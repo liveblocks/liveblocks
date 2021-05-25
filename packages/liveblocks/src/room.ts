@@ -1,0 +1,870 @@
+import { RecordData, List } from ".";
+import { Doc, Record } from "./doc";
+import {
+  Others,
+  Presence,
+  ClientOptions,
+  Room,
+  InitialStorageFactory,
+  MyPresenceCallback,
+  OthersEventCallback,
+  RoomEventCallbackMap,
+  StorageCallback,
+  AuthEndpoint,
+  LiveStorageState,
+  LiveStorage,
+  EventCallback,
+  User,
+  Connection,
+  Serializable,
+  ErrorCallback,
+} from "./types";
+import {
+  createRecord as innerCreateRecord,
+  createList as innerCreateList,
+} from "./doc";
+import { remove } from "./utils";
+import auth, { parseToken } from "./authentication";
+import {
+  ClientMessage,
+  ClientMessageType,
+  InitialDocumentStateMessage,
+  UpdateStorageMessage,
+  ServerMessageType,
+  UserLeftMessage,
+  Op,
+  EventMessage,
+  RoomStateMessage,
+  UpdatePresenceMessage,
+  UserJoinMessage,
+} from "./live";
+
+const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
+
+const HEARTBEAT_INTERVAL = 30000;
+// const WAKE_UP_CHECK_INTERVAL = 2000;
+const PONG_TIMEOUT = 2000;
+
+function isValidRoomEventType(value: string) {
+  return (
+    value === "storage" ||
+    value === "my-presence" ||
+    value === "others" ||
+    value === "event" ||
+    value === "error"
+  );
+}
+
+function makeIdFactory(connectionId: number): IdFactory {
+  let count = 0;
+  return () => `${connectionId}:${count++}`;
+}
+
+function makeOthers<T extends Presence>(presenceMap: {
+  [key: number]: User<T>;
+}): Others<T> {
+  const array = Object.values(presenceMap);
+
+  return {
+    get count() {
+      return array.length;
+    },
+    map(callback) {
+      return array.map(callback);
+    },
+    toArray() {
+      return array;
+    },
+  };
+}
+
+function log(...params: any[]) {
+  return;
+  console.log(...params, new Date().toString());
+}
+
+type IdFactory = () => string;
+
+export type State = {
+  connection: Connection;
+  socket: WebSocket | null;
+  lastFlushTime: number;
+  flushData: {
+    presence: Presence | null;
+    messages: ClientMessage[];
+    storageOperations: Op[];
+  };
+  timeoutHandles: {
+    flush: number | null;
+    reconnect: number;
+    pongTimeout: number;
+  };
+  intervalHandles: {
+    heartbeat: number;
+  };
+  listeners: {
+    storage: StorageCallback[];
+    event: EventCallback[];
+    others: OthersEventCallback[];
+    "my-presence": MyPresenceCallback[];
+    error: ErrorCallback[];
+  };
+  me: Presence;
+  others: Others;
+  users: {
+    [connectionId: number]: User;
+  };
+  idFactory: IdFactory | null;
+  numberOfRetry: number;
+  doc: Doc<any> | null;
+  storageState: LiveStorageState;
+  initialStorageFactory: InitialStorageFactory | null;
+};
+
+export type Effects = {
+  authenticate(): void;
+  send(messages: ClientMessage[]): void;
+  delayFlush(delay: number): number;
+  startHeartbeatInterval(): number;
+  schedulePongTimeout(): number;
+  scheduleReconnect(delay: number): number;
+};
+
+type Context = {
+  room: string;
+  authEndpoint: AuthEndpoint;
+  liveblocksServer: string;
+  throttleDelay: number;
+};
+
+export function makeStateMachine(
+  state: State,
+  context: Context,
+  mockedEffects?: Effects
+) {
+  const effects: Effects = mockedEffects || {
+    async authenticate() {
+      try {
+        const token = await auth(context.authEndpoint, context.room);
+        const connectionId = parseToken(token).actor;
+        const socket = new WebSocket(
+          `${context.liveblocksServer}/?token=${token}`
+        );
+        socket.addEventListener("message", onMessage);
+        socket.addEventListener("open", onOpen);
+        socket.addEventListener("close", onClose);
+        socket.addEventListener("error", onError);
+        authenticationSuccess(connectionId, socket);
+      } catch (er) {
+        authenticationFailure(er);
+      }
+    },
+    send(messageOrMessages: ClientMessage | ClientMessage[]) {
+      if (state.socket == null) {
+        throw new Error("Can't send message if socket is null");
+      }
+      state.socket.send(JSON.stringify(messageOrMessages));
+    },
+    delayFlush(delay: number) {
+      return setTimeout(tryFlushing, delay) as any;
+    },
+    startHeartbeatInterval() {
+      return setInterval(heartbeat, HEARTBEAT_INTERVAL) as any;
+    },
+    schedulePongTimeout() {
+      return setTimeout(pongTimeout, PONG_TIMEOUT) as any;
+    },
+    scheduleReconnect(delay: number) {
+      return setTimeout(connect, delay) as any;
+    },
+  };
+
+  function subscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): void;
+  function subscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): void;
+  function subscribe(type: "event", listener: EventCallback): void;
+  function subscribe<T extends RecordData>(
+    type: "storage",
+    listener: StorageCallback<T>
+  ): void;
+  function subscribe(type: "error", listener: ErrorCallback): void;
+  function subscribe<T extends keyof RoomEventCallbackMap>(
+    type: T,
+    listener: RoomEventCallbackMap[T]
+  ) {
+    if (!isValidRoomEventType(type)) {
+      throw new Error(`"${type}" is not a valid event name`);
+    }
+    (state.listeners[type] as RoomEventCallbackMap[T][]).push(listener);
+  }
+
+  function unsubscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): void;
+  function unsubscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): void;
+  function unsubscribe(type: "event", listener: EventCallback): void;
+  function unsubscribe<T extends RecordData>(
+    type: "storage",
+    listener: StorageCallback<T>
+  ): void;
+  function unsubscribe(type: "error", listener: ErrorCallback): void;
+  function unsubscribe<T extends keyof RoomEventCallbackMap>(
+    event: T,
+    callback: RoomEventCallbackMap[T]
+  ) {
+    if (!isValidRoomEventType(event)) {
+      throw new Error(`"${event}" is not a valid event name`);
+    }
+    const callbacks = state.listeners[event] as RoomEventCallbackMap[T][];
+    remove(callbacks, callback);
+  }
+
+  function getConnectionState() {
+    return state.connection;
+  }
+
+  function connect() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (
+      state.connection.state !== "closed" &&
+      state.connection.state !== "unavailable"
+    ) {
+      return null;
+    }
+
+    updateConnection({ state: "authenticating" });
+    effects.authenticate();
+  }
+
+  function updatePresence<T extends Presence>(overrides: Partial<T>) {
+    const newPresence = { ...state.me, ...overrides };
+
+    if (state.flushData.presence == null) {
+      state.flushData.presence = overrides as Serializable;
+    } else {
+      for (const key in overrides) {
+        state.flushData.presence[key] = overrides[key] as any;
+      }
+    }
+
+    state.me = newPresence;
+
+    tryFlushing();
+
+    for (const listener of state.listeners["my-presence"]) {
+      listener(state.me);
+    }
+  }
+
+  function authenticationSuccess(connectionId: number, socket: WebSocket) {
+    updateConnection({ state: "connecting", id: connectionId });
+    state.idFactory = makeIdFactory(connectionId);
+    state.socket = socket;
+  }
+
+  function authenticationFailure(error: Error) {
+    console.error(error);
+    updateConnection({ state: "unavailable" });
+    state.numberOfRetry++;
+    state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
+  }
+
+  function onVisibilityChange(visibilityState: VisibilityState) {
+    if (visibilityState === "visible" && state.connection.state === "open") {
+      log("Heartbeat after visibility change");
+      heartbeat();
+    }
+  }
+
+  function onUpdatePresenceMessage(message: UpdatePresenceMessage) {
+    const user = state.users[message.actor];
+    if (user == null) {
+      state.users[message.actor] = {
+        connectionId: message.actor,
+        presence: message.data,
+      };
+    } else {
+      state.users[message.actor] = {
+        id: user.id,
+        info: user.info,
+        connectionId: message.actor,
+        presence: {
+          ...user.presence,
+          ...message.data,
+        },
+      };
+    }
+    updateUsers();
+  }
+
+  function updateUsers() {
+    state.others = makeOthers(state.users);
+
+    for (const listener of state.listeners["others"]) {
+      listener(state.others);
+    }
+  }
+
+  function onUserLeftMessage(message: UserLeftMessage) {
+    const userLeftMessage: UserLeftMessage = message;
+    delete state.users[userLeftMessage.actor];
+    updateUsers();
+  }
+
+  function onRoomStateMessage(message: RoomStateMessage) {
+    const newUsers: { [connectionId: number]: User } = {};
+    for (const key in message.users) {
+      const connectionId = Number.parseInt(key);
+      const user = message.users[key];
+      newUsers[connectionId] = {
+        connectionId,
+        info: user.info,
+        id: user.id,
+      };
+    }
+    state.users = newUsers;
+    updateUsers();
+  }
+
+  function onNavigatorOnline() {
+    if (state.connection.state === "unavailable") {
+      log("Try to reconnect after connectivity change");
+      reconnect();
+    }
+  }
+
+  function onEvent(message: EventMessage) {
+    for (const listener of state.listeners.event) {
+      listener({ connectionId: message.actor, event: message.event });
+    }
+  }
+
+  function onUserJoinedMessage(message: UserJoinMessage) {
+    state.users[message.actor] = {
+      connectionId: message.actor,
+      info: message.info,
+      id: message.id,
+    };
+    updateUsers();
+
+    if (state.me) {
+      // Send current presence to new user
+      // TODO: Consider storing it on the backend
+      state.flushData.messages.push({
+        type: ClientMessageType.UpdatePresence,
+        data: state.me!,
+        targetActor: message.actor,
+      });
+      tryFlushing();
+    }
+  }
+
+  function onMessage(event: MessageEvent) {
+    if (event.data === "pong") {
+      clearTimeout(state.timeoutHandles.pongTimeout);
+      return;
+    }
+
+    const message = JSON.parse(event.data);
+    switch (message.type) {
+      case ServerMessageType.InitialStorageState: {
+        onInitialStorageState(message);
+        break;
+      }
+      case ServerMessageType.UpdateStorage: {
+        onStorageUpdates(message);
+        break;
+      }
+      case ServerMessageType.UserJoined: {
+        onUserJoinedMessage(message as UserJoinMessage);
+        break;
+      }
+      case ServerMessageType.UpdatePresence: {
+        onUpdatePresenceMessage(message as UpdatePresenceMessage);
+        break;
+      }
+      case ServerMessageType.Event: {
+        onEvent(message);
+        break;
+      }
+      case ServerMessageType.UserLeft: {
+        onUserLeftMessage(message as UserLeftMessage);
+        break;
+      }
+      case ServerMessageType.RoomState: {
+        onRoomStateMessage(message as RoomStateMessage);
+        break;
+      }
+    }
+  }
+
+  // function onWakeUp() {
+  //   // Sometimes, the browser can put the webpage on pause (computer is on sleep mode for example)
+  //   // The client will not know that the server has probably close the connection even if the readyState is Open
+  //   // One way to detect this kind of pause is to ensure that a setInterval is not taking more than the delay it was configured with
+  //   if (state.connection.state === "open") {
+  //     log("Try to reconnect after laptop wake up");
+  //     reconnect();
+  //   }
+  // }
+
+  function onClose(event: { code: number; wasClean: boolean; reason: any }) {
+    state.socket = null;
+
+    clearTimeout(state.timeoutHandles.pongTimeout);
+    clearInterval(state.intervalHandles.heartbeat);
+    if (state.timeoutHandles.flush) {
+      clearTimeout(state.timeoutHandles.flush);
+    }
+    clearTimeout(state.timeoutHandles.reconnect);
+
+    state.users = {};
+    updateUsers();
+
+    if (event.code >= 4000 && event.code <= 4100) {
+      updateConnection({ state: "failed" });
+
+      const error = new LiveblocksError(event.reason, event.code);
+      for (const listener of state.listeners.error) {
+        listener(error);
+      }
+    } else if (event.wasClean === false) {
+      updateConnection({ state: "unavailable" });
+      state.numberOfRetry++;
+      state.timeoutHandles.reconnect = effects.scheduleReconnect(
+        getRetryDelay()
+      );
+    } else {
+      updateConnection({ state: "closed" });
+    }
+  }
+
+  function updateConnection(connection: Connection) {
+    state.connection = connection;
+  }
+
+  function getRetryDelay() {
+    return BACKOFF_RETRY_DELAYS[
+      state.numberOfRetry < BACKOFF_RETRY_DELAYS.length
+        ? state.numberOfRetry
+        : BACKOFF_RETRY_DELAYS.length - 1
+    ];
+  }
+
+  function onError() {}
+
+  function onOpen() {
+    clearInterval(state.intervalHandles.heartbeat);
+
+    state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
+
+    updateConnection({ state: "open", id: (state.connection as any).id });
+    state.numberOfRetry = 0;
+    tryFlushing();
+  }
+
+  function heartbeat() {
+    if (state.socket == null) {
+      // Should never happen, because we clear the pong timeout when the connection is dropped explictly
+      return;
+    }
+
+    clearTimeout(state.timeoutHandles.pongTimeout);
+    state.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
+
+    if (state.socket.readyState === WebSocket.OPEN) {
+      state.socket.send("ping");
+    }
+  }
+
+  function pongTimeout() {
+    log("Pong timeout. Trying to reconnect.");
+    reconnect();
+  }
+
+  function reconnect() {
+    if (state.socket) {
+      state.socket.removeEventListener("open", onOpen);
+      state.socket.removeEventListener("message", onMessage);
+      state.socket.removeEventListener("close", onClose);
+      state.socket.removeEventListener("error", onError);
+      state.socket.close();
+      state.socket = null;
+    }
+
+    updateConnection({ state: "unavailable" });
+    clearTimeout(state.timeoutHandles.pongTimeout);
+    if (state.timeoutHandles.flush) {
+      clearTimeout(state.timeoutHandles.flush);
+    }
+    clearTimeout(state.timeoutHandles.reconnect);
+    clearInterval(state.intervalHandles.heartbeat);
+    connect();
+  }
+
+  function tryFlushing() {
+    if (state.socket == null) {
+      return;
+    }
+
+    if (state.socket.readyState !== WebSocket.OPEN) {
+      return;
+    }
+
+    const now = Date.now();
+
+    const elapsedTime = now - state.lastFlushTime;
+
+    if (elapsedTime > context.throttleDelay) {
+      const messages = flushDataToMessages(state);
+      if (messages.length === 0) {
+        return;
+      }
+      effects.send(messages);
+      state.flushData = {
+        messages: [],
+        storageOperations: [],
+        presence: null,
+      };
+      state.lastFlushTime = now;
+    } else {
+      if (state.timeoutHandles.flush != null) {
+        clearTimeout(state.timeoutHandles.flush);
+      }
+
+      state.timeoutHandles.flush = effects.delayFlush(
+        context.throttleDelay - (now - state.lastFlushTime)
+      );
+    }
+  }
+
+  function flushDataToMessages(state: State) {
+    const messages: ClientMessage[] = [];
+    if (state.flushData.presence) {
+      messages.push({
+        type: ClientMessageType.UpdatePresence,
+        data: state.flushData.presence,
+      });
+    }
+    for (const event of state.flushData.messages) {
+      messages.push(event);
+    }
+    if (state.flushData.storageOperations.length > 0) {
+      messages.push({
+        type: ClientMessageType.UpdateStorage,
+        ops: state.flushData.storageOperations,
+      });
+    }
+    return messages;
+  }
+
+  function disconnect() {
+    if (state.socket) {
+      state.socket.removeEventListener("open", onOpen);
+      state.socket.removeEventListener("message", onMessage);
+      state.socket.removeEventListener("close", onClose);
+      state.socket.removeEventListener("error", onError);
+      state.socket.close();
+      state.socket = null;
+    }
+    updateConnection({ state: "closed" });
+    if (state.timeoutHandles.flush) {
+      clearTimeout(state.timeoutHandles.flush);
+    }
+    clearTimeout(state.timeoutHandles.reconnect);
+    clearTimeout(state.timeoutHandles.pongTimeout);
+    clearInterval(state.intervalHandles.heartbeat);
+    state.users = {};
+    updateUsers();
+    clearListeners();
+  }
+
+  function clearListeners() {
+    for (const key in state.listeners) {
+      state.listeners[key as keyof State["listeners"]] = [];
+    }
+  }
+
+  function getPresence<T extends Presence>(): T {
+    return state.me as T;
+  }
+
+  function getOthers<T extends Presence>(): Others<T> {
+    return state.others as Others<T>;
+  }
+
+  function broadcastEvent(event: any) {
+    if (state.socket == null) {
+      return;
+    }
+
+    state.flushData.messages.push({
+      type: ClientMessageType.ClientEvent,
+      event,
+    });
+    tryFlushing();
+  }
+
+  /**
+   * STORAGE
+   */
+
+  function onStorageUpdates(message: UpdateStorageMessage) {
+    if (state.doc == null) {
+      // TODO: Cache updates in case they are coming while root is queried
+      return;
+    }
+    updateDoc(message.ops.reduce((doc, op) => doc.dispatch(op), state.doc));
+  }
+
+  function updateDoc(doc: Doc<any> | null) {
+    state.doc = doc;
+    if (doc) {
+      for (const listener of state.listeners.storage) {
+        listener(getStorage());
+      }
+    }
+  }
+
+  function getStorage(): LiveStorage {
+    if (state.storageState === LiveStorageState.Loaded) {
+      return {
+        state: state.storageState,
+        root: state.doc!.root,
+      };
+    }
+
+    return {
+      state: state.storageState,
+    };
+  }
+
+  function onInitialStorageState(message: InitialDocumentStateMessage) {
+    state.storageState = LiveStorageState.Loaded;
+    if (message.root == null) {
+      const rootId = makeId();
+      state.doc = Doc.empty<any>(rootId, (op) => dispatch(op));
+      updateDoc(
+        state.doc.updateRecord(
+          rootId,
+          state.initialStorageFactory!({
+            createRecord: <T extends RecordData>(data: T) =>
+              createRecord<T>(data),
+            createList: () => createList(),
+          })
+        )
+      );
+    } else {
+      updateDoc(Doc.load<any>(message.root, (op) => dispatch(op)));
+    }
+  }
+
+  function makeId() {
+    if (state.idFactory == null) {
+      throw new Error("Can't generate id. Id factory is missing.");
+    }
+    return state.idFactory();
+  }
+
+  function dispatch(op: Op) {
+    state.flushData.storageOperations.push(op);
+
+    tryFlushing();
+  }
+
+  function createRecord<T extends RecordData>(data: any): Record<T> {
+    return innerCreateRecord(makeId(), data);
+  }
+
+  function createList<T extends RecordData>(): List<Record<T>> {
+    return innerCreateList(makeId());
+  }
+
+  function fetchStorage(initialStorageFactory: InitialStorageFactory) {
+    state.initialStorageFactory = initialStorageFactory;
+    state.storageState = LiveStorageState.Loading;
+    state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
+    tryFlushing();
+  }
+
+  function updateRecord<T extends RecordData>(
+    record: Record<T>,
+    overrides: Partial<T>
+  ) {
+    updateDoc(state.doc!.updateRecord(record.id, overrides));
+  }
+
+  function pushItem<T extends RecordData>(
+    list: List<Record<T>>,
+    item: Record<T>
+  ) {
+    updateDoc(state.doc!.pushItem(list.id, item));
+  }
+  function deleteItem<T extends RecordData>(
+    list: List<Record<T>>,
+    index: number
+  ) {
+    updateDoc(state.doc!.deleteItem(list.id, index));
+  }
+  function moveItem<T extends RecordData>(
+    list: List<Record<T>>,
+    index: number,
+    targetIndex: number
+  ) {
+    updateDoc(state.doc!.moveItem(list.id, index, targetIndex));
+  }
+
+  return {
+    // Internal
+    onOpen,
+    onClose,
+    onMessage,
+    authenticationSuccess,
+    heartbeat,
+    onNavigatorOnline,
+    // onWakeUp,
+    onVisibilityChange,
+
+    // Core
+    connect,
+    disconnect,
+    subscribe,
+    unsubscribe,
+
+    // Presence
+    updatePresence,
+    broadcastEvent,
+
+    // Storage
+    fetchStorage,
+    createRecord,
+    updateRecord,
+    createList,
+    pushItem,
+    deleteItem,
+    moveItem,
+
+    selectors: {
+      // Core
+      getConnectionState,
+
+      // Presence
+      getPresence,
+      getOthers,
+
+      // Storage
+      getStorage,
+    },
+  };
+}
+
+export function defaultState(me?: Presence): State {
+  return {
+    connection: { state: "closed" },
+    socket: null,
+    listeners: {
+      storage: [],
+      event: [],
+      others: [],
+      "my-presence": [],
+      error: [],
+    },
+    numberOfRetry: 0,
+    lastFlushTime: 0,
+    timeoutHandles: {
+      flush: null,
+      reconnect: 0,
+      pongTimeout: 0,
+    },
+    flushData: {
+      presence: null,
+      messages: [],
+      storageOperations: [],
+    },
+    intervalHandles: {
+      heartbeat: 0,
+    },
+    me: me == null ? {} : me,
+    users: {},
+    others: makeOthers({}),
+    storageState: LiveStorageState.NotInitialized,
+    initialStorageFactory: null,
+    doc: null,
+    idFactory: null,
+  };
+}
+
+export function createRoom(
+  name: string,
+  options: ClientOptions & {
+    initialPresence?: Presence;
+  }
+): Room {
+  const throttleDelay = options.throttle || 100;
+  const liveblocksServer: string =
+    (options as any).liveblocksServer || "wss://live.liveblocks.io";
+  const authEndpoint: AuthEndpoint = options.authEndpoint;
+
+  const state = defaultState(options.initialPresence);
+
+  const machine = makeStateMachine(state, {
+    throttleDelay,
+    liveblocksServer,
+    authEndpoint,
+    room: name,
+  });
+
+  const room: Room = {
+    /////////////
+    // Core    //
+    /////////////
+    connect: machine.connect,
+    disconnect: machine.disconnect,
+    getConnectionState: machine.selectors.getConnectionState,
+    subscribe: machine.subscribe,
+    unsubscribe: machine.unsubscribe,
+
+    /////////////
+    // Storage //
+    /////////////
+    getStorage: machine.selectors.getStorage,
+    fetchStorage: machine.fetchStorage,
+    createRecord: machine.createRecord,
+    createList: machine.createList,
+    updateRecord: machine.updateRecord,
+    pushItem: machine.pushItem,
+    deleteItem: machine.deleteItem,
+    moveItem: machine.moveItem,
+
+    //////////////
+    // Presence //
+    //////////////
+    getPresence: machine.selectors.getPresence,
+    updatePresence: machine.updatePresence,
+    getOthers: machine.selectors.getOthers,
+    broadcastEvent: machine.broadcastEvent,
+  };
+
+  (room as any)._onNavigatorOnline = machine.onNavigatorOnline;
+  (room as any)._onVisibilityChange = machine.onVisibilityChange;
+
+  return room;
+}
+
+class LiveblocksError extends Error {
+  constructor(message: string, public code: number) {
+    super(message);
+  }
+}
