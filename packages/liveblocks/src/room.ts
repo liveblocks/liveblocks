@@ -18,6 +18,7 @@ import {
   Connection,
   Serializable,
   ErrorCallback,
+  OthersEvent,
 } from "./types";
 import {
   createRecord as innerCreateRecord,
@@ -306,21 +307,28 @@ export function makeStateMachine(
         },
       };
     }
-    updateUsers();
+    updateUsers({
+      type: "update",
+      updates: message.data,
+      user: state.users[message.actor],
+    });
   }
 
-  function updateUsers() {
+  function updateUsers(event: OthersEvent) {
     state.others = makeOthers(state.users);
 
     for (const listener of state.listeners["others"]) {
-      listener(state.others);
+      listener(state.others, event);
     }
   }
 
   function onUserLeftMessage(message: UserLeftMessage) {
     const userLeftMessage: UserLeftMessage = message;
-    delete state.users[userLeftMessage.actor];
-    updateUsers();
+    const user = state.users[userLeftMessage.actor];
+    if (user) {
+      delete state.users[userLeftMessage.actor];
+      updateUsers({ type: "leave", user });
+    }
   }
 
   function onRoomStateMessage(message: RoomStateMessage) {
@@ -335,7 +343,7 @@ export function makeStateMachine(
       };
     }
     state.users = newUsers;
-    updateUsers();
+    updateUsers({ type: "reset" });
   }
 
   function onNavigatorOnline() {
@@ -357,7 +365,7 @@ export function makeStateMachine(
       info: message.info,
       id: message.id,
     };
-    updateUsers();
+    updateUsers({ type: "enter", user: state.users[message.actor] });
 
     if (state.me) {
       // Send current presence to new user
@@ -431,7 +439,7 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.reconnect);
 
     state.users = {};
-    updateUsers();
+    updateUsers({ type: "reset" });
 
     if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
@@ -587,7 +595,7 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
     state.users = {};
-    updateUsers();
+    updateUsers({ type: "reset" });
     clearListeners();
   }
 

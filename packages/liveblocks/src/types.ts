@@ -88,6 +88,24 @@ export type Connection =
       id: number;
     };
 
+export type OthersEvent<T extends Presence = Presence> =
+  | {
+      type: "leave";
+      user: User<T>;
+    }
+  | {
+      type: "enter";
+      user: User<T>;
+    }
+  | {
+      type: "update";
+      user: User<T>;
+      updates: Partial<T>;
+    }
+  | {
+      type: "reset";
+    };
+
 export type Room = {
   connect(): void;
   disconnect(): void;
@@ -146,7 +164,8 @@ export type StorageCallback<T extends RecordData = RecordData> = (
 ) => void;
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
-  others: Others<T>
+  others: Others<T>,
+  event: OthersEvent<T>
 ) => void;
 export type EventCallback = ({
   connectionId,

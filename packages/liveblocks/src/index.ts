@@ -10,4 +10,5 @@ export type {
   InitialStorageFactory,
   Client,
   LiveStorage,
+  User,
 } from "./types";
