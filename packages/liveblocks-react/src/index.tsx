@@ -309,6 +309,7 @@ type StorageActions = {
   createList: Room["createList"];
   moveItem: Room["moveItem"];
   deleteItem: Room["deleteItem"];
+  deleteItemById: Room["deleteItemById"];
   pushItem: Room["pushItem"];
 };
 
@@ -374,6 +375,13 @@ export function useStorageActions(): StorageActions {
       return room.deleteItem<T>(list, index);
     }
 
+    function deleteItemById<T extends RecordData>(
+      list: List<Record<T>>,
+      itemId: string
+    ) {
+      return room.deleteItemById<T>(list, itemId);
+    }
+
     function pushItem<T extends RecordData>(
       list: List<Record<T>>,
       item: Record<T>
@@ -388,6 +396,7 @@ export function useStorageActions(): StorageActions {
       createList,
       moveItem,
       deleteItem,
+      deleteItemById,
       pushItem,
     };
   }, [room]);

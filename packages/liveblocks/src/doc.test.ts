@@ -139,6 +139,18 @@ describe("Doc", () => {
       expect(doc.data.items.toArray()).toMatchObject([{ x: 1 }, { x: 3 }]);
     });
 
+    test("deleteItemById", () => {
+      const items = makeList<Record<{ x: number }>>();
+      let doc = Doc.createFromRoot({ items });
+      const firstItem = makeRecord({ x: 1 });
+      doc = doc.pushItem(items.id, firstItem);
+      doc = doc.pushItem(items.id, makeRecord({ x: 2 }));
+      doc = doc.pushItem(items.id, makeRecord({ x: 3 }));
+
+      doc = doc.deleteItemById(items.id, firstItem.id);
+      expect(doc.data.items.toArray()).toMatchObject([{ x: 2 }, { x: 3 }]);
+    });
+
     // test("create list with items", () => {
     //   const items = makeList<Record<{ x: number }>>([
     //     makeRecord({ x: 1 }),

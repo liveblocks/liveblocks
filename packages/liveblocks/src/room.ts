@@ -726,6 +726,12 @@ export function makeStateMachine(
   ) {
     updateDoc(state.doc!.deleteItem(list.id, index));
   }
+  function deleteItemById<T extends RecordData>(
+    list: List<Record<T>>,
+    itemId: string
+  ) {
+    updateDoc(state.doc!.deleteItemById(list.id, itemId));
+  }
   function moveItem<T extends RecordData>(
     list: List<Record<T>>,
     index: number,
@@ -762,6 +768,7 @@ export function makeStateMachine(
     createList,
     pushItem,
     deleteItem,
+    deleteItemById,
     moveItem,
 
     selectors: {
@@ -854,6 +861,7 @@ export function createRoom(
     updateRecord: machine.updateRecord,
     pushItem: machine.pushItem,
     deleteItem: machine.deleteItem,
+    deleteItemById: machine.deleteItemById,
     moveItem: machine.moveItem,
 
     //////////////

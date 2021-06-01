@@ -227,7 +227,7 @@ export class Doc<T extends RecordData> {
     const items = sortedListItems(getListItems(this._cache, id));
 
     if (targetIndex < 0) {
-      throw new Error("targetIndex cannont be less than 0");
+      throw new Error("targetIndex cannot be less than 0");
     }
 
     if (targetIndex >= items.length) {
@@ -237,7 +237,7 @@ export class Doc<T extends RecordData> {
     }
 
     if (index < 0) {
-      throw new Error("index cannont be less than 0");
+      throw new Error("index cannot be less than 0");
     }
 
     if (index >= items.length) {
@@ -290,7 +290,45 @@ export class Doc<T extends RecordData> {
 
     const items = sortedListItems(getListItems(this._cache, id));
 
-    const [position, item] = items[index];
+    const [, item] = items[index];
+
+    return this.dispatch(
+      {
+        type: OpType.ListRemove,
+        id: list.id,
+        itemId: item.id,
+      },
+      true
+    );
+  }
+
+  deleteItemById(id: string, itemId: string) {
+    const list = this.getChild(id);
+
+    if (list == null) {
+      throw new Error(`List with id "${id}" does not exist`);
+    }
+
+    if (list.$$type !== LIST) {
+      throw new Error(`Node with id "${id}" is not a list`);
+    }
+
+    const itemsMap = getListItems(this._cache, id);
+
+    let item = null;
+
+    for (const [, crdt] of itemsMap) {
+      if (crdt.id === itemId) {
+        item = crdt;
+        break;
+      }
+    }
+
+    if (item == null) {
+      throw new Error(
+        `List with id "${id}" does not have an item with id "${itemId}"`
+      );
+    }
 
     return this.dispatch(
       {

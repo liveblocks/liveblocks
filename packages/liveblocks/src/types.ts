@@ -152,6 +152,10 @@ export type Room = {
   ): void;
   pushItem<T extends RecordData>(list: List<Record<T>>, item: Record<T>): void;
   deleteItem<T extends RecordData>(list: List<Record<T>>, index: number): void;
+  deleteItemById<T extends RecordData>(
+    list: List<Record<T>>,
+    itemId: string
+  ): void;
   moveItem<T extends RecordData>(
     list: List<Record<T>>,
     index: number,
