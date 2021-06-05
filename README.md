@@ -22,7 +22,7 @@ Clone this [github repository](https://github.com/liveblocks/next-js-examples) o
 
 ### Nuxt.js
 
-Clone this [github repository](https://github.com/liveblocks/nuxt-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/nuxt-js-examples)
+Clone this [github repository](https://github.com/liveblocks/nuxt-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/nuxt-js-examples?file=/pages/presence.vue)
 
 ### No front-end framework
 
