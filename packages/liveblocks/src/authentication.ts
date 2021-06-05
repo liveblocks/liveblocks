@@ -1,4 +1,4 @@
-import { AuthEndpoint } from "./types";
+import { AuthEndpoint, AuthenticationToken } from "./types";
 
 async function fetchAuthorize(endpoint: string, room: string): Promise<string> {
   const res = await fetch(endpoint, {
@@ -58,7 +58,7 @@ class AuthenticationError extends Error {
   }
 }
 
-export function parseToken(token: string): { actor: number } {
+export function parseToken(token: string): AuthenticationToken {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new AuthenticationError(

@@ -79,6 +79,14 @@ export type LiveStorage<T extends RecordData = RecordData> =
       root: Record<T>;
     };
 
+type ConnectionState =
+  | "closed"
+  | "authenticating"
+  | "unavailable"
+  | "failed"
+  | "open"
+  | "connecting";
+
 export type Connection =
   | {
       state: "closed" | "authenticating" | "unavailable" | "failed";
@@ -86,6 +94,8 @@ export type Connection =
   | {
       state: "open" | "connecting";
       id: number;
+      userId?: string;
+      userInfo?: any;
     };
 
 export type OthersEvent<T extends Presence = Presence> =
@@ -109,7 +119,10 @@ export type OthersEvent<T extends Presence = Presence> =
 export type Room = {
   connect(): void;
   disconnect(): void;
-  getConnectionState(): Connection;
+  getConnectionState(): ConnectionState;
+  getCurrentUser<
+    TPresence extends Presence = Presence
+  >(): User<TPresence> | null;
   subscribe: {
     <T extends Presence>(
       type: "my-presence",
@@ -121,7 +134,8 @@ export type Room = {
     ): void;
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
-    (type: "error", listener: (error: Error) => void): void;
+    (type: "error", listener: ErrorCallback): void;
+    (type: "connection", listener: ConnectionCallback): void;
   };
   unsubscribe: {
     <T extends Presence>(
@@ -134,7 +148,8 @@ export type Room = {
     ): void;
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
-    (type: "error", listener: (error: Error) => void): void;
+    (type: "error", listener: ErrorCallback): void;
+    (type: "connection", listener: ConnectionCallback): void;
   };
 
   getPresence: <T extends Presence>() => T;
@@ -179,6 +194,7 @@ export type EventCallback = ({
   event: any;
 }) => void;
 export type ErrorCallback = (error: Error) => void;
+export type ConnectionCallback = (state: ConnectionState) => void;
 
 export type RoomEventCallbackMap = {
   storage: StorageCallback;
@@ -186,6 +202,7 @@ export type RoomEventCallbackMap = {
   others: OthersEventCallback;
   event: EventCallback;
   error: ErrorCallback;
+  connection: ConnectionCallback;
 };
 
 export type CreateRecord = Room["createRecord"];
@@ -200,4 +217,10 @@ export type Client = {
   getRoom(roomId: string): Room | null;
   enter(roomId: string, defaultPresence?: Presence): Room;
   leave(roomId: string): void;
+};
+
+export type AuthenticationToken = {
+  actor: number;
+  id?: string;
+  info?: any;
 };

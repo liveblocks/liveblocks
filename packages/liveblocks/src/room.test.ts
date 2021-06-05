@@ -64,7 +64,7 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
-    machine.authenticationSuccess(0, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     expect(state.connection.state).toBe("connecting");
   });
 
@@ -75,7 +75,7 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
     machine.connect();
-    machine.authenticationSuccess(0, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     machine.onOpen();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -92,7 +92,7 @@ describe("room", () => {
     const machine = makeStateMachine(state, defaultContext, effects);
 
     machine.connect();
-    machine.authenticationSuccess(0, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     machine.onOpen();
 
     expect(effects.send).not.toHaveBeenCalled();
@@ -104,7 +104,7 @@ describe("room", () => {
     const machine = makeStateMachine(state, defaultContext, effects);
 
     machine.connect();
-    machine.authenticationSuccess(0, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     machine.onOpen();
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
@@ -157,7 +157,7 @@ describe("room", () => {
     const machine = makeStateMachine(state, defaultContext, effects);
 
     machine.connect();
-    machine.authenticationSuccess(0, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     machine.onOpen();
 
     machine.onMessage(

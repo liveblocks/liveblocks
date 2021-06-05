@@ -19,6 +19,8 @@ import {
   Serializable,
   ErrorCallback,
   OthersEvent,
+  AuthenticationToken,
+  ConnectionCallback,
 } from "./types";
 import {
   createRecord as innerCreateRecord,
@@ -52,7 +54,8 @@ function isValidRoomEventType(value: string) {
     value === "my-presence" ||
     value === "others" ||
     value === "event" ||
-    value === "error"
+    value === "error" ||
+    value === "connection"
   );
 }
 
@@ -109,6 +112,7 @@ export type State = {
     others: OthersEventCallback[];
     "my-presence": MyPresenceCallback[];
     error: ErrorCallback[];
+    connection: ConnectionCallback[];
   };
   me: Presence;
   others: Others;
@@ -147,7 +151,7 @@ export function makeStateMachine(
     async authenticate() {
       try {
         const token = await auth(context.authEndpoint, context.room);
-        const connectionId = parseToken(token).actor;
+        const parsedToken = parseToken(token);
         const socket = new WebSocket(
           `${context.liveblocksServer}/?token=${token}`
         );
@@ -155,7 +159,7 @@ export function makeStateMachine(
         socket.addEventListener("open", onOpen);
         socket.addEventListener("close", onClose);
         socket.addEventListener("error", onError);
-        authenticationSuccess(connectionId, socket);
+        authenticationSuccess(parsedToken, socket);
       } catch (er) {
         authenticationFailure(er);
       }
@@ -194,6 +198,7 @@ export function makeStateMachine(
     listener: StorageCallback<T>
   ): void;
   function subscribe(type: "error", listener: ErrorCallback): void;
+  function subscribe(type: "connection", listener: ConnectionCallback): void;
   function subscribe<T extends keyof RoomEventCallbackMap>(
     type: T,
     listener: RoomEventCallbackMap[T]
@@ -218,6 +223,7 @@ export function makeStateMachine(
     listener: StorageCallback<T>
   ): void;
   function unsubscribe(type: "error", listener: ErrorCallback): void;
+  function unsubscribe(type: "connection", listener: ConnectionCallback): void;
   function unsubscribe<T extends keyof RoomEventCallbackMap>(
     event: T,
     callback: RoomEventCallbackMap[T]
@@ -230,7 +236,21 @@ export function makeStateMachine(
   }
 
   function getConnectionState() {
-    return state.connection;
+    return state.connection.state;
+  }
+
+  function getCurrentUser<
+    TPresence extends Presence = Presence
+  >(): User<TPresence> | null {
+    return state.connection.state === "open" ||
+      state.connection.state === "connecting"
+      ? {
+          connectionId: state.connection.id,
+          id: state.connection.userId,
+          info: state.connection.userInfo,
+          presence: getPresence() as TPresence,
+        }
+      : null;
   }
 
   function connect() {
@@ -269,9 +289,17 @@ export function makeStateMachine(
     }
   }
 
-  function authenticationSuccess(connectionId: number, socket: WebSocket) {
-    updateConnection({ state: "connecting", id: connectionId });
-    state.idFactory = makeIdFactory(connectionId);
+  function authenticationSuccess(
+    token: AuthenticationToken,
+    socket: WebSocket
+  ) {
+    updateConnection({
+      state: "connecting",
+      id: token.actor,
+      userInfo: token.info,
+      userId: token.id,
+    });
+    state.idFactory = makeIdFactory(token.actor);
     state.socket = socket;
   }
 
@@ -461,6 +489,9 @@ export function makeStateMachine(
 
   function updateConnection(connection: Connection) {
     state.connection = connection;
+    for (const listener of state.listeners.connection) {
+      listener(connection.state);
+    }
   }
 
   function getRetryDelay() {
@@ -478,9 +509,13 @@ export function makeStateMachine(
 
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
-    updateConnection({ state: "open", id: (state.connection as any).id });
-    state.numberOfRetry = 0;
-    tryFlushing();
+    if (state.connection.state === "connecting") {
+      updateConnection({ ...state.connection, state: "open" });
+      state.numberOfRetry = 0;
+      tryFlushing();
+    } else {
+      // TODO
+    }
   }
 
   function heartbeat() {
@@ -774,6 +809,7 @@ export function makeStateMachine(
     selectors: {
       // Core
       getConnectionState,
+      getCurrentUser,
 
       // Presence
       getPresence,
@@ -795,6 +831,7 @@ export function defaultState(me?: Presence): State {
       others: [],
       "my-presence": [],
       error: [],
+      connection: [],
     },
     numberOfRetry: 0,
     lastFlushTime: 0,
@@ -848,6 +885,7 @@ export function createRoom(
     connect: machine.connect,
     disconnect: machine.disconnect,
     getConnectionState: machine.selectors.getConnectionState,
+    getCurrentUser: machine.selectors.getCurrentUser,
     subscribe: machine.subscribe,
     unsubscribe: machine.unsubscribe,
 
