@@ -1,6 +1,16 @@
-import { createRoom } from "./room";
+import { createRoom, InternalRoom } from "./room";
 import { ClientOptions, Room, Client, Presence } from "./types";
 
+/**
+ * Create a client that will be responsible to communicate with liveblocks servers.
+ *
+ * ### Example
+ * ```
+ * const client = createClient({
+ *   authEndpoint: "/api/auth"
+ * })
+ * ```
+ */
 export function createClient(options: ClientOptions): Client {
   if (typeof options.throttle === "number") {
     if (options.throttle < 80 || options.throttle > 1000) {
@@ -10,21 +20,22 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  const rooms = new Map<string, Room>();
+  const rooms = new Map<string, InternalRoom>();
 
   function getRoom(roomId: string): Room | null {
-    return rooms.get(roomId) || null;
+    const internalRoom = rooms.get(roomId);
+    return internalRoom ? internalRoom.room : null;
   }
 
-  function enter(roomId: string, initialPresence?: Presence) {
-    let room = rooms.get(roomId);
-    if (room) {
-      return room;
+  function enter(roomId: string, initialPresence?: Presence): Room {
+    let internalRoom = rooms.get(roomId);
+    if (internalRoom) {
+      return internalRoom.room;
     }
-    room = createRoom(roomId, { ...options, initialPresence });
-    rooms.set(roomId, room);
-    room.connect();
-    return room;
+    internalRoom = createRoom(roomId, { ...options, initialPresence });
+    rooms.set(roomId, internalRoom);
+    internalRoom.connect();
+    return internalRoom.room;
   }
 
   function leave(roomId: string) {
@@ -39,7 +50,7 @@ export function createClient(options: ClientOptions): Client {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
-        (room as any)._onNavigatorOnline();
+        room.onNavigatorOnline();
       }
     });
   }
@@ -47,7 +58,7 @@ export function createClient(options: ClientOptions): Client {
   if (typeof document !== "undefined") {
     document.addEventListener("visibilitychange", () => {
       for (const [, room] of rooms) {
-        (room as any)._onVisibilityChange(document.visibilityState);
+        room.onVisibilityChange(document.visibilityState);
       }
     });
   }

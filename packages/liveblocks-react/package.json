@@ -6,6 +6,16 @@
   "files": [
     "lib/"
   ],
+  "keywords": [
+    "react",
+    "liveblocks",
+    "multiplayer",
+    "live-cursors",
+    "collaborative"
+  ],
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "scripts": {
     "build": "rollup -c",
     "start": "rollup -c -w",
@@ -38,5 +48,10 @@
     "rollup-plugin-typescript2": "^0.30.0",
     "typescript": "^4.1.5",
     "whatwg-fetch": "^3.6.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-react"
   }
 }

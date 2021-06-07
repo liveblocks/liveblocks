@@ -858,12 +858,20 @@ export function defaultState(me?: Presence): State {
   };
 }
 
+export type InternalRoom = {
+  room: Room;
+  connect: () => void;
+  disconnect: () => void;
+  onNavigatorOnline: () => void;
+  onVisibilityChange: (visibilityState: VisibilityState) => void;
+};
+
 export function createRoom(
   name: string,
   options: ClientOptions & {
     initialPresence?: Presence;
   }
-): Room {
+): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
     (options as any).liveblocksServer || "wss://live.liveblocks.io";
@@ -882,8 +890,6 @@ export function createRoom(
     /////////////
     // Core    //
     /////////////
-    connect: machine.connect,
-    disconnect: machine.disconnect,
     getConnectionState: machine.selectors.getConnectionState,
     getCurrentUser: machine.selectors.getCurrentUser,
     subscribe: machine.subscribe,
@@ -911,10 +917,13 @@ export function createRoom(
     broadcastEvent: machine.broadcastEvent,
   };
 
-  (room as any)._onNavigatorOnline = machine.onNavigatorOnline;
-  (room as any)._onVisibilityChange = machine.onVisibilityChange;
-
-  return room;
+  return {
+    connect: machine.connect,
+    disconnect: machine.disconnect,
+    onNavigatorOnline: machine.onNavigatorOnline,
+    onVisibilityChange: machine.onVisibilityChange,
+    room,
+  };
 }
 
 class LiveblocksError extends Error {

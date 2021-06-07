@@ -7,6 +7,16 @@
   "files": [
     "lib/"
   ],
+  "keywords": [
+    "node",
+    "liveblocks",
+    "multiplayer",
+    "live-cursors",
+    "collaborative"
+  ],
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "scripts": {
     "build-and-pack": "npm run build && npm pack",
     "build": "npm run build:esm && npm run build:cjs",
@@ -27,5 +37,10 @@
   },
   "dependencies": {
     "node-fetch": "^2.6.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-node"
   }
 }
