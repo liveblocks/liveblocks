@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.8.0",
+  "version": "0.8.2",
   "description": "",
   "main": "./lib/index.js",
   "files": [
@@ -23,7 +23,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "0.8.0"
+    "@liveblocks/client": "0.8.2"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17"

@@ -841,7 +841,7 @@ export function defaultState(me?: Presence): State {
       pongTimeout: 0,
     },
     flushData: {
-      presence: null,
+      presence: me == null ? {} : me,
       messages: [],
       storageOperations: [],
     },

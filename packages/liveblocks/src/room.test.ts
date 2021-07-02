@@ -68,6 +68,23 @@ describe("room", () => {
     expect(state.connection.state).toBe("connecting");
   });
 
+  test("initial presence should be sent once the connection is open", () => {
+    const effects = mockEffects();
+    const state = defaultState({ x: 0 });
+    const machine = makeStateMachine(state, defaultContext, effects);
+
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
+
+    expect(effects.send).toHaveBeenCalledWith([
+      {
+        type: ClientMessageType.UpdatePresence,
+        data: { x: 0 },
+      },
+    ]);
+  });
+
   test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
     const effects = mockEffects();
     const state = defaultState({});
@@ -86,30 +103,34 @@ describe("room", () => {
     ]);
   });
 
-  test("if no presence has been set before the connection is open, no message should be sent on open", () => {
+  test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
     const effects = mockEffects();
-    const state = defaultState({});
+    const state = defaultState();
     const machine = makeStateMachine(state, defaultContext, effects);
 
     machine.connect();
     machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
     machine.onOpen();
 
-    expect(effects.send).not.toHaveBeenCalled();
+    expect(effects.send).toHaveBeenCalledWith([
+      {
+        type: ClientMessageType.UpdatePresence,
+        data: {},
+      },
+    ]);
   });
 
-  test("2 consecutives updatePresence should delay sending the second presence events", () => {
+  test("initial presence followed by updatePresence should delay sending the second presence event", () => {
     const effects = mockEffects();
-    const state = defaultState({});
+    const state = defaultState({ x: 0 });
     const machine = makeStateMachine(state, defaultContext, effects);
 
     machine.connect();
     machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
-    withDateNow(now, () => machine.updatePresence({ x: 0 }));
+    withDateNow(now, () => machine.onOpen());
 
     withDateNow(now + 30, () => machine.updatePresence({ x: 1 }));
 
