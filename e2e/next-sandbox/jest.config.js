@@ -1,17 +1,9 @@
-// jest.config.js
-// Sync object
-/** @type {import('@jest/types').Config.InitialOptions} */
-const config = {
+module.exports = {
+  transform: {
+    "^.+\\.tsx?$": "ts-jest",
+  },
   verbose: true,
-};
-
-module.exports = config;
-
-// Or async function
-module.exports = async () => {
-  return {
-    preset: "jest-puppeteer",
-    verbose: true,
-    testTimeout: 60000,
-  };
+  testTimeout: 60000,
+  globalSetup: "./setup.js",
+  globalTeardown: "./teardown.js",
 };

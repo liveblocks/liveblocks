@@ -9,15 +9,33 @@ export default function Home() {
   );
 }
 
+type Presence = {
+  count?: number;
+};
+
 function Sandbox() {
   const others = useOthers();
-  const [me, updateMyPresence] = useMyPresence();
+  const [me, updateMyPresence] = useMyPresence<Presence>();
 
   return (
     <div>
-      <button id="update-presence-button">Update presence</button>
-      <div id="others">{JSON.stringify(others.toArray())}</div>
-      <div id="me">{JSON.stringify(me)}</div>
+      <h1>Presence sandbox</h1>
+      <button
+        id="increment-button"
+        onClick={() => updateMyPresence({ count: me.count ? me.count + 1 : 1 })}
+      >
+        Increment
+      </button>
+
+      <h2>Current user</h2>
+      <div>
+        Count: <span id="me-count">{me.count}</span>
+      </div>
+
+      <h2>Others</h2>
+      <div id="others" style={{ whiteSpace: "pre" }}>
+        {JSON.stringify(others.toArray(), null, 2)}
+      </div>
     </div>
   );
 }
