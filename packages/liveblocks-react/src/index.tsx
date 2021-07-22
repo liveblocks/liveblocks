@@ -435,6 +435,3 @@ export function useStorageActions(): StorageActions {
     };
   }, [room]);
 }
-
-export { createClient } from "@liveblocks/client";
-export type { Record, Client, List } from "@liveblocks/client";

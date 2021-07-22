@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "",
   "main": "./lib/index.js",
   "files": [
@@ -22,10 +22,8 @@
     "test": "jest --watch"
   },
   "license": "Apache-2.0",
-  "dependencies": {
-    "@liveblocks/client": "0.9.0"
-  },
   "peerDependencies": {
+    "@liveblocks/client": "0.10.0",
     "react": "^16.14.0 || ^17"
   },
   "devDependencies": {
