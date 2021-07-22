@@ -44,7 +44,9 @@ export default async function auth(
   }
 
   if (typeof endpoint === "function") {
-    return endpoint(room);
+    const { token } = await endpoint(room);
+    // TODO: Validation
+    return token;
   }
 
   throw new Error(

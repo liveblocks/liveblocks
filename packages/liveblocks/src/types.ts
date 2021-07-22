@@ -37,20 +37,21 @@ export type InitialStorageFactory<TRoot = RecordData> = (factories: {
 
 export type Client = {
   /**
-   * Get a room. Returns null if you never entered the room
+   * Gets a room. Returns null if {@link Client.enter} has not been called previously.
+   *
    * @param roomId - The id of the room
    */
   getRoom(roomId: string): Room | null;
 
   /**
-   * Enter a room.
+   * Enters a room and returns it.
    * @param roomId - The id of the room
    * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
   enter(roomId: string, defaultPresence?: Presence): Room;
 
   /**
-   * Leave a room.
+   * Leaves a room.
    * @param roomId - The id of the room
    */
   leave(roomId: string): void;
@@ -109,7 +110,7 @@ export type Serializable = {
   [key: string]: SerializablePrimitive | Serializable | SerializablePrimitive[];
 };
 
-type AuthEndpointCallback = (room: string) => Promise<string>;
+type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
@@ -183,6 +184,15 @@ export type Room = {
   subscribe: {
     /**
      * Subscribe to the current user presence updates.
+     *
+     * @param listener - the callback that is called everytime the current user presence is updated with {@link Room.updatePresence}.
+     *
+     * ### Example
+     * ``` typescript
+     * room.subscribe("my-presence", (presence) => {
+     *   // Do something
+     * });
+     * ```
      */
     <T extends Presence>(
       type: "my-presence",
@@ -190,14 +200,31 @@ export type Room = {
     ): void;
     /**
      * Subscribe to the other users updates.
-     * The listener will be called when a user enters or leaves the room or when a user update its presence.
+     *
+     * @param listener - the callback that is called when a user enters or leaves the room or when a user update its presence.
+     *
+     * ### Example
+     * ``` typescript
+     * room.subscribe("others", (others) => {
+     *   // Do something
+     * });
+     * ```
      */
     <T extends Presence>(
       type: "others",
       listener: OthersEventCallback<T>
     ): void;
     /**
-     * Subscribe to events broadcasted by room.broadcastEvent
+     * Subscribe to events broadcasted by {@link Room.broadcastEvent}
+     *
+     * @param listener - the callback that is called when a user calls {@link Room.broadcastEvent}
+     *
+     * ### Example
+     * ``` typescript
+     * room.subscribe("event", ({ event, connectionId }) => {
+     *   // Do something
+     * });
+     * ```
      */
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
@@ -213,6 +240,15 @@ export type Room = {
   unsubscribe: {
     /**
      * Unsubscribe to the current user presence updates.
+     *
+     * @param listener - the callback that has been used with {@link Room.subscribe}("my-presence").
+     *
+     * ### Example
+     * ``` typescript
+     * const onPresenceChange = (presence) => { };
+     * room.subscribe("my-presence", onPresenceChange);
+     * room.unsubscribe("my-presence", onPresenceChange);
+     * ```
      */
     <T extends Presence>(
       type: "my-presence",
@@ -220,13 +256,31 @@ export type Room = {
     ): void;
     /**
      * Unsubscribe to the other users updates.
+     *
+     * @param listener - the callback that has been used with {@link Room.subscribe}("others").
+     *
+     * ### Example
+     * ``` typescript
+     * const onOthersChange = (presence) => { };
+     * room.subscribe("others", onOthersChange);
+     * room.unsubscribe("others", onOthersChange);
+     * ```
      */
     <T extends Presence>(
       type: "others",
       listener: OthersEventCallback<T>
     ): void;
     /**
-     * Unsubscribe to events broadcasted by room.broadcastEvent
+     * Unsubscribe to events broadcasted by {@link Room.broadcastEvent}
+     *
+     * @param listener - the callback that has been used with {@link Room.unsubscribe}("event").
+     *
+     * ### Example
+     * ``` typescript
+     * const onEvent = ({ event, connectionId }) => { };
+     * room.subscribe("event", onEvent);
+     * room.unsubscribe("event", onEvent);
+     * ```
      */
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
@@ -241,7 +295,7 @@ export type Room = {
   };
 
   /**
-   * Get the current user.
+   * Gets the current user.
    *
    * ### Example
    * ``` typescript
@@ -253,7 +307,7 @@ export type Room = {
   >(): User<TPresence> | null;
 
   /**
-   * Get the presence of the current user.
+   * Gets the presence of the current user.
    *
    * ### Example
    * ``` typescript
@@ -263,7 +317,7 @@ export type Room = {
   getPresence: <T extends Presence>() => T;
 
   /**
-   * Get all the other users in the room.
+   * Gets all the other users in the room.
    *
    * ### Example
    * ``` typescript
@@ -273,8 +327,8 @@ export type Room = {
   getOthers: <T extends Presence>() => Others<T>;
 
   /**
-   * Update the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param {Partial<T>} overrides - A partial object that contains the properties you want to update.
+   * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
+   * @param {Partial<T>} overrides A partial object that contains the properties you want to update.
    *
    * ### Example
    * ``` typescript
@@ -288,18 +342,20 @@ export type Room = {
   updatePresence: <T extends Presence>(overrides: Partial<T>) => void;
 
   /**
-   * Broadcast an event to other users in the room.
-   * @param {any} event - the event to broadcast. Should be serializable to JSON
+   * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
+   * @param {any} event the event to broadcast. Should be serializable to JSON
    *
    * ### Example
    * ``` typescript
    *
    * // On client A
-   * room.broadcastEvent({ type: "EMOJI", emoji: 🔥 });
+   * room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
    *
    * // On client B
    * room.subscribe("event", ({ event }) => {
-   *
+   *   if(event.type === "EMOJI") {
+   *     // Do something
+   *   }
    * });
    * ```
    */
