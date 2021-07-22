@@ -1,4 +1,5 @@
-import { createClient, LiveblocksProvider } from "@liveblocks/react";
+import { createClient } from "@liveblocks/client";
+import { LiveblocksProvider } from "@liveblocks/react";
 import { AppProps } from "next/app";
 
 const client = createClient({
