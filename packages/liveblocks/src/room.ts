@@ -239,7 +239,7 @@ export function makeStateMachine(
     return state.connection.state;
   }
 
-  function getCurrentUser<
+  function getSelf<
     TPresence extends Presence = Presence
   >(): User<TPresence> | null {
     return state.connection.state === "open" ||
@@ -809,7 +809,7 @@ export function makeStateMachine(
     selectors: {
       // Core
       getConnectionState,
-      getCurrentUser,
+      getSelf,
 
       // Presence
       getPresence,
@@ -891,7 +891,7 @@ export function createRoom(
     // Core    //
     /////////////
     getConnectionState: machine.selectors.getConnectionState,
-    getCurrentUser: machine.selectors.getCurrentUser,
+    getSelf: machine.selectors.getSelf,
     subscribe: machine.subscribe,
     unsubscribe: machine.unsubscribe,
 

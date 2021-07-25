@@ -185,7 +185,7 @@ export type Room = {
     /**
      * Subscribe to the current user presence updates.
      *
-     * @param listener - the callback that is called everytime the current user presence is updated with {@link Room.updatePresence}.
+     * @param listener - the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
      *
      * ### Example
      * ``` typescript
@@ -296,15 +296,14 @@ export type Room = {
 
   /**
    * Gets the current user.
+   * Returns null if not it is not yet connected to the room.
    *
    * ### Example
    * ``` typescript
-   * const user = room.getCurrentUser();
+   * const user = room.getSelf();
    * ```
    */
-  getCurrentUser<
-    TPresence extends Presence = Presence
-  >(): User<TPresence> | null;
+  getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
 
   /**
    * Gets the presence of the current user.
@@ -328,7 +327,7 @@ export type Room = {
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param {Partial<T>} overrides A partial object that contains the properties you want to update.
+   * @param {Partial<T>} overrides - A partial object that contains the properties you want to update.
    *
    * ### Example
    * ``` typescript
@@ -343,7 +342,7 @@ export type Room = {
 
   /**
    * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
-   * @param {any} event the event to broadcast. Should be serializable to JSON
+   * @param {any} event - the event to broadcast. Should be serializable to JSON
    *
    * ### Example
    * ``` typescript
