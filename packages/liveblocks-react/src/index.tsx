@@ -304,16 +304,16 @@ export function useEventListener<TEvent>(
 }
 
 /**
- * useCurrentUser is a react hook that lets you react to get the current user once it is connected to the room.
+ * Gets the current user once it is connected to the room.
  *
  * ### Example
  * ``` typescript
- * import { useCurrentUser } from "@liveblocks/react";
+ * import { useSelf } from "@liveblocks/react";
  *
- * const user = useCurrentUser();
+ * const user = useSelf();
  * ```
  */
-export function useCurrentUser<
+export function useSelf<
   TPresence extends Presence = Presence
 >(): User<TPresence> | null {
   const room = useRoom();
@@ -333,7 +333,7 @@ export function useCurrentUser<
     };
   }, [room]);
 
-  return room.getCurrentUser<TPresence>();
+  return room.getSelf<TPresence>();
 }
 
 type StorageActions = {
