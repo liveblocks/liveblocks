@@ -1,11 +1,16 @@
 import { createRoom, InternalRoom } from "./room";
-import { ClientOptions, Room, Client, Presence } from "./types";
+import {
+  ClientOptions,
+  Room,
+  Client,
+  Presence,
+  InitialStorageFactory,
+} from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
  *
- * ### Example
- * ```
+ * @example
  * const client = createClient({
  *   authEndpoint: "/api/auth"
  * });
@@ -26,11 +31,12 @@ import { ClientOptions, Room, Client, Presence } from "./types";
  *     return await response.json();
  *   }
  * });
- * ```
  */
 export function createClient(options: ClientOptions): Client {
-  if (typeof options.throttle === "number") {
-    if (options.throttle < 80 || options.throttle > 1000) {
+  const clientOptions = options;
+
+  if (typeof clientOptions.throttle === "number") {
+    if (clientOptions.throttle < 80 || clientOptions.throttle > 1000) {
       throw new Error(
         "Liveblocks client throttle should be between 80 and 1000 ms"
       );
@@ -44,12 +50,18 @@ export function createClient(options: ClientOptions): Client {
     return internalRoom ? internalRoom.room : null;
   }
 
-  function enter(roomId: string, initialPresence?: Presence): Room {
+  function enter(
+    roomId: string,
+    options: {
+      defaultPresence?: Presence;
+      defaultStorage?: InitialStorageFactory;
+    }
+  ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
     }
-    internalRoom = createRoom(roomId, { ...options, initialPresence });
+    internalRoom = createRoom(roomId, { ...clientOptions, ...options });
     rooms.set(roomId, internalRoom);
     internalRoom.connect();
     return internalRoom.room;

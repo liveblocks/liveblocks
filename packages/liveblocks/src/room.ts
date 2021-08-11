@@ -1,5 +1,4 @@
-import { RecordData, List } from ".";
-import { Doc, Record } from "./doc";
+import { Storage, LiveList, LiveRecord, RecordData } from "./storage";
 import {
   Others,
   Presence,
@@ -16,16 +15,11 @@ import {
   EventCallback,
   User,
   Connection,
-  Serializable,
   ErrorCallback,
   OthersEvent,
   AuthenticationToken,
   ConnectionCallback,
 } from "./types";
-import {
-  createRecord as innerCreateRecord,
-  createList as innerCreateList,
-} from "./doc";
 import { remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
@@ -121,7 +115,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  doc: Doc<any> | null;
+  doc: Storage<any> | null;
   storageState: LiveStorageState;
   initialStorageFactory: InitialStorageFactory | null;
 };
@@ -273,7 +267,7 @@ export function makeStateMachine(
     const newPresence = { ...state.me, ...overrides };
 
     if (state.flushData.presence == null) {
-      state.flushData.presence = overrides as Serializable;
+      state.flushData.presence = overrides as Presence;
     } else {
       for (const key in overrides) {
         state.flushData.presence[key] = overrides[key] as any;
@@ -663,16 +657,18 @@ export function makeStateMachine(
   /**
    * STORAGE
    */
-
   function onStorageUpdates(message: UpdateStorageMessage) {
     if (state.doc == null) {
       // TODO: Cache updates in case they are coming while root is queried
       return;
     }
-    updateDoc(message.ops.reduce((doc, op) => doc.dispatch(op), state.doc));
+
+    for (const op of message.ops) {
+      state.doc.apply(op);
+    }
   }
 
-  function updateDoc(doc: Doc<any> | null) {
+  function updateDoc(doc: Storage<any> | null) {
     state.doc = doc;
     if (doc) {
       for (const listener of state.listeners.storage) {
@@ -696,43 +692,37 @@ export function makeStateMachine(
 
   function onInitialStorageState(message: InitialDocumentStateMessage) {
     state.storageState = LiveStorageState.Loaded;
-    if (message.root == null) {
-      const rootId = makeId();
-      state.doc = Doc.empty<any>(rootId, (op) => dispatch(op));
-      updateDoc(
-        state.doc.updateRecord(
-          rootId,
-          state.initialStorageFactory!({
-            createRecord: <T extends RecordData>(data: T) =>
-              createRecord<T>(data),
-            createList: () => createList(),
-          })
-        )
+
+    if (state.connection.state !== "open") {
+      throw new Error();
+    }
+
+    if (message.items.length === 0) {
+      state.doc = Storage.from(
+        state.connection.id,
+        state.initialStorageFactory!,
+        dispatch
       );
+
+      updateDoc(state.doc);
     } else {
-      updateDoc(Doc.load<any>(message.root, (op) => dispatch(op)));
+      state.doc = Storage.load(state.connection.id, message.items, dispatch);
+      updateDoc(state.doc);
     }
   }
 
-  function makeId() {
-    if (state.idFactory == null) {
-      throw new Error("Can't generate id. Id factory is missing.");
-    }
-    return state.idFactory();
-  }
-
-  function dispatch(op: Op) {
-    state.flushData.storageOperations.push(op);
+  function dispatch(ops: Op[]) {
+    state.flushData.storageOperations.push(...ops);
 
     tryFlushing();
   }
 
-  function createRecord<T extends RecordData>(data: any): Record<T> {
-    return innerCreateRecord(makeId(), data);
+  function createRecord<T extends RecordData>(data: T): LiveRecord<T> {
+    return state.doc!.createRecord<T>(data);
   }
 
-  function createList<T extends RecordData>(): List<Record<T>> {
-    return innerCreateList(makeId());
+  function createList<T extends LiveRecord>(): LiveList<T> {
+    return state.doc!.createList<T>();
   }
 
   function fetchStorage(initialStorageFactory: InitialStorageFactory) {
@@ -740,39 +730,6 @@ export function makeStateMachine(
     state.storageState = LiveStorageState.Loading;
     state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
     tryFlushing();
-  }
-
-  function updateRecord<T extends RecordData>(
-    record: Record<T>,
-    overrides: Partial<T>
-  ) {
-    updateDoc(state.doc!.updateRecord(record.id, overrides));
-  }
-
-  function pushItem<T extends RecordData>(
-    list: List<Record<T>>,
-    item: Record<T>
-  ) {
-    updateDoc(state.doc!.pushItem(list.id, item));
-  }
-  function deleteItem<T extends RecordData>(
-    list: List<Record<T>>,
-    index: number
-  ) {
-    updateDoc(state.doc!.deleteItem(list.id, index));
-  }
-  function deleteItemById<T extends RecordData>(
-    list: List<Record<T>>,
-    itemId: string
-  ) {
-    updateDoc(state.doc!.deleteItemById(list.id, itemId));
-  }
-  function moveItem<T extends RecordData>(
-    list: List<Record<T>>,
-    index: number,
-    targetIndex: number
-  ) {
-    updateDoc(state.doc!.moveItem(list.id, index, targetIndex));
   }
 
   return {
@@ -799,12 +756,7 @@ export function makeStateMachine(
     // Storage
     fetchStorage,
     createRecord,
-    updateRecord,
     createList,
-    pushItem,
-    deleteItem,
-    deleteItemById,
-    moveItem,
 
     selectors: {
       // Core
@@ -821,7 +773,10 @@ export function makeStateMachine(
   };
 }
 
-export function defaultState(me?: Presence): State {
+export function defaultState(
+  me?: Presence,
+  initialStorageFactory?: InitialStorageFactory
+): State {
   return {
     connection: { state: "closed" },
     socket: null,
@@ -852,7 +807,7 @@ export function defaultState(me?: Presence): State {
     users: {},
     others: makeOthers({}),
     storageState: LiveStorageState.NotInitialized,
-    initialStorageFactory: null,
+    initialStorageFactory: initialStorageFactory || null,
     doc: null,
     idFactory: null,
   };
@@ -869,7 +824,8 @@ export type InternalRoom = {
 export function createRoom(
   name: string,
   options: ClientOptions & {
-    initialPresence?: Presence;
+    defaultPresence?: Presence;
+    defaultStorage?: InitialStorageFactory;
   }
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
@@ -877,7 +833,7 @@ export function createRoom(
     (options as any).liveblocksServer || "wss://liveblocks.net";
   const authEndpoint: AuthEndpoint = options.authEndpoint;
 
-  const state = defaultState(options.initialPresence);
+  const state = defaultState(options.defaultPresence, options.defaultStorage);
 
   const machine = makeStateMachine(state, {
     throttleDelay,
@@ -902,11 +858,6 @@ export function createRoom(
     fetchStorage: machine.fetchStorage,
     createRecord: machine.createRecord,
     createList: machine.createList,
-    updateRecord: machine.updateRecord,
-    pushItem: machine.pushItem,
-    deleteItem: machine.deleteItem,
-    deleteItemById: machine.deleteItemById,
-    moveItem: machine.moveItem,
 
     //////////////
     // Presence //

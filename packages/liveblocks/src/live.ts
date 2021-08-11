@@ -54,9 +54,11 @@ export type EventMessage = {
   event: any;
 };
 
+export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
+
 export type InitialDocumentStateMessage = {
   type: ServerMessageType.InitialStorageState;
-  root: SerializedRecord | null;
+  items: SerializedCrdtWithId[];
 };
 
 export type UpdateStorageMessage = {
@@ -101,74 +103,77 @@ export type FetchStorageClientMessage = {
 export enum CrdtType {
   Record = 0,
   List = 1,
-  Register = 2,
 }
 
 export type SerializedRecord = {
-  id: string;
   type: CrdtType.Record;
+  parentId?: string;
+  parentKey?: string;
   data: {
-    [key: string]: SerializedCrdt;
+    [key: string]: any; // TODO
   };
 };
 
 export type SerializedList = {
-  id: string;
   type: CrdtType.List;
-  data: {
-    [position: string]: SerializedCrdt;
-  };
+  parentId: string;
+  parentKey: string;
 };
 
-export type SerializedRegister = {
-  id?: string;
-  type: CrdtType.Register;
-  data: any;
-};
-
-export type SerializedCrdt =
-  | SerializedRecord
-  | SerializedList
-  | SerializedRegister;
+export type SerializedCrdt = SerializedRecord | SerializedList;
 
 export enum OpType {
   Init = 100,
+  SetParentKey = 101,
 
-  ListInsert = 200,
-  ListMove = 201,
-  ListRemove = 202,
+  CreateList = 203,
 
-  RecordUpdate = 300,
+  UpdateRecord = 300,
+  CreateRecord = 301,
+  DeleteRecord = 302,
 }
 
-export type Op = RecordUpdateOp | ListInsertOp | ListDeleteOp | ListMoveOp;
+export type Op =
+  | CreateRecordOp
+  | RecordUpdateOp
+  | DeleteRecordOp
+  | CreateListOp
+  | SetParentKeyOp;
 
 export type RecordUpdateOp = {
   id: string;
-  type: OpType.RecordUpdate;
+  type: OpType.UpdateRecord;
   data: {
-    [key: string]: SerializedCrdt;
+    [key: string]: any; // TODO
   };
 };
 
-export type ListInsertOp = {
+export type CreateRecordOp = {
   id: string;
-  type: OpType.ListInsert;
-  position: string;
-  data: SerializedCrdt;
+  type: OpType.CreateRecord;
+  parentId?: string;
+  parentKey?: string;
+  data: {
+    [key: string]: any; // TODO
+  };
 };
 
-export type ListMoveOp = {
+export type CreateListOp = {
   id: string;
-  type: OpType.ListMove;
-  itemId: string;
-  position: string;
+  type: OpType.CreateList;
+  parentId: string;
+  parentKey: string;
 };
 
-export type ListDeleteOp = {
+export type DeleteRecordOp = {
   id: string;
-  type: OpType.ListRemove;
-  itemId: string;
+  type: OpType.DeleteRecord;
+};
+
+export type SetParentKeyOp = {
+  id: string;
+  type: OpType.SetParentKey;
+  parentKey: string;
 };
 
 export enum WebsocketCloseCodes {

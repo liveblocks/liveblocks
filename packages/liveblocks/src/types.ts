@@ -1,4 +1,4 @@
-import { RecordData, Record, List } from "./doc";
+import { LiveRecord, LiveList, RecordData } from "./storage";
 
 export type StorageCallback<T extends RecordData = RecordData> = (
   storage: LiveStorage<T>
@@ -48,7 +48,13 @@ export type Client = {
    * @param roomId - The id of the room
    * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter(roomId: string, defaultPresence?: Presence): Room;
+  enter(
+    roomId: string,
+    options: {
+      defaultPresence?: Presence;
+      defaultStorage?: InitialStorageFactory;
+    }
+  ): Room;
 
   /**
    * Leaves a room.
@@ -104,10 +110,8 @@ export type User<TPresence extends Presence = Presence> = {
   readonly presence?: TPresence;
 };
 
-export type Presence = Serializable;
-export type SerializablePrimitive = boolean | string | number | null;
-export type Serializable = {
-  [key: string]: SerializablePrimitive | Serializable | SerializablePrimitive[];
+export type Presence = {
+  [key: string]: any;
 };
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
@@ -139,7 +143,7 @@ export type LiveStorage<T extends RecordData = RecordData> =
     }
   | {
       state: LiveStorageState.Loaded;
-      root: Record<T>;
+      root: LiveRecord<T>;
     };
 
 type ConnectionState =
@@ -187,12 +191,10 @@ export type Room = {
      *
      * @param listener - the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * room.subscribe("my-presence", (presence) => {
      *   // Do something
      * });
-     * ```
      */
     <T extends Presence>(
       type: "my-presence",
@@ -203,12 +205,10 @@ export type Room = {
      *
      * @param listener - the callback that is called when a user enters or leaves the room or when a user update its presence.
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * room.subscribe("others", (others) => {
      *   // Do something
      * });
-     * ```
      */
     <T extends Presence>(
       type: "others",
@@ -219,12 +219,10 @@ export type Room = {
      *
      * @param listener - the callback that is called when a user calls {@link Room.broadcastEvent}
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * room.subscribe("event", ({ event, connectionId }) => {
      *   // Do something
      * });
-     * ```
      */
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
@@ -243,12 +241,10 @@ export type Room = {
      *
      * @param listener - the callback that has been used with {@link Room.subscribe}("my-presence").
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * const onPresenceChange = (presence) => { };
      * room.subscribe("my-presence", onPresenceChange);
      * room.unsubscribe("my-presence", onPresenceChange);
-     * ```
      */
     <T extends Presence>(
       type: "my-presence",
@@ -259,12 +255,10 @@ export type Room = {
      *
      * @param listener - the callback that has been used with {@link Room.subscribe}("others").
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * const onOthersChange = (presence) => { };
      * room.subscribe("others", onOthersChange);
      * room.unsubscribe("others", onOthersChange);
-     * ```
      */
     <T extends Presence>(
       type: "others",
@@ -275,12 +269,10 @@ export type Room = {
      *
      * @param listener - the callback that has been used with {@link Room.unsubscribe}("event").
      *
-     * ### Example
-     * ``` typescript
+     * @example
      * const onEvent = ({ event, connectionId }) => { };
      * room.subscribe("event", onEvent);
      * room.unsubscribe("event", onEvent);
-     * ```
      */
     (type: "event", listener: EventCallback): void;
     <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
@@ -298,30 +290,24 @@ export type Room = {
    * Gets the current user.
    * Returns null if not it is not yet connected to the room.
    *
-   * ### Example
-   * ``` typescript
+   * @example
    * const user = room.getSelf();
-   * ```
    */
   getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
 
   /**
    * Gets the presence of the current user.
    *
-   * ### Example
-   * ``` typescript
+   * @example
    * const presence = room.getPresence();
-   * ```
    */
   getPresence: <T extends Presence>() => T;
 
   /**
    * Gets all the other users in the room.
    *
-   * ### Example
-   * ``` typescript
+   * @example
    * const others = room.getOthers();
-   * ```
    */
   getOthers: <T extends Presence>() => Others<T>;
 
@@ -329,14 +315,12 @@ export type Room = {
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
    * @param {Partial<T>} overrides - A partial object that contains the properties you want to update.
    *
-   * ### Example
-   * ``` typescript
+   * @example
    * room.updatePresence({ x: 0 });
    * room.updatePresence({ y: 0 });
    *
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
-   * ```
    */
   updatePresence: <T extends Presence>(overrides: Partial<T>) => void;
 
@@ -344,9 +328,7 @@ export type Room = {
    * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event - the event to broadcast. Should be serializable to JSON
    *
-   * ### Example
-   * ``` typescript
-   *
+   * @example
    * // On client A
    * room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
    *
@@ -356,27 +338,11 @@ export type Room = {
    *     // Do something
    *   }
    * });
-   * ```
    */
   broadcastEvent: (event: any) => void;
 
   getStorage: () => LiveStorage;
   fetchStorage(initialStorageFactory: InitialStorageFactory): void;
-  createRecord: <T extends RecordData>(data: T) => Record<T>;
-  createList: <T extends RecordData>() => List<Record<T>>;
-  updateRecord<T extends RecordData>(
-    record: Record<T>,
-    overrides: Partial<T>
-  ): void;
-  pushItem<T extends RecordData>(list: List<Record<T>>, item: Record<T>): void;
-  deleteItem<T extends RecordData>(list: List<Record<T>>, index: number): void;
-  deleteItemById<T extends RecordData>(
-    list: List<Record<T>>,
-    itemId: string
-  ): void;
-  moveItem<T extends RecordData>(
-    list: List<Record<T>>,
-    index: number,
-    targetIndex: number
-  ): void;
+  createRecord: <T extends RecordData>(data: T) => LiveRecord<T>;
+  createList: <T extends LiveRecord>() => LiveList<T>;
 };

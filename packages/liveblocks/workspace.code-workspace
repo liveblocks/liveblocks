@@ -1,0 +1,22 @@
+{
+  "settings": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 2,
+    "editor.detectIndentation": false
+  },
+  "folders": [
+	{
+		"path": "../.."
+	},
+	{
+		"path": "../../../liveblocks.io"
+	},
+	{
+		"path": "../../../next-js-examples"
+	},
+	{
+		"path": "../../../liveblocks-cloudflare"
+	}
+]
+}

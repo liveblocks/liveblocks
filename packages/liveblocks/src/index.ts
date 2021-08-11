@@ -1,4 +1,4 @@
-export type { Record, RecordData, List } from "./doc";
+export type { LiveRecord, LiveList, RecordData } from "./storage";
 
 export { createClient } from "./client";
 

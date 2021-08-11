@@ -3,14 +3,13 @@ import {
   RecordData,
   Others,
   Presence,
-  Record,
-  InitialStorageFactory,
-  List,
+  LiveRecord,
   Room,
   LiveStorageState,
   User,
 } from "@liveblocks/client";
 import * as React from "react";
+import { LiveList } from "../../liveblocks/lib/cjs/new-doc";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;
@@ -54,6 +53,8 @@ type RoomProviderProps = {
    */
   defaultPresence?: () => Presence;
 
+  defaultStorage?: () => any;
+
   children: React.ReactNode;
 };
 
@@ -66,6 +67,7 @@ export function RoomProvider({
   id,
   children,
   defaultPresence,
+  defaultStorage,
 }: RoomProviderProps) {
   const client = useClient();
 
@@ -77,7 +79,11 @@ export function RoomProvider({
 
   const room =
     client.getRoom(id) ||
-    client.enter(id, defaultPresence ? defaultPresence() : undefined);
+    client.enter(
+      id,
+      defaultPresence ? defaultPresence() : undefined,
+      defaultStorage
+    );
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
@@ -100,8 +106,7 @@ function useRoom() {
  * It is different from the setState function returned by the useState hook from React.
  * You don't need to pass the full presence object to update it.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useMyPresence } from "@liveblocks/react";
  *
  * const [myPresence, updateMyPresence] = useMyPresence();
@@ -109,7 +114,6 @@ function useRoom() {
  * updateMyPresence({ y: 0 });
  *
  * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
- * ```
  */
 export function useMyPresence<T extends Presence>(): [
   T,
@@ -143,8 +147,7 @@ export function useMyPresence<T extends Presence>(): [
  * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
  * If you don't use the current user presence in your component, but you need to update it (e.g. live cursor), it's better to use useUpdateMyPresence to avoid unnecessary renders.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useUpdateMyPresence } from "@liveblocks/react";
  *
  * const updateMyPresence = useUpdateMyPresence();
@@ -152,7 +155,6 @@ export function useMyPresence<T extends Presence>(): [
  * updateMyPresence({ y: 0 });
  *
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
- * ```
  */
 export function useUpdateMyPresence<T extends Presence>(): (
   overrides: Partial<T>
@@ -170,8 +172,7 @@ export function useUpdateMyPresence<T extends Presence>(): (
 /**
  * Returns an object that lets you get information about all the the users currently connected in the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useOthers } from "@liveblocks/react";
  *
  * const others = useOthers();
@@ -185,7 +186,6 @@ export function useUpdateMyPresence<T extends Presence>(): (
  *     return <Cursor key={connectionId} cursor={presence.cursor} />
  *   })
  * }
- * ```
  */
 export function useOthers<T extends Presence>(): Others<T> {
   const room = useRoom();
@@ -210,14 +210,12 @@ export function useOthers<T extends Presence>(): Others<T> {
 /**
  * Returns a callback that lets you broadcast custom events to other users in the room
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useBroadcastEvent } from "@liveblocks/react";
  *
  * const broadcast = useBroadcastEvent();
  *
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
- * ```
  */
 export function useBroadcastEvent() {
   const room = useRoom();
@@ -233,14 +231,12 @@ export function useBroadcastEvent() {
 /**
  * useErrorListener is a react hook that lets you react to potential room connection errors.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useErrorListener } from "@liveblocks/react";
  *
  * useErrorListener(er => {
  *   console.error(er);
  * })
- * ```
  */
 export function useErrorListener(callback: (er: Error) => void) {
   const room = useRoom();
@@ -264,8 +260,7 @@ export function useErrorListener(callback: (er: Error) => void) {
 /**
  * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useEventListener } from "@liveblocks/react";
  *
  * useEventListener(({ connectionId, event }) => {
@@ -273,7 +268,6 @@ export function useErrorListener(callback: (er: Error) => void) {
  *     // Do something
  *   }
  * });
- * ```
  */
 export function useEventListener<TEvent>(
   callback: ({
@@ -306,12 +300,10 @@ export function useEventListener<TEvent>(
 /**
  * Gets the current user once it is connected to the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useSelf } from "@liveblocks/react";
  *
  * const user = useSelf();
- * ```
  */
 export function useSelf<
   TPresence extends Presence = Presence
@@ -336,20 +328,9 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-type StorageActions = {
-  createRecord: Room["createRecord"];
-  updateRecord: Room["updateRecord"];
-
-  createList: Room["createList"];
-  moveItem: Room["moveItem"];
-  deleteItem: Room["deleteItem"];
-  deleteItemById: Room["deleteItemById"];
-  pushItem: Room["pushItem"];
-};
-
-export function useStorage<TRoot extends RecordData>(
-  initialStorage: InitialStorageFactory<TRoot>
-): [root: Record<TRoot> | null, actions: StorageActions] {
+export function useStorage<TRoot extends RecordData>(): [
+  root: LiveRecord<TRoot> | null
+] {
   const room = useRoom();
   const storage = room.getStorage();
   const [, update] = React.useState(0);
@@ -359,7 +340,6 @@ export function useStorage<TRoot extends RecordData>(
       update((x) => x + 1);
     }
 
-    room.fetchStorage(initialStorage);
     room.subscribe("storage", onStorageChange);
 
     return () => {
@@ -369,69 +349,50 @@ export function useStorage<TRoot extends RecordData>(
 
   const root =
     storage.state === LiveStorageState.Loaded
-      ? (storage.root as Record<TRoot>)
+      ? (storage.root as LiveRecord<TRoot>)
       : null;
 
-  const actions = useStorageActions();
-  return [root, actions];
+  return [root];
 }
 
-export function useStorageActions(): StorageActions {
-  const room = useRoom();
-  return React.useMemo(() => {
-    function createRecord<T extends RecordData>(data: T) {
-      return room.createRecord<T>(data);
+export function useRecordData<TData>(record: LiveRecord<TData>) {
+  const [data, setData] = React.useState<TData>(record.data);
+
+  React.useEffect(() => {
+    function onChange() {
+      setData({ ...record.data });
     }
 
-    function updateRecord<T extends RecordData>(
-      record: Record<T>,
-      overrides: Partial<T>
-    ) {
-      return room.updateRecord<T>(record, overrides);
-    }
+    record.subscribe(onChange);
 
-    function createList<T extends RecordData>(): List<Record<T>> {
-      return room.createList<T>();
-    }
-
-    function moveItem<T extends RecordData>(
-      list: List<Record<T>>,
-      index: number,
-      targetIndex: number
-    ) {
-      return room.moveItem<T>(list, index, targetIndex);
-    }
-
-    function deleteItem<T extends RecordData>(
-      list: List<Record<T>>,
-      index: number
-    ) {
-      return room.deleteItem<T>(list, index);
-    }
-
-    function deleteItemById<T extends RecordData>(
-      list: List<Record<T>>,
-      itemId: string
-    ) {
-      return room.deleteItemById<T>(list, itemId);
-    }
-
-    function pushItem<T extends RecordData>(
-      list: List<Record<T>>,
-      item: Record<T>
-    ) {
-      return room.pushItem<T>(list, item);
-    }
-
-    return {
-      createRecord,
-      updateRecord,
-
-      createList,
-      moveItem,
-      deleteItem,
-      deleteItemById,
-      pushItem,
+    return () => {
+      record.unsubscribe(onChange);
     };
-  }, [room]);
+  }, [record]);
+
+  return data;
+}
+
+// @ts-ignore TODO
+export function useList<T extends LiveRecord>(list: LiveList<T>) {
+  const [items, setItems] = React.useState<T[]>(list.toArray());
+
+  React.useEffect(() => {
+    function onChange() {
+      setItems(list.toArray());
+    }
+
+    list.subscribe(onChange);
+
+    return () => {
+      list.unsubscribe(onChange);
+    };
+  }, [list]);
+
+  return items;
+}
+
+export function useCreateRecord() {
+  const room = useRoom();
+  return room.createRecord;
 }
