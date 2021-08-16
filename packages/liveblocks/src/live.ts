@@ -123,14 +123,13 @@ export type SerializedList = {
 export type SerializedCrdt = SerializedRecord | SerializedList;
 
 export enum OpType {
-  Init = 100,
-  SetParentKey = 101,
-
-  CreateList = 203,
-
-  UpdateRecord = 300,
-  CreateRecord = 301,
-  DeleteRecord = 302,
+  Init = 0,
+  SetParentKey = 1,
+  CreateList = 2,
+  UpdateRecord = 3,
+  CreateRecord = 4,
+  DeleteRecord = 5,
+  DeleteRecordKey = 6,
 }
 
 export type Op =
@@ -138,7 +137,8 @@ export type Op =
   | RecordUpdateOp
   | DeleteRecordOp
   | CreateListOp
-  | SetParentKeyOp;
+  | SetParentKeyOp
+  | DeleteRecordKeyOp;
 
 export type RecordUpdateOp = {
   id: string;
@@ -174,6 +174,12 @@ export type SetParentKeyOp = {
   id: string;
   type: OpType.SetParentKey;
   parentKey: string;
+};
+
+export type DeleteRecordKeyOp = {
+  id: string;
+  type: OpType.DeleteRecordKey;
+  key: string;
 };
 
 export enum WebsocketCloseCodes {

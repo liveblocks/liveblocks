@@ -1,11 +1,5 @@
 import { createRoom, InternalRoom } from "./room";
-import {
-  ClientOptions,
-  Room,
-  Client,
-  Presence,
-  InitialStorageFactory,
-} from "./types";
+import { ClientOptions, Room, Client, Presence } from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -50,12 +44,12 @@ export function createClient(options: ClientOptions): Client {
     return internalRoom ? internalRoom.room : null;
   }
 
-  function enter(
+  function enter<TStorageRoot>(
     roomId: string,
     options: {
       defaultPresence?: Presence;
-      defaultStorage?: InitialStorageFactory;
-    }
+      defaultStorageRoot?: TStorageRoot;
+    } = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {

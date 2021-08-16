@@ -1,15 +1,14 @@
 import {
   Client,
-  RecordData,
   Others,
   Presence,
   LiveRecord,
+  LiveList,
+  RecordData,
   Room,
-  LiveStorageState,
   User,
 } from "@liveblocks/client";
 import * as React from "react";
-import { LiveList } from "../../liveblocks/lib/cjs/new-doc";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;
@@ -42,7 +41,7 @@ function useClient(): Client {
   return client;
 }
 
-type RoomProviderProps = {
+type RoomProviderProps<TStorageRoot> = {
   /**
    * The id of the room you want to connect to
    */
@@ -53,7 +52,7 @@ type RoomProviderProps = {
    */
   defaultPresence?: () => Presence;
 
-  defaultStorage?: () => any;
+  defaultStorageRoot?: TStorageRoot;
 
   children: React.ReactNode;
 };
@@ -63,12 +62,12 @@ type RoomProviderProps = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider({
+export function RoomProvider<TStorageRoot>({
   id,
   children,
   defaultPresence,
-  defaultStorage,
-}: RoomProviderProps) {
+  defaultStorageRoot,
+}: RoomProviderProps<TStorageRoot>) {
   const client = useClient();
 
   React.useEffect(() => {
@@ -79,11 +78,10 @@ export function RoomProvider({
 
   const room =
     client.getRoom(id) ||
-    client.enter(
-      id,
-      defaultPresence ? defaultPresence() : undefined,
-      defaultStorage
-    );
+    client.enter(id, {
+      defaultPresence: defaultPresence ? defaultPresence() : undefined,
+      defaultStorageRoot,
+    });
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
@@ -332,35 +330,28 @@ export function useStorage<TRoot extends RecordData>(): [
   root: LiveRecord<TRoot> | null
 ] {
   const room = useRoom();
-  const storage = room.getStorage();
-  const [, update] = React.useState(0);
+  const [root, setState] = React.useState<LiveRecord<TRoot> | null>(null);
 
   React.useEffect(() => {
-    function onStorageChange() {
-      update((x) => x + 1);
+    async function fetchStorage() {
+      const storage = await room.getStorage<TRoot>();
+      setState(storage.root);
     }
 
-    room.subscribe("storage", onStorageChange);
+    fetchStorage();
 
-    return () => {
-      room.unsubscribe("storage", onStorageChange);
-    };
+    return () => {};
   }, [room]);
-
-  const root =
-    storage.state === LiveStorageState.Loaded
-      ? (storage.root as LiveRecord<TRoot>)
-      : null;
 
   return [root];
 }
 
-export function useRecordData<TData>(record: LiveRecord<TData>) {
-  const [data, setData] = React.useState<TData>(record.data);
+export function useRecord<TData>(record: LiveRecord<TData>) {
+  const [data, setData] = React.useState<TData>(record.toObject());
 
   React.useEffect(() => {
     function onChange() {
-      setData({ ...record.data });
+      setData({ ...record.toObject() });
     }
 
     record.subscribe(onChange);
@@ -373,7 +364,6 @@ export function useRecordData<TData>(record: LiveRecord<TData>) {
   return data;
 }
 
-// @ts-ignore TODO
 export function useList<T extends LiveRecord>(list: LiveList<T>) {
   const [items, setItems] = React.useState<T[]>(list.toArray());
 
@@ -390,9 +380,4 @@ export function useList<T extends LiveRecord>(list: LiveList<T>) {
   }, [list]);
 
   return items;
-}
-
-export function useCreateRecord() {
-  const room = useRoom();
-  return room.createRecord;
 }

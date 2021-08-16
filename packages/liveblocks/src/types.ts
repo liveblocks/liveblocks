@@ -1,8 +1,5 @@
-import { LiveRecord, LiveList, RecordData } from "./storage";
+import { LiveRecord, RecordData } from "./doc";
 
-export type StorageCallback<T extends RecordData = RecordData> = (
-  storage: LiveStorage<T>
-) => void;
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
@@ -19,21 +16,12 @@ export type ErrorCallback = (error: Error) => void;
 export type ConnectionCallback = (state: ConnectionState) => void;
 
 export type RoomEventCallbackMap = {
-  storage: StorageCallback;
   "my-presence": MyPresenceCallback;
   others: OthersEventCallback;
   event: EventCallback;
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
-
-export type CreateRecord = Room["createRecord"];
-export type CreateList = Room["createList"];
-
-export type InitialStorageFactory<TRoot = RecordData> = (factories: {
-  createRecord: CreateRecord;
-  createList: CreateList;
-}) => TRoot;
 
 export type Client = {
   /**
@@ -48,11 +36,11 @@ export type Client = {
    * @param roomId - The id of the room
    * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter(
+  enter<TStorageRoot = RecordData>(
     roomId: string,
-    options: {
+    options?: {
       defaultPresence?: Presence;
-      defaultStorage?: InitialStorageFactory;
+      defaultStorageRoot?: TStorageRoot;
     }
   ): Room;
 
@@ -130,21 +118,6 @@ export type ClientOptions = {
 export type AuthorizeResponse = {
   token: string;
 };
-
-export enum LiveStorageState {
-  NotInitialized = 0,
-  Loading = 1,
-  Loaded = 2,
-}
-
-export type LiveStorage<T extends RecordData = RecordData> =
-  | {
-      state: LiveStorageState.Loading | LiveStorageState.NotInitialized;
-    }
-  | {
-      state: LiveStorageState.Loaded;
-      root: LiveRecord<T>;
-    };
 
 type ConnectionState =
   | "closed"
@@ -225,7 +198,6 @@ export type Room = {
      * });
      */
     (type: "event", listener: EventCallback): void;
-    <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
     /**
      * Subscribe to errors thrown in the room.
      */
@@ -275,7 +247,6 @@ export type Room = {
      * room.unsubscribe("event", onEvent);
      */
     (type: "event", listener: EventCallback): void;
-    <T extends RecordData>(type: "storage", listener: StorageCallback<T>): void;
     /**
      * Unsubscribe to errors thrown in the room.
      */
@@ -341,8 +312,5 @@ export type Room = {
    */
   broadcastEvent: (event: any) => void;
 
-  getStorage: () => LiveStorage;
-  fetchStorage(initialStorageFactory: InitialStorageFactory): void;
-  createRecord: <T extends RecordData>(data: T) => LiveRecord<T>;
-  createList: <T extends LiveRecord>() => LiveList<T>;
+  getStorage: <TRoot>() => Promise<{ root: LiveRecord<TRoot> }>;
 };

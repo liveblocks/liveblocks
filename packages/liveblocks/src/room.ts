@@ -1,17 +1,13 @@
-import { Storage, LiveList, LiveRecord, RecordData } from "./storage";
+import { RecordData } from "./doc";
 import {
   Others,
   Presence,
   ClientOptions,
   Room,
-  InitialStorageFactory,
   MyPresenceCallback,
   OthersEventCallback,
   RoomEventCallbackMap,
-  StorageCallback,
   AuthEndpoint,
-  LiveStorageState,
-  LiveStorage,
   EventCallback,
   User,
   Connection,
@@ -25,8 +21,6 @@ import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
   ClientMessageType,
-  InitialDocumentStateMessage,
-  UpdateStorageMessage,
   ServerMessageType,
   UserLeftMessage,
   Op,
@@ -35,6 +29,7 @@ import {
   UpdatePresenceMessage,
   UserJoinMessage,
 } from "./live";
+import Storage from "./storage";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 
@@ -44,7 +39,6 @@ const PONG_TIMEOUT = 2000;
 
 function isValidRoomEventType(value: string) {
   return (
-    value === "storage" ||
     value === "my-presence" ||
     value === "others" ||
     value === "event" ||
@@ -101,7 +95,6 @@ export type State = {
     heartbeat: number;
   };
   listeners: {
-    storage: StorageCallback[];
     event: EventCallback[];
     others: OthersEventCallback[];
     "my-presence": MyPresenceCallback[];
@@ -115,9 +108,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  doc: Storage<any> | null;
-  storageState: LiveStorageState;
-  initialStorageFactory: InitialStorageFactory | null;
+  defaultStorageRoot?: { [key: string]: any };
 };
 
 export type Effects = {
@@ -187,10 +178,6 @@ export function makeStateMachine(
     listener: OthersEventCallback<T>
   ): void;
   function subscribe(type: "event", listener: EventCallback): void;
-  function subscribe<T extends RecordData>(
-    type: "storage",
-    listener: StorageCallback<T>
-  ): void;
   function subscribe(type: "error", listener: ErrorCallback): void;
   function subscribe(type: "connection", listener: ConnectionCallback): void;
   function subscribe<T extends keyof RoomEventCallbackMap>(
@@ -212,10 +199,6 @@ export function makeStateMachine(
     listener: OthersEventCallback<T>
   ): void;
   function unsubscribe(type: "event", listener: EventCallback): void;
-  function unsubscribe<T extends RecordData>(
-    type: "storage",
-    listener: StorageCallback<T>
-  ): void;
   function unsubscribe(type: "error", listener: ErrorCallback): void;
   function unsubscribe(type: "connection", listener: ConnectionCallback): void;
   function unsubscribe<T extends keyof RoomEventCallbackMap>(
@@ -409,14 +392,6 @@ export function makeStateMachine(
 
     const message = JSON.parse(event.data);
     switch (message.type) {
-      case ServerMessageType.InitialStorageState: {
-        onInitialStorageState(message);
-        break;
-      }
-      case ServerMessageType.UpdateStorage: {
-        onStorageUpdates(message);
-        break;
-      }
       case ServerMessageType.UserJoined: {
         onUserJoinedMessage(message as UserJoinMessage);
         break;
@@ -438,6 +413,8 @@ export function makeStateMachine(
         break;
       }
     }
+
+    storage.onMessage(message);
   }
 
   // function onWakeUp() {
@@ -654,82 +631,34 @@ export function makeStateMachine(
     tryFlushing();
   }
 
-  /**
-   * STORAGE
-   */
-  function onStorageUpdates(message: UpdateStorageMessage) {
-    if (state.doc == null) {
-      // TODO: Cache updates in case they are coming while root is queried
-      return;
-    }
-
-    for (const op of message.ops) {
-      state.doc.apply(op);
-    }
-  }
-
-  function updateDoc(doc: Storage<any> | null) {
-    state.doc = doc;
-    if (doc) {
-      for (const listener of state.listeners.storage) {
-        listener(getStorage());
-      }
-    }
-  }
-
-  function getStorage(): LiveStorage {
-    if (state.storageState === LiveStorageState.Loaded) {
-      return {
-        state: state.storageState,
-        root: state.doc!.root,
-      };
-    }
-
-    return {
-      state: state.storageState,
-    };
-  }
-
-  function onInitialStorageState(message: InitialDocumentStateMessage) {
-    state.storageState = LiveStorageState.Loaded;
-
-    if (state.connection.state !== "open") {
-      throw new Error();
-    }
-
-    if (message.items.length === 0) {
-      state.doc = Storage.from(
-        state.connection.id,
-        state.initialStorageFactory!,
-        dispatch
-      );
-
-      updateDoc(state.doc);
-    } else {
-      state.doc = Storage.load(state.connection.id, message.items, dispatch);
-      updateDoc(state.doc);
-    }
-  }
-
   function dispatch(ops: Op[]) {
     state.flushData.storageOperations.push(...ops);
-
     tryFlushing();
   }
 
-  function createRecord<T extends RecordData>(data: T): LiveRecord<T> {
-    return state.doc!.createRecord<T>(data);
-  }
+  const storage = new Storage({
+    fetchStorage: () => {
+      state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
+      tryFlushing();
+    },
+    dispatch,
+    getConnectionId: () => {
+      const me = getSelf();
 
-  function createList<T extends LiveRecord>(): LiveList<T> {
-    return state.doc!.createList<T>();
-  }
+      if (me) {
+        return me.connectionId;
+      }
 
-  function fetchStorage(initialStorageFactory: InitialStorageFactory) {
-    state.initialStorageFactory = initialStorageFactory;
-    state.storageState = LiveStorageState.Loading;
-    state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
-    tryFlushing();
+      throw new Error("Unexpected");
+    },
+    defaultRoot: state.defaultStorageRoot!,
+  });
+
+  async function getStorage<TRoot>() {
+    const doc = await storage.getDocument<TRoot>();
+    return {
+      root: doc.root,
+    };
   }
 
   return {
@@ -753,10 +682,7 @@ export function makeStateMachine(
     updatePresence,
     broadcastEvent,
 
-    // Storage
-    fetchStorage,
-    createRecord,
-    createList,
+    getStorage,
 
     selectors: {
       // Core
@@ -766,22 +692,18 @@ export function makeStateMachine(
       // Presence
       getPresence,
       getOthers,
-
-      // Storage
-      getStorage,
     },
   };
 }
 
 export function defaultState(
   me?: Presence,
-  initialStorageFactory?: InitialStorageFactory
+  defaultStorageRoot?: { [key: string]: any }
 ): State {
   return {
     connection: { state: "closed" },
     socket: null,
     listeners: {
-      storage: [],
       event: [],
       others: [],
       "my-presence": [],
@@ -806,9 +728,7 @@ export function defaultState(
     me: me == null ? {} : me,
     users: {},
     others: makeOthers({}),
-    storageState: LiveStorageState.NotInitialized,
-    initialStorageFactory: initialStorageFactory || null,
-    doc: null,
+    defaultStorageRoot,
     idFactory: null,
   };
 }
@@ -825,15 +745,18 @@ export function createRoom(
   name: string,
   options: ClientOptions & {
     defaultPresence?: Presence;
-    defaultStorage?: InitialStorageFactory;
+    defaultStorageRoot?: RecordData;
   }
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v2";
   const authEndpoint: AuthEndpoint = options.authEndpoint;
 
-  const state = defaultState(options.defaultPresence, options.defaultStorage);
+  const state = defaultState(
+    options.defaultPresence,
+    options.defaultStorageRoot
+  );
 
   const machine = makeStateMachine(state, {
     throttleDelay,
@@ -851,14 +774,6 @@ export function createRoom(
     subscribe: machine.subscribe,
     unsubscribe: machine.unsubscribe,
 
-    /////////////
-    // Storage //
-    /////////////
-    getStorage: machine.selectors.getStorage,
-    fetchStorage: machine.fetchStorage,
-    createRecord: machine.createRecord,
-    createList: machine.createList,
-
     //////////////
     // Presence //
     //////////////
@@ -866,6 +781,8 @@ export function createRoom(
     updatePresence: machine.updatePresence,
     getOthers: machine.selectors.getOthers,
     broadcastEvent: machine.broadcastEvent,
+
+    getStorage: machine.getStorage,
   };
 
   return {

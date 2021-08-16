@@ -1,18 +1,16 @@
-import { CrdtType, Op, SerializedCrdtWithId } from "./live";
-import { Storage, LiveList, LiveRecord } from "./storage";
+import { CrdtType, Op, OpType, SerializedCrdtWithId } from "./live";
+import { Doc, LiveList, LiveRecord } from "./doc";
 
-function docToJson(doc: Storage<any>) {
+function docToJson(doc: Doc<any>) {
   return recordToJson(doc.root);
 }
 
 function recordToJson(record: LiveRecord) {
-  const result: any = {
-    id: record.id,
-    data: {},
-  };
+  const result: any = {};
+  const obj = record.toObject();
 
-  for (const key in record.data) {
-    result.data[key] = toJson(record.data[key]);
+  for (const key in obj) {
+    result[key] = toJson(obj[key]);
   }
 
   return result;
@@ -37,8 +35,8 @@ function prepareStorageTest<T>(
   actor: number = 0
 ) {
   const clonedItems = JSON.parse(JSON.stringify(items));
-  const refStorage = Storage.load<T>(actor, items);
-  const storage = Storage.load<T>(actor, clonedItems, (ops) => {
+  const refStorage = Doc.load<T>(items, actor);
+  const storage = Doc.load<T>(clonedItems, actor, (ops) => {
     for (const op of ops) {
       refStorage.apply(op);
     }
@@ -46,8 +44,8 @@ function prepareStorageTest<T>(
 
   function assert(data: any) {
     const json = docToJson(storage);
-    expect(json).toEqual(docToJson(refStorage));
     expect(json).toEqual(data);
+    expect(docToJson(refStorage)).toEqual(data);
     expect(storage.count()).toBe(refStorage.count());
   }
 
@@ -90,39 +88,30 @@ function createSerializedList(
   ];
 }
 
-describe("Doc", () => {
+describe("Storage", () => {
   it("update root", () => {
     const { storage, assert } = prepareStorageTest([
       createSerializedRecord("0:0", { a: 0 }),
     ]);
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-      },
+      a: 0,
     });
 
     storage.root.update({ a: 1 });
     assert({
-      id: "0:0",
-      data: {
-        a: 1,
-      },
+      a: 1,
     });
 
     storage.root.update({ b: 1 });
     assert({
-      id: "0:0",
-      data: {
-        a: 1,
-        b: 1,
-      },
+      a: 1,
+      b: 1,
     });
   });
 
   it("remove child record with update", () => {
-    const { storage: doc, assert } = prepareStorageTest<{
+    const { storage, assert } = prepareStorageTest<{
       a: number;
       child: LiveRecord<{
         b: number;
@@ -135,34 +124,22 @@ describe("Doc", () => {
     ]);
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: {
-          id: "0:1",
-          data: {
-            b: 0,
-            grandChild: {
-              id: "0:2",
-              data: {
-                c: 0,
-              },
-            },
-          },
+      a: 0,
+      child: {
+        b: 0,
+        grandChild: {
+          c: 0,
         },
       },
     });
 
-    doc.root.update({ child: null });
+    storage.root.update({ child: null });
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: null,
-      },
+      a: 0,
+      child: null,
     });
-    expect(doc.count()).toBe(1);
+    expect(storage.count()).toBe(1);
   });
 
   it("update record with null prop", () => {
@@ -171,29 +148,30 @@ describe("Doc", () => {
     ]);
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-      },
+      a: 0,
     });
 
     doc.root.update({ a: null });
 
     assert({
-      id: "0:0",
-      data: {
-        a: null,
-      },
+      a: null,
     });
 
     doc.root.update({ a: 0 });
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-      },
+      a: 0,
     });
+  });
+
+  it("delete record key", () => {
+    const { storage: doc, assert } = prepareStorageTest<{ a: number }>([
+      createSerializedRecord("0:0", { a: 0 }),
+    ]);
+
+    doc.root.delete("a");
+
+    assert({});
   });
 
   it("add nested record with update", () => {
@@ -202,24 +180,15 @@ describe("Doc", () => {
       1
     );
 
-    assert({
-      id: "0:0",
-      data: {},
-    });
+    assert({});
 
     storage.root.update({
-      child: storage.createRecord({ a: 0 }),
+      child: new LiveRecord({ a: 0 }),
     });
 
     assert({
-      id: "0:0",
-      data: {
-        child: {
-          id: "1:0",
-          data: {
-            a: 0,
-          },
-        },
+      child: {
+        a: 0,
       },
     });
 
@@ -236,32 +205,20 @@ describe("Doc", () => {
     ]);
 
     const root = storage.root;
-    const child = root.data.child;
+    const child = root.toObject().child;
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: {
-          id: "0:1",
-          data: {
-            b: 0,
-          },
-        },
+      a: 0,
+      child: {
+        b: 0,
       },
     });
 
     child.update({ b: 1 });
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: {
-          id: "0:1",
-          data: {
-            b: 1,
-          },
-        },
+      a: 0,
+      child: {
+        b: 1,
       },
     });
   });
@@ -277,49 +234,31 @@ describe("Doc", () => {
     ]);
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: {
-          id: "0:1",
-          data: {
-            b: 0,
-            grandChild: {
-              id: "0:2",
-              data: {
-                c: 0,
-              },
-            },
-          },
+      a: 0,
+      child: {
+        b: 0,
+        grandChild: {
+          c: 0,
         },
       },
     });
 
     const root = storage.root;
-    const child = root.data.child;
-    const grandChild = child.data.grandChild;
-    expect(root.data).toMatchObject({ a: 0 });
-    expect(child.data).toMatchObject({ b: 0 });
-    expect(grandChild.data).toMatchObject({ c: 0 });
+    const child = root.toObject().child;
+    const grandChild = child.toObject().grandChild;
+    expect(root.toObject()).toMatchObject({ a: 0 });
+    expect(child.toObject()).toMatchObject({ b: 0 });
+    expect(grandChild.toObject()).toMatchObject({ c: 0 });
 
     grandChild.update({ c: 1 });
-    expect(grandChild.data).toMatchObject({ c: 1 });
+    expect(grandChild.toObject()).toMatchObject({ c: 1 });
 
     assert({
-      id: "0:0",
-      data: {
-        a: 0,
-        child: {
-          id: "0:1",
-          data: {
-            b: 0,
-            grandChild: {
-              id: "0:2",
-              data: {
-                c: 1,
-              },
-            },
-          },
+      a: 0,
+      child: {
+        b: 0,
+        grandChild: {
+          c: 1,
         },
       },
     });
@@ -334,13 +273,10 @@ describe("Doc", () => {
     ]);
 
     const root = storage.root;
-    expect(root.data.items.toArray()).toMatchObject([]);
+    expect(root.toObject().items.toArray()).toMatchObject([]);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [],
-      },
+      items: [],
     });
   });
 
@@ -355,21 +291,15 @@ describe("Doc", () => {
       createSerializedRecord("0:4", { a: 2 }, "0:1", "#"),
     ]);
     const root = storage.root;
-    expect(root.data.items.toArray()).toMatchObject([
-      { data: { a: 0 } },
-      { data: { a: 1 } },
-      { data: { a: 2 } },
-    ]);
+    expect(
+      root
+        .toObject()
+        .items.toArray()
+        .map((r) => r.toObject())
+    ).toMatchObject([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [
-          { id: "0:2", data: { a: 0 } },
-          { id: "0:3", data: { a: 1 } },
-          { id: "0:4", data: { a: 2 } },
-        ],
-      },
+      items: [{ a: 0 }, { a: 1 }, { a: 2 }],
     });
   });
 
@@ -385,48 +315,23 @@ describe("Doc", () => {
     );
 
     const root = storage.root;
-    const items = root.data.items;
+    const items = root.toObject().items;
     expect(items.toArray()).toMatchObject([]);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [],
-      },
+      items: [],
     });
 
-    items.push(storage.createRecord({ b: 0 }));
-    items.push(storage.createRecord({ b: 1 }));
-    items.push(storage.createRecord({ b: 2 }));
-    expect(items.toArray()).toMatchObject([
-      { data: { b: 0 } },
-      { data: { b: 1 } },
-      { data: { b: 2 } },
+    items.push(new LiveRecord({ b: 0 }));
+    items.push(new LiveRecord({ b: 1 }));
+    items.push(new LiveRecord({ b: 2 }));
+    expect(items.toArray().map((r) => r.toObject())).toMatchObject([
+      { b: 0 },
+      { b: 1 },
+      { b: 2 },
     ]);
     assert({
-      id: "0:0",
-      data: {
-        items: [
-          {
-            id: "1:0",
-            data: {
-              b: 0,
-            },
-          },
-          {
-            id: "1:1",
-            data: {
-              b: 1,
-            },
-          },
-          {
-            id: "1:2",
-            data: {
-              b: 2,
-            },
-          },
-        ],
-      },
+      items: [{ b: 0 }, { b: 1 }, { b: 2 }],
     });
   });
 
@@ -439,11 +344,11 @@ describe("Doc", () => {
     ]);
 
     const root = doc.root;
-    const items = root.data.items;
+    const items = root.toObject().items;
     expect(items.toArray()).toMatchObject([]);
 
-    items.push(doc.createRecord({ b: 0 }));
-    expect(items.toArray()).toMatchObject([{ data: { b: 0 } }]);
+    items.push(new LiveRecord({ b: 0 }));
+    expect(items.toArray().map((r) => r.toObject())).toMatchObject([{ b: 0 }]);
 
     items.delete(0);
     expect(items.toArray()).toMatchObject([]);
@@ -460,31 +365,19 @@ describe("Doc", () => {
     ]);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [
-          {
-            id: "0:2",
-            data: {
-              child: {
-                id: "0:3",
-                data: {
-                  a: 0,
-                },
-              },
-            },
+      items: [
+        {
+          child: {
+            a: 0,
           },
-        ],
-      },
+        },
+      ],
     });
 
-    storage.root.data.items.delete(0);
+    storage.root.toObject().items.delete(0);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [],
-      },
+      items: [],
     });
 
     expect(storage.count()).toBe(2);
@@ -500,12 +393,12 @@ describe("Doc", () => {
     ]);
 
     const root = storage.root;
-    const items = root.data.items;
-    items.insert(storage.createRecord({ a: 0 }), 0);
+    const items = root.toObject().items;
+    items.insert(new LiveRecord({ a: 0 }), 0);
 
-    expect(items.toArray()).toMatchObject([
-      { data: { a: 0 } },
-      { data: { a: 1 } },
+    expect(items.toArray().map((r) => r.toObject())).toMatchObject([
+      { a: 0 },
+      { a: 1 },
     ]);
   });
 
@@ -521,17 +414,17 @@ describe("Doc", () => {
     ]);
 
     const root = storage.root;
-    const items = root.data.items;
+    const items = root.toObject().items;
     items.move(0, 1);
 
-    expect(items.toArray()).toMatchObject([
-      { data: { a: 1 } },
-      { data: { a: 0 } },
-      { data: { a: 2 } },
+    expect(items.toArray().map((r) => r.toObject())).toMatchObject([
+      { a: 1 },
+      { a: 0 },
+      { a: 2 },
     ]);
   });
 
-  it.skip("list.push same record should throw", () => {
+  it("list.push same record should throw", () => {
     const { storage, assert } = prepareStorageTest<{
       items: LiveList;
     }>(
@@ -543,19 +436,60 @@ describe("Doc", () => {
     );
 
     const root = storage.root;
-    const items = root.data.items;
+    const items = root.toObject().items;
     expect(items.toArray()).toMatchObject([]);
 
     assert({
-      id: "0:0",
-      data: {
-        items: [],
-      },
+      items: [],
     });
 
-    const record = storage.createRecord({ b: 0 });
+    const record = new LiveRecord({ b: 0 });
 
     items.push(record);
     expect(() => items.push(record)).toThrow();
+  });
+
+  describe("from", () => {
+    it("nested records", () => {
+      const ops: Op[] = [];
+      const doc = Doc.from(
+        {
+          a: 0,
+          child: new LiveRecord({ b: 0, grandChild: new LiveRecord({ c: 0 }) }),
+        },
+        0,
+        (newOps) => ops.push(...newOps)
+      );
+
+      expect(ops).toEqual([
+        {
+          type: OpType.CreateRecord,
+          id: "0:0",
+          parentId: undefined,
+          parentKey: undefined,
+          data: {
+            a: 0,
+          },
+        },
+        {
+          type: OpType.CreateRecord,
+          id: "0:1",
+          parentId: "0:0",
+          parentKey: "child",
+          data: {
+            b: 0,
+          },
+        },
+        {
+          type: OpType.CreateRecord,
+          id: "0:2",
+          parentId: "0:1",
+          parentKey: "grandChild",
+          data: {
+            c: 0,
+          },
+        },
+      ]);
+    });
   });
 });
