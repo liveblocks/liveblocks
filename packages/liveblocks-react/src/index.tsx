@@ -2,9 +2,8 @@ import {
   Client,
   Others,
   Presence,
-  LiveRecord,
-  LiveList,
-  RecordData,
+  LiveObject,
+  LiveMap,
   Room,
   User,
 } from "@liveblocks/client";
@@ -326,11 +325,11 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-export function useStorage<TRoot extends RecordData>(): [
-  root: LiveRecord<TRoot> | null
+export function useStorage<TRoot extends Record<string, any>>(): [
+  root: LiveObject<TRoot> | null
 ] {
   const room = useRoom();
-  const [root, setState] = React.useState<LiveRecord<TRoot> | null>(null);
+  const [root, setState] = React.useState<LiveObject<TRoot> | null>(null);
 
   React.useEffect(() => {
     async function fetchStorage() {
@@ -346,38 +345,36 @@ export function useStorage<TRoot extends RecordData>(): [
   return [root];
 }
 
-export function useRecord<TData>(record: LiveRecord<TData>) {
-  const [data, setData] = React.useState<TData>(record.toObject());
+export function useMap<TKey extends string, TValue>(
+  key: string
+): LiveMap<TKey, TValue> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
 
   React.useEffect(() => {
-    function onChange() {
-      setData({ ...record.toObject() });
+    if (root == null) {
+      return;
     }
 
-    record.subscribe(onChange);
+    let map: LiveMap<TKey, TValue> = root.get(key);
 
-    return () => {
-      record.unsubscribe(onChange);
-    };
-  }, [record]);
-
-  return data;
-}
-
-export function useList<T extends LiveRecord>(list: LiveList<T>) {
-  const [items, setItems] = React.useState<T[]>(list.toArray());
-
-  React.useEffect(() => {
-    function onChange() {
-      setItems(list.toArray());
+    if (map == null) {
+      map = new LiveMap();
+      root.set(key, map);
     }
 
-    list.subscribe(onChange);
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    map.subscribe(onChange);
+
+    setCount((x) => x + 1);
 
     return () => {
-      list.unsubscribe(onChange);
+      return map.unsubscribe(onChange);
     };
-  }, [list]);
+  }, [root]);
 
-  return items;
+  return root?.get(key) ?? null;
 }

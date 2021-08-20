@@ -2,15 +2,18 @@ import { remove } from "./utils";
 import {
   CrdtType,
   CreateListOp,
-  CreateRecordOp,
-  DeleteRecordKeyOp,
-  DeleteRecordOp,
+  CreateMapOp,
+  CreateObjectOp,
+  DeleteObjectKeyOp,
+  DeleteObjectOp,
   Op,
   OpType,
-  RecordUpdateOp,
+  UpdateObjectOp,
   SerializedCrdtWithId,
   SerializedList,
+  SerializedMap,
   SetParentKeyOp,
+  CreateRegisterOp,
 } from "./live";
 import { compare, makePosition } from "./position";
 
@@ -20,22 +23,28 @@ type Dispatch = (ops: Op[]) => void;
 
 function noOp() {}
 
-type Crdt = LiveRecord | LiveList;
+interface ICrdt {
+  readonly [INTERNAL]: {
+    getId(): string | undefined;
+    getParentId(): string | undefined;
+    attach(id: string, doc: Doc, parentId?: string, parentKey?: string): Op[];
+    attachChild(key: any, child: ICrdt): void;
+    detachChild(child: ICrdt): void;
+  };
+}
 
-export type RecordData = Record<string, any>;
-
-export class Doc<T extends RecordData = RecordData> {
+export class Doc<T extends Record<string, any> = Record<string, any>> {
   private _clock = 0;
-  private _items = new Map<string, Crdt>();
+  private _items = new Map<string, ICrdt>();
 
   private constructor(
-    private _root: LiveRecord<T>,
+    private _root: LiveObject<T>,
     private actor: number = 0,
     private _dispatch: Dispatch = noOp
   ) {}
 
   static from<T>(root: T, actor: number = 0, dispatch: Dispatch = noOp) {
-    const rootRecord = new LiveRecord(root) as LiveRecord<T>;
+    const rootRecord = new LiveObject(root) as LiveObject<T>;
     const storage = new Doc(rootRecord, actor, dispatch) as Doc<T>;
     const ops = rootRecord[INTERNAL].attach(storage.generateId(), storage);
     storage.dispatch(ops);
@@ -72,12 +81,12 @@ export class Doc<T extends RecordData = RecordData> {
       throw new Error("Root can't be null");
     }
 
-    const doc = new Doc<T>(null as any as LiveRecord<T>, actor, dispatch);
-    doc._root = LiveRecord.deserialize(
+    const doc = new Doc<T>(null as any as LiveObject<T>, actor, dispatch);
+    doc._root = LiveObject.deserialize(
       root,
       parentToChildren,
       doc
-    ) as LiveRecord<T>;
+    ) as LiveObject<T>;
     return doc;
   }
 
@@ -85,7 +94,7 @@ export class Doc<T extends RecordData = RecordData> {
     this._dispatch(ops);
   }
 
-  addItem(id: string, item: Crdt) {
+  addItem(id: string, item: ICrdt) {
     this._items.set(id, item);
   }
 
@@ -95,15 +104,19 @@ export class Doc<T extends RecordData = RecordData> {
 
   apply(op: Op) {
     switch (op.type) {
-      case OpType.UpdateRecord: {
+      case OpType.UpdateObject: {
         this.applyUpdateRecord(op);
         break;
       }
-      case OpType.CreateRecord: {
-        this.applyCreateRecord(op);
+      case OpType.CreateObject: {
+        this.applyCreateObject(op);
         break;
       }
-      case OpType.DeleteRecord: {
+      case OpType.CreateMap: {
+        this.applyCreateMap(op);
+        break;
+      }
+      case OpType.DeleteObject: {
         this.applyDeleteRecord(op);
         break;
       }
@@ -111,30 +124,52 @@ export class Doc<T extends RecordData = RecordData> {
         this.applySetParentKey(op);
         break;
       }
-      case OpType.DeleteRecordKey: {
+      case OpType.DeleteObjectKey: {
         this.applyDeleteRecordKey(op);
+        break;
+      }
+      case OpType.CreateRegister: {
+        this.applyCreateRegister(op);
         break;
       }
     }
   }
 
-  private applyDeleteRecordKey(op: DeleteRecordKeyOp) {
+  private applyCreateRegister(op: CreateRegisterOp) {
+    const newRegister = new LiveRegister(op.data);
+    newRegister[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
+    const parent = this._items.get(op.parentId);
+
+    if (parent == null) {
+      return;
+    }
+
+    if (!(parent instanceof LiveMap) && !(parent instanceof LiveList)) {
+      throw new Error(
+        "LiveRegister can only be attached to a LiveMap or LiveList"
+      );
+    }
+
+    parent[INTERNAL].attachChild(op.parentKey, newRegister);
+  }
+
+  private applyDeleteRecordKey(op: DeleteObjectKeyOp) {
     const item = this._items.get(op.id);
-    if (item) {
+    if (item && item instanceof LiveObject) {
       item[INTERNAL].apply(op);
     }
   }
 
-  private applyUpdateRecord(op: RecordUpdateOp) {
+  private applyUpdateRecord(op: UpdateObjectOp) {
     const item = this._items.get(op.id);
-    if (item) {
+    if (item && item instanceof LiveObject) {
       item[INTERNAL].apply(op);
     }
   }
 
-  private applyCreateRecord(op: CreateRecordOp) {
-    const newRecord = new LiveRecord(op.data);
-    newRecord[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
+  private applyCreateMap(op: CreateMapOp) {
+    const newMap = new LiveMap();
+    newMap[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
 
     if (op.parentId && op.parentKey) {
       const parent = this._items.get(op.parentId);
@@ -142,18 +177,32 @@ export class Doc<T extends RecordData = RecordData> {
         throw new Error("Parent is missing");
       }
 
-      parent[INTERNAL].attachChild(op.parentKey, newRecord);
+      parent[INTERNAL].attachChild(op.parentKey, newMap);
     }
   }
 
-  private applyDeleteRecord(op: DeleteRecordOp) {
+  private applyCreateObject(op: CreateObjectOp) {
+    const newObj = new LiveObject(op.data);
+    newObj[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
+
+    if (op.parentId && op.parentKey) {
+      const parent = this._items.get(op.parentId);
+      if (parent == null) {
+        throw new Error("Parent is missing");
+      }
+
+      parent[INTERNAL].attachChild(op.parentKey, newObj);
+    }
+  }
+
+  private applyDeleteRecord(op: DeleteObjectOp) {
     const item = this._items.get(op.id);
 
     if (item == null) {
       return;
     }
 
-    const parentId = item[INTERNAL].ctx!.parentId;
+    const parentId = item[INTERNAL].getParentId()
 
     if (parentId == null) {
       return;
@@ -173,7 +222,7 @@ export class Doc<T extends RecordData = RecordData> {
       return;
     }
 
-    const parentId = item[INTERNAL].ctx!.parentId;
+    const parentId = item[INTERNAL].getParentId();
 
     if (parentId == null) {
       return;
@@ -186,7 +235,7 @@ export class Doc<T extends RecordData = RecordData> {
     }
   }
 
-  get root(): LiveRecord<T> {
+  get root(): LiveObject<T> {
     return this._root;
   }
 
@@ -199,7 +248,7 @@ export class Doc<T extends RecordData = RecordData> {
   }
 }
 
-export class LiveRecord<T extends RecordData = RecordData> {
+export class LiveObject<T extends Record<string, any> = Record<string, any>> {
   private _map: Map<string, any>;
   private _listeners: Array<() => void> = [];
   private _ctx?: {
@@ -217,13 +266,13 @@ export class LiveRecord<T extends RecordData = RecordData> {
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.Record) {
+    if (item.type !== CrdtType.Object) {
       throw new Error(
         `Tried to deserialize a record but item type is "${item.type}"`
       );
     }
 
-    const record = new LiveRecord(item.data);
+    const record = new LiveObject(item.data);
     record.attach(id, doc, item.parentId, item.parentKey);
 
     const children = parentToChildren.get(id);
@@ -255,7 +304,17 @@ export class LiveRecord<T extends RecordData = RecordData> {
       detach: this.detach.bind(this),
       attach: this.attach.bind(this),
       apply: this.apply.bind(this),
+      getParentId: this._getParentId.bind(this),
+      getId: this._getId.bind(this),
     };
+  }
+
+  private _getParentId() {
+    return this._ctx?.parentId;
+  }
+
+  private _getId() {
+    return this._ctx?.id;
   }
 
   private attach(
@@ -265,7 +324,7 @@ export class LiveRecord<T extends RecordData = RecordData> {
     parentKey?: string
   ): Op[] {
     if (this._ctx) {
-      throw new Error("LiveRecord is already part of the storage!");
+      throw new Error("LiveObject is already part of the storage");
     }
 
     doc.addItem(id, this);
@@ -277,9 +336,9 @@ export class LiveRecord<T extends RecordData = RecordData> {
     };
 
     const ops: Op[] = [];
-    const createOp: CreateRecordOp = {
+    const createOp: CreateObjectOp = {
       id: this._ctx.id,
-      type: OpType.CreateRecord,
+      type: OpType.CreateObject,
       parentId,
       parentKey,
       data: {},
@@ -287,8 +346,12 @@ export class LiveRecord<T extends RecordData = RecordData> {
     ops.push(createOp);
 
     for (const [key, value] of this._map) {
-      if (value instanceof LiveRecord) {
+      if (value instanceof LiveObject) {
         ops.push(...value.attach(doc.generateId(), doc, this._ctx.id, key));
+      } else if (value instanceof LiveMap) {
+        ops.push(
+          ...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key)
+        );
       } else if (value instanceof LiveList) {
         ops.push(
           ...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key)
@@ -301,19 +364,24 @@ export class LiveRecord<T extends RecordData = RecordData> {
     return ops;
   }
 
-  private attachChild(key: keyof T, child: Crdt) {
+  private attachChild(key: keyof T, child: ICrdt) {
+    const previousValue = this._map.get(key as string);
+    if (previousValue instanceof LiveObject) {
+      previousValue.detach();
+    }
+
     this._map.set(key as string, child);
     this.notify();
   }
 
-  private detachChild(child: Crdt) {
+  private detachChild(child: ICrdt) {
     for (const [key, value] of this._map) {
       if (value === child) {
         this._map.delete(key);
       }
     }
 
-    if (child instanceof LiveRecord) {
+    if (child instanceof LiveObject) {
       child.detach();
     }
 
@@ -328,18 +396,18 @@ export class LiveRecord<T extends RecordData = RecordData> {
     this._ctx.doc.deleteItem(this._ctx.id);
 
     for (const [, value] of this._map) {
-      if (value instanceof LiveRecord) {
+      if (value instanceof LiveObject) {
         value.detach();
       }
     }
   }
 
   private apply(op: Op) {
-    if (op.type === OpType.UpdateRecord) {
+    if (op.type === OpType.UpdateObject) {
       for (const key in op.data as Partial<T>) {
         const oldValue = this._map.get(key);
 
-        if (oldValue instanceof LiveRecord) {
+        if (oldValue instanceof LiveObject) {
           oldValue.detach();
         }
 
@@ -347,11 +415,11 @@ export class LiveRecord<T extends RecordData = RecordData> {
         this._map.set(key, value);
       }
       this.notify();
-    } else if (op.type === OpType.DeleteRecordKey) {
+    } else if (op.type === OpType.DeleteObjectKey) {
       const key = op.key;
       const oldValue = this._map.get(key);
 
-      if (oldValue instanceof LiveRecord) {
+      if (oldValue instanceof LiveObject) {
         oldValue.detach();
       }
 
@@ -384,12 +452,12 @@ export class LiveRecord<T extends RecordData = RecordData> {
       const ops = [];
       const item = this._map.get(key as string);
 
-      if (item instanceof LiveRecord) {
+      if (item instanceof LiveObject) {
         item.detach();
       }
 
       this._ctx.doc.dispatch([
-        { type: OpType.DeleteRecordKey, id: this._ctx.id, key: key as string },
+        { type: OpType.DeleteObjectKey, id: this._ctx.id, key: key as string },
       ]);
     }
 
@@ -400,9 +468,9 @@ export class LiveRecord<T extends RecordData = RecordData> {
   update(overrides: Partial<T>) {
     if (this._ctx) {
       const ops = [];
-      const updateOperation: RecordUpdateOp = {
+      const updateOperation: UpdateObjectOp = {
         id: this._ctx.id,
-        type: OpType.UpdateRecord,
+        type: OpType.UpdateObject,
         data: {},
       };
 
@@ -411,14 +479,14 @@ export class LiveRecord<T extends RecordData = RecordData> {
       for (const key in overrides) {
         const oldValue = this._map.get(key);
 
-        if (oldValue instanceof LiveRecord) {
+        if (oldValue instanceof LiveObject) {
           oldValue.detach();
         }
 
         const value = overrides[key] as any;
-        if (value instanceof LiveRecord) {
+        if (isCrdt(value)) {
           ops.push(
-            ...value.attach(
+            ...value[INTERNAL].attach(
               this._ctx.doc.generateId(),
               this._ctx.doc,
               this._ctx.id,
@@ -452,9 +520,452 @@ export class LiveRecord<T extends RecordData = RecordData> {
   }
 }
 
-type LiveListItem = [crdt: Crdt, position: string];
+// TODO: Consider removing default parameter
+export class LiveMap<TKey extends string = string, TValue = any>
+  implements ICrdt
+{
+  private _listeners: Array<() => void> = [];
 
-export class LiveList<T extends LiveRecord = LiveRecord> {
+  private _map: Map<TKey, TValue>;
+
+  private _ctx?: {
+    id: string;
+    doc: Doc;
+    parentId?: string;
+  };
+
+  constructor(
+    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
+  ) {
+    if (entries) {
+      this._map = new Map(
+        entries.map((entry) => [entry[0], selfOrRegister(entry[1])])
+      ) as any as Map<TKey, TValue>;
+    } else {
+      this._map = new Map();
+    }
+  }
+
+  static deserialize(
+    [id, item]: SerializedCrdtWithId,
+    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    doc: Doc
+  ) {
+    if (item.type !== CrdtType.Map) {
+      throw new Error(
+        `Tried to deserialize a map but item type is "${item.type}"`
+      );
+    }
+
+    const map = new LiveMap();
+    map.attach(id, doc, item.parentId, item.parentKey);
+
+    const children = parentToChildren.get(id);
+
+    if (children == null) {
+      return map;
+    }
+
+    for (const entry of children) {
+      const crdt = entry[1];
+      if (crdt.parentKey == null) {
+        throw new Error(
+          "Tried to deserialize a crdt but it does not have a parentKey and is not the root"
+        );
+      }
+
+      const child = deserialize(entry, parentToChildren, doc);
+      map._map.set(crdt.parentKey, child);
+    }
+
+    return map;
+  }
+
+  get [INTERNAL]() {
+    return {
+      ctx: this._ctx,
+      apply: this.apply.bind(this),
+      attachChild: this.attachChild.bind(this),
+      attach: this.attach.bind(this),
+      detachChild: this.detachChild.bind(this),
+      getParentId: this._getParentId.bind(this),
+      getId: this._getId.bind(this),
+    };
+  }
+
+  private _getParentId() {
+    return this._ctx?.parentId;
+  }
+
+  private _getId() {
+    return this._ctx?.id;
+  }
+
+  private apply(op: Op) {}
+
+  private attach(
+    id: string,
+    doc: Doc,
+    parentId: string,
+    parentKey: string
+  ): Op[] {
+    if (this._ctx) {
+      throw new Error("LiveMap is already part of the storage");
+    }
+
+    doc.addItem(id, this);
+
+    this._ctx = {
+      id,
+      doc: doc,
+      parentId,
+    };
+
+    const ops: Op[] = [];
+    const createOp: CreateMapOp = {
+      id: this._ctx.id,
+      type: OpType.CreateMap,
+      parentId,
+      parentKey,
+    };
+    ops.push(createOp);
+
+    for (const [key, value] of this._map) {
+      if (isCrdt(value)) {
+        ops.push(
+          ...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key)
+        );
+      }
+    }
+
+    return ops;
+  }
+
+  private attachChild(key: TKey, child: ICrdt) {
+    const previousValue = this._map.get(key);
+    if (previousValue instanceof LiveObject) {
+      previousValue[INTERNAL].detach();
+    }
+
+    this._map.set(key, child as any as TValue);
+    this.notify();
+  }
+
+  private detachChild(child: ICrdt) {
+    for (const [key, value] of this._map) {
+      if (value === (child as any)) {
+        this._map.delete(key);
+      }
+    }
+
+    if (child instanceof LiveObject) {
+      child[INTERNAL].detach();
+    } else if (child instanceof LiveRegister) {
+      child[INTERNAL].detach();
+    }
+
+    this.notify();
+  }
+
+  get(key: TKey): TValue | undefined {
+    const value = this._map.get(key);
+    if (value instanceof LiveRegister) {
+      return value.data;
+    }
+    return this._map.get(key);
+  }
+
+  set(key: TKey, value: TValue) {
+    if (this._ctx) {
+      const ops: Op[] = [];
+
+      const oldValue = this._map.get(key);
+
+      if (oldValue instanceof LiveObject) {
+        oldValue[INTERNAL].detach();
+      }
+
+      if (value instanceof LiveObject) {
+        ops.push(
+          ...value[INTERNAL].attach(
+            this._ctx.doc.generateId(),
+            this._ctx.doc,
+            this._ctx.id,
+            key
+          )
+        );
+        this._map.set(key, value);
+      } else if (value instanceof LiveMap || value instanceof LiveList) {
+        throw new Error(
+          "Adding a map or a list inside map is not yet supported"
+        );
+      } else {
+        const register = new LiveRegister(value);
+        ops.push(
+          ...register[INTERNAL].attach(
+            this._ctx.doc.generateId(),
+            this._ctx.doc,
+            this._ctx.id,
+            key
+          )
+        );
+        this._map.set(key, register as any);
+      }
+
+      this._ctx.doc.dispatch(ops);
+      this.notify();
+    } else {
+      if (value instanceof LiveObject) {
+        this._map.set(key, value);
+      } else if (value instanceof LiveMap || value instanceof LiveList) {
+        throw new Error(
+          "Adding a map or a list inside map is not yet supported"
+        );
+      } else {
+        const register = new LiveRegister(value);
+        this._map.set(key, register as any);
+      }
+      this.notify();
+    }
+  }
+
+  get size() {
+    return this._map.size;
+  }
+
+  has(key: TKey): boolean {
+    return this._map.has(key);
+  }
+
+  delete(key: TKey): boolean {
+    if (this._ctx) {
+      const item = this._map.get(key);
+
+      if (item instanceof LiveObject) {
+        const itemCtx = item[INTERNAL].ctx;
+        if (itemCtx == null) {
+          throw new Error("Tried to detach a CRDT that is not yet attached");
+        }
+
+        item[INTERNAL].detach();
+        this._ctx.doc.dispatch([{ type: OpType.DeleteObject, id: itemCtx.id }]);
+      } else if (item instanceof LiveRegister) {
+        const itemCtx = item[INTERNAL].ctx;
+        if (itemCtx == null) {
+          throw new Error("Tried to detach a CRDT that is not yet attached");
+        }
+
+        item[INTERNAL].detach();
+        this._ctx.doc.dispatch([{ type: OpType.DeleteObject, id: itemCtx.id }]);
+      }
+    }
+
+    const isDeleted = this._map.delete(key);
+    if (isDeleted) {
+      this.notify();
+    }
+    return isDeleted;
+  }
+
+  entries(): IterableIterator<[string, TValue]> {
+    const innerIterator = this._map.entries();
+
+    return {
+      [Symbol.iterator]: function () {
+        return this;
+      },
+      next() {
+        const iteratorValue = innerIterator.next();
+
+        if (iteratorValue.done) {
+          return {
+            done: true,
+            value: undefined,
+          };
+        }
+
+        const entry = iteratorValue.value;
+
+        return {
+          value: [entry[0], selfOrRegisterValue(iteratorValue.value[1])],
+        };
+      },
+    };
+  }
+
+  [Symbol.iterator](): IterableIterator<[string, TValue]> {
+    return this.entries();
+  }
+
+  keys(): IterableIterator<TKey> {
+    return this._map.keys();
+  }
+
+  values(): IterableIterator<TValue> {
+    const innerIterator = this._map.values();
+
+    return {
+      [Symbol.iterator]: function () {
+        return this;
+      },
+      next() {
+        const iteratorValue = innerIterator.next();
+
+        if (iteratorValue.done) {
+          return {
+            done: true,
+            value: undefined,
+          };
+        }
+
+        return {
+          value: selfOrRegisterValue(iteratorValue.value),
+        };
+      },
+    };
+  }
+
+  forEach(
+    callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
+  ) {
+    for (const entry of this) {
+      callback(entry[1], entry[0] as TKey, this);
+    }
+  }
+
+  subscribe(listener: () => void) {
+    this._listeners.push(listener);
+  }
+
+  unsubscribe(listener: () => void) {
+    remove(this._listeners, listener);
+  }
+
+  private notify() {
+    for (const listener of this._listeners) {
+      listener();
+    }
+  }
+}
+
+function selfOrRegisterValue(obj: any) {
+  if (obj instanceof LiveRegister) {
+    return obj.data;
+  }
+
+  return obj;
+}
+
+function selfOrRegister(obj: any): ICrdt {
+  if (obj instanceof LiveObject) {
+    return obj;
+  } else if (obj instanceof LiveMap || obj instanceof LiveList) {
+    throw new Error("Nested map and list are not yet supported inside a map");
+  } else {
+    return new LiveRegister(obj);
+  }
+}
+
+class LiveRegister<TValue = any> implements ICrdt {
+  private _ctx?: {
+    id: string;
+    doc: Doc;
+    parentId?: string;
+  };
+  private _data: TValue;
+
+  constructor(data: TValue) {
+    this._data = data;
+  }
+
+  get data() {
+    return this._data;
+  }
+
+  static deserialize(
+    [id, item]: SerializedCrdtWithId,
+    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    doc: Doc
+  ) {
+    if (item.type !== CrdtType.Register) {
+      throw new Error(
+        `Tried to deserialize a map but item type is "${item.type}"`
+      );
+    }
+
+    const register = new LiveRegister(item.data);
+    register.attach(id, doc, item.parentId, item.parentKey);
+    return register;
+  }
+
+  get [INTERNAL]() {
+    return {
+      ctx: this._ctx,
+      attach: this.attach.bind(this),
+      detach: this.detach.bind(this),
+      attachChild: this.attachChild.bind(this),
+      detachChild: this.detachChild.bind(this),
+      getParentId: this._getParentId.bind(this),
+      getId: this._getId.bind(this),
+    };
+  }
+
+  private _getParentId() {
+    return this._ctx?.parentId;
+  }
+
+  private _getId() {
+    return this._ctx?.id;
+  }
+
+  private detachChild(crdt: ICrdt) {
+    throw new Error("Cannot detach CRDT on register");
+  }
+
+  private detach() {
+    if (this._ctx) {
+      this._ctx.doc.deleteItem(this._ctx.id);
+    }
+  }
+
+  private attach(
+    id: string,
+    doc: Doc,
+    parentId: string,
+    parentKey: string
+  ): Op[] {
+    if (this._ctx) {
+      throw new Error("LiveRegister is already part of the storage");
+    }
+
+    doc.addItem(id, this);
+
+    this._ctx = {
+      id,
+      doc: doc,
+      parentId,
+    };
+
+    const ops: Op[] = [];
+    const createOp: CreateRegisterOp = {
+      id,
+      type: OpType.CreateRegister,
+      parentId,
+      parentKey,
+      data: this._data,
+    };
+    ops.push(createOp);
+    return ops;
+  }
+
+  private attachChild(key: any, child: ICrdt) {
+    throw new Error("Cannot attach child to register");
+  }
+}
+
+type LiveListItem = [crdt: ICrdt, position: string];
+
+export class LiveList<T> implements ICrdt {
   private _listeners: Array<() => void> = [];
   private _ctx?: {
     id: string;
@@ -469,7 +980,8 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     let position = undefined;
     for (let i = 0; i < items.length; i++) {
       const newPosition = makePosition(position);
-      this._items.push([items[i], newPosition]);
+      const item = selfOrRegister(items[i]);
+      this._items.push([item, newPosition]);
       position = newPosition;
     }
   }
@@ -489,7 +1001,7 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     }
 
     for (const entry of children) {
-      const child = LiveRecord.deserialize(entry, parentToChildren, doc);
+      const child = LiveObject.deserialize(entry, parentToChildren, doc);
       list.attachChild(entry[1].parentKey!, child);
     }
 
@@ -505,7 +1017,17 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
       detach: this.detach.bind(this),
       apply: this.apply.bind(this),
       setChildKey: this.setChildKey.bind(this),
+      getParentId: this._getParentId.bind(this),
+      getId: this._getId.bind(this),
     };
+  }
+
+  private _getParentId() {
+    return this._ctx?.parentId;
+  }
+
+  private _getId() {
+    return this._ctx?.id;
   }
 
   private attach(
@@ -515,7 +1037,7 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     parentKey: string
   ): Op[] {
     if (this._ctx) {
-      throw new Error("LiveList is already part of the storage!");
+      throw new Error("LiveList is already part of the storage");
     }
 
     doc.addItem(id, this);
@@ -554,7 +1076,7 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     this._ctx.doc.deleteItem(this._ctx.id);
   }
 
-  private attachChild(key: string, child: LiveRecord) {
+  private attachChild(key: string, child: ICrdt) {
     this._items.push([child, key]);
     this._items.sort((itemA, itemB) =>
       compare({ position: itemA[1] }, { position: itemB[1] })
@@ -562,16 +1084,16 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     this.notify();
   }
 
-  private detachChild(child: Crdt) {
+  private detachChild(child: ICrdt) {
     const indexToDelete = this._items.findIndex((item) => item[0] === child);
     this._items.splice(indexToDelete);
-    if (child instanceof LiveRecord) {
+    if (child instanceof LiveObject) {
       child[INTERNAL].detach();
     }
     this.notify();
   }
 
-  private setChildKey(key: string, child: Crdt) {
+  private setChildKey(key: string, child: ICrdt) {
     const item = this._items.find((item) => item[0] === child);
     if (item) {
       item[1] = key;
@@ -596,11 +1118,12 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
         ? makePosition()
         : makePosition(this._items[this._items.length - 1][1]);
 
-    this._items.push([item, position]);
+    const value = selfOrRegister(item);
+    this._items.push([value, position]);
     this.notify();
 
     if (this._ctx) {
-      const ops = item[INTERNAL].attach(
+      const ops = value[INTERNAL].attach(
         this._ctx.doc.generateId(),
         this._ctx.doc,
         this._ctx.id,
@@ -621,7 +1144,9 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     let after = this._items[index] ? this._items[index][1] : undefined;
     const position = makePosition(before, after);
 
-    this._items.push([item, position]);
+    const value = selfOrRegister(item);
+
+    this._items.push([value, position]);
     this._items.sort((itemA, itemB) =>
       compare({ position: itemA[1] }, { position: itemB[1] })
     );
@@ -629,7 +1154,7 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     this.notify();
 
     if (this._ctx) {
-      const ops = item[INTERNAL].attach(
+      const ops = value[INTERNAL].attach(
         this._ctx.doc.generateId(),
         this._ctx.doc,
         this._ctx.id,
@@ -684,10 +1209,14 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     this.notify();
 
     if (this._ctx) {
+      const id = item[0][INTERNAL].getId();
+      if(id == null) {
+        throw new Error("Internal error. Cannot set parent key from ")
+      }
       this._ctx.doc.dispatch([
         {
           type: OpType.SetParentKey,
-          id: item[0][INTERNAL].ctx!.id,
+          id: id,
           parentKey: position,
         },
       ]);
@@ -707,11 +1236,11 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
     this._items.splice(index, 1);
 
     if (this._ctx) {
-      const childRecord = item[0] as LiveRecord;
+      const childRecord = item[0] as LiveObject;
       this._ctx.doc.dispatch([
         {
           id: childRecord[INTERNAL].ctx!.id,
-          type: OpType.DeleteRecord,
+          type: OpType.DeleteObject,
         },
       ]);
       childRecord[INTERNAL].detach();
@@ -721,11 +1250,14 @@ export class LiveList<T extends LiveRecord = LiveRecord> {
   }
 
   toArray(): T[] {
-    return this._items.map((entry) => entry[0] as T);
+    // TODO: typing
+    return this._items.map((entry) =>
+      selfOrRegisterValue(entry[0] as any as T)
+    );
   }
 
   get(index: number): T {
-    return this._items[index][0] as T;
+    return selfOrRegisterValue(this._items[index][0]);
   }
 
   subscribe(listener: () => void) {
@@ -741,10 +1273,10 @@ function deserialize(
   entry: SerializedCrdtWithId,
   parentToChildren: Map<string, SerializedCrdtWithId[]>,
   doc: Doc
-): Crdt {
+): ICrdt {
   switch (entry[1].type) {
-    case CrdtType.Record: {
-      return LiveRecord.deserialize(entry, parentToChildren, doc);
+    case CrdtType.Object: {
+      return LiveObject.deserialize(entry, parentToChildren, doc);
     }
     case CrdtType.List: {
       return LiveList.deserialize(
@@ -753,8 +1285,31 @@ function deserialize(
         doc
       );
     }
+    case CrdtType.Map: {
+      return LiveMap.deserialize(
+        entry as [string, SerializedMap],
+        parentToChildren,
+        doc
+      );
+    }
+    case CrdtType.Register: {
+      return LiveRegister.deserialize(
+        entry as [string, SerializedMap],
+        parentToChildren,
+        doc
+      );
+    }
     default: {
       throw new Error("Unexpected CRDT type");
     }
   }
+}
+
+function isCrdt(obj: any): obj is ICrdt {
+  return (
+    obj instanceof LiveObject ||
+    obj instanceof LiveMap ||
+    obj instanceof LiveList ||
+    obj instanceof LiveRegister
+  );
 }

@@ -1,4 +1,4 @@
-import { LiveRecord, RecordData } from "./doc";
+import { LiveObject } from "./doc";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -36,7 +36,7 @@ export type Client = {
    * @param roomId - The id of the room
    * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter<TStorageRoot = RecordData>(
+  enter<TStorageRoot extends Record<string, any> = Record<string, any>>(
     roomId: string,
     options?: {
       defaultPresence?: Presence;
@@ -312,5 +312,5 @@ export type Room = {
    */
   broadcastEvent: (event: any) => void;
 
-  getStorage: <TRoot>() => Promise<{ root: LiveRecord<TRoot> }>;
+  getStorage: <TRoot>() => Promise<{ root: LiveObject<TRoot> }>;
 };

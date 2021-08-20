@@ -101,12 +101,14 @@ export type FetchStorageClientMessage = {
 };
 
 export enum CrdtType {
-  Record = 0,
+  Object = 0,
   List = 1,
+  Map = 2,
+  Register = 3,
 }
 
-export type SerializedRecord = {
-  type: CrdtType.Record;
+export type SerializedObject = {
+  type: CrdtType.Object;
   parentId?: string;
   parentKey?: string;
   data: {
@@ -120,37 +122,58 @@ export type SerializedList = {
   parentKey: string;
 };
 
-export type SerializedCrdt = SerializedRecord | SerializedList;
+export type SerializedMap = {
+  type: CrdtType.Map;
+  parentId: string;
+  parentKey: string;
+};
+
+export type SerializedRegister = {
+  type: CrdtType.Register;
+  parentId: string;
+  parentKey: string;
+  data: any;
+};
+
+export type SerializedCrdt =
+  | SerializedObject
+  | SerializedList
+  | SerializedMap
+  | SerializedRegister;
 
 export enum OpType {
   Init = 0,
   SetParentKey = 1,
   CreateList = 2,
-  UpdateRecord = 3,
-  CreateRecord = 4,
-  DeleteRecord = 5,
-  DeleteRecordKey = 6,
+  UpdateObject = 3,
+  CreateObject = 4,
+  DeleteObject = 5,
+  DeleteObjectKey = 6,
+  CreateMap = 7,
+  CreateRegister = 8,
 }
 
 export type Op =
-  | CreateRecordOp
-  | RecordUpdateOp
-  | DeleteRecordOp
+  | CreateObjectOp
+  | UpdateObjectOp
+  | DeleteObjectOp
   | CreateListOp
   | SetParentKeyOp
-  | DeleteRecordKeyOp;
+  | DeleteObjectKeyOp
+  | CreateMapOp
+  | CreateRegisterOp;
 
-export type RecordUpdateOp = {
+export type UpdateObjectOp = {
   id: string;
-  type: OpType.UpdateRecord;
+  type: OpType.UpdateObject;
   data: {
     [key: string]: any; // TODO
   };
 };
 
-export type CreateRecordOp = {
+export type CreateObjectOp = {
   id: string;
-  type: OpType.CreateRecord;
+  type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
   data: {
@@ -165,9 +188,24 @@ export type CreateListOp = {
   parentKey: string;
 };
 
-export type DeleteRecordOp = {
+export type CreateMapOp = {
   id: string;
-  type: OpType.DeleteRecord;
+  type: OpType.CreateMap;
+  parentId: string;
+  parentKey: string;
+};
+
+export type CreateRegisterOp = {
+  id: string;
+  type: OpType.CreateRegister;
+  parentId: string;
+  parentKey: string;
+  data: any;
+};
+
+export type DeleteObjectOp = {
+  id: string;
+  type: OpType.DeleteObject;
 };
 
 export type SetParentKeyOp = {
@@ -176,9 +214,9 @@ export type SetParentKeyOp = {
   parentKey: string;
 };
 
-export type DeleteRecordKeyOp = {
+export type DeleteObjectKeyOp = {
   id: string;
-  type: OpType.DeleteRecordKey;
+  type: OpType.DeleteObjectKey;
   key: string;
 };
 

@@ -1,4 +1,3 @@
-import { RecordData } from "./doc";
 import {
   Others,
   Presence,
@@ -745,7 +744,7 @@ export function createRoom(
   name: string,
   options: ClientOptions & {
     defaultPresence?: Presence;
-    defaultStorageRoot?: RecordData;
+    defaultStorageRoot?: Record<string, any>;
   }
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
