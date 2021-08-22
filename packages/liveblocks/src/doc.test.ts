@@ -20,7 +20,7 @@ function listToJson<T>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson(map: LiveMap): Array<any> {
+function mapToJson<TKey extends string, TValue>(map: LiveMap<TKey, TValue>): Array<[string, TValue]> {
   return Array.from(map.entries()).map((entry) => [entry[0], toJson(entry[1])]);
 }
 
@@ -540,6 +540,30 @@ describe("Storage", () => {
         items: [0, 1, 2],
       });
     });
+
+    it("list.push LiveMap", () => {
+      const { storage, assert } = prepareStorageTest<{
+        items: LiveList<LiveMap<string, number>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      items.push(new LiveMap<string, number>([["first",0]]));
+
+      const asArray = items.toArray().map(x => Array.from(x));
+
+      expect(asArray).toEqual([[["first", 0]]]);
+      assert({
+        items: [[["first", 0]]],
+      });
+    });
   });
 
   describe("LiveMap", () => {
@@ -621,7 +645,7 @@ describe("Storage", () => {
 
     it("create document with map in root", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -672,7 +696,7 @@ describe("Storage", () => {
 
     it("map.set object", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, number>;
       }>(
         [
           createSerializedObject("0:0", {}),
@@ -697,9 +721,9 @@ describe("Storage", () => {
       });
     });
 
-    it("map.delete object", () => {
+    it("map.delete live object", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -722,7 +746,7 @@ describe("Storage", () => {
 
     it("map.set live object", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -738,9 +762,42 @@ describe("Storage", () => {
       });
     });
 
+    it("map.set already attached live object should throw", () => {
+      const { storage, assert } = prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedMap("0:1", "0:0", "map"),
+      ]);
+
+      const root = storage.root;
+      const map = root.toObject().map;
+
+      const object = new LiveObject({ a: 0 });
+
+      map.set("first", object);
+      expect(() => map.set("second", object)).toThrow();
+    });
+
+    it("new Map with already attached live object should throw", () => {
+      const { storage, assert } = prepareStorageTest<{
+        child: LiveObject | null,
+        map: LiveMap<string, LiveObject<{ a: number }>> | null;
+      }>([
+        createSerializedObject("0:0", { child: null, map: null }),
+      ], 1);
+
+      const root = storage.root;
+      const child = new LiveObject({ a: 0 });
+      root.update({ child });
+
+      const newMap = new LiveMap([["first", child]])
+      expect(() => root.set("map", newMap)).toThrow();
+    });
+
     it("map.set live object on existing key", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -761,9 +818,9 @@ describe("Storage", () => {
       });
     });
 
-    it("map.delete live object", () => {
+    it("map.delete existing live object", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
           createSerializedObject("0:0", {}),
@@ -780,7 +837,38 @@ describe("Storage", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
+      expect(storage.count()).toBe(3);
       expect(map.delete("first")).toBe(true);
+      expect(storage.count()).toBe(2);
+
+      assert({
+        map: [],
+      });
+    });
+
+    it("map.delete live list", () => {
+      const { storage, assert } = prepareStorageTest<{
+        map: LiveMap<string, LiveList<number>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedList("0:2", "0:1", "first"),
+          createSerializedRegister("0:3", "0:2", "!", 0),
+        ],
+        1
+      );
+
+      assert({
+        map: [["first", [0]]],
+      });
+
+      const root = storage.root;
+      const map = root.toObject().map;
+
+      expect(storage.count()).toBe(4);
+      expect(map.delete("first")).toBe(true);
+      expect(storage.count()).toBe(2);
 
       assert({
         map: [],
@@ -789,7 +877,7 @@ describe("Storage", () => {
 
     it("attach map with items to root", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, { a: number }>;
       }>([createSerializedObject("0:0", {})], 1);
 
       storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
@@ -808,7 +896,7 @@ describe("Storage", () => {
 
     it("attach map with live objects to root", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([createSerializedObject("0:0", {})], 1);
 
       storage.root.set(
@@ -830,7 +918,7 @@ describe("Storage", () => {
 
     it("attach map with objects to root", () => {
       const { storage, assert } = prepareStorageTest<{
-        map: LiveMap;
+        map: LiveMap<string, { a: number }>;
       }>([createSerializedObject("0:0", {})], 1);
 
       storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
@@ -846,6 +934,48 @@ describe("Storage", () => {
         ],
       });
     });
+
+    it("add list in map", () => {
+      const { storage, assert } = prepareStorageTest<{
+        map: LiveMap<string, LiveList<string>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedMap("0:1", "0:0", "map"),
+      ],1 );
+
+      const map = storage.root.get("map");
+      map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
+
+      assert({
+        map: [
+          [
+            "list",
+            ["itemA", "itemB", "itemC"]
+          ],
+        ],
+      });
+    })
+
+    it("add map in map", () => {
+      const { storage, assert } = prepareStorageTest<{
+        map: LiveMap<string, LiveMap<string, string>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedMap("0:1", "0:0", "map"),
+      ],1 );
+
+      const map = storage.root.get("map");
+      map.set("map", new LiveMap([["first", "itemA"]]));
+
+      assert({
+        map: [
+          [
+            "map",
+            [["first","itemA"]]
+          ],
+        ],
+      });
+    })
   });
 
   describe("from", () => {

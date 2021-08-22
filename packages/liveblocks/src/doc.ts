@@ -5,7 +5,7 @@ import {
   CreateMapOp,
   CreateObjectOp,
   DeleteObjectKeyOp,
-  DeleteObjectOp,
+  DeleteCrdtOp,
   Op,
   OpType,
   UpdateObjectOp,
@@ -29,6 +29,7 @@ interface ICrdt {
     getParentId(): string | undefined;
     attach(id: string, doc: Doc, parentId?: string, parentKey?: string): Op[];
     attachChild(key: any, child: ICrdt): void;
+    detach(): void;
     detachChild(child: ICrdt): void;
   };
 }
@@ -116,7 +117,11 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
         this.applyCreateMap(op);
         break;
       }
-      case OpType.DeleteObject: {
+      case OpType.CreateList: {
+        this.applyCreateList(op);
+        break;
+      }
+      case OpType.DeleteCrdt: {
         this.applyDeleteRecord(op);
         break;
       }
@@ -168,17 +173,25 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   private applyCreateMap(op: CreateMapOp) {
+    const parent = this._items.get(op.parentId);
+    if (parent == null) {
+      return;
+    }
+
     const newMap = new LiveMap();
     newMap[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
+    parent[INTERNAL].attachChild(op.parentKey, newMap);
+  }
 
-    if (op.parentId && op.parentKey) {
-      const parent = this._items.get(op.parentId);
-      if (parent == null) {
-        throw new Error("Parent is missing");
-      }
-
-      parent[INTERNAL].attachChild(op.parentKey, newMap);
+  private applyCreateList(op: CreateListOp) {
+    const parent = this._items.get(op.parentId);
+    if (parent == null) {
+      return;
     }
+
+    const newMap = new LiveList();
+    newMap[INTERNAL].attach(op.id, this, op.parentId, op.parentKey);
+    parent[INTERNAL].attachChild(op.parentKey, newMap);
   }
 
   private applyCreateObject(op: CreateObjectOp) {
@@ -188,21 +201,21 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     if (op.parentId && op.parentKey) {
       const parent = this._items.get(op.parentId);
       if (parent == null) {
-        throw new Error("Parent is missing");
+        return;
       }
 
       parent[INTERNAL].attachChild(op.parentKey, newObj);
     }
   }
 
-  private applyDeleteRecord(op: DeleteObjectOp) {
+  private applyDeleteRecord(op: DeleteCrdtOp) {
     const item = this._items.get(op.id);
 
     if (item == null) {
       return;
     }
 
-    const parentId = item[INTERNAL].getParentId()
+    const parentId = item[INTERNAL].getParentId();
 
     if (parentId == null) {
       return;
@@ -346,16 +359,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
     ops.push(createOp);
 
     for (const [key, value] of this._map) {
-      if (value instanceof LiveObject) {
-        ops.push(...value.attach(doc.generateId(), doc, this._ctx.id, key));
-      } else if (value instanceof LiveMap) {
-        ops.push(
-          ...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key)
-        );
-      } else if (value instanceof LiveList) {
-        ops.push(
-          ...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key)
-        );
+      if (isCrdt(value)) {
+        ops.push(...value[INTERNAL].attach(doc.generateId(), doc, this._ctx.id, key));
       } else {
         createOp.data[key] = value;
       }
@@ -366,8 +371,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
 
   private attachChild(key: keyof T, child: ICrdt) {
     const previousValue = this._map.get(key as string);
-    if (previousValue instanceof LiveObject) {
-      previousValue.detach();
+    if (isCrdt(previousValue)) {
+      previousValue[INTERNAL].detach();
     }
 
     this._map.set(key as string, child);
@@ -381,8 +386,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
       }
     }
 
-    if (child instanceof LiveObject) {
-      child.detach();
+    if (child) {
+      child[INTERNAL].detach();
     }
 
     this.notify();
@@ -394,10 +399,9 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
     }
 
     this._ctx.doc.deleteItem(this._ctx.id);
-
-    for (const [, value] of this._map) {
-      if (value instanceof LiveObject) {
-        value.detach();
+    for(const value of this._map.values()) {
+      if(isCrdt(value)) {
+        value[INTERNAL].detach();
       }
     }
   }
@@ -407,8 +411,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
       for (const key in op.data as Partial<T>) {
         const oldValue = this._map.get(key);
 
-        if (oldValue instanceof LiveObject) {
-          oldValue.detach();
+        if (isCrdt(oldValue)) {
+          oldValue[INTERNAL].detach();
         }
 
         const value = op.data[key];
@@ -419,8 +423,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
       const key = op.key;
       const oldValue = this._map.get(key);
 
-      if (oldValue instanceof LiveObject) {
-        oldValue.detach();
+      if (isCrdt(oldValue)) {
+        oldValue[INTERNAL].detach();
       }
 
       this._map.delete(key);
@@ -452,8 +456,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
       const ops = [];
       const item = this._map.get(key as string);
 
-      if (item instanceof LiveObject) {
-        item.detach();
+      if (isCrdt(item)) {
+        item[INTERNAL].detach();
       }
 
       this._ctx.doc.dispatch([
@@ -479,8 +483,8 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
       for (const key in overrides) {
         const oldValue = this._map.get(key);
 
-        if (oldValue instanceof LiveObject) {
-          oldValue.detach();
+        if (isCrdt(oldValue)) {
+          oldValue[INTERNAL].detach();
         }
 
         const value = overrides[key] as any;
@@ -520,13 +524,12 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> {
   }
 }
 
-// TODO: Consider removing default parameter
-export class LiveMap<TKey extends string = string, TValue = any>
+export class LiveMap<TKey extends string, TValue>
   implements ICrdt
 {
   private _listeners: Array<() => void> = [];
 
-  private _map: Map<TKey, TValue>;
+  private _map: Map<TKey, ICrdt>;
 
   private _ctx?: {
     id: string;
@@ -540,7 +543,7 @@ export class LiveMap<TKey extends string = string, TValue = any>
     if (entries) {
       this._map = new Map(
         entries.map((entry) => [entry[0], selfOrRegister(entry[1])])
-      ) as any as Map<TKey, TValue>;
+      );
     } else {
       this._map = new Map();
     }
@@ -587,6 +590,7 @@ export class LiveMap<TKey extends string = string, TValue = any>
       apply: this.apply.bind(this),
       attachChild: this.attachChild.bind(this),
       attach: this.attach.bind(this),
+      detach: this.detach.bind(this),
       detachChild: this.detachChild.bind(this),
       getParentId: this._getParentId.bind(this),
       getId: this._getId.bind(this),
@@ -643,12 +647,24 @@ export class LiveMap<TKey extends string = string, TValue = any>
 
   private attachChild(key: TKey, child: ICrdt) {
     const previousValue = this._map.get(key);
-    if (previousValue instanceof LiveObject) {
+    if (previousValue) {
       previousValue[INTERNAL].detach();
     }
 
-    this._map.set(key, child as any as TValue);
+    this._map.set(key, child);
     this.notify();
+  }
+
+  private detach() {
+    if (this._ctx == null) {
+      return;
+    }
+
+    for(const item of this._map.values()) {
+      item[INTERNAL].detach();
+    }
+
+    this._ctx.doc.deleteItem(this._ctx.id);
   }
 
   private detachChild(child: ICrdt) {
@@ -658,21 +674,16 @@ export class LiveMap<TKey extends string = string, TValue = any>
       }
     }
 
-    if (child instanceof LiveObject) {
-      child[INTERNAL].detach();
-    } else if (child instanceof LiveRegister) {
-      child[INTERNAL].detach();
-    }
-
+    child[INTERNAL].detach();
     this.notify();
   }
 
   get(key: TKey): TValue | undefined {
     const value = this._map.get(key);
-    if (value instanceof LiveRegister) {
-      return value.data;
+    if (value == undefined) {
+      return undefined;
     }
-    return this._map.get(key);
+    return selfOrRegisterValue(value);
   }
 
   set(key: TKey, value: TValue) {
@@ -681,50 +692,25 @@ export class LiveMap<TKey extends string = string, TValue = any>
 
       const oldValue = this._map.get(key);
 
-      if (oldValue instanceof LiveObject) {
+      if (oldValue) {
         oldValue[INTERNAL].detach();
       }
 
-      if (value instanceof LiveObject) {
-        ops.push(
-          ...value[INTERNAL].attach(
-            this._ctx.doc.generateId(),
-            this._ctx.doc,
-            this._ctx.id,
-            key
-          )
-        );
-        this._map.set(key, value);
-      } else if (value instanceof LiveMap || value instanceof LiveList) {
-        throw new Error(
-          "Adding a map or a list inside map is not yet supported"
-        );
-      } else {
-        const register = new LiveRegister(value);
-        ops.push(
-          ...register[INTERNAL].attach(
-            this._ctx.doc.generateId(),
-            this._ctx.doc,
-            this._ctx.id,
-            key
-          )
-        );
-        this._map.set(key, register as any);
-      }
-
+      const item = selfOrRegister(value);
+      ops.push(
+        ...item[INTERNAL].attach(
+          this._ctx.doc.generateId(),
+          this._ctx.doc,
+          this._ctx.id,
+          key
+        )
+      );
+      this._map.set(key, item);
       this._ctx.doc.dispatch(ops);
       this.notify();
     } else {
-      if (value instanceof LiveObject) {
-        this._map.set(key, value);
-      } else if (value instanceof LiveMap || value instanceof LiveList) {
-        throw new Error(
-          "Adding a map or a list inside map is not yet supported"
-        );
-      } else {
-        const register = new LiveRegister(value);
-        this._map.set(key, register as any);
-      }
+      const item = selfOrRegister(value);
+      this._map.set(key, item);
       this.notify();
     }
   }
@@ -741,22 +727,12 @@ export class LiveMap<TKey extends string = string, TValue = any>
     if (this._ctx) {
       const item = this._map.get(key);
 
-      if (item instanceof LiveObject) {
-        const itemCtx = item[INTERNAL].ctx;
-        if (itemCtx == null) {
-          throw new Error("Tried to detach a CRDT that is not yet attached");
+      if (item) {
+        const itemId = item[INTERNAL].getId();
+        if(itemId != null) {
+          item[INTERNAL].detach();
+          this._ctx.doc.dispatch([{ type: OpType.DeleteCrdt, id: itemId }]);
         }
-
-        item[INTERNAL].detach();
-        this._ctx.doc.dispatch([{ type: OpType.DeleteObject, id: itemCtx.id }]);
-      } else if (item instanceof LiveRegister) {
-        const itemCtx = item[INTERNAL].ctx;
-        if (itemCtx == null) {
-          throw new Error("Tried to detach a CRDT that is not yet attached");
-        }
-
-        item[INTERNAL].detach();
-        this._ctx.doc.dispatch([{ type: OpType.DeleteObject, id: itemCtx.id }]);
       }
     }
 
@@ -848,7 +824,7 @@ export class LiveMap<TKey extends string = string, TValue = any>
   }
 }
 
-function selfOrRegisterValue(obj: any) {
+function selfOrRegisterValue(obj: ICrdt) {
   if (obj instanceof LiveRegister) {
     return obj.data;
   }
@@ -857,10 +833,16 @@ function selfOrRegisterValue(obj: any) {
 }
 
 function selfOrRegister(obj: any): ICrdt {
-  if (obj instanceof LiveObject) {
+  if (
+    obj instanceof LiveObject ||
+    obj instanceof LiveMap ||
+    obj instanceof LiveList
+  ) {
     return obj;
-  } else if (obj instanceof LiveMap || obj instanceof LiveList) {
-    throw new Error("Nested map and list are not yet supported inside a map");
+  } else if (obj instanceof LiveRegister) {
+    throw new Error(
+      "Internal error. LiveRegister should not be created from LiveRegister"
+    );
   } else {
     return new LiveRegister(obj);
   }
@@ -919,7 +901,7 @@ class LiveRegister<TValue = any> implements ICrdt {
   }
 
   private detachChild(crdt: ICrdt) {
-    throw new Error("Cannot detach CRDT on register");
+    throw new Error("Internal error: cannot detach CRDT on register");
   }
 
   private detach() {
@@ -973,7 +955,7 @@ export class LiveList<T> implements ICrdt {
     doc: Doc;
   };
 
-  // TODO: Find a better data structure
+  // TODO: Naive array at first, find a better data structure
   private _items: Array<LiveListItem> = [];
 
   constructor(items: T[] = []) {
@@ -1001,7 +983,7 @@ export class LiveList<T> implements ICrdt {
     }
 
     for (const entry of children) {
-      const child = LiveObject.deserialize(entry, parentToChildren, doc);
+      const child = deserialize(entry, parentToChildren, doc);
       list.attachChild(entry[1].parentKey!, child);
     }
 
@@ -1073,6 +1055,10 @@ export class LiveList<T> implements ICrdt {
       return;
     }
 
+    for(const [value] of this._items) {
+      value[INTERNAL].detach();
+    }
+
     this._ctx.doc.deleteItem(this._ctx.id);
   }
 
@@ -1087,7 +1073,7 @@ export class LiveList<T> implements ICrdt {
   private detachChild(child: ICrdt) {
     const indexToDelete = this._items.findIndex((item) => item[0] === child);
     this._items.splice(indexToDelete);
-    if (child instanceof LiveObject) {
+    if (child) {
       child[INTERNAL].detach();
     }
     this.notify();
@@ -1210,8 +1196,8 @@ export class LiveList<T> implements ICrdt {
 
     if (this._ctx) {
       const id = item[0][INTERNAL].getId();
-      if(id == null) {
-        throw new Error("Internal error. Cannot set parent key from ")
+      if (id == null) {
+        throw new Error("Internal error. Cannot set parent key from ");
       }
       this._ctx.doc.dispatch([
         {
@@ -1240,7 +1226,7 @@ export class LiveList<T> implements ICrdt {
       this._ctx.doc.dispatch([
         {
           id: childRecord[INTERNAL].ctx!.id,
-          type: OpType.DeleteObject,
+          type: OpType.DeleteCrdt,
         },
       ]);
       childRecord[INTERNAL].detach();
@@ -1250,10 +1236,7 @@ export class LiveList<T> implements ICrdt {
   }
 
   toArray(): T[] {
-    // TODO: typing
-    return this._items.map((entry) =>
-      selfOrRegisterValue(entry[0] as any as T)
-    );
+    return this._items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
   get(index: number): T {

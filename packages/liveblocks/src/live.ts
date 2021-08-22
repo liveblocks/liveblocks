@@ -147,7 +147,7 @@ export enum OpType {
   CreateList = 2,
   UpdateObject = 3,
   CreateObject = 4,
-  DeleteObject = 5,
+  DeleteCrdt = 5,
   DeleteObjectKey = 6,
   CreateMap = 7,
   CreateRegister = 8,
@@ -156,7 +156,7 @@ export enum OpType {
 export type Op =
   | CreateObjectOp
   | UpdateObjectOp
-  | DeleteObjectOp
+  | DeleteCrdtOp
   | CreateListOp
   | SetParentKeyOp
   | DeleteObjectKeyOp
@@ -203,9 +203,9 @@ export type CreateRegisterOp = {
   data: any;
 };
 
-export type DeleteObjectOp = {
+export type DeleteCrdtOp = {
   id: string;
-  type: OpType.DeleteObject;
+  type: OpType.DeleteCrdt;
 };
 
 export type SetParentKeyOp = {
