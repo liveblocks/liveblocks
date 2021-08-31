@@ -401,6 +401,31 @@ describe("Storage", () => {
       });
     });
 
+    it("list.delete first item", () => {
+      let { storage: doc, assert } = prepareStorageTest<{
+        items: LiveList<number>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("0:2", "0:1", "!", 0),
+        createSerializedRegister("0:3", "0:1", "'", 1),
+      ]);
+
+      const root = doc.root;
+      const items = root.toObject().items;
+      expect(items.toArray()).toMatchObject([0, 1]);
+
+      assert({
+        items: [0,1]
+      });
+
+      items.delete(0);
+      
+      assert({
+        items: [1]
+      });
+    });
+
     it("list.push record then delete", () => {
       let { storage: doc } = prepareStorageTest<{
         items: LiveList<LiveObject<{ b: number }>>;

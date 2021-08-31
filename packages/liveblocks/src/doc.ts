@@ -1073,7 +1073,7 @@ export class LiveList<T> implements ICrdt {
 
   private detachChild(child: ICrdt) {
     const indexToDelete = this._items.findIndex((item) => item[0] === child);
-    this._items.splice(indexToDelete);
+    this._items.splice(indexToDelete, 1);
     if (child) {
       child[INTERNAL].detach();
     }
