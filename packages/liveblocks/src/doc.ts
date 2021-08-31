@@ -1063,6 +1063,7 @@ export class LiveList<T> implements ICrdt {
   }
 
   private attachChild(key: string, child: ICrdt) {
+    // TODO: Handle list conflict
     this._items.push([child, key]);
     this._items.sort((itemA, itemB) =>
       compare({ position: itemA[1] }, { position: itemB[1] })

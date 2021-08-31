@@ -6,6 +6,7 @@ import {
   LiveMap,
   Room,
   User,
+  LiveList,
 } from "@liveblocks/client";
 import * as React from "react";
 
@@ -373,6 +374,74 @@ export function useMap<TKey extends string, TValue>(
 
     return () => {
       return map.unsubscribe(onChange);
+    };
+  }, [root]);
+
+  return root?.get(key) ?? null;
+}
+
+export function useList<TValue>(
+  key: string
+): LiveList<TValue> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
+    }
+
+    let list: LiveList<TValue> = root.get(key);
+
+    if (list == null) {
+      list = new LiveList();
+      root.set(key, list);
+    }
+
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    list.subscribe(onChange);
+
+    setCount((x) => x + 1);
+
+    return () => {
+      return list.unsubscribe(onChange);
+    };
+  }, [root]);
+
+  return root?.get(key) ?? null;
+}
+
+export function useObject<TData>(
+  key: string
+): LiveObject<TData> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
+    }
+
+    let obj: LiveObject<TData> = root.get(key);
+
+    if (obj == null) {
+      obj = new LiveObject();
+      root.set(key, obj);
+    }
+
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    obj.subscribe(onChange);
+
+    setCount((x) => x + 1);
+
+    return () => {
+      return obj.unsubscribe(onChange);
     };
   }, [root]);
 
