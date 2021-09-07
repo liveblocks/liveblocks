@@ -381,7 +381,7 @@ export function useMap<TKey extends string, TValue>(
 }
 
 export function useList<TValue>(
-  key: string
+  key: string,
 ): LiveList<TValue> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);

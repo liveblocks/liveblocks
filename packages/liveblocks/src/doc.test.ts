@@ -20,7 +20,9 @@ function listToJson<T>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson<TKey extends string, TValue>(map: LiveMap<TKey, TValue>): Array<[string, TValue]> {
+function mapToJson<TKey extends string, TValue>(
+  map: LiveMap<TKey, TValue>
+): Array<[string, TValue]> {
   return Array.from(map.entries()).map((entry) => [entry[0], toJson(entry[1])]);
 }
 
@@ -127,7 +129,7 @@ function createSerializedRegister(
 }
 
 describe("Storage", () => {
-  describe("LiveRecord", () => {
+  describe("LiveObject", () => {
     it("update root", () => {
       const { storage, assert } = prepareStorageTest([
         createSerializedObject("0:0", { a: 0 }),
@@ -203,15 +205,15 @@ describe("Storage", () => {
       });
     });
 
-    it("delete record key", () => {
-      const { storage: doc, assert } = prepareStorageTest<{ a: number }>([
-        createSerializedObject("0:0", { a: 0 }),
-      ]);
+    // it("delete record key", () => {
+    //   const { storage: doc, assert } = prepareStorageTest<{ a: number }>([
+    //     createSerializedObject("0:0", { a: 0 }),
+    //   ]);
 
-      doc.root.delete("a");
+    //   doc.root.delete("a");
 
-      assert({});
-    });
+    //   assert({});
+    // });
 
     it("add nested record with update", () => {
       const { storage, assert } = prepareStorageTest(
@@ -327,6 +329,38 @@ describe("Storage", () => {
         },
       });
     });
+
+    it("set should call subscribers", () => {
+      const object = new LiveObject();
+      const callback = jest.fn();
+
+      object.subscribe(callback);
+      object.set("a", 0);
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("set on a child should call deep subscribers", () => {
+      const child = new LiveObject();
+      const root = new LiveObject();
+      const callback = jest.fn();
+
+      root.set("child", child);
+
+      root.subscribeDeep(callback);
+      child.set("a", 0);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("attaching a child via constructor should attach it properly", () => {
+      const root = new LiveObject({ child: new LiveObject() });
+      const callback = jest.fn();
+
+      root.subscribeDeep(callback);
+      root.get("child").set("a", 0);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("LiveList", () => {
@@ -416,13 +450,13 @@ describe("Storage", () => {
       expect(items.toArray()).toMatchObject([0, 1]);
 
       assert({
-        items: [0,1]
+        items: [0, 1],
       });
 
       items.delete(0);
-      
+
       assert({
-        items: [1]
+        items: [1],
       });
     });
 
@@ -477,7 +511,7 @@ describe("Storage", () => {
     });
 
     it("list.insert at index 0", () => {
-      let { storage } = prepareStorageTest<{
+      let { storage, assert } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -489,14 +523,20 @@ describe("Storage", () => {
       const items = root.toObject().items;
       items.insert(new LiveObject({ a: 0 }), 0);
 
-      expect(items.toArray().map((r) => r.toObject())).toMatchObject([
-        { a: 0 },
-        { a: 1 },
-      ]);
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+        ],
+      });
     });
 
     it("list.move after current position", () => {
-      const { storage } = prepareStorageTest<{
+      const { storage, assert } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -510,11 +550,19 @@ describe("Storage", () => {
       const items = root.toObject().items;
       items.move(0, 1);
 
-      expect(items.toArray().map((r) => r.toObject())).toMatchObject([
-        { a: 1 },
-        { a: 0 },
-        { a: 2 },
-      ]);
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+          {
+            a: 0,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
     });
 
     it("list.push same record should throw", () => {
@@ -580,9 +628,9 @@ describe("Storage", () => {
       const root = storage.root;
       const items = root.get("items");
 
-      items.push(new LiveMap<string, number>([["first",0]]));
+      items.push(new LiveMap<string, number>([["first", 0]]));
 
-      const asArray = items.toArray().map(x => Array.from(x));
+      const asArray = items.toArray().map((x) => Array.from(x));
 
       expect(asArray).toEqual([[["first", 0]]]);
       assert({
@@ -806,18 +854,15 @@ describe("Storage", () => {
 
     it("new Map with already attached live object should throw", () => {
       const { storage, assert } = prepareStorageTest<{
-        child: LiveObject | null,
+        child: LiveObject | null;
         map: LiveMap<string, LiveObject<{ a: number }>> | null;
-      }>([
-        createSerializedObject("0:0", { child: null, map: null }),
-      ], 1);
+      }>([createSerializedObject("0:0", { child: null, map: null })], 1);
 
       const root = storage.root;
       const child = new LiveObject({ a: 0 });
       root.update({ child });
 
-      const newMap = new LiveMap([["first", child]])
-      expect(() => root.set("map", newMap)).toThrow();
+      expect(() => new LiveMap([["first", child]])).toThrow();
     });
 
     it("map.set live object on existing key", () => {
@@ -963,44 +1008,40 @@ describe("Storage", () => {
     it("add list in map", () => {
       const { storage, assert } = prepareStorageTest<{
         map: LiveMap<string, LiveList<string>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],1 );
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
       const map = storage.root.get("map");
       map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
       assert({
-        map: [
-          [
-            "list",
-            ["itemA", "itemB", "itemC"]
-          ],
-        ],
+        map: [["list", ["itemA", "itemB", "itemC"]]],
       });
-    })
+    });
 
     it("add map in map", () => {
       const { storage, assert } = prepareStorageTest<{
         map: LiveMap<string, LiveMap<string, string>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],1 );
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
       const map = storage.root.get("map");
       map.set("map", new LiveMap([["first", "itemA"]]));
 
       assert({
-        map: [
-          [
-            "map",
-            [["first","itemA"]]
-          ],
-        ],
+        map: [["map", [["first", "itemA"]]]],
       });
-    })
+    });
   });
 
   describe("from", () => {
