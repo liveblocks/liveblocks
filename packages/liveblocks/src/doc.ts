@@ -1234,8 +1234,75 @@ export class LiveList<T> extends AbstractCrdt {
     return this.#items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
+  every(predicate: (value: T, index: number) => unknown): boolean {
+    return this.toArray().every(predicate);
+  }
+
+  filter(predicate: (value: T, index: number) => unknown): T[] {
+    return this.toArray().filter(predicate);
+  }
+
+  find(predicate: (value: T, index: number) => unknown): T | undefined {
+    return this.toArray().find(predicate);
+  }
+
+  findIndex(predicate: (value: T, index: number) => unknown): number {
+    return this.toArray().findIndex(predicate);
+  }
+
+  forEach(callbackfn: (value: T, index: number) => void): void {
+    return this.toArray().forEach(callbackfn);
+  }
+
   get(index: number): T {
     return selfOrRegisterValue(this.#items[index][0]);
+  }
+
+  indexOf(searchElement: T, fromIndex?: number): number {
+    return this.toArray().indexOf(searchElement, fromIndex);
+  }
+
+  lastIndexOf(searchElement: T, fromIndex?: number): number {
+    return this.toArray().lastIndexOf(searchElement, fromIndex);
+  }
+
+  map<U>(callback: (value: T, index: number) => U): U[] {
+    return this.#items.map((entry, i) => callback(selfOrRegisterValue(entry[0]), i));
+  }
+
+  some(predicate: (value: T, index: number) => unknown): boolean {
+    return this.toArray().some(predicate);
+  }
+
+  [Symbol.iterator](): IterableIterator<T> {
+    return new LiveListIterator(this.#items);
+  }
+}
+
+class LiveListIterator<T> implements IterableIterator<T> {
+  #innerIterator: IterableIterator<LiveListItem>;
+
+  constructor(items: Array<LiveListItem>) {
+    this.#innerIterator = items[Symbol.iterator]();
+  }
+
+  [Symbol.iterator](): IterableIterator<T> {
+    return this;
+  }
+
+  next(): IteratorResult<T> {
+    const result = this.#innerIterator.next();
+    
+    if (result.done) {
+      return {
+        done: true,
+        value: undefined,
+      };
+    }
+
+    return {
+      value: selfOrRegisterValue(result.value[0]),
+    }
   }
 }
 

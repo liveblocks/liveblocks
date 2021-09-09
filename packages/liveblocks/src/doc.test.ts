@@ -364,6 +364,29 @@ describe("Storage", () => {
   });
 
   describe("LiveList", () => {
+    describe("not attached", () => {
+      it("basic operations with native objects", () => {
+        const list = new LiveList<string>(["first", "second", "third"]);
+        expect(list.get(0)).toEqual("first");
+
+        expect(list.toArray()).toEqual(["first", "second", "third"])
+
+        expect(Array.from(list)).toEqual(["first", "second", "third"]);
+
+        expect(list.map(item => item.toUpperCase())).toEqual(["FIRST", "SECOND", "THIRD"]);
+
+        expect(list.filter(item => item.endsWith("d"))).toEqual(["second", "third"]);
+
+        expect(list.findIndex(item => item.startsWith("s"))).toEqual(1);
+
+        expect(list.some(item => item.startsWith("x"))).toEqual(false);
+
+        expect(list.indexOf("quatres")).toEqual(-1);
+        expect(list.indexOf("third")).toEqual(2);
+      });
+    });
+
+
     it("create document with list in root", () => {
       const { storage, assert } = prepareStorageTest<{
         items: LiveList<any>;
