@@ -144,7 +144,7 @@ export function makeStateMachine(
         socket.addEventListener("close", onClose);
         socket.addEventListener("error", onError);
         authenticationSuccess(parsedToken, socket);
-      } catch (er) {
+      } catch (er: any) {
         authenticationFailure(er);
       }
     },
