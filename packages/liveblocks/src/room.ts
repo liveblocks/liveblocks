@@ -140,6 +140,7 @@ type Context = {
   authEndpoint: AuthEndpoint;
   liveblocksServer: string;
   throttleDelay: number;
+  publicApiKey?: string;
 };
 
 export function makeStateMachine(
@@ -150,7 +151,7 @@ export function makeStateMachine(
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
-        const token = await auth(context.authEndpoint, context.room);
+        const token = await auth(context.authEndpoint, context.room, context.publicApiKey);
         const parsedToken = parseToken(token);
         const socket = new WebSocket(
           `${context.liveblocksServer}/?token=${token}`
@@ -875,7 +876,13 @@ export function createRoom(
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
     (options as any).liveblocksServer || "wss://liveblocks.net";
-  const authEndpoint: AuthEndpoint = options.authEndpoint;
+
+  let authEndpoint: AuthEndpoint
+  if (options.authEndpoint) {
+    authEndpoint = options.authEndpoint;
+  } else {
+    authEndpoint = `http://localhost:3001/api/public/authorize`
+  }
 
   const state = defaultState(options.initialPresence);
 
@@ -884,6 +891,7 @@ export function createRoom(
     liveblocksServer,
     authEndpoint,
     room: name,
+    publicApiKey: options.publicApiKey
   });
 
   const room: Room = {

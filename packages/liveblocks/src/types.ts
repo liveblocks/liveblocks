@@ -105,7 +105,7 @@ export type User<TPresence extends Presence = Presence> = {
 };
 
 export type Presence = Serializable;
-export type SerializablePrimitive = boolean | string | number | null;
+export type SerializablePrimitive = boolean |  number | null;
 export type Serializable = {
   [key: string]: SerializablePrimitive | Serializable | SerializablePrimitive[];
 };
@@ -119,7 +119,8 @@ export type ClientOptions = {
    * The authentication endpoint that is called to ensure that the current user has access to a room.
    * Can be an url or a callback if you need to add additional headers.
    */
-  authEndpoint: AuthEndpoint;
+  authEndpoint?: AuthEndpoint;
+  publicApiKey?: string;
   throttle?: number;
 };
 
