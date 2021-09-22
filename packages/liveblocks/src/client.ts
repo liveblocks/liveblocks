@@ -37,18 +37,6 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  if (options.authEndpoint && options.publicApiKey) {
-    throw new Error(
-      "Liveblocks client should use only one auth method, authEndpoint or publicApiKey"
-    );
-  }
-
-  if (!options.authEndpoint && !options.publicApiKey) {
-    throw new Error(
-      "Liveblocks client needs either an authEndpoint or a publicApiKey"
-    );
-  }
-
   const rooms = new Map<string, InternalRoom>();
 
   function getRoom(roomId: string): Room | null {

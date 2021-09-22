@@ -114,15 +114,23 @@ type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
-export type ClientOptions = {
-  /**
+
+export type PrivateKeyClientOptions = {
+  kind: "privateKey";
+   /**
    * The authentication endpoint that is called to ensure that the current user has access to a room.
    * Can be an url or a callback if you need to add additional headers.
    */
-  authEndpoint?: AuthEndpoint;
-  publicApiKey?: string;
+  authEndpoint: AuthEndpoint;
   throttle?: number;
-};
+}
+
+export type PublicKeyClientOptions = {
+  kind: "publicKey";
+  publicApiKey: string;
+  throttle?: number;
+}
+export type ClientOptions = PrivateKeyClientOptions | PublicKeyClientOptions
 
 export type AuthorizeResponse = {
   token: string;
