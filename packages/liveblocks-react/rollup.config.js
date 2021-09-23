@@ -15,5 +15,5 @@ export default {
     },
   ],
   plugins: [typescript(), resolve()],
-  external: ["react"],
+  external: ["react", "@liveblocks/client"],
 };

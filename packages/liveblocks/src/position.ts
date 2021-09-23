@@ -1,10 +1,5 @@
 export const min = 32;
-export const max = 127;
-export const mid = 79;
-
-export function middle(a: number, b: number) {
-  return (a + b) / 2;
-}
+export const max = 126;
 
 export function makePosition(before?: string, after?: string): string {
   // No children
@@ -34,7 +29,7 @@ function getPreviousPosition(after: string) {
     if (code <= min + 1) {
       result.push(min);
       if (afterCodes.length - 1 === i) {
-        result.push(max - 1);
+        result.push(max);
         break;
       }
     } else {
@@ -52,7 +47,7 @@ function getNextPosition(before: string) {
   for (let i = 0; i < beforeCodes.length; i++) {
     const code = beforeCodes[i];
 
-    if (code === max - 1) {
+    if (code === max) {
       result.push(code);
       if (beforeCodes.length - 1 === i) {
         result.push(min + 1);
@@ -93,7 +88,7 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
       break;
     }
 
-    const mid = beforeDigit + Math.floor((afterDigit - beforeDigit) / 2);
+    const mid = (afterDigit + beforeDigit) >> 1;
     result.push(mid);
     break;
   }

@@ -1,38 +1,25 @@
-import { RecordData, List } from ".";
-import { Doc, Record } from "./doc";
 import {
   Others,
   Presence,
   ClientOptions,
   Room,
-  InitialStorageFactory,
   MyPresenceCallback,
   OthersEventCallback,
   RoomEventCallbackMap,
-  StorageCallback,
   AuthEndpoint,
-  LiveStorageState,
-  LiveStorage,
   EventCallback,
   User,
   Connection,
-  Serializable,
   ErrorCallback,
   OthersEvent,
   AuthenticationToken,
   ConnectionCallback,
 } from "./types";
-import {
-  createRecord as innerCreateRecord,
-  createList as innerCreateList,
-} from "./doc";
 import { remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
   ClientMessageType,
-  InitialDocumentStateMessage,
-  UpdateStorageMessage,
   ServerMessageType,
   UserLeftMessage,
   Op,
@@ -41,6 +28,7 @@ import {
   UpdatePresenceMessage,
   UserJoinMessage,
 } from "./live";
+import Storage from "./storage";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 
@@ -50,7 +38,6 @@ const PONG_TIMEOUT = 2000;
 
 function isValidRoomEventType(value: string) {
   return (
-    value === "storage" ||
     value === "my-presence" ||
     value === "others" ||
     value === "event" ||
@@ -107,7 +94,6 @@ export type State = {
     heartbeat: number;
   };
   listeners: {
-    storage: StorageCallback[];
     event: EventCallback[];
     others: OthersEventCallback[];
     "my-presence": MyPresenceCallback[];
@@ -121,9 +107,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  doc: Doc<any> | null;
-  storageState: LiveStorageState;
-  initialStorageFactory: InitialStorageFactory | null;
+  defaultStorageRoot?: { [key: string]: any };
 };
 
 export type Effects = {
@@ -161,7 +145,7 @@ export function makeStateMachine(
         socket.addEventListener("close", onClose);
         socket.addEventListener("error", onError);
         authenticationSuccess(parsedToken, socket);
-      } catch (er) {
+      } catch (er: any) {
         authenticationFailure(er);
       }
     },
@@ -194,10 +178,6 @@ export function makeStateMachine(
     listener: OthersEventCallback<T>
   ): void;
   function subscribe(type: "event", listener: EventCallback): void;
-  function subscribe<T extends RecordData>(
-    type: "storage",
-    listener: StorageCallback<T>
-  ): void;
   function subscribe(type: "error", listener: ErrorCallback): void;
   function subscribe(type: "connection", listener: ConnectionCallback): void;
   function subscribe<T extends keyof RoomEventCallbackMap>(
@@ -219,10 +199,6 @@ export function makeStateMachine(
     listener: OthersEventCallback<T>
   ): void;
   function unsubscribe(type: "event", listener: EventCallback): void;
-  function unsubscribe<T extends RecordData>(
-    type: "storage",
-    listener: StorageCallback<T>
-  ): void;
   function unsubscribe(type: "error", listener: ErrorCallback): void;
   function unsubscribe(type: "connection", listener: ConnectionCallback): void;
   function unsubscribe<T extends keyof RoomEventCallbackMap>(
@@ -274,7 +250,7 @@ export function makeStateMachine(
     const newPresence = { ...state.me, ...overrides };
 
     if (state.flushData.presence == null) {
-      state.flushData.presence = overrides as Serializable;
+      state.flushData.presence = overrides as Presence;
     } else {
       for (const key in overrides) {
         state.flushData.presence[key] = overrides[key] as any;
@@ -416,14 +392,6 @@ export function makeStateMachine(
 
     const message = JSON.parse(event.data);
     switch (message.type) {
-      case ServerMessageType.InitialStorageState: {
-        onInitialStorageState(message);
-        break;
-      }
-      case ServerMessageType.UpdateStorage: {
-        onStorageUpdates(message);
-        break;
-      }
       case ServerMessageType.UserJoined: {
         onUserJoinedMessage(message as UserJoinMessage);
         break;
@@ -445,6 +413,8 @@ export function makeStateMachine(
         break;
       }
     }
+
+    storage.onMessage(message);
   }
 
   // function onWakeUp() {
@@ -661,119 +631,34 @@ export function makeStateMachine(
     tryFlushing();
   }
 
-  /**
-   * STORAGE
-   */
-
-  function onStorageUpdates(message: UpdateStorageMessage) {
-    if (state.doc == null) {
-      // TODO: Cache updates in case they are coming while root is queried
-      return;
-    }
-    updateDoc(message.ops.reduce((doc, op) => doc.dispatch(op), state.doc));
+  function dispatch(ops: Op[]) {
+    state.flushData.storageOperations.push(...ops);
+    tryFlushing();
   }
 
-  function updateDoc(doc: Doc<any> | null) {
-    state.doc = doc;
-    if (doc) {
-      for (const listener of state.listeners.storage) {
-        listener(getStorage());
+  const storage = new Storage({
+    fetchStorage: () => {
+      state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
+      tryFlushing();
+    },
+    dispatch,
+    getConnectionId: () => {
+      const me = getSelf();
+
+      if (me) {
+        return me.connectionId;
       }
-    }
-  }
 
-  function getStorage(): LiveStorage {
-    if (state.storageState === LiveStorageState.Loaded) {
-      return {
-        state: state.storageState,
-        root: state.doc!.root,
-      };
-    }
+      throw new Error("Unexpected");
+    },
+    defaultRoot: state.defaultStorageRoot!,
+  });
 
+  async function getStorage<TRoot>() {
+    const doc = await storage.getDocument<TRoot>();
     return {
-      state: state.storageState,
+      root: doc.root,
     };
-  }
-
-  function onInitialStorageState(message: InitialDocumentStateMessage) {
-    state.storageState = LiveStorageState.Loaded;
-    if (message.root == null) {
-      const rootId = makeId();
-      state.doc = Doc.empty<any>(rootId, (op) => dispatch(op));
-      updateDoc(
-        state.doc.updateRecord(
-          rootId,
-          state.initialStorageFactory!({
-            createRecord: <T extends RecordData>(data: T) =>
-              createRecord<T>(data),
-            createList: () => createList(),
-          })
-        )
-      );
-    } else {
-      updateDoc(Doc.load<any>(message.root, (op) => dispatch(op)));
-    }
-  }
-
-  function makeId() {
-    if (state.idFactory == null) {
-      throw new Error("Can't generate id. Id factory is missing.");
-    }
-    return state.idFactory();
-  }
-
-  function dispatch(op: Op) {
-    state.flushData.storageOperations.push(op);
-
-    tryFlushing();
-  }
-
-  function createRecord<T extends RecordData>(data: any): Record<T> {
-    return innerCreateRecord(makeId(), data);
-  }
-
-  function createList<T extends RecordData>(): List<Record<T>> {
-    return innerCreateList(makeId());
-  }
-
-  function fetchStorage(initialStorageFactory: InitialStorageFactory) {
-    state.initialStorageFactory = initialStorageFactory;
-    state.storageState = LiveStorageState.Loading;
-    state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
-    tryFlushing();
-  }
-
-  function updateRecord<T extends RecordData>(
-    record: Record<T>,
-    overrides: Partial<T>
-  ) {
-    updateDoc(state.doc!.updateRecord(record.id, overrides));
-  }
-
-  function pushItem<T extends RecordData>(
-    list: List<Record<T>>,
-    item: Record<T>
-  ) {
-    updateDoc(state.doc!.pushItem(list.id, item));
-  }
-  function deleteItem<T extends RecordData>(
-    list: List<Record<T>>,
-    index: number
-  ) {
-    updateDoc(state.doc!.deleteItem(list.id, index));
-  }
-  function deleteItemById<T extends RecordData>(
-    list: List<Record<T>>,
-    itemId: string
-  ) {
-    updateDoc(state.doc!.deleteItemById(list.id, itemId));
-  }
-  function moveItem<T extends RecordData>(
-    list: List<Record<T>>,
-    index: number,
-    targetIndex: number
-  ) {
-    updateDoc(state.doc!.moveItem(list.id, index, targetIndex));
   }
 
   return {
@@ -797,15 +682,7 @@ export function makeStateMachine(
     updatePresence,
     broadcastEvent,
 
-    // Storage
-    fetchStorage,
-    createRecord,
-    updateRecord,
-    createList,
-    pushItem,
-    deleteItem,
-    deleteItemById,
-    moveItem,
+    getStorage,
 
     selectors: {
       // Core
@@ -815,19 +692,18 @@ export function makeStateMachine(
       // Presence
       getPresence,
       getOthers,
-
-      // Storage
-      getStorage,
     },
   };
 }
 
-export function defaultState(me?: Presence): State {
+export function defaultState(
+  me?: Presence,
+  defaultStorageRoot?: { [key: string]: any }
+): State {
   return {
     connection: { state: "closed" },
     socket: null,
     listeners: {
-      storage: [],
       event: [],
       others: [],
       "my-presence": [],
@@ -852,9 +728,7 @@ export function defaultState(me?: Presence): State {
     me: me == null ? {} : me,
     users: {},
     others: makeOthers({}),
-    storageState: LiveStorageState.NotInitialized,
-    initialStorageFactory: null,
-    doc: null,
+    defaultStorageRoot,
     idFactory: null,
   };
 }
@@ -870,21 +744,25 @@ export type InternalRoom = {
 export function createRoom(
   name: string,
   options: ClientOptions & {
-    initialPresence?: Presence;
+    defaultPresence?: Presence;
+    defaultStorageRoot?: Record<string, any>;
   }
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v2";
 
   let authEndpoint: AuthEndpoint
   if (options.authEndpoint) {
     authEndpoint = options.authEndpoint;
   } else {
-    authEndpoint = `http://localhost:3001/api/public/authorize`
+    authEndpoint = `https://liveblocks.io/api/public/authorize`
   }
 
-  const state = defaultState(options.initialPresence);
+  const state = defaultState(
+    options.defaultPresence,
+    options.defaultStorageRoot
+  );
 
   const machine = makeStateMachine(state, {
     throttleDelay,
@@ -903,19 +781,6 @@ export function createRoom(
     subscribe: machine.subscribe,
     unsubscribe: machine.unsubscribe,
 
-    /////////////
-    // Storage //
-    /////////////
-    getStorage: machine.selectors.getStorage,
-    fetchStorage: machine.fetchStorage,
-    createRecord: machine.createRecord,
-    createList: machine.createList,
-    updateRecord: machine.updateRecord,
-    pushItem: machine.pushItem,
-    deleteItem: machine.deleteItem,
-    deleteItemById: machine.deleteItemById,
-    moveItem: machine.moveItem,
-
     //////////////
     // Presence //
     //////////////
@@ -923,6 +788,8 @@ export function createRoom(
     updatePresence: machine.updatePresence,
     getOthers: machine.selectors.getOthers,
     broadcastEvent: machine.broadcastEvent,
+
+    getStorage: machine.getStorage,
   };
 
   return {
