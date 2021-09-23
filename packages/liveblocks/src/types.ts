@@ -105,7 +105,7 @@ export type User<TPresence extends Presence = Presence> = {
 };
 
 export type Presence = Serializable;
-export type SerializablePrimitive = boolean |  number | null;
+export type SerializablePrimitive = boolean | number | null;
 export type Serializable = {
   [key: string]: SerializablePrimitive | Serializable | SerializablePrimitive[];
 };
@@ -114,23 +114,16 @@ type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
-
-export type PrivateKeyClientOptions = {
-  kind: "privateKey";
-   /**
-   * The authentication endpoint that is called to ensure that the current user has access to a room.
-   * Can be an url or a callback if you need to add additional headers.
-   */
-  authEndpoint: AuthEndpoint;
+/**
+ * The authentication endpoint that is called to ensure that the current user has access to a room.
+ * Can be an url or a callback if you need to add additional headers.
+ */
+export type ClientOptions = {
   throttle?: number;
-}
-
-export type PublicKeyClientOptions = {
-  kind: "publicKey";
-  publicApiKey: string;
-  throttle?: number;
-}
-export type ClientOptions = PrivateKeyClientOptions | PublicKeyClientOptions
+} & (
+  | { publicApiKey: string; authEndpoint?: never }
+  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
+)
 
 export type AuthorizeResponse = {
   token: string;

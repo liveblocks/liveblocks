@@ -878,7 +878,7 @@ export function createRoom(
     (options as any).liveblocksServer || "wss://liveblocks.net";
 
   let authEndpoint: AuthEndpoint
-  if (options.kind === "privateKey") {
+  if (options.authEndpoint) {
     authEndpoint = options.authEndpoint;
   } else {
     authEndpoint = `http://localhost:3001/api/public/authorize`
@@ -891,7 +891,7 @@ export function createRoom(
     liveblocksServer,
     authEndpoint,
     room: name,
-    publicApiKey: options.kind === "publicKey" ? options.publicApiKey : undefined
+    publicApiKey: options.publicApiKey
   });
 
   const room: Room = {
