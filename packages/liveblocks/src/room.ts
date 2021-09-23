@@ -756,7 +756,10 @@ export function createRoom(
   if (options.authEndpoint) {
     authEndpoint = options.authEndpoint;
   } else {
-    authEndpoint = `https://liveblocks.io/api/public/authorize`
+    const publicAuthorizeEndpoint: string =
+    (options as any).publicAuthorizeEndpoint || "https://liveblocks.io/api/public/authorize";
+
+    authEndpoint = publicAuthorizeEndpoint
   }
 
   const state = defaultState(
