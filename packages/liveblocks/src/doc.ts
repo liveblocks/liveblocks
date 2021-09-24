@@ -15,7 +15,7 @@ import {
   SetParentKeyOp,
   CreateRegisterOp,
 } from "./live";
-import { compare, makePosition } from "./position";
+import { compare, makePosition, posCodes } from "./position";
 
 type Dispatch = (ops: Op[]) => void;
 
@@ -139,6 +139,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   #applyCreateRegister(op: CreateRegisterOp) {
+    if (this.#items.has(op.id)) {
+      return;
+    }
+
     const parent = this.#items.get(op.parentId);
 
     if (parent == null) {
@@ -170,6 +174,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   #applyCreateMap(op: CreateMapOp) {
+    if (this.#items.has(op.id)) {
+      return;
+    }
+
     const parent = this.#items.get(op.parentId);
     if (parent == null) {
       return;
@@ -180,6 +188,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   #applyCreateList(op: CreateListOp) {
+    if (this.#items.has(op.id)) {
+      return;
+    }
+
     const parent = this.#items.get(op.parentId);
     if (parent == null) {
       return;
@@ -190,12 +202,16 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   #applyCreateObject(op: CreateObjectOp) {
+    if (this.#items.has(op.id)) {
+      return;
+    }
+
     if (op.parentId && op.parentKey) {
       const parent = this.#items.get(op.parentId);
       if (parent == null) {
         return;
       }
-      
+
       const newObj = new LiveObject(op.data);
       parent._attachChild(op.id, op.parentKey, newObj);
     }
@@ -256,31 +272,31 @@ abstract class AbstractCrdt {
   #id?: string;
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   protected get _doc() {
     return this.#doc;
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   get _id() {
     return this.#id;
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   get _parent() {
     return this.#parent;
   }
-  
+
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _setParent(parent: AbstractCrdt) {
-    if(this.#parent) {
+    if (this.#parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
 
@@ -288,10 +304,10 @@ abstract class AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _attach(id: string, doc: Doc) {
-    if(this.#id || this.#doc) {
+    if (this.#id || this.#doc) {
       throw new Error("Cannot attach if CRDT is already attached");
     }
 
@@ -304,11 +320,11 @@ abstract class AbstractCrdt {
   abstract _attachChild(id: string, key: string, crdt: AbstractCrdt): void;
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detach() {
-    if(this.#doc && this.#id) {
-      this.#doc.deleteItem(this.#id)
+    if (this.#doc && this.#id) {
+      this.#doc.deleteItem(this.#id);
     }
 
     this.#parent = undefined;
@@ -334,7 +350,7 @@ abstract class AbstractCrdt {
   }
 
   notify(onlyDeep = false) {
-    if(onlyDeep === false) {
+    if (onlyDeep === false) {
       for (const listener of this.#listeners) {
         listener();
       }
@@ -344,7 +360,7 @@ abstract class AbstractCrdt {
       listener();
     }
 
-    if(this._parent) {
+    if (this._parent) {
       this._parent.notify(true);
     }
   }
@@ -352,15 +368,17 @@ abstract class AbstractCrdt {
   abstract _serialize(parentId: string, parentKey: string): Op[];
 }
 
-export class LiveObject<T extends Record<string, any> = Record<string, any>> extends AbstractCrdt {
+export class LiveObject<
+  T extends Record<string, any> = Record<string, any>
+> extends AbstractCrdt {
   #map: Map<string, any>;
 
   constructor(object: T = {} as T) {
     super();
 
-    for(const key in object) {
+    for (const key in object) {
       const value = object[key] as any;
-      if(value instanceof AbstractCrdt) {
+      if (value instanceof AbstractCrdt) {
         value._setParent(this);
       }
     }
@@ -369,11 +387,11 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _serialize(parentId?: string, parentKey?: string): Op[] {
-    if(this._id == null) {
-      throw new Error("Cannot serialize item is not attached")
+    if (this._id == null) {
+      throw new Error("Cannot serialize item is not attached");
     }
 
     const ops = [];
@@ -382,14 +400,14 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
       type: OpType.CreateObject,
       parentId,
       parentKey,
-      data: {}
+      data: {},
     };
 
     ops.push(op);
 
     for (const [key, value] of this.#map) {
       if (value instanceof AbstractCrdt) {
-        ops.push(...value._serialize(this._id, key))
+        ops.push(...value._serialize(this._id, key));
       } else {
         op.data[key] = value;
       }
@@ -399,7 +417,7 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
@@ -438,14 +456,11 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
-  _attach(
-    id: string,
-    doc: Doc,
-  ) {
+  _attach(id: string, doc: Doc) {
     super._attach(id, doc);
-    
+
     for (const [key, value] of this.#map) {
       if (value instanceof AbstractCrdt) {
         value._attach(doc.generateId(), doc);
@@ -454,11 +469,11 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _attachChild(id: string, key: keyof T, child: AbstractCrdt) {
-    if(this._doc == null) {
-      throw new Error("Can't attach child if doc is not present")
+    if (this._doc == null) {
+      throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key as string);
@@ -473,7 +488,7 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detachChild(child: AbstractCrdt) {
     for (const [key, value] of this.#map) {
@@ -490,20 +505,20 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detach() {
     super._detach();
 
-    for(const value of this.#map.values()) {
-      if(isCrdt(value)) {
+    for (const value of this.#map.values()) {
+      if (isCrdt(value)) {
         value._detach();
       }
     }
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _apply(op: Op) {
     if (op.type === OpType.UpdateObject) {
@@ -544,50 +559,33 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
     return this.#map.get(key as string);
   }
 
-  // delete<TKey extends keyof T>(key: TKey) {
-  //   if (this.doc && this.id) {
-  //     const item = this._map.get(key as string);
-
-  //     if (isCrdt(item)) {
-  //       item.detach();
-  //     }
-
-  //     this.doc.dispatch([
-  //       { type: OpType.DeleteObjectKey, id: this.id, key: key as string },
-  //     ]);
-  //   }
-
-  //   this._map.delete(key as string);
-  //   this.notify();
-  // }
-
   update(overrides: Partial<T>) {
-    if(this._doc && this._id) {
+    if (this._doc && this._id) {
       const ops = [];
       const updateOp: UpdateObjectOp = {
         id: this._id,
         type: OpType.UpdateObject,
-        data: { }
+        data: {},
       };
       ops.push(updateOp);
 
       for (const key in overrides) {
         const oldValue = this.#map.get(key);
-  
-        if(oldValue instanceof LiveObject) {
+
+        if (oldValue instanceof LiveObject) {
           oldValue._detach();
         }
-  
+
         const newValue = overrides[key] as any;
-  
-        if(newValue instanceof AbstractCrdt) {
+
+        if (newValue instanceof AbstractCrdt) {
           newValue._setParent(this);
           newValue._attach(this._doc.generateId(), this._doc);
           ops.push(...newValue._serialize(this._id, key));
         } else {
           updateOp.data[key] = newValue;
         }
-  
+
         this.#map.set(key, newValue);
       }
 
@@ -596,17 +594,17 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
 
       return;
     }
-    
+
     for (const key in overrides) {
       const oldValue = this.#map.get(key);
 
-      if(oldValue instanceof AbstractCrdt) {
+      if (oldValue instanceof AbstractCrdt) {
         oldValue._detach();
       }
 
       const newValue = overrides[key] as any;
 
-      if(newValue instanceof AbstractCrdt) {
+      if (newValue instanceof AbstractCrdt) {
         newValue._setParent(this);
       }
 
@@ -617,9 +615,7 @@ export class LiveObject<T extends Record<string, any> = Record<string, any>> ext
   }
 }
 
-export class LiveMap<TKey extends string, TValue>
-  extends AbstractCrdt
-{
+export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   #map: Map<TKey, AbstractCrdt>;
 
   constructor(
@@ -627,31 +623,31 @@ export class LiveMap<TKey extends string, TValue>
   ) {
     super();
     if (entries) {
-      const mappedEntries: Array<[TKey,AbstractCrdt]> = [];
-      for(const entry of entries) {
+      const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
+      for (const entry of entries) {
         const value = selfOrRegister(entry[1]);
         value._setParent(this);
         mappedEntries.push([entry[0], value]);
       }
 
-      this.#map = new Map(
-        mappedEntries
-      );
+      this.#map = new Map(mappedEntries);
     } else {
       this.#map = new Map();
     }
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _serialize(parentId?: string, parentKey?: string): Op[] {
-    if(this._id == null) {
-      throw new Error("Cannot serialize item is not attached")
+    if (this._id == null) {
+      throw new Error("Cannot serialize item is not attached");
     }
 
-    if(parentId == null || parentKey == null) {
-      throw new Error("Cannot serialize map if parentId or parentKey is undefined")
+    if (parentId == null || parentKey == null) {
+      throw new Error(
+        "Cannot serialize map if parentId or parentKey is undefined"
+      );
     }
 
     const ops = [];
@@ -672,7 +668,7 @@ export class LiveMap<TKey extends string, TValue>
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
@@ -711,27 +707,24 @@ export class LiveMap<TKey extends string, TValue>
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
-  _attach(
-    id: string,
-    doc: Doc
-  ) {
+  _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
     for (const [key, value] of this.#map) {
       if (isCrdt(value)) {
-        value._attach(doc.generateId(), doc)
+        value._attach(doc.generateId(), doc);
       }
     }
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _attachChild(id: string, key: TKey, child: AbstractCrdt) {
-    if(this._doc == null) {
-      throw new Error("Can't attach child if doc is not present")
+    if (this._doc == null) {
+      throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key);
@@ -746,18 +739,18 @@ export class LiveMap<TKey extends string, TValue>
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detach() {
-    super._detach()
+    super._detach();
 
-    for(const item of this.#map.values()) {
+    for (const item of this.#map.values()) {
       item._detach();
     }
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detachChild(child: AbstractCrdt) {
     for (const [key, value] of this.#map) {
@@ -780,17 +773,17 @@ export class LiveMap<TKey extends string, TValue>
 
   set(key: TKey, value: TValue) {
     const oldValue = this.#map.get(key);
-    
+
     if (oldValue) {
       oldValue._detach();
     }
-    
+
     const item = selfOrRegister(value);
     item._setParent(this);
 
     this.#map.set(key, item);
 
-    if(this._doc && this._id) {
+    if (this._doc && this._id) {
       item._attach(this._doc.generateId(), this._doc);
       const ops = item._serialize(this._id, key);
       this._doc.dispatch(ops);
@@ -810,13 +803,13 @@ export class LiveMap<TKey extends string, TValue>
   delete(key: TKey): boolean {
     const item = this.#map.get(key);
 
-    if(item == null) {
+    if (item == null) {
       return false;
     }
 
     item._detach();
 
-    if(this._doc && item._id) {
+    if (this._doc && item._id) {
       this._doc.dispatch([{ type: OpType.DeleteCrdt, id: item._id }]);
     }
 
@@ -905,7 +898,7 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
@@ -924,20 +917,24 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _serialize(parentId: string, parentKey: string): Op[] {
-    if(this._id == null || parentId == null || parentKey == null) {
-      throw new Error("Cannot serialize register if parentId or parentKey is undefined")
+    if (this._id == null || parentId == null || parentKey == null) {
+      throw new Error(
+        "Cannot serialize register if parentId or parentKey is undefined"
+      );
     }
 
-    return [{
-      type: OpType.CreateRegister,
-      id: this._id,
-      parentId,
-      parentKey,
-      data: this.data
-    }]
+    return [
+      {
+        type: OpType.CreateRegister,
+        id: this._id,
+        parentId,
+        parentKey,
+        data: this.data,
+      },
+    ];
   }
 
   _attachChild(id: string, key: string, crdt: AbstractCrdt): void {
@@ -952,7 +949,7 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
 export class LiveList<T> extends AbstractCrdt {
-  // TODO: Naive array at first, find a better data structure
+  // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   #items: Array<LiveListItem> = [];
 
   constructor(items: T[] = []) {
@@ -967,7 +964,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   static _deserialize(
     [id, item]: [id: string, item: SerializedList],
@@ -989,27 +986,26 @@ export class LiveList<T> extends AbstractCrdt {
       child._setParent(list);
 
       list.#items.push([child, entry[1].parentKey!]);
-      list.#items.sort((itemA, itemB) =>
-        compare({ position: itemA[1] }, { position: itemB[1] })
-      );
+      list.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
     }
 
     return list;
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _serialize(parentId?: string, parentKey?: string): Op[] {
-    if(this._id == null) {
-      throw new Error("Cannot serialize item is not attached")
+    if (this._id == null) {
+      throw new Error("Cannot serialize item is not attached");
     }
 
-    if(parentId == null || parentKey == null) {
-      throw new Error("Cannot serialize list if parentId or parentKey is undefined")
+    if (parentId == null || parentKey == null) {
+      throw new Error(
+        "Cannot serialize list if parentId or parentKey is undefined"
+      );
     }
 
-    
     const ops = [];
     const op: CreateListOp = {
       id: this._id,
@@ -1028,53 +1024,52 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
-  _attach(
-    id: string,
-    doc: Doc,
-  ) {
+  _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-
     for (const [item, position] of this.#items) {
-      item._attach(doc.generateId(), doc)
+      item._attach(doc.generateId(), doc);
     }
-
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detach() {
     super._detach();
 
-    for(const [value] of this.#items) {
+    for (const [value] of this.#items) {
       value._detach();
     }
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _attachChild(id: string, key: string, child: AbstractCrdt) {
-    if(this._doc == null) {
-      throw new Error("Can't attach child if doc is not present")
+    if (this._doc == null) {
+      throw new Error("Can't attach child if doc is not present");
     }
 
     child._attach(id, this._doc);
     child._setParent(this);
-    
-    // TODO: Handle list conflict
+
+    const index = this.#items.findIndex((entry) => entry[1] === key);
+
+    // Assign a temporary position until we get the fix from the backend
+    if (index !== -1) {
+      this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+    }
+
     this.#items.push([child, key]);
-    this.#items.sort((itemA, itemB) =>
-      compare({ position: itemA[1] }, { position: itemB[1] })
-    );
+    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
     this.notify();
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _detachChild(child: AbstractCrdt) {
     const indexToDelete = this.#items.findIndex((item) => item[0] === child);
@@ -1086,17 +1081,28 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL 
+   * INTERNAL
    */
   _setChildKey(key: string, child: AbstractCrdt) {
+    const index = this.#items.findIndex((entry) => entry[1] === key);
+
+    // Assign a temporary position until we get the fix from the backend
+    if (index !== -1) {
+      this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+    }
+
     const item = this.#items.find((item) => item[0] === child);
+
     if (item) {
       item[1] = key;
     }
-    this.#items.sort((itemA, itemB) =>
-      compare({ position: itemA[1] }, { position: itemB[1] })
-    );
+
+    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
     this.notify();
+  }
+
+  get length() {
+    return this.#items.length;
   }
 
   push(item: T) {
@@ -1111,10 +1117,7 @@ export class LiveList<T> extends AbstractCrdt {
     this.notify();
 
     if (this._doc && this._id) {
-      value._attach(
-        this._doc.generateId(),
-        this._doc
-      );
+      value._attach(this._doc.generateId(), this._doc);
       this._doc.dispatch(value._serialize(this._id, position));
     }
   }
@@ -1122,7 +1125,9 @@ export class LiveList<T> extends AbstractCrdt {
   insert(item: T, index: number) {
     if (index < 0 || index > this.#items.length) {
       throw new Error(
-        `Cannot delete list item at index "${index}". index should be between 0 and ${this.#items.length}`
+        `Cannot delete list item at index "${index}". index should be between 0 and ${
+          this.#items.length
+        }`
       );
     }
 
@@ -1134,17 +1139,12 @@ export class LiveList<T> extends AbstractCrdt {
     value._setParent(this);
 
     this.#items.push([value, position]);
-    this.#items.sort((itemA, itemB) =>
-      compare({ position: itemA[1] }, { position: itemB[1] })
-    );
+    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
     this.notify();
 
     if (this._doc && this._id) {
-      value._attach(
-        this._doc.generateId(),
-        this._doc
-      );
+      value._attach(this._doc.generateId(), this._doc);
       this._doc.dispatch(value._serialize(this._id, position));
     }
   }
@@ -1187,18 +1187,18 @@ export class LiveList<T> extends AbstractCrdt {
 
     const item = this.#items[index];
     item[1] = position;
-    this.#items.sort((itemA, itemB) =>
-      compare({ position: itemA[1] }, { position: itemB[1] })
-    );
+    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
     this.notify();
 
     if (this._doc && this._id) {
-      this._doc.dispatch([{
-        type: OpType.SetParentKey,
-        id: item[0]._id!,
-        parentKey: position,
-      },]);
+      this._doc.dispatch([
+        {
+          type: OpType.SetParentKey,
+          id: item[0]._id!,
+          parentKey: position,
+        },
+      ]);
     }
   }
 
@@ -1217,7 +1217,7 @@ export class LiveList<T> extends AbstractCrdt {
 
     if (this._doc) {
       const childRecordId = item[0]._id;
-      if(childRecordId) {
+      if (childRecordId) {
         this._doc.dispatch([
           {
             id: childRecordId,
@@ -1254,7 +1254,11 @@ export class LiveList<T> extends AbstractCrdt {
     return this.toArray().forEach(callbackfn);
   }
 
-  get(index: number): T {
+  get(index: number): T | undefined {
+    if (index < 0 || index >= this.#items.length) {
+      return undefined;
+    }
+
     return selfOrRegisterValue(this.#items[index][0]);
   }
 
@@ -1267,7 +1271,9 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   map<U>(callback: (value: T, index: number) => U): U[] {
-    return this.#items.map((entry, i) => callback(selfOrRegisterValue(entry[0]), i));
+    return this.#items.map((entry, i) =>
+      callback(selfOrRegisterValue(entry[0]), i)
+    );
   }
 
   some(predicate: (value: T, index: number) => unknown): boolean {
@@ -1292,7 +1298,7 @@ class LiveListIterator<T> implements IterableIterator<T> {
 
   next(): IteratorResult<T> {
     const result = this.#innerIterator.next();
-    
+
     if (result.done) {
       return {
         done: true,
@@ -1302,7 +1308,7 @@ class LiveListIterator<T> implements IterableIterator<T> {
 
     return {
       value: selfOrRegisterValue(result.value[0]),
-    }
+    };
   }
 }
 

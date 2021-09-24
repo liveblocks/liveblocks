@@ -108,12 +108,9 @@ export function pos(codes: number[]) {
   return String.fromCharCode(...codes);
 }
 
-export function compare(
-  itemA: { position: string },
-  itemB: { position: string }
-): number {
-  const aCodes = posCodes(itemA.position);
-  const bCodes = posCodes(itemB.position);
+export function compare(posA: string, posB: string): number {
+  const aCodes = posCodes(posA);
+  const bCodes = posCodes(posB);
 
   const maxLength = Math.max(aCodes.length, bCodes.length);
 
@@ -129,6 +126,6 @@ export function compare(
   }
 
   throw new Error(
-    `Impossible to compare similar position "${itemA.position}" and "${itemB.position}"`
+    `Impossible to compare similar position "${posA}" and "${posB}"`
   );
 }

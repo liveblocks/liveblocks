@@ -13,13 +13,21 @@ const HEIGHT = 800;
 module.exports = async function () {
   const browserA = await puppeteer.launch({
     headless: false,
-    args: [`--window-size=${WIDTH},${HEIGHT}`, `--window-position=0,0`],
+    args: [
+      `--window-size=${WIDTH},${HEIGHT}`,
+      `--window-position=0,0`,
+      "--disable-dev-shm-usage",
+    ],
   });
   global.__BROWSER_GLOBAL_A__ = browserA;
 
   const browserB = await puppeteer.launch({
     headless: false,
-    args: [`--window-size=${WIDTH},${HEIGHT}`, `--window-position=${WIDTH},0`],
+    args: [
+      `--window-size=${WIDTH},${HEIGHT}`,
+      `--window-position=${WIDTH},0`,
+      "--disable-dev-shm-usage",
+    ],
   });
   global.__BROWSER_GLOBAL_B__ = browserB;
 

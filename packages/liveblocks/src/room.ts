@@ -135,7 +135,11 @@ export function makeStateMachine(
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
-        const token = await auth(context.authEndpoint, context.room, context.publicApiKey);
+        const token = await auth(
+          context.authEndpoint,
+          context.room,
+          context.publicApiKey
+        );
         const parsedToken = parseToken(token);
         const socket = new WebSocket(
           `${context.liveblocksServer}/?token=${token}`
@@ -750,16 +754,17 @@ export function createRoom(
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net/v2";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v3";
 
-  let authEndpoint: AuthEndpoint
+  let authEndpoint: AuthEndpoint;
   if (options.authEndpoint) {
     authEndpoint = options.authEndpoint;
   } else {
     const publicAuthorizeEndpoint: string =
-    (options as any).publicAuthorizeEndpoint || "https://liveblocks.io/api/public/authorize";
+      (options as any).publicAuthorizeEndpoint ||
+      "https://liveblocks.io/api/public/authorize";
 
-    authEndpoint = publicAuthorizeEndpoint
+    authEndpoint = publicAuthorizeEndpoint;
   }
 
   const state = defaultState(
@@ -772,7 +777,7 @@ export function createRoom(
     liveblocksServer,
     authEndpoint,
     room: name,
-    publicApiKey: options.publicApiKey
+    publicApiKey: options.publicApiKey,
   });
 
   const room: Room = {

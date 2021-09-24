@@ -1,5 +1,6 @@
 import { CrdtType, Op, OpType, SerializedCrdtWithId } from "./live";
 import { Doc, LiveList, LiveMap, LiveObject } from "./doc";
+import { makePosition } from "./position";
 
 function docToJson(doc: Doc<any>) {
   return recordToJson(doc.root);
@@ -38,6 +39,17 @@ function toJson(value: any) {
   return value;
 }
 
+const FIRST_POSITION = makePosition();
+const SECOND_POSITION = makePosition(FIRST_POSITION);
+const THIRD_POSITION = makePosition(SECOND_POSITION);
+const FOURTH_POSITION = makePosition(THIRD_POSITION);
+const FIFTH_POSITION = makePosition(FOURTH_POSITION);
+
+function assertStorage(storage: Doc, data: any) {
+  const json = docToJson(storage);
+  expect(json).toEqual(data);
+}
+
 function prepareStorageTest<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0
@@ -47,6 +59,7 @@ function prepareStorageTest<T>(
   const storage = Doc.load<T>(clonedItems, actor, (ops) => {
     for (const op of ops) {
       refStorage.apply(op);
+      storage.apply(op);
     }
   });
 
@@ -368,24 +381,37 @@ describe("Storage", () => {
       it("basic operations with native objects", () => {
         const list = new LiveList<string>(["first", "second", "third"]);
         expect(list.get(0)).toEqual("first");
+        expect(list.length).toBe(3);
 
-        expect(list.toArray()).toEqual(["first", "second", "third"])
+        expect(list.toArray()).toEqual(["first", "second", "third"]);
 
         expect(Array.from(list)).toEqual(["first", "second", "third"]);
 
-        expect(list.map(item => item.toUpperCase())).toEqual(["FIRST", "SECOND", "THIRD"]);
+        expect(list.map((item) => item.toUpperCase())).toEqual([
+          "FIRST",
+          "SECOND",
+          "THIRD",
+        ]);
 
-        expect(list.filter(item => item.endsWith("d"))).toEqual(["second", "third"]);
+        expect(list.filter((item) => item.endsWith("d"))).toEqual([
+          "second",
+          "third",
+        ]);
 
-        expect(list.findIndex(item => item.startsWith("s"))).toEqual(1);
+        expect(list.findIndex((item) => item.startsWith("s"))).toEqual(1);
 
-        expect(list.some(item => item.startsWith("x"))).toEqual(false);
+        expect(list.some((item) => item.startsWith("x"))).toEqual(false);
 
         expect(list.indexOf("quatres")).toEqual(-1);
         expect(list.indexOf("third")).toEqual(2);
+
+        list.delete(0);
+
+        expect(list.toArray()).toEqual(["second", "third"]);
+        expect(list.get(2)).toBe(undefined);
+        expect(list.length).toBe(2);
       });
     });
-
 
     it("create document with list in root", () => {
       const { storage, assert } = prepareStorageTest<{
@@ -536,11 +562,14 @@ describe("Storage", () => {
     it("list.insert at index 0", () => {
       let { storage, assert } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
-        createSerializedObject("0:2", { a: 1 }, "0:1", "!"),
-      ]);
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", "!"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.toObject().items;
@@ -658,6 +687,154 @@ describe("Storage", () => {
       expect(asArray).toEqual([[["first", 0]]]);
       assert({
         items: [[["first", 0]]],
+      });
+    });
+
+    it("list conflicts - move", () => {
+      const storage = Doc.load<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      // Register id = 1:0
+      items.push("A");
+      // Register id = 1:1
+      items.push("B");
+      // Register id = 1:2
+      items.push("C");
+
+      assertStorage(storage, {
+        items: ["A", "B", "C"],
+      });
+
+      items.move(0, 2);
+
+      assertStorage(storage, {
+        items: ["B", "C", "A"],
+      });
+
+      storage.apply({
+        type: OpType.SetParentKey,
+        id: "1:1",
+        parentKey: FOURTH_POSITION,
+      });
+
+      assertStorage(storage, {
+        items: ["C", "B", "A"],
+      });
+
+      storage.apply({
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: FIFTH_POSITION,
+      });
+
+      assertStorage(storage, {
+        items: ["C", "B", "A"],
+      });
+    });
+
+    it("list conflicts", () => {
+      const storage = Doc.load<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      // Register id = 1:0
+      items.push("0");
+
+      storage.apply({
+        type: OpType.CreateRegister,
+        id: "2:1",
+        parentId: "0:1",
+        parentKey: "!",
+        data: "1",
+      });
+
+      assertStorage(storage, {
+        items: ["1", "0"],
+      });
+
+      // Fix from backend
+      storage.apply({
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: '"',
+      });
+
+      assertStorage(storage, {
+        items: ["1", "0"],
+      });
+    });
+
+    it("list conflicts 2", () => {
+      const storage = Doc.load<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      items.push("x0"); // Register id = 1:0
+      items.push("x1"); // Register id = 1:1
+
+      // Should go to pending
+      storage.apply({
+        type: OpType.CreateRegister,
+        id: "2:0",
+        parentId: "0:1",
+        parentKey: FIRST_POSITION,
+        data: "y0",
+      });
+
+      assertStorage(storage, {
+        items: ["y0", "x0", "x1"],
+      });
+
+      // Should go to pending
+      storage.apply({
+        type: OpType.CreateRegister,
+        id: "2:1",
+        parentId: "0:1",
+        parentKey: SECOND_POSITION,
+        data: "y1",
+      });
+
+      assertStorage(storage, {
+        items: ["y0", "x0", "y1", "x1"],
+      });
+
+      storage.apply({
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: THIRD_POSITION,
+      });
+
+      assertStorage(storage, {
+        items: ["y0", "y1", "x0", "x1"],
+      });
+
+      storage.apply({
+        type: OpType.SetParentKey,
+        id: "1:1",
+        parentKey: FOURTH_POSITION,
+      });
+
+      assertStorage(storage, {
+        items: ["y0", "y1", "x0", "x1"],
       });
     });
   });
@@ -843,10 +1020,13 @@ describe("Storage", () => {
     it("map.set live object", () => {
       const { storage, assert } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ]);
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const map = root.toObject().map;
@@ -891,11 +1071,14 @@ describe("Storage", () => {
     it("map.set live object on existing key", () => {
       const { storage, assert } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-      ]);
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
+        ],
+        1
+      );
 
       assert({
         map: [["first", { a: 0 }]],
