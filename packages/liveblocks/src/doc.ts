@@ -23,6 +23,7 @@ function noOp() {}
 
 export class Doc<T extends Record<string, any> = Record<string, any>> {
   #clock = 0;
+  #opClock = 0;
   #items = new Map<string, AbstractCrdt>();
   #root: LiveObject<T>;
   #actor: number;
@@ -262,6 +263,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   generateId() {
     return `${this.#actor}:${this.#clock++}`;
   }
+
+  generateOpId() {
+    return `${this.#actor}:${this.#opClock++}`;
+  }
 }
 
 abstract class AbstractCrdt {
@@ -372,6 +377,7 @@ export class LiveObject<
   T extends Record<string, any> = Record<string, any>
 > extends AbstractCrdt {
   #map: Map<string, any>;
+  #propToLastUpdate: Map<string, string> = new Map<string, string>();
 
   constructor(object: T = {} as T) {
     super();
@@ -523,6 +529,13 @@ export class LiveObject<
   _apply(op: Op) {
     if (op.type === OpType.UpdateObject) {
       for (const key in op.data as Partial<T>) {
+        const lastOpId = this.#propToLastUpdate.get(key);
+        if (lastOpId === op.opId) {
+          this.#propToLastUpdate.delete(key);
+        } else if (lastOpId != null) {
+          continue;
+        }
+
         const oldValue = this.#map.get(key);
 
         if (isCrdt(oldValue)) {
@@ -562,7 +575,9 @@ export class LiveObject<
   update(overrides: Partial<T>) {
     if (this._doc && this._id) {
       const ops = [];
+      const opId = this._doc.generateOpId();
       const updateOp: UpdateObjectOp = {
+        opId,
         id: this._id,
         type: OpType.UpdateObject,
         data: {},
@@ -570,6 +585,8 @@ export class LiveObject<
       ops.push(updateOp);
 
       for (const key in overrides) {
+        this.#propToLastUpdate.set(key, opId);
+
         const oldValue = this.#map.get(key);
 
         if (oldValue instanceof LiveObject) {

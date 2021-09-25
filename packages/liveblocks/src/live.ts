@@ -164,6 +164,7 @@ export type Op =
   | CreateRegisterOp;
 
 export type UpdateObjectOp = {
+  opId: string;
   id: string;
   type: OpType.UpdateObject;
   data: {
