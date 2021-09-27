@@ -16,7 +16,7 @@ Try it live on [liveblocks.io](https://liveblocks.io/examples)
 
 ### Next.js
 
-Clone this [github repository](https://github.com/liveblocks/next-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/presence.tsx)
+Clone this [github repository](https://github.com/liveblocks/next-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/live-cursors-basic.js)
 
 ### Nuxt.js
 
