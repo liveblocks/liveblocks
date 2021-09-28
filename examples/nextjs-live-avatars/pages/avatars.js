@@ -22,8 +22,8 @@ export default function Root() {
       <ExampleInfo
         title="Live Avatars"
         description="Open this page in multiple windows to see the live avatars."
-        githubHref="https://github.com/liveblocks/next-js-examples/blob/main/pages/avatars.js"
-        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/avatars.js"
+        githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars"
+        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/next-js-live-avatars"
       />
     </RoomProvider>
   );

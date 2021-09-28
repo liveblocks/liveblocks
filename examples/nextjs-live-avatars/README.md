@@ -22,7 +22,7 @@ This repo shows how to implement live avatars with Liveblocks and [Next.js](http
 
 ### Run examples on CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/live-cursors-basic.js)
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/next-js-live-avatars)
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 
