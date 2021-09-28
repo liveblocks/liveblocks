@@ -16,14 +16,3 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   });
   return res.status(response.status).end(response.body);
 }
-
-const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];
