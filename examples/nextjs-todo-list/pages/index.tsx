@@ -44,18 +44,12 @@ export default function Home({
 
       {hasSetupLiveblocksKey ? (
         <main>
-          <div className="text-right mt-4 mr-4">
-            <i>
-              ⚠️ Note that the Storage demo will not work if you don't have access
-              to the private beta
-            </i>
-          </div>
-
           <TodoList />
           <ExampleInfo
             title="Multiplayer Todo list"
             description="Open this page in multiple windows to see the real-time updates."
             githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-todo-list"
+            needStorage={true}
           />
         </main>
       ) : isRunningOnCodeSandbox ? (
