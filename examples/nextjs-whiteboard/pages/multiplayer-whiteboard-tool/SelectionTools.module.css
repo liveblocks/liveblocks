@@ -1,0 +1,18 @@
+.selection_inspector {
+  position: absolute;
+  padding: 12px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-popup);
+  display: flex;
+  flex-direction: row;
+  background-color: var(--color-surface-panel);
+  user-select: none;
+}
+
+.selection_inspector_delete {
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  margin-left: 8px;
+  border-left: 1px solid var(--color-divider);
+}
