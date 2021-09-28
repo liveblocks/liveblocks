@@ -329,7 +329,7 @@ export default function Room() {
         title="Live Cursors Chat Reactions"
         description="Open this page in multiple windows to see the live cursors."
         githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors"
-        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/live-cursors-chat-reactions.tsx"
+        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors"
       />
     </RoomProvider>
   );
