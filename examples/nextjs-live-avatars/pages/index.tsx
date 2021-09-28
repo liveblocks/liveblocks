@@ -1,8 +1,9 @@
 import React from "react";
 import Head from "next/head";
-import ListItem from "../components/ListItem";
 import SingleLineCodeBlock from "../components/SingleLineCodeBlock";
 import InlineCodeBlock from "../components/InlineCodeBlock";
+
+import Avatar from "./avatars"
 
 export async function getStaticProps() {
   return {
@@ -39,33 +40,15 @@ export default function Home({
           href="/favicon-16x16.png"
         />
       </Head>
-      <main className="container mx-auto px-8">
-        <h1 className="text-3xl font-semibold mt-24 mb-2">
-          Welcome to Liveblocks Next.js live avatars examples
-        </h1>
         {hasSetupLiveblocksKey ? (
-          <>
-            <div className="grid grid-cols-3 gap-16">
-              <div className="col-span-2">
-                <div className="max-w-sm">
-                  <h2 className="mt-12 mb-1 font-medium text-lg">Use cases</h2>
-                  <p className="text-gray-400 mb-4">
-                    Realistic examples to take inspiration from for your own
-                    production projects.
-                  </p>
-                </div>
-                <ul className="grid grid-cols-2 gap-4">
-                  <ListItem
-                    label="Live Avatars"
-                    href="/avatars"
-                    description="Presence"
-                  />
-                </ul>
-              </div>
-            </div>
-          </>
+          <main>
+            <Avatar />
+          </main>
         ) : isRunningOnCodeSandbox ? (
-          <>
+          <main className="container mx-auto px-8">
+          <h1 className="text-3xl font-semibold mt-24 mb-2">
+            Welcome to Liveblocks Next.js live avatars examples
+          </h1>
             <p className="mt-12 mb-6">
               To run{" "}
               <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
@@ -103,9 +86,12 @@ export default function Home({
                 Refresh your browser and you should be good to go!
               </li>
             </ul>
-          </>
+          </main>
         ) : (
-          <>
+          <main className="container mx-auto px-8">
+          <h1 className="text-3xl font-semibold mt-24 mb-2">
+            Welcome to Liveblocks Next.js live avatars examples
+          </h1>
             <p className="mt-12 mb-6">
               To run{" "}
               <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
@@ -144,9 +130,8 @@ export default function Home({
                 <SingleLineCodeBlock>npm run dev</SingleLineCodeBlock>
               </li>
             </ul>
-          </>
+          </main>
         )}
-      </main>
     </div>
   );
 }
