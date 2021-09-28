@@ -10,8 +10,7 @@ export async function getStaticProps() {
   return {
     props: {
       isRunningOnCodeSandbox: process.env.CODESANDBOX_SSE != null,
-      hasSetupLiveblocksKey:
-        process.env.LIVEBLOCKS_SECRET_KEY != null
+      hasSetupLiveblocksKey: process.env.LIVEBLOCKS_SECRET_KEY != null,
     },
   };
 }
@@ -50,6 +49,7 @@ export default function Home({
             title="Multiplayer Whiteboard Tool"
             description="Open this page in multiple windows to see the real-time updates."
             githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard"
+            needStorage={true}
           />
         </main>
       ) : isRunningOnCodeSandbox ? (
