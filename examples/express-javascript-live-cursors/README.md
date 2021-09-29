@@ -7,7 +7,7 @@
 
 # Liveblocks examples without front-end framework
 
-This project contains Liveblocks examples that do not rely on any front-end technologies. It uses [express](https://expressjs.com/) for the authentication endpoint and [esbuild](https://esbuild.github.io/) for the bundling.
+This project contains Liveblocks live cursors example that do not rely on any front-end technologies. It uses [express](https://expressjs.com/) for the authentication endpoint and [esbuild](https://esbuild.github.io/) for the bundling.
 
 ## Getting started
 
