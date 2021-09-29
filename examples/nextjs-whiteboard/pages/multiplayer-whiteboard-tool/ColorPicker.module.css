@@ -1,0 +1,25 @@
+.container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  max-width: 121px;
+  padding-right: 8px;
+  margin-right: 8px;
+  border-right: 1px solid var(--color-divider);
+}
+
+.color_swatch_button,
+.color_swatch_button_active {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.color_swatch {
+  width: 20px;
+  height: 20px;
+  border-radius: 20px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
