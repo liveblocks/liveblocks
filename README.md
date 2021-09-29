@@ -8,20 +8,11 @@
 
 Liveblocks helps you create performant and reliable collaborative experiences.
 
-## [Documentation](https://liveblocks.io/docs)
+## Documentation
+Visit [https://liveblocks.io/docs](https://liveblocks.io/docs) to get started with Liveblocks.
+
+## Live examples
+Try it live on [liveblocks.io](https://liveblocks.io/examples).
 
 ## Examples
-
-Try it live on [liveblocks.io](https://liveblocks.io/examples)
-
-### Next.js
-
-Clone this [github repository](https://github.com/liveblocks/next-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/next-js-examples?file=/pages/presence.tsx)
-
-### Nuxt.js
-
-Clone this [github repository](https://github.com/liveblocks/nuxt-js-examples) or try it directly on [CodeSandbox](https://codesandbox.io/s/github/liveblocks/nuxt-js-examples?file=/pages/presence.vue)
-
-### Vanilla JavaScript + Express.js
-
-Clone this [github repository](https://github.com/liveblocks/javascript-examples)
+Clone one of our [examples](https://github.com/liveblocks/liveblocks/tree/main/examples).
