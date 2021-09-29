@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-50;
+  }
+}
+
+a {
+  @apply text-blue-400;
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  @apply text-blue-500;
+}
+
+a:active {
+  @apply text-blue-600;
+}
+
+a:focus,
+input:focus,
+button:focus,
+a:focus-visible,
+input:focus-visible,
+button:focus-visible {
+  @apply outline-none;
+}
