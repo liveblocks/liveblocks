@@ -139,7 +139,7 @@ describe("Storage/list", () => {
     await secondPage.close();
   });
 
-  it("fuzzy", async () => {
+  it.only("fuzzy", async () => {
     const firstPage = await browserA.newPage();
     await firstPage.goto(TEST_URL);
 

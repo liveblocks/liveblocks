@@ -7,7 +7,7 @@ const puppeteer = require("puppeteer");
 
 const DIR = path.join(os.tmpdir(), "jest_puppeteer_global_setup");
 
-const WIDTH = 600;
+const WIDTH = 640;
 const HEIGHT = 800;
 
 module.exports = async function () {

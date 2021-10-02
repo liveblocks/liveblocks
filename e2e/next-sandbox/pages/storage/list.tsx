@@ -48,7 +48,6 @@ function Sandbox() {
         onClick={() => {
           const index = generateRandomNumber(0, list.length);
           const target = generateRandomNumber(0, list.length, index);
-          console.log("MOVE", index, target);
           list.move(index, target);
         }}
       >
@@ -77,7 +76,9 @@ function Sandbox() {
       </button>
 
       <h2>Items</h2>
-      <div id="items">{JSON.stringify(list.toArray(), null, 2)}</div>
+      <div id="items" style={{ whiteSpace: "pre" }}>
+        {JSON.stringify(list.toArray(), null, 2)}
+      </div>
     </div>
   );
 }

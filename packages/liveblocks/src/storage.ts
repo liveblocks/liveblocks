@@ -63,9 +63,7 @@ export default class Storage {
         break;
       }
       case ServerMessageType.UpdateStorage: {
-        for (const op of message.ops) {
-          this._doc?.apply(op);
-        }
+        this._doc?.apply(message.ops);
         break;
       }
     }

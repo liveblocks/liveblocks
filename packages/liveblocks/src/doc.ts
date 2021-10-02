@@ -21,6 +21,8 @@ type Dispatch = (ops: Op[]) => void;
 
 function noOp() {}
 
+type UndoStackItem = Op[];
+
 export class Doc<T extends Record<string, any> = Record<string, any>> {
   #clock = 0;
   #opClock = 0;
@@ -28,6 +30,9 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   #root: LiveObject<T>;
   #actor: number;
   #dispatch: Dispatch;
+  #isBatching: boolean = false;
+  #undoStack: UndoStackItem[] = [];
+  #redoStack: UndoStackItem[] = [];
 
   private constructor(
     root: LiveObject<T>,
@@ -90,6 +95,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     this.#dispatch(ops);
   }
 
+  addToUndoStack(ops: Op[]) {
+    this.#undoStack.push(ops);
+  }
+
   addItem(id: string, item: AbstractCrdt) {
     this.#items.set(id, item);
   }
@@ -102,158 +111,79 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     return this.#items.get(id);
   }
 
-  apply(op: Op) {
+  apply(ops: Op[]): Op[] {
+    const reverse = [];
+    for (const op of ops) {
+      reverse.push(...this.#applyOp(op));
+    }
+    return reverse;
+  }
+
+  #applyOp(op: Op): Op[] {
     switch (op.type) {
-      case OpType.UpdateObject: {
-        this.#applyUpdateRecord(op);
-        break;
-      }
-      case OpType.CreateObject: {
-        this.#applyCreateObject(op);
-        break;
-      }
-      case OpType.CreateMap: {
-        this.#applyCreateMap(op);
-        break;
-      }
-      case OpType.CreateList: {
-        this.#applyCreateList(op);
-        break;
-      }
-      case OpType.DeleteCrdt: {
-        this.#applyDeleteRecord(op);
-        break;
-      }
+      case OpType.DeleteObjectKey:
+      case OpType.UpdateObject:
+      case OpType.DeleteCrdt:
       case OpType.SetParentKey: {
-        this.#applySetParentKey(op);
+        const item = this.#items.get(op.id);
+
+        if (item == null) {
+          return [];
+        }
+
+        return item._apply(op);
         break;
       }
-      case OpType.DeleteObjectKey: {
-        this.#applyDeleteRecordKey(op);
-        break;
-      }
+      case OpType.CreateList:
+      case OpType.CreateObject:
+      case OpType.CreateMap:
       case OpType.CreateRegister: {
-        this.#applyCreateRegister(op);
+        const parent = this.#items.get(op.parentId);
+        if (parent == null) {
+          return [];
+        }
+        return parent._apply(op);
         break;
       }
     }
-  }
 
-  #applyCreateRegister(op: CreateRegisterOp) {
-    if (this.#items.has(op.id)) {
-      return;
-    }
-
-    const parent = this.#items.get(op.parentId);
-
-    if (parent == null) {
-      return;
-    }
-
-    if (!(parent instanceof LiveMap) && !(parent instanceof LiveList)) {
-      throw new Error(
-        "LiveRegister can only be attached to a LiveMap or LiveList"
-      );
-    }
-
-    const newRegister = new LiveRegister(op.data);
-    parent._attachChild(op.id, op.parentKey, newRegister);
-  }
-
-  #applyDeleteRecordKey(op: DeleteObjectKeyOp) {
-    const item = this.#items.get(op.id);
-    if (item && item instanceof LiveObject) {
-      item._apply(op);
-    }
-  }
-
-  #applyUpdateRecord(op: UpdateObjectOp) {
-    const item = this.#items.get(op.id);
-    if (item && item instanceof LiveObject) {
-      item._apply(op);
-    }
-  }
-
-  #applyCreateMap(op: CreateMapOp) {
-    if (this.#items.has(op.id)) {
-      return;
-    }
-
-    const parent = this.#items.get(op.parentId);
-    if (parent == null) {
-      return;
-    }
-
-    const newMap = new LiveMap();
-    parent._attachChild(op.id, op.parentKey, newMap);
-  }
-
-  #applyCreateList(op: CreateListOp) {
-    if (this.#items.has(op.id)) {
-      return;
-    }
-
-    const parent = this.#items.get(op.parentId);
-    if (parent == null) {
-      return;
-    }
-
-    const list = new LiveList();
-    parent._attachChild(op.id, op.parentKey, list);
-  }
-
-  #applyCreateObject(op: CreateObjectOp) {
-    if (this.#items.has(op.id)) {
-      return;
-    }
-
-    if (op.parentId && op.parentKey) {
-      const parent = this.#items.get(op.parentId);
-      if (parent == null) {
-        return;
-      }
-
-      const newObj = new LiveObject(op.data);
-      parent._attachChild(op.id, op.parentKey, newObj);
-    }
-  }
-
-  #applyDeleteRecord(op: DeleteCrdtOp) {
-    const item = this.#items.get(op.id);
-
-    if (item == null) {
-      return;
-    }
-
-    const parent = item._parent;
-
-    if (parent == null) {
-      return;
-    }
-
-    if (parent) {
-      parent._detachChild(item);
-    }
-  }
-
-  #applySetParentKey(op: SetParentKeyOp) {
-    const item = this.#items.get(op.id);
-
-    if (item == null) {
-      return;
-    }
-
-    if (item._parent == null) {
-      return;
-    }
-
-    if (item._parent instanceof LiveList) {
-      item._parent._setChildKey(op.parentKey, item);
-    }
+    return [];
   }
 
   get root(): LiveObject<T> {
     return this.#root;
+  }
+
+  get isBatching(): boolean {
+    return this.#isBatching;
+  }
+
+  batch(callback: () => void) {
+    callback();
+  }
+
+  scheduleNotify(id: string) {}
+
+  undo() {
+    const ops = this.#undoStack.pop();
+
+    if (ops == null) {
+      return;
+    }
+
+    this.#redoStack.push(this.apply(ops));
+    this.#dispatch(ops);
+  }
+
+  redo() {
+    const ops = this.#redoStack.pop();
+
+    if (ops == null) {
+      return;
+    }
+
+    this.#undoStack.push(this.apply(ops));
+    this.#dispatch(ops);
   }
 
   count() {
@@ -275,6 +205,7 @@ abstract class AbstractCrdt {
   #parent?: AbstractCrdt;
   #doc?: Doc;
   #id?: string;
+  #parentKey?: string;
 
   /**
    * INTERNAL
@@ -297,14 +228,114 @@ abstract class AbstractCrdt {
     return this.#parent;
   }
 
+  get _parentKey() {
+    return this.#parentKey;
+  }
+
+  _apply(op: Op): Op[] {
+    switch (op.type) {
+      case OpType.DeleteCrdt: {
+        if (this._parent != null && this._parentKey != null) {
+          const reverse = this._serialize(this._parent._id!, this._parentKey);
+          this._parent._detachChild(this);
+          return reverse;
+        }
+
+        return [];
+      }
+      case OpType.CreateObject: {
+        return this.#applyCreateObject(op);
+      }
+      case OpType.CreateMap: {
+        return this.#applyCreateMap(op);
+      }
+      case OpType.CreateRegister: {
+        return this.#applyRegister(op);
+      }
+      case OpType.CreateList: {
+        return this.#applyCreateList(op);
+      }
+      case OpType.SetParentKey: {
+        return this.#applySetParentKey(op);
+      }
+    }
+
+    return [];
+  }
+
+  #applySetParentKey(op: SetParentKeyOp): Op[] {
+    if (this._parent == null) {
+      return [];
+    }
+
+    if (this._parent instanceof LiveList) {
+      const previousKey = this._parentKey!;
+      this._parent._setChildKey(op.parentKey, this);
+      return [
+        { type: OpType.SetParentKey, id: this._id!, parentKey: previousKey },
+      ];
+    }
+
+    return [];
+  }
+
+  #applyRegister(op: CreateRegisterOp): Op[] {
+    if (this._doc == null) {
+      throw new Error("Internal: doc should exist");
+    }
+
+    if (this._doc.getItem(op.id) != null) {
+      return [];
+    }
+
+    return this._attachChild(op.id, op.parentKey!, new LiveRegister(op.data));
+  }
+
+  #applyCreateObject(op: CreateObjectOp): Op[] {
+    if (this._doc == null) {
+      throw new Error("Internal: doc should exist");
+    }
+
+    if (this._doc.getItem(op.id) != null) {
+      return [];
+    }
+
+    return this._attachChild(op.id, op.parentKey!, new LiveObject(op.data));
+  }
+
+  #applyCreateMap(op: CreateMapOp): Op[] {
+    if (this._doc == null) {
+      throw new Error("Internal: doc should exist");
+    }
+
+    if (this._doc.getItem(op.id) != null) {
+      return [];
+    }
+
+    return this._attachChild(op.id, op.parentKey!, new LiveMap());
+  }
+
+  #applyCreateList(op: CreateListOp): Op[] {
+    if (this._doc == null) {
+      throw new Error("Internal: doc should exist");
+    }
+
+    if (this._doc.getItem(op.id) != null) {
+      return [];
+    }
+
+    return this._attachChild(op.id, op.parentKey!, new LiveList());
+  }
+
   /**
    * INTERNAL
    */
-  _setParent(parent: AbstractCrdt) {
-    if (this.#parent) {
+  _setParentLink(parent: AbstractCrdt, key: string) {
+    if (this.#parent != null && this.#parent !== parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
 
+    this.#parentKey = key;
     this.#parent = parent;
   }
 
@@ -322,7 +353,7 @@ abstract class AbstractCrdt {
     this.#doc = doc;
   }
 
-  abstract _attachChild(id: string, key: string, crdt: AbstractCrdt): void;
+  abstract _attachChild(id: string, key: string, crdt: AbstractCrdt): Op[];
 
   /**
    * INTERNAL
@@ -355,6 +386,11 @@ abstract class AbstractCrdt {
   }
 
   notify(onlyDeep = false) {
+    if (this._doc != null && this._id != null && this._doc.isBatching) {
+      this._doc.scheduleNotify(this._id);
+      return;
+    }
+
     if (onlyDeep === false) {
       for (const listener of this.#listeners) {
         listener();
@@ -385,7 +421,7 @@ export class LiveObject<
     for (const key in object) {
       const value = object[key] as any;
       if (value instanceof AbstractCrdt) {
-        value._setParent(this);
+        value._setParentLink(this, key);
       }
     }
 
@@ -454,7 +490,7 @@ export class LiveObject<
       }
 
       const child = deserialize(entry, parentToChildren, doc);
-      child._setParent(object);
+      child._setParentLink(object, crdt.parentKey);
       object.#map.set(crdt.parentKey, child);
     }
 
@@ -477,20 +513,36 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: keyof T, child: AbstractCrdt) {
+  _attachChild(id: string, key: keyof T, child: AbstractCrdt): Op[] {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key as string);
+    let result: Op[];
     if (isCrdt(previousValue)) {
+      result = previousValue._serialize(this._id!, key as string);
       previousValue._detach();
+    } else if (previousValue === undefined) {
+      result = [
+        { type: OpType.DeleteObjectKey, id: this._id!, key: key as string },
+      ];
+    } else {
+      result = [
+        {
+          type: OpType.UpdateObject,
+          id: this._id!,
+          data: { [key]: previousValue },
+        } as any, // TODO
+      ];
     }
 
     this.#map.set(key as string, child);
-    child._setParent(this);
+    child._setParentLink(this, key as string);
     child._attach(id, this._doc);
     this.notify();
+
+    return result;
   }
 
   /**
@@ -526,15 +578,33 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _apply(op: Op) {
+  _apply(op: Op): Op[] {
     if (op.type === OpType.UpdateObject) {
+      const reverse: Op[] = [];
+      const reverseUpdate: UpdateObjectOp = {
+        type: OpType.UpdateObject,
+        id: this._id!,
+        data: {},
+      } as any; // TODO
+      reverse.push(reverseUpdate);
+
       for (const key in op.data as Partial<T>) {
-        const lastOpId = this.#propToLastUpdate.get(key);
-        if (lastOpId === op.opId) {
-          this.#propToLastUpdate.delete(key);
-        } else if (lastOpId != null) {
-          continue;
+        const oldValue = this.#map.get(key);
+        if (oldValue !== undefined) {
+          reverseUpdate.data[key] = oldValue;
+        } else if (oldValue === undefined) {
+          reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
         }
+      }
+
+      for (const key in op.data as Partial<T>) {
+        // const lastOpId = this.#propToLastUpdate.get(key);
+        // if (lastOpId === op.opId) {
+        //   this.#propToLastUpdate.delete(key);
+        //   continue;
+        // } else if (lastOpId != null) {
+        //   continue;
+        // }
 
         const oldValue = this.#map.get(key);
 
@@ -546,17 +616,35 @@ export class LiveObject<
         this.#map.set(key, value);
       }
       this.notify();
+      return reverse;
     } else if (op.type === OpType.DeleteObjectKey) {
-      const key = op.key;
-      const oldValue = this.#map.get(key);
-
-      if (isCrdt(oldValue)) {
-        oldValue._detach();
-      }
-
-      this.#map.delete(key);
-      this.notify();
+      return this.#applyDeleteObjectKey(op);
     }
+
+    return super._apply(op);
+  }
+
+  #applyDeleteObjectKey(op: DeleteObjectKeyOp): Op[] {
+    const key = op.key;
+    const oldValue = this.#map.get(key);
+
+    let result: Op[] = [];
+    if (isCrdt(oldValue)) {
+      result = oldValue._serialize(this._id!, op.key);
+      oldValue._detach();
+    } else if (oldValue !== undefined) {
+      result = [
+        {
+          type: OpType.UpdateObject,
+          id: this._id!,
+          data: { [key]: oldValue },
+        } as any, // TODO
+      ];
+    }
+
+    this.#map.delete(key);
+    this.notify();
+    return result;
   }
 
   toObject(): T {
@@ -573,61 +661,75 @@ export class LiveObject<
   }
 
   update(overrides: Partial<T>) {
-    if (this._doc && this._id) {
-      const ops = [];
-      const opId = this._doc.generateOpId();
-      const updateOp: UpdateObjectOp = {
-        opId,
-        id: this._id,
-        type: OpType.UpdateObject,
-        data: {},
-      };
-      ops.push(updateOp);
-
+    if (this._doc == null || this._id == null) {
       for (const key in overrides) {
-        this.#propToLastUpdate.set(key, opId);
-
         const oldValue = this.#map.get(key);
 
-        if (oldValue instanceof LiveObject) {
+        if (oldValue instanceof AbstractCrdt) {
           oldValue._detach();
         }
 
         const newValue = overrides[key] as any;
 
         if (newValue instanceof AbstractCrdt) {
-          newValue._setParent(this);
-          newValue._attach(this._doc.generateId(), this._doc);
-          ops.push(...newValue._serialize(this._id, key));
-        } else {
-          updateOp.data[key] = newValue;
+          newValue._setParentLink(this, key);
         }
 
         this.#map.set(key, newValue);
       }
 
-      this._doc.dispatch(ops);
       this.notify();
-
       return;
     }
 
+    const ops = [];
+    const reverseOps: Op[] = [];
+    // const opId = this._doc.generateOpId();
+    const updateOp: UpdateObjectOp = {
+      // opId,
+      id: this._id,
+      type: OpType.UpdateObject,
+      data: {},
+    } as any; // TODO
+    ops.push(updateOp);
+
+    const reverseUpdateOp: UpdateObjectOp = {
+      // opId,
+      id: this._id,
+      type: OpType.UpdateObject,
+      data: {},
+    } as any; // TODO
+    reverseOps.push(reverseUpdateOp);
+
     for (const key in overrides) {
+      // this.#propToLastUpdate.set(key, opId);
+
       const oldValue = this.#map.get(key);
 
       if (oldValue instanceof AbstractCrdt) {
+        reverseOps.push(...oldValue._serialize(this._id, key));
         oldValue._detach();
+      } else if (oldValue === undefined) {
+        reverseOps.push({ type: OpType.DeleteObjectKey, id: this._id, key });
+      } else {
+        reverseUpdateOp.data[key] = oldValue;
       }
 
       const newValue = overrides[key] as any;
 
       if (newValue instanceof AbstractCrdt) {
-        newValue._setParent(this);
+        newValue._setParentLink(this, key);
+        newValue._attach(this._doc.generateId(), this._doc);
+        ops.push(...newValue._serialize(this._id, key));
+      } else {
+        updateOp.data[key] = newValue;
       }
 
       this.#map.set(key, newValue);
     }
 
+    this._doc.addToUndoStack(reverseOps);
+    this._doc.dispatch(ops);
     this.notify();
   }
 }
@@ -643,7 +745,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
       for (const entry of entries) {
         const value = selfOrRegister(entry[1]);
-        value._setParent(this);
+        value._setParentLink(this, entry[0]);
         mappedEntries.push([entry[0], value]);
       }
 
@@ -716,7 +818,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       }
 
       const child = deserialize(entry, parentToChildren, doc);
-      child._setParent(map);
+      child._setParentLink(map, crdt.parentKey);
       map.#map.set(crdt.parentKey, child);
     }
 
@@ -739,20 +841,26 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: TKey, child: AbstractCrdt) {
+  _attachChild(id: string, key: TKey, child: AbstractCrdt): Op[] {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key);
+    let result: Op[];
     if (previousValue) {
+      result = previousValue._serialize(this._id!, key);
       previousValue._detach();
+    } else {
+      result = [{ type: OpType.DeleteCrdt, id }];
     }
 
-    child._setParent(this);
+    child._setParentLink(this, key);
     child._attach(id, this._doc);
     this.#map.set(key, child);
     this.notify();
+
+    return result;
   }
 
   /**
@@ -796,14 +904,19 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     const item = selfOrRegister(value);
-    item._setParent(this);
+    item._setParentLink(this, key);
 
     this.#map.set(key, item);
 
     if (this._doc && this._id) {
-      item._attach(this._doc.generateId(), this._doc);
-      const ops = item._serialize(this._id, key);
-      this._doc.dispatch(ops);
+      const id = this._doc.generateId();
+      item._attach(id, this._doc);
+      this._doc.addToUndoStack(
+        oldValue
+          ? oldValue._serialize(this._id, key)
+          : [{ type: OpType.DeleteCrdt, id }]
+      );
+      this._doc.dispatch(item._serialize(this._id, key));
     }
 
     this.notify();
@@ -827,6 +940,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     item._detach();
 
     if (this._doc && item._id) {
+      this._doc.addToUndoStack(item._serialize(this._id!, key));
       this._doc.dispatch([{ type: OpType.DeleteCrdt, id: item._id }]);
     }
 
@@ -954,12 +1068,16 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
     ];
   }
 
-  _attachChild(id: string, key: string, crdt: AbstractCrdt): void {
+  _attachChild(id: string, key: string, crdt: AbstractCrdt): Op[] {
     throw new Error("Method not implemented.");
   }
 
   _detachChild(crdt: AbstractCrdt): void {
     throw new Error("Method not implemented.");
+  }
+
+  _apply(op: Op): Op[] {
+    return super._apply(op);
   }
 }
 
@@ -1000,7 +1118,7 @@ export class LiveList<T> extends AbstractCrdt {
     for (const entry of children) {
       const child = deserialize(entry, parentToChildren, doc);
 
-      child._setParent(list);
+      child._setParentLink(list, entry[1].parentKey!);
 
       list.#items.push([child, entry[1].parentKey!]);
       list.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
@@ -1065,13 +1183,13 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: string, child: AbstractCrdt) {
+  _attachChild(id: string, key: string, child: AbstractCrdt): Op[] {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
     child._attach(id, this._doc);
-    child._setParent(this);
+    child._setParentLink(this, key);
 
     const index = this.#items.findIndex((entry) => entry[1] === key);
 
@@ -1083,6 +1201,8 @@ export class LiveList<T> extends AbstractCrdt {
     this.#items.push([child, key]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
     this.notify();
+
+    return [{ type: OpType.DeleteCrdt, id }];
   }
 
   /**
@@ -1101,6 +1221,8 @@ export class LiveList<T> extends AbstractCrdt {
    * INTERNAL
    */
   _setChildKey(key: string, child: AbstractCrdt) {
+    child._setParentLink(this, key);
+
     const index = this.#items.findIndex((entry) => entry[1] === key);
 
     // Assign a temporary position until we get the fix from the backend
@@ -1118,25 +1240,16 @@ export class LiveList<T> extends AbstractCrdt {
     this.notify();
   }
 
+  _apply(op: Op) {
+    return super._apply(op);
+  }
+
   get length() {
     return this.#items.length;
   }
 
   push(item: T) {
-    const position =
-      this.#items.length === 0
-        ? makePosition()
-        : makePosition(this.#items[this.#items.length - 1][1]);
-
-    const value = selfOrRegister(item);
-    value._setParent(this);
-    this.#items.push([value, position]);
-    this.notify();
-
-    if (this._doc && this._id) {
-      value._attach(this._doc.generateId(), this._doc);
-      this._doc.dispatch(value._serialize(this._id, position));
-    }
+    return this.insert(item, this.length);
   }
 
   insert(item: T, index: number) {
@@ -1153,7 +1266,7 @@ export class LiveList<T> extends AbstractCrdt {
     const position = makePosition(before, after);
 
     const value = selfOrRegister(item);
-    value._setParent(this);
+    value._setParentLink(this, position);
 
     this.#items.push([value, position]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
@@ -1161,7 +1274,9 @@ export class LiveList<T> extends AbstractCrdt {
     this.notify();
 
     if (this._doc && this._id) {
-      value._attach(this._doc.generateId(), this._doc);
+      const id = this._doc.generateId();
+      value._attach(id, this._doc);
+      this._doc.addToUndoStack([{ type: OpType.DeleteCrdt, id }]);
       this._doc.dispatch(value._serialize(this._id, position));
     }
   }
@@ -1203,12 +1318,21 @@ export class LiveList<T> extends AbstractCrdt {
     const position = makePosition(beforePosition, afterPosition);
 
     const item = this.#items[index];
+    const previousPosition = item[1];
     item[1] = position;
+    item[0]._setParentLink(this, position);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
     this.notify();
 
     if (this._doc && this._id) {
+      this._doc.addToUndoStack([
+        {
+          type: OpType.SetParentKey,
+          id: item[0]._id!,
+          parentKey: previousPosition,
+        },
+      ]);
       this._doc.dispatch([
         {
           type: OpType.SetParentKey,
@@ -1235,6 +1359,7 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc) {
       const childRecordId = item[0]._id;
       if (childRecordId) {
+        this._doc.addToUndoStack(item[0]._serialize(this._id!, item[1]));
         this._doc.dispatch([
           {
             id: childRecordId,
