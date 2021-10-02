@@ -1,0 +1,21 @@
+{
+  "name": "liveblocks-example-express-javascript-live-cursors",
+  "version": "1.0.0",
+  "description": "Liveblocks live cursors example with node js and no javascript frameworks",
+  "main": "index.js",
+  "scripts": {
+    "dev": "esbuild app.js --bundle --outfile=static/app.js && node -r dotenv/config index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@liveblocks/client": "0.12.0-beta.11",
+    "@liveblocks/node": "^0.3.0",
+    "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "esbuild": "^0.12.2"
+  }
+}

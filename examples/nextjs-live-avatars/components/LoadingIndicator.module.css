@@ -1,0 +1,28 @@
+.loading_container {
+  background-color: var(--color-surface-panel);
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading_svg {
+  animation: spin 1s linear infinite;
+  fill: currentColor;
+  width: 28px;
+  height: auto;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
