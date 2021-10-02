@@ -1,0 +1,29 @@
+.button {
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  color: var(--color-foreground-200);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.button:hover,
+.button:focus {
+  color: var(--color-foreground-400);
+}
+
+.button:active {
+  color: var(--color-foreground-600);
+}
+
+.button_active {
+  color: var(--color-primary);
+  background-color: var(--color-surface-subtle);
+}
+
+.button_active:hover,
+.button_active:focus,
+.button_active:active {
+  color: var(--color-primary);
+}

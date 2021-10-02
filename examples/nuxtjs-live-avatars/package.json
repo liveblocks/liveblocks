@@ -1,0 +1,23 @@
+{
+  "name": "liveblocks-examples-nuxt-js-live-avatars",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt",
+    "build": "nuxt build",
+    "start": "nuxt start",
+    "generate": "nuxt generate"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@liveblocks/client": "0.12.0-beta.11",
+    "@liveblocks/node": "^0.3.0",
+    "core-js": "^3.9.1",
+    "express": "^4.17.1",
+    "nuxt": "^2.15.3"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^4.1.2",
+    "postcss": "^8.3.0"
+  }
+}
