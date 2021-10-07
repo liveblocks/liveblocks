@@ -665,6 +665,14 @@ export function makeStateMachine(
     };
   }
 
+  function undo() {
+    storage.undo();
+  }
+
+  function redo() {
+    storage.redo();
+  }
+
   return {
     // Internal
     onOpen,
@@ -685,6 +693,9 @@ export function makeStateMachine(
     // Presence
     updatePresence,
     broadcastEvent,
+
+    undo,
+    redo,
 
     getStorage,
 
@@ -798,6 +809,8 @@ export function createRoom(
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
+    undo: machine.undo,
+    redo: machine.redo,
   };
 
   return {

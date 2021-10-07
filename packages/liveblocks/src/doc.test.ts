@@ -216,7 +216,7 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    it("list.insert", () => {
+    it("storage operation should clear redo stack", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -236,12 +236,18 @@ describe("Storage", () => {
         items: ["A"],
       });
 
+      storage.undo();
+
       items.insert("B", 0);
       assert({
-        items: ["B", "A"],
+        items: ["B"],
       });
 
-      assertUndoRedo();
+      storage.redo();
+
+      assert({
+        items: ["B"],
+      });
     });
   });
 
@@ -562,6 +568,30 @@ describe("Storage", () => {
       root.get("child").set("a", 0);
 
       expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should ignore incoming updates if current op has not been acknowledged", () => {
+      const storage = Doc.load<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
+
+      expect(docToJson(storage)).toEqual({ a: 0 });
+
+      storage.root.set("a", 1);
+
+      expect(docToJson(storage)).toEqual({ a: 1 });
+
+      storage.apply([
+        {
+          type: OpType.UpdateObject,
+          data: { a: 2 },
+          id: "0:0",
+          opId: "external",
+        },
+      ]);
+
+      expect(docToJson(storage)).toEqual({ a: 1 });
     });
   });
 

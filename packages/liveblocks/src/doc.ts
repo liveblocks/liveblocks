@@ -92,6 +92,7 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   dispatch(ops: Op[]) {
+    this.#redoStack = [];
     this.#dispatch(ops);
   }
 
@@ -138,7 +139,7 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
       case OpType.CreateObject:
       case OpType.CreateMap:
       case OpType.CreateRegister: {
-        const parent = this.#items.get(op.parentId);
+        const parent = this.#items.get(op.parentId!);
         if (parent == null) {
           return [];
         }
@@ -153,16 +154,6 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   get root(): LiveObject<T> {
     return this.#root;
   }
-
-  get isBatching(): boolean {
-    return this.#isBatching;
-  }
-
-  batch(callback: () => void) {
-    callback();
-  }
-
-  scheduleNotify(id: string) {}
 
   undo() {
     const ops = this.#undoStack.pop();
@@ -386,11 +377,6 @@ abstract class AbstractCrdt {
   }
 
   notify(onlyDeep = false) {
-    if (this._doc != null && this._id != null && this._doc.isBatching) {
-      this._doc.scheduleNotify(this._id);
-      return;
-    }
-
     if (onlyDeep === false) {
       for (const listener of this.#listeners) {
         listener();
@@ -585,7 +571,7 @@ export class LiveObject<
         type: OpType.UpdateObject,
         id: this._id!,
         data: {},
-      } as any; // TODO
+      };
       reverse.push(reverseUpdate);
 
       for (const key in op.data as Partial<T>) {
@@ -598,13 +584,16 @@ export class LiveObject<
       }
 
       for (const key in op.data as Partial<T>) {
-        // const lastOpId = this.#propToLastUpdate.get(key);
-        // if (lastOpId === op.opId) {
-        //   this.#propToLastUpdate.delete(key);
-        //   continue;
-        // } else if (lastOpId != null) {
-        //   continue;
-        // }
+        if (op.opId == null) {
+          op.opId = this._doc?.generateOpId();
+        }
+        const lastOpId = this.#propToLastUpdate.get(key);
+        if (lastOpId === op.opId) {
+          this.#propToLastUpdate.delete(key);
+          continue;
+        } else if (lastOpId != null) {
+          continue;
+        }
 
         const oldValue = this.#map.get(key);
 
@@ -638,7 +627,7 @@ export class LiveObject<
           type: OpType.UpdateObject,
           id: this._id!,
           data: { [key]: oldValue },
-        } as any, // TODO
+        },
       ];
     }
 
@@ -684,25 +673,25 @@ export class LiveObject<
 
     const ops = [];
     const reverseOps: Op[] = [];
-    // const opId = this._doc.generateOpId();
+
+    const opId = this._doc.generateOpId();
     const updateOp: UpdateObjectOp = {
-      // opId,
+      opId,
       id: this._id,
       type: OpType.UpdateObject,
       data: {},
-    } as any; // TODO
+    };
     ops.push(updateOp);
 
     const reverseUpdateOp: UpdateObjectOp = {
-      // opId,
       id: this._id,
       type: OpType.UpdateObject,
       data: {},
-    } as any; // TODO
+    };
     reverseOps.push(reverseUpdateOp);
 
     for (const key in overrides) {
-      // this.#propToLastUpdate.set(key, opId);
+      this.#propToLastUpdate.set(key, opId);
 
       const oldValue = this.#map.get(key);
 

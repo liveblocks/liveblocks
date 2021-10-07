@@ -1,4 +1,10 @@
-import { RoomProvider, useList, useSelf } from "@liveblocks/react";
+import {
+  RoomProvider,
+  useList,
+  useRedo,
+  useSelf,
+  useUndo,
+} from "@liveblocks/react";
 import React from "react";
 
 export default function Home() {
@@ -22,6 +28,8 @@ function generateRandomNumber(min: number, max: number, ignore?: number) {
 }
 
 function Sandbox() {
+  const undo = useUndo();
+  const redo = useRedo();
   const list = useList("items");
   const me = useSelf();
 
@@ -73,6 +81,14 @@ function Sandbox() {
         }}
       >
         Clear
+      </button>
+
+      <button id="undo" onClick={undo}>
+        Undo
+      </button>
+
+      <button id="redo" onClick={redo}>
+        Redo
       </button>
 
       <h2>Items</h2>

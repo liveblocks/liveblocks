@@ -68,4 +68,12 @@ export default class Storage {
       }
     }
   }
+
+  undo() {
+    this._doc?.undo();
+  }
+
+  redo() {
+    this._doc?.redo();
+  }
 }

@@ -380,9 +380,7 @@ export function useMap<TKey extends string, TValue>(
   return root?.get(key) ?? null;
 }
 
-export function useList<TValue>(
-  key: string,
-): LiveList<TValue> | null {
+export function useList<TValue>(key: string): LiveList<TValue> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -414,9 +412,7 @@ export function useList<TValue>(
   return root?.get(key) ?? null;
 }
 
-export function useObject<TData>(
-  key: string
-): LiveObject<TData> | null {
+export function useObject<TData>(key: string): LiveObject<TData> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -446,4 +442,12 @@ export function useObject<TData>(
   }, [root]);
 
   return root?.get(key) ?? null;
+}
+
+export function useUndo() {
+  return useRoom().undo;
+}
+
+export function useRedo() {
+  return useRoom().redo;
 }
