@@ -216,6 +216,27 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
+    it("max undo-redo stack", () => {
+      const { storage, assert } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      for (let i = 0; i < 100; i++) {
+        storage.root.set("a", i + 1);
+        assert({
+          a: i + 1,
+        });
+      }
+
+      for (let i = 0; i < 100; i++) {
+        storage.undo();
+      }
+
+      assert({
+        a: 50,
+      });
+    });
+
     it("storage operation should clear redo stack", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<string>;

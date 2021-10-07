@@ -23,6 +23,8 @@ function noOp() {}
 
 type UndoStackItem = Op[];
 
+const MAX_UNDO_STACK = 50;
+
 export class Doc<T extends Record<string, any> = Record<string, any>> {
   #clock = 0;
   #opClock = 0;
@@ -96,10 +98,6 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     this.#dispatch(ops);
   }
 
-  addToUndoStack(ops: Op[]) {
-    this.#undoStack.push(ops);
-  }
-
   addItem(id: string, item: AbstractCrdt) {
     this.#items.set(id, item);
   }
@@ -153,6 +151,13 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
 
   get root(): LiveObject<T> {
     return this.#root;
+  }
+
+  addToUndoStack(ops: Op[]) {
+    if (this.#undoStack.length >= MAX_UNDO_STACK) {
+      this.#undoStack.shift();
+    }
+    this.#undoStack.push(ops);
   }
 
   undo() {
