@@ -346,6 +346,10 @@ export function useStorage<TRoot extends Record<string, any>>(): [
   return [root];
 }
 
+/**
+ * Returns the LiveMap associated to the provided key. If the LiveList does not exists, a new empty LiveMap will be created.
+ * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
 export function useMap<TKey extends string, TValue>(
   key: string
 ): LiveMap<TKey, TValue> | null {
@@ -380,6 +384,10 @@ export function useMap<TKey extends string, TValue>(
   return root?.get(key) ?? null;
 }
 
+/**
+ * Returns the LiveList associated to the provided key. If the LiveList does not exists, a new empty LiveList will be created.
+ * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
 export function useList<TValue>(key: string): LiveList<TValue> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
@@ -412,7 +420,14 @@ export function useList<TValue>(key: string): LiveList<TValue> | null {
   return root?.get(key) ?? null;
 }
 
-export function useObject<TData>(key: string): LiveObject<TData> | null {
+/**
+ * Returns the LiveObject associated to the provided key. If the LiveObject does not exists, it will be created with the initialData parameter.
+ * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
+export function useObject<TData>(
+  key: string,
+  initialData?: TData
+): LiveObject<TData> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -424,7 +439,7 @@ export function useObject<TData>(key: string): LiveObject<TData> | null {
     let obj: LiveObject<TData> = root.get(key);
 
     if (obj == null) {
-      obj = new LiveObject();
+      obj = new LiveObject(initialData);
       root.set(key, obj);
     }
 
@@ -444,10 +459,18 @@ export function useObject<TData>(key: string): LiveObject<TData> | null {
   return root?.get(key) ?? null;
 }
 
+/**
+ * Returns a function that undo the last operation executed by the current client.
+ * Undo does not impact operations made by other clients.
+ */
 export function useUndo() {
   return useRoom().undo;
 }
 
+/**
+ * Returns a function that redo the last operation executed by the current client.
+ * Redo does not impact operations made by other clients.
+ */
 export function useRedo() {
   return useRoom().redo;
 }

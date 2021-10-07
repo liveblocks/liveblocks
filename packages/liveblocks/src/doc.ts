@@ -32,7 +32,6 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   #root: LiveObject<T>;
   #actor: number;
   #dispatch: Dispatch;
-  #isBatching: boolean = false;
   #undoStack: UndoStackItem[] = [];
   #redoStack: UndoStackItem[] = [];
 
@@ -224,6 +223,9 @@ abstract class AbstractCrdt {
     return this.#parent;
   }
 
+  /**
+   * INTERNAL
+   */
   get _parentKey() {
     return this.#parentKey;
   }
@@ -365,23 +367,38 @@ abstract class AbstractCrdt {
 
   abstract _detachChild(crdt: AbstractCrdt): void;
 
+  /**
+   * Subscribes to updates.
+   */
   subscribe(listener: () => void) {
     this.#listeners.push(listener);
   }
 
+  /**
+   * Subscribes to updates and children updates.
+   */
   subscribeDeep(listener: () => void) {
     this.#deepListeners.push(listener);
   }
 
+  /**
+   * Unsubscribes to updates.
+   */
   unsubscribe(listener: () => void) {
     remove(this.#listeners, listener);
   }
 
+  /**
+   * Unsubscribes to updates and children updates.
+   */
   unsubscribeDeep(listener: () => void) {
     remove(this.#deepListeners, listener);
   }
 
-  notify(onlyDeep = false) {
+  /**
+   * INTERNAL
+   */
+  _notify(onlyDeep = false) {
     if (onlyDeep === false) {
       for (const listener of this.#listeners) {
         listener();
@@ -393,13 +410,18 @@ abstract class AbstractCrdt {
     }
 
     if (this._parent) {
-      this._parent.notify(true);
+      this._parent._notify(true);
     }
   }
 
   abstract _serialize(parentId: string, parentKey: string): Op[];
 }
 
+/**
+ * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
+ * Keys should be a string, and values should be serializable to JSON.
+ * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
+ */
 export class LiveObject<
   T extends Record<string, any> = Record<string, any>
 > extends AbstractCrdt {
@@ -531,7 +553,7 @@ export class LiveObject<
     this.#map.set(key as string, child);
     child._setParentLink(this, key as string);
     child._attach(id, this._doc);
-    this.notify();
+    this._notify();
 
     return result;
   }
@@ -550,7 +572,7 @@ export class LiveObject<
       child._detach();
     }
 
-    this.notify();
+    this._notify();
   }
 
   /**
@@ -609,7 +631,7 @@ export class LiveObject<
         const value = op.data[key];
         this.#map.set(key, value);
       }
-      this.notify();
+      this._notify();
       return reverse;
     } else if (op.type === OpType.DeleteObjectKey) {
       return this.#applyDeleteObjectKey(op);
@@ -637,23 +659,39 @@ export class LiveObject<
     }
 
     this.#map.delete(key);
-    this.notify();
+    this._notify();
     return result;
   }
 
+  /**
+   * Transform the LiveObject into a javascript object
+   */
   toObject(): T {
     return Object.fromEntries(this.#map) as T;
   }
 
+  /**
+   * Adds or updates a property with a specified key and a value.
+   * @param key The key of the property to add
+   * @param value The value of the property to add
+   */
   set<TKey extends keyof T>(key: TKey, value: T[TKey]) {
     // TODO: Find out why typescript complains
     this.update({ [key]: value } as any as Partial<T>);
   }
 
+  /**
+   * Returns a specified property from the LiveObject.
+   * @param key The key of the property to get
+   */
   get<TKey extends keyof T>(key: TKey): T[TKey] {
     return this.#map.get(key as string);
   }
 
+  /**
+   * Adds or updates multiple properties at once with an object.
+   * @param overrides The object used to overrides properties
+   */
   update(overrides: Partial<T>) {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
@@ -672,7 +710,7 @@ export class LiveObject<
         this.#map.set(key, newValue);
       }
 
-      this.notify();
+      this._notify();
       return;
     }
 
@@ -724,10 +762,15 @@ export class LiveObject<
 
     this._doc.addToUndoStack(reverseOps);
     this._doc.dispatch(ops);
-    this.notify();
+    this._notify();
   }
 }
 
+/**
+ * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
+ * Keys should be a string, and values should be serializable to JSON.
+ * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
+ */
 export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   #map: Map<TKey, AbstractCrdt>;
 
@@ -852,7 +895,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     child._setParentLink(this, key);
     child._attach(id, this._doc);
     this.#map.set(key, child);
-    this.notify();
+    this._notify();
 
     return result;
   }
@@ -879,9 +922,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     child._detach();
-    this.notify();
+    this._notify();
   }
 
+  /**
+   * Returns a specified element from the LiveMap.
+   * @param key The key of the element to return.
+   * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
+   */
   get(key: TKey): TValue | undefined {
     const value = this.#map.get(key);
     if (value == undefined) {
@@ -890,6 +938,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     return selfOrRegisterValue(value);
   }
 
+  /**
+   * Adds or updates an element with a specified key and a value.
+   * @param key The key of the element to add. Should be a string.
+   * @param value The value of the element to add. Should be serializable to JSON.
+   */
   set(key: TKey, value: TValue) {
     const oldValue = this.#map.get(key);
 
@@ -913,17 +966,29 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       this._doc.dispatch(item._serialize(this._id, key));
     }
 
-    this.notify();
+    this._notify();
   }
 
+  /**
+   * Returns the number of elements in the LiveMap.
+   */
   get size() {
     return this.#map.size;
   }
 
+  /**
+   * Returns a boolean indicating whether an element with the specified key exists or not.
+   * @param key The key of the element to test for presence.
+   */
   has(key: TKey): boolean {
     return this.#map.has(key);
   }
 
+  /**
+   * Removes the specified element by key.
+   * @param key The key of the element to remove.
+   * @returns true if an element existed and has been removed, or false if the element does not exist.
+   */
   delete(key: TKey): boolean {
     const item = this.#map.get(key);
 
@@ -939,10 +1004,13 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     this.#map.delete(key);
-    this.notify();
+    this._notify();
     return true;
   }
 
+  /**
+   * Returns a new Iterator object that contains the [key, value] pairs for each element.
+   */
   entries(): IterableIterator<[string, TValue]> {
     const innerIterator = this.#map.entries();
 
@@ -969,14 +1037,23 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     };
   }
 
+  /**
+   * Same function object as the initial value of the entries method.
+   */
   [Symbol.iterator](): IterableIterator<[string, TValue]> {
     return this.entries();
   }
 
+  /**
+   * Returns a new Iterator object that contains the keys for each element.
+   */
   keys(): IterableIterator<TKey> {
     return this.#map.keys();
   }
 
+  /**
+   * Returns a new Iterator object that contains the values for each element.
+   */
   values(): IterableIterator<TValue> {
     const innerIterator = this.#map.values();
 
@@ -1001,6 +1078,10 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     };
   }
 
+  /**
+   * Executes a provided function once per each key/value pair in the Map object, in insertion order.
+   * @param callback Function to execute for each entry in the map.
+   */
   forEach(
     callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
   ) {
@@ -1010,6 +1091,9 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 }
 
+/**
+ * INTERNAL
+ */
 class LiveRegister<TValue = any> extends AbstractCrdt {
   #data: TValue;
 
@@ -1077,6 +1161,9 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
+/**
+ * The LiveList class represents an ordered collection of items that is synchorinized across clients.
+ */
 export class LiveList<T> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   #items: Array<LiveListItem> = [];
@@ -1194,7 +1281,7 @@ export class LiveList<T> extends AbstractCrdt {
 
     this.#items.push([child, key]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    this.notify();
+    this._notify();
 
     return [{ type: OpType.DeleteCrdt, id }];
   }
@@ -1208,7 +1295,7 @@ export class LiveList<T> extends AbstractCrdt {
     if (child) {
       child._detach();
     }
-    this.notify();
+    this._notify();
   }
 
   /**
@@ -1231,22 +1318,37 @@ export class LiveList<T> extends AbstractCrdt {
     }
 
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    this.notify();
+    this._notify();
   }
 
+  /**
+   * INTERNAL
+   */
   _apply(op: Op) {
     return super._apply(op);
   }
 
+  /**
+   * Returns the number of elements.
+   */
   get length() {
     return this.#items.length;
   }
 
-  push(item: T) {
-    return this.insert(item, this.length);
+  /**
+   * Adds one element to the end of the LiveList.
+   * @param element The element to add to the end of the LiveList.
+   */
+  push(element: T) {
+    return this.insert(element, this.length);
   }
 
-  insert(item: T, index: number) {
+  /**
+   * Inserts one element at a specified index.
+   * @param element The element to insert.
+   * @param index The index at which you want to insert the element.
+   */
+  insert(element: T, index: number) {
     if (index < 0 || index > this.#items.length) {
       throw new Error(
         `Cannot delete list item at index "${index}". index should be between 0 and ${
@@ -1259,13 +1361,13 @@ export class LiveList<T> extends AbstractCrdt {
     let after = this.#items[index] ? this.#items[index][1] : undefined;
     const position = makePosition(before, after);
 
-    const value = selfOrRegister(item);
+    const value = selfOrRegister(element);
     value._setParentLink(this, position);
 
     this.#items.push([value, position]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    this.notify();
+    this._notify();
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -1275,6 +1377,11 @@ export class LiveList<T> extends AbstractCrdt {
     }
   }
 
+  /**
+   * Move one element from one index to another.
+   * @param index The index of the element to move
+   * @param targetIndex The index where the element should be after moving.
+   */
   move(index: number, targetIndex: number) {
     if (targetIndex < 0) {
       throw new Error("targetIndex cannot be less than 0");
@@ -1317,7 +1424,7 @@ export class LiveList<T> extends AbstractCrdt {
     item[0]._setParentLink(this, position);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    this.notify();
+    this._notify();
 
     if (this._doc && this._id) {
       this._doc.addToUndoStack([
@@ -1337,6 +1444,10 @@ export class LiveList<T> extends AbstractCrdt {
     }
   }
 
+  /**
+   * Deletes an element at the specified index
+   * @param index The index of the element to delete
+   */
   delete(index: number) {
     if (index < 0 || index >= this.#items.length) {
       throw new Error(
@@ -1363,33 +1474,65 @@ export class LiveList<T> extends AbstractCrdt {
       }
     }
 
-    this.notify();
+    this._notify();
   }
 
+  /**
+   * Returns an Array of all the elements in the LiveList.
+   */
   toArray(): T[] {
     return this.#items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
+  /**
+   * Tests whether all elements pass the test implemented by the provided function.
+   * @param predicate Function to test for each element, taking two arguments (the element and its index).
+   * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
+   */
   every(predicate: (value: T, index: number) => unknown): boolean {
     return this.toArray().every(predicate);
   }
 
+  /**
+   * Creates an array with all elements that pass the test implemented by the provided function.
+   * @param predicate Function to test each element of the LiveList. Return a value that coerces to true to keep the element, or to false otherwise.
+   * @returns An array with the elements that pass the test.
+   */
   filter(predicate: (value: T, index: number) => unknown): T[] {
     return this.toArray().filter(predicate);
   }
 
+  /**
+   * Returns the first element that satisfies the provided testing function.
+   * @param predicate Function to execute on each value.
+   * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
+   */
   find(predicate: (value: T, index: number) => unknown): T | undefined {
     return this.toArray().find(predicate);
   }
 
+  /**
+   * Returns the index of the first element in the LiveList that satisfies the provided testing function.
+   * @param predicate Function to execute on each value until the function returns true, indicating that the satisfying element was found.
+   * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
+   */
   findIndex(predicate: (value: T, index: number) => unknown): number {
     return this.toArray().findIndex(predicate);
   }
 
+  /**
+   * Executes a provided function once for each element.
+   * @param callbackfn Function to execute on each element.
+   */
   forEach(callbackfn: (value: T, index: number) => void): void {
     return this.toArray().forEach(callbackfn);
   }
 
+  /**
+   * Get the element at the specified index.
+   * @param index The index on the element to get.
+   * @returns The element at the specified index or undefined.
+   */
   get(index: number): T | undefined {
     if (index < 0 || index >= this.#items.length) {
       return undefined;
@@ -1398,20 +1541,42 @@ export class LiveList<T> extends AbstractCrdt {
     return selfOrRegisterValue(this.#items[index][0]);
   }
 
+  /**
+   * Returns the first index at which a given element can be found in the LiveList, or -1 if it is not present.
+   * @param searchElement Element to locate.
+   * @param fromIndex The index to start the search at.
+   * @returns The first index of the element in the LiveList; -1 if not found.
+   */
   indexOf(searchElement: T, fromIndex?: number): number {
     return this.toArray().indexOf(searchElement, fromIndex);
   }
 
+  /**
+   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveLsit is searched backwards, starting at fromIndex.
+   * @param searchElement Element to locate.
+   * @param fromIndex The index at which to start searching backwards.
+   * @returns
+   */
   lastIndexOf(searchElement: T, fromIndex?: number): number {
     return this.toArray().lastIndexOf(searchElement, fromIndex);
   }
 
+  /**
+   * Creates an array populated with the results of calling a provided function on every element.
+   * @param callback Function that is called for every element.
+   * @returns An array with each element being the result of the callback function.
+   */
   map<U>(callback: (value: T, index: number) => U): U[] {
     return this.#items.map((entry, i) =>
       callback(selfOrRegisterValue(entry[0]), i)
     );
   }
 
+  /**
+   * Tests whether at least one element in the LiveList passes the test implemented by the provided function.
+   * @param predicate Function to test for each element.
+   * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
+   */
   some(predicate: (value: T, index: number) => unknown): boolean {
     return this.toArray().some(predicate);
   }
