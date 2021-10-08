@@ -24,7 +24,9 @@ function listToJson<T>(list: LiveList<T>): Array<T> {
 function mapToJson<TKey extends string, TValue>(
   map: LiveMap<TKey, TValue>
 ): Array<[string, TValue]> {
-  return Array.from(map.entries()).map((entry) => [entry[0], toJson(entry[1])]);
+  return Array.from(map.entries())
+    .sort((entryA, entryB) => entryA[0].localeCompare(entryB[0]))
+    .map((entry) => [entry[0], toJson(entry[1])]);
 }
 
 function toJson(value: any) {
@@ -57,23 +59,44 @@ function prepareStorageTest<T>(
   const clonedItems = JSON.parse(JSON.stringify(items));
   const refStorage = Doc.load<T>(items, actor);
   const storage = Doc.load<T>(clonedItems, actor, (ops) => {
-    for (const op of ops) {
-      refStorage.apply(op);
-      storage.apply(op);
-    }
+    refStorage.apply(ops);
+    storage.apply(ops);
   });
 
-  function assert(data: any) {
+  const states: any[] = [];
+
+  function assert(data: any, shouldPushToStates = true) {
+    if (shouldPushToStates) {
+      states.push(data);
+    }
     const json = docToJson(storage);
     expect(json).toEqual(data);
     expect(docToJson(refStorage)).toEqual(data);
     expect(storage.count()).toBe(refStorage.count());
   }
 
+  function assertUndoRedo() {
+    for (let i = 0; i < states.length - 1; i++) {
+      storage.undo();
+      assert(states[states.length - 2 - i], false);
+    }
+
+    for (let i = 0; i < states.length - 1; i++) {
+      storage.redo();
+      assert(states[i + 1], false);
+    }
+
+    for (let i = 0; i < states.length - 1; i++) {
+      storage.undo();
+      assert(states[states.length - 2 - i], false);
+    }
+  }
+
   return {
     storage,
     refStorage,
     assert,
+    assertUndoRedo,
   };
 }
 
@@ -142,9 +165,176 @@ function createSerializedRegister(
 }
 
 describe("Storage", () => {
+  // it("batching", () => {
+  //   const { storage, assert } = prepareStorageTest<{ items: LiveList<string> }>(
+  //     [
+  //       createSerializedObject("0:0", {}),
+  //       createSerializedList("0:1", "0:0", "items"),
+  //     ]
+  //   );
+
+  //   const items = storage.root.get("items");
+
+  //   const fn = jest.fn();
+
+  //   items.subscribe(fn);
+
+  //   storage.batch(() => {
+  //     items.push("A");
+  //     items.push("B");
+  //   });
+
+  //   expect(fn).toHaveBeenCalledTimes(1);
+  // });
+
+  describe("undo / redo", () => {
+    it("list.push", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      items.push("A");
+      assert({
+        items: ["A"],
+      });
+
+      items.push("B");
+      assert({
+        items: ["A", "B"],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("max undo-redo stack", () => {
+      const { storage, assert } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      for (let i = 0; i < 100; i++) {
+        storage.root.set("a", i + 1);
+        assert({
+          a: i + 1,
+        });
+      }
+
+      for (let i = 0; i < 100; i++) {
+        storage.undo();
+      }
+
+      assert({
+        a: 50,
+      });
+    });
+
+    it("storage operation should clear redo stack", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      items.insert("A", 0);
+      assert({
+        items: ["A"],
+      });
+
+      storage.undo();
+
+      items.insert("B", 0);
+      assert({
+        items: ["B"],
+      });
+
+      storage.redo();
+
+      assert({
+        items: ["B"],
+      });
+    });
+  });
+
   describe("LiveObject", () => {
+    it("update non existing property", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest([
+        createSerializedObject("0:0", {}),
+      ]);
+
+      assert({});
+
+      storage.root.update({ a: 1 });
+      assert({
+        a: 1,
+      });
+
+      assertUndoRedo();
+    });
+
+    it("update non existing property with null", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest([
+        createSerializedObject("0:0", {}),
+      ]);
+
+      assert({});
+
+      storage.root.update({ a: null });
+      assert({
+        a: null,
+      });
+
+      assertUndoRedo();
+    });
+
+    it("update existing property", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest([
+        createSerializedObject("0:0", { a: 0 }),
+      ]);
+
+      assert({ a: 0 });
+
+      storage.root.update({ a: 1 });
+      assert({
+        a: 1,
+      });
+
+      assertUndoRedo();
+    });
+
+    it("update existing property with null", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest([
+        createSerializedObject("0:0", { a: 0 }),
+      ]);
+
+      assert({ a: 0 });
+
+      storage.root.update({ a: null });
+      assert({
+        a: null,
+      });
+
+      assertUndoRedo();
+    });
+
     it("update root", () => {
-      const { storage, assert } = prepareStorageTest([
+      const { storage, assert, assertUndoRedo } = prepareStorageTest([
         createSerializedObject("0:0", { a: 0 }),
       ]);
 
@@ -162,10 +352,12 @@ describe("Storage", () => {
         a: 1,
         b: 1,
       });
+
+      assertUndoRedo();
     });
 
-    it("remove child record with update", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("remove nested child record with update", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         a: number;
         child: LiveObject<{
           b: number;
@@ -194,28 +386,38 @@ describe("Storage", () => {
         child: null,
       });
       expect(storage.count()).toBe(1);
+
+      assertUndoRedo();
     });
 
-    it("update record with null prop", () => {
-      const { storage: doc, assert } = prepareStorageTest([
+    it("remove nested child record with update", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        a: number;
+        child: LiveObject<{
+          b: number;
+          grandChild: LiveObject<{ c: number }>;
+        }> | null;
+      }>([
         createSerializedObject("0:0", { a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
       ]);
 
       assert({
         a: 0,
+        child: {
+          b: 0,
+        },
       });
 
-      doc.root.update({ a: null });
-
-      assert({
-        a: null,
-      });
-
-      doc.root.update({ a: 0 });
+      storage.root.update({ child: null });
 
       assert({
         a: 0,
+        child: null,
       });
+      expect(storage.count()).toBe(1);
+
+      assertUndoRedo();
     });
 
     // it("delete record key", () => {
@@ -229,7 +431,7 @@ describe("Storage", () => {
     // });
 
     it("add nested record with update", () => {
-      const { storage, assert } = prepareStorageTest(
+      const { storage, assert, assertUndoRedo } = prepareStorageTest(
         [createSerializedObject("0:0", {})],
         1
       );
@@ -247,10 +449,12 @@ describe("Storage", () => {
       });
 
       expect(storage.count()).toBe(2);
+
+      assertUndoRedo();
     });
 
     it("replace nested record with update", () => {
-      const { storage, assert } = prepareStorageTest(
+      const { storage, assert, assertUndoRedo } = prepareStorageTest(
         [createSerializedObject("0:0", {})],
         1
       );
@@ -271,11 +475,19 @@ describe("Storage", () => {
         child: new LiveObject({ a: 1 }),
       });
 
+      assert({
+        child: {
+          a: 1,
+        },
+      });
+
       expect(storage.count()).toBe(2);
+
+      assertUndoRedo();
     });
 
     it("update nested record", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }>;
       }>([
@@ -300,10 +512,12 @@ describe("Storage", () => {
           b: 1,
         },
       });
+
+      assertUndoRedo();
     });
 
     it("update deeply nested record", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
       }>([
@@ -341,6 +555,8 @@ describe("Storage", () => {
           },
         },
       });
+
+      assertUndoRedo();
     });
 
     it("set should call subscribers", () => {
@@ -373,6 +589,30 @@ describe("Storage", () => {
       root.get("child").set("a", 0);
 
       expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    it("should ignore incoming updates if current op has not been acknowledged", () => {
+      const storage = Doc.load<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
+
+      expect(docToJson(storage)).toEqual({ a: 0 });
+
+      storage.root.set("a", 1);
+
+      expect(docToJson(storage)).toEqual({ a: 1 });
+
+      storage.apply([
+        {
+          type: OpType.UpdateObject,
+          data: { a: 2 },
+          id: "0:0",
+          opId: "external",
+        },
+      ]);
+
+      expect(docToJson(storage)).toEqual({ a: 1 });
     });
   });
 
@@ -421,9 +661,6 @@ describe("Storage", () => {
         createSerializedList("0:1", "0:0", "items"),
       ]);
 
-      const root = storage.root;
-      expect(root.toObject().items.toArray()).toMatchObject([]);
-
       assert({
         items: [],
       });
@@ -435,17 +672,10 @@ describe("Storage", () => {
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", "!"),
-        createSerializedObject("0:3", { a: 1 }, "0:1", '"'),
-        createSerializedObject("0:4", { a: 2 }, "0:1", "#"),
+        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
       ]);
-      const root = storage.root;
-      expect(
-        root
-          .toObject()
-          .items.toArray()
-          .map((r) => r.toObject())
-      ).toMatchObject([{ a: 0 }, { a: 1 }, { a: 2 }]);
 
       assert({
         items: [{ a: 0 }, { a: 1 }, { a: 2 }],
@@ -453,7 +683,7 @@ describe("Storage", () => {
     });
 
     it("list.push record", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
@@ -464,39 +694,46 @@ describe("Storage", () => {
       );
 
       const root = storage.root;
-      const items = root.toObject().items;
-      expect(items.toArray()).toMatchObject([]);
+      const items = root.get("items");
 
       assert({
         items: [],
       });
 
       items.push(new LiveObject({ a: 0 }));
+      assert({
+        items: [{ a: 0 }],
+      });
+
       items.push(new LiveObject({ a: 1 }));
+      assert({
+        items: [{ a: 0 }, { a: 1 }],
+      });
+
       items.push(new LiveObject({ a: 2 }));
-      expect(items.toArray().map((r) => r.toObject())).toMatchObject([
-        { a: 0 },
-        { a: 1 },
-        { a: 2 },
-      ]);
       assert({
         items: [{ a: 0 }, { a: 1 }, { a: 2 }],
       });
+
+      assertUndoRedo();
     });
 
     it("list.delete first item", () => {
-      let { storage: doc, assert } = prepareStorageTest<{
+      let {
+        storage: doc,
+        assert,
+        assertUndoRedo,
+      } = prepareStorageTest<{
         items: LiveList<number>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
-        createSerializedRegister("0:2", "0:1", "!", 0),
-        createSerializedRegister("0:3", "0:1", "'", 1),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, 0),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
       ]);
 
       const root = doc.root;
       const items = root.toObject().items;
-      expect(items.toArray()).toMatchObject([0, 1]);
 
       assert({
         items: [0, 1],
@@ -507,31 +744,47 @@ describe("Storage", () => {
       assert({
         items: [1],
       });
+
+      assertUndoRedo();
     });
 
     it("list.push record then delete", () => {
-      let { storage: doc } = prepareStorageTest<{
+      let {
+        storage: doc,
+        assert,
+        assertUndoRedo,
+      } = prepareStorageTest<{
         items: LiveList<LiveObject<{ b: number }>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
-      ]);
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
-      const root = doc.root;
-      const items = root.toObject().items;
-      expect(items.toArray()).toMatchObject([]);
+      const items = doc.root.get("items");
+
+      assert({
+        items: [],
+      });
 
       items.push(new LiveObject({ b: 0 }));
-      expect(items.toArray().map((r) => r.toObject())).toMatchObject([
-        { b: 0 },
-      ]);
+
+      assert({
+        items: [{ b: 0 }],
+      });
 
       items.delete(0);
-      expect(items.toArray()).toMatchObject([]);
+      assert({
+        items: [],
+      });
+
+      assertUndoRedo();
     });
 
     it("list.delete child record should remove descendants", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -557,22 +810,33 @@ describe("Storage", () => {
       });
 
       expect(storage.count()).toBe(2);
+
+      assertUndoRedo();
     });
 
     it("list.insert at index 0", () => {
-      let { storage, assert } = prepareStorageTest<{
+      let { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", "!"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
         ],
         1
       );
 
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+        ],
+      });
+
       const root = storage.root;
       const items = root.toObject().items;
+
       items.insert(new LiveObject({ a: 0 }), 0);
 
       assert({
@@ -585,18 +849,34 @@ describe("Storage", () => {
           },
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("list.move after current position", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", "!"),
-        createSerializedObject("0:3", { a: 1 }, "0:1", '"'),
-        createSerializedObject("0:4", { a: 2 }, "0:1", "#"),
+        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
       ]);
+
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
 
       const root = storage.root;
       const items = root.toObject().items;
@@ -615,6 +895,8 @@ describe("Storage", () => {
           },
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("list.push same record should throw", () => {
@@ -642,8 +924,8 @@ describe("Storage", () => {
       expect(() => items.push(record)).toThrow();
     });
 
-    it("list.push native object", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("list.push numbers", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<number>;
       }>(
         [
@@ -656,18 +938,25 @@ describe("Storage", () => {
       const root = storage.root;
       const items = root.toObject().items;
 
+      assert({ items: [] });
+
       items.push(0);
+      assert({ items: [0] });
+
       items.push(1);
+      assert({ items: [0, 1] });
+
       items.push(2);
 
-      expect(items.toArray()).toEqual([0, 1, 2]);
       assert({
         items: [0, 1, 2],
       });
+
+      assertUndoRedo();
     });
 
     it("list.push LiveMap", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         items: LiveList<LiveMap<string, number>>;
       }>(
         [
@@ -680,14 +969,15 @@ describe("Storage", () => {
       const root = storage.root;
       const items = root.get("items");
 
+      assert({ items: [] });
+
       items.push(new LiveMap<string, number>([["first", 0]]));
 
-      const asArray = items.toArray().map((x) => Array.from(x));
-
-      expect(asArray).toEqual([[["first", 0]]]);
       assert({
         items: [[["first", 0]]],
       });
+
+      assertUndoRedo();
     });
 
     it("list conflicts - move", () => {
@@ -718,21 +1008,25 @@ describe("Storage", () => {
         items: ["B", "C", "A"],
       });
 
-      storage.apply({
-        type: OpType.SetParentKey,
-        id: "1:1",
-        parentKey: FOURTH_POSITION,
-      });
+      storage.apply([
+        {
+          type: OpType.SetParentKey,
+          id: "1:1",
+          parentKey: FOURTH_POSITION,
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["C", "B", "A"],
       });
 
-      storage.apply({
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: FIFTH_POSITION,
-      });
+      storage.apply([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: FIFTH_POSITION,
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["C", "B", "A"],
@@ -753,24 +1047,28 @@ describe("Storage", () => {
       // Register id = 1:0
       items.push("0");
 
-      storage.apply({
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: "!",
-        data: "1",
-      });
+      storage.apply([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: "!",
+          data: "1",
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["1", "0"],
       });
 
       // Fix from backend
-      storage.apply({
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: '"',
-      });
+      storage.apply([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: '"',
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["1", "0"],
@@ -792,46 +1090,54 @@ describe("Storage", () => {
       items.push("x1"); // Register id = 1:1
 
       // Should go to pending
-      storage.apply({
-        type: OpType.CreateRegister,
-        id: "2:0",
-        parentId: "0:1",
-        parentKey: FIRST_POSITION,
-        data: "y0",
-      });
+      storage.apply([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "y0",
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["y0", "x0", "x1"],
       });
 
       // Should go to pending
-      storage.apply({
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: SECOND_POSITION,
-        data: "y1",
-      });
+      storage.apply([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: SECOND_POSITION,
+          data: "y1",
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["y0", "x0", "y1", "x1"],
       });
 
-      storage.apply({
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: THIRD_POSITION,
-      });
+      storage.apply([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: THIRD_POSITION,
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["y0", "y1", "x0", "x1"],
       });
 
-      storage.apply({
-        type: OpType.SetParentKey,
-        id: "1:1",
-        parentKey: FOURTH_POSITION,
-      });
+      storage.apply([
+        {
+          type: OpType.SetParentKey,
+          id: "1:1",
+          parentKey: FOURTH_POSITION,
+        },
+      ]);
 
       assertStorage(storage, {
         items: ["y0", "y1", "x0", "x1"],
@@ -968,7 +1274,7 @@ describe("Storage", () => {
     });
 
     it("map.set object", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, number>;
       }>(
         [
@@ -981,10 +1287,22 @@ describe("Storage", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      map.set("first", 0);
-      map.set("second", 1);
-      map.set("third", 2);
+      assert({ map: [] });
 
+      map.set("first", 0);
+      assert({
+        map: [["first", 0]],
+      });
+
+      map.set("second", 1);
+      assert({
+        map: [
+          ["first", 0],
+          ["second", 1],
+        ],
+      });
+
+      map.set("third", 2);
       assert({
         map: [
           ["first", 0],
@@ -992,10 +1310,12 @@ describe("Storage", () => {
           ["third", 2],
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("map.delete live object", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -1008,17 +1328,37 @@ describe("Storage", () => {
       const root = storage.root;
       const map = root.toObject().map;
 
-      map.delete("first");
-      map.delete("second");
-      map.delete("third");
+      assert({
+        map: [
+          ["first", 0],
+          ["second", 1],
+          ["third", 2],
+        ],
+      });
 
+      map.delete("first");
+      assert({
+        map: [
+          ["second", 1],
+          ["third", 2],
+        ],
+      });
+
+      map.delete("second");
+      assert({
+        map: [["third", 2]],
+      });
+
+      map.delete("third");
       assert({
         map: [],
       });
+
+      assertUndoRedo();
     });
 
     it("map.set live object", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -1030,12 +1370,17 @@ describe("Storage", () => {
 
       const root = storage.root;
       const map = root.toObject().map;
+      assert({
+        map: [],
+      });
 
       map.set("first", new LiveObject({ a: 0 }));
 
       assert({
         map: [["first", { a: 0 }]],
       });
+
+      assertUndoRedo();
     });
 
     it("map.set already attached live object should throw", () => {
@@ -1069,7 +1414,7 @@ describe("Storage", () => {
     });
 
     it("map.set live object on existing key", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -1092,10 +1437,12 @@ describe("Storage", () => {
       assert({
         map: [["first", { a: 1 }]],
       });
+
+      assertUndoRedo();
     });
 
     it("map.delete existing live object", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>(
         [
@@ -1120,10 +1467,12 @@ describe("Storage", () => {
       assert({
         map: [],
       });
+
+      assertUndoRedo();
     });
 
     it("map.delete live list", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveList<number>>;
       }>(
         [
@@ -1149,12 +1498,16 @@ describe("Storage", () => {
       assert({
         map: [],
       });
+
+      assertUndoRedo();
     });
 
     it("attach map with items to root", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, { a: number }>;
       }>([createSerializedObject("0:0", {})], 1);
+
+      assert({});
 
       storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
@@ -1168,12 +1521,16 @@ describe("Storage", () => {
           ],
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("attach map with live objects to root", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveObject<{ a: number }>>;
       }>([createSerializedObject("0:0", {})], 1);
+
+      assert({});
 
       storage.root.set(
         "map",
@@ -1190,12 +1547,16 @@ describe("Storage", () => {
           ],
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("attach map with objects to root", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, { a: number }>;
       }>([createSerializedObject("0:0", {})], 1);
+
+      assert({});
 
       storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
@@ -1209,10 +1570,12 @@ describe("Storage", () => {
           ],
         ],
       });
+
+      assertUndoRedo();
     });
 
     it("add list in map", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveList<string>>;
       }>(
         [
@@ -1222,16 +1585,20 @@ describe("Storage", () => {
         1
       );
 
+      assert({ map: [] });
+
       const map = storage.root.get("map");
       map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
       assert({
         map: [["list", ["itemA", "itemB", "itemC"]]],
       });
+
+      assertUndoRedo();
     });
 
     it("add map in map", () => {
-      const { storage, assert } = prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         map: LiveMap<string, LiveMap<string, string>>;
       }>(
         [
@@ -1241,12 +1608,16 @@ describe("Storage", () => {
         1
       );
 
+      assert({ map: [] });
+
       const map = storage.root.get("map");
       map.set("map", new LiveMap([["first", "itemA"]]));
 
       assert({
         map: [["map", [["first", "itemA"]]]],
       });
+
+      assertUndoRedo();
     });
   });
 

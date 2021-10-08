@@ -115,7 +115,7 @@ export type ClientOptions = {
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
-)
+);
 
 export type AuthorizeResponse = {
   token: string;
@@ -314,5 +314,10 @@ export type Room = {
    */
   broadcastEvent: (event: any) => void;
 
-  getStorage: <TRoot>() => Promise<{ root: LiveObject<TRoot> }>;
+  getStorage: <TRoot>() => Promise<{
+    root: LiveObject<TRoot>;
+  }>;
+
+  undo: () => void;
+  redo: () => void;
 };
