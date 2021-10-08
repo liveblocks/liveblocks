@@ -7,19 +7,27 @@ const puppeteer = require("puppeteer");
 
 const DIR = path.join(os.tmpdir(), "jest_puppeteer_global_setup");
 
-const WIDTH = 600;
+const WIDTH = 640;
 const HEIGHT = 800;
 
 module.exports = async function () {
   const browserA = await puppeteer.launch({
     headless: false,
-    args: [`--window-size=${WIDTH},${HEIGHT}`, `--window-position=0,0`],
+    args: [
+      `--window-size=${WIDTH},${HEIGHT}`,
+      `--window-position=0,0`,
+      "--disable-dev-shm-usage",
+    ],
   });
   global.__BROWSER_GLOBAL_A__ = browserA;
 
   const browserB = await puppeteer.launch({
     headless: false,
-    args: [`--window-size=${WIDTH},${HEIGHT}`, `--window-position=${WIDTH},0`],
+    args: [
+      `--window-size=${WIDTH},${HEIGHT}`,
+      `--window-position=${WIDTH},0`,
+      "--disable-dev-shm-usage",
+    ],
   });
   global.__BROWSER_GLOBAL_B__ = browserB;
 

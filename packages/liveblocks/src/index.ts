@@ -1,14 +1,4 @@
-export type { Record, RecordData, List } from "./doc";
+export { LiveObject, LiveList, LiveMap } from "./doc";
+export type { Others, Presence, Room, Client, User } from "./types";
 
 export { createClient } from "./client";
-
-export { LiveStorageState } from "./types";
-export type {
-  Others,
-  Presence,
-  Room,
-  InitialStorageFactory,
-  Client,
-  LiveStorage,
-  User,
-} from "./types";

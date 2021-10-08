@@ -3,19 +3,7 @@
  */
 
 import { Page, Browser, default as puppeteer } from "puppeteer";
-
-async function getTextContent(page: Page, id: string) {
-  const element = await page.$(`#${id}`);
-  if (element == null) {
-    throw new Error(`Element with id "${id}" is missing`);
-  }
-  const textContentHandle = await element.getProperty("textContent");
-  return await textContentHandle!.jsonValue<string>();
-}
-
-async function getJsonContent(page: Page, id: string) {
-  return JSON.parse(await getTextContent(page, id));
-}
+import { CONNECT_DELAY, delay, getJsonContent, getTextContent } from "./utils";
 
 function getCurrentPresenseCount(page: Page) {
   return getTextContent(page, "me-count");
@@ -29,8 +17,6 @@ const TEST_URL = "http://localhost:3007";
 
 declare const browserA: Browser;
 declare const browserB: Browser;
-
-const CONNECT_DELAY = 2000;
 
 describe("Presence", () => {
   it("me.count without initial presence should be empty", async () => {
@@ -128,7 +114,3 @@ describe("Presence", () => {
     await secondPage.close();
   });
 });
-
-function delay(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

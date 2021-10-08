@@ -1,14 +1,12 @@
 import {
   Client,
-  RecordData,
   Others,
   Presence,
-  Record,
-  InitialStorageFactory,
-  List,
+  LiveObject,
+  LiveMap,
   Room,
-  LiveStorageState,
   User,
+  LiveList,
 } from "@liveblocks/client";
 import * as React from "react";
 
@@ -43,7 +41,7 @@ function useClient(): Client {
   return client;
 }
 
-type RoomProviderProps = {
+type RoomProviderProps<TStorageRoot> = {
   /**
    * The id of the room you want to connect to
    */
@@ -54,6 +52,8 @@ type RoomProviderProps = {
    */
   defaultPresence?: () => Presence;
 
+  defaultStorageRoot?: TStorageRoot;
+
   children: React.ReactNode;
 };
 
@@ -62,11 +62,12 @@ type RoomProviderProps = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider({
+export function RoomProvider<TStorageRoot>({
   id,
   children,
   defaultPresence,
-}: RoomProviderProps) {
+  defaultStorageRoot,
+}: RoomProviderProps<TStorageRoot>) {
   const client = useClient();
 
   React.useEffect(() => {
@@ -77,7 +78,10 @@ export function RoomProvider({
 
   const room =
     client.getRoom(id) ||
-    client.enter(id, defaultPresence ? defaultPresence() : undefined);
+    client.enter(id, {
+      defaultPresence: defaultPresence ? defaultPresence() : undefined,
+      defaultStorageRoot,
+    });
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
@@ -100,8 +104,7 @@ function useRoom() {
  * It is different from the setState function returned by the useState hook from React.
  * You don't need to pass the full presence object to update it.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useMyPresence } from "@liveblocks/react";
  *
  * const [myPresence, updateMyPresence] = useMyPresence();
@@ -109,7 +112,6 @@ function useRoom() {
  * updateMyPresence({ y: 0 });
  *
  * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
- * ```
  */
 export function useMyPresence<T extends Presence>(): [
   T,
@@ -143,8 +145,7 @@ export function useMyPresence<T extends Presence>(): [
  * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
  * If you don't use the current user presence in your component, but you need to update it (e.g. live cursor), it's better to use useUpdateMyPresence to avoid unnecessary renders.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useUpdateMyPresence } from "@liveblocks/react";
  *
  * const updateMyPresence = useUpdateMyPresence();
@@ -152,7 +153,6 @@ export function useMyPresence<T extends Presence>(): [
  * updateMyPresence({ y: 0 });
  *
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
- * ```
  */
 export function useUpdateMyPresence<T extends Presence>(): (
   overrides: Partial<T>
@@ -170,8 +170,7 @@ export function useUpdateMyPresence<T extends Presence>(): (
 /**
  * Returns an object that lets you get information about all the the users currently connected in the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useOthers } from "@liveblocks/react";
  *
  * const others = useOthers();
@@ -185,7 +184,6 @@ export function useUpdateMyPresence<T extends Presence>(): (
  *     return <Cursor key={connectionId} cursor={presence.cursor} />
  *   })
  * }
- * ```
  */
 export function useOthers<T extends Presence>(): Others<T> {
   const room = useRoom();
@@ -210,14 +208,12 @@ export function useOthers<T extends Presence>(): Others<T> {
 /**
  * Returns a callback that lets you broadcast custom events to other users in the room
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useBroadcastEvent } from "@liveblocks/react";
  *
  * const broadcast = useBroadcastEvent();
  *
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
- * ```
  */
 export function useBroadcastEvent() {
   const room = useRoom();
@@ -233,14 +229,12 @@ export function useBroadcastEvent() {
 /**
  * useErrorListener is a react hook that lets you react to potential room connection errors.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useErrorListener } from "@liveblocks/react";
  *
  * useErrorListener(er => {
  *   console.error(er);
  * })
- * ```
  */
 export function useErrorListener(callback: (er: Error) => void) {
   const room = useRoom();
@@ -264,8 +258,7 @@ export function useErrorListener(callback: (er: Error) => void) {
 /**
  * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useEventListener } from "@liveblocks/react";
  *
  * useEventListener(({ connectionId, event }) => {
@@ -273,7 +266,6 @@ export function useErrorListener(callback: (er: Error) => void) {
  *     // Do something
  *   }
  * });
- * ```
  */
 export function useEventListener<TEvent>(
   callback: ({
@@ -306,12 +298,10 @@ export function useEventListener<TEvent>(
 /**
  * Gets the current user once it is connected to the room.
  *
- * ### Example
- * ``` typescript
+ * @example
  * import { useSelf } from "@liveblocks/react";
  *
  * const user = useSelf();
- * ```
  */
 export function useSelf<
   TPresence extends Presence = Presence
@@ -336,102 +326,151 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-type StorageActions = {
-  createRecord: Room["createRecord"];
-  updateRecord: Room["updateRecord"];
-
-  createList: Room["createList"];
-  moveItem: Room["moveItem"];
-  deleteItem: Room["deleteItem"];
-  deleteItemById: Room["deleteItemById"];
-  pushItem: Room["pushItem"];
-};
-
-export function useStorage<TRoot extends RecordData>(
-  initialStorage: InitialStorageFactory<TRoot>
-): [root: Record<TRoot> | null, actions: StorageActions] {
+export function useStorage<TRoot extends Record<string, any>>(): [
+  root: LiveObject<TRoot> | null
+] {
   const room = useRoom();
-  const storage = room.getStorage();
-  const [, update] = React.useState(0);
+  const [root, setState] = React.useState<LiveObject<TRoot> | null>(null);
 
   React.useEffect(() => {
-    function onStorageChange() {
-      update((x) => x + 1);
+    async function fetchStorage() {
+      const storage = await room.getStorage<TRoot>();
+      setState(storage.root);
     }
 
-    room.fetchStorage(initialStorage);
-    room.subscribe("storage", onStorageChange);
+    fetchStorage();
 
-    return () => {
-      room.unsubscribe("storage", onStorageChange);
-    };
+    return () => {};
   }, [room]);
 
-  const root =
-    storage.state === LiveStorageState.Loaded
-      ? (storage.root as Record<TRoot>)
-      : null;
-
-  const actions = useStorageActions();
-  return [root, actions];
+  return [root];
 }
 
-export function useStorageActions(): StorageActions {
-  const room = useRoom();
-  return React.useMemo(() => {
-    function createRecord<T extends RecordData>(data: T) {
-      return room.createRecord<T>(data);
+/**
+ * Returns the LiveMap associated to the provided key. If the LiveList does not exists, a new empty LiveMap will be created.
+ * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
+export function useMap<TKey extends string, TValue>(
+  key: string
+): LiveMap<TKey, TValue> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
     }
 
-    function updateRecord<T extends RecordData>(
-      record: Record<T>,
-      overrides: Partial<T>
-    ) {
-      return room.updateRecord<T>(record, overrides);
+    let map: LiveMap<TKey, TValue> = root.get(key);
+
+    if (map == null) {
+      map = new LiveMap();
+      root.set(key, map);
     }
 
-    function createList<T extends RecordData>(): List<Record<T>> {
-      return room.createList<T>();
+    function onChange() {
+      setCount((x) => x + 1);
     }
 
-    function moveItem<T extends RecordData>(
-      list: List<Record<T>>,
-      index: number,
-      targetIndex: number
-    ) {
-      return room.moveItem<T>(list, index, targetIndex);
-    }
+    map.subscribe(onChange);
 
-    function deleteItem<T extends RecordData>(
-      list: List<Record<T>>,
-      index: number
-    ) {
-      return room.deleteItem<T>(list, index);
-    }
+    setCount((x) => x + 1);
 
-    function deleteItemById<T extends RecordData>(
-      list: List<Record<T>>,
-      itemId: string
-    ) {
-      return room.deleteItemById<T>(list, itemId);
-    }
-
-    function pushItem<T extends RecordData>(
-      list: List<Record<T>>,
-      item: Record<T>
-    ) {
-      return room.pushItem<T>(list, item);
-    }
-
-    return {
-      createRecord,
-      updateRecord,
-
-      createList,
-      moveItem,
-      deleteItem,
-      deleteItemById,
-      pushItem,
+    return () => {
+      return map.unsubscribe(onChange);
     };
-  }, [room]);
+  }, [root]);
+
+  return root?.get(key) ?? null;
+}
+
+/**
+ * Returns the LiveList associated to the provided key. If the LiveList does not exists, a new empty LiveList will be created.
+ * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
+export function useList<TValue>(key: string): LiveList<TValue> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
+    }
+
+    let list: LiveList<TValue> = root.get(key);
+
+    if (list == null) {
+      list = new LiveList();
+      root.set(key, list);
+    }
+
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    list.subscribe(onChange);
+
+    setCount((x) => x + 1);
+
+    return () => {
+      return list.unsubscribe(onChange);
+    };
+  }, [root]);
+
+  return root?.get(key) ?? null;
+}
+
+/**
+ * Returns the LiveObject associated to the provided key. If the LiveObject does not exists, it will be created with the initialData parameter.
+ * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ */
+export function useObject<TData>(
+  key: string,
+  initialData?: TData
+): LiveObject<TData> | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
+    }
+
+    let obj: LiveObject<TData> = root.get(key);
+
+    if (obj == null) {
+      obj = new LiveObject(initialData);
+      root.set(key, obj);
+    }
+
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    obj.subscribe(onChange);
+
+    setCount((x) => x + 1);
+
+    return () => {
+      return obj.unsubscribe(onChange);
+    };
+  }, [root]);
+
+  return root?.get(key) ?? null;
+}
+
+/**
+ * Returns a function that undo the last operation executed by the current client.
+ * Undo does not impact operations made by other clients.
+ */
+export function useUndo() {
+  return useRoom().undo;
+}
+
+/**
+ * Returns a function that redo the last operation executed by the current client.
+ * Redo does not impact operations made by other clients.
+ */
+export function useRedo() {
+  return useRoom().redo;
 }

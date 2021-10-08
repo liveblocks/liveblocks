@@ -1,6 +1,6 @@
 import { AuthEndpoint, AuthenticationToken } from "./types";
 
-async function fetchAuthorize(endpoint: string, room: string): Promise<string> {
+async function fetchAuthorize(endpoint: string, room: string, publicApiKey?: string): Promise<string> {
   const res = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -8,6 +8,7 @@ async function fetchAuthorize(endpoint: string, room: string): Promise<string> {
     },
     body: JSON.stringify({
       room,
+      publicApiKey,
     }),
   });
 
@@ -37,10 +38,11 @@ async function fetchAuthorize(endpoint: string, room: string): Promise<string> {
 
 export default async function auth(
   endpoint: AuthEndpoint,
-  room: string
+  room: string,
+  publicApiKey?: string,
 ): Promise<string> {
   if (typeof endpoint === "string") {
-    return fetchAuthorize(endpoint, room);
+    return fetchAuthorize(endpoint, room, publicApiKey);
   }
 
   if (typeof endpoint === "function") {

@@ -9,10 +9,13 @@
 Liveblocks helps you create performant and reliable collaborative experiences.
 
 ## Documentation
+
 Visit [https://liveblocks.io/docs](https://liveblocks.io/docs) to get started with Liveblocks.
 
 ## Live examples
+
 Try it live on [liveblocks.io](https://liveblocks.io/examples).
 
 ## Examples
+
 Clone one of our [examples](https://github.com/liveblocks/liveblocks/tree/main/examples).

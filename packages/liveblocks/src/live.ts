@@ -54,9 +54,11 @@ export type EventMessage = {
   event: any;
 };
 
+export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
+
 export type InitialDocumentStateMessage = {
   type: ServerMessageType.InitialStorageState;
-  root: SerializedRecord | null;
+  items: SerializedCrdtWithId[];
 };
 
 export type UpdateStorageMessage = {
@@ -99,76 +101,124 @@ export type FetchStorageClientMessage = {
 };
 
 export enum CrdtType {
-  Record = 0,
+  Object = 0,
   List = 1,
-  Register = 2,
+  Map = 2,
+  Register = 3,
 }
 
-export type SerializedRecord = {
-  id: string;
-  type: CrdtType.Record;
+export type SerializedObject = {
+  type: CrdtType.Object;
+  parentId?: string;
+  parentKey?: string;
   data: {
-    [key: string]: SerializedCrdt;
+    [key: string]: any; // TODO
   };
 };
 
 export type SerializedList = {
-  id: string;
   type: CrdtType.List;
-  data: {
-    [position: string]: SerializedCrdt;
-  };
+  parentId: string;
+  parentKey: string;
+};
+
+export type SerializedMap = {
+  type: CrdtType.Map;
+  parentId: string;
+  parentKey: string;
 };
 
 export type SerializedRegister = {
-  id?: string;
   type: CrdtType.Register;
+  parentId: string;
+  parentKey: string;
   data: any;
 };
 
 export type SerializedCrdt =
-  | SerializedRecord
+  | SerializedObject
   | SerializedList
+  | SerializedMap
   | SerializedRegister;
 
 export enum OpType {
-  Init = 100,
-
-  ListInsert = 200,
-  ListMove = 201,
-  ListRemove = 202,
-
-  RecordUpdate = 300,
+  Init = 0,
+  SetParentKey = 1,
+  CreateList = 2,
+  UpdateObject = 3,
+  CreateObject = 4,
+  DeleteCrdt = 5,
+  DeleteObjectKey = 6,
+  CreateMap = 7,
+  CreateRegister = 8,
 }
 
-export type Op = RecordUpdateOp | ListInsertOp | ListDeleteOp | ListMoveOp;
+export type Op =
+  | CreateObjectOp
+  | UpdateObjectOp
+  | DeleteCrdtOp
+  | CreateListOp
+  | SetParentKeyOp
+  | DeleteObjectKeyOp
+  | CreateMapOp
+  | CreateRegisterOp;
 
-export type RecordUpdateOp = {
+export type UpdateObjectOp = {
+  opId?: string;
   id: string;
-  type: OpType.RecordUpdate;
+  type: OpType.UpdateObject;
   data: {
-    [key: string]: SerializedCrdt;
+    [key: string]: any; // TODO
   };
 };
 
-export type ListInsertOp = {
+export type CreateObjectOp = {
   id: string;
-  type: OpType.ListInsert;
-  position: string;
-  data: SerializedCrdt;
+  type: OpType.CreateObject;
+  parentId?: string;
+  parentKey?: string;
+  data: {
+    [key: string]: any; // TODO
+  };
 };
 
-export type ListMoveOp = {
+export type CreateListOp = {
   id: string;
-  type: OpType.ListMove;
-  itemId: string;
-  position: string;
+  type: OpType.CreateList;
+  parentId: string;
+  parentKey: string;
 };
 
-export type ListDeleteOp = {
+export type CreateMapOp = {
   id: string;
-  type: OpType.ListRemove;
-  itemId: string;
+  type: OpType.CreateMap;
+  parentId: string;
+  parentKey: string;
+};
+
+export type CreateRegisterOp = {
+  id: string;
+  type: OpType.CreateRegister;
+  parentId: string;
+  parentKey: string;
+  data: any;
+};
+
+export type DeleteCrdtOp = {
+  id: string;
+  type: OpType.DeleteCrdt;
+};
+
+export type SetParentKeyOp = {
+  id: string;
+  type: OpType.SetParentKey;
+  parentKey: string;
+};
+
+export type DeleteObjectKeyOp = {
+  id: string;
+  type: OpType.DeleteObjectKey;
+  key: string;
 };
 
 export enum WebsocketCloseCodes {
