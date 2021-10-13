@@ -78,11 +78,14 @@ function Whiteboard({ lines }: { lines: LiveList<Line> }) {
   const handlePointerMove = React.useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
       const point = getPoint(e.clientX, e.clientY);
-      // updateUserPoint(point);
 
       if (e.currentTarget.hasPointerCapture(e.pointerId)) {
         updateMyPresence({ points: [...presence.points!, point] });
       }
+
+      updateMyPresence({
+        cursor: { x: point[0], y: point[1] },
+      });
     },
     [presence, updateMyPresence]
   );
@@ -114,7 +117,9 @@ function Whiteboard({ lines }: { lines: LiveList<Line> }) {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerEnter={() => updateMyPresence({ isActive: true })}
-        onPointerLeave={() => updateMyPresence({ isActive: false })}
+        onPointerLeave={() =>
+          updateMyPresence({ isActive: false, cursor: null })
+        }
       >
         <g transform={`translate(0, -${getYOffset()})`}>
           {self && presence.points && presence.points.length > 2 && (
