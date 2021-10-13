@@ -1,3 +1,49 @@
+export const dataRevenue = [
+  {
+    name: "Jul",
+    current: 8500,
+    previous: 8218,
+  },
+  {
+    name: "Aug",
+    current: 9512,
+    previous: 7403,
+  },
+  {
+    name: "Sep",
+    current: 10100,
+    previous: 8521,
+  },
+  {
+    name: "Oct",
+    current: 12900,
+    previous: 9247,
+  },
+];
+
+export const dataUsers = [
+  {
+    name: "Jul",
+    current: 192,
+    previous: 189,
+  },
+  {
+    name: "Aug",
+    current: 230,
+    previous: 201,
+  },
+  {
+    name: "Sep",
+    current: 399,
+    previous: 266,
+  },
+  {
+    name: "Oct",
+    current: 455,
+    previous: 389,
+  },
+];
+
 export const dataBar = [
   {
     name: "Page A",
