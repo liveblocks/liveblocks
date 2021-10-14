@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   XAxis,
   YAxis,
@@ -6,14 +6,55 @@ import {
   LineChart,
   Line,
   CartesianGrid,
+  Legend,
 } from "recharts";
 import { dataRevenue, dataUsers } from "./data";
-import { RoomProvider } from "@liveblocks/react";
+import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
 import styles from "./App.module.css";
 import Header from "./Header";
 import Card from "./Card";
 
 function BarChartDemo() {
+  const [myPresence, updateMyPresence] = useMyPresence();
+  const others = useOthers();
+
+  const handleLegendMouseEnter = (e, cardId) => {
+    const { dataKey } = e;
+
+    updateMyPresence({
+      selectedDataset: {
+        cardId: cardId,
+        dataKey: dataKey,
+      },
+    });
+  };
+
+  const handleLegendMouseLeave = (e) => {
+    updateMyPresence({
+      selectedDataset: null,
+    });
+  };
+
+  const isDatasetSelected = (cardId, dataKey) => {
+    if (
+      myPresence?.selectedDataset?.cardId === cardId &&
+      myPresence?.selectedDataset?.dataKey === dataKey
+    ) {
+      return true;
+    }
+
+    for (const other of others.toArray()) {
+      if (
+        other.presence?.selectedDataset?.cardId === cardId &&
+        other.presence?.selectedDataset?.dataKey === dataKey
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   return (
     <div className={styles.container}>
       <Header />
@@ -37,13 +78,20 @@ function BarChartDemo() {
                   type="monotone"
                   dataKey="current"
                   stroke="#31f2cc"
-                  strokeWidth={2}
+                  strokeWidth={isDatasetSelected("revenue", "current") ? 4 : 2}
                 />
                 <Line
                   type="monotone"
                   dataKey="previous"
                   stroke="#2E75FF"
-                  strokeWidth={2}
+                  strokeWidth={isDatasetSelected("revenue", "previous") ? 4 : 2}
+                />
+                <Legend
+                  verticalAlign="top"
+                  onMouseEnter={(event) =>
+                    handleLegendMouseEnter(event, "revenue")
+                  }
+                  onMouseLeave={handleLegendMouseLeave}
                 />
               </LineChart>
             </ResponsiveContainer>
