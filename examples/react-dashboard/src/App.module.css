@@ -1,14 +1,12 @@
 .container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  position: relative;
 }
 
 .container_charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  margin: 0 12px 12px;
+  padding: 0 12px 12px;
 }
 
 .card_heading {
@@ -35,7 +33,7 @@
   }
 
   .card_heading {
-    font-size: 32px;
+    font-size: 34px;
     font-weight: 300;
     margin: 0;
   }

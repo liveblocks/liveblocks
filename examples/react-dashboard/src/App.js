@@ -73,22 +73,22 @@ function BarChartDemo() {
                 data={dataRevenue}
                 margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
               >
-                <CartesianGrid stroke="#e1e5e9" strokeDasharray="5 5" />
                 <XAxis dataKey="name" hide />
                 <YAxis type="number" domain={["dataMin", "dataMax"]} hide />
                 <Line
                   type="monotone"
                   dataKey="current"
                   stroke="#31f2cc"
-                  strokeWidth={isDatasetSelected("revenue", "current") ? 4 : 2}
+                  strokeWidth={isDatasetSelected("revenue", "current") ? 3 : 2}
                 />
                 <Line
                   type="monotone"
                   dataKey="previous"
                   stroke="#2E75FF"
-                  strokeWidth={isDatasetSelected("revenue", "previous") ? 4 : 2}
+                  strokeWidth={isDatasetSelected("revenue", "previous") ? 3 : 2}
                 />
                 <Legend
+                  align="left"
                   verticalAlign="top"
                   onMouseEnter={(event) =>
                     handleLegendMouseEnter(event, "revenue")
@@ -113,7 +113,7 @@ function BarChartDemo() {
                   cx="50%"
                   cy="50%"
                   outerRadius={80}
-                  innerRadius={40}
+                  innerRadius={60}
                   dataKey="value"
                   label={(entry) => {
                     return entry.name;
@@ -137,20 +137,27 @@ function BarChartDemo() {
                 data={dataUsers}
                 margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
               >
-                <CartesianGrid stroke="#e1e5e9" strokeDasharray="5 5" />
                 <XAxis dataKey="name" hide />
                 <YAxis type="number" domain={["dataMin", "dataMax"]} hide />
                 <Line
                   type="monotone"
                   dataKey="current"
                   stroke="#31f2cc"
-                  strokeWidth={2}
+                  strokeWidth={isDatasetSelected("users", "current") ? 3 : 2}
                 />
                 <Line
                   type="monotone"
                   dataKey="previous"
                   stroke="#2E75FF"
-                  strokeWidth={2}
+                  strokeWidth={isDatasetSelected("users", "previous") ? 3 : 2}
+                />
+                <Legend
+                  align="left"
+                  verticalAlign="top"
+                  onMouseEnter={(event) =>
+                    handleLegendMouseEnter(event, "users")
+                  }
+                  onMouseLeave={handleLegendMouseLeave}
                 />
               </LineChart>
             </ResponsiveContainer>
