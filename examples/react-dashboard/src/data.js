@@ -89,9 +89,9 @@ export const dataBar = [
   },
 ];
 
-export const dataPie = [
-  { name: "Group A", value: 400 },
-  { name: "Group B", value: 300 },
-  { name: "Group C", value: 300 },
-  { name: "Group D", value: 200 },
+export const dataPlatforms = [
+  { name: "Android", value: 400 },
+  { name: "iOS", value: 300 },
+  { name: "Web app", value: 300 },
+  { name: "Others", value: 200 },
 ];

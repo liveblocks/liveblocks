@@ -7,8 +7,10 @@ import {
   Line,
   CartesianGrid,
   Legend,
+  PieChart,
+  Pie,
 } from "recharts";
-import { dataRevenue, dataUsers } from "./data";
+import { dataRevenue, dataUsers, dataPlatforms } from "./data";
 import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
 import styles from "./App.module.css";
 import Header from "./Header";
@@ -97,7 +99,32 @@ function BarChartDemo() {
             </ResponsiveContainer>
           </div>
         </Card>
+        <Card id="platforms">
+          <h2 className={styles.card_heading}>
+            Platforms
+            <span>Most used: Android</span>
+          </h2>
 
+          <div className={styles.card_chart_area}>
+            <ResponsiveContainer width={"100%"} height={220}>
+              <PieChart>
+                <Pie
+                  data={dataPlatforms}
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  innerRadius={40}
+                  dataKey="value"
+                  label={(entry) => {
+                    return entry.name;
+                  }}
+                  labelLine={false}
+                  fill={"#2E75FF"}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
         <Card id="users">
           <h2 className={styles.card_heading}>
             455
