@@ -5,12 +5,13 @@ import {
   ResponsiveContainer,
   LineChart,
   Line,
-  CartesianGrid,
+  Bar,
   Legend,
   PieChart,
   Pie,
+  BarChart,
 } from "recharts";
-import { dataRevenue, dataUsers, dataPlatforms } from "./data";
+import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
 import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
 import styles from "./App.module.css";
 import Header from "./Header";
@@ -78,14 +79,22 @@ function BarChartDemo() {
                 <Line
                   type="monotone"
                   dataKey="current"
-                  stroke="#31f2cc"
-                  strokeWidth={isDatasetSelected("revenue", "current") ? 3 : 2}
+                  stroke={
+                    isDatasetSelected("revenue", "previous")
+                      ? "#e1e5e9"
+                      : "#31f2cc"
+                  }
+                  strokeWidth={2}
                 />
                 <Line
                   type="monotone"
                   dataKey="previous"
-                  stroke="#2E75FF"
-                  strokeWidth={isDatasetSelected("revenue", "previous") ? 3 : 2}
+                  stroke={
+                    isDatasetSelected("revenue", "current")
+                      ? "#e1e5e9"
+                      : "#2E75FF"
+                  }
+                  strokeWidth={2}
                 />
                 <Legend
                   align="left"
@@ -142,14 +151,22 @@ function BarChartDemo() {
                 <Line
                   type="monotone"
                   dataKey="current"
-                  stroke="#31f2cc"
-                  strokeWidth={isDatasetSelected("users", "current") ? 3 : 2}
+                  stroke={
+                    isDatasetSelected("users", "previous")
+                      ? "#e1e5e9"
+                      : "#31f2cc"
+                  }
+                  strokeWidth={2}
                 />
                 <Line
                   type="monotone"
                   dataKey="previous"
-                  stroke="#2E75FF"
-                  strokeWidth={isDatasetSelected("users", "previous") ? 3 : 2}
+                  stroke={
+                    isDatasetSelected("users", "current")
+                      ? "#e1e5e9"
+                      : "#2E75FF"
+                  }
+                  strokeWidth={2}
                 />
                 <Legend
                   align="left"
@@ -160,6 +177,47 @@ function BarChartDemo() {
                   onMouseLeave={handleLegendMouseLeave}
                 />
               </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+        <Card id="activation">
+          <h2 className={styles.card_heading}>
+            Activation
+            <span>Users</span>
+          </h2>
+
+          <div className={styles.card_chart_area}>
+            <ResponsiveContainer width={"100%"} height={220}>
+              <BarChart
+                data={dataActivation}
+                margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+              >
+                <Legend
+                  align="left"
+                  verticalAlign="top"
+                  onMouseEnter={(event) =>
+                    handleLegendMouseEnter(event, "activation")
+                  }
+                  onMouseLeave={handleLegendMouseLeave}
+                />
+                <Bar
+                  dataKey="current"
+                  fill={
+                    isDatasetSelected("activation", "previous")
+                      ? "#e1e5e9"
+                      : "#31f2cc"
+                  }
+                />
+                <Bar
+                  dataKey="previous"
+                  fill={
+                    isDatasetSelected("activation", "current")
+                      ? "#e1e5e9"
+                      : "#2E75FF"
+                  }
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
