@@ -347,11 +347,20 @@ export function useStorage<TRoot extends Record<string, any>>(): [
 }
 
 /**
- * Returns the LiveMap associated to the provided key. If the LiveList does not exists, a new empty LiveMap will be created.
+ * Returns the LiveMap associated to the provided key. If the LiveMap does not exists, a new empty LiveMap will be created.
  * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated to the LiveMap
+ * @param entries Optional entries that are used to create the LiveMap for the first time
+ * @returns returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+ *
+ * @example
+ * const emptyMap = useMap("mapA");
+ * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
 export function useMap<TKey extends string, TValue>(
-  key: string
+  key: string,
+  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
@@ -364,7 +373,7 @@ export function useMap<TKey extends string, TValue>(
     let map: LiveMap<TKey, TValue> = root.get(key);
 
     if (map == null) {
-      map = new LiveMap();
+      map = new LiveMap(entries);
       root.set(key, map);
     }
 
@@ -385,10 +394,21 @@ export function useMap<TKey extends string, TValue>(
 }
 
 /**
- * Returns the LiveList associated to the provided key. If the LiveList does not exists, a new empty LiveList will be created.
+ * Returns the LiveList associated to the provided key. If the LiveList does not exists, a new LiveList will be created.
  * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated to the LiveList
+ * @param items Optional items that are used to create the LiveList for the first time
+ * @returns return null while the storage is loading, otherwise, returns the LiveList associated to the storage
+ *
+ * @example
+ * const emptyList = useList("listA");
+ * const listWithItems = useList("listB", ["a", "b", "c"]);
  */
-export function useList<TValue>(key: string): LiveList<TValue> | null {
+export function useList<TValue>(
+  key: string,
+  items?: TValue[] | undefined
+): LiveList<TValue> | null {
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -400,7 +420,7 @@ export function useList<TValue>(key: string): LiveList<TValue> | null {
     let list: LiveList<TValue> = root.get(key);
 
     if (list == null) {
-      list = new LiveList();
+      list = new LiveList(items);
       root.set(key, list);
     }
 
@@ -423,6 +443,16 @@ export function useList<TValue>(key: string): LiveList<TValue> | null {
 /**
  * Returns the LiveObject associated to the provided key. If the LiveObject does not exists, it will be created with the initialData parameter.
  * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated to the LiveObject
+ * @param initialData Optional data that is used to create the LiveObject for the first time
+ * @returns return null while the storage is loading, otherwise, returns the LveObject associated to the storage
+ *
+ * @example
+ * const object = useObject("obj", {
+ *   company: "Liveblocks",
+ *   website: "https://liveblocks.io"
+ * });
  */
 export function useObject<TData>(
   key: string,
