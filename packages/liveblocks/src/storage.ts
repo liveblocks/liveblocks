@@ -22,19 +22,17 @@ export default class Storage {
     }
   ) {}
 
-  private createDocFromMessage<TRoot>(message: InitialDocumentStateMessage) {
-    if (message.items.length === 0) {
-      this._doc = Doc.from<TRoot>(
-        this.options.defaultRoot as TRoot,
-        this.options.getConnectionId(),
-        this.options.dispatch
-      );
-    } else {
-      this._doc = Doc.load(
-        message.items,
-        this.options.getConnectionId(),
-        this.options.dispatch
-      );
+  private createDocFromMessage(message: InitialDocumentStateMessage) {
+    this._doc = Doc.load(
+      message.items,
+      this.options.getConnectionId(),
+      this.options.dispatch
+    );
+
+    for (const key in this.options.defaultRoot) {
+      if (this._doc.root.get(key) == null) {
+        this._doc.root.set(key, this.options.defaultRoot[key]);
+      }
     }
   }
 

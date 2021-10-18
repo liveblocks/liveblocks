@@ -10,7 +10,6 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
 import { LiveblocksProvider, RoomProvider, useMyPresence, useOthers } from ".";
-import { ErrorBoundary } from "react-error-boundary";
 import {
   ClientMessageType,
   ServerMessageType,
@@ -415,34 +414,4 @@ describe("presence", () => {
       JSON.stringify([])
     );
   });
-
-  // describe("error handling", () => {
-  //   beforeEach(() => {
-  //     // Remove jsdom error logs for uncaught errors to avoid noise
-  //     // https://youtu.be/dxWrHEOD5DU?t=592
-  //     jest.spyOn(console, "error").mockImplementation(() => {});
-  //   });
-
-  //   afterEach(() => {
-  //     (console.error as any).mockRestore();
-  //   });
-
-  //   test("auth endpoint failed", async () => {
-  //     const client = createClient({ authEndpoint: "/api/auth-fail" });
-
-  //     render(
-  //       <ErrorBoundary fallbackRender={ErrorFallback}>
-  //         <LiveblocksProvider client={client}>
-  //           <PresenceComponent room="room" initialPresence={{ x: 1 }} />
-  //         </LiveblocksProvider>
-  //       </ErrorBoundary>
-  //     );
-
-  //     await waitFor(() => screen.getByTestId(testIds.errorConstructorName));
-
-  //     expect(screen.getByTestId(testIds.errorConstructorName).textContent).toBe(
-  //       "AuthenticationError"
-  //     );
-  //   });
-  // });
 });

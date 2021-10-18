@@ -765,7 +765,7 @@ export function createRoom(
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net/v3";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v4";
 
   let authEndpoint: AuthEndpoint;
   if (options.authEndpoint) {

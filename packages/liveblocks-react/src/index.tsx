@@ -347,116 +347,62 @@ export function useStorage<TRoot extends Record<string, any>>(): [
 }
 
 /**
- * Returns the LiveMap associated to the provided key. If the LiveList does not exists, a new empty LiveMap will be created.
+ * Returns the LiveMap associated with the provided key. If the LiveMap does not exist, a new empty LiveMap will be created.
  * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated with the LiveMap
+ * @param entries Optional entries that are used to create the LiveMap for the first time
+ * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
+ *
+ * @example
+ * const emptyMap = useMap("mapA");
+ * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
 export function useMap<TKey extends string, TValue>(
-  key: string
+  key: string,
+  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
-  const [root] = useStorage();
-  const [, setCount] = React.useState(0);
-
-  React.useEffect(() => {
-    if (root == null) {
-      return;
-    }
-
-    let map: LiveMap<TKey, TValue> = root.get(key);
-
-    if (map == null) {
-      map = new LiveMap();
-      root.set(key, map);
-    }
-
-    function onChange() {
-      setCount((x) => x + 1);
-    }
-
-    map.subscribe(onChange);
-
-    setCount((x) => x + 1);
-
-    return () => {
-      return map.unsubscribe(onChange);
-    };
-  }, [root]);
-
-  return root?.get(key) ?? null;
+  return useCrdt(key, new LiveMap(entries));
 }
 
 /**
- * Returns the LiveList associated to the provided key. If the LiveList does not exists, a new empty LiveList will be created.
+ * Returns the LiveList associated with the provided key. If the LiveList does not exist, a new LiveList will be created.
  * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated with the LiveList
+ * @param items Optional items that are used to create the LiveList for the first time
+ * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
+ *
+ * @example
+ * const emptyList = useList("listA");
+ * const listWithItems = useList("listB", ["a", "b", "c"]);
  */
-export function useList<TValue>(key: string): LiveList<TValue> | null {
-  const [root] = useStorage();
-  const [, setCount] = React.useState(0);
-
-  React.useEffect(() => {
-    if (root == null) {
-      return;
-    }
-
-    let list: LiveList<TValue> = root.get(key);
-
-    if (list == null) {
-      list = new LiveList();
-      root.set(key, list);
-    }
-
-    function onChange() {
-      setCount((x) => x + 1);
-    }
-
-    list.subscribe(onChange);
-
-    setCount((x) => x + 1);
-
-    return () => {
-      return list.unsubscribe(onChange);
-    };
-  }, [root]);
-
-  return root?.get(key) ?? null;
+export function useList<TValue>(
+  key: string,
+  items?: TValue[] | undefined
+): LiveList<TValue> | null {
+  return useCrdt<LiveList<TValue>>(key, new LiveList(items));
 }
 
 /**
- * Returns the LiveObject associated to the provided key. If the LiveObject does not exists, it will be created with the initialData parameter.
+ * Returns the LiveObject associated with the provided key. If the LiveObject does not exist, it will be created with the initialData parameter.
  * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
+ *
+ * @param key The storage key associated with the LiveObject
+ * @param initialData Optional data that is used to create the LiveObject for the first time
+ * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
+ *
+ * @example
+ * const object = useObject("obj", {
+ *   company: "Liveblocks",
+ *   website: "https://liveblocks.io"
+ * });
  */
 export function useObject<TData>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
-  const [root] = useStorage();
-  const [, setCount] = React.useState(0);
-
-  React.useEffect(() => {
-    if (root == null) {
-      return;
-    }
-
-    let obj: LiveObject<TData> = root.get(key);
-
-    if (obj == null) {
-      obj = new LiveObject(initialData);
-      root.set(key, obj);
-    }
-
-    function onChange() {
-      setCount((x) => x + 1);
-    }
-
-    obj.subscribe(onChange);
-
-    setCount((x) => x + 1);
-
-    return () => {
-      return obj.unsubscribe(onChange);
-    };
-  }, [root]);
-
-  return root?.get(key) ?? null;
+  return useCrdt(key, new LiveObject(initialData));
 }
 
 /**
@@ -473,4 +419,53 @@ export function useUndo() {
  */
 export function useRedo() {
   return useRoom().redo;
+}
+
+function useCrdt<
+  T extends {
+    subscribe: (callback: () => void) => void;
+    unsubscribe: (callback: () => void) => void;
+  }
+>(key: string, initialCrdt: T): T | null {
+  const [root] = useStorage();
+  const [, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    if (root == null) {
+      return;
+    }
+
+    let crdt: null | T = root.get(key);
+
+    if (crdt == null) {
+      crdt = initialCrdt;
+      root.set(key, crdt);
+    }
+
+    function onChange() {
+      setCount((x) => x + 1);
+    }
+
+    function onRootChange() {
+      const newCrdt = root!.get(key);
+      if (newCrdt !== crdt) {
+        crdt!.unsubscribe(onChange);
+        crdt = newCrdt;
+        crdt!.subscribe(onChange);
+        setCount((x) => x + 1);
+      }
+    }
+
+    crdt.subscribe(onChange);
+    root.subscribe(onRootChange);
+
+    setCount((x) => x + 1);
+
+    return () => {
+      root.unsubscribe(onRootChange);
+      crdt!.unsubscribe(onChange);
+    };
+  }, [root]);
+
+  return root?.get(key) ?? null;
 }
