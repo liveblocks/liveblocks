@@ -29,52 +29,44 @@ declare const browserA: Browser;
 declare const browserB: Browser;
 
 describe("Storage/list", () => {
-  it("list push", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
+  let firstPage: Page, secondPage: Page;
+  beforeEach(async () => {
+    firstPage = await browserA.newPage();
+    secondPage = await browserB.newPage();
+
+    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
     await delay(CONNECT_DELAY);
+  });
 
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-
+  afterEach(async () => {
     await firstPage.close();
     await secondPage.close();
   });
 
+  it("list push", async () => {
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+
+    await firstPage.click("#push");
+    await delay(1000);
+    await assertItemsAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#push");
+    await delay(1000);
+    await assertItemsAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#push");
+    await delay(1000);
+    await assertItemsAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
+
   it("list move", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -99,22 +91,9 @@ describe("Storage/list", () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
-
-    await firstPage.close();
-    await secondPage.close();
   });
 
   it("push conflicts", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -134,22 +113,9 @@ describe("Storage/list", () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
-
-    await firstPage.close();
-    await secondPage.close();
   });
 
-  it.only("fuzzy", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
-
+  it("fuzzy", async () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -178,8 +144,5 @@ describe("Storage/list", () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
-
-    await firstPage.close();
-    await secondPage.close();
   });
 });

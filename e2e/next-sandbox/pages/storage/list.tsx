@@ -45,7 +45,6 @@ function Sandbox() {
         onClick={() => {
           list.push(me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
-          console.clear();
         }}
       >
         Push
