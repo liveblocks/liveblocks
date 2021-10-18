@@ -9,9 +9,9 @@
     "test": "jest"
   },
   "dependencies": {
-    "@liveblocks/client": "0.12.0-beta.13",
+    "@liveblocks/client": "0.12.1",
     "@liveblocks/node": "0.3.0",
-    "@liveblocks/react": "0.12.0-beta.13",
+    "@liveblocks/react": "0.12.1",
     "next": "11.0.1",
     "react": "17.0.2",
     "react-dom": "17.0.2",
