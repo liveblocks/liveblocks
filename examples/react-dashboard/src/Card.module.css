@@ -1,0 +1,13 @@
+.container {
+  position: relative;
+  background: var(--white);
+  border-radius: 5px;
+  box-shadow: 0 12px 24px -16px rgba(26, 43, 59, 0.2);
+  padding: 16px;
+}
+
+@media (max-width: 800px) {
+  .container {
+    padding: 12px;
+  }
+}
