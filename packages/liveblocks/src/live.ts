@@ -151,6 +151,7 @@ export enum OpType {
   DeleteObjectKey = 6,
   CreateMap = 7,
   CreateRegister = 8,
+  ClearList = 9,
 }
 
 export type Op =
@@ -161,19 +162,22 @@ export type Op =
   | SetParentKeyOp
   | DeleteObjectKeyOp
   | CreateMapOp
-  | CreateRegisterOp;
+  | CreateRegisterOp
+  | ClearListOp;
 
-export type UpdateObjectOp = {
-  opId?: string;
+type OperationBase = {
   id: string;
+};
+
+export type UpdateObjectOp = OperationBase & {
+  opId?: string;
   type: OpType.UpdateObject;
   data: {
     [key: string]: any; // TODO
   };
 };
 
-export type CreateObjectOp = {
-  id: string;
+export type CreateObjectOp = OperationBase & {
   type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
@@ -182,43 +186,41 @@ export type CreateObjectOp = {
   };
 };
 
-export type CreateListOp = {
-  id: string;
+export type CreateListOp = OperationBase & {
   type: OpType.CreateList;
   parentId: string;
   parentKey: string;
 };
 
-export type CreateMapOp = {
-  id: string;
+export type CreateMapOp = OperationBase & {
   type: OpType.CreateMap;
   parentId: string;
   parentKey: string;
 };
 
-export type CreateRegisterOp = {
-  id: string;
+export type CreateRegisterOp = OperationBase & {
   type: OpType.CreateRegister;
   parentId: string;
   parentKey: string;
   data: any;
 };
 
-export type DeleteCrdtOp = {
-  id: string;
+export type DeleteCrdtOp = OperationBase & {
   type: OpType.DeleteCrdt;
 };
 
-export type SetParentKeyOp = {
-  id: string;
+export type SetParentKeyOp = OperationBase & {
   type: OpType.SetParentKey;
   parentKey: string;
 };
 
-export type DeleteObjectKeyOp = {
-  id: string;
+export type DeleteObjectKeyOp = OperationBase & {
   type: OpType.DeleteObjectKey;
   key: string;
+};
+
+export type ClearListOp = OperationBase & {
+  type: OpType.ClearList;
 };
 
 export enum WebsocketCloseCodes {
