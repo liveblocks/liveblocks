@@ -1143,6 +1143,66 @@ describe("Storage", () => {
         items: ["y0", "y1", "x0", "x1"],
       });
     });
+
+    it("list.deleteAll", () => {
+      let {
+        storage: doc,
+        assert,
+        assertUndoRedo,
+      } = prepareStorageTest<{
+        items: LiveList<number>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, 0),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
+      ]);
+
+      const root = doc.root;
+      const items = root.toObject().items;
+
+      assert({
+        items: [0, 1],
+      });
+
+      items.deleteAll();
+
+      assert({
+        items: [],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("list.apply ClearList", () => {
+      const storage = Doc.load<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      items.push("x0"); // Register id = 1:0
+      items.push("x1"); // Register id = 1:1
+
+      assertStorage(storage, {
+        items: ["x0", "x1"],
+      });
+
+      storage.apply([
+        {
+          type: OpType.ClearList,
+          id: "0:1",
+        },
+      ]);
+
+      assertStorage(storage, {
+        items: [],
+      });
+    });
   });
 
   describe("LiveMap", () => {

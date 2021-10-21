@@ -122,7 +122,8 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
       case OpType.DeleteCrdt:
-      case OpType.SetParentKey: {
+      case OpType.SetParentKey:
+      case OpType.ClearList: {
         const item = this.#items.get(op.id);
 
         if (item == null) {
@@ -1325,7 +1326,30 @@ export class LiveList<T> extends AbstractCrdt {
    * INTERNAL
    */
   _apply(op: Op) {
+    if (op.type === OpType.ClearList) {
+      return this.#applyClearList();
+    }
+
     return super._apply(op);
+  }
+
+  #applyClearList(): Op[] {
+    if (this.#items.length === 0) {
+      return [];
+    }
+
+    const reverse: Op[] = [];
+
+    this.#items.map((item) => {
+      item[0]._detach();
+
+      reverse.push(...item[0]._serialize(this._id!, item[1]));
+    });
+
+    this.#items.splice(0, this.#items.length);
+
+    this._notify();
+    return reverse;
   }
 
   /**
@@ -1472,6 +1496,35 @@ export class LiveList<T> extends AbstractCrdt {
           },
         ]);
       }
+    }
+
+    this._notify();
+  }
+
+  deleteAll() {
+    if (this.#items.length === 0) {
+      return [];
+    }
+
+    const undoOps: Op[] = [];
+
+    this.#items.map((item) => {
+      item[0]._detach();
+
+      undoOps.push(...item[0]._serialize(this._id!, item[1]));
+    });
+
+    this.#items.splice(0, this.#items.length);
+
+    if (this._doc) {
+      this._doc.addToUndoStack(undoOps);
+
+      this._doc.dispatch([
+        {
+          id: this._id!,
+          type: OpType.ClearList,
+        },
+      ]);
     }
 
     this._notify();
