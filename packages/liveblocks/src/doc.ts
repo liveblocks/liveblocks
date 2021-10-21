@@ -1501,6 +1501,9 @@ export class LiveList<T> extends AbstractCrdt {
     this._notify();
   }
 
+  /**
+   * Deletes all elements of the LiveList.
+   */
   deleteAll() {
     if (this.#items.length === 0) {
       return [];
@@ -1605,7 +1608,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveLsit is searched backwards, starting at fromIndex.
+   * Returns the last index at which a given element can be found in the LiveList, or -1 if it is not present. The LiveList is searched backwards, starting at fromIndex.
    * @param searchElement Element to locate.
    * @param fromIndex The index at which to start searching backwards.
    * @returns
