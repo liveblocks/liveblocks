@@ -8,6 +8,8 @@
 
 This repo shows how to implement a whiteboard with Liveblocks and [Next.js](https://nextjs.org/).
 
+> :warning: ** This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta **
+
 ## Getting started
 
 ### Run examples locally

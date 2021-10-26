@@ -1,6 +1,6 @@
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
- * https://preview.liveblocks.io/docs/examples/live-avatars
+ * https://liveblocks.io/docs/examples/live-avatars
  *
  * The users picture and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.
@@ -23,7 +23,7 @@ export default function Root() {
         title="Live Avatars"
         description="Open this page in multiple windows to see the live avatars."
         githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars"
-        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/next-js-live-avatars"
+        codeSandboxHref="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars"
       />
     </RoomProvider>
   );
