@@ -8,6 +8,10 @@
 
 This repo shows how to implement live cursors with Liveblocks and [Next.js](https://nextjs.org/).
 
+
+
+![live-cursors-reactions](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-live-cursors-chat-reactions.png&w=1200&q=90)
+
 ## Getting started
 
 ### Run examples locally

@@ -8,6 +8,10 @@
 
 This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
 
+> :warning: **This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta**
+
+![todo-list-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-todo-list.png&w=1200&q=90)
+
 ## Getting started
 
 ### Run examples locally

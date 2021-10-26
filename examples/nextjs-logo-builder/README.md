@@ -6,9 +6,11 @@
 
 # [Liveblocks](https://liveblocks.io) × [Next.js](https://nextjs.org/).
 
-This repo shows how to implement live avatars with Liveblocks and [Next.js](https://nextjs.org/).
+This repo shows how to use the Storage block and [Next.js](https://nextjs.org/).
 
-![live-avatars-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-live-avatars.png&w=1200&q=90)
+> :warning: **This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta**
+
+![logo-builder-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-logo-builder.png&w=1200&q=90)
 
 ## Getting started
 
@@ -24,7 +26,7 @@ This repo shows how to implement live avatars with Liveblocks and [Next.js](http
 
 ### Run examples on CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars)
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-logo-builder)
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 
