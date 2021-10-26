@@ -8,9 +8,9 @@
 
 This repo shows how to use the Storage block and [Next.js](https://nextjs.org/).
 
-> :warning: ** This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta **
+> :warning: **This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta**
 
-[logo-builder-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-logo-builder.png&w=1200&q=90)
+![logo-builder-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-logo-builder.png&w=1200&q=90)
 
 ## Getting started
 
