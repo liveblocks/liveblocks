@@ -29,7 +29,7 @@ You can change the shoe colors by clicking on it and every users in the room wil
 
 ### Run examples on CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs)
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe)
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 
