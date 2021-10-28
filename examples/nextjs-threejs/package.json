@@ -1,0 +1,27 @@
+{
+  "name": "nextjs-threejs",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^0.12.1",
+    "@liveblocks/react": "^0.12.1",
+    "drei": "2.2.12",
+    "next": "12.0.1",
+    "next-transpile-modules": "^9.0.0",
+    "react": "17.0.2",
+    "react-colorful": "^5.5.0",
+    "react-dom": "17.0.2",
+    "react-three-fiber": "5.3.10",
+    "three": "0.123.0"
+  },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-config-next": "12.0.1"
+  }
+}
