@@ -384,11 +384,12 @@ describe("LiveObject", () => {
 
     test("deep subscribe", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest<{
-        child: LiveObject<{ a: number }>;
+        child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
       }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+          createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
         ],
         1
       );
@@ -400,12 +401,13 @@ describe("LiveObject", () => {
       const unsubscribe = storage.subscribe(root, callback, { isDeep: true });
 
       root.get("child").set("a", 1);
+      root.get("child").get("subchild").set("b", 1);
 
       unsubscribe();
 
       root.get("child").set("a", 2);
 
-      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledTimes(2);
     });
   });
 });
