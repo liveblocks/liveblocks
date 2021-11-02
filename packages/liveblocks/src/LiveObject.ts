@@ -320,20 +320,12 @@ export class LiveObject<
 
     const opId = this._doc.generateOpId();
     const updatedProps: Partial<T> = {};
-    // const updateOp: UpdateObjectOp = {
-    //   opId,
-    //   id: this._id,
-    //   type: OpType.UpdateObject,
-    //   data: {},
-    // };
-    // ops.push(updateOp);
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
       type: OpType.UpdateObject,
       data: {},
     };
-    reverseOps.push(reverseUpdateOp);
 
     for (const key in overrides) {
       this.#propToLastUpdate.set(key, opId);
@@ -360,6 +352,10 @@ export class LiveObject<
       }
 
       this.#map.set(key, newValue);
+    }
+
+    if (Object.keys(reverseUpdateOp.data).length !== 0) {
+      reverseOps.unshift(reverseUpdateOp);
     }
 
     if (Object.keys(updatedProps).length !== 0) {
