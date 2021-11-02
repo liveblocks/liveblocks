@@ -1,5 +1,8 @@
 import { CrdtType, Op, OpType, SerializedCrdtWithId } from "./live";
-import { Doc, LiveList, LiveMap, LiveObject } from "./doc";
+import { Doc } from "./doc";
+import { LiveList } from "./LiveList";
+import { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
 import { makePosition } from "./position";
 
 function docToJson(doc: Doc<any>) {
@@ -185,7 +188,7 @@ describe("Storage", () => {
       expect(callback).toHaveBeenCalledTimes(1);
     });
 
-    test.only("deep subscribe", () => {
+    test("deep subscribe", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         child: LiveObject<{ a: number }>;
       }>(
@@ -554,7 +557,7 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    it.only("update with LiveObject", () => {
+    it("update with LiveObject", () => {
       const { storage, assert, operations, assertUndoRedo } =
         prepareStorageTest<{
           child: LiveObject<{ a: number }> | null;
@@ -804,38 +807,6 @@ describe("Storage", () => {
 
       assertUndoRedo();
     });
-
-    // it("set should call subscribers", () => {
-    //   const object = new LiveObject();
-    //   const callback = jest.fn();
-
-    //   object.subscribe(callback);
-    //   object.set("a", 0);
-    //   expect(callback).toHaveBeenCalledTimes(1);
-    // });
-
-    // it("set on a child should call deep subscribers", () => {
-    //   const child = new LiveObject();
-    //   const root = new LiveObject();
-    //   const callback = jest.fn();
-
-    //   root.set("child", child);
-
-    //   root.subscribeDeep(callback);
-    //   child.set("a", 0);
-
-    //   expect(callback).toHaveBeenCalledTimes(1);
-    // });
-
-    // it("attaching a child via constructor should attach it properly", () => {
-    //   const root = new LiveObject({ child: new LiveObject() });
-    //   const callback = jest.fn();
-
-    //   root.subscribeDeep(callback);
-    //   root.get("child").set("a", 0);
-
-    //   expect(callback).toHaveBeenCalledTimes(1);
-    // });
 
     it("should ignore incoming updates if current op has not been acknowledged", () => {
       const storage = Doc.load<{ a: number }>(
@@ -1974,20 +1945,3 @@ describe("Storage", () => {
     });
   });
 });
-
-// let root = {
-//   child: {
-//     name: "Olivier"
-//   }
-// }
-
-// root.set("child", new LiveObject({ name: "Guillaume" }));
-// // ops: Create LiveObject { name: "Guillaume" }, id: "xxx", parentId: "root", parentKey: child
-// // reverseOps: Create LiveObject { name: "Olivier" }, id: "yyy", parentId: "root", parentKey: child
-// // undo
-
-// root = {
-//   child: {
-//     name: "Guillaume",
-//   }
-// }
