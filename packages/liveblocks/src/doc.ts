@@ -1,4 +1,4 @@
-import { remove } from "./utils";
+import { remove, isSameNodeOrChildOf } from "./utils";
 import {
   CrdtType,
   Op,
@@ -119,7 +119,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   ) {
     const cb = (nodes: AbstractCrdt[]) => {
       for (const node of nodes) {
-        if (node === crdt) {
+        if (
+          node === crdt ||
+          (options?.isDeep && isSameNodeOrChildOf(node, crdt))
+        ) {
           innerCallback();
         }
       }
