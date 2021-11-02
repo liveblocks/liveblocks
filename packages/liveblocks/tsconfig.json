@@ -10,8 +10,8 @@
     "declaration": true,
     "moduleResolution": "node",
     "outDir": "./lib/esm",
-    "lib": ["ES2019", "dom", "esnext"],
+    "lib": ["ES2019", "dom", "esnext"]
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules", "src/**/*.spec.ts"]
+  "include": ["./src/**/*", "./test/**/*.ts"],
+  "exclude": ["node_modules"]
 }

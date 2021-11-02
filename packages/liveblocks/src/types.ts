@@ -1,4 +1,4 @@
-import { LiveObject } from "./doc";
+import type { LiveObject } from "./LiveObject";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
