@@ -863,7 +863,6 @@ export class LiveObject<
       type: OpType.UpdateObject,
       data: {},
     };
-    reverseOps.push(reverseUpdateOp);
 
     for (const key in overrides) {
       this.#propToLastUpdate.set(key, opId);
@@ -890,6 +889,10 @@ export class LiveObject<
       }
 
       this.#map.set(key, newValue);
+    }
+
+    if (Object.keys(reverseUpdateOp.data).length !== 0) {
+      reverseOps.push(reverseUpdateOp);
     }
 
     if (Object.keys(updatedProps).length !== 0) {
