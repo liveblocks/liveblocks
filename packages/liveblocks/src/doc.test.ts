@@ -57,10 +57,12 @@ function prepareStorageTest<T>(
   actor: number = 0
 ) {
   const clonedItems = JSON.parse(JSON.stringify(items));
-  const refStorage = Doc.load<T>(items, actor);
-  const storage = Doc.load<T>(clonedItems, actor, (ops) => {
-    refStorage.apply(ops);
-    storage.apply(ops);
+  const refDoc = Doc.load<T>(items, actor);
+  const operations: Op[] = [];
+  const doc = Doc.load<T>(clonedItems, actor, (ops) => {
+    operations.push(...ops);
+    refDoc.applyRemoteOperations(ops);
+    doc.applyRemoteOperations(ops);
   });
 
   const states: any[] = [];
@@ -69,32 +71,33 @@ function prepareStorageTest<T>(
     if (shouldPushToStates) {
       states.push(data);
     }
-    const json = docToJson(storage);
+    const json = docToJson(doc);
     expect(json).toEqual(data);
-    expect(docToJson(refStorage)).toEqual(data);
-    expect(storage.count()).toBe(refStorage.count());
+    expect(docToJson(refDoc)).toEqual(data);
+    expect(doc.count()).toBe(refDoc.count());
   }
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
-      storage.undo();
+      doc.undo();
       assert(states[states.length - 2 - i], false);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      storage.redo();
+      doc.redo();
       assert(states[i + 1], false);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      storage.undo();
+      doc.undo();
       assert(states[states.length - 2 - i], false);
     }
   }
 
   return {
-    storage,
-    refStorage,
+    operations,
+    storage: doc,
+    refStorage: refDoc,
     assert,
     assertUndoRedo,
   };
@@ -165,27 +168,222 @@ function createSerializedRegister(
 }
 
 describe("Storage", () => {
-  // it("batching", () => {
-  //   const { storage, assert } = prepareStorageTest<{ items: LiveList<string> }>(
-  //     [
-  //       createSerializedObject("0:0", {}),
-  //       createSerializedList("0:1", "0:0", "items"),
-  //     ]
-  //   );
+  describe("subscribe live object", () => {
+    test("simple action", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
 
-  //   const items = storage.root.get("items");
+      const callback = jest.fn();
 
-  //   const fn = jest.fn();
+      const root = storage.root;
 
-  //   items.subscribe(fn);
+      storage.subscribe(root, callback);
 
-  //   storage.batch(() => {
-  //     items.push("A");
-  //     items.push("B");
-  //   });
+      root.set("a", 1);
 
-  //   expect(fn).toHaveBeenCalledTimes(1);
-  // });
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+
+    test.only("deep subscribe", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        child: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = storage.subscribe(root, callback, { isDeep: true });
+
+      root.get("child").set("a", 1);
+
+      unsubscribe();
+
+      root.get("child").set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("subscribe generic", () => {
+    test("simple action", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      const callback = jest.fn();
+
+      const unsubscribe = storage.subscribe(callback);
+
+      storage.root.set("a", 1);
+
+      unsubscribe();
+
+      storage.root.set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([storage.root]);
+    });
+
+    test("remote action", () => {
+      const { storage } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      const callback = jest.fn();
+
+      const unsubscribe = storage.subscribe(callback);
+
+      storage.applyRemoteOperations([
+        { type: OpType.UpdateObject, data: { a: 1 }, opId: "", id: "0:0" },
+      ]);
+
+      unsubscribe();
+
+      storage.applyRemoteOperations([
+        { type: OpType.UpdateObject, data: { a: 2 }, opId: "", id: "0:0" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([storage.root]);
+    });
+
+    test("batch actions on a single LiveObject", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        a: number;
+        b: number;
+      }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = storage.subscribe(callback);
+
+      storage.batch(() => {
+        root.set("a", 1);
+        root.set("b", 1);
+      });
+
+      unsubscribe();
+
+      storage.batch(() => {
+        root.set("a", 2);
+        root.set("b", 2);
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([storage.root]);
+
+      assertUndoRedo();
+    });
+
+    test("batch actions on multiple LiveObjects", () => {
+      const { storage } = prepareStorageTest<{
+        a: number;
+        child: LiveObject<{ b: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", { a: 0 }),
+          createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      storage.subscribe(callback);
+
+      storage.batch(() => {
+        root.set("a", 1);
+        root.get("child").set("b", 1);
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([storage.root, root.get("child")]);
+    });
+  });
+
+  describe("batching", () => {
+    it("batching and undo", () => {
+      const { storage, assert } = prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      storage.batch(() => {
+        items.push("A");
+        items.push("B");
+        items.push("C");
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      storage.undo();
+
+      assert({
+        items: [],
+      });
+
+      storage.redo();
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+    });
+
+    it("calling batch during a batch should throw", () => {
+      const { storage, assert } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      storage.batch(() => {
+        expect(() =>
+          storage.batch(() => {
+            storage.root.set("a", 0);
+          })
+        ).toThrow();
+      });
+    });
+
+    it("calling undo during a batch should throw", () => {
+      const { storage, assert } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      storage.batch(() => {
+        expect(() => storage.undo()).toThrow();
+      });
+    });
+
+    it("calling redo during a batch should throw", () => {
+      const { storage, assert } = prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      storage.batch(() => {
+        expect(() => storage.redo()).toThrow();
+      });
+    });
+  });
 
   describe("undo / redo", () => {
     it("list.push", () => {
@@ -356,6 +554,64 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
+    it.only("update with LiveObject", () => {
+      const { storage, assert, operations, assertUndoRedo } =
+        prepareStorageTest<{
+          child: LiveObject<{ a: number }> | null;
+        }>([createSerializedObject("0:0", { child: null })], 1);
+
+      const root = storage.root;
+
+      assert({
+        child: null,
+      });
+
+      root.set("child", new LiveObject({ a: 0 }));
+
+      assert({
+        child: {
+          a: 0,
+        },
+      });
+      expect(storage.undoStack[0]).toEqual([
+        {
+          type: OpType.UpdateObject,
+          id: "0:0",
+          data: {
+            child: null,
+          },
+        },
+      ]);
+
+      expect(operations.length).toEqual(1);
+      expect(operations).toEqual([
+        {
+          type: OpType.CreateObject,
+          id: "1:0",
+          data: { a: 0 },
+          parentId: "0:0",
+          parentKey: "child",
+        },
+      ]);
+
+      root.set("child", null);
+
+      assert({
+        child: null,
+      });
+      expect(storage.undoStack[1]).toEqual([
+        {
+          type: OpType.CreateObject,
+          id: "1:0",
+          data: { a: 0 },
+          parentId: "0:0",
+          parentKey: "child",
+        },
+      ]);
+
+      assertUndoRedo();
+    });
+
     it("remove nested child record with update", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest<{
         a: number;
@@ -419,16 +675,6 @@ describe("Storage", () => {
 
       assertUndoRedo();
     });
-
-    // it("delete record key", () => {
-    //   const { storage: doc, assert } = prepareStorageTest<{ a: number }>([
-    //     createSerializedObject("0:0", { a: 0 }),
-    //   ]);
-
-    //   doc.root.delete("a");
-
-    //   assert({});
-    // });
 
     it("add nested record with update", () => {
       const { storage, assert, assertUndoRedo } = prepareStorageTest(
@@ -559,37 +805,37 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    it("set should call subscribers", () => {
-      const object = new LiveObject();
-      const callback = jest.fn();
+    // it("set should call subscribers", () => {
+    //   const object = new LiveObject();
+    //   const callback = jest.fn();
 
-      object.subscribe(callback);
-      object.set("a", 0);
-      expect(callback).toHaveBeenCalledTimes(1);
-    });
+    //   object.subscribe(callback);
+    //   object.set("a", 0);
+    //   expect(callback).toHaveBeenCalledTimes(1);
+    // });
 
-    it("set on a child should call deep subscribers", () => {
-      const child = new LiveObject();
-      const root = new LiveObject();
-      const callback = jest.fn();
+    // it("set on a child should call deep subscribers", () => {
+    //   const child = new LiveObject();
+    //   const root = new LiveObject();
+    //   const callback = jest.fn();
 
-      root.set("child", child);
+    //   root.set("child", child);
 
-      root.subscribeDeep(callback);
-      child.set("a", 0);
+    //   root.subscribeDeep(callback);
+    //   child.set("a", 0);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-    });
+    //   expect(callback).toHaveBeenCalledTimes(1);
+    // });
 
-    it("attaching a child via constructor should attach it properly", () => {
-      const root = new LiveObject({ child: new LiveObject() });
-      const callback = jest.fn();
+    // it("attaching a child via constructor should attach it properly", () => {
+    //   const root = new LiveObject({ child: new LiveObject() });
+    //   const callback = jest.fn();
 
-      root.subscribeDeep(callback);
-      root.get("child").set("a", 0);
+    //   root.subscribeDeep(callback);
+    //   root.get("child").set("a", 0);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-    });
+    //   expect(callback).toHaveBeenCalledTimes(1);
+    // });
 
     it("should ignore incoming updates if current op has not been acknowledged", () => {
       const storage = Doc.load<{ a: number }>(
@@ -603,7 +849,7 @@ describe("Storage", () => {
 
       expect(docToJson(storage)).toEqual({ a: 1 });
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.UpdateObject,
           data: { a: 2 },
@@ -1008,7 +1254,7 @@ describe("Storage", () => {
         items: ["B", "C", "A"],
       });
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.SetParentKey,
           id: "1:1",
@@ -1020,7 +1266,7 @@ describe("Storage", () => {
         items: ["C", "B", "A"],
       });
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.SetParentKey,
           id: "1:0",
@@ -1047,7 +1293,7 @@ describe("Storage", () => {
       // Register id = 1:0
       items.push("0");
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.CreateRegister,
           id: "2:1",
@@ -1062,7 +1308,7 @@ describe("Storage", () => {
       });
 
       // Fix from backend
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.SetParentKey,
           id: "1:0",
@@ -1090,7 +1336,7 @@ describe("Storage", () => {
       items.push("x1"); // Register id = 1:1
 
       // Should go to pending
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.CreateRegister,
           id: "2:0",
@@ -1105,7 +1351,7 @@ describe("Storage", () => {
       });
 
       // Should go to pending
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.CreateRegister,
           id: "2:1",
@@ -1119,7 +1365,7 @@ describe("Storage", () => {
         items: ["y0", "x0", "y1", "x1"],
       });
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.SetParentKey,
           id: "1:0",
@@ -1131,7 +1377,7 @@ describe("Storage", () => {
         items: ["y0", "y1", "x0", "x1"],
       });
 
-      storage.apply([
+      storage.applyRemoteOperations([
         {
           type: OpType.SetParentKey,
           id: "1:1",
@@ -1728,3 +1974,20 @@ describe("Storage", () => {
     });
   });
 });
+
+// let root = {
+//   child: {
+//     name: "Olivier"
+//   }
+// }
+
+// root.set("child", new LiveObject({ name: "Guillaume" }));
+// // ops: Create LiveObject { name: "Guillaume" }, id: "xxx", parentId: "root", parentKey: child
+// // reverseOps: Create LiveObject { name: "Olivier" }, id: "yyy", parentId: "root", parentKey: child
+// // undo
+
+// root = {
+//   child: {
+//     name: "Guillaume",
+//   }
+// }

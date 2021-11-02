@@ -61,7 +61,7 @@ export default class Storage {
         break;
       }
       case ServerMessageType.UpdateStorage: {
-        this._doc?.apply(message.ops);
+        this._doc?.applyRemoteOperations(message.ops);
         break;
       }
     }

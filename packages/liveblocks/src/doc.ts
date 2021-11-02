@@ -25,31 +25,50 @@ type UndoStackItem = Op[];
 
 const MAX_UNDO_STACK = 50;
 
+type StorageSubscriberCallback = (nodes: AbstractCrdt[]) => void;
+
+type ApplyResult =
+  | { reverse: Op[]; modified: AbstractCrdt }
+  | { modified: false };
+
 export class Doc<T extends Record<string, any> = Record<string, any>> {
   #clock = 0;
   #opClock = 0;
   #items = new Map<string, AbstractCrdt>();
   #root: LiveObject<T>;
   #actor: number;
-  #dispatch: Dispatch;
+  #broadcast: Dispatch;
   #undoStack: UndoStackItem[] = [];
   #redoStack: UndoStackItem[] = [];
+  #isBatching: boolean = false;
 
-  private constructor(
+  #toBatch = {
+    ops: [] as Op[],
+    modified: new Set<AbstractCrdt>(),
+    reverseOps: [] as Op[],
+  };
+
+  _subscribers: Array<StorageSubscriberCallback> = [];
+
+  get undoStack() {
+    return this.#undoStack;
+  }
+
+  constructor(
     root: LiveObject<T>,
     actor: number = 0,
-    dispatch: Dispatch = noOp
+    broadcast: Dispatch = noOp
   ) {
     this.#root = root;
     this.#actor = actor;
-    this.#dispatch = dispatch;
+    this.#broadcast = broadcast;
   }
 
   static from<T>(root: T, actor: number = 0, dispatch: Dispatch = noOp) {
     const rootRecord = new LiveObject(root) as LiveObject<T>;
     const storage = new Doc(rootRecord, actor, dispatch) as Doc<T>;
     rootRecord._attach(storage.generateId(), storage);
-    storage.dispatch(rootRecord._serialize());
+    storage.dispatch(rootRecord._serialize(), [], []);
     return storage;
   }
 
@@ -92,9 +111,52 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     return doc;
   }
 
-  dispatch(ops: Op[]) {
-    this.#redoStack = [];
-    this.#dispatch(ops);
+  #genericSubscribe(callback: StorageSubscriberCallback) {
+    this._subscribers.push(callback);
+    return () => remove(this._subscribers, callback);
+  }
+
+  #crdtSubscribe<T extends AbstractCrdt>(
+    crdt: T,
+    innerCallback: () => void,
+    options?: { isDeep: boolean }
+  ) {
+    const cb = (nodes: AbstractCrdt[]) => {
+      for (const node of nodes) {
+        if (node === crdt) {
+          innerCallback();
+        }
+      }
+    };
+
+    return this.#genericSubscribe(cb);
+  }
+
+  subscribe(
+    node: AbstractCrdt,
+    callback: () => void,
+    options?: { isDeep: boolean }
+  ): () => void;
+  subscribe(callback: StorageSubscriberCallback): () => void;
+  subscribe(
+    ...parameters:
+      | [
+          item: AbstractCrdt,
+          callback: () => void,
+          options?: { isDeep: boolean }
+        ]
+      | [StorageSubscriberCallback]
+  ): () => void {
+    if (parameters[0] instanceof AbstractCrdt) {
+      return this.#crdtSubscribe(
+        parameters[0] as AbstractCrdt,
+        parameters[1] as () => void,
+        parameters[2]
+      );
+    }
+
+    const callback = parameters[0];
+    return this.#genericSubscribe(callback);
   }
 
   addItem(id: string, item: AbstractCrdt) {
@@ -109,15 +171,28 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     return this.#items.get(id);
   }
 
-  apply(ops: Op[]): Op[] {
-    const reverse = [];
-    for (const op of ops) {
-      reverse.push(...this.#applyOp(op));
+  applyRemoteOperations(ops: Op[]) {
+    const applyResults = this.#apply(ops);
+    const modified = new Set<AbstractCrdt>();
+
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        modified.add(applyResult.modified);
+      }
     }
-    return reverse;
+
+    this.#notify(modified);
   }
 
-  #applyOp(op: Op): Op[] {
+  #apply(ops: Op[]): ApplyResult[] {
+    const result: ApplyResult[] = [];
+    for (const op of ops) {
+      result.push(this.#applyOp(op));
+    }
+    return result;
+  }
+
+  #applyOp(op: Op): ApplyResult {
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
@@ -126,11 +201,10 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
         const item = this.#items.get(op.id);
 
         if (item == null) {
-          return [];
+          return { modified: false };
         }
 
         return item._apply(op);
-        break;
       }
       case OpType.CreateList:
       case OpType.CreateObject:
@@ -138,21 +212,69 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
       case OpType.CreateRegister: {
         const parent = this.#items.get(op.parentId!);
         if (parent == null) {
-          return [];
+          return { modified: false };
         }
         return parent._apply(op);
-        break;
       }
     }
 
-    return [];
+    return { modified: false };
+  }
+
+  batch(fn: () => void) {
+    if (this.#isBatching) {
+      throw new Error("batch should not be called during a batch");
+    }
+
+    this.#isBatching = true;
+
+    try {
+      fn();
+    } finally {
+      // If the callback is throwing it's important to set the isBatching flag to false to make sure that future ops are dispatched
+      this.#isBatching = false;
+      this.#addToUndoStack(this.#toBatch.reverseOps);
+      this.#redoStack = [];
+      this.#broadcast(this.#toBatch.ops);
+      this.#notify(this.#toBatch.modified);
+      this.#toBatch = {
+        ops: [],
+        reverseOps: [],
+        modified: new Set(),
+      };
+    }
   }
 
   get root(): LiveObject<T> {
     return this.#root;
   }
 
-  addToUndoStack(ops: Op[]) {
+  dispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
+    if (this.#isBatching) {
+      this.#toBatch.ops.push(...ops);
+      for (const item of modified) {
+        this.#toBatch.modified.add(item);
+      }
+      this.#toBatch.reverseOps.push(...reverse);
+    } else {
+      this.#addToUndoStack(reverse);
+      this.#redoStack = [];
+      this.#broadcast(ops);
+      this.#notify(new Set(modified));
+    }
+  }
+
+  #notify(modified: Set<AbstractCrdt>) {
+    if (modified.size === 0) {
+      return;
+    }
+
+    for (const subscriber of this._subscribers) {
+      subscriber(Array.from(modified));
+    }
+  }
+
+  #addToUndoStack(ops: Op[]) {
     if (this.#undoStack.length >= MAX_UNDO_STACK) {
       this.#undoStack.shift();
     }
@@ -160,25 +282,57 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
   }
 
   undo() {
+    if (this.#isBatching) {
+      throw new Error("undo is not allowed during a batch");
+    }
+
     const ops = this.#undoStack.pop();
 
     if (ops == null) {
       return;
     }
 
-    this.#redoStack.push(this.apply(ops));
-    this.#dispatch(ops);
+    const applyResults = this.#apply(ops);
+
+    const reverse: Op[] = [];
+    const modified = new Set<AbstractCrdt>();
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        reverse.push(...applyResult.reverse);
+        modified.add(applyResult.modified);
+      }
+    }
+
+    this.#notify(modified);
+    this.#redoStack.push(reverse);
+    this.#broadcast(ops);
   }
 
   redo() {
+    if (this.#isBatching) {
+      throw new Error("redo is not allowed during a batch");
+    }
+
     const ops = this.#redoStack.pop();
 
     if (ops == null) {
       return;
     }
 
-    this.#undoStack.push(this.apply(ops));
-    this.#dispatch(ops);
+    const applyResults = this.#apply(ops);
+
+    const reverse: Op[] = [];
+    const modified = new Set<AbstractCrdt>();
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        reverse.push(...applyResult.reverse);
+        modified.add(applyResult.modified);
+      }
+    }
+
+    this.#notify(modified);
+    this.#undoStack.push(reverse);
+    this.#broadcast(ops);
   }
 
   count() {
@@ -195,8 +349,6 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
 }
 
 abstract class AbstractCrdt {
-  #listeners: Array<() => void> = [];
-  #deepListeners: Array<() => void> = [];
   #parent?: AbstractCrdt;
   #doc?: Doc;
   #id?: string;
@@ -230,16 +382,19 @@ abstract class AbstractCrdt {
     return this.#parentKey;
   }
 
-  _apply(op: Op): Op[] {
+  /**
+   * INTERNAL
+   */
+  _apply(op: Op): ApplyResult {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {
           const reverse = this._serialize(this._parent._id!, this._parentKey);
           this._parent._detachChild(this);
-          return reverse;
+          return { modified: this, reverse };
         }
 
-        return [];
+        return { modified: false };
       }
       case OpType.CreateObject: {
         return this.#applyCreateObject(op);
@@ -258,68 +413,71 @@ abstract class AbstractCrdt {
       }
     }
 
-    return [];
+    return { modified: false };
   }
 
-  #applySetParentKey(op: SetParentKeyOp): Op[] {
+  #applySetParentKey(op: SetParentKeyOp): ApplyResult {
     if (this._parent == null) {
-      return [];
+      return { modified: false };
     }
 
     if (this._parent instanceof LiveList) {
       const previousKey = this._parentKey!;
       this._parent._setChildKey(op.parentKey, this);
-      return [
-        { type: OpType.SetParentKey, id: this._id!, parentKey: previousKey },
-      ];
+      return {
+        reverse: [
+          { type: OpType.SetParentKey, id: this._id!, parentKey: previousKey },
+        ],
+        modified: this,
+      };
     }
 
-    return [];
+    return { modified: false };
   }
 
-  #applyRegister(op: CreateRegisterOp): Op[] {
+  #applyRegister(op: CreateRegisterOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Internal: doc should exist");
     }
 
     if (this._doc.getItem(op.id) != null) {
-      return [];
+      return { modified: false };
     }
 
-    return this._attachChild(op.id, op.parentKey!, new LiveRegister(op.data));
+    return this._attachChild(op.id, op.parentKey, new LiveRegister(op.data));
   }
 
-  #applyCreateObject(op: CreateObjectOp): Op[] {
+  #applyCreateObject(op: CreateObjectOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Internal: doc should exist");
     }
 
     if (this._doc.getItem(op.id) != null) {
-      return [];
+      return { modified: false };
     }
 
     return this._attachChild(op.id, op.parentKey!, new LiveObject(op.data));
   }
 
-  #applyCreateMap(op: CreateMapOp): Op[] {
+  #applyCreateMap(op: CreateMapOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Internal: doc should exist");
     }
 
     if (this._doc.getItem(op.id) != null) {
-      return [];
+      return { modified: false };
     }
 
     return this._attachChild(op.id, op.parentKey!, new LiveMap());
   }
 
-  #applyCreateList(op: CreateListOp): Op[] {
+  #applyCreateList(op: CreateListOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Internal: doc should exist");
     }
 
     if (this._doc.getItem(op.id) != null) {
-      return [];
+      return { modified: false };
     }
 
     return this._attachChild(op.id, op.parentKey!, new LiveList());
@@ -351,7 +509,14 @@ abstract class AbstractCrdt {
     this.#doc = doc;
   }
 
-  abstract _attachChild(id: string, key: string, crdt: AbstractCrdt): Op[];
+  /**
+   * INTERNAL
+   */
+  abstract _attachChild(
+    id: string,
+    key: string,
+    crdt: AbstractCrdt
+  ): ApplyResult;
 
   /**
    * INTERNAL
@@ -365,55 +530,13 @@ abstract class AbstractCrdt {
     this.#doc = undefined;
   }
 
-  abstract _detachChild(crdt: AbstractCrdt): void;
-
-  /**
-   * Subscribes to updates.
-   */
-  subscribe(listener: () => void) {
-    this.#listeners.push(listener);
-  }
-
-  /**
-   * Subscribes to updates and children updates.
-   */
-  subscribeDeep(listener: () => void) {
-    this.#deepListeners.push(listener);
-  }
-
-  /**
-   * Unsubscribes to updates.
-   */
-  unsubscribe(listener: () => void) {
-    remove(this.#listeners, listener);
-  }
-
-  /**
-   * Unsubscribes to updates and children updates.
-   */
-  unsubscribeDeep(listener: () => void) {
-    remove(this.#deepListeners, listener);
-  }
-
   /**
    * INTERNAL
    */
-  _notify(onlyDeep = false) {
-    if (onlyDeep === false) {
-      for (const listener of this.#listeners) {
-        listener();
-      }
-    }
-
-    for (const listener of this.#deepListeners) {
-      listener();
-    }
-
-    if (this._parent) {
-      this._parent._notify(true);
-    }
-  }
-
+  abstract _detachChild(crdt: AbstractCrdt): void;
+  /**
+   * INTERNAL
+   */
   abstract _serialize(parentId: string, parentKey: string): Op[];
 }
 
@@ -526,22 +649,22 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: keyof T, child: AbstractCrdt): Op[] {
+  _attachChild(id: string, key: keyof T, child: AbstractCrdt): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key as string);
-    let result: Op[];
+    let reverse: Op[];
     if (isCrdt(previousValue)) {
-      result = previousValue._serialize(this._id!, key as string);
+      reverse = previousValue._serialize(this._id!, key as string);
       previousValue._detach();
     } else if (previousValue === undefined) {
-      result = [
+      reverse = [
         { type: OpType.DeleteObjectKey, id: this._id!, key: key as string },
       ];
     } else {
-      result = [
+      reverse = [
         {
           type: OpType.UpdateObject,
           id: this._id!,
@@ -553,9 +676,8 @@ export class LiveObject<
     this.#map.set(key as string, child);
     child._setParentLink(this, key as string);
     child._attach(id, this._doc);
-    this._notify();
 
-    return result;
+    return { reverse, modified: this };
   }
 
   /**
@@ -571,8 +693,6 @@ export class LiveObject<
     if (child) {
       child._detach();
     }
-
-    this._notify();
   }
 
   /**
@@ -591,48 +711,9 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _apply(op: Op): Op[] {
+  _apply(op: Op): ApplyResult {
     if (op.type === OpType.UpdateObject) {
-      const reverse: Op[] = [];
-      const reverseUpdate: UpdateObjectOp = {
-        type: OpType.UpdateObject,
-        id: this._id!,
-        data: {},
-      };
-      reverse.push(reverseUpdate);
-
-      for (const key in op.data as Partial<T>) {
-        const oldValue = this.#map.get(key);
-        if (oldValue !== undefined) {
-          reverseUpdate.data[key] = oldValue;
-        } else if (oldValue === undefined) {
-          reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
-        }
-      }
-
-      for (const key in op.data as Partial<T>) {
-        if (op.opId == null) {
-          op.opId = this._doc?.generateOpId();
-        }
-        const lastOpId = this.#propToLastUpdate.get(key);
-        if (lastOpId === op.opId) {
-          this.#propToLastUpdate.delete(key);
-          continue;
-        } else if (lastOpId != null) {
-          continue;
-        }
-
-        const oldValue = this.#map.get(key);
-
-        if (isCrdt(oldValue)) {
-          oldValue._detach();
-        }
-
-        const value = op.data[key];
-        this.#map.set(key, value);
-      }
-      this._notify();
-      return reverse;
+      return this.#applyUpdate(op);
     } else if (op.type === OpType.DeleteObjectKey) {
       return this.#applyDeleteObjectKey(op);
     }
@@ -640,16 +721,68 @@ export class LiveObject<
     return super._apply(op);
   }
 
-  #applyDeleteObjectKey(op: DeleteObjectKeyOp): Op[] {
+  #applyUpdate(op: UpdateObjectOp): ApplyResult {
+    let isModified = false;
+    const reverse: Op[] = [];
+    const reverseUpdate: UpdateObjectOp = {
+      type: OpType.UpdateObject,
+      id: this._id!,
+      data: {},
+    };
+    reverse.push(reverseUpdate);
+
+    for (const key in op.data as Partial<T>) {
+      const oldValue = this.#map.get(key);
+      if (oldValue !== undefined) {
+        reverseUpdate.data[key] = oldValue;
+      } else if (oldValue === undefined) {
+        reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
+      }
+    }
+
+    let isLocal = false;
+    if (op.opId == null) {
+      isLocal = true;
+      op.opId = this._doc!.generateOpId();
+    }
+
+    for (const key in op.data as Partial<T>) {
+      if (isLocal) {
+        this.#propToLastUpdate.set(key, op.opId);
+      } else if (this.#propToLastUpdate.get(key) == null) {
+        // Not modified localy so we apply update
+        isModified = true;
+      } else if (this.#propToLastUpdate.get(key) === op.opId) {
+        // Acknowledment from local operation
+        this.#propToLastUpdate.delete(key);
+        continue;
+      } else {
+        // Conflict, ignore remote operation
+        continue;
+      }
+
+      const oldValue = this.#map.get(key);
+
+      if (isCrdt(oldValue)) {
+        oldValue._detach();
+      }
+
+      isModified = true;
+      this.#map.set(key, op.data[key]);
+    }
+    return isModified ? { modified: this, reverse } : { modified: false };
+  }
+
+  #applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
     const key = op.key;
     const oldValue = this.#map.get(key);
 
-    let result: Op[] = [];
+    let reverse: Op[] = [];
     if (isCrdt(oldValue)) {
-      result = oldValue._serialize(this._id!, op.key);
+      reverse = oldValue._serialize(this._id!, op.key);
       oldValue._detach();
     } else if (oldValue !== undefined) {
-      result = [
+      reverse = [
         {
           type: OpType.UpdateObject,
           id: this._id!,
@@ -659,8 +792,7 @@ export class LiveObject<
     }
 
     this.#map.delete(key);
-    this._notify();
-    return result;
+    return { modified: this, reverse };
   }
 
   /**
@@ -710,21 +842,21 @@ export class LiveObject<
         this.#map.set(key, newValue);
       }
 
-      this._notify();
       return;
     }
 
-    const ops = [];
+    const ops: Op[] = [];
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updateOp: UpdateObjectOp = {
-      opId,
-      id: this._id,
-      type: OpType.UpdateObject,
-      data: {},
-    };
-    ops.push(updateOp);
+    const updatedProps: Partial<T> = {};
+    // const updateOp: UpdateObjectOp = {
+    //   opId,
+    //   id: this._id,
+    //   type: OpType.UpdateObject,
+    //   data: {},
+    // };
+    // ops.push(updateOp);
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
@@ -754,15 +886,22 @@ export class LiveObject<
         newValue._attach(this._doc.generateId(), this._doc);
         ops.push(...newValue._serialize(this._id, key));
       } else {
-        updateOp.data[key] = newValue;
+        updatedProps[key] = newValue;
       }
 
       this.#map.set(key, newValue);
     }
 
-    this._doc.addToUndoStack(reverseOps);
-    this._doc.dispatch(ops);
-    this._notify();
+    if (Object.keys(updatedProps).length !== 0) {
+      ops.unshift({
+        opId,
+        id: this._id,
+        type: OpType.UpdateObject,
+        data: updatedProps,
+      });
+    }
+
+    this._doc.dispatch(ops, reverseOps, [this]);
   }
 }
 
@@ -878,26 +1017,25 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: TKey, child: AbstractCrdt): Op[] {
+  _attachChild(id: string, key: TKey, child: AbstractCrdt): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
     const previousValue = this.#map.get(key);
-    let result: Op[];
+    let reverse: Op[];
     if (previousValue) {
-      result = previousValue._serialize(this._id!, key);
+      reverse = previousValue._serialize(this._id!, key);
       previousValue._detach();
     } else {
-      result = [{ type: OpType.DeleteCrdt, id }];
+      reverse = [{ type: OpType.DeleteCrdt, id }];
     }
 
     child._setParentLink(this, key);
     child._attach(id, this._doc);
     this.#map.set(key, child);
-    this._notify();
 
-    return result;
+    return { modified: this, reverse };
   }
 
   /**
@@ -922,7 +1060,6 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     child._detach();
-    this._notify();
   }
 
   /**
@@ -958,15 +1095,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     if (this._doc && this._id) {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
-      this._doc.addToUndoStack(
+      this._doc.dispatch(
+        item._serialize(this._id, key),
         oldValue
           ? oldValue._serialize(this._id, key)
-          : [{ type: OpType.DeleteCrdt, id }]
+          : [{ type: OpType.DeleteCrdt, id }],
+        [this]
       );
-      this._doc.dispatch(item._serialize(this._id, key));
     }
-
-    this._notify();
   }
 
   /**
@@ -999,12 +1135,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     item._detach();
 
     if (this._doc && item._id) {
-      this._doc.addToUndoStack(item._serialize(this._id!, key));
-      this._doc.dispatch([{ type: OpType.DeleteCrdt, id: item._id }]);
+      this._doc.dispatch(
+        [{ type: OpType.DeleteCrdt, id: item._id }],
+        item._serialize(this._id!, key),
+        [this]
+      );
     }
 
     this.#map.delete(key);
-    this._notify();
     return true;
   }
 
@@ -1146,7 +1284,7 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
     ];
   }
 
-  _attachChild(id: string, key: string, crdt: AbstractCrdt): Op[] {
+  _attachChild(id: string, key: string, crdt: AbstractCrdt): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
@@ -1154,7 +1292,7 @@ class LiveRegister<TValue = any> extends AbstractCrdt {
     throw new Error("Method not implemented.");
   }
 
-  _apply(op: Op): Op[] {
+  _apply(op: Op): ApplyResult {
     return super._apply(op);
   }
 }
@@ -1264,7 +1402,7 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: string, child: AbstractCrdt): Op[] {
+  _attachChild(id: string, key: string, child: AbstractCrdt): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -1281,9 +1419,8 @@ export class LiveList<T> extends AbstractCrdt {
 
     this.#items.push([child, key]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    this._notify();
 
-    return [{ type: OpType.DeleteCrdt, id }];
+    return { reverse: [{ type: OpType.DeleteCrdt, id }], modified: this };
   }
 
   /**
@@ -1295,7 +1432,6 @@ export class LiveList<T> extends AbstractCrdt {
     if (child) {
       child._detach();
     }
-    this._notify();
   }
 
   /**
@@ -1318,7 +1454,6 @@ export class LiveList<T> extends AbstractCrdt {
     }
 
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    this._notify();
   }
 
   /**
@@ -1367,13 +1502,14 @@ export class LiveList<T> extends AbstractCrdt {
     this.#items.push([value, position]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    this._notify();
-
     if (this._doc && this._id) {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
-      this._doc.addToUndoStack([{ type: OpType.DeleteCrdt, id }]);
-      this._doc.dispatch(value._serialize(this._id, position));
+      this._doc.dispatch(
+        value._serialize(this._id, position),
+        [{ type: OpType.DeleteCrdt, id }],
+        [this]
+      );
     }
   }
 
@@ -1424,23 +1560,24 @@ export class LiveList<T> extends AbstractCrdt {
     item[0]._setParentLink(this, position);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    this._notify();
-
     if (this._doc && this._id) {
-      this._doc.addToUndoStack([
-        {
-          type: OpType.SetParentKey,
-          id: item[0]._id!,
-          parentKey: previousPosition,
-        },
-      ]);
-      this._doc.dispatch([
-        {
-          type: OpType.SetParentKey,
-          id: item[0]._id!,
-          parentKey: position,
-        },
-      ]);
+      this._doc.dispatch(
+        [
+          {
+            type: OpType.SetParentKey,
+            id: item[0]._id!,
+            parentKey: position,
+          },
+        ],
+        [
+          {
+            type: OpType.SetParentKey,
+            id: item[0]._id!,
+            parentKey: previousPosition,
+          },
+        ],
+        [this]
+      );
     }
   }
 
@@ -1464,17 +1601,18 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc) {
       const childRecordId = item[0]._id;
       if (childRecordId) {
-        this._doc.addToUndoStack(item[0]._serialize(this._id!, item[1]));
-        this._doc.dispatch([
-          {
-            id: childRecordId,
-            type: OpType.DeleteCrdt,
-          },
-        ]);
+        this._doc.dispatch(
+          [
+            {
+              id: childRecordId,
+              type: OpType.DeleteCrdt,
+            },
+          ],
+          item[0]._serialize(this._id!, item[1]),
+          [this]
+        );
       }
     }
-
-    this._notify();
   }
 
   /**
