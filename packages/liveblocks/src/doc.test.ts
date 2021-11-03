@@ -7,6 +7,7 @@ import {
   prepareStorageTest,
   createSerializedObject,
   createSerializedList,
+  createSerializedMap,
 } from "../test/utils";
 
 describe("Storage", () => {
@@ -130,6 +131,56 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: root.get("child"),
+        },
+      ]);
+    });
+
+    test("batch actions on multiple Live types", () => {
+      const { storage } = prepareStorageTest<{
+        a: number;
+        childObj: LiveObject<{ b: number }>;
+        childList: LiveList<string>;
+        childMap: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", { a: 0 }),
+          createSerializedObject("0:1", { b: 0 }, "0:0", "childObj"),
+          createSerializedList("0:2", "0:0", "childList"),
+          createSerializedMap("0:3", "0:0", "childMap"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      storage.subscribe(callback);
+
+      storage.batch(() => {
+        root.set("a", 1);
+        root.get("childObj").set("b", 1);
+        root.get("childList").push("item1");
+        root.get("childMap").set("el1", "v1");
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+        },
+        {
+          type: "LiveObject",
+          node: root.get("childObj"),
+        },
+        {
+          type: "LiveList",
+          node: root.get("childList"),
+        },
+        {
+          type: "LiveMap",
+          node: root.get("childMap"),
         },
       ]);
     });
