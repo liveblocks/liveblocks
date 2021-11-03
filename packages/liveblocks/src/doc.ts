@@ -21,7 +21,24 @@ type UndoStackItem = Op[];
 
 const MAX_UNDO_STACK = 50;
 
-type StorageSubscriberCallback = (nodes: AbstractCrdt[]) => void;
+type LiveMapUpdates<TKey extends string = string, TValue = any> = {
+  type: "LiveMap";
+  liveMap: LiveMap<TKey, TValue>;
+};
+
+type LiveObjectUpdates<TData = any> = {
+  type: "LiveObject";
+  liveObject: LiveObject<TData>;
+};
+
+type LiveListUpdates<TItem = any> = {
+  type: "LiveList";
+  liveList: LiveList<TItem>;
+};
+
+type StorageUpdate = LiveMapUpdates | LiveObjectUpdates | LiveListUpdates;
+
+type StorageSubscriberCallback = (updates: StorageUpdate[]) => void;
 
 export type ApplyResult =
   | { reverse: Op[]; modified: AbstractCrdt }
@@ -117,35 +134,40 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     innerCallback: () => void,
     options?: { isDeep: boolean }
   ) {
-    const cb = (nodes: AbstractCrdt[]) => {
-      for (const node of nodes) {
-        if (
-          node === crdt ||
-          (options?.isDeep && isSameNodeOrChildOf(node, crdt))
-        ) {
-          innerCallback();
-        }
-      }
+    const cb = (updates: StorageUpdate[]) => {
+      throw new Error("TODO");
+      // for (const node of nodes) {
+      //   if (
+      //     node === crdt ||
+      //     (options?.isDeep && isSameNodeOrChildOf(node, crdt))
+      //   ) {
+      //     innerCallback();
+      //   }
+      // }
     };
 
     return this.#genericSubscribe(cb);
   }
 
-  subscribe(
-    node: AbstractCrdt,
-    callback: () => void,
-    options?: { isDeep: boolean }
+  subscribe<TKey extends string, TValue>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
   ): () => void;
-  subscribe(callback: StorageSubscriberCallback): () => void;
-  subscribe(
-    ...parameters:
-      | [
-          item: AbstractCrdt,
-          callback: () => void,
-          options?: { isDeep: boolean }
-        ]
-      | [StorageSubscriberCallback]
-  ): () => void {
+  subscribe<TData>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  subscribe<TItem>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
+  subscribe(callback: (updates: StorageUpdate[]) => void): () => void;
+  subscribe(...parameters: any[]): () => void {
     if (parameters[0] instanceof AbstractCrdt) {
       return this.#crdtSubscribe(
         parameters[0] as AbstractCrdt,
@@ -325,7 +347,8 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     }
 
     for (const subscriber of this._subscribers) {
-      subscriber(Array.from(modified));
+      throw new Error("TODO");
+      // subscriber(Array.from(modified));
     }
   }
 
