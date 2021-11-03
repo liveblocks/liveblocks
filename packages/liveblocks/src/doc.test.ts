@@ -27,7 +27,12 @@ describe("Storage", () => {
       storage.root.set("a", 2);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([storage.root]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+        },
+      ]);
     });
 
     test("remote action", () => {
@@ -50,7 +55,12 @@ describe("Storage", () => {
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([storage.root]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+        },
+      ]);
     });
 
     test("batch actions on a single LiveObject", () => {
@@ -78,7 +88,12 @@ describe("Storage", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([storage.root]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+        },
+      ]);
 
       assertUndoRedo();
     });
@@ -107,7 +122,16 @@ describe("Storage", () => {
       });
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([storage.root, root.get("child")]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+        },
+        {
+          type: "LiveObject",
+          node: root.get("child"),
+        },
+      ]);
     });
   });
 
