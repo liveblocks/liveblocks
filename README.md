@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/images/blog/introducing-liveblocks.png" height="320">
+    <img src="https://liveblocks.io/images/blog/introducing-liveblocks.png">
   </a>
 </p>
 
@@ -10,9 +10,9 @@
 
 ## Examples
 
-Browse our gallery of collaborative UI patterns. [Examples gallery](https://liveblocks.io/examples).
+Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 
-Explore and clone any of our open-source examples. [Code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
+Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
 
 ## Documentation
 
@@ -30,11 +30,8 @@ For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https:/
 ## Community
 
 - Steven Fabre ([@stevenfabre](https://twitter.com/stevenfabre)) - [Liveblocks](https://liveblocks.io)
-
 - [Slack](https://join.slack.com/t/liveblocks-community/shared_invite/zt-qozwnk75-6RB0i1wk1lx470KX0YuZxQ) - To get involved with the Liveblocks community, ask questions and share tips.
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
-
----
 
 ## License
 
