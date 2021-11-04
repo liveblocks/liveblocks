@@ -477,4 +477,69 @@ describe("LiveMap", () => {
 
     assertUndoRedo();
   });
+
+  describe("subscriptions", () => {
+    test("simple action", () => {
+      const { storage } = prepareStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveMap = root.get("map");
+
+      storage.subscribe(liveMap, callback);
+
+      liveMap.set("a", "av");
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveMap",
+          node: liveMap,
+        },
+      ]);
+    });
+
+    test("deep subscribe", () => {
+      const { storage } = prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", "mapElement"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+      const mapElement = root.get("map").get("mapElement");
+
+      const unsubscribe = storage.subscribe(root.get("map"), callback, {
+        isDeep: true,
+      });
+
+      mapElement?.set("a", 1);
+
+      unsubscribe();
+
+      mapElement?.set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: mapElement },
+      ]);
+    });
+  });
 });
