@@ -4,9 +4,9 @@
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) · [![Twitter Follow](https://shields.io/twitter/follow/liveblocks?label=Follow)](https://twitter.com/liveblocks)
+# Liveblocks · [![Twitter Follow](https://shields.io/twitter/follow/liveblocks?label=Follow)](https://twitter.com/liveblocks)
 
-**At Liveblocks, we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
+**At [Liveblocks](https://liveblocks.io), we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
 
 ## Examples
 
@@ -42,4 +42,4 @@ For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https:/
 
 Licensed under the Apache License 2.0, Copyright © 2021-present [Liveblocks](https://liveblocks.io).
 
-See [LICENSE](https://github.com/liveblocks/liveblocks/tree/main/LICENSE) for more information.
+See [LICENSE](./LICENSE) for more information.
