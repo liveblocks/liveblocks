@@ -6,7 +6,7 @@
 
 # [Liveblocks](https://liveblocks.io) · [![Twitter Follow](https://shields.io/twitter/follow/liveblocks?label=Follow)](https://twitter.com/liveblocks)
 
-**At Liveblocks, we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repositiory is a set of open-source packages for building performant and reliable multiplayer experiences.
+**At Liveblocks, we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
 
 ## Examples
 
