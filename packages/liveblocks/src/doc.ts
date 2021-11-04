@@ -23,17 +23,17 @@ const MAX_UNDO_STACK = 50;
 
 type LiveMapUpdates<TKey extends string = string, TValue = any> = {
   type: "LiveMap";
-  liveMap: LiveMap<TKey, TValue>;
+  node: LiveMap<TKey, TValue>;
 };
 
 type LiveObjectUpdates<TData = any> = {
   type: "LiveObject";
-  liveObject: LiveObject<TData>;
+  node: LiveObject<TData>;
 };
 
 type LiveListUpdates<TItem = any> = {
   type: "LiveList";
-  liveList: LiveList<TItem>;
+  node: LiveList<TItem>;
 };
 
 type StorageUpdate = LiveMapUpdates | LiveObjectUpdates | LiveListUpdates;
@@ -131,19 +131,22 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
 
   #crdtSubscribe<T extends AbstractCrdt>(
     crdt: T,
-    innerCallback: () => void,
+    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
-      throw new Error("TODO");
-      // for (const node of nodes) {
-      //   if (
-      //     node === crdt ||
-      //     (options?.isDeep && isSameNodeOrChildOf(node, crdt))
-      //   ) {
-      //     innerCallback();
-      //   }
-      // }
+      const relatedUpdates: StorageUpdate[] = [];
+      for (const update of updates) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+          relatedUpdates.push(update);
+        } else if (update.node._id === crdt._id) {
+          innerCallback(update.node);
+        }
+      }
+
+      if (options?.isDeep && relatedUpdates.length > 0) {
+        innerCallback(relatedUpdates);
+      }
     };
 
     return this.#genericSubscribe(cb);
@@ -175,7 +178,6 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
         parameters[2]
       );
     }
-
     const callback = parameters[0];
     return this.#genericSubscribe(callback);
   }
@@ -347,8 +349,26 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     }
 
     for (const subscriber of this._subscribers) {
-      throw new Error("TODO");
-      // subscriber(Array.from(modified));
+      subscriber(
+        Array.from(modified).map((m) => {
+          if (m instanceof LiveObject) {
+            return {
+              type: "LiveObject",
+              node: m,
+            } as LiveObjectUpdates;
+          } else if (m instanceof LiveList) {
+            return {
+              type: "LiveList",
+              node: m,
+            } as LiveListUpdates;
+          } else {
+            return {
+              type: "LiveMap",
+              node: m,
+            } as LiveMapUpdates;
+          }
+        })
+      );
     }
   }
 

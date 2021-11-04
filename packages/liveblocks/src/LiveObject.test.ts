@@ -380,6 +380,38 @@ describe("LiveObject", () => {
       root.set("a", 1);
 
       expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(storage.root);
+    });
+
+    test("subscribe multiple actions", () => {
+      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+        child: LiveObject<{ a: number }>;
+        child2: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+          createSerializedObject("0:2", { a: 0 }, "0:0", "child2"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = storage.subscribe(root.get("child"), callback);
+
+      root.get("child").set("a", 1);
+
+      root.get("child2").set("a", 1);
+
+      unsubscribe();
+
+      root.get("child").set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(root.get("child"));
     });
 
     test("deep subscribe", () => {
@@ -408,6 +440,15 @@ describe("LiveObject", () => {
       root.get("child").set("a", 2);
 
       expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("child") },
+      ]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: root.get("child").get("subchild"),
+        },
+      ]);
     });
   });
 });

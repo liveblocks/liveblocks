@@ -543,4 +543,64 @@ describe("LiveList", () => {
       items: ["y0", "y1", "x0", "x1"],
     });
   });
+
+  describe("subscriptions", () => {
+    test("simple action", () => {
+      const { storage } = prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveList = root.get("items");
+
+      storage.subscribe(liveList, callback);
+
+      liveList.push("a");
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(liveList);
+    });
+
+    test("deep subscribe", () => {
+      const { storage } = prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+      const listElement = root.get("items").get(0);
+
+      const unsubscribe = storage.subscribe(root.get("items"), callback, {
+        isDeep: true,
+      });
+
+      listElement?.set("a", 1);
+
+      unsubscribe();
+
+      listElement?.set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: listElement },
+      ]);
+    });
+  });
 });
