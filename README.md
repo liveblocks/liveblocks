@@ -13,9 +13,15 @@
 - Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 - Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
 
+## Packages
+
+- [@liveblocks/client](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks)
+- [@liveblocks/react](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-react)
+- [@liveblocks/node](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-node)
+
 ## Documentation
 
-Visit [https://liveblocks.io/docs](https://liveblocks.io/docs) to get started with Liveblocks.
+[Read the documentation](https://liveblocks.io/docs) to start using Liveblocks.
 
 ## Releases
 
@@ -25,10 +31,10 @@ For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https:/
 
 - Guillaume Salles ([@guillaume_slls](https://twitter.com/guillaume_slls)) - [Liveblocks](https://liveblocks.io)
 - Olivier Foucherot ([@ofoucherot](https://twitter.com/ofoucherot)) - [Liveblocks](https://liveblocks.io)
+- Steven Fabre ([@stevenfabre](https://twitter.com/stevenfabre)) - [Liveblocks](https://liveblocks.io)
 
 ## Community
 
-- Steven Fabre ([@stevenfabre](https://twitter.com/stevenfabre)) - [Liveblocks](https://liveblocks.io)
 - [Slack](https://join.slack.com/t/liveblocks-community/shared_invite/zt-qozwnk75-6RB0i1wk1lx470KX0YuZxQ) - To get involved with the Liveblocks community, ask questions and share tips.
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
 
