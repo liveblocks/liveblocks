@@ -131,21 +131,20 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
 
   #crdtSubscribe<T extends AbstractCrdt>(
     crdt: T,
-    innerCallback: (updates: StorageUpdate[]) => void,
+    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
       const relatedUpdates: StorageUpdate[] = [];
       for (const update of updates) {
-        if (
-          update.node._id === crdt._id ||
-          (options?.isDeep && isSameNodeOrChildOf(update.node, crdt))
-        ) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
           relatedUpdates.push(update);
+        } else if (update.node._id === crdt._id) {
+          innerCallback(update.node);
         }
       }
 
-      if (relatedUpdates.length > 0) {
+      if (options?.isDeep && relatedUpdates.length > 0) {
         innerCallback(relatedUpdates);
       }
     };

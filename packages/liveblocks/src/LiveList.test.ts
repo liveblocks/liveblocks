@@ -567,12 +567,7 @@ describe("LiveList", () => {
       liveList.push("a");
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveList",
-          node: liveList,
-        },
-      ]);
+      expect(callback).toHaveBeenCalledWith(liveList);
     });
 
     test("deep subscribe", () => {

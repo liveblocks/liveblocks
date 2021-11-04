@@ -501,12 +501,7 @@ describe("LiveMap", () => {
       liveMap.set("a", "av");
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveMap",
-          node: liveMap,
-        },
-      ]);
+      expect(callback).toHaveBeenCalledWith(liveMap);
     });
 
     test("deep subscribe", () => {

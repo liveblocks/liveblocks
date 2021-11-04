@@ -380,12 +380,7 @@ describe("LiveObject", () => {
       root.set("a", 1);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: storage.root,
-        },
-      ]);
+      expect(callback).toHaveBeenCalledWith(storage.root);
     });
 
     test("subscribe multiple actions", () => {
@@ -416,12 +411,7 @@ describe("LiveObject", () => {
       root.get("child").set("a", 2);
 
       expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: root.get("child"),
-        },
-      ]);
+      expect(callback).toHaveBeenCalledWith(root.get("child"));
     });
 
     test("deep subscribe", () => {
