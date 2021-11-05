@@ -1,12 +1,11 @@
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, Doc } from "./AbstractCrdt";
+import { ApplyResult } from "./doc";
 import {
-  ApplyResult,
   deserialize,
-  Doc,
   isCrdt,
   selfOrRegister,
   selfOrRegisterValue,
-} from "./doc";
+} from "./utils";
 import {
   Op,
   CreateMapOp,

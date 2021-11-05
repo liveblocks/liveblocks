@@ -1,5 +1,13 @@
-import { ApplyResult, Doc } from "./doc";
+import { ApplyResult } from "./doc";
 import { Op, OpType } from "./live";
+
+export interface Doc {
+  generateId: () => string;
+  generateOpId: () => string;
+  addItem: (id: string, item: AbstractCrdt) => void;
+  deleteItem: (id: string) => void;
+  dispatch: (ops: Op[], reverseOps: Op[], modified: AbstractCrdt[]) => void;
+}
 
 export abstract class AbstractCrdt {
   #parent?: AbstractCrdt;

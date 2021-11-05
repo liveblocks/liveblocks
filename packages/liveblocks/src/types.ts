@@ -1,3 +1,6 @@
+import { AbstractCrdt } from "./AbstractCrdt";
+import { LiveList } from "./LiveList";
+import { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
@@ -22,6 +25,28 @@ export type RoomEventCallbackMap = {
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
+
+export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
+  type: "LiveMap";
+  node: LiveMap<TKey, TValue>;
+};
+
+export type LiveObjectUpdates<TData = any> = {
+  type: "LiveObject";
+  node: LiveObject<TData>;
+};
+
+export type LiveListUpdates<TItem = any> = {
+  type: "LiveList";
+  node: LiveList<TItem>;
+};
+
+export type StorageUpdate =
+  | LiveMapUpdates
+  | LiveObjectUpdates
+  | LiveListUpdates;
+
+export type StorageCallback = (updates: StorageUpdate[]) => void;
 
 export type Client = {
   /**

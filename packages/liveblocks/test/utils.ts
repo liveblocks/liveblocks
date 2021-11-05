@@ -1,15 +1,25 @@
-import { Doc } from "../src/doc";
-import { CrdtType, Op, SerializedCrdtWithId } from "../src/live";
+import {
+  ClientMessage,
+  ClientMessageType,
+  CrdtType,
+  Op,
+  SerializedCrdtWithId,
+  ServerMessage,
+  ServerMessageType,
+} from "../src/live";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
+import {
+  createRoom,
+  defaultState,
+  Effects,
+  makeStateMachine,
+} from "../src/room";
+import { remove } from "../src/utils";
 
-export function docToJson(doc: Doc<any>) {
-  return recordToJson(doc.root);
-}
-
-function recordToJson(record: LiveObject) {
+export function objectToJson(record: LiveObject) {
   const result: any = {};
   const obj = record.toObject();
 
@@ -34,7 +44,7 @@ function mapToJson<TKey extends string, TValue>(
 
 function toJson(value: any) {
   if (value instanceof LiveObject) {
-    return recordToJson(value);
+    return objectToJson(value);
   } else if (value instanceof LiveList) {
     return listToJson(value);
   } else if (value instanceof LiveMap) {
@@ -50,23 +60,86 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-export function assertStorage(storage: Doc, data: any) {
-  const json = docToJson(storage);
+export function assertStorage(storage: { root: LiveObject }, data: any) {
+  const json = objectToJson(storage.root);
   expect(json).toEqual(data);
 }
 
-export function prepareStorageTest<T>(
+const defaultContext = {
+  room: "room-id",
+  authEndpoint: "/api/auth",
+  throttleDelay: -1, // No throttle for standard storage test
+  liveblocksServer: "wss://live.liveblocks.io",
+  onError: () => {},
+};
+
+async function prepareRoomWithStorage<T>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0,
+  onSend: (messages: ClientMessage[]) => void = () => {}
+) {
+  const effects = mockEffects();
+  (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
+
+  const state = defaultState({});
+  const machine = makeStateMachine(state, defaultContext, effects);
+  const ws = new MockWebSocket("");
+
+  machine.connect();
+  machine.authenticationSuccess({ actor }, ws as any);
+  machine.onOpen();
+
+  const getStoragePromise = machine.getStorage<T>();
+
+  const clonedItems = JSON.parse(JSON.stringify(items));
+  machine.onMessage(
+    serverMessage({
+      type: ServerMessageType.InitialStorageState,
+      items: clonedItems,
+    })
+  );
+
+  const storage = await getStoragePromise;
+
+  return {
+    storage,
+    machine,
+  };
+}
+
+export async function prepareStorageTest<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
-  const clonedItems = JSON.parse(JSON.stringify(items));
-  const refDoc = Doc.load<T>(items, actor);
   const operations: Op[] = [];
-  const doc = Doc.load<T>(clonedItems, actor, (ops) => {
-    operations.push(...ops);
-    refDoc.applyRemoteOperations(ops);
-    doc.applyRemoteOperations(ops);
-  });
+
+  const { machine: refMachine, storage: refStorage } =
+    await prepareRoomWithStorage<T>(items, -1);
+
+  const { machine, storage } = await prepareRoomWithStorage<T>(
+    items,
+    actor,
+    (messages: ClientMessage[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMessageType.UpdateStorage) {
+          operations.push(...message.ops);
+
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+        }
+      }
+    }
+  );
 
   const states: any[] = [];
 
@@ -74,35 +147,48 @@ export function prepareStorageTest<T>(
     if (shouldPushToStates) {
       states.push(data);
     }
-    const json = docToJson(doc);
+    const json = objectToJson(storage.root);
     expect(json).toEqual(data);
-    expect(docToJson(refDoc)).toEqual(data);
-    expect(doc.count()).toBe(refDoc.count());
+    expect(objectToJson(refStorage.root)).toEqual(data);
+    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
-      doc.undo();
+      machine.undo();
       assert(states[states.length - 2 - i], false);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      doc.redo();
+      machine.redo();
       assert(states[i + 1], false);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
-      doc.undo();
+      machine.undo();
       assert(states[states.length - 2 - i], false);
     }
   }
 
   return {
     operations,
-    storage: doc,
-    refStorage: refDoc,
+    storage,
+    // refStorage: refDoc,
     assert,
     assertUndoRedo,
+    getUndoStack: machine.getUndoStack,
+    getItemsCount: machine.getItemsCount,
+    subscribe: machine.subscribe,
+    batch: machine.batch,
+    undo: machine.undo,
+    redo: machine.redo,
+    applyRemoteOperations: (ops: Op[]) =>
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdateStorage,
+          ops,
+        })
+      ),
   };
 }
 
@@ -169,3 +255,67 @@ export function createSerializedRegister(
     },
   ];
 }
+
+export function mockEffects(): Effects {
+  return {
+    authenticate: jest.fn(),
+    delayFlush: jest.fn(),
+    send: jest.fn(),
+    schedulePongTimeout: jest.fn(),
+    startHeartbeatInterval: jest.fn(),
+    scheduleReconnect: jest.fn(),
+  };
+}
+
+export function serverMessage(message: ServerMessage) {
+  return new MessageEvent("message", {
+    data: JSON.stringify(message),
+  });
+}
+
+export class MockWebSocket {
+  static instances: MockWebSocket[] = [];
+
+  isMock = true;
+
+  callbacks = {
+    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
+    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
+    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
+    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
+  };
+
+  sentMessages: string[] = [];
+  readyState: number;
+
+  constructor(
+    public url: string,
+    private onSend: (message: string) => void = () => {}
+  ) {
+    this.readyState = WebSocket.CLOSED;
+    MockWebSocket.instances.push(this);
+  }
+
+  addEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    this.callbacks[event].push(callback as any);
+  }
+
+  removeEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    remove(this.callbacks[event], callback as any);
+  }
+
+  send(message: string) {
+    this.sentMessages.push(message);
+    this.onSend(message);
+  }
+
+  close() {}
+}
+
+window.WebSocket = MockWebSocket as any;

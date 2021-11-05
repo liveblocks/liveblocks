@@ -1,5 +1,6 @@
-import { AbstractCrdt } from "./AbstractCrdt";
-import { Doc, deserialize, ApplyResult, isCrdt } from "./doc";
+import { AbstractCrdt, Doc } from "./AbstractCrdt";
+import { ApplyResult } from "./doc";
+import { deserialize, isCrdt } from "./utils";
 import {
   CrdtType,
   CreateObjectOp,

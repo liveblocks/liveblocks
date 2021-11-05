@@ -1,9 +1,13 @@
+import { mockEffects, MockWebSocket, serverMessage } from "../test/utils";
 import {
   ClientMessageType,
+  CrdtType,
+  ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
 import { makeStateMachine, Effects, defaultState } from "./room";
+import { Others } from "./types";
 
 const defaultContext = {
   room: "room-id",
@@ -12,17 +16,6 @@ const defaultContext = {
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
 };
-
-function mockEffects(): Effects {
-  return {
-    authenticate: jest.fn(),
-    delayFlush: jest.fn(),
-    send: jest.fn(),
-    schedulePongTimeout: jest.fn(),
-    startHeartbeatInterval: jest.fn(),
-    scheduleReconnect: jest.fn(),
-  };
-}
 
 function withDateNow(now: number, callback: () => void) {
   const realDateNow = Date.now.bind(global.Date);
@@ -182,12 +175,10 @@ describe("room", () => {
     machine.onOpen();
 
     machine.onMessage(
-      new MessageEvent("message", {
-        data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
-          data: { x: 2 },
-          actor: 1,
-        }),
+      serverMessage({
+        type: ServerMessageType.UpdatePresence,
+        data: { x: 2 },
+        actor: 1,
       })
     );
 
@@ -204,56 +195,160 @@ describe("room", () => {
 
     expect(machine.selectors.getOthers().toArray()).toEqual([]);
   });
+
+  test("storage should be initialized properly", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const machine = makeStateMachine(state, defaultContext, effects);
+
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
+
+    const getStoragePromise = machine.getStorage<{ x: number }>();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+  });
+
+  describe("subscription", () => {
+    test("batch my-presence", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const callback = jest.fn();
+
+      machine.subscribe("my-presence", callback);
+
+      machine.batch(() => {
+        machine.updatePresence({ x: 0 });
+        machine.updatePresence({ y: 1 });
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({ x: 0, y: 1 });
+    });
+
+    test("batch storage and presence", async () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      const getStoragePromise = machine.getStorage<{ x: number }>();
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.InitialStorageState,
+          items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        })
+      );
+
+      const storage = await getStoragePromise;
+
+      const presenceSubscriber = jest.fn();
+      const storageRootSubscriber = jest.fn();
+      machine.subscribe("my-presence", presenceSubscriber);
+      machine.subscribe(storage.root, storageRootSubscriber);
+
+      machine.batch(() => {
+        machine.updatePresence({ x: 0 });
+        storage.root.set("x", 1);
+
+        expect(presenceSubscriber).not.toHaveBeenCalled();
+        expect(storageRootSubscriber).not.toHaveBeenCalled();
+      });
+
+      expect(presenceSubscriber).toHaveBeenCalledTimes(1);
+      expect(presenceSubscriber).toHaveBeenCalledWith({ x: 0 });
+
+      expect(storageRootSubscriber).toHaveBeenCalledTimes(1);
+      expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
+    });
+
+    test("my-presence", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const callback = jest.fn();
+
+      machine.subscribe("my-presence", callback);
+
+      machine.updatePresence({ x: 0 });
+
+      expect(callback).toHaveBeenCalledWith({ x: 0 });
+    });
+
+    test("others", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      let others: Others | undefined;
+
+      machine.subscribe("others", (o) => (others = o));
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          presence: {
+            x: 2,
+          },
+        },
+      ]);
+    });
+
+    test("event", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      const callback = jest.fn();
+
+      machine.subscribe("event", callback);
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.Event,
+          event: { type: "MY_EVENT" },
+          actor: 1,
+        })
+      );
+
+      expect(callback).toHaveBeenCalledWith({
+        connectionId: 1,
+        event: {
+          type: "MY_EVENT",
+        },
+      });
+    });
+  });
 });
-
-class MockWebSocket {
-  static instances: MockWebSocket[] = [];
-
-  isMock = true;
-
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
-
-  sentMessages: string[] = [];
-  readyState: number;
-
-  constructor(public url: string) {
-    this.readyState = WebSocket.CLOSED;
-    MockWebSocket.instances.push(this);
-  }
-
-  addEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    this.callbacks[event].push(callback as any);
-  }
-
-  removeEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    remove(this.callbacks[event], callback as any);
-  }
-
-  send(message: string) {
-    this.sentMessages.push(message);
-  }
-
-  close() {}
-}
-
-window.WebSocket = MockWebSocket as any;
-
-function remove<T>(array: T[], item: T) {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] === item) {
-      array.splice(i, 1);
-      break;
-    }
-  }
-}

@@ -14,8 +14,13 @@ import {
   OthersEvent,
   AuthenticationToken,
   ConnectionCallback,
+  StorageCallback,
+  StorageUpdate,
+  LiveObjectUpdates,
+  LiveListUpdates,
+  LiveMapUpdates,
 } from "./types";
-import { remove } from "./utils";
+import { isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -27,8 +32,17 @@ import {
   RoomStateMessage,
   UpdatePresenceMessage,
   UserJoinMessage,
+  SerializedCrdtWithId,
+  InitialDocumentStateMessage,
+  OpType,
+  UpdateStorageMessage,
 } from "./live";
-import Storage from "./storage";
+import { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import { LiveList } from "./LiveList";
+import { AbstractCrdt } from "./AbstractCrdt";
+import { ApplyResult } from "./doc";
+import { LiveRegister } from "./LiveRegister";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 
@@ -74,9 +88,15 @@ function log(...params: any[]) {
   console.log(...params, new Date().toString());
 }
 
+type UndoStackItem = Op[];
+
 type IdFactory = () => string;
 
 export type State = {
+  isBatching: boolean;
+  updates: {
+    presence: boolean;
+  };
   connection: Connection;
   socket: WebSocket | null;
   lastFlushTime: number;
@@ -100,6 +120,7 @@ export type State = {
     error: ErrorCallback[];
     connection: ConnectionCallback[];
   };
+  storageListeners: StorageCallback[];
   me: Presence;
   others: Others;
   users: {
@@ -108,6 +129,19 @@ export type State = {
   idFactory: IdFactory | null;
   numberOfRetry: number;
   defaultStorageRoot?: { [key: string]: any };
+
+  clock: number;
+  opClock: number;
+  items: Map<string, AbstractCrdt>;
+  root: LiveObject | undefined;
+  undoStack: UndoStackItem[];
+  redoStack: UndoStackItem[];
+
+  toBatch: {
+    ops: Op[];
+    modified: Set<AbstractCrdt>;
+    reverseOps: Op[];
+  };
 };
 
 export type Effects = {
@@ -173,25 +207,322 @@ export function makeStateMachine(
     },
   };
 
+  function genericSubscribe(callback: StorageCallback) {
+    state.storageListeners.push(callback);
+    return () => remove(state.storageListeners, callback);
+  }
+
+  function crdtSubscribe<T extends AbstractCrdt>(
+    crdt: T,
+    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
+    options?: { isDeep: boolean }
+  ) {
+    const cb = (updates: StorageUpdate[]) => {
+      const relatedUpdates: StorageUpdate[] = [];
+      for (const update of updates) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+          relatedUpdates.push(update);
+        } else if (update.node._id === crdt._id) {
+          innerCallback(update.node);
+        }
+      }
+
+      if (options?.isDeep && relatedUpdates.length > 0) {
+        innerCallback(relatedUpdates);
+      }
+    };
+
+    return genericSubscribe(cb);
+  }
+
+  function createRootFromMessage(message: InitialDocumentStateMessage) {
+    state.root = load(message.items);
+
+    for (const key in state.defaultStorageRoot) {
+      if (state.root.get(key) == null) {
+        state.root.set(key, state.defaultStorageRoot[key]);
+      }
+    }
+  }
+
+  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+    if (items.length === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
+    const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
+    let root = null;
+
+    for (const tuple of items) {
+      const parentId = tuple[1].parentId;
+      if (parentId == null) {
+        root = tuple;
+      } else {
+        const children = parentToChildren.get(parentId);
+        if (children != null) {
+          children.push(tuple);
+        } else {
+          parentToChildren.set(parentId, [tuple]);
+        }
+      }
+    }
+
+    if (root == null) {
+      throw new Error("Root can't be null");
+    }
+
+    return LiveObject._deserialize(root, parentToChildren, {
+      addItem,
+      deleteItem,
+      generateId,
+      generateOpId,
+      dispatch: storageDispatch,
+    }) as LiveObject<T>;
+  }
+
+  function addItem(id: string, item: AbstractCrdt) {
+    state.items.set(id, item);
+  }
+
+  function deleteItem(id: string) {
+    state.items.delete(id);
+  }
+
+  function getItem(id: string) {
+    return state.items.get(id);
+  }
+
+  function addToUndoStack(ops: Op[]) {
+    if (state.undoStack.length >= 50) {
+      state.undoStack.shift();
+    }
+    state.undoStack.push(ops);
+  }
+
+  function storageDispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
+    if (state.isBatching) {
+      state.toBatch.ops.push(...ops);
+      for (const item of modified) {
+        state.toBatch.modified.add(item);
+      }
+      state.toBatch.reverseOps.push(...reverse);
+    } else {
+      addToUndoStack(reverse);
+      state.redoStack = [];
+      dispatch(ops);
+      notify(new Set(modified));
+    }
+  }
+
+  function notify(modified: Set<AbstractCrdt>) {
+    if (modified.size === 0) {
+      return;
+    }
+
+    for (const subscriber of state.storageListeners) {
+      subscriber(
+        Array.from(modified).map((m) => {
+          if (m instanceof LiveObject) {
+            return {
+              type: "LiveObject",
+              node: m,
+            } as LiveObjectUpdates;
+          } else if (m instanceof LiveList) {
+            return {
+              type: "LiveList",
+              node: m,
+            } as LiveListUpdates;
+          } else {
+            return {
+              type: "LiveMap",
+              node: m,
+            } as LiveMapUpdates;
+          }
+        })
+      );
+    }
+  }
+
+  function getConnectionId() {
+    if (
+      state.connection.state === "open" ||
+      state.connection.state === "connecting"
+    ) {
+      return state.connection.id;
+    }
+
+    throw new Error(
+      "Internal. Tried to get connection id but connection is not open"
+    );
+  }
+
+  function generateId() {
+    return `${getConnectionId()}:${state.clock++}`;
+  }
+
+  function generateOpId() {
+    return `${getConnectionId()}:${state.opClock++}`;
+  }
+
+  function applyRemoteOperations(ops: Op[]) {
+    const applyResults = apply(ops);
+    const modified = new Set<AbstractCrdt>();
+
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        modified.add(applyResult.modified);
+      }
+    }
+
+    notify(modified);
+  }
+
+  function apply(ops: Op[]): ApplyResult[] {
+    const result: ApplyResult[] = [];
+    for (const op of ops) {
+      result.push(applyOp(op));
+    }
+    return result;
+  }
+
+  function applyOp(op: Op): ApplyResult {
+    switch (op.type) {
+      case OpType.DeleteObjectKey:
+      case OpType.UpdateObject:
+      case OpType.DeleteCrdt: {
+        const item = state.items.get(op.id);
+
+        if (item == null) {
+          return { modified: false };
+        }
+
+        return item._apply(op);
+      }
+      case OpType.SetParentKey: {
+        const item = state.items.get(op.id);
+
+        if (item == null) {
+          return { modified: false };
+        }
+
+        if (item._parent instanceof LiveList) {
+          const previousKey = item._parentKey!;
+          item._parent._setChildKey(op.parentKey, item);
+          return {
+            reverse: [
+              {
+                type: OpType.SetParentKey,
+                id: item._id!,
+                parentKey: previousKey,
+              },
+            ],
+            modified: item,
+          };
+        }
+        return { modified: false };
+      }
+      case OpType.CreateObject: {
+        const parent = state.items.get(op.parentId!);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveObject(op.data)
+        );
+      }
+      case OpType.CreateList: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(op.id, op.parentKey!, new LiveList());
+      }
+      case OpType.CreateRegister: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveRegister(op.data)
+        );
+      }
+      case OpType.CreateMap: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(op.id, op.parentKey!, new LiveMap());
+      }
+    }
+
+    return { modified: false };
+  }
+
+  function subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  function subscribe<TKey extends string, TValue>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
+  ): () => void;
+  function subscribe<TData>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  function subscribe<TItem>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  function subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
   function subscribe<T extends Presence>(
     type: "my-presence",
     listener: MyPresenceCallback<T>
-  ): void;
+  ): () => void;
   function subscribe<T extends Presence>(
     type: "others",
     listener: OthersEventCallback<T>
-  ): void;
-  function subscribe(type: "event", listener: EventCallback): void;
-  function subscribe(type: "error", listener: ErrorCallback): void;
-  function subscribe(type: "connection", listener: ConnectionCallback): void;
+  ): () => void;
+  function subscribe(type: "event", listener: EventCallback): () => void;
+  function subscribe(type: "error", listener: ErrorCallback): () => void;
+  function subscribe(
+    type: "connection",
+    listener: ConnectionCallback
+  ): () => void;
   function subscribe<T extends keyof RoomEventCallbackMap>(
-    type: T,
-    listener: RoomEventCallbackMap[T]
-  ) {
-    if (!isValidRoomEventType(type)) {
-      throw new Error(`"${type}" is not a valid event name`);
+    firstParam: T | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap[T] | any,
+    options?: { isDeep: boolean }
+  ): () => void {
+    if (firstParam instanceof AbstractCrdt) {
+      return crdtSubscribe(firstParam, listener, options);
+    } else if (typeof firstParam === "function") {
+      return genericSubscribe(firstParam);
+    } else if (!isValidRoomEventType(firstParam)) {
+      throw new Error(`"${firstParam}" is not a valid event name`);
     }
-    (state.listeners[type] as RoomEventCallbackMap[T][]).push(listener);
+
+    (state.listeners[firstParam] as RoomEventCallbackMap[T][]).push(listener);
+
+    return () => {
+      const callbacks = state.listeners[
+        firstParam
+      ] as RoomEventCallbackMap[T][];
+      remove(callbacks, listener);
+    };
   }
 
   function unsubscribe<T extends Presence>(
@@ -263,10 +594,11 @@ export function makeStateMachine(
 
     state.me = newPresence;
 
-    tryFlushing();
-
-    for (const listener of state.listeners["my-presence"]) {
-      listener(state.me);
+    if (state.isBatching) {
+      state.updates.presence = true;
+    } else {
+      tryFlushing();
+      notifyMyPresence();
     }
   }
 
@@ -416,9 +748,16 @@ export function makeStateMachine(
         onRoomStateMessage(message as RoomStateMessage);
         break;
       }
+      case ServerMessageType.InitialStorageState: {
+        createRootFromMessage(message);
+        _getInitialStateResolver?.();
+        break;
+      }
+      case ServerMessageType.UpdateStorage: {
+        applyRemoteOperations((message as UpdateStorageMessage).ops);
+        break;
+      }
     }
-
-    storage.onMessage(message);
   }
 
   // function onWakeUp() {
@@ -609,6 +948,12 @@ export function makeStateMachine(
     clearListeners();
   }
 
+  function notifyMyPresence() {
+    for (const listener of state.listeners["my-presence"]) {
+      listener(state.me);
+    }
+  }
+
   function clearListeners() {
     for (const key in state.listeners) {
       state.listeners[key as keyof State["listeners"]] = [];
@@ -640,37 +985,110 @@ export function makeStateMachine(
     tryFlushing();
   }
 
-  const storage = new Storage({
-    fetchStorage: () => {
+  let _getInitialStatePromise: Promise<void> | null = null;
+  let _getInitialStateResolver: (() => void) | null = null;
+
+  async function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
+    if (state.root) {
+      return {
+        root: state.root as LiveObject<TRoot>,
+      };
+    }
+
+    if (_getInitialStatePromise == null) {
       state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
       tryFlushing();
-    },
-    dispatch,
-    getConnectionId: () => {
-      const me = getSelf();
+      _getInitialStatePromise = new Promise(
+        (resolve) => (_getInitialStateResolver = resolve)
+      );
+    }
 
-      if (me) {
-        return me.connectionId;
-      }
+    await _getInitialStatePromise;
 
-      throw new Error("Unexpected");
-    },
-    defaultRoot: state.defaultStorageRoot!,
-  });
-
-  async function getStorage<TRoot>() {
-    const doc = await storage.getDocument<TRoot>();
     return {
-      root: doc.root,
+      root: state.root! as LiveObject<TRoot>,
     };
   }
 
   function undo() {
-    storage.undo();
+    if (state.isBatching) {
+      throw new Error("undo is not allowed during a batch");
+    }
+
+    const ops = state.undoStack.pop();
+
+    if (ops == null) {
+      return;
+    }
+
+    const applyResults = apply(ops);
+
+    const reverse: Op[] = [];
+    const modified = new Set<AbstractCrdt>();
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        reverse.push(...applyResult.reverse);
+        modified.add(applyResult.modified);
+      }
+    }
+
+    notify(modified);
+    state.redoStack.push(reverse);
+    dispatch(ops);
   }
 
   function redo() {
-    storage.redo();
+    if (state.isBatching) {
+      throw new Error("redo is not allowed during a batch");
+    }
+
+    const ops = state.redoStack.pop();
+
+    if (ops == null) {
+      return;
+    }
+
+    const applyResults = apply(ops);
+
+    const reverse: Op[] = [];
+    const modified = new Set<AbstractCrdt>();
+    for (const applyResult of applyResults) {
+      if (applyResult.modified) {
+        reverse.push(...applyResult.reverse);
+        modified.add(applyResult.modified);
+      }
+    }
+
+    notify(modified);
+    state.undoStack.push(reverse);
+    dispatch(ops);
+  }
+
+  function batch(callback: () => void) {
+    if (state.isBatching) {
+      throw new Error("batch should not be called during a batch");
+    }
+
+    state.isBatching = true;
+
+    try {
+      callback();
+    } finally {
+      state.isBatching = false;
+      addToUndoStack(state.toBatch.reverseOps);
+      state.redoStack = [];
+      dispatch(state.toBatch.ops);
+      notify(state.toBatch.modified);
+      state.toBatch = {
+        ops: [],
+        reverseOps: [],
+        modified: new Set(),
+      };
+      if (state.updates.presence) {
+        notifyMyPresence();
+      }
+      tryFlushing();
+    }
   }
 
   return {
@@ -683,6 +1101,8 @@ export function makeStateMachine(
     onNavigatorOnline,
     // onWakeUp,
     onVisibilityChange,
+    getUndoStack: () => state.undoStack,
+    getItemsCount: () => state.items.size,
 
     // Core
     connect,
@@ -694,6 +1114,7 @@ export function makeStateMachine(
     updatePresence,
     broadcastEvent,
 
+    batch,
     undo,
     redo,
 
@@ -716,6 +1137,10 @@ export function defaultState(
   defaultStorageRoot?: { [key: string]: any }
 ): State {
   return {
+    isBatching: false,
+    updates: {
+      presence: false,
+    },
     connection: { state: "closed" },
     socket: null,
     listeners: {
@@ -745,6 +1170,21 @@ export function defaultState(
     others: makeOthers({}),
     defaultStorageRoot,
     idFactory: null,
+
+    // Storage
+    clock: 0,
+    opClock: 0,
+    items: new Map<string, AbstractCrdt>(),
+    root: undefined,
+    undoStack: [],
+    redoStack: [],
+
+    toBatch: {
+      ops: [] as Op[],
+      modified: new Set<AbstractCrdt>(),
+      reverseOps: [] as Op[],
+    },
+    storageListeners: [],
   };
 }
 

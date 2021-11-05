@@ -2,14 +2,14 @@ import { LiveObject } from "./LiveObject";
 import {
   prepareStorageTest,
   createSerializedObject,
-  docToJson,
+  objectToJson,
 } from "../test/utils";
 import { Doc } from "./doc";
 import { OpType } from "./live";
 
 describe("LiveObject", () => {
-  it("update non existing property", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest([
+  it("update non existing property", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", {}),
     ]);
 
@@ -23,8 +23,8 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update non existing property with null", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest([
+  it("update non existing property with null", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", {}),
     ]);
 
@@ -38,8 +38,8 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update existing property", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest([
+  it("update existing property", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", { a: 0 }),
     ]);
 
@@ -53,8 +53,8 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update existing property with null", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest([
+  it("update existing property with null", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", { a: 0 }),
     ]);
 
@@ -68,8 +68,8 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update root", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest([
+  it("update root", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", { a: 0 }),
     ]);
 
@@ -91,10 +91,11 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update with LiveObject", () => {
-    const { storage, assert, operations, assertUndoRedo } = prepareStorageTest<{
-      child: LiveObject<{ a: number }> | null;
-    }>([createSerializedObject("0:0", { child: null })], 1);
+  it("update with LiveObject", async () => {
+    const { storage, assert, operations, assertUndoRedo, getUndoStack } =
+      await prepareStorageTest<{
+        child: LiveObject<{ a: number }> | null;
+      }>([createSerializedObject("0:0", { child: null })], 1);
 
     const root = storage.root;
 
@@ -109,7 +110,7 @@ describe("LiveObject", () => {
         a: 0,
       },
     });
-    expect(storage.undoStack[0]).toEqual([
+    expect(getUndoStack()[0]).toEqual([
       {
         type: OpType.UpdateObject,
         id: "0:0",
@@ -135,7 +136,7 @@ describe("LiveObject", () => {
     assert({
       child: null,
     });
-    expect(storage.undoStack[1]).toEqual([
+    expect(getUndoStack()[1]).toEqual([
       {
         type: OpType.CreateObject,
         id: "1:0",
@@ -148,18 +149,19 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("remove nested child record with update", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest<{
-      a: number;
-      child: LiveObject<{
-        b: number;
-        grandChild: LiveObject<{ c: number }>;
-      }> | null;
-    }>([
-      createSerializedObject("0:0", { a: 0 }),
-      createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
-      createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
-    ]);
+  it("remove nested child record with update", async () => {
+    const { storage, assert, assertUndoRedo, getItemsCount } =
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{
+          b: number;
+          grandChild: LiveObject<{ c: number }>;
+        }> | null;
+      }>([
+        createSerializedObject("0:0", { a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
+      ]);
 
     assert({
       a: 0,
@@ -177,22 +179,23 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(storage.count()).toBe(1);
+    expect(getItemsCount()).toBe(1);
 
     assertUndoRedo();
   });
 
-  it("remove nested child record with update", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest<{
-      a: number;
-      child: LiveObject<{
-        b: number;
-        grandChild: LiveObject<{ c: number }>;
-      }> | null;
-    }>([
-      createSerializedObject("0:0", { a: 0 }),
-      createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
-    ]);
+  it("remove nested child record with update", async () => {
+    const { storage, assert, assertUndoRedo, getItemsCount } =
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{
+          b: number;
+          grandChild: LiveObject<{ c: number }>;
+        }> | null;
+      }>([
+        createSerializedObject("0:0", { a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+      ]);
 
     assert({
       a: 0,
@@ -207,16 +210,14 @@ describe("LiveObject", () => {
       a: 0,
       child: null,
     });
-    expect(storage.count()).toBe(1);
+    expect(getItemsCount()).toBe(1);
 
     assertUndoRedo();
   });
 
-  it("add nested record with update", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest(
-      [createSerializedObject("0:0", {})],
-      1
-    );
+  it("add nested record with update", async () => {
+    const { storage, assert, assertUndoRedo, getItemsCount } =
+      await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
     assert({});
 
@@ -230,16 +231,14 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(storage.count()).toBe(2);
+    expect(getItemsCount()).toBe(2);
 
     assertUndoRedo();
   });
 
-  it("replace nested record with update", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest(
-      [createSerializedObject("0:0", {})],
-      1
-    );
+  it("replace nested record with update", async () => {
+    const { storage, assert, assertUndoRedo, getItemsCount } =
+      await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
     assert({});
 
@@ -263,13 +262,13 @@ describe("LiveObject", () => {
       },
     });
 
-    expect(storage.count()).toBe(2);
+    expect(getItemsCount()).toBe(2);
 
     assertUndoRedo();
   });
 
-  it("update nested record", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+  it("update nested record", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
       a: number;
       child: LiveObject<{ b: number }>;
     }>([
@@ -298,8 +297,8 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("update deeply nested record", () => {
-    const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+  it("update deeply nested record", async () => {
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
       a: number;
       child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
     }>([
@@ -341,17 +340,17 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("should ignore incoming updates if current op has not been acknowledged", () => {
+  it("should ignore incoming updates if current op has not been acknowledged", async () => {
     const storage = Doc.load<{ a: number }>(
       [createSerializedObject("0:0", { a: 0 })],
       1
     );
 
-    expect(docToJson(storage)).toEqual({ a: 0 });
+    expect(objectToJson(storage.root)).toEqual({ a: 0 });
 
     storage.root.set("a", 1);
 
-    expect(docToJson(storage)).toEqual({ a: 1 });
+    expect(objectToJson(storage.root)).toEqual({ a: 1 });
 
     storage.applyRemoteOperations([
       {
@@ -362,20 +361,21 @@ describe("LiveObject", () => {
       },
     ]);
 
-    expect(docToJson(storage)).toEqual({ a: 1 });
+    expect(objectToJson(storage.root)).toEqual({ a: 1 });
   });
 
   describe("subscriptions", () => {
-    test("simple action", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+    test("simple action", async () => {
+      const { storage, assert, assertUndoRedo, subscribe } =
+        await prepareStorageTest<{
+          a: number;
+        }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
 
       const root = storage.root;
 
-      storage.subscribe(root, callback);
+      subscribe(root, callback);
 
       root.set("a", 1);
 
@@ -383,8 +383,8 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledWith(storage.root);
     });
 
-    test("subscribe multiple actions", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+    test("subscribe multiple actions", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
         child: LiveObject<{ a: number }>;
         child2: LiveObject<{ a: number }>;
       }>(
@@ -400,7 +400,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = storage.subscribe(root.get("child"), callback);
+      const unsubscribe = subscribe(root.get("child"), callback);
 
       root.get("child").set("a", 1);
 
@@ -414,8 +414,8 @@ describe("LiveObject", () => {
       expect(callback).toHaveBeenCalledWith(root.get("child"));
     });
 
-    test("deep subscribe", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+    test("deep subscribe", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
         child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
       }>(
         [
@@ -430,7 +430,7 @@ describe("LiveObject", () => {
 
       const root = storage.root;
 
-      const unsubscribe = storage.subscribe(root, callback, { isDeep: true });
+      const unsubscribe = subscribe(root, callback, { isDeep: true });
 
       root.get("child").set("a", 1);
       root.get("child").get("subchild").set("b", 1);

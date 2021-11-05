@@ -12,6 +12,13 @@ import { LiveObject } from "./LiveObject";
 import { LiveMap } from "./LiveMap";
 import { LiveList } from "./LiveList";
 import { LiveRegister } from "./LiveRegister";
+import {
+  StorageCallback,
+  StorageUpdate,
+  LiveObjectUpdates,
+  LiveListUpdates,
+  LiveMapUpdates,
+} from "./types";
 
 type Dispatch = (ops: Op[]) => void;
 
@@ -20,25 +27,6 @@ function noOp() {}
 type UndoStackItem = Op[];
 
 const MAX_UNDO_STACK = 50;
-
-type LiveMapUpdates<TKey extends string = string, TValue = any> = {
-  type: "LiveMap";
-  node: LiveMap<TKey, TValue>;
-};
-
-type LiveObjectUpdates<TData = any> = {
-  type: "LiveObject";
-  node: LiveObject<TData>;
-};
-
-type LiveListUpdates<TItem = any> = {
-  type: "LiveList";
-  node: LiveList<TItem>;
-};
-
-type StorageUpdate = LiveMapUpdates | LiveObjectUpdates | LiveListUpdates;
-
-type StorageSubscriberCallback = (updates: StorageUpdate[]) => void;
 
 export type ApplyResult =
   | { reverse: Op[]; modified: AbstractCrdt }
@@ -61,7 +49,7 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     reverseOps: [] as Op[],
   };
 
-  _subscribers: Array<StorageSubscriberCallback> = [];
+  _subscribers: Array<StorageCallback> = [];
 
   get undoStack() {
     return this.#undoStack;
@@ -124,7 +112,7 @@ export class Doc<T extends Record<string, any> = Record<string, any>> {
     return doc;
   }
 
-  #genericSubscribe(callback: StorageSubscriberCallback) {
+  #genericSubscribe(callback: StorageCallback) {
     this._subscribers.push(callback);
     return () => remove(this._subscribers, callback);
   }

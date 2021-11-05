@@ -1,5 +1,4 @@
-import { Op, OpType } from "./live";
-import { Doc } from "./doc";
+import { OpType } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -12,14 +11,14 @@ import {
 
 describe("Storage", () => {
   describe("subscribe generic", () => {
-    test("simple action", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+    test("simple action", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
 
-      const unsubscribe = storage.subscribe(callback);
+      const unsubscribe = subscribe(callback);
 
       storage.root.set("a", 1);
 
@@ -36,22 +35,23 @@ describe("Storage", () => {
       ]);
     });
 
-    test("remote action", () => {
-      const { storage } = prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+    test("remote action", async () => {
+      const { storage, applyRemoteOperations, subscribe } =
+        await prepareStorageTest<{
+          a: number;
+        }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
 
-      const unsubscribe = storage.subscribe(callback);
+      const unsubscribe = subscribe(callback);
 
-      storage.applyRemoteOperations([
+      applyRemoteOperations([
         { type: OpType.UpdateObject, data: { a: 1 }, opId: "", id: "0:0" },
       ]);
 
       unsubscribe();
 
-      storage.applyRemoteOperations([
+      applyRemoteOperations([
         { type: OpType.UpdateObject, data: { a: 2 }, opId: "", id: "0:0" },
       ]);
 
@@ -64,26 +64,27 @@ describe("Storage", () => {
       ]);
     });
 
-    test("batch actions on a single LiveObject", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
-        a: number;
-        b: number;
-      }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
+    test("batch actions on a single LiveObject", async () => {
+      const { storage, assert, assertUndoRedo, subscribe, batch } =
+        await prepareStorageTest<{
+          a: number;
+          b: number;
+        }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
 
       const callback = jest.fn();
 
       const root = storage.root;
 
-      const unsubscribe = storage.subscribe(callback);
+      const unsubscribe = subscribe(callback);
 
-      storage.batch(() => {
+      batch(() => {
         root.set("a", 1);
         root.set("b", 1);
       });
 
       unsubscribe();
 
-      storage.batch(() => {
+      batch(() => {
         root.set("a", 2);
         root.set("b", 2);
       });
@@ -99,8 +100,8 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    test("batch actions on multiple LiveObjects", () => {
-      const { storage } = prepareStorageTest<{
+    test("batch actions on multiple LiveObjects", async () => {
+      const { storage, subscribe, batch } = await prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }>;
       }>(
@@ -115,9 +116,9 @@ describe("Storage", () => {
 
       const root = storage.root;
 
-      storage.subscribe(callback);
+      subscribe(callback);
 
-      storage.batch(() => {
+      batch(() => {
         root.set("a", 1);
         root.get("child").set("b", 1);
       });
@@ -135,8 +136,8 @@ describe("Storage", () => {
       ]);
     });
 
-    test("batch actions on multiple Live types", () => {
-      const { storage } = prepareStorageTest<{
+    test("batch actions on multiple Live types", async () => {
+      const { storage, subscribe, batch } = await prepareStorageTest<{
         a: number;
         childObj: LiveObject<{ b: number }>;
         childList: LiveList<string>;
@@ -155,9 +156,9 @@ describe("Storage", () => {
 
       const root = storage.root;
 
-      storage.subscribe(callback);
+      subscribe(callback);
 
-      storage.batch(() => {
+      batch(() => {
         root.set("a", 1);
         root.get("childObj").set("b", 1);
         root.get("childList").push("item1");
@@ -187,8 +188,8 @@ describe("Storage", () => {
   });
 
   describe("batching", () => {
-    it("batching and undo", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("batching and undo", async () => {
+      const { storage, assert, undo, redo, batch } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -200,7 +201,7 @@ describe("Storage", () => {
 
       const items = storage.root.get("items");
 
-      storage.batch(() => {
+      batch(() => {
         items.push("A");
         items.push("B");
         items.push("C");
@@ -210,57 +211,57 @@ describe("Storage", () => {
         items: ["A", "B", "C"],
       });
 
-      storage.undo();
+      undo();
 
       assert({
         items: [],
       });
 
-      storage.redo();
+      redo();
 
       assert({
         items: ["A", "B", "C"],
       });
     });
 
-    it("calling batch during a batch should throw", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("calling batch during a batch should throw", async () => {
+      const { storage, batch } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
-      storage.batch(() => {
+      batch(() => {
         expect(() =>
-          storage.batch(() => {
+          batch(() => {
             storage.root.set("a", 0);
           })
         ).toThrow();
       });
     });
 
-    it("calling undo during a batch should throw", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("calling undo during a batch should throw", async () => {
+      const { undo, batch } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
-      storage.batch(() => {
-        expect(() => storage.undo()).toThrow();
+      batch(() => {
+        expect(() => undo()).toThrow();
       });
     });
 
-    it("calling redo during a batch should throw", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("calling redo during a batch should throw", async () => {
+      const { batch, redo } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
-      storage.batch(() => {
-        expect(() => storage.redo()).toThrow();
+      batch(() => {
+        expect(() => redo()).toThrow();
       });
     });
   });
 
   describe("undo / redo", () => {
-    it("list.push", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+    it("list.push", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -287,8 +288,8 @@ describe("Storage", () => {
       assertUndoRedo();
     });
 
-    it("max undo-redo stack", () => {
-      const { storage, assert } = prepareStorageTest<{
+    it("max undo-redo stack", async () => {
+      const { storage, assert, undo } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
@@ -300,7 +301,7 @@ describe("Storage", () => {
       }
 
       for (let i = 0; i < 100; i++) {
-        storage.undo();
+        undo();
       }
 
       assert({
@@ -308,8 +309,8 @@ describe("Storage", () => {
       });
     });
 
-    it("storage operation should clear redo stack", () => {
-      const { storage, assert, assertUndoRedo } = prepareStorageTest<{
+    it("storage operation should clear redo stack", async () => {
+      const { storage, assert, undo, redo } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
         [
@@ -328,125 +329,18 @@ describe("Storage", () => {
         items: ["A"],
       });
 
-      storage.undo();
+      undo();
 
       items.insert("B", 0);
       assert({
         items: ["B"],
       });
 
-      storage.redo();
+      redo();
 
       assert({
         items: ["B"],
       });
-    });
-  });
-
-  describe("from", () => {
-    it("nested records", () => {
-      const ops: Op[] = [];
-      const doc = Doc.from(
-        {
-          a: 0,
-          child: new LiveObject({ b: 0, grandChild: new LiveObject({ c: 0 }) }),
-        },
-        0,
-        (newOps) => ops.push(...newOps)
-      );
-
-      expect(ops).toEqual([
-        {
-          type: OpType.CreateObject,
-          id: "0:0",
-          parentId: undefined,
-          parentKey: undefined,
-          data: {
-            a: 0,
-          },
-        },
-        {
-          type: OpType.CreateObject,
-          id: "0:1",
-          parentId: "0:0",
-          parentKey: "child",
-          data: {
-            b: 0,
-          },
-        },
-        {
-          type: OpType.CreateObject,
-          id: "0:2",
-          parentId: "0:1",
-          parentKey: "grandChild",
-          data: {
-            c: 0,
-          },
-        },
-      ]);
-    });
-
-    it("nested map", () => {
-      const ops: Op[] = [];
-      Doc.from(
-        {
-          map: new LiveMap(),
-        },
-        0,
-        (newOps) => ops.push(...newOps)
-      );
-
-      expect(ops).toEqual([
-        {
-          type: OpType.CreateObject,
-          id: "0:0",
-          parentId: undefined,
-          parentKey: undefined,
-          data: {},
-        },
-        {
-          type: OpType.CreateMap,
-          id: "0:1",
-          parentId: "0:0",
-          parentKey: "map",
-        },
-      ]);
-    });
-
-    it("nested map with live object", () => {
-      const ops: Op[] = [];
-      Doc.from(
-        {
-          map: new LiveMap([["first", new LiveObject({ a: 0 })]]),
-        },
-        0,
-        (newOps) => ops.push(...newOps)
-      );
-
-      expect(ops).toEqual([
-        {
-          type: OpType.CreateObject,
-          id: "0:0",
-          parentId: undefined,
-          parentKey: undefined,
-          data: {},
-        },
-        {
-          type: OpType.CreateMap,
-          id: "0:1",
-          parentId: "0:0",
-          parentKey: "map",
-        },
-        {
-          type: OpType.CreateObject,
-          id: "0:2",
-          parentId: "0:1",
-          parentKey: "first",
-          data: {
-            a: 0,
-          },
-        },
-      ]);
     });
   });
 });

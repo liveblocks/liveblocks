@@ -1,11 +1,6 @@
-import { AbstractCrdt } from "./AbstractCrdt";
-import {
-  Doc,
-  ApplyResult,
-  selfOrRegister,
-  deserialize,
-  selfOrRegisterValue,
-} from "./doc";
+import { AbstractCrdt, Doc } from "./AbstractCrdt";
+import { ApplyResult } from "./doc";
+import { deserialize, selfOrRegister, selfOrRegisterValue } from "./utils";
 import {
   SerializedList,
   SerializedCrdtWithId,
