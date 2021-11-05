@@ -333,14 +333,20 @@ export function useStorage<TRoot extends Record<string, any>>(): [
   const [root, setState] = React.useState<LiveObject<TRoot> | null>(null);
 
   React.useEffect(() => {
+    let didCancel = false;
+
     async function fetchStorage() {
       const storage = await room.getStorage<TRoot>();
-      setState(storage.root);
+      if (!didCancel) {
+        setState(storage.root);
+      }
     }
 
     fetchStorage();
 
-    return () => {};
+    return () => {
+      didCancel = true;
+    };
   }, [room]);
 
   return [root];

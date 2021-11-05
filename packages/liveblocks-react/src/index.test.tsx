@@ -9,9 +9,16 @@ import {
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
-import { LiveblocksProvider, RoomProvider, useMyPresence, useOthers } from ".";
+import {
+  LiveblocksProvider,
+  RoomProvider,
+  useMyPresence,
+  useObject,
+  useOthers,
+} from ".";
 import {
   ClientMessageType,
+  CrdtType,
   ServerMessageType,
 } from "@liveblocks/client/lib/cjs/live";
 
@@ -103,6 +110,8 @@ const testIds = {
   errorMessage: "error-message",
   errorConstructorName: "error-constructor-name",
   othersJson: "othersJson",
+  liveObject: "liveObject",
+  unmount: "unmount",
 };
 
 function PresenceComponent() {
@@ -413,5 +422,111 @@ describe("presence", () => {
     expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
       JSON.stringify([])
     );
+  });
+});
+
+function ObjectComponent() {
+  const obj = useObject("obj", { a: 0 });
+
+  return (
+    <div data-testid={testIds.liveObject}>
+      {obj == null ? "Loading" : JSON.stringify(obj.toObject())}
+    </div>
+  );
+}
+
+function UnmountingComponent() {
+  const [isVisible, setIsVisible] = React.useState(true);
+
+  return (
+    <div>
+      <button
+        data-testid={testIds.unmount}
+        onClick={() => {
+          setIsVisible(!isVisible);
+        }}
+      >
+        {isVisible ? "Unmount" : "Mount"}
+      </button>
+      {isVisible && <ObjectComponent />}
+    </div>
+  );
+}
+
+describe("Storage", () => {
+  test("useObject initialization", async () => {
+    const client = createClient({ authEndpoint: "/api/auth" });
+
+    render(
+      <LiveblocksProvider client={client}>
+        <RoomProvider id="room">
+          <ObjectComponent />
+        </RoomProvider>
+      </LiveblocksProvider>
+    );
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Loading"
+    );
+
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]();
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Loading"
+    );
+
+    act(() => {
+      socket.callbacks.message[0]({
+        data: JSON.stringify({
+          type: ServerMessageType.InitialStorageState,
+          items: [["root", { type: CrdtType.Object, data: {} }]],
+        }),
+      } as MessageEvent);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId(testIds.liveObject).textContent).toBe(
+        JSON.stringify({ a: 0 })
+      )
+    );
+  });
+
+  test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
+    const client = createClient({ authEndpoint: "/api/auth" });
+
+    render(
+      <LiveblocksProvider client={client}>
+        <RoomProvider id="room">
+          <UnmountingComponent />
+        </RoomProvider>
+      </LiveblocksProvider>
+    );
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Loading"
+    );
+
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]();
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Loading"
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByTestId(testIds.unmount));
+    });
+
+    act(() => {
+      socket.callbacks.message[0]({
+        data: JSON.stringify({
+          type: ServerMessageType.InitialStorageState,
+          items: [["root", { type: CrdtType.Object, data: {} }]],
+        }),
+      } as MessageEvent);
+    });
   });
 });
