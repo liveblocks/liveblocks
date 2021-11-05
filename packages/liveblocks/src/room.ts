@@ -524,28 +524,6 @@ export function makeStateMachine(
     };
   }
 
-  function unsubscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): void;
-  function unsubscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): void;
-  function unsubscribe(type: "event", listener: EventCallback): void;
-  function unsubscribe(type: "error", listener: ErrorCallback): void;
-  function unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  function unsubscribe<T extends keyof RoomEventCallbackMap>(
-    event: T,
-    callback: RoomEventCallbackMap[T]
-  ) {
-    if (!isValidRoomEventType(event)) {
-      throw new Error(`"${event}" is not a valid event name`);
-    }
-    const callbacks = state.listeners[event] as RoomEventCallbackMap[T][];
-    remove(callbacks, callback);
-  }
-
   function getConnectionState() {
     return state.connection.state;
   }
@@ -1107,7 +1085,6 @@ export function makeStateMachine(
     connect,
     disconnect,
     subscribe,
-    unsubscribe,
 
     // Presence
     updatePresence,
@@ -1237,7 +1214,6 @@ export function createRoom(
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
     subscribe: machine.subscribe,
-    unsubscribe: machine.unsubscribe,
 
     //////////////
     // Presence //
