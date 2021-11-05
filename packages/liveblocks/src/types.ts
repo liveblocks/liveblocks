@@ -199,7 +199,7 @@ export type Room = {
     <T extends Presence>(
       type: "my-presence",
       listener: MyPresenceCallback<T>
-    ): void;
+    ): () => void;
     /**
      * Subscribe to the other users updates.
      *
@@ -213,7 +213,7 @@ export type Room = {
     <T extends Presence>(
       type: "others",
       listener: OthersEventCallback<T>
-    ): void;
+    ): () => void;
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
@@ -224,64 +224,44 @@ export type Room = {
      *   // Do something
      * });
      */
-    (type: "event", listener: EventCallback): void;
+    (type: "event", listener: EventCallback): () => void;
     /**
      * Subscribe to errors thrown in the room.
      */
-    (type: "error", listener: ErrorCallback): void;
+    (type: "error", listener: ErrorCallback): () => void;
     /**
      * Subscribe to connection state updates.
      */
-    (type: "connection", listener: ConnectionCallback): void;
-  };
-  unsubscribe: {
-    /**
-     * Unsubscribe to the current user presence updates.
-     *
-     * @param listener - the callback that has been used with {@link Room.subscribe}("my-presence").
-     *
-     * @example
-     * const onPresenceChange = (presence) => { };
-     * room.subscribe("my-presence", onPresenceChange);
-     * room.unsubscribe("my-presence", onPresenceChange);
-     */
-    <T extends Presence>(
-      type: "my-presence",
-      listener: MyPresenceCallback<T>
-    ): void;
-    /**
-     * Unsubscribe to the other users updates.
-     *
-     * @param listener - the callback that has been used with {@link Room.subscribe}("others").
-     *
-     * @example
-     * const onOthersChange = (presence) => { };
-     * room.subscribe("others", onOthersChange);
-     * room.unsubscribe("others", onOthersChange);
-     */
-    <T extends Presence>(
-      type: "others",
-      listener: OthersEventCallback<T>
-    ): void;
-    /**
-     * Unsubscribe to events broadcasted by {@link Room.broadcastEvent}
-     *
-     * @param listener - the callback that has been used with {@link Room.unsubscribe}("event").
-     *
-     * @example
-     * const onEvent = ({ event, connectionId }) => { };
-     * room.subscribe("event", onEvent);
-     * room.unsubscribe("event", onEvent);
-     */
-    (type: "event", listener: EventCallback): void;
-    /**
-     * Unsubscribe to errors thrown in the room.
-     */
-    (type: "error", listener: ErrorCallback): void;
-    /**
-     * Unsubscribe to connection state updates.
-     */
-    (type: "connection", listener: ConnectionCallback): void;
+    (type: "connection", listener: ConnectionCallback): () => void;
+
+    <TKey extends string, TValue>(
+      liveMap: LiveMap<TKey, TValue>,
+      callback: (liveMap: LiveMap<TKey, TValue>) => void
+    ): () => void;
+    <TData>(
+      liveObject: LiveObject<TData>,
+      callback: (liveObject: LiveObject<TData>) => void
+    ): () => void;
+    <TItem>(
+      liveList: LiveList<TItem>,
+      callback: (liveList: LiveList<TItem>) => void
+    ): () => void;
+
+    <TKey extends string, TValue>(
+      liveMap: LiveMap<TKey, TValue>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
+    <TData>(
+      liveObject: LiveObject<TData>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
+    <TItem>(
+      liveList: LiveList<TItem>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
   };
 
   /**
