@@ -60,11 +60,6 @@ export const THIRD_POSITION = makePosition(SECOND_POSITION);
 export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
-export function assertStorage(storage: { root: LiveObject }, data: any) {
-  const json = objectToJson(storage.root);
-  expect(json).toEqual(data);
-}
-
 const defaultContext = {
   room: "room-id",
   authEndpoint: "/api/auth",
@@ -107,6 +102,30 @@ async function prepareRoomWithStorage<T>(
   };
 }
 
+export async function prepareIsolatedStorageTest<T>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0
+) {
+  const { machine, storage } = await prepareRoomWithStorage<T>(items, actor);
+
+  return {
+    root: storage.root,
+    assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
+    applyRemoteOperations: (ops: Op[]) =>
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdateStorage,
+          ops,
+        })
+      ),
+  };
+}
+
+/**
+ * Create 2 rooms with a loaded storage
+ * All operations made on the main room are forwarded to the other room
+ * Assertion on the storage validate both rooms
+ */
 export async function prepareStorageTest<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0

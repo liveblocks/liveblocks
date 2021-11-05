@@ -1,5 +1,4 @@
-import { AbstractCrdt, Doc } from "./AbstractCrdt";
-import { ApplyResult } from "./doc";
+import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
 import { SerializedCrdtWithId, CrdtType, Op, OpType } from "./live";
 
 /**

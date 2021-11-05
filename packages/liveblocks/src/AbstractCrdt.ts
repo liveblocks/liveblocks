@@ -1,5 +1,8 @@
-import { ApplyResult } from "./doc";
 import { Op, OpType } from "./live";
+
+export type ApplyResult =
+  | { reverse: Op[]; modified: AbstractCrdt }
+  | { modified: false };
 
 export interface Doc {
   generateId: () => string;

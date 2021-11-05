@@ -3,8 +3,8 @@ import {
   prepareStorageTest,
   createSerializedObject,
   objectToJson,
+  prepareIsolatedStorageTest,
 } from "../test/utils";
-import { Doc } from "./doc";
 import { OpType } from "./live";
 
 describe("LiveObject", () => {
@@ -341,18 +341,19 @@ describe("LiveObject", () => {
   });
 
   it("should ignore incoming updates if current op has not been acknowledged", async () => {
-    const storage = Doc.load<{ a: number }>(
-      [createSerializedObject("0:0", { a: 0 })],
-      1
-    );
+    const { root, assert, applyRemoteOperations } =
+      await prepareIsolatedStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
-    expect(objectToJson(storage.root)).toEqual({ a: 0 });
+    assert({ a: 0 });
 
-    storage.root.set("a", 1);
+    root.set("a", 1);
 
-    expect(objectToJson(storage.root)).toEqual({ a: 1 });
+    assert({ a: 1 });
 
-    storage.applyRemoteOperations([
+    applyRemoteOperations([
       {
         type: OpType.UpdateObject,
         data: { a: 2 },
@@ -361,7 +362,7 @@ describe("LiveObject", () => {
       },
     ]);
 
-    expect(objectToJson(storage.root)).toEqual({ a: 1 });
+    assert({ a: 1 });
   });
 
   describe("subscriptions", () => {

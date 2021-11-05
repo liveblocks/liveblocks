@@ -7,6 +7,7 @@ import {
   FIFTH_POSITION,
   FIRST_POSITION,
   FOURTH_POSITION,
+  prepareIsolatedStorageTest,
   prepareStorageTest,
   SECOND_POSITION,
   THIRD_POSITION,
@@ -380,169 +381,172 @@ describe("LiveList", () => {
     assertUndoRedo();
   });
 
-  // it("list conflicts - move", () => {
-  //   const storage = Doc.load<{ items: LiveList<string> }>(
-  //     [
-  //       createSerializedObject("0:0", {}),
-  //       createSerializedList("0:1", "0:0", "items"),
-  //     ],
-  //     1
-  //   );
+  it("list conflicts - move", async () => {
+    const { root, assert, applyRemoteOperations } =
+      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
-  //   const items = storage.root.get("items");
+    const items = root.get("items");
 
-  //   // Register id = 1:0
-  //   items.push("A");
-  //   // Register id = 1:1
-  //   items.push("B");
-  //   // Register id = 1:2
-  //   items.push("C");
+    // Register id = 1:0
+    items.push("A");
+    // Register id = 1:1
+    items.push("B");
+    // Register id = 1:2
+    items.push("C");
 
-  //   assertStorage(storage, {
-  //     items: ["A", "B", "C"],
-  //   });
+    assert({
+      items: ["A", "B", "C"],
+    });
 
-  //   items.move(0, 2);
+    items.move(0, 2);
 
-  //   assertStorage(storage, {
-  //     items: ["B", "C", "A"],
-  //   });
+    assert({
+      items: ["B", "C", "A"],
+    });
 
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.SetParentKey,
-  //       id: "1:1",
-  //       parentKey: FOURTH_POSITION,
-  //     },
-  //   ]);
+    applyRemoteOperations([
+      {
+        type: OpType.SetParentKey,
+        id: "1:1",
+        parentKey: FOURTH_POSITION,
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["C", "B", "A"],
-  //   });
+    assert({
+      items: ["C", "B", "A"],
+    });
 
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.SetParentKey,
-  //       id: "1:0",
-  //       parentKey: FIFTH_POSITION,
-  //     },
-  //   ]);
+    applyRemoteOperations([
+      {
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: FIFTH_POSITION,
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["C", "B", "A"],
-  //   });
-  // });
+    assert({
+      items: ["C", "B", "A"],
+    });
+  });
 
-  // it("list conflicts", () => {
-  //   const storage = Doc.load<{ items: LiveList<string> }>(
-  //     [
-  //       createSerializedObject("0:0", {}),
-  //       createSerializedList("0:1", "0:0", "items"),
-  //     ],
-  //     1
-  //   );
+  it("list conflicts", async () => {
+    const { root, assert, applyRemoteOperations } =
+      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
-  //   const items = storage.root.get("items");
+    const items = root.get("items");
 
-  //   // Register id = 1:0
-  //   items.push("0");
+    // Register id = 1:0
+    items.push("0");
 
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.CreateRegister,
-  //       id: "2:1",
-  //       parentId: "0:1",
-  //       parentKey: "!",
-  //       data: "1",
-  //     },
-  //   ]);
+    applyRemoteOperations([
+      {
+        type: OpType.CreateRegister,
+        id: "2:1",
+        parentId: "0:1",
+        parentKey: "!",
+        data: "1",
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["1", "0"],
-  //   });
+    assert({
+      items: ["1", "0"],
+    });
 
-  //   // Fix from backend
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.SetParentKey,
-  //       id: "1:0",
-  //       parentKey: '"',
-  //     },
-  //   ]);
+    // Fix from backend
+    applyRemoteOperations([
+      {
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: '"',
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["1", "0"],
-  //   });
-  // });
+    assert({
+      items: ["1", "0"],
+    });
+  });
 
-  // it("list conflicts 2", () => {
-  //   const storage = Doc.load<{ items: LiveList<string> }>(
-  //     [
-  //       createSerializedObject("0:0", {}),
-  //       createSerializedList("0:1", "0:0", "items"),
-  //     ],
-  //     1
-  //   );
+  it("list conflicts 2", async () => {
+    const { root, applyRemoteOperations, assert } =
+      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
-  //   const items = storage.root.get("items");
+    const items = root.get("items");
 
-  //   items.push("x0"); // Register id = 1:0
-  //   items.push("x1"); // Register id = 1:1
+    items.push("x0"); // Register id = 1:0
+    items.push("x1"); // Register id = 1:1
 
-  //   // Should go to pending
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.CreateRegister,
-  //       id: "2:0",
-  //       parentId: "0:1",
-  //       parentKey: FIRST_POSITION,
-  //       data: "y0",
-  //     },
-  //   ]);
+    // Should go to pending
+    applyRemoteOperations([
+      {
+        type: OpType.CreateRegister,
+        id: "2:0",
+        parentId: "0:1",
+        parentKey: FIRST_POSITION,
+        data: "y0",
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["y0", "x0", "x1"],
-  //   });
+    assert({
+      items: ["y0", "x0", "x1"],
+    });
 
-  //   // Should go to pending
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.CreateRegister,
-  //       id: "2:1",
-  //       parentId: "0:1",
-  //       parentKey: SECOND_POSITION,
-  //       data: "y1",
-  //     },
-  //   ]);
+    // Should go to pending
+    applyRemoteOperations([
+      {
+        type: OpType.CreateRegister,
+        id: "2:1",
+        parentId: "0:1",
+        parentKey: SECOND_POSITION,
+        data: "y1",
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["y0", "x0", "y1", "x1"],
-  //   });
+    assert({
+      items: ["y0", "x0", "y1", "x1"],
+    });
 
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.SetParentKey,
-  //       id: "1:0",
-  //       parentKey: THIRD_POSITION,
-  //     },
-  //   ]);
+    applyRemoteOperations([
+      {
+        type: OpType.SetParentKey,
+        id: "1:0",
+        parentKey: THIRD_POSITION,
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["y0", "y1", "x0", "x1"],
-  //   });
+    assert({
+      items: ["y0", "y1", "x0", "x1"],
+    });
 
-  //   storage.applyRemoteOperations([
-  //     {
-  //       type: OpType.SetParentKey,
-  //       id: "1:1",
-  //       parentKey: FOURTH_POSITION,
-  //     },
-  //   ]);
+    applyRemoteOperations([
+      {
+        type: OpType.SetParentKey,
+        id: "1:1",
+        parentKey: FOURTH_POSITION,
+      },
+    ]);
 
-  //   assertStorage(storage, {
-  //     items: ["y0", "y1", "x0", "x1"],
-  //   });
-  // });
+    assert({
+      items: ["y0", "y1", "x0", "x1"],
+    });
+  });
 
   describe("subscriptions", () => {
     test("simple action", async () => {
