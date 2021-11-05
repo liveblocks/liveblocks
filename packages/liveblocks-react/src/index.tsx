@@ -126,10 +126,10 @@ export function useMyPresence<T extends Presence>(): [
       update((x) => x + 1);
     }
 
-    room.subscribe("my-presence", onMyPresenceChange);
+    const unsubscribe = room.subscribe("my-presence", onMyPresenceChange);
 
     return () => {
-      room.unsubscribe("my-presence", onMyPresenceChange);
+      unsubscribe();
     };
   }, [room]);
 
@@ -195,10 +195,10 @@ export function useOthers<T extends Presence>(): Others<T> {
       update((x) => x + 1);
     }
 
-    room.subscribe("others", onOthersChange);
+    const unsubscribe = room.subscribe("others", onOthersChange);
 
     return () => {
-      room.subscribe("others", onOthersChange);
+      unsubscribe();
     };
   }, [room]);
 
@@ -247,10 +247,10 @@ export function useErrorListener(callback: (er: Error) => void) {
   React.useEffect(() => {
     const listener = (e: Error) => savedCallback.current(e);
 
-    room.subscribe("error", listener);
+    const unsubscribe = room.subscribe("error", listener);
 
     return () => {
-      room.unsubscribe("error", listener);
+      unsubscribe();
     };
   }, [room]);
 }
@@ -287,10 +287,10 @@ export function useEventListener<TEvent>(
     const listener = (e: { connectionId: number; event: TEvent }) =>
       savedCallback.current(e);
 
-    room.subscribe("event", listener);
+    const unsubscribe = room.subscribe("event", listener);
 
     return () => {
-      room.unsubscribe("event", listener);
+      unsubscribe();
     };
   }, [room]);
 }
@@ -314,12 +314,12 @@ export function useSelf<
       update((x) => x + 1);
     }
 
-    room.subscribe("my-presence", onChange);
-    room.subscribe("connection", onChange);
+    const unsubscribePresence = room.subscribe("my-presence", onChange);
+    const unsubscribeConnection = room.subscribe("connection", onChange);
 
     return () => {
-      room.unsubscribe("my-presence", onChange);
-      room.unsubscribe("connection", onChange);
+      unsubscribePresence();
+      unsubscribeConnection();
     };
   }, [room]);
 
@@ -421,12 +421,8 @@ export function useRedo() {
   return useRoom().redo;
 }
 
-function useCrdt<
-  T extends {
-    subscribe: (callback: () => void) => void;
-    unsubscribe: (callback: () => void) => void;
-  }
->(key: string, initialCrdt: T): T | null {
+function useCrdt<T>(key: string, initialCrdt: T): T | null {
+  const room = useRoom();
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -449,23 +445,32 @@ function useCrdt<
     function onRootChange() {
       const newCrdt = root!.get(key);
       if (newCrdt !== crdt) {
-        crdt!.unsubscribe(onChange);
+        unsubscribeCrdt();
         crdt = newCrdt;
-        crdt!.subscribe(onChange);
+        unsubscribeCrdt = room.subscribe(
+          crdt as any /* AbstractCrdt */,
+          onChange
+        );
         setCount((x) => x + 1);
       }
     }
 
-    crdt.subscribe(onChange);
-    root.subscribe(onRootChange);
+    let unsubscribeCrdt = room.subscribe(
+      crdt as any /* AbstractCrdt */,
+      onChange
+    );
+    const unsubscribeRoot = room.subscribe(
+      root as any /* AbstractCrdt */,
+      onRootChange
+    );
 
     setCount((x) => x + 1);
 
     return () => {
-      root.unsubscribe(onRootChange);
-      crdt!.unsubscribe(onChange);
+      unsubscribeRoot();
+      unsubscribeCrdt();
     };
-  }, [root]);
+  }, [root, room]);
 
   return root?.get(key) ?? null;
 }

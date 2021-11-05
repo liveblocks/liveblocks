@@ -284,10 +284,15 @@ describe("room", () => {
 
       const callback = jest.fn();
 
-      machine.subscribe("my-presence", callback);
+      const unsubscribe = machine.subscribe("my-presence", callback);
 
       machine.updatePresence({ x: 0 });
 
+      unsubscribe();
+
+      machine.updatePresence({ x: 1 });
+
+      expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith({ x: 0 });
     });
 
@@ -302,12 +307,22 @@ describe("room", () => {
 
       let others: Others | undefined;
 
-      machine.subscribe("others", (o) => (others = o));
+      const unsubscribe = machine.subscribe("others", (o) => (others = o));
 
       machine.onMessage(
         serverMessage({
           type: ServerMessageType.UpdatePresence,
           data: { x: 2 },
+          actor: 1,
+        })
+      );
+
+      unsubscribe();
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 3 },
           actor: 1,
         })
       );
