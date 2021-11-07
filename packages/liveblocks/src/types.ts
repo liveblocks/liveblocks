@@ -52,14 +52,14 @@ export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
-   * @param roomId - The id of the room
+   * @param roomId The id of the room
    */
   getRoom(roomId: string): Room | null;
 
   /**
    * Enters a room and returns it.
-   * @param roomId - The id of the room
-   * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
+   * @param roomId The id of the room
+   * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
   enter<TStorageRoot extends Record<string, any> = Record<string, any>>(
     roomId: string,
@@ -71,7 +71,7 @@ export type Client = {
 
   /**
    * Leaves a room.
-   * @param roomId - The id of the room
+   * @param roomId The id of the room
    */
   leave(roomId: string): void;
 };
@@ -189,7 +189,7 @@ export type Room = {
     /**
      * Subscribe to the current user presence updates.
      *
-     * @param listener - the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
+     * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
      *
      * @example
      * room.subscribe("my-presence", (presence) => {
@@ -203,7 +203,7 @@ export type Room = {
     /**
      * Subscribe to the other users updates.
      *
-     * @param listener - the callback that is called when a user enters or leaves the room or when a user update its presence.
+     * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
      *
      * @example
      * room.subscribe("others", (others) => {
@@ -217,7 +217,7 @@ export type Room = {
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
-     * @param listener - the callback that is called when a user calls {@link Room.broadcastEvent}
+     * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
      *
      * @example
      * room.subscribe("event", ({ event, connectionId }) => {
@@ -233,30 +233,109 @@ export type Room = {
      * Subscribe to connection state updates.
      */
     (type: "connection", listener: ConnectionCallback): () => void;
-
+    /**
+     * Subscribes to changes made on a {@link LiveMap}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     *
+     * @param listener the callback this called when the {@link LiveMap} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveMap = new LiveMap();
+     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
+     * unsubscribe();
+     */
     <TKey extends string, TValue>(
       liveMap: LiveMap<TKey, TValue>,
-      callback: (liveMap: LiveMap<TKey, TValue>) => void
+      listener: (liveMap: LiveMap<TKey, TValue>) => void
     ): () => void;
+    /**
+     * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
+     *
+     * @param listener the callback this called when the {@link LiveObject} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveObject = new LiveObject();
+     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
+     * unsubscribe();
+     */
     <TData>(
       liveObject: LiveObject<TData>,
       callback: (liveObject: LiveObject<TData>) => void
     ): () => void;
+    /**
+     * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
+     *
+     * @param listener the callback this called when the {@link LiveList} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveList = new LiveList();
+     * const unsubscribe = room.subscribe(liveList, (liveList) => { });
+     * unsubscribe();
+     */
     <TItem>(
       liveList: LiveList<TItem>,
       callback: (liveList: LiveList<TItem>) => void
     ): () => void;
 
+    /**
+     * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     *
+     * @param listener the callback this called when the {@link LiveMap} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveMap = new LiveMap();
+     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
+     * unsubscribe();
+     */
     <TKey extends string, TValue>(
       liveMap: LiveMap<TKey, TValue>,
       callback: (updates: StorageUpdate[]) => void,
       options: { isDeep: true }
     ): () => void;
+
+    /**
+     * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
+     *
+     * @param listener the callback this called when the {@link LiveObject} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveObject = new LiveObject();
+     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
+     * unsubscribe();
+     */
     <TData>(
       liveObject: LiveObject<TData>,
       callback: (updates: StorageUpdate[]) => void,
       options: { isDeep: true }
     ): () => void;
+
+    /**
+     * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
+     *
+     * @param listener the callback this called when the {@link LiveList} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveList = new LiveList();
+     * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
+     * unsubscribe();
+     */
     <TItem>(
       liveList: LiveList<TItem>,
       callback: (updates: StorageUpdate[]) => void,
@@ -291,7 +370,7 @@ export type Room = {
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param {Partial<T>} overrides - A partial object that contains the properties you want to update.
+   * @param {Partial<T>} overrides A partial object that contains the properties you want to update.
    *
    * @example
    * room.updatePresence({ x: 0 });
@@ -304,7 +383,7 @@ export type Room = {
 
   /**
    * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
-   * @param {any} event - the event to broadcast. Should be serializable to JSON
+   * @param {any} event the event to broadcast. Should be serializable to JSON
    *
    * @example
    * // On client A
