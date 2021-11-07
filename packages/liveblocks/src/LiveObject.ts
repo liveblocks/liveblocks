@@ -203,7 +203,10 @@ export class LiveObject<
 
     for (const key in op.data as Partial<T>) {
       const oldValue = this.#map.get(key);
-      if (oldValue !== undefined) {
+      if (oldValue instanceof AbstractCrdt) {
+        reverse.push(...oldValue._serialize(this._id!, key));
+        oldValue._detach();
+      } else if (oldValue !== undefined) {
         reverseUpdate.data[key] = oldValue;
       } else if (oldValue === undefined) {
         reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
@@ -223,7 +226,7 @@ export class LiveObject<
         // Not modified localy so we apply update
         isModified = true;
       } else if (this.#propToLastUpdate.get(key) === op.opId) {
-        // Acknowledment from local operation
+        // Acknowlegment from local operation
         this.#propToLastUpdate.delete(key);
         continue;
       } else {
@@ -240,6 +243,11 @@ export class LiveObject<
       isModified = true;
       this.#map.set(key, op.data[key]);
     }
+
+    if (Object.keys(reverseUpdate.data).length !== 0) {
+      reverse.unshift(reverseUpdate);
+    }
+
     return isModified ? { modified: this, reverse } : { modified: false };
   }
 
