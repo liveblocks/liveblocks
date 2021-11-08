@@ -94,9 +94,6 @@ type IdFactory = () => string;
 
 export type State = {
   isBatching: boolean;
-  updates: {
-    presence: boolean;
-  };
   connection: Connection;
   socket: WebSocket | null;
   lastFlushTime: number;
@@ -139,7 +136,11 @@ export type State = {
 
   toBatch: {
     ops: Op[];
-    modified: Set<AbstractCrdt>;
+    updates: {
+      others: [];
+      presence: boolean;
+      nodes: Set<AbstractCrdt>;
+    };
     reverseOps: Op[];
   };
 };
@@ -303,43 +304,63 @@ export function makeStateMachine(
     if (state.isBatching) {
       state.toBatch.ops.push(...ops);
       for (const item of modified) {
-        state.toBatch.modified.add(item);
+        state.toBatch.updates.nodes.add(item);
       }
       state.toBatch.reverseOps.push(...reverse);
     } else {
       addToUndoStack(reverse);
       state.redoStack = [];
       dispatch(ops);
-      notify(new Set(modified));
+      notify({ nodes: new Set(modified) });
     }
   }
 
-  function notify(modified: Set<AbstractCrdt>) {
-    if (modified.size === 0) {
-      return;
+  function notify({
+    nodes = new Set(),
+    presence = false,
+    others = [],
+  }: {
+    nodes?: Set<AbstractCrdt>;
+    presence?: boolean;
+    others?: OthersEvent[];
+  }) {
+    if (others.length > 0) {
+      state.others = makeOthers(state.users);
+
+      for (const listener of state.listeners["others"]) {
+        listener(state.others, others);
+      }
     }
 
-    for (const subscriber of state.storageListeners) {
-      subscriber(
-        Array.from(modified).map((m) => {
-          if (m instanceof LiveObject) {
-            return {
-              type: "LiveObject",
-              node: m,
-            } as LiveObjectUpdates;
-          } else if (m instanceof LiveList) {
-            return {
-              type: "LiveList",
-              node: m,
-            } as LiveListUpdates;
-          } else {
-            return {
-              type: "LiveMap",
-              node: m,
-            } as LiveMapUpdates;
-          }
-        })
-      );
+    if (presence) {
+      for (const listener of state.listeners["my-presence"]) {
+        listener(state.me);
+      }
+    }
+
+    if (nodes.size > 0) {
+      for (const subscriber of state.storageListeners) {
+        subscriber(
+          Array.from(nodes).map((m) => {
+            if (m instanceof LiveObject) {
+              return {
+                type: "LiveObject",
+                node: m,
+              } as LiveObjectUpdates;
+            } else if (m instanceof LiveList) {
+              return {
+                type: "LiveList",
+                node: m,
+              } as LiveListUpdates;
+            } else {
+              return {
+                type: "LiveMap",
+                node: m,
+              } as LiveMapUpdates;
+            }
+          })
+        );
+      }
     }
   }
 
@@ -362,10 +383,6 @@ export function makeStateMachine(
 
   function generateOpId() {
     return `${getConnectionId()}:${state.opClock++}`;
-  }
-
-  function applyRemoteOperations(ops: Op[]): ApplyResult[] {
-    return apply(ops);
   }
 
   function apply(ops: Op[]): ApplyResult[] {
@@ -564,10 +581,10 @@ export function makeStateMachine(
     state.me = newPresence;
 
     if (state.isBatching) {
-      state.updates.presence = true;
+      state.toBatch.updates.presence = true;
     } else {
       tryFlushing();
-      notifyMyPresence();
+      notify({ presence: true });
     }
   }
 
@@ -599,7 +616,9 @@ export function makeStateMachine(
     }
   }
 
-  function onUpdatePresenceMessage(message: UpdatePresenceMessage) {
+  function onUpdatePresenceMessage(
+    message: UpdatePresenceMessage
+  ): OthersEvent {
     const user = state.users[message.actor];
     if (user == null) {
       state.users[message.actor] = {
@@ -617,31 +636,24 @@ export function makeStateMachine(
         },
       };
     }
-    updateUsers({
+    return {
       type: "update",
       updates: message.data,
       user: state.users[message.actor],
-    });
+    };
   }
 
-  function updateUsers(event: OthersEvent) {
-    state.others = makeOthers(state.users);
-
-    for (const listener of state.listeners["others"]) {
-      listener(state.others, event);
-    }
-  }
-
-  function onUserLeftMessage(message: UserLeftMessage) {
+  function onUserLeftMessage(message: UserLeftMessage): OthersEvent | null {
     const userLeftMessage: UserLeftMessage = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
       delete state.users[userLeftMessage.actor];
-      updateUsers({ type: "leave", user });
+      return { type: "leave", user };
     }
+    return null;
   }
 
-  function onRoomStateMessage(message: RoomStateMessage) {
+  function onRoomStateMessage(message: RoomStateMessage): OthersEvent {
     const newUsers: { [connectionId: number]: User } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
@@ -653,7 +665,7 @@ export function makeStateMachine(
       };
     }
     state.users = newUsers;
-    updateUsers({ type: "reset" });
+    return { type: "reset" };
   }
 
   function onNavigatorOnline() {
@@ -669,13 +681,12 @@ export function makeStateMachine(
     }
   }
 
-  function onUserJoinedMessage(message: UserJoinMessage) {
+  function onUserJoinedMessage(message: UserJoinMessage): OthersEvent {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
       id: message.id,
     };
-    updateUsers({ type: "enter", user: state.users[message.actor] });
 
     if (state.me) {
       // Send current presence to new user
@@ -687,6 +698,8 @@ export function makeStateMachine(
       });
       tryFlushing();
     }
+
+    return { type: "enter", user: state.users[message.actor] };
   }
 
   function onMessage(event: MessageEvent) {
@@ -704,16 +717,21 @@ export function makeStateMachine(
       subMessages.push(message);
     }
 
-    const modified = new Set<AbstractCrdt>();
+    const updates = {
+      nodes: new Set<AbstractCrdt>(),
+      others: [] as OthersEvent[],
+    };
 
     for (const subMessage of subMessages) {
       switch (subMessage.type) {
         case ServerMessageType.UserJoined: {
-          onUserJoinedMessage(message as UserJoinMessage);
+          updates.others.push(onUserJoinedMessage(message as UserJoinMessage));
           break;
         }
         case ServerMessageType.UpdatePresence: {
-          onUpdatePresenceMessage(subMessage as UpdatePresenceMessage);
+          updates.others.push(
+            onUpdatePresenceMessage(subMessage as UpdatePresenceMessage)
+          );
           break;
         }
         case ServerMessageType.Event: {
@@ -721,11 +739,16 @@ export function makeStateMachine(
           break;
         }
         case ServerMessageType.UserLeft: {
-          onUserLeftMessage(subMessage as UserLeftMessage);
+          const event = onUserLeftMessage(subMessage as UserLeftMessage);
+          if (event) {
+            updates.others.push(event);
+          }
           break;
         }
         case ServerMessageType.RoomState: {
-          onRoomStateMessage(subMessage as RoomStateMessage);
+          updates.others.push(
+            onRoomStateMessage(subMessage as RoomStateMessage)
+          );
           break;
         }
         case ServerMessageType.InitialStorageState: {
@@ -734,12 +757,10 @@ export function makeStateMachine(
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResults = applyRemoteOperations(
-            (subMessage as UpdateStorageMessage).ops
-          );
+          const applyResults = apply((subMessage as UpdateStorageMessage).ops);
           for (const applyResult of applyResults) {
             if (applyResult.modified) {
-              modified.add(applyResult.modified);
+              updates.nodes.add(applyResult.modified);
             }
           }
           break;
@@ -747,7 +768,7 @@ export function makeStateMachine(
       }
     }
 
-    notify(modified);
+    notify(updates);
   }
 
   // function onWakeUp() {
@@ -771,7 +792,7 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.reconnect);
 
     state.users = {};
-    updateUsers({ type: "reset" });
+    notify({ others: [{ type: "reset" }] });
 
     if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
@@ -934,14 +955,8 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
     state.users = {};
-    updateUsers({ type: "reset" });
+    notify({ others: [{ type: "reset" }] });
     clearListeners();
-  }
-
-  function notifyMyPresence() {
-    for (const listener of state.listeners["my-presence"]) {
-      listener(state.me);
-    }
   }
 
   function clearListeners() {
@@ -1022,7 +1037,7 @@ export function makeStateMachine(
       }
     }
 
-    notify(modified);
+    notify({ nodes: modified });
     state.redoStack.push(reverse);
     dispatch(ops);
   }
@@ -1049,7 +1064,7 @@ export function makeStateMachine(
       }
     }
 
-    notify(modified);
+    notify({ nodes: modified });
     state.undoStack.push(reverse);
     dispatch(ops);
   }
@@ -1066,17 +1081,21 @@ export function makeStateMachine(
     } finally {
       state.isBatching = false;
       addToUndoStack(state.toBatch.reverseOps);
+
+      // Clear the redo stack because batch is always called from a local operation
       state.redoStack = [];
+
       dispatch(state.toBatch.ops);
-      notify(state.toBatch.modified);
+      notify(state.toBatch.updates);
       state.toBatch = {
         ops: [],
         reverseOps: [],
-        modified: new Set(),
+        updates: {
+          others: [],
+          nodes: new Set(),
+          presence: false,
+        },
       };
-      if (state.updates.presence) {
-        notifyMyPresence();
-      }
       tryFlushing();
     }
   }
@@ -1127,9 +1146,6 @@ export function defaultState(
 ): State {
   return {
     isBatching: false,
-    updates: {
-      presence: false,
-    },
     connection: { state: "closed" },
     socket: null,
     listeners: {
@@ -1170,7 +1186,7 @@ export function defaultState(
 
     toBatch: {
       ops: [] as Op[],
-      modified: new Set<AbstractCrdt>(),
+      updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
     },
     storageListeners: [],
