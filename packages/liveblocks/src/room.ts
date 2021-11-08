@@ -115,8 +115,8 @@ export type State = {
     "my-presence": MyPresenceCallback[];
     error: ErrorCallback[];
     connection: ConnectionCallback[];
+    storage: StorageCallback[];
   };
-  storageListeners: StorageCallback[];
   me: Presence;
   others: Others;
   users: {
@@ -209,8 +209,8 @@ export function makeStateMachine(
   };
 
   function genericSubscribe(callback: StorageCallback) {
-    state.storageListeners.push(callback);
-    return () => remove(state.storageListeners, callback);
+    state.listeners.storage.push(callback);
+    return () => remove(state.listeners.storage, callback);
   }
 
   function crdtSubscribe<T extends AbstractCrdt>(
@@ -327,8 +327,10 @@ export function makeStateMachine(
     if (others.length > 0) {
       state.others = makeOthers(state.users);
 
-      for (const listener of state.listeners["others"]) {
-        listener(state.others, others);
+      for (const event of others) {
+        for (const listener of state.listeners["others"]) {
+          listener(state.others, event);
+        }
       }
     }
 
@@ -339,7 +341,7 @@ export function makeStateMachine(
     }
 
     if (nodes.size > 0) {
-      for (const subscriber of state.storageListeners) {
+      for (const subscriber of state.listeners.storage) {
         subscriber(
           Array.from(nodes).map((m) => {
             if (m instanceof LiveObject) {
@@ -1186,6 +1188,7 @@ export function defaultState(
       "my-presence": [],
       error: [],
       connection: [],
+      storage: [],
     },
     numberOfRetry: 0,
     lastFlushTime: 0,
@@ -1221,7 +1224,6 @@ export function defaultState(
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
     },
-    storageListeners: [],
   };
 }
 

@@ -1,12 +1,11 @@
-import { AbstractCrdt } from "./AbstractCrdt";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
+import type { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
-  events: OthersEvent<T>[]
+  event: OthersEvent<T>
 ) => void;
 export type EventCallback = ({
   connectionId,
