@@ -1,4 +1,11 @@
-import { mockEffects, MockWebSocket, serverMessage } from "../test/utils";
+import {
+  prepareStorageTest,
+  createSerializedObject,
+  createSerializedList,
+  mockEffects,
+  MockWebSocket,
+  serverMessage,
+} from "../test/utils";
 import {
   ClientMessageType,
   CrdtType,
@@ -6,6 +13,7 @@ import {
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
+import { LiveList } from "./LiveList";
 import { makeStateMachine, Effects, defaultState } from "./room";
 import { Others } from "./types";
 
@@ -275,6 +283,63 @@ describe("room", () => {
 
       expect(storageRootSubscriber).toHaveBeenCalledTimes(1);
       expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
+    });
+
+    test("batch storage and presence with changes from server", async () => {
+      const {
+        storage,
+        assert,
+        undo,
+        redo,
+        batch,
+        subscribe,
+        refSubscribe,
+        refStorage,
+      } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+      const refItems = storage.root.get("items");
+
+      const itemsSubscriber = jest.fn();
+      const refItemsSubscriber = jest.fn();
+
+      subscribe(items, itemsSubscriber);
+      refSubscribe(refItems, refItemsSubscriber);
+
+      batch(() => {
+        items.push("A");
+        items.push("B");
+        items.push("C");
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(itemsSubscriber).toHaveBeenCalledWith(items);
+      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+
+      undo();
+
+      assert({
+        items: [],
+      });
+
+      redo();
+
+      assert({
+        items: ["A", "B", "C"],
+      });
     });
 
     test("my-presence", () => {
