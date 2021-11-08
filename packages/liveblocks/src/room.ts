@@ -36,6 +36,7 @@ import {
   InitialDocumentStateMessage,
   OpType,
   UpdateStorageMessage,
+  ServerMessage,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -363,17 +364,8 @@ export function makeStateMachine(
     return `${getConnectionId()}:${state.opClock++}`;
   }
 
-  function applyRemoteOperations(ops: Op[]) {
-    const applyResults = apply(ops);
-    const modified = new Set<AbstractCrdt>();
-
-    for (const applyResult of applyResults) {
-      if (applyResult.modified) {
-        modified.add(applyResult.modified);
-      }
-    }
-
-    notify(modified);
+  function applyRemoteOperations(ops: Op[]): ApplyResult[] {
+    return apply(ops);
   }
 
   function apply(ops: Op[]): ApplyResult[] {
@@ -704,37 +696,58 @@ export function makeStateMachine(
     }
 
     const message = JSON.parse(event.data);
-    switch (message.type) {
-      case ServerMessageType.UserJoined: {
-        onUserJoinedMessage(message as UserJoinMessage);
-        break;
-      }
-      case ServerMessageType.UpdatePresence: {
-        onUpdatePresenceMessage(message as UpdatePresenceMessage);
-        break;
-      }
-      case ServerMessageType.Event: {
-        onEvent(message);
-        break;
-      }
-      case ServerMessageType.UserLeft: {
-        onUserLeftMessage(message as UserLeftMessage);
-        break;
-      }
-      case ServerMessageType.RoomState: {
-        onRoomStateMessage(message as RoomStateMessage);
-        break;
-      }
-      case ServerMessageType.InitialStorageState: {
-        createRootFromMessage(message);
-        _getInitialStateResolver?.();
-        break;
-      }
-      case ServerMessageType.UpdateStorage: {
-        applyRemoteOperations((message as UpdateStorageMessage).ops);
-        break;
+    let subMessages: ServerMessage[] = [];
+
+    if (Array.isArray(message)) {
+      subMessages = message;
+    } else {
+      subMessages.push(message);
+    }
+
+    const modified = new Set<AbstractCrdt>();
+
+    for (const subMessage of subMessages) {
+      switch (subMessage.type) {
+        case ServerMessageType.UserJoined: {
+          onUserJoinedMessage(message as UserJoinMessage);
+          break;
+        }
+        case ServerMessageType.UpdatePresence: {
+          onUpdatePresenceMessage(subMessage as UpdatePresenceMessage);
+          break;
+        }
+        case ServerMessageType.Event: {
+          onEvent(subMessage);
+          break;
+        }
+        case ServerMessageType.UserLeft: {
+          onUserLeftMessage(subMessage as UserLeftMessage);
+          break;
+        }
+        case ServerMessageType.RoomState: {
+          onRoomStateMessage(subMessage as RoomStateMessage);
+          break;
+        }
+        case ServerMessageType.InitialStorageState: {
+          createRootFromMessage(subMessage);
+          _getInitialStateResolver?.();
+          break;
+        }
+        case ServerMessageType.UpdateStorage: {
+          const applyResults = applyRemoteOperations(
+            (subMessage as UpdateStorageMessage).ops
+          );
+          for (const applyResult of applyResults) {
+            if (applyResult.modified) {
+              modified.add(applyResult.modified);
+            }
+          }
+          break;
+        }
       }
     }
+
+    notify(modified);
   }
 
   // function onWakeUp() {
@@ -1181,7 +1194,7 @@ export function createRoom(
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net/v4";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v5";
 
   let authEndpoint: AuthEndpoint;
   if (options.authEndpoint) {
