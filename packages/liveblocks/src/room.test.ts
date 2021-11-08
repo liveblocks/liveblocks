@@ -136,7 +136,7 @@ describe("room", () => {
         data: { x: 0 },
       },
     ]);
-    expect(state.flushData.presence).toEqual({ x: 1 });
+    expect(state.buffer.presence).toEqual({ x: 1 });
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
@@ -147,7 +147,7 @@ describe("room", () => {
     machine.updatePresence({ x: 0 });
 
     expect(state.me).toEqual({ x: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -158,11 +158,11 @@ describe("room", () => {
     machine.updatePresence({ x: 0 });
 
     expect(state.me).toEqual({ x: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
     expect(state.me).toEqual({ x: 0, y: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0, y: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0, y: 0 });
   });
 
   test("should clear users when socket close", () => {
@@ -217,6 +217,82 @@ describe("room", () => {
     const storage = await getStoragePromise;
 
     expect(storage.root.toObject()).toEqual({ x: 0 });
+  });
+
+  test("undo redo with presence", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+
+    room.redo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+  });
+
+  test("undo redo with presence that do not impact presence", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 });
+    room.updatePresence({ x: 1 });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+  });
+
+  test("undo redo with presence + storage", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    const getStoragePromise = room.getStorage<{ x: number }>();
+
+    room.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.batch(() => {
+      room.updatePresence({ x: 1 }, { addToHistory: true });
+      storage.root.set("x", 1);
+    });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+
+    room.redo();
+
+    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
 
   describe("subscription", () => {

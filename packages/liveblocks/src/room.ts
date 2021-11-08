@@ -88,16 +88,15 @@ function log(...params: any[]) {
   console.log(...params, new Date().toString());
 }
 
-type UndoStackItem = Op[];
+type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
 
 type IdFactory = () => string;
 
 export type State = {
-  isBatching: boolean;
   connection: Connection;
   socket: WebSocket | null;
   lastFlushTime: number;
-  flushData: {
+  buffer: {
     presence: Presence | null;
     messages: ClientMessage[];
     storageOperations: Op[];
@@ -131,17 +130,18 @@ export type State = {
   opClock: number;
   items: Map<string, AbstractCrdt>;
   root: LiveObject | undefined;
-  undoStack: UndoStackItem[];
-  redoStack: UndoStackItem[];
+  undoStack: HistoryItem[];
+  redoStack: HistoryItem[];
 
-  toBatch: {
+  isBatching: boolean;
+  batch: {
     ops: Op[];
+    reverseOps: HistoryItem;
     updates: {
       others: [];
       presence: boolean;
       nodes: Set<AbstractCrdt>;
     };
-    reverseOps: Op[];
   };
 };
 
@@ -293,20 +293,20 @@ export function makeStateMachine(
     return state.items.get(id);
   }
 
-  function addToUndoStack(ops: Op[]) {
+  function addToUndoStack(historyItem: HistoryItem) {
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
-    state.undoStack.push(ops);
+    state.undoStack.push(historyItem);
   }
 
   function storageDispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
     if (state.isBatching) {
-      state.toBatch.ops.push(...ops);
+      state.batch.ops.push(...ops);
       for (const item of modified) {
-        state.toBatch.updates.nodes.add(item);
+        state.batch.updates.nodes.add(item);
       }
-      state.toBatch.reverseOps.push(...reverse);
+      state.batch.reverseOps.push(...reverse);
     } else {
       addToUndoStack(reverse);
       state.redoStack = [];
@@ -385,10 +385,44 @@ export function makeStateMachine(
     return `${getConnectionId()}:${state.opClock++}`;
   }
 
-  function apply(ops: Op[]): ApplyResult[] {
-    const result: ApplyResult[] = [];
-    for (const op of ops) {
-      result.push(applyOp(op));
+  function apply(item: HistoryItem): {
+    reverse: HistoryItem;
+    updates: { nodes: Set<AbstractCrdt>; presence: boolean };
+  } {
+    const result = {
+      reverse: [] as HistoryItem,
+      updates: { nodes: new Set<AbstractCrdt>(), presence: false },
+    };
+    for (const op of item) {
+      if (op.type === "presence") {
+        const reverse = {
+          type: "presence",
+          data: {} as Presence,
+        };
+
+        for (const key in op.data) {
+          reverse.data[key] = state.me[key];
+        }
+
+        state.me = { ...state.me, ...op.data };
+
+        if (state.buffer.presence == null) {
+          state.buffer.presence = op.data;
+        } else {
+          for (const key in op.data) {
+            state.buffer.presence[key] = op.data;
+          }
+        }
+
+        result.reverse.push(reverse as any);
+        result.updates.presence = true;
+      } else {
+        const applyOpResult = applyOp(op);
+        if (applyOpResult.modified) {
+          result.updates.nodes.add(applyOpResult.modified);
+          result.reverse.push(...applyOpResult.reverse);
+        }
+      }
     }
     return result;
   }
@@ -567,23 +601,31 @@ export function makeStateMachine(
     effects.authenticate();
   }
 
-  function updatePresence<T extends Presence>(overrides: Partial<T>) {
-    const newPresence = { ...state.me, ...overrides };
+  function updatePresence<T extends Presence>(
+    overrides: Partial<T>,
+    options?: { addToHistory: boolean }
+  ) {
+    const oldValues: Presence = {};
 
-    if (state.flushData.presence == null) {
-      state.flushData.presence = overrides as Presence;
-    } else {
-      for (const key in overrides) {
-        state.flushData.presence[key] = overrides[key] as any;
-      }
+    if (state.buffer.presence == null) {
+      state.buffer.presence = {};
     }
 
-    state.me = newPresence;
+    for (const key in overrides) {
+      state.buffer.presence[key] = overrides[key] as any;
+      oldValues[key] = state.me[key];
+    }
+
+    state.me = { ...state.me, ...overrides };
 
     if (state.isBatching) {
-      state.toBatch.updates.presence = true;
+      state.batch.reverseOps.push({ type: "presence", data: oldValues });
+      state.batch.updates.presence = true;
     } else {
       tryFlushing();
+      if (options?.addToHistory) {
+        addToUndoStack([{ type: "presence", data: oldValues }]);
+      }
       notify({ presence: true });
     }
   }
@@ -691,7 +733,7 @@ export function makeStateMachine(
     if (state.me) {
       // Send current presence to new user
       // TODO: Consider storing it on the backend
-      state.flushData.messages.push({
+      state.buffer.messages.push({
         type: ClientMessageType.UpdatePresence,
         data: state.me!,
         targetActor: message.actor,
@@ -757,11 +799,9 @@ export function makeStateMachine(
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResults = apply((subMessage as UpdateStorageMessage).ops);
-          for (const applyResult of applyResults) {
-            if (applyResult.modified) {
-              updates.nodes.add(applyResult.modified);
-            }
+          const applyResult = apply((subMessage as UpdateStorageMessage).ops);
+          for (const node of applyResult.updates.nodes) {
+            updates.nodes.add(node);
           }
           break;
         }
@@ -901,7 +941,7 @@ export function makeStateMachine(
         return;
       }
       effects.send(messages);
-      state.flushData = {
+      state.buffer = {
         messages: [],
         storageOperations: [],
         presence: null,
@@ -920,19 +960,19 @@ export function makeStateMachine(
 
   function flushDataToMessages(state: State) {
     const messages: ClientMessage[] = [];
-    if (state.flushData.presence) {
+    if (state.buffer.presence) {
       messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.flushData.presence,
+        data: state.buffer.presence,
       });
     }
-    for (const event of state.flushData.messages) {
+    for (const event of state.buffer.messages) {
       messages.push(event);
     }
-    if (state.flushData.storageOperations.length > 0) {
+    if (state.buffer.storageOperations.length > 0) {
       messages.push({
         type: ClientMessageType.UpdateStorage,
-        ops: state.flushData.storageOperations,
+        ops: state.buffer.storageOperations,
       });
     }
     return messages;
@@ -978,7 +1018,7 @@ export function makeStateMachine(
       return;
     }
 
-    state.flushData.messages.push({
+    state.buffer.messages.push({
       type: ClientMessageType.ClientEvent,
       event,
     });
@@ -986,7 +1026,7 @@ export function makeStateMachine(
   }
 
   function dispatch(ops: Op[]) {
-    state.flushData.storageOperations.push(...ops);
+    state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
 
@@ -1001,7 +1041,7 @@ export function makeStateMachine(
     }
 
     if (_getInitialStatePromise == null) {
-      state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
+      state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
       tryFlushing();
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)
@@ -1020,26 +1060,22 @@ export function makeStateMachine(
       throw new Error("undo is not allowed during a batch");
     }
 
-    const ops = state.undoStack.pop();
+    const historyItem = state.undoStack.pop();
 
-    if (ops == null) {
+    if (historyItem == null) {
       return;
     }
 
-    const applyResults = apply(ops);
+    const result = apply(historyItem);
+    notify(result.updates);
+    state.redoStack.push(result.reverse);
 
-    const reverse: Op[] = [];
-    const modified = new Set<AbstractCrdt>();
-    for (const applyResult of applyResults) {
-      if (applyResult.modified) {
-        reverse.push(...applyResult.reverse);
-        modified.add(applyResult.modified);
+    for (const op of historyItem) {
+      if (op.type !== "presence") {
+        state.buffer.storageOperations.push(op);
       }
     }
-
-    notify({ nodes: modified });
-    state.redoStack.push(reverse);
-    dispatch(ops);
+    tryFlushing();
   }
 
   function redo() {
@@ -1047,26 +1083,22 @@ export function makeStateMachine(
       throw new Error("redo is not allowed during a batch");
     }
 
-    const ops = state.redoStack.pop();
+    const historyItem = state.redoStack.pop();
 
-    if (ops == null) {
+    if (historyItem == null) {
       return;
     }
 
-    const applyResults = apply(ops);
+    const result = apply(historyItem);
+    notify(result.updates);
+    state.undoStack.push(result.reverse);
 
-    const reverse: Op[] = [];
-    const modified = new Set<AbstractCrdt>();
-    for (const applyResult of applyResults) {
-      if (applyResult.modified) {
-        reverse.push(...applyResult.reverse);
-        modified.add(applyResult.modified);
+    for (const op of historyItem) {
+      if (op.type !== "presence") {
+        state.buffer.storageOperations.push(op);
       }
     }
-
-    notify({ nodes: modified });
-    state.undoStack.push(reverse);
-    dispatch(ops);
+    tryFlushing();
   }
 
   function batch(callback: () => void) {
@@ -1080,14 +1112,14 @@ export function makeStateMachine(
       callback();
     } finally {
       state.isBatching = false;
-      addToUndoStack(state.toBatch.reverseOps);
+      addToUndoStack(state.batch.reverseOps);
 
       // Clear the redo stack because batch is always called from a local operation
       state.redoStack = [];
 
-      dispatch(state.toBatch.ops);
-      notify(state.toBatch.updates);
-      state.toBatch = {
+      dispatch(state.batch.ops);
+      notify(state.batch.updates);
+      state.batch = {
         ops: [],
         reverseOps: [],
         updates: {
@@ -1162,7 +1194,7 @@ export function defaultState(
       reconnect: 0,
       pongTimeout: 0,
     },
-    flushData: {
+    buffer: {
       presence: me == null ? {} : me,
       messages: [],
       storageOperations: [],
@@ -1184,7 +1216,7 @@ export function defaultState(
     undoStack: [],
     redoStack: [],
 
-    toBatch: {
+    batch: {
       ops: [] as Op[],
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
