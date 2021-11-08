@@ -6,7 +6,7 @@ import type { LiveObject } from "./LiveObject";
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
-  event: OthersEvent<T>
+  events: OthersEvent<T>[]
 ) => void;
 export type EventCallback = ({
   connectionId,
