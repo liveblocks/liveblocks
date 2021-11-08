@@ -285,25 +285,17 @@ describe("room", () => {
       expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
     });
 
-    test("batch storage and presence with changes from server", async () => {
-      const {
-        storage,
-        assert,
-        undo,
-        redo,
-        batch,
-        subscribe,
-        refSubscribe,
-        refStorage,
-      } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+    test("batch storage with changes from server", async () => {
+      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
       const refItems = storage.root.get("items");
@@ -328,6 +320,78 @@ describe("room", () => {
       expect(itemsSubscriber).toHaveBeenCalledWith(items);
       expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
       expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+
+      undo();
+
+      assert({
+        items: [],
+      });
+
+      redo();
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+    });
+
+    test.only("batch storage and presence with changes from server", async () => {
+      const {
+        storage,
+        assert,
+        undo,
+        redo,
+        batch,
+        subscribe,
+        refSubscribe,
+        refStorage,
+        updatePresence,
+      } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+      const refItems = storage.root.get("items");
+
+      const itemsSubscriber = jest.fn();
+      const refItemsSubscriber = jest.fn();
+      let refOthers: Others | undefined;
+      const refPresenceSubscriber = (o: any) => (refOthers = o);
+
+      subscribe(items, itemsSubscriber);
+      refSubscribe(refItems, refItemsSubscriber);
+      refSubscribe("others", refPresenceSubscriber);
+
+      batch(() => {
+        updatePresence({ x: 0 });
+        updatePresence({ x: 1 });
+        items.push("A");
+        items.push("B");
+        items.push("C");
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(itemsSubscriber).toHaveBeenCalledWith(items);
+      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+
+      expect(refOthers?.toArray()).toEqual([
+        {
+          connectionId: 0,
+          presence: {
+            x: 1,
+          },
+        },
+      ]);
 
       undo();
 
