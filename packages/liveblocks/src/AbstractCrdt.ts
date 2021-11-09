@@ -53,9 +53,10 @@ export abstract class AbstractCrdt {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {
+          const parent = this._parent;
           const reverse = this._serialize(this._parent._id!, this._parentKey);
           this._parent._detachChild(this);
-          return { modified: this, reverse };
+          return { modified: parent, reverse };
         }
 
         return { modified: false };

@@ -470,7 +470,7 @@ export function makeStateMachine(
                 parentKey: previousKey,
               },
             ],
-            modified: item,
+            modified: item._parent,
           };
         }
         return { modified: false };
