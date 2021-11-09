@@ -6,6 +6,7 @@ import {
   useRedo,
   useSelf,
   useUndo,
+  useBatch,
 } from "@liveblocks/react";
 import "./styles.css";
 import { LiveList } from "@liveblocks/client";
@@ -54,14 +55,17 @@ function Whiteboard({ lines }: { lines: LiveList<Line> }) {
 
   const undo = useUndo();
   const redo = useRedo();
+  const batch = useBatch();
 
   useKeyboardEvents();
 
   const clearAllLines = React.useCallback(() => {
-    // Ugly but LiveList.clear is coming soon!
-    while (lines.length > 0) {
-      lines.delete(0);
-    }
+    batch(() => {
+      // Ugly but LiveList.clear is coming soon!
+      while (lines.length > 0) {
+        lines.delete(0);
+      }
+    });
   }, [lines]);
 
   // On pointer down, start a new current line

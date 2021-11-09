@@ -369,7 +369,8 @@ export type Room = {
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param {Partial<T>} overrides A partial object that contains the properties you want to update.
+   * @param overrides A partial object that contains the properties you want to update.
+   * @param overrides Optional object to configure the behavior of updatePresence.
    *
    * @example
    * room.updatePresence({ x: 0 });
@@ -378,10 +379,18 @@ export type Room = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <T extends Presence>(overrides: Partial<T>) => void;
+  updatePresence: <T extends Presence>(
+    overrides: Partial<T>,
+    options?: {
+      /**
+       * Whether or not the presence should have an impact on the undo/redo history.
+       */
+      addToHistory: boolean;
+    }
+  ) => void;
 
   /**
-   * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
+   * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
    * @param {any} event the event to broadcast. Should be serializable to JSON
    *
    * @example
@@ -401,6 +410,23 @@ export type Room = {
     root: LiveObject<TRoot>;
   }>;
 
+  /**
+   * Undoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   */
   undo: () => void;
+
+  /**
+   * Redoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   */
   redo: () => void;
+
+  /**
+   * Batches modifications made during the given function.
+   * All the modifications are sent to other clients in a single message.
+   * All the subscribers are called only after the batch is over.
+   * All the modifications are merged in a single history item (undo/redo).
+   */
+  batch: (fn: () => void) => void;
 };

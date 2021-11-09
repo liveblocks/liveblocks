@@ -115,7 +115,7 @@ function useRoom() {
  */
 export function useMyPresence<T extends Presence>(): [
   T,
-  (overrides: Partial<T>) => void
+  (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
 ] {
   const room = useRoom();
   const presence = room.getPresence<T>();
@@ -134,7 +134,8 @@ export function useMyPresence<T extends Presence>(): [
   }, [room]);
 
   const setPresence = React.useCallback(
-    (overrides: Partial<T>) => room.updatePresence(overrides),
+    (overrides: Partial<T>, options?: { addToHistory: boolean }) =>
+      room.updatePresence(overrides, options),
     [room]
   );
 
@@ -155,13 +156,14 @@ export function useMyPresence<T extends Presence>(): [
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
  */
 export function useUpdateMyPresence<T extends Presence>(): (
-  overrides: Partial<T>
+  overrides: Partial<T>,
+  options?: { addToHistory: boolean }
 ) => void {
   const room = useRoom();
 
   return React.useCallback(
-    (overrides: Partial<T>) => {
-      room.updatePresence(overrides);
+    (overrides: Partial<T>, options?: { addToHistory: boolean }) => {
+      room.updatePresence(overrides, options);
     },
     [room]
   );
@@ -412,19 +414,29 @@ export function useObject<TData>(
 }
 
 /**
- * Returns a function that undo the last operation executed by the current client.
- * Undo does not impact operations made by other clients.
+ * Returns a function that undoes the last operation executed by the current client.
+ * It does not impact operations made by other clients.
  */
 export function useUndo() {
   return useRoom().undo;
 }
 
 /**
- * Returns a function that redo the last operation executed by the current client.
- * Redo does not impact operations made by other clients.
+ * Returns a function that redoes the last operation executed by the current client.
+ * It does not impact operations made by other clients.
  */
 export function useRedo() {
   return useRoom().redo;
+}
+
+/**
+ * Returns a function that batches modifications made during the given function.
+ * All the modifications are sent to other clients in a single message.
+ * All the modifications are merged in a single history item (undo/redo).
+ * All the subscribers are called only after the batch is over.
+ */
+export function useBatch() {
+  return useRoom().batch;
 }
 
 function useCrdt<T>(key: string, initialCrdt: T): T | null {

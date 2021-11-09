@@ -1179,7 +1179,6 @@ export function defaultState(
   defaultStorageRoot?: { [key: string]: any }
 ): State {
   return {
-    isBatching: false,
     connection: { state: "closed" },
     socket: null,
     listeners: {
@@ -1219,6 +1218,7 @@ export function defaultState(
     undoStack: [],
     redoStack: [],
 
+    isBatching: false,
     batch: {
       ops: [] as Op[],
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
@@ -1289,6 +1289,7 @@ export function createRoom(
     getStorage: machine.getStorage,
     undo: machine.undo,
     redo: machine.redo,
+    batch: machine.batch,
   };
 
   return {
