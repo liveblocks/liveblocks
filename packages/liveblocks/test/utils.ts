@@ -155,6 +155,14 @@ export async function prepareStorageTest<T>(
               ops: message.ops,
             })
           );
+        } else if (message.type === ClientMessageType.UpdatePresence) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdatePresence,
+              data: message.data,
+              actor: 0,
+            })
+          );
         }
       }
     }
@@ -192,12 +200,14 @@ export async function prepareStorageTest<T>(
   return {
     operations,
     storage,
-    // refStorage: refDoc,
+    refStorage,
     assert,
     assertUndoRedo,
+    updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
     subscribe: machine.subscribe,
+    refSubscribe: refMachine.subscribe,
     batch: machine.batch,
     undo: machine.undo,
     redo: machine.redo,
