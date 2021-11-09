@@ -672,7 +672,7 @@ describe("LiveList", () => {
       applyRemoteOperations([
         {
           type: OpType.DeleteCrdt,
-          id: "1:1",
+          id: "1:0",
         },
       ]);
 
