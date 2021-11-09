@@ -133,6 +133,7 @@ export type State = {
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
 
+  isHistoryPaused: boolean;
   isBatching: boolean;
   batch: {
     ops: Op[];
@@ -294,10 +295,19 @@ export function makeStateMachine(
   }
 
   function addToUndoStack(historyItem: HistoryItem) {
+    // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
-    state.undoStack.push(historyItem);
+
+    if (state.isHistoryPaused) {
+      if (state.undoStack.length === 0) {
+        state.undoStack.push([]);
+      }
+      state.undoStack[state.undoStack.length - 1].unshift(...historyItem);
+    } else {
+      state.undoStack.push(historyItem);
+    }
   }
 
   function storageDispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
@@ -416,13 +426,13 @@ export function makeStateMachine(
           }
         }
 
-        result.reverse.push(reverse as any);
+        result.reverse.unshift(reverse as any);
         result.updates.presence = true;
       } else {
         const applyOpResult = applyOp(op);
         if (applyOpResult.modified) {
           result.updates.nodes.add(applyOpResult.modified);
-          result.reverse.push(...applyOpResult.reverse);
+          result.reverse.unshift(...applyOpResult.reverse);
         }
       }
     }
@@ -567,6 +577,32 @@ export function makeStateMachine(
       ] as RoomEventCallbackMap[T][];
       remove(callbacks, listener);
     };
+  }
+
+  function unsubscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): void;
+  function unsubscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): void;
+  function unsubscribe(type: "event", listener: EventCallback): void;
+  function unsubscribe(type: "error", listener: ErrorCallback): void;
+  function unsubscribe(type: "connection", listener: ConnectionCallback): void;
+  function unsubscribe<T extends keyof RoomEventCallbackMap>(
+    event: T,
+    callback: RoomEventCallbackMap[T]
+  ) {
+    console.warn(`unsubscribe is depreacted and will be removed in a future version.
+use the callback returned by subscribe instead.
+See v0.13 release notes for more information.
+`);
+    if (!isValidRoomEventType(event)) {
+      throw new Error(`"${event}" is not a valid event name`);
+    }
+    const callbacks = state.listeners[event] as RoomEventCallbackMap[T][];
+    remove(callbacks, callback);
   }
 
   function getConnectionState() {
@@ -1068,6 +1104,7 @@ export function makeStateMachine(
       return;
     }
 
+    state.isHistoryPaused = false;
     const result = apply(historyItem);
     notify(result.updates);
     state.redoStack.push(result.reverse);
@@ -1091,6 +1128,7 @@ export function makeStateMachine(
       return;
     }
 
+    state.isHistoryPaused = false;
     const result = apply(historyItem);
     notify(result.updates);
     state.undoStack.push(result.reverse);
@@ -1134,6 +1172,14 @@ export function makeStateMachine(
     }
   }
 
+  function pauseHistory() {
+    state.isHistoryPaused = true;
+  }
+
+  function resumeHistory() {
+    state.isHistoryPaused = false;
+  }
+
   return {
     // Internal
     onOpen,
@@ -1151,6 +1197,7 @@ export function makeStateMachine(
     connect,
     disconnect,
     subscribe,
+    unsubscribe,
 
     // Presence
     updatePresence,
@@ -1159,6 +1206,8 @@ export function makeStateMachine(
     batch,
     undo,
     redo,
+    pauseHistory,
+    resumeHistory,
 
     getStorage,
 
@@ -1218,6 +1267,7 @@ export function defaultState(
     undoStack: [],
     redoStack: [],
 
+    isHistoryPaused: false,
     isBatching: false,
     batch: {
       ops: [] as Op[],
@@ -1277,6 +1327,7 @@ export function createRoom(
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
     subscribe: machine.subscribe,
+    unsubscribe: machine.unsubscribe,
 
     //////////////
     // Presence //
@@ -1287,9 +1338,13 @@ export function createRoom(
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
-    undo: machine.undo,
-    redo: machine.redo,
     batch: machine.batch,
+    history: {
+      undo: machine.undo,
+      redo: machine.redo,
+      pause: machine.pauseHistory,
+      resume: machine.resumeHistory,
+    },
   };
 
   return {

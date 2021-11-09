@@ -149,7 +149,7 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("remove nested child record with update", async () => {
+  it("remove nested grand child record with update", async () => {
     const { storage, assert, assertUndoRedo, getItemsCount } =
       await prepareStorageTest<{
         a: number;
@@ -190,7 +190,6 @@ describe("LiveObject", () => {
         a: number;
         child: LiveObject<{
           b: number;
-          grandChild: LiveObject<{ c: number }>;
         }> | null;
       }>([
         createSerializedObject("0:0", { a: 0 }),

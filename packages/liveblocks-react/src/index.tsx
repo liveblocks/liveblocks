@@ -89,7 +89,7 @@ export function RoomProvider<TStorageRoot>({
 /**
  * Returns the room of the nearest RoomProvider above in the react component tree
  */
-function useRoom() {
+export function useRoom() {
   const room = React.useContext(RoomContext);
 
   if (room == null) {
@@ -286,14 +286,10 @@ export function useEventListener<TEvent>(
   });
 
   React.useEffect(() => {
-    const listener = (e: { connectionId: number; event: TEvent }) =>
-      savedCallback.current(e);
-
-    const unsubscribe = room.subscribe("event", listener);
-
-    return () => {
-      unsubscribe();
-    };
+    return room.subscribe(
+      "event",
+      (e: { connectionId: number; event: TEvent }) => savedCallback.current(e)
+    );
   }, [room]);
 }
 
@@ -418,7 +414,7 @@ export function useObject<TData>(
  * It does not impact operations made by other clients.
  */
 export function useUndo() {
-  return useRoom().undo;
+  return useRoom().history.undo;
 }
 
 /**
@@ -426,7 +422,7 @@ export function useUndo() {
  * It does not impact operations made by other clients.
  */
 export function useRedo() {
-  return useRoom().redo;
+  return useRoom().history.redo;
 }
 
 /**
@@ -437,6 +433,10 @@ export function useRedo() {
  */
 export function useBatch() {
   return useRoom().batch;
+}
+
+export function useHistory() {
+  return useRoom().history;
 }
 
 function useCrdt<T>(key: string, initialCrdt: T): T | null {

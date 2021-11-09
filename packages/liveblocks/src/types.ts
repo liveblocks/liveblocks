@@ -343,6 +343,74 @@ export type Room = {
   };
 
   /**
+   * Room's history contains function that let you undo and redo operation made on by the current client on the presence and storage.
+   */
+  history: {
+    /**
+     * Undoes the last operation executed by the current client.
+     * It does not impact operations made by other clients.
+     */
+    undo: () => void;
+    /**
+     * Redoes the last operation executed by the current client.
+     * It does not impact operations made by other clients.
+     */
+    redo: () => void;
+    /**
+     * All future modifications made on the Room will be merged together to create a single history item until resume is called.
+     */
+    pause: () => void;
+    /**
+     * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
+     */
+    resume: () => void;
+  };
+
+  /**
+   * @deprecated use the callback returned by subscribe instead.
+   * See v0.13 release notes for more information.
+   * Will be removed in a future version.
+   */
+  unsubscribe: {
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
+     */
+    <T extends Presence>(
+      type: "my-presence",
+      listener: MyPresenceCallback<T>
+    ): void;
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
+     */
+    <T extends Presence>(
+      type: "others",
+      listener: OthersEventCallback<T>
+    ): void;
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
+     */
+    (type: "event", listener: EventCallback): void;
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
+     */
+    (type: "error", listener: ErrorCallback): void;
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
+     */
+    (type: "connection", listener: ConnectionCallback): void;
+  };
+
+  /**
    * Gets the current user.
    * Returns null if not it is not yet connected to the room.
    *
@@ -409,18 +477,6 @@ export type Room = {
   getStorage: <TRoot>() => Promise<{
     root: LiveObject<TRoot>;
   }>;
-
-  /**
-   * Undoes the last operation executed by the current client.
-   * It does not impact operations made by other clients.
-   */
-  undo: () => void;
-
-  /**
-   * Redoes the last operation executed by the current client.
-   * It does not impact operations made by other clients.
-   */
-  redo: () => void;
 
   /**
    * Batches modifications made during the given function.

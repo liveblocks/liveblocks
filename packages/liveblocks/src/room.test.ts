@@ -265,6 +265,36 @@ describe("room", () => {
     expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
 
+  test("pause / resume history", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.pauseHistory();
+
+    for (let i = 1; i <= 10; i++) {
+      room.updatePresence({ x: i }, { addToHistory: true });
+    }
+
+    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+
+    room.resumeHistory();
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: undefined });
+
+    room.redo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+  });
+
   test("undo redo with presence + storage", async () => {
     const effects = mockEffects();
     const state = defaultState({});
@@ -410,7 +440,7 @@ describe("room", () => {
       });
     });
 
-    test.only("batch storage and presence with changes from server", async () => {
+    test("batch storage and presence with changes from server", async () => {
       const {
         storage,
         assert,
