@@ -45,6 +45,11 @@ cd examples/nuxtjs-live-avatars
 npm install @liveblocks/client@$1
 
 cd -
+echo "Upgrade react-dashboard to $1"
+cd examples/react-dashboard
+npm install @liveblocks/client@$1 @liveblocks/react@$1
+
+cd -
 echo "Upgrade vuejs-live-cursors to $1"
 cd examples/vuejs-live-cursors
 npm install @liveblocks/client@$1
