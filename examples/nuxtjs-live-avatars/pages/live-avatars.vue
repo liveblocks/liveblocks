@@ -28,7 +28,7 @@ import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  authEndpoint: "/api/auth"
+  authEndpoint: "/api/auth",
 });
 
 const roomId = "nuxt-js-live-avatars";
@@ -37,33 +37,36 @@ export default Vue.extend({
   data: function() {
     return {
       others: [],
-      currentUser: null
+      currentUser: null,
     };
   },
   mounted: function() {
     const room = client.enter(roomId);
-    room.subscribe("others", this.onOthersChange);
-    room.subscribe("connection", this.onConnectionChange);
+    this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
+    this._unsubscribeConnection = room.subscribe(
+      "connection",
+      this.onConnectionChange
+    );
     this._room = room;
   },
   destroyed: function() {
-    this._room.unsubscribe("others", this.onOthersChange);
-    this._room.unsubscribe("connection", this.onConnectionChange);
+    this._unsubscribeOthers();
+    this._unsubscribeConnection();
     client.leave(roomId);
   },
   methods: {
     onOthersChange: function(others) {
       // The picture and name are comming from the authentication endpoint
       // See api.js for and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
-      this.others = others.map(user => ({
+      this.others = others.map((user) => ({
         connectionId: user.connectionId,
         picture: user.info?.picture,
-        name: user.info?.name
+        name: user.info?.name,
       }));
     },
     onConnectionChange: function() {
       this.currentUser = this._room.getSelf();
-    }
-  }
+    },
+  },
 });
 </script>
