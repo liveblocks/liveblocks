@@ -2,7 +2,14 @@
   <div
     v-on:pointerleave="pointerLeave"
     v-on:pointermove="pointerMove"
-    v-bind:style="{width: '100%', height: '100vh', textAlign: 'center', display: 'flex', justifyContent: 'center', alignItems: 'center'}"
+    v-bind:style="{
+      width: '100%',
+      height: '100vh',
+      textAlign: 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    }"
   >
     <div>
       Move your cursor to broadcast its position to other people in the room
@@ -15,7 +22,7 @@
         left: 0,
         top: 0,
         transition: 'transform 0.5s cubic-bezier(0.17, 0.93, 0.38, 1)',
-        transform: `translateX(${cursor.x}px) translateY(${cursor.y}px)`
+        transform: `translateX(${cursor.x}px) translateY(${cursor.y}px)`,
       }"
       width="24"
       height="36"
@@ -35,7 +42,7 @@ import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  publicApiKey: "pk_YOUR_PUBLIC_KEY" // => replace with your public key.
+  publicApiKey: "pk_live_CXeYqF--qWwo8hcq7kGBPrG3", // => replace with your public key.
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
@@ -45,16 +52,16 @@ const roomId = "vuejs-live-cursors-example";
 export default Vue.extend({
   data: function() {
     return {
-      cursors: []
+      cursors: [],
     };
   },
   mounted: function() {
     const room = client.enter(roomId, { cursor: null });
-    room.subscribe("others", this.onOthersChange);
     this._room = room;
+    this._unsubscribe = room.subscribe("others", this.onOthersChange);
   },
   destroyed: function() {
-    this._room.unsubscribe("others", this.onOthersChange);
+    this._unsubscribe();
     client.leave(roomId);
   },
   methods: {
@@ -62,26 +69,26 @@ export default Vue.extend({
       this._room.updatePresence({
         cursor: {
           x: Math.round(e.clientX),
-          y: Math.round(e.clientY)
-        }
+          y: Math.round(e.clientY),
+        },
       });
     },
     pointerLeave: function() {
       this._room.updatePresence({
-        cursor: null
+        cursor: null,
       });
     },
     onOthersChange: function(others) {
       this.cursors = others
         .toArray()
-        .filter(user => user.presence?.cursor)
-        .map(user => ({
+        .filter((user) => user.presence?.cursor)
+        .map((user) => ({
           x: user.presence.cursor.x,
           y: user.presence.cursor.y,
           color: COLORS[user.connectionId % COLORS.length],
-          connectionId: user.connectionId
+          connectionId: user.connectionId,
         }));
-    }
-  }
+    },
+  },
 });
 </script>
