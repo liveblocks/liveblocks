@@ -450,5 +450,51 @@ describe("LiveObject", () => {
         },
       ]);
     });
+
+    test("deep subscribe remote operation", async () => {
+      const { storage, subscribe, applyRemoteOperations } =
+        await prepareStorageTest<{
+          child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+            createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
+          ],
+          1
+        );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root, callback, { isDeep: true });
+
+      root.get("child").set("a", 1);
+
+      applyRemoteOperations([
+        {
+          type: OpType.UpdateObject,
+          data: { b: 1 },
+          id: "0:2",
+          opId: "external",
+        },
+      ]);
+
+      unsubscribe();
+
+      root.get("child").set("a", 2);
+
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("child") },
+      ]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: root.get("child").get("subchild"),
+        },
+      ]);
+    });
   });
 });

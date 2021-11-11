@@ -606,5 +606,78 @@ describe("LiveList", () => {
         { type: "LiveObject", node: listElement },
       ]);
     });
+
+    test("remote move operation", async () => {
+      const { storage, subscribe, applyRemoteOperations } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveList = root.get("items");
+
+      // Register id = 1:0
+      liveList.push("A");
+      // Register id = 1:1
+      liveList.push("B");
+      // Register id = 1:2
+      liveList.push("C");
+
+      subscribe(liveList, callback);
+
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:1",
+          parentKey: FOURTH_POSITION,
+        },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(liveList);
+    });
+
+    test("remote delete item operation", async () => {
+      const { storage, subscribe, applyRemoteOperations } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveList = root.get("items");
+
+      // Register id = 1:0
+      liveList.push("A");
+
+      subscribe(liveList, callback);
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteCrdt,
+          id: "1:0",
+        },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(liveList);
+    });
   });
 });

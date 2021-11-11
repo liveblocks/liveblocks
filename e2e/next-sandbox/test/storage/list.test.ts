@@ -3,21 +3,13 @@
  */
 
 import { Page, Browser } from "puppeteer";
-import { CONNECT_DELAY, delay, getJsonContent } from "../utils";
-
-function getItems(page: Page) {
-  return getJsonContent(page, "items");
-}
-
-async function assertItemsAreEquals(firstPage: Page, secondPage: Page) {
-  expect(await getItems(firstPage)).toEqual(await getItems(secondPage));
-}
-
-async function assertItems(pages: Page[], json: any) {
-  for (const page of pages) {
-    expect(await getItems(page)).toEqual(json);
-  }
-}
+import {
+  CONNECT_DELAY,
+  delay,
+  getJsonContent,
+  assertItemsAreEquals,
+  assertItems,
+} from "../utils";
 
 function pickRandomAction(actions = ["#push", "#delete", "#move"]) {
   return actions[Math.floor(Math.random() * actions.length)];
