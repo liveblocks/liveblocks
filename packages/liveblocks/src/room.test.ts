@@ -1,9 +1,21 @@
 import {
+  prepareStorageTest,
+  createSerializedObject,
+  createSerializedList,
+  mockEffects,
+  MockWebSocket,
+  serverMessage,
+} from "../test/utils";
+import {
   ClientMessageType,
+  CrdtType,
+  ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
+import { LiveList } from "./LiveList";
 import { makeStateMachine, Effects, defaultState } from "./room";
+import { Others } from "./types";
 
 const defaultContext = {
   room: "room-id",
@@ -12,17 +24,6 @@ const defaultContext = {
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
 };
-
-function mockEffects(): Effects {
-  return {
-    authenticate: jest.fn(),
-    delayFlush: jest.fn(),
-    send: jest.fn(),
-    schedulePongTimeout: jest.fn(),
-    startHeartbeatInterval: jest.fn(),
-    scheduleReconnect: jest.fn(),
-  };
-}
 
 function withDateNow(now: number, callback: () => void) {
   const realDateNow = Date.now.bind(global.Date);
@@ -143,7 +144,7 @@ describe("room", () => {
         data: { x: 0 },
       },
     ]);
-    expect(state.flushData.presence).toEqual({ x: 1 });
+    expect(state.buffer.presence).toEqual({ x: 1 });
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
@@ -154,7 +155,7 @@ describe("room", () => {
     machine.updatePresence({ x: 0 });
 
     expect(state.me).toEqual({ x: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -165,11 +166,11 @@ describe("room", () => {
     machine.updatePresence({ x: 0 });
 
     expect(state.me).toEqual({ x: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
     expect(state.me).toEqual({ x: 0, y: 0 });
-    expect(state.flushData.presence).toEqual({ x: 0, y: 0 });
+    expect(state.buffer.presence).toEqual({ x: 0, y: 0 });
   });
 
   test("should clear users when socket close", () => {
@@ -182,12 +183,10 @@ describe("room", () => {
     machine.onOpen();
 
     machine.onMessage(
-      new MessageEvent("message", {
-        data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
-          data: { x: 2 },
-          actor: 1,
-        }),
+      serverMessage({
+        type: ServerMessageType.UpdatePresence,
+        data: { x: 2 },
+        actor: 1,
       })
     );
 
@@ -204,56 +203,481 @@ describe("room", () => {
 
     expect(machine.selectors.getOthers().toArray()).toEqual([]);
   });
-});
 
-class MockWebSocket {
-  static instances: MockWebSocket[] = [];
+  test("storage should be initialized properly", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const machine = makeStateMachine(state, defaultContext, effects);
 
-  isMock = true;
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
 
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
+    const getStoragePromise = machine.getStorage<{ x: number }>();
 
-  sentMessages: string[] = [];
-  readyState: number;
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
 
-  constructor(public url: string) {
-    this.readyState = WebSocket.CLOSED;
-    MockWebSocket.instances.push(this);
-  }
+    const storage = await getStoragePromise;
 
-  addEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    this.callbacks[event].push(callback as any);
-  }
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+  });
 
-  removeEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    remove(this.callbacks[event], callback as any);
-  }
+  test("undo redo with presence", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
 
-  send(message: string) {
-    this.sentMessages.push(message);
-  }
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
 
-  close() {}
-}
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+    room.updatePresence({ x: 1 }, { addToHistory: true });
 
-window.WebSocket = MockWebSocket as any;
+    room.undo();
 
-function remove<T>(array: T[], item: T) {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] === item) {
-      array.splice(i, 1);
-      break;
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+
+    room.redo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+  });
+
+  test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    const getStoragePromise = room.getStorage<{ x: number }>();
+
+    room.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    room.updatePresence({ x: 0 });
+
+    room.batch(() => {
+      room.updatePresence({ x: 1 });
+      storage.root.set("x", 1);
+    });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+
+    room.redo();
+  });
+
+  test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+
+    room.pauseHistory();
+    room.resumeHistory();
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+  });
+
+  test("undo redo with presence that do not impact presence", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 });
+    room.updatePresence({ x: 1 });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+  });
+
+  test("pause / resume history", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.pauseHistory();
+
+    for (let i = 1; i <= 10; i++) {
+      room.updatePresence({ x: i }, { addToHistory: true });
     }
-  }
-}
+
+    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+
+    room.resumeHistory();
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+
+    room.redo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+  });
+
+  test("undo while history is paused", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+
+    room.pauseHistory();
+
+    for (let i = 1; i <= 10; i++) {
+      room.updatePresence({ x: i }, { addToHistory: true });
+    }
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+  });
+
+  test("undo redo with presence + storage", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    const getStoragePromise = room.getStorage<{ x: number }>();
+
+    room.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.batch(() => {
+      room.updatePresence({ x: 1 }, { addToHistory: true });
+      storage.root.set("x", 1);
+    });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+
+    room.redo();
+
+    expect(storage.root.toObject()).toEqual({ x: 1 });
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+  });
+
+  describe("subscription", () => {
+    test("batch my-presence", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const callback = jest.fn();
+
+      machine.subscribe("my-presence", callback);
+
+      machine.batch(() => {
+        machine.updatePresence({ x: 0 });
+        machine.updatePresence({ y: 1 });
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({ x: 0, y: 1 });
+    });
+
+    test("batch storage and presence", async () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      const getStoragePromise = machine.getStorage<{ x: number }>();
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.InitialStorageState,
+          items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        })
+      );
+
+      const storage = await getStoragePromise;
+
+      const presenceSubscriber = jest.fn();
+      const storageRootSubscriber = jest.fn();
+      machine.subscribe("my-presence", presenceSubscriber);
+      machine.subscribe(storage.root, storageRootSubscriber);
+
+      machine.batch(() => {
+        machine.updatePresence({ x: 0 });
+        storage.root.set("x", 1);
+
+        expect(presenceSubscriber).not.toHaveBeenCalled();
+        expect(storageRootSubscriber).not.toHaveBeenCalled();
+      });
+
+      expect(presenceSubscriber).toHaveBeenCalledTimes(1);
+      expect(presenceSubscriber).toHaveBeenCalledWith({ x: 0 });
+
+      expect(storageRootSubscriber).toHaveBeenCalledTimes(1);
+      expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
+    });
+
+    test("batch storage with changes from server", async () => {
+      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = storage.root.get("items");
+      const refItems = storage.root.get("items");
+
+      const itemsSubscriber = jest.fn();
+      const refItemsSubscriber = jest.fn();
+
+      subscribe(items, itemsSubscriber);
+      refSubscribe(refItems, refItemsSubscriber);
+
+      batch(() => {
+        items.push("A");
+        items.push("B");
+        items.push("C");
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(itemsSubscriber).toHaveBeenCalledWith(items);
+      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+
+      undo();
+
+      assert({
+        items: [],
+      });
+
+      redo();
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+    });
+
+    test("batch storage and presence with changes from server", async () => {
+      const {
+        storage,
+        assert,
+        undo,
+        redo,
+        batch,
+        subscribe,
+        refSubscribe,
+        refStorage,
+        updatePresence,
+      } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+      const refItems = storage.root.get("items");
+
+      const itemsSubscriber = jest.fn();
+      const refItemsSubscriber = jest.fn();
+      let refOthers: Others | undefined;
+      const refPresenceSubscriber = (o: any) => (refOthers = o);
+
+      subscribe(items, itemsSubscriber);
+      refSubscribe(refItems, refItemsSubscriber);
+      refSubscribe("others", refPresenceSubscriber);
+
+      batch(() => {
+        updatePresence({ x: 0 });
+        updatePresence({ x: 1 });
+        items.push("A");
+        items.push("B");
+        items.push("C");
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(itemsSubscriber).toHaveBeenCalledWith(items);
+      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
+      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+
+      expect(refOthers?.toArray()).toEqual([
+        {
+          connectionId: 0,
+          presence: {
+            x: 1,
+          },
+        },
+      ]);
+
+      undo();
+
+      assert({
+        items: [],
+      });
+
+      redo();
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+    });
+
+    test("my-presence", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const callback = jest.fn();
+
+      const unsubscribe = machine.subscribe("my-presence", callback);
+
+      machine.updatePresence({ x: 0 });
+
+      unsubscribe();
+
+      machine.updatePresence({ x: 1 });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({ x: 0 });
+    });
+
+    test("others", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      let others: Others | undefined;
+
+      const unsubscribe = machine.subscribe("others", (o) => (others = o));
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+        })
+      );
+
+      unsubscribe();
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 3 },
+          actor: 1,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          presence: {
+            x: 2,
+          },
+        },
+      ]);
+    });
+
+    test("event", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      const callback = jest.fn();
+
+      machine.subscribe("event", callback);
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.Event,
+          event: { type: "MY_EVENT" },
+          actor: 1,
+        })
+      );
+
+      expect(callback).toHaveBeenCalledWith({
+        connectionId: 1,
+        event: {
+          type: "MY_EVENT",
+        },
+      });
+    });
+  });
+});

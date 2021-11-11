@@ -3,26 +3,29 @@ import { colorToCss, getSvgPathFromStroke } from "./utils";
 import getStroke from "perfect-freehand";
 
 type Props = {
-  id: string;
-  layer: PathLayer;
-  isAnimated: boolean;
-  onPointerDown: (e: React.PointerEvent, id: string) => void;
-  selectionColor?: string;
+  x: number;
+  y: number;
+  points: number[][];
+  fill: string;
+  isAnimated?: boolean;
+  onPointerDown?: (e: React.PointerEvent) => void;
+  stroke?: string;
 };
 
 export default function Path({
-  layer,
+  x,
+  y,
   isAnimated,
   onPointerDown,
-  id,
-  selectionColor,
+  stroke,
+  fill,
+  points,
 }: Props) {
   return (
     <path
-      key={id}
-      onPointerDown={(e) => onPointerDown(e, id)}
+      onPointerDown={onPointerDown}
       d={getSvgPathFromStroke(
-        getStroke(layer.points, {
+        getStroke(points, {
           size: 16,
           thinning: 0.5,
           smoothing: 0.5,
@@ -31,12 +34,12 @@ export default function Path({
       )}
       style={{
         transition: isAnimated ? "all 0.1s ease" : "",
-        transform: `translate(${layer.x}px, ${layer.y}px)`,
+        transform: `translate(${x}px, ${y}px)`,
       }}
       x={0}
       y={0}
-      fill={layer.fill ? colorToCss(layer.fill) : "#CCC"}
-      stroke={selectionColor}
+      fill={fill}
+      stroke={stroke}
       strokeWidth={1}
     />
   );

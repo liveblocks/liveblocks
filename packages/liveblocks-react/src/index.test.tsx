@@ -435,7 +435,7 @@ function ObjectComponent() {
   );
 }
 
-function UnmountingComponent() {
+function UnmountContainer({ children }: { children: React.ReactElement }) {
   const [isVisible, setIsVisible] = React.useState(true);
 
   return (
@@ -448,7 +448,7 @@ function UnmountingComponent() {
       >
         {isVisible ? "Unmount" : "Mount"}
       </button>
-      {isVisible && <ObjectComponent />}
+      {isVisible && children}
     </div>
   );
 }
@@ -499,7 +499,9 @@ describe("Storage", () => {
     render(
       <LiveblocksProvider client={client}>
         <RoomProvider id="room">
-          <UnmountingComponent />
+          <UnmountContainer>
+            <ObjectComponent />
+          </UnmountContainer>
         </RoomProvider>
       </LiveblocksProvider>
     );

@@ -14,8 +14,13 @@ import {
   OthersEvent,
   AuthenticationToken,
   ConnectionCallback,
+  StorageCallback,
+  StorageUpdate,
+  LiveObjectUpdates,
+  LiveListUpdates,
+  LiveMapUpdates,
 } from "./types";
-import { remove } from "./utils";
+import { isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -27,8 +32,17 @@ import {
   RoomStateMessage,
   UpdatePresenceMessage,
   UserJoinMessage,
+  SerializedCrdtWithId,
+  InitialDocumentStateMessage,
+  OpType,
+  UpdateStorageMessage,
+  ServerMessage,
 } from "./live";
-import Storage from "./storage";
+import { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import { LiveList } from "./LiveList";
+import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
+import { LiveRegister } from "./LiveRegister";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 
@@ -74,13 +88,15 @@ function log(...params: any[]) {
   console.log(...params, new Date().toString());
 }
 
+type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
+
 type IdFactory = () => string;
 
 export type State = {
   connection: Connection;
   socket: WebSocket | null;
   lastFlushTime: number;
-  flushData: {
+  buffer: {
     presence: Presence | null;
     messages: ClientMessage[];
     storageOperations: Op[];
@@ -99,6 +115,7 @@ export type State = {
     "my-presence": MyPresenceCallback[];
     error: ErrorCallback[];
     connection: ConnectionCallback[];
+    storage: StorageCallback[];
   };
   me: Presence;
   others: Others;
@@ -108,6 +125,27 @@ export type State = {
   idFactory: IdFactory | null;
   numberOfRetry: number;
   defaultStorageRoot?: { [key: string]: any };
+
+  clock: number;
+  opClock: number;
+  items: Map<string, AbstractCrdt>;
+  root: LiveObject | undefined;
+  undoStack: HistoryItem[];
+  redoStack: HistoryItem[];
+
+  isHistoryPaused: boolean;
+  pausedHistory: HistoryItem;
+
+  isBatching: boolean;
+  batch: {
+    ops: Op[];
+    reverseOps: HistoryItem;
+    updates: {
+      others: [];
+      presence: boolean;
+      nodes: Set<AbstractCrdt>;
+    };
+  };
 };
 
 export type Effects = {
@@ -173,25 +211,371 @@ export function makeStateMachine(
     },
   };
 
+  function genericSubscribe(callback: StorageCallback) {
+    state.listeners.storage.push(callback);
+    return () => remove(state.listeners.storage, callback);
+  }
+
+  function crdtSubscribe<T extends AbstractCrdt>(
+    crdt: T,
+    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
+    options?: { isDeep: boolean }
+  ) {
+    const cb = (updates: StorageUpdate[]) => {
+      const relatedUpdates: StorageUpdate[] = [];
+      for (const update of updates) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+          relatedUpdates.push(update);
+        } else if (update.node._id === crdt._id) {
+          innerCallback(update.node);
+        }
+      }
+
+      if (options?.isDeep && relatedUpdates.length > 0) {
+        innerCallback(relatedUpdates);
+      }
+    };
+
+    return genericSubscribe(cb);
+  }
+
+  function createRootFromMessage(message: InitialDocumentStateMessage) {
+    state.root = load(message.items);
+
+    for (const key in state.defaultStorageRoot) {
+      if (state.root.get(key) == null) {
+        state.root.set(key, state.defaultStorageRoot[key]);
+      }
+    }
+  }
+
+  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+    if (items.length === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
+    const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
+    let root = null;
+
+    for (const tuple of items) {
+      const parentId = tuple[1].parentId;
+      if (parentId == null) {
+        root = tuple;
+      } else {
+        const children = parentToChildren.get(parentId);
+        if (children != null) {
+          children.push(tuple);
+        } else {
+          parentToChildren.set(parentId, [tuple]);
+        }
+      }
+    }
+
+    if (root == null) {
+      throw new Error("Root can't be null");
+    }
+
+    return LiveObject._deserialize(root, parentToChildren, {
+      addItem,
+      deleteItem,
+      generateId,
+      generateOpId,
+      dispatch: storageDispatch,
+    }) as LiveObject<T>;
+  }
+
+  function addItem(id: string, item: AbstractCrdt) {
+    state.items.set(id, item);
+  }
+
+  function deleteItem(id: string) {
+    state.items.delete(id);
+  }
+
+  function getItem(id: string) {
+    return state.items.get(id);
+  }
+
+  function addToUndoStack(historyItem: HistoryItem) {
+    // If undo stack is too large, we remove the older item
+    if (state.undoStack.length >= 50) {
+      state.undoStack.shift();
+    }
+
+    if (state.isHistoryPaused) {
+      state.pausedHistory.unshift(...historyItem);
+    } else {
+      state.undoStack.push(historyItem);
+    }
+  }
+
+  function storageDispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
+    if (state.isBatching) {
+      state.batch.ops.push(...ops);
+      for (const item of modified) {
+        state.batch.updates.nodes.add(item);
+      }
+      state.batch.reverseOps.push(...reverse);
+    } else {
+      addToUndoStack(reverse);
+      state.redoStack = [];
+      dispatch(ops);
+      notify({ nodes: new Set(modified) });
+    }
+  }
+
+  function notify({
+    nodes = new Set(),
+    presence = false,
+    others = [],
+  }: {
+    nodes?: Set<AbstractCrdt>;
+    presence?: boolean;
+    others?: OthersEvent[];
+  }) {
+    if (others.length > 0) {
+      state.others = makeOthers(state.users);
+
+      for (const event of others) {
+        for (const listener of state.listeners["others"]) {
+          listener(state.others, event);
+        }
+      }
+    }
+
+    if (presence) {
+      for (const listener of state.listeners["my-presence"]) {
+        listener(state.me);
+      }
+    }
+
+    if (nodes.size > 0) {
+      for (const subscriber of state.listeners.storage) {
+        subscriber(
+          Array.from(nodes).map((m) => {
+            if (m instanceof LiveObject) {
+              return {
+                type: "LiveObject",
+                node: m,
+              } as LiveObjectUpdates;
+            } else if (m instanceof LiveList) {
+              return {
+                type: "LiveList",
+                node: m,
+              } as LiveListUpdates;
+            } else {
+              return {
+                type: "LiveMap",
+                node: m,
+              } as LiveMapUpdates;
+            }
+          })
+        );
+      }
+    }
+  }
+
+  function getConnectionId() {
+    if (
+      state.connection.state === "open" ||
+      state.connection.state === "connecting"
+    ) {
+      return state.connection.id;
+    }
+
+    throw new Error(
+      "Internal. Tried to get connection id but connection is not open"
+    );
+  }
+
+  function generateId() {
+    return `${getConnectionId()}:${state.clock++}`;
+  }
+
+  function generateOpId() {
+    return `${getConnectionId()}:${state.opClock++}`;
+  }
+
+  function apply(item: HistoryItem): {
+    reverse: HistoryItem;
+    updates: { nodes: Set<AbstractCrdt>; presence: boolean };
+  } {
+    const result = {
+      reverse: [] as HistoryItem,
+      updates: { nodes: new Set<AbstractCrdt>(), presence: false },
+    };
+    for (const op of item) {
+      if (op.type === "presence") {
+        const reverse = {
+          type: "presence",
+          data: {} as Presence,
+        };
+
+        for (const key in op.data) {
+          reverse.data[key] = state.me[key];
+        }
+
+        state.me = { ...state.me, ...op.data };
+
+        if (state.buffer.presence == null) {
+          state.buffer.presence = op.data;
+        } else {
+          for (const key in op.data) {
+            state.buffer.presence[key] = op.data;
+          }
+        }
+
+        result.reverse.unshift(reverse as any);
+        result.updates.presence = true;
+      } else {
+        const applyOpResult = applyOp(op);
+        if (applyOpResult.modified) {
+          result.updates.nodes.add(applyOpResult.modified);
+          result.reverse.unshift(...applyOpResult.reverse);
+        }
+      }
+    }
+    return result;
+  }
+
+  function applyOp(op: Op): ApplyResult {
+    switch (op.type) {
+      case OpType.DeleteObjectKey:
+      case OpType.UpdateObject:
+      case OpType.DeleteCrdt: {
+        const item = state.items.get(op.id);
+
+        if (item == null) {
+          return { modified: false };
+        }
+
+        return item._apply(op);
+      }
+      case OpType.SetParentKey: {
+        const item = state.items.get(op.id);
+
+        if (item == null) {
+          return { modified: false };
+        }
+
+        if (item._parent instanceof LiveList) {
+          const previousKey = item._parentKey!;
+          item._parent._setChildKey(op.parentKey, item);
+          return {
+            reverse: [
+              {
+                type: OpType.SetParentKey,
+                id: item._id!,
+                parentKey: previousKey,
+              },
+            ],
+            modified: item._parent,
+          };
+        }
+        return { modified: false };
+      }
+      case OpType.CreateObject: {
+        const parent = state.items.get(op.parentId!);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveObject(op.data)
+        );
+      }
+      case OpType.CreateList: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(op.id, op.parentKey!, new LiveList());
+      }
+      case OpType.CreateRegister: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveRegister(op.data)
+        );
+      }
+      case OpType.CreateMap: {
+        const parent = state.items.get(op.parentId);
+
+        if (parent == null || getItem(op.id) != null) {
+          return { modified: false };
+        }
+
+        return parent._attachChild(op.id, op.parentKey!, new LiveMap());
+      }
+    }
+
+    return { modified: false };
+  }
+
+  function subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  function subscribe<TKey extends string, TValue>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
+  ): () => void;
+  function subscribe<TData>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  function subscribe<TItem>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  function subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
   function subscribe<T extends Presence>(
     type: "my-presence",
     listener: MyPresenceCallback<T>
-  ): void;
+  ): () => void;
   function subscribe<T extends Presence>(
     type: "others",
     listener: OthersEventCallback<T>
-  ): void;
-  function subscribe(type: "event", listener: EventCallback): void;
-  function subscribe(type: "error", listener: ErrorCallback): void;
-  function subscribe(type: "connection", listener: ConnectionCallback): void;
+  ): () => void;
+  function subscribe(type: "event", listener: EventCallback): () => void;
+  function subscribe(type: "error", listener: ErrorCallback): () => void;
+  function subscribe(
+    type: "connection",
+    listener: ConnectionCallback
+  ): () => void;
   function subscribe<T extends keyof RoomEventCallbackMap>(
-    type: T,
-    listener: RoomEventCallbackMap[T]
-  ) {
-    if (!isValidRoomEventType(type)) {
-      throw new Error(`"${type}" is not a valid event name`);
+    firstParam: T | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap[T] | any,
+    options?: { isDeep: boolean }
+  ): () => void {
+    if (firstParam instanceof AbstractCrdt) {
+      return crdtSubscribe(firstParam, listener, options);
+    } else if (typeof firstParam === "function") {
+      return genericSubscribe(firstParam);
+    } else if (!isValidRoomEventType(firstParam)) {
+      throw new Error(`"${firstParam}" is not a valid event name`);
     }
-    (state.listeners[type] as RoomEventCallbackMap[T][]).push(listener);
+
+    (state.listeners[firstParam] as RoomEventCallbackMap[T][]).push(listener);
+
+    return () => {
+      const callbacks = state.listeners[
+        firstParam
+      ] as RoomEventCallbackMap[T][];
+      remove(callbacks, listener);
+    };
   }
 
   function unsubscribe<T extends Presence>(
@@ -209,6 +593,10 @@ export function makeStateMachine(
     event: T,
     callback: RoomEventCallbackMap[T]
   ) {
+    console.warn(`unsubscribe is depreacted and will be removed in a future version.
+use the callback returned by subscribe instead.
+See v0.13 release notes for more information.
+`);
     if (!isValidRoomEventType(event)) {
       throw new Error(`"${event}" is not a valid event name`);
     }
@@ -250,23 +638,34 @@ export function makeStateMachine(
     effects.authenticate();
   }
 
-  function updatePresence<T extends Presence>(overrides: Partial<T>) {
-    const newPresence = { ...state.me, ...overrides };
+  function updatePresence<T extends Presence>(
+    overrides: Partial<T>,
+    options?: { addToHistory: boolean }
+  ) {
+    const oldValues: Presence = {};
 
-    if (state.flushData.presence == null) {
-      state.flushData.presence = overrides as Presence;
-    } else {
-      for (const key in overrides) {
-        state.flushData.presence[key] = overrides[key] as any;
-      }
+    if (state.buffer.presence == null) {
+      state.buffer.presence = {};
     }
 
-    state.me = newPresence;
+    for (const key in overrides) {
+      state.buffer.presence[key] = overrides[key] as any;
+      oldValues[key] = state.me[key];
+    }
 
-    tryFlushing();
+    state.me = { ...state.me, ...overrides };
 
-    for (const listener of state.listeners["my-presence"]) {
-      listener(state.me);
+    if (state.isBatching) {
+      if (options?.addToHistory) {
+        state.batch.reverseOps.push({ type: "presence", data: oldValues });
+      }
+      state.batch.updates.presence = true;
+    } else {
+      tryFlushing();
+      if (options?.addToHistory) {
+        addToUndoStack([{ type: "presence", data: oldValues }]);
+      }
+      notify({ presence: true });
     }
   }
 
@@ -298,7 +697,9 @@ export function makeStateMachine(
     }
   }
 
-  function onUpdatePresenceMessage(message: UpdatePresenceMessage) {
+  function onUpdatePresenceMessage(
+    message: UpdatePresenceMessage
+  ): OthersEvent {
     const user = state.users[message.actor];
     if (user == null) {
       state.users[message.actor] = {
@@ -316,31 +717,24 @@ export function makeStateMachine(
         },
       };
     }
-    updateUsers({
+    return {
       type: "update",
       updates: message.data,
       user: state.users[message.actor],
-    });
+    };
   }
 
-  function updateUsers(event: OthersEvent) {
-    state.others = makeOthers(state.users);
-
-    for (const listener of state.listeners["others"]) {
-      listener(state.others, event);
-    }
-  }
-
-  function onUserLeftMessage(message: UserLeftMessage) {
+  function onUserLeftMessage(message: UserLeftMessage): OthersEvent | null {
     const userLeftMessage: UserLeftMessage = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
       delete state.users[userLeftMessage.actor];
-      updateUsers({ type: "leave", user });
+      return { type: "leave", user };
     }
+    return null;
   }
 
-  function onRoomStateMessage(message: RoomStateMessage) {
+  function onRoomStateMessage(message: RoomStateMessage): OthersEvent {
     const newUsers: { [connectionId: number]: User } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
@@ -352,7 +746,7 @@ export function makeStateMachine(
       };
     }
     state.users = newUsers;
-    updateUsers({ type: "reset" });
+    return { type: "reset" };
   }
 
   function onNavigatorOnline() {
@@ -368,24 +762,25 @@ export function makeStateMachine(
     }
   }
 
-  function onUserJoinedMessage(message: UserJoinMessage) {
+  function onUserJoinedMessage(message: UserJoinMessage): OthersEvent {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
       id: message.id,
     };
-    updateUsers({ type: "enter", user: state.users[message.actor] });
 
     if (state.me) {
       // Send current presence to new user
       // TODO: Consider storing it on the backend
-      state.flushData.messages.push({
+      state.buffer.messages.push({
         type: ClientMessageType.UpdatePresence,
         data: state.me!,
         targetActor: message.actor,
       });
       tryFlushing();
     }
+
+    return { type: "enter", user: state.users[message.actor] };
   }
 
   function onMessage(event: MessageEvent) {
@@ -395,30 +790,64 @@ export function makeStateMachine(
     }
 
     const message = JSON.parse(event.data);
-    switch (message.type) {
-      case ServerMessageType.UserJoined: {
-        onUserJoinedMessage(message as UserJoinMessage);
-        break;
-      }
-      case ServerMessageType.UpdatePresence: {
-        onUpdatePresenceMessage(message as UpdatePresenceMessage);
-        break;
-      }
-      case ServerMessageType.Event: {
-        onEvent(message);
-        break;
-      }
-      case ServerMessageType.UserLeft: {
-        onUserLeftMessage(message as UserLeftMessage);
-        break;
-      }
-      case ServerMessageType.RoomState: {
-        onRoomStateMessage(message as RoomStateMessage);
-        break;
+    let subMessages: ServerMessage[] = [];
+
+    if (Array.isArray(message)) {
+      subMessages = message;
+    } else {
+      subMessages.push(message);
+    }
+
+    const updates = {
+      nodes: new Set<AbstractCrdt>(),
+      others: [] as OthersEvent[],
+    };
+
+    for (const subMessage of subMessages) {
+      switch (subMessage.type) {
+        case ServerMessageType.UserJoined: {
+          updates.others.push(onUserJoinedMessage(message as UserJoinMessage));
+          break;
+        }
+        case ServerMessageType.UpdatePresence: {
+          updates.others.push(
+            onUpdatePresenceMessage(subMessage as UpdatePresenceMessage)
+          );
+          break;
+        }
+        case ServerMessageType.Event: {
+          onEvent(subMessage);
+          break;
+        }
+        case ServerMessageType.UserLeft: {
+          const event = onUserLeftMessage(subMessage as UserLeftMessage);
+          if (event) {
+            updates.others.push(event);
+          }
+          break;
+        }
+        case ServerMessageType.RoomState: {
+          updates.others.push(
+            onRoomStateMessage(subMessage as RoomStateMessage)
+          );
+          break;
+        }
+        case ServerMessageType.InitialStorageState: {
+          createRootFromMessage(subMessage);
+          _getInitialStateResolver?.();
+          break;
+        }
+        case ServerMessageType.UpdateStorage: {
+          const applyResult = apply((subMessage as UpdateStorageMessage).ops);
+          for (const node of applyResult.updates.nodes) {
+            updates.nodes.add(node);
+          }
+          break;
+        }
       }
     }
 
-    storage.onMessage(message);
+    notify(updates);
   }
 
   // function onWakeUp() {
@@ -442,7 +871,7 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.reconnect);
 
     state.users = {};
-    updateUsers({ type: "reset" });
+    notify({ others: [{ type: "reset" }] });
 
     if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
@@ -551,7 +980,7 @@ export function makeStateMachine(
         return;
       }
       effects.send(messages);
-      state.flushData = {
+      state.buffer = {
         messages: [],
         storageOperations: [],
         presence: null,
@@ -570,19 +999,19 @@ export function makeStateMachine(
 
   function flushDataToMessages(state: State) {
     const messages: ClientMessage[] = [];
-    if (state.flushData.presence) {
+    if (state.buffer.presence) {
       messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.flushData.presence,
+        data: state.buffer.presence,
       });
     }
-    for (const event of state.flushData.messages) {
+    for (const event of state.buffer.messages) {
       messages.push(event);
     }
-    if (state.flushData.storageOperations.length > 0) {
+    if (state.buffer.storageOperations.length > 0) {
       messages.push({
         type: ClientMessageType.UpdateStorage,
-        ops: state.flushData.storageOperations,
+        ops: state.buffer.storageOperations,
       });
     }
     return messages;
@@ -605,7 +1034,7 @@ export function makeStateMachine(
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
     state.users = {};
-    updateUsers({ type: "reset" });
+    notify({ others: [{ type: "reset" }] });
     clearListeners();
   }
 
@@ -628,7 +1057,7 @@ export function makeStateMachine(
       return;
     }
 
-    state.flushData.messages.push({
+    state.buffer.messages.push({
       type: ClientMessageType.ClientEvent,
       event,
     });
@@ -636,41 +1065,125 @@ export function makeStateMachine(
   }
 
   function dispatch(ops: Op[]) {
-    state.flushData.storageOperations.push(...ops);
+    state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
 
-  const storage = new Storage({
-    fetchStorage: () => {
-      state.flushData.messages.push({ type: ClientMessageType.FetchStorage });
+  let _getInitialStatePromise: Promise<void> | null = null;
+  let _getInitialStateResolver: (() => void) | null = null;
+
+  async function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
+    if (state.root) {
+      return {
+        root: state.root as LiveObject<TRoot>,
+      };
+    }
+
+    if (_getInitialStatePromise == null) {
+      state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
       tryFlushing();
-    },
-    dispatch,
-    getConnectionId: () => {
-      const me = getSelf();
+      _getInitialStatePromise = new Promise(
+        (resolve) => (_getInitialStateResolver = resolve)
+      );
+    }
 
-      if (me) {
-        return me.connectionId;
-      }
+    await _getInitialStatePromise;
 
-      throw new Error("Unexpected");
-    },
-    defaultRoot: state.defaultStorageRoot!,
-  });
-
-  async function getStorage<TRoot>() {
-    const doc = await storage.getDocument<TRoot>();
     return {
-      root: doc.root,
+      root: state.root! as LiveObject<TRoot>,
     };
   }
 
   function undo() {
-    storage.undo();
+    if (state.isBatching) {
+      throw new Error("undo is not allowed during a batch");
+    }
+
+    const historyItem = state.undoStack.pop();
+
+    if (historyItem == null) {
+      return;
+    }
+
+    state.isHistoryPaused = false;
+    const result = apply(historyItem);
+    notify(result.updates);
+    state.redoStack.push(result.reverse);
+
+    for (const op of historyItem) {
+      if (op.type !== "presence") {
+        state.buffer.storageOperations.push(op);
+      }
+    }
+    tryFlushing();
   }
 
   function redo() {
-    storage.redo();
+    if (state.isBatching) {
+      throw new Error("redo is not allowed during a batch");
+    }
+
+    const historyItem = state.redoStack.pop();
+
+    if (historyItem == null) {
+      return;
+    }
+
+    state.isHistoryPaused = false;
+    const result = apply(historyItem);
+    notify(result.updates);
+    state.undoStack.push(result.reverse);
+
+    for (const op of historyItem) {
+      if (op.type !== "presence") {
+        state.buffer.storageOperations.push(op);
+      }
+    }
+    tryFlushing();
+  }
+
+  function batch(callback: () => void) {
+    if (state.isBatching) {
+      throw new Error("batch should not be called during a batch");
+    }
+
+    state.isBatching = true;
+
+    try {
+      callback();
+    } finally {
+      state.isBatching = false;
+      addToUndoStack(state.batch.reverseOps);
+
+      // Clear the redo stack because batch is always called from a local operation
+      state.redoStack = [];
+
+      dispatch(state.batch.ops);
+      notify(state.batch.updates);
+      state.batch = {
+        ops: [],
+        reverseOps: [],
+        updates: {
+          others: [],
+          nodes: new Set(),
+          presence: false,
+        },
+      };
+      tryFlushing();
+    }
+  }
+
+  function pauseHistory() {
+    state.pausedHistory = [];
+    state.isHistoryPaused = true;
+  }
+
+  function resumeHistory() {
+    state.isHistoryPaused = false;
+    if (state.pausedHistory.length > 0) {
+      addToUndoStack(state.pausedHistory);
+    }
+    state.pausedHistory = [];
   }
 
   return {
@@ -683,6 +1196,8 @@ export function makeStateMachine(
     onNavigatorOnline,
     // onWakeUp,
     onVisibilityChange,
+    getUndoStack: () => state.undoStack,
+    getItemsCount: () => state.items.size,
 
     // Core
     connect,
@@ -694,8 +1209,11 @@ export function makeStateMachine(
     updatePresence,
     broadcastEvent,
 
+    batch,
     undo,
     redo,
+    pauseHistory,
+    resumeHistory,
 
     getStorage,
 
@@ -724,6 +1242,7 @@ export function defaultState(
       "my-presence": [],
       error: [],
       connection: [],
+      storage: [],
     },
     numberOfRetry: 0,
     lastFlushTime: 0,
@@ -732,7 +1251,7 @@ export function defaultState(
       reconnect: 0,
       pongTimeout: 0,
     },
-    flushData: {
+    buffer: {
       presence: me == null ? {} : me,
       messages: [],
       storageOperations: [],
@@ -745,6 +1264,23 @@ export function defaultState(
     others: makeOthers({}),
     defaultStorageRoot,
     idFactory: null,
+
+    // Storage
+    clock: 0,
+    opClock: 0,
+    items: new Map<string, AbstractCrdt>(),
+    root: undefined,
+    undoStack: [],
+    redoStack: [],
+
+    isHistoryPaused: false,
+    pausedHistory: [],
+    isBatching: false,
+    batch: {
+      ops: [] as Op[],
+      updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
+      reverseOps: [] as Op[],
+    },
   };
 }
 
@@ -765,7 +1301,7 @@ export function createRoom(
 ): InternalRoom {
   const throttleDelay = options.throttle || 100;
   const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net/v4";
+    (options as any).liveblocksServer || "wss://liveblocks.net/v5";
 
   let authEndpoint: AuthEndpoint;
   if (options.authEndpoint) {
@@ -809,8 +1345,13 @@ export function createRoom(
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
-    undo: machine.undo,
-    redo: machine.redo,
+    batch: machine.batch,
+    history: {
+      undo: machine.undo,
+      redo: machine.redo,
+      pause: machine.pauseHistory,
+      resume: machine.resumeHistory,
+    },
   };
 
   return {

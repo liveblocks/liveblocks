@@ -89,7 +89,7 @@ export function RoomProvider<TStorageRoot>({
 /**
  * Returns the room of the nearest RoomProvider above in the react component tree
  */
-function useRoom() {
+export function useRoom() {
   const room = React.useContext(RoomContext);
 
   if (room == null) {
@@ -115,7 +115,7 @@ function useRoom() {
  */
 export function useMyPresence<T extends Presence>(): [
   T,
-  (overrides: Partial<T>) => void
+  (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
 ] {
   const room = useRoom();
   const presence = room.getPresence<T>();
@@ -126,15 +126,16 @@ export function useMyPresence<T extends Presence>(): [
       update((x) => x + 1);
     }
 
-    room.subscribe("my-presence", onMyPresenceChange);
+    const unsubscribe = room.subscribe("my-presence", onMyPresenceChange);
 
     return () => {
-      room.unsubscribe("my-presence", onMyPresenceChange);
+      unsubscribe();
     };
   }, [room]);
 
   const setPresence = React.useCallback(
-    (overrides: Partial<T>) => room.updatePresence(overrides),
+    (overrides: Partial<T>, options?: { addToHistory: boolean }) =>
+      room.updatePresence(overrides, options),
     [room]
   );
 
@@ -155,13 +156,14 @@ export function useMyPresence<T extends Presence>(): [
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
  */
 export function useUpdateMyPresence<T extends Presence>(): (
-  overrides: Partial<T>
+  overrides: Partial<T>,
+  options?: { addToHistory: boolean }
 ) => void {
   const room = useRoom();
 
   return React.useCallback(
-    (overrides: Partial<T>) => {
-      room.updatePresence(overrides);
+    (overrides: Partial<T>, options?: { addToHistory: boolean }) => {
+      room.updatePresence(overrides, options);
     },
     [room]
   );
@@ -195,10 +197,10 @@ export function useOthers<T extends Presence>(): Others<T> {
       update((x) => x + 1);
     }
 
-    room.subscribe("others", onOthersChange);
+    const unsubscribe = room.subscribe("others", onOthersChange);
 
     return () => {
-      room.subscribe("others", onOthersChange);
+      unsubscribe();
     };
   }, [room]);
 
@@ -247,10 +249,10 @@ export function useErrorListener(callback: (er: Error) => void) {
   React.useEffect(() => {
     const listener = (e: Error) => savedCallback.current(e);
 
-    room.subscribe("error", listener);
+    const unsubscribe = room.subscribe("error", listener);
 
     return () => {
-      room.unsubscribe("error", listener);
+      unsubscribe();
     };
   }, [room]);
 }
@@ -287,10 +289,10 @@ export function useEventListener<TEvent>(
     const listener = (e: { connectionId: number; event: TEvent }) =>
       savedCallback.current(e);
 
-    room.subscribe("event", listener);
+    const unsubscribe = room.subscribe("event", listener);
 
     return () => {
-      room.unsubscribe("event", listener);
+      unsubscribe();
     };
   }, [room]);
 }
@@ -314,12 +316,12 @@ export function useSelf<
       update((x) => x + 1);
     }
 
-    room.subscribe("my-presence", onChange);
-    room.subscribe("connection", onChange);
+    const unsubscribePresence = room.subscribe("my-presence", onChange);
+    const unsubscribeConnection = room.subscribe("connection", onChange);
 
     return () => {
-      room.unsubscribe("my-presence", onChange);
-      room.unsubscribe("connection", onChange);
+      unsubscribePresence();
+      unsubscribeConnection();
     };
   }, [room]);
 
@@ -412,27 +414,37 @@ export function useObject<TData>(
 }
 
 /**
- * Returns a function that undo the last operation executed by the current client.
- * Undo does not impact operations made by other clients.
+ * Returns a function that undoes the last operation executed by the current client.
+ * It does not impact operations made by other clients.
  */
 export function useUndo() {
-  return useRoom().undo;
+  return useRoom().history.undo;
 }
 
 /**
- * Returns a function that redo the last operation executed by the current client.
- * Redo does not impact operations made by other clients.
+ * Returns a function that redoes the last operation executed by the current client.
+ * It does not impact operations made by other clients.
  */
 export function useRedo() {
-  return useRoom().redo;
+  return useRoom().history.redo;
 }
 
-function useCrdt<
-  T extends {
-    subscribe: (callback: () => void) => void;
-    unsubscribe: (callback: () => void) => void;
-  }
->(key: string, initialCrdt: T): T | null {
+/**
+ * Returns a function that batches modifications made during the given function.
+ * All the modifications are sent to other clients in a single message.
+ * All the modifications are merged in a single history item (undo/redo).
+ * All the subscribers are called only after the batch is over.
+ */
+export function useBatch() {
+  return useRoom().batch;
+}
+
+export function useHistory() {
+  return useRoom().history;
+}
+
+function useCrdt<T>(key: string, initialCrdt: T): T | null {
+  const room = useRoom();
   const [root] = useStorage();
   const [, setCount] = React.useState(0);
 
@@ -455,23 +467,32 @@ function useCrdt<
     function onRootChange() {
       const newCrdt = root!.get(key);
       if (newCrdt !== crdt) {
-        crdt!.unsubscribe(onChange);
+        unsubscribeCrdt();
         crdt = newCrdt;
-        crdt!.subscribe(onChange);
+        unsubscribeCrdt = room.subscribe(
+          crdt as any /* AbstractCrdt */,
+          onChange
+        );
         setCount((x) => x + 1);
       }
     }
 
-    crdt.subscribe(onChange);
-    root.subscribe(onRootChange);
+    let unsubscribeCrdt = room.subscribe(
+      crdt as any /* AbstractCrdt */,
+      onChange
+    );
+    const unsubscribeRoot = room.subscribe(
+      root as any /* AbstractCrdt */,
+      onRootChange
+    );
 
     setCount((x) => x + 1);
 
     return () => {
-      root.unsubscribe(onRootChange);
-      crdt!.unsubscribe(onChange);
+      unsubscribeRoot();
+      unsubscribeCrdt();
     };
-  }, [root]);
+  }, [root, room]);
 
   return root?.get(key) ?? null;
 }

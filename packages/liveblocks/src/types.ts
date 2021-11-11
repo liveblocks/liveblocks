@@ -1,4 +1,6 @@
-import { LiveObject } from "./doc";
+import type { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import type { LiveObject } from "./LiveObject";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -23,18 +25,40 @@ export type RoomEventCallbackMap = {
   connection: ConnectionCallback;
 };
 
+export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
+  type: "LiveMap";
+  node: LiveMap<TKey, TValue>;
+};
+
+export type LiveObjectUpdates<TData = any> = {
+  type: "LiveObject";
+  node: LiveObject<TData>;
+};
+
+export type LiveListUpdates<TItem = any> = {
+  type: "LiveList";
+  node: LiveList<TItem>;
+};
+
+export type StorageUpdate =
+  | LiveMapUpdates
+  | LiveObjectUpdates
+  | LiveListUpdates;
+
+export type StorageCallback = (updates: StorageUpdate[]) => void;
+
 export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
-   * @param roomId - The id of the room
+   * @param roomId The id of the room
    */
   getRoom(roomId: string): Room | null;
 
   /**
    * Enters a room and returns it.
-   * @param roomId - The id of the room
-   * @param defaultPresence - Optional. Should be serializable to JSON. If omitted, an empty object will be used.
+   * @param roomId The id of the room
+   * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
   enter<TStorageRoot extends Record<string, any> = Record<string, any>>(
     roomId: string,
@@ -46,7 +70,7 @@ export type Client = {
 
   /**
    * Leaves a room.
-   * @param roomId - The id of the room
+   * @param roomId The id of the room
    */
   leave(roomId: string): void;
 };
@@ -164,7 +188,7 @@ export type Room = {
     /**
      * Subscribe to the current user presence updates.
      *
-     * @param listener - the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
+     * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
      *
      * @example
      * room.subscribe("my-presence", (presence) => {
@@ -174,11 +198,11 @@ export type Room = {
     <T extends Presence>(
       type: "my-presence",
       listener: MyPresenceCallback<T>
-    ): void;
+    ): () => void;
     /**
      * Subscribe to the other users updates.
      *
-     * @param listener - the callback that is called when a user enters or leaves the room or when a user update its presence.
+     * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
      *
      * @example
      * room.subscribe("others", (others) => {
@@ -188,73 +212,200 @@ export type Room = {
     <T extends Presence>(
       type: "others",
       listener: OthersEventCallback<T>
-    ): void;
+    ): () => void;
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
-     * @param listener - the callback that is called when a user calls {@link Room.broadcastEvent}
+     * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
      *
      * @example
      * room.subscribe("event", ({ event, connectionId }) => {
      *   // Do something
      * });
      */
-    (type: "event", listener: EventCallback): void;
+    (type: "event", listener: EventCallback): () => void;
     /**
      * Subscribe to errors thrown in the room.
      */
-    (type: "error", listener: ErrorCallback): void;
+    (type: "error", listener: ErrorCallback): () => void;
     /**
      * Subscribe to connection state updates.
      */
-    (type: "connection", listener: ConnectionCallback): void;
-  };
-  unsubscribe: {
+    (type: "connection", listener: ConnectionCallback): () => void;
     /**
-     * Unsubscribe to the current user presence updates.
+     * Subscribes to changes made on a {@link LiveMap}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
      *
-     * @param listener - the callback that has been used with {@link Room.subscribe}("my-presence").
+     * @param listener the callback this called when the {@link LiveMap} changes.
+     *
+     * @returns Unsubscribe function.
      *
      * @example
-     * const onPresenceChange = (presence) => { };
-     * room.subscribe("my-presence", onPresenceChange);
-     * room.unsubscribe("my-presence", onPresenceChange);
+     * const liveMap = new LiveMap();
+     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
+     * unsubscribe();
+     */
+    <TKey extends string, TValue>(
+      liveMap: LiveMap<TKey, TValue>,
+      listener: (liveMap: LiveMap<TKey, TValue>) => void
+    ): () => void;
+    /**
+     * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
+     *
+     * @param listener the callback this called when the {@link LiveObject} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveObject = new LiveObject();
+     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
+     * unsubscribe();
+     */
+    <TData>(
+      liveObject: LiveObject<TData>,
+      callback: (liveObject: LiveObject<TData>) => void
+    ): () => void;
+    /**
+     * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
+     *
+     * @param listener the callback this called when the {@link LiveList} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveList = new LiveList();
+     * const unsubscribe = room.subscribe(liveList, (liveList) => { });
+     * unsubscribe();
+     */
+    <TItem>(
+      liveList: LiveList<TItem>,
+      callback: (liveList: LiveList<TItem>) => void
+    ): () => void;
+
+    /**
+     * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     *
+     * @param listener the callback this called when the {@link LiveMap} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveMap = new LiveMap();
+     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
+     * unsubscribe();
+     */
+    <TKey extends string, TValue>(
+      liveMap: LiveMap<TKey, TValue>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
+
+    /**
+     * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
+     *
+     * @param listener the callback this called when the {@link LiveObject} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveObject = new LiveObject();
+     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
+     * unsubscribe();
+     */
+    <TData>(
+      liveObject: LiveObject<TData>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
+
+    /**
+     * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
+     *
+     * @param listener the callback this called when the {@link LiveList} changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * const liveList = new LiveList();
+     * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
+     * unsubscribe();
+     */
+    <TItem>(
+      liveList: LiveList<TItem>,
+      callback: (updates: StorageUpdate[]) => void,
+      options: { isDeep: true }
+    ): () => void;
+  };
+
+  /**
+   * Room's history contains function that let you undo and redo operation made on by the current client on the presence and storage.
+   */
+  history: {
+    /**
+     * Undoes the last operation executed by the current client.
+     * It does not impact operations made by other clients.
+     */
+    undo: () => void;
+    /**
+     * Redoes the last operation executed by the current client.
+     * It does not impact operations made by other clients.
+     */
+    redo: () => void;
+    /**
+     * All future modifications made on the Room will be merged together to create a single history item until resume is called.
+     */
+    pause: () => void;
+    /**
+     * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
+     */
+    resume: () => void;
+  };
+
+  /**
+   * @deprecated use the callback returned by subscribe instead.
+   * See v0.13 release notes for more information.
+   * Will be removed in a future version.
+   */
+  unsubscribe: {
+    /**
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
      */
     <T extends Presence>(
       type: "my-presence",
       listener: MyPresenceCallback<T>
     ): void;
     /**
-     * Unsubscribe to the other users updates.
-     *
-     * @param listener - the callback that has been used with {@link Room.subscribe}("others").
-     *
-     * @example
-     * const onOthersChange = (presence) => { };
-     * room.subscribe("others", onOthersChange);
-     * room.unsubscribe("others", onOthersChange);
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
      */
     <T extends Presence>(
       type: "others",
       listener: OthersEventCallback<T>
     ): void;
     /**
-     * Unsubscribe to events broadcasted by {@link Room.broadcastEvent}
-     *
-     * @param listener - the callback that has been used with {@link Room.unsubscribe}("event").
-     *
-     * @example
-     * const onEvent = ({ event, connectionId }) => { };
-     * room.subscribe("event", onEvent);
-     * room.unsubscribe("event", onEvent);
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
      */
     (type: "event", listener: EventCallback): void;
     /**
-     * Unsubscribe to errors thrown in the room.
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
      */
     (type: "error", listener: ErrorCallback): void;
     /**
-     * Unsubscribe to connection state updates.
+     * @deprecated use the callback returned by subscribe instead.
+     * See v0.13 release notes for more information.
+     * Will be removed in a future version.
      */
     (type: "connection", listener: ConnectionCallback): void;
   };
@@ -286,7 +437,8 @@ export type Room = {
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param {Partial<T>} overrides - A partial object that contains the properties you want to update.
+   * @param overrides A partial object that contains the properties you want to update.
+   * @param overrides Optional object to configure the behavior of updatePresence.
    *
    * @example
    * room.updatePresence({ x: 0 });
@@ -295,11 +447,19 @@ export type Room = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <T extends Presence>(overrides: Partial<T>) => void;
+  updatePresence: <T extends Presence>(
+    overrides: Partial<T>,
+    options?: {
+      /**
+       * Whether or not the presence should have an impact on the undo/redo history.
+       */
+      addToHistory: boolean;
+    }
+  ) => void;
 
   /**
-   * Broadcast an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
-   * @param {any} event - the event to broadcast. Should be serializable to JSON
+   * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
+   * @param {any} event the event to broadcast. Should be serializable to JSON
    *
    * @example
    * // On client A
@@ -318,6 +478,11 @@ export type Room = {
     root: LiveObject<TRoot>;
   }>;
 
-  undo: () => void;
-  redo: () => void;
+  /**
+   * Batches modifications made during the given function.
+   * All the modifications are sent to other clients in a single message.
+   * All the subscribers are called only after the batch is over.
+   * All the modifications are merged in a single history item (undo/redo).
+   */
+  batch: (fn: () => void) => void;
 };

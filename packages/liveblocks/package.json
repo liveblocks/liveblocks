@@ -19,8 +19,8 @@
   "scripts": {
     "build-and-pack": "npm run build && npm pack",
     "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc -p tsconfig.json && rm ./lib/esm/*.test.js && rm ./lib/esm/*.test.d.ts",
-    "build:cjs": "tsc -p tsconfig-cjs.json && rm ./lib/cjs/*.test.js && rm ./lib/cjs/*.test.d.ts",
+    "build:esm": "tsc -p tsconfig-esm.json",
+    "build:cjs": "tsc -p tsconfig-cjs.json",
     "test": "jest --watch"
   },
   "license": "Apache-2.0",

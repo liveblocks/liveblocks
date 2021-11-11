@@ -23,3 +23,23 @@ export const CONNECT_DELAY = 2000;
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+export async function assertItemsAreEquals(
+  firstPage: Page,
+  secondPage: Page,
+  id: string = "items"
+) {
+  expect(await getJsonContent(firstPage, id)).toEqual(
+    await getJsonContent(secondPage, id)
+  );
+}
+
+export async function assertItems(
+  pages: Page[],
+  json: any,
+  id: string = "items"
+) {
+  for (const page of pages) {
+    expect(await getJsonContent(page, id)).toEqual(json);
+  }
+}
