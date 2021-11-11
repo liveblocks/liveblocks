@@ -266,7 +266,7 @@ function Canvas({
         setState({ mode: CanvasMode.None });
       });
     },
-    [batch, layerIds, layers, setPresence]
+    [batch, layerIds, layers, setPresence, lastUsedColor]
   );
 
   /**
@@ -519,6 +519,9 @@ function Canvas({
               canvasState.mode === CanvasMode.Pressing
             ) {
               unselectLayers();
+              setState({
+                mode: CanvasMode.None,
+              });
             } else if (canvasState.mode === CanvasMode.Pencil) {
               insertPath();
             } else if (canvasState.mode === CanvasMode.Inserting) {
