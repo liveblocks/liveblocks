@@ -32,26 +32,6 @@
   height: 100vh;
 }
 
-.tools_panel_container {
-  position: absolute;
-  bottom: 24px;
-  right: 0;
-  left: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tools_panel {
-  box-shadow: var(--shadow-popup);
-  border-radius: 12px;
-  background-color: var(--color-surface-panel);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 12px;
-}
-
 .selection_net {
   fill: var(--color-primary);
   fill-opacity: 0.05;

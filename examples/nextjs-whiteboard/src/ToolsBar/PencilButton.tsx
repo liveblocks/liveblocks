@@ -1,12 +1,12 @@
 import React from "react";
-import IconButton from "./IconButton";
+import IconButton from "../IconButton";
 
 type Props = {
   isActive: boolean;
   onClick: () => void;
 };
 
-export default function PencilIconButton({ isActive, onClick }: Props) {
+export default function PencilButton({ isActive, onClick }: Props) {
   return (
     <IconButton isActive={isActive} onClick={onClick}>
       <svg width="36" height="36" viewBox="0 0 36 36" fill="none">

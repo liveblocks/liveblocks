@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Layer, XYWH } from "./types";
 import { boundingBox } from "./utils";
 
-export function useSelectionBounds(
+export default function useSelectionBounds(
   layers: LiveMap<string, LiveObject<Layer>>,
   selection: string[]
 ): XYWH | null {

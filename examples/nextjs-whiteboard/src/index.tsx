@@ -36,14 +36,11 @@ import { nanoid } from "nanoid";
 import LayerComponent from "./LayerComponent";
 import SelectionTools from "./SelectionTools";
 import LoadingIndicator from "../components/LoadingIndicator";
-import { useSelectionBounds } from "./hooks";
-import EllipseIconButton from "./EllipseIconButton";
-import RectangleIconButton from "./RectangleIconButton";
-import PencilIconButton from "./PencilIconButton";
-import SelectionIconButton from "./SelectionIconButton";
+import useSelectionBounds from "./useSelectionBounds";
 import useDisableScrollBounce from "./useDisableScrollBounce";
 import MultiplayerGuides from "./MultiplayerGuides";
 import Path from "./Path";
+import ToolsBar from "./ToolsBar";
 
 const MAX_LAYERS = 100;
 
@@ -169,6 +166,13 @@ function Canvas({
    */
   const onLayerPointerDown = useCallback(
     (e: React.PointerEvent, layerId: string) => {
+      if (
+        canvasState.mode === CanvasMode.Pencil ||
+        canvasState.mode === CanvasMode.Inserting
+      ) {
+        return;
+      }
+
       history.pause();
       e.stopPropagation();
       const point = pointerEventToCanvasPoint(e, camera);
@@ -177,7 +181,7 @@ function Canvas({
       }
       setState({ mode: CanvasMode.Translating, current: point });
     },
-    [setPresence, setState, selection, camera, history]
+    [setPresence, setState, selection, camera, history, canvasState.mode]
   );
 
   /**
@@ -271,7 +275,8 @@ function Canvas({
   const insertPath = useCallback(() => {
     if (
       pencilDraft == null ||
-      (pencilDraft.length < 2 && layers.size >= MAX_LAYERS)
+      pencilDraft.length < 2 ||
+      layers.size >= MAX_LAYERS
     ) {
       setPresence({ pencilDraft: null });
       return;
@@ -518,10 +523,11 @@ function Canvas({
               insertPath();
             } else if (canvasState.mode === CanvasMode.Inserting) {
               insertLayer(canvasState.layerType, point);
+            } else {
+              setState({
+                mode: CanvasMode.None,
+              });
             }
-            setState({
-              mode: CanvasMode.None,
-            });
             history.resume();
           }}
         >
@@ -586,56 +592,12 @@ function Canvas({
           </g>
         </svg>
       </div>
-      <div className={styles.tools_panel_container}>
-        <div className={styles.tools_panel}>
-          <SelectionIconButton
-            isActive={
-              canvasState.mode === CanvasMode.None ||
-              canvasState.mode === CanvasMode.Translating ||
-              canvasState.mode === CanvasMode.SelectionNet ||
-              canvasState.mode === CanvasMode.Pressing ||
-              canvasState.mode === CanvasMode.Resizing
-            }
-            onClick={() =>
-              setState({
-                mode: CanvasMode.None,
-              })
-            }
-          />
-          <PencilIconButton
-            isActive={canvasState.mode === CanvasMode.Pencil}
-            onClick={() =>
-              setState({
-                mode: CanvasMode.Pencil,
-              })
-            }
-          />
-          <RectangleIconButton
-            isActive={
-              canvasState.mode === CanvasMode.Inserting &&
-              canvasState.layerType === LayerType.Rectangle
-            }
-            onClick={() =>
-              setState({
-                mode: CanvasMode.Inserting,
-                layerType: LayerType.Rectangle,
-              })
-            }
-          />
-          <EllipseIconButton
-            isActive={
-              canvasState.mode === CanvasMode.Inserting &&
-              canvasState.layerType === LayerType.Ellipse
-            }
-            onClick={() =>
-              setState({
-                mode: CanvasMode.Inserting,
-                layerType: LayerType.Ellipse,
-              })
-            }
-          />
-        </div>
-      </div>
+      <ToolsBar
+        canvasState={canvasState}
+        setCanvasState={setState}
+        undo={history.undo}
+        redo={history.redo}
+      />
     </>
   );
 }
