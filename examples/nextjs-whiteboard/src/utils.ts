@@ -17,6 +17,12 @@ export function colorToCss(color: Color) {
     .padStart(2, "0")}${color.b.toString(16).padStart(2, "0")}`;
 }
 
+const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
+
+export function connectionIdToColor(connectionId: number): string {
+  return COLORS[connectionId % COLORS.length];
+}
+
 export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
   const result = {
     x: bounds.x,
@@ -137,7 +143,7 @@ export function findIntersectingLayersWithRectangle(
   return ids;
 }
 
-export function getLayers(
+export function getSelectedLayers(
   layers: LiveMap<string, LiveObject<Layer>>,
   selection: string[]
 ): LiveObject<Layer>[] {
@@ -159,7 +165,9 @@ export function boundingBox(
     return null;
   }
 
-  const layers = getLayers(allLayers, selection).map((l) => l.toObject());
+  const layers = getSelectedLayers(allLayers, selection).map((l) =>
+    l.toObject()
+  );
 
   if (layers.length === 0) {
     return null;

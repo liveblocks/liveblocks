@@ -15,11 +15,6 @@
     0px 0px 0px 1px rgba(0, 0, 0, 0.05);
 }
 
-.no_scroll {
-  overscroll-behavior: none;
-  overflow: hidden;
-}
-
 .canvas {
   background-color: var(--color-surface-canvas);
   /**

@@ -134,6 +134,8 @@ export type State = {
   redoStack: HistoryItem[];
 
   isHistoryPaused: boolean;
+  pausedHistory: HistoryItem;
+
   isBatching: boolean;
   batch: {
     ops: Op[];
@@ -301,10 +303,7 @@ export function makeStateMachine(
     }
 
     if (state.isHistoryPaused) {
-      if (state.undoStack.length === 0) {
-        state.undoStack.push([]);
-      }
-      state.undoStack[state.undoStack.length - 1].unshift(...historyItem);
+      state.pausedHistory.unshift(...historyItem);
     } else {
       state.undoStack.push(historyItem);
     }
@@ -657,7 +656,9 @@ See v0.13 release notes for more information.
     state.me = { ...state.me, ...overrides };
 
     if (state.isBatching) {
-      state.batch.reverseOps.push({ type: "presence", data: oldValues });
+      if (options?.addToHistory) {
+        state.batch.reverseOps.push({ type: "presence", data: oldValues });
+      }
       state.batch.updates.presence = true;
     } else {
       tryFlushing();
@@ -1173,11 +1174,16 @@ See v0.13 release notes for more information.
   }
 
   function pauseHistory() {
+    state.pausedHistory = [];
     state.isHistoryPaused = true;
   }
 
   function resumeHistory() {
     state.isHistoryPaused = false;
+    if (state.pausedHistory.length > 0) {
+      addToUndoStack(state.pausedHistory);
+    }
+    state.pausedHistory = [];
   }
 
   return {
@@ -1268,6 +1274,7 @@ export function defaultState(
     redoStack: [],
 
     isHistoryPaused: false,
+    pausedHistory: [],
     isBatching: false,
     batch: {
       ops: [] as Op[],

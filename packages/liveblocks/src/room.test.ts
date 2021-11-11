@@ -248,6 +248,61 @@ describe("room", () => {
     expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
 
+  test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    const getStoragePromise = room.getStorage<{ x: number }>();
+
+    room.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    room.updatePresence({ x: 0 });
+
+    room.batch(() => {
+      room.updatePresence({ x: 1 });
+      storage.root.set("x", 1);
+    });
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+
+    room.redo();
+  });
+
+  test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+
+    room.pauseHistory();
+    room.resumeHistory();
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+  });
+
   test("undo redo with presence that do not impact presence", async () => {
     const effects = mockEffects();
     const state = defaultState({});
@@ -288,11 +343,35 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: undefined });
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
     expect(room.selectors.getPresence()).toEqual({ x: 10 });
+  });
+
+  test("undo while history is paused", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    room.updatePresence({ x: 0 }, { addToHistory: true });
+
+    room.updatePresence({ x: 1 }, { addToHistory: true });
+
+    room.pauseHistory();
+
+    for (let i = 1; i <= 10; i++) {
+      room.updatePresence({ x: i }, { addToHistory: true });
+    }
+
+    room.undo();
+
+    expect(room.selectors.getPresence()).toEqual({ x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {

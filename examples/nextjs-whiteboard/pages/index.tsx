@@ -3,8 +3,7 @@ import Head from "next/head";
 import SingleLineCodeBlock from "../components/SingleLineCodeBlock";
 import InlineCodeBlock from "../components/InlineCodeBlock";
 import ExampleInfo from "../components/ExampleInfo";
-
-import Whiteboard from "./multiplayer-whiteboard-tool";
+import Whiteboard from "../src";
 
 export async function getStaticProps() {
   return {

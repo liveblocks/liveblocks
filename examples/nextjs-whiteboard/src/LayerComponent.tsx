@@ -1,9 +1,11 @@
 import { LiveObject } from "@liveblocks/client";
+import { useRoom } from "@liveblocks/react";
 import React, { memo, useEffect, useState } from "react";
 import Ellipse from "./Ellipse";
 import Path from "./Path";
 import Rectangle from "./Rectangle";
 import { CanvasMode, Layer, LayerType } from "./types";
+import { colorToCss } from "./utils";
 
 type Props = {
   id: string;
@@ -18,16 +20,16 @@ const LayerComponent = memo(
   ({ layer, mode, onLayerPointerDown, id, selectionColor }: Props) => {
     const [layerData, setLayerData] = useState(layer.toObject());
 
+    const room = useRoom();
+
     // Layer is a nested LiveObject inside a LiveMap, so we need to subscribe to changes made to a specific layer
     useEffect(() => {
       function onChange() {
         setLayerData(layer.toObject());
       }
 
-      layer.subscribe(onChange);
-
-      return () => layer.unsubscribe(onChange);
-    }, [layer]);
+      return room.subscribe(layer, onChange);
+    }, [room, layer]);
 
     const isAnimated =
       mode !== CanvasMode.Translating && mode !== CanvasMode.Resizing;
@@ -46,11 +48,14 @@ const LayerComponent = memo(
       case LayerType.Path:
         return (
           <Path
-            id={id}
-            layer={layerData}
-            onPointerDown={onLayerPointerDown}
+            key={id}
+            points={layerData.points}
             isAnimated={isAnimated}
-            selectionColor={selectionColor}
+            onPointerDown={(e) => onLayerPointerDown(e, id)}
+            x={layerData.x}
+            y={layerData.y}
+            fill={layerData.fill ? colorToCss(layerData.fill) : "#CCC"}
+            stroke={selectionColor}
           />
         );
       case LayerType.Rectangle:

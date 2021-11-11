@@ -286,10 +286,14 @@ export function useEventListener<TEvent>(
   });
 
   React.useEffect(() => {
-    return room.subscribe(
-      "event",
-      (e: { connectionId: number; event: TEvent }) => savedCallback.current(e)
-    );
+    const listener = (e: { connectionId: number; event: TEvent }) =>
+      savedCallback.current(e);
+
+    const unsubscribe = room.subscribe("event", listener);
+
+    return () => {
+      unsubscribe();
+    };
   }, [room]);
 }
 
