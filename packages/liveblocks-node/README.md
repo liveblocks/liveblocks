@@ -35,11 +35,11 @@ For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https:/
 
 ## Community
 
-- [Slack](https://join.slack.com/t/liveblocks-community/shared_invite/zt-qozwnk75-6RB0i1wk1lx470KX0YuZxQ) - To get involved with the Liveblocks community, ask questions and share tips.
+- [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks community, ask questions and share tips.
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
 
 ## License
 
 Licensed under the Apache License 2.0, Copyright © 2021-present [Liveblocks](https://liveblocks.io).
 
-See [LICENSE](./LICENSE) for more information.
+See [LICENSE](../../LICENSE) for more information.
