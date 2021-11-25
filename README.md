@@ -10,9 +10,9 @@
 
 ## Packages
 
-- [@liveblocks/client](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks)
-- [@liveblocks/react](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-react)
-- [@liveblocks/node](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-node)
+- [@liveblocks/client](./packages/liveblocks)
+- [@liveblocks/react](./packages/liveblocks-react)
+- [@liveblocks/node](./packages/liveblocks-node)
 
 ## Examples
 
