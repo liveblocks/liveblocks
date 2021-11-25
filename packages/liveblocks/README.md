@@ -8,16 +8,16 @@
 
 **At [Liveblocks](https://liveblocks.io), we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
 
+## Installation
+
+```
+npm install @liveblocks/client
+```
+
 ## Examples
 
 - Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 - Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
-
-## Packages
-
-- [@liveblocks/client](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks)
-- [@liveblocks/react](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-react)
-- [@liveblocks/node](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-node)
 
 ## Documentation
 
