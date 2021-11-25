@@ -10,8 +10,8 @@
 
 ## Installation
 
-```sh
-$ npm install @liveblocks/client
+```
+npm install @liveblocks/client
 ```
 
 ## Examples

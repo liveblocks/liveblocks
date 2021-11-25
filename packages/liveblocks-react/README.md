@@ -10,8 +10,8 @@
 
 ## Installation
 
-```sh
-$ npm install @liveblocks/react
+```
+npm install @liveblocks/react
 ```
 
 ## Examples

@@ -10,8 +10,8 @@
 
 ## Installation
 
-```sh
-$ npm install @liveblocks/node
+```
+npm install @liveblocks/node
 ```
 
 ## Examples
