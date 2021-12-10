@@ -1153,12 +1153,18 @@ See v0.13 release notes for more information.
       callback();
     } finally {
       state.isBatching = false;
-      addToUndoStack(state.batch.reverseOps);
+
+      if (state.batch.reverseOps.length > 0) {
+        addToUndoStack(state.batch.reverseOps);
+      }
 
       // Clear the redo stack because batch is always called from a local operation
       state.redoStack = [];
 
-      dispatch(state.batch.ops);
+      if (state.batch.ops.length > 0) {
+        dispatch(state.batch.ops);
+      }
+
       notify(state.batch.updates);
       state.batch = {
         ops: [],

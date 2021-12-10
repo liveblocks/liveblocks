@@ -470,6 +470,24 @@ describe("room", () => {
       expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
     });
 
+    test("batch without operations should not add an item to the undo stack", async () => {
+      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
+        await prepareStorageTest<{
+          a: number;
+        }>([createSerializedObject("0:0", { a: 1 })], 1);
+
+      storage.root.set("a", 2);
+
+      // Batch without operations on storage or presence
+      batch(() => {});
+
+      assert({ a: 2 });
+
+      undo();
+
+      assert({ a: 1 });
+    });
+
     test("batch storage with changes from server", async () => {
       const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
         await prepareStorageTest<{
