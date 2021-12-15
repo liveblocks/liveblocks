@@ -253,6 +253,12 @@ export class LiveObject<
 
   #applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
     const key = op.key;
+
+    // If property does not exist, exit without notifying
+    if (this.#map.has(key) === false) {
+      return { modified: false };
+    }
+
     const oldValue = this.#map.get(key);
 
     let reverse: Op[] = [];
@@ -296,6 +302,49 @@ export class LiveObject<
    */
   get<TKey extends keyof T>(key: TKey): T[TKey] {
     return this.#map.get(key as string);
+  }
+
+  /**
+   * Deletes a key from the LiveObject
+   * @param key The key of the property to delete
+   */
+  delete(key: keyof T): void {
+    const keyAsString = key as string;
+    const oldValue = this.#map.get(keyAsString);
+
+    if (oldValue === undefined) {
+      return;
+    }
+
+    if (this._doc == null || this._id == null) {
+      if (oldValue instanceof AbstractCrdt) {
+        oldValue._detach();
+      }
+      this.#map.delete(keyAsString);
+      return;
+    }
+
+    let reverse: Op[];
+
+    if (oldValue instanceof AbstractCrdt) {
+      oldValue._detach();
+      reverse = oldValue._serialize(this._id, keyAsString);
+    } else {
+      reverse = [
+        {
+          type: OpType.UpdateObject,
+          data: { [keyAsString]: oldValue },
+          id: this._id,
+        },
+      ];
+    }
+
+    this.#map.delete(keyAsString);
+    this._doc.dispatch(
+      [{ type: OpType.DeleteObjectKey, key: keyAsString, id: this._id }],
+      reverse,
+      [this]
+    );
   }
 
   /**

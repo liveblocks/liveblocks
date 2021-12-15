@@ -364,12 +364,107 @@ describe("LiveObject", () => {
     assert({ a: 1 });
   });
 
+  describe("delete", () => {
+    it("detached", () => {
+      const liveObject = new LiveObject({ a: 0 });
+      liveObject.delete("a");
+      expect(liveObject.get("a")).toBe(undefined);
+    });
+
+    it("should delete property from the object", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 0 })]);
+      assert({ a: 0 });
+
+      storage.root.delete("a");
+      assert({});
+
+      assertUndoRedo();
+    });
+
+    it("should delete nested crdt", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        child?: LiveObject<{ a: number }>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+      ]);
+
+      assert({ child: { a: 0 } });
+
+      storage.root.delete("child");
+      assert({});
+
+      assertUndoRedo();
+    });
+
+    it("should not notify if property does not exist", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", {})]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      root.delete("a");
+
+      expect(callback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should notify if property has been deleted", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 1 })]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      root.delete("a");
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("applyDeleteObjectKey", () => {
+    it("should not notify if property does not exist", async () => {
+      const { root, subscribe, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{
+          a?: number;
+        }>([createSerializedObject("0:0", {})]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      applyRemoteOperations([
+        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should notify if property has been deleted", async () => {
+      const { root, subscribe, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{
+          a?: number;
+        }>([createSerializedObject("0:0", { a: 1 })]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      applyRemoteOperations([
+        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, assert, assertUndoRedo, subscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, subscribe } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
 
