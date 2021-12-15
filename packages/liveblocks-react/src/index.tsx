@@ -439,6 +439,9 @@ export function useBatch() {
   return useRoom().batch;
 }
 
+/**
+ * Returns the room.history
+ */
 export function useHistory() {
   return useRoom().history;
 }
