@@ -31,3 +31,5 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 packages/liveblocks/.vscode/*
+packages/liveblocks/.idea/*
+.idea
