@@ -199,6 +199,7 @@ export async function prepareStorageTest<T>(
   }
 
   return {
+    machine,
     operations,
     storage,
     refStorage,

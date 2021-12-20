@@ -5,6 +5,7 @@ import {
   mockEffects,
   MockWebSocket,
   serverMessage,
+  objectToJson,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -696,6 +697,76 @@ describe("room", () => {
           type: "MY_EVENT",
         },
       });
+    });
+  });
+
+  describe("offline", () => {
+    test.only("disconnect and reconnect", async () => {
+      const { storage, assert, assertUndoRedo, machine, refStorage } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      items.push("A");
+      assert({
+        items: ["A"],
+      });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      items.push("B");
+
+      const storageJson = objectToJson(storage.root);
+      expect(storageJson).toEqual({ items: ["A", "B"] });
+      const refStorageJson = objectToJson(refStorage.root);
+      expect(refStorageJson).toEqual({ items: ["A"] });
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 1 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.InitialStorageState,
+          items: [
+            ["0:0", { type: CrdtType.Object, data: {} }],
+            [
+              "0:1",
+              { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
+            ],
+            [
+              "0:2",
+              {
+                type: CrdtType.Register,
+                parentId: "0:1",
+                parentKey: "!",
+                data: "A",
+              },
+            ],
+          ],
+        })
+      );
+
+      assert({
+        items: ["A", "B"],
+      });
+
+      // assertUndoRedo();
     });
   });
 });

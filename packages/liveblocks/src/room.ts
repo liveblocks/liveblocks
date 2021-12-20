@@ -146,6 +146,7 @@ export type State = {
       nodes: Set<AbstractCrdt>;
     };
   };
+  offlineOperations: Op[];
 };
 
 export type Effects = {
@@ -240,6 +241,7 @@ export function makeStateMachine(
   }
 
   function createRootFromMessage(message: InitialDocumentStateMessage) {
+    state.items = new Map<string, AbstractCrdt>();
     state.root = load(message.items);
 
     for (const key in state.defaultStorageRoot) {
@@ -383,9 +385,7 @@ export function makeStateMachine(
       return state.connection.id;
     }
 
-    throw new Error(
-      "Internal. Tried to get connection id but connection is not open"
-    );
+    return "offlineUser";
   }
 
   function generateId() {
@@ -835,6 +835,7 @@ See v0.13 release notes for more information.
         case ServerMessageType.InitialStorageState: {
           createRootFromMessage(subMessage);
           _getInitialStateResolver?.();
+          tryFlushing(true);
           break;
         }
         case ServerMessageType.UpdateStorage: {
@@ -961,12 +962,13 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function tryFlushing() {
-    if (state.socket == null) {
-      return;
-    }
+  function tryFlushing(flushOffLineOperation: boolean = false) {
+    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
+      if (state.buffer.storageOperations.length > 0) {
+        state.offlineOperations.push(...state.buffer.storageOperations);
+        state.buffer.storageOperations = [];
+      }
 
-    if (state.socket.readyState !== WebSocket.OPEN) {
       return;
     }
 
@@ -976,6 +978,14 @@ See v0.13 release notes for more information.
 
     if (elapsedTime > context.throttleDelay) {
       const messages = flushDataToMessages(state);
+
+      if (state.offlineOperations.length > 0 && flushOffLineOperation) {
+        messages.push({
+          type: ClientMessageType.UpdateStorage,
+          ops: overrideStorageOperationsIds(state.offlineOperations),
+        });
+        state.offlineOperations = [];
+      }
       if (messages.length === 0) {
         return;
       }
@@ -995,6 +1005,15 @@ See v0.13 release notes for more information.
         context.throttleDelay - (now - state.lastFlushTime)
       );
     }
+  }
+
+  function overrideStorageOperationsIds(ops: Op[]) {
+    const connectionId = getConnectionId();
+    const newOps = ops.map((op) => {
+      return { ...op, id: `${connectionId}:${op.id.split(":")[1]}` };
+    });
+
+    return newOps;
   }
 
   function flushDataToMessages(state: State) {
@@ -1287,6 +1306,7 @@ export function defaultState(
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
     },
+    offlineOperations: [],
   };
 }
 
