@@ -980,7 +980,7 @@ See v0.13 release notes for more information.
       const messages = flushDataToMessages(state);
 
       if (state.offlineOperations.length > 0 && flushOffLineOperation) {
-        messages.push({
+        messages.unshift({
           type: ClientMessageType.UpdateStorage,
           ops: overrideStorageOperationsIds(state.offlineOperations),
         });
@@ -1125,11 +1125,20 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem);
+
+    const formattedHistoryItem = historyItem.map((item) => {
+      if ("id" in item && item.id.startsWith("offlineUser")) {
+        return { ...item, id: `${getConnectionId()}:${item.id.split(":")[1]}` };
+      }
+      return item;
+    });
+
+    const result = apply(formattedHistoryItem);
+
     notify(result.updates);
     state.redoStack.push(result.reverse);
 
-    for (const op of historyItem) {
+    for (const op of formattedHistoryItem) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
