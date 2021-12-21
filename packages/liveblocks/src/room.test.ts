@@ -820,8 +820,6 @@ describe("room", () => {
       room.authenticationSuccess({ actor: 1 }, new MockWebSocket("") as any);
       room.onOpen();
 
-      getStoragePromise = room.getStorage<{ items: string[] }>();
-
       room.onMessage(
         serverMessage({
           type: ServerMessageType.InitialStorageState,
@@ -844,14 +842,13 @@ describe("room", () => {
         })
       );
 
+      getStoragePromise = room.getStorage<{ items: string[] }>();
+
       storage = await getStoragePromise;
 
       expect(objectToJson(storage.root)).toEqual({ items: ["A", "B"] });
 
       room.undo();
-
-      getStoragePromise = room.getStorage<{ items: string[] }>();
-      storage = await getStoragePromise;
 
       expect(objectToJson(storage.root)).toEqual({ items: ["A"] });
     });

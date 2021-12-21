@@ -980,9 +980,13 @@ See v0.13 release notes for more information.
       const messages = flushDataToMessages(state);
 
       if (state.offlineOperations.length > 0 && flushOffLineOperation) {
+        const opsWithNewIds = overrideStorageOperationsIds(
+          state.offlineOperations
+        );
+        apply(opsWithNewIds);
         messages.unshift({
           type: ClientMessageType.UpdateStorage,
-          ops: overrideStorageOperationsIds(state.offlineOperations),
+          ops: opsWithNewIds,
         });
         state.offlineOperations = [];
       }
