@@ -1,4 +1,5 @@
 import { Page } from "puppeteer";
+import randomNumber from "../utils/randomNumber";
 
 export async function getElementById(page: Page, id: string) {
   const element = await page.$(`#${id}`);
@@ -24,7 +25,7 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function assertItemsAreEquals(
+export async function assertJsonContentAreEquals(
   firstPage: Page,
   secondPage: Page,
   id: string = "items"
@@ -42,4 +43,8 @@ export async function assertItems(
   for (const page of pages) {
     expect(await getJsonContent(page, id)).toEqual(json);
   }
+}
+
+export function pickRandomItem<T>(array: T[]) {
+  return array[randomNumber(array.length)];
 }

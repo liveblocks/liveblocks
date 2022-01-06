@@ -1,16 +1,10 @@
-import {
-  RoomProvider,
-  useObject,
-  useRedo,
-  useSelf,
-  useUndo,
-} from "@liveblocks/react";
-import randomNumber from "../../utils/randomNumber";
+import { RoomProvider, useMap, useRedo, useUndo } from "@liveblocks/react";
 import React from "react";
+import randomNumber from "../../utils/randomNumber";
 
 export default function Home() {
   return (
-    <RoomProvider id="e2e-storage-object">
+    <RoomProvider id="e2e-storage-map">
       <Sandbox />
     </RoomProvider>
   );
@@ -19,20 +13,19 @@ export default function Home() {
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
-  const object = useObject<{ [key: string]: number }>("object");
-  const me = useSelf();
+  const map = useMap("map");
 
-  if (object == null || me == null) {
+  if (map == null) {
     return <div>Loading</div>;
   }
 
   return (
     <div>
-      <h1>Storage object sandbox</h1>
+      <h1>useMap sandbox</h1>
       <button
         id="set"
         onClick={() => {
-          object.set(randomNumber(10).toString(), randomNumber(10));
+          map.set(`key:${randomNumber(10)}`, `value:${randomNumber(10)}`);
         }}
       >
         Set
@@ -41,10 +34,9 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          const keys = Object.keys(object.toObject());
-          if (keys.length > 0) {
-            const index = randomNumber(keys.length);
-            object.delete(keys[index]);
+          if (map.size > 0) {
+            const index = randomNumber(map.size);
+            map.delete(Array.from(map.keys())[index]);
           }
         }}
       >
@@ -54,8 +46,8 @@ function Sandbox() {
       <button
         id="clear"
         onClick={() => {
-          while (Object.keys(object.toObject()).length > 0) {
-            object.delete(Array.from(Object.keys(object.toObject()))[0]);
+          while (map.size > 0) {
+            map.delete(Array.from(map.keys())[0]);
           }
         }}
       >
@@ -72,7 +64,7 @@ function Sandbox() {
 
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(object.toObject(), null, 2)}
+        {JSON.stringify(Object.fromEntries(map), null, 2)}
       </div>
     </div>
   );
