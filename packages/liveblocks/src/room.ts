@@ -879,6 +879,9 @@ See v0.13 release notes for more information.
 
       const error = new LiveblocksError(event.reason, event.code);
       for (const listener of state.listeners.error) {
+        console.error(
+          `Liveblocks WebSocket connection closed. Reason: ${error.message} (code: ${error.code})`
+        );
         listener(error);
       }
     } else if (event.wasClean === false) {

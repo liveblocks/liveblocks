@@ -3,7 +3,7 @@
  */
 
 import { Page, Browser, default as puppeteer } from "puppeteer";
-import { CONNECT_DELAY, delay, getJsonContent, getTextContent } from "./utils";
+import { CONNECT_DELAY, delay, getJsonContent, getTextContent } from "../utils";
 
 function getCurrentPresenseCount(page: Page) {
   return getTextContent(page, "me-count");
@@ -13,7 +13,7 @@ function getOthers(page: Page) {
   return getJsonContent(page, "others");
 }
 
-const TEST_URL = "http://localhost:3007";
+const TEST_URL = "http://localhost:3007/presence";
 
 declare const browserA: Browser;
 declare const browserB: Browser;

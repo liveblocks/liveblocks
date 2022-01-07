@@ -17,7 +17,7 @@ export default function Home() {
 
 let item = "A";
 
-function generateRandomNumber(min: number, max: number, ignore?: number) {
+function generateRandomNumber(max: number, ignore?: number) {
   let result = 0;
   while (true) {
     result = Math.floor(Math.random() * max);
@@ -53,8 +53,8 @@ function Sandbox() {
       <button
         id="move"
         onClick={() => {
-          const index = generateRandomNumber(0, list.length);
-          const target = generateRandomNumber(0, list.length, index);
+          const index = generateRandomNumber(list.length);
+          const target = generateRandomNumber(list.length, index);
           list.move(index, target);
         }}
       >
@@ -64,7 +64,7 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          const index = generateRandomNumber(0, list.length);
+          const index = generateRandomNumber(list.length);
           list.delete(index);
         }}
       >
