@@ -136,7 +136,7 @@ export async function prepareStorageTest<T>(
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
 
-  const { machine, storage } = await prepareRoomWithStorage<T>(
+  let { machine, storage } = await prepareRoomWithStorage<T>(
     items,
     actor,
     (messages: ClientMessage[]) => {
@@ -198,6 +198,25 @@ export async function prepareStorageTest<T>(
     }
   }
 
+  async function reconnect(actor: number, newItems: SerializedCrdtWithId[]) {
+    machine.connect();
+    machine.authenticationSuccess(
+      { actor: actor },
+      new MockWebSocket("") as any
+    );
+    machine.onOpen();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: newItems,
+      })
+    );
+
+    let getStoragePromise = machine.getStorage<T>();
+    storage = await getStoragePromise;
+  }
+
   return {
     machine,
     operations,
@@ -220,6 +239,7 @@ export async function prepareStorageTest<T>(
           ops,
         })
       ),
+    reconnect,
   };
 }
 
