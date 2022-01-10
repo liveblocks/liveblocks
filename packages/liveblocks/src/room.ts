@@ -94,6 +94,7 @@ type IdFactory = () => string;
 
 export type State = {
   connection: Connection;
+  lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
@@ -146,7 +147,7 @@ export type State = {
       nodes: Set<AbstractCrdt>;
     };
   };
-  offlineOperations: Op[];
+  offlineOperations: Map<string, Op>;
 };
 
 export type Effects = {
@@ -383,9 +384,13 @@ export function makeStateMachine(
       state.connection.state === "connecting"
     ) {
       return state.connection.id;
+    } else if (state.lastConnectionId !== null) {
+      return state.lastConnectionId;
     }
 
-    return "offlineUser";
+    throw new Error(
+      "Internal. Tried to get connection id but connection was never open"
+    );
   }
 
   function generateId() {
@@ -439,6 +444,8 @@ export function makeStateMachine(
   }
 
   function applyOp(op: Op): ApplyResult {
+    state.offlineOperations.delete(op.id);
+
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
@@ -835,7 +842,7 @@ See v0.13 release notes for more information.
         case ServerMessageType.InitialStorageState: {
           createRootFromMessage(subMessage);
           _getInitialStateResolver?.();
-          tryFlushing(true);
+          applyAndSendOfflineOps();
           break;
         }
         case ServerMessageType.UpdateStorage: {
@@ -920,6 +927,7 @@ See v0.13 release notes for more information.
     if (state.connection.state === "connecting") {
       updateConnection({ ...state.connection, state: "open" });
       state.numberOfRetry = 0;
+      state.lastConnectionId = state.connection.id;
       tryFlushing();
     } else {
       // TODO
@@ -965,13 +973,37 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function tryFlushing(flushOffLineOperation: boolean = false) {
-    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
-      if (state.buffer.storageOperations.length > 0) {
-        state.offlineOperations.push(...state.buffer.storageOperations);
-        state.buffer.storageOperations = [];
-      }
+  function applyAndSendOfflineOps() {
+    if (state.offlineOperations.size === 0) {
+      return;
+    }
 
+    const messages: ClientMessage[] = [];
+
+    const ops = Array.from(state.offlineOperations.values());
+
+    apply(ops);
+
+    messages.push({
+      type: ClientMessageType.UpdateStorage,
+      ops: ops,
+    });
+
+    effects.send(messages);
+  }
+
+  function tryFlushing() {
+    const storageOps = state.buffer.storageOperations;
+
+    if (storageOps.length > 0) {
+      storageOps.map((op) => {
+        state.offlineOperations.set(op.id, op);
+      });
+
+      state.buffer.storageOperations = [];
+    }
+
+    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
       return;
     }
 
@@ -982,17 +1014,13 @@ See v0.13 release notes for more information.
     if (elapsedTime > context.throttleDelay) {
       const messages = flushDataToMessages(state);
 
-      if (state.offlineOperations.length > 0 && flushOffLineOperation) {
-        const opsWithNewIds = overrideStorageOperationsIds(
-          state.offlineOperations
-        );
-        apply(opsWithNewIds);
-        messages.unshift({
+      if (storageOps.length > 0) {
+        messages.push({
           type: ClientMessageType.UpdateStorage,
-          ops: opsWithNewIds,
+          ops: storageOps,
         });
-        state.offlineOperations = [];
       }
+
       if (messages.length === 0) {
         return;
       }
@@ -1014,15 +1042,6 @@ See v0.13 release notes for more information.
     }
   }
 
-  function overrideStorageOperationsIds(ops: Op[]) {
-    const connectionId = getConnectionId();
-    const newOps = ops.map((op) => {
-      return { ...op, id: `${connectionId}:${op.id.split(":")[1]}` };
-    });
-
-    return newOps;
-  }
-
   function flushDataToMessages(state: State) {
     const messages: ClientMessage[] = [];
     if (state.buffer.presence) {
@@ -1033,12 +1052,6 @@ See v0.13 release notes for more information.
     }
     for (const event of state.buffer.messages) {
       messages.push(event);
-    }
-    if (state.buffer.storageOperations.length > 0) {
-      messages.push({
-        type: ClientMessageType.UpdateStorage,
-        ops: state.buffer.storageOperations,
-      });
     }
     return messages;
   }
@@ -1133,19 +1146,12 @@ See v0.13 release notes for more information.
 
     state.isHistoryPaused = false;
 
-    const formattedHistoryItem = historyItem.map((item) => {
-      if ("id" in item && item.id.startsWith("offlineUser")) {
-        return { ...item, id: `${getConnectionId()}:${item.id.split(":")[1]}` };
-      }
-      return item;
-    });
-
-    const result = apply(formattedHistoryItem);
+    const result = apply(historyItem);
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
 
-    for (const op of formattedHistoryItem) {
+    for (const op of historyItem) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1276,6 +1282,7 @@ export function defaultState(
 ): State {
   return {
     connection: { state: "closed" },
+    lastConnectionId: null,
     socket: null,
     listeners: {
       event: [],
@@ -1322,7 +1329,7 @@ export function defaultState(
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
     },
-    offlineOperations: [],
+    offlineOperations: new Map<string, Op>(),
   };
 }
 

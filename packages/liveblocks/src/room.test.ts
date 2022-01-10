@@ -738,7 +738,7 @@ describe("room", () => {
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       machine.connect();
-      machine.authenticationSuccess({ actor: 1 }, new MockWebSocket("") as any);
+      machine.authenticationSuccess({ actor: 2 }, new MockWebSocket("") as any);
       machine.onOpen();
 
       machine.onMessage(
@@ -751,7 +751,7 @@ describe("room", () => {
               { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
             ],
             [
-              "0:2",
+              "1:0",
               {
                 type: CrdtType.Register,
                 parentId: "0:1",
@@ -762,95 +762,112 @@ describe("room", () => {
           ],
         })
       );
+
+      let getStoragePromise = machine.getStorage<{ items: string[] }>();
+      let storageRefresh = await getStoragePromise;
 
       assert({
         items: ["A", "B"],
       });
+
+      // console.log("test1", objectToJson(storageRefresh.root));
+
+      machine.undo();
+
+      // console.log("test2", objectToJson(storageRefresh.root));
+
+      expect(objectToJson(storageRefresh.root)).toEqual({
+        items: ["A"],
+      });
+      // TODO: fix prepareStorageTest to refresh storage
+      // assert({
+      //   items: ["A"],
+      // });
     });
 
-    test("disconnect and reconnect with undo redo", async () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const room = makeStateMachine(
-        state,
-        { ...defaultContext, throttleDelay: -1 },
-        effects
-      );
+    // test("disconnect and reconnect with undo redo", async () => {
+    //   const effects = mockEffects();
+    //   const state = defaultState({});
+    //   const room = makeStateMachine(
+    //     state,
+    //     { ...defaultContext, throttleDelay: -1 },
+    //     effects
+    //   );
 
-      room.connect();
-      room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      room.onOpen();
+    //   room.connect();
+    //   room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    //   room.onOpen();
 
-      let getStoragePromise = room.getStorage<{ items: string[] }>();
+    //   let getStoragePromise = room.getStorage<{ items: string[] }>();
 
-      room.onMessage(
-        serverMessage({
-          type: ServerMessageType.InitialStorageState,
-          items: [
-            ["0:0", { type: CrdtType.Object, data: {} }],
-            [
-              "0:1",
-              { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
-            ],
-          ],
-        })
-      );
+    //   room.onMessage(
+    //     serverMessage({
+    //       type: ServerMessageType.InitialStorageState,
+    //       items: [
+    //         ["0:0", { type: CrdtType.Object, data: {} }],
+    //         [
+    //           "0:1",
+    //           { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
+    //         ],
+    //       ],
+    //     })
+    //   );
 
-      let storage = await getStoragePromise;
+    //   let storage = await getStoragePromise;
 
-      const items = storage.root.get("items");
+    //   const items = storage.root.get("items");
 
-      expect(objectToJson(storage.root)).toEqual({ items: [] });
+    //   expect(objectToJson(storage.root)).toEqual({ items: [] });
 
-      items.push("A");
-      expect(objectToJson(storage.root)).toEqual({ items: ["A"] });
-      room.onClose(
-        new CloseEvent("close", {
-          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
-          wasClean: false,
-        })
-      );
+    //   items.push("A");
+    //   expect(objectToJson(storage.root)).toEqual({ items: ["A"] });
+    //   room.onClose(
+    //     new CloseEvent("close", {
+    //       code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+    //       wasClean: false,
+    //     })
+    //   );
 
-      // Operation done offline
-      items.push("B");
+    //   // Operation done offline
+    //   items.push("B");
 
-      expect(objectToJson(storage.root)).toEqual({ items: ["A", "B"] });
+    //   expect(objectToJson(storage.root)).toEqual({ items: ["A", "B"] });
 
-      room.connect();
-      room.authenticationSuccess({ actor: 1 }, new MockWebSocket("") as any);
-      room.onOpen();
+    //   room.connect();
+    //   room.authenticationSuccess({ actor: 1 }, new MockWebSocket("") as any);
+    //   room.onOpen();
 
-      room.onMessage(
-        serverMessage({
-          type: ServerMessageType.InitialStorageState,
-          items: [
-            ["0:0", { type: CrdtType.Object, data: {} }],
-            [
-              "0:1",
-              { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
-            ],
-            [
-              "0:2",
-              {
-                type: CrdtType.Register,
-                parentId: "0:1",
-                parentKey: "!",
-                data: "A",
-              },
-            ],
-          ],
-        })
-      );
+    //   room.onMessage(
+    //     serverMessage({
+    //       type: ServerMessageType.InitialStorageState,
+    //       items: [
+    //         ["0:0", { type: CrdtType.Object, data: {} }],
+    //         [
+    //           "0:1",
+    //           { type: CrdtType.List, parentId: "0:0", parentKey: "items" },
+    //         ],
+    //         [
+    //           "0:2",
+    //           {
+    //             type: CrdtType.Register,
+    //             parentId: "0:1",
+    //             parentKey: "!",
+    //             data: "A",
+    //           },
+    //         ],
+    //       ],
+    //     })
+    //   );
 
-      getStoragePromise = room.getStorage<{ items: string[] }>();
+    //   getStoragePromise = room.getStorage<{ items: string[] }>();
 
-      storage = await getStoragePromise;
+    //   storage = await getStoragePromise;
 
-      expect(objectToJson(storage.root)).toEqual({ items: ["A", "B"] });
+    //   expect(objectToJson(storage.root)).toEqual({ items: ["A", "B"] });
 
-      room.undo();
+    //   room.undo();
 
-      expect(objectToJson(storage.root)).toEqual({ items: ["A"] });
-    });
+    //   expect(objectToJson(storage.root)).toEqual({ items: ["A"] });
+    // });
   });
 });
