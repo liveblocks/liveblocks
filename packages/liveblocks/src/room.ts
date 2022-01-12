@@ -433,7 +433,10 @@ export function makeStateMachine(
     return `${getConnectionId()}:${state.opClock++}`;
   }
 
-  function apply(item: HistoryItem): {
+  function apply(
+    item: HistoryItem,
+    isLocal: boolean
+  ): {
     reverse: HistoryItem;
     updates: { nodes: Set<AbstractCrdt>; presence: boolean };
   } {
@@ -465,7 +468,11 @@ export function makeStateMachine(
         result.reverse.unshift(reverse as any);
         result.updates.presence = true;
       } else {
-        const applyOpResult = applyOp(op);
+        // Ops applied after undo/redo don't have an opId.
+        if (isLocal && !op.opId) {
+          op.opId = generateOpId();
+        }
+        const applyOpResult = applyOp(op, isLocal);
         if (applyOpResult.modified) {
           result.updates.nodes.add(applyOpResult.modified);
           result.reverse.unshift(...applyOpResult.reverse);
@@ -475,8 +482,10 @@ export function makeStateMachine(
     return result;
   }
 
-  function applyOp(op: Op): ApplyResult {
-    state.offlineOperations.delete(op.id);
+  function applyOp(op: Op, isLocal: boolean): ApplyResult {
+    if (op.opId) {
+      state.offlineOperations.delete(op.opId);
+    }
 
     switch (op.type) {
       case OpType.DeleteObjectKey:
@@ -488,7 +497,7 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return item._apply(op);
+        return item._apply(op, isLocal);
       }
       case OpType.SetParentKey: {
         const item = state.items.get(op.id);
@@ -519,11 +528,11 @@ export function makeStateMachine(
         if (parent == null || getItem(op.id) != null) {
           return { modified: false };
         }
-
         return parent._attachChild(
           op.id,
           op.parentKey!,
-          new LiveObject(op.data)
+          new LiveObject(op.data),
+          isLocal
         );
       }
       case OpType.CreateList: {
@@ -533,7 +542,12 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return parent._attachChild(op.id, op.parentKey!, new LiveList());
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveList(),
+          isLocal
+        );
       }
       case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId);
@@ -545,7 +559,8 @@ export function makeStateMachine(
         return parent._attachChild(
           op.id,
           op.parentKey!,
-          new LiveRegister(op.data)
+          new LiveRegister(op.data),
+          isLocal
         );
       }
       case OpType.CreateMap: {
@@ -555,7 +570,12 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return parent._attachChild(op.id, op.parentKey!, new LiveMap());
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveMap(),
+          isLocal
+        );
       }
     }
 
@@ -878,7 +898,10 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResult = apply((subMessage as UpdateStorageMessage).ops);
+          const applyResult = apply(
+            (subMessage as UpdateStorageMessage).ops,
+            false
+          );
           for (const node of applyResult.updates.nodes) {
             updates.nodes.add(node);
           }
@@ -1018,7 +1041,7 @@ See v0.13 release notes for more information.
 
     const ops = Array.from(state.offlineOperations.values());
 
-    apply(ops);
+    apply(ops, true);
 
     messages.push({
       type: ClientMessageType.UpdateStorage,
@@ -1033,7 +1056,7 @@ See v0.13 release notes for more information.
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(op.id, op);
+        state.offlineOperations.set(op.opId!, op);
       });
     }
 
@@ -1178,7 +1201,7 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem);
+    const result = apply(historyItem, true);
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
@@ -1203,7 +1226,7 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem);
+    const result = apply(historyItem, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
 
@@ -1265,6 +1288,12 @@ See v0.13 release notes for more information.
     state.pausedHistory = [];
   }
 
+  function simulateCloseWebsocket() {
+    if (state.socket) {
+      state.socket.close(4800);
+    }
+  }
+
   return {
     // Internal
     onOpen,
@@ -1273,6 +1302,9 @@ See v0.13 release notes for more information.
     authenticationSuccess,
     heartbeat,
     onNavigatorOnline,
+    // Internal dev tools
+    simulateCloseWebsocket,
+
     // onWakeUp,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
@@ -1432,6 +1464,9 @@ export function createRoom(
       redo: machine.redo,
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
+    },
+    internalDevTools: {
+      closeWebsocket: machine.simulateCloseWebsocket,
     },
   };
 

@@ -37,7 +37,7 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _serialize(parentId?: string, parentKey?: string): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -45,6 +45,7 @@ export class LiveObject<
     const ops = [];
     const op: CreateObjectOp = {
       id: this._id,
+      opId: doc?.generateOpId(),
       type: OpType.CreateObject,
       parentId,
       parentKey,
@@ -55,7 +56,7 @@ export class LiveObject<
 
     for (const [key, value] of this.#map) {
       if (value instanceof AbstractCrdt) {
-        ops.push(...value._serialize(this._id, key));
+        ops.push(...value._serialize(this._id, key, doc));
       } else {
         op.data[key] = value;
       }
@@ -130,7 +131,12 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: keyof T, child: AbstractCrdt): ApplyResult {
+  _attachChild(
+    id: string,
+    key: keyof T,
+    child: AbstractCrdt,
+    isLocal: boolean
+  ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -202,17 +208,17 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _apply(op: Op): ApplyResult {
+  _apply(op: Op, isLocal: boolean): ApplyResult {
     if (op.type === OpType.UpdateObject) {
-      return this.#applyUpdate(op);
+      return this.#applyUpdate(op, isLocal);
     } else if (op.type === OpType.DeleteObjectKey) {
       return this.#applyDeleteObjectKey(op);
     }
 
-    return super._apply(op);
+    return super._apply(op, isLocal);
   }
 
-  #applyUpdate(op: UpdateObjectOp): ApplyResult {
+  #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];
     const reverseUpdate: UpdateObjectOp = {
@@ -234,15 +240,14 @@ export class LiveObject<
       }
     }
 
-    let isLocal = false;
-    if (op.opId == null) {
-      isLocal = true;
-      op.opId = this._doc!.generateOpId();
-    }
+    // NEED?
+    // if (op.opId == null) {
+    //   op.opId = this._doc!.generateOpId();
+    // }
 
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
-        this.#propToLastUpdate.set(key, op.opId);
+        this.#propToLastUpdate.set(key, op.opId!);
       } else if (this.#propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
@@ -362,7 +367,14 @@ export class LiveObject<
 
     this.#map.delete(keyAsString);
     this._doc.dispatch(
-      [{ type: OpType.DeleteObjectKey, key: keyAsString, id: this._id }],
+      [
+        {
+          type: OpType.DeleteObjectKey,
+          key: keyAsString,
+          id: this._id,
+          opId: this._doc!.generateOpId(),
+        },
+      ],
       reverse,
       [this]
     );
@@ -424,7 +436,7 @@ export class LiveObject<
       if (newValue instanceof AbstractCrdt) {
         newValue._setParentLink(this, key);
         newValue._attach(this._doc.generateId(), this._doc);
-        ops.push(...newValue._serialize(this._id, key));
+        ops.push(...newValue._serialize(this._id, key, this._doc));
       } else {
         updatedProps[key] = newValue;
       }

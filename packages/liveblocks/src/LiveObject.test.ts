@@ -125,6 +125,7 @@ describe("LiveObject", () => {
       {
         type: OpType.CreateObject,
         id: "1:0",
+        opId: "1:1",
         data: { a: 0 },
         parentId: "0:0",
         parentKey: "child",

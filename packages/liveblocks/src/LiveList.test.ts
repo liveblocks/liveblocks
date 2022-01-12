@@ -549,7 +549,7 @@ describe("LiveList", () => {
       });
     });
 
-    it.only("list conflicts with offline", async () => {
+    it("list conflicts with offline", async () => {
       const { root, assert, applyRemoteOperations, machine } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [

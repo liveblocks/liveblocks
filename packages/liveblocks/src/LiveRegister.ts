@@ -38,7 +38,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId: string, parentKey: string): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
@@ -48,6 +48,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     return [
       {
         type: OpType.CreateRegister,
+        opId: doc?.generateOpId(),
         id: this._id,
         parentId,
         parentKey,
@@ -56,7 +57,12 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     ];
   }
 
-  _attachChild(id: string, key: string, crdt: AbstractCrdt): ApplyResult {
+  _attachChild(
+    id: string,
+    key: string,
+    crdt: AbstractCrdt,
+    isLocal: boolean
+  ): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
@@ -64,7 +70,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     throw new Error("Method not implemented.");
   }
 
-  _apply(op: Op): ApplyResult {
-    return super._apply(op);
+  _apply(op: Op, isLocal: boolean): ApplyResult {
+    return super._apply(op, isLocal);
   }
 }
