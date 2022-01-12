@@ -212,9 +212,6 @@ export async function prepareStorageTest<T>(
         items: newItems,
       })
     );
-
-    let getStoragePromise = machine.getStorage<T>();
-    storage = await getStoragePromise;
   }
 
   return {

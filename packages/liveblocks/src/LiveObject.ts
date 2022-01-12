@@ -81,7 +81,18 @@ export class LiveObject<
     const object = new LiveObject(item.data);
     object._attach(id, doc);
 
-    const children = parentToChildren.get(id);
+    return this._deserializeChildren(object, parentToChildren, doc);
+  }
+
+  /**
+   * INTERNAL
+   */
+  static _deserializeChildren(
+    object: LiveObject,
+    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    doc: Doc
+  ) {
+    const children = parentToChildren.get(object._id!);
 
     if (children == null) {
       return object;
@@ -162,6 +173,16 @@ export class LiveObject<
 
     if (child) {
       child._detach();
+    }
+  }
+
+  /**
+   * INTERNAL
+   */
+  _detachChildren() {
+    for (const [key, value] of this.#map) {
+      this.#map.delete(key);
+      value._detach();
     }
   }
 

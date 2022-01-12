@@ -241,9 +241,16 @@ export function makeStateMachine(
     return genericSubscribe(cb);
   }
 
-  function createRootFromMessage(message: InitialDocumentStateMessage) {
-    state.items = new Map<string, AbstractCrdt>();
-    state.root = load(message.items);
+  function createOrUpdateRootFromMessage(message: InitialDocumentStateMessage) {
+    if (message.items.length === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
+    if (state.root) {
+      updateRoot(message.items);
+    } else {
+      state.root = load(message.items);
+    }
 
     for (const key in state.defaultStorageRoot) {
       if (state.root.get(key) == null) {
@@ -252,11 +259,9 @@ export function makeStateMachine(
     }
   }
 
-  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
-    if (items.length === 0) {
-      throw new Error("Internal error: cannot load storage without items");
-    }
-
+  function buildRootAndParentToChildren(
+    items: SerializedCrdtWithId[]
+  ): [SerializedCrdtWithId, Map<string, SerializedCrdtWithId[]>] {
     const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
     let root = null;
 
@@ -277,6 +282,33 @@ export function makeStateMachine(
     if (root == null) {
       throw new Error("Root can't be null");
     }
+
+    return [root, parentToChildren];
+  }
+
+  function updateRoot<T>(items: SerializedCrdtWithId[]) {
+    if (!state.root) {
+      return;
+    }
+
+    state.items = new Map<string, AbstractCrdt>();
+    state.items.set(state.root._id!, state.root);
+
+    state.root._detachChildren();
+
+    const [_, parentToChildren] = buildRootAndParentToChildren(items);
+
+    return LiveObject._deserializeChildren(state.root, parentToChildren, {
+      addItem,
+      deleteItem,
+      generateId,
+      generateOpId,
+      dispatch: storageDispatch,
+    }) as LiveObject<T>;
+  }
+
+  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+    const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
       addItem,
@@ -840,9 +872,9 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.InitialStorageState: {
-          createRootFromMessage(subMessage);
-          _getInitialStateResolver?.();
+          createOrUpdateRootFromMessage(subMessage);
           applyAndSendOfflineOps();
+          _getInitialStateResolver?.();
           break;
         }
         case ServerMessageType.UpdateStorage: {
@@ -928,6 +960,10 @@ See v0.13 release notes for more information.
       updateConnection({ ...state.connection, state: "open" });
       state.numberOfRetry = 0;
       state.lastConnectionId = state.connection.id;
+
+      if (state.root) {
+        state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
+      }
       tryFlushing();
     } else {
       // TODO
@@ -996,14 +1032,13 @@ See v0.13 release notes for more information.
     const storageOps = state.buffer.storageOperations;
 
     if (storageOps.length > 0) {
-      storageOps.map((op) => {
+      storageOps.forEach((op) => {
         state.offlineOperations.set(op.id, op);
       });
-
-      state.buffer.storageOperations = [];
     }
 
     if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
+      state.buffer.storageOperations = [];
       return;
     }
 
@@ -1013,13 +1048,6 @@ See v0.13 release notes for more information.
 
     if (elapsedTime > context.throttleDelay) {
       const messages = flushDataToMessages(state);
-
-      if (storageOps.length > 0) {
-        messages.push({
-          type: ClientMessageType.UpdateStorage,
-          ops: storageOps,
-        });
-      }
 
       if (messages.length === 0) {
         return;
@@ -1052,6 +1080,12 @@ See v0.13 release notes for more information.
     }
     for (const event of state.buffer.messages) {
       messages.push(event);
+    }
+    if (state.buffer.storageOperations.length > 0) {
+      messages.push({
+        type: ClientMessageType.UpdateStorage,
+        ops: state.buffer.storageOperations,
+      });
     }
     return messages;
   }
@@ -1137,7 +1171,6 @@ See v0.13 release notes for more information.
     if (state.isBatching) {
       throw new Error("undo is not allowed during a batch");
     }
-
     const historyItem = state.undoStack.pop();
 
     if (historyItem == null) {
@@ -1145,7 +1178,6 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-
     const result = apply(historyItem);
 
     notify(result.updates);
