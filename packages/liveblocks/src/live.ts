@@ -173,6 +173,7 @@ export type UpdateObjectOp = {
 };
 
 export type CreateObjectOp = {
+  opId?: string;
   id: string;
   type: OpType.CreateObject;
   parentId?: string;
@@ -183,6 +184,7 @@ export type CreateObjectOp = {
 };
 
 export type CreateListOp = {
+  opId?: string;
   id: string;
   type: OpType.CreateList;
   parentId: string;
@@ -190,6 +192,7 @@ export type CreateListOp = {
 };
 
 export type CreateMapOp = {
+  opId?: string;
   id: string;
   type: OpType.CreateMap;
   parentId: string;
@@ -197,6 +200,7 @@ export type CreateMapOp = {
 };
 
 export type CreateRegisterOp = {
+  opId?: string;
   id: string;
   type: OpType.CreateRegister;
   parentId: string;
@@ -205,17 +209,20 @@ export type CreateRegisterOp = {
 };
 
 export type DeleteCrdtOp = {
+  opId?: string;
   id: string;
   type: OpType.DeleteCrdt;
 };
 
 export type SetParentKeyOp = {
+  opId?: string;
   id: string;
   type: OpType.SetParentKey;
   parentKey: string;
 };
 
 export type DeleteObjectKeyOp = {
+  opId?: string;
   id: string;
   type: OpType.DeleteObjectKey;
   key: string;

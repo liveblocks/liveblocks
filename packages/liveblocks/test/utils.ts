@@ -19,6 +19,8 @@ import {
 } from "../src/room";
 import { remove } from "../src/utils";
 
+type Machine = ReturnType<typeof makeStateMachine>;
+
 export function objectToJson(record: LiveObject) {
   const result: any = {};
   const obj = record.toObject();
@@ -111,6 +113,7 @@ export async function prepareIsolatedStorageTest<T>(
   return {
     root: storage.root,
     subscribe: machine.subscribe,
+    machine,
     assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
@@ -238,6 +241,23 @@ export async function prepareStorageTest<T>(
       ),
     reconnect,
   };
+}
+
+export async function reconnect(
+  machine: Machine,
+  actor: number,
+  newItems: SerializedCrdtWithId[]
+) {
+  machine.connect();
+  machine.authenticationSuccess({ actor: actor }, new MockWebSocket("") as any);
+  machine.onOpen();
+
+  machine.onMessage(
+    serverMessage({
+      type: ServerMessageType.InitialStorageState,
+      items: newItems,
+    })
+  );
 }
 
 export function createSerializedObject(

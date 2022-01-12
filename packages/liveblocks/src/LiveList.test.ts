@@ -1,6 +1,6 @@
 import { LiveList } from "./LiveList";
 import {
-  assertStorage,
+  reconnect,
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
@@ -14,7 +14,7 @@ import {
 } from "../test/utils";
 import { LiveObject } from "./LiveObject";
 import { LiveMap } from "./LiveMap";
-import { OpType } from "./live";
+import { OpType, WebsocketCloseCodes } from "./live";
 
 describe("LiveList", () => {
   describe("not attached", () => {
@@ -42,7 +42,7 @@ describe("LiveList", () => {
 
       expect(list.some((item) => item.startsWith("x"))).toEqual(false);
 
-      expect(list.indexOf("quatres")).toEqual(-1);
+      expect(list.indexOf("quatre")).toEqual(-1);
       expect(list.indexOf("third")).toEqual(2);
 
       list.delete(0);
@@ -435,116 +435,168 @@ describe("LiveList", () => {
     });
   });
 
-  it("list conflicts", async () => {
-    const { root, assert, applyRemoteOperations } =
-      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
+  describe("conflict", () => {
+    it("list conflicts", async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      // Register id = 1:0
+      items.push("0");
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "1",
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+
+      // Fix from backend
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: SECOND_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+    });
+
+    it("list conflicts 2", async () => {
+      const { root, applyRemoteOperations, assert } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("x0"); // Register id = 1:0
+      items.push("x1"); // Register id = 1:1
+
+      // Should go to pending
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "y0",
+        },
+      ]);
+
+      assert({
+        items: ["y0", "x0", "x1"],
+      });
+
+      // Should go to pending
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: SECOND_POSITION,
+          data: "y1",
+        },
+      ]);
+
+      assert({
+        items: ["y0", "x0", "y1", "x1"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: THIRD_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["y0", "y1", "x0", "x1"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:1",
+          parentKey: FOURTH_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["y0", "y1", "x0", "x1"],
+      });
+    });
+
+    it.only("list conflicts with offline", async () => {
+      const { root, assert, applyRemoteOperations, machine } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
       );
 
-    const items = root.get("items");
+      const items = root.get("items");
 
-    // Register id = 1:0
-    items.push("0");
+      // Register id = 1:0
+      items.push("0");
 
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: "!",
-        data: "1",
-      },
-    ]);
+      assert({
+        items: ["0"],
+      });
 
-    assert({
-      items: ["1", "0"],
-    });
+      reconnect(machine, 3, [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
+      ]);
 
-    // Fix from backend
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: '"',
-      },
-    ]);
+      assert({
+        items: ["1", "0"],
+      });
 
-    assert({
-      items: ["1", "0"],
-    });
-  });
+      // Fix from backend
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: SECOND_POSITION,
+        },
+      ]);
 
-  it("list conflicts 2", async () => {
-    const { root, applyRemoteOperations, assert } =
-      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
-
-    const items = root.get("items");
-
-    items.push("x0"); // Register id = 1:0
-    items.push("x1"); // Register id = 1:1
-
-    // Should go to pending
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:0",
-        parentId: "0:1",
-        parentKey: FIRST_POSITION,
-        data: "y0",
-      },
-    ]);
-
-    assert({
-      items: ["y0", "x0", "x1"],
-    });
-
-    // Should go to pending
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: SECOND_POSITION,
-        data: "y1",
-      },
-    ]);
-
-    assert({
-      items: ["y0", "x0", "y1", "x1"],
-    });
-
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: THIRD_POSITION,
-      },
-    ]);
-
-    assert({
-      items: ["y0", "y1", "x0", "x1"],
-    });
-
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:1",
-        parentKey: FOURTH_POSITION,
-      },
-    ]);
-
-    assert({
-      items: ["y0", "y1", "x0", "x1"],
+      assert({
+        items: ["1", "0"],
+      });
     });
   });
 
