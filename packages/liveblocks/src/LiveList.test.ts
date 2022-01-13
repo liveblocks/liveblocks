@@ -598,6 +598,54 @@ describe("LiveList", () => {
         items: ["1", "0"],
       });
     });
+
+    it("list conflicts with undo redo and remote change", async () => {
+      const { root, assert, applyRemoteOperations, machine } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const items = root.get("items");
+
+      items.push("0");
+
+      assert({
+        items: ["0"],
+      });
+
+      machine.undo();
+
+      assert({
+        items: [],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:1",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "1",
+        },
+      ]);
+
+      machine.redo();
+
+      assert({
+        items: ["1", "0"],
+      });
+    });
   });
 
   describe("subscriptions", () => {

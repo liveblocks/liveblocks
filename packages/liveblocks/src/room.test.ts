@@ -6,6 +6,10 @@ import {
   MockWebSocket,
   serverMessage,
   objectToJson,
+  createSerializedRegister,
+  FIRST_POSITION,
+  prepareIsolatedStorageTest,
+  reconnect,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -762,6 +766,48 @@ describe("room", () => {
 
       assert({
         items: ["A"],
+      });
+    });
+
+    test("disconnect and reconnect with remote changes", async () => {
+      const { assert, machine } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      assert({ items: ["a"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
+        [
+          "2:0",
+          {
+            type: CrdtType.Register,
+            parentId: "2:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items2: ["B"],
       });
     });
   });
