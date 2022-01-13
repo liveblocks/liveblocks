@@ -534,5 +534,10 @@ export type Room = {
 
   internalDevTools: {
     closeWebsocket: () => void;
+    sendCloseEvent: (event: {
+      code: number;
+      wasClean: boolean;
+      reason: any;
+    }) => void;
   };
 };

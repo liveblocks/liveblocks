@@ -298,13 +298,15 @@ export function makeStateMachine(
 
     const [_, parentToChildren] = buildRootAndParentToChildren(items);
 
-    return LiveObject._deserializeChildren(state.root, parentToChildren, {
+    LiveObject._deserializeChildren(state.root, parentToChildren, {
       addItem,
       deleteItem,
       generateId,
       generateOpId,
       dispatch: storageDispatch,
     }) as LiveObject<T>;
+
+    notify({ nodes: new Set([state.root]) });
   }
 
   function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
@@ -1041,12 +1043,14 @@ See v0.13 release notes for more information.
 
     const ops = Array.from(state.offlineOperations.values());
 
-    apply(ops, true);
+    const result = apply(ops, true);
 
     messages.push({
       type: ClientMessageType.UpdateStorage,
       ops: ops,
     });
+
+    notify(result.updates);
 
     effects.send(messages);
   }
@@ -1288,9 +1292,19 @@ See v0.13 release notes for more information.
     state.pausedHistory = [];
   }
 
-  function simulateCloseWebsocket() {
+  function simulateSocketClose() {
     if (state.socket) {
-      state.socket.close(4800);
+      state.socket.close();
+    }
+  }
+
+  function simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: any;
+  }) {
+    if (state.socket) {
+      onClose(event);
     }
   }
 
@@ -1303,7 +1317,8 @@ See v0.13 release notes for more information.
     heartbeat,
     onNavigatorOnline,
     // Internal dev tools
-    simulateCloseWebsocket,
+    simulateSocketClose,
+    simulateSendCloseEvent,
 
     // onWakeUp,
     onVisibilityChange,
@@ -1466,7 +1481,8 @@ export function createRoom(
       resume: machine.resumeHistory,
     },
     internalDevTools: {
-      closeWebsocket: machine.simulateCloseWebsocket,
+      closeWebsocket: machine.simulateSocketClose,
+      sendCloseEvent: machine.simulateSendCloseEvent,
     },
   };
 
