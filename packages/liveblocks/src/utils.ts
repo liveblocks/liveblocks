@@ -4,6 +4,10 @@ import {
   CrdtType,
   SerializedList,
   SerializedMap,
+  Op,
+  SerializedCrdt,
+  OpType,
+  SerializedObject,
 } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
@@ -99,4 +103,84 @@ export function selfOrRegister(obj: any): AbstractCrdt {
   } else {
     return new LiveRegister(obj);
   }
+}
+
+export function getTreesDiffOperations(
+  currentItems: Map<string, SerializedCrdt>,
+  newItems: Map<string, SerializedCrdt>
+): Op[] {
+  const ops: Op[] = [];
+
+  currentItems.forEach((_, id) => {
+    if (!newItems.get(id)) {
+      // Delete crdt
+      ops.push({
+        type: OpType.DeleteCrdt,
+        id: id,
+      });
+    }
+  });
+
+  newItems.forEach((crdt, id) => {
+    const currentCrdt = currentItems.get(id);
+    if (currentCrdt) {
+      // check diff if LiveObject
+      if (crdt.type === CrdtType.Object) {
+        if (crdt.data !== (currentCrdt as SerializedObject).data) {
+          // ops.push({
+          //   type: OpType.UpdateObject,
+          //   id: id,
+          //   data: crdt.data,
+          // });
+        }
+      }
+      if (crdt.parentKey !== currentCrdt.parentKey) {
+        ops.push({
+          type: OpType.SetParentKey,
+          id: id,
+          parentKey: crdt.parentKey!,
+        });
+      }
+    } else {
+      // new Crdt
+      switch (crdt.type) {
+        case CrdtType.Register:
+          ops.push({
+            type: OpType.CreateRegister,
+            id: id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+          });
+          break;
+        case CrdtType.List:
+          ops.push({
+            type: OpType.CreateList,
+            id: id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+          });
+          break;
+        case CrdtType.Object:
+          ops.push({
+            type: OpType.CreateObject,
+            id: id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+            data: crdt.data,
+          });
+          break;
+        case CrdtType.Map:
+          ops.push({
+            type: OpType.CreateMap,
+            id: id,
+            parentId: crdt.parentId,
+            parentKey: crdt.parentKey,
+          });
+          break;
+      }
+    }
+  });
+
+  return ops;
 }

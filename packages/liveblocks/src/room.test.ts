@@ -10,6 +10,7 @@ import {
   FIRST_POSITION,
   prepareIsolatedStorageTest,
   reconnect,
+  SECOND_POSITION,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -769,7 +770,7 @@ describe("room", () => {
       });
     });
 
-    test("disconnect and reconnect with remote changes", async () => {
+    test("disconnect and reconnect with remote changes k", async () => {
       const { assert, machine } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
@@ -794,7 +795,7 @@ describe("room", () => {
         ["0:0", { type: CrdtType.Object, data: {} }],
         ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
         [
-          "2:0",
+          "2:1",
           {
             type: CrdtType.Register,
             parentId: "2:0",
@@ -809,6 +810,77 @@ describe("room", () => {
       assert({
         items2: ["B"],
       });
+    });
+
+    test("disconnect and reconnect with remote changes and subscribe", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      const rootCallback = jest.fn();
+      const rootDeepCallback = jest.fn();
+      const listCallback = jest.fn();
+
+      machine.subscribe(root, rootCallback);
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(root.get("items"), listCallback);
+
+      assert({ items: ["a"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "0:2",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: FIRST_POSITION,
+            data: "a",
+          },
+        ],
+        [
+          "2:0",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: SECOND_POSITION,
+            data: "b",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items: ["a", "b"],
+      });
+
+      root.get("items").push("c");
+
+      assert({
+        items: ["a", "b", "c"],
+      });
+
+      expect(rootCallback).toHaveBeenCalledTimes(0);
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(2);
+
+      expect(listCallback).toHaveBeenCalledTimes(2);
     });
   });
 });

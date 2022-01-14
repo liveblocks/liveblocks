@@ -20,7 +20,7 @@ import {
   LiveListUpdates,
   LiveMapUpdates,
 } from "./types";
-import { isSameNodeOrChildOf, remove } from "./utils";
+import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -37,6 +37,8 @@ import {
   OpType,
   UpdateStorageMessage,
   ServerMessage,
+  SerializedCrdt,
+  CrdtType,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -291,22 +293,44 @@ export function makeStateMachine(
       return;
     }
 
-    state.items = new Map<string, AbstractCrdt>();
-    state.items.set(state.root._id!, state.root);
+    const currentItems = new Map<string, SerializedCrdt>();
+    // TODO: move code in LiveCrdt, or pass Map<string, AbstractCrdt> to getTreesDiffOperations
+    state.items.forEach((liveCrdt, id) => {
+      if (liveCrdt instanceof LiveObject) {
+        currentItems.set(id, {
+          type: CrdtType.Object,
+          parentId: liveCrdt._parent?._id,
+          parentKey: liveCrdt._parentKey,
+          data: liveCrdt.toObject(),
+        });
+      } else if (liveCrdt instanceof LiveMap) {
+        currentItems.set(id, {
+          type: CrdtType.Map,
+          parentId: liveCrdt._parent?._id!,
+          parentKey: liveCrdt._parentKey!,
+        });
+      } else if (liveCrdt instanceof LiveList) {
+        currentItems.set(id, {
+          type: CrdtType.List,
+          parentId: liveCrdt._parent?._id!,
+          parentKey: liveCrdt._parentKey!,
+        });
+      } else if (liveCrdt instanceof LiveRegister) {
+        currentItems.set(id, {
+          type: CrdtType.Register,
+          parentId: liveCrdt._parent?._id!,
+          parentKey: liveCrdt._parentKey!,
+          data: liveCrdt.data,
+        });
+      }
+    });
 
-    state.root._detachChildren();
+    // Get operations that represent the diff between 2 states.
+    const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const [_, parentToChildren] = buildRootAndParentToChildren(items);
+    const result = apply(ops, false);
 
-    LiveObject._deserializeChildren(state.root, parentToChildren, {
-      addItem,
-      deleteItem,
-      generateId,
-      generateOpId,
-      dispatch: storageDispatch,
-    }) as LiveObject<T>;
-
-    notify({ nodes: new Set([state.root]) });
+    notify(result.updates);
   }
 
   function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
