@@ -124,14 +124,16 @@ export function getTreesDiffOperations(
   newItems.forEach((crdt, id) => {
     const currentCrdt = currentItems.get(id);
     if (currentCrdt) {
-      // check diff if LiveObject
       if (crdt.type === CrdtType.Object) {
-        if (crdt.data !== (currentCrdt as SerializedObject).data) {
-          // ops.push({
-          //   type: OpType.UpdateObject,
-          //   id: id,
-          //   data: crdt.data,
-          // });
+        if (
+          JSON.stringify(crdt.data) !==
+          JSON.stringify((currentCrdt as SerializedObject).data)
+        ) {
+          ops.push({
+            type: OpType.UpdateObject,
+            id: id,
+            data: crdt.data,
+          });
         }
       }
       if (crdt.parentKey !== currentCrdt.parentKey) {
