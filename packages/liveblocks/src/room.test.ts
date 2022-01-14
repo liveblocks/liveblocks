@@ -770,7 +770,7 @@ describe("room", () => {
       });
     });
 
-    test("disconnect and reconnect with remote changes k", async () => {
+    test("disconnect and reconnect with remote changes", async () => {
       const { assert, machine } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>(
