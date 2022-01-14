@@ -294,35 +294,8 @@ export function makeStateMachine(
     }
 
     const currentItems = new Map<string, SerializedCrdt>();
-    // TODO: move code in LiveCrdt, or pass Map<string, AbstractCrdt> to getTreesDiffOperations
     state.items.forEach((liveCrdt, id) => {
-      if (liveCrdt instanceof LiveObject) {
-        currentItems.set(id, {
-          type: CrdtType.Object,
-          parentId: liveCrdt._parent?._id,
-          parentKey: liveCrdt._parentKey,
-          data: liveCrdt.toObject(),
-        });
-      } else if (liveCrdt instanceof LiveMap) {
-        currentItems.set(id, {
-          type: CrdtType.Map,
-          parentId: liveCrdt._parent?._id!,
-          parentKey: liveCrdt._parentKey!,
-        });
-      } else if (liveCrdt instanceof LiveList) {
-        currentItems.set(id, {
-          type: CrdtType.List,
-          parentId: liveCrdt._parent?._id!,
-          parentKey: liveCrdt._parentKey!,
-        });
-      } else if (liveCrdt instanceof LiveRegister) {
-        currentItems.set(id, {
-          type: CrdtType.Register,
-          parentId: liveCrdt._parent?._id!,
-          parentKey: liveCrdt._parentKey!,
-          data: liveCrdt.data,
-        });
-      }
+      currentItems.set(id, liveCrdt._toSerializedCrdt());
     });
 
     // Get operations that represent the diff between 2 states.

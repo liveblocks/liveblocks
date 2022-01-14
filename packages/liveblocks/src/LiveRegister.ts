@@ -1,5 +1,11 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
-import { SerializedCrdtWithId, CrdtType, Op, OpType } from "./live";
+import {
+  SerializedCrdtWithId,
+  CrdtType,
+  Op,
+  OpType,
+  SerializedCrdt,
+} from "./live";
 
 /**
  * INTERNAL
@@ -55,6 +61,18 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
         data: this.data,
       },
     ];
+  }
+
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.Register,
+      parentId: this._parent?._id!,
+      parentKey: this._parentKey!,
+      data: this.data,
+    };
   }
 
   _attachChild(

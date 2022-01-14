@@ -6,6 +6,8 @@ import {
   Op,
   CreateListOp,
   OpType,
+  SerializedCrdt,
+  CrdtType,
 } from "./live";
 import { makePosition, compare } from "./position";
 
@@ -192,6 +194,17 @@ export class LiveList<T> extends AbstractCrdt {
    */
   _apply(op: Op, isLocal: boolean) {
     return super._apply(op, isLocal);
+  }
+
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.List,
+      parentId: this._parent?._id!,
+      parentKey: this._parentKey!,
+    };
   }
 
   /**

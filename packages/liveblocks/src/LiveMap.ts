@@ -11,6 +11,7 @@ import {
   OpType,
   SerializedCrdtWithId,
   CrdtType,
+  SerializedCrdt,
 } from "./live";
 
 /**
@@ -174,6 +175,17 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     child._detach();
+  }
+
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.Map,
+      parentId: this._parent?._id!,
+      parentKey: this._parentKey!,
+    };
   }
 
   /**
