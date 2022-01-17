@@ -2,10 +2,15 @@ import { LiveObject } from "./LiveObject";
 import {
   prepareStorageTest,
   createSerializedObject,
-  objectToJson,
   prepareIsolatedStorageTest,
+  reconnect,
 } from "../test/utils";
-import { OpType } from "./live";
+import {
+  CrdtType,
+  OpType,
+  SerializedCrdtWithId,
+  WebsocketCloseCodes,
+} from "./live";
 
 describe("LiveObject", () => {
   it("update non existing property", async () => {
@@ -591,6 +596,125 @@ describe("LiveObject", () => {
           node: root.get("child").get("subchild"),
         },
       ]);
+    });
+  });
+
+  describe("reconnect with remote changes and subscribe", async () => {
+    test("LiveObject updated", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
+
+      const rootDeepCallback = jest.fn();
+      const liveObjectCallback = jest.fn();
+
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(root.get("obj"), liveObjectCallback);
+
+      assert({ obj: { a: 1 } });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.Object,
+            data: { a: 2 },
+            parentId: "0:0",
+            parentKey: "obj",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        obj: { a: 2 },
+      });
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("obj") },
+      ]);
+
+      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
+    });
+
+    test("LiveObject updated nested", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
+
+      const rootDeepCallback = jest.fn();
+      const liveObjectCallback = jest.fn();
+
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(root.get("obj"), liveObjectCallback);
+
+      assert({ obj: { a: 1 } });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.Object,
+            data: { a: 1 },
+            parentId: "0:0",
+            parentKey: "obj",
+          },
+        ],
+        [
+          "0:2",
+          {
+            type: CrdtType.Object,
+            data: { b: 1 },
+            parentId: "0:1",
+            parentKey: "subObj",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        obj: { a: 1, subObj: { b: 1 } },
+      });
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("obj") },
+      ]);
+
+      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
     });
   });
 });
