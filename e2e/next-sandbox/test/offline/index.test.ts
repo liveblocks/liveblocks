@@ -13,7 +13,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move"]);
+  return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
 }
 
 const TEST_URL = "http://localhost:3007/offline";

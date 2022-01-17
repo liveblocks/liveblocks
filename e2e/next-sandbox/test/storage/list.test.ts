@@ -12,7 +12,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move"]);
+  return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -107,7 +107,7 @@ describe("Storage - LiveList", () => {
     await assertItems([firstPage, secondPage], []);
   });
 
-  it("fuzzy", async () => {
+  it.only("fuzzy", async () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
