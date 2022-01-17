@@ -70,4 +70,44 @@ describe("Storage - Offline - LiveList", () => {
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
   });
+
+  it("fuzzy", async () => {
+    await firstPage.click("#clear");
+    await secondPage.click("#clear");
+    await delay(1000);
+
+    await assertItems([firstPage, secondPage], []);
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      firstPage.click("#push");
+      secondPage.click("#push");
+      await delay(50);
+    }
+
+    await delay(1000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#closeWebsocket");
+    await delay(50);
+
+    for (let i = 0; i < 100; i++) {
+      // no await to create randomness
+      firstPage.click(pickRandomAction());
+      secondPage.click(pickRandomAction());
+      await delay(50);
+    }
+
+    await delay(1000);
+
+    await firstPage.click("#sendCloseEvent");
+
+    await delay(5000);
+
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
 });
