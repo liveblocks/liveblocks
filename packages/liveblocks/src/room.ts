@@ -20,7 +20,7 @@ import {
   LiveListUpdates,
   LiveMapUpdates,
 } from "./types";
-import { isSameNodeOrChildOf, remove } from "./utils";
+import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -37,6 +37,8 @@ import {
   OpType,
   UpdateStorageMessage,
   ServerMessage,
+  SerializedCrdt,
+  CrdtType,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -291,22 +293,17 @@ export function makeStateMachine(
       return;
     }
 
-    state.items = new Map<string, AbstractCrdt>();
-    state.items.set(state.root._id!, state.root);
+    const currentItems = new Map<string, SerializedCrdt>();
+    state.items.forEach((liveCrdt, id) => {
+      currentItems.set(id, liveCrdt._toSerializedCrdt());
+    });
 
-    state.root._detachChildren();
+    // Get operations that represent the diff between 2 states.
+    const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const [_, parentToChildren] = buildRootAndParentToChildren(items);
+    const result = apply(ops, false);
 
-    LiveObject._deserializeChildren(state.root, parentToChildren, {
-      addItem,
-      deleteItem,
-      generateId,
-      generateOpId,
-      dispatch: storageDispatch,
-    }) as LiveObject<T>;
-
-    notify({ nodes: new Set([state.root]) });
+    notify(result.updates);
   }
 
   function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {

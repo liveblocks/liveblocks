@@ -6,6 +6,7 @@ import {
   DeleteObjectKeyOp,
   Op,
   OpType,
+  SerializedCrdt,
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
@@ -218,6 +219,18 @@ export class LiveObject<
     return super._apply(op, isLocal);
   }
 
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.Object,
+      parentId: this._parent?._id,
+      parentKey: this._parentKey,
+      data: this.toObject(),
+    };
+  }
+
   #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];
@@ -239,11 +252,6 @@ export class LiveObject<
         reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
       }
     }
-
-    // NEED?
-    // if (op.opId == null) {
-    //   op.opId = this._doc!.generateOpId();
-    // }
 
     for (const key in op.data as Partial<T>) {
       if (isLocal) {

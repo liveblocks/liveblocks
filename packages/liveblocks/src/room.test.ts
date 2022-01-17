@@ -10,6 +10,7 @@ import {
   FIRST_POSITION,
   prepareIsolatedStorageTest,
   reconnect,
+  SECOND_POSITION,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -794,7 +795,7 @@ describe("room", () => {
         ["0:0", { type: CrdtType.Object, data: {} }],
         ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
         [
-          "2:0",
+          "2:1",
           {
             type: CrdtType.Register,
             parentId: "2:0",

@@ -1,4 +1,4 @@
-import { Op, OpType } from "./live";
+import { Op, OpType, SerializedCrdt } from "./live";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: AbstractCrdt }
@@ -126,4 +126,9 @@ export abstract class AbstractCrdt {
    * INTERNAL
    */
   abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+
+  /**
+   * INTERNAL
+   */
+  abstract _toSerializedCrdt(): SerializedCrdt;
 }
