@@ -531,13 +531,4 @@ export type Room = {
    * });
    */
   batch: (fn: () => void) => void;
-
-  internalDevTools: {
-    closeWebsocket: () => void;
-    sendCloseEvent: (event: {
-      code: number;
-      wasClean: boolean;
-      reason: any;
-    }) => void;
-  };
 };

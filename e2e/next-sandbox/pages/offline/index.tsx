@@ -1,3 +1,4 @@
+import { Room } from "@liveblocks/client";
 import {
   RoomProvider,
   useList,
@@ -7,6 +8,17 @@ import {
   useRoom,
 } from "@liveblocks/react";
 import React, { useState } from "react";
+
+type RoomWithDevTools = Room & {
+  internalDevTools: {
+    closeWebsocket: () => void;
+    sendCloseEvent: (event: {
+      code: number;
+      wasClean: boolean;
+      reason: any;
+    }) => void;
+  };
+};
 
 export default function Home() {
   return (
@@ -30,7 +42,7 @@ function generateRandomNumber(max: number, ignore?: number) {
 
 function Sandbox() {
   const [status, setStatus] = useState("connected");
-  const room = useRoom();
+  const room = useRoom() as RoomWithDevTools;
   const list = useList("items");
   const me = useSelf();
   const undo = useUndo();
