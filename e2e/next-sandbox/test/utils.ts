@@ -48,3 +48,13 @@ export async function assertItems(
 export function pickRandomItem<T>(array: T[]) {
   return array[randomNumber(array.length)];
 }
+
+export function pickNumberOfUnderRedo() {
+  const undoRedoProb = randomNumber(100);
+
+  if (undoRedoProb > 75) {
+    return randomNumber(5);
+  }
+
+  return 0;
+}

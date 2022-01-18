@@ -9,10 +9,15 @@ import {
   assertJsonContentAreEquals,
   assertItems,
   pickRandomItem,
+  pickNumberOfUnderRedo,
 } from "../utils";
 
-function pickRandomAction() {
+function pickRandomActionWithUndoRedo() {
   return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
+}
+
+function pickRandomAction() {
+  return pickRandomItem(["#push", "#delete", "#move"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -107,7 +112,7 @@ describe("Storage - LiveList", () => {
     await assertItems([firstPage, secondPage], []);
   });
 
-  it.only("fuzzy", async () => {
+  it("fuzzy", async () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -125,8 +130,54 @@ describe("Storage - LiveList", () => {
 
     for (let i = 0; i < 100; i++) {
       // no await to create randomness
-      firstPage.click(pickRandomAction());
-      secondPage.click(pickRandomAction());
+      firstPage.click(pickRandomActionWithUndoRedo());
+      secondPage.click(pickRandomActionWithUndoRedo());
+      await delay(50);
+    }
+
+    await delay(5000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
+
+  it("fuzzy with full undo/redo", async () => {
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      firstPage.click("#push");
+      secondPage.click("#push");
+      await delay(50);
+    }
+
+    await delay(5000);
+
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    const pages = [firstPage, secondPage];
+    for (let i = 0; i < 100; i++) {
+      // no await to create randomness
+
+      pages.forEach((page) => {
+        const nbofUndoRedo = pickNumberOfUnderRedo();
+
+        if (nbofUndoRedo > 0) {
+          for (let y = 0; y < nbofUndoRedo; y++) {
+            page.click("#undo");
+          }
+          for (let y = 0; y < nbofUndoRedo; y++) {
+            page.click("#redo");
+          }
+        } else {
+          page.click(pickRandomAction());
+        }
+      });
+
       await delay(50);
     }
 
