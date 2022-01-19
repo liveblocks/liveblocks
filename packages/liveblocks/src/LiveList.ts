@@ -89,6 +89,10 @@ export class LiveList<T> extends AbstractCrdt {
     return ops;
   }
 
+  _indexOfPosition(position: string): number {
+    return this.#items.findIndex((item) => item[1] === position);
+  }
+
   /**
    * INTERNAL
    */
