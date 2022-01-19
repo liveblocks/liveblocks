@@ -1,3 +1,5 @@
+import { AbstractCrdt } from "../src/AbstractCrdt";
+import { liveObjectToJson, patchImmutableObject } from "../src/immutable";
 import {
   ClientMessage,
   ClientMessageType,
@@ -218,6 +220,71 @@ export async function prepareStorageTest<T>(
           ops,
         })
       ),
+  };
+}
+
+export async function prepareStorageImmutableTest<T>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0
+) {
+  let state: T = {} as T;
+  let refState = {};
+
+  const { machine: refMachine, storage: refStorage } =
+    await prepareRoomWithStorage<T>(items, -1);
+
+  const { machine, storage } = await prepareRoomWithStorage<T>(
+    items,
+    actor,
+    (messages: ClientMessage[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMessageType.UpdateStorage) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+        }
+      }
+    }
+  );
+
+  state = liveObjectToJson(storage.root);
+  refState = liveObjectToJson(refStorage.root);
+
+  const root = refStorage.root;
+  refMachine.subscribe(
+    root as AbstractCrdt,
+    (updates) => {
+      refState = patchImmutableObject(refState, updates);
+    },
+    { isDeep: true }
+  );
+
+  function assert(data: any) {
+    const json = objectToJson(storage.root);
+    expect(json).toEqual(data);
+    expect(objectToJson(refStorage.root)).toEqual(data);
+    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
+
+    expect(state).toEqual(refState);
+    expect(state).toEqual(data);
+  }
+
+  return {
+    storage,
+    refStorage,
+    assert,
+    subscribe: machine.subscribe,
+    refSubscribe: refMachine.subscribe,
+    state,
   };
 }
 
