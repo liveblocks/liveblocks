@@ -10,24 +10,25 @@ import {
 } from "@liveblocks/client";
 
 export interface LiveblocksState<TPresence = any> {
-  enter: (room: string) => void;
-  leave: (room: string) => void;
-  others: Array<User<TPresence>>;
-  me: User<TPresence> | null;
-  isStorageLoading: boolean;
-  history: {
-    undo: () => void;
-    redo: () => void;
-    pause: () => void;
-    resume: () => void;
+  readonly liveblocks: {
+    readonly enter: (room: string) => void;
+    readonly leave: (room: string) => void;
+    readonly others: Array<User<TPresence>>;
+    readonly isStorageLoading: boolean;
+    readonly history: {
+      undo: () => void;
+      redo: () => void;
+      pause: () => void;
+      resume: () => void;
+    };
+    readonly connection:
+      | "closed"
+      | "authenticating"
+      | "unavailable"
+      | "failed"
+      | "open"
+      | "connecting";
   };
-  connection:
-    | "closed"
-    | "authenticating"
-    | "unavailable"
-    | "failed"
-    | "open"
-    | "connecting";
 }
 
 export type Mapping<T> = Partial<
@@ -40,7 +41,7 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<T>,
+    GetState<T & LiveblocksState>,
     StoreApi<T> & { getRoom: () => Room }
   >,
   options: { client: Client; mapping: Mapping<T>; presenceMapping?: Mapping<T> }
@@ -152,17 +153,19 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
 
     return {
       ...store,
-      enter,
-      leave,
-      others: [],
-      me: null,
-      connection: "closed",
-      isStorageLoading: false,
-      history: {
-        undo: () => room?.history.undo(),
-        redo: () => room?.history.redo(),
-        pause: () => room?.history.pause(),
-        resume: () => room?.history.resume(),
+      liveblocks: {
+        enter,
+        leave,
+        others: [],
+        me: null,
+        connection: "closed",
+        isStorageLoading: false,
+        history: {
+          undo: () => room?.history.undo(),
+          redo: () => room?.history.redo(),
+          pause: () => room?.history.pause(),
+          resume: () => room?.history.resume(),
+        },
       },
     };
   };

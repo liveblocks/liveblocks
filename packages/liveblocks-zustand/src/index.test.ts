@@ -2,7 +2,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
 import { Mapping, middleware } from ".";
-import create from "zustand/vanilla";
+import create, { GetState, SetState, StoreApi } from "zustand";
 import { StateCreator } from "zustand";
 import {
   CrdtType,
@@ -131,7 +131,7 @@ async function prepare<T extends Object>(
 ) {
   const { client, store } = prepareClientAndStore<T>(stateCreator);
 
-  store.getState().enter(room);
+  store.getState().liveblocks.enter(room);
 
   const socket = await waitForSocketToBeConnected();
 
@@ -147,6 +147,32 @@ async function prepare<T extends Object>(
   return { client, store };
 }
 
+// Use dtslint to validate typings?
+test("typing", () => {
+  const client = createClient({ authEndpoint: "/api/auth" });
+
+  const useStore = create(
+    middleware<BasicStore>(
+      (set, get, api) => ({
+        value: 0,
+        setValue: (newValue: number) => {
+          // Liveblocks state should be available here
+          const { others, connection, enter, leave, isStorageLoading } =
+            get().liveblocks;
+
+          // Should fail because liveblocks is readonly
+          // get().liveblocks = {};
+
+          // Should fail because all properties
+
+          return set({ value: get().value });
+        },
+      }),
+      { client, mapping: {}, presenceMapping: {} }
+    )
+  );
+});
+
 describe("middleware", () => {
   test("init middleware", () => {
     const { client, store } = prepareClientAndStore<BasicStore>((set) => ({
@@ -154,16 +180,15 @@ describe("middleware", () => {
       setValue: (newValue: number) => set({ value: newValue }),
     }));
 
-    const { others, value, me } = store.getState();
+    const { liveblocks, value } = store.getState();
 
-    expect(others).toEqual([]);
+    expect(liveblocks.others).toEqual([]);
     expect(value).toBe(0);
-    expect(me).toBe(null);
   });
 
   test("enter room should set the connection to open", async () => {
     const { client, store } = await prepare<BasicStore>(
-      (set) => ({
+      (set, get, api) => ({
         value: 0,
         setValue: (newValue: number) => set({ value: newValue }),
       }),
@@ -171,17 +196,17 @@ describe("middleware", () => {
       [obj("root", {})]
     );
 
-    expect(store.getState().connection).toBe("open");
+    expect(store.getState().liveblocks.connection).toBe("open");
 
     expect(true).toBe(true);
   });
 });
 
-export function wait(delay: number) {
+function wait(delay: number) {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
-export async function waitFor(predicate: () => boolean): Promise<void> {
+async function waitFor(predicate: () => boolean): Promise<void> {
   const result = predicate();
   if (result) {
     return;
@@ -199,7 +224,7 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
   throw new Error("TIMEOUT");
 }
 
-export function obj(
+function obj(
   id: string,
   data: Record<string, any>,
   parentId?: string,
@@ -216,7 +241,7 @@ export function obj(
   ];
 }
 
-export function list(
+function list(
   id: string,
   parentId: string,
   parentKey: string
@@ -231,7 +256,7 @@ export function list(
   ];
 }
 
-export function map(
+function map(
   id: string,
   parentId: string,
   parentKey: string
@@ -246,7 +271,7 @@ export function map(
   ];
 }
 
-export function createSerializedRegister(
+function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
