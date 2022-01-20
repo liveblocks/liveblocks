@@ -2,7 +2,9 @@ import { LiveList } from ".";
 import {
   createSerializedList,
   createSerializedObject,
+  createSerializedRegister,
   prepareStorageImmutableTest,
+  FIRST_POSITION,
 } from "../test/utils";
 import { patchLiveObjectKey, patchImmutableObject } from "./immutable";
 import { LiveObject } from "./LiveObject";
@@ -45,10 +47,37 @@ describe("patchLiveObjectKey", () => {
 });
 
 describe("immutable tests with ref machine", () => {
-  test("should sync LiveObject", async () => {
-    const { storage, state, assert } = await prepareStorageImmutableTest<{
-      syncObj: { a: number };
-    }>(
+  test("create object/LiveObject", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncObj: { a: number };
+      },
+      { syncObj: { a: number } }
+    >([createSerializedObject("0:0", {})], 1);
+
+    expect(state).toEqual({});
+
+    const { oldState, newState } = applyStateChanges(state, () => {
+      state.syncObj = { a: 1 };
+    });
+
+    patchLiveObjectKey(
+      storage.root,
+      "syncObj",
+      oldState["syncObj"],
+      newState["syncObj"]
+    );
+
+    assert({ syncObj: { a: 1 } }, 2, 1);
+  });
+
+  test("update object/LiveObject", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncObj: { a: number };
+      },
+      { syncObj: { a: number } }
+    >(
       [
         createSerializedObject("0:0", {}),
         createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -62,20 +91,55 @@ describe("immutable tests with ref machine", () => {
       state.syncObj.a = 1;
     });
 
-    patchLiveObjectKey<{ syncObj: { a: number } }>(
+    patchLiveObjectKey(
       storage.root,
       "syncObj",
       oldState["syncObj"],
       newState["syncObj"]
     );
 
-    assert({ syncObj: { a: 1 } });
+    assert({ syncObj: { a: 1 } }, 2, 1);
   });
 
-  test("should sync LiveList", async () => {
-    const { storage, state, assert } = await prepareStorageImmutableTest<{
-      syncList: LiveList<string>;
-    }>(
+  test("add nested object/LiveObject", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncObj: { a: any };
+      },
+      {
+        syncObj: { a: any };
+      }
+    >(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+      ],
+      1
+    );
+
+    expect(state).toEqual({ syncObj: { a: 0 } });
+
+    const { oldState, newState } = applyStateChanges(state, () => {
+      state.syncObj.a = { subA: "ok" };
+    });
+
+    patchLiveObjectKey(
+      storage.root,
+      "syncObj",
+      oldState["syncObj"],
+      newState["syncObj"]
+    );
+
+    assert({ syncObj: { a: { subA: "ok" } } }, 3, 1);
+  });
+
+  test("add item to array/LiveList", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncList: LiveList<string>;
+      },
+      { syncList: string[] }
+    >(
       [
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "syncList"),
@@ -87,14 +151,43 @@ describe("immutable tests with ref machine", () => {
       state.syncList.push("a");
     });
 
-    patchLiveObjectKey<{ syncList: LiveList<string> }>(
+    patchLiveObjectKey(
       storage.root,
       "syncList",
       oldState["syncList"],
       newState["syncList"]
     );
 
-    assert({ syncList: ["a"] });
+    assert({ syncList: ["a"] }, 3, 1);
+  });
+
+  test("insert item to beginning of array/LiveList", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncList: LiveList<string>;
+      },
+      { syncList: string[] }
+    >(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "syncList"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+      ],
+      1
+    );
+
+    const { oldState, newState } = applyStateChanges(state, () => {
+      state.syncList.unshift("b");
+    });
+
+    patchLiveObjectKey(
+      storage.root,
+      "syncList",
+      oldState["syncList"],
+      newState["syncList"]
+    );
+
+    assert({ syncList: ["b", "a"] }, 4, 1);
   });
 });
 

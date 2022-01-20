@@ -223,12 +223,14 @@ export async function prepareStorageTest<T>(
   };
 }
 
-export async function prepareStorageImmutableTest<T>(
+export async function prepareStorageImmutableTest<T, StateType>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
-  let state: T = {} as T;
-  let refState = {};
+  let state: StateType = {} as any;
+  let refState: StateType = {} as any;
+
+  let refTotalUpdatedNodes = 0;
 
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
@@ -263,19 +265,23 @@ export async function prepareStorageImmutableTest<T>(
   refMachine.subscribe(
     root as AbstractCrdt,
     (updates) => {
+      refTotalUpdatedNodes += updates.length;
       refState = patchImmutableObject(refState, updates);
     },
     { isDeep: true }
   );
 
-  function assert(data: any) {
+  function assert(data: any, itemsCount: number, updatedNodesCount: number) {
     const json = objectToJson(storage.root);
     expect(json).toEqual(data);
     expect(objectToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
+    expect(machine.getItemsCount()).toBe(itemsCount);
 
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
+
+    expect(refTotalUpdatedNodes).toEqual(updatedNodesCount);
   }
 
   return {
