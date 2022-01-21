@@ -684,7 +684,9 @@ See v0.13 release notes for more information.
   }
 
   function authenticationFailure(error: Error) {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Call to authentication endpoint failed", error);
+    }
     updateConnection({ state: "unavailable" });
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
@@ -878,17 +880,23 @@ See v0.13 release notes for more information.
 
       const error = new LiveblocksError(event.reason, event.code);
       for (const listener of state.listeners.error) {
-        console.error(
-          `Liveblocks WebSocket connection closed. Reason: ${error.message} (code: ${error.code})`
-        );
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code})`
+          );
+        }
         listener(error);
       }
     } else if (event.wasClean === false) {
-      updateConnection({ state: "unavailable" });
       state.numberOfRetry++;
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(
-        getRetryDelay()
-      );
+      const delay = getRetryDelay();
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
+        );
+      }
+      updateConnection({ state: "unavailable" });
+      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
     } else {
       updateConnection({ state: "closed" });
     }
