@@ -90,6 +90,10 @@ export interface Others<TPresence extends Presence = Presence> {
    */
   readonly count: number;
   /**
+   * Returns a new Iterator object that contains the users.
+   */
+  [Symbol.iterator](): IterableIterator<User<TPresence>>;
+  /**
    * Returns the array of connected users in room.
    */
   toArray(): User<TPresence>[];
