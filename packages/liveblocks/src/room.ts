@@ -19,6 +19,7 @@ import {
   LiveObjectUpdates,
   LiveListUpdates,
   LiveMapUpdates,
+  BroadcastOptions,
 } from "./types";
 import { isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
@@ -1055,8 +1056,13 @@ See v0.13 release notes for more information.
     return state.others as Others<T>;
   }
 
-  function broadcastEvent(event: any) {
-    if (state.socket == null) {
+  function broadcastEvent(
+    event: any,
+    options: BroadcastOptions = {
+      shouldQueueEventIfNotReady: false,
+    }
+  ) {
+    if (state.socket == null && options.shouldQueueEventIfNotReady == false) {
       return;
     }
 

@@ -7,6 +7,7 @@ import {
   Room,
   User,
   LiveList,
+  BroadcastOptions,
 } from "@liveblocks/client";
 import * as React from "react";
 
@@ -221,8 +222,11 @@ export function useBroadcastEvent() {
   const room = useRoom();
 
   return React.useCallback(
-    (event: any) => {
-      room.broadcastEvent(event);
+    (
+      event: any,
+      options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
+    ) => {
+      room.broadcastEvent(event, options);
     },
     [room]
   );
