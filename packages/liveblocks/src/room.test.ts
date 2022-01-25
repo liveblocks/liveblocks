@@ -173,6 +173,31 @@ describe("room", () => {
     expect(state.buffer.presence).toEqual({ x: 0, y: 0 });
   });
 
+  test("others should be iterable", () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const machine = makeStateMachine(state, defaultContext, effects);
+
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.UpdatePresence,
+        data: { x: 2 },
+        actor: 1,
+      })
+    );
+
+    const users = [];
+    for (const user of machine.selectors.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([{ connectionId: 1, presence: { x: 2 } }]);
+  });
+
   test("should clear users when socket close", () => {
     const effects = mockEffects();
     const state = defaultState({});

@@ -74,6 +74,9 @@ function makeOthers<T extends Presence>(presenceMap: {
     get count() {
       return array.length;
     },
+    [Symbol.iterator]() {
+      return array[Symbol.iterator]();
+    },
     map(callback) {
       return array.map(callback);
     },
