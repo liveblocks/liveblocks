@@ -5,10 +5,17 @@ import {
   mockEffects,
   MockWebSocket,
   serverMessage,
+  objectToJson,
+  createSerializedRegister,
+  FIRST_POSITION,
+  prepareIsolatedStorageTest,
+  reconnect,
+  SECOND_POSITION,
 } from "../test/utils";
 import {
   ClientMessageType,
   CrdtType,
+  SerializedCrdtWithId,
   ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
@@ -802,6 +809,113 @@ describe("room", () => {
         event: {
           type: "MY_EVENT",
         },
+      });
+    });
+  });
+
+  describe("offline", () => {
+    test("disconnect and reconnect with offline changes", async () => {
+      const { storage, assert, machine, refStorage, reconnect } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      items.push("A");
+      assert({
+        items: ["A"],
+      });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      // Operation done offline
+      items.push("B");
+
+      const storageJson = objectToJson(storage.root);
+      expect(storageJson).toEqual({ items: ["A", "B"] });
+      const refStorageJson = objectToJson(refStorage.root);
+      expect(refStorageJson).toEqual({ items: ["A"] });
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "1:0",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: "!",
+            data: "A",
+          },
+        ],
+      ];
+
+      await reconnect(2, newInitStorage);
+
+      assert({
+        items: ["A", "B"],
+      });
+
+      machine.undo();
+
+      assert({
+        items: ["A"],
+      });
+    });
+
+    test("disconnect and reconnect with remote changes", async () => {
+      const { assert, machine } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      assert({ items: ["a"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
+        [
+          "2:1",
+          {
+            type: CrdtType.Register,
+            parentId: "2:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items2: ["B"],
       });
     });
   });

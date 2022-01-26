@@ -6,6 +6,8 @@ import {
   Op,
   CreateListOp,
   OpType,
+  SerializedCrdt,
+  CrdtType,
 } from "./live";
 import { makePosition, compare } from "./position";
 
@@ -61,7 +63,7 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId?: string, parentKey?: string): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -75,6 +77,7 @@ export class LiveList<T> extends AbstractCrdt {
     const ops = [];
     const op: CreateListOp = {
       id: this._id,
+      opId: doc?.generateOpId(),
       type: OpType.CreateList,
       parentId,
       parentKey,
@@ -83,7 +86,7 @@ export class LiveList<T> extends AbstractCrdt {
     ops.push(op);
 
     for (const [value, key] of this.#items) {
-      ops.push(...value._serialize(this._id, key));
+      ops.push(...value._serialize(this._id, key, doc));
     }
 
     return ops;
@@ -114,7 +117,12 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: string, child: AbstractCrdt): ApplyResult {
+  _attachChild(
+    id: string,
+    key: string,
+    child: AbstractCrdt,
+    isLocal: boolean
+  ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -124,14 +132,27 @@ export class LiveList<T> extends AbstractCrdt {
 
     const index = this.#items.findIndex((entry) => entry[1] === key);
 
-    // Assign a temporary position until we get the fix from the backend
+    let newKey = key;
+
+    // If there is a conflict
     if (index !== -1) {
-      this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+      if (isLocal) {
+        // If change is local => assign a temporary position to newly attached child
+        let before = this.#items[index] ? this.#items[index][1] : undefined;
+        let after = this.#items[index + 1]
+          ? this.#items[index + 1][1]
+          : undefined;
+
+        newKey = makePosition(before, after);
+        child._setParentLink(this, newKey);
+      } else {
+        // If change is remote => assign a temporary position to existing child until we get the fix from the backend
+        this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+      }
     }
 
-    this.#items.push([child, key]);
+    this.#items.push([child, newKey]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-
     return { reverse: [{ type: OpType.DeleteCrdt, id }], modified: this };
   }
 
@@ -171,8 +192,19 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _apply(op: Op) {
-    return super._apply(op);
+  _apply(op: Op, isLocal: boolean) {
+    return super._apply(op, isLocal);
+  }
+
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.List,
+      parentId: this._parent?._id!,
+      parentKey: this._parentKey!,
+    };
   }
 
   /**
@@ -218,7 +250,7 @@ export class LiveList<T> extends AbstractCrdt {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
       this._doc.dispatch(
-        value._serialize(this._id, position),
+        value._serialize(this._id, position, this._doc),
         [{ type: OpType.DeleteCrdt, id }],
         [this]
       );
@@ -278,6 +310,7 @@ export class LiveList<T> extends AbstractCrdt {
           {
             type: OpType.SetParentKey,
             id: item[0]._id!,
+            opId: this._doc.generateOpId(),
             parentKey: position,
           },
         ],
@@ -317,6 +350,7 @@ export class LiveList<T> extends AbstractCrdt {
           [
             {
               id: childRecordId,
+              opId: this._doc.generateOpId(),
               type: OpType.DeleteCrdt,
             },
           ],

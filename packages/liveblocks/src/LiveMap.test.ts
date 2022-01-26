@@ -4,10 +4,13 @@ import {
   createSerializedMap,
   createSerializedRegister,
   createSerializedList,
+  prepareIsolatedStorageTest,
+  reconnect,
 } from "../test/utils";
 import { LiveMap } from "./LiveMap";
 import { LiveList } from "./LiveList";
 import { LiveObject } from "./LiveObject";
+import { CrdtType, SerializedCrdtWithId, WebsocketCloseCodes } from "./live";
 
 describe("LiveMap", () => {
   describe("not attached", () => {
@@ -537,6 +540,80 @@ describe("LiveMap", () => {
       expect(callback).toHaveBeenCalledWith([
         { type: "LiveObject", node: mapElement },
       ]);
+    });
+  });
+
+  describe("reconnect with remote changes and subscribe", async () => {
+    test("Register added to map", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", "a"),
+        ],
+        1
+      );
+
+      const rootDeepCallback = jest.fn();
+      const mapCallback = jest.fn();
+
+      const listItems = root.get("map");
+
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(listItems, mapCallback);
+
+      assert({
+        map: [["first", "a"]],
+      });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.Map, parentId: "0:0", parentKey: "map" }],
+        [
+          "0:2",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: "first",
+            data: "a",
+          },
+        ],
+        [
+          "2:0",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: "second",
+            data: "b",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        map: [
+          ["first", "a"],
+          ["second", "b"],
+        ],
+      });
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveMap", node: listItems },
+      ]);
+
+      expect(mapCallback).toHaveBeenCalledTimes(1);
     });
   });
 });
