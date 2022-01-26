@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "module": "ES2020",
+    "target": "ES2015",
+    "moduleResolution": "node",
+    "lib": ["ES2015"],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "types": [],
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "paths": { "@liveblocks/zustand": [".."] }
+  }
+}

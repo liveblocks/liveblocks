@@ -2,6 +2,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
+import { LiveRegister } from "./LiveRegister";
 import { StorageUpdate } from "./types";
 
 export function liveObjectToJson(liveObject: LiveObject<any>) {
@@ -37,6 +38,8 @@ function liveNodeToJson(value: any): any {
     return liveListToJson(value);
   } else if (value instanceof LiveMap) {
     return liveMapToJson(value);
+  } else if (value instanceof LiveRegister) {
+    return value.data;
   }
 
   return value;

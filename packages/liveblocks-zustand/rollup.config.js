@@ -25,7 +25,7 @@ function getEsbuild(target) {
   return esbuild({
     minify: false,
     target,
-    tsconfig: path.resolve("./tsconfig.json"),
+    tsconfig: path.resolve("./tsconfig.build.json"),
   });
 }
 
@@ -39,8 +39,8 @@ function createDeclarationConfig(input, output) {
     plugins: [
       typescript({
         declaration: true,
-        emitDeclarationOnly: true,
         outDir: output,
+        tsconfig: "./tsconfig.build.json",
       }),
     ],
   };

@@ -5,8 +5,9 @@
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "lib": ["ES2019", "dom", "esnext"]
   },
-  "include": ["src/**/*", "tests/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "file": ["src/index.ts", "src/index.test.ts"],
+  "exclude": ["node_modules"]
 }
