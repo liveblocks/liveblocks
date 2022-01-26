@@ -1,6 +1,6 @@
 import { LiveList } from "./LiveList";
 import {
-  assertStorage,
+  reconnect,
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
@@ -14,7 +14,12 @@ import {
 } from "../test/utils";
 import { LiveObject } from "./LiveObject";
 import { LiveMap } from "./LiveMap";
-import { OpType } from "./live";
+import {
+  CrdtType,
+  OpType,
+  SerializedCrdtWithId,
+  WebsocketCloseCodes,
+} from "./live";
 
 describe("LiveList", () => {
   describe("not attached", () => {
@@ -42,7 +47,7 @@ describe("LiveList", () => {
 
       expect(list.some((item) => item.startsWith("x"))).toEqual(false);
 
-      expect(list.indexOf("quatres")).toEqual(-1);
+      expect(list.indexOf("quatre")).toEqual(-1);
       expect(list.indexOf("third")).toEqual(2);
 
       list.delete(0);
@@ -50,6 +55,9 @@ describe("LiveList", () => {
       expect(list.toArray()).toEqual(["second", "third"]);
       expect(list.get(2)).toBe(undefined);
       expect(list.length).toBe(2);
+
+      list.clear();
+      expect(list.toArray()).toEqual([]);
     });
   });
 
@@ -381,6 +389,49 @@ describe("LiveList", () => {
     assertUndoRedo();
   });
 
+  describe("clear", () => {
+    it("should delete all items", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      assert({
+        items: [],
+      });
+
+      items.push(new LiveObject({ a: 0 }));
+      assert({
+        items: [{ a: 0 }],
+      });
+
+      items.push(new LiveObject({ a: 1 }));
+      assert({
+        items: [{ a: 0 }, { a: 1 }],
+      });
+
+      items.push(new LiveObject({ a: 2 }));
+      assert({
+        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+      });
+
+      items.clear();
+      assert({
+        items: [],
+      });
+
+      assertUndoRedo();
+    });
+  });
+
   it("list conflicts - move", async () => {
     const { root, assert, applyRemoteOperations } =
       await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
@@ -435,116 +486,216 @@ describe("LiveList", () => {
     });
   });
 
-  it("list conflicts", async () => {
-    const { root, assert, applyRemoteOperations } =
-      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
+  describe("conflict", () => {
+    it("list conflicts", async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      // Register id = 1:0
+      items.push("0");
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "1",
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+
+      // Fix from backend
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: SECOND_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+    });
+
+    it("list conflicts 2", async () => {
+      const { root, applyRemoteOperations, assert } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("x0"); // Register id = 1:0
+      items.push("x1"); // Register id = 1:1
+
+      // Should go to pending
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "y0",
+        },
+      ]);
+
+      assert({
+        items: ["y0", "x0", "x1"],
+      });
+
+      // Should go to pending
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: SECOND_POSITION,
+          data: "y1",
+        },
+      ]);
+
+      assert({
+        items: ["y0", "x0", "y1", "x1"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: THIRD_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["y0", "y1", "x0", "x1"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:1",
+          parentKey: FOURTH_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["y0", "y1", "x0", "x1"],
+      });
+    });
+
+    it("list conflicts with offline", async () => {
+      const { root, assert, applyRemoteOperations, machine } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
       );
 
-    const items = root.get("items");
+      const items = root.get("items");
 
-    // Register id = 1:0
-    items.push("0");
+      // Register id = 1:0
+      items.push("0");
 
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: "!",
-        data: "1",
-      },
-    ]);
+      assert({
+        items: ["0"],
+      });
 
-    assert({
-      items: ["1", "0"],
+      reconnect(machine, 3, [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+
+      // Fix from backend
+      applyRemoteOperations([
+        {
+          type: OpType.SetParentKey,
+          id: "1:0",
+          parentKey: SECOND_POSITION,
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
     });
 
-    // Fix from backend
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: '"',
-      },
-    ]);
+    it("list conflicts with undo redo and remote change", async () => {
+      const { root, assert, applyRemoteOperations, machine } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
-    assert({
-      items: ["1", "0"],
-    });
-  });
-
-  it("list conflicts 2", async () => {
-    const { root, applyRemoteOperations, assert } =
-      await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
       );
 
-    const items = root.get("items");
+      const items = root.get("items");
 
-    items.push("x0"); // Register id = 1:0
-    items.push("x1"); // Register id = 1:1
+      items.push("0");
 
-    // Should go to pending
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:0",
-        parentId: "0:1",
-        parentKey: FIRST_POSITION,
-        data: "y0",
-      },
-    ]);
+      assert({
+        items: ["0"],
+      });
 
-    assert({
-      items: ["y0", "x0", "x1"],
-    });
+      machine.undo();
 
-    // Should go to pending
-    applyRemoteOperations([
-      {
-        type: OpType.CreateRegister,
-        id: "2:1",
-        parentId: "0:1",
-        parentKey: SECOND_POSITION,
-        data: "y1",
-      },
-    ]);
+      assert({
+        items: [],
+      });
 
-    assert({
-      items: ["y0", "x0", "y1", "x1"],
-    });
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:1",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "1",
+        },
+      ]);
 
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:0",
-        parentKey: THIRD_POSITION,
-      },
-    ]);
+      machine.redo();
 
-    assert({
-      items: ["y0", "y1", "x0", "x1"],
-    });
-
-    applyRemoteOperations([
-      {
-        type: OpType.SetParentKey,
-        id: "1:1",
-        parentKey: FOURTH_POSITION,
-      },
-    ]);
-
-    assert({
-      items: ["y0", "y1", "x0", "x1"],
+      assert({
+        items: ["1", "0"],
+      });
     });
   });
 
@@ -678,6 +829,222 @@ describe("LiveList", () => {
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(liveList);
+    });
+  });
+
+  describe("reconnect with remote changes and subscribe", async () => {
+    test("Register added to list", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      const rootCallback = jest.fn();
+      const rootDeepCallback = jest.fn();
+      const listCallback = jest.fn();
+
+      const listItems = root.get("items");
+
+      machine.subscribe(root, rootCallback);
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(listItems, listCallback);
+
+      assert({ items: ["a"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "0:2",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: FIRST_POSITION,
+            data: "a",
+          },
+        ],
+        [
+          "2:0",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: SECOND_POSITION,
+            data: "b",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items: ["a", "b"],
+      });
+
+      listItems.push("c");
+
+      assert({
+        items: ["a", "b", "c"],
+      });
+
+      expect(rootCallback).toHaveBeenCalledTimes(0);
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(2);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveList", node: listItems },
+      ]);
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveList", node: listItems },
+      ]);
+      expect(listCallback).toHaveBeenCalledTimes(2);
+    });
+
+    test("Register moved in list", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        ],
+        1
+      );
+
+      const rootCallback = jest.fn();
+      const rootDeepCallback = jest.fn();
+      const listCallback = jest.fn();
+
+      const listItems = root.get("items");
+
+      machine.subscribe(root, rootCallback);
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(listItems, listCallback);
+
+      assert({ items: ["a", "b"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "0:2",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: SECOND_POSITION,
+            data: "a",
+          },
+        ],
+        [
+          "0:3",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: FIRST_POSITION,
+            data: "b",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items: ["b", "a"],
+      });
+
+      expect(rootCallback).toHaveBeenCalledTimes(0);
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveList", node: listItems },
+      ]);
+
+      expect(listCallback).toHaveBeenCalledTimes(1);
+    });
+
+    test("Register deleted from list", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        ],
+        1
+      );
+
+      const rootCallback = jest.fn();
+      const rootDeepCallback = jest.fn();
+      const listCallback = jest.fn();
+
+      const listItems = root.get("items");
+
+      machine.subscribe(root, rootCallback);
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(listItems, listCallback);
+
+      assert({ items: ["a", "b"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "0:2",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: FIRST_POSITION,
+            data: "a",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items: ["a"],
+      });
+
+      expect(rootCallback).toHaveBeenCalledTimes(0);
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveList", node: listItems },
+      ]);
+
+      expect(listCallback).toHaveBeenCalledTimes(1);
     });
   });
 });

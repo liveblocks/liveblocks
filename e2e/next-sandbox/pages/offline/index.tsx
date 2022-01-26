@@ -1,15 +1,28 @@
+import { Room } from "@liveblocks/client";
 import {
   RoomProvider,
   useList,
   useRedo,
   useSelf,
   useUndo,
+  useRoom,
 } from "@liveblocks/react";
-import React from "react";
+import React, { useState } from "react";
+
+type RoomWithDevTools = Room & {
+  internalDevTools: {
+    closeWebsocket: () => void;
+    sendCloseEvent: (event: {
+      code: number;
+      wasClean: boolean;
+      reason: any;
+    }) => void;
+  };
+};
 
 export default function Home() {
   return (
-    <RoomProvider id="e2e-storage-list">
+    <RoomProvider id="e2e-offline-list">
       <Sandbox />
     </RoomProvider>
   );
@@ -28,18 +41,57 @@ function generateRandomNumber(max: number, ignore?: number) {
 }
 
 function Sandbox() {
-  const undo = useUndo();
-  const redo = useRedo();
+  const [status, setStatus] = useState("connected");
+  const room = useRoom() as RoomWithDevTools;
   const list = useList("items");
   const me = useSelf();
+  const undo = useUndo();
+  const redo = useRedo();
 
   if (list == null || me == null) {
     return <div>Loading</div>;
   }
+  room.getStorage();
+
+  function onConnectionChange(status: any) {
+    if (status === "open") {
+      setStatus("connected");
+    }
+  }
+
+  room.subscribe("connection", onConnectionChange);
 
   return (
     <div>
-      <h1>Storage list sandbox</h1>
+      <h1>Storage sandbox- Offline</h1>
+      <h2>
+        Websocket status:{" "}
+        <span style={{ color: status === "offline" ? "red" : "black" }}>
+          {status}
+        </span>
+      </h2>
+      <button
+        id="closeWebsocket"
+        onClick={() => {
+          room.internalDevTools.closeWebsocket();
+          setStatus("offline");
+        }}
+      >
+        Close socket
+      </button>
+      <button
+        id="sendCloseEvent"
+        onClick={() => {
+          room.internalDevTools.sendCloseEvent({
+            reason: "Fake connection error",
+            code: 4900,
+            wasClean: false,
+          });
+        }}
+      >
+        Send close event
+      </button>
+
       <button
         id="push"
         onClick={() => {

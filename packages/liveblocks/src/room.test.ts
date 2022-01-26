@@ -5,10 +5,17 @@ import {
   mockEffects,
   MockWebSocket,
   serverMessage,
+  objectToJson,
+  createSerializedRegister,
+  FIRST_POSITION,
+  prepareIsolatedStorageTest,
+  reconnect,
+  SECOND_POSITION,
 } from "../test/utils";
 import {
   ClientMessageType,
   CrdtType,
+  SerializedCrdtWithId,
   ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
@@ -173,6 +180,31 @@ describe("room", () => {
     expect(state.buffer.presence).toEqual({ x: 0, y: 0 });
   });
 
+  test("others should be iterable", () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const machine = makeStateMachine(state, defaultContext, effects);
+
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.UpdatePresence,
+        data: { x: 2 },
+        actor: 1,
+      })
+    );
+
+    const users = [];
+    for (const user of machine.selectors.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([{ connectionId: 1, presence: { x: 2 } }]);
+  });
+
   test("should clear users when socket close", () => {
     const effects = mockEffects();
     const state = defaultState({});
@@ -202,6 +234,88 @@ describe("room", () => {
     );
 
     expect(machine.selectors.getOthers().toArray()).toEqual([]);
+  });
+
+  describe("broadcast", () => {
+    test("should send event to other users", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+
+      const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
+
+      withDateNow(now, () => machine.onOpen());
+
+      expect(effects.send).nthCalledWith(1, [
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+      ]);
+
+      withDateNow(now + 1000, () => machine.broadcastEvent({ type: "EVENT" }));
+
+      expect(effects.send).nthCalledWith(2, [
+        {
+          type: ClientMessageType.ClientEvent,
+          event: { type: "EVENT" },
+        },
+      ]);
+    });
+
+    test("should not send event to other users if not connected", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.broadcastEvent({ type: "EVENT" });
+
+      expect(effects.send).not.toHaveBeenCalled();
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      expect(effects.send).toBeCalledTimes(1);
+      expect(effects.send).toHaveBeenCalledWith([
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+      ]);
+    });
+
+    test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.broadcastEvent(
+        { type: "EVENT" },
+        { shouldQueueEventIfNotReady: true }
+      );
+
+      expect(effects.send).not.toHaveBeenCalled();
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      expect(effects.send).toBeCalledTimes(1);
+      expect(effects.send).toHaveBeenCalledWith([
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+        {
+          type: ClientMessageType.ClientEvent,
+          event: { type: "EVENT" },
+        },
+      ]);
+    });
   });
 
   test("storage should be initialized properly", async () => {
@@ -470,6 +584,24 @@ describe("room", () => {
       expect(storageRootSubscriber).toHaveBeenCalledWith(storage.root);
     });
 
+    test("batch without operations should not add an item to the undo stack", async () => {
+      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
+        await prepareStorageTest<{
+          a: number;
+        }>([createSerializedObject("0:0", { a: 1 })], 1);
+
+      storage.root.set("a", 2);
+
+      // Batch without operations on storage or presence
+      batch(() => {});
+
+      assert({ a: 2 });
+
+      undo();
+
+      assert({ a: 1 });
+    });
+
     test("batch storage with changes from server", async () => {
       const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
         await prepareStorageTest<{
@@ -677,6 +809,113 @@ describe("room", () => {
         event: {
           type: "MY_EVENT",
         },
+      });
+    });
+  });
+
+  describe("offline", () => {
+    test("disconnect and reconnect with offline changes", async () => {
+      const { storage, assert, machine, refStorage, reconnect } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      items.push("A");
+      assert({
+        items: ["A"],
+      });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      // Operation done offline
+      items.push("B");
+
+      const storageJson = objectToJson(storage.root);
+      expect(storageJson).toEqual({ items: ["A", "B"] });
+      const refStorageJson = objectToJson(refStorage.root);
+      expect(refStorageJson).toEqual({ items: ["A"] });
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        [
+          "1:0",
+          {
+            type: CrdtType.Register,
+            parentId: "0:1",
+            parentKey: "!",
+            data: "A",
+          },
+        ],
+      ];
+
+      await reconnect(2, newInitStorage);
+
+      assert({
+        items: ["A", "B"],
+      });
+
+      machine.undo();
+
+      assert({
+        items: ["A"],
+      });
+    });
+
+    test("disconnect and reconnect with remote changes", async () => {
+      const { assert, machine } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      assert({ items: ["a"] });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
+        [
+          "2:1",
+          {
+            type: CrdtType.Register,
+            parentId: "2:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        items2: ["B"],
       });
     });
   });

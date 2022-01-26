@@ -2,10 +2,15 @@ import { LiveObject } from "./LiveObject";
 import {
   prepareStorageTest,
   createSerializedObject,
-  objectToJson,
   prepareIsolatedStorageTest,
+  reconnect,
 } from "../test/utils";
-import { OpType } from "./live";
+import {
+  CrdtType,
+  OpType,
+  SerializedCrdtWithId,
+  WebsocketCloseCodes,
+} from "./live";
 
 describe("LiveObject", () => {
   it("update non existing property", async () => {
@@ -125,6 +130,7 @@ describe("LiveObject", () => {
       {
         type: OpType.CreateObject,
         id: "1:0",
+        opId: "1:1",
         data: { a: 0 },
         parentId: "0:0",
         parentKey: "child",
@@ -364,12 +370,107 @@ describe("LiveObject", () => {
     assert({ a: 1 });
   });
 
+  describe("delete", () => {
+    it("detached", () => {
+      const liveObject = new LiveObject({ a: 0 });
+      liveObject.delete("a");
+      expect(liveObject.get("a")).toBe(undefined);
+    });
+
+    it("should delete property from the object", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 0 })]);
+      assert({ a: 0 });
+
+      storage.root.delete("a");
+      assert({});
+
+      assertUndoRedo();
+    });
+
+    it("should delete nested crdt", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        child?: LiveObject<{ a: number }>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+      ]);
+
+      assert({ child: { a: 0 } });
+
+      storage.root.delete("child");
+      assert({});
+
+      assertUndoRedo();
+    });
+
+    it("should not notify if property does not exist", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", {})]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      root.delete("a");
+
+      expect(callback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should notify if property has been deleted", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 1 })]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      root.delete("a");
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("applyDeleteObjectKey", () => {
+    it("should not notify if property does not exist", async () => {
+      const { root, subscribe, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{
+          a?: number;
+        }>([createSerializedObject("0:0", {})]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      applyRemoteOperations([
+        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(0);
+    });
+
+    it("should notify if property has been deleted", async () => {
+      const { root, subscribe, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{
+          a?: number;
+        }>([createSerializedObject("0:0", { a: 1 })]);
+
+      const callback = jest.fn();
+      subscribe(root, callback);
+
+      applyRemoteOperations([
+        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, assert, assertUndoRedo, subscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, subscribe } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
 
@@ -495,6 +596,125 @@ describe("LiveObject", () => {
           node: root.get("child").get("subchild"),
         },
       ]);
+    });
+  });
+
+  describe("reconnect with remote changes and subscribe", async () => {
+    test("LiveObject updated", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
+
+      const rootDeepCallback = jest.fn();
+      const liveObjectCallback = jest.fn();
+
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(root.get("obj"), liveObjectCallback);
+
+      assert({ obj: { a: 1 } });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.Object,
+            data: { a: 2 },
+            parentId: "0:0",
+            parentKey: "obj",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        obj: { a: 2 },
+      });
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("obj") },
+      ]);
+
+      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
+    });
+
+    test("LiveObject updated nested", async () => {
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+        ],
+        1
+      );
+
+      const rootDeepCallback = jest.fn();
+      const liveObjectCallback = jest.fn();
+
+      machine.subscribe(root, rootDeepCallback, { isDeep: true });
+      machine.subscribe(root.get("obj"), liveObjectCallback);
+
+      assert({ obj: { a: 1 } });
+
+      machine.onClose(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      const newInitStorage: SerializedCrdtWithId[] = [
+        ["0:0", { type: CrdtType.Object, data: {} }],
+        [
+          "0:1",
+          {
+            type: CrdtType.Object,
+            data: { a: 1 },
+            parentId: "0:0",
+            parentKey: "obj",
+          },
+        ],
+        [
+          "0:2",
+          {
+            type: CrdtType.Object,
+            data: { b: 1 },
+            parentId: "0:1",
+            parentKey: "subObj",
+          },
+        ],
+      ];
+
+      reconnect(machine, 3, newInitStorage);
+
+      assert({
+        obj: { a: 1, subObj: { b: 1 } },
+      });
+
+      expect(rootDeepCallback).toHaveBeenCalledTimes(1);
+
+      expect(rootDeepCallback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root.get("obj") },
+      ]);
+
+      expect(liveObjectCallback).toHaveBeenCalledTimes(1);
     });
   });
 });

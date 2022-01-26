@@ -53,3 +53,8 @@ cd -
 echo "Upgrade vuejs-live-cursors to $1"
 cd examples/vuejs-live-cursors
 npm install @liveblocks/client@$1
+
+cd -
+echo "Upgrade react-multiplayer-drawing-app to $1"
+cd examples/react-multiplayer-drawing-app
+npm install @liveblocks/client@$1 @liveblocks/react@$1

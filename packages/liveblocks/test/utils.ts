@@ -19,6 +19,8 @@ import {
 } from "../src/room";
 import { remove } from "../src/utils";
 
+type Machine = ReturnType<typeof makeStateMachine>;
+
 export function objectToJson(record: LiveObject) {
   const result: any = {};
   const obj = record.toObject();
@@ -110,6 +112,8 @@ export async function prepareIsolatedStorageTest<T>(
 
   return {
     root: storage.root,
+    subscribe: machine.subscribe,
+    machine,
     assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
@@ -135,7 +139,7 @@ export async function prepareStorageTest<T>(
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
 
-  const { machine, storage } = await prepareRoomWithStorage<T>(
+  let { machine, storage } = await prepareRoomWithStorage<T>(
     items,
     actor,
     (messages: ClientMessage[]) => {
@@ -197,7 +201,24 @@ export async function prepareStorageTest<T>(
     }
   }
 
+  async function reconnect(actor: number, newItems: SerializedCrdtWithId[]) {
+    machine.connect();
+    machine.authenticationSuccess(
+      { actor: actor },
+      new MockWebSocket("") as any
+    );
+    machine.onOpen();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: newItems,
+      })
+    );
+  }
+
   return {
+    machine,
     operations,
     storage,
     refStorage,
@@ -218,7 +239,25 @@ export async function prepareStorageTest<T>(
           ops,
         })
       ),
+    reconnect,
   };
+}
+
+export async function reconnect(
+  machine: Machine,
+  actor: number,
+  newItems: SerializedCrdtWithId[]
+) {
+  machine.connect();
+  machine.authenticationSuccess({ actor: actor }, new MockWebSocket("") as any);
+  machine.onOpen();
+
+  machine.onMessage(
+    serverMessage({
+      type: ServerMessageType.InitialStorageState,
+      items: newItems,
+    })
+  );
 }
 
 export function createSerializedObject(

@@ -19,8 +19,9 @@ import {
   LiveObjectUpdates,
   LiveListUpdates,
   LiveMapUpdates,
+  BroadcastOptions,
 } from "./types";
-import { isSameNodeOrChildOf, remove } from "./utils";
+import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -37,6 +38,8 @@ import {
   OpType,
   UpdateStorageMessage,
   ServerMessage,
+  SerializedCrdt,
+  CrdtType,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -74,6 +77,9 @@ function makeOthers<T extends Presence>(presenceMap: {
     get count() {
       return array.length;
     },
+    [Symbol.iterator]() {
+      return array[Symbol.iterator]();
+    },
     map(callback) {
       return array.map(callback);
     },
@@ -94,6 +100,7 @@ type IdFactory = () => string;
 
 export type State = {
   connection: Connection;
+  lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
@@ -146,6 +153,7 @@ export type State = {
       nodes: Set<AbstractCrdt>;
     };
   };
+  offlineOperations: Map<string, Op>;
 };
 
 export type Effects = {
@@ -239,8 +247,16 @@ export function makeStateMachine(
     return genericSubscribe(cb);
   }
 
-  function createRootFromMessage(message: InitialDocumentStateMessage) {
-    state.root = load(message.items);
+  function createOrUpdateRootFromMessage(message: InitialDocumentStateMessage) {
+    if (message.items.length === 0) {
+      throw new Error("Internal error: cannot load storage without items");
+    }
+
+    if (state.root) {
+      updateRoot(message.items);
+    } else {
+      state.root = load(message.items);
+    }
 
     for (const key in state.defaultStorageRoot) {
       if (state.root.get(key) == null) {
@@ -249,11 +265,9 @@ export function makeStateMachine(
     }
   }
 
-  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
-    if (items.length === 0) {
-      throw new Error("Internal error: cannot load storage without items");
-    }
-
+  function buildRootAndParentToChildren(
+    items: SerializedCrdtWithId[]
+  ): [SerializedCrdtWithId, Map<string, SerializedCrdtWithId[]>] {
     const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
     let root = null;
 
@@ -274,6 +288,30 @@ export function makeStateMachine(
     if (root == null) {
       throw new Error("Root can't be null");
     }
+
+    return [root, parentToChildren];
+  }
+
+  function updateRoot<T>(items: SerializedCrdtWithId[]) {
+    if (!state.root) {
+      return;
+    }
+
+    const currentItems = new Map<string, SerializedCrdt>();
+    state.items.forEach((liveCrdt, id) => {
+      currentItems.set(id, liveCrdt._toSerializedCrdt());
+    });
+
+    // Get operations that represent the diff between 2 states.
+    const ops = getTreesDiffOperations(currentItems, new Map(items));
+
+    const result = apply(ops, false);
+
+    notify(result.updates);
+  }
+
+  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+    const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
       addItem,
@@ -381,10 +419,12 @@ export function makeStateMachine(
       state.connection.state === "connecting"
     ) {
       return state.connection.id;
+    } else if (state.lastConnectionId !== null) {
+      return state.lastConnectionId;
     }
 
     throw new Error(
-      "Internal. Tried to get connection id but connection is not open"
+      "Internal. Tried to get connection id but connection was never open"
     );
   }
 
@@ -396,7 +436,10 @@ export function makeStateMachine(
     return `${getConnectionId()}:${state.opClock++}`;
   }
 
-  function apply(item: HistoryItem): {
+  function apply(
+    item: HistoryItem,
+    isLocal: boolean
+  ): {
     reverse: HistoryItem;
     updates: { nodes: Set<AbstractCrdt>; presence: boolean };
   } {
@@ -428,7 +471,11 @@ export function makeStateMachine(
         result.reverse.unshift(reverse as any);
         result.updates.presence = true;
       } else {
-        const applyOpResult = applyOp(op);
+        // Ops applied after undo/redo don't have an opId.
+        if (isLocal && !op.opId) {
+          op.opId = generateOpId();
+        }
+        const applyOpResult = applyOp(op, isLocal);
         if (applyOpResult.modified) {
           result.updates.nodes.add(applyOpResult.modified);
           result.reverse.unshift(...applyOpResult.reverse);
@@ -438,7 +485,11 @@ export function makeStateMachine(
     return result;
   }
 
-  function applyOp(op: Op): ApplyResult {
+  function applyOp(op: Op, isLocal: boolean): ApplyResult {
+    if (op.opId) {
+      state.offlineOperations.delete(op.opId);
+    }
+
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
@@ -449,7 +500,7 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return item._apply(op);
+        return item._apply(op, isLocal);
       }
       case OpType.SetParentKey: {
         const item = state.items.get(op.id);
@@ -480,11 +531,11 @@ export function makeStateMachine(
         if (parent == null || getItem(op.id) != null) {
           return { modified: false };
         }
-
         return parent._attachChild(
           op.id,
           op.parentKey!,
-          new LiveObject(op.data)
+          new LiveObject(op.data),
+          isLocal
         );
       }
       case OpType.CreateList: {
@@ -494,7 +545,12 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return parent._attachChild(op.id, op.parentKey!, new LiveList());
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveList(),
+          isLocal
+        );
       }
       case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId);
@@ -506,7 +562,8 @@ export function makeStateMachine(
         return parent._attachChild(
           op.id,
           op.parentKey!,
-          new LiveRegister(op.data)
+          new LiveRegister(op.data),
+          isLocal
         );
       }
       case OpType.CreateMap: {
@@ -516,7 +573,12 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return parent._attachChild(op.id, op.parentKey!, new LiveMap());
+        return parent._attachChild(
+          op.id,
+          op.parentKey!,
+          new LiveMap(),
+          isLocal
+        );
       }
     }
 
@@ -684,7 +746,9 @@ See v0.13 release notes for more information.
   }
 
   function authenticationFailure(error: Error) {
-    console.error(error);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Call to authentication endpoint failed", error);
+    }
     updateConnection({ state: "unavailable" });
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
@@ -833,12 +897,16 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.InitialStorageState: {
-          createRootFromMessage(subMessage);
+          createOrUpdateRootFromMessage(subMessage);
+          applyAndSendOfflineOps();
           _getInitialStateResolver?.();
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResult = apply((subMessage as UpdateStorageMessage).ops);
+          const applyResult = apply(
+            (subMessage as UpdateStorageMessage).ops,
+            false
+          );
           for (const node of applyResult.updates.nodes) {
             updates.nodes.add(node);
           }
@@ -878,14 +946,23 @@ See v0.13 release notes for more information.
 
       const error = new LiveblocksError(event.reason, event.code);
       for (const listener of state.listeners.error) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code})`
+          );
+        }
         listener(error);
       }
     } else if (event.wasClean === false) {
-      updateConnection({ state: "unavailable" });
       state.numberOfRetry++;
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(
-        getRetryDelay()
-      );
+      const delay = getRetryDelay();
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
+        );
+      }
+      updateConnection({ state: "unavailable" });
+      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
     } else {
       updateConnection({ state: "closed" });
     }
@@ -916,6 +993,11 @@ See v0.13 release notes for more information.
     if (state.connection.state === "connecting") {
       updateConnection({ ...state.connection, state: "open" });
       state.numberOfRetry = 0;
+      state.lastConnectionId = state.connection.id;
+
+      if (state.root) {
+        state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
+      }
       tryFlushing();
     } else {
       // TODO
@@ -961,12 +1043,38 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function tryFlushing() {
-    if (state.socket == null) {
+  function applyAndSendOfflineOps() {
+    if (state.offlineOperations.size === 0) {
       return;
     }
 
-    if (state.socket.readyState !== WebSocket.OPEN) {
+    const messages: ClientMessage[] = [];
+
+    const ops = Array.from(state.offlineOperations.values());
+
+    const result = apply(ops, true);
+
+    messages.push({
+      type: ClientMessageType.UpdateStorage,
+      ops: ops,
+    });
+
+    notify(result.updates);
+
+    effects.send(messages);
+  }
+
+  function tryFlushing() {
+    const storageOps = state.buffer.storageOperations;
+
+    if (storageOps.length > 0) {
+      storageOps.forEach((op) => {
+        state.offlineOperations.set(op.opId!, op);
+      });
+    }
+
+    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
+      state.buffer.storageOperations = [];
       return;
     }
 
@@ -976,6 +1084,7 @@ See v0.13 release notes for more information.
 
     if (elapsedTime > context.throttleDelay) {
       const messages = flushDataToMessages(state);
+
       if (messages.length === 0) {
         return;
       }
@@ -1052,8 +1161,13 @@ See v0.13 release notes for more information.
     return state.others as Others<T>;
   }
 
-  function broadcastEvent(event: any) {
-    if (state.socket == null) {
+  function broadcastEvent(
+    event: any,
+    options: BroadcastOptions = {
+      shouldQueueEventIfNotReady: false,
+    }
+  ) {
+    if (state.socket == null && options.shouldQueueEventIfNotReady == false) {
       return;
     }
 
@@ -1098,7 +1212,6 @@ See v0.13 release notes for more information.
     if (state.isBatching) {
       throw new Error("undo is not allowed during a batch");
     }
-
     const historyItem = state.undoStack.pop();
 
     if (historyItem == null) {
@@ -1106,7 +1219,8 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem);
+    const result = apply(historyItem, true);
+
     notify(result.updates);
     state.redoStack.push(result.reverse);
 
@@ -1130,7 +1244,7 @@ See v0.13 release notes for more information.
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem);
+    const result = apply(historyItem, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
 
@@ -1153,12 +1267,18 @@ See v0.13 release notes for more information.
       callback();
     } finally {
       state.isBatching = false;
-      addToUndoStack(state.batch.reverseOps);
+
+      if (state.batch.reverseOps.length > 0) {
+        addToUndoStack(state.batch.reverseOps);
+      }
 
       // Clear the redo stack because batch is always called from a local operation
       state.redoStack = [];
 
-      dispatch(state.batch.ops);
+      if (state.batch.ops.length > 0) {
+        dispatch(state.batch.ops);
+      }
+
       notify(state.batch.updates);
       state.batch = {
         ops: [],
@@ -1186,6 +1306,22 @@ See v0.13 release notes for more information.
     state.pausedHistory = [];
   }
 
+  function simulateSocketClose() {
+    if (state.socket) {
+      state.socket.close();
+    }
+  }
+
+  function simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: any;
+  }) {
+    if (state.socket) {
+      onClose(event);
+    }
+  }
+
   return {
     // Internal
     onOpen,
@@ -1194,6 +1330,10 @@ See v0.13 release notes for more information.
     authenticationSuccess,
     heartbeat,
     onNavigatorOnline,
+    // Internal dev tools
+    simulateSocketClose,
+    simulateSendCloseEvent,
+
     // onWakeUp,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
@@ -1235,6 +1375,7 @@ export function defaultState(
 ): State {
   return {
     connection: { state: "closed" },
+    lastConnectionId: null,
     socket: null,
     listeners: {
       event: [],
@@ -1281,6 +1422,7 @@ export function defaultState(
       updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
       reverseOps: [] as Op[],
     },
+    offlineOperations: new Map<string, Op>(),
   };
 }
 
@@ -1351,6 +1493,11 @@ export function createRoom(
       redo: machine.redo,
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
+    },
+    // @ts-ignore
+    internalDevTools: {
+      closeWebsocket: machine.simulateSocketClose,
+      sendCloseEvent: machine.simulateSendCloseEvent,
     },
   };
 

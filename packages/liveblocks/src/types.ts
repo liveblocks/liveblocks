@@ -40,6 +40,15 @@ export type LiveListUpdates<TItem = any> = {
   node: LiveList<TItem>;
 };
 
+export type BroadcastOptions = {
+  /**
+   * Whether or not event is queued if the connection is currently closed.
+   *
+   * ❗ We are not sure if we want to support this option in the future so it might be deprecated to be replaced by something else
+   */
+  shouldQueueEventIfNotReady: boolean;
+};
+
 export type StorageUpdate =
   | LiveMapUpdates
   | LiveObjectUpdates
@@ -89,6 +98,10 @@ export interface Others<TPresence extends Presence = Presence> {
    * Number of other users in the room.
    */
   readonly count: number;
+  /**
+   * Returns a new Iterator object that contains the users.
+   */
+  [Symbol.iterator](): IterableIterator<User<TPresence>>;
   /**
    * Returns the array of connected users in room.
    */
@@ -343,25 +356,57 @@ export type Room = {
   };
 
   /**
-   * Room's history contains function that let you undo and redo operation made on by the current client on the presence and storage.
+   * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
   history: {
     /**
      * Undoes the last operation executed by the current client.
      * It does not impact operations made by other clients.
+     *
+     * @example
+     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+     * room.history.undo();
+     * // room.getPresence() equals { selectedId: "xxx" }
      */
     undo: () => void;
     /**
      * Redoes the last operation executed by the current client.
      * It does not impact operations made by other clients.
+     *
+     * @example
+     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+     * room.history.undo();
+     * // room.getPresence() equals { selectedId: "xxx" }
+     * room.history.redo();
+     * // room.getPresence() equals { selectedId: "yyy" }
      */
     redo: () => void;
     /**
      * All future modifications made on the Room will be merged together to create a single history item until resume is called.
+     *
+     * @example
+     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+     * room.history.pause();
+     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+     * room.history.resume();
+     * room.history.undo();
+     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
      */
     pause: () => void;
     /**
      * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
+     *
+     * @example
+     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+     * room.history.pause();
+     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+     * room.history.resume();
+     * room.history.undo();
+     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
      */
     resume: () => void;
   };
@@ -472,8 +517,15 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: any) => void;
+  broadcastEvent: (event: any, options?: BroadcastOptions) => void;
 
+  /**
+   * Get the room's storage asynchronously.
+   * The storage's root is a {@link LiveObject}.
+   *
+   * @example
+   * const { root } = await room.getStorage();
+   */
   getStorage: <TRoot>() => Promise<{
     root: LiveObject<TRoot>;
   }>;
@@ -483,6 +535,13 @@ export type Room = {
    * All the modifications are sent to other clients in a single message.
    * All the subscribers are called only after the batch is over.
    * All the modifications are merged in a single history item (undo/redo).
+   *
+   * @example
+   * const { root } = await room.getStorage();
+   * room.batch(() => {
+   *   root.set("x", 0);
+   *   room.updatePresence({ cursor: { x: 100, y: 100 }});
+   * });
    */
   batch: (fn: () => void) => void;
 };

@@ -6,13 +6,18 @@ import { Page, Browser } from "puppeteer";
 import {
   CONNECT_DELAY,
   delay,
-  getJsonContent,
-  assertItemsAreEquals,
+  assertJsonContentAreEquals,
   assertItems,
+  pickRandomItem,
+  pickNumberOfUnderRedo,
 } from "../utils";
 
-function pickRandomAction(actions = ["#push", "#delete", "#move"]) {
-  return actions[Math.floor(Math.random() * actions.length)];
+function pickRandomActionWithUndoRedo() {
+  return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
+}
+
+function pickRandomAction() {
+  return pickRandomItem(["#push", "#delete", "#move"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -20,7 +25,7 @@ const TEST_URL = "http://localhost:3007/storage/list";
 declare const browserA: Browser;
 declare const browserB: Browser;
 
-describe("Storage/list", () => {
+describe("Storage - LiveList", () => {
   let firstPage: Page, secondPage: Page;
   beforeEach(async () => {
     firstPage = await browserA.newPage();
@@ -43,15 +48,15 @@ describe("Storage/list", () => {
 
     await firstPage.click("#push");
     await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#push");
     await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#push");
     await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
     await delay(1000);
@@ -70,7 +75,7 @@ describe("Storage/list", () => {
 
     await delay(1000);
 
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     for (let i = 0; i < 10; i++) {
       await firstPage.click("#move");
@@ -78,7 +83,7 @@ describe("Storage/list", () => {
     }
 
     await delay(1000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
     await delay(1000);
@@ -90,7 +95,7 @@ describe("Storage/list", () => {
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
 
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
@@ -100,7 +105,7 @@ describe("Storage/list", () => {
     }
 
     await delay(2000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
     await delay(1000);
@@ -121,17 +126,63 @@ describe("Storage/list", () => {
 
     await delay(5000);
 
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     for (let i = 0; i < 100; i++) {
       // no await to create randomness
-      firstPage.click(pickRandomAction());
-      secondPage.click(pickRandomAction());
+      firstPage.click(pickRandomActionWithUndoRedo());
+      secondPage.click(pickRandomActionWithUndoRedo());
       await delay(50);
     }
 
     await delay(5000);
-    await assertItemsAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
+
+  it("fuzzy with full undo/redo", async () => {
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      firstPage.click("#push");
+      secondPage.click("#push");
+      await delay(50);
+    }
+
+    await delay(5000);
+
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    const pages = [firstPage, secondPage];
+    for (let i = 0; i < 100; i++) {
+      // no await to create randomness
+
+      pages.forEach((page) => {
+        const nbofUndoRedo = pickNumberOfUnderRedo();
+
+        if (nbofUndoRedo > 0) {
+          for (let y = 0; y < nbofUndoRedo; y++) {
+            page.click("#undo");
+          }
+          for (let y = 0; y < nbofUndoRedo; y++) {
+            page.click("#redo");
+          }
+        } else {
+          page.click(pickRandomAction());
+        }
+      });
+
+      await delay(50);
+    }
+
+    await delay(5000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
     await delay(1000);
