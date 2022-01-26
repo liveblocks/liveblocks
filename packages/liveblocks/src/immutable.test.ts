@@ -224,6 +224,35 @@ describe("immutable tests with ref machine", () => {
 
     assert({ syncList: ["d", "b", "c", "a"] }, 6, 8);
   });
+
+  test("liveList of LiveObject", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncList: LiveList<LiveObject<{ a: number }>>;
+      },
+      { syncList: any[] }
+    >(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "syncList"),
+        createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+      ],
+      1
+    );
+
+    const { oldState, newState } = applyStateChanges(state, () => {
+      state.syncList[0].a = 2;
+    });
+
+    patchLiveObjectKey(
+      storage.root,
+      "syncList",
+      oldState["syncList"],
+      newState["syncList"]
+    );
+
+    // assert({ syncList: [{ a: 1 }, { a: 2 }] }, 4, 1);
+  });
 });
 
 describe("patchLiveObjectKey", () => {
@@ -231,7 +260,7 @@ describe("patchLiveObjectKey", () => {
     const state = { a: 0 };
 
     const updates: StorageUpdate[] = [
-      { type: "LiveObject", node: new LiveObject({ a: 1 }) },
+      { type: "LiveObject", node: new LiveObject({ a: 1 }), updates: {} },
     ];
 
     const newState = patchImmutableObject(state, updates);

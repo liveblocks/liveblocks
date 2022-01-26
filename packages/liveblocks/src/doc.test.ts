@@ -31,6 +31,7 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: storage.root,
+          updates: { a: { type: "update" } },
         },
       ]);
     });
@@ -60,6 +61,38 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: storage.root,
+          updates: { a: { type: "update" } },
+        },
+      ]);
+    });
+
+    test("remote action with multipe updates on same object", async () => {
+      const { storage, applyRemoteOperations, subscribe } =
+        await prepareStorageTest<{
+          a: number;
+        }>([createSerializedObject("0:0", { a: 0 })], 1);
+
+      const callback = jest.fn();
+
+      const unsubscribe = subscribe(callback);
+
+      applyRemoteOperations([
+        { type: OpType.UpdateObject, data: { a: 1 }, opId: "", id: "0:0" },
+        { type: OpType.UpdateObject, data: { b: 1 }, opId: "", id: "0:0" },
+      ]);
+
+      unsubscribe();
+
+      applyRemoteOperations([
+        { type: OpType.UpdateObject, data: { a: 2 }, opId: "", id: "0:0" },
+      ]);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: storage.root,
+          updates: { a: { type: "update" }, b: { type: "update" } },
         },
       ]);
     });
@@ -94,6 +127,7 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: storage.root,
+          updates: { a: { type: "update" }, b: { type: "update" } },
         },
       ]);
 
@@ -128,10 +162,12 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: storage.root,
+          updates: { a: { type: "update" } },
         },
         {
           type: "LiveObject",
           node: root.get("child"),
+          updates: { b: { type: "update" } },
         },
       ]);
     });
@@ -170,10 +206,12 @@ describe("Storage", () => {
         {
           type: "LiveObject",
           node: storage.root,
+          updates: { a: { type: "update" } },
         },
         {
           type: "LiveObject",
           node: root.get("childObj"),
+          updates: { b: { type: "update" } },
         },
         {
           type: "LiveList",

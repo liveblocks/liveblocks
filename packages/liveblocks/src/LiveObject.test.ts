@@ -542,12 +542,17 @@ describe("LiveObject", () => {
 
       expect(callback).toHaveBeenCalledTimes(2);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root.get("child") },
+        {
+          type: "LiveObject",
+          node: root.get("child"),
+          updates: { a: { type: "update" } },
+        },
       ]);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
           node: root.get("child").get("subchild"),
+          updates: { b: { type: "update" } },
         },
       ]);
     });
@@ -588,12 +593,17 @@ describe("LiveObject", () => {
 
       expect(callback).toHaveBeenCalledTimes(2);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root.get("child") },
+        {
+          type: "LiveObject",
+          node: root.get("child"),
+          updates: { a: { type: "update" } },
+        },
       ]);
       expect(callback).toHaveBeenCalledWith([
         {
           type: "LiveObject",
           node: root.get("child").get("subchild"),
+          updates: { b: { type: "update" } },
         },
       ]);
     });
@@ -648,7 +658,11 @@ describe("LiveObject", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root.get("obj") },
+        {
+          type: "LiveObject",
+          node: root.get("obj"),
+          updates: { a: { type: "update" } },
+        },
       ]);
 
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);
@@ -711,7 +725,7 @@ describe("LiveObject", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root.get("obj") },
+        { type: "LiveObject", node: root.get("obj"), updates: {} },
       ]);
 
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);

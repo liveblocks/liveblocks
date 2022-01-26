@@ -754,7 +754,11 @@ describe("LiveList", () => {
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: listElement },
+        {
+          type: "LiveObject",
+          node: listElement,
+          updates: { a: { type: "update" } },
+        },
       ]);
     });
 

@@ -13,6 +13,7 @@ import {
   CrdtType,
   SerializedCrdt,
 } from "./live";
+import { StorageUpdate } from "./types";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
@@ -150,7 +151,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     child._attach(id, this._doc);
     this.#map.set(key, child);
 
-    return { modified: this, reverse };
+    return { modified: { node: this, type: "LiveMap" }, reverse };
   }
 
   /**
@@ -167,7 +168,9 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _detachChild(child: AbstractCrdt) {
+  _detachChild(child: AbstractCrdt): ApplyResult {
+    const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+
     for (const [key, value] of this.#map) {
       if (value === (child as any)) {
         this.#map.delete(key);
@@ -175,6 +178,21 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     child._detach();
+
+    const storageUpdate: StorageUpdate = {
+      node: this as any,
+      type: "LiveMap",
+      // TODO updates
+    };
+
+    return { modified: storageUpdate, reverse };
+  }
+
+  /**
+   * INTERNAL
+   */
+  _getType(): string {
+    return "LiveMap";
   }
 
   /**
@@ -221,12 +239,16 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     if (this._doc && this._id) {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
+
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id!, { node: this, type: "LiveMap" });
+
       this._doc.dispatch(
         item._serialize(this._id, key, this._doc),
         oldValue
           ? oldValue._serialize(this._id, key)
           : [{ type: OpType.DeleteCrdt, id }],
-        [this]
+        storageUpdates
       );
     }
   }
@@ -261,6 +283,8 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     item._detach();
 
     if (this._doc && item._id) {
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id!, { node: this, type: "LiveMap" });
       this._doc.dispatch(
         [
           {
@@ -270,7 +294,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
           },
         ],
         item._serialize(this._id!, key),
-        [this]
+        storageUpdates
       );
     }
 

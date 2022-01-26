@@ -21,7 +21,12 @@ import {
   LiveMapUpdates,
   BroadcastOptions,
 } from "./types";
-import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
+import {
+  getTreesDiffOperations,
+  isSameNodeOrChildOf,
+  remove,
+  mergeStorageUpdates,
+} from "./utils";
 import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
@@ -150,7 +155,7 @@ export type State = {
     updates: {
       others: [];
       presence: boolean;
-      nodes: Set<AbstractCrdt>;
+      storageUpdates: Map<string, StorageUpdate>;
     };
   };
   offlineOperations: Map<string, Op>;
@@ -347,27 +352,37 @@ export function makeStateMachine(
     }
   }
 
-  function storageDispatch(ops: Op[], reverse: Op[], modified: AbstractCrdt[]) {
+  function storageDispatch(
+    ops: Op[],
+    reverse: Op[],
+    storageUpdates: Map<string, StorageUpdate>
+  ) {
     if (state.isBatching) {
       state.batch.ops.push(...ops);
-      for (const item of modified) {
-        state.batch.updates.nodes.add(item);
-      }
+      storageUpdates.forEach((value, key) => {
+        state.batch.updates.storageUpdates.set(
+          key,
+          mergeStorageUpdates(
+            state.batch.updates.storageUpdates.get(key),
+            value
+          )
+        );
+      });
       state.batch.reverseOps.push(...reverse);
     } else {
       addToUndoStack(reverse);
       state.redoStack = [];
       dispatch(ops);
-      notify({ nodes: new Set(modified) });
+      notify({ storageUpdates: storageUpdates });
     }
   }
 
   function notify({
-    nodes = new Set(),
+    storageUpdates = new Map<string, StorageUpdate>(),
     presence = false,
     others = [],
   }: {
-    nodes?: Set<AbstractCrdt>;
+    storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     others?: OthersEvent[];
   }) {
@@ -387,28 +402,9 @@ export function makeStateMachine(
       }
     }
 
-    if (nodes.size > 0) {
+    if (storageUpdates.size > 0) {
       for (const subscriber of state.listeners.storage) {
-        subscriber(
-          Array.from(nodes).map((m) => {
-            if (m instanceof LiveObject) {
-              return {
-                type: "LiveObject",
-                node: m,
-              } as LiveObjectUpdates;
-            } else if (m instanceof LiveList) {
-              return {
-                type: "LiveList",
-                node: m,
-              } as LiveListUpdates;
-            } else {
-              return {
-                type: "LiveMap",
-                node: m,
-              } as LiveMapUpdates;
-            }
-          })
-        );
+        subscriber(Array.from(storageUpdates.values()));
       }
     }
   }
@@ -441,11 +437,14 @@ export function makeStateMachine(
     isLocal: boolean
   ): {
     reverse: HistoryItem;
-    updates: { nodes: Set<AbstractCrdt>; presence: boolean };
+    updates: { storageUpdates: Map<string, StorageUpdate>; presence: boolean };
   } {
     const result = {
       reverse: [] as HistoryItem,
-      updates: { nodes: new Set<AbstractCrdt>(), presence: false },
+      updates: {
+        storageUpdates: new Map<string, StorageUpdate>(),
+        presence: false,
+      },
     };
     for (const op of item) {
       if (op.type === "presence") {
@@ -477,7 +476,15 @@ export function makeStateMachine(
         }
         const applyOpResult = applyOp(op, isLocal);
         if (applyOpResult.modified) {
-          result.updates.nodes.add(applyOpResult.modified);
+          result.updates.storageUpdates.set(
+            applyOpResult.modified.node._id!,
+            mergeStorageUpdates(
+              result.updates.storageUpdates.get(
+                applyOpResult.modified.node._id!
+              ),
+              applyOpResult.modified
+            )
+          );
           result.reverse.unshift(...applyOpResult.reverse);
         }
       }
@@ -520,7 +527,10 @@ export function makeStateMachine(
                 parentKey: previousKey,
               },
             ],
-            modified: item._parent,
+            modified: {
+              node: item._parent,
+              type: item._parent._getType() as any,
+            },
           };
         }
         return { modified: false };
@@ -863,7 +873,7 @@ See v0.13 release notes for more information.
     }
 
     const updates = {
-      nodes: new Set<AbstractCrdt>(),
+      storageUpdates: new Map<string, StorageUpdate>(),
       others: [] as OthersEvent[],
     };
 
@@ -907,9 +917,13 @@ See v0.13 release notes for more information.
             (subMessage as UpdateStorageMessage).ops,
             false
           );
-          for (const node of applyResult.updates.nodes) {
-            updates.nodes.add(node);
-          }
+          applyResult.updates.storageUpdates.forEach((value, key) => {
+            updates.storageUpdates.set(
+              key,
+              mergeStorageUpdates(updates.storageUpdates.get(key), value)
+            );
+          });
+
           break;
         }
       }
@@ -1285,7 +1299,7 @@ See v0.13 release notes for more information.
         reverseOps: [],
         updates: {
           others: [],
-          nodes: new Set(),
+          storageUpdates: new Map(),
           presence: false,
         },
       };
@@ -1419,7 +1433,11 @@ export function defaultState(
     isBatching: false,
     batch: {
       ops: [] as Op[],
-      updates: { nodes: new Set<AbstractCrdt>(), presence: false, others: [] },
+      updates: {
+        storageUpdates: new Map<string, StorageUpdate>(),
+        presence: false,
+        others: [],
+      },
       reverseOps: [] as Op[],
     },
     offlineOperations: new Map<string, Op>(),

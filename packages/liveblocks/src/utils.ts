@@ -13,6 +13,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { LiveObjectUpdates, StorageUpdate } from "./types";
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -185,4 +186,27 @@ export function getTreesDiffOperations(
   });
 
   return ops;
+}
+
+export function mergeStorageUpdates(
+  first: StorageUpdate | undefined,
+  second: StorageUpdate
+): StorageUpdate {
+  if (!first) {
+    return second;
+  }
+
+  if (second.type === "LiveObject") {
+    const updates = (first as LiveObjectUpdates).updates;
+
+    for (const [key, value] of Object.entries(second.updates)) {
+      updates[key] = value;
+    }
+    return {
+      ...second,
+      updates: updates,
+    };
+  }
+  // TODO LiveList/Map
+  return second;
 }

@@ -10,6 +10,7 @@ import {
   CrdtType,
 } from "./live";
 import { makePosition, compare } from "./position";
+import { StorageUpdate } from "./types";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
@@ -157,18 +158,35 @@ export class LiveList<T> extends AbstractCrdt {
 
     this.#items.push([child, newKey]);
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    return { reverse: [{ type: OpType.DeleteCrdt, id }], modified: this };
+
+    return {
+      reverse: [{ type: OpType.DeleteCrdt, id }],
+      modified: { node: this, type: "LiveList" },
+    };
   }
 
   /**
    * INTERNAL
    */
-  _detachChild(child: AbstractCrdt) {
-    const indexToDelete = this.#items.findIndex((item) => item[0] === child);
-    this.#items.splice(indexToDelete, 1);
+  _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
+      const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+
+      const indexToDelete = this.#items.findIndex((item) => item[0] === child);
+      this.#items.splice(indexToDelete, 1);
+
       child._detach();
+
+      const storageUpdate: StorageUpdate = {
+        node: this as any,
+        type: "LiveList",
+        // TODO updates
+      };
+
+      return { modified: storageUpdate, reverse };
     }
+
+    return { modified: false };
   }
 
   /**
@@ -198,6 +216,13 @@ export class LiveList<T> extends AbstractCrdt {
    */
   _apply(op: Op, isLocal: boolean) {
     return super._apply(op, isLocal);
+  }
+
+  /**
+   * INTERNAL
+   */
+  _getType(): string {
+    return "LiveList";
   }
 
   /**
@@ -253,10 +278,13 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc && this._id) {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
+
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id, { node: this, type: "LiveList" });
       this._doc.dispatch(
         value._serialize(this._id, position, this._doc),
         [{ type: OpType.DeleteCrdt, id }],
-        [this]
+        storageUpdates
       );
     }
   }
@@ -309,6 +337,9 @@ export class LiveList<T> extends AbstractCrdt {
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
     if (this._doc && this._id) {
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id, { node: this, type: "LiveList" });
+
       this._doc.dispatch(
         [
           {
@@ -325,7 +356,7 @@ export class LiveList<T> extends AbstractCrdt {
             parentKey: previousPosition,
           },
         ],
-        [this]
+        storageUpdates
       );
     }
   }
@@ -350,6 +381,9 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc) {
       const childRecordId = item[0]._id;
       if (childRecordId) {
+        const storageUpdates = new Map<string, StorageUpdate>();
+        storageUpdates.set(this._id!, { node: this, type: "LiveList" });
+
         this._doc.dispatch(
           [
             {
@@ -359,7 +393,7 @@ export class LiveList<T> extends AbstractCrdt {
             },
           ],
           item[0]._serialize(this._id!, item[1]),
-          [this]
+          storageUpdates
         );
       }
     }
@@ -380,7 +414,11 @@ export class LiveList<T> extends AbstractCrdt {
       }
 
       this.#items = [];
-      this._doc.dispatch(ops, reverseOps, [this]);
+
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id!, { node: this, type: "LiveList" });
+
+      this._doc.dispatch(ops, reverseOps, storageUpdates);
     } else {
       for (const item of this.#items) {
         item[0]._detach();

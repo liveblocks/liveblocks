@@ -538,7 +538,11 @@ describe("LiveMap", () => {
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: mapElement },
+        {
+          type: "LiveObject",
+          node: mapElement,
+          updates: { a: { type: "update" } },
+        },
       ]);
     });
   });

@@ -84,11 +84,18 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     throw new Error("Method not implemented.");
   }
 
-  _detachChild(crdt: AbstractCrdt): void {
+  _detachChild(crdt: AbstractCrdt): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
+  }
+
+  /**
+   * INTERNAL
+   */
+  _getType(): string {
+    return "LiveRegister";
   }
 }

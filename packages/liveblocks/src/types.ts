@@ -30,9 +30,20 @@ export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
   node: LiveMap<TKey, TValue>;
 };
 
+export type LiveObjectUpdateDelta<T> = Partial<{
+  [Property in keyof T]:
+    | {
+        type: "update";
+      }
+    | {
+        type: "delete";
+      };
+}>;
+
 export type LiveObjectUpdates<TData = any> = {
   type: "LiveObject";
   node: LiveObject<TData>;
+  updates: LiveObjectUpdateDelta<TData>;
 };
 
 export type LiveListUpdates<TItem = any> = {
