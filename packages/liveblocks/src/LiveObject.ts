@@ -6,6 +6,7 @@ import {
   DeleteObjectKeyOp,
   Op,
   OpType,
+  SerializedCrdt,
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
@@ -37,7 +38,7 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _serialize(parentId?: string, parentKey?: string): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -45,6 +46,7 @@ export class LiveObject<
     const ops = [];
     const op: CreateObjectOp = {
       id: this._id,
+      opId: doc?.generateOpId(),
       type: OpType.CreateObject,
       parentId,
       parentKey,
@@ -55,7 +57,7 @@ export class LiveObject<
 
     for (const [key, value] of this.#map) {
       if (value instanceof AbstractCrdt) {
-        ops.push(...value._serialize(this._id, key));
+        ops.push(...value._serialize(this._id, key, doc));
       } else {
         op.data[key] = value;
       }
@@ -81,7 +83,18 @@ export class LiveObject<
     const object = new LiveObject(item.data);
     object._attach(id, doc);
 
-    const children = parentToChildren.get(id);
+    return this._deserializeChildren(object, parentToChildren, doc);
+  }
+
+  /**
+   * INTERNAL
+   */
+  static _deserializeChildren(
+    object: LiveObject,
+    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    doc: Doc
+  ) {
+    const children = parentToChildren.get(object._id!);
 
     if (children == null) {
       return object;
@@ -119,7 +132,12 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: keyof T, child: AbstractCrdt): ApplyResult {
+  _attachChild(
+    id: string,
+    key: keyof T,
+    child: AbstractCrdt,
+    isLocal: boolean
+  ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -168,6 +186,16 @@ export class LiveObject<
   /**
    * INTERNAL
    */
+  _detachChildren() {
+    for (const [key, value] of this.#map) {
+      this.#map.delete(key);
+      value._detach();
+    }
+  }
+
+  /**
+   * INTERNAL
+   */
   _detach() {
     super._detach();
 
@@ -181,17 +209,29 @@ export class LiveObject<
   /**
    * INTERNAL
    */
-  _apply(op: Op): ApplyResult {
+  _apply(op: Op, isLocal: boolean): ApplyResult {
     if (op.type === OpType.UpdateObject) {
-      return this.#applyUpdate(op);
+      return this.#applyUpdate(op, isLocal);
     } else if (op.type === OpType.DeleteObjectKey) {
       return this.#applyDeleteObjectKey(op);
     }
 
-    return super._apply(op);
+    return super._apply(op, isLocal);
   }
 
-  #applyUpdate(op: UpdateObjectOp): ApplyResult {
+  /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.Object,
+      parentId: this._parent?._id,
+      parentKey: this._parentKey,
+      data: this.toObject(),
+    };
+  }
+
+  #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];
     const reverseUpdate: UpdateObjectOp = {
@@ -213,15 +253,9 @@ export class LiveObject<
       }
     }
 
-    let isLocal = false;
-    if (op.opId == null) {
-      isLocal = true;
-      op.opId = this._doc!.generateOpId();
-    }
-
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
-        this.#propToLastUpdate.set(key, op.opId);
+        this.#propToLastUpdate.set(key, op.opId!);
       } else if (this.#propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
@@ -253,6 +287,12 @@ export class LiveObject<
 
   #applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
     const key = op.key;
+
+    // If property does not exist, exit without notifying
+    if (this.#map.has(key) === false) {
+      return { modified: false };
+    }
+
     const oldValue = this.#map.get(key);
 
     let reverse: Op[] = [];
@@ -337,6 +377,56 @@ export class LiveObject<
   }
 
   /**
+   * Deletes a key from the LiveObject
+   * @param key The key of the property to delete
+   */
+  delete(key: keyof T): void {
+    const keyAsString = key as string;
+    const oldValue = this.#map.get(keyAsString);
+
+    if (oldValue === undefined) {
+      return;
+    }
+
+    if (this._doc == null || this._id == null) {
+      if (oldValue instanceof AbstractCrdt) {
+        oldValue._detach();
+      }
+      this.#map.delete(keyAsString);
+      return;
+    }
+
+    let reverse: Op[];
+
+    if (oldValue instanceof AbstractCrdt) {
+      oldValue._detach();
+      reverse = oldValue._serialize(this._id, keyAsString);
+    } else {
+      reverse = [
+        {
+          type: OpType.UpdateObject,
+          data: { [keyAsString]: oldValue },
+          id: this._id,
+        },
+      ];
+    }
+
+    this.#map.delete(keyAsString);
+    this._doc.dispatch(
+      [
+        {
+          type: OpType.DeleteObjectKey,
+          key: keyAsString,
+          id: this._id,
+          opId: this._doc!.generateOpId(),
+        },
+      ],
+      reverse,
+      [this]
+    );
+  }
+
+  /**
    * Adds or updates multiple properties at once with an object.
    * @param overrides The object used to overrides properties
    */
@@ -392,7 +482,7 @@ export class LiveObject<
       if (newValue instanceof AbstractCrdt) {
         newValue._setParentLink(this, key);
         newValue._attach(this._doc.generateId(), this._doc);
-        ops.push(...newValue._serialize(this._id, key));
+        ops.push(...newValue._serialize(this._id, key, this._doc));
       } else {
         updatedProps[key] = newValue;
       }

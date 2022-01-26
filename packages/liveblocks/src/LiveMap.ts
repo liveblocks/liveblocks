@@ -11,6 +11,7 @@ import {
   OpType,
   SerializedCrdtWithId,
   CrdtType,
+  SerializedCrdt,
 } from "./live";
 
 /**
@@ -42,7 +43,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId?: string, parentKey?: string): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -56,6 +57,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     const ops = [];
     const op: CreateMapOp = {
       id: this._id,
+      opId: doc?.generateOpId(),
       type: OpType.CreateMap,
       parentId,
       parentKey,
@@ -64,7 +66,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     ops.push(op);
 
     for (const [key, value] of this.#map) {
-      ops.push(...value._serialize(this._id, key));
+      ops.push(...value._serialize(this._id, key, doc));
     }
 
     return ops;
@@ -125,7 +127,12 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _attachChild(id: string, key: TKey, child: AbstractCrdt): ApplyResult {
+  _attachChild(
+    id: string,
+    key: TKey,
+    child: AbstractCrdt,
+    isLocal: boolean
+  ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -171,6 +178,17 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
+   * INTERNAL
+   */
+  _toSerializedCrdt(): SerializedCrdt {
+    return {
+      type: CrdtType.Map,
+      parentId: this._parent?._id!,
+      parentKey: this._parentKey!,
+    };
+  }
+
+  /**
    * Returns a specified element from the LiveMap.
    * @param key The key of the element to return.
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
@@ -204,7 +222,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
       this._doc.dispatch(
-        item._serialize(this._id, key),
+        item._serialize(this._id, key, this._doc),
         oldValue
           ? oldValue._serialize(this._id, key)
           : [{ type: OpType.DeleteCrdt, id }],
@@ -244,7 +262,13 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     if (this._doc && item._id) {
       this._doc.dispatch(
-        [{ type: OpType.DeleteCrdt, id: item._id }],
+        [
+          {
+            type: OpType.DeleteCrdt,
+            id: item._id,
+            opId: this._doc.generateOpId(),
+          },
+        ],
         item._serialize(this._id!, key),
         [this]
       );

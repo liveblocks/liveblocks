@@ -1,4 +1,4 @@
-import { Op, OpType } from "./live";
+import { Op, OpType, SerializedCrdt } from "./live";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: AbstractCrdt }
@@ -49,12 +49,16 @@ export abstract class AbstractCrdt {
   /**
    * INTERNAL
    */
-  _apply(op: Op): ApplyResult {
+  _apply(op: Op, isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {
           const parent = this._parent;
-          const reverse = this._serialize(this._parent._id!, this._parentKey);
+          const reverse = this._serialize(
+            this._parent._id!,
+            this._parentKey,
+            this.#doc
+          );
           this._parent._detachChild(this);
           return { modified: parent, reverse };
         }
@@ -98,7 +102,8 @@ export abstract class AbstractCrdt {
   abstract _attachChild(
     id: string,
     key: string,
-    crdt: AbstractCrdt
+    crdt: AbstractCrdt,
+    isLocal: boolean
   ): ApplyResult;
 
   /**
@@ -120,5 +125,10 @@ export abstract class AbstractCrdt {
   /**
    * INTERNAL
    */
-  abstract _serialize(parentId: string, parentKey: string): Op[];
+  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+
+  /**
+   * INTERNAL
+   */
+  abstract _toSerializedCrdt(): SerializedCrdt;
 }

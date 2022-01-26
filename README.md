@@ -8,16 +8,16 @@
 
 **At [Liveblocks](https://liveblocks.io), we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
 
+## Packages
+
+- [@liveblocks/client](./packages/liveblocks)
+- [@liveblocks/react](./packages/liveblocks-react)
+- [@liveblocks/node](./packages/liveblocks-node)
+
 ## Examples
 
 - Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 - Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
-
-## Packages
-
-- [@liveblocks/client](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks)
-- [@liveblocks/react](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-react)
-- [@liveblocks/node](https://github.com/liveblocks/liveblocks/tree/main/packages/liveblocks-node)
 
 ## Documentation
 
@@ -35,7 +35,7 @@ For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https:/
 
 ## Community
 
-- [Slack](https://join.slack.com/t/liveblocks-community/shared_invite/zt-qozwnk75-6RB0i1wk1lx470KX0YuZxQ) - To get involved with the Liveblocks community, ask questions and share tips.
+- [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks community, ask questions and share tips.
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
 
 ## License
