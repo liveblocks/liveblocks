@@ -52,6 +52,10 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
   StoreApi<T & LiveblocksState>
 > = (config, { client, mapping, presenceMapping = {} as Mapping<Object> }) => {
   return (set: any, get, api: any) => {
+    const typedSet: (
+      callback: (current: LiveblocksState) => LiveblocksState
+    ) => void = set;
+
     let room: Room | null = null;
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
@@ -95,33 +99,36 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
         return;
       }
 
-      set({ isStorageLoading: true });
+      typedSet((state) => ({
+        liveblocks: { ...state.liveblocks, isStorageLoading: true },
+      }));
 
       room = client.enter(roomId);
 
       unsubscribeCallbacks.push(
         room.subscribe("others", (others) => {
-          set({ others: others.toArray() });
-        })
-      );
-
-      unsubscribeCallbacks.push(
-        room.subscribe("my-presence", () => {
-          set({ me: room!.getSelf() });
+          typedSet((state) => ({
+            liveblocks: { ...state.liveblocks, others: others.toArray() },
+          }));
         })
       );
 
       unsubscribeCallbacks.push(
         room.subscribe("connection", () => {
-          set({ connection: room!.getConnectionState() });
-          set({ me: room!.getSelf() });
+          typedSet((state) => ({
+            liveblocks: {
+              ...state.liveblocks,
+              connection: room!.getConnectionState(),
+            },
+          }));
         })
       );
 
       room
         .getStorage()
         .then(({ root }) => {
-          set(liveObjectToJson(root));
+          const json = liveObjectToJson(root);
+          set(json);
           storageRoot = root;
           unsubscribeCallbacks.push(
             room!.subscribe(
@@ -136,7 +143,9 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
           );
         })
         .finally(() => {
-          set({ isStorageLoading: false });
+          typedSet((state) => ({
+            liveblocks: { ...state.liveblocks, isStorageLoading: false },
+          }));
         });
     }
 

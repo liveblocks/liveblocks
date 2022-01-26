@@ -2,69 +2,13 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
 import { Mapping, middleware } from ".";
-import create, { GetState, SetState, StoreApi } from "zustand";
+import create from "zustand";
 import { StateCreator } from "zustand";
 import {
-  CrdtType,
   SerializedCrdtWithId,
   ServerMessageType,
 } from "@liveblocks/client/lib/cjs/live";
-
-/**
- * https://github.com/Luka967/websocket-close-codes
- */
-enum WebSocketErrorCodes {
-  CLOSE_ABNORMAL = 1006,
-}
-
-function remove<T>(array: T[], item: T) {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] === item) {
-      array.splice(i, 1);
-      break;
-    }
-  }
-}
-
-class MockWebSocket {
-  static instances: MockWebSocket[] = [];
-
-  isMock = true;
-
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
-
-  sentMessages: string[] = [];
-
-  constructor(public url: string) {
-    MockWebSocket.instances.push(this);
-  }
-
-  addEventListener(
-    event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
-    this.callbacks[event].push(callback);
-  }
-
-  removeEventListener(
-    event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
-    // TODO: Fix TS issue
-    remove(this.callbacks[event] as any, callback);
-  }
-
-  send(message: string) {
-    this.sentMessages.push(message);
-  }
-
-  close() {}
-}
+import { MockWebSocket, obj, waitFor } from "../test/utils";
 
 window.WebSocket = MockWebSocket as any;
 
@@ -107,6 +51,11 @@ type BasicStore = {
   setValue: (newValue: number) => void;
 };
 
+const basicStateCreator: StateCreator<BasicStore> = (set) => ({
+  value: 0,
+  setValue: (newValue: number) => set({ value: newValue }),
+});
+
 function prepareClientAndStore<T extends Object>(
   stateCreator: StateCreator<T>,
   mapping: Mapping<T> = {}
@@ -116,7 +65,7 @@ function prepareClientAndStore<T extends Object>(
   const store = create(
     middleware<T, any>(stateCreator, {
       client,
-      mapping: {},
+      mapping,
       presenceMapping: {},
     })
   );
@@ -124,14 +73,20 @@ function prepareClientAndStore<T extends Object>(
   return { client, store };
 }
 
-async function prepare<T extends Object>(
+async function prepareWithStorage<T extends Object>(
   stateCreator: StateCreator<T>,
-  room: string,
-  items: SerializedCrdtWithId[]
+  items: SerializedCrdtWithId[],
+  options?: {
+    room?: string;
+    mapping?: Mapping<T>;
+  }
 ) {
-  const { client, store } = prepareClientAndStore<T>(stateCreator);
+  const { client, store } = prepareClientAndStore<T>(
+    stateCreator,
+    options?.mapping
+  );
 
-  store.getState().liveblocks.enter(room);
+  store.getState().liveblocks.enter(options?.room || "room");
 
   const socket = await waitForSocketToBeConnected();
 
@@ -144,146 +99,70 @@ async function prepare<T extends Object>(
     }),
   } as MessageEvent);
 
+  await waitFor(() => !store.getState().liveblocks.isStorageLoading);
+
   return { client, store };
 }
 
-// Use dtslint to validate typings?
-test("typing", () => {
-  const client = createClient({ authEndpoint: "/api/auth" });
-
-  const useStore = create(
-    middleware<BasicStore>(
-      (set, get, api) => ({
-        value: 0,
-        setValue: (newValue: number) => {
-          // Liveblocks state should be available here
-          const { others, connection, enter, leave, isStorageLoading } =
-            get().liveblocks;
-
-          // Should fail because liveblocks is readonly
-          // get().liveblocks = {};
-
-          // Should fail because all properties
-
-          return set({ value: get().value });
-        },
-      }),
-      { client, mapping: {}, presenceMapping: {} }
-    )
-  );
-});
-
 describe("middleware", () => {
   test("init middleware", () => {
-    const { client, store } = prepareClientAndStore<BasicStore>((set) => ({
+    const { store } = prepareClientAndStore(basicStateCreator);
+
+    const { liveblocks, value } = store.getState();
+
+    // Others should be empty before entering the room
+    expect(liveblocks.others).toEqual([]);
+    expect(value).toBe(0);
+    expect(liveblocks.isStorageLoading).toBe(false);
+  });
+
+  test("storage should be loading while socket is connecting and initial storage message", async () => {
+    const { store } = prepareClientAndStore(basicStateCreator);
+
+    const { liveblocks } = store.getState();
+
+    liveblocks.enter("room");
+
+    expect(store.getState().liveblocks.isStorageLoading).toBe(true);
+
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]!();
+
+    socket.callbacks.message[0]!({
+      data: JSON.stringify({
+        type: ServerMessageType.InitialStorageState,
+        items: [obj("root", {})],
+      }),
+    } as MessageEvent);
+
+    await waitFor(() => !store.getState().liveblocks.isStorageLoading);
+  });
+
+  test("enter room should set the connection to open", async () => {
+    const { store } = prepareClientAndStore<BasicStore>((set) => ({
       value: 0,
       setValue: (newValue: number) => set({ value: newValue }),
     }));
 
-    const { liveblocks, value } = store.getState();
+    const { liveblocks } = store.getState();
 
-    expect(liveblocks.others).toEqual([]);
-    expect(value).toBe(0);
-  });
+    liveblocks.enter("room");
 
-  test("enter room should set the connection to open", async () => {
-    const { client, store } = await prepare<BasicStore>(
-      (set, get, api) => ({
-        value: 0,
-        setValue: (newValue: number) => set({ value: newValue }),
-      }),
-      "room",
-      [obj("root", {})]
-    );
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]!();
 
     expect(store.getState().liveblocks.connection).toBe("open");
+  });
 
-    expect(true).toBe(true);
+  test("storage initialize storage if storage mapping key is true", async () => {
+    const { store } = await prepareWithStorage(
+      basicStateCreator,
+      [obj("root", { value: 1 })],
+      { mapping: { value: true } }
+    );
+
+    expect(store.getState().value).toBe(1);
   });
 });
-
-function wait(delay: number) {
-  return new Promise((resolve) => setTimeout(resolve, delay));
-}
-
-async function waitFor(predicate: () => boolean): Promise<void> {
-  const result = predicate();
-  if (result) {
-    return;
-  }
-
-  const time = new Date().getTime();
-
-  while (new Date().getTime() - time < 2000) {
-    await wait(100);
-    if (predicate()) {
-      return;
-    }
-  }
-
-  throw new Error("TIMEOUT");
-}
-
-function obj(
-  id: string,
-  data: Record<string, any>,
-  parentId?: string,
-  parentKey?: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.Object,
-      data,
-      parentId,
-      parentKey,
-    },
-  ];
-}
-
-function list(
-  id: string,
-  parentId: string,
-  parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.List,
-      parentId,
-      parentKey,
-    },
-  ];
-}
-
-function map(
-  id: string,
-  parentId: string,
-  parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.Map,
-      parentId,
-      parentKey,
-    },
-  ];
-}
-
-function createSerializedRegister(
-  id: string,
-  parentId: string,
-  parentKey: string,
-  data: any
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.Register,
-      parentId,
-      parentKey,
-      data,
-    },
-  ];
-}
