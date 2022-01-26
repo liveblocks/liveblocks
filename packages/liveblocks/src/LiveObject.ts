@@ -338,44 +338,6 @@ export class LiveObject<
     return this.#map.get(key as string);
   }
 
-  delete<TKey extends keyof T>(key: TKey) {
-    if (this._doc == null || this._id == null) {
-      const oldValue = this.#map.get(key as string);
-
-      this.#map.delete(key as string);
-
-      if (oldValue instanceof AbstractCrdt) {
-        oldValue._detach();
-      }
-
-      return;
-    }
-
-    const ops: Op[] = [];
-    const reverseOps: Op[] = [];
-
-    const oldValue = this.#map.get(key as string);
-
-    this.#map.delete(key as string);
-
-    if (oldValue instanceof AbstractCrdt) {
-      oldValue._detach();
-    }
-
-    ops.push({
-      type: OpType.DeleteObjectKey,
-      id: this._id,
-      key: key as string,
-    });
-    reverseOps.push({
-      type: OpType.UpdateObject,
-      id: this._id,
-      data: { [key]: oldValue },
-    });
-
-    this._doc.dispatch(ops, reverseOps, [this]);
-  }
-
   /**
    * Deletes a key from the LiveObject
    * @param key The key of the property to delete
