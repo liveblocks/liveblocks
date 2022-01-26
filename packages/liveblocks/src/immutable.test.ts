@@ -5,6 +5,9 @@ import {
   createSerializedRegister,
   prepareStorageImmutableTest,
   FIRST_POSITION,
+  SECOND_POSITION,
+  THIRD_POSITION,
+  FOURTH_POSITION,
 } from "../test/utils";
 import { patchLiveObjectKey, patchImmutableObject } from "./immutable";
 import { LiveObject } from "./LiveObject";
@@ -188,6 +191,38 @@ describe("immutable tests with ref machine", () => {
     );
 
     assert({ syncList: ["b", "a"] }, 4, 1);
+  });
+
+  test("swap items in array/LiveList", async () => {
+    const { storage, state, assert } = await prepareStorageImmutableTest<
+      {
+        syncList: LiveList<string>;
+      },
+      { syncList: string[] }
+    >(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "syncList"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+        createSerializedRegister("0:5", "0:1", FOURTH_POSITION, "d"),
+      ],
+      1
+    );
+
+    const { oldState, newState } = applyStateChanges(state, () => {
+      state.syncList = ["d", "b", "c", "a"];
+    });
+
+    patchLiveObjectKey(
+      storage.root,
+      "syncList",
+      oldState["syncList"],
+      newState["syncList"]
+    );
+
+    assert({ syncList: ["d", "b", "c", "a"] }, 6, 8);
   });
 });
 

@@ -230,7 +230,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
   let state: StateType = {} as any;
   let refState: StateType = {} as any;
 
-  let refTotalUpdatedNodes = 0;
+  let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
@@ -241,6 +241,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     (messages: ClientMessage[]) => {
       for (const message of messages) {
         if (message.type === ClientMessageType.UpdateStorage) {
+          totalStorageOps += message.ops.length;
           refMachine.onMessage(
             serverMessage({
               type: ServerMessageType.UpdateStorage,
@@ -265,13 +266,12 @@ export async function prepareStorageImmutableTest<T, StateType>(
   refMachine.subscribe(
     root as AbstractCrdt,
     (updates) => {
-      refTotalUpdatedNodes += updates.length;
       refState = patchImmutableObject(refState, updates);
     },
     { isDeep: true }
   );
 
-  function assert(data: any, itemsCount: number, updatedNodesCount: number) {
+  function assert(data: any, itemsCount: number, storageOpsCount: number) {
     const json = objectToJson(storage.root);
     expect(json).toEqual(data);
     expect(objectToJson(refStorage.root)).toEqual(data);
@@ -281,7 +281,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
 
-    expect(refTotalUpdatedNodes).toEqual(updatedNodesCount);
+    expect(totalStorageOps).toEqual(storageOpsCount);
   }
 
   return {
