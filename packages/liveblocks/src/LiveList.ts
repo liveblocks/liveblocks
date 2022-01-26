@@ -361,6 +361,30 @@ export class LiveList<T> extends AbstractCrdt {
     }
   }
 
+  clear() {
+    if (this._doc) {
+      let ops: Op[] = [];
+      let reverseOps: Op[] = [];
+
+      for (const item of this.#items) {
+        item[0]._detach();
+        const childId = item[0]._id;
+        if (childId) {
+          ops.push({ id: childId, type: OpType.DeleteCrdt });
+          reverseOps.push(...item[0]._serialize(this._id!, item[1]));
+        }
+      }
+
+      this.#items = [];
+      this._doc.dispatch(ops, reverseOps, [this]);
+    } else {
+      for (const item of this.#items) {
+        item[0]._detach();
+      }
+      this.#items = [];
+    }
+  }
+
   /**
    * Returns an Array of all the elements in the LiveList.
    */

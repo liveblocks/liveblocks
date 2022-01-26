@@ -180,6 +180,31 @@ describe("room", () => {
     expect(state.buffer.presence).toEqual({ x: 0, y: 0 });
   });
 
+  test("others should be iterable", () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const machine = makeStateMachine(state, defaultContext, effects);
+
+    machine.connect();
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.onOpen();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMessageType.UpdatePresence,
+        data: { x: 2 },
+        actor: 1,
+      })
+    );
+
+    const users = [];
+    for (const user of machine.selectors.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([{ connectionId: 1, presence: { x: 2 } }]);
+  });
+
   test("should clear users when socket close", () => {
     const effects = mockEffects();
     const state = defaultState({});
@@ -209,6 +234,88 @@ describe("room", () => {
     );
 
     expect(machine.selectors.getOthers().toArray()).toEqual([]);
+  });
+
+  describe("broadcast", () => {
+    test("should send event to other users", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+
+      const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
+
+      withDateNow(now, () => machine.onOpen());
+
+      expect(effects.send).nthCalledWith(1, [
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+      ]);
+
+      withDateNow(now + 1000, () => machine.broadcastEvent({ type: "EVENT" }));
+
+      expect(effects.send).nthCalledWith(2, [
+        {
+          type: ClientMessageType.ClientEvent,
+          event: { type: "EVENT" },
+        },
+      ]);
+    });
+
+    test("should not send event to other users if not connected", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.broadcastEvent({ type: "EVENT" });
+
+      expect(effects.send).not.toHaveBeenCalled();
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      expect(effects.send).toBeCalledTimes(1);
+      expect(effects.send).toHaveBeenCalledWith([
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+      ]);
+    });
+
+    test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      machine.broadcastEvent(
+        { type: "EVENT" },
+        { shouldQueueEventIfNotReady: true }
+      );
+
+      expect(effects.send).not.toHaveBeenCalled();
+
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.onOpen();
+
+      expect(effects.send).toBeCalledTimes(1);
+      expect(effects.send).toHaveBeenCalledWith([
+        {
+          type: ClientMessageType.UpdatePresence,
+          data: {},
+        },
+        {
+          type: ClientMessageType.ClientEvent,
+          event: { type: "EVENT" },
+        },
+      ]);
+    });
   });
 
   test("storage should be initialized properly", async () => {

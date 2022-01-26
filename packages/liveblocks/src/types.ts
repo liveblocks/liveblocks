@@ -40,6 +40,15 @@ export type LiveListUpdates<TItem = any> = {
   node: LiveList<TItem>;
 };
 
+export type BroadcastOptions = {
+  /**
+   * Whether or not event is queued if the connection is currently closed.
+   *
+   * ❗ We are not sure if we want to support this option in the future so it might be deprecated to be replaced by something else
+   */
+  shouldQueueEventIfNotReady: boolean;
+};
+
 export type StorageUpdate =
   | LiveMapUpdates
   | LiveObjectUpdates
@@ -89,6 +98,10 @@ export interface Others<TPresence extends Presence = Presence> {
    * Number of other users in the room.
    */
   readonly count: number;
+  /**
+   * Returns a new Iterator object that contains the users.
+   */
+  [Symbol.iterator](): IterableIterator<User<TPresence>>;
   /**
    * Returns the array of connected users in room.
    */
@@ -504,7 +517,7 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: any) => void;
+  broadcastEvent: (event: any, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.

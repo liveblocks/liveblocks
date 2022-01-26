@@ -55,6 +55,9 @@ describe("LiveList", () => {
       expect(list.toArray()).toEqual(["second", "third"]);
       expect(list.get(2)).toBe(undefined);
       expect(list.length).toBe(2);
+
+      list.clear();
+      expect(list.toArray()).toEqual([]);
     });
   });
 
@@ -384,6 +387,49 @@ describe("LiveList", () => {
     });
 
     assertUndoRedo();
+  });
+
+  describe("clear", () => {
+    it("should delete all items", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      assert({
+        items: [],
+      });
+
+      items.push(new LiveObject({ a: 0 }));
+      assert({
+        items: [{ a: 0 }],
+      });
+
+      items.push(new LiveObject({ a: 1 }));
+      assert({
+        items: [{ a: 0 }, { a: 1 }],
+      });
+
+      items.push(new LiveObject({ a: 2 }));
+      assert({
+        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+      });
+
+      items.clear();
+      assert({
+        items: [],
+      });
+
+      assertUndoRedo();
+    });
   });
 
   it("list conflicts - move", async () => {
