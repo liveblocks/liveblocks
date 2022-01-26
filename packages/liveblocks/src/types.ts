@@ -43,6 +43,8 @@ export type LiveListUpdates<TItem = any> = {
 export type BroadcastOptions = {
   /**
    * Whether or not event is queued if the connection is currently closed.
+   *
+   * ❗ We are not sure if we want to support this option in the future so it might be deprecated to be replaced by something else
    */
   shouldQueueEventIfNotReady: boolean;
 };
