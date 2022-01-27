@@ -168,7 +168,11 @@ export class LiveObject<
 
     return {
       reverse,
-      modified: { node: this, type: "LiveObject", updates: {} }, // TODO
+      modified: {
+        node: this,
+        type: "LiveObject",
+        updates: { [key as string]: { type: "update" } },
+      },
     };
   }
 
@@ -347,9 +351,13 @@ export class LiveObject<
 
     this.#map.delete(key);
     return {
-      modified: { node: this, type: "LiveObject", updates: {} },
+      modified: {
+        node: this,
+        type: "LiveObject",
+        updates: { [op.key]: { type: "delete" } },
+      },
       reverse,
-    }; // TODO
+    };
   }
 
   /**
@@ -418,8 +426,8 @@ export class LiveObject<
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
-      updates: {},
-    }); // TODO delete
+      updates: { [key as string]: { type: "delete" } },
+    });
 
     this._doc.dispatch(
       [

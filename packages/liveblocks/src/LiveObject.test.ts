@@ -607,6 +607,54 @@ describe("LiveObject", () => {
         },
       ]);
     });
+
+    test("deep subscribe remote and local operation - delete object key", async () => {
+      const { storage, subscribe, applyRemoteOperations } =
+        await prepareStorageTest<{
+          child: LiveObject<{ a?: number; b?: number }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0, b: 0 }, "0:0", "child"),
+          ],
+          1
+        );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root, callback, { isDeep: true });
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteObjectKey,
+          key: "a",
+          id: "0:1",
+          opId: "external",
+        },
+      ]);
+
+      root.get("child").delete("b");
+
+      unsubscribe();
+
+      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: root.get("child"),
+          updates: { a: { type: "delete" } },
+        },
+      ]);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveObject",
+          node: root.get("child"),
+          updates: { b: { type: "delete" } },
+        },
+      ]);
+    });
   });
 
   describe("reconnect with remote changes and subscribe", async () => {
@@ -725,7 +773,13 @@ describe("LiveObject", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: root.get("obj"), updates: {} },
+        {
+          type: "LiveObject",
+          node: root.get("obj"),
+          updates: {
+            subObj: { type: "update" },
+          },
+        },
       ]);
 
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);
