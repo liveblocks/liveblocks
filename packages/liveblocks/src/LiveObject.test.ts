@@ -657,7 +657,7 @@ describe("LiveObject", () => {
     });
   });
 
-  describe("reconnect with remote changes and subscribe", async () => {
+  describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<{
         obj: LiveObject<{ a: number }>;

@@ -836,7 +836,7 @@ describe("LiveList", () => {
     });
   });
 
-  describe("reconnect with remote changes and subscribe", async () => {
+  describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
