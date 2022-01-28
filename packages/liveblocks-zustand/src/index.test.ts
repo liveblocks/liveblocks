@@ -5,7 +5,10 @@ import { Mapping, middleware } from ".";
 import create from "zustand";
 import { StateCreator } from "zustand";
 import {
+  ClientMessageType,
+  OpType,
   SerializedCrdtWithId,
+  ServerMessage,
   ServerMessageType,
 } from "@liveblocks/client/lib/cjs/live";
 import { MockWebSocket, obj, waitFor } from "../test/utils";
@@ -49,42 +52,44 @@ async function waitForSocketToBeConnected() {
 type BasicStore = {
   value: number;
   setValue: (newValue: number) => void;
+
+  notMapped: string;
+  setNotMapped: (newValue: string) => void;
+
+  cursor: { x: number; y: number };
 };
 
 const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   value: 0,
   setValue: (newValue: number) => set({ value: newValue }),
+
+  notMapped: "default",
+  setNotMapped: (notMapped: string) => set({ notMapped }),
+
+  cursor: { x: 0, y: 0 },
 });
 
-function prepareClientAndStore<T extends Object>(
-  stateCreator: StateCreator<T>,
-  mapping: Mapping<T> = {}
-) {
+function prepareClientAndStore() {
   const client = createClient({ authEndpoint: "/api/auth" });
 
   const store = create(
-    middleware<T, any>(stateCreator, {
+    middleware<BasicStore, any>(basicStateCreator, {
       client,
-      mapping,
-      presenceMapping: {},
+      mapping: { value: true },
+      presenceMapping: { cursor: true },
     })
   );
 
   return { client, store };
 }
 
-async function prepareWithStorage<T extends Object>(
-  stateCreator: StateCreator<T>,
+async function prepareWithStorage(
   items: SerializedCrdtWithId[],
   options?: {
     room?: string;
-    mapping?: Mapping<T>;
   }
 ) {
-  const { client, store } = prepareClientAndStore<T>(
-    stateCreator,
-    options?.mapping
-  );
+  const { client, store } = prepareClientAndStore();
 
   store.getState().liveblocks.enter(options?.room || "room");
 
@@ -99,14 +104,20 @@ async function prepareWithStorage<T extends Object>(
     }),
   } as MessageEvent);
 
+  function sendMessage(serverMessage: ServerMessage) {
+    socket.callbacks.message[0]!({
+      data: JSON.stringify(serverMessage),
+    } as MessageEvent);
+  }
+
   await waitFor(() => !store.getState().liveblocks.isStorageLoading);
 
-  return { client, store };
+  return { client, store, socket, sendMessage };
 }
 
 describe("middleware", () => {
   test("init middleware", () => {
-    const { store } = prepareClientAndStore(basicStateCreator);
+    const { store } = prepareClientAndStore();
 
     const { liveblocks, value } = store.getState();
 
@@ -117,7 +128,7 @@ describe("middleware", () => {
   });
 
   test("storage should be loading while socket is connecting and initial storage message", async () => {
-    const { store } = prepareClientAndStore(basicStateCreator);
+    const { store } = prepareClientAndStore();
 
     const { liveblocks } = store.getState();
 
@@ -136,14 +147,11 @@ describe("middleware", () => {
       }),
     } as MessageEvent);
 
-    await waitFor(() => !store.getState().liveblocks.isStorageLoading);
+    await waitFor(() => store.getState().liveblocks.isStorageLoading === false);
   });
 
   test("enter room should set the connection to open", async () => {
-    const { store } = prepareClientAndStore<BasicStore>((set) => ({
-      value: 0,
-      setValue: (newValue: number) => set({ value: newValue }),
-    }));
+    const { store } = prepareClientAndStore();
 
     const { liveblocks } = store.getState();
 
@@ -156,13 +164,141 @@ describe("middleware", () => {
     expect(store.getState().liveblocks.connection).toBe("open");
   });
 
-  test("storage initialize storage if storage mapping key is true", async () => {
-    const { store } = await prepareWithStorage(
-      basicStateCreator,
-      [obj("root", { value: 1 })],
-      { mapping: { value: true } }
-    );
+  describe("presence", () => {
+    test("should broadcast presence when connecting to the room", async () => {
+      const { store } = prepareClientAndStore();
 
-    expect(store.getState().value).toBe(1);
+      const { liveblocks } = store.getState();
+
+      liveblocks.enter("room");
+
+      const socket = await waitForSocketToBeConnected();
+
+      socket.callbacks.open[0]!();
+
+      expect(socket.sentMessages[0]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 0, y: 0 } },
+          },
+          {
+            type: ClientMessageType.FetchStorage,
+          },
+        ])
+      );
+    });
+
+    // test("should update presence is state is updated", async () => {
+    //   const { store } = prepareClientAndStore();
+
+    //   const { liveblocks } = store.getState();
+
+    //   liveblocks.enter("room");
+
+    //   const socket = await waitForSocketToBeConnected();
+
+    //   socket.callbacks.open[0]!();
+
+    //   expect(socket.sentMessages[0]).toEqual(
+    //     JSON.stringify([
+    //       {
+    //         type: ClientMessageType.UpdatePresence,
+    //         data: { cursor: { x: 0, y: 0 } },
+    //       },
+    //       {
+    //         type: ClientMessageType.FetchStorage,
+    //       },
+    //     ])
+    //   );
+    // });
+  });
+
+  describe("storage", () => {
+    describe("initialization", () => {
+      test("should initialize if mapping key is true", async () => {
+        const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+
+        expect(store.getState().value).toBe(1);
+      });
+
+      test("should not initialize if mapping key does not exist", async () => {
+        const { store } = await prepareWithStorage([
+          obj("root", { notMapped: "not mapped" }),
+        ]);
+
+        expect(store.getState().notMapped).toBe("default");
+      });
+    });
+
+    describe("remote updates", () => {
+      test("should update state if mapping allows it", async () => {
+        const { store, sendMessage } = await prepareWithStorage([
+          obj("root", { value: 1 }),
+        ]);
+
+        sendMessage({
+          type: ServerMessageType.UpdateStorage,
+          ops: [
+            {
+              type: OpType.UpdateObject,
+              id: "root",
+              data: {
+                value: 2,
+              },
+            },
+          ],
+        });
+
+        expect(store.getState().value).toBe(2);
+      });
+
+      test("should not update state if key is not part of the mapping", async () => {
+        const { store, sendMessage } = await prepareWithStorage([
+          obj("root", { value: 1 }),
+        ]);
+
+        sendMessage({
+          type: ServerMessageType.UpdateStorage,
+          ops: [
+            {
+              type: OpType.UpdateObject,
+              id: "root",
+              data: {
+                notMapped: "hey",
+              },
+            },
+          ],
+        });
+
+        expect(store.getState().notMapped).toBe("default");
+      });
+    });
+
+    describe("patching Liveblocks state", () => {
+      test("should update liveblocks state if mapping allows it", async () => {
+        const { store, socket } = await prepareWithStorage([
+          obj("root", { value: 1 }),
+        ]);
+
+        store.getState().setValue(2);
+
+        expect(socket.sentMessages[1]).toEqual(
+          JSON.stringify([
+            {
+              type: ClientMessageType.UpdateStorage,
+              ops: [
+                {
+                  opId: "0:0",
+                  id: "root",
+                  type: OpType.UpdateObject,
+                  data: { value: 2 },
+                },
+              ],
+            },
+          ])
+        );
+      });
+    });
   });
 });

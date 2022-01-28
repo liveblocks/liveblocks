@@ -31,7 +31,7 @@ function liveListToJson(value: LiveList<any>) {
   return value.toArray().map(liveNodeToJson);
 }
 
-function liveNodeToJson(value: any): any {
+export function liveNodeToJson(value: any): any {
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {

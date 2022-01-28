@@ -6,8 +6,10 @@ import {
   patchLiveObjectKey,
   liveObjectToJson,
   patchImmutableObject,
+  liveNodeToJson,
   Room,
 } from "@liveblocks/client";
+import { StorageUpdate } from "../../liveblocks/lib/cjs/types";
 
 export interface LiveblocksState<TPresence = any> {
   readonly liveblocks: {
@@ -105,6 +107,12 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
 
       room = client.enter(roomId);
 
+      const state = get();
+
+      for (const key in presenceMapping) {
+        room?.updatePresence({ [key]: (state as any)[key] });
+      }
+
       unsubscribeCallbacks.push(
         room.subscribe("others", (others) => {
           typedSet((state) => ({
@@ -125,17 +133,20 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
       );
 
       room
-        .getStorage()
+        .getStorage<any>()
         .then(({ root }) => {
-          const json = liveObjectToJson(root);
-          set(json);
+          const updates: any = {};
+          for (const key in mapping) {
+            updates[key] = liveNodeToJson(root.get(key));
+          }
+          set(updates);
           storageRoot = root;
           unsubscribeCallbacks.push(
             room!.subscribe(
               root,
               (updates) => {
                 if (isPatching === false) {
-                  set(patchImmutableObject(get(), updates));
+                  set(patchState(get(), updates, mapping as any));
                 }
               },
               { isDeep: true }
@@ -179,3 +190,25 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
     };
   };
 };
+
+function patchState<T>(
+  state: T,
+  updates: StorageUpdate[],
+  mapping: Mapping<T>
+) {
+  const partialState: Partial<T> = {};
+
+  for (const key in mapping) {
+    partialState[key] = state[key];
+  }
+
+  const patched = patchImmutableObject(partialState, updates);
+
+  const result: Partial<T> = {};
+
+  for (const key in mapping) {
+    result[key] = patched[key];
+  }
+
+  return result;
+}
