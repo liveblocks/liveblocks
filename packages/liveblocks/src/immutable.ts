@@ -240,7 +240,6 @@ function patchImmutableNode(
   update: StorageUpdate
 ): any {
   const pathItem = path.pop();
-
   if (pathItem === undefined) {
     switch (update.type) {
       case "LiveObject": {
@@ -249,7 +248,17 @@ function patchImmutableNode(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
-        return liveObjectToJson(update.node);
+        let newState = Object.assign({}, state);
+
+        for (const key in update.updates) {
+          if (update.updates[key]?.type === "update") {
+            newState[key] = liveNodeToJson(update.node.get(key));
+          } else if (update.updates[key]?.type === "delete") {
+            delete newState[key];
+          }
+        }
+
+        return newState;
       }
       case "LiveList": {
         if (Array.isArray(state) === false) {

@@ -256,15 +256,105 @@ describe("immutable tests with ref machine", () => {
 });
 
 describe("patchLiveObjectKey", () => {
-  test("should update object value", () => {
-    const state = { a: 0 };
+  test("update one sub node of root", () => {
+    const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
+
+    const root = new LiveObject();
+    root.set("subA", new LiveObject({ subsubA: new LiveObject({ a: 1 }) }));
+    root.set("subB", new LiveObject({ b: 2 }));
 
     const updates: StorageUpdate[] = [
-      { type: "LiveObject", node: new LiveObject({ a: 1 }), updates: {} },
+      {
+        type: "LiveObject",
+        node: root,
+        updates: { subB: { type: "update" } },
+      },
     ];
 
     const newState = patchImmutableObject(state, updates);
 
-    expect(newState).toEqual({ a: 1 });
+    expect(newState.subB === state.subB).toBeFalsy();
+    expect(newState.subA === state.subA).toBeTruthy();
+    expect(newState).toEqual({ subA: { subsubA: { a: 1 } }, subB: { b: 2 } });
+  });
+
+  test("update one sub element of sub node", () => {
+    const state = {
+      subA: { subsubA: { a: 1 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    };
+
+    const root = new LiveObject();
+    root.set(
+      "subA",
+      new LiveObject({
+        subsubA: new LiveObject({ a: 2 }),
+        subsubB: new LiveObject({ b: 1 }),
+      })
+    );
+    root.set("subB", new LiveObject({ b: 1 }));
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubA: { type: "update" } },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.subB === state.subB).toBeTruthy();
+    expect(newState.subA === state.subA).toBeFalsy();
+    expect(newState.subA.subsubB === state.subA.subsubB).toBeTruthy();
+    expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
+    expect(newState).toEqual({
+      subA: { subsubA: { a: 2 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    });
+  });
+
+  test("multiple updates", () => {
+    const state = {
+      subA: { subsubA: { a: 1 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    };
+
+    const root = new LiveObject();
+    root.set(
+      "subA",
+      new LiveObject({
+        subsubA: new LiveObject({ a: 2 }),
+      })
+    );
+    root.set("subB", new LiveObject({ b: 2 }));
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubA: { type: "update" } },
+      },
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubB: { type: "delete" } },
+      },
+      {
+        type: "LiveObject",
+        node: root.get("subB"),
+        updates: { b: { type: "update" } },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.subB === state.subB).toBeFalsy();
+    expect(newState.subA === state.subA).toBeFalsy();
+    expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
+    expect(newState).toEqual({
+      subA: { subsubA: { a: 2 } },
+      subB: { b: 2 },
+    });
   });
 });
