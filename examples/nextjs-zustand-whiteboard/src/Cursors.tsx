@@ -25,7 +25,7 @@ function Cursor({ color, x, y }: CursorProps) {
 }
 
 const Cursors = () => {
-  const others = useStore((state) => state.others);
+  const others = useStore((state) => state.liveblocks.others);
 
   return (
     <>

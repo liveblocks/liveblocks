@@ -5,7 +5,7 @@ import styles from "./index.module.css";
 import useStore from "../store";
 
 export default function ToolsBar() {
-  const history = useStore((state) => state.history);
+  const history = useStore((state) => state.liveblocks.history);
 
   return (
     <div className={styles.tools_panel_container}>

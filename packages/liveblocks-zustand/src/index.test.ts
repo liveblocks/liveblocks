@@ -57,6 +57,7 @@ type BasicStore = {
   setNotMapped: (newValue: string) => void;
 
   cursor: { x: number; y: number };
+  setCursor: (cursor: { x: number; y: number }) => void;
 };
 
 const basicStateCreator: StateCreator<BasicStore> = (set) => ({
@@ -67,6 +68,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   setNotMapped: (notMapped: string) => set({ notMapped }),
 
   cursor: { x: 0, y: 0 },
+  setCursor: (cursor: { x: number; y: number }) => set({ cursor }),
 });
 
 function prepareClientAndStore() {
@@ -87,11 +89,14 @@ async function prepareWithStorage(
   items: SerializedCrdtWithId[],
   options?: {
     room?: string;
+    initialState?: any;
   }
 ) {
   const { client, store } = prepareClientAndStore();
 
-  store.getState().liveblocks.enter(options?.room || "room");
+  store
+    .getState()
+    .liveblocks.enter(options?.room || "room", options?.initialState || {});
 
   const socket = await waitForSocketToBeConnected();
 
@@ -132,7 +137,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enter("room");
+    liveblocks.enter("room", {});
 
     expect(store.getState().liveblocks.isStorageLoading).toBe(true);
 
@@ -155,7 +160,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enter("room");
+    liveblocks.enter("room", {});
 
     const socket = await waitForSocketToBeConnected();
 
@@ -170,7 +175,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enter("room");
+      liveblocks.enter("room", {});
 
       const socket = await waitForSocketToBeConnected();
 
@@ -189,29 +194,75 @@ describe("middleware", () => {
       );
     });
 
-    // test("should update presence is state is updated", async () => {
-    //   const { store } = prepareClientAndStore();
+    test("should update presence if state is updated", async () => {
+      const { store } = prepareClientAndStore();
 
-    //   const { liveblocks } = store.getState();
+      const { liveblocks } = store.getState();
 
-    //   liveblocks.enter("room");
+      liveblocks.enter("room", {});
 
-    //   const socket = await waitForSocketToBeConnected();
+      const socket = await waitForSocketToBeConnected();
 
-    //   socket.callbacks.open[0]!();
+      socket.callbacks.open[0]!();
 
-    //   expect(socket.sentMessages[0]).toEqual(
-    //     JSON.stringify([
-    //       {
-    //         type: ClientMessageType.UpdatePresence,
-    //         data: { cursor: { x: 0, y: 0 } },
-    //       },
-    //       {
-    //         type: ClientMessageType.FetchStorage,
-    //       },
-    //     ])
-    //   );
-    // });
+      expect(socket.sentMessages[0]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 0, y: 0 } },
+          },
+          {
+            type: ClientMessageType.FetchStorage,
+          },
+        ])
+      );
+
+      store.getState().setCursor({ x: 1, y: 1 });
+
+      await waitFor(() => socket.sentMessages[1] != null);
+
+      expect(socket.sentMessages[1]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 1, y: 1 } },
+          },
+        ])
+      );
+    });
+
+    test("should set liveblocks.others if there are others users in the room", async () => {
+      const { store } = prepareClientAndStore();
+
+      const { liveblocks } = store.getState();
+
+      liveblocks.enter("room", {});
+
+      const socket = await waitForSocketToBeConnected();
+
+      socket.callbacks.open[0]!();
+
+      socket.callbacks.message[0]!({
+        data: JSON.stringify({
+          type: ServerMessageType.RoomState,
+          users: {
+            "1": {
+              info: { name: "Testy McTester" },
+            },
+          },
+        } as ServerMessage),
+      } as MessageEvent);
+
+      expect(store.getState().liveblocks.others).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: {
+            name: "Testy McTester",
+          },
+        },
+      ]);
+    });
   });
 
   describe("storage", () => {
@@ -228,6 +279,49 @@ describe("middleware", () => {
         ]);
 
         expect(store.getState().notMapped).toBe("default");
+      });
+
+      test("should initialize with default state if key is missing from liveblocks storage", async () => {
+        const { store, socket } = await prepareWithStorage([obj("root", {})], {
+          initialState: {
+            value: 5,
+          },
+        });
+
+        expect(store.getState().value).toBe(5);
+
+        await waitFor(() => socket.sentMessages[1] != null);
+
+        expect(socket.sentMessages[1]).toEqual(
+          JSON.stringify([
+            {
+              type: ClientMessageType.UpdateStorage,
+              ops: [
+                {
+                  opId: "0:0",
+                  id: "root",
+                  type: OpType.UpdateObject,
+                  data: { value: 5 },
+                },
+              ],
+            },
+          ])
+        );
+      });
+
+      test("should not override liveblocks state with initial state if key exists", async () => {
+        const { store, socket } = await prepareWithStorage(
+          [obj("root", { value: 1 })],
+          {
+            initialState: {
+              value: 5,
+            },
+          }
+        );
+
+        expect(store.getState().value).toBe(1);
+
+        expect(socket.sentMessages[1]).toEqual(undefined);
       });
     });
 
