@@ -908,10 +908,18 @@ describe("LiveList", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(2);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: { [SECOND_POSITION]: { type: "update" } },
+        },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: { [THIRD_POSITION]: { type: "update" } },
+        },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
     });
@@ -1045,7 +1053,11 @@ describe("LiveList", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: { [SECOND_POSITION]: { type: "delete" } },
+        },
       ]);
 
       expect(listCallback).toHaveBeenCalledTimes(1);

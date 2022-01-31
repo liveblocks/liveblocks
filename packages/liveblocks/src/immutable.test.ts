@@ -357,4 +357,34 @@ describe("patchLiveObjectKey", () => {
       subB: { b: 2 },
     });
   });
+
+  test("insert element at the end of LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject();
+    const liveList = new LiveList();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    liveList.push(new LiveObject({ a: 3 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: { [THIRD_POSITION]: { type: "update" } },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    // expect(newState.list[0] === state.list[0]).toBeTruthy();
+    // expect(newState.list[1] === state.list[1]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 2 }, { a: 3 }],
+    });
+  });
 });

@@ -7,6 +7,7 @@ import {
   createSerializedObject,
   createSerializedList,
   createSerializedMap,
+  FIRST_POSITION,
 } from "../test/utils";
 
 describe("Storage", () => {
@@ -216,6 +217,7 @@ describe("Storage", () => {
         {
           type: "LiveList",
           node: root.get("childList"),
+          updates: { [FIRST_POSITION]: { type: "update" } },
         },
         {
           type: "LiveMap",

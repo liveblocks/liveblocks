@@ -284,7 +284,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     if (this._doc && item._id) {
       const storageUpdates = new Map<string, StorageUpdate>();
-      storageUpdates.set(this._id!, { node: this, type: "LiveMap" });
+      storageUpdates.set(this._id!, { node: this, type: "LiveMap" }); // todo updates delta
       this._doc.dispatch(
         [
           {
