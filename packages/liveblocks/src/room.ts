@@ -186,6 +186,7 @@ export function makeStateMachine(
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
+        debugger;
         const token = await auth(
           context.authEndpoint,
           context.room,

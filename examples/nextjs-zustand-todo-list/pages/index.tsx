@@ -10,13 +10,13 @@ export default function StorageDemo() {
     deleteTodo,
     draft,
     setDraft,
-    enter,
-    leave,
-    isStorageLoading,
+    liveblocks: { enter, leave, isStorageLoading },
   } = useStore();
 
   useEffect(() => {
-    enter("example-storage");
+    enter("example-storage", {
+      todos: [],
+    });
 
     return () => {
       leave("example-storage");

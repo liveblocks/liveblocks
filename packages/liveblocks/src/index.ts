@@ -14,6 +14,7 @@ export { createClient } from "./client";
 
 export {
   liveObjectToJson,
+  liveNodeToJson,
   patchLiveList,
   patchImmutableObject,
   patchLiveObject,

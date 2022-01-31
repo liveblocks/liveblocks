@@ -4,14 +4,15 @@ import {
   LiveObject,
   User,
   patchLiveObjectKey,
-  liveObjectToJson,
   patchImmutableObject,
+  liveNodeToJson,
   Room,
 } from "@liveblocks/client";
+import { StorageUpdate } from "../../liveblocks/lib/cjs/types";
 
-export interface LiveblocksState<TPresence = any> {
+export type LiveblocksState<TState, TPresence = any> = TState & {
   readonly liveblocks: {
-    readonly enter: (room: string) => void;
+    readonly enter: (room: string, initialState: Partial<TState>) => void;
     readonly leave: (room: string) => void;
     readonly others: Array<User<TPresence>>;
     readonly isStorageLoading: boolean;
@@ -29,7 +30,7 @@ export interface LiveblocksState<TPresence = any> {
       | "open"
       | "connecting";
   };
-}
+};
 
 export type Mapping<T> = Partial<
   {
@@ -41,19 +42,21 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<T & LiveblocksState>,
+    GetState<LiveblocksState<T>>,
     StoreApi<T> & { getRoom: () => Room }
   >,
   options: { client: Client; mapping: Mapping<T>; presenceMapping?: Mapping<T> }
 ) => StateCreator<
-  T & LiveblocksState<TPresence>,
-  SetState<T & LiveblocksState<TPresence>>,
-  GetState<T & LiveblocksState>,
-  StoreApi<T & LiveblocksState>
-> = (config, { client, mapping, presenceMapping = {} as Mapping<Object> }) => {
+  LiveblocksState<T, TPresence>,
+  SetState<LiveblocksState<T, TPresence>>,
+  GetState<LiveblocksState<T, TPresence>>,
+  StoreApi<LiveblocksState<T, TPresence>>
+> = (config, { client, mapping, presenceMapping = {} }) => {
   return (set: any, get, api: any) => {
     const typedSet: (
-      callback: (current: LiveblocksState) => LiveblocksState
+      callbackOrPartial: (
+        current: LiveblocksState<any>
+      ) => LiveblocksState<any> | Partial<any>
     ) => void = set;
 
     let room: Room | null = null;
@@ -67,22 +70,17 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
         set(args);
         const newState = get();
 
-        if (storageRoot) {
+        if (room) {
           isPatching = true;
-          for (const key in mapping) {
-            if (oldState[key] !== newState[key]) {
-              patchLiveObjectKey(
-                storageRoot,
-                key,
-                oldState[key],
-                newState[key]
-              );
-            }
-          }
-          for (const key in presenceMapping) {
-            if ((oldState as any)[key] !== (newState as any)[key]) {
-              room?.updatePresence({ [key]: (newState as any)[key] });
-            }
+          updatePresence(room, oldState, newState, presenceMapping as any);
+
+          if (storageRoot) {
+            patchLiveblocksStorage(
+              storageRoot,
+              oldState,
+              newState,
+              mapping as any
+            );
           }
           isPatching = false;
         }
@@ -94,59 +92,66 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
       }
     );
 
-    function enter(roomId: string) {
+    function enter(roomId: string, initialState: any) {
       if (storageRoot) {
         return;
       }
 
-      typedSet((state) => ({
-        liveblocks: { ...state.liveblocks, isStorageLoading: true },
-      }));
+      // set isLoading storage to true
+      updateZustandLiveblocksState(set, { isStorageLoading: true });
 
       room = client.enter(roomId);
 
+      const state = get();
+
+      broadcastInitialPresence(room, state, presenceMapping as any);
+
       unsubscribeCallbacks.push(
         room.subscribe("others", (others) => {
-          typedSet((state) => ({
-            liveblocks: { ...state.liveblocks, others: others.toArray() },
-          }));
+          updateZustandLiveblocksState(set, { others: others.toArray() });
         })
       );
 
       unsubscribeCallbacks.push(
         room.subscribe("connection", () => {
-          typedSet((state) => ({
-            liveblocks: {
-              ...state.liveblocks,
-              connection: room!.getConnectionState(),
-            },
-          }));
+          updateZustandLiveblocksState(set, {
+            connection: room!.getConnectionState(),
+          });
         })
       );
 
-      room
-        .getStorage()
-        .then(({ root }) => {
-          const json = liveObjectToJson(root);
-          set(json);
-          storageRoot = root;
-          unsubscribeCallbacks.push(
-            room!.subscribe(
-              root,
-              (updates) => {
-                if (isPatching === false) {
-                  set(patchImmutableObject(get(), updates));
-                }
-              },
-              { isDeep: true }
-            )
-          );
-        })
-        .finally(() => {
-          typedSet((state) => ({
-            liveblocks: { ...state.liveblocks, isStorageLoading: false },
-          }));
-        });
+      room.getStorage<any>().then(({ root }) => {
+        const updates: any = {};
+
+        for (const key in mapping) {
+          const liveblocksStatePart = root.get(key);
+
+          if (liveblocksStatePart == null) {
+            updates[key] = initialState[key];
+            patchLiveObjectKey(root, key, undefined, initialState[key]);
+          } else {
+            updates[key] = liveNodeToJson(liveblocksStatePart);
+          }
+        }
+
+        typedSet(updates);
+
+        storageRoot = root;
+        unsubscribeCallbacks.push(
+          room!.subscribe(
+            root,
+            (updates) => {
+              if (isPatching === false) {
+                set(patchState(get(), updates, mapping as any));
+              }
+            },
+            { isDeep: true }
+          )
+        );
+
+        // set isLoading storage to false once storage is loaded
+        updateZustandLiveblocksState(set, { isStorageLoading: false });
+      });
     }
 
     function leave(roomId: string) {
@@ -166,7 +171,6 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
         enter,
         leave,
         others: [],
-        me: null,
         connection: "closed",
         isStorageLoading: false,
         history: {
@@ -179,3 +183,72 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
     };
   };
 };
+
+function patchState<T>(
+  state: T,
+  updates: StorageUpdate[],
+  mapping: Mapping<T>
+) {
+  const partialState: Partial<T> = {};
+
+  for (const key in mapping) {
+    partialState[key] = state[key];
+  }
+
+  const patched = patchImmutableObject(partialState, updates);
+
+  const result: Partial<T> = {};
+
+  for (const key in mapping) {
+    result[key] = patched[key];
+  }
+
+  return result;
+}
+
+function updateZustandLiveblocksState<T>(
+  set: (
+    callbackOrPartial: (
+      current: LiveblocksState<T>
+    ) => LiveblocksState<T> | Partial<any>
+  ) => void,
+  partial: Partial<LiveblocksState<T>["liveblocks"]>
+) {
+  set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
+}
+
+function broadcastInitialPresence<T>(
+  room: Room,
+  state: T,
+  mapping: Mapping<T>
+) {
+  for (const key in mapping) {
+    room?.updatePresence({ [key]: (state as any)[key] });
+  }
+}
+
+function updatePresence<T>(
+  room: Room,
+  oldState: T,
+  newState: T,
+  presenceMapping: Mapping<T>
+) {
+  for (const key in presenceMapping) {
+    if (oldState[key] !== newState[key]) {
+      room.updatePresence({ [key]: newState[key] });
+    }
+  }
+}
+
+function patchLiveblocksStorage<T>(
+  root: LiveObject,
+  oldState: T,
+  newState: T,
+  mapping: Mapping<T>
+) {
+  for (const key in mapping) {
+    if (oldState[key] !== newState[key]) {
+      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+    }
+  }
+}

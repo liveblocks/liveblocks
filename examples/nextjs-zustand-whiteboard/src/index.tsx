@@ -38,15 +38,15 @@ export default function Whiteboard() {
   // Liveblocks integration start
   const { enter, leave, isLoading } = useStore(
     (state) => ({
-      enter: state.enter,
-      leave: state.leave,
-      isLoading: state.isStorageLoading,
+      enter: state.liveblocks.enter,
+      leave: state.liveblocks.leave,
+      isLoading: state.liveblocks.isStorageLoading,
     }),
     shallow
   );
 
   useEffect(() => {
-    enter("zustand-whiteboard");
+    enter("zustand-whiteboard", { layers: {} });
 
     return () => {
       leave("zustand-whiteboard");
