@@ -614,7 +614,11 @@ describe("LiveMap", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveMap", node: listItems },
+        {
+          type: "LiveMap",
+          node: listItems,
+          updates: { second: { type: "update" } },
+        },
       ]);
 
       expect(mapCallback).toHaveBeenCalledTimes(1);

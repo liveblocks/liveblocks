@@ -222,6 +222,7 @@ describe("Storage", () => {
         {
           type: "LiveMap",
           node: root.get("childMap"),
+          updates: { el1: { type: "update" } },
         },
       ]);
     });

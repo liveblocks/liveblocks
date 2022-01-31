@@ -151,7 +151,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     child._attach(id, this._doc);
     this.#map.set(key, child);
 
-    return { modified: { node: this, type: "LiveMap" }, reverse };
+    return {
+      modified: {
+        node: this,
+        type: "LiveMap",
+        updates: { [key]: { type: "update" } },
+      },
+      reverse,
+    };
   }
 
   /**
@@ -182,7 +189,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     const storageUpdate: StorageUpdate = {
       node: this as any,
       type: "LiveMap",
-      // TODO updates
+      updates: { [child._parentKey!]: { type: "delete" } },
     };
 
     return { modified: storageUpdate, reverse };
@@ -241,7 +248,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       item._attach(id, this._doc);
 
       const storageUpdates = new Map<string, StorageUpdate>();
-      storageUpdates.set(this._id!, { node: this, type: "LiveMap" });
+      storageUpdates.set(this._id!, {
+        node: this,
+        type: "LiveMap",
+        updates: { [key]: { type: "update" } },
+      });
 
       this._doc.dispatch(
         item._serialize(this._id, key, this._doc),
@@ -284,7 +295,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     if (this._doc && item._id) {
       const storageUpdates = new Map<string, StorageUpdate>();
-      storageUpdates.set(this._id!, { node: this, type: "LiveMap" }); // todo updates delta
+      storageUpdates.set(this._id!, {
+        node: this,
+        type: "LiveMap",
+        updates: { [key as string]: { type: "delete" } },
+      });
       this._doc.dispatch(
         [
           {

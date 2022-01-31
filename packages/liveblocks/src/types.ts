@@ -33,14 +33,10 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdateDelta<T> = Partial<{
-  [Property in keyof T]: UpdateDelta;
-}>;
-
 export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
-  // updates: LiveMapUpdateDelta<TKey>;
+  updates: Record<TKey, UpdateDelta>;
 };
 
 export type LiveObjectUpdateDelta<T> = Partial<{
