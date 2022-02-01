@@ -274,7 +274,17 @@ function patchImmutableNode(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        return liveMapToJson(update.node);
+        let newState = Object.assign({}, state);
+
+        for (const key in update.updates) {
+          if (update.updates[key]?.type === "update") {
+            newState[key] = liveNodeToJson(update.node.get(key));
+          } else if (update.updates[key]?.type === "delete") {
+            delete newState[key];
+          }
+        }
+
+        return newState;
       }
     }
   }

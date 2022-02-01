@@ -1,4 +1,4 @@
-import { LiveList } from ".";
+import { LiveList, LiveMap } from ".";
 import {
   createSerializedList,
   createSerializedObject,
@@ -355,6 +355,63 @@ describe("patchLiveObjectKey", () => {
     expect(newState).toEqual({
       subA: { subsubA: { a: 2 } },
       subB: { b: 2 },
+    });
+  });
+
+  test("add element to LiveMap", () => {
+    const state = {
+      map: { el1: { a: 1 } },
+    };
+
+    const root = new LiveObject();
+    const liveMap = new LiveMap();
+    liveMap.set("el1", new LiveObject({ a: 1 }));
+    liveMap.set("el2", new LiveObject({ a: 2 }));
+
+    root.set("map", liveMap);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveMap",
+        node: root.get("map"),
+        updates: { el2: { type: "update" } },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+
+    expect(newState).toEqual({
+      map: { el1: { a: 1 }, el2: { a: 2 } },
+    });
+  });
+
+  test("remove element from LiveMap", () => {
+    const state = {
+      map: { el1: { a: 1 }, el2: { a: 2 } },
+    };
+
+    const root = new LiveObject();
+    const liveMap = new LiveMap();
+    liveMap.set("el1", new LiveObject({ a: 1 }));
+
+    root.set("map", liveMap);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveMap",
+        node: root.get("map"),
+        updates: { el2: { type: "delete" } },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+
+    expect(newState).toEqual({
+      map: { el1: { a: 1 } },
     });
   });
 
