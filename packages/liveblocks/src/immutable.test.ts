@@ -437,8 +437,8 @@ describe("patchLiveObjectKey", () => {
 
     const newState = patchImmutableObject(state, updates);
 
-    // expect(newState.list[0] === state.list[0]).toBeTruthy();
-    // expect(newState.list[1] === state.list[1]).toBeTruthy();
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[1] === state.list[1]).toBeTruthy();
 
     expect(newState).toEqual({
       list: [{ a: 1 }, { a: 2 }, { a: 3 }],

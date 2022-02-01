@@ -3,6 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { compare } from "./position";
 import { StorageUpdate } from "./types";
 
 export function liveObjectToJson(liveObject: LiveObject<any>) {
@@ -266,7 +267,39 @@ function patchImmutableNode(
             "Internal: received update on LiveList but state was not an array"
           );
         }
-        return liveListToJson(update.node);
+        const newArray = [];
+
+        let allPositions = [];
+
+        for (const key in update.updates) {
+          if (update.updates[key].type === "delete") allPositions.push(key);
+        }
+
+        for (const node of update.node.toCrdtArray()) {
+          allPositions.push(node._parentKey!);
+        }
+
+        allPositions.sort((itemA, itemB) => compare(itemA, itemB));
+
+        let patchMode = true;
+
+        for (const position of allPositions) {
+          if (!patchMode && update.updates[position]?.type !== "delete") {
+            const index = update.node._indexOfPosition(position);
+            newArray.push(liveNodeToJson(update.node.get(index)));
+          } else {
+            if (position in update.updates) {
+              patchMode = false;
+              const index = update.node._indexOfPosition(position);
+              newArray.push(liveNodeToJson(update.node.get(index)));
+            } else {
+              const index = update.node._indexOfPosition(position);
+              newArray.push(state[index]);
+            }
+          }
+        }
+
+        return newArray;
       }
       case "LiveMap": {
         if (typeof state !== "object") {
