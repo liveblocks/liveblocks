@@ -576,7 +576,9 @@ describe("patchImmutableObject", () => {
 
     const root = new LiveObject();
     const liveList = new LiveList();
+    liveList.push(new LiveObject({ a: 1 }));
     liveList.push(new LiveObject({ a: 2 }));
+    liveList.delete(0);
     root.set("list", liveList);
 
     const updates: StorageUpdate[] = [
@@ -593,6 +595,39 @@ describe("patchImmutableObject", () => {
 
     expect(newState).toEqual({
       list: [{ a: 2 }],
+    });
+  });
+
+  test("remove item and add new item at new position but same index", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject();
+    const liveList = new LiveList();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    liveList.push(new LiveObject({ a: 3 }));
+    liveList.delete(1);
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: {
+          [SECOND_POSITION]: { type: "delete" },
+          [THIRD_POSITION]: { type: "update" },
+        },
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 3 }],
     });
   });
 });
