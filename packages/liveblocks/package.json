@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.13.3",
+  "version": "0.14.0",
   "description": "",
   "main": "./lib/cjs/index.js",
   "module": "./lib/esm/index.js",
