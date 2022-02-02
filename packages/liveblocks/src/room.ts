@@ -520,6 +520,7 @@ export function makeStateMachine(
         if (item._parent instanceof LiveList) {
           const previousKey = item._parentKey!;
           item._parent._setChildKey(op.parentKey, item);
+          const newIndex = item._parent._indexOfPosition(op.parentKey); // TODO move to LiveList
           return {
             reverse: [
               {
@@ -531,6 +532,7 @@ export function makeStateMachine(
             modified: {
               node: item._parent,
               type: item._parent._getType() as any,
+              updates: [{ index: newIndex, type: "insert" }],
             },
           };
         }

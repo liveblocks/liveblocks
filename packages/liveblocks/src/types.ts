@@ -49,14 +49,23 @@ export type LiveObjectUpdates<TData = any> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
+export type ListUpdateDelta =
+  | {
+      type: "insert";
+    }
+  | {
+      type: "delete";
+    };
+
 export type LiveListUpdateDelta = {
-  [position: string]: UpdateDelta;
+  index: number;
+  type: "insert" | "delete";
 };
 
 export type LiveListUpdates<TItem = any> = {
   type: "LiveList";
   node: LiveList<TItem>;
-  updates: LiveListUpdateDelta;
+  updates: LiveListUpdateDelta[];
 };
 
 export type BroadcastOptions = {

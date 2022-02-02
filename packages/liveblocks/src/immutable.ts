@@ -267,42 +267,44 @@ function patchImmutableNode(
             "Internal: received update on LiveList but state was not an array"
           );
         }
-        const newArray = [];
+        // const newArray = [];
 
-        let allPositions = [];
+        // let allPositions = [];
 
-        for (const key in update.updates) {
-          if (update.updates[key].type === "delete") allPositions.push(key);
-        }
+        // for (const key in update.updates) {
+        //   if (update.updates[key].type === "delete") allPositions.push(key);
+        // }
 
-        for (const node of update.node.toCrdtArray()) {
-          allPositions.push(node._parentKey!);
-        }
+        // for (const node of update.node.toCrdtArray()) {
+        //   allPositions.push(node._parentKey!);
+        // }
 
-        allPositions.sort((itemA, itemB) => compare(itemA, itemB));
+        // allPositions.sort((itemA, itemB) => compare(itemA, itemB));
 
-        let patchMode = true;
+        // let patchMode = true;
 
-        for (const position of allPositions) {
-          if (!patchMode && update.updates[position]?.type !== "delete") {
-            const index = update.node._indexOfPosition(position);
-            newArray.push(liveNodeToJson(update.node.get(index)));
-          } else {
-            if (position in update.updates) {
-              patchMode = false;
+        // for (const position of allPositions) {
+        //   if (!patchMode && update.updates[position]?.type !== "delete") {
+        //     const index = update.node._indexOfPosition(position);
+        //     newArray.push(liveNodeToJson(update.node.get(index)));
+        //   } else {
+        //     if (position in update.updates) {
+        //       patchMode = false;
 
-              if (update.updates[position].type !== "delete") {
-                const index = update.node._indexOfPosition(position);
-                newArray.push(liveNodeToJson(update.node.get(index)));
-              }
-            } else {
-              const index = update.node._indexOfPosition(position);
-              newArray.push(state[index]);
-            }
-          }
-        }
+        //       if (update.updates[position].type !== "delete") {
+        //         const index = update.node._indexOfPosition(position);
+        //         newArray.push(liveNodeToJson(update.node.get(index)));
+        //       }
+        //     } else {
+        //       const index = update.node._indexOfPosition(position);
+        //       newArray.push(state[index]);
+        //     }
+        //   }
+        // }
 
-        return newArray;
+        // return newArray;
+
+        return liveListToJson(update.node);
       }
       case "LiveMap": {
         if (typeof state !== "object") {
