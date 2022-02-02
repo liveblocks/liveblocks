@@ -164,7 +164,7 @@ describe("immutable tests with ref machine", () => {
     assert({ syncList: ["a"] }, 3, 1);
   });
 
-  test("insert item to beginning of array/LiveList", async () => {
+  test("insert item at beginning of array/LiveList", async () => {
     const { storage, state, assert } = await prepareStorageImmutableTest<
       {
         syncList: LiveList<string>;
@@ -251,11 +251,11 @@ describe("immutable tests with ref machine", () => {
       newState["syncList"]
     );
 
-    // assert({ syncList: [{ a: 1 }, { a: 2 }] }, 4, 1);
+    assert({ syncList: [{ a: 2 }] }, 3, 1);
   });
 });
 
-describe("patchLiveObjectKey", () => {
+describe("patchImmutableObject", () => {
   test("update one sub node of root", () => {
     const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
 
