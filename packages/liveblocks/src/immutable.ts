@@ -290,8 +290,11 @@ function patchImmutableNode(
           } else {
             if (position in update.updates) {
               patchMode = false;
-              const index = update.node._indexOfPosition(position);
-              newArray.push(liveNodeToJson(update.node.get(index)));
+
+              if (update.updates[position].type !== "delete") {
+                const index = update.node._indexOfPosition(position);
+                newArray.push(liveNodeToJson(update.node.get(index)));
+              }
             } else {
               const index = update.node._indexOfPosition(position);
               newArray.push(state[index]);
