@@ -16,9 +16,6 @@ import {
   ConnectionCallback,
   StorageCallback,
   StorageUpdate,
-  LiveObjectUpdates,
-  LiveListUpdates,
-  LiveMapUpdates,
   BroadcastOptions,
 } from "./types";
 import {
@@ -44,7 +41,6 @@ import {
   UpdateStorageMessage,
   ServerMessage,
   SerializedCrdt,
-  CrdtType,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -519,7 +515,11 @@ export function makeStateMachine(
 
         if (item._parent instanceof LiveList) {
           const previousKey = item._parentKey!;
-          return item._parent._setChildKey(op.parentKey, item, previousKey);
+          if (previousKey === op.parentKey) {
+            return { modified: false };
+          } else {
+            return item._parent._setChildKey(op.parentKey, item, previousKey);
+          }
         }
         return { modified: false };
       }

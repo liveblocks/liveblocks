@@ -874,6 +874,82 @@ describe("LiveList", () => {
         },
       ]);
     });
+
+    test("clear with deep subscribe ", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root.get("items"), callback, {
+        isDeep: true,
+      });
+
+      root.get("items").clear();
+
+      unsubscribe();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            { index: 0, type: "delete" },
+            { index: 1, type: "delete" },
+          ],
+        },
+      ]);
+    });
+
+    test("move with deep subscribe", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root.get("items"), callback, {
+        isDeep: true,
+      });
+
+      root.get("items").move(0, 1);
+
+      unsubscribe();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            { index: 0, type: "delete" },
+            { index: 1, type: "insert" },
+          ],
+        },
+      ]);
+    });
   });
 
   describe("reconnect with remote changes and subscribe", () => {
