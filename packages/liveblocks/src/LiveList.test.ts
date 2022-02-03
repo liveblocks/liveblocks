@@ -1103,7 +1103,7 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 1, type: "insert" }],
+          updates: [{ index: 1, type: "delete" }],
         },
       ]);
 

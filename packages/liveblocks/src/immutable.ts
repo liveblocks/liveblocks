@@ -267,44 +267,27 @@ function patchImmutableNode(
             "Internal: received update on LiveList but state was not an array"
           );
         }
-        // const newArray = [];
 
-        // let allPositions = [];
+        let newState: any[] = state.map((x: any) => x);
+        const newArray: any[] = update.node.toArray();
 
-        // for (const key in update.updates) {
-        //   if (update.updates[key].type === "delete") allPositions.push(key);
-        // }
+        for (const listUpdate of update.updates) {
+          if (listUpdate.type === "insert") {
+            if (listUpdate.index === newState.length) {
+              newState.push(liveNodeToJson(newArray[listUpdate.index]));
+            } else {
+              newState = [
+                ...newState.slice(0, listUpdate.index),
+                liveNodeToJson(newArray[listUpdate.index]),
+                ...newState.slice(listUpdate.index),
+              ];
+            }
+          } else if (listUpdate.type === "delete") {
+            newState.splice(listUpdate.index, 1);
+          }
+        }
 
-        // for (const node of update.node.toCrdtArray()) {
-        //   allPositions.push(node._parentKey!);
-        // }
-
-        // allPositions.sort((itemA, itemB) => compare(itemA, itemB));
-
-        // let patchMode = true;
-
-        // for (const position of allPositions) {
-        //   if (!patchMode && update.updates[position]?.type !== "delete") {
-        //     const index = update.node._indexOfPosition(position);
-        //     newArray.push(liveNodeToJson(update.node.get(index)));
-        //   } else {
-        //     if (position in update.updates) {
-        //       patchMode = false;
-
-        //       if (update.updates[position].type !== "delete") {
-        //         const index = update.node._indexOfPosition(position);
-        //         newArray.push(liveNodeToJson(update.node.get(index)));
-        //       }
-        //     } else {
-        //       const index = update.node._indexOfPosition(position);
-        //       newArray.push(state[index]);
-        //     }
-        //   }
-        // }
-
-        // return newArray;
-
-        return liveListToJson(update.node);
+        return newState;
       }
       case "LiveMap": {
         if (typeof state !== "object") {

@@ -185,7 +185,7 @@ export class LiveList<T> extends AbstractCrdt {
       const storageUpdate: StorageUpdate = {
         node: this as any,
         type: "LiveList",
-        updates: [{ index: indexToDelete, type: "insert" }],
+        updates: [{ index: indexToDelete, type: "delete" }],
       };
 
       return { modified: storageUpdate, reverse };
@@ -393,7 +393,6 @@ export class LiveList<T> extends AbstractCrdt {
     }
 
     const item = this.#items[index];
-    const position = item[0]._parentKey!;
     item[0]._detach();
     this.#items.splice(index, 1);
 

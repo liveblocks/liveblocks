@@ -505,8 +505,8 @@ describe("patchImmutableObject", () => {
 
     const newState = patchImmutableObject(state, updates);
 
-    // expect(newState.list[0] === state.list[0]).toBeTruthy();
-    // expect(newState.list[1] === state.list[1]).toBeTruthy();
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[1] === state.list[1]).toBeTruthy();
 
     expect(newState).toEqual({
       list: [{ a: 1 }, { a: 2 }, { a: 3 }],
@@ -562,7 +562,7 @@ describe("patchImmutableObject", () => {
 
     const newState = patchImmutableObject(state, updates);
 
-    // expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
 
     expect(newState).toEqual({
       list: [{ a: 1 }],
@@ -591,7 +591,7 @@ describe("patchImmutableObject", () => {
 
     const newState = patchImmutableObject(state, updates);
 
-    expect(newState.list[0] === state.list[1]).toBeFalsy();
+    expect(newState.list[0] === state.list[1]).toBeTruthy();
 
     expect(newState).toEqual({
       list: [{ a: 2 }],
@@ -624,7 +624,7 @@ describe("patchImmutableObject", () => {
 
     const newState = patchImmutableObject(state, updates);
 
-    // expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
 
     expect(newState).toEqual({
       list: [{ a: 1 }, { a: 3 }],
