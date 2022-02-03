@@ -287,7 +287,37 @@ describe("2 ways tests with two clients", () => {
       assert({ syncList: [{ a: 2 }] }, 3, 1);
     });
 
-    test("remove item from array", async () => {
+    test("remove first item from array", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          syncList: LiveList<string>;
+        },
+        { syncList: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList.shift();
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: ["b"] }, 3, 1);
+    });
+
+    test("remove last item from array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
         {
           syncList: LiveList<string>;
@@ -539,6 +569,36 @@ describe("patchImmutableObject", () => {
 
     expect(newState).toEqual({
       list: [{ a: 0 }, { a: 1 }],
+    });
+  });
+
+  test("insert element in the middle of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject();
+    const liveList = new LiveList();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 15 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 1, type: "insert" }],
+      },
+    ];
+
+    const newState = patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[2] === state.list[1]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 15 }, { a: 2 }],
     });
   });
 

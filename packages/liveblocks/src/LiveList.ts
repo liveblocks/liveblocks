@@ -197,7 +197,11 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _setChildKey(key: string, child: AbstractCrdt) {
+  _setChildKey(
+    key: string,
+    child: AbstractCrdt,
+    previousKey: string
+  ): ApplyResult {
     child._setParentLink(this, key);
 
     const index = this.#items.findIndex((entry) => entry[1] === key);
@@ -214,6 +218,21 @@ export class LiveList<T> extends AbstractCrdt {
     }
 
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    const newIndex = this._indexOfPosition(key);
+    return {
+      modified: {
+        node: this,
+        type: "LiveList",
+        updates: [{ index: newIndex, type: "insert" }],
+      },
+      reverse: [
+        {
+          type: OpType.SetParentKey,
+          id: item?.[0]._id!,
+          parentKey: previousKey,
+        },
+      ],
+    };
   }
 
   /**
