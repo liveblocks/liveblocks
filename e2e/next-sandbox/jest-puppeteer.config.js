@@ -1,6 +1,6 @@
 module.exports = {
   launch: {
-    headless: false,
+    headless: process.env.CI ? true : false,
     product: "chrome",
   },
   browserContext: "default",
