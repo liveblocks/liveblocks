@@ -111,6 +111,7 @@ describe("Storage - LiveList", () => {
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
+    await secondPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
   });
