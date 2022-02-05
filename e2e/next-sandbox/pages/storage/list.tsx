@@ -9,7 +9,7 @@ import React from "react";
 
 export default function Home() {
   return (
-    <RoomProvider id="e2e-storage-list">
+    <RoomProvider id={`e2e-storage-list-${new Date().getTime()}`}>
       <Sandbox />
     </RoomProvider>
   );
