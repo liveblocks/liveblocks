@@ -12,7 +12,7 @@ const HEIGHT = 800;
 
 module.exports = async function () {
   const browserA = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: [
       `--no-sandbox`,
       `--disable-setuid-sandbox`,
@@ -24,7 +24,7 @@ module.exports = async function () {
   global.__BROWSER_GLOBAL_A__ = browserA;
 
   const browserB = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: [
       `--no-sandbox`,
       `--disable-setuid-sandbox`,
