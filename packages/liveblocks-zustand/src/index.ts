@@ -93,16 +93,19 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
 
         if (room) {
           isPatching = true;
-          updatePresence(room, oldState, newState, presenceMapping as any);
+          room.batch(() => {
+            updatePresence(room!, oldState, newState, presenceMapping as any);
 
-          if (storageRoot) {
-            patchLiveblocksStorage(
-              storageRoot,
-              oldState,
-              newState,
-              mapping as any
-            );
-          }
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                oldState,
+                newState,
+                mapping as any
+              );
+            }
+          });
+
           isPatching = false;
         }
       },
@@ -144,16 +147,18 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
       room.getStorage<any>().then(({ root }) => {
         const updates: any = {};
 
-        for (const key in mapping) {
-          const liveblocksStatePart = root.get(key);
+        room!.batch(() => {
+          for (const key in mapping) {
+            const liveblocksStatePart = root.get(key);
 
-          if (liveblocksStatePart == null) {
-            updates[key] = initialState[key];
-            patchLiveObjectKey(root, key, undefined, initialState[key]);
-          } else {
-            updates[key] = liveNodeToJson(liveblocksStatePart);
+            if (liveblocksStatePart == null) {
+              updates[key] = initialState[key];
+              patchLiveObjectKey(root, key, undefined, initialState[key]);
+            } else {
+              updates[key] = liveNodeToJson(liveblocksStatePart);
+            }
           }
-        }
+        });
 
         typedSet(updates);
 

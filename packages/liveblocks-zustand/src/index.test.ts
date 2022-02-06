@@ -1,7 +1,7 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
-import { Mapping, middleware } from ".";
+import { middleware } from ".";
 import create from "zustand";
 import { StateCreator } from "zustand";
 import {
@@ -11,7 +11,7 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "@liveblocks/client/lib/cjs/live";
-import { MockWebSocket, obj, waitFor } from "../test/utils";
+import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 
 window.WebSocket = MockWebSocket as any;
 
@@ -53,6 +53,9 @@ type BasicStore = {
   value: number;
   setValue: (newValue: number) => void;
 
+  items: Array<{ text: string }>;
+  setItems: (newItems: Array<{ text: string }>) => void;
+
   mappedToFalse: number;
   setMappedToFalse: (newValue: number) => void;
 
@@ -66,6 +69,9 @@ type BasicStore = {
 const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   value: 0,
   setValue: (newValue: number) => set({ value: newValue }),
+
+  items: [],
+  setItems: (items: Array<{ text: string }>) => set({ items }),
 
   mappedToFalse: 0,
   setMappedToFalse: (newValue: number) => set({ value: newValue }),
@@ -83,7 +89,7 @@ function prepareClientAndStore() {
   const store = create(
     middleware<BasicStore, any>(basicStateCreator, {
       client,
-      storageMapping: { value: true, mappedToFalse: false },
+      storageMapping: { value: true, mappedToFalse: false, items: true },
       presenceMapping: { cursor: true },
     })
   );
@@ -323,6 +329,42 @@ describe("middleware", () => {
         );
       });
 
+      test("should batch initialization", async () => {
+        const { store, socket } = await prepareWithStorage([obj("root", {})], {
+          initialState: {
+            value: 5,
+            items: [],
+          },
+        });
+
+        expect(store.getState().value).toBe(5);
+
+        await waitFor(() => socket.sentMessages[1] != null);
+
+        expect(socket.sentMessages[1]).toEqual(
+          JSON.stringify([
+            {
+              type: ClientMessageType.UpdateStorage,
+              ops: [
+                {
+                  opId: "0:0",
+                  id: "root",
+                  type: OpType.UpdateObject,
+                  data: { value: 5 },
+                },
+                {
+                  id: "0:0",
+                  opId: "0:2", // TODO: We currently have a tiny issue in LiveObject.update who generate an opId 0:1 for a potential UpdateObject
+                  type: OpType.CreateList,
+                  parentId: "root",
+                  parentKey: "items",
+                },
+              ],
+            },
+          ])
+        );
+      });
+
       test("should not override liveblocks state with initial state if key exists", async () => {
         const { store, socket } = await prepareWithStorage(
           [obj("root", { value: 1 })],
@@ -401,6 +443,41 @@ describe("middleware", () => {
                   id: "root",
                   type: OpType.UpdateObject,
                   data: { value: 2 },
+                },
+              ],
+            },
+          ])
+        );
+      });
+
+      test("should batch modifications", async () => {
+        const { store, socket } = await prepareWithStorage([
+          obj("root", { value: 1 }),
+          list("1:0", "root", "items"),
+        ]);
+
+        store.getState().setItems([{ text: "A" }, { text: "B" }]);
+
+        expect(socket.sentMessages[1]).toEqual(
+          JSON.stringify([
+            {
+              type: ClientMessageType.UpdateStorage,
+              ops: [
+                {
+                  id: "0:0",
+                  opId: "0:0",
+                  type: OpType.CreateObject,
+                  parentId: "1:0",
+                  parentKey: "!",
+                  data: { text: "A" },
+                },
+                {
+                  id: "0:1",
+                  opId: "0:1",
+                  type: OpType.CreateObject,
+                  parentId: "1:0",
+                  parentKey: '"',
+                  data: { text: "B" },
                 },
               ],
             },

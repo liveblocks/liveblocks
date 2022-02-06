@@ -26,9 +26,7 @@
   "scripts": {
     "build": "rollup -c",
     "test": "jest --watch",
-    "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types",
-    "link:todo": "npm link @liveblocks/client ../../examples/nextjs-zustand-todo-list/node_modules/zustand",
-    "link:whiteboard": "npm link @liveblocks/client ../../examples/nextjs-zustand-whiteboard/node_modules/zustand"
+    "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
   },
   "license": "Apache-2.0",
   "repository": {
