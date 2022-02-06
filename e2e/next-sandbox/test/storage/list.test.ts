@@ -41,7 +41,7 @@ describe("Storage - LiveList", () => {
     await secondPage.close();
   });
 
-  it("list push", async () => {
+  it("list push basic", async () => {
     await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
