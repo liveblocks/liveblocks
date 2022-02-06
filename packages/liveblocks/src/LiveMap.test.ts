@@ -538,12 +538,16 @@ describe("LiveMap", () => {
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: mapElement },
+        {
+          type: "LiveObject",
+          node: mapElement,
+          updates: { a: { type: "update" } },
+        },
       ]);
     });
   });
 
-  describe("reconnect with remote changes and subscribe", async () => {
+  describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<{
         map: LiveMap<string, string>;
@@ -610,7 +614,11 @@ describe("LiveMap", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveMap", node: listItems },
+        {
+          type: "LiveMap",
+          node: listItems,
+          updates: { second: { type: "update" } },
+        },
       ]);
 
       expect(mapCallback).toHaveBeenCalledTimes(1);

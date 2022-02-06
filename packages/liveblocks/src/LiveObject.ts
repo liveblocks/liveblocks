@@ -10,6 +10,7 @@ import {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
+import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -165,22 +166,43 @@ export class LiveObject<
     child._setParentLink(this, key as string);
     child._attach(id, this._doc);
 
-    return { reverse, modified: this };
+    return {
+      reverse,
+      modified: {
+        node: this,
+        type: "LiveObject",
+        updates: { [key as string]: { type: "update" } },
+      },
+    };
   }
 
   /**
    * INTERNAL
    */
-  _detachChild(child: AbstractCrdt) {
-    for (const [key, value] of this.#map) {
-      if (value === child) {
-        this.#map.delete(key);
+  _detachChild(child: AbstractCrdt): ApplyResult {
+    if (child) {
+      const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+
+      for (const [key, value] of this.#map) {
+        if (value === child) {
+          this.#map.delete(key);
+        }
       }
+
+      child._detach();
+
+      const storageUpdate: StorageUpdate = {
+        node: this as any,
+        type: "LiveObject",
+        updates: {
+          [child._parentKey!]: { type: "delete" },
+        },
+      };
+
+      return { modified: storageUpdate, reverse };
     }
 
-    if (child) {
-      child._detach();
-    }
+    return { modified: false };
   }
 
   /**
@@ -231,6 +253,13 @@ export class LiveObject<
     };
   }
 
+  /**
+   * INTERNAL
+   */
+  _getType(): string {
+    return "LiveObject";
+  }
+
   #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];
@@ -253,12 +282,14 @@ export class LiveObject<
       }
     }
 
+    let updateDelta: LiveObjectUpdateDelta<T> = {};
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
         this.#propToLastUpdate.set(key, op.opId!);
       } else if (this.#propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
+        updateDelta[key] = { type: "update" };
       } else if (this.#propToLastUpdate.get(key) === op.opId) {
         // Acknowlegment from local operation
         this.#propToLastUpdate.delete(key);
@@ -282,7 +313,16 @@ export class LiveObject<
       reverse.unshift(reverseUpdate);
     }
 
-    return isModified ? { modified: this, reverse } : { modified: false };
+    return isModified
+      ? {
+          modified: {
+            node: this,
+            type: "LiveObject",
+            updates: updateDelta,
+          },
+          reverse,
+        }
+      : { modified: false };
   }
 
   #applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
@@ -310,7 +350,14 @@ export class LiveObject<
     }
 
     this.#map.delete(key);
-    return { modified: this, reverse };
+    return {
+      modified: {
+        node: this,
+        type: "LiveObject",
+        updates: { [op.key]: { type: "delete" } },
+      },
+      reverse,
+    };
   }
 
   /**
@@ -374,6 +421,14 @@ export class LiveObject<
     }
 
     this.#map.delete(keyAsString);
+
+    const storageUpdates = new Map<string, StorageUpdate>();
+    storageUpdates.set(this._id, {
+      node: this,
+      type: "LiveObject",
+      updates: { [key as string]: { type: "delete" } },
+    });
+
     this._doc.dispatch(
       [
         {
@@ -384,7 +439,7 @@ export class LiveObject<
         },
       ],
       reverse,
-      [this]
+      storageUpdates
     );
   }
 
@@ -425,6 +480,8 @@ export class LiveObject<
       data: {},
     };
 
+    const updateDelta: LiveObjectUpdateDelta<T> = {};
+
     for (const key in overrides) {
       this.#propToLastUpdate.set(key, opId);
 
@@ -450,6 +507,7 @@ export class LiveObject<
       }
 
       this.#map.set(key, newValue);
+      updateDelta[key] = { type: "update" };
     }
 
     if (Object.keys(reverseUpdateOp.data).length !== 0) {
@@ -465,6 +523,12 @@ export class LiveObject<
       });
     }
 
-    this._doc.dispatch(ops, reverseOps, [this]);
+    const storageUpdates = new Map<string, StorageUpdate>();
+    storageUpdates.set(this._id, {
+      node: this,
+      type: "LiveObject",
+      updates: updateDelta,
+    });
+    this._doc.dispatch(ops, reverseOps, storageUpdates);
   }
 }

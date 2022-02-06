@@ -754,7 +754,11 @@ describe("LiveList", () => {
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
-        { type: "LiveObject", node: listElement },
+        {
+          type: "LiveObject",
+          node: listElement,
+          updates: { a: { type: "update" } },
+        },
       ]);
     });
 
@@ -830,9 +834,125 @@ describe("LiveList", () => {
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith(liveList);
     });
+
+    test("batch multiple actions", async () => {
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveList = root.get("items");
+
+      subscribe(liveList, callback, { isDeep: true });
+
+      batch(() => {
+        liveList.push("b");
+        liveList.push("c");
+      });
+
+      assert({ items: ["a", "b", "c"] });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          node: liveList,
+          type: "LiveList",
+          updates: [
+            { index: 1, type: "insert" },
+            { index: 2, type: "insert" },
+          ],
+        },
+      ]);
+    });
+
+    test("clear with deep subscribe ", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root.get("items"), callback, {
+        isDeep: true,
+      });
+
+      root.get("items").clear();
+
+      unsubscribe();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            { index: 0, type: "delete" },
+            { index: 1, type: "delete" },
+          ],
+        },
+      ]);
+    });
+
+    test("move with deep subscribe", async () => {
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const unsubscribe = subscribe(root.get("items"), callback, {
+        isDeep: true,
+      });
+
+      root.get("items").move(0, 1);
+
+      unsubscribe();
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            { index: 0, type: "delete" },
+            { index: 1, type: "insert" },
+          ],
+        },
+      ]);
+    });
   });
 
-  describe("reconnect with remote changes and subscribe", async () => {
+  describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
@@ -904,10 +1024,18 @@ describe("LiveList", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(2);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: [{ index: 1, type: "insert" }],
+        },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: [{ index: 2, type: "insert" }],
+        },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
     });
@@ -978,7 +1106,14 @@ describe("LiveList", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: [
+            { index: 0, type: "insert" },
+            { index: 0, type: "insert" },
+          ],
+        },
       ]);
 
       expect(listCallback).toHaveBeenCalledTimes(1);
@@ -1041,7 +1176,11 @@ describe("LiveList", () => {
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
 
       expect(rootDeepCallback).toHaveBeenCalledWith([
-        { type: "LiveList", node: listItems },
+        {
+          type: "LiveList",
+          node: listItems,
+          updates: [{ index: 1, type: "delete" }],
+        },
       ]);
 
       expect(listCallback).toHaveBeenCalledTimes(1);

@@ -25,19 +25,47 @@ export type RoomEventCallbackMap = {
   connection: ConnectionCallback;
 };
 
+export type UpdateDelta =
+  | {
+      type: "update";
+    }
+  | {
+      type: "delete";
+    };
+
 export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
+  updates: Record<TKey, UpdateDelta>;
 };
+
+export type LiveObjectUpdateDelta<T> = Partial<{
+  [Property in keyof T]: UpdateDelta;
+}>;
 
 export type LiveObjectUpdates<TData = any> = {
   type: "LiveObject";
   node: LiveObject<TData>;
+  updates: LiveObjectUpdateDelta<TData>;
+};
+
+export type ListUpdateDelta =
+  | {
+      type: "insert";
+    }
+  | {
+      type: "delete";
+    };
+
+export type LiveListUpdateDelta = {
+  index: number;
+  type: "insert" | "delete";
 };
 
 export type LiveListUpdates<TItem = any> = {
   type: "LiveList";
   node: LiveList<TItem>;
+  updates: LiveListUpdateDelta[];
 };
 
 export type BroadcastOptions = {

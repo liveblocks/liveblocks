@@ -1,7 +1,8 @@
 import { Op, OpType, SerializedCrdt } from "./live";
+import { StorageUpdate } from "./types";
 
 export type ApplyResult =
-  | { reverse: Op[]; modified: AbstractCrdt }
+  | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
 
 export interface Doc {
@@ -9,7 +10,11 @@ export interface Doc {
   generateOpId: () => string;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
-  dispatch: (ops: Op[], reverseOps: Op[], modified: AbstractCrdt[]) => void;
+  dispatch: (
+    ops: Op[],
+    reverseOps: Op[],
+    storageUpdates: Map<string, StorageUpdate>
+  ) => void;
 }
 
 export abstract class AbstractCrdt {
@@ -53,14 +58,7 @@ export abstract class AbstractCrdt {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {
-          const parent = this._parent;
-          const reverse = this._serialize(
-            this._parent._id!,
-            this._parentKey,
-            this.#doc
-          );
-          this._parent._detachChild(this);
-          return { modified: parent, reverse };
+          return this._parent._detachChild(this);
         }
 
         return { modified: false };
@@ -121,7 +119,7 @@ export abstract class AbstractCrdt {
   /**
    * INTERNAL
    */
-  abstract _detachChild(crdt: AbstractCrdt): void;
+  abstract _detachChild(crdt: AbstractCrdt): ApplyResult;
   /**
    * INTERNAL
    */
@@ -131,4 +129,6 @@ export abstract class AbstractCrdt {
    * INTERNAL
    */
   abstract _toSerializedCrdt(): SerializedCrdt;
+
+  abstract _getType(): string;
 }

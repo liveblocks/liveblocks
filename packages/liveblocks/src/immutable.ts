@@ -3,6 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { compare } from "./position";
 import { StorageUpdate } from "./types";
 
 export function liveObjectToJson(liveObject: LiveObject<any>) {
@@ -240,7 +241,6 @@ function patchImmutableNode(
   update: StorageUpdate
 ): any {
   const pathItem = path.pop();
-
   if (pathItem === undefined) {
     switch (update.type) {
       case "LiveObject": {
@@ -249,7 +249,17 @@ function patchImmutableNode(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
-        return liveObjectToJson(update.node);
+        let newState = Object.assign({}, state);
+
+        for (const key in update.updates) {
+          if (update.updates[key]?.type === "update") {
+            newState[key] = liveNodeToJson(update.node.get(key));
+          } else if (update.updates[key]?.type === "delete") {
+            delete newState[key];
+          }
+        }
+
+        return newState;
       }
       case "LiveList": {
         if (Array.isArray(state) === false) {
@@ -257,7 +267,27 @@ function patchImmutableNode(
             "Internal: received update on LiveList but state was not an array"
           );
         }
-        return liveListToJson(update.node);
+
+        let newState: any[] = state.map((x: any) => x);
+        const newArray: any[] = update.node.toArray();
+
+        for (const listUpdate of update.updates) {
+          if (listUpdate.type === "insert") {
+            if (listUpdate.index === newState.length) {
+              newState.push(liveNodeToJson(newArray[listUpdate.index]));
+            } else {
+              newState = [
+                ...newState.slice(0, listUpdate.index),
+                liveNodeToJson(newArray[listUpdate.index]),
+                ...newState.slice(listUpdate.index),
+              ];
+            }
+          } else if (listUpdate.type === "delete") {
+            newState.splice(listUpdate.index, 1);
+          }
+        }
+
+        return newState;
       }
       case "LiveMap": {
         if (typeof state !== "object") {
@@ -265,7 +295,17 @@ function patchImmutableNode(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        return liveMapToJson(update.node);
+        let newState = Object.assign({}, state);
+
+        for (const key in update.updates) {
+          if (update.updates[key]?.type === "update") {
+            newState[key] = liveNodeToJson(update.node.get(key));
+          } else if (update.updates[key]?.type === "delete") {
+            delete newState[key];
+          }
+        }
+
+        return newState;
       }
     }
   }
