@@ -141,7 +141,7 @@ const useStore = create(
     }),
     {
       client,
-      mapping: { layers: true },
+      storageMapping: { layers: true },
       presenceMapping: { cursor: true },
     }
   )

@@ -35,7 +35,7 @@ const useStore = create(
           todos: state.todos.filter((todo, i) => index != i),
         })),
     }),
-    { client, mapping: { todos: true } }
+    { client, storageMapping: { todos: true } }
   )
 );
 
