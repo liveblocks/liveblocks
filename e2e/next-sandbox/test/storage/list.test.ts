@@ -41,7 +41,8 @@ describe("Storage - LiveList", () => {
     await secondPage.close();
   });
 
-  it("list push", async () => {
+  it("list push basic", async () => {
+    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -64,6 +65,7 @@ describe("Storage - LiveList", () => {
   });
 
   it("list move", async () => {
+    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -91,6 +93,7 @@ describe("Storage - LiveList", () => {
   });
 
   it("push conflicts", async () => {
+    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -113,6 +116,7 @@ describe("Storage - LiveList", () => {
   });
 
   it("fuzzy", async () => {
+    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -144,6 +148,7 @@ describe("Storage - LiveList", () => {
   });
 
   it("fuzzy with full undo/redo", async () => {
+    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);

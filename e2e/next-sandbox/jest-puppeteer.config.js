@@ -1,6 +1,6 @@
 module.exports = {
   launch: {
-    headless: false,
+    headless: true,
     product: "chrome",
   },
   browserContext: "default",
