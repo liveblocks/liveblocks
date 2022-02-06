@@ -53,6 +53,9 @@ type BasicStore = {
   value: number;
   setValue: (newValue: number) => void;
 
+  mappedToFalse: number;
+  setMappedToFalse: (newValue: number) => void;
+
   notMapped: string;
   setNotMapped: (newValue: string) => void;
 
@@ -63,6 +66,9 @@ type BasicStore = {
 const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   value: 0,
   setValue: (newValue: number) => set({ value: newValue }),
+
+  mappedToFalse: 0,
+  setMappedToFalse: (newValue: number) => set({ value: newValue }),
 
   notMapped: "default",
   setNotMapped: (notMapped: string) => set({ notMapped }),
@@ -77,7 +83,7 @@ function prepareClientAndStore() {
   const store = create(
     middleware<BasicStore, any>(basicStateCreator, {
       client,
-      mapping: { value: true },
+      storageMapping: { value: true, mappedToFalse: false },
       presenceMapping: { cursor: true },
     })
   );
@@ -281,6 +287,14 @@ describe("middleware", () => {
         expect(store.getState().notMapped).toBe("default");
       });
 
+      test("should not initialize if mapping key is false", async () => {
+        const { store } = await prepareWithStorage([
+          obj("root", { mappedToFalse: 1 }),
+        ]);
+
+        expect(store.getState().mappedToFalse).toBe(0);
+      });
+
       test("should initialize with default state if key is missing from liveblocks storage", async () => {
         const { store, socket } = await prepareWithStorage([obj("root", {})], {
           initialState: {
@@ -393,6 +407,64 @@ describe("middleware", () => {
           ])
         );
       });
+    });
+  });
+
+  describe("configuration validation", () => {
+    test("missing client should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), { client: undefined as any, storageMapping: {} })
+      ).toThrow();
+    });
+
+    test("missing mapping should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), { client, storageMapping: null as any })
+      ).toThrow();
+    });
+
+    test("invalid storageMapping type should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), {
+          client,
+          storageMapping: "invalid_mapping" as any,
+        })
+      ).toThrow();
+    });
+
+    test("invalid storageMapping key value should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), {
+          client,
+          storageMapping: { key: "value" },
+        })
+      ).toThrow();
+    });
+
+    test("duplicated key should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), {
+          client,
+          storageMapping: { key: true },
+          presenceMapping: { key: true },
+        })
+      ).toThrow();
+    });
+
+    test("invalid presenceMapping should throw", () => {
+      const client = createClient({ authEndpoint: "/api/auth" });
+      expect(() =>
+        middleware(() => ({}), {
+          client,
+          storageMapping: {},
+          presenceMapping: "invalid_mapping",
+        })
+      ).toThrow();
     });
   });
 });

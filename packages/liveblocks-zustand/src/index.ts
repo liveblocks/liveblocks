@@ -45,13 +45,34 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
     GetState<LiveblocksState<T>>,
     StoreApi<T> & { getRoom: () => Room }
   >,
-  options: { client: Client; mapping: Mapping<T>; presenceMapping?: Mapping<T> }
+  options: {
+    client: Client;
+    storageMapping: Mapping<T>;
+    presenceMapping?: Mapping<T>;
+  }
 ) => StateCreator<
   LiveblocksState<T, TPresence>,
   SetState<LiveblocksState<T, TPresence>>,
   GetState<LiveblocksState<T, TPresence>>,
   StoreApi<LiveblocksState<T, TPresence>>
-> = (config, { client, mapping, presenceMapping = {} }) => {
+> = (
+  config,
+  {
+    client,
+    storageMapping: unvalidatedMapping,
+    presenceMapping: unvalidatedPresenceMapping = {},
+  }
+) => {
+  if (client == null) {
+    throw new Error(`${ERROR_PREFIX} client is missing`);
+  }
+  const mapping = validateMapping(unvalidatedMapping, "storageMapping");
+  const presenceMapping = validateMapping(
+    unvalidatedPresenceMapping,
+    "presenceMapping"
+  );
+  validateNoDuplicateKeys(mapping, presenceMapping);
+
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
@@ -252,3 +273,53 @@ function patchLiveblocksStorage<T>(
     }
   }
 }
+
+function isObject(value: any): value is object {
+  return Object.prototype.toString.call(value) === "[object Object]";
+}
+
+function validateNoDuplicateKeys<T>(
+  storageMapping: Mapping<T>,
+  presenceMapping: Mapping<T>
+) {
+  for (const key in storageMapping) {
+    if (presenceMapping[key] !== undefined) {
+      throw new Error(
+        `${ERROR_PREFIX} "${key}" is mapped on presenceMapping and storageMapping. A key shouldn't exist on both mapping.`
+      );
+    }
+  }
+}
+
+/**
+ * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware
+ */
+function validateMapping<T>(
+  mapping: Mapping<T>,
+  mappingType: "storageMapping" | "presenceMapping"
+): Mapping<T> {
+  if (mapping == null) {
+    throw new Error(`${ERROR_PREFIX} ${mappingType} is missing.`);
+  }
+  if (!isObject(mapping)) {
+    throw new Error(
+      `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
+    );
+  }
+
+  const result: Mapping<T> = {};
+  for (const key in mapping) {
+    if (typeof mapping[key] !== "boolean") {
+      throw new Error(
+        `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
+      );
+    }
+
+    if (mapping[key] === true) {
+      result[key] = true;
+    }
+  }
+  return result;
+}
+
+const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
