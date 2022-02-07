@@ -487,9 +487,24 @@ describe("middleware", () => {
     });
   });
 
+  describe("history", () => {
+    test("undo", async () => {
+      const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+
+      expect(store.getState().value).toBe(1);
+
+      store.getState().setValue(2);
+
+      expect(store.getState().value).toBe(2);
+
+      store.getState().liveblocks.history.undo();
+
+      expect(store.getState().value).toBe(1);
+    });
+  });
+
   describe("configuration validation", () => {
     test("missing client should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
         middleware(() => ({}), { client: undefined as any, storageMapping: {} })
       ).toThrow();

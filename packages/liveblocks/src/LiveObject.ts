@@ -289,7 +289,6 @@ export class LiveObject<
       } else if (this.#propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
-        updateDelta[key] = { type: "update" };
       } else if (this.#propToLastUpdate.get(key) === op.opId) {
         // Acknowlegment from local operation
         this.#propToLastUpdate.delete(key);
@@ -306,6 +305,7 @@ export class LiveObject<
       }
 
       isModified = true;
+      updateDelta[key] = { type: "update" };
       this.#map.set(key, op.data[key]);
     }
 

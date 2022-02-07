@@ -785,4 +785,28 @@ describe("LiveObject", () => {
       expect(liveObjectCallback).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("undo apply update", () => {
+    test("subscription should gives the right update", async () => {
+      const { root, assert, subscribe, undo } =
+        await prepareIsolatedStorageTest<{ a: number }>(
+          [createSerializedObject("0:0", { a: 0 })],
+          1
+        );
+
+      assert({ a: 0 });
+      root.set("a", 1);
+      assert({ a: 1 });
+
+      const callback = jest.fn();
+      subscribe(root, callback, { isDeep: true });
+
+      undo();
+      assert({ a: 0 });
+
+      expect(callback).toHaveBeenCalledWith([
+        { type: "LiveObject", node: root, updates: { a: { type: "update" } } },
+      ]);
+    });
+  });
 });
