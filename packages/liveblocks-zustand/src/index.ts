@@ -93,9 +93,9 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
 
         if (room) {
           isPatching = true;
-          room.batch(() => {
-            updatePresence(room!, oldState, newState, presenceMapping as any);
+          updatePresence(room!, oldState, newState, presenceMapping as any);
 
+          room.batch(() => {
             if (storageRoot) {
               patchLiveblocksStorage(
                 storageRoot,

@@ -488,7 +488,7 @@ describe("middleware", () => {
   });
 
   describe("history", () => {
-    test("undo", async () => {
+    test("undo / redo", async () => {
       const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
 
       expect(store.getState().value).toBe(1);
@@ -500,6 +500,28 @@ describe("middleware", () => {
       store.getState().liveblocks.history.undo();
 
       expect(store.getState().value).toBe(1);
+
+      store.getState().liveblocks.history.redo();
+
+      expect(store.getState().value).toBe(2);
+    });
+
+    test("updating presence should not reset redo stack", async () => {
+      const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+
+      expect(store.getState().value).toBe(1);
+
+      store.getState().setValue(2);
+
+      expect(store.getState().value).toBe(2);
+
+      store.getState().liveblocks.history.undo();
+
+      store.getState().setCursor({ x: 0, y: 1 });
+
+      store.getState().liveblocks.history.redo();
+
+      expect(store.getState().value).toBe(2);
     });
   });
 

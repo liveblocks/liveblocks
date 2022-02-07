@@ -526,6 +526,39 @@ describe("room", () => {
     expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
 
+  test("batch without changes should not erase redo stack", async () => {
+    const effects = mockEffects();
+    const state = defaultState({});
+    const room = makeStateMachine(state, defaultContext, effects);
+
+    room.connect();
+    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    room.onOpen();
+
+    const getStoragePromise = room.getStorage<{ x: number }>();
+
+    room.onMessage(
+      serverMessage({
+        type: ServerMessageType.InitialStorageState,
+        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+      })
+    );
+
+    const storage = await getStoragePromise;
+
+    storage.root.set("x", 1);
+
+    room.undo();
+
+    expect(storage.root.toObject()).toEqual({ x: 0 });
+
+    room.batch(() => {});
+
+    room.redo();
+
+    expect(storage.root.toObject()).toEqual({ x: 1 });
+  });
+
   describe("subscription", () => {
     test("batch my-presence", () => {
       const effects = mockEffects();
