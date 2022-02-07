@@ -108,7 +108,7 @@ async function prepareWithStorage(
 
   store
     .getState()
-    .liveblocks.enter(options?.room || "room", options?.initialState || {});
+    .liveblocks.enterRoom(options?.room || "room", options?.initialState || {});
 
   const socket = await waitForSocketToBeConnected();
 
@@ -149,7 +149,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enter("room", {});
+    liveblocks.enterRoom("room", {});
 
     expect(store.getState().liveblocks.isStorageLoading).toBe(true);
 
@@ -172,7 +172,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enter("room", {});
+    liveblocks.enterRoom("room", {});
 
     const socket = await waitForSocketToBeConnected();
 
@@ -187,7 +187,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enter("room", {});
+      liveblocks.enterRoom("room", {});
 
       const socket = await waitForSocketToBeConnected();
 
@@ -211,7 +211,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enter("room", {});
+      liveblocks.enterRoom("room", {});
 
       const socket = await waitForSocketToBeConnected();
 
@@ -248,7 +248,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enter("room", {});
+      liveblocks.enterRoom("room", {});
 
       const socket = await waitForSocketToBeConnected();
 
@@ -497,11 +497,11 @@ describe("middleware", () => {
 
       expect(store.getState().value).toBe(2);
 
-      store.getState().liveblocks.history.undo();
+      store.getState().liveblocks.room!.history.undo();
 
       expect(store.getState().value).toBe(1);
 
-      store.getState().liveblocks.history.redo();
+      store.getState().liveblocks.room!.history.redo();
 
       expect(store.getState().value).toBe(2);
     });
@@ -515,11 +515,11 @@ describe("middleware", () => {
 
       expect(store.getState().value).toBe(2);
 
-      store.getState().liveblocks.history.undo();
+      store.getState().liveblocks.room!.history.undo();
 
       store.getState().setCursor({ x: 0, y: 1 });
 
-      store.getState().liveblocks.history.redo();
+      store.getState().liveblocks.room!.history.redo();
 
       expect(store.getState().value).toBe(2);
     });

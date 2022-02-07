@@ -1,13 +1,12 @@
 import React from "react";
+import useStore from "../store";
 import IconButton from "./IconButton";
 
-type Props = {
-  onClick: () => void;
-};
+export default function UndoButton() {
+  const undo = useStore((state) => state.liveblocks.room?.history.undo);
 
-export default function UndoButton({ onClick }: Props) {
   return (
-    <IconButton onClick={onClick}>
+    <IconButton onClick={undo}>
       <svg
         width="36"
         height="36"

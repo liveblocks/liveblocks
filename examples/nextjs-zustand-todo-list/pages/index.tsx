@@ -10,18 +10,20 @@ export default function StorageDemo() {
     deleteTodo,
     draft,
     setDraft,
-    liveblocks: { enter, leave, isStorageLoading },
+    liveblocks: { enterRoom, leaveRoom, isStorageLoading },
   } = useStore();
 
   useEffect(() => {
-    enter("example-storage", {
+    // Enter liveblocks room on unmount and start syncing Liveblocks and Zustand store
+    enterRoom("zustand-todo-list", {
       todos: [],
     });
 
     return () => {
-      leave("example-storage");
+      // Leave liveblocks room on unmount and stop syncing Liveblocks and Zustand store
+      leaveRoom("zustand-todo-list");
     };
-  }, [enter, leave]);
+  }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
     return <div>Loading...</div>;

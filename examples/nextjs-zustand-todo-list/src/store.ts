@@ -35,6 +35,7 @@ const useStore = create(
           todos: state.todos.filter((todo, i) => index != i),
         })),
     }),
+    // Only todos are synced with Liveblocks, draft is a local state so it's not part of the mapping
     { client, storageMapping: { todos: true } }
   )
 );

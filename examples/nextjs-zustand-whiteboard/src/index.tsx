@@ -36,22 +36,22 @@ export default function Whiteboard() {
   }, [onKeyDown]);
 
   // Liveblocks integration start
-  const { enter, leave, isLoading } = useStore(
+  const { enterRoom, leaveRoom, isLoading } = useStore(
     (state) => ({
-      enter: state.liveblocks.enter,
-      leave: state.liveblocks.leave,
+      enterRoom: state.liveblocks.enterRoom,
+      leaveRoom: state.liveblocks.leaveRoom,
       isLoading: state.liveblocks.isStorageLoading,
     }),
     shallow
   );
 
   useEffect(() => {
-    enter("zustand-whiteboard", { layers: {} });
+    enterRoom("zustand-whiteboard", { layers: {} });
 
     return () => {
-      leave("zustand-whiteboard");
+      leaveRoom("zustand-whiteboard");
     };
-  }, [enter, leave]);
+  }, [enterRoom, leaveRoom]);
 
   if (isLoading) {
     return <div>Loading...</div>;

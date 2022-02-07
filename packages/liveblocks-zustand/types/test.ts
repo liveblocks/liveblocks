@@ -17,13 +17,17 @@ const useStore = create(
         value: 0,
         setValue: (newValue: number) => {
           // Liveblocks state should be available here
-          const { others, connection, enter, leave, isStorageLoading } =
-            get().liveblocks;
+          const {
+            others,
+            connection,
+            enterRoom,
+            leaveRoom,
+            isStorageLoading,
+            room,
+          } = get().liveblocks;
 
           // $ExpectError
           get().liveblocks = {}; // Readonly
-
-          api.getRoom();
 
           return set({ value: get().value });
         },
@@ -39,9 +43,9 @@ const useStore = create(
 const { value, liveblocks } = useStore.getState();
 
 // $ExpectError
-liveblocks.enter = () => {}; // Readonly
+liveblocks.enterRoom = () => {}; // Readonly
 // $ExpectError
-liveblocks.leave = () => {}; // Readonly
+liveblocks.leaveRoom = () => {}; // Readonly
 // $ExpectError
 liveblocks.connection = "open"; // Readonly
 // $ExpectError
@@ -49,4 +53,4 @@ liveblocks.others = []; // Readonly
 // $ExpectError
 liveblocks.isStorageLoading = false; // Readonly
 // $ExpectError
-liveblocks.history = {}; // Readonly
+liveblocks.room = {}; // Readonly

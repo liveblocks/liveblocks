@@ -12,16 +12,11 @@ import { StorageUpdate } from "../../liveblocks/lib/cjs/types";
 
 export type LiveblocksState<TState, TPresence = any> = TState & {
   readonly liveblocks: {
-    readonly enter: (room: string, initialState: Partial<TState>) => void;
-    readonly leave: (room: string) => void;
+    readonly enterRoom: (room: string, initialState: Partial<TState>) => void;
+    readonly leaveRoom: (room: string) => void;
+    readonly room: Room | null;
     readonly others: Array<User<TPresence>>;
     readonly isStorageLoading: boolean;
-    readonly history: {
-      undo: () => void;
-      redo: () => void;
-      pause: () => void;
-      resume: () => void;
-    };
     readonly connection:
       | "closed"
       | "authenticating"
@@ -43,7 +38,7 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
     T,
     SetState<T>,
     GetState<LiveblocksState<T>>,
-    StoreApi<T> & { getRoom: () => Room }
+    StoreApi<T>
   >,
   options: {
     client: Client;
@@ -110,21 +105,17 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
         }
       },
       get,
-      {
-        ...api,
-        getRoom: () => room!,
-      }
+      api
     );
 
-    function enter(roomId: string, initialState: any) {
+    function enterRoom(roomId: string, initialState: any) {
       if (storageRoot) {
         return;
       }
 
-      // set isLoading storage to true
-      updateZustandLiveblocksState(set, { isStorageLoading: true });
-
       room = client.enter(roomId);
+
+      updateZustandLiveblocksState(set, { isStorageLoading: true, room });
 
       const state = get();
 
@@ -180,7 +171,7 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
       });
     }
 
-    function leave(roomId: string) {
+    function leaveRoom(roomId: string) {
       for (const unsubscribe of unsubscribeCallbacks) {
         unsubscribe();
       }
@@ -189,22 +180,23 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
       isPatching = false;
       unsubscribeCallbacks = [];
       client.leave(roomId);
+      updateZustandLiveblocksState(set, {
+        others: [],
+        connection: "closed",
+        isStorageLoading: false,
+        room: null,
+      });
     }
 
     return {
       ...store,
       liveblocks: {
-        enter,
-        leave,
+        enterRoom,
+        leaveRoom,
+        room: null,
         others: [],
         connection: "closed",
         isStorageLoading: false,
-        history: {
-          undo: () => room?.history.undo(),
-          redo: () => room?.history.redo(),
-          pause: () => room?.history.pause(),
-          resume: () => room?.history.resume(),
-        },
       },
     };
   };

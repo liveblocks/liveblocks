@@ -1,7 +1,7 @@
 import styles from "./IconButton.module.css";
 
 type Props = {
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   isActive?: boolean;
 };

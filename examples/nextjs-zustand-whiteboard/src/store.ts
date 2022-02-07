@@ -38,14 +38,15 @@ interface Presence {
 
 const useStore = create(
   middleware<State, Presence>(
-    (set, get, api: any) => ({
+    (set, get) => ({
       layers: initialLayers,
       isDragging: false,
       cursor: null,
       selectedLayerId: null,
 
       onLayerPointerDown: (id: string, e: React.PointerEvent) => {
-        api.getRoom().history.pause();
+        // Access to underlying room API to pause history before starting a drag
+        get().liveblocks.room?.history.pause();
         set({
           cursor: { x: e.clientX, y: e.clientY },
           selectedLayerId: id,
@@ -57,7 +58,8 @@ const useStore = create(
         set({
           isDragging: false,
         });
-        api.getRoom().history.resume();
+        // Access to underlying room API to resume history after ending a drag
+        get().liveblocks.room?.history.resume();
       },
 
       onDocumentPointerLeave: (e: PointerEvent) => {
