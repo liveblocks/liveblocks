@@ -28,7 +28,7 @@ const useStore = create(
           return set({ value: get().value });
         },
       }),
-      { client, mapping: {}, presenceMapping: {} }
+      { client, storageMapping: {}, presenceMapping: {} }
     ),
     {
       name: "persist-name",
