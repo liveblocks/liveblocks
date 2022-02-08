@@ -8,7 +8,6 @@ import {
   liveNodeToJson,
   Room,
 } from "@liveblocks/client";
-import { StorageUpdate } from "../../liveblocks/lib/cjs/types";
 
 export type LiveblocksState<TState, TPresence = any> = TState & {
   readonly liveblocks: {
@@ -204,7 +203,7 @@ export const middleware: <T extends Object, TPresence extends Object = any>(
 
 function patchState<T>(
   state: T,
-  updates: StorageUpdate[],
+  updates: any[], // StorageUpdate
   mapping: Mapping<T>
 ) {
   const partialState: Partial<T> = {};
