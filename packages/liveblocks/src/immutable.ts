@@ -124,8 +124,10 @@ export function patchLiveList<T>(
       }
     }
   } else if (i > nextEnd) {
-    while (i <= prevEnd) {
-      liveList.delete(i++);
+    let localI = i;
+    while (localI <= prevEnd) {
+      liveList.delete(i);
+      localI++;
     }
   } else {
     while (i <= prevEnd && i <= nextEnd) {

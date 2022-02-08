@@ -346,6 +346,97 @@ describe("2 ways tests with two clients", () => {
 
       assert({ syncList: ["a"] }, 3, 1);
     });
+
+    test("remove all elements of array except first", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          syncList: LiveList<string>;
+        },
+        { syncList: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList = ["a"];
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: ["a"] }, 3, 2);
+    });
+    test("remove all elements of array except last", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          syncList: LiveList<string>;
+        },
+        { syncList: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList = ["c"];
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: ["c"] }, 3, 2);
+    });
+    test("remove all elements of array", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          syncList: LiveList<string>;
+        },
+        { syncList: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "c"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList = [];
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: [] }, 2, 3);
+    });
   });
 
   describe("Map/LiveMap", () => {
