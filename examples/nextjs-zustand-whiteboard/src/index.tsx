@@ -65,6 +65,12 @@ export default function Whiteboard() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
+        <div style={{ position: "absolute" }}>
+          Shortcuts: <br />
+          "R": Insert Rectangle <br />
+          "O": Insert Circle <br />
+          "Backspace": Delete selected layer <br />
+        </div>
         {Object.keys(layers).map((id) => (
           <Layer key={id} id={id} isSelected={selectedLayerId == id} />
         ))}
