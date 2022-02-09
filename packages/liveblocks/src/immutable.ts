@@ -271,16 +271,15 @@ function patchImmutableNode(
         }
 
         let newState: any[] = state.map((x: any) => x);
-        const newArray: any[] = update.node.toArray();
 
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
-              newState.push(liveNodeToJson(newArray[listUpdate.index]));
+              newState.push(liveNodeToJson(listUpdate.item));
             } else {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(newArray[listUpdate.index]),
+                liveNodeToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index),
               ];
             }
@@ -290,7 +289,7 @@ function patchImmutableNode(
             if (listUpdate.previousIndex > listUpdate.index) {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(newArray[listUpdate.index]),
+                liveNodeToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index, listUpdate.previousIndex),
                 ...newState.slice(listUpdate.previousIndex + 1),
               ];
@@ -301,7 +300,7 @@ function patchImmutableNode(
                   listUpdate.previousIndex + 1,
                   listUpdate.index + 1
                 ),
-                liveNodeToJson(newArray[listUpdate.index]),
+                liveNodeToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index + 1),
               ];
             }

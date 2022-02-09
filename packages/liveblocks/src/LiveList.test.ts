@@ -447,7 +447,7 @@ describe("LiveList", () => {
         {
           node: items,
           type: "LiveList",
-          updates: [{ type: "insert", index: 0, value: "1" }],
+          updates: [{ type: "insert", index: 0, item: "1" }],
         },
       ]);
     });
@@ -924,8 +924,8 @@ describe("LiveList", () => {
           node: liveList,
           type: "LiveList",
           updates: [
-            { index: 1, type: "insert" },
-            { index: 2, type: "insert" },
+            { index: 1, item: "b", type: "insert" },
+            { index: 2, item: "c", type: "insert" },
           ],
         },
       ]);
@@ -958,7 +958,7 @@ describe("LiveList", () => {
 
       assert({ items: ["a", "b", "c"] });
 
-      expect(callback).toHaveBeenCalledTimes(2);
+      expect(callback).toHaveBeenCalledTimes(1);
     });
 
     test("clear with deep subscribe ", async () => {
@@ -1029,7 +1029,14 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: root.get("items"),
-          updates: [{ index: 1, previousIndex: 0, type: "move" }],
+          updates: [
+            {
+              index: 1,
+              previousIndex: 0,
+              item: root.get("items").get(1),
+              type: "move",
+            },
+          ],
         },
       ]);
     });
@@ -1110,14 +1117,14 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 1, type: "insert" }],
+          updates: [{ index: 1, item: "b", type: "insert" }],
         },
       ]);
       expect(rootDeepCallback).toHaveBeenCalledWith([
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 2, type: "insert" }],
+          updates: [{ index: 2, item: "c", type: "insert" }],
         },
       ]);
       expect(listCallback).toHaveBeenCalledTimes(2);
@@ -1192,7 +1199,7 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 1, previousIndex: 0, type: "move" }],
+          updates: [{ index: 0, previousIndex: 1, item: "b", type: "move" }],
         },
       ]);
 

@@ -60,7 +60,7 @@ describe("Zustand - Array", () => {
 
   it("fuzzy", async () => {
     await firstPage.click("#clear");
-    await delay(4000);
+    await delay(2000);
     await assertItems([firstPage, secondPage], []);
 
     for (let i = 0; i < 10; i++) {
@@ -74,7 +74,7 @@ describe("Zustand - Array", () => {
 
     await assertJsonContentAreEquals(firstPage, secondPage);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) {
       // no await to create randomness
       firstPage.click(pickRandomActionWithUndoRedo());
       secondPage.click(pickRandomActionWithUndoRedo());
