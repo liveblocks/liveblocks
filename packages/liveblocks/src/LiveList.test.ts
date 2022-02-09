@@ -405,6 +405,54 @@ describe("LiveList", () => {
     });
   });
 
+  describe("apply CreateRegister", () => {
+    it("on existing position should give the right update", async () => {
+      const { root, assert, applyRemoteOperations, subscribe } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      // Register id = 1:0
+      items.push("0");
+
+      assert({
+        items: ["0"],
+      });
+
+      const callback = jest.fn();
+
+      subscribe(items, callback, { isDeep: true });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:1",
+          parentId: "0:1",
+          parentKey: FIRST_POSITION,
+          data: "1",
+        },
+      ]);
+
+      assert({
+        items: ["1", "0"],
+      });
+
+      expect(callback).toHaveBeenCalledWith([
+        {
+          node: items,
+          type: "LiveList",
+          updates: [{ type: "insert", index: 0, value: "1" }],
+        },
+      ]);
+    });
+  });
+
   describe("conflict", () => {
     it("list conflicts", async () => {
       const { root, assert, applyRemoteOperations } =
