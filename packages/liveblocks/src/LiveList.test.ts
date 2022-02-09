@@ -883,6 +883,36 @@ describe("LiveList", () => {
       ]);
     });
 
+    test("batch multiple inserts", async () => {
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const liveList = root.get("items");
+
+      subscribe(liveList, callback, { isDeep: true });
+
+      batch(() => {
+        liveList.insert("b", 1);
+        liveList.insert("c", 2);
+      });
+
+      assert({ items: ["a", "b", "c"] });
+
+      expect(callback).toHaveBeenCalledTimes(2);
+    });
+
     test("clear with deep subscribe ", async () => {
       const { storage, subscribe } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
@@ -951,10 +981,7 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: root.get("items"),
-          updates: [
-            { index: 0, type: "delete" },
-            { index: 1, type: "insert" },
-          ],
+          updates: [{ index: 1, previousIndex: 0, type: "move" }],
         },
       ]);
     });
@@ -1117,10 +1144,7 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [
-            { index: 0, type: "insert" },
-            { index: 0, type: "insert" },
-          ],
+          updates: [{ index: 1, previousIndex: 0, type: "move" }],
         },
       ]);
 

@@ -49,18 +49,16 @@ export type LiveObjectUpdates<TData = any> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
-export type ListUpdateDelta =
+export type LiveListUpdateDelta =
   | {
-      type: "insert";
+      index: number;
+      type: "insert" | "delete";
     }
   | {
-      type: "delete";
+      index: number;
+      previousIndex: number;
+      type: "move";
     };
-
-export type LiveListUpdateDelta = {
-  index: number;
-  type: "insert" | "delete";
-};
 
 export type LiveListUpdates<TItem = any> = {
   type: "LiveList";

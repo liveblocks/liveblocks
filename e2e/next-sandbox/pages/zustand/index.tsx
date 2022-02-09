@@ -93,13 +93,13 @@ export default function Home() {
         Clear
       </button>
 
-      {/* <button id="undo" onClick={undo}>
+      <button id="undo" onClick={room?.history.undo}>
         Undo
       </button>
 
-      <button id="redo" onClick={redo}>
+      <button id="redo" onClick={room?.history.redo}>
         Redo
-      </button> */}
+      </button>
 
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>

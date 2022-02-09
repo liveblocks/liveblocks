@@ -8,12 +8,17 @@ import {
   delay,
   assertJsonContentAreEquals,
   assertItems,
+  pickRandomItem,
 } from "../utils";
 
 const TEST_URL = "http://localhost:3007/zustand";
 
 declare const browserA: Browser;
 declare const browserB: Browser;
+
+function pickRandomActionWithUndoRedo() {
+  return pickRandomItem(["#push", "#delete", "#undo", "#redo"]);
+}
 
 describe("Zustand - Array", () => {
   let firstPage: Page, secondPage: Page;
@@ -32,7 +37,6 @@ describe("Zustand - Array", () => {
   });
 
   it("array push basic", async () => {
-    await delay(2000);
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
@@ -47,6 +51,37 @@ describe("Zustand - Array", () => {
 
     await firstPage.click("#push");
     await delay(1000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
+
+  it("fuzzy", async () => {
+    await firstPage.click("#clear");
+    await delay(4000);
+    await assertItems([firstPage, secondPage], []);
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      firstPage.click("#push");
+      secondPage.click("#push");
+      await delay(50);
+    }
+
+    await delay(2000);
+
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    for (let i = 0; i < 100; i++) {
+      // no await to create randomness
+      firstPage.click(pickRandomActionWithUndoRedo());
+      secondPage.click(pickRandomActionWithUndoRedo());
+      await delay(50);
+    }
+
+    await delay(2000);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");

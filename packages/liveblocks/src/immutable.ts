@@ -286,6 +286,25 @@ function patchImmutableNode(
             }
           } else if (listUpdate.type === "delete") {
             newState.splice(listUpdate.index, 1);
+          } else if (listUpdate.type === "move") {
+            if (listUpdate.previousIndex > listUpdate.index) {
+              newState = [
+                ...newState.slice(0, listUpdate.index),
+                liveNodeToJson(newArray[listUpdate.index]),
+                ...newState.slice(listUpdate.index, listUpdate.previousIndex),
+                ...newState.slice(listUpdate.previousIndex + 1),
+              ];
+            } else {
+              newState = [
+                ...newState.slice(0, listUpdate.previousIndex),
+                ...newState.slice(
+                  listUpdate.previousIndex + 1,
+                  listUpdate.index + 1
+                ),
+                liveNodeToJson(newArray[listUpdate.index]),
+                ...newState.slice(listUpdate.index + 1),
+              ];
+            }
           }
         }
 
