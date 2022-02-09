@@ -781,4 +781,138 @@ describe("patchImmutableObject", () => {
       list: [{ a: 1 }, { a: 3 }],
     });
   });
+
+  describe("move items in array/LiveList", () => {
+    test("move index 2 to 0", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject();
+      const liveList = new LiveList();
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "b" }));
+      liveList.push(new LiveObject({ i: "d" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [{ index: 0, previousIndex: 2, type: "move" }],
+        },
+      ];
+
+      const newState = patchImmutableObject(state, updates);
+
+      expect(newState.list[1] === state.list[0]).toBeTruthy();
+      expect(newState.list[2] === state.list[1]).toBeTruthy();
+      expect(newState.list[3] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "c" }, { i: "a" }, { i: "b" }, { i: "d" }],
+      });
+    });
+
+    test("move index 0 to 3", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject();
+      const liveList = new LiveList();
+      liveList.push(new LiveObject({ i: "b" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "d" }));
+      liveList.push(new LiveObject({ i: "a" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [{ index: 3, previousIndex: 0, type: "move" }],
+        },
+      ];
+
+      const newState = patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[1]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[2] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "b" }, { i: "c" }, { i: "d" }, { i: "a" }],
+      });
+    });
+
+    test("move index 1 to 3", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject();
+      const liveList = new LiveList();
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "d" }));
+      liveList.push(new LiveObject({ i: "b" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [{ index: 3, previousIndex: 1, type: "move" }],
+        },
+      ];
+
+      const newState = patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[0]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[2] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "a" }, { i: "c" }, { i: "d" }, { i: "b" }],
+      });
+    });
+
+    test("move index 1 to 2", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject();
+      const liveList = new LiveList();
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "b" }));
+      liveList.push(new LiveObject({ i: "d" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [{ index: 2, previousIndex: 1, type: "move" }],
+        },
+      ];
+
+      const newState = patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[0]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[3] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "a" }, { i: "c" }, { i: "b" }, { i: "d" }],
+      });
+    });
+  });
 });
