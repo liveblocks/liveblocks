@@ -30,7 +30,8 @@ const defaultContext = {
   throttleDelay: 100,
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
-};
+  WebSocketPolyfill: WebSocket
+}
 
 function withDateNow(now: number, callback: () => void) {
   const realDateNow = Date.now.bind(global.Date);
