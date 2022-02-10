@@ -124,8 +124,10 @@ export function patchLiveList<T>(
       }
     }
   } else if (i > nextEnd) {
-    while (i <= prevEnd) {
-      liveList.delete(i++);
+    let localI = i;
+    while (localI <= prevEnd) {
+      liveList.delete(i);
+      localI++;
     }
   } else {
     while (i <= prevEnd && i <= nextEnd) {
@@ -269,21 +271,39 @@ function patchImmutableNode(
         }
 
         let newState: any[] = state.map((x: any) => x);
-        const newArray: any[] = update.node.toArray();
 
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
-              newState.push(liveNodeToJson(newArray[listUpdate.index]));
+              newState.push(liveNodeToJson(listUpdate.item));
             } else {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(newArray[listUpdate.index]),
+                liveNodeToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index),
               ];
             }
           } else if (listUpdate.type === "delete") {
             newState.splice(listUpdate.index, 1);
+          } else if (listUpdate.type === "move") {
+            if (listUpdate.previousIndex > listUpdate.index) {
+              newState = [
+                ...newState.slice(0, listUpdate.index),
+                liveNodeToJson(listUpdate.item),
+                ...newState.slice(listUpdate.index, listUpdate.previousIndex),
+                ...newState.slice(listUpdate.previousIndex + 1),
+              ];
+            } else {
+              newState = [
+                ...newState.slice(0, listUpdate.previousIndex),
+                ...newState.slice(
+                  listUpdate.previousIndex + 1,
+                  listUpdate.index + 1
+                ),
+                liveNodeToJson(listUpdate.item),
+                ...newState.slice(listUpdate.index + 1),
+              ];
+            }
           }
         }
 

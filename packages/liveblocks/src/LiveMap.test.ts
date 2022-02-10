@@ -10,7 +10,12 @@ import {
 import { LiveMap } from "./LiveMap";
 import { LiveList } from "./LiveList";
 import { LiveObject } from "./LiveObject";
-import { CrdtType, SerializedCrdtWithId, WebsocketCloseCodes } from "./live";
+import {
+  CrdtType,
+  OpType,
+  SerializedCrdtWithId,
+  WebsocketCloseCodes,
+} from "./live";
 
 describe("LiveMap", () => {
   describe("not attached", () => {
@@ -622,6 +627,45 @@ describe("LiveMap", () => {
       ]);
 
       expect(mapCallback).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("internal methods", () => {
+    test("_detachChild", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", "el1"),
+          createSerializedObject("0:3", { a: 2 }, "0:1", "el2"),
+        ],
+        1
+      );
+
+      const map = root.get("map");
+      const secondItem = map.get("el2");
+
+      const applyResult = map._detachChild(secondItem!);
+
+      expect(applyResult).toEqual({
+        modified: {
+          node: map,
+          type: "LiveMap",
+          updates: { el2: { type: "delete" } },
+        },
+        reverse: [
+          {
+            data: { a: 2 },
+            id: "0:3",
+            opId: "1:0",
+            parentId: "0:1",
+            parentKey: "el2",
+            type: OpType.CreateObject,
+          },
+        ],
+      });
     });
   });
 });
