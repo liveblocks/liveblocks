@@ -73,5 +73,5 @@ function createESMConfig(input, output) {
 export default [
   createDeclarationConfig("src/index.ts", "lib"),
   createCommonJSConfig("src/index.ts", "lib/index.js"),
-  createESMConfig("src/index.ts", "lib/esm/index.js"),
+  createESMConfig("src/index.ts", "lib/esm/index"),
 ];

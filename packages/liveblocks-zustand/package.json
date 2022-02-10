@@ -1,6 +1,7 @@
 {
   "name": "@liveblocks/zustand",
   "version": "0.15.0-alpha.2",
+  "sideEffects": false,
   "description": "",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

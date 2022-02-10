@@ -1,7 +1,7 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient } from "@liveblocks/client";
-import { middleware } from ".";
+import { Client, createClient } from "@liveblocks/client";
+import { Mapping, middleware } from ".";
 import create from "zustand";
 import { StateCreator } from "zustand";
 import {
@@ -12,6 +12,14 @@ import {
   ServerMessageType,
 } from "@liveblocks/client/lib/cjs/live";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
+import {
+  mappingShouldBeAnObject,
+  mappingShouldNotHaveTheSameKeys,
+  mappingToFunctionIsNotAllowed,
+  mappingValueShouldBeABoolean,
+  missingClient,
+  missingMapping,
+} from "./errors";
 
 window.WebSocket = MockWebSocket as any;
 
@@ -83,29 +91,41 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   setCursor: (cursor: { x: number; y: number }) => set({ cursor }),
 });
 
-function prepareClientAndStore() {
+function prepareClientAndStore<T extends Object, TPresence = any>(
+  stateCreator: StateCreator<T>,
+  options: {
+    storageMapping: Mapping<T>;
+    presenceMapping: Mapping<T>;
+  }
+) {
   const client = createClient({ authEndpoint: "/api/auth" });
-
   const store = create(
-    middleware<BasicStore, any>(basicStateCreator, {
-      client,
-      storageMapping: { value: true, mappedToFalse: false, items: true },
-      presenceMapping: { cursor: true },
-    })
+    middleware<T, TPresence>(stateCreator, { ...options, client })
   );
-
   return { client, store };
 }
 
-async function prepareWithStorage(
-  items: SerializedCrdtWithId[],
-  options?: {
+function prepareClientAndBasicStore() {
+  return prepareClientAndStore(basicStateCreator, {
+    storageMapping: { value: true, mappedToFalse: false, items: true },
+    presenceMapping: { cursor: true },
+  });
+}
+
+async function prepareWithStorage<T extends Object>(
+  stateCreator: StateCreator<T>,
+  options: {
+    storageMapping: Mapping<T>;
+    presenceMapping: Mapping<T>;
     room?: string;
     initialState?: any;
+    items: SerializedCrdtWithId[];
   }
 ) {
-  const { client, store } = prepareClientAndStore();
-
+  const { client, store } = prepareClientAndStore(stateCreator, {
+    storageMapping: options.storageMapping,
+    presenceMapping: options.presenceMapping,
+  });
   store
     .getState()
     .liveblocks.enterRoom(options?.room || "room", options?.initialState || {});
@@ -117,7 +137,7 @@ async function prepareWithStorage(
   socket.callbacks.message[0]!({
     data: JSON.stringify({
       type: ServerMessageType.InitialStorageState,
-      items,
+      items: options.items,
     }),
   } as MessageEvent);
 
@@ -132,9 +152,25 @@ async function prepareWithStorage(
   return { client, store, socket, sendMessage };
 }
 
+async function prepareBasicStoreWithStorage(
+  items: SerializedCrdtWithId[],
+  options?: {
+    room?: string;
+    initialState?: any;
+  }
+) {
+  return prepareWithStorage(basicStateCreator, {
+    storageMapping: { value: true, mappedToFalse: false, items: true },
+    presenceMapping: { cursor: true },
+    items,
+    room: options?.room,
+    initialState: options?.initialState,
+  });
+}
+
 describe("middleware", () => {
   test("init middleware", () => {
-    const { store } = prepareClientAndStore();
+    const { store } = prepareClientAndBasicStore();
 
     const { liveblocks, value } = store.getState();
 
@@ -145,7 +181,7 @@ describe("middleware", () => {
   });
 
   test("storage should be loading while socket is connecting and initial storage message", async () => {
-    const { store } = prepareClientAndStore();
+    const { store } = prepareClientAndBasicStore();
 
     const { liveblocks } = store.getState();
 
@@ -168,7 +204,7 @@ describe("middleware", () => {
   });
 
   test("enter room should set the connection to open", async () => {
-    const { store } = prepareClientAndStore();
+    const { store } = prepareClientAndBasicStore();
 
     const { liveblocks } = store.getState();
 
@@ -183,7 +219,7 @@ describe("middleware", () => {
 
   describe("presence", () => {
     test("should broadcast presence when connecting to the room", async () => {
-      const { store } = prepareClientAndStore();
+      const { store } = prepareClientAndBasicStore();
 
       const { liveblocks } = store.getState();
 
@@ -207,7 +243,7 @@ describe("middleware", () => {
     });
 
     test("should update presence if state is updated", async () => {
-      const { store } = prepareClientAndStore();
+      const { store } = prepareClientAndBasicStore();
 
       const { liveblocks } = store.getState();
 
@@ -244,7 +280,7 @@ describe("middleware", () => {
     });
 
     test("should set liveblocks.others if there are others users in the room", async () => {
-      const { store } = prepareClientAndStore();
+      const { store } = prepareClientAndBasicStore();
 
       const { liveblocks } = store.getState();
 
@@ -280,13 +316,15 @@ describe("middleware", () => {
   describe("storage", () => {
     describe("initialization", () => {
       test("should initialize if mapping key is true", async () => {
-        const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+        const { store } = await prepareBasicStoreWithStorage([
+          obj("root", { value: 1 }),
+        ]);
 
         expect(store.getState().value).toBe(1);
       });
 
       test("should not initialize if mapping key does not exist", async () => {
-        const { store } = await prepareWithStorage([
+        const { store } = await prepareBasicStoreWithStorage([
           obj("root", { notMapped: "not mapped" }),
         ]);
 
@@ -294,7 +332,7 @@ describe("middleware", () => {
       });
 
       test("should not initialize if mapping key is false", async () => {
-        const { store } = await prepareWithStorage([
+        const { store } = await prepareBasicStoreWithStorage([
           obj("root", { mappedToFalse: 1 }),
         ]);
 
@@ -302,11 +340,14 @@ describe("middleware", () => {
       });
 
       test("should initialize with default state if key is missing from liveblocks storage", async () => {
-        const { store, socket } = await prepareWithStorage([obj("root", {})], {
-          initialState: {
-            value: 5,
-          },
-        });
+        const { store, socket } = await prepareBasicStoreWithStorage(
+          [obj("root", {})],
+          {
+            initialState: {
+              value: 5,
+            },
+          }
+        );
 
         expect(store.getState().value).toBe(5);
 
@@ -330,12 +371,15 @@ describe("middleware", () => {
       });
 
       test("should batch initialization", async () => {
-        const { store, socket } = await prepareWithStorage([obj("root", {})], {
-          initialState: {
-            value: 5,
-            items: [],
-          },
-        });
+        const { store, socket } = await prepareBasicStoreWithStorage(
+          [obj("root", {})],
+          {
+            initialState: {
+              value: 5,
+              items: [],
+            },
+          }
+        );
 
         expect(store.getState().value).toBe(5);
 
@@ -366,7 +410,7 @@ describe("middleware", () => {
       });
 
       test("should not override liveblocks state with initial state if key exists", async () => {
-        const { store, socket } = await prepareWithStorage(
+        const { store, socket } = await prepareBasicStoreWithStorage(
           [obj("root", { value: 1 })],
           {
             initialState: {
@@ -383,7 +427,7 @@ describe("middleware", () => {
 
     describe("remote updates", () => {
       test("should update state if mapping allows it", async () => {
-        const { store, sendMessage } = await prepareWithStorage([
+        const { store, sendMessage } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
         ]);
 
@@ -404,7 +448,7 @@ describe("middleware", () => {
       });
 
       test("should not update state if key is not part of the mapping", async () => {
-        const { store, sendMessage } = await prepareWithStorage([
+        const { store, sendMessage } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
         ]);
 
@@ -427,7 +471,7 @@ describe("middleware", () => {
 
     describe("patching Liveblocks state", () => {
       test("should update liveblocks state if mapping allows it", async () => {
-        const { store, socket } = await prepareWithStorage([
+        const { store, socket } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
         ]);
 
@@ -451,7 +495,7 @@ describe("middleware", () => {
       });
 
       test("should batch modifications", async () => {
-        const { store, socket } = await prepareWithStorage([
+        const { store, socket } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
           list("1:0", "root", "items"),
         ]);
@@ -489,7 +533,9 @@ describe("middleware", () => {
 
   describe("history", () => {
     test("undo / redo", async () => {
-      const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+      const { store } = await prepareBasicStoreWithStorage([
+        obj("root", { value: 1 }),
+      ]);
 
       expect(store.getState().value).toBe(1);
 
@@ -507,7 +553,9 @@ describe("middleware", () => {
     });
 
     test("updating presence should not reset redo stack", async () => {
-      const { store } = await prepareWithStorage([obj("root", { value: 1 })]);
+      const { store } = await prepareBasicStoreWithStorage([
+        obj("root", { value: 1 }),
+      ]);
 
       expect(store.getState().value).toBe(1);
 
@@ -529,24 +577,24 @@ describe("middleware", () => {
     test("missing client should throw", () => {
       expect(() =>
         middleware(() => ({}), { client: undefined as any, storageMapping: {} })
-      ).toThrow();
+      ).toThrow(missingClient());
     });
 
     test("missing mapping should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
         middleware(() => ({}), { client, storageMapping: null as any })
-      ).toThrow();
+      ).toThrow(missingMapping("storageMapping"));
     });
 
-    test("invalid storageMapping type should throw", () => {
+    test("storageMapping should be an object", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
         middleware(() => ({}), {
           client,
           storageMapping: "invalid_mapping" as any,
         })
-      ).toThrow();
+      ).toThrow(mappingShouldBeAnObject("storageMapping"));
     });
 
     test("invalid storageMapping key value should throw", () => {
@@ -556,7 +604,7 @@ describe("middleware", () => {
           client,
           storageMapping: { key: "value" },
         })
-      ).toThrow();
+      ).toThrow(mappingValueShouldBeABoolean("storageMapping", "key"));
     });
 
     test("duplicated key should throw", () => {
@@ -567,7 +615,7 @@ describe("middleware", () => {
           storageMapping: { key: true },
           presenceMapping: { key: true },
         })
-      ).toThrow();
+      ).toThrow(mappingShouldNotHaveTheSameKeys("key"));
     });
 
     test("invalid presenceMapping should throw", () => {
@@ -578,7 +626,31 @@ describe("middleware", () => {
           storageMapping: {},
           presenceMapping: "invalid_mapping",
         })
-      ).toThrow();
+      ).toThrow(mappingShouldBeAnObject("presenceMapping"));
+    });
+
+    test("mapping on function should throw", async () => {
+      const { store } = await prepareWithStorage<{
+        value: any;
+        setFunction: () => void;
+      }>(
+        (set) => ({
+          value: null,
+
+          setFunction: () => {
+            set({ value: () => {} });
+          },
+        }),
+        {
+          storageMapping: { value: true },
+          presenceMapping: {},
+          items: [obj("root", {})],
+        }
+      );
+
+      expect(() => store.getState().setFunction()).toThrow(
+        mappingToFunctionIsNotAllowed("value")
+      );
     });
   });
 });
