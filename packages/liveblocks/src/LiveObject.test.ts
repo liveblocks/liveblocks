@@ -809,4 +809,46 @@ describe("LiveObject", () => {
       ]);
     });
   });
+
+  describe("internal methods", () => {
+    test("_detachChild", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{
+          a: LiveObject<{ subA: number }>;
+          b: LiveObject<{ subA: number }>;
+        }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", {}, "0:0", "obj"),
+          createSerializedObject("0:2", { subA: 1 }, "0:1", "a"),
+          createSerializedObject("0:3", { subA: 2 }, "0:1", "b"),
+        ],
+        1
+      );
+
+      const obj = root.get("obj");
+      const secondItem = obj.get("b");
+
+      const applyResult = obj._detachChild(secondItem!);
+
+      expect(applyResult).toEqual({
+        modified: {
+          node: obj,
+          type: "LiveObject",
+          updates: { b: { type: "delete" } },
+        },
+        reverse: [
+          {
+            data: { subA: 2 },
+            id: "0:3",
+            opId: "1:0",
+            parentId: "0:1",
+            parentKey: "b",
+            type: OpType.CreateObject,
+          },
+        ],
+      });
+    });
+  });
 });

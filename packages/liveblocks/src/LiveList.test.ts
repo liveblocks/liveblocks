@@ -1273,4 +1273,43 @@ describe("LiveList", () => {
       expect(listCallback).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("internal methods", () => {
+    test("_detachChild", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
+        ],
+        1
+      );
+
+      const items = root.get("items");
+      const secondItem = items.get(1);
+
+      const applyResult = items._detachChild(secondItem!);
+
+      expect(applyResult).toEqual({
+        modified: {
+          node: items,
+          type: "LiveList",
+          updates: [{ index: 1, type: "delete" }],
+        },
+        reverse: [
+          {
+            data: { a: 2 },
+            id: "0:3",
+            opId: "1:0",
+            parentId: "0:1",
+            parentKey: SECOND_POSITION,
+            type: OpType.CreateObject,
+          },
+        ],
+      });
+    });
+  });
 });
