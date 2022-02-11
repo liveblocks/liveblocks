@@ -312,23 +312,31 @@ export async function prepareStorageImmutableTest<T, StateType>(
     { isDeep: true }
   );
 
-  function assert(data: any, itemsCount: number, storageOpsCount: number) {
-    const json = objectToJson(storage.root);
-    expect(json).toEqual(data);
-    expect(objectToJson(refStorage.root)).toEqual(data);
-    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
-    expect(machine.getItemsCount()).toBe(itemsCount);
+  function assert(data: any, itemsCount?: number, storageOpsCount?: number) {
+    assertStorage(data);
 
+    if (itemsCount) {
+      expect(machine.getItemsCount()).toBe(itemsCount);
+    }
     expect(state).toEqual(refState);
     expect(state).toEqual(data);
 
-    expect(totalStorageOps).toEqual(storageOpsCount);
+    if (storageOpsCount) {
+      expect(totalStorageOps).toEqual(storageOpsCount);
+    }
+  }
+
+  function assertStorage(data: any) {
+    const json = objectToJson(storage.root);
+    expect(json).toEqual(data);
+    expect(objectToJson(refStorage.root)).toEqual(data);
   }
 
   return {
     storage,
     refStorage,
     assert,
+    assertStorage,
     subscribe: machine.subscribe,
     refSubscribe: refMachine.subscribe,
     state,

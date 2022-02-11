@@ -232,3 +232,70 @@ export function mergeStorageUpdates(
 
   return second;
 }
+
+function isPlain(value: any) {
+  const type = typeof value;
+  return (
+    type === "undefined" ||
+    value === null ||
+    type === "string" ||
+    type === "boolean" ||
+    type === "number" ||
+    Array.isArray(value) ||
+    isPlainObject(value)
+  );
+}
+
+function isPlainObject(value: unknown): value is object {
+  if (typeof value !== "object" || value === null) return false;
+
+  let proto = Object.getPrototypeOf(value);
+  if (proto === null) return true;
+
+  let baseProto = proto;
+  while (Object.getPrototypeOf(baseProto) !== null) {
+    baseProto = Object.getPrototypeOf(baseProto);
+  }
+
+  return proto === baseProto;
+}
+
+export function findNonSerializableValue(
+  value: any,
+  path: string = ""
+): { path: string; value: any } | false {
+  if (!isPlain) {
+    return {
+      path: path || "root",
+      value: value,
+    };
+  }
+
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  for (const [key, nestedValue] of Object.entries(value)) {
+    const nestedPath = path ? path + "." + key : key;
+
+    if (!isPlain(nestedValue)) {
+      return {
+        path: nestedPath,
+        value: nestedValue,
+      };
+    }
+
+    if (typeof nestedValue === "object") {
+      const nonSerializableNestedValue = findNonSerializableValue(
+        nestedValue,
+        nestedPath
+      );
+
+      if (nonSerializableNestedValue) {
+        return nonSerializableNestedValue;
+      }
+    }
+  }
+
+  return false;
+}
