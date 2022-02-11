@@ -1,6 +1,7 @@
+import each from "jest-each";
 import { FIRST_POSITION, SECOND_POSITION } from "../test/utils";
 import { CrdtType, OpType, SerializedCrdt } from "./live";
-import { getTreesDiffOperations } from "./utils";
+import { getTreesDiffOperations, findNonSerializableValue } from "./utils";
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {
@@ -226,4 +227,30 @@ describe("getTreesDiffOperations", () => {
       },
     ]);
   });
+});
+describe("findNonSerializableValue", () => {
+  each([
+    [null, false],
+    [undefined, false],
+    [1, false],
+    [true, false],
+    [[], false],
+    ["a", false],
+    [{ a: "a" }, false],
+    [{ a: () => {} }, "a"],
+    [() => {}, "root"],
+    [[() => {}], "0"],
+    [{ a: [() => {}] }, "a.0"],
+  ]).test(
+    "findNonSerializableValue should return path and value of non serializable value",
+    (value, expectedPath) => {
+      const result = findNonSerializableValue(value);
+
+      if (result) {
+        expect(result.path).toEqual(expectedPath);
+      } else {
+        expect(result).toEqual(false);
+      }
+    }
+  );
 });
