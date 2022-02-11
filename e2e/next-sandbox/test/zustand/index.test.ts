@@ -9,6 +9,7 @@ import {
   assertJsonContentAreEquals,
   assertItems,
   pickRandomItem,
+  getJsonContent,
 } from "../utils";
 
 const TEST_URL = "http://localhost:3007/zustand";
@@ -36,10 +37,18 @@ describe("Zustand - Array", () => {
     await secondPage.close();
   });
 
-  it("array push basic", async () => {
+  it("array push basic + presence", async () => {
     await firstPage.click("#clear");
     await delay(1000);
     await assertItems([firstPage, secondPage], []);
+
+    const othersFirstPage = await getJsonContent(firstPage, "others");
+    const othersSecondPage = await getJsonContent(secondPage, "others");
+
+    expect(othersFirstPage.length).toEqual(1);
+    expect(othersFirstPage[0].presence).toEqual({});
+    expect(othersSecondPage.length).toEqual(1);
+    expect(othersSecondPage[0].presence).toEqual({});
 
     await firstPage.click("#push");
     await delay(1000);

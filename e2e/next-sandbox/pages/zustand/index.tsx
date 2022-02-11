@@ -44,7 +44,7 @@ export default function Home() {
     addItem,
     deleteItem,
     clear,
-    liveblocks: { enterRoom, leaveRoom, isStorageLoading, room },
+    liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
 
   useEffect(() => {
@@ -121,6 +121,11 @@ export default function Home() {
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(items, null, 2)}
+      </div>
+
+      <h2>Others</h2>
+      <div id="others" style={{ whiteSpace: "pre" }}>
+        {JSON.stringify(others, null, 2)}
       </div>
     </div>
   );
