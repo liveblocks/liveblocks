@@ -241,6 +241,7 @@ describe("findNonSerializableValue", () => {
     [() => {}, "root"],
     [[() => {}], "0"],
     [{ a: [() => {}] }, "a.0"],
+    [{ a: new Map() }, "a"], // Map will be accepted in the future
   ]).test(
     "findNonSerializableValue should return path and value of non serializable value",
     (value, expectedPath) => {

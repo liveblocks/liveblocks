@@ -8,6 +8,8 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
+const roomName = "e2e-zustand-basic";
+
 interface State {
   items: string[];
   addItem: (newTodo: string) => void;
@@ -46,12 +48,12 @@ export default function Home() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("e2e-zustand-basic", {
+    enterRoom(roomName, {
       items: [],
     });
 
     return () => {
-      leaveRoom("e2e-zustand-basic");
+      leaveRoom(roomName);
     };
   }, [enterRoom, leaveRoom]);
 
@@ -99,6 +101,21 @@ export default function Home() {
 
       <button id="redo" onClick={room?.history.redo}>
         Redo
+      </button>
+
+      <button
+        id="enter"
+        onClick={() =>
+          enterRoom(roomName, {
+            items: [],
+          })
+        }
+      >
+        Enter room
+      </button>
+
+      <button id="leave" onClick={() => leaveRoom(roomName)}>
+        Leave room
       </button>
 
       <h2>Items</h2>

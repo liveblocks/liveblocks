@@ -58,6 +58,32 @@ describe("Zustand - Array", () => {
     await assertItems([firstPage, secondPage], []);
   });
 
+  it("with enter and leave room", async () => {
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+
+    await firstPage.click("#push");
+    await delay(50);
+    await firstPage.click("#push");
+    await delay(1000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await secondPage.click("#leave"); // Leave
+    await delay(500);
+
+    await firstPage.click("#push");
+    await delay(1000);
+
+    await secondPage.click("#enter"); // Enter
+    await delay(1000);
+    await assertJsonContentAreEquals(firstPage, secondPage);
+
+    await firstPage.click("#clear");
+    await delay(1000);
+    await assertItems([firstPage, secondPage], []);
+  });
+
   it("fuzzy", async () => {
     await firstPage.click("#clear");
     await delay(2000);
