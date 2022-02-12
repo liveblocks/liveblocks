@@ -60,7 +60,7 @@ export function middleware<T extends Object, TPresence extends Object = any>(
   GetState<LiveblocksState<T, TPresence>>,
   StoreApi<LiveblocksState<T, TPresence>>
 > {
-  if (options.client == null) {
+  if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
   const client = options.client;
@@ -69,7 +69,9 @@ export function middleware<T extends Object, TPresence extends Object = any>(
     options.presenceMapping || {},
     "presenceMapping"
   );
-  validateNoDuplicateKeys(mapping, presenceMapping);
+  if (process.env.NODE_ENV !== "production") {
+    validateNoDuplicateKeys(mapping, presenceMapping);
+  }
 
   return (set: any, get, api: any) => {
     const typedSet: (
@@ -272,7 +274,10 @@ function patchLiveblocksStorage<T>(
   mapping: Mapping<T>
 ) {
   for (const key in mapping) {
-    if (typeof newState[key] === "function") {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      typeof newState[key] === "function"
+    ) {
       throw mappingToFunctionIsNotAllowed("value");
     }
 
@@ -304,16 +309,21 @@ function validateMapping<T>(
   mapping: Mapping<T>,
   mappingType: "storageMapping" | "presenceMapping"
 ): Mapping<T> {
-  if (mapping == null) {
-    throw missingMapping(mappingType);
-  }
-  if (!isObject(mapping)) {
-    throw mappingShouldBeAnObject(mappingType);
+  if (process.env.NODE_ENV !== "production") {
+    if (mapping == null) {
+      throw missingMapping(mappingType);
+    }
+    if (!isObject(mapping)) {
+      throw mappingShouldBeAnObject(mappingType);
+    }
   }
 
   const result: Mapping<T> = {};
   for (const key in mapping) {
-    if (typeof mapping[key] !== "boolean") {
+    if (
+      process.env.NODE_ENV !== "production" &&
+      typeof mapping[key] !== "boolean"
+    ) {
       throw mappingValueShouldBeABoolean(mappingType, key);
     }
 

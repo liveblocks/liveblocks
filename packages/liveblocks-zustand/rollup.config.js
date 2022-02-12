@@ -6,6 +6,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import babelPlugin from "@rollup/plugin-babel";
 import typescript from "@rollup/plugin-typescript";
 import esbuild from "rollup-plugin-esbuild";
+import { promises } from "fs";
 const createBabelConfig = require("./babel.config");
 
 const extensions = [".ts"];
@@ -29,6 +30,11 @@ function getEsbuild(target) {
   });
 }
 
+/**
+ * We use @rollup/plugin-typescript to generate typescript definition
+ * but it does not support the declarationOnly option so we delete
+ * js files and additional undesirable d.ts files
+ */
 function createDeclarationConfig(input, output) {
   return {
     input,
@@ -42,6 +48,15 @@ function createDeclarationConfig(input, output) {
         outDir: output,
         tsconfig: "./tsconfig.build.json",
       }),
+      {
+        closeBundle: async () => {
+          await Promise.all(
+            [`./${output}/index.js`, `./${output}/errors.d.ts`].map(
+              promises.unlink
+            )
+          );
+        },
+      },
     ],
   };
 }
