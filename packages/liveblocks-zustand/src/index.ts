@@ -18,12 +18,36 @@ import {
 } from "./errors";
 
 export type LiveblocksState<TState, TPresence = any> = TState & {
+  /**
+   * Liveblocks extra state attached by the middleware
+   */
   readonly liveblocks: {
-    readonly enterRoom: (room: string, initialState: Partial<TState>) => void;
-    readonly leaveRoom: (room: string) => void;
+    /**
+     * Enters a room and starts sync it with zustand state
+     * @param roomId The id of the room
+     * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
+     */
+    readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
+    /**
+     * Leaves a room and stops sync it with zustand state.
+     * @param roomId The id of the room
+     */
+    readonly leaveRoom: (roomId: string) => void;
+    /**
+     * The room currently synced to your zustand state.
+     */
     readonly room: Room | null;
+    /**
+     * Other users in the room. Empty no room is currently synced
+     */
     readonly others: Array<User<TPresence>>;
+    /**
+     * Whether or not the room storage is currently loading
+     */
     readonly isStorageLoading: boolean;
+    /**
+     * Connection state of the room
+     */
     readonly connection:
       | "closed"
       | "authenticating"
@@ -41,8 +65,17 @@ export type Mapping<T> = Partial<
 >;
 
 type Options<T> = {
+  /**
+   * Liveblocks client created by @liveblocks/client createClient
+   */
   client: Client;
+  /**
+   * Mapping used to synchronize a part of your zustand state with one Liveblocks Room storage.
+   */
   storageMapping: Mapping<T>;
+  /**
+   * Mapping used to synchronize a part of your zustand state with one Liveblocks Room presence.
+   */
   presenceMapping?: Mapping<T>;
 };
 
