@@ -11,6 +11,7 @@ import {
 } from "./live";
 import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, StorageUpdate } from "./types";
+import { LiveRegister } from "./LiveRegister";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
@@ -165,7 +166,13 @@ export class LiveList<T> extends AbstractCrdt {
       modified: {
         node: this,
         type: "LiveList",
-        updates: [{ index: newIndex, type: "insert" }],
+        updates: [
+          {
+            index: newIndex,
+            type: "insert",
+            item: child instanceof LiveRegister ? child.data : child,
+          },
+        ],
       },
     };
   }
@@ -175,7 +182,7 @@ export class LiveList<T> extends AbstractCrdt {
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
-      const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+      const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
       const indexToDelete = this.#items.findIndex((item) => item[0] === child);
       this.#items.splice(indexToDelete, 1);
@@ -204,6 +211,9 @@ export class LiveList<T> extends AbstractCrdt {
   ): ApplyResult {
     child._setParentLink(this, key);
 
+    const previousIndex = this.#items.findIndex(
+      (entry) => entry[0]._id === child._id
+    );
     const index = this.#items.findIndex((entry) => entry[1] === key);
 
     // Assign a temporary position until we get the fix from the backend
@@ -218,12 +228,27 @@ export class LiveList<T> extends AbstractCrdt {
     }
 
     this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    const newIndex = this._indexOfPosition(key);
+
+    const newIndex = this.#items.findIndex(
+      (entry) => entry[0]._id === child._id
+    );
+
+    const updatesDelta: LiveListUpdateDelta[] =
+      newIndex === previousIndex
+        ? []
+        : [
+            {
+              index: newIndex,
+              item: child instanceof LiveRegister ? child.data : child,
+              previousIndex: previousIndex,
+              type: "move",
+            },
+          ];
     return {
       modified: {
         node: this,
         type: "LiveList",
-        updates: [{ index: newIndex, type: "insert" }],
+        updates: updatesDelta,
       },
       reverse: [
         {
@@ -283,7 +308,7 @@ export class LiveList<T> extends AbstractCrdt {
   insert(element: T, index: number) {
     if (index < 0 || index > this.#items.length) {
       throw new Error(
-        `Cannot delete list item at index "${index}". index should be between 0 and ${
+        `Cannot insert list item at index "${index}". index should be between 0 and ${
           this.#items.length
         }`
       );
@@ -308,7 +333,13 @@ export class LiveList<T> extends AbstractCrdt {
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
-        updates: [{ index: newIndex, type: "insert" }],
+        updates: [
+          {
+            index: newIndex,
+            item: value instanceof LiveRegister ? value.data : value,
+            type: "insert",
+          },
+        ],
       });
       this._doc.dispatch(
         value._serialize(this._id, position, this._doc),
@@ -372,8 +403,12 @@ export class LiveList<T> extends AbstractCrdt {
         node: this,
         type: "LiveList",
         updates: [
-          { index: index, type: "delete" },
-          { index: newIndex, type: "insert" },
+          {
+            index: newIndex,
+            previousIndex: index,
+            item: item[0],
+            type: "move",
+          },
         ],
       });
 

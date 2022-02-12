@@ -181,7 +181,7 @@ export class LiveObject<
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
-      const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+      const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
       for (const [key, value] of this.#map) {
         if (value === child) {

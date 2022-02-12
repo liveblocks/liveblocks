@@ -1,3 +1,4 @@
+import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
@@ -49,18 +50,22 @@ export type LiveObjectUpdates<TData = any> = {
   updates: LiveObjectUpdateDelta<TData>;
 };
 
-export type ListUpdateDelta =
+export type LiveListUpdateDelta =
   | {
+      index: number;
+      item: AbstractCrdt;
       type: "insert";
     }
   | {
+      index: number;
       type: "delete";
+    }
+  | {
+      index: number;
+      previousIndex: number;
+      item: AbstractCrdt;
+      type: "move";
     };
-
-export type LiveListUpdateDelta = {
-  index: number;
-  type: "insert" | "delete";
-};
 
 export type LiveListUpdates<TItem = any> = {
   type: "LiveList";

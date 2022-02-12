@@ -176,7 +176,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * INTERNAL
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
-    const reverse = this._serialize(this._id!, child._parentKey, this._doc);
+    const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
     for (const [key, value] of this.#map) {
       if (value === (child as any)) {

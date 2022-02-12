@@ -217,7 +217,7 @@ describe("Storage", () => {
         {
           type: "LiveList",
           node: root.get("childList"),
-          updates: [{ index: 0, type: "insert" }],
+          updates: [{ index: 0, item: "item1", type: "insert" }],
         },
         {
           type: "LiveMap",
