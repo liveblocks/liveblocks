@@ -28,7 +28,8 @@ declare const browserB: Browser;
 
 describe("Storage - LiveList", () => {
   let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
+
+  beforeAll(async () => {
     firstPage = await browserA.newPage();
     secondPage = await browserB.newPage();
 
@@ -40,7 +41,7 @@ describe("Storage - LiveList", () => {
     ]);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await firstPage.close();
     await secondPage.close();
   });
