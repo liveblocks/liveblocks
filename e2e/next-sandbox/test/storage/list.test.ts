@@ -4,12 +4,13 @@
 
 import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
   delay,
   assertJsonContentAreEquals,
   assertItems,
   pickRandomItem,
   pickNumberOfUnderRedo,
+  waitForContentToBeEquals,
+  waitForNElements,
 } from "../utils";
 
 function pickRandomActionWithUndoRedo() {
@@ -33,7 +34,10 @@ describe("Storage - LiveList", () => {
 
     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#clear"),
+      secondPage.waitForSelector("#clear"),
+    ]);
   });
 
   afterEach(async () => {
@@ -42,32 +46,30 @@ describe("Storage - LiveList", () => {
   });
 
   it("list push basic", async () => {
-    await delay(2000);
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     await firstPage.click("#push");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 1);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#push");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 2);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#push");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 3);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 
   it("list move", async () => {
-    await delay(2000);
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     for (let i = 0; i < 5; i++) {
@@ -75,7 +77,7 @@ describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 5);
 
     await assertJsonContentAreEquals(firstPage, secondPage);
 
@@ -88,14 +90,13 @@ describe("Storage - LiveList", () => {
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 
   it("push conflicts", async () => {
-    await delay(2000);
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     await assertJsonContentAreEquals(firstPage, secondPage);
@@ -107,18 +108,17 @@ describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await delay(2000);
+    await waitForNElements([firstPage, secondPage], 20);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 
-  it("fuzzy", async () => {
-    await delay(2000);
+  it("fuzzy allo", async () => {
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     for (let i = 0; i < 10; i++) {
@@ -127,30 +127,26 @@ describe("Storage - LiveList", () => {
       secondPage.click("#push");
       await delay(50);
     }
+    await waitForNElements([firstPage, secondPage], 20);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
-    await delay(5000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
       firstPage.click(pickRandomActionWithUndoRedo());
       secondPage.click(pickRandomActionWithUndoRedo());
       await delay(50);
     }
 
-    await delay(5000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 
   it("fuzzy with full undo/redo", async () => {
-    await delay(2000);
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     for (let i = 0; i < 10; i++) {
@@ -160,12 +156,12 @@ describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await delay(5000);
+    await waitForNElements([firstPage, secondPage], 20);
 
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     const pages = [firstPage, secondPage];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
 
       pages.forEach((page) => {
@@ -186,11 +182,10 @@ describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await delay(5000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 });
