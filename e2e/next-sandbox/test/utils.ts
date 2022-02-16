@@ -25,6 +25,27 @@ export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+export async function waitForContentToBeEquals(
+  firstPage: Page,
+  secondPage: Page,
+  id: string = "items"
+) {
+  for (let i = 0; i < 20; i++) {
+    const firstPageContent = await getTextContent(firstPage, id);
+    const secondPageContent = await getTextContent(secondPage, id);
+
+    if (firstPageContent === secondPageContent) {
+      return;
+    }
+
+    await delay(100);
+  }
+
+  expect(await getJsonContent(firstPage, id)).toEqual(
+    await getJsonContent(secondPage, id)
+  );
+}
+
 export async function assertJsonContentAreEquals(
   firstPage: Page,
   secondPage: Page,
@@ -57,4 +78,18 @@ export function pickNumberOfUnderRedo() {
   }
 
   return 0;
+}
+
+export async function waitForNElements(
+  pages: Page[],
+  length: number,
+  id: string = "itemsCount"
+) {
+  const promises = pages.map((page) => {
+    return page.waitForFunction(
+      `document.getElementById("${id}").innerHTML == ${length}`,
+      { timeout: 5000 }
+    );
+  });
+  await Promise.all(promises);
 }
