@@ -63,6 +63,9 @@ function Sandbox() {
       </button>
 
       <h2>Items</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {map.size}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(Object.fromEntries(map), null, 2)}
       </div>
