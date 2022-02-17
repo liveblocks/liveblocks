@@ -1,0 +1,32 @@
+name: E2E Tests
+
+on: [pull_request]
+
+jobs:
+  e2e-tests:
+    needs: unit-tests
+    env:
+      BRANCH_NAME: ${{ github.head_ref }}
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
+      LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
+      LIVEBLOCKS_AUTHORIZE_ENDPOINT: https://liveblocks.io/api/authorize
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: e2e/next-sandbox
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          repository: liveblocks/liveblocks
+          ref: refs/heads/${{ github.head_ref }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: scripts/link-liveblocks.sh
+      - run: |
+          npm run dev &
+          sleep 4 &
+          npm run test-ci -- test/storage/map.test.ts
