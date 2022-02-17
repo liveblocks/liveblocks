@@ -527,21 +527,22 @@ export function makeStateMachine(
       }
       case OpType.CreateObject: {
         const parent = state.items.get(op.parentId!);
-
-        if (parent == null || getItem(op.id) != null) {
+        if (parent == null) {
           return { modified: false };
         }
         return parent._attachChild(
           op.id,
           op.parentKey!,
           new LiveObject(op.data),
-          isLocal
+          op.opId!,
+          isLocal,
+          getItem(op.id) != null
         );
       }
       case OpType.CreateList: {
         const parent = state.items.get(op.parentId);
 
-        if (parent == null || getItem(op.id) != null) {
+        if (parent == null) {
           return { modified: false };
         }
 
@@ -549,13 +550,15 @@ export function makeStateMachine(
           op.id,
           op.parentKey!,
           new LiveList(),
-          isLocal
+          op.opId!,
+          isLocal,
+          getItem(op.id) != null
         );
       }
       case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId);
 
-        if (parent == null || getItem(op.id) != null) {
+        if (parent == null) {
           return { modified: false };
         }
 
@@ -563,13 +566,15 @@ export function makeStateMachine(
           op.id,
           op.parentKey!,
           new LiveRegister(op.data),
-          isLocal
+          op.opId!,
+          isLocal,
+          getItem(op.id) != null
         );
       }
       case OpType.CreateMap: {
         const parent = state.items.get(op.parentId);
 
-        if (parent == null || getItem(op.id) != null) {
+        if (parent == null) {
           return { modified: false };
         }
 
@@ -577,7 +582,9 @@ export function makeStateMachine(
           op.id,
           op.parentKey!,
           new LiveMap(),
-          isLocal
+          op.opId!,
+          isLocal,
+          getItem(op.id) != null
         );
       }
     }

@@ -131,10 +131,16 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     id: string,
     key: TKey,
     child: AbstractCrdt,
-    isLocal: boolean
+    opId: string,
+    isLocal: boolean,
+    alreadyExist: boolean
   ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
+    }
+
+    if (alreadyExist) {
+      return { modified: false };
     }
 
     const previousValue = this.#map.get(key);

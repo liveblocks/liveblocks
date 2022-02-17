@@ -103,7 +103,9 @@ export abstract class AbstractCrdt {
     id: string,
     key: string,
     crdt: AbstractCrdt,
-    isLocal: boolean
+    opId: string,
+    isLocal: boolean,
+    alreadyExist: boolean
   ): ApplyResult;
 
   /**

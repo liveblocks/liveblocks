@@ -46,6 +46,31 @@ export async function waitForContentToBeEquals(
   );
 }
 
+export async function waitForContentToEqual(
+  firstPage: Page,
+  secondPage: Page,
+  json: any,
+  id: string = "items"
+) {
+  const jsonStr = JSON.stringify(json);
+
+  for (let i = 0; i < 20; i++) {
+    const firstPageContent = await getTextContent(firstPage, id);
+    const secondPageContent = await getTextContent(secondPage, id);
+
+    if (
+      JSON.stringify(firstPageContent) === jsonStr &&
+      JSON.stringify(secondPageContent) === jsonStr
+    ) {
+      return;
+    }
+
+    await delay(100);
+  }
+
+  await assertItems([firstPage, secondPage], json, id);
+}
+
 export async function assertJsonContentAreEquals(
   firstPage: Page,
   secondPage: Page,
