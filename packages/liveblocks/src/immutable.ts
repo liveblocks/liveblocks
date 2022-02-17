@@ -3,8 +3,8 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { compare } from "./position";
 import { StorageUpdate } from "./types";
+import { findNonSerializableValue } from "./utils";
 
 export function liveObjectToJson(liveObject: LiveObject<any>) {
   const result: any = {};
@@ -165,6 +165,16 @@ export function patchLiveObjectKey<T>(
   prev: any,
   next: any
 ) {
+  if (process.env.NODE_ENV !== "production") {
+    const nonSerializableValue = findNonSerializableValue(next);
+    if (nonSerializableValue) {
+      console.error(
+        `New state path: '${nonSerializableValue.path}' value: '${nonSerializableValue.value}' is not serializable.\nOnly serializable value can be synced with Liveblocks.`
+      );
+      return;
+    }
+  }
+
   const value = liveObject.get(key);
 
   if (next === undefined) {

@@ -439,6 +439,89 @@ describe("2 ways tests with two clients", () => {
     });
   });
 
+  describe("unsupported types", () => {
+    let originalEnv: NodeJS.ProcessEnv;
+    let consoleErrorSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      originalEnv = process.env;
+      consoleErrorSpy = jest.spyOn(console, "error");
+    });
+
+    afterEach(() => {
+      process.env = originalEnv;
+      consoleErrorSpy.mockRestore();
+    });
+
+    test("new state contains a function", async () => {
+      const { storage, state, assertStorage } =
+        await prepareStorageImmutableTest<
+          {
+            syncObj: { a: any };
+          },
+          { syncObj: { a: any } }
+        >(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+          ],
+          1
+        );
+
+      expect(state).toEqual({ syncObj: { a: 0 } });
+
+      const oldState = JSON.parse(JSON.stringify(state));
+
+      state.syncObj.a = () => {};
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncObj",
+        oldState["syncObj"],
+        state["syncObj"]
+      );
+
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(1);
+
+      assertStorage({ syncObj: { a: 0 } });
+    });
+
+    test("Production env - new state contains a function", async () => {
+      const { storage, state } = await prepareStorageImmutableTest<
+        {
+          syncObj: { a: any };
+        },
+        { syncObj: { a: any } }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
+        ],
+        1
+      );
+
+      expect(state).toEqual({ syncObj: { a: 0 } });
+
+      process.env = {
+        ...originalEnv,
+        NODE_ENV: "production",
+      };
+
+      const oldState = JSON.parse(JSON.stringify(state));
+
+      state.syncObj.a = () => {};
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncObj",
+        oldState["syncObj"],
+        state["syncObj"]
+      );
+
+      expect(consoleErrorSpy).toHaveBeenCalledTimes(0);
+    });
+  });
+
   describe("Map/LiveMap", () => {
     // TODO
   });

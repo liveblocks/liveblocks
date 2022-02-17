@@ -8,6 +8,8 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
+const roomName = "e2e-zustand-basic";
+
 interface State {
   items: string[];
   addItem: (newTodo: string) => void;
@@ -42,16 +44,16 @@ export default function Home() {
     addItem,
     deleteItem,
     clear,
-    liveblocks: { enterRoom, leaveRoom, isStorageLoading, room },
+    liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
 
   useEffect(() => {
-    enterRoom("e2e-zustand-basic", {
+    enterRoom(roomName, {
       items: [],
     });
 
     return () => {
-      leaveRoom("e2e-zustand-basic");
+      leaveRoom(roomName);
     };
   }, [enterRoom, leaveRoom]);
 
@@ -101,9 +103,29 @@ export default function Home() {
         Redo
       </button>
 
+      <button
+        id="enter"
+        onClick={() =>
+          enterRoom(roomName, {
+            items: [],
+          })
+        }
+      >
+        Enter room
+      </button>
+
+      <button id="leave" onClick={() => leaveRoom(roomName)}>
+        Leave room
+      </button>
+
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(items, null, 2)}
+      </div>
+
+      <h2>Others</h2>
+      <div id="others" style={{ whiteSpace: "pre" }}>
+        {JSON.stringify(others, null, 2)}
       </div>
     </div>
   );
