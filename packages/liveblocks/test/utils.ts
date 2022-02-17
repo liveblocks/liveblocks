@@ -68,6 +68,7 @@ const defaultContext = {
   throttleDelay: -1, // No throttle for standard storage test
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
+  WebSocketPolyfill: WebSocket
 };
 
 async function prepareRoomWithStorage<T>(
