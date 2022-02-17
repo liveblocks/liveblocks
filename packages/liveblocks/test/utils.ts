@@ -11,13 +11,55 @@ import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
-import {
-  createRoom,
-  defaultState,
-  Effects,
-  makeStateMachine,
-} from "../src/room";
+import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { remove } from "../src/utils";
+
+export class MockWebSocket {
+  static instances: MockWebSocket[] = [];
+
+  isMock = true;
+
+  callbacks = {
+    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
+    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
+    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
+    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
+  };
+
+  sentMessages: string[] = [];
+  readyState: number;
+
+  constructor(
+    public url: string,
+    private onSend: (message: string) => void = () => {}
+  ) {
+    this.readyState = WebSocket.CLOSED;
+    MockWebSocket.instances.push(this);
+  }
+
+  addEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    this.callbacks[event].push(callback as any);
+  }
+
+  removeEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    remove(this.callbacks[event], callback as any);
+  }
+
+  send(message: string) {
+    this.sentMessages.push(message);
+    this.onSend(message);
+  }
+
+  close() {}
+}
+
+window.WebSocket = MockWebSocket as any;
 
 type Machine = ReturnType<typeof makeStateMachine>;
 
@@ -64,11 +106,11 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 const defaultContext = {
   room: "room-id",
-  authEndpoint: "/api/auth",
+  authEndpoint: async (room: string) => await { token: "" },
   throttleDelay: -1, // No throttle for standard storage test
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
-  WebSocketPolyfill: WebSocket
+  WebSocket: window.WebSocket,
 };
 
 async function prepareRoomWithStorage<T>(
@@ -341,50 +383,3 @@ export function serverMessage(message: ServerMessage) {
     data: JSON.stringify(message),
   });
 }
-
-export class MockWebSocket {
-  static instances: MockWebSocket[] = [];
-
-  isMock = true;
-
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
-
-  sentMessages: string[] = [];
-  readyState: number;
-
-  constructor(
-    public url: string,
-    private onSend: (message: string) => void = () => {}
-  ) {
-    this.readyState = WebSocket.CLOSED;
-    MockWebSocket.instances.push(this);
-  }
-
-  addEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    this.callbacks[event].push(callback as any);
-  }
-
-  removeEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    remove(this.callbacks[event], callback as any);
-  }
-
-  send(message: string) {
-    this.sentMessages.push(message);
-    this.onSend(message);
-  }
-
-  close() {}
-}
-
-window.WebSocket = MockWebSocket as any;

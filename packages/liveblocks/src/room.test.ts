@@ -26,12 +26,12 @@ import { Others } from "./types";
 
 const defaultContext = {
   room: "room-id",
-  authEndpoint: "/api/auth",
+  authEndpoint: async (room: string) => await { token: "" },
   throttleDelay: 100,
   liveblocksServer: "wss://live.liveblocks.io",
   onError: () => {},
-  WebSocketPolyfill: WebSocket
-}
+  WebSocket: WebSocket as any,
+};
 
 function withDateNow(now: number, callback: () => void) {
   const realDateNow = Date.now.bind(global.Date);

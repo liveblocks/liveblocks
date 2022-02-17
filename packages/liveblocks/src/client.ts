@@ -1,5 +1,12 @@
 import { createRoom, InternalRoom } from "./room";
-import { ClientOptions, Room, Client, Presence } from "./types";
+import {
+  ClientOptions,
+  Room,
+  Client,
+  Presence,
+  GlobalOptions,
+  AuthorizeResponse,
+} from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -27,15 +34,7 @@ import { ClientOptions, Room, Client, Presence } from "./types";
  * });
  */
 export function createClient(options: ClientOptions): Client {
-  const clientOptions = options;
-
-  if (typeof clientOptions.throttle === "number") {
-    if (clientOptions.throttle < 80 || clientOptions.throttle > 1000) {
-      throw new Error(
-        "Liveblocks client throttle should be between 80 and 1000 ms"
-      );
-    }
-  }
+  const globalOptions = prepareGlobalOptions(options);
 
   const rooms = new Map<string, InternalRoom>();
 
@@ -49,14 +48,19 @@ export function createClient(options: ClientOptions): Client {
     options: {
       defaultPresence?: Presence;
       defaultStorageRoot?: TStorageRoot;
-      WebSocketPolyfill: typeof WebSocket
-    } = {WebSocketPolyfill: WebSocket}
+    } = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
     }
-    internalRoom = createRoom(roomId, { ...clientOptions, ...options });
+    internalRoom = createRoom(roomId, {
+      ...globalOptions,
+      ...{
+        defaultPresence: options.defaultPresence,
+        defaultStorageRoot: options.defaultStorageRoot,
+      },
+    });
     rooms.set(roomId, internalRoom);
     internalRoom.connect();
     return internalRoom.room;
@@ -91,5 +95,114 @@ export function createClient(options: ClientOptions): Client {
     getRoom,
     enter,
     leave,
+  };
+}
+
+function fetchAuthorize(
+  fetch: typeof window.fetch,
+  endpoint: string,
+  publicApiKey?: string
+): (room: string) => Promise<{ token: string }> {
+  return async (room: string) => {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        room,
+        publicApiKey,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new AuthenticationError(
+        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+      );
+    }
+
+    let authResponse = null;
+    try {
+      authResponse = await res.json();
+    } catch (er) {
+      throw new AuthenticationError(
+        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+      );
+    }
+
+    if (typeof authResponse.token !== "string") {
+      throw new AuthenticationError(
+        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+      );
+    }
+
+    return authResponse;
+  };
+}
+
+class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
+function prepareGlobalOptions(options: ClientOptions): GlobalOptions {
+  if (options.throttle === undefined) {
+    options.throttle = 80;
+  }
+
+  if (
+    typeof options.throttle !== "number" ||
+    options.throttle < 80 ||
+    options.throttle > 1000
+  ) {
+    throw new Error("throttle should be a number between 80 and 1000.");
+  }
+
+  if (typeof window === "undefined" && options.WebSocketPolyfill == null) {
+    throw new Error(
+      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+    );
+  }
+
+  let authEndpoint: (room: string) => Promise<AuthorizeResponse>;
+
+  if (typeof options.publicApiKey === "string") {
+    if (typeof window === "undefined" && options.fetchPolyfill == null) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+      );
+    }
+
+    authEndpoint = fetchAuthorize(
+      options.fetchPolyfill || fetch,
+      (options as any).publicAuthorizeEndpoint ||
+        "https://liveblocks.io/api/public/authorize",
+      options.publicApiKey
+    );
+  } else if (typeof options.authEndpoint === "string") {
+    if (typeof window === "undefined" && options.fetchPolyfill == null) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+      );
+    }
+
+    authEndpoint = fetchAuthorize(
+      options.fetchPolyfill || fetch,
+      options.authEndpoint
+    );
+  } else if (typeof options.authEndpoint === "function") {
+    authEndpoint = options.authEndpoint;
+  } else {
+    // TODO: Better error message
+    throw new Error("Invalid Liveblocks client config.");
+  }
+
+  return {
+    WebSocket: options.WebSocketPolyfill || WebSocket,
+    throttle: options.throttle || 100,
+    authEndpoint,
+    liveblocksServer:
+      (options as any).liveblocksServer || "wss://liveblocks.net/v5",
   };
 }

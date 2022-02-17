@@ -1,12 +1,10 @@
 import {
   Others,
   Presence,
-  ClientOptions,
   Room,
   MyPresenceCallback,
   OthersEventCallback,
   RoomEventCallbackMap,
-  AuthEndpoint,
   EventCallback,
   User,
   Connection,
@@ -22,7 +20,6 @@ import {
   BroadcastOptions,
 } from "./types";
 import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
-import auth, { parseToken } from "./authentication";
 import {
   ClientMessage,
   ClientMessageType,
@@ -167,11 +164,10 @@ export type Effects = {
 
 type Context = {
   room: string;
-  authEndpoint: AuthEndpoint;
+  authEndpoint: (room: string) => Promise<{ token: string }>;
   liveblocksServer: string;
   throttleDelay: number;
-  publicApiKey?: string;
-  WebSocketPolyfill: typeof WebSocket
+  WebSocket: typeof WebSocket;
 };
 
 export function makeStateMachine(
@@ -182,13 +178,9 @@ export function makeStateMachine(
   const effects: Effects = mockedEffects || {
     async authenticate() {
       try {
-        const token = await auth(
-          context.authEndpoint,
-          context.room,
-          context.publicApiKey
-        );
+        const { token } = await context.authEndpoint(context.room);
         const parsedToken = parseToken(token);
-        const socket = new context.WebSocketPolyfill!(
+        const socket = new context.WebSocket(
           `${context.liveblocksServer}/?token=${token}`
         );
         socket.addEventListener("message", onMessage);
@@ -1433,39 +1425,26 @@ export type InternalRoom = {
 
 export function createRoom(
   name: string,
-  options: ClientOptions & {
+  options: {
     defaultPresence?: Presence;
     defaultStorageRoot?: Record<string, any>;
-    WebSocketPolyfill: typeof WebSocket;
+    throttle: number;
+    authEndpoint: (roomId: string) => Promise<{ token: string }>;
+    WebSocket: typeof WebSocket;
+    liveblocksServer: string;
   }
 ): InternalRoom {
-  const throttleDelay = options.throttle || 100;
-  const liveblocksServer: string =
-    (options as any).liveblocksServer || "wss://liveblocks.net/v5";
-
-  let authEndpoint: AuthEndpoint;
-  if (options.authEndpoint) {
-    authEndpoint = options.authEndpoint;
-  } else {
-    const publicAuthorizeEndpoint: string =
-      (options as any).publicAuthorizeEndpoint ||
-      "https://liveblocks.io/api/public/authorize";
-
-    authEndpoint = publicAuthorizeEndpoint;
-  }
-
   const state = defaultState(
     options.defaultPresence,
     options.defaultStorageRoot
   );
 
   const machine = makeStateMachine(state, {
-    throttleDelay,
-    liveblocksServer,
-    authEndpoint,
+    throttleDelay: options.throttle,
+    liveblocksServer: options.liveblocksServer,
+    authEndpoint: options.authEndpoint,
     room: name,
-    publicApiKey: options.publicApiKey,
-    WebSocketPolyfill: options.WebSocketPolyfill
+    WebSocket: options.WebSocket,
   });
 
   const room: Room = {
@@ -1513,4 +1492,22 @@ class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
     super(message);
   }
+}
+
+function parseToken(token: string): AuthenticationToken {
+  const tokenParts = token.split(".");
+  if (tokenParts.length !== 3) {
+    throw new Error(
+      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+    );
+  }
+
+  const data = JSON.parse(atob(tokenParts[1]));
+  if (typeof data.actor !== "number") {
+    throw new Error(
+      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+    );
+  }
+
+  return data;
 }

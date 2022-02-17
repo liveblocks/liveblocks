@@ -149,10 +149,19 @@ export type AuthEndpoint = string | AuthEndpointCallback;
  */
 export type ClientOptions = {
   throttle?: number;
+  fetchPolyfill?: any;
+  WebSocketPolyfill?: any;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
 );
+
+export type GlobalOptions = {
+  throttle: number;
+  WebSocket: typeof WebSocket;
+  authEndpoint: (room: string) => Promise<AuthorizeResponse>;
+  liveblocksServer: string;
+};
 
 export type AuthorizeResponse = {
   token: string;
