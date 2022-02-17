@@ -4,12 +4,13 @@
 
 import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
   delay,
   assertJsonContentAreEquals,
   assertItems,
   pickRandomItem,
   getJsonContent,
+  waitForNElements,
+  waitForContentToBeEquals,
 } from "../utils";
 
 function pickRandomAction() {
@@ -23,36 +24,37 @@ declare const browserB: Browser;
 
 describe("Storage - Offline - LiveList", () => {
   let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
+  beforeAll(async () => {
     firstPage = await browserA.newPage();
     secondPage = await browserB.newPage();
 
     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#clear"),
+      secondPage.waitForSelector("#clear"),
+    ]);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await firstPage.close();
     await secondPage.close();
   });
 
   it("one client offline with offline changes", async () => {
     await firstPage.click("#clear");
-    await secondPage.click("#clear");
-    await delay(1000);
-
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     await firstPage.click("#push");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 1);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     await firstPage.click("#closeWebsocket");
     await delay(50);
     await firstPage.click("#push");
     await secondPage.click("#push");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 2);
 
     const firstPageItems = await getJsonContent(firstPage, "items");
     const secondPageItems = await getJsonContent(secondPage, "items");
@@ -62,19 +64,17 @@ describe("Storage - Offline - LiveList", () => {
 
     await firstPage.click("#sendCloseEvent");
 
-    await delay(3000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 
   it("fuzzy", async () => {
     await firstPage.click("#clear");
-    await secondPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
+    await assertItems([firstPage, secondPage], []);
 
     await assertItems([firstPage, secondPage], []);
 
@@ -85,13 +85,12 @@ describe("Storage - Offline - LiveList", () => {
       await delay(50);
     }
 
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
     await firstPage.click("#closeWebsocket");
     await delay(50);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
       firstPage.click(pickRandomAction());
       secondPage.click(pickRandomAction());
@@ -102,12 +101,10 @@ describe("Storage - Offline - LiveList", () => {
 
     await firstPage.click("#sendCloseEvent");
 
-    await delay(5000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(firstPage, secondPage);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 });

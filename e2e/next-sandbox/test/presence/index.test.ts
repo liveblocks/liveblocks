@@ -3,7 +3,12 @@
  */
 
 import { Page, Browser, default as puppeteer } from "puppeteer";
-import { CONNECT_DELAY, delay, getJsonContent, getTextContent } from "../utils";
+import {
+  delay,
+  getJsonContent,
+  getTextContent,
+  waitForNElements,
+} from "../utils";
 
 function getCurrentPresenseCount(page: Page) {
   return getTextContent(page, "me-count");
@@ -35,7 +40,12 @@ describe("Presence", () => {
     const secondPage = await browserB.newPage();
     await secondPage.goto(TEST_URL);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await waitForNElements([firstPage, secondPage], 1, "othersCount");
 
     const othersFirstPage = await getOthers(firstPage);
     const othersSecondPage = await getOthers(secondPage);
@@ -58,7 +68,7 @@ describe("Presence", () => {
     const secondPage = await browserB.newPage();
     await secondPage.goto(TEST_URL);
 
-    await delay(CONNECT_DELAY);
+    await waitForNElements([firstPage, secondPage], 1, "othersCount");
 
     const othersSecondPage = await getOthers(secondPage);
 
@@ -76,7 +86,12 @@ describe("Presence", () => {
     const secondPage = await browserB.newPage();
     await secondPage.goto(TEST_URL);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await waitForNElements([firstPage, secondPage], 1, "othersCount");
 
     await firstPage.click("#increment-button");
 
@@ -98,7 +113,12 @@ describe("Presence", () => {
     const secondPage = await browserB.newPage();
     await secondPage.goto(TEST_URL);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await waitForNElements([firstPage, secondPage], 1, "othersCount");
 
     let othersSecondPage = await getOthers(secondPage);
     expect(othersSecondPage.length).toEqual(1);
