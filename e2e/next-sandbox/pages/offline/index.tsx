@@ -143,6 +143,9 @@ function Sandbox() {
       </button>
 
       <h2>Items</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {list.length}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(list.toArray(), null, 2)}
       </div>

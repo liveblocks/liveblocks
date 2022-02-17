@@ -4,11 +4,10 @@
 
 import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
-  delay,
   getJsonContent,
   assertJsonContentAreEquals,
   assertItems,
+  waitForNElements,
 } from "../utils";
 
 const TEST_URL = "http://localhost:3007/batching";
@@ -18,28 +17,31 @@ declare const browserB: Browser;
 
 describe("Batching", () => {
   let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
+  beforeAll(async () => {
     firstPage = await browserA.newPage();
     secondPage = await browserB.newPage();
 
     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#clear"),
+      secondPage.waitForSelector("#clear"),
+    ]);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await firstPage.close();
     await secondPage.close();
   });
 
   it("update storage and presence", async () => {
     await firstPage.click("#clear");
-    await delay(1000);
 
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
 
     await firstPage.click("#update-storage-presence-batch");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 1);
     await assertJsonContentAreEquals(firstPage, secondPage);
 
     const othersFirstPage = await getJsonContent(firstPage, "others");
@@ -51,7 +53,7 @@ describe("Batching", () => {
     expect(othersSecondPage[0].presence.count).toEqual(1);
 
     await firstPage.click("#clear");
-    await delay(1000);
+    await waitForNElements([firstPage, secondPage], 0);
     await assertItems([firstPage, secondPage], []);
   });
 });

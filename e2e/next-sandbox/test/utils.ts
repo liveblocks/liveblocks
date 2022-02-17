@@ -1,22 +1,25 @@
 import { Page } from "puppeteer";
 import randomNumber from "../utils/randomNumber";
 
-export async function getElementById(page: Page, id: string) {
-  const element = await page.$(`#${id}`);
-  if (element == null) {
-    throw new Error(`Element with id "${id}" is missing`);
-  }
-  return element;
+async function getElementById(page: Page, id: string) {
+  return await page.$(`#${id}`);
 }
 
 export async function getTextContent(page: Page, id: string) {
   const element = await getElementById(page, id);
+  if (!element) {
+    return null;
+  }
   const textContentHandle = await element.getProperty("textContent");
   return await textContentHandle!.jsonValue<string>();
 }
 
 export async function getJsonContent(page: Page, id: string) {
-  return JSON.parse(await getTextContent(page, id));
+  const content = await getTextContent(page, id);
+  if (!content) {
+    return null;
+  }
+  return JSON.parse(content);
 }
 
 export const CONNECT_DELAY = 2000;
