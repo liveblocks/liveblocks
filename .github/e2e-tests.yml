@@ -28,5 +28,5 @@ jobs:
       - run: scripts/link-liveblocks.sh
       - run: |
           npm run dev &
-          sleep 5 &
+          sleep 4 &
           npm run test-ci -- test/storage/map.test.ts
