@@ -4,7 +4,6 @@ on: [pull_request]
 
 jobs:
   e2e-tests:
-    needs: unit-tests
     env:
       BRANCH_NAME: ${{ github.head_ref }}
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
