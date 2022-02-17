@@ -4,6 +4,7 @@ import {
   createSerializedObject,
   prepareIsolatedStorageTest,
   reconnect,
+  createSerializedList,
 } from "../test/utils";
 import {
   CrdtType,
@@ -11,6 +12,7 @@ import {
   SerializedCrdtWithId,
   WebsocketCloseCodes,
 } from "./live";
+import { LiveList } from ".";
 
 describe("LiveObject", () => {
   it("update non existing property", async () => {
@@ -345,29 +347,96 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
-  it("should ignore incoming updates if current op has not been acknowledged", async () => {
-    const { root, assert, applyRemoteOperations } =
-      await prepareIsolatedStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
-        1
-      );
+  describe("acknowledge mechanism", () => {
+    describe("should ignore incoming updates if current op has not been acknowledged", () => {
+      test("when value is not a crdt", async () => {
+        const { root, assert, applyRemoteOperations } =
+          await prepareIsolatedStorageTest<{ a: number }>(
+            [createSerializedObject("0:0", { a: 0 })],
+            1
+          );
 
-    assert({ a: 0 });
+        assert({ a: 0 });
 
-    root.set("a", 1);
+        root.set("a", 1);
 
-    assert({ a: 1 });
+        assert({ a: 1 });
 
-    applyRemoteOperations([
-      {
-        type: OpType.UpdateObject,
-        data: { a: 2 },
-        id: "0:0",
-        opId: "external",
-      },
-    ]);
+        applyRemoteOperations([
+          {
+            type: OpType.UpdateObject,
+            data: { a: 2 },
+            id: "0:0",
+            opId: "external",
+          },
+        ]);
 
-    assert({ a: 1 });
+        assert({ a: 1 });
+      });
+
+      it("when value is a LiveObject", async () => {
+        const { root, assert, applyRemoteOperations } =
+          await prepareIsolatedStorageTest<{ a: LiveObject<{ subA: number }> }>(
+            [
+              createSerializedObject("0:0", {}),
+              createSerializedObject("0:1", { subA: 0 }, "0:0", "a"),
+            ],
+            1
+          );
+
+        assert({ a: { subA: 0 } });
+
+        root.set("a", new LiveObject({ subA: 1 }));
+
+        assert({ a: { subA: 1 } });
+
+        applyRemoteOperations([
+          {
+            type: OpType.CreateObject,
+            data: { subA: 2 },
+            id: "2:0",
+            parentKey: "a",
+            parentId: "0:0",
+            opId: "external",
+          },
+        ]);
+
+        assert({ a: { subA: 1 } });
+      });
+
+      it("when value is a LiveList with LiveObjects", async () => {
+        const { root, assert, applyRemoteOperations } =
+          await prepareIsolatedStorageTest<{
+            a: LiveList<LiveObject<{ b: number }>>;
+          }>(
+            [
+              createSerializedObject("0:0", {}),
+              createSerializedList("0:1", "0:0", "a"),
+            ],
+            1
+          );
+
+        assert({ a: [] });
+
+        const newList = new LiveList<LiveObject<{ b: number }>>();
+        newList.push(new LiveObject({ b: 1 }));
+        root.set("a", newList);
+
+        assert({ a: [{ b: 1 }] });
+
+        applyRemoteOperations([
+          {
+            type: OpType.CreateList,
+            id: "2:0",
+            parentKey: "a",
+            parentId: "0:0",
+            opId: "external",
+          },
+        ]);
+
+        assert({ a: [{ b: 1 }] });
+      });
+    });
   });
 
   describe("delete", () => {

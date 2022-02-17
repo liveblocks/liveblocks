@@ -76,14 +76,14 @@ describe("Storage - LiveObject", () => {
 
     await assertJsonContentAreEquals(firstPage, secondPage);
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 20; i++) {
       firstPage.click("#set-nested");
       await delay(50);
     }
 
     await waitForContentToBeEquals(firstPage, secondPage);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
       firstPage.click(pickRandomActionNested());
       secondPage.click(pickRandomActionNested());

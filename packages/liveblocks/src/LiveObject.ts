@@ -473,10 +473,15 @@ export class LiveObject<
         newValue._setParentLink(this, key);
         newValue._attach(this._doc.generateId(), this._doc);
         const newAttachChildOps = newValue._serialize(this._id, key, this._doc);
-        // TODO hanlde multiple ops
+
+        const createCrdtOp = newAttachChildOps.find(
+          (op: Op & { parentId?: string }) => op.parentId === this._id
+        );
+        if (createCrdtOp) {
+          this.#propToLastUpdate.set(key, createCrdtOp.opId!);
+        }
 
         ops.push(...newAttachChildOps);
-        this.#propToLastUpdate.set(key, newAttachChildOps[0].opId!);
       } else {
         updatedProps[key] = newValue;
         this.#propToLastUpdate.set(key, opId);
