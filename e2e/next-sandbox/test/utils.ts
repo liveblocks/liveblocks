@@ -88,9 +88,7 @@ export async function waitForNElements(
   length: number,
   id: string = "itemsCount"
 ) {
-  const promises = pages.map(async (page) => {
-    const dd = await getTextContent(page, id);
-    console.log("dddd", dd);
+  const promises = pages.map((page) => {
     return page.waitForFunction(
       `document.getElementById("${id}").innerHTML == ${length}`,
       { timeout: 5000 }

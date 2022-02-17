@@ -20,7 +20,7 @@ const TEST_URL = "http://localhost:3007/storage/object";
 declare const browserA: Browser;
 declare const browserB: Browser;
 
-describe("Storage - LiveObject", () => {
+describe.skip("Storage - LiveObject", () => {
   let firstPage: Page, secondPage: Page;
   beforeEach(async () => {
     firstPage = await browserA.newPage();
