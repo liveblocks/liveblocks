@@ -5,7 +5,6 @@ on: [pull_request]
 jobs:
   e2e-tests:
     env:
-      BRANCH_NAME: ${{ github.head_ref }}
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
       LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
       LIVEBLOCKS_AUTHORIZE_ENDPOINT: https://liveblocks.io/api/authorize
@@ -29,5 +28,5 @@ jobs:
       - run: scripts/link-liveblocks.sh
       - run: |
           npm run dev &
-          sleep 4 &
+          sleep 10 &
           npm run test-ci -- test/storage/map.test.ts
