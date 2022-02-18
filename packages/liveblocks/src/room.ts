@@ -681,6 +681,10 @@ See v0.13 release notes for more information.
   }
 
   function connect() {
+    if (typeof window === "undefined") {
+      return;
+    }
+
     if (
       state.connection.state !== "closed" &&
       state.connection.state !== "unavailable"
@@ -1019,7 +1023,7 @@ See v0.13 release notes for more information.
     clearTimeout(state.timeoutHandles.pongTimeout);
     state.timeoutHandles.pongTimeout = effects.schedulePongTimeout();
 
-    if (state.socket.readyState === state.socket.OPEN) {
+    if (state.socket.readyState === WebSocket.OPEN) {
       state.socket.send("ping");
     }
   }
@@ -1079,7 +1083,7 @@ See v0.13 release notes for more information.
       });
     }
 
-    if (state.socket == null || state.socket.readyState !== state.socket.OPEN) {
+    if (state.socket == null || state.socket.readyState !== WebSocket.OPEN) {
       state.buffer.storageOperations = [];
       return;
     }
