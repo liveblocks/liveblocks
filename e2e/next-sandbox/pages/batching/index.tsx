@@ -74,6 +74,9 @@ function Sandbox() {
       </button>
 
       <h2>Element</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {liveMap.size}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(Array.from(liveMap.entries()), null, 2)}
       </div>

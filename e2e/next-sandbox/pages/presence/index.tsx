@@ -33,6 +33,9 @@ function Sandbox() {
       </div>
 
       <h2>Others</h2>
+      <p id="othersCount">
+        {others.toArray().filter((o) => o.presence !== undefined).length}
+      </p>
       <div id="others" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(others.toArray(), null, 2)}
       </div>
