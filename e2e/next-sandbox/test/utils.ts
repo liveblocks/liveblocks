@@ -1,17 +1,13 @@
-import { Page } from "puppeteer";
+import { expect, Page } from "@playwright/test";
+
 import randomNumber from "../utils/randomNumber";
 
-async function getElementById(page: Page, id: string) {
-  return await page.$(`#${id}`);
-}
-
 export async function getTextContent(page: Page, id: string) {
-  const element = await getElementById(page, id);
+  const element = await page.locator(`#${id}`).innerText();
   if (!element) {
     return null;
   }
-  const textContentHandle = await element.getProperty("textContent");
-  return await textContentHandle!.jsonValue<string>();
+  return element;
 }
 
 export async function getJsonContent(page: Page, id: string) {
@@ -22,7 +18,15 @@ export async function getJsonContent(page: Page, id: string) {
   return JSON.parse(content);
 }
 
-export const CONNECT_DELAY = 2000;
+export async function assertJsonContentAreEquals(
+  firstPage: Page,
+  secondPage: Page,
+  id: string = "items"
+) {
+  expect(await getJsonContent(firstPage, id)).toEqual(
+    await getJsonContent(secondPage, id)
+  );
+}
 
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -49,23 +53,13 @@ export async function waitForContentToBeEquals(
   );
 }
 
-export async function assertJsonContentAreEquals(
-  firstPage: Page,
-  secondPage: Page,
-  id: string = "items"
-) {
-  expect(await getJsonContent(firstPage, id)).toEqual(
-    await getJsonContent(secondPage, id)
-  );
-}
-
 export async function assertItems(
   pages: Page[],
   json: any,
   id: string = "items"
 ) {
   for (const page of pages) {
-    expect(await getJsonContent(page, id)).toEqual(json);
+    await expect(getJsonContent(page, id)).toEqual(json);
   }
 }
 
@@ -83,16 +77,16 @@ export function pickNumberOfUnderRedo() {
   return 0;
 }
 
-export async function waitForNElements(
-  pages: Page[],
-  length: number,
-  id: string = "itemsCount"
-) {
-  const promises = pages.map((page) => {
-    return page.waitForFunction(
-      `document.getElementById("${id}").innerHTML == ${length}`,
-      { timeout: 5000 }
-    );
-  });
-  await Promise.all(promises);
-}
+// export async function waitForNElements(
+//   pages: Page[],
+//   length: number,
+//   id: string = "itemsCount"
+// ) {
+//   const promises = pages.map((page) => {
+//     return page.waitForFunction(
+//       `document.getElementById("${id}").innerHTML == ${length}`,
+//       { timeout: 5000 }
+//     );
+//   });
+//   await Promise.all(promises);
+// }
