@@ -4,12 +4,10 @@ on: [pull_request]
 
 jobs:
   e2e-tests:
-    needs: unit-tests
     env:
-      BRANCH_NAME: ${{ github.head_ref }}
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
       LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
-      LIVEBLOCKS_AUTHORIZE_ENDPOINT: https://liveblocks.io/api/authorize
+      LIVEBLOCKS_AUTHORIZE_ENDPOINT: ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,8 +23,10 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Add permissions to script
+        run: chmod +x ./scripts/link-liveblocks.sh
       - run: scripts/link-liveblocks.sh
       - run: |
           npm run dev &
           sleep 5 &
-          npm run test-ci -- test/storage/map.test.ts
+          npm run test-ci -- test/batching/index.test.ts
