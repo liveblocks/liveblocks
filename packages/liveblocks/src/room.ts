@@ -18,6 +18,8 @@ import {
   LiveListUpdates,
   LiveMapUpdates,
   BroadcastOptions,
+  AuthorizeResponse,
+  Authentication,
 } from "./types";
 import { getTreesDiffOperations, isSameNodeOrChildOf, remove } from "./utils";
 import {
@@ -154,7 +156,10 @@ export type State = {
 };
 
 export type Effects = {
-  authenticate(): void;
+  authenticate(
+    auth: (room: string) => Promise<AuthorizeResponse>,
+    createWebSocket: (token: string) => WebSocket
+  ): void;
   send(messages: ClientMessage[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
@@ -164,10 +169,11 @@ export type Effects = {
 
 type Context = {
   room: string;
-  authEndpoint: (room: string) => Promise<{ token: string }>;
-  liveblocksServer: string;
   throttleDelay: number;
-  WebSocket: typeof WebSocket;
+  fetchPolyfill?: typeof fetch;
+  WebSocketPolyfill?: typeof WebSocket;
+  authentication: Authentication;
+  liveblocksServer: string;
 };
 
 export function makeStateMachine(
@@ -176,17 +182,14 @@ export function makeStateMachine(
   mockedEffects?: Effects
 ) {
   const effects: Effects = mockedEffects || {
-    async authenticate() {
+    async authenticate(
+      auth: (room: string) => Promise<AuthorizeResponse>,
+      createWebSocket: (token: string) => WebSocket
+    ) {
       try {
-        const { token } = await context.authEndpoint(context.room);
+        const { token } = await auth(context.room);
         const parsedToken = parseToken(token);
-        const socket = new context.WebSocket(
-          `${context.liveblocksServer}/?token=${token}`
-        );
-        socket.addEventListener("message", onMessage);
-        socket.addEventListener("open", onOpen);
-        socket.addEventListener("close", onClose);
-        socket.addEventListener("error", onError);
+        const socket = createWebSocket(token);
         authenticationSuccess(parsedToken, socket);
       } catch (er: any) {
         authenticationFailure(er);
@@ -685,8 +688,17 @@ See v0.13 release notes for more information.
       return null;
     }
 
+    const auth = prepareAuthEndpoint(
+      context.authentication,
+      context.fetchPolyfill
+    );
+    const createWebSocket = prepareCreateWebSocket(
+      context.liveblocksServer,
+      context.WebSocketPolyfill
+    );
+
     updateConnection({ state: "authenticating" });
-    effects.authenticate();
+    effects.authenticate(auth, createWebSocket);
   }
 
   function updatePresence<T extends Presence>(
@@ -724,6 +736,11 @@ See v0.13 release notes for more information.
     token: AuthenticationToken,
     socket: WebSocket
   ) {
+    socket.addEventListener("message", onMessage);
+    socket.addEventListener("open", onOpen);
+    socket.addEventListener("close", onClose);
+    socket.addEventListener("error", onError);
+
     updateConnection({
       state: "connecting",
       id: token.actor,
@@ -1313,7 +1330,6 @@ See v0.13 release notes for more information.
 
   return {
     // Internal
-    onOpen,
     onClose,
     onMessage,
     authenticationSuccess,
@@ -1424,28 +1440,18 @@ export type InternalRoom = {
 };
 
 export function createRoom(
-  name: string,
   options: {
     defaultPresence?: Presence;
     defaultStorageRoot?: Record<string, any>;
-    throttle: number;
-    authEndpoint: (roomId: string) => Promise<{ token: string }>;
-    WebSocket: typeof WebSocket;
-    liveblocksServer: string;
-  }
+  },
+  context: Context
 ): InternalRoom {
   const state = defaultState(
     options.defaultPresence,
     options.defaultStorageRoot
   );
 
-  const machine = makeStateMachine(state, {
-    throttleDelay: options.throttle,
-    liveblocksServer: options.liveblocksServer,
-    authEndpoint: options.authEndpoint,
-    room: name,
-    WebSocket: options.WebSocket,
-  });
+  const machine = makeStateMachine(state, context);
 
   const room: Room = {
     /////////////
@@ -1510,4 +1516,105 @@ function parseToken(token: string): AuthenticationToken {
   }
 
   return data;
+}
+
+function prepareCreateWebSocket(
+  liveblocksServer: string,
+  WebSocketPolyfill?: typeof WebSocket
+) {
+  if (typeof window === "undefined" && WebSocketPolyfill == null) {
+    throw new Error(
+      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
+    );
+  }
+
+  const ws = WebSocketPolyfill || WebSocket;
+
+  return (token: string): WebSocket => {
+    return new ws(`${liveblocksServer}/?token=${token}`);
+  };
+}
+
+function prepareAuthEndpoint(
+  authentication: Authentication,
+  fetchPolyfill?: typeof window.fetch
+): (room: string) => Promise<AuthorizeResponse> {
+  if (authentication.type === "public") {
+    if (typeof window === "undefined" && fetchPolyfill == null) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
+      );
+    }
+
+    return (room: string) =>
+      fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
+        room,
+        publicApiKey: authentication.publicApiKey,
+      });
+  }
+
+  if (authentication.type === "private") {
+    if (typeof window === "undefined" && fetchPolyfill == null) {
+      throw new Error(
+        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
+      );
+    }
+
+    return (room: string) =>
+      fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
+        room,
+      });
+  }
+
+  if (authentication.type === "custom") {
+    return authentication.callback;
+  }
+
+  throw new Error("Internal error. Unexpected authentication type");
+}
+
+async function fetchAuthEndpoint(
+  fetch: typeof window.fetch,
+  endpoint: string,
+  body: {
+    room: string;
+    publicApiKey?: string;
+  }
+) {
+  const res = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    throw new AuthenticationError(
+      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+    );
+  }
+
+  let authResponse = null;
+  try {
+    authResponse = await res.json();
+  } catch (er) {
+    throw new AuthenticationError(
+      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+    );
+  }
+
+  if (typeof authResponse.token !== "string") {
+    throw new AuthenticationError(
+      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+    );
+  }
+
+  return authResponse;
+}
+
+class AuthenticationError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
 }

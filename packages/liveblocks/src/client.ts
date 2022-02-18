@@ -1,12 +1,5 @@
 import { createRoom, InternalRoom } from "./room";
-import {
-  ClientOptions,
-  Room,
-  Client,
-  Presence,
-  GlobalOptions,
-  AuthorizeResponse,
-} from "./types";
+import { ClientOptions, Room, Client, Presence, Authentication } from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -34,7 +27,8 @@ import {
  * });
  */
 export function createClient(options: ClientOptions): Client {
-  const globalOptions = prepareGlobalOptions(options);
+  const clientOptions = options;
+  const throttleDelay = getThrottleDelayFromOptions(options);
 
   const rooms = new Map<string, InternalRoom>();
 
@@ -48,21 +42,35 @@ export function createClient(options: ClientOptions): Client {
     options: {
       defaultPresence?: Presence;
       defaultStorageRoot?: TStorageRoot;
+      /**
+       * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
+       */
+      DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
     }
-    internalRoom = createRoom(roomId, {
-      ...globalOptions,
-      ...{
+    internalRoom = createRoom(
+      {
         defaultPresence: options.defaultPresence,
         defaultStorageRoot: options.defaultStorageRoot,
       },
-    });
+      {
+        room: roomId,
+        throttleDelay,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
+        fetchPolyfill: clientOptions.fetchPolyfill,
+        liveblocksServer:
+          (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v5",
+        authentication: prepareAuthentication(clientOptions),
+      }
+    );
     rooms.set(roomId, internalRoom);
-    internalRoom.connect();
+    if (!options.DO_NOT_USE_withoutConnecting) {
+      internalRoom.connect();
+    }
     return internalRoom.room;
   }
 
@@ -98,57 +106,9 @@ export function createClient(options: ClientOptions): Client {
   };
 }
 
-function fetchAuthorize(
-  fetch: typeof window.fetch,
-  endpoint: string,
-  publicApiKey?: string
-): (room: string) => Promise<{ token: string }> {
-  return async (room: string) => {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        room,
-        publicApiKey,
-      }),
-    });
-
-    if (!res.ok) {
-      throw new AuthenticationError(
-        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-      );
-    }
-
-    let authResponse = null;
-    try {
-      authResponse = await res.json();
-    } catch (er) {
-      throw new AuthenticationError(
-        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-      );
-    }
-
-    if (typeof authResponse.token !== "string") {
-      throw new AuthenticationError(
-        `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-      );
-    }
-
-    return authResponse;
-  };
-}
-
-class AuthenticationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-function prepareGlobalOptions(options: ClientOptions): GlobalOptions {
+function getThrottleDelayFromOptions(options: ClientOptions): number {
   if (options.throttle === undefined) {
-    options.throttle = 80;
+    return 100;
   }
 
   if (
@@ -159,50 +119,29 @@ function prepareGlobalOptions(options: ClientOptions): GlobalOptions {
     throw new Error("throttle should be a number between 80 and 1000.");
   }
 
-  if (typeof window === "undefined" && options.WebSocketPolyfill == null) {
-    throw new Error(
-      "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
-    );
-  }
+  return options.throttle;
+}
 
-  let authEndpoint: (room: string) => Promise<AuthorizeResponse>;
-
-  if (typeof options.publicApiKey === "string") {
-    if (typeof window === "undefined" && options.fetchPolyfill == null) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
-      );
-    }
-
-    authEndpoint = fetchAuthorize(
-      options.fetchPolyfill || fetch,
-      (options as any).publicAuthorizeEndpoint ||
+function prepareAuthentication(clientOptions: ClientOptions): Authentication {
+  if (typeof clientOptions.publicApiKey === "string") {
+    return {
+      type: "public",
+      publicApiKey: clientOptions.publicApiKey,
+      url:
+        (clientOptions as any).publicAuthorizeEndpoint ||
         "https://liveblocks.io/api/public/authorize",
-      options.publicApiKey
-    );
-  } else if (typeof options.authEndpoint === "string") {
-    if (typeof window === "undefined" && options.fetchPolyfill == null) {
-      throw new Error(
-        "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
-      );
-    }
-
-    authEndpoint = fetchAuthorize(
-      options.fetchPolyfill || fetch,
-      options.authEndpoint
-    );
-  } else if (typeof options.authEndpoint === "function") {
-    authEndpoint = options.authEndpoint;
-  } else {
-    // TODO: Better error message
-    throw new Error("Invalid Liveblocks client config.");
+    };
+  } else if (typeof clientOptions.authEndpoint === "string") {
+    return {
+      type: "private",
+      url: clientOptions.authEndpoint,
+    };
+  } else if (typeof clientOptions.authEndpoint === "function") {
+    return {
+      type: "custom",
+      callback: clientOptions.authEndpoint,
+    };
   }
 
-  return {
-    WebSocket: options.WebSocketPolyfill || WebSocket,
-    throttle: options.throttle || 100,
-    authEndpoint,
-    liveblocksServer:
-      (options as any).liveblocksServer || "wss://liveblocks.net/v5",
-  };
+  throw new Error("Invalid config");
 }
