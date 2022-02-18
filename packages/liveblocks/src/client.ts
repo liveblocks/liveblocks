@@ -49,8 +49,7 @@ export function createClient(options: ClientOptions): Client {
     options: {
       defaultPresence?: Presence;
       defaultStorageRoot?: TStorageRoot;
-      WebSocketPolyfill: typeof WebSocket
-    } = {WebSocketPolyfill: WebSocket}
+    } = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
