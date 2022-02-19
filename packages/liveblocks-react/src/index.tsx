@@ -69,6 +69,17 @@ export function RoomProvider<TStorageRoot>({
   defaultPresence,
   defaultStorageRoot,
 }: RoomProviderProps<TStorageRoot>) {
+  if (process.env.NODE_ENV !== "production") {
+    if (id == null) {
+      throw new Error(
+        "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      );
+    }
+    if (typeof id !== "string") {
+      throw new Error("RoomProvider id property should be a string.");
+    }
+  }
+
   const client = useClient();
 
   React.useEffect(() => {
