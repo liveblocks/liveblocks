@@ -123,6 +123,7 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 }
 
 function prepareAuthentication(clientOptions: ClientOptions): Authentication {
+  // TODO: throw descriptive errors for invalid options
   if (typeof clientOptions.publicApiKey === "string") {
     return {
       type: "public",
@@ -143,5 +144,7 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
     };
   }
 
-  throw new Error("Invalid config");
+  throw new Error(
+    "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+  );
 }

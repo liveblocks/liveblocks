@@ -100,4 +100,37 @@ describe("createClient", () => {
       })
     ).toThrowError("throttle should be a number between 80 and 1000.");
   });
+
+  test("should throw if throttle is less than 80", () => {
+    expect(() =>
+      createClientAndEnter({
+        throttle: 79,
+        authEndpoint: "api/auth",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+      })
+    ).toThrowError("throttle should be a number between 80 and 1000.");
+  });
+
+  test("should throw if throttle is more than 1000", () => {
+    expect(() =>
+      createClientAndEnter({
+        throttle: 1001,
+        authEndpoint: "api/auth",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+      })
+    ).toThrowError("throttle should be a number between 80 and 1000.");
+  });
+
+  test("should throw if publicApiKey and authEndpoint are undefined", () => {
+    expect(() =>
+      createClientAndEnter({
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+      } as ClientOptions)
+    ).toThrowError(
+      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+    );
+  });
 });
