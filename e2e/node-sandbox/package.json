@@ -1,0 +1,20 @@
+{
+  "name": "node-sandbox",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@liveblocks/client": "^0.14.0",
+    "node-fetch": "2.6.7",
+    "ws": "^8.5.0"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0",
+    "jest": "^27.5.1"
+  }
+}

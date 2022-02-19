@@ -82,7 +82,8 @@ export function RoomProvider<TStorageRoot>({
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
-    });
+      DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+    } as any);
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
