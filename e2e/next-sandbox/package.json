@@ -6,7 +6,7 @@
     "dev": "next dev --port 3007",
     "build": "next build",
     "start": "next start",
-    "test": "jest --runInBand",
+    "test": "playwright test",
     "test-ci": "export CI=true && jest --runInBand"
   },
   "dependencies": {
