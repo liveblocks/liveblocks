@@ -30,7 +30,7 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
       - name: Run Playwright tests
-        run: npx playwright test test/storage/list.test.ts
+        run: npx playwright test
       - uses: actions/upload-artifact@v2
         if: always()
         with:
