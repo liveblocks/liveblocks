@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 

@@ -5,52 +5,41 @@ import randomNumber from "../utils/randomNumber";
 const WIDTH = 640;
 const HEIGHT = 800;
 
-export async function preparePages(url: string) {
-  let firstPage: Page, secondPage: Page;
+export async function preparePage(url: string, windowPositionX: number = 0) {
+  let page: Page;
   const browser = await chromium.launch({
     args: [
       `--no-sandbox`,
       `--disable-setuid-sandbox`,
       `--window-size=${WIDTH},${HEIGHT}`,
-      `--window-position=0,0`,
+      `--window-position=${windowPositionX},0`,
       "--disable-dev-shm-usage",
     ],
   });
   const context = await browser.newContext({
     viewport: { width: 640, height: 800 },
   });
-  firstPage = await context.newPage();
-  await firstPage.goto(url);
+  page = await context.newPage();
+  await page.goto(url);
 
-  const browser2 = await chromium.launch({
-    args: [
-      `--no-sandbox`,
-      `--disable-setuid-sandbox`,
-      `--window-size=${WIDTH},${HEIGHT}`,
-      `--window-position=${WIDTH},0`,
-      "--disable-dev-shm-usage",
-    ],
-  });
-  const context2 = await browser2.newContext({
-    viewport: { width: 640, height: 800 },
-  });
-  secondPage = await context2.newPage();
-  await secondPage.goto(url);
+  return page;
+}
+
+export async function preparePages(url: string) {
+  const firstPage = await preparePage(url, 0);
+  const secondPage = await preparePage(url, WIDTH);
 
   return [firstPage, secondPage];
 }
 
-export async function assertContainText(pages: Page[], value: string) {
+export async function assertContainText(
+  pages: Page[],
+  value: string,
+  id: string = "itemsCount"
+) {
   for (let i = 0; i < pages.length; i++) {
-    await expect(pages[i].locator("#itemsCount")).toContainText(value);
+    await expect(pages[i].locator(`#${id}`)).toContainText(value);
   }
-
-  // pages.forEach(async (page, index) => {
-  //   await expect(
-  //     page.locator("#itemsCount"),
-  //     "page" + index + message
-  //   ).toContainText(value);
-  // });
 }
 
 export async function getTextContent(page: Page, id: string) {
