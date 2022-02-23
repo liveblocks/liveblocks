@@ -1,60 +1,123 @@
-// /**
-//  * @jest-environment ./puppeteer_environment
-//  */
+import { Page, test, expect } from "@playwright/test";
 
-// import { Page, Browser } from "puppeteer";
-// import {
-//   CONNECT_DELAY,
-//   delay,
-//   assertJsonContentAreEquals,
-//   assertItems,
-//   pickRandomItem,
-// } from "../utils";
+import {
+  delay,
+  assertJsonContentAreEquals,
+  pickRandomItem,
+  waitForContentToBeEquals,
+  pickNumberOfUnderRedo,
+  preparePages,
+  assertContainText,
+} from "../utils";
 
-// function pickRandomAction() {
-//   return pickRandomItem(["#set", "#delete"]);
-// }
+function pickRandomAction() {
+  return pickRandomItem(["#set", "#delete"]);
+}
 
-// const TEST_URL = "http://localhost:3007/storage/object";
+function pickRandomActionNested() {
+  return pickRandomItem(["#set-nested", "#delete"]);
+}
 
-// declare const browserA: Browser;
-// declare const browserB: Browser;
+const TEST_URL = "http://localhost:3007/storage/object";
 
-// describe.skip("Storage - LiveObject", () => {
-//   let firstPage: Page, secondPage: Page;
-//   beforeEach(async () => {
-//     firstPage = await browserA.newPage();
-//     secondPage = await browserB.newPage();
+test.describe("Storage - LiveObject", () => {
+  let pages: Page[];
 
-//     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
+  test.beforeEach(async ({}, testInfo) => {
+    const roomName = `e2e-object-${testInfo.title.replaceAll(" ", "-")}`;
+    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
+  });
 
-//     await delay(CONNECT_DELAY);
-//   });
+  test.afterEach(async () => {
+    pages.forEach(async (page) => {
+      await page.close();
+    });
+  });
 
-//   afterEach(async () => {
-//     await firstPage.close();
-//     await secondPage.close();
-//   });
+  test("fuzzy", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
 
-//   it("fuzzy", async () => {
-//     await firstPage.click("#clear");
-//     await delay(1000);
-//     await assertItems([firstPage, secondPage], {});
+    for (let i = 0; i < 20; i++) {
+      pages[0].click("#set");
+      await delay(50);
+    }
 
-//     await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-//     for (let i = 0; i < 100; i++) {
-//       // no await to create randomness
-//       firstPage.click(pickRandomAction());
-//       secondPage.click(pickRandomAction());
-//       await delay(50);
-//     }
+    for (let i = 0; i < 100; i++) {
+      // no await to create randomness
+      pages[0].click(pickRandomAction());
+      pages[1].click(pickRandomAction());
+      await delay(50);
+    }
 
-//     await delay(5000);
-//     await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-//     await firstPage.click("#clear");
-//     await delay(1000);
-//     await assertItems([firstPage, secondPage], {});
-//   });
-// });
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
+  });
+
+  test("fuzzy with nested objects", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
+
+    await assertJsonContentAreEquals(pages);
+
+    for (let i = 0; i < 20; i++) {
+      pages[0].click("#set-nested");
+      await delay(50);
+    }
+
+    await waitForContentToBeEquals(pages);
+
+    for (let i = 0; i < 50; i++) {
+      // no await to create randomness
+      pages[0].click(pickRandomActionNested());
+      pages[1].click(pickRandomActionNested());
+      await delay(50);
+    }
+
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
+  });
+
+  test("fuzzy with nested objects and undo/redo", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
+
+    await assertJsonContentAreEquals(pages);
+
+    for (let i = 0; i < 20; i++) {
+      pages[0].click("#set-nested");
+      await delay(50);
+    }
+
+    await waitForContentToBeEquals(pages);
+
+    for (let i = 0; i < 50; i++) {
+      const nbofUndoRedo = pickNumberOfUnderRedo();
+
+      if (nbofUndoRedo > 0) {
+        for (let y = 0; y < nbofUndoRedo; y++) {
+          pages[0].click("#undo");
+        }
+        for (let y = 0; y < nbofUndoRedo; y++) {
+          pages[0].click("#redo");
+        }
+      } else {
+        pages[0].click(pickRandomActionNested());
+        pages[1].click(pickRandomActionNested());
+      }
+
+      await delay(50);
+    }
+
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "{}", "items");
+  });
+});

@@ -136,10 +136,33 @@ export class LiveObject<
     id: string,
     key: keyof T,
     child: AbstractCrdt,
+    opId: string,
     isLocal: boolean
   ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
+    }
+
+    if (this._doc.getItem(id) !== undefined) {
+      if (this.#propToLastUpdate.get(key as string) === opId) {
+        // Acknowlegment from local operation
+        this.#propToLastUpdate.delete(key as string);
+      }
+
+      return { modified: false };
+    }
+
+    if (isLocal) {
+      this.#propToLastUpdate.set(key as string, opId);
+    } else if (this.#propToLastUpdate.get(key as string) === undefined) {
+      // Remote operation with no local change => apply operation
+    } else if (this.#propToLastUpdate.get(key as string) === opId) {
+      // Acknowlegment from local operation
+      this.#propToLastUpdate.delete(key as string);
+      return { modified: false };
+    } else {
+      // Conflict, ignore remote operation
+      return { modified: false };
     }
 
     const previousValue = this.#map.get(key as string);
@@ -293,6 +316,12 @@ export class LiveObject<
       return { modified: false };
     }
 
+    // If a local operation exists on the same key
+    // prevent flickering by not applying delete op.
+    if (this.#propToLastUpdate.get(key) !== undefined) {
+      return { modified: false };
+    }
+
     const oldValue = this.#map.get(key);
 
     let reverse: Op[] = [];
@@ -426,8 +455,6 @@ export class LiveObject<
     };
 
     for (const key in overrides) {
-      this.#propToLastUpdate.set(key, opId);
-
       const oldValue = this.#map.get(key);
 
       if (oldValue instanceof AbstractCrdt) {
@@ -444,9 +471,19 @@ export class LiveObject<
       if (newValue instanceof AbstractCrdt) {
         newValue._setParentLink(this, key);
         newValue._attach(this._doc.generateId(), this._doc);
-        ops.push(...newValue._serialize(this._id, key, this._doc));
+        const newAttachChildOps = newValue._serialize(this._id, key, this._doc);
+
+        const createCrdtOp = newAttachChildOps.find(
+          (op: Op & { parentId?: string }) => op.parentId === this._id
+        );
+        if (createCrdtOp) {
+          this.#propToLastUpdate.set(key, createCrdtOp.opId!);
+        }
+
+        ops.push(...newAttachChildOps);
       } else {
         updatedProps[key] = newValue;
+        this.#propToLastUpdate.set(key, opId);
       }
 
       this.#map.set(key, newValue);
