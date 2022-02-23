@@ -122,14 +122,13 @@ export class LiveList<T> extends AbstractCrdt {
     key: string,
     child: AbstractCrdt,
     opId: string,
-    isLocal: boolean,
-    alreadyExist: boolean
+    isLocal: boolean
   ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    if (alreadyExist) {
+    if (this._doc.getItem(id) !== undefined) {
       return { modified: false };
     }
 

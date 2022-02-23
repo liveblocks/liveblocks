@@ -310,6 +310,7 @@ export function makeStateMachine(
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
+      getItem,
       addItem,
       deleteItem,
       generateId,
@@ -531,8 +532,7 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveObject(op.data),
           op.opId!,
-          isLocal,
-          getItem(op.id) != null
+          isLocal
         );
       }
       case OpType.CreateList: {
@@ -547,8 +547,7 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveList(),
           op.opId!,
-          isLocal,
-          getItem(op.id) != null
+          isLocal
         );
       }
       case OpType.CreateRegister: {
@@ -563,8 +562,7 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveRegister(op.data),
           op.opId!,
-          isLocal,
-          getItem(op.id) != null
+          isLocal
         );
       }
       case OpType.CreateMap: {
@@ -579,8 +577,7 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveMap(),
           op.opId!,
-          isLocal,
-          getItem(op.id) != null
+          isLocal
         );
       }
     }

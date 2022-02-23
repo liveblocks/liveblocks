@@ -80,8 +80,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     key: string,
     crdt: AbstractCrdt,
     opId: string,
-    isLocal: boolean,
-    alreadyExist: boolean
+    isLocal: boolean
   ): ApplyResult {
     throw new Error("Method not implemented.");
   }
