@@ -1006,7 +1006,8 @@ See v0.13 release notes for more information.
 
       // Re-broadcast the user presence during a reconnect.
       if (state.lastConnectionId !== undefined) {
-        updatePresence(state.me);
+        state.buffer.presence = state.me;
+        tryFlushing();
       }
 
       state.lastConnectionId = state.connection.id;

@@ -953,8 +953,6 @@ describe("room", () => {
         })
       );
 
-      refMachine.onMessage;
-
       await reconnect(2);
 
       const refMachineOthers = refMachine.selectors.getOthers().toArray();
