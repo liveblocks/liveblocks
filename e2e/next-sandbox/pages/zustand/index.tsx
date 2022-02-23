@@ -8,8 +8,6 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-const roomName = "e2e-zustand-basic";
-
 interface State {
   items: string[];
   addItem: (newTodo: string) => void;
@@ -47,13 +45,21 @@ export default function Home() {
     liveblocks: { enterRoom, leaveRoom, isStorageLoading, room, others },
   } = useStore();
 
+  let roomId = "e2e-zustand-basic";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
+
   useEffect(() => {
-    enterRoom(roomName, {
+    enterRoom(roomId, {
       items: [],
     });
 
     return () => {
-      leaveRoom(roomName);
+      leaveRoom(roomId);
     };
   }, [enterRoom, leaveRoom]);
 
@@ -106,7 +112,7 @@ export default function Home() {
       <button
         id="enter"
         onClick={() =>
-          enterRoom(roomName, {
+          enterRoom(roomId, {
             items: [],
           })
         }
@@ -114,11 +120,14 @@ export default function Home() {
         Enter room
       </button>
 
-      <button id="leave" onClick={() => leaveRoom(roomName)}>
+      <button id="leave" onClick={() => leaveRoom(roomId)}>
         Leave room
       </button>
 
       <h2>Items</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {items.length}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(items, null, 2)}
       </div>

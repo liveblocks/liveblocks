@@ -1,126 +1,104 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+import { Page, test, expect } from "@playwright/test";
 
-import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
   delay,
-  assertJsonContentAreEquals,
-  assertItems,
   pickRandomItem,
   getJsonContent,
+  preparePages,
+  assertContainText,
+  waitForContentToBeEquals,
 } from "../utils";
 
 const TEST_URL = "http://localhost:3007/zustand";
-
-declare const browserA: Browser;
-declare const browserB: Browser;
 
 function pickRandomActionWithUndoRedo() {
   return pickRandomItem(["#push", "#delete", "#undo", "#redo"]);
 }
 
-describe("Zustand - Array", () => {
-  let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
-    firstPage = await browserA.newPage();
-    secondPage = await browserB.newPage();
+test.describe("Zustand", () => {
+  let pages: Page[];
 
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
-
-    await delay(CONNECT_DELAY);
+  test.beforeEach(async ({}, testInfo) => {
+    const roomName = `e2e-zustand-${testInfo.title.replaceAll(" ", "-")}`;
+    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  afterEach(async () => {
-    await firstPage.close();
-    await secondPage.close();
+  test.afterEach(async () => {
+    pages.forEach(async (page) => {
+      await page.close();
+    });
   });
 
-  it("array push basic + presence", async () => {
-    await firstPage.click("#clear");
+  test("array push basic + presence", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
+
     await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-
-    const othersFirstPage = await getJsonContent(firstPage, "others");
-    const othersSecondPage = await getJsonContent(secondPage, "others");
+    const othersFirstPage = await getJsonContent(pages[0], "others");
+    const othersSecondPage = await getJsonContent(pages[1], "others");
 
     expect(othersFirstPage.length).toEqual(1);
     expect(othersFirstPage[0].presence).toEqual({});
     expect(othersSecondPage.length).toEqual(1);
     expect(othersSecondPage[0].presence).toEqual({});
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("with enter and leave room", async () => {
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+  test("with enter and leave room", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
-    await firstPage.click("#push");
+    await pages[0].click("#push");
     await delay(50);
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await waitForContentToBeEquals(pages);
 
-    await secondPage.click("#leave"); // Leave
+    await pages[1].click("#leave"); // Leave
     await delay(500);
 
-    await firstPage.click("#push");
+    await pages[0].click("#push");
     await delay(1000);
 
-    await secondPage.click("#enter"); // Enter
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[1].click("#enter"); // Enter
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("fuzzy", async () => {
-    await firstPage.click("#clear");
-    await delay(2000);
-    await assertItems([firstPage, secondPage], []);
-
+  test("fuzzy", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      firstPage.click("#push");
-      secondPage.click("#push");
+      pages[0].click("#push");
+      pages[1].click("#push");
       await delay(50);
     }
 
-    await delay(2000);
+    await waitForContentToBeEquals(pages);
 
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      firstPage.click(pickRandomActionWithUndoRedo());
-      secondPage.click(pickRandomActionWithUndoRedo());
+      pages[0].click(pickRandomActionWithUndoRedo());
+      pages[1].click(pickRandomActionWithUndoRedo());
       await delay(50);
     }
 
-    await delay(2000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 });
