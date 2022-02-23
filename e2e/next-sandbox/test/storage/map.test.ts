@@ -1,16 +1,13 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+import { Page, test, expect } from "@playwright/test";
 
-import { Page, Browser } from "puppeteer";
 import {
   delay,
   assertJsonContentAreEquals,
-  assertItems,
   pickRandomItem,
   pickNumberOfUnderRedo,
-  waitForNElements,
+  preparePages,
   waitForContentToBeEquals,
+  assertContainText,
 } from "../utils";
 
 function pickRandomAction() {
@@ -19,54 +16,43 @@ function pickRandomAction() {
 
 const TEST_URL = "http://localhost:3007/storage/map";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+test.describe("Storage - LiveMap", () => {
+  let pages: Page[];
 
-describe("Storage - LiveMap", () => {
-  let firstPage: Page, secondPage: Page;
-  beforeAll(async () => {
-    firstPage = await browserA.newPage();
-    secondPage = await browserB.newPage();
-
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
-
-    await Promise.all([
-      firstPage.waitForSelector("#clear"),
-      secondPage.waitForSelector("#clear"),
-    ]);
+  test.beforeEach(async ({}, testInfo) => {
+    const roomName = `e2e-map-${testInfo.title.replaceAll(" ", "-")}`;
+    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  afterAll(async () => {
-    await firstPage.close();
-    await secondPage.close();
+  test.afterEach(async () => {
+    pages.forEach(async (page) => {
+      await page.close();
+    });
   });
 
-  it("fuzzy", async () => {
-    await firstPage.click("#clear");
-    await waitForNElements([firstPage, secondPage], 0);
-    await assertItems([firstPage, secondPage], {});
+  test("fuzzy", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      firstPage.click(pickRandomAction());
-      secondPage.click(pickRandomAction());
+      pages[0].click(pickRandomAction());
+      pages[1].click(pickRandomAction());
       await delay(50);
     }
 
-    await waitForContentToBeEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await waitForNElements([firstPage, secondPage], 0);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("fuzzy with full undo/redo", async () => {
-    await firstPage.click("#clear");
-    await waitForNElements([firstPage, secondPage], 0);
-    await assertItems([firstPage, secondPage], {});
+  test("fuzzy with full undo/redo", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await assertJsonContentAreEquals(pages);
 
-    const pages = [firstPage, secondPage];
     for (let i = 0; i < 50; i++) {
       // no await to create randomness
 
@@ -88,9 +74,9 @@ describe("Storage - LiveMap", () => {
       await delay(50);
     }
 
-    await waitForContentToBeEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await waitForNElements([firstPage, secondPage], 0);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 });

@@ -1,60 +1,60 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+// /**
+//  * @jest-environment ./puppeteer_environment
+//  */
 
-import { Page, Browser } from "puppeteer";
-import {
-  CONNECT_DELAY,
-  delay,
-  assertJsonContentAreEquals,
-  assertItems,
-  pickRandomItem,
-} from "../utils";
+// import { Page, Browser } from "puppeteer";
+// import {
+//   CONNECT_DELAY,
+//   delay,
+//   assertJsonContentAreEquals,
+//   assertItems,
+//   pickRandomItem,
+// } from "../utils";
 
-function pickRandomAction() {
-  return pickRandomItem(["#set", "#delete"]);
-}
+// function pickRandomAction() {
+//   return pickRandomItem(["#set", "#delete"]);
+// }
 
-const TEST_URL = "http://localhost:3007/storage/object";
+// const TEST_URL = "http://localhost:3007/storage/object";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+// declare const browserA: Browser;
+// declare const browserB: Browser;
 
-describe.skip("Storage - LiveObject", () => {
-  let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
-    firstPage = await browserA.newPage();
-    secondPage = await browserB.newPage();
+// describe.skip("Storage - LiveObject", () => {
+//   let firstPage: Page, secondPage: Page;
+//   beforeEach(async () => {
+//     firstPage = await browserA.newPage();
+//     secondPage = await browserB.newPage();
 
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
+//     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
-    await delay(CONNECT_DELAY);
-  });
+//     await delay(CONNECT_DELAY);
+//   });
 
-  afterEach(async () => {
-    await firstPage.close();
-    await secondPage.close();
-  });
+//   afterEach(async () => {
+//     await firstPage.close();
+//     await secondPage.close();
+//   });
 
-  it("fuzzy", async () => {
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], {});
+//   it("fuzzy", async () => {
+//     await firstPage.click("#clear");
+//     await delay(1000);
+//     await assertItems([firstPage, secondPage], {});
 
-    await assertJsonContentAreEquals(firstPage, secondPage);
+//     await assertJsonContentAreEquals(firstPage, secondPage);
 
-    for (let i = 0; i < 100; i++) {
-      // no await to create randomness
-      firstPage.click(pickRandomAction());
-      secondPage.click(pickRandomAction());
-      await delay(50);
-    }
+//     for (let i = 0; i < 100; i++) {
+//       // no await to create randomness
+//       firstPage.click(pickRandomAction());
+//       secondPage.click(pickRandomAction());
+//       await delay(50);
+//     }
 
-    await delay(5000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+//     await delay(5000);
+//     await assertJsonContentAreEquals(firstPage, secondPage);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], {});
-  });
-});
+//     await firstPage.click("#clear");
+//     await delay(1000);
+//     await assertItems([firstPage, secondPage], {});
+//   });
+// });

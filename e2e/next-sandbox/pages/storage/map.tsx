@@ -3,8 +3,15 @@ import React from "react";
 import randomNumber from "../../utils/randomNumber";
 
 export default function Home() {
+  let roomId = "e2e-storage-map";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-storage-map">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );

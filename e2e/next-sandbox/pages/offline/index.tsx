@@ -21,8 +21,15 @@ type RoomWithDevTools = Room & {
 };
 
 export default function Home() {
+  let roomId = "e2e-offline";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-offline-list">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );
