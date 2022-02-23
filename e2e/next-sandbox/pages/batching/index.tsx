@@ -12,8 +12,15 @@ import {
 import React from "react";
 
 export default function Home() {
+  let roomId = "e2e-batching-presence-storage";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-batching-presence-storage">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );

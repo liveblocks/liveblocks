@@ -1,6 +1,6 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+// /**
+//  * @jest-environment ./puppeteer_environment
+//  */
 
 import { Page, Browser } from "puppeteer";
 import {
@@ -13,9 +13,9 @@ import {
   pickNumberOfUnderRedo,
 } from "../utils";
 
-function pickRandomAction() {
-  return pickRandomItem(["#set", "#delete"]);
-}
+// function pickRandomAction() {
+//   return pickRandomItem(["#set", "#delete"]);
+// }
 
 function pickRandomActionNested() {
   return pickRandomItem(["#set-nested", "#delete"]);
@@ -23,8 +23,8 @@ function pickRandomActionNested() {
 
 const TEST_URL = "http://localhost:3007/storage/object";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+// declare const browserA: Browser;
+// declare const browserB: Browser;
 
 describe("Storage - LiveObject", () => {
   let firstPage: Page, secondPage: Page;
@@ -32,7 +32,7 @@ describe("Storage - LiveObject", () => {
     firstPage = await browserA.newPage();
     secondPage = await browserB.newPage();
 
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
+//     await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
 
     await Promise.all([
       firstPage.waitForSelector("#clear"),
@@ -49,7 +49,7 @@ describe("Storage - LiveObject", () => {
     await firstPage.click("#clear");
     await waitForContentToEqual(firstPage, secondPage, {});
 
-    await assertJsonContentAreEquals(firstPage, secondPage);
+//     await assertJsonContentAreEquals(firstPage, secondPage);
 
     for (let i = 0; i < 20; i++) {
       firstPage.click("#set");
