@@ -13,13 +13,97 @@ import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
-import {
-  createRoom,
-  defaultState,
-  Effects,
-  makeStateMachine,
-} from "../src/room";
+import { defaultState, Effects, makeStateMachine } from "../src/room";
+import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
+
+export class MockWebSocket implements WebSocket {
+  CONNECTING = 0;
+  OPEN = 1;
+  CLOSING = 2;
+  CLOSED = 3;
+
+  static instances: MockWebSocket[] = [];
+
+  isMock = true;
+
+  callbacks = {
+    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
+    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
+    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
+    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
+  };
+
+  sentMessages: string[] = [];
+  readyState: number;
+
+  constructor(
+    public url: string,
+    private onSend: (message: string) => void = () => {}
+  ) {
+    this.readyState = this.CLOSED;
+    MockWebSocket.instances.push(this);
+  }
+
+  close(code?: number, reason?: string): void {
+    this.readyState = this.CLOSED;
+  }
+
+  addEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    this.callbacks[event].push(callback as any);
+  }
+
+  removeEventListener<T extends "open" | "close" | "error" | "message">(
+    event: T,
+    callback: (event: WebSocketEventMap[T]) => void
+  ) {
+    remove(this.callbacks[event], callback as any);
+  }
+
+  send(message: string) {
+    this.sentMessages.push(message);
+    this.onSend(message);
+  }
+
+  open() {
+    this.readyState = this.OPEN;
+    for (const callback of this.callbacks.open) {
+      callback();
+    }
+  }
+
+  closeFromBackend(event?: CloseEvent) {
+    this.readyState = this.CLOSED;
+    for (const callback of this.callbacks.close) {
+      callback(event);
+    }
+  }
+
+  // Fields and methods below are not implemented
+
+  binaryType: BinaryType = "blob";
+  bufferedAmount: number = 0;
+  extensions: string = "";
+  onclose: ((this: WebSocket, ev: CloseEvent) => any) | null = () => {
+    throw new Error("NOT IMPLEMENTED");
+  };
+  onerror: ((this: WebSocket, ev: Event) => any) | null = () => {
+    throw new Error("NOT IMPLEMENTED");
+  };
+  onmessage: ((this: WebSocket, ev: MessageEvent<any>) => any) | null = () => {
+    throw new Error("NOT IMPLEMENTED");
+  };
+  onopen: ((this: WebSocket, ev: Event) => any) | null = () => {
+    throw new Error("NOT IMPLEMENTED");
+  };
+  protocol: string = "";
+  dispatchEvent(event: Event): boolean {
+    throw new Error("Method not implemented.");
+  }
+}
 
 type Machine = ReturnType<typeof makeStateMachine>;
 
@@ -66,10 +150,13 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 const defaultContext = {
   room: "room-id",
-  authEndpoint: "/api/auth",
   throttleDelay: -1, // No throttle for standard storage test
-  liveblocksServer: "wss://live.liveblocks.io",
-  onError: () => {},
+  liveblocksServer: "wss://live.liveblocks.io/v5",
+  authentication: {
+    type: "private",
+    url: "/api/auth",
+  } as Authentication,
+  WebSocketPolyfill: MockWebSocket as any,
 };
 
 async function prepareRoomWithStorage<T>(
@@ -86,7 +173,7 @@ async function prepareRoomWithStorage<T>(
 
   machine.connect();
   machine.authenticationSuccess({ actor }, ws as any);
-  machine.onOpen();
+  ws.open();
 
   const getStoragePromise = machine.getStorage<T>();
 
@@ -103,6 +190,7 @@ async function prepareRoomWithStorage<T>(
   return {
     storage,
     machine,
+    ws,
   };
 }
 
@@ -110,14 +198,17 @@ export async function prepareIsolatedStorageTest<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
-  const { machine, storage } = await prepareRoomWithStorage<T>(items, actor);
+  const { machine, storage, ws } = await prepareRoomWithStorage<T>(
+    items,
+    actor
+  );
 
   return {
     root: storage.root,
     machine,
     subscribe: machine.subscribe,
-    undo: machine.undo,
-    redo: machine.redo,
+    machine,
+    ws,
     assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
@@ -143,7 +234,7 @@ export async function prepareStorageTest<T>(
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
 
-  let { machine, storage } = await prepareRoomWithStorage<T>(
+  let { machine, storage, ws } = await prepareRoomWithStorage<T>(
     items,
     actor,
     (messages: ClientMessage[]) => {
@@ -205,13 +296,14 @@ export async function prepareStorageTest<T>(
     }
   }
 
-  async function reconnect(actor: number, newItems: SerializedCrdtWithId[]) {
+  function reconnect(
+    actor: number,
+    newItems: SerializedCrdtWithId[]
+  ): MockWebSocket {
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { actor: actor },
-      new MockWebSocket("") as any
-    );
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: actor }, ws as any);
+    ws.open();
 
     machine.onMessage(
       serverMessage({
@@ -219,6 +311,7 @@ export async function prepareStorageTest<T>(
         items: newItems,
       })
     );
+    return ws;
   }
 
   return {
@@ -244,6 +337,7 @@ export async function prepareStorageTest<T>(
         })
       ),
     reconnect,
+    ws,
   };
 }
 
@@ -252,9 +346,10 @@ export async function reconnect(
   actor: number,
   newItems: SerializedCrdtWithId[]
 ) {
+  const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess({ actor: actor }, new MockWebSocket("") as any);
-  machine.onOpen();
+  machine.authenticationSuccess({ actor: actor }, ws);
+  ws.open();
 
   machine.onMessage(
     serverMessage({
@@ -423,50 +518,3 @@ export function serverMessage(message: ServerMessage) {
     data: JSON.stringify(message),
   });
 }
-
-export class MockWebSocket {
-  static instances: MockWebSocket[] = [];
-
-  isMock = true;
-
-  callbacks = {
-    open: [] as Array<(event?: WebSocketEventMap["open"]) => void>,
-    close: [] as Array<(event?: WebSocketEventMap["close"]) => void>,
-    error: [] as Array<(event?: WebSocketEventMap["error"]) => void>,
-    message: [] as Array<(event?: WebSocketEventMap["message"]) => void>,
-  };
-
-  sentMessages: string[] = [];
-  readyState: number;
-
-  constructor(
-    public url: string,
-    private onSend: (message: string) => void = () => {}
-  ) {
-    this.readyState = WebSocket.CLOSED;
-    MockWebSocket.instances.push(this);
-  }
-
-  addEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    this.callbacks[event].push(callback as any);
-  }
-
-  removeEventListener<T extends "open" | "close" | "error" | "message">(
-    event: T,
-    callback: (event: WebSocketEventMap[T]) => void
-  ) {
-    remove(this.callbacks[event], callback as any);
-  }
-
-  send(message: string) {
-    this.sentMessages.push(message);
-    this.onSend(message);
-  }
-
-  close() {}
-}
-
-window.WebSocket = MockWebSocket as any;

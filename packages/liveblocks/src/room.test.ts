@@ -22,14 +22,16 @@ import {
 } from "./live";
 import { LiveList } from "./LiveList";
 import { makeStateMachine, Effects, defaultState } from "./room";
-import { Others } from "./types";
+import { Authentication, Others } from "./types";
 
 const defaultContext = {
   room: "room-id",
-  authEndpoint: "/api/auth",
   throttleDelay: 100,
-  liveblocksServer: "wss://live.liveblocks.io",
-  onError: () => {},
+  liveblocksServer: "wss://live.liveblocks.io/v5",
+  authentication: {
+    type: "private",
+    url: "/api/auth",
+  } as Authentication,
 };
 
 function withDateNow(now: number, callback: () => void) {
@@ -72,7 +74,7 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket(""));
     expect(state.connection.state).toBe("connecting");
   });
 
@@ -81,9 +83,10 @@ describe("room", () => {
     const state = defaultState({ x: 0 });
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
       {
@@ -98,10 +101,11 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.updatePresence({ x: 0 });
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
       {
@@ -116,9 +120,10 @@ describe("room", () => {
     const state = defaultState();
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
       {
@@ -133,12 +138,13 @@ describe("room", () => {
     const state = defaultState({ x: 0 });
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+    machine.authenticationSuccess({ actor: 0 }, ws);
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
-    withDateNow(now, () => machine.onOpen());
+    withDateNow(now, () => ws.open());
 
     withDateNow(now + 30, () => machine.updatePresence({ x: 1 }));
 
@@ -185,9 +191,10 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     machine.onMessage(
       serverMessage({
@@ -210,9 +217,10 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     machine.onMessage(
       serverMessage({
@@ -242,12 +250,13 @@ describe("room", () => {
       const state = defaultState({});
       const machine = makeStateMachine(state, defaultContext, effects);
 
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
+      machine.authenticationSuccess({ actor: 0 }, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
-      withDateNow(now, () => machine.onOpen());
+      withDateNow(now, () => ws.open());
 
       expect(effects.send).nthCalledWith(1, [
         {
@@ -275,9 +284,10 @@ describe("room", () => {
 
       expect(effects.send).not.toHaveBeenCalled();
 
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      machine.onOpen();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
@@ -300,9 +310,10 @@ describe("room", () => {
 
       expect(effects.send).not.toHaveBeenCalled();
 
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      machine.onOpen();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
@@ -323,9 +334,10 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    machine.onOpen();
+    machine.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     const getStoragePromise = machine.getStorage<{ x: number }>();
 
@@ -346,9 +358,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
@@ -367,9 +380,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
 
@@ -402,9 +416,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
@@ -422,9 +437,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     room.updatePresence({ x: 0 });
     room.updatePresence({ x: 1 });
@@ -439,9 +455,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
 
@@ -469,9 +486,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
 
@@ -493,9 +511,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
 
@@ -582,9 +601,10 @@ describe("room", () => {
       const effects = mockEffects();
       const state = defaultState({});
       const machine = makeStateMachine(state, defaultContext, effects);
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      machine.onOpen();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
 
       const getStoragePromise = machine.getStorage<{ x: number }>();
 
@@ -779,10 +799,10 @@ describe("room", () => {
       const effects = mockEffects();
       const state = defaultState({});
       const machine = makeStateMachine(state, defaultContext, effects);
-
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      machine.onOpen();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
 
       let others: Others | undefined;
 
@@ -821,9 +841,10 @@ describe("room", () => {
       const state = defaultState({});
       const machine = makeStateMachine(state, defaultContext, effects);
 
+      const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-      machine.onOpen();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
 
       const callback = jest.fn();
 
@@ -848,7 +869,7 @@ describe("room", () => {
 
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
-      const { storage, assert, machine, refStorage, reconnect } =
+      const { storage, assert, machine, refStorage, reconnect, ws } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -868,7 +889,7 @@ describe("room", () => {
         items: ["A"],
       });
 
-      machine.onClose(
+      ws.closeFromBackend(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
           wasClean: false,

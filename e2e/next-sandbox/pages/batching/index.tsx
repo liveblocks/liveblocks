@@ -12,8 +12,15 @@ import {
 import React from "react";
 
 export default function Home() {
+  let roomId = "e2e-batching-presence-storage";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-batching-presence-storage">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );
@@ -74,6 +81,9 @@ function Sandbox() {
       </button>
 
       <h2>Element</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {liveMap.size}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(Array.from(liveMap.entries()), null, 2)}
       </div>

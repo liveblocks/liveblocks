@@ -1,9 +1,12 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
-
-import { Page, Browser, default as puppeteer } from "puppeteer";
-import { CONNECT_DELAY, delay, getJsonContent, getTextContent } from "../utils";
+import { Page, test, expect } from "@playwright/test";
+import {
+  preparePage,
+  delay,
+  getJsonContent,
+  getTextContent,
+  preparePages,
+  assertContainText,
+} from "../utils";
 
 function getCurrentPresenseCount(page: Page) {
   return getTextContent(page, "me-count");
@@ -15,27 +18,19 @@ function getOthers(page: Page) {
 
 const TEST_URL = "http://localhost:3007/presence";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+test.describe("Presence", () => {
+  test("connect A => connect B => verify others on A and B", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario1";
+    const firstPage = await preparePage(testUrl);
 
-describe("Presence", () => {
-  it("me.count without initial presence should be empty", async () => {
-    const page = await browserA.newPage();
-    await page.goto(TEST_URL);
+    const secondPage = await preparePage(testUrl);
 
-    expect(await getCurrentPresenseCount(page)).toEqual("");
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
 
-    await page.close();
-  });
-
-  it("connect A => connect B => verify others on A and B", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
-
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
-
-    await delay(CONNECT_DELAY);
+    await assertContainText([firstPage, secondPage], "1", "othersCount");
 
     const othersFirstPage = await getOthers(firstPage);
     const othersSecondPage = await getOthers(secondPage);
@@ -49,16 +44,15 @@ describe("Presence", () => {
     await secondPage.close();
   });
 
-  it("connect A => update presence A => connect B => verify presence A on B", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
+  test("connect A => update presence A => connect B => verify presence A on B", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario2";
+    const firstPage = await preparePage(testUrl);
 
     await firstPage.click("#increment-button");
 
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
+    const secondPage = await preparePage(testUrl);
 
-    await delay(CONNECT_DELAY);
+    await assertContainText([firstPage, secondPage], "1", "othersCount");
 
     const othersSecondPage = await getOthers(secondPage);
 
@@ -69,14 +63,18 @@ describe("Presence", () => {
     await secondPage.close();
   });
 
-  it("connect A => connect B => update presence A => verify presence A on B", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
+  test("connect A => connect B => update presence A => verify presence A on B", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario3";
+    const firstPage = await preparePage(testUrl);
 
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
+    const secondPage = await preparePage(testUrl);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await assertContainText([firstPage, secondPage], "1", "othersCount");
 
     await firstPage.click("#increment-button");
 
@@ -91,14 +89,18 @@ describe("Presence", () => {
     await secondPage.close();
   });
 
-  it("connect A => connect B => verify other on B => disconnect A => verify others is empty on B", async () => {
-    const firstPage = await browserA.newPage();
-    await firstPage.goto(TEST_URL);
+  test("connect A => connect B => verify other on B => disconnect A => verify others is empty on B", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario4";
+    const firstPage = await preparePage(testUrl);
 
-    const secondPage = await browserB.newPage();
-    await secondPage.goto(TEST_URL);
+    const secondPage = await preparePage(testUrl);
 
-    await delay(CONNECT_DELAY);
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await assertContainText([firstPage, secondPage], "1", "othersCount");
 
     let othersSecondPage = await getOthers(secondPage);
     expect(othersSecondPage.length).toEqual(1);

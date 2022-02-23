@@ -1,20 +1,13 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+import { Page, test, expect } from "@playwright/test";
 
-import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
   delay,
-  assertJsonContentAreEquals,
-  assertItems,
+  assertContainText,
   pickRandomItem,
   pickNumberOfUnderRedo,
+  waitForContentToBeEquals,
+  preparePages,
 } from "../utils";
-
-function pickRandomActionWithUndoRedo() {
-  return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
-}
 
 function pickRandomAction() {
   return pickRandomItem(["#push", "#delete", "#move"]);
@@ -22,150 +15,99 @@ function pickRandomAction() {
 
 const TEST_URL = "http://localhost:3007/storage/list";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+// test.describe.configure({ mode: "parallel" });
 
-describe("Storage - LiveList", () => {
-  let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
-    firstPage = await browserA.newPage();
-    secondPage = await browserB.newPage();
+test.describe("Storage - LiveList", () => {
+  let pages: Page[];
 
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
-
-    await delay(CONNECT_DELAY);
+  test.beforeEach(async ({}, testInfo) => {
+    const roomName = `e2e-list-${testInfo.title.replaceAll(" ", "-")}`;
+    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  afterEach(async () => {
-    await firstPage.close();
-    await secondPage.close();
+  test.afterEach(async () => {
+    pages.forEach(async (page) => {
+      await page.close();
+    });
   });
 
-  it("list push basic", async () => {
-    await delay(2000);
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+  test("list push basic", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await assertContainText(pages, "1");
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await pages[0].click("#push");
+    await assertContainText(pages, "2");
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#push");
+    await assertContainText(pages, "3");
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("list move", async () => {
-    await delay(2000);
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+  test("list move", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
     for (let i = 0; i < 5; i++) {
-      await firstPage.click("#push");
+      await pages[0].click("#push");
       await delay(50);
     }
 
-    await delay(1000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
     for (let i = 0; i < 10; i++) {
-      await firstPage.click("#move");
+      await pages[0].click("#move");
       await delay(50);
     }
 
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("push conflicts", async () => {
-    await delay(2000);
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
+  test("push conflicts", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      firstPage.click("#push");
-      secondPage.click("#push");
+      pages[0].click("#push");
+      pages[1].click("#push");
       await delay(50);
     }
 
-    await delay(2000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await assertContainText(pages, "20");
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("fuzzy", async () => {
-    await delay(2000);
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+  test("fuzzy with full undo/redo", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      firstPage.click("#push");
-      secondPage.click("#push");
+      pages[0].click("#push");
+      pages[1].click("#push");
       await delay(50);
     }
 
-    await delay(5000);
+    await expect(pages[0].locator("#itemsCount")).toContainText("20");
 
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    for (let i = 0; i < 100; i++) {
-      // no await to create randomness
-      firstPage.click(pickRandomActionWithUndoRedo());
-      secondPage.click(pickRandomActionWithUndoRedo());
-      await delay(50);
-    }
-
-    await delay(5000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-  });
-
-  it("fuzzy with full undo/redo", async () => {
-    await delay(2000);
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
-
-    for (let i = 0; i < 10; i++) {
-      // no await to create randomness
-      firstPage.click("#push");
-      secondPage.click("#push");
-      await delay(50);
-    }
-
-    await delay(5000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    const pages = [firstPage, secondPage];
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
 
       pages.forEach((page) => {
@@ -186,11 +128,9 @@ describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await delay(5000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 });

@@ -1,5 +1,5 @@
 import { createRoom, InternalRoom } from "./room";
-import { ClientOptions, Room, Client, Presence } from "./types";
+import { ClientOptions, Room, Client, Presence, Authentication } from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -28,14 +28,7 @@ import { ClientOptions, Room, Client, Presence } from "./types";
  */
 export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
-
-  if (typeof clientOptions.throttle === "number") {
-    if (clientOptions.throttle < 80 || clientOptions.throttle > 1000) {
-      throw new Error(
-        "Liveblocks client throttle should be between 80 and 1000 ms"
-      );
-    }
-  }
+  const throttleDelay = getThrottleDelayFromOptions(options);
 
   const rooms = new Map<string, InternalRoom>();
 
@@ -49,15 +42,35 @@ export function createClient(options: ClientOptions): Client {
     options: {
       defaultPresence?: Presence;
       defaultStorageRoot?: TStorageRoot;
+      /**
+       * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
+       */
+      DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
     }
-    internalRoom = createRoom(roomId, { ...clientOptions, ...options });
+    internalRoom = createRoom(
+      {
+        defaultPresence: options.defaultPresence,
+        defaultStorageRoot: options.defaultStorageRoot,
+      },
+      {
+        room: roomId,
+        throttleDelay,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
+        fetchPolyfill: clientOptions.fetchPolyfill,
+        liveblocksServer:
+          (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v5",
+        authentication: prepareAuthentication(clientOptions),
+      }
+    );
     rooms.set(roomId, internalRoom);
-    internalRoom.connect();
+    if (!options.DO_NOT_USE_withoutConnecting) {
+      internalRoom.connect();
+    }
     return internalRoom.room;
   }
 
@@ -91,4 +104,47 @@ export function createClient(options: ClientOptions): Client {
     enter,
     leave,
   };
+}
+
+function getThrottleDelayFromOptions(options: ClientOptions): number {
+  if (options.throttle === undefined) {
+    return 100;
+  }
+
+  if (
+    typeof options.throttle !== "number" ||
+    options.throttle < 80 ||
+    options.throttle > 1000
+  ) {
+    throw new Error("throttle should be a number between 80 and 1000.");
+  }
+
+  return options.throttle;
+}
+
+function prepareAuthentication(clientOptions: ClientOptions): Authentication {
+  // TODO: throw descriptive errors for invalid options
+  if (typeof clientOptions.publicApiKey === "string") {
+    return {
+      type: "public",
+      publicApiKey: clientOptions.publicApiKey,
+      url:
+        (clientOptions as any).publicAuthorizeEndpoint ||
+        "https://liveblocks.io/api/public/authorize",
+    };
+  } else if (typeof clientOptions.authEndpoint === "string") {
+    return {
+      type: "private",
+      url: clientOptions.authEndpoint,
+    };
+  } else if (typeof clientOptions.authEndpoint === "function") {
+    return {
+      type: "custom",
+      callback: clientOptions.authEndpoint,
+    };
+  }
+
+  throw new Error(
+    "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+  );
 }

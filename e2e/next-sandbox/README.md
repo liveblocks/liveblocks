@@ -2,7 +2,7 @@
 
 Made with
 
-- [Puppeteer](https://github.com/puppeteer/puppeteer)
+- [Playwright](https://playwright.dev/)
 - [Jest](https://jestjs.io/)
 
 # Documentation

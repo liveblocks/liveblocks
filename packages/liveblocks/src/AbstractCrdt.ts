@@ -8,6 +8,7 @@ export type ApplyResult =
 export interface Doc {
   generateId: () => string;
   generateOpId: () => string;
+  getItem: (id: string) => AbstractCrdt | undefined;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
   dispatch: (
@@ -101,6 +102,7 @@ export abstract class AbstractCrdt {
     id: string,
     key: string,
     crdt: AbstractCrdt,
+    opId: string,
     isLocal: boolean
   ): ApplyResult;
 

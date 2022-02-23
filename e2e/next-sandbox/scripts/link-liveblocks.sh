@@ -4,9 +4,11 @@ cd -
 cd ../../packages/liveblocks
 npm install
 cd -
+
 cd ../../packages/liveblocks-zustand
 npm install
 cd -
+
 cd ../../packages/liveblocks-react
 npm install
 cd -
@@ -23,7 +25,6 @@ npm link @liveblocks/client ../../e2e/next-sandbox/node_modules/react
 npm run build
 npm link
 
-
 echo "Build @liveblocks/zustand"
 cd -
 cd ../../packages/liveblocks-zustand
@@ -34,3 +35,4 @@ npm link
 echo "link @liveblocks/client @liveblocks/zustand @liveblocks/react"
 cd -
 npm link @liveblocks/client @liveblocks/zustand @liveblocks/react
+

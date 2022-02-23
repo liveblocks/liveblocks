@@ -1,113 +1,94 @@
-/**
- * @jest-environment ./puppeteer_environment
- */
+import { Page, test, expect } from "@playwright/test";
 
-import { Page, Browser } from "puppeteer";
 import {
-  CONNECT_DELAY,
   delay,
-  assertJsonContentAreEquals,
-  assertItems,
   pickRandomItem,
   getJsonContent,
+  waitForContentToBeEquals,
+  preparePages,
+  assertContainText,
 } from "../utils";
 
 function pickRandomAction() {
   return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
 }
 
-const TEST_URL = "http://localhost:3007/offline";
+const TEST_URL = "http://localhost:3007/offline/";
 
-declare const browserA: Browser;
-declare const browserB: Browser;
+test.describe("Offline", () => {
+  let pages: Page[];
 
-describe("Storage - Offline - LiveList", () => {
-  let firstPage: Page, secondPage: Page;
-  beforeEach(async () => {
-    firstPage = await browserA.newPage();
-    secondPage = await browserB.newPage();
-
-    await Promise.all([firstPage.goto(TEST_URL), secondPage.goto(TEST_URL)]);
-
-    await delay(CONNECT_DELAY);
+  test.beforeEach(async ({}, testInfo) => {
+    const roomName = `e2e-offline-${testInfo.title.replaceAll(" ", "-")}`;
+    pages = await preparePages(`${TEST_URL}?room=${roomName}`);
   });
 
-  afterEach(async () => {
-    await firstPage.close();
-    await secondPage.close();
+  test.afterEach(async () => {
+    pages.forEach(async (page) => {
+      await page.close();
+    });
   });
 
-  it("one client offline with offline changes", async () => {
-    await firstPage.click("#clear");
-    await secondPage.click("#clear");
-    await delay(1000);
+  test("one client offline with offline changes", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#push");
+    await assertContainText(pages, "1");
 
-    await firstPage.click("#push");
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#closeWebsocket");
+    await pages[0].click("#closeWebsocket");
     await delay(50);
-    await firstPage.click("#push");
-    await secondPage.click("#push");
-    await delay(1000);
+    await pages[0].click("#push");
+    await pages[1].click("#push");
+    await assertContainText([pages[0]], "2");
 
-    const firstPageItems = await getJsonContent(firstPage, "items");
-    const secondPageItems = await getJsonContent(secondPage, "items");
+    const firstPageItems = await getJsonContent(pages[0], "items");
+    const secondPageItems = await getJsonContent(pages[1], "items");
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
 
-    await firstPage.click("#sendCloseEvent");
-
-    await delay(3000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#clear");
+    await pages[0].click("#sendCloseEvent");
     await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 
-  it("fuzzy", async () => {
-    await firstPage.click("#clear");
-    await secondPage.click("#clear");
-    await delay(1000);
-
-    await assertItems([firstPage, secondPage], []);
+  test("fuzzy", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
 
     for (let i = 0; i < 10; i++) {
       // no await to create randomness
-      firstPage.click("#push");
-      secondPage.click("#push");
+      pages[0].click("#push");
+      pages[1].click("#push");
       await delay(50);
     }
 
-    await delay(1000);
-    await assertJsonContentAreEquals(firstPage, secondPage);
+    await waitForContentToBeEquals(pages);
 
-    await firstPage.click("#closeWebsocket");
+    await pages[0].click("#closeWebsocket");
     await delay(50);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
-      firstPage.click(pickRandomAction());
-      secondPage.click(pickRandomAction());
+      pages[0].click(pickRandomAction());
+      pages[1].click(pickRandomAction());
       await delay(50);
     }
 
+    await delay(2000);
+
+    await pages[0].click("#sendCloseEvent");
+
     await delay(1000);
 
-    await firstPage.click("#sendCloseEvent");
+    await waitForContentToBeEquals(pages);
 
-    await delay(5000);
-
-    await assertJsonContentAreEquals(firstPage, secondPage);
-
-    await firstPage.click("#clear");
-    await delay(1000);
-    await assertItems([firstPage, secondPage], []);
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
   });
 });
