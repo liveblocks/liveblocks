@@ -550,9 +550,10 @@ describe("room", () => {
     const state = defaultState({});
     const room = makeStateMachine(state, defaultContext, effects);
 
+    const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, new MockWebSocket("") as any);
-    room.onOpen();
+    room.authenticationSuccess({ actor: 0 }, ws);
+    ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
 

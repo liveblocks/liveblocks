@@ -207,7 +207,8 @@ export async function prepareIsolatedStorageTest<T>(
     root: storage.root,
     machine,
     subscribe: machine.subscribe,
-    machine,
+    undo: machine.undo,
+    redo: machine.redo,
     ws,
     assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
     applyRemoteOperations: (ops: Op[]) =>
