@@ -7,19 +7,46 @@ import {
 } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
+import { LiveObject } from "@liveblocks/client";
 
 export default function Home() {
+  let roomId = "e2e-storage-object";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-storage-object">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );
 }
 
+function objectToJson(record: LiveObject) {
+  const result: any = {};
+  const obj = record.toObject();
+
+  for (const key in obj) {
+    result[key] = toJson(obj[key]);
+  }
+
+  return result;
+}
+
+function toJson(value: any) {
+  if (value instanceof LiveObject) {
+    return objectToJson(value);
+  }
+
+  return value;
+}
+
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
-  const object = useObject<{ [key: string]: number }>("object");
+  const object = useObject<{ [key: string]: number | LiveObject }>("object");
   const me = useSelf();
 
   if (object == null || me == null) {
@@ -36,6 +63,16 @@ function Sandbox() {
         }}
       >
         Set
+      </button>
+
+      <button
+        id="set-nested"
+        onClick={() => {
+          const nestedLiveObj = new LiveObject({ a: randomNumber(10) });
+          object.set(randomNumber(10).toString(), nestedLiveObj);
+        }}
+      >
+        Set nested
       </button>
 
       <button
@@ -72,7 +109,7 @@ function Sandbox() {
 
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(object.toObject(), null, 2)}
+        {JSON.stringify(objectToJson(object), null, 2)}
       </div>
     </div>
   );

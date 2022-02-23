@@ -8,8 +8,15 @@ import {
 import React from "react";
 
 export default function Home() {
+  let roomId = "e2e-storage-list";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-storage-list">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );
@@ -91,6 +98,9 @@ function Sandbox() {
       </button>
 
       <h2>Items</h2>
+      <p id="itemsCount" style={{ visibility: "hidden" }}>
+        {list.length}
+      </p>
       <div id="items" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(list.toArray(), null, 2)}
       </div>

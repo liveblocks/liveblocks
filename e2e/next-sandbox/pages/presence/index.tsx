@@ -2,8 +2,15 @@ import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
 import React from "react";
 
 export default function Home() {
+  let roomId = "e2e-presence";
+  if (typeof window !== "undefined") {
+    const queryParam = window.location.search;
+    if (queryParam.split("room=").length > 1) {
+      roomId = queryParam.split("room=")[1];
+    }
+  }
   return (
-    <RoomProvider id="e2e-presence">
+    <RoomProvider id={roomId}>
       <Sandbox />
     </RoomProvider>
   );
@@ -33,6 +40,9 @@ function Sandbox() {
       </div>
 
       <h2>Others</h2>
+      <p id="othersCount">
+        {others.toArray().filter((o) => o.presence !== undefined).length}
+      </p>
       <div id="others" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(others.toArray(), null, 2)}
       </div>

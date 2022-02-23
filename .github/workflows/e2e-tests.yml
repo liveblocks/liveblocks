@@ -1,0 +1,39 @@
+name: E2E Tests
+
+on: [pull_request]
+
+jobs:
+  e2e-tests:
+    timeout-minutes: 60
+    env:
+      LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
+      LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
+      LIVEBLOCKS_AUTHORIZE_ENDPOINT: ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: e2e/next-sandbox
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          repository: liveblocks/liveblocks
+          ref: refs/heads/${{ github.head_ref }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Add permissions to script
+        run: chmod +x ./scripts/link-liveblocks.sh
+      - run: scripts/link-liveblocks.sh
+      - name: Install Playwright
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npx playwright test
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30

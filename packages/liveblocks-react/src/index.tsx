@@ -69,6 +69,17 @@ export function RoomProvider<TStorageRoot>({
   defaultPresence,
   defaultStorageRoot,
 }: RoomProviderProps<TStorageRoot>) {
+  if (process.env.NODE_ENV !== "production") {
+    if (id == null) {
+      throw new Error(
+        "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
+      );
+    }
+    if (typeof id !== "string") {
+      throw new Error("RoomProvider id property should be a string.");
+    }
+  }
+
   const client = useClient();
 
   React.useEffect(() => {
@@ -82,7 +93,8 @@ export function RoomProvider<TStorageRoot>({
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
-    });
+      DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+    } as any);
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
