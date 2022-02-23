@@ -941,9 +941,8 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>([createSerializedObject("0:0", {})], 1);
+      const { machine, refMachine, reconnect, ws } =
+        await prepareStorageTest<{}>([createSerializedObject("0:0", {})], 1);
 
       machine.updatePresence({ x: 1 });
 
@@ -956,7 +955,7 @@ describe("room", () => {
 
       refMachine.onMessage;
 
-      await reconnect(2, [["0:0", { type: CrdtType.Object, data: {} }]]);
+      await reconnect(2);
 
       const refMachineOthers = refMachine.selectors.getOthers().toArray();
 

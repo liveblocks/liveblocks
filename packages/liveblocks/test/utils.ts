@@ -296,7 +296,7 @@ export async function prepareStorageTest<T>(
 
   function reconnect(
     actor: number,
-    newItems: SerializedCrdtWithId[]
+    newItems?: SerializedCrdtWithId[] | undefined
   ): MockWebSocket {
     currentActor = actor;
     const ws = new MockWebSocket("");
@@ -304,12 +304,14 @@ export async function prepareStorageTest<T>(
     machine.authenticationSuccess({ actor: actor }, ws as any);
     ws.open();
 
-    machine.onMessage(
-      serverMessage({
-        type: ServerMessageType.InitialStorageState,
-        items: newItems,
-      })
-    );
+    if (newItems) {
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.InitialStorageState,
+          items: newItems,
+        })
+      );
+    }
     return ws;
   }
 
