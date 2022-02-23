@@ -723,7 +723,7 @@ describe("room", () => {
 
       expect(refOthers?.toArray()).toEqual([
         {
-          connectionId: 0,
+          connectionId: 1,
           presence: {
             x: 1,
           },
@@ -938,6 +938,32 @@ describe("room", () => {
       assert({
         items2: ["B"],
       });
+    });
+
+    test("disconnect and reconnect should keep user current presence", async () => {
+      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1);
+
+      machine.updatePresence({ x: 1 });
+
+      ws.closeFromBackend(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      refMachine.onMessage;
+
+      await reconnect(2, [["0:0", { type: CrdtType.Object, data: {} }]]);
+
+      const refMachineOthers = refMachine.selectors.getOthers().toArray();
+
+      expect(refMachineOthers).toEqual([
+        { connectionId: 1, id: undefined, info: undefined, presence: { x: 1 } }, // old user is not cleaned directly
+        { connectionId: 2, id: undefined, info: undefined, presence: { x: 1 } },
+      ]);
     });
   });
 });

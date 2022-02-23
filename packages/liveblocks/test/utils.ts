@@ -226,6 +226,7 @@ export async function prepareStorageTest<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
+  let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
@@ -233,7 +234,7 @@ export async function prepareStorageTest<T>(
 
   let { machine, storage, ws } = await prepareRoomWithStorage<T>(
     items,
-    actor,
+    currentActor,
     (messages: ClientMessage[]) => {
       for (const message of messages) {
         if (message.type === ClientMessageType.UpdateStorage) {
@@ -256,7 +257,7 @@ export async function prepareStorageTest<T>(
             serverMessage({
               type: ServerMessageType.UpdatePresence,
               data: message.data,
-              actor: 0,
+              actor: currentActor,
             })
           );
         }
@@ -297,6 +298,7 @@ export async function prepareStorageTest<T>(
     actor: number,
     newItems: SerializedCrdtWithId[]
   ): MockWebSocket {
+    currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
     machine.authenticationSuccess({ actor: actor }, ws as any);
@@ -313,6 +315,7 @@ export async function prepareStorageTest<T>(
 
   return {
     machine,
+    refMachine,
     operations,
     storage,
     refStorage,
