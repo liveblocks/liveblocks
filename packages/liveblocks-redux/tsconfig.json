@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "strict": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "noUncheckedIndexedAccess": true,
+    "lib": ["ES2019", "dom", "esnext"]
+  },
+  "file": ["src/index.ts", "src/index.test.ts"],
+  "exclude": ["node_modules"]
+}
