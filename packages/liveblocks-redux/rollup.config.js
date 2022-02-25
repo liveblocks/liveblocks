@@ -51,7 +51,7 @@ function createDeclarationConfig(input, output) {
       {
         closeBundle: async () => {
           await Promise.all(
-            [`./${output}/index.js` /*,`./${output}/errors.d.ts`*/].map(
+            [`./${output}/index.js`, `./${output}/errors.d.ts`].map(
               promises.unlink
             )
           );

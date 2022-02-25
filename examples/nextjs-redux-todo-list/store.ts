@@ -1,6 +1,6 @@
 import { createClient } from "@liveblocks/client";
-import { plugin } from "@liveblocks/redux";
-import { configureStore } from "@reduxjs/toolkit";
+import { LiveblocksState, plugin } from "@liveblocks/redux";
+import { configureStore, Store } from "@reduxjs/toolkit";
 
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
@@ -40,8 +40,12 @@ type Action =
 export function makeStore() {
   return configureStore({
     reducer,
-    enhancers: [plugin(client, {})],
-  });
+    enhancers: [plugin({ client, storageMapping: { todos: true } })],
+    preloadedState: { todos: [] },
+  }) as any as Store<LiveblocksState<State>> & {
+    enterRoom: (room: string) => void;
+    leaveRoom: (room: string) => void;
+  };
 }
 
 const store = makeStore();

@@ -9,9 +9,11 @@ export default function StorageDemo() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    store.enter("example-storage");
+    store.enterRoom("example-storage", {
+      todos: [],
+    });
 
-    return () => store.leave("example-storage");
+    return () => store.leaveRoom("example-storage");
   }, []);
 
   const [text, setText] = useState("");
