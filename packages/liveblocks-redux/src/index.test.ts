@@ -1,5 +1,5 @@
 import { createClient } from "@liveblocks/client";
-import { LiveblocksState, Mapping, plugin } from ".";
+import { LiveblocksState, Mapping, plugin, enterRoom, leaveRoom } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
@@ -64,14 +64,11 @@ function prepareClientAndStore<T>(
   preloadedState?: T
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = configureStore({
-    reducer: reducer,
+  const store = configureStore<LiveblocksState<BasicState>>({
+    reducer: reducer as any,
     enhancers: [plugin({ client, ...options })],
     preloadedState,
-  }) as Store<LiveblocksState<T>> & {
-    enterRoom: (roomId: string, initialState?: any) => void;
-    leaveRoom: (roomId: string) => void;
-  };
+  });
   return { client, store };
 }
 
@@ -83,7 +80,16 @@ type BasicState = {
   cursor: { x: number; y: number };
 };
 
-const basicStoreReducer = ((state: BasicState | undefined, action: any) => {
+const basicStoreReducer = ((
+  state: BasicState = {
+    value: 0,
+    items: [],
+    mappedToFalse: 0,
+    notMapped: "default",
+    cursor: { x: 0, y: 0 },
+  },
+  action: any
+) => {
   switch (action.type) {
     case "SET_CURSOR": {
       return {
@@ -144,7 +150,7 @@ async function prepareWithStorage<T extends Object>(
     },
     preloadedState
   );
-  store.enterRoom(options?.room || "room", options?.initialState || {});
+  store.dispatch(enterRoom(options?.room || "room", options?.initialState));
 
   const socket = await waitForSocketToBeConnected();
 
@@ -172,7 +178,7 @@ async function prepareBasicStoreWithStorage(
   items: SerializedCrdtWithId[],
   options?: {
     room?: string;
-    initialState?: any;
+    initialState?: Partial<BasicState>;
   }
 ) {
   return prepareWithStorage(
@@ -204,14 +210,13 @@ describe("middleware", () => {
     expect(liveblocks.others).toEqual([]);
     expect(value).toBe(0);
     expect(liveblocks.isStorageLoading).toBe(false);
+    expect(store.getState().cursor).toEqual({ x: 0, y: 0 });
   });
 
   test("storage should be loading while socket is connecting and initial storage message", async () => {
     const { store } = prepareClientAndBasicStore();
 
-    const { liveblocks } = store.getState();
-
-    store.enterRoom("room", {});
+    store.dispatch(enterRoom("room"));
 
     expect(store.getState().liveblocks.isStorageLoading).toBe(true);
 
@@ -232,9 +237,7 @@ describe("middleware", () => {
   test("enter room should set the connection to open", async () => {
     const { store } = prepareClientAndBasicStore();
 
-    const { liveblocks } = store.getState();
-
-    store.enterRoom("room", {});
+    store.dispatch(enterRoom("room"));
 
     const socket = await waitForSocketToBeConnected();
 
@@ -247,7 +250,7 @@ describe("middleware", () => {
     test("should broadcast presence when connecting to the room", async () => {
       const { store } = prepareClientAndBasicStore();
 
-      store.enterRoom("room", {});
+      store.dispatch(enterRoom("room"));
 
       const socket = await waitForSocketToBeConnected();
 
@@ -269,7 +272,7 @@ describe("middleware", () => {
     test("should update presence if state is updated", async () => {
       const { store } = prepareClientAndBasicStore();
 
-      store.enterRoom("room", {});
+      store.dispatch(enterRoom("room"));
 
       const socket = await waitForSocketToBeConnected();
 
@@ -301,10 +304,38 @@ describe("middleware", () => {
       );
     });
 
+    test("should not update presence if state is updated after leaving the room", async () => {
+      const { store } = prepareClientAndBasicStore();
+
+      store.dispatch(enterRoom("room"));
+
+      const socket = await waitForSocketToBeConnected();
+
+      socket.callbacks.open[0]!();
+
+      expect(socket.sentMessages[0]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 0, y: 0 } },
+          },
+          {
+            type: ClientMessageType.FetchStorage,
+          },
+        ])
+      );
+
+      store.dispatch(leaveRoom("room"));
+
+      store.dispatch({ type: "SET_CURSOR", cursor: { x: 1, y: 1 } });
+
+      expect(socket.sentMessages[1]).toBeUndefined();
+    });
+
     test("should set liveblocks.others if there are others users in the room", async () => {
       const { store } = prepareClientAndBasicStore();
 
-      store.enterRoom("room", {});
+      store.dispatch(enterRoom("room"));
 
       const socket = await waitForSocketToBeConnected();
 
@@ -383,6 +414,38 @@ describe("middleware", () => {
                   id: "root",
                   type: OpType.UpdateObject,
                   data: { value: 5 },
+                },
+              ],
+            },
+          ])
+        );
+      });
+
+      test("should initialize with LiveList if key is missing from liveblocks storage and initial value is an array", async () => {
+        const { store, socket } = await prepareBasicStoreWithStorage(
+          [obj("root", {})],
+          {
+            initialState: {
+              items: [],
+            },
+          }
+        );
+
+        expect(store.getState().items).toEqual([]);
+
+        await waitFor(() => socket.sentMessages[1] != null);
+
+        expect(socket.sentMessages[1]).toEqual(
+          JSON.stringify([
+            {
+              type: ClientMessageType.UpdateStorage,
+              ops: [
+                {
+                  id: "0:0",
+                  opId: "0:1",
+                  type: OpType.CreateList,
+                  parentId: "root",
+                  parentKey: "items",
                 },
               ],
             },

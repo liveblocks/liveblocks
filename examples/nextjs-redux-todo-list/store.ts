@@ -42,10 +42,7 @@ export function makeStore() {
     reducer,
     enhancers: [plugin({ client, storageMapping: { todos: true } })],
     preloadedState: { todos: [] },
-  }) as any as Store<LiveblocksState<State>> & {
-    enterRoom: (room: string) => void;
-    leaveRoom: (room: string) => void;
-  };
+  });
 }
 
 const store = makeStore();

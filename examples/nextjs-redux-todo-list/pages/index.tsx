@@ -2,19 +2,21 @@ import React, { useEffect, useState } from "react";
 import styles from "./index.module.css";
 import { useDispatch, useSelector, useStore } from "react-redux";
 import { AppState } from "../store";
+import { enterRoom, leaveRoom } from "@liveblocks/redux";
 
 export default function StorageDemo() {
-  const store = useStore();
   const todos = useSelector((state: AppState) => state.todos);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    store.enterRoom("example-storage", {
-      todos: [],
-    });
+    dispatch(
+      enterRoom("example-storage", {
+        todos: [],
+      })
+    );
 
-    return () => store.leaveRoom("example-storage");
-  }, []);
+    return () => dispatch(leaveRoom("example-storage"));
+  }, [dispatch]);
 
   const [text, setText] = useState("");
 

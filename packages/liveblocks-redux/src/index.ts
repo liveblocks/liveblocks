@@ -23,6 +23,16 @@ export type Mapping<T> = Partial<
   }
 >;
 
+const ACTION_TYPES = {
+  ENTER: "@@LIVEBLOCKS/ENTER",
+  LEAVE: "@@LIVEBLOCKS/LEAVE",
+  START_LOADING_STORAGE: "@@LIVEBLOCKS/START_LOADING_STORAGE",
+  INIT_STORAGE: "@@LIVEBLOCKS/INIT_STORAGE",
+  PATCH_STORAGE: "@@LIVEBLOCKS/PATCH_STORAGE",
+  UPDATE_CONNECTION: "@@LIVEBLOCKS/UPDATE_CONNECTION",
+  UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
+};
+
 export type LiveblocksState<TState, TPresence = any> = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -76,12 +86,12 @@ const internalPlugin = <T>(options: {
 
       const newReducer = (state: any, action: any) => {
         switch (action.type) {
-          case "LIVEBLOCKS_REPLACE":
+          case ACTION_TYPES.PATCH_STORAGE:
             return {
               ...state,
               ...action.state,
             };
-          case "LIVEBLOCKS_INIT":
+          case ACTION_TYPES.INIT_STORAGE:
             return {
               ...state,
               ...action.state,
@@ -90,7 +100,7 @@ const internalPlugin = <T>(options: {
                 isStorageLoading: false,
               },
             };
-          case "LIVEBLOCKS_ENTER_ROOM":
+          case ACTION_TYPES.START_LOADING_STORAGE:
             return {
               ...state,
               liveblocks: {
@@ -98,7 +108,7 @@ const internalPlugin = <T>(options: {
                 isStorageLoading: true,
               },
             };
-          case "LIVEBLOCKS_UPDATE_CONNECTION": {
+          case ACTION_TYPES.UPDATE_CONNECTION: {
             return {
               ...state,
               liveblocks: {
@@ -107,7 +117,7 @@ const internalPlugin = <T>(options: {
               },
             };
           }
-          case "LIVEBLOCKS_UPDATE_OTHERS": {
+          case ACTION_TYPES.UPDATE_OTHERS: {
             return {
               ...state,
               liveblocks: {
@@ -135,41 +145,41 @@ const internalPlugin = <T>(options: {
               });
               isPatching = false;
             }
+
+            if (newState.liveblocks == null) {
+              return {
+                ...newState,
+                liveblocks: {
+                  others: [],
+                  isStorageLoading: false,
+                  connection: "closed",
+                },
+              };
+            }
             return newState;
           }
         }
       };
 
-      const store = createStore(
-        newReducer,
-        {
-          ...initialState,
-          liveblocks: {
-            others: [],
-            isStorageLoading: false,
-            connection: "closed",
-          },
-        },
-        enhancer
-      );
+      const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(roomId: string, initialState: any) {
+      function enterRoom(
+        roomId: string,
+        storageInitialState = {} as any,
+        reduxState: any
+      ) {
         if (storageRoot) {
           return;
         }
 
         room = client.enter(roomId);
 
-        broadcastInitialPresence(
-          room,
-          store.getState(),
-          presenceMapping as any
-        );
+        broadcastInitialPresence(room, reduxState, presenceMapping as any);
 
         unsubscribeCallbacks.push(
           room.subscribe("connection", () => {
             store.dispatch({
-              type: "LIVEBLOCKS_UPDATE_CONNECTION",
+              type: ACTION_TYPES.UPDATE_CONNECTION,
               connection: room!.getConnectionState(),
             });
           })
@@ -178,38 +188,39 @@ const internalPlugin = <T>(options: {
         unsubscribeCallbacks.push(
           room.subscribe("others", (others) => {
             store.dispatch({
-              type: "LIVEBLOCKS_UPDATE_OTHERS",
+              type: ACTION_TYPES.UPDATE_OTHERS,
               others: others.toArray(),
             });
           })
         );
 
         store.dispatch({
-          type: "LIVEBLOCKS_ENTER_ROOM",
+          type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
         room.getStorage<any>().then(({ root }) => {
           const updates: any = {};
-
-          console.log("initial State", initialState);
 
           room!.batch(() => {
             for (const key in mapping) {
               const liveblocksStatePart = root.get(key);
 
               if (liveblocksStatePart == null) {
-                updates[key] = initialState[key];
-                patchLiveObjectKey(root, key, undefined, initialState[key]);
+                updates[key] = storageInitialState[key];
+                patchLiveObjectKey(
+                  root,
+                  key,
+                  undefined,
+                  storageInitialState[key]
+                );
               } else {
                 updates[key] = liveNodeToJson(liveblocksStatePart);
               }
             }
           });
 
-          console.log("updates", updates);
-
           store.dispatch({
-            type: "LIVEBLOCKS_INIT",
+            type: ACTION_TYPES.INIT_STORAGE,
             state: updates,
           });
 
@@ -220,7 +231,7 @@ const internalPlugin = <T>(options: {
               (updates) => {
                 if (isPatching === false) {
                   store.dispatch({
-                    type: "LIVEBLOCKS_REPLACE",
+                    type: ACTION_TYPES.PATCH_STORAGE,
                     state: patchState(
                       store.getState(),
                       updates,
@@ -248,13 +259,37 @@ const internalPlugin = <T>(options: {
         client.leave(roomId);
       }
 
+      function newDispatch(action: any, state: any) {
+        if (action.type === ACTION_TYPES.ENTER) {
+          enterRoom(action.roomId, action.initialState, store.getState());
+        } else if (action.type === ACTION_TYPES.LEAVE) {
+          leaveRoom(action.roomId);
+        } else {
+          store.dispatch(action, state);
+        }
+      }
+
       return {
         ...store,
-        enterRoom,
-        leaveRoom,
+        dispatch: newDispatch,
       };
     };
 };
+
+export function enterRoom(roomId: string, initialState?: any) {
+  return {
+    type: ACTION_TYPES.ENTER,
+    roomId,
+    initialState,
+  };
+}
+
+export function leaveRoom(roomId: string) {
+  return {
+    type: ACTION_TYPES.LEAVE,
+    roomId,
+  };
+}
 
 export const plugin = internalPlugin as <T>(options: {
   client: Client;
