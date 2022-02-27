@@ -7,7 +7,14 @@ import {
   patchLiveObjectKey,
   liveNodeToJson,
 } from "@liveblocks/client";
-import { StoreEnhancer } from "redux";
+import {
+  Action,
+  AnyAction,
+  Reducer,
+  Store,
+  StoreEnhancer,
+  StoreEnhancerStoreCreator,
+} from "redux";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
@@ -59,6 +66,73 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
   };
 };
 
+export function reducer<TState, TAction extends Action = AnyAction>(
+  innerReducer: Reducer<TState, TAction>
+): Reducer<LiveblocksState<TState>, TAction> {
+  return (state: TState | undefined, action: any) => {
+    const newState = innerReducer(state, action) as LiveblocksState<TState>;
+
+    switch (action.type) {
+      case ACTION_TYPES.PATCH_STORAGE: {
+        return {
+          ...newState,
+          ...action.state,
+        };
+      }
+      case ACTION_TYPES.INIT_STORAGE: {
+        return {
+          ...newState,
+          ...action.state,
+          liveblocks: {
+            ...newState.liveblocks,
+            isStorageLoading: false,
+          },
+        };
+      }
+      case ACTION_TYPES.START_LOADING_STORAGE: {
+        return {
+          ...state,
+          liveblocks: {
+            ...newState.liveblocks,
+            isStorageLoading: true,
+          },
+        };
+      }
+      case ACTION_TYPES.UPDATE_CONNECTION: {
+        return {
+          ...state,
+          liveblocks: {
+            ...newState.liveblocks,
+            connection: action.connection,
+          },
+        };
+      }
+      case ACTION_TYPES.UPDATE_OTHERS: {
+        return {
+          ...state,
+          liveblocks: {
+            ...newState.liveblocks,
+            others: action.others,
+          },
+        };
+      }
+    }
+
+    if (newState.liveblocks == null) {
+      return {
+        ...newState,
+        liveblocks: {
+          others: [],
+          isStorageLoading: false,
+          connection: "closed",
+        },
+      };
+    }
+
+    return newState;
+  };
+}
+
 const internalPlugin = <T>(options: {
   client: Client;
   storageMapping: Mapping<T>;
@@ -77,88 +151,36 @@ const internalPlugin = <T>(options: {
     validateNoDuplicateKeys(mapping, presenceMapping);
   }
 
-  return (createStore: any) =>
-    (reducer: any, initialState: any, enhancer: any) => {
+  return (
+      createStore: (reducer: Reducer, initialState: any, enhancer: any) => Store
+    ) =>
+    (reducer: Reducer, initialState: any, enhancer: any) => {
       let room: Room | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<any> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
 
-      const newReducer = (state: any, action: any) => {
-        switch (action.type) {
-          case ACTION_TYPES.PATCH_STORAGE:
-            return {
-              ...state,
-              ...action.state,
-            };
-          case ACTION_TYPES.INIT_STORAGE:
-            return {
-              ...state,
-              ...action.state,
-              liveblocks: {
-                ...state.liveblocks,
-                isStorageLoading: false,
-              },
-            };
-          case ACTION_TYPES.START_LOADING_STORAGE:
-            return {
-              ...state,
-              liveblocks: {
-                ...state.liveblocks,
-                isStorageLoading: true,
-              },
-            };
-          case ACTION_TYPES.UPDATE_CONNECTION: {
-            return {
-              ...state,
-              liveblocks: {
-                ...state.liveblocks,
-                connection: action.connection,
-              },
-            };
-          }
-          case ACTION_TYPES.UPDATE_OTHERS: {
-            return {
-              ...state,
-              liveblocks: {
-                ...state.liveblocks,
-                others: action.others,
-              },
-            };
-          }
-          default: {
-            const newState = reducer(state, action);
+      const newReducer: Reducer = (state: any, action: any) => {
+        const newState = reducer(state, action);
 
-            if (room) {
-              isPatching = true;
-              updatePresence(room!, state, newState, presenceMapping as any);
+        if (room) {
+          isPatching = true;
+          updatePresence(room!, state, newState, presenceMapping as any);
 
-              room.batch(() => {
-                if (storageRoot) {
-                  patchLiveblocksStorage(
-                    storageRoot,
-                    state,
-                    newState,
-                    mapping as any
-                  );
-                }
-              });
-              isPatching = false;
+          room.batch(() => {
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                state,
+                newState,
+                mapping as any
+              );
             }
-
-            if (newState.liveblocks == null) {
-              return {
-                ...newState,
-                liveblocks: {
-                  others: [],
-                  isStorageLoading: false,
-                  connection: "closed",
-                },
-              };
-            }
-            return newState;
-          }
+          });
+          isPatching = false;
         }
+
+        return newState;
       };
 
       const store = createStore(newReducer, initialState, enhancer);
@@ -259,20 +281,20 @@ const internalPlugin = <T>(options: {
         client.leave(roomId);
       }
 
-      function newDispatch(action: any, state: any) {
+      function newDispatch(action: any) {
         if (action.type === ACTION_TYPES.ENTER) {
           enterRoom(action.roomId, action.initialState, store.getState());
         } else if (action.type === ACTION_TYPES.LEAVE) {
           leaveRoom(action.roomId);
         } else {
-          store.dispatch(action, state);
+          store.dispatch(action);
         }
       }
 
       return {
         ...store,
         dispatch: newDispatch,
-      };
+      } as Store;
     };
 };
 
@@ -291,7 +313,7 @@ export function leaveRoom(roomId: string) {
   };
 }
 
-export const plugin = internalPlugin as <T>(options: {
+export const enhancer = internalPlugin as any as <T>(options: {
   client: Client;
   storageMapping: Mapping<T>;
   presenceMapping?: Mapping<T>;
