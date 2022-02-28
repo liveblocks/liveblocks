@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import styles from "./index.module.css";
-import { useDispatch, useSelector, useStore } from "react-redux";
-import { AppState } from "../store";
 import { enterRoom, leaveRoom } from "@liveblocks/redux";
+import { useAppDispatch, useAppSelector } from "../src/hooks";
 
 export default function StorageDemo() {
-  const todos = useSelector((state: AppState) => state.todos);
-  const dispatch = useDispatch();
+  const todos = useAppSelector((state) => state.todos);
+  const draft = useAppSelector((state) => state.draft);
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     dispatch(
@@ -15,7 +15,9 @@ export default function StorageDemo() {
       })
     );
 
-    return () => dispatch(leaveRoom("example-storage"));
+    return () => {
+      dispatch(leaveRoom("example-storage"));
+    };
   }, [dispatch]);
 
   const [text, setText] = useState("");
@@ -30,12 +32,11 @@ export default function StorageDemo() {
         className={styles.input}
         type="text"
         placeholder="What needs to be done?"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
+        value={draft}
+        onChange={(e) => dispatch({ type: "SET_DRAFT", draft: e.target.value })}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
-            dispatch({ type: "ADD_TODO", text });
-            setText("");
+            dispatch({ type: "ADD_TODO" });
           }
         }}
       ></input>

@@ -1,5 +1,5 @@
 import { createClient } from "@liveblocks/client";
-import { LiveblocksState, plugin } from "@liveblocks/redux";
+import { LiveblocksState, enhancer } from "@liveblocks/redux";
 import { configureStore, Store } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -10,12 +10,20 @@ type Todo = {
   text: string;
 };
 
-function reducer(state: State = { todos: [] }, action: Action) {
+export type State = {
+  draft: string;
+  todos: Todo[];
+};
+
+function reducer(state: State = { todos: [], draft: "" }, action: Action) {
   switch (action.type) {
+    case "SET_DRAFT":
+      return { ...state, draft: action.draft };
     case "ADD_TODO":
-      return { todos: state.todos.concat({ text: action.text }) };
+      return { todos: state.todos.concat({ text: state.draft }), draft: "" };
     case "DELETE_TODO":
       return {
+        ...state,
         todos: state.todos.filter((todo, i) => i !== action.index),
       };
     default:
@@ -23,31 +31,30 @@ function reducer(state: State = { todos: [] }, action: Action) {
   }
 }
 
-export type State = {
-  todos: Todo[];
-};
-
 type Action =
   | {
       type: "ADD_TODO";
-      text: string;
     }
   | {
       type: "DELETE_TODO";
       index: number;
+    }
+  | {
+      type: "SET_DRAFT";
+      draft: string;
     };
 
 export function makeStore() {
   return configureStore({
     reducer,
-    enhancers: [plugin({ client, storageMapping: { todos: true } })],
+    enhancers: [enhancer({ client, storageMapping: { todos: true } })],
     preloadedState: { todos: [] },
   });
 }
 
 const store = makeStore();
 
-export type AppState = ReturnType<typeof store.getState>;
+export type AppState = LiveblocksState<ReturnType<typeof store.getState>>;
 
 export type AppDispatch = typeof store.dispatch;
 

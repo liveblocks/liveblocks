@@ -291,7 +291,7 @@ export function leaveRoom(roomId: string) {
   };
 }
 
-export const plugin = internalPlugin as <T>(options: {
+export const enhancer = internalPlugin as <T>(options: {
   client: Client;
   storageMapping: Mapping<T>;
   presenceMapping?: Mapping<T>;

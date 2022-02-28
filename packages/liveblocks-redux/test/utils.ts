@@ -1,4 +1,7 @@
-import { CrdtType, SerializedCrdtWithId } from "../../liveblocks/lib/cjs/live";
+import {
+  CrdtType,
+  SerializedCrdtWithId,
+} from "@liveblocks/client/lib/cjs/live";
 
 /**
  * https://github.com/Luka967/websocket-close-codes
