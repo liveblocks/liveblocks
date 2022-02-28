@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.15.0-alpha.2",
+  "version": "0.15.0-alpha.3",
   "sideEffects": false,
   "description": "",
   "main": "./lib/index.js",
@@ -33,10 +33,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/liveblocks-zustand"
+    "directory": "packages/liveblocks-redux"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.15.0-alpha.2",
+    "@liveblocks/client": "0.15.0-alpha.3",
     "redux": "^4"
   },
   "devDependencies": {
