@@ -1,3 +1,5 @@
+import { createClient } from ".";
+import { Response } from "node-fetch";
 import {
   prepareStorageTest,
   createSerializedObject,
@@ -961,6 +963,41 @@ describe("room", () => {
         { connectionId: 1, id: undefined, info: undefined, presence: { x: 1 } }, // old user is not cleaned directly
         { connectionId: 2, id: undefined, info: undefined, presence: { x: 1 } },
       ]);
+    });
+  });
+
+  describe("authentication failure", () => {
+    let consoleErrorSpy: jest.SpyInstance;
+
+    beforeAll(() => {
+      consoleErrorSpy = jest.spyOn(console, "error");
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+    });
+
+    test("when authentication returns error message", () => {
+      const fetchMock = async () => {
+        return new Response(JSON.stringify({ error: "Invalid room id" }), {
+          status: 400,
+        });
+      };
+
+      const client = createClient({
+        authEndpoint: "/api/auth",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+      });
+
+      const room = client.enter("room");
+
+      room.subscribe("connection", () => {
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          "Call to authentication endpoint failed",
+          new Error("Invalid room id")
+        );
+      });
     });
   });
 });
