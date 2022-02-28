@@ -213,6 +213,10 @@ export type OthersEvent<T extends Presence = Presence> =
     };
 
 export type Room = {
+  /**
+   * The id of the room.
+   */
+  readonly id: string;
   getConnectionState(): ConnectionState;
   subscribe: {
     /**

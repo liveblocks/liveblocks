@@ -1465,6 +1465,7 @@ export function createRoom(
   const machine = makeStateMachine(state, context);
 
   const room: Room = {
+    id: context.room,
     /////////////
     // Core    //
     /////////////
