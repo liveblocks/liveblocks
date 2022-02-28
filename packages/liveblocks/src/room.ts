@@ -1601,9 +1601,19 @@ async function fetchAuthEndpoint(
   });
 
   if (!res.ok) {
-    throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-    );
+    let errorMessage;
+    try {
+      const jsonErrorMessage = await res.json();
+      errorMessage = jsonErrorMessage.error;
+    } catch (er) {}
+
+    if (errorMessage) {
+      throw new AuthenticationError(errorMessage);
+    } else {
+      throw new AuthenticationError(
+        `Liveblocks could not parse the response of your authentication "${endpoint}".`
+      );
+    }
   }
 
   let authResponse = null;
@@ -1611,13 +1621,13 @@ async function fetchAuthEndpoint(
     authResponse = await res.json();
   } catch (er) {
     throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+      `Liveblocks could not parse the response of your authentication "${endpoint}"`
     );
   }
 
   if (typeof authResponse.token !== "string") {
     throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+      `Liveblocks could not parse the response of your authentication "${endpoint}"`
     );
   }
 
