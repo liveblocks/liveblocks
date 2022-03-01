@@ -42,7 +42,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
@@ -74,7 +74,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
@@ -113,7 +113,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
@@ -126,7 +126,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attachChild(
     id: string,
@@ -167,7 +167,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detach() {
     super._detach();
@@ -178,7 +178,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
@@ -201,14 +201,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _getType(): string {
     return "LiveMap";
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {

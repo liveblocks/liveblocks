@@ -34,7 +34,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   static _deserialize(
     [id, item]: [id: string, item: SerializedList],
@@ -63,7 +63,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
@@ -94,12 +94,15 @@ export class LiveList<T> extends AbstractCrdt {
     return ops;
   }
 
+  /**
+   * @internal
+   */
   _indexOfPosition(position: string): number {
     return this.#items.findIndex((item) => item[1] === position);
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
@@ -110,7 +113,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detach() {
     super._detach();
@@ -121,7 +124,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attachChild(
     id: string,
@@ -183,7 +186,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
@@ -207,7 +210,7 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _setChildKey(
     key: string,
@@ -266,21 +269,21 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _apply(op: Op, isLocal: boolean) {
     return super._apply(op, isLocal);
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _getType(): string {
     return "LiveList";
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
@@ -526,6 +529,9 @@ export class LiveList<T> extends AbstractCrdt {
     return this.#items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
+  /**
+   * @internal
+   */
   toCrdtArray(): AbstractCrdt[] {
     return this.#items.map((entry) => entry[0]);
   }

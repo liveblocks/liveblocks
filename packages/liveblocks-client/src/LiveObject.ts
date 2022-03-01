@@ -37,7 +37,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
@@ -68,7 +68,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
@@ -88,7 +88,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   static _deserializeChildren(
     object: LiveObject,
@@ -118,7 +118,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
@@ -131,7 +131,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attachChild(
     id: string,
@@ -200,7 +200,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
@@ -229,7 +229,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detachChildren() {
     for (const [key, value] of this.#map) {
@@ -239,7 +239,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detach() {
     super._detach();
@@ -252,7 +252,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     if (op.type === OpType.UpdateObject) {
@@ -265,7 +265,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
@@ -277,7 +277,7 @@ export class LiveObject<
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _getType(): string {
     return "LiveObject";

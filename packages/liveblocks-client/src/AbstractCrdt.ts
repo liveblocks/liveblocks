@@ -25,35 +25,35 @@ export abstract class AbstractCrdt {
   #parentKey?: string;
 
   /**
-   * INTERNAL
+   * @internal
    */
   protected get _doc() {
     return this.#doc;
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   get _id() {
     return this.#id;
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   get _parent() {
     return this.#parent;
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   get _parentKey() {
     return this.#parentKey;
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     switch (op.type) {
@@ -70,7 +70,7 @@ export abstract class AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _setParentLink(parent: AbstractCrdt, key: string) {
     if (this.#parent != null && this.#parent !== parent) {
@@ -82,7 +82,7 @@ export abstract class AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   _attach(id: string, doc: Doc) {
     if (this.#id || this.#doc) {
@@ -96,7 +96,7 @@ export abstract class AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   abstract _attachChild(
     id: string,
@@ -107,7 +107,7 @@ export abstract class AbstractCrdt {
   ): ApplyResult;
 
   /**
-   * INTERNAL
+   * @internal
    */
   _detach() {
     if (this.#doc && this.#id) {
@@ -119,18 +119,21 @@ export abstract class AbstractCrdt {
   }
 
   /**
-   * INTERNAL
+   * @internal
    */
   abstract _detachChild(crdt: AbstractCrdt): ApplyResult;
   /**
-   * INTERNAL
+   * @internal
    */
   abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
 
   /**
-   * INTERNAL
+   * @internal
    */
   abstract _toSerializedCrdt(): SerializedCrdt;
 
+  /**
+   * @internal
+   */
   abstract _getType(): string;
 }
