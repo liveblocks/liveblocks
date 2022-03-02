@@ -16,11 +16,13 @@ import {
   useObject,
   useOthers,
 } from ".";
+
+// TODO: find out why typescript is complaining when using @liveblocks/client/internal even if properly defined in package.json
 import {
   ClientMessageType,
   CrdtType,
   ServerMessageType,
-} from "@liveblocks/client/lib/cjs/live";
+} from "@liveblocks/client/lib/internal";
 
 /**
  * https://github.com/Luka967/websocket-close-codes

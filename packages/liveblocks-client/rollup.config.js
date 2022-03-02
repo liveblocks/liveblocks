@@ -34,32 +34,32 @@ function getEsbuild(target) {
 /**
  * We use @rollup/plugin-typescript to generate typescript definition
  * but it does not support the declarationOnly option so we delete
- * js files and bundle d.ts files
+ * js files and bundle d.ts files with rollup-plugin-dts
  */
 function createDeclarationConfig(input, output) {
   return [
     {
       input,
       output: {
-        dir: output,
+        dir: "lib",
       },
       external,
       plugins: [
         typescript({
           declaration: true,
-          outDir: `./${output}/tmp`, // We need to put
+          outDir: `./lib/tmp`, // We need to put it in "lib" because of typescript can't @rollup/plugin-typescript ouput outside tsconfig outDir option
           tsconfig: "./tsconfig.build.json",
         }),
       ],
     },
     {
-      input: `./${output}/tmp/index.d.ts`,
-      output: [{ file: `${output}/index.d.ts`, format: "es" }],
+      input: `./lib/tmp/${output}.d.ts`,
+      output: [{ file: `lib/${output}.d.ts`, format: "es" }],
       plugins: [
         dts(),
         {
           closeBundle: async () => {
-            await promises.rmdir(`./${output}/tmp`, {
+            await promises.rm(`./lib/tmp`, {
               recursive: true,
               force: true,
             });
@@ -73,7 +73,7 @@ function createDeclarationConfig(input, output) {
 function createCommonJSConfig(input, output) {
   return {
     input,
-    output: { file: output, format: "cjs", exports: "named" },
+    output: { file: `lib/${output}`, format: "cjs", exports: "named" },
     external,
     plugins: [
       resolve({ extensions }),
@@ -87,15 +87,26 @@ function createESMConfig(input, output) {
     input,
     external,
     output: [
-      { file: `${output}.js`, format: "esm" },
-      { file: `${output}.mjs`, format: "esm" },
+      { file: `lib/${output}.js`, format: "esm" },
+      { file: `lib/${output}.mjs`, format: "esm" },
     ],
     plugins: [getEsbuild("node12")],
   };
 }
 
-export default [
-  ...createDeclarationConfig("src/index.ts", "lib"),
-  createCommonJSConfig("src/index.ts", "lib/index.js"),
-  createESMConfig("src/index.ts", "lib/esm/index"),
-];
+export default async () => {
+  await promises.rm(`./lib`, {
+    recursive: true,
+    force: true,
+  });
+
+  return [
+    ...createDeclarationConfig("src/index.ts", "index"),
+    createCommonJSConfig("src/index.ts", "index.js"),
+    createESMConfig("src/index.ts", "esm/index"),
+
+    ...createDeclarationConfig("src/internal.ts", "internal"),
+    createCommonJSConfig("src/internal.ts", "internal.js"),
+    createESMConfig("src/internal.ts", "esm/internal"),
+  ];
+};

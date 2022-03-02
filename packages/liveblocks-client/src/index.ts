@@ -8,11 +8,12 @@ export type {
   Client,
   User,
   BroadcastOptions,
+  StorageUpdate,
 } from "./types";
 
 export { createClient } from "./client";
 
-export {
+import {
   liveObjectToJson,
   liveNodeToJson,
   patchLiveList,
@@ -20,3 +21,15 @@ export {
   patchLiveObject,
   patchLiveObjectKey,
 } from "./immutable";
+
+/**
+ * @internal
+ */
+export const internals = {
+  liveObjectToJson,
+  liveNodeToJson,
+  patchLiveList,
+  patchImmutableObject,
+  patchLiveObject,
+  patchLiveObjectKey,
+};

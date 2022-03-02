@@ -2,11 +2,26 @@
   "name": "@liveblocks/client",
   "version": "0.15.0-alpha.3",
   "description": "",
-  "main": "./lib/cjs/index.js",
-  "module": "./lib/esm/index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "lib/"
+    "lib/**"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./lib/index.d.ts",
+      "module": "./lib/esm/index.js",
+      "import": "./lib/esm/index.mjs",
+      "default": "./lib/index.js"
+    },
+    "./internal": {
+      "types": "./lib/internal.d.ts",
+      "module": "./lib/esm/internal.js",
+      "import": "./lib/esm/internal.mjs",
+      "default": "./lib/internal.js"
+    }
+  },
   "keywords": [
     "liveblocks",
     "multiplayer",

@@ -50,6 +50,7 @@ function createDeclarationConfig(input, output) {
       }),
       {
         closeBundle: async () => {
+          // TODO Consider using "rollup-plugin-dts" and tmp folder like in client if the list of file to cleanup grows
           await Promise.all(
             [`./${output}/index.js`, `./${output}/errors.d.ts`].map(
               promises.unlink
@@ -85,8 +86,15 @@ function createESMConfig(input, output) {
   };
 }
 
-export default [
-  createDeclarationConfig("src/index.ts", "lib"),
-  createCommonJSConfig("src/index.ts", "lib/index.js"),
-  createESMConfig("src/index.ts", "lib/esm/index"),
-];
+export default async () => {
+  await promises.rm(`./lib`, {
+    recursive: true,
+    force: true,
+  });
+
+  return [
+    createDeclarationConfig("src/index.ts", "lib"),
+    createCommonJSConfig("src/index.ts", "lib/index.js"),
+    createESMConfig("src/index.ts", "lib/esm/index"),
+  ];
+};

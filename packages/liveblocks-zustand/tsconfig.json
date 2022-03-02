@@ -6,7 +6,8 @@
     "esModuleInterop": true,
     "moduleResolution": "node",
     "noUncheckedIndexedAccess": true,
-    "lib": ["ES2019", "dom", "esnext"]
+    "lib": ["ES2019", "dom", "esnext"],
+    "stripInternal": true
   },
   "file": ["src/index.ts", "src/index.test.ts"],
   "exclude": ["node_modules"]

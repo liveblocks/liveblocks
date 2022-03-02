@@ -1,11 +1,10 @@
 import {
   Client,
-  patchImmutableObject,
   User,
   Room,
   LiveObject,
-  patchLiveObjectKey,
-  liveNodeToJson,
+  internals,
+  StorageUpdate,
 } from "@liveblocks/client";
 import { StoreEnhancer } from "redux";
 import {
@@ -16,6 +15,29 @@ import {
   missingClient,
   missingMapping,
 } from "./errors";
+
+// @liveblocks/client export internals API to be used only by our packages.
+// Internals APIs are removed from public d.ts so we patch them manually here to consume them.
+// They are patched inline because @rollup/plugin-typescript does not respect tsconfig typeRoots
+// @internal is necessary to remove it from public d.ts
+/**
+ * @internal
+ */
+declare module "@liveblocks/client" {
+  const internals: {
+    liveObjectToJson(liveObject: LiveObject<any>): void;
+    patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
+    patchLiveObjectKey<T>(
+      liveObject: LiveObject<T>,
+      key: keyof T,
+      prev: any,
+      next: any
+    ): void;
+    liveNodeToJson(value: any): any;
+  };
+}
+
+const { patchImmutableObject, patchLiveObjectKey, liveNodeToJson } = internals;
 
 export type Mapping<T> = Partial<
   {
