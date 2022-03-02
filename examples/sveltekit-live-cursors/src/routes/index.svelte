@@ -41,7 +41,7 @@ onMount(() => {
   <ExampleInfo
     title="Live Cursors Basic"
     description="Open this link in multiple windows to see the live cursors."
-    githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/sveltekit-live-cursors-basic"
-    codeSandboxHref="https://codesandbox.io/s/sveltekit-live-cursors-basic-mfgdi7?file=/src/LiveCursors.svelte"
+    githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/sveltekit-live-cursors"
+    codeSandboxHref="https://codesandbox.io/s/sveltekit-live-cursors-mfgdi7?file=/src/LiveCursors.svelte"
   />
 </ExampleWrapper>
