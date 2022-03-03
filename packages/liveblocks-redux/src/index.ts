@@ -57,7 +57,7 @@ const ACTION_TYPES = {
 
 export type LiveblocksState<TState, TPresence = any> = TState & {
   /**
-   * Liveblocks extra state attached by the middleware
+   * Liveblocks extra state attached by the enhancer
    */
   readonly liveblocks: {
     /**
@@ -81,7 +81,7 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
   };
 };
 
-const internalPlugin = <T>(options: {
+const internalEnhancer = <T>(options: {
   client: Client;
   storageMapping: Mapping<T>;
   presenceMapping?: Mapping<T>;
@@ -298,7 +298,24 @@ const internalPlugin = <T>(options: {
     };
 };
 
-export function enterRoom(roomId: string, initialState?: any) {
+/**
+ * Actions used to interact with Liveblocks
+ */
+export const actions = {
+  /**
+   * Enters a room and starts sync it with zustand state
+   * @param roomId The id of the room
+   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
+   */
+  enterRoom,
+  /**
+   * Leaves a room and stops sync it with zustand state.
+   * @param roomId The id of the room
+   */
+  leaveRoom,
+};
+
+function enterRoom(roomId: string, initialState?: any) {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
@@ -306,14 +323,14 @@ export function enterRoom(roomId: string, initialState?: any) {
   };
 }
 
-export function leaveRoom(roomId: string) {
+function leaveRoom(roomId: string) {
   return {
     type: ACTION_TYPES.LEAVE,
     roomId,
   };
 }
 
-export const enhancer = internalPlugin as <T>(options: {
+export const enhancer = internalEnhancer as <T>(options: {
   client: Client;
   storageMapping: Mapping<T>;
   presenceMapping?: Mapping<T>;

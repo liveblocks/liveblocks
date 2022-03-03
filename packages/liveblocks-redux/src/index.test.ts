@@ -1,5 +1,5 @@
 import { createClient } from "@liveblocks/client";
-import { LiveblocksState, Mapping, enhancer, enterRoom, leaveRoom } from ".";
+import { LiveblocksState, Mapping, enhancer, actions } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
@@ -11,7 +11,7 @@ import {
   SerializedCrdtWithId,
   ServerMessage,
   ServerMessageType,
-} from "@liveblocks/client/lib/cjs/live";
+} from "@liveblocks/client/lib/internal";
 import {
   missingClient,
   missingMapping,
@@ -20,6 +20,8 @@ import {
   mappingShouldNotHaveTheSameKeys,
 } from "./errors";
 window.WebSocket = MockWebSocket as any;
+
+const { enterRoom, leaveRoom } = actions;
 
 const server = setupServer(
   rest.post("/api/auth", (req, res, ctx) => {

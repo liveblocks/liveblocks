@@ -8,8 +8,6 @@
 
 This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
 
-> :warning: **This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta**
-
 ![todo-list-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-todo-list.png&w=1200&q=90)
 
 ## Getting started
@@ -22,7 +20,7 @@ This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
 
 - Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
 
-- Create a file named `.env.local` and add your Liveblocks secret as environment variable `LIVEBLOCKS_SECRET_KEY=sk_test_yourkey`
+- Create a file named `.env.local` and add your Liveblocks secret as environment variable `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_test_yourkey`
 
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
@@ -34,6 +32,6 @@ This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
 
 - Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
 
-- Create [secret](https://codesandbox.io/docs/secrets) named `LIVEBLOCKS_SECRET_KEY` with the secret key you just copied. You need to create an account on CodeSandbox to add an environment variable.
+- Create [secret](https://codesandbox.io/docs/secrets) named `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` with the secret key you just copied. You need to create an account on CodeSandbox to add an environment variable.
 
 - Refresh your browser and you should be good to go!

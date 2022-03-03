@@ -1,136 +1,60 @@
-import React from "react";
-import Head from "next/head";
-import SingleLineCodeBlock from "../components/SingleLineCodeBlock";
-import InlineCodeBlock from "../components/InlineCodeBlock";
-import ExampleInfo from "../components/ExampleInfo";
+import { RoomProvider, useList, useUpdateMyPresence } from "@liveblocks/react";
+import React, { useState } from "react";
+import SomeoneIsTyping from "../components/SomeoneIsTyping";
+import WhosHere from "../components/WhosHere";
+import styles from "./index.module.css";
 
-import TodoList from "./todo-list";
-
-export async function getStaticProps() {
-  return {
-    props: {
-      isRunningOnCodeSandbox: process.env.CODESANDBOX_SSE != null,
-      hasSetupLiveblocksKey: process.env.LIVEBLOCKS_SECRET_KEY != null,
-    },
-  };
-}
-
-type Props = {
-  hasSetupLiveblocksKey: boolean;
-  isRunningOnCodeSandbox: boolean;
+type Todo = {
+  text: string;
 };
 
-export default function Home({
-  hasSetupLiveblocksKey,
-  isRunningOnCodeSandbox,
-}: Props) {
+export default function Room() {
   return (
-    <div>
-      <Head>
-        <title>Liveblocks</title>
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-      </Head>
+    <RoomProvider id="todo-list-react">
+      <StorageDemo />
+    </RoomProvider>
+  );
+}
 
-      {hasSetupLiveblocksKey ? (
-        <main>
-          <TodoList />
-          <ExampleInfo
-            title="Multiplayer Todo list"
-            description="Open this page in multiple windows to see the real-time updates."
-            githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-todo-list"
-            needStorage={true}
-          />
-        </main>
-      ) : isRunningOnCodeSandbox ? (
-        <main className="container mx-auto px-8">
-          <h1 className="text-3xl font-semibold mt-24 mb-2">
-            Welcome to Liveblocks Next.js Todo list example
-          </h1>
-          <p className="mt-12 mb-6">
-            To run{" "}
-            <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-              Liveblocks
-            </a>{" "}
-            examples on CodeSandbox
-          </p>
-          <ul className="list-disc list-inside">
-            <li className="mb-2">
-              Create an account on{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                liveblocks.io
-              </a>
-            </li>
-            <li className="mb-2">
-              Copy your secret key from the administration
-            </li>
-            <li className="mb-2">
-              Add a{" "}
-              <a
-                href="https://codesandbox.io/docs/secrets"
-                target="_blank"
-                rel="noreferrer"
-              >
-                secret key
-              </a>{" "}
-              named <InlineCodeBlock>LIVEBLOCKS_SECRET_KEY</InlineCodeBlock> to
-              your CodeSandbox sandbox.
-            </li>
-            <li className="mb-2">
-              Refresh your browser and you should be good to go!
-            </li>
-          </ul>
-        </main>
-      ) : (
-        <main className="container mx-auto px-8">
-          <h1 className="text-3xl font-semibold mt-24 mb-2">
-            Welcome to Liveblocks Next.js Todo list example
-          </h1>
-          <p className="mt-12 mb-6">
-            To run{" "}
-            <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-              Liveblocks
-            </a>{" "}
-            examples locally
-          </p>
-          <ul className="list-disc list-inside">
-            <li className="mb-2">
-              Install all dependencies with{" "}
-              <SingleLineCodeBlock>npm install</SingleLineCodeBlock>
-            </li>
-            <li className="mb-2">
-              Create an account on{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                liveblocks.io
-              </a>
-            </li>
-            <li className="mb-2">
-              Copy your secret key from the administration
-            </li>
-            <li className="mb-2">
-              Create a file named <InlineCodeBlock>.env.local</InlineCodeBlock>{" "}
-              and add your Liveblocks secret as environment variable{" "}
-              <SingleLineCodeBlock>
-                LIVEBLOCKS_SECRET_KEY=sk_test_yourkey
-              </SingleLineCodeBlock>
-            </li>
-            <li className="mb-2">
-              Run the following command and you should be good to go
-              <SingleLineCodeBlock>npm run dev</SingleLineCodeBlock>
-            </li>
-          </ul>
-        </main>
-      )}
+function StorageDemo() {
+  const todos = useList<Todo>("todos");
+  const updateMyPresence = useUpdateMyPresence();
+  const [draft, setDraft] = useState("");
+
+  if (todos == null) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div className={styles.container}>
+      <WhosHere />
+      <input
+        className={styles.input}
+        type="text"
+        placeholder="What needs to be done?"
+        value={draft}
+        onChange={(e) => {
+          setDraft(e.target.value);
+          updateMyPresence({ isTyping: true });
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            todos.push({ text: draft });
+            setDraft("");
+            updateMyPresence({ isTyping: false });
+          }
+        }}
+        onBlur={() => updateMyPresence({ isTyping: false })}
+      ></input>
+      <SomeoneIsTyping />
+      {todos.map((todo, index) => {
+        return (
+          <div className={styles.todo_container} key={index}>
+            <div className={styles.todo}>{todo.text}</div>
+            <button onClick={() => todos.delete(index)}>✕</button>
+          </div>
+        );
+      })}
     </div>
   );
 }

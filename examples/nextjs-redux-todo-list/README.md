@@ -1,34 +1,37 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+<p align="center">
+  <a href="https://liveblocks.io">
+    <img src="https://liveblocks.io/icon-192x192.png" height="96">
+  </a>
+</p>
 
-## Getting Started
+# [Liveblocks](https://liveblocks.io) × [Next.js](https://nextjs.org/). × [Redux Toolkit](https://redux-toolkit.js.org/).
 
-First, run the development server:
+This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/) and [Redux Toolkit](https://redux-toolkit.js.org/).
 
-```bash
-npm run dev
-# or
-yarn dev
-```
+![todo-list-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-todo-list.png&w=1200&q=90)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Getting started
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+### Run examples locally
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+- Install all dependencies with `npm install`
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 
-## Learn More
+- Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
 
-To learn more about Next.js, take a look at the following resources:
+- Create a file named `.env.local` and add your Liveblocks secret as environment variable `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_test_yourkey`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Run examples on CodeSandbox
 
-## Deploy on Vercel
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-redux-todo-list)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
+
+- Create [secret](https://codesandbox.io/docs/secrets) named `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` with the secret key you just copied. You need to create an account on CodeSandbox to add an environment variable.
+
+- Refresh your browser and you should be good to go!

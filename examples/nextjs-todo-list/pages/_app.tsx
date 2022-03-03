@@ -1,11 +1,10 @@
 import { LiveblocksProvider } from "@liveblocks/react";
 import { createClient } from "@liveblocks/client";
 import { AppProps } from "next/app";
-import "tailwindcss/tailwind.css";
-import "../components/globals.css";
+import "../styles/globals.css";
 
 const client = createClient({
-  authEndpoint: "/api/auth",
+  publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
 function MyApp({ Component, pageProps }: AppProps) {
