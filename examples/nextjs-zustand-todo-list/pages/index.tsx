@@ -1,7 +1,9 @@
 import React, { useEffect } from "react";
-import useStore from "../src/store";
+import useStore from "../store";
+import SomeoneIsTyping from "../components/SomeoneIsTyping";
+import WhosHere from "../components/WhoIsHere";
 
-import styles from "./index.module.css";
+import styles from "../styles/Home.module.css";
 
 export default function StorageDemo() {
   const {
@@ -32,6 +34,7 @@ export default function StorageDemo() {
   return (
     <div>
       <div className={styles.container}>
+        <WhosHere />
         <input
           className={styles.input}
           type="text"
@@ -44,6 +47,7 @@ export default function StorageDemo() {
             }
           }}
         ></input>
+        <SomeoneIsTyping />
         {todos.map((todo, index) => {
           return (
             <div className={styles.todo_container} key={index}>

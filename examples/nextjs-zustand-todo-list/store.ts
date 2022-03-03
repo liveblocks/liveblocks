@@ -13,8 +13,9 @@ type Todo = {
 
 interface State {
   draft: string;
-  setDraft: (draft: string) => void;
   todos: Todo[];
+  isTyping: boolean;
+  setDraft: (draft: string) => void;
   addTodo: () => void;
   deleteTodo: (index: number) => void;
 }
@@ -24,7 +25,12 @@ const useStore = create(
     (set) => ({
       draft: "",
       todos: [],
-      setDraft: (draft: string) => set({ draft }),
+      isTyping: false,
+      setDraft: (draft: string) =>
+        set({
+          draft,
+          isTyping: draft === "" ? false : true,
+        }),
       addTodo: () =>
         set((state) => ({
           todos: state.todos.concat({ text: state.draft }),
@@ -35,8 +41,11 @@ const useStore = create(
           todos: state.todos.filter((todo, i) => index != i),
         })),
     }),
-    // Only todos are synced with Liveblocks, draft is a local state so it's not part of the mapping
-    { client, storageMapping: { todos: true } }
+    {
+      client,
+      storageMapping: { todos: true },
+      presenceMapping: { isTyping: true },
+    }
   )
 );
 
