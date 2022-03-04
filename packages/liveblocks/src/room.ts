@@ -316,6 +316,7 @@ export function makeStateMachine(
       generateId,
       generateOpId,
       dispatch: storageDispatch,
+      roomId: context.room,
     }) as LiveObject<T>;
   }
 
