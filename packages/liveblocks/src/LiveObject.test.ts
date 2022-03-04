@@ -15,6 +15,41 @@ import {
 import { LiveList } from ".";
 
 describe("LiveObject", () => {
+  describe("roomId", () => {
+    it("should be null for orphan", () => {
+      expect(new LiveObject().roomId).toBeNull();
+    });
+
+    it("should be the associated room id if attached", async () => {
+      const { root, assert } = await prepareIsolatedStorageTest(
+        [createSerializedObject("root", {})],
+        1
+      );
+
+      expect(root.roomId).toBe("room-id");
+    });
+
+    it("should be null after being detached", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        child: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("root", {}),
+          createSerializedObject("0:0", { a: 0 }, "root", "child"),
+        ],
+        1
+      );
+
+      const child = root.get("child");
+
+      expect(child.roomId).toBe("room-id");
+
+      root.set("child", new LiveObject({ a: 1 }));
+
+      expect(child.roomId).toBe(null);
+    });
+  });
+
   it("update non existing property", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", {}),
