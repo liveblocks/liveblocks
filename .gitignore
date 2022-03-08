@@ -33,3 +33,6 @@ yarn-error.log*
 packages/liveblocks/.vscode/*
 packages/liveblocks/.idea/*
 .idea
+
+# examples
+examples/*/build/*

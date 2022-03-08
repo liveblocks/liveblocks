@@ -80,11 +80,9 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
   };
 };
 
-export type Mapping<T> = Partial<
-  {
-    [Property in keyof T]: boolean;
-  }
->;
+export type Mapping<T> = Partial<{
+  [Property in keyof T]: boolean;
+}>;
 
 type Options<T> = {
   /**
@@ -94,7 +92,7 @@ type Options<T> = {
   /**
    * Mapping used to synchronize a part of your zustand state with one Liveblocks Room storage.
    */
-  storageMapping: Mapping<T>;
+  storageMapping?: Mapping<T>;
   /**
    * Mapping used to synchronize a part of your zustand state with one Liveblocks Room presence.
    */
@@ -119,13 +117,17 @@ export function middleware<T extends Object, TPresence extends Object = any>(
     throw missingClient();
   }
   const client = options.client;
-  const mapping = validateMapping(options.storageMapping, "storageMapping");
+  const storageMapping = validateMapping(
+    options.storageMapping || {},
+    "storageMapping"
+  );
+
   const presenceMapping = validateMapping(
     options.presenceMapping || {},
     "presenceMapping"
   );
   if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(mapping, presenceMapping);
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
   }
 
   return (set: any, get, api: any) => {
@@ -156,7 +158,7 @@ export function middleware<T extends Object, TPresence extends Object = any>(
                 storageRoot,
                 oldState,
                 newState,
-                mapping as any
+                storageMapping as any
               );
             }
           });
@@ -199,7 +201,7 @@ export function middleware<T extends Object, TPresence extends Object = any>(
         const updates: any = {};
 
         room!.batch(() => {
-          for (const key in mapping) {
+          for (const key in storageMapping) {
             const liveblocksStatePart = root.get(key);
 
             if (liveblocksStatePart == null) {
@@ -219,7 +221,7 @@ export function middleware<T extends Object, TPresence extends Object = any>(
             root,
             (updates) => {
               if (isPatching === false) {
-                set(patchState(get(), updates, mapping as any));
+                set(patchState(get(), updates, storageMapping as any));
               }
             },
             { isDeep: true }
