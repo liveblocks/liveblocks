@@ -6,7 +6,7 @@
 
 # [Liveblocks](https://liveblocks.io) × [SvelteKit](https://kit.svelte.dev/).
 
-This repo shows how to implement live cursors with Liveblocks and [SvelteKit](https://kit.svelte.dev/). [Demo](https://sveltekit-live-cursors-basic.vercel.app/)
+This repo shows how to implement live cursors with Liveblocks and [SvelteKit](https://kit.svelte.dev/).
 
 ## Getting started
 
@@ -22,7 +22,7 @@ This repo shows how to implement live cursors with Liveblocks and [SvelteKit](ht
 
 ### Run examples on CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars)
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/sveltekit-live-cursors-mfgdi7?file=/src/LiveCursors.svelte)
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 

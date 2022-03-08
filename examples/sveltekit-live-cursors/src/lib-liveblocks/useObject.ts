@@ -1,9 +1,9 @@
-import { LiveObject } from '@liveblocks/client'
-import { useStorage } from './useStorage'
-import { onDestroy } from 'svelte'
-import type { Writable } from 'svelte/store'
-import { writable } from 'svelte/store'
-import { useRoom } from './useRoom'
+import { LiveObject } from "@liveblocks/client";
+import { useStorage } from "./useStorage";
+import { onDestroy } from "svelte";
+import type { Writable } from "svelte/store";
+import { writable } from "svelte/store";
+import { useRoom } from "./useRoom";
 
 /**
  * Works similarly to `liveblocks-react` useObject
@@ -15,34 +15,30 @@ import { useRoom } from './useRoom'
  * console.log($obj.get('name'))
  */
 export function useObject (name: string, initial?: any): Writable<LiveObject> {
-  const room = useRoom()
-
-  if (!room) {
-    throw new Error('Use RoomProvider as parent with id prop')
-  }
-
-  const rootStore = useStorage()
-  const list = writable<LiveObject>()
-  let unsubscribe = () => {}
+  const room = useRoom();
+  const rootStore = useStorage();
+  const list = writable<LiveObject>();
+  let unsubscribe = () => {
+  };
 
   const unsubscribeRoot = rootStore.subscribe(root => {
     if (!root) {
-      return
+      return;
     }
 
     if (!root.get(name)) {
-      root.set(name, new LiveObject(initial))
+      root.set(name, new LiveObject(initial));
     }
 
-    list.set(root.get(name))
+    list.set(root.get(name));
 
-    unsubscribe()
+    unsubscribe();
     unsubscribe = room.subscribe(root.get(name) as LiveObject, newObject => {
-      list.set(newObject)
-    })
-  })
+      list.set(newObject);
+    });
+  });
 
-  onDestroy(unsubscribeRoot)
+  onDestroy(unsubscribeRoot);
 
-  return list
+  return list;
 }

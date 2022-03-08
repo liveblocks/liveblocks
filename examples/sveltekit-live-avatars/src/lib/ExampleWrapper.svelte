@@ -1,6 +1,6 @@
 <script>
-  const isRunningOnCodeSandbox = import.meta.env.VITE_CODESANDBOX_SSE || import.meta.env.CODESANDBOX_SSE
-  const hasLiveblocksSecretKey= import.meta.env.VITE_hasLiveblocksSecretKey || import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY || import.meta.env.VITE_LIVEBLOCKS_SECRET_KEY
+  const isRunningOnCodeSandbox = typeof process !== 'undefined' ? process.env.CODESANDBOX_SSE : false;
+  const hasLiveblocksSecretKey = import.meta.env.VITE_hasLiveblocksSecretKey || import.meta.env.VITE_LIVEBLOCKS_PUBLIC_KEY || import.meta.env.VITE_LIVEBLOCKS_SECRET_KEY;
 </script>
 
 {#if hasLiveblocksSecretKey}

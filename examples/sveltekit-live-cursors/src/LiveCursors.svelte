@@ -1,7 +1,8 @@
 <script>
-  import { useMyPresence, useOthers } from './lib-liveblocks/index.ts'
-  import Cursor from '$lib/Cursor.svelte'
-  const COLORS = ['#E57373', '#9575CD', '#4FC3F7', '#81C784', '#FFF176', '#FF8A65', '#F06292', '#7986CB']
+  import { useMyPresence, useOthers } from "./lib-liveblocks/index.ts";
+  import Cursor from "$lib/Cursor.svelte";
+
+  const COLORS = ["#E57373", "#9575CD", "#4FC3F7", "#81C784", "#FFF176", "#FF8A65", "#F06292", "#7986CB"];
 
   /**
    * The main Liveblocks code for the example.
@@ -12,30 +13,30 @@
    * More info inside src/lib-liveblocks
    */
 
-  let myPresence = useMyPresence()
-  let others = useOthers()
+  let myPresence = useMyPresence();
+  let others = useOthers();
 
   // Update cursor presence to current mouse location
   function handleMousemove (event) {
     myPresence.update({
       cursor: {
         x: Math.round(event.clientX),
-        y: Math.round(event.clientY)
-      }
-    })
+        y: Math.round(event.clientY),
+      },
+    });
   }
 
   // When the mouse leaves the page, set cursor presence to null
   function handleMouseleave () {
     myPresence.update({
-      cursor: null
-    })
+      cursor: null,
+    });
   }
 </script>
 
 <main
-  on:mousemove={handleMousemove}
   on:mouseleave={handleMouseleave}
+  on:mousemove={handleMousemove}
 >
 
   <!-- Show the current user's cursor location -->

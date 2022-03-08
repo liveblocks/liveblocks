@@ -1,4 +1,4 @@
-import { useMyPresence } from './useMyPresence'
+import { useMyPresence } from "./useMyPresence";
 
 /**
  * Works similarly to `liveblocks-react` useUpdateMyPresence
@@ -14,7 +14,7 @@ import { useMyPresence } from './useMyPresence'
  * myPresence.update({ name: 'Chris' })
  */
 
-export function useUpdateMyPresence (): (val: any) => void {
-  const presence = useMyPresence()
-  return updatedPresence => presence.update(updatedPresence)
+export function useUpdateMyPresence(): (val: any) => void {
+  const presence = useMyPresence();
+  return (updatedPresence) => presence.update(updatedPresence);
 }

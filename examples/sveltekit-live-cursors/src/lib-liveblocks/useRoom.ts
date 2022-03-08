@@ -1,6 +1,6 @@
-import { getContext } from 'svelte'
-import type { Room } from '@liveblocks/client'
-import { roomSymbol } from './symbols'
+import { getContext } from "svelte";
+import type { Room } from "@liveblocks/client";
+import { roomSymbol } from "./symbols";
 
 /**
  * Works similarly to `liveblocks-react` useRoom
@@ -11,5 +11,11 @@ import { roomSymbol } from './symbols'
  * room.history.undo()
  */
 export function useRoom (): Room {
-  return getContext<Room>(roomSymbol)
+  const room = getContext<Room>(roomSymbol);
+
+  if (!room) {
+    throw new Error("Use RoomProvider as parent with id prop");
+  }
+
+  return room;
 }

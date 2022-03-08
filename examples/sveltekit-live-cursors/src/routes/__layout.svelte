@@ -1,6 +1,6 @@
 <script lang="ts">
-	import '../app.css';
-</script>
+	import "../app.css";
+  import "../../static/example.css";</script>
 
 <svelte:head>
 	<title>Home</title>

@@ -6,7 +6,7 @@
 
 # [Liveblocks](https://liveblocks.io) × [SvelteKit](https://kit.svelte.dev/).
 
-This repo shows how to implement live avatars with Liveblocks and [SvelteKit](https://kit.svelte.dev/). [Demo](https://sveltekit-live-avatars.vercel.app/)
+This repo shows how to implement live avatars with Liveblocks and [SvelteKit](https://kit.svelte.dev/).
 
 ![live-avatars-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-live-avatars.png&w=1200&q=90)
 
@@ -24,7 +24,7 @@ This repo shows how to implement live avatars with Liveblocks and [SvelteKit](ht
 
 ### Run examples on CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars)
+- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/sveltekit-live-avatars-t4vetx)
 
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 

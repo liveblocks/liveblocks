@@ -1,17 +1,17 @@
 <script>
-  export let picture = ''
-  export let name = ''
+  export let picture = "";
+  export let name = "";
 
-  const IMAGE_SIZE = 48
+  const IMAGE_SIZE = 48;
 </script>
 
 <div class="avatar" data-tooltip={name}>
   <img
     alt=""
-    src={picture}
-    height={IMAGE_SIZE}
-    width={IMAGE_SIZE}
     class="avatar_picture"
+    height={IMAGE_SIZE}
+    src={picture}
+    width={IMAGE_SIZE}
   />
 </div>
 

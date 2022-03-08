@@ -1,15 +1,15 @@
 <script lang="ts">
   const WEBSITE_ROUTES = {
     HOME: "https://liveblocks.io/",
-    EXAMPLES: "/"
-  }
+    EXAMPLES: "/",
+  };
 
-  export let title: string
-  export let description: string
-  export let githubHref: string
-  export let codeSandboxHref: string
+  export let title: string;
+  export let description: string;
+  export let githubHref: string;
+  export let codeSandboxHref: string;
 
-  let showing = true
+  let showing = true;
 </script>
 
 {#if showing}

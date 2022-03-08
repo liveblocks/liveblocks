@@ -1,6 +1,6 @@
 <script>
-  import { useOthers, useSelf } from './lib-liveblocks'
-  import Avatar from '$lib/Avatar.svelte'
+  import { useOthers, useSelf } from "./lib-liveblocks";
+  import Avatar from "$lib/Avatar.svelte";
 
   /**
    * The main Liveblocks code for the example.
@@ -11,9 +11,9 @@
    * More info inside src/lib-liveblocks
    */
 
-  let users = useOthers()
-  let currentUser = useSelf()
-  $: hasMoreUsers = $users ? [...$users].length > 3 : false
+  let users = useOthers();
+  let currentUser = useSelf();
+  $: hasMoreUsers = $users ? [...$users].length > 3 : false;
 </script>
 
 <main>

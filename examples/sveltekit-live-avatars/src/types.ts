@@ -1,10 +1,10 @@
-export type User = string
+export type User = string;
 
 export type Pixel = {
-  color: string
-  drawnBy?: User
-}
+  color: string;
+  drawnBy?: User;
+};
 
-export type PixelGrid = Pixel[][]
+export type PixelGrid = Pixel[][];
 
-export type PixelGridCoords = [number, number]
+export type PixelGridCoords = [number, number];
