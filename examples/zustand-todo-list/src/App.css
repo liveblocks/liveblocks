@@ -59,6 +59,13 @@ input:focus {
   outline: none;
 }
 
+.who_is_here {
+  align-self: flex-end;
+  font-size: 11px;
+  color: #aaa;
+  margin-left: 1rem;
+}
+
 .someone_is_typing {
   height: 12px;
   font-size: 11px;

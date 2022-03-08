@@ -1,9 +1,32 @@
 import React, { useEffect } from "react";
 import useStore from "./store";
-
 import "./App.css";
 
-import SomeoneIsTyping from "./SomeoneIsTyping";
+function WhoIsHere() {
+  const othersUsersCount = useStore((state) => state.liveblocks.others.length);
+
+  let message = "";
+
+  if (othersUsersCount === 0) {
+    message = "You’re the only one here.";
+  } else if (othersUsersCount === 1) {
+    message = "There is one other person here.";
+  } else {
+    message = `There are ${othersUsersCount} other people here`;
+  }
+
+  return <div className="who_is_here">{message}</div>;
+}
+
+function SomeoneIsTyping() {
+  const others = useStore((state) => state.liveblocks.others);
+
+  const someoneIsTyping = others.some((user) => user.presence?.isTyping);
+
+  return someoneIsTyping ? (
+    <div className="someone_is_typing">Someone is typing</div>
+  ) : null;
+}
 
 const App = () => {
   const {
@@ -31,6 +54,7 @@ const App = () => {
 
   return (
     <div className="container">
+      <WhoIsHere />
       <input
         className="input"
         type="text"
