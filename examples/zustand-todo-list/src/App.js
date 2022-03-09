@@ -28,7 +28,7 @@ function SomeoneIsTyping() {
   ) : null;
 }
 
-const App = () => {
+export default function App() {
   const {
     draft,
     setDraft,
@@ -85,6 +85,4 @@ const App = () => {
       })}
     </div>
   );
-};
-
-export default App;
+}
