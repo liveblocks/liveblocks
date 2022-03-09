@@ -1,5 +1,5 @@
 {
-  "name": "sveltekit-pixel-art",
+  "name": "sveltekit-live-avatars",
   "version": "0.0.1",
   "scripts": {
     "dev": "svelte-kit dev",
@@ -13,7 +13,6 @@
     "@sveltejs/adapter-auto": "next",
     "@sveltejs/kit": "next",
     "autoprefixer": "^10.4.2",
-    "prettier": "^2.5.1",
     "svelte": "^3.46.0",
     "svelte-check": "^2.2.6",
     "svelte-preprocess": "^4.10.1",
@@ -22,7 +21,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@liveblocks/client": "^0.14.2",
+    "@liveblocks/client": "^0.14.5",
     "@liveblocks/node": "^0.3.0",
     "@vercel/node": "^1.13.0"
   }
