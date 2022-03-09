@@ -4,9 +4,9 @@
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
+# [Liveblocks](https://liveblocks.io) × [Redux](https://redux-toolkit.js.org/).
 
-This repo shows how to use Liveblocks with [Zustand](https://github.com/pmndrs/zustand).
+This repo shows how to use Liveblocks with [Redux](https://redux-toolkit.js.org/).
 
 ## Getting started
 

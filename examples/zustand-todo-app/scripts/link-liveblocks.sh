@@ -17,7 +17,7 @@ npm link
 echo "Build @liveblocks/zustand"
 cd -
 cd ../../packages/liveblocks-zustand
-npm link @liveblocks/client ../../examples/zustand-todo-list/node_modules/zustand
+npm link @liveblocks/client ../../examples/zustand-todo-app/node_modules/zustand
 npm run build
 npm link
 
