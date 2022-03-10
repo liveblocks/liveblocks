@@ -530,13 +530,6 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   /**
-   * @internal
-   */
-  toCrdtArray(): AbstractCrdt[] {
-    return this.#items.map((entry) => entry[0]);
-  }
-
-  /**
    * Tests whether all elements pass the test implemented by the provided function.
    * @param predicate Function to test for each element, taking two arguments (the element and its index).
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
