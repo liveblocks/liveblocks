@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "dotenv": "^16.0.0",
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "regenerator-runtime": "^0.13.9"
   }
 }
