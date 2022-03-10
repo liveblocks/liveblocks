@@ -317,6 +317,7 @@ export function makeStateMachine(
       generateId,
       generateOpId,
       dispatch: storageDispatch,
+      roomId: context.room,
     }) as LiveObject<T>;
   }
 
@@ -1004,6 +1005,13 @@ See v0.13 release notes for more information.
     if (state.connection.state === "connecting") {
       updateConnection({ ...state.connection, state: "open" });
       state.numberOfRetry = 0;
+
+      // Re-broadcast the user presence during a reconnect.
+      if (state.lastConnectionId !== undefined) {
+        state.buffer.presence = state.me;
+        tryFlushing();
+      }
+
       state.lastConnectionId = state.connection.id;
 
       if (state.root) {
@@ -1466,6 +1474,7 @@ export function createRoom(
   const machine = makeStateMachine(state, context);
 
   const room: Room = {
+    id: context.room,
     /////////////
     // Core    //
     /////////////
