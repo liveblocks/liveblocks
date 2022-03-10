@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
-import { enterRoom, leaveRoom } from "@liveblocks/redux";
+import { actions } from "@liveblocks/redux";
 
 import { addTodo, deleteTodo, setDraft } from "./store";
 
@@ -40,13 +40,13 @@ export default function App() {
 
   useEffect(() => {
     dispatch(
-      enterRoom("redux-demo-room", {
+      actions.enterRoom("redux-demo-room", {
         todos: [],
       })
     );
 
     return () => {
-      dispatch(leaveRoom("redux-demo-room"));
+      dispatch(actions.leaveRoom("redux-demo-room"));
     };
   }, [dispatch]);
 
