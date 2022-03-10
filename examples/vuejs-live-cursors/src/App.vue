@@ -42,7 +42,7 @@ import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
-  publicApiKey: "pk_live_CXeYqF--qWwo8hcq7kGBPrG3", // => replace with your public key.
+  publicApiKey: "pk_xxxxxxxx", // => replace with your public key.
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];

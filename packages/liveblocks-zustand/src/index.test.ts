@@ -10,7 +10,7 @@ import {
   SerializedCrdtWithId,
   ServerMessage,
   ServerMessageType,
-} from "@liveblocks/client/lib/cjs/live";
+} from "@liveblocks/client/lib/internal";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 import {
   mappingShouldBeAnObject,
@@ -18,7 +18,6 @@ import {
   mappingToFunctionIsNotAllowed,
   mappingValueShouldBeABoolean,
   missingClient,
-  missingMapping,
 } from "./errors";
 
 window.WebSocket = MockWebSocket as any;
@@ -578,13 +577,6 @@ describe("middleware", () => {
       expect(() =>
         middleware(() => ({}), { client: undefined as any, storageMapping: {} })
       ).toThrow(missingClient());
-    });
-
-    test("missing mapping should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
-      expect(() =>
-        middleware(() => ({}), { client, storageMapping: null as any })
-      ).toThrow(missingMapping("storageMapping"));
     });
 
     test("storageMapping should be an object", () => {

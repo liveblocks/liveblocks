@@ -6,6 +6,7 @@ export type ApplyResult =
   | { modified: false };
 
 export interface Doc {
+  roomId: string;
   generateId: () => string;
   generateOpId: () => string;
   getItem: (id: string) => AbstractCrdt | undefined;
@@ -29,6 +30,10 @@ export abstract class AbstractCrdt {
    */
   protected get _doc() {
     return this.#doc;
+  }
+
+  get roomId() {
+    return this.#doc ? this.#doc.roomId : null;
   }
 
   /**

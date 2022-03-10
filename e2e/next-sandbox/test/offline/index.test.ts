@@ -49,7 +49,7 @@ test.describe("Offline", () => {
     expect(secondPageItems.length).toEqual(2);
 
     await pages[0].click("#sendCloseEvent");
-    await delay(1000);
+    await delay(3000);
 
     await waitForContentToBeEquals(pages);
 
@@ -84,7 +84,7 @@ test.describe("Offline", () => {
 
     await pages[0].click("#sendCloseEvent");
 
-    await delay(1000);
+    await delay(3000);
 
     await waitForContentToBeEquals(pages);
 

@@ -9,12 +9,13 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@liveblocks/client": "^0.14.0",
+    "@liveblocks/client": "^0.15.0-alpha.4",
     "node-fetch": "2.6.7",
     "ws": "^8.5.0"
   },
   "devDependencies": {
     "dotenv": "^16.0.0",
-    "jest": "^27.5.1"
+    "jest": "^27.5.1",
+    "regenerator-runtime": "^0.13.9"
   }
 }

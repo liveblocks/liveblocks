@@ -1,3 +1,5 @@
+require("regenerator-runtime/runtime");
+
 const { createClient } = require("@liveblocks/client");
 const fetch = require("node-fetch");
 const WebSocket = require("ws");
