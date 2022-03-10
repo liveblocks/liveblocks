@@ -183,18 +183,17 @@ export function makeStateMachine(
   mockedEffects?: Effects
 ) {
   const effects: Effects = mockedEffects || {
-    async authenticate(
+    authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      try {
-        const { token } = await auth(context.room);
-        const parsedToken = parseToken(token);
-        const socket = createWebSocket(token);
-        authenticationSuccess(parsedToken, socket);
-      } catch (er: any) {
-        authenticationFailure(er);
-      }
+      return auth(context.room)
+        .then(({ token }) => {
+          const parsedToken = parseToken(token);
+          const socket = createWebSocket(token);
+          authenticationSuccess(parsedToken, socket);
+        })
+        .catch((er: any) => authenticationFailure(er));
     },
     send(messageOrMessages: ClientMessage | ClientMessage[]) {
       if (state.socket == null) {
@@ -1197,11 +1196,13 @@ See v0.13 release notes for more information.
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  async function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
+  function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
     if (state.root) {
-      return {
-        root: state.root as LiveObject<TRoot>,
-      };
+      return new Promise((resolve) =>
+        resolve({
+          root: state.root as LiveObject<TRoot>,
+        })
+      );
     }
 
     if (_getInitialStatePromise == null) {
@@ -1212,11 +1213,11 @@ See v0.13 release notes for more information.
       );
     }
 
-    await _getInitialStatePromise;
-
-    return {
-      root: state.root! as LiveObject<TRoot>,
-    };
+    return _getInitialStatePromise.then(() => {
+      return {
+        root: state.root! as LiveObject<TRoot>,
+      };
+    });
   }
 
   function undo() {
@@ -1585,44 +1586,39 @@ function prepareAuthEndpoint(
   throw new Error("Internal error. Unexpected authentication type");
 }
 
-async function fetchAuthEndpoint(
+function fetchAuthEndpoint(
   fetch: typeof window.fetch,
   endpoint: string,
   body: {
     room: string;
     publicApiKey?: string;
   }
-) {
-  const res = await fetch(endpoint, {
+): Promise<any> {
+  return fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  });
+  })
+    .then((res) => {
+      if (!res.ok) {
+        throw new AuthenticationError(
+          `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+        );
+      }
 
-  if (!res.ok) {
-    throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-    );
-  }
+      return res.json();
+    })
+    .then((authResponse) => {
+      if (typeof authResponse.token !== "string") {
+        throw new AuthenticationError(
+          `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+        );
+      }
 
-  let authResponse = null;
-  try {
-    authResponse = await res.json();
-  } catch (er) {
-    throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-    );
-  }
-
-  if (typeof authResponse.token !== "string") {
-    throw new AuthenticationError(
-      `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
-    );
-  }
-
-  return authResponse;
+      return authResponse;
+    });
 }
 
 class AuthenticationError extends Error {
