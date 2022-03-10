@@ -52,7 +52,6 @@
     "@testing-library/react": "^12.1.2",
     "@testing-library/react-hooks": "^7.0.2",
     "@types/jest": "^27.4.1",
-    "@types/regenerator-runtime": "^0.13.1",
     "esbuild": "0.14.11",
     "jest": "^27.4.7",
     "msw": "^0.36.4",

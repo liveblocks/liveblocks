@@ -36,7 +36,6 @@
     "@testing-library/react": "^11.2.5",
     "@types/jest": "^26.0.20",
     "@types/react": "^16.14.0",
-    "@types/regenerator-runtime": "^0.13.1",
     "babel-core": "^6.26.3",
     "babel-jest": "^26.6.3",
     "babel-runtime": "^6.26.0",
