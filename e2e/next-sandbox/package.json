@@ -9,19 +9,19 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.15.0-alpha.4",
+    "@liveblocks/client": "^0.15.0",
     "@liveblocks/node": "0.3.0",
-    "@liveblocks/react": "^0.15.0-alpha.4",
-    "@liveblocks/redux": "^0.15.0-alpha.4",
-    "@liveblocks/zustand": "^0.15.0-alpha.4",
+    "@liveblocks/react": "^0.15.0",
+    "@liveblocks/redux": "^0.15.0",
+    "@liveblocks/zustand": "^0.15.0",
     "@reduxjs/toolkit": "^1.7.2",
     "next": "12.1.0",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-redux": "^7.2.6",
+    "redux": "^4.1.2",
     "ts-jest": "^27.0.3",
-    "zustand": "^3.6.8",
-    "redux": "^4.1.2"
+    "zustand": "^3.6.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.19.1",
