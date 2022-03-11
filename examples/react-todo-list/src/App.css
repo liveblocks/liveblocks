@@ -63,12 +63,10 @@ input:focus {
   align-self: flex-end;
   font-size: 11px;
   color: #aaa;
-  margin-left: 1rem;
 }
 
 .someone_is_typing {
   position: absolute;
   font-size: 11px;
   color: #aaa;
-  margin-left: 1rem;
 }
