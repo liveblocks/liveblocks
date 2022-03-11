@@ -2,7 +2,7 @@ echo "Install all dependencies"
 npm install
 
 echo "Build @liveblocks/client"
-cd ../../packages/liveblocks
+cd ../../packages/liveblocks-client
 npm install
 npm run build
 npm link
