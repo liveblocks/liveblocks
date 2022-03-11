@@ -7,7 +7,7 @@
 
 # Liveblocks + React
 
-This project does not work without access to the Storage private beta.
+This repo shows how to use Liveblocks with [React](https://reactjs.org/).
 
 ## Getting started
 

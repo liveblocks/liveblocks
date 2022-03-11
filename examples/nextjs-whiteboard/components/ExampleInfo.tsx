@@ -69,12 +69,6 @@ export default function ExampleInfo({
         </button>
       </div>
       <p className="mt-4 leading-relaxed text-gray-400">{description}</p>
-      {needStorage && (
-        <p className="mt-4 leading-relaxed text-gray-400">
-          ⚠️ Note that the Storage demo will not work if you don't have access
-          to the private beta.
-        </p>
-      )}
       <div className="flex items-center justify-between mt-6">
         <a
           href={WEBSITE_ROUTES.HOME}

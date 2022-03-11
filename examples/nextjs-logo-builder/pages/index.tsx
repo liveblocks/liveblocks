@@ -1,13 +1,11 @@
 /**
- *❕ This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta **
-
- * 
+ *
  * This file shows how to create a simple collaborative form.
  * https://liveblocks.io/examples/collaborative-logo-builder
  *
  * We use the presence block to show the currently focused input to everyone in the room.
  * We use the storage block to persist the state of the form even after everyone leaves the room.
- * 
+ *
  * The users picture and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.
  *

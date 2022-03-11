@@ -9,8 +9,6 @@
 This repo shows how to use [Three.js](https://threejs.org/) and [Next.js](https://nextjs.org/) with the storage block.
 You can change the shoe colors by clicking on it and every users in the room will see it in real time.
 
-> :warning: **This demo will not work if you don't have access to the private beta. Please contact us at hello@liveblocks.io if you want access to the storage block private beta**
-
 ![3d-shoe](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-shoe-builder.png&w=1200&q=90)
 
 ## Getting started
