@@ -1,0 +1,72 @@
+body {
+  background-color: rgb(243, 243, 243);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 3rem;
+  max-width: 28rem;
+}
+
+input {
+  box-sizing: border-box;
+  padding: 0.5rem 0.875rem;
+  margin: 0.5rem 0;
+  width: 100%;
+  background-color: white;
+  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
+    0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border-radius: 0.5rem;
+  color: black;
+  border: 0 solid;
+  font-size: 16px;
+}
+
+input:hover {
+  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
+    0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+input:focus {
+  outline: none;
+}
+
+.todo_container {
+  display: flex;
+  padding: 0.5rem 0.875rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.todo {
+  flex-grow: 1;
+}
+
+.delete_button {
+  padding: 0;
+  margin: 0;
+  font-size: 16px;
+  border: 0 solid;
+  appearance: button;
+  background-color: transparent;
+}
+
+.delete_button:focus {
+  outline: none;
+}
+
+.who_is_here {
+  align-self: flex-end;
+  font-size: 11px;
+  color: #aaa;
+}
+
+.someone_is_typing {
+  position: absolute;
+  font-size: 11px;
+  color: #aaa;
+}

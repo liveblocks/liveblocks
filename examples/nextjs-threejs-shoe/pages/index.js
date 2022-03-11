@@ -1,6 +1,4 @@
 /**
- *❕ This demo will not work if you don't have access to the private beta.
- * Please contact us at hello@liveblocks.io if you want access to the storage block private beta **
  *
  * This file shows how to create a simple collaborative form.
  * https://liveblocks.io/examples/3d-shoe-builder

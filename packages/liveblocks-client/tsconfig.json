@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "ES2015",
+    "module": "ES2020",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strictPropertyInitialization": true,
+    "strictFunctionTypes": true,
+    "declaration": true,
+    "moduleResolution": "node",
+    "outDir": "./lib/esm",
+    "lib": ["ES2019", "dom", "esnext"],
+    "stripInternal": true
+  },
+  "include": ["./src/**/*", "./test/**/*.ts"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,9 @@
+{
+  "short_name": "Redux Todo App",
+  "name": "Redux Todo App with Liveblocks",
+  "icons": [],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff"
+}
