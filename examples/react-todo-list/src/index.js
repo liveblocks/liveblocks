@@ -11,7 +11,7 @@ const PUBLIC_KEY = "pk_xxxxxxx";
 
 if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
   throw new Error(
-    "Replace the constant PUBLIC_KEY in store.js with your own Liveblocks public key."
+    "Replace the above constant PUBLIC_KEY with your own Liveblocks public key."
   );
 }
 
