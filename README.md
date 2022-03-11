@@ -10,9 +10,11 @@
 
 ## Packages
 
-- [@liveblocks/client](./packages/liveblocks)
+- [@liveblocks/client](./packages/liveblocks-client)
 - [@liveblocks/react](./packages/liveblocks-react)
 - [@liveblocks/node](./packages/liveblocks-node)
+- [@liveblocks/zustand](./packages/liveblocks-zustand)
+- [@liveblocks/redux](./packages/liveblocks-redux)
 
 ## Examples
 
