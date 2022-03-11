@@ -18,7 +18,7 @@ input {
   margin: 0.5rem 0;
   width: 100%;
   background-color: white;
-  box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000,
+  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
     0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border-radius: 0.5rem;
   color: black;
@@ -27,7 +27,7 @@ input {
 }
 
 input:hover {
-  box-shadow: 0 0 #0000, 0 0 #0000, 0 0 #0000, 0 0 #0000,
+  box-shadow: 0 0 #000, 0 0 #000, 0 0 #000, 0 0 #000,
     0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 
@@ -67,7 +67,7 @@ input:focus {
 }
 
 .someone_is_typing {
-  height: 12px;
+  position: absolute;
   font-size: 11px;
   color: #aaa;
   margin-left: 1rem;

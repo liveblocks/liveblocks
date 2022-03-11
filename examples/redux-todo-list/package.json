@@ -1,5 +1,5 @@
 {
-  "name": "liveblocks-examples-redux-todo-app",
+  "name": "liveblocks-examples-redux-todo-list",
   "version": "0.1.0",
   "private": true,
   "scripts": {
