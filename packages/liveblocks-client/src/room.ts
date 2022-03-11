@@ -1613,16 +1613,22 @@ function fetchAuthEndpoint(
     .then((res) => {
       if (!res.ok) {
         throw new AuthenticationError(
-          `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+          `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
         );
       }
 
-      return res.json();
+      return res.json().catch((er) => {
+        throw new AuthenticationError(
+          `Expected a json when doing a POST request on "${endpoint}". ${er}`
+        );
+      });
     })
     .then((authResponse) => {
       if (typeof authResponse.token !== "string") {
         throw new AuthenticationError(
-          `Authentication error. Liveblocks could not parse the response of your authentication "${endpoint}"`
+          `Expected a json with a string token when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+            authResponse
+          )}`
         );
       }
 

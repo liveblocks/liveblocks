@@ -11,6 +11,7 @@ import {
   prepareIsolatedStorageTest,
   reconnect,
   SECOND_POSITION,
+  waitFor,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -21,8 +22,10 @@ import {
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
-import { makeStateMachine, Effects, defaultState } from "./room";
+import { makeStateMachine, Effects, defaultState, createRoom } from "./room";
 import { Authentication, Others } from "./types";
+import { rest } from "msw";
+import { setupServer } from "msw/node";
 
 const defaultContext = {
   room: "room-id",
@@ -43,6 +46,115 @@ function withDateNow(now: number, callback: () => void) {
     global.Date.now = realDateNow;
   }
 }
+
+describe("room / auth", () => {
+  const server = setupServer(
+    rest.post("/api/auth", (req, res, ctx) => {
+      return res(
+        ctx.json({
+          token:
+            // actor = 0
+            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw",
+        })
+      );
+    }),
+    rest.post("/api/403", (req, res, ctx) => {
+      return res(ctx.status(403));
+    }),
+    rest.post("/api/not-json", (req, res, ctx) => {
+      return res(ctx.status(202), ctx.text("this is not json"));
+    }),
+    rest.post("/api/missing-token", (req, res, ctx) => {
+      return res(ctx.status(202), ctx.json({}));
+    })
+  );
+
+  beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
+  let originalEnv: NodeJS.ProcessEnv;
+  let consoleErrorSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    originalEnv = process.env;
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+    consoleErrorSpy.mockRestore();
+  });
+
+  test("private authentication with 403 status should throw", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/403",
+        },
+      }
+    );
+
+    room.connect();
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    room.disconnect();
+
+    expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+      new Error(
+        `Expected a status 200 but got 403 when doing a POST request on "/api/403"`
+      )
+    );
+  });
+
+  test("private authentication that does not returns json should throw", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/not-json",
+        },
+      }
+    );
+
+    room.connect();
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    room.disconnect();
+
+    expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+      new Error(
+        `Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1`
+      )
+    );
+  });
+
+  test("private authentication that does not returns json should throw", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/missing-token",
+        },
+      }
+    );
+
+    room.connect();
+    await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+    room.disconnect();
+
+    expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+      new Error(
+        `Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}`
+      )
+    );
+  });
+});
 
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
