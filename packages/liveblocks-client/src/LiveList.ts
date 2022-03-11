@@ -278,13 +278,6 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * @internal
    */
-  _getType(): string {
-    return "LiveList";
-  }
-
-  /**
-   * @internal
-   */
   _toSerializedCrdt(): SerializedCrdt {
     return {
       type: CrdtType.List,

@@ -276,13 +276,6 @@ export class LiveObject<
     };
   }
 
-  /**
-   * @internal
-   */
-  _getType(): string {
-    return "LiveObject";
-  }
-
   #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];

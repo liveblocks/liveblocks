@@ -203,13 +203,6 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * @internal
    */
-  _getType(): string {
-    return "LiveMap";
-  }
-
-  /**
-   * @internal
-   */
   _toSerializedCrdt(): SerializedCrdt {
     return {
       type: CrdtType.Map,

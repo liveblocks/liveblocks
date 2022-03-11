@@ -136,9 +136,4 @@ export abstract class AbstractCrdt {
    * @internal
    */
   abstract _toSerializedCrdt(): SerializedCrdt;
-
-  /**
-   * @internal
-   */
-  abstract _getType(): string;
 }

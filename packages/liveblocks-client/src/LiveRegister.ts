@@ -92,11 +92,4 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
   }
-
-  /**
-   * INTERNAL
-   */
-  _getType(): string {
-    return "LiveRegister";
-  }
 }
