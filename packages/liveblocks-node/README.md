@@ -27,12 +27,6 @@ npm install @liveblocks/node
 
 For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https://github.com/liveblocks/liveblocks/releases).
 
-## Authors
-
-- Guillaume Salles ([@guillaume_slls](https://twitter.com/guillaume_slls)) - [Liveblocks](https://liveblocks.io)
-- Olivier Foucherot ([@ofoucherot](https://twitter.com/ofoucherot)) - [Liveblocks](https://liveblocks.io)
-- Steven Fabre ([@stevenfabre](https://twitter.com/stevenfabre)) - [Liveblocks](https://liveblocks.io)
-
 ## Community
 
 - [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks community, ask questions and share tips.
