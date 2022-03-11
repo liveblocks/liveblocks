@@ -33,7 +33,7 @@ test.describe("Zustand", () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    await delay(1000);
+    await delay(3000);
     const othersFirstPage = await getJsonContent(pages[0], "others");
     const othersSecondPage = await getJsonContent(pages[1], "others");
 
