@@ -1,0 +1,17 @@
+{
+  "name": "javascript-todo-list",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "build": "esbuild app.js --bundle --outfile=static/app.js"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "esbuild": "^0.14.25"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^0.15.0"
+  }
+}
