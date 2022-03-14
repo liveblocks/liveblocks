@@ -158,7 +158,7 @@ function Canvas({ layers }) {
 }
 
 const LayerComponent = memo(
-  ({ layer, onLayerPointerDown, id, selectionColor }) => {
+  ({ layer, id, onLayerPointerDown, selectionColor }) => {
     const [layerData, setLayerData] = useState(layer.toObject());
 
     const room = useRoom();
