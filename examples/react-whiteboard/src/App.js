@@ -29,7 +29,7 @@ export default function App() {
 }
 
 function Canvas({ layers }) {
-  const [{ selection, cursor }, setPresence] = useMyPresence();
+  const [{ selectedLayer }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState({
     isDragging: false,
   });
@@ -40,30 +40,25 @@ function Canvas({ layers }) {
 
   const myColor = connectionIdToColor(me.connectionId);
 
-  const insertLayer = useCallback(
-    (position) => {
-      batch(() => {
-        const layerId = nanoid();
-        const layer = new LiveObject({
-          type: "rectangle",
-          x: position.x,
-          y: position.y,
-          height: 100,
-          width: 100,
-          fill: myColor,
-        });
-        layers.set(layerId, layer);
-        setPresence({ selection: layerId }, { addToHistory: true });
+  const insertLayer = useCallback(() => {
+    batch(() => {
+      const layerId = nanoid();
+      const layer = new LiveObject({
+        type: "rectangle",
+        x: Math.floor(Math.random() * 300),
+        y: Math.floor(Math.random() * 300),
+        height: 100,
+        width: 100,
+        fill: myColor,
       });
-    },
-    [batch, layers, setPresence, myColor]
-  );
+      layers.set(layerId, layer);
+      setPresence({ selectedLayer: layerId }, { addToHistory: true });
+    });
+  }, [batch, layers, setPresence, myColor]);
 
   const deleteSelectedLayer = useCallback(() => {
-    batch(() => {
-      layers.delete(selection);
-    });
-  }, [layers, selection]);
+    layers.delete(selectedLayer);
+  }, [layers, selectedLayer]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -83,11 +78,7 @@ function Canvas({ layers }) {
           }
         }
         case "i": {
-          const point = {
-            x: cursor.x,
-            y: cursor.y,
-          };
-          insertLayer(point);
+          insertLayer();
         }
       }
     }
@@ -97,7 +88,7 @@ function Canvas({ layers }) {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [selection, cursor, history, insertLayer, deleteSelectedLayer]);
+  }, [history, insertLayer, deleteSelectedLayer]);
 
   const onLayerPointerDown = useCallback(
     (e, layerId) => {
@@ -108,20 +99,20 @@ function Canvas({ layers }) {
         y: Math.round(e.clientY),
       };
 
-      setPresence({ selection: layerId }, { addToHistory: true });
+      setPresence({ selectedLayer: layerId }, { addToHistory: true });
 
       setState({ isDragging: true, current: point });
     },
-    [setPresence, setState, selection, history]
+    [setPresence, setState, selectedLayer, history]
   );
 
   const unselectLayer = useCallback(() => {
-    setPresence({ selection: null }, { addToHistory: true });
+    setPresence({ selectedLayer: null }, { addToHistory: true });
   }, [setPresence]);
 
   const translateSelectedLayer = useCallback(
     (point) => {
-      const layer = layers.get(selection);
+      const layer = layers.get(selectedLayer);
       if (layer) {
         layer.update({
           x: layer.get("x") + point.x - canvasState.current.x,
@@ -131,7 +122,7 @@ function Canvas({ layers }) {
 
       setState({ ...canvasState, current: point });
     },
-    [layers, canvasState, selection]
+    [layers, canvasState, selectedLayer]
   );
 
   const onCanvasPointerUp = useCallback(
@@ -152,17 +143,17 @@ function Canvas({ layers }) {
   const onCanvasPointerMove = useCallback(
     (e) => {
       e.preventDefault();
-      const current = {
-        x: Math.round(e.clientX),
-        y: Math.round(e.clientY),
-      };
 
       if (canvasState.isDragging) {
-        translateSelectedLayer(current);
+        const point = {
+          x: Math.round(e.clientX),
+          y: Math.round(e.clientY),
+        };
+
+        translateSelectedLayer(point);
       }
-      setPresence({ cursor: current });
     },
-    [canvasState.isDragging, setPresence, translateSelectedLayer]
+    [canvasState.isDragging, translateSelectedLayer]
   );
 
   return (
@@ -180,7 +171,7 @@ function Canvas({ layers }) {
               mode={canvasState.mode}
               onLayerPointerDown={onLayerPointerDown}
               layer={layer}
-              selectionColor={selection === layerId ? "blue" : undefined}
+              selectionColor={selectedLayer === layerId ? "blue" : undefined}
             />
           );
         })}
