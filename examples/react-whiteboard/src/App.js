@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import {
   useMyPresence,
   RoomProvider,
@@ -6,13 +6,12 @@ import {
   useHistory,
   useBatch,
   useSelf,
+  useRoom,
 } from "@liveblocks/react";
 import { LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 
 import "./App.css";
-
-import LayerComponent from "./LayerComponent";
 
 const CanvasMode = {
   None: "None",
@@ -218,3 +217,36 @@ function Canvas({ layers }) {
     </>
   );
 }
+
+const LayerComponent = memo(
+  ({ layer, onLayerPointerDown, id, selectionColor }) => {
+    const [layerData, setLayerData] = useState(layer.toObject());
+
+    const room = useRoom();
+
+    useEffect(() => {
+      function onChange() {
+        setLayerData(layer.toObject());
+      }
+
+      return room.subscribe(layer, onChange);
+    }, [room, layer]);
+
+    return (
+      <div
+        onPointerDown={(e) => onLayerPointerDown(e, id)}
+        style={{
+          transition: "all 0.1s ease",
+          transform: `translate(${layerData.x}px, ${layerData.y}px)`,
+          height: layerData.height,
+          width: layerData.width,
+          backgroundColor: layerData.fill ? layerData.fill : "#CCC",
+          borderColor: selectionColor || "transparent",
+          strokeWidth: 1,
+          borderStyle: "solid",
+          borderWidth: "2px",
+        }}
+      ></div>
+    );
+  }
+);
