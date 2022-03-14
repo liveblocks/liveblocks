@@ -1,8 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
   useMyPresence,
-  useOthers,
-  useList,
   RoomProvider,
   useMap,
   useHistory,
@@ -46,16 +44,15 @@ export default function App() {
 
 function Whiteboard() {
   const layers = useMap("layers");
-  const layerIds = useList("layerIds");
 
-  if (layerIds == null || layers == null) {
+  if (layers == null) {
     return <div>Loading</div>;
   }
 
-  return <Canvas layers={layers} layerIds={layerIds} />;
+  return <Canvas layers={layers} />;
 }
 
-function Canvas({ layerIds, layers }) {
+function Canvas({ layers }) {
   const [{ selection }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState({
     mode: CanvasMode.None,
@@ -70,15 +67,9 @@ function Canvas({ layerIds, layers }) {
 
   const deleteSelectedLayer = useCallback(() => {
     batch(() => {
-      // Delete the layer from the layers LiveMap
       layers.delete(selection);
-      // Find the layer index in the z-index list and remove it
-      const index = layerIds.indexOf(selection);
-      if (index !== -1) {
-        layerIds.delete(index);
-      }
     });
-  }, [layerIds, layers, selection]);
+  }, [layers, selection]);
 
   useEffect(() => {
     function onKeyDown(e) {
@@ -142,13 +133,12 @@ function Canvas({ layerIds, layers }) {
           width: 100,
           fill: myColor,
         });
-        layerIds.push(layerId);
         layers.set(layerId, layer);
         setPresence({ selection: layerId }, { addToHistory: true });
         setState({ mode: CanvasMode.None });
       });
     },
-    [batch, layerIds, layers, setPresence, myColor]
+    [batch, layers, setPresence, myColor]
   );
 
   const unselectLayers = useCallback(() => {
@@ -221,12 +211,7 @@ function Canvas({ layerIds, layers }) {
           }}
         >
           <g>
-            {layerIds.map((layerId) => {
-              const layer = layers.get(layerId);
-              if (layer == null) {
-                return null;
-              }
-
+            {Array.from(layers, ([layerId, layer]) => {
               return (
                 <LayerComponent
                   key={layerId}
