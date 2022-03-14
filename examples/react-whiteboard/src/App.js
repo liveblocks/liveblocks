@@ -16,7 +16,6 @@ import LayerComponent from "./LayerComponent";
 
 const CanvasMode = {
   None: "None",
-  SelectionNe: "SelectionNet",
   Translating: "Translating",
   Inserting: "Inserting",
 };
@@ -141,90 +140,80 @@ function Canvas({ layers }) {
     [batch, layers, setPresence, myColor]
   );
 
-  const unselectLayers = useCallback(() => {
+  const unselectLayer = useCallback(() => {
     setPresence({ selection: null }, { addToHistory: true });
   }, [setPresence]);
 
-  const translateSelectedLayers = useCallback(
+  const translateSelectedLayer = useCallback(
     (point) => {
       if (canvasState.mode !== CanvasMode.Translating) {
         return;
       }
 
-      batch(() => {
-        const offset = {
-          x: point.x - canvasState.current.x,
-          y: point.y - canvasState.current.y,
-        };
+      const layer = layers.get(selection);
+      if (layer) {
+        layer.update({
+          x: layer.get("x") + point.x - canvasState.current.x,
+          y: layer.get("y") + point.y - canvasState.current.y,
+        });
+      }
 
-        const layer = layers.get(selection);
-        if (layer) {
-          layer.update({
-            x: layer.get("x") + offset.x,
-            y: layer.get("y") + offset.y,
-          });
-        }
-
-        setState({ mode: CanvasMode.Translating, current: point });
-      });
+      setState({ mode: CanvasMode.Translating, current: point });
     },
-    [layers, canvasState, selection, batch]
+    [layers, canvasState, selection]
   );
+
+  const onCanvasPointerUp = (e) => {
+    if (canvasState.mode === CanvasMode.None) {
+      unselectLayer();
+      setState({
+        mode: CanvasMode.None,
+      });
+    } else if (canvasState.mode === CanvasMode.Inserting) {
+      const point = {
+        x: Math.round(e.clientX),
+        y: Math.round(e.clientY),
+      };
+      insertLayer(canvasState.layerType, point);
+    } else {
+      setState({
+        mode: CanvasMode.None,
+      });
+    }
+    history.resume();
+  };
+
+  const onCanvasPointerMove = (e) => {
+    e.preventDefault();
+    const current = {
+      x: Math.round(e.clientX),
+      y: Math.round(e.clientY),
+    };
+    if (canvasState.mode === CanvasMode.Translating) {
+      translateSelectedLayer(current);
+    }
+    setPresence({ cursor: current });
+  };
 
   return (
     <>
-      <div className="canvas">
-        <svg
-          className="renderer_svg"
-          onPointerLeave={(e) => {
-            setPresence({ cursor: null });
-          }}
-          onPointerMove={(e) => {
-            e.preventDefault();
-            const current = {
-              x: Math.round(e.clientX),
-              y: Math.round(e.clientY),
-            };
-            if (canvasState.mode === CanvasMode.Translating) {
-              translateSelectedLayers(current);
-            }
-            setPresence({ cursor: current });
-          }}
-          onPointerUp={(e) => {
-            const point = {
-              x: Math.round(e.clientX),
-              y: Math.round(e.clientY),
-            };
-            if (canvasState.mode === CanvasMode.None) {
-              unselectLayers();
-              setState({
-                mode: CanvasMode.None,
-              });
-            } else if (canvasState.mode === CanvasMode.Inserting) {
-              insertLayer(canvasState.layerType, point);
-            } else {
-              setState({
-                mode: CanvasMode.None,
-              });
-            }
-            history.resume();
-          }}
-        >
-          <g>
-            {Array.from(layers, ([layerId, layer]) => {
-              return (
-                <LayerComponent
-                  key={layerId}
-                  id={layerId}
-                  mode={canvasState.mode}
-                  onLayerPointerDown={onLayerPointerDown}
-                  layer={layer}
-                  selectionColor={selection === layerId ? "blue" : undefined}
-                />
-              );
-            })}
-          </g>
-        </svg>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {Array.from(layers, ([layerId, layer]) => {
+          return (
+            <LayerComponent
+              key={layerId}
+              id={layerId}
+              mode={canvasState.mode}
+              onLayerPointerDown={onLayerPointerDown}
+              layer={layer}
+              selectionColor={selection === layerId ? "blue" : undefined}
+            />
+          );
+        })}
       </div>
     </>
   );

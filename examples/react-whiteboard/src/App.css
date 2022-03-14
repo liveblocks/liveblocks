@@ -2,50 +2,9 @@ body {
   background-color: rgb(243, 243, 243);
 }
 
-.container {
-  --color-surface-canvas: #eee;
-  --color-surface-panel: #fff;
-  --color-surface-subtle: #f3f3f3;
-  --color-divider: #eee;
-  --color-foreground-600: #333;
-  --color-foreground-500: #444;
-  --color-foreground-400: #555;
-  --color-foreground-300: #666;
-  --color-foreground-200: #888;
-  --color-foreground-100: #999;
-  --color-primary: #0044ff;
-  --color-white: #fff;
-  --shadow-popup: 0px 2px 4px rgba(0, 0, 0, 0.1),
-    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
-}
-
 .canvas {
   background-color: #eee;
-  /**
-    https://stackoverflow.com/questions/48124372/pointermove-event-not-working-with-touch-why-not
-
-    After a short period of time, the (mobile) browser will claim the pointermove event for "native" behavior like panning the page.
-
-    The designed, simple solution is to use the css property touch-action and set it to none on the container that has the event handler.
-   */
   touch-action: none;
-}
-
-.renderer_svg {
   width: 100vw;
   height: 100vh;
-}
-
-.selection_net {
-  fill: #0044ff;
-  fill-opacity: 0.05;
-  stroke: #0044ff;
-  stroke-width: 0.5;
-}
-
-.selection {
-  fill: transparent;
-  stroke: #0044ff;
-  stroke-width: 1;
-  pointer-events: none;
 }

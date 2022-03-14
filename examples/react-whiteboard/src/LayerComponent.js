@@ -15,23 +15,21 @@ const LayerComponent = memo(
       return room.subscribe(layer, onChange);
     }, [room, layer]);
 
-    const { x, y, width, height, fill } = layerData;
-
     return (
-      <rect
+      <div
         onPointerDown={(e) => onLayerPointerDown(e, id)}
         style={{
           transition: "all 0.1s ease",
-          transform: `translate(${x}px, ${y}px)`,
+          transform: `translate(${layerData.x}px, ${layerData.y}px)`,
+          height: layerData.height,
+          width: layerData.width,
+          backgroundColor: layerData.fill ? layerData.fill : "#CCC",
+          strokeWidth: 1,
+          borderStyle: "solid",
+          borderWidth: "2px",
+          borderColor: selectionColor || "transparent",
         }}
-        x={0}
-        y={0}
-        width={width}
-        height={height}
-        fill={fill ? fill : "#CCC"}
-        strokeWidth={1}
-        stroke={selectionColor || "transparent"}
-      />
+      ></div>
     );
   }
 );
