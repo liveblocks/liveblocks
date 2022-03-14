@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App";
 
 import { createClient } from "@liveblocks/client";
-import { LiveblocksProvider } from "@liveblocks/react";
+import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 
 // Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
 const PUBLIC_KEY = "pk_xxxxxxx";
@@ -22,7 +22,9 @@ const client = createClient({
 ReactDOM.render(
   <React.StrictMode>
     <LiveblocksProvider client={client}>
-      <App />
+      <RoomProvider id="react-whiteboard-app">
+        <App />
+      </RoomProvider>
     </LiveblocksProvider>
   </React.StrictMode>,
   document.getElementById("root")

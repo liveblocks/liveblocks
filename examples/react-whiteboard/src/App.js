@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect, memo } from "react";
 import {
   useMyPresence,
-  RoomProvider,
   useMap,
   useHistory,
   useBatch,
@@ -26,21 +25,6 @@ function connectionIdToColor(connectionId) {
 }
 
 export default function App() {
-  return (
-    <RoomProvider
-      id="react-whiteboard"
-      defaultPresence={() => ({
-        selection: [],
-      })}
-    >
-      <div>
-        <Whiteboard />
-      </div>
-    </RoomProvider>
-  );
-}
-
-function Whiteboard() {
   const layers = useMap("layers");
 
   if (layers == null) {
