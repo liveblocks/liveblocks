@@ -28,11 +28,9 @@ export default function App() {
 }
 
 function Canvas({ layers }) {
-  const [{ selectedLayer }, setPresence] = useMyPresence();
-  const [canvasState, setState] = useState({
-    isDragging: false,
-  });
+  const [isDragging, setIsDragging] = useState(false);
 
+  const [{ selectedLayer }, setPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();
   const me = useSelf();
@@ -57,6 +55,7 @@ function Canvas({ layers }) {
 
   const deleteSelectedLayer = useCallback(() => {
     layers.delete(selectedLayer);
+    setPresence({ selectedLayer: null });
   }, [layers, selectedLayer]);
 
   useEffect(() => {
@@ -93,66 +92,46 @@ function Canvas({ layers }) {
     (e, layerId) => {
       history.pause();
       e.stopPropagation();
-      const point = {
-        x: Math.round(e.clientX),
-        y: Math.round(e.clientY),
-      };
 
       setPresence({ selectedLayer: layerId }, { addToHistory: true });
 
-      setState({ isDragging: true, current: point });
+      setIsDragging(true);
     },
-    [setPresence, setState, selectedLayer, history]
+    [setPresence, setIsDragging, selectedLayer, history]
   );
 
   const unselectLayer = useCallback(() => {
     setPresence({ selectedLayer: null }, { addToHistory: true });
   }, [setPresence]);
 
-  const translateSelectedLayer = useCallback(
-    (point) => {
-      const layer = layers.get(selectedLayer);
-      if (layer) {
-        layer.update({
-          x: layer.get("x") + point.x - canvasState.current.x,
-          y: layer.get("y") + point.y - canvasState.current.y,
-        });
-      }
-
-      setState({ ...canvasState, current: point });
-    },
-    [layers, canvasState, selectedLayer]
-  );
-
   const onCanvasPointerUp = useCallback(
     (e) => {
-      if (!canvasState.isDragging) {
+      if (!isDragging) {
         unselectLayer();
       }
 
-      setState({
-        isDragging: false,
-      });
+      setIsDragging(false);
 
       history.resume();
     },
-    [canvasState.isDragging, history]
+    [isDragging, history]
   );
 
   const onCanvasPointerMove = useCallback(
     (e) => {
       e.preventDefault();
 
-      if (canvasState.isDragging) {
-        const point = {
-          x: Math.round(e.clientX),
-          y: Math.round(e.clientY),
-        };
-
-        translateSelectedLayer(point);
+      if (isDragging) {
+        const layer = layers.get(selectedLayer);
+        if (layer) {
+          layer.update({
+            x: layer.get("x") + e.movementX,
+            y: layer.get("y") + e.movementY,
+          });
+        }
       }
     },
-    [canvasState.isDragging, translateSelectedLayer]
+    [isDragging, selectedLayer]
   );
 
   return (
