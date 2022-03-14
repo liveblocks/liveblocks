@@ -9,19 +9,13 @@ async function run() {
 
   const whoIsHere = document.getElementById("who_is_here");
   const todoInput = document.getElementById("todo_input");
-  const somoeneIsTyping = document.getElementById("someone_is_typing");
+  const someoneIsTyping = document.getElementById("someone_is_typing");
   const todosContainer = document.getElementById("todos_container");
 
   room.subscribe("others", (others) => {
-    if (others.count === 0) {
-      whoIsHere.innerHTML = "You’re the only one here.";
-    } else if (others.count === 1) {
-      whoIsHere.innerHTML = "There is one other person here.";
-    } else {
-      whoIsHere.innerHTML = `There are ${others.count} other people here`;
-    }
+    whoIsHere.innerHTML = `There are ${others.count} other users online`;
 
-    somoeneIsTyping.innerHTML = others
+    someoneIsTyping.innerHTML = others
       .toArray()
       .some((user) => user.presence?.isTyping)
       ? "Someone is typing..."
