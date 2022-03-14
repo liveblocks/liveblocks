@@ -12,12 +12,6 @@ import { nanoid } from "nanoid";
 
 import "./App.css";
 
-const CanvasMode = {
-  None: "None",
-  Translating: "Translating",
-  Inserting: "Inserting",
-};
-
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
 function connectionIdToColor(connectionId) {
@@ -35,17 +29,35 @@ export default function App() {
 }
 
 function Canvas({ layers }) {
-  const [{ selection }, setPresence] = useMyPresence();
+  const [{ selection, cursor }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState({
-    mode: CanvasMode.None,
+    isDragging: false,
   });
 
   const batch = useBatch();
   const history = useHistory();
-
   const me = useSelf();
 
   const myColor = connectionIdToColor(me.connectionId);
+
+  const insertLayer = useCallback(
+    (position) => {
+      batch(() => {
+        const layerId = nanoid();
+        const layer = new LiveObject({
+          type: "rectangle",
+          x: position.x,
+          y: position.y,
+          height: 100,
+          width: 100,
+          fill: myColor,
+        });
+        layers.set(layerId, layer);
+        setPresence({ selection: layerId }, { addToHistory: true });
+      });
+    },
+    [batch, layers, setPresence, myColor]
+  );
 
   const deleteSelectedLayer = useCallback(() => {
     batch(() => {
@@ -71,7 +83,11 @@ function Canvas({ layers }) {
           }
         }
         case "i": {
-          setState({ mode: CanvasMode.Inserting });
+          const point = {
+            x: cursor.x,
+            y: cursor.y,
+          };
+          insertLayer(point);
         }
       }
     }
@@ -81,14 +97,10 @@ function Canvas({ layers }) {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [selection, , history, deleteSelectedLayer]);
+  }, [selection, cursor, history, insertLayer, deleteSelectedLayer]);
 
   const onLayerPointerDown = useCallback(
     (e, layerId) => {
-      if (canvasState.mode === CanvasMode.Inserting) {
-        return;
-      }
-
       history.pause();
       e.stopPropagation();
       const point = {
@@ -98,29 +110,9 @@ function Canvas({ layers }) {
 
       setPresence({ selection: layerId }, { addToHistory: true });
 
-      setState({ mode: CanvasMode.Translating, current: point });
+      setState({ isDragging: true, current: point });
     },
-    [setPresence, setState, selection, history, canvasState.mode]
-  );
-
-  const insertLayer = useCallback(
-    (layerType, position) => {
-      batch(() => {
-        const layerId = nanoid();
-        const layer = new LiveObject({
-          type: layerType,
-          x: position.x,
-          y: position.y,
-          height: 100,
-          width: 100,
-          fill: myColor,
-        });
-        layers.set(layerId, layer);
-        setPresence({ selection: layerId }, { addToHistory: true });
-        setState({ mode: CanvasMode.None });
-      });
-    },
-    [batch, layers, setPresence, myColor]
+    [setPresence, setState, selection, history]
   );
 
   const unselectLayer = useCallback(() => {
@@ -129,10 +121,6 @@ function Canvas({ layers }) {
 
   const translateSelectedLayer = useCallback(
     (point) => {
-      if (canvasState.mode !== CanvasMode.Translating) {
-        return;
-      }
-
       const layer = layers.get(selection);
       if (layer) {
         layer.update({
@@ -141,42 +129,41 @@ function Canvas({ layers }) {
         });
       }
 
-      setState({ mode: CanvasMode.Translating, current: point });
+      setState({ ...canvasState, current: point });
     },
     [layers, canvasState, selection]
   );
 
-  const onCanvasPointerUp = (e) => {
-    if (canvasState.mode === CanvasMode.None) {
-      unselectLayer();
+  const onCanvasPointerUp = useCallback(
+    (e) => {
+      if (!canvasState.isDragging) {
+        unselectLayer();
+      }
+
       setState({
-        mode: CanvasMode.None,
+        isDragging: false,
       });
-    } else if (canvasState.mode === CanvasMode.Inserting) {
-      const point = {
+
+      history.resume();
+    },
+    [canvasState.isDragging, history]
+  );
+
+  const onCanvasPointerMove = useCallback(
+    (e) => {
+      e.preventDefault();
+      const current = {
         x: Math.round(e.clientX),
         y: Math.round(e.clientY),
       };
-      insertLayer(canvasState.layerType, point);
-    } else {
-      setState({
-        mode: CanvasMode.None,
-      });
-    }
-    history.resume();
-  };
 
-  const onCanvasPointerMove = (e) => {
-    e.preventDefault();
-    const current = {
-      x: Math.round(e.clientX),
-      y: Math.round(e.clientY),
-    };
-    if (canvasState.mode === CanvasMode.Translating) {
-      translateSelectedLayer(current);
-    }
-    setPresence({ cursor: current });
-  };
+      if (canvasState.isDragging) {
+        translateSelectedLayer(current);
+      }
+      setPresence({ cursor: current });
+    },
+    [canvasState.isDragging, setPresence, translateSelectedLayer]
+  );
 
   return (
     <>
