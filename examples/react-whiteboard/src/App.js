@@ -8,7 +8,6 @@ import {
   useRoom,
 } from "@liveblocks/react";
 import { LiveObject } from "@liveblocks/client";
-import { nanoid } from "nanoid";
 
 import "./App.css";
 
@@ -42,7 +41,7 @@ function Canvas({ layers }) {
 
   const insertLayer = useCallback(() => {
     batch(() => {
-      const layerId = nanoid();
+      const layerId = Date.now() + Math.random() * 100;
       const layer = new LiveObject({
         type: "rectangle",
         x: Math.floor(Math.random() * 300),
@@ -168,7 +167,6 @@ function Canvas({ layers }) {
             <LayerComponent
               key={layerId}
               id={layerId}
-              mode={canvasState.mode}
               onLayerPointerDown={onLayerPointerDown}
               layer={layer}
               selectionColor={selectedLayer === layerId ? "blue" : undefined}
