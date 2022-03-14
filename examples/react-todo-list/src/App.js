@@ -3,19 +3,13 @@ import { useOthers, useUpdateMyPresence, useList } from "@liveblocks/react";
 import "./App.css";
 
 function WhoIsHere() {
-  const othersUsersCount = useOthers().count;
+  const others = useOthers();
 
-  let message = "";
-
-  if (othersUsersCount === 0) {
-    message = "You’re the only one here.";
-  } else if (othersUsersCount === 1) {
-    message = "There is one other person here.";
-  } else {
-    message = `There are ${othersUsersCount} other people here`;
-  }
-
-  return <div className="who_is_here">{message}</div>;
+  return (
+    <div className="who_is_here">
+      There are {others.count} other users online
+    </div>
+  );
 }
 
 function SomeoneIsTyping() {

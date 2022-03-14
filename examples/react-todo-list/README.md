@@ -6,7 +6,11 @@
 
 # [Liveblocks](https://liveblocks.io) × [React](https://reactjs.org/).
 
-This repo shows how to use Liveblocks with [React](https://reactjs.org/).
+This project shows how to build a collaborative to-do list with [React](https://reactjs.org/).
+
+As users edit the list, changes will be automatically persisted and synced, allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react) to build it from scratch.
 
 ## Getting started
 

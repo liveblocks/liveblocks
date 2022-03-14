@@ -4,9 +4,13 @@
   </a>
 </p>
 
-# Multiplayer to-do list app with [Liveblocks](https://liveblocks.io)
+# Multiplayer to-do list with [Liveblocks](https://liveblocks.io)
 
-This project shows how to build a real-time to-do list that do not rely on any front-end technologies. It uses [esbuild](https://esbuild.github.io/) for the bundling.
+This project shows how to build a collaborative to-do list that do not rely on any front-end frameworks.
+As users edit the list, changes will be automatically persisted and synced, allowing for a list that updates in real-time across clients.
+Users will also be able to see who else is currently online and when a user is typing.
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/javascript) to build it from scratch.
 
 ## Getting started
 

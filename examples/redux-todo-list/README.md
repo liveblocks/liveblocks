@@ -6,7 +6,12 @@
 
 # [Liveblocks](https://liveblocks.io) × [Redux](https://redux-toolkit.js.org/).
 
-This repo shows how to use Liveblocks with [Redux](https://redux-toolkit.js.org/).
+This project shows how to build a collaborative to-do list with [React](https://reactjs.org/)and [Redux](https://redux-toolkit.js.org/).
+
+As users edit the list, changes will be automatically persisted and synced, allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react-redux) to build it from scratch.
+
 
 ## Getting started
 
