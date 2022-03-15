@@ -11,17 +11,18 @@
 ## Installation
 
 ```
-npm install @liveblocks/react
+npm install @liveblocks/client @liveblocks/react
 ```
+
+## Documentation
+
+- Start with the [React guide](https://liveblocks.io/docs/get-started/react).
+- Explore the [API Reference](https://liveblocks.io/docs/api-reference/liveblocks-react).
 
 ## Examples
 
 - Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 - Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
-
-## Documentation
-
-[Read the documentation](https://liveblocks.io/docs) to start using Liveblocks.
 
 ## Releases
 

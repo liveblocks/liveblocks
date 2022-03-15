@@ -14,14 +14,15 @@
 npm install @liveblocks/client
 ```
 
+## Documentation
+
+- [Read the documentation](https://liveblocks.io/docs) to start using Liveblocks.
+- Explore the [API Reference](https://liveblocks.io/docs/api-reference/liveblocks-client).
+
 ## Examples
 
 - Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
 - Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
-
-## Documentation
-
-[Read the documentation](https://liveblocks.io/docs) to start using Liveblocks.
 
 ## Releases
 
