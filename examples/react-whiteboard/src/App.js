@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, memo } from "react";
+import { useState, useEffect, memo } from "react";
 import {
   useMyPresence,
   useMap,
@@ -37,32 +37,25 @@ function Canvas({ layers }) {
 
   const myColor = connectionIdToColor(me.connectionId);
 
-  const insertLayer = useCallback(() => {
+  const insertLayer = () => {
     batch(() => {
       const layerId = Date.now() + Math.random() * 100;
       const layer = new LiveObject({
-        type: "rectangle",
         x: Math.floor(Math.random() * 300),
         y: Math.floor(Math.random() * 300),
-        height: 100,
-        width: 100,
         fill: myColor,
       });
       layers.set(layerId, layer);
       setPresence({ selectedLayer: layerId }, { addToHistory: true });
     });
-  }, [batch, layers, setPresence, myColor]);
-
-  const deleteSelectedLayer = useCallback(() => {
-    layers.delete(selectedLayer);
-    setPresence({ selectedLayer: null });
-  }, [layers, selectedLayer]);
+  };
 
   useEffect(() => {
     function onKeyDown(e) {
       switch (e.key) {
         case "Backspace": {
-          deleteSelectedLayer();
+          layers.delete(selectedLayer);
+          setPresence({ selectedLayer: null });
           break;
         }
         case "z": {
@@ -86,106 +79,85 @@ function Canvas({ layers }) {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [history, insertLayer, deleteSelectedLayer]);
+  }, [history, insertLayer, layers, selectedLayer, setPresence]);
 
-  const onLayerPointerDown = useCallback(
-    (e, layerId) => {
-      history.pause();
-      e.stopPropagation();
+  const onLayerPointerDown = (e, layerId) => {
+    history.pause();
+    e.stopPropagation();
 
-      setPresence({ selectedLayer: layerId }, { addToHistory: true });
+    setPresence({ selectedLayer: layerId }, { addToHistory: true });
 
-      setIsDragging(true);
-    },
-    [setPresence, setIsDragging, selectedLayer, history]
-  );
+    setIsDragging(true);
+  };
 
-  const unselectLayer = useCallback(() => {
-    setPresence({ selectedLayer: null }, { addToHistory: true });
-  }, [setPresence]);
+  const onCanvasPointerUp = (e) => {
+    if (!isDragging) {
+      setPresence({ selectedLayer: null }, { addToHistory: true });
+    }
 
-  const onCanvasPointerUp = useCallback(
-    (e) => {
-      if (!isDragging) {
-        unselectLayer();
+    setIsDragging(false);
+
+    history.resume();
+  };
+
+  const onCanvasPointerMove = (e) => {
+    e.preventDefault();
+
+    if (isDragging) {
+      const layer = layers.get(selectedLayer);
+      if (layer) {
+        console.log(e);
+        layer.update({
+          x: e.clientX - 50,
+          y: e.clientY - 50,
+        });
       }
-
-      setIsDragging(false);
-
-      history.resume();
-    },
-    [isDragging, history]
-  );
-
-  const onCanvasPointerMove = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      if (isDragging) {
-        const layer = layers.get(selectedLayer);
-        if (layer) {
-          layer.update({
-            x: layer.get("x") + e.movementX,
-            y: layer.get("y") + e.movementY,
-          });
-        }
-      }
-    },
-    [isDragging, selectedLayer]
-  );
+    }
+  };
 
   return (
-    <>
-      <div
-        className="canvas"
-        onPointerMove={onCanvasPointerMove}
-        onPointerUp={onCanvasPointerUp}
-      >
-        {Array.from(layers, ([layerId, layer]) => {
-          return (
-            <LayerComponent
-              key={layerId}
-              id={layerId}
-              onLayerPointerDown={onLayerPointerDown}
-              layer={layer}
-              selectionColor={selectedLayer === layerId ? "blue" : undefined}
-            />
-          );
-        })}
-      </div>
-    </>
+    <div
+      className="canvas"
+      onPointerMove={onCanvasPointerMove}
+      onPointerUp={onCanvasPointerUp}
+    >
+      {Array.from(layers, ([layerId, layer]) => {
+        return (
+          <Rectangle
+            key={layerId}
+            id={layerId}
+            onLayerPointerDown={onLayerPointerDown}
+            layer={layer}
+            selectionColor={selectedLayer === layerId ? "blue" : undefined}
+          />
+        );
+      })}
+    </div>
   );
 }
 
-const LayerComponent = memo(
-  ({ layer, id, onLayerPointerDown, selectionColor }) => {
-    const [layerData, setLayerData] = useState(layer.toObject());
+const Rectangle = memo(({ layer, id, onLayerPointerDown, selectionColor }) => {
+  const [{ x, y, fill }, setLayerData] = useState(layer.toObject());
 
-    const room = useRoom();
+  const room = useRoom();
 
-    useEffect(() => {
-      function onChange() {
-        setLayerData(layer.toObject());
-      }
+  useEffect(() => {
+    function onChange() {
+      setLayerData(layer.toObject());
+    }
 
-      return room.subscribe(layer, onChange);
-    }, [room, layer]);
+    return room.subscribe(layer, onChange);
+  }, [room, layer]);
 
-    return (
-      <div
-        onPointerDown={(e) => onLayerPointerDown(e, id)}
-        style={{
-          transition: "all 0.1s ease",
-          transform: `translate(${layerData.x}px, ${layerData.y}px)`,
-          height: layerData.height,
-          width: layerData.width,
-          backgroundColor: layerData.fill ? layerData.fill : "#CCC",
-          borderColor: selectionColor || "transparent",
-          strokeWidth: 1,
-          borderStyle: "solid",
-          borderWidth: "2px",
-        }}
-      ></div>
-    );
-  }
-);
+  return (
+    <div
+      onPointerDown={(e) => onLayerPointerDown(e, id)}
+      className={"rectangle"}
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        backgroundColor: fill ? fill : "#CCC",
+        borderColor: selectionColor || "transparent",
+      }}
+    ></div>
+  );
+});
