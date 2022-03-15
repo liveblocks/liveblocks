@@ -18,44 +18,47 @@ function connectionIdToColor(connectionId) {
 }
 
 export default function App() {
-  const layers = useMap("layers");
+  const shapes = useMap("shapes");
 
-  if (layers == null) {
+  if (shapes == null) {
     return <div>Loading</div>;
   }
 
-  return <Canvas layers={layers} />;
+  return <Canvas shapes={shapes} />;
 }
 
-function Canvas({ layers }) {
+function Canvas({ shapes }) {
   const [isDragging, setIsDragging] = useState(false);
 
-  const [{ selectedLayer }, setPresence] = useMyPresence();
+  const [{ selectedShape }, setPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();
   const me = useSelf();
 
   const myColor = connectionIdToColor(me.connectionId);
 
-  const insertLayer = () => {
+  const insertRectangle = () => {
     batch(() => {
-      const layerId = Date.now() + Math.random() * 100;
-      const layer = new LiveObject({
+      const shapeId = Date.now() + Math.random() * 100;
+      const shape = new LiveObject({
         x: Math.floor(Math.random() * 300),
         y: Math.floor(Math.random() * 300),
         fill: myColor,
       });
-      layers.set(layerId, layer);
-      setPresence({ selectedLayer: layerId }, { addToHistory: true });
+      shapes.set(shapeId, shape);
+      setPresence({ selectedShape: shapeId }, { addToHistory: true });
     });
   };
 
   useEffect(() => {
     function onKeyDown(e) {
       switch (e.key) {
+        case "i": {
+          insertRectangle();
+        }
         case "Backspace": {
-          layers.delete(selectedLayer);
-          setPresence({ selectedLayer: null });
+          shapes.delete(selectedShape);
+          setPresence({ selectedShape: null });
           break;
         }
         case "z": {
@@ -68,9 +71,6 @@ function Canvas({ layers }) {
             break;
           }
         }
-        case "i": {
-          insertLayer();
-        }
       }
     }
 
@@ -79,20 +79,20 @@ function Canvas({ layers }) {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [history, insertLayer, layers, selectedLayer, setPresence]);
+  }, [history, insertRectangle, shapes, selectedShape, setPresence]);
 
-  const onLayerPointerDown = (e, layerId) => {
+  const onShapePointerDown = (e, shapeId) => {
     history.pause();
     e.stopPropagation();
 
-    setPresence({ selectedLayer: layerId }, { addToHistory: true });
+    setPresence({ selectedShape: shapeId }, { addToHistory: true });
 
     setIsDragging(true);
   };
 
   const onCanvasPointerUp = (e) => {
     if (!isDragging) {
-      setPresence({ selectedLayer: null }, { addToHistory: true });
+      setPresence({ selectedShape: null }, { addToHistory: true });
     }
 
     setIsDragging(false);
@@ -104,10 +104,9 @@ function Canvas({ layers }) {
     e.preventDefault();
 
     if (isDragging) {
-      const layer = layers.get(selectedLayer);
-      if (layer) {
-        console.log(e);
-        layer.update({
+      const shape = shapes.get(selectedShape);
+      if (shape) {
+        shape.update({
           x: e.clientX - 50,
           y: e.clientY - 50,
         });
@@ -121,14 +120,14 @@ function Canvas({ layers }) {
       onPointerMove={onCanvasPointerMove}
       onPointerUp={onCanvasPointerUp}
     >
-      {Array.from(layers, ([layerId, layer]) => {
+      {Array.from(shapes, ([shapeId, shape]) => {
         return (
           <Rectangle
-            key={layerId}
-            id={layerId}
-            onLayerPointerDown={onLayerPointerDown}
-            layer={layer}
-            selectionColor={selectedLayer === layerId ? "blue" : undefined}
+            key={shapeId}
+            id={shapeId}
+            onShapePointerDown={onShapePointerDown}
+            shape={shape}
+            selectionColor={selectedShape === shapeId ? "blue" : undefined}
           />
         );
       })}
@@ -136,22 +135,22 @@ function Canvas({ layers }) {
   );
 }
 
-const Rectangle = memo(({ layer, id, onLayerPointerDown, selectionColor }) => {
-  const [{ x, y, fill }, setLayerData] = useState(layer.toObject());
+const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
+  const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
 
   const room = useRoom();
 
   useEffect(() => {
     function onChange() {
-      setLayerData(layer.toObject());
+      setShapeData(shape.toObject());
     }
 
-    return room.subscribe(layer, onChange);
-  }, [room, layer]);
+    return room.subscribe(shape, onChange);
+  }, [room, shape]);
 
   return (
     <div
-      onPointerDown={(e) => onLayerPointerDown(e, id)}
+      onPointerDown={(e) => onShapePointerDown(e, id)}
       className={"rectangle"}
       style={{
         transform: `translate(${x}px, ${y}px)`,
