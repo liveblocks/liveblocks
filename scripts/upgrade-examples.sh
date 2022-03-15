@@ -69,13 +69,18 @@ cd examples/react-multiplayer-drawing-app
 npm install @liveblocks/client@$1 @liveblocks/react@$1
 
 cd -
-echo "Upgrade react-todo-app to $1"
-cd examples/react-todo-app
+echo "Upgrade react-todo-list to $1"
+cd examples/react-todo-list
 npm install @liveblocks/client@$1 @liveblocks/react@$1
 
 cd -
-echo "Upgrade redux-todo-app to $1"
-cd examples/redux-todo-app
+echo "Upgrade react-whiteboard to $1"
+cd examples/react-whiteboard
+npm install @liveblocks/client@$1 @liveblocks/react@$1
+
+cd -
+echo "Upgrade redux-todo-list to $1"
+cd examples/redux-todo-list
 npm install @liveblocks/client@$1 @liveblocks/redux@$1
 
 cd -
@@ -94,7 +99,7 @@ cd examples/vuejs-live-cursors
 npm install @liveblocks/client@$1
 
 cd -
-echo "Upgrade zustand-todo-app to $1"
-cd examples/zustand-todo-app
+echo "Upgrade zustand-todo-list to $1"
+cd examples/zustand-todo-list
 npm install @liveblocks/client@$1 @liveblocks/zustand@$1
 
