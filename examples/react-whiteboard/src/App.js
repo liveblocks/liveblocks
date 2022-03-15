@@ -151,7 +151,7 @@ const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
   return (
     <div
       onPointerDown={(e) => onShapePointerDown(e, id)}
-      className={"rectangle"}
+      className="rectangle"
       style={{
         transform: `translate(${x}px, ${y}px)`,
         backgroundColor: fill ? fill : "#CCC",
