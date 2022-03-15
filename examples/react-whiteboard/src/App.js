@@ -6,6 +6,7 @@ import {
   useBatch,
   useSelf,
   useRoom,
+  useOthers,
 } from "@liveblocks/react";
 import { LiveObject } from "@liveblocks/client";
 
@@ -34,6 +35,7 @@ function Canvas({ shapes }) {
   const batch = useBatch();
   const history = useHistory();
   const me = useSelf();
+  const others = useOthers();
 
   const myColor = connectionIdToColor(me.connectionId);
 
@@ -121,13 +123,22 @@ function Canvas({ shapes }) {
       onPointerUp={onCanvasPointerUp}
     >
       {Array.from(shapes, ([shapeId, shape]) => {
+        let selectionColor =
+          selectedShape === shapeId
+            ? "blue"
+            : others
+                .toArray()
+                .some((user) => user.presence?.selectedShape === shapeId)
+            ? "green"
+            : undefined;
+
         return (
           <Rectangle
             key={shapeId}
             id={shapeId}
             onShapePointerDown={onShapePointerDown}
             shape={shape}
-            selectionColor={selectedShape === shapeId ? "blue" : undefined}
+            selectionColor={selectionColor}
           />
         );
       })}
