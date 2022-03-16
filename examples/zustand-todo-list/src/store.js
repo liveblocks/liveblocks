@@ -29,7 +29,7 @@ const useStore = create(
         })),
       deleteTodo: (index) =>
         set((state) => ({
-          todos: state.todos.filter((todo, i) => index != i),
+          todos: state.todos.filter((todo, i) => index !== i),
         })),
     }),
     {
