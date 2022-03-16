@@ -14,7 +14,6 @@ import {
 } from "@liveblocks/client/lib/internal";
 import {
   missingClient,
-  missingMapping,
   mappingShouldBeAnObject,
   mappingValueShouldBeABoolean,
   mappingShouldNotHaveTheSameKeys,
@@ -669,13 +668,6 @@ describe("middleware", () => {
       expect(() =>
         enhancer({ client: undefined as any, storageMapping: {} })
       ).toThrow(missingClient());
-    });
-
-    test("missing mapping should throw", () => {
-      const client = createClient({ authEndpoint: "/api/auth" });
-      expect(() => enhancer({ client, storageMapping: null as any })).toThrow(
-        missingMapping("storageMapping")
-      );
     });
 
     test("storageMapping should be an object", () => {

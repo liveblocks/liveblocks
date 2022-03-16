@@ -4,12 +4,6 @@ export function missingClient() {
   return new Error(`${ERROR_PREFIX} client is missing`);
 }
 
-export function missingMapping(
-  mappingType: "storageMapping" | "presenceMapping"
-) {
-  return new Error(`${ERROR_PREFIX} ${mappingType} is missing.`);
-}
-
 export function mappingShouldBeAnObject(
   mappingType: "storageMapping" | "presenceMapping"
 ) {

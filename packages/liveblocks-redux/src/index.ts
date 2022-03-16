@@ -13,7 +13,6 @@ import {
   mappingToFunctionIsNotAllowed,
   mappingValueShouldBeABoolean,
   missingClient,
-  missingMapping,
 } from "./errors";
 
 // @liveblocks/client export internals API to be used only by our packages.
@@ -83,14 +82,17 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
 
 const internalEnhancer = <T>(options: {
   client: Client;
-  storageMapping: Mapping<T>;
+  storageMapping?: Mapping<T>;
   presenceMapping?: Mapping<T>;
 }) => {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
   const client = options.client;
-  const mapping = validateMapping(options.storageMapping, "storageMapping");
+  const mapping = validateMapping(
+    options.storageMapping || {},
+    "storageMapping"
+  );
   const presenceMapping = validateMapping(
     options.presenceMapping || {},
     "presenceMapping"
@@ -428,9 +430,6 @@ function validateMapping<T>(
   mappingType: "storageMapping" | "presenceMapping"
 ): Mapping<T> {
   if (process.env.NODE_ENV !== "production") {
-    if (mapping == null) {
-      throw missingMapping(mappingType);
-    }
     if (!isObject(mapping)) {
       throw mappingShouldBeAnObject(mappingType);
     }
