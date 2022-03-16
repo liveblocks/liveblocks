@@ -6,7 +6,7 @@
 
 # [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
 
-This project shows how to build a collaborative to-do list with [React](https://reactjs.org/)and [Zustand](https://github.com/pmndrs/zustand).
+This project shows how to build a collaborative to-do list with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
 
 As users edit the list, changes will be automatically persisted and synced, allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
