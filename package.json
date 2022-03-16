@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "@liveblocks/client": "^0.15.0",
-    "@liveblocks/react": "^0.15.0",
-    "@liveblocks/zustand": "^0.15.0"
-  }
-}

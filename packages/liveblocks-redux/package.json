@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.15.1",
+  "version": "0.15.3",
   "sideEffects": false,
   "description": "",
   "main": "./lib/index.js",
@@ -36,7 +36,7 @@
     "directory": "packages/liveblocks-redux"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.15.1",
+    "@liveblocks/client": "0.15.3",
     "redux": "^4"
   },
   "devDependencies": {

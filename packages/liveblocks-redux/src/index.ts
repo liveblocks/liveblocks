@@ -334,7 +334,7 @@ function leaveRoom(roomId: string) {
 
 export const enhancer = internalEnhancer as <T>(options: {
   client: Client;
-  storageMapping: Mapping<T>;
+  storageMapping?: Mapping<T>;
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
