@@ -69,48 +69,36 @@ const useStore = create(
           });
         }
       },
+      onAddRectangle: () => {
+        const { shapes } = get();
 
-      onKeyDown: (e) => {
-        const { shapes, selectedShape, liveblocks } = get();
+        const shapeId = Date.now();
+        const shape = {
+          x: getRandomInt(300),
+          y: getRandomInt(300),
+          fill: getRandomColor(),
+        };
 
-        switch (e.key) {
-          case "i": {
-            const shapeId = Date.now();
-            const shape = {
-              x: getRandomInt(300),
-              y: getRandomInt(300),
-              fill: getRandomColor(),
-            };
-
-            set({
-              selectedShape: shapeId,
-              shapes: { ...shapes, [shapeId]: shape },
-            });
-            break;
-          }
-          case "Backspace": {
-            if (selectedShape == null) {
-              return;
-            }
-
-            const { [selectedShape]: value, ...newShapes } = shapes;
-            set({
-              shapes: newShapes,
-              selectedShape: null,
-            });
-            break;
-          }
-          case "z": {
-            if (e.ctrlKey || e.metaKey) {
-              if (e.shiftKey) {
-                liveblocks.room.history.redo();
-              } else {
-                liveblocks.room.history.undo();
-              }
-              break;
-            }
-          }
-        }
+        set({
+          selectedShape: shapeId,
+          shapes: { ...shapes, [shapeId]: shape },
+        });
+      },
+      onDeleteRectangle: () => {
+        const { shapes, selectedShape } = get();
+        const { [selectedShape]: value, ...newShapes } = shapes;
+        set({
+          shapes: newShapes,
+          selectedShape: null,
+        });
+      },
+      onUndo: () => {
+        const { liveblocks } = get();
+        liveblocks.room.history.undo();
+      },
+      onRedo: () => {
+        const { liveblocks } = get();
+        liveblocks.room.history.redo();
       },
     }),
     {

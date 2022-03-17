@@ -18,3 +18,13 @@ body {
   height: 100px;
   width: 100px;
 }
+
+.toolbar {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+}
+
+.toolbar button {
+  margin-right: 10px;
+}

@@ -1,4 +1,4 @@
-import { useEffect, memo } from "react";
+import { useEffect } from "react";
 import useStore from "./store";
 import shallow from "zustand/shallow";
 
@@ -9,16 +9,11 @@ export default function App() {
   const selectedShape = useStore((state) => state.selectedShape);
   const onCanvasPointerUp = useStore((state) => state.onCanvasPointerUp);
   const onCanvasPointerMove = useStore((state) => state.onCanvasPointerMove);
-  const onKeyDown = useStore((state) => state.onKeyDown);
+  const onAddRectangle = useStore((state) => state.onAddRectangle);
+  const onDeleteRectangle = useStore((state) => state.onDeleteRectangle);
+  const onUndo = useStore((state) => state.onUndo);
+  const onRedo = useStore((state) => state.onRedo);
   const others = useStore((state) => state.liveblocks.others);
-
-  useEffect(() => {
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onKeyDown]);
 
   // Liveblocks integration start
   const { enterRoom, leaveRoom, isLoading } = useStore(
@@ -43,32 +38,40 @@ export default function App() {
   }
 
   return (
-    <div
-      className="canvas"
-      onPointerMove={onCanvasPointerMove}
-      onPointerUp={onCanvasPointerUp}
-    >
-      {Object.entries(shapes).map(([shapeId, shape]) => {
-        let selectionColor = "transparent";
+    <>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {Object.entries(shapes).map(([shapeId, shape]) => {
+          let selectionColor = "transparent";
 
-        if (selectedShape === shapeId) {
-          selectionColor = "blue";
-        } else if (
-          others.some((user) => user.presence?.selectedShape === shapeId)
-        ) {
-          selectionColor = "green";
-        }
+          if (selectedShape === shapeId) {
+            selectionColor = "blue";
+          } else if (
+            others.some((user) => user.presence?.selectedShape === shapeId)
+          ) {
+            selectionColor = "green";
+          }
 
-        return (
-          <Rectangle
-            key={shapeId}
-            id={shapeId}
-            shape={shape}
-            selectionColor={selectionColor}
-          />
-        );
-      })}
-    </div>
+          return (
+            <Rectangle
+              key={shapeId}
+              id={shapeId}
+              shape={shape}
+              selectionColor={selectionColor}
+            />
+          );
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={onAddRectangle}>Rectangle</button>
+        <button onClick={onDeleteRectangle}>Delete</button>
+        <button onClick={onUndo}>Undo</button>
+        <button onClick={onRedo}>Redo</button>
+      </div>
+    </>
   );
 }
 
