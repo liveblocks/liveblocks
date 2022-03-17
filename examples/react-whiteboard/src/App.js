@@ -4,7 +4,6 @@ import {
   useMap,
   useHistory,
   useBatch,
-  useSelf,
   useRoom,
   useOthers,
 } from "@liveblocks/react";
@@ -14,8 +13,12 @@ import "./App.css";
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function connectionIdToColor(connectionId) {
-  return COLORS[connectionId % COLORS.length];
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function getRandomColor() {
+  return COLORS[getRandomInt(COLORS.length)];
 }
 
 export default function App() {
@@ -34,54 +37,24 @@ function Canvas({ shapes }) {
   const [{ selectedShape }, setPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();
-  const me = useSelf();
   const others = useOthers();
-
-  const myColor = connectionIdToColor(me.connectionId);
 
   const insertRectangle = () => {
     batch(() => {
-      const shapeId = Date.now() + Math.random() * 100;
+      const shapeId = Date.now();
       const shape = new LiveObject({
-        x: Math.floor(Math.random() * 300),
-        y: Math.floor(Math.random() * 300),
-        fill: myColor,
+        x: getRandomInt(300),
+        y: getRandomInt(300),
+        fill: getRandomColor(),
       });
       shapes.set(shapeId, shape);
       setPresence({ selectedShape: shapeId }, { addToHistory: true });
     });
   };
 
-  useEffect(() => {
-    function onKeyDown(e) {
-      switch (e.key) {
-        case "i": {
-          insertRectangle();
-        }
-        case "Backspace": {
-          shapes.delete(selectedShape);
-          setPresence({ selectedShape: null });
-          break;
-        }
-        case "z": {
-          if (e.ctrlKey || e.metaKey) {
-            if (e.shiftKey) {
-              history.redo();
-            } else {
-              history.undo();
-            }
-            break;
-          }
-        }
-      }
-    }
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [history, insertRectangle, shapes, selectedShape, setPresence]);
+  const deleteRectangle = () => {
+    shapes.delete(selectedShape);
+  };
 
   const onShapePointerDown = (e, shapeId) => {
     history.pause();
@@ -117,32 +90,40 @@ function Canvas({ shapes }) {
   };
 
   return (
-    <div
-      className="canvas"
-      onPointerMove={onCanvasPointerMove}
-      onPointerUp={onCanvasPointerUp}
-    >
-      {Array.from(shapes, ([shapeId, shape]) => {
-        let selectionColor =
-          selectedShape === shapeId
-            ? "blue"
-            : others
-                .toArray()
-                .some((user) => user.presence?.selectedShape === shapeId)
-            ? "green"
-            : undefined;
+    <>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {Array.from(shapes, ([shapeId, shape]) => {
+          let selectionColor =
+            selectedShape === shapeId
+              ? "blue"
+              : others
+                  .toArray()
+                  .some((user) => user.presence?.selectedShape === shapeId)
+              ? "green"
+              : undefined;
 
-        return (
-          <Rectangle
-            key={shapeId}
-            id={shapeId}
-            onShapePointerDown={onShapePointerDown}
-            shape={shape}
-            selectionColor={selectionColor}
-          />
-        );
-      })}
-    </div>
+          return (
+            <Rectangle
+              key={shapeId}
+              id={shapeId}
+              onShapePointerDown={onShapePointerDown}
+              shape={shape}
+              selectionColor={selectionColor}
+            />
+          );
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+        <button onClick={deleteRectangle}>Delete</button>
+        <button onClick={history.undo}>Undo</button>
+        <button onClick={history.redo}>Redo</button>
+      </div>
+    </>
   );
 }
 

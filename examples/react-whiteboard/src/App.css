@@ -10,10 +10,21 @@ body {
 }
 
 .rectangle {
+  position: absolute;
   transition: all 0.1s ease;
   stroke-width: 1;
   border-style: solid;
   border-width: 2px;
   height: 100px;
   width: 100px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+}
+
+.toolbar button {
+  margin-right: 10px;
 }
