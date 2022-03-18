@@ -248,6 +248,43 @@ describe("middleware", () => {
   });
 
   describe("presence", () => {
+    test("should update state if presence is updated via room", async () => {
+      const { store, client } = prepareClientAndBasicStore();
+
+      store.dispatch(enterRoom("room"));
+
+      const socket = await waitForSocketToBeConnected();
+
+      socket.callbacks.open[0]!();
+
+      client.getRoom("room")!.updatePresence({ cursor: { x: 100, y: 100 } });
+
+      expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
+
+      expect(socket.sentMessages[0]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 0, y: 0 } },
+          },
+          {
+            type: ClientMessageType.FetchStorage,
+          },
+        ])
+      );
+
+      await waitFor(() => socket.sentMessages[1] != null);
+
+      expect(socket.sentMessages[1]).toEqual(
+        JSON.stringify([
+          {
+            type: ClientMessageType.UpdatePresence,
+            data: { cursor: { x: 100, y: 100 } },
+          },
+        ])
+      );
+    });
+
     test("should broadcast presence when connecting to the room", async () => {
       const { store } = prepareClientAndBasicStore();
 
@@ -660,6 +697,44 @@ describe("middleware", () => {
       client.getRoom("room")!.history.redo();
 
       expect(store.getState().value).toBe(2);
+    });
+
+    test("updating presence should not reset redo stack", async () => {
+      const { store, client } = await prepareBasicStoreWithStorage([
+        obj("root", { value: 1 }),
+      ]);
+
+      client.getRoom("room")!.updatePresence(
+        {
+          cursor: {
+            x: 100,
+            y: 100,
+          },
+        },
+        {
+          addToHistory: true,
+        }
+      );
+
+      client.getRoom("room")!.updatePresence(
+        {
+          cursor: {
+            x: 200,
+            y: 200,
+          },
+        },
+        {
+          addToHistory: true,
+        }
+      );
+
+      client.getRoom("room")!.history.undo();
+
+      expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
+
+      client.getRoom("room")!.history.redo();
+
+      expect(store.getState().cursor).toEqual({ x: 200, y: 200 });
     });
   });
 
