@@ -2,16 +2,18 @@
 name: Docs Request for an Update or Improvement
 about: A request to update or improve Liveblocks documentation
 title: "[DOC_REQUEST]"
-labels: documentation, enhancement
+labels: documentation, enhancement, triage needed
 assignees: ''
-
 ---
 
 **What is the improvement or update you wish to see?**
-Example: I would like to see more examples of how to use the `<RoomProvider>` component. Or, the `<RoomProvider>` component docs are missing information.
+
+Ex. I would like to see more examples of how to use the `updateMyPresence`  React Hook. 
 
 **Is there any context that might help us understand?**
-A clear description of any added context that might help us understand.
 
+Ex. Can I call the `updateMyPresence` function with other parameters than cursors position?  
+  
 **Does the docs page already exist? Please link to it.**
-Example: [https://liveblocks.io/docs/guides/concepts](https://liveblocks.io/docs/guides/concepts)
+
+Ex. [https://liveblocks.io/docs/api-reference/liveblocks-react](https://liveblocks.io/docs/api-reference/liveblocks-react)
