@@ -53,10 +53,6 @@ echo "Upgrade nextjs-whiteboard to $1"
 cd examples/nextjs-whiteboard
 npm install @liveblocks/client@$1 @liveblocks/react@$1
 
-cd -
-echo "Upgrade nextjs-zustand-whiteboard to $1"
-cd examples/nextjs-zustand-whiteboard
-npm install @liveblocks/client@$1 @liveblocks/zustand@$1
 
 cd -
 echo "Upgrade nuxtjs-live-avatars to $1"
@@ -108,3 +104,7 @@ echo "Upgrade zustand-todo-list to $1"
 cd examples/zustand-todo-list
 npm install @liveblocks/client@$1 @liveblocks/zustand@$1
 
+cd -
+echo "Upgrade zustand-whiteboard to $1"
+cd examples/zustand-whiteboard
+npm install @liveblocks/client@$1 @liveblocks/zustand@$1
