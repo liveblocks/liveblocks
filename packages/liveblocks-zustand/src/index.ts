@@ -80,9 +80,11 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
   };
 };
 
-export type Mapping<T> = Partial<{
-  [Property in keyof T]: boolean;
-}>;
+export type Mapping<T> = Partial<
+  {
+    [Property in keyof T]: boolean;
+  }
+>;
 
 type Options<T> = {
   /**
@@ -197,6 +199,16 @@ export function middleware<T extends Object, TPresence extends Object = any>(
         })
       );
 
+      unsubscribeCallbacks.push(
+        room.subscribe("my-presence", () => {
+          if (isPatching === false) {
+            set(
+              patchPresenceState(room!.getPresence(), presenceMapping as any)
+            );
+          }
+        })
+      );
+
       room.getStorage<any>().then(({ root }) => {
         const updates: any = {};
 
@@ -284,6 +296,16 @@ function patchState<T>(
   }
 
   return result;
+}
+
+function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
+  const partialState: Partial<T> = {};
+
+  for (const key in mapping) {
+    partialState[key] = presence[key];
+  }
+
+  return partialState;
 }
 
 function updateZustandLiveblocksState<T>(

@@ -25,7 +25,7 @@ export default function App() {
   const shapes = useMap("shapes");
 
   if (shapes == null) {
-    return <div>Loading</div>;
+    return <div className="loading">Loading</div>;
   }
 
   return <Canvas shapes={shapes} />;
@@ -119,7 +119,9 @@ function Canvas({ shapes }) {
       </div>
       <div className="toolbar">
         <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteRectangle}>Delete</button>
+        <button onClick={deleteRectangle} disabled={selectedShape == null}>
+          Delete
+        </button>
         <button onClick={history.undo}>Undo</button>
         <button onClick={history.redo}>Redo</button>
       </div>

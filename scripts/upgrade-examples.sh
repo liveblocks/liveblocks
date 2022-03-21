@@ -24,6 +24,11 @@ cd examples/javascript-live-cursors
 npm install @liveblocks/client@$1
 
 cd -
+echo "Upgrade javascript-todo-list to $1"
+cd examples/javascript-todo-list
+npm install @liveblocks/client@$1
+
+cd -
 echo "Upgrade nextjs-live-avatars to $1"
 cd examples/nextjs-live-avatars
 npm install @liveblocks/client@$1 @liveblocks/react@$1
@@ -103,3 +108,7 @@ echo "Upgrade zustand-todo-list to $1"
 cd examples/zustand-todo-list
 npm install @liveblocks/client@$1 @liveblocks/zustand@$1
 
+cd -
+echo "Upgrade zustand-whiteboard to $1"
+cd examples/zustand-whiteboard
+npm install @liveblocks/client@$1 @liveblocks/zustand@$1

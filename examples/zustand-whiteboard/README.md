@@ -4,9 +4,9 @@
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [Next.js](https://nextjs.org/).
+# [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
 
-This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
+This project shows how to build a collaborative whiteboard app with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
 
 ## Getting started
 
@@ -18,6 +18,6 @@ This repo shows how to use Liveblocks with [Next.js](https://nextjs.org/).
 
 - Copy your public key from the [administration](https://liveblocks.io/dashboard/apikeys)
 
-- Create a file named `.env.local` and add your Liveblocks secret as environment variable `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_test_yourkey`
+- Replace the constant PUBLIC_KEY in `src/store.js` with your own public key.
 
-- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+- Run `npm start` and go to [http://localhost:3000](http://localhost:3000)

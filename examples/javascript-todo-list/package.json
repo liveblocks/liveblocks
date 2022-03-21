@@ -12,6 +12,6 @@
     "esbuild": "^0.14.25"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.15.0"
+    "@liveblocks/client": "^0.15.4"
   }
 }
