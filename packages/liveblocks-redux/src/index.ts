@@ -49,7 +49,7 @@ const ACTION_TYPES = {
   LEAVE: "@@LIVEBLOCKS/LEAVE",
   START_LOADING_STORAGE: "@@LIVEBLOCKS/START_LOADING_STORAGE",
   INIT_STORAGE: "@@LIVEBLOCKS/INIT_STORAGE",
-  PATCH_STORAGE: "@@LIVEBLOCKS/PATCH_STORAGE",
+  PATCH_REDUX_STATE: "@@LIVEBLOCKS/PATCH_REDUX_STATE",
   UPDATE_CONNECTION: "@@LIVEBLOCKS/UPDATE_CONNECTION",
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
@@ -110,7 +110,7 @@ const internalEnhancer = <T>(options: {
 
       const newReducer = (state: any, action: any) => {
         switch (action.type) {
-          case ACTION_TYPES.PATCH_STORAGE:
+          case ACTION_TYPES.PATCH_REDUX_STATE:
             return {
               ...state,
               ...action.state,
@@ -218,6 +218,20 @@ const internalEnhancer = <T>(options: {
           })
         );
 
+        unsubscribeCallbacks.push(
+          room.subscribe("my-presence", () => {
+            if (isPatching === false) {
+              store.dispatch({
+                type: ACTION_TYPES.PATCH_REDUX_STATE,
+                state: patchPresenceState(
+                  room!.getPresence(),
+                  presenceMapping as any
+                ),
+              });
+            }
+          })
+        );
+
         store.dispatch({
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
@@ -255,7 +269,7 @@ const internalEnhancer = <T>(options: {
               (updates) => {
                 if (isPatching === false) {
                   store.dispatch({
-                    type: ACTION_TYPES.PATCH_STORAGE,
+                    type: ACTION_TYPES.PATCH_REDUX_STATE,
                     state: patchState(
                       store.getState(),
                       updates,
@@ -398,6 +412,16 @@ function validateNoDuplicateKeys<T>(
       throw mappingShouldNotHaveTheSameKeys(key);
     }
   }
+}
+
+function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
+  const partialState: Partial<T> = {};
+
+  for (const key in mapping) {
+    partialState[key] = presence[key];
+  }
+
+  return partialState;
 }
 
 function patchState<T>(
