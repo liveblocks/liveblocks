@@ -34,7 +34,7 @@ export default function App() {
   }, [enterRoom, leaveRoom]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div className="loading">Loading...</div>;
   }
 
   return (
@@ -66,8 +66,10 @@ export default function App() {
         })}
       </div>
       <div className="toolbar">
-        <button onClick={onAddRectangle}>Rectangle</button>
-        <button onClick={onDeleteRectangle}>Delete</button>
+        <button onClick={onAddRectangle}>Add</button>
+        <button onClick={onDeleteRectangle} disabled={selectedShape == null}>
+          Delete
+        </button>
         <button onClick={onUndo}>Undo</button>
         <button onClick={onRedo}>Redo</button>
       </div>
