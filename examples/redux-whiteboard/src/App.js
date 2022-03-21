@@ -9,8 +9,7 @@ import {
   selectShape,
   deselectShape,
   moveShape,
-  undo,
-  redo,
+  client,
 } from "./store";
 
 export default function App() {
@@ -21,15 +20,17 @@ export default function App() {
 
   const dispatch = useDispatch();
 
+  const roomId = "redux-whiteboard-demo";
+
   useEffect(() => {
     dispatch(
-      actions.enterRoom("redux-whiteboard-demo", {
+      actions.enterRoom(roomId, {
         shapes: {},
       })
     );
 
     return () => {
-      dispatch(actions.leaveRoom("redux-whiteboard-demo"));
+      dispatch(actions.leaveRoom(roomId));
     };
   }, [dispatch]);
 
@@ -76,8 +77,12 @@ export default function App() {
         >
           Delete
         </button>
-        <button onClick={() => dispatch(undo())}>Undo</button>
-        <button onClick={() => dispatch(redo())}>Redo</button>
+        <button onClick={() => client.getRoom(roomId).history.undo()}>
+          Undo
+        </button>
+        <button onClick={() => client.getRoom(roomId).history.redo()}>
+          Redo
+        </button>
       </div>
     </>
   );

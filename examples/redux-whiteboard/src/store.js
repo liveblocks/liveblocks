@@ -11,7 +11,7 @@ if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
   );
 }
 
-const client = createClient({
+export const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
@@ -62,8 +62,6 @@ const slice = createSlice({
         state.shapes[state.selectedShape].y = action.payload.y - 50;
       }
     },
-    undo: (state) => {},
-    redo: (state) => {},
   },
 });
 
@@ -73,8 +71,6 @@ export const {
   selectShape,
   deselectShape,
   moveShape,
-  undo,
-  redo,
 } = slice.actions;
 
 export function makeStore() {
