@@ -34,7 +34,7 @@ export default function App() {
   }, [dispatch]);
 
   if (isLoading) {
-    return <div>Loading</div>;
+    return <div className="loading">Loading</div>;
   }
 
   return (
@@ -70,7 +70,12 @@ export default function App() {
       </div>
       <div className="toolbar">
         <button onClick={() => dispatch(addRectangle())}>Rectangle</button>
-        <button onClick={() => dispatch(deleteRectangle())}>Delete</button>
+        <button
+          onClick={() => dispatch(deleteRectangle())}
+          disabled={selectedShape == null}
+        >
+          Delete
+        </button>
         <button onClick={() => dispatch(undo())}>Undo</button>
         <button onClick={() => dispatch(redo())}>Redo</button>
       </div>
