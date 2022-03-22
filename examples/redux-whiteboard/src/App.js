@@ -12,6 +12,8 @@ import {
   client,
 } from "./store";
 
+const roomId = "redux-whiteboard-demo";
+
 export default function App() {
   const shapes = useSelector((state) => state.shapes);
   const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
@@ -19,8 +21,6 @@ export default function App() {
   const others = useSelector((state) => state.liveblocks.others);
 
   const dispatch = useDispatch();
-
-  const roomId = "redux-whiteboard-demo";
 
   useEffect(() => {
     dispatch(
@@ -46,7 +46,10 @@ export default function App() {
           e.preventDefault();
           dispatch(moveShape({ x: e.clientX, y: e.clientY }));
         }}
-        onPointerUp={() => dispatch(deselectShape())}
+        onPointerUp={() => {
+          dispatch(deselectShape());
+          client.getRoom(roomId).history.resume();
+        }}
       >
         {Object.entries(shapes).map(([shapeId, shape]) => {
           let selectionColor = "transparent";
@@ -101,6 +104,7 @@ const Rectangle = ({ shape, selectionColor, id }) => {
       }}
       onPointerDown={(e) => {
         e.stopPropagation();
+        client.getRoom(roomId).history.pause();
         dispatch(selectShape(id));
       }}
     ></div>
