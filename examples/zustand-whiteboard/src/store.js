@@ -3,7 +3,7 @@ import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 
 // Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_xxxxxxx";
+const PUBLIC_KEY = "pk_live_CXeYqF--qWwo8hcq7kGBPrG3";
 
 if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
   throw new Error(
@@ -28,20 +28,15 @@ function getRandomColor() {
 const useStore = create(
   middleware(
     (set, get) => ({
-      shapes: {
-        ["id"]: {
-          x: 100,
-          y: 100,
-          fill: "gray",
-        },
-      },
+      shapes: {},
       isDragging: false,
       selectedShape: null,
 
       onShapePointerDown: (shapeId) => {
-        get().liveblocks.room.history.pause();
-
-        set({ selectedShape: shapeId, isDragging: true });
+        const room = get().liveblocks.room;
+        room.history.pause();
+        room.updatePresence({ selectedShape: shapeId }, { addToHistory: true });
+        set({ isDragging: true });
       },
 
       onCanvasPointerUp: () => {
@@ -69,36 +64,34 @@ const useStore = create(
           });
         }
       },
-      onAddRectangle: () => {
-        const { shapes } = get();
+      insertRectangle: () => {
+        const { shapes, liveblocks } = get();
 
-        const shapeId = Date.now();
+        const shapeId = Date.now().toString();
         const shape = {
           x: getRandomInt(300),
           y: getRandomInt(300),
           fill: getRandomColor(),
         };
 
+        liveblocks.room.updatePresence(
+          { selectedShape: shapeId },
+          { addToHistory: true }
+        );
         set({
-          selectedShape: shapeId,
           shapes: { ...shapes, [shapeId]: shape },
         });
       },
-      onDeleteRectangle: () => {
-        const { shapes, selectedShape } = get();
-        const { [selectedShape]: value, ...newShapes } = shapes;
+      deleteShape: () => {
+        const { shapes, selectedShape, liveblocks } = get();
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
+        liveblocks.room.updatePresence(
+          { selectedShape: null },
+          { addToHistory: true }
+        );
         set({
           shapes: newShapes,
-          selectedShape: null,
         });
-      },
-      onUndo: () => {
-        const { liveblocks } = get();
-        liveblocks.room.history.undo();
-      },
-      onRedo: () => {
-        const { liveblocks } = get();
-        liveblocks.room.history.redo();
       },
     }),
     {
