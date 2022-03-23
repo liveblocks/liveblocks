@@ -40,6 +40,7 @@ import {
   UpdateStorageMessage,
   ServerMessage,
   SerializedCrdt,
+  WebsocketCloseCodes,
 } from "./live";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -48,7 +49,7 @@ import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
-const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 30000];
+const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
 const HEARTBEAT_INTERVAL = 30000;
 // const WAKE_UP_CHECK_INTERVAL = 2000;
@@ -190,6 +191,9 @@ export function makeStateMachine(
     ) {
       return auth(context.room)
         .then(({ token }) => {
+          if (state.connection.state !== "authenticating") {
+            return;
+          }
           const parsedToken = parseToken(token);
           const socket = createWebSocket(token);
           authenticationSuccess(parsedToken, socket);
@@ -953,9 +957,7 @@ See v0.13 release notes for more information.
     state.users = {};
     notify({ others: [{ type: "reset" }] });
 
-    if (event.code === 1000 && event.wasClean) {
-      updateConnection({ state: "closed" });
-    } else if (event.code >= 4000 && event.code <= 4100) {
+    if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
@@ -974,6 +976,8 @@ See v0.13 release notes for more information.
 
       updateConnection({ state: "unavailable" });
       state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+    } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
+      updateConnection({ state: "closed" });
     } else {
       const delay = getRetryDelay();
       state.numberOfRetry++;
