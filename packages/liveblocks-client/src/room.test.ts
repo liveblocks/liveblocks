@@ -1109,4 +1109,71 @@ describe("room", () => {
       ]);
     });
   });
+
+  describe("reconnect", () => {
+    let consoleErrorSpy: jest.SpyInstance;
+    let consoleWarnSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      consoleErrorSpy = jest
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      consoleWarnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      consoleErrorSpy.mockRestore();
+      consoleWarnSpy.mockRestore();
+    });
+
+    test("when error code 1006", () => {
+      const effects = mockEffects();
+
+      const state = defaultState({ x: 0 });
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const ws = new MockWebSocket("");
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
+
+      ws.closeFromBackend(
+        new CloseEvent("close", {
+          code: 1006,
+          wasClean: false,
+        })
+      );
+
+      expect(consoleWarnSpy.mock.calls[0][0]).toEqual(
+        "Connection to Liveblocks websocket server closed (code: 1006). Retrying in 250ms."
+      );
+
+      expect(state.numberOfRetry).toEqual(1);
+    });
+
+    test("when error code 4002", () => {
+      const effects = mockEffects();
+
+      const state = defaultState({ x: 0 });
+      const machine = makeStateMachine(state, defaultContext, effects);
+
+      const ws = new MockWebSocket("");
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
+
+      ws.closeFromBackend(
+        new CloseEvent("close", {
+          code: 4002,
+          wasClean: false,
+        })
+      );
+
+      expect(consoleErrorSpy.mock.calls[0][0]).toEqual(
+        "Connection to Liveblocks websocket server closed. Reason:  (code: 4002). Retrying in 2000ms."
+      );
+
+      expect(state.numberOfRetry).toEqual(1);
+    });
+  });
 });

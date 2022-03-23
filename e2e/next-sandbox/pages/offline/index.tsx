@@ -87,16 +87,28 @@ function Sandbox() {
         Close socket
       </button>
       <button
-        id="sendCloseEvent"
+        id="sendCloseEventConnectionError"
         onClick={() => {
           room.internalDevTools.sendCloseEvent({
             reason: "Fake connection error",
-            code: 4900,
-            wasClean: false,
+            code: 1005,
+            wasClean: true,
           });
         }}
       >
-        Send close event
+        Send close event (connection)
+      </button>
+      <button
+        id="sendCloseEventAppError"
+        onClick={() => {
+          room.internalDevTools.sendCloseEvent({
+            reason: "App error",
+            code: 4002,
+            wasClean: true,
+          });
+        }}
+      >
+        Send close event (app)
       </button>
 
       <button
