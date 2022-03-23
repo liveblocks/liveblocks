@@ -29,7 +29,7 @@ test.describe("Offline", () => {
     });
   });
 
-  test("one client offline with offline changes", async () => {
+  test("one client offline with offline changes - connection issue (code 1005)", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
@@ -48,8 +48,36 @@ test.describe("Offline", () => {
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
 
-    await pages[0].click("#sendCloseEvent");
+    await pages[0].click("#sendCloseEventConnectionError");
     await delay(3000);
+
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
+  });
+
+  test("one client offline with offline changes - app server issue (code 4002)", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
+
+    await pages[0].click("#push");
+    await assertContainText(pages, "1");
+
+    await pages[0].click("#closeWebsocket");
+    await delay(50);
+    await pages[0].click("#push");
+    await pages[1].click("#push");
+    await assertContainText([pages[0]], "2");
+
+    const firstPageItems = await getJsonContent(pages[0], "items");
+    const secondPageItems = await getJsonContent(pages[1], "items");
+
+    expect(firstPageItems.length).toEqual(2);
+    expect(secondPageItems.length).toEqual(2);
+
+    await pages[0].click("#sendCloseEventAppError");
+    await delay(8000);
 
     await waitForContentToBeEquals(pages);
 
@@ -82,7 +110,7 @@ test.describe("Offline", () => {
 
     await delay(2000);
 
-    await pages[0].click("#sendCloseEvent");
+    await pages[0].click("#sendCloseEventConnectionError");
 
     await delay(3000);
 

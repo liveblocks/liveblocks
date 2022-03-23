@@ -48,6 +48,7 @@ import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
+const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 30000];
 
 const HEARTBEAT_INTERVAL = 30000;
 // const WAKE_UP_CHECK_INTERVAL = 2000;
@@ -952,21 +953,31 @@ See v0.13 release notes for more information.
     state.users = {};
     notify({ others: [{ type: "reset" }] });
 
-    if (event.code >= 4000 && event.code <= 4100) {
+    if (event.code === 1000 && event.wasClean) {
+      updateConnection({ state: "closed" });
+    } else if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
       for (const listener of state.listeners.error) {
-        if (process.env.NODE_ENV !== "production") {
-          console.error(
-            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code})`
-          );
-        }
         listener(error);
       }
-    } else if (event.wasClean === false) {
+
+      const delay = getRetryDelay(true);
       state.numberOfRetry++;
+
+      if (process.env.NODE_ENV !== "production") {
+        console.error(
+          `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+        );
+      }
+
+      updateConnection({ state: "unavailable" });
+      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+    } else {
       const delay = getRetryDelay();
+      state.numberOfRetry++;
+
       if (process.env.NODE_ENV !== "production") {
         console.warn(
           `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
@@ -974,8 +985,6 @@ See v0.13 release notes for more information.
       }
       updateConnection({ state: "unavailable" });
       state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
-    } else {
-      updateConnection({ state: "closed" });
     }
   }
 
@@ -986,7 +995,14 @@ See v0.13 release notes for more information.
     }
   }
 
-  function getRetryDelay() {
+  function getRetryDelay(slow: boolean = false) {
+    if (slow) {
+      return BACKOFF_RETRY_DELAYS_SLOW[
+        state.numberOfRetry < BACKOFF_RETRY_DELAYS_SLOW.length
+          ? state.numberOfRetry
+          : BACKOFF_RETRY_DELAYS_SLOW.length - 1
+      ];
+    }
     return BACKOFF_RETRY_DELAYS[
       state.numberOfRetry < BACKOFF_RETRY_DELAYS.length
         ? state.numberOfRetry
