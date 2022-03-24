@@ -6,7 +6,11 @@
 
 # [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
 
-This project shows how to build a collaborative whiteboard app with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+This project shows how to build a collaborative online whiteboard app with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-zustand) to build it from scratch.
+
+![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
 ## Getting started
 

@@ -12,6 +12,7 @@ As users edit the list, changes will be automatically persisted and synced, allo
 
 You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react-redux) to build it from scratch.
 
+![todo-list-gif](https://liveblocks.io/images/docs/tutorials/todo-list/tutorial-todo-list-1.gif)
 
 ## Getting started
 
