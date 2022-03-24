@@ -3,7 +3,7 @@ import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 
 // Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_live_CXeYqF--qWwo8hcq7kGBPrG3";
+const PUBLIC_KEY = "pk_xxxxxxx";
 
 if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
   throw new Error(
@@ -29,21 +29,48 @@ const useStore = create(
   middleware(
     (set, get) => ({
       shapes: {},
-      isDragging: false,
       selectedShape: null,
+      isDragging: false,
 
+      insertRectangle: () => {
+        const { shapes, liveblocks } = get();
+
+        const shapeId = Date.now().toString();
+        const shape = {
+          x: getRandomInt(300),
+          y: getRandomInt(300),
+          fill: getRandomColor(),
+        };
+
+        liveblocks.room.updatePresence(
+          { selectedShape: shapeId },
+          { addToHistory: true }
+        );
+        set({
+          shapes: { ...shapes, [shapeId]: shape },
+        });
+      },
       onShapePointerDown: (shapeId) => {
         const room = get().liveblocks.room;
         room.history.pause();
         room.updatePresence({ selectedShape: shapeId }, { addToHistory: true });
         set({ isDragging: true });
       },
-
+      deleteShape: () => {
+        const { shapes, selectedShape, liveblocks } = get();
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
+        liveblocks.room.updatePresence(
+          { selectedShape: null },
+          { addToHistory: true }
+        );
+        set({
+          shapes: newShapes,
+        });
+      },
       onCanvasPointerUp: () => {
         set({ isDragging: false });
         get().liveblocks.room.history.resume();
       },
-
       onCanvasPointerMove: (e) => {
         e.preventDefault();
 
@@ -63,35 +90,6 @@ const useStore = create(
             },
           });
         }
-      },
-      insertRectangle: () => {
-        const { shapes, liveblocks } = get();
-
-        const shapeId = Date.now().toString();
-        const shape = {
-          x: getRandomInt(300),
-          y: getRandomInt(300),
-          fill: getRandomColor(),
-        };
-
-        liveblocks.room.updatePresence(
-          { selectedShape: shapeId },
-          { addToHistory: true }
-        );
-        set({
-          shapes: { ...shapes, [shapeId]: shape },
-        });
-      },
-      deleteShape: () => {
-        const { shapes, selectedShape, liveblocks } = get();
-        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
-        liveblocks.room.updatePresence(
-          { selectedShape: null },
-          { addToHistory: true }
-        );
-        set({
-          shapes: newShapes,
-        });
       },
     }),
     {

@@ -1,18 +1,18 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 
 import {
-  addRectangle,
-  deleteRectangle,
-  selectShape,
-  deselectShape,
-  moveShape,
+  insertRectangle,
+  onShapePointerDown,
+  deleteShape,
+  onCanvasPointerUp,
+  onCanvasPointerMove,
   client,
 } from "./store";
 
-const roomId = "redux-whiteboard-demo";
+const roomId = "redux-whiteboard";
 
 export default function App() {
   const shapes = useSelector((state) => state.shapes);
@@ -44,10 +44,10 @@ export default function App() {
         className="canvas"
         onPointerMove={(e) => {
           e.preventDefault();
-          dispatch(moveShape({ x: e.clientX, y: e.clientY }));
+          dispatch(onCanvasPointerMove({ x: e.clientX, y: e.clientY }));
         }}
         onPointerUp={() => {
-          dispatch(deselectShape());
+          dispatch(onCanvasPointerUp());
           client.getRoom(roomId).history.resume();
         }}
       >
@@ -73,9 +73,9 @@ export default function App() {
         })}
       </div>
       <div className="toolbar">
-        <button onClick={() => dispatch(addRectangle())}>Rectangle</button>
+        <button onClick={() => dispatch(insertRectangle())}>Rectangle</button>
         <button
-          onClick={() => dispatch(deleteRectangle())}
+          onClick={() => dispatch(deleteShape())}
           disabled={selectedShape == null}
         >
           Delete
@@ -105,7 +105,7 @@ const Rectangle = ({ shape, selectionColor, id }) => {
       onPointerDown={(e) => {
         e.stopPropagation();
         client.getRoom(roomId).history.pause();
-        dispatch(selectShape(id));
+        dispatch(onShapePointerDown(id));
       }}
     ></div>
   );

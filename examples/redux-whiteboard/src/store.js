@@ -35,28 +35,30 @@ const slice = createSlice({
   name: "state",
   initialState,
   reducers: {
-    addRectangle: (state) => {
-      const shapeId = Date.now();
+    insertRectangle: (state) => {
+      const shapeId = Date.now().toString();
       const shape = {
         x: getRandomInt(300),
         y: getRandomInt(300),
         fill: getRandomColor(),
       };
       state.shapes[shapeId] = shape;
+      state.selectedShape = shapeId;
     },
-    deleteRectangle: (state) => {
-      if (state.selectedShape) {
-        delete state.shapes[state.selectedShape];
-      }
-    },
-    selectShape: (state, action) => {
+    onShapePointerDown: (state, action) => {
       state.selectedShape = action.payload;
       state.isDragging = true;
     },
-    deselectShape: (state) => {
+    deleteShape: (state) => {
+      if (state.selectedShape) {
+        delete state.shapes[state.selectedShape];
+        state.selectedShape = null;
+      }
+    },
+    onCanvasPointerUp: (state) => {
       state.isDragging = false;
     },
-    moveShape: (state, action) => {
+    onCanvasPointerMove: (state, action) => {
       if (state.isDragging && state.selectedShape) {
         state.shapes[state.selectedShape].x = action.payload.x - 50;
         state.shapes[state.selectedShape].y = action.payload.y - 50;
@@ -66,11 +68,11 @@ const slice = createSlice({
 });
 
 export const {
-  addRectangle,
-  deleteRectangle,
-  selectShape,
-  deselectShape,
-  moveShape,
+  insertRectangle,
+  onShapePointerDown,
+  deleteShape,
+  onCanvasPointerUp,
+  onCanvasPointerMove,
 } = slice.actions;
 
 export function makeStore() {
