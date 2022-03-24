@@ -6,7 +6,11 @@
 
 # [Liveblocks](https://liveblocks.io) × [Redux](https://redux-toolkit.js.org/).
 
-This project shows how to build a collaborative whiteboard app with [React](https://reactjs.org/)and [Redux](https://redux-toolkit.js.org/).
+This project shows how to build a collaborative online whiteboard app with [React](https://reactjs.org/)and [Redux](https://redux-toolkit.js.org/).
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-redux) to build it from scratch.
+
+![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
 ## Getting started
 
