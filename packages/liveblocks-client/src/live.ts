@@ -34,6 +34,7 @@ export type UpdatePresenceMessage = {
   type: ServerMessageType.UpdatePresence;
   actor: number;
   data: Presence;
+  targetActor?: number;
 };
 
 export type UserJoinMessage = {

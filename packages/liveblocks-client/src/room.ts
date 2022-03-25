@@ -775,14 +775,22 @@ See v0.13 release notes for more information.
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceMessage
-  ): OthersEvent {
+  ): OthersEvent | undefined {
     const user = state.users[message.actor];
+
     if (user == null) {
       state.users[message.actor] = {
         connectionId: message.actor,
         presence: message.data,
+        fullPresenceReceived: true,
       };
     } else {
+      if (
+        !message.targetActor &&
+        state.users[message.actor].fullPresenceReceived === false
+      ) {
+        return undefined;
+      }
       state.users[message.actor] = {
         id: user.id,
         info: user.info,
@@ -791,6 +799,7 @@ See v0.13 release notes for more information.
           ...user.presence,
           ...message.data,
         },
+        fullPresenceReceived: true,
       };
     }
     return {
@@ -886,9 +895,12 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.UpdatePresence: {
-          updates.others.push(
-            onUpdatePresenceMessage(subMessage as UpdatePresenceMessage)
+          const othersPresenceUpdate = onUpdatePresenceMessage(
+            subMessage as UpdatePresenceMessage
           );
+          if (othersPresenceUpdate) {
+            updates.others.push(othersPresenceUpdate);
+          }
           break;
         }
         case ServerMessageType.Event: {
