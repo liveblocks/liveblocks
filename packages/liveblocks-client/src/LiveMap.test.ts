@@ -30,6 +30,7 @@ describe("LiveMap", () => {
       expect(map.get("second")?.get("a")).toBe(1);
 
       expect(map.delete("first")).toBe(true);
+      expect(map.delete("unknown")).toBe(false);
 
       expect(map.has("first")).toBe(false);
       expect(map.has("second")).toBe(true);
@@ -68,6 +69,7 @@ describe("LiveMap", () => {
       expect(map.get("second")?.a).toBe(1);
 
       expect(map.delete("first")).toBe(true);
+      expect(map.delete("unknown")).toBe(false);
 
       expect(map.has("first")).toBe(false);
       expect(map.has("second")).toBe(true);
@@ -183,47 +185,186 @@ describe("LiveMap", () => {
     assertUndoRedo();
   });
 
-  it("map.delete live object", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([
-      createSerializedObject("0:0", {}),
-      createSerializedMap("0:1", "0:0", "map"),
-      createSerializedRegister("0:2", "0:1", "first", 0),
-      createSerializedRegister("0:3", "0:1", "second", 1),
-      createSerializedRegister("0:4", "0:1", "third", 2),
-    ]);
+  describe("delete", () => {
+    it("should delete LiveObject", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedMap("0:1", "0:0", "map"),
+        createSerializedRegister("0:2", "0:1", "first", 0),
+        createSerializedRegister("0:3", "0:1", "second", 1),
+        createSerializedRegister("0:4", "0:1", "third", 2),
+      ]);
 
-    const root = storage.root;
-    const map = root.toObject().map;
+      const root = storage.root;
+      const map = root.toObject().map;
 
-    assert({
-      map: [
-        ["first", 0],
-        ["second", 1],
-        ["third", 2],
-      ],
+      assert({
+        map: [
+          ["first", 0],
+          ["second", 1],
+          ["third", 2],
+        ],
+      });
+
+      map.delete("first");
+      assert({
+        map: [
+          ["second", 1],
+          ["third", 2],
+        ],
+      });
+
+      map.delete("second");
+      assert({
+        map: [["third", 2]],
+      });
+
+      map.delete("third");
+      assert({
+        map: [],
+      });
+
+      assertUndoRedo();
     });
 
-    map.delete("first");
-    assert({
-      map: [
-        ["second", 1],
-        ["third", 2],
-      ],
+    it("should remove nested data structure from cache", async () => {
+      const { storage, assert, assertUndoRedo, getItemsCount } =
+        await prepareStorageTest<{
+          map: LiveMap<string, LiveObject<{ a: number }>>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
+          ],
+          1
+        );
+
+      assert({
+        map: [["first", { a: 0 }]],
+      });
+
+      const root = storage.root;
+      const map = root.toObject().map;
+
+      expect(getItemsCount()).toBe(3);
+      expect(map.delete("first")).toBe(true);
+      expect(getItemsCount()).toBe(2);
+
+      assert({
+        map: [],
+      });
+
+      assertUndoRedo();
     });
 
-    map.delete("second");
-    assert({
-      map: [["third", 2]],
+    it("should delete live list", async () => {
+      const { storage, assert, assertUndoRedo, getItemsCount } =
+        await prepareStorageTest<{
+          map: LiveMap<string, LiveList<number>>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedList("0:2", "0:1", "first"),
+            createSerializedRegister("0:3", "0:2", "!", 0),
+          ],
+          1
+        );
+
+      assert({
+        map: [["first", [0]]],
+      });
+
+      const root = storage.root;
+      const map = root.toObject().map;
+
+      expect(getItemsCount()).toBe(4);
+      expect(map.delete("first")).toBe(true);
+      expect(getItemsCount()).toBe(2);
+
+      assert({
+        map: [],
+      });
+
+      assertUndoRedo();
     });
 
-    map.delete("third");
-    assert({
-      map: [],
+    // https://github.com/liveblocks/liveblocks/issues/95
+    it("should have deleted key when subscriber is called", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", "a"),
+          createSerializedRegister("0:3", "0:1", "second", "b"),
+        ],
+        1
+      );
+
+      const map = root.get("map");
+
+      let keys: string[] = [];
+
+      subscribe(map, () => (keys = Array.from(map.keys())));
+
+      map.delete("first");
+
+      expect(keys).toEqual(["second"]);
     });
 
-    assertUndoRedo();
+    it("should call subscribe when key is deleted", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", "a"),
+          createSerializedRegister("0:3", "0:1", "second", "b"),
+        ],
+        1
+      );
+
+      const map = root.get("map");
+
+      const fn = jest.fn();
+
+      subscribe(map, fn);
+
+      map.delete("first");
+
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(fn.mock.calls[0][0]).toBe(map);
+    });
+
+    it("should not call subscribe when key is not deleted", async () => {
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", "a"),
+          createSerializedRegister("0:3", "0:1", "second", "b"),
+        ],
+        1
+      );
+
+      const map = root.get("map");
+
+      const fn = jest.fn();
+
+      subscribe(map, fn);
+
+      map.delete("unknown");
+
+      expect(fn).toHaveBeenCalledTimes(0);
+    });
   });
 
   it("map.set live object", async () => {
@@ -305,69 +446,6 @@ describe("LiveMap", () => {
 
     assert({
       map: [["first", { a: 1 }]],
-    });
-
-    assertUndoRedo();
-  });
-
-  it("map.delete existing live object", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
-      await prepareStorageTest<{
-        map: LiveMap<string, LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-          createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-        ],
-        1
-      );
-
-    assert({
-      map: [["first", { a: 0 }]],
-    });
-
-    const root = storage.root;
-    const map = root.toObject().map;
-
-    expect(getItemsCount()).toBe(3);
-    expect(map.delete("first")).toBe(true);
-    expect(getItemsCount()).toBe(2);
-
-    assert({
-      map: [],
-    });
-
-    assertUndoRedo();
-  });
-
-  it("map.delete live list", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
-      await prepareStorageTest<{
-        map: LiveMap<string, LiveList<number>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-          createSerializedList("0:2", "0:1", "first"),
-          createSerializedRegister("0:3", "0:2", "!", 0),
-        ],
-        1
-      );
-
-    assert({
-      map: [["first", [0]]],
-    });
-
-    const root = storage.root;
-    const map = root.toObject().map;
-
-    expect(getItemsCount()).toBe(4);
-    expect(map.delete("first")).toBe(true);
-    expect(getItemsCount()).toBe(2);
-
-    assert({
-      map: [],
     });
 
     assertUndoRedo();
