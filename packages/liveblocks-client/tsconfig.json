@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "ES2015",
     "module": "ES2020",
+    "outDir": "./lib/esm",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -9,7 +10,6 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "outDir": "./lib/esm",
     "lib": ["ES2019", "dom", "esnext"],
     "stripInternal": true
   },
