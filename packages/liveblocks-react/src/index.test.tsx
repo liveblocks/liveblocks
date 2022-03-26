@@ -82,7 +82,7 @@ class MockWebSocket {
 window.WebSocket = MockWebSocket as any;
 
 const server = setupServer(
-  rest.post("/api/auth", (req, res, ctx) => {
+  rest.post("/api/auth", (_, res, ctx) => {
     return res(
       ctx.json({
         token:
@@ -91,7 +91,7 @@ const server = setupServer(
       })
     );
   }),
-  rest.post("/api/auth-fail", (req, res, ctx) => {
+  rest.post("/api/auth-fail", (_, res, ctx) => {
     return res(ctx.status(400));
   })
 );
@@ -133,17 +133,6 @@ function PresenceComponent() {
         {JSON.stringify(others.toArray())}
       </div>
     </div>
-  );
-}
-
-function ErrorFallback({ error }: { error: Error }) {
-  return (
-    <>
-      <div data-testid={testIds.errorConstructorName}>
-        {error.constructor.name}
-      </div>
-      <div data-testid={testIds.errorMessage}>{error.message}</div>
-    </>
   );
 }
 

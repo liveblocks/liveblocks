@@ -1,8 +1,21 @@
-// babel.config.js
-module.exports = {
-  presets: [
-    ["@babel/preset-env", { targets: { node: "current" } }],
-    "@babel/preset-typescript",
-    "@babel/preset-react",
-  ],
+module.exports = (api, targets) => {
+  // https://babeljs.io/docs/en/config-files#config-function-api
+  const isTestEnv = api.env("test");
+
+  return {
+    babelrc: false,
+    ignore: ["./node_modules"],
+    presets: [
+      [
+        "@babel/preset-env",
+        {
+          loose: true,
+          modules: isTestEnv ? "commonjs" : false,
+          targets: isTestEnv ? { node: "current" } : targets,
+        },
+      ],
+      "@babel/preset-typescript",
+      "@babel/preset-react",
+    ],
+  };
 };
