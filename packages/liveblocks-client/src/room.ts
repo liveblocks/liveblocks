@@ -73,7 +73,10 @@ function makeIdFactory(connectionId: number): IdFactory {
 function makeOthers<T extends Presence>(presenceMap: {
   [key: number]: User<T>;
 }): Others<T> {
-  const array = Object.values(presenceMap);
+  const array = Object.values(presenceMap).map((presence) => {
+    delete presence.initialFullPresenceReceived;
+    return presence;
+  });
 
   return {
     get count() {
@@ -778,16 +781,19 @@ See v0.13 release notes for more information.
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
 
+    // If other user has just entered the room, we consider this message as the initial presence message.
     if (user == null) {
       state.users[message.actor] = {
         connectionId: message.actor,
         presence: message.data,
-        fullPresenceReceived: true,
+        initialFullPresenceReceived: true,
       };
     } else {
+      // If the other user initial presence hasn't been received yet, we discard the presence update.
+      // The initial presence update message contains the property "targetActor".
       if (
         !message.targetActor &&
-        state.users[message.actor].fullPresenceReceived === false
+        state.users[message.actor].initialFullPresenceReceived === false
       ) {
         return undefined;
       }
@@ -799,7 +805,7 @@ See v0.13 release notes for more information.
           ...user.presence,
           ...message.data,
         },
-        fullPresenceReceived: true,
+        initialFullPresenceReceived: true,
       };
     }
     return {
