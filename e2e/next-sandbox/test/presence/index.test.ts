@@ -136,7 +136,6 @@ test.describe("Presence", () => {
       await delay(500);
       await firstPage.click("#set-second-prop");
 
-      await delay(100);
       await assertContainText([secondPage], "1", "othersCount");
 
       let othersSecondPage = await getOthers(secondPage);

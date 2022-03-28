@@ -780,8 +780,16 @@ See v0.13 release notes for more information.
     message: UpdatePresenceMessage
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
+    // If the other user initial presence hasn't been received yet, we discard the presence update.
+    // The initial presence update message contains the property "targetActor".
+    if (
+      message.targetActor === undefined &&
+      user != null &&
+      !user.initialFullPresenceReceived
+    ) {
+      return undefined;
+    }
 
-    // If other user has just entered the room, we consider this message as the initial presence message.
     if (user == null) {
       state.users[message.actor] = {
         connectionId: message.actor,
@@ -789,11 +797,6 @@ See v0.13 release notes for more information.
         initialFullPresenceReceived: true,
       };
     } else {
-      // If the other user initial presence hasn't been received yet, we discard the presence update.
-      // The initial presence update message contains the property "targetActor".
-      if (!message.targetActor && !user.initialFullPresenceReceived) {
-        return undefined;
-      }
       state.users[message.actor] = {
         id: user.id,
         info: user.info,
@@ -805,6 +808,7 @@ See v0.13 release notes for more information.
         initialFullPresenceReceived: true,
       };
     }
+
     return {
       type: "update",
       updates: message.data,

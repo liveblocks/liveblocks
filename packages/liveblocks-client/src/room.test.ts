@@ -1176,4 +1176,65 @@ describe("room", () => {
       expect(state.numberOfRetry).toEqual(1);
     });
   });
+
+  describe("Initial UpdatePresenceMessage", () => {
+    test("skip UpdatePresence from other when initial full presence has not been received", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+      const ws = new MockWebSocket("");
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
+
+      let others: Others | undefined;
+
+      machine.subscribe("others", (o) => (others = o));
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.RoomState,
+          users: { "1": { id: undefined } },
+        })
+      );
+
+      // UpdatePresence sent before the initial full UpdatePresence
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+        },
+      ]);
+
+      // Full UpdatePresence sent as an answer to "UserJoined" message
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+          targetActor: 0,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+          presence: {
+            x: 2,
+          },
+        },
+      ]);
+    });
+  });
 });
