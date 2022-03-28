@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import useStore from "./store";
-import shallow from "zustand/shallow";
 
 import "./App.css";
 
@@ -9,21 +8,15 @@ export default function App() {
   const selectedShape = useStore((state) => state.selectedShape);
   const onCanvasPointerUp = useStore((state) => state.onCanvasPointerUp);
   const onCanvasPointerMove = useStore((state) => state.onCanvasPointerMove);
-  const onAddRectangle = useStore((state) => state.onAddRectangle);
-  const onDeleteRectangle = useStore((state) => state.onDeleteRectangle);
-  const onUndo = useStore((state) => state.onUndo);
-  const onRedo = useStore((state) => state.onRedo);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+  const deleteShape = useStore((state) => state.deleteShape);
+  const undo = useStore((state) => state.liveblocks.room?.history.undo);
+  const redo = useStore((state) => state.liveblocks.room?.history.redo);
   const others = useStore((state) => state.liveblocks.others);
 
-  // Liveblocks integration start
-  const { enterRoom, leaveRoom, isLoading } = useStore(
-    (state) => ({
-      enterRoom: state.liveblocks.enterRoom,
-      leaveRoom: state.liveblocks.leaveRoom,
-      isLoading: state.liveblocks.isStorageLoading,
-    }),
-    shallow
-  );
+  const enterRoom = useStore((state) => state.liveblocks.enterRoom);
+  const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
+  const isLoading = useStore((state) => state.liveblocks.isLoading);
 
   useEffect(() => {
     enterRoom("zustand-whiteboard", { shapes: {} });
@@ -66,12 +59,12 @@ export default function App() {
         })}
       </div>
       <div className="toolbar">
-        <button onClick={onAddRectangle}>Add</button>
-        <button onClick={onDeleteRectangle} disabled={selectedShape == null}>
+        <button onClick={insertRectangle}>Rectangle</button>
+        <button onClick={deleteShape} disabled={selectedShape == null}>
           Delete
         </button>
-        <button onClick={onUndo}>Undo</button>
-        <button onClick={onRedo}>Redo</button>
+        <button onClick={undo}>Undo</button>
+        <button onClick={redo}>Redo</button>
       </div>
     </>
   );

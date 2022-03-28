@@ -10,7 +10,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "^0.15.5",
+    "@liveblocks/client": "^0.15.7",
     "@liveblocks/node": "^0.3.0",
     "express": "^4.17.1"
   },

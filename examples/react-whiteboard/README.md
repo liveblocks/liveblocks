@@ -6,7 +6,11 @@
 
 # [Liveblocks](https://liveblocks.io) × [React](https://reactjs.org/).
 
-This repo shows how to use Liveblocks with [React](https://reactjs.org/).
+This project shows how to build a collaborative online whiteboard app with [React](https://reactjs.org/)).
+
+You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react) to build it from scratch.
+
+![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
 ## Getting started
 

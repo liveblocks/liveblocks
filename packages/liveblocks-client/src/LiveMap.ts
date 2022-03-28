@@ -290,6 +290,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     }
 
     item._detach();
+    this.#map.delete(key);
 
     if (this._doc && item._id) {
       const storageUpdates = new Map<string, StorageUpdate>();
@@ -311,7 +312,6 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       );
     }
 
-    this.#map.delete(key);
     return true;
   }
 

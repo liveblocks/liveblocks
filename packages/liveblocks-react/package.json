@@ -1,11 +1,21 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.15.5",
+  "version": "0.15.7",
   "description": "",
   "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "lib/"
+    "lib/**"
   ],
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "types": "./lib/index.d.ts",
+      "module": "./lib/esm/index.js",
+      "import": "./lib/esm/index.mjs",
+      "default": "./lib/index.js"
+    }
+  },
   "keywords": [
     "react",
     "liveblocks",
@@ -23,7 +33,7 @@
   },
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@liveblocks/client": "0.15.5",
+    "@liveblocks/client": "0.15.7",
     "react": "^16.14.0 || ^17"
   },
   "devDependencies": {
@@ -31,7 +41,9 @@
     "@babel/preset-env": "^7.12.16",
     "@babel/preset-react": "^7.12.13",
     "@babel/preset-typescript": "^7.12.16",
-    "@rollup/plugin-node-resolve": "^11.2.0",
+    "@rollup/plugin-babel": "^5.3.1",
+    "@rollup/plugin-node-resolve": "^11.2.1",
+    "@rollup/plugin-typescript": "^8.3.1",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.5",
     "@types/jest": "^26.0.20",
@@ -43,7 +55,8 @@
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1",
     "rollup": "^2.39.0",
-    "rollup-plugin-typescript2": "^0.30.0",
+    "rollup-plugin-dts": "^4.2.0",
+    "rollup-plugin-esbuild": "^4.8.2",
     "typescript": "^4.1.5",
     "whatwg-fetch": "^3.6.2"
   },
