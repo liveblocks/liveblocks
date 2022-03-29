@@ -166,6 +166,11 @@ export type User<TPresence extends Presence = Presence> = {
    * The user presence.
    */
   readonly presence?: TPresence;
+
+  /**
+   * @internal
+   */
+  _hasReceivedInitialPresence?: boolean;
 };
 
 export type Presence = {
