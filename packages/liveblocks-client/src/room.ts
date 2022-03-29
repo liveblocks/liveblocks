@@ -74,7 +74,7 @@ function makeOthers<T extends Presence>(presenceMap: {
   [key: number]: User<T>;
 }): Others<T> {
   const array = Object.values(presenceMap).map((presence) => {
-    const { initialFullPresenceReceived, ...publicKeys } = presence;
+    const { _hasReceivedInitialPresence, ...publicKeys } = presence;
     return publicKeys;
   });
 
@@ -785,7 +785,7 @@ See v0.13 release notes for more information.
     if (
       message.targetActor === undefined &&
       user != null &&
-      !user.initialFullPresenceReceived
+      !user._hasReceivedInitialPresence
     ) {
       return undefined;
     }
@@ -794,7 +794,7 @@ See v0.13 release notes for more information.
       state.users[message.actor] = {
         connectionId: message.actor,
         presence: message.data,
-        initialFullPresenceReceived: true,
+        _hasReceivedInitialPresence: true,
       };
     } else {
       state.users[message.actor] = {
@@ -805,7 +805,7 @@ See v0.13 release notes for more information.
           ...user.presence,
           ...message.data,
         },
-        initialFullPresenceReceived: true,
+        _hasReceivedInitialPresence: true,
       };
     }
 
@@ -859,7 +859,7 @@ See v0.13 release notes for more information.
       connectionId: message.actor,
       info: message.info,
       id: message.id,
-      initialFullPresenceReceived: true,
+      _hasReceivedInitialPresence: true,
     };
 
     if (state.me) {

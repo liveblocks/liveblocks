@@ -170,7 +170,7 @@ export type User<TPresence extends Presence = Presence> = {
   /**
    * @internal
    */
-  initialFullPresenceReceived?: boolean;
+  _hasReceivedInitialPresence?: boolean;
 };
 
 export type Presence = {
