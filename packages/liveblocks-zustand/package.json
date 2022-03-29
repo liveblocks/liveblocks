@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "0.15.7",
+  "version": "0.15.8",
   "sideEffects": false,
   "description": "",
   "main": "./lib/index.js",
@@ -36,7 +36,7 @@
     "directory": "packages/liveblocks-zustand"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.15.7",
+    "@liveblocks/client": "0.15.8",
     "zustand": "^3"
   },
   "devDependencies": {
