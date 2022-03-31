@@ -21,7 +21,7 @@ import { StorageUpdate } from "./types";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
-  #map: Map<TKey, AbstractCrdt>;
+  private _map: Map<TKey, AbstractCrdt>;
 
   constructor(
     entries?: readonly (readonly [TKey, TValue])[] | null | undefined
@@ -35,9 +35,9 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
         mappedEntries.push([entry[0], value]);
       }
 
-      this.#map = new Map(mappedEntries);
+      this._map = new Map(mappedEntries);
     } else {
-      this.#map = new Map();
+      this._map = new Map();
     }
   }
 
@@ -66,7 +66,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     ops.push(op);
 
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this._map) {
       ops.push(...value._serialize(this._id, key, doc));
     }
 
@@ -106,7 +106,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
       const child = deserialize(entry, parentToChildren, doc);
       child._setParentLink(map, crdt.parentKey);
-      map.#map.set(crdt.parentKey, child);
+      map._map.set(crdt.parentKey, child);
     }
 
     return map;
@@ -118,7 +118,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this._map) {
       if (isCrdt(value)) {
         value._attach(doc.generateId(), doc);
       }
@@ -143,7 +143,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       return { modified: false };
     }
 
-    const previousValue = this.#map.get(key);
+    const previousValue = this._map.get(key);
     let reverse: Op[];
     if (previousValue) {
       reverse = previousValue._serialize(this._id!, key);
@@ -154,7 +154,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     child._setParentLink(this, key);
     child._attach(id, this._doc);
-    this.#map.set(key, child);
+    this._map.set(key, child);
 
     return {
       modified: {
@@ -172,7 +172,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   _detach() {
     super._detach();
 
-    for (const item of this.#map.values()) {
+    for (const item of this._map.values()) {
       item._detach();
     }
   }
@@ -183,9 +183,9 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   _detachChild(child: AbstractCrdt): ApplyResult {
     const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this._map) {
       if (value === (child as any)) {
-        this.#map.delete(key);
+        this._map.delete(key);
       }
     }
 
@@ -217,7 +217,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
    */
   get(key: TKey): TValue | undefined {
-    const value = this.#map.get(key);
+    const value = this._map.get(key);
     if (value == undefined) {
       return undefined;
     }
@@ -230,7 +230,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue) {
-    const oldValue = this.#map.get(key);
+    const oldValue = this._map.get(key);
 
     if (oldValue) {
       oldValue._detach();
@@ -239,7 +239,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     const item = selfOrRegister(value);
     item._setParentLink(this, key);
 
-    this.#map.set(key, item);
+    this._map.set(key, item);
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -266,7 +266,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * Returns the number of elements in the LiveMap.
    */
   get size() {
-    return this.#map.size;
+    return this._map.size;
   }
 
   /**
@@ -274,7 +274,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * @param key The key of the element to test for presence.
    */
   has(key: TKey): boolean {
-    return this.#map.has(key);
+    return this._map.has(key);
   }
 
   /**
@@ -283,14 +283,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
-    const item = this.#map.get(key);
+    const item = this._map.get(key);
 
     if (item == null) {
       return false;
     }
 
     item._detach();
-    this.#map.delete(key);
+    this._map.delete(key);
 
     if (this._doc && item._id) {
       const storageUpdates = new Map<string, StorageUpdate>();
@@ -319,7 +319,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * Returns a new Iterator object that contains the [key, value] pairs for each element.
    */
   entries(): IterableIterator<[string, TValue]> {
-    const innerIterator = this.#map.entries();
+    const innerIterator = this._map.entries();
 
     return {
       [Symbol.iterator]: function () {
@@ -355,14 +355,14 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
    * Returns a new Iterator object that contains the keys for each element.
    */
   keys(): IterableIterator<TKey> {
-    return this.#map.keys();
+    return this._map.keys();
   }
 
   /**
    * Returns a new Iterator object that contains the values for each element.
    */
   values(): IterableIterator<TValue> {
-    const innerIterator = this.#map.values();
+    const innerIterator = this._map.values();
 
     return {
       [Symbol.iterator]: function () {
