@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useReducer } from 'react';
 
 /**
  * Trigger a re-render programmatically, without changing the component's
@@ -15,11 +15,12 @@ import { useCallback, useState } from 'react';
  *
  */
 export default function useRerender(): () => void {
-  const [, update] = useState<unknown>(null);
-  return useCallback(() => {
+  const [, update] = useReducer(
     // NOTE: This assigns a new, empty, object on every call, which forces
     // a state update, and thus a re-render of the calling component.
-    update({});
-  }, []);
+    () => ({}),
+    {}
+  );
+  return update;
 }
 
