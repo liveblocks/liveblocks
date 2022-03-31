@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useReducer } from "react";
 
 /**
  * Trigger a re-render programmatically, without changing the component's
@@ -23,4 +23,3 @@ export default function useRerender(): () => void {
   );
   return update;
 }
-
