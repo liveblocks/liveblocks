@@ -124,7 +124,7 @@ export type AuthenticationToken = {
 };
 
 //
-// TODO: The `count` and `toArray()` methods are here for backward-compatible
+// NOTE: The `count` and `toArray()` methods are here for backward-compatible
 // reasons only. We want to eventually deprecate these APIs in favor of
 // `length` and just accessing the array directly here.
 //
@@ -139,7 +139,7 @@ type ReadonlyArrayish<T> = readonly T[] & {
  * A read-only array containing all other users connected to the room.
  */
 export type Others<P extends Presence = Presence> =
-  // TODO: Make this a normal `ReadonlyArray<User<P>>` later
+  // NOTE: This will become a normal `ReadonlyArray<User<P>>` later
   ReadonlyArrayish<User<P>>;
 
 /**
