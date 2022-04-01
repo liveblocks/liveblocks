@@ -16,10 +16,11 @@ import { useReducer } from "react";
  */
 export default function useRerender(): () => void {
   const [, update] = useReducer(
-    // NOTE: This assigns a new, empty, object on every call, which forces
-    // a state update, and thus a re-render of the calling component.
-    () => ({}),
-    {}
+    // This implementation works by incrementing a hidden counter value that is
+    // never consumed. Simply incrementing the counter changes the component's
+    // state and, thus, trigger a re-render.
+    (x: number): number => x + 1,
+    0
   );
   return update;
 }
