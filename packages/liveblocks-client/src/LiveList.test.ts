@@ -211,7 +211,7 @@ describe("LiveList", () => {
 
   describe("insert", () => {
     it("insert LiveObject at position 0", async () => {
-      let { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
         [
@@ -252,7 +252,7 @@ describe("LiveList", () => {
 
   describe("delete", () => {
     it("delete first item", async () => {
-      let {
+      const {
         storage: doc,
         assert,
         assertUndoRedo,
@@ -721,7 +721,7 @@ describe("LiveList", () => {
   });
 
   it("list.push record then delete", async () => {
-    let {
+    const {
       storage: doc,
       assert,
       assertUndoRedo,

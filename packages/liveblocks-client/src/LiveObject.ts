@@ -298,7 +298,7 @@ export class LiveObject<
       }
     }
 
-    let updateDelta: LiveObjectUpdateDelta<T> = {};
+    const updateDelta: LiveObjectUpdateDelta<T> = {};
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
         this.#propToLastUpdate.set(key, op.opId!);

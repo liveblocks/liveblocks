@@ -261,7 +261,7 @@ function patchImmutableNode(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
-        let newState = Object.assign({}, state);
+        const newState = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -325,7 +325,7 @@ function patchImmutableNode(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        let newState = Object.assign({}, state);
+        const newState = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {

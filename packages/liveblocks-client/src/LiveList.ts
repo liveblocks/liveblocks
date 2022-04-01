@@ -152,8 +152,8 @@ export class LiveList<T> extends AbstractCrdt {
     if (index !== -1) {
       if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
-        let before = this.#items[index] ? this.#items[index][1] : undefined;
-        let after = this.#items[index + 1]
+        const before = this.#items[index] ? this.#items[index][1] : undefined;
+        const after = this.#items[index + 1]
           ? this.#items[index + 1][1]
           : undefined;
 
@@ -315,8 +315,10 @@ export class LiveList<T> extends AbstractCrdt {
       );
     }
 
-    let before = this.#items[index - 1] ? this.#items[index - 1][1] : undefined;
-    let after = this.#items[index] ? this.#items[index][1] : undefined;
+    const before = this.#items[index - 1]
+      ? this.#items[index - 1][1]
+      : undefined;
+    const after = this.#items[index] ? this.#items[index][1] : undefined;
     const position = makePosition(before, after);
 
     const value = selfOrRegister(element);
@@ -478,10 +480,10 @@ export class LiveList<T> extends AbstractCrdt {
 
   clear() {
     if (this._doc) {
-      let ops: Op[] = [];
-      let reverseOps: Op[] = [];
+      const ops: Op[] = [];
+      const reverseOps: Op[] = [];
 
-      let updateDelta: LiveListUpdateDelta[] = [];
+      const updateDelta: LiveListUpdateDelta[] = [];
 
       let i = 0;
       for (const item of this.#items) {
