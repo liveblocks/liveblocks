@@ -1084,7 +1084,10 @@ describe("room", () => {
 
     test("disconnect and reconnect should keep user current presence", async () => {
       const { machine, refMachine, reconnect, ws } =
-        await prepareStorageTest<{}>([createSerializedObject("0:0", {})], 1);
+        await prepareStorageTest<unknown>(
+          [createSerializedObject("0:0", {})],
+          1
+        );
 
       machine.updatePresence({ x: 1 });
 
