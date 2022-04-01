@@ -5,6 +5,10 @@ module.exports = {
   plugins: ["@typescript-eslint"],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
+    // Turn this one off for now. It would be a good idea to re-enable this
+    // check later on!
+    "@typescript-eslint/no-explicit-any": "off",
+
     "no-restricted-syntax": [
       "error",
       {
