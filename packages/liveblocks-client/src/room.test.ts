@@ -10,19 +10,17 @@ import {
   FIRST_POSITION,
   prepareIsolatedStorageTest,
   reconnect,
-  SECOND_POSITION,
   waitFor,
 } from "../test/utils";
 import {
   ClientMessageType,
   CrdtType,
   SerializedCrdtWithId,
-  ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
-import { makeStateMachine, Effects, defaultState, createRoom } from "./room";
+import { makeStateMachine, defaultState, createRoom } from "./room";
 import { Authentication, Others } from "./types";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -751,10 +749,9 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 1 })], 1);
+      const { storage, assert, undo, batch } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
@@ -826,7 +823,6 @@ describe("room", () => {
         batch,
         subscribe,
         refSubscribe,
-        refStorage,
         updatePresence,
       } = await prepareStorageTest<{
         items: LiveList<string>;

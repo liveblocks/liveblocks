@@ -17,7 +17,7 @@ async function fetchMock() {
   return new Response(JSON.stringify({ token }));
 }
 
-async function authEndpointCallback(room: string) {
+async function authEndpointCallback() {
   return {
     token,
   };

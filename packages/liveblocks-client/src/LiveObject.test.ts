@@ -21,7 +21,7 @@ describe("LiveObject", () => {
     });
 
     it("should be the associated room id if attached", async () => {
-      const { root, assert } = await prepareIsolatedStorageTest(
+      const { root } = await prepareIsolatedStorageTest(
         [createSerializedObject("root", {})],
         1
       );
