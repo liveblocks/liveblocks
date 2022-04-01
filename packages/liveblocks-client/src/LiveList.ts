@@ -37,7 +37,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id, item]: [id: string, item: SerializedList],
+    [id]: [id: string, item: SerializedList],
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
@@ -107,7 +107,7 @@ export class LiveList<T> extends AbstractCrdt {
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [item, position] of this.#items) {
+    for (const [item] of this.#items) {
       item._attach(doc.generateId(), doc);
     }
   }
@@ -130,7 +130,7 @@ export class LiveList<T> extends AbstractCrdt {
     id: string,
     key: string,
     child: AbstractCrdt,
-    opId: string,
+    _opId: string,
     isLocal: boolean
   ): ApplyResult {
     if (this._doc == null) {

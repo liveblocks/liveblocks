@@ -123,7 +123,7 @@ export class LiveObject<
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [key, value] of this.#map) {
+    for (const [_key, value] of this.#map) {
       if (value instanceof AbstractCrdt) {
         value._attach(doc.generateId(), doc);
       }
