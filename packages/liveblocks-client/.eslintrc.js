@@ -9,6 +9,12 @@ module.exports = {
     // check later on!
     "@typescript-eslint/no-explicit-any": "off",
 
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      // Unused variables are fine if they start with an underscore
+      { varsIgnorePattern: "^_.*" },
+    ],
+
     "no-restricted-syntax": [
       "error",
       {
