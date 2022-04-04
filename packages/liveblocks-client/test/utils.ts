@@ -162,12 +162,13 @@ const defaultContext = {
 async function prepareRoomWithStorage<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
-  onSend: (messages: ClientMessage[]) => void = () => {}
+  onSend: (messages: ClientMessage[]) => void = () => {},
+  defaultStorage = {}
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({});
+  const state = defaultState({}, defaultStorage);
   const machine = makeStateMachine(state, defaultContext, effects);
   const ws = new MockWebSocket("");
 
@@ -196,11 +197,18 @@ async function prepareRoomWithStorage<T>(
 
 export async function prepareIsolatedStorageTest<T>(
   items: SerializedCrdtWithId[],
-  actor: number = 0
+  actor: number = 0,
+  defaultStorage = {}
 ) {
+  const messagesSent: ClientMessage[] = [];
+
   const { machine, storage, ws } = await prepareRoomWithStorage<T>(
     items,
-    actor
+    actor,
+    (messages: ClientMessage[]) => {
+      messagesSent.push(...messages);
+    },
+    defaultStorage
   );
 
   return {
@@ -211,6 +219,9 @@ export async function prepareIsolatedStorageTest<T>(
     redo: machine.redo,
     ws,
     assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
+    assertMessagesSent: (messages: ClientMessage[]) => {
+      expect(messagesSent).toEqual(messages);
+    },
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({
