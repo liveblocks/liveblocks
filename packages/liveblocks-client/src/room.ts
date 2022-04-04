@@ -929,8 +929,11 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.InitialStorageState: {
+          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+          const offlineOps = new Map(state.offlineOperations);
           createOrUpdateRootFromMessage(subMessage);
-          applyAndSendOfflineOps();
+          applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
           break;
         }
@@ -1101,14 +1104,14 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function applyAndSendOfflineOps() {
-    if (state.offlineOperations.size === 0) {
+  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+    if (offlineOps.size === 0) {
       return;
     }
 
     const messages: ClientMessage[] = [];
 
-    const ops = Array.from(state.offlineOperations.values());
+    const ops = Array.from(offlineOps.values());
 
     const result = apply(ops, true);
 
