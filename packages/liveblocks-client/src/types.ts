@@ -128,12 +128,23 @@ export type AuthenticationToken = {
 // reasons only. We want to eventually deprecate these APIs in favor of
 // `length` and just accessing the array directly here.
 //
-type ReadonlyArrayWithLegacyMethods<T> = readonly T[] & {
-  // @deprecated
-  readonly count: number;
-  // @deprecated
-  toArray(): T[];
-};
+// prettier-ignore
+type ReadonlyArrayWithLegacyMethods<T> =
+  // Base type
+  readonly T[]
+  &
+  // Legacy methods
+  // (These will be removed in a future release.)
+  {
+    /**
+     * @deprecated Prefer the normal .length property on arrays.
+     */
+    readonly count: number;
+    /**
+     * @deprecated Calling .toArray() is no longer needed
+     */
+    toArray(): T[];
+  };
 
 /**
  * A read-only array containing all other users connected to the room.
