@@ -12,6 +12,7 @@ import {
   reconnect,
   SECOND_POSITION,
   waitFor,
+  withDateNow,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -36,16 +37,6 @@ const defaultContext = {
     url: "/api/auth",
   } as Authentication,
 };
-
-function withDateNow(now: number, callback: () => void) {
-  const realDateNow = Date.now.bind(global.Date);
-  global.Date.now = jest.fn(() => now);
-  try {
-    callback();
-  } finally {
-    global.Date.now = realDateNow;
-  }
-}
 
 describe("room / auth", () => {
   const server = setupServer(

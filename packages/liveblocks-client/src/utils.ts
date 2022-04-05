@@ -299,3 +299,27 @@ export function findNonSerializableValue(
 
   return false;
 }
+
+export function isTokenValid(token: string | null) {
+  if (token === null) {
+    return false;
+  }
+
+  const tokenParts = token.split(".");
+  if (tokenParts.length !== 3) {
+    return false;
+  }
+
+  const data = JSON.parse(atob(tokenParts[1]));
+  if (typeof data.exp !== "number") {
+    return false;
+  }
+
+  const now = Date.now();
+
+  if (now / 1000 > data.exp - 300) {
+    return false;
+  }
+
+  return true;
+}
