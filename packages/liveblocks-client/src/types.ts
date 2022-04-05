@@ -128,7 +128,7 @@ export type AuthenticationToken = {
 // reasons only. We want to eventually deprecate these APIs in favor of
 // `length` and just accessing the array directly here.
 //
-type ReadonlyArrayish<T> = readonly T[] & {
+type ReadonlyArrayWithLegacyMethods<T> = readonly T[] & {
   // @deprecated
   readonly count: number;
   // @deprecated
@@ -140,7 +140,7 @@ type ReadonlyArrayish<T> = readonly T[] & {
  */
 export type Others<P extends Presence = Presence> =
   // NOTE: This will become a normal `ReadonlyArray<User<P>>` later
-  ReadonlyArrayish<User<P>>;
+  ReadonlyArrayWithLegacyMethods<User<P>>;
 
 /**
  * Represents a user connected in a room. Treated as immutable.
