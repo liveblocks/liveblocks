@@ -78,19 +78,20 @@ function makeOthers<T extends Presence>(presenceMap: {
     return publicKeys;
   });
 
-  const arrayish: Others<T> = Object.assign(
-    array,
-
-    // NOTE: We extend the array instance with custom `count` and `toArray()`
-    // methods here. This is done for backward-compatible reasons. These APIs
-    // will be deprecated in a future version.
-    {
-      count: array.length,
-      toArray: () => array,
-    }
-  );
-
-  return Object.freeze(arrayish);
+  return {
+    get count() {
+      return array.length;
+    },
+    [Symbol.iterator]() {
+      return array[Symbol.iterator]();
+    },
+    map(callback) {
+      return array.map(callback);
+    },
+    toArray() {
+      return array;
+    },
+  };
 }
 
 function log(...params: any[]) {
