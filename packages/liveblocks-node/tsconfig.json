@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
-    "module": "ES2020",
+    "target": "es2015",
+    "module": "es2020",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
