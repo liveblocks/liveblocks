@@ -33,7 +33,8 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "test-ci": "jest"
   },
   "license": "Apache-2.0",
   "devDependencies": {
