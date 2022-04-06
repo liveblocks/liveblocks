@@ -131,7 +131,7 @@ function prepareClientAndBasicStore() {
   );
 }
 
-async function prepareWithStorage<T extends Object>(
+async function prepareWithStorage<T extends Record<string, unknown>>(
   reducer: Reducer<T>,
   preloadedState: T,
   options: {
