@@ -2,8 +2,7 @@ import { createClient } from "@liveblocks/client";
 import { LiveblocksState, Mapping, enhancer, actions } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-
-import { configureStore, Reducer, Store } from "@reduxjs/toolkit";
+import { configureStore, Reducer } from "@reduxjs/toolkit";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 import {
   ClientMessageType,
