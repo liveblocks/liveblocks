@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.15.8",
+  "version": "0.15.9",
   "description": "",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",

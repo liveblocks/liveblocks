@@ -123,27 +123,35 @@ export type AuthenticationToken = {
   info?: any;
 };
 
+//
+// NOTE: The `count` and `toArray()` methods are here for backward-compatible
+// reasons only. We want to eventually deprecate these APIs in favor of
+// `length` and just accessing the array directly here.
+//
+// prettier-ignore
+type ReadonlyArrayWithLegacyMethods<T> =
+  // Base type
+  readonly T[]
+  &
+  // Legacy methods
+  // (These will be removed in a future release.)
+  {
+    /**
+     * @deprecated Prefer the normal .length property on arrays.
+     */
+    readonly count: number;
+    /**
+     * @deprecated Calling .toArray() is no longer needed
+     */
+    toArray(): T[];
+  };
+
 /**
- * Represents all the other users connected in the room. Treated as immutable.
+ * A read-only array containing all other users connected to the room.
  */
-export interface Others<TPresence extends Presence = Presence> {
-  /**
-   * Number of other users in the room.
-   */
-  readonly count: number;
-  /**
-   * Returns a new Iterator object that contains the users.
-   */
-  [Symbol.iterator](): IterableIterator<User<TPresence>>;
-  /**
-   * Returns the array of connected users in room.
-   */
-  toArray(): User<TPresence>[];
-  /**
-   * This function let you map over the connected users in the room.
-   */
-  map<U>(callback: (user: User<TPresence>) => U): U[];
-}
+export type Others<P extends Presence = Presence> =
+  // NOTE: This will become a normal `ReadonlyArray<User<P>>` later
+  ReadonlyArrayWithLegacyMethods<User<P>>;
 
 /**
  * Represents a user connected in a room. Treated as immutable.

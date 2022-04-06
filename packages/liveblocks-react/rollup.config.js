@@ -10,7 +10,7 @@ import dts from "rollup-plugin-dts";
 import { promises } from "fs";
 const createBabelConfig = require("./babel.config");
 
-const extensions = [".tsx"];
+const extensions = [".tsx", ".ts"];
 
 const external = ["react", "@liveblocks/client"];
 

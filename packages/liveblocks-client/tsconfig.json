@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ES2015",
-    "module": "ES2020",
+    "target": "es2015",
+    "module": "es2020",
     "outDir": "./lib/esm",
     "strict": true,
     "esModuleInterop": true,
@@ -10,7 +10,7 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "lib": ["ES2019", "dom", "esnext"],
+    "lib": ["es2019", "dom", "esnext"],
     "stripInternal": true
   },
   "include": ["./src/**/*", "./test/**/*.ts"],
