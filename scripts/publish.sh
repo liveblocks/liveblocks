@@ -15,6 +15,40 @@ err () {
     echo "$@" >&2
 }
 
+usage () {
+    err "usage: publish.sh [-V <version> [-t <tag>] [-h]"
+    # err "usage: publish.sh [-Vtnh]"
+    err
+    err ""
+    err "Publish a new version of the Liveblocks packages to NPM."
+    err
+    err "Options:"
+    err "-V <version>  Set version to publish (default: prompt)"
+    err "-t <tag>      Sets the tag to use on NPM (default: latest)"
+    # err "-n            Dry run"
+    err "-h            Show this help"
+}
+
+VERSION=
+TAG=
+# dryrun=0
+# while getopts V:t:nh flag; do
+while getopts V:t:h flag; do
+    case "$flag" in
+        V) VERSION=$OPTARG;;
+        t) TAG=$OPTARG;;
+        # n) dryrun=1;;
+        *) usage; exit 2;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ "$#" -ne 0 ]; then
+    err "Unknown arguments: $@"
+    usage
+    exit 2
+fi
+
 check_git_toolbelt_installed () {
     # Test existence of a random toolbelt command
     if ! which -s git-root; then
@@ -124,28 +158,24 @@ check_all_the_things () {
     check_git_toolbelt_installed
     check_jq_installed
     check_moreutils_installed
-    # check_current_branch   # TODO: Put back
+    # check_current_branch   # TODO: Put back, or allow custom branches
     check_up_to_date_with_upstream
     check_cwd
     check_no_local_changes
     check_npm_stuff_is_stable
 }
 
-check_all_the_things 
+check_all_the_things
 
 echo "The current version is: $(jq -r .version "${PACKAGE_DIRS[0]}/package.json")"
 
-VERSION=""
-while true; do
-    read -p "Enter a new version: " answer
-    if ! echo "$answer" | grep -Ee "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"; then
-        err "Invalid version number: $answer"
+while ! echo "$VERSION" | grep -Ee "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"; do
+    if [ -n "$VERSION" ]; then
+        err "Invalid version number: $VERSION"
         err "Please try again."
         err ""
-    else
-        VERSION="$answer"
-        break
     fi
+    read -p "Enter a new version: " VERSION
 done
 
 # Write the same new version to all package.json files
