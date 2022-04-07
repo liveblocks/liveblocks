@@ -23,4 +23,4 @@ This example shows how to build live cursors without relying on a front-end fram
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
-- Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
