@@ -144,9 +144,10 @@ check_no_local_changes () {
 }
 
 check_npm_stuff_is_stable () {
-    for pkg in ${PACKAGE_DIRS[@]}; do
-        echo "Rebuilding node_modules inside $pkg (this may take a while)..."
-        ( cd "$pkg" && (
+    for pkgdir in ${PACKAGE_DIRS[@]}; do
+        pkgname="$(npm_pkgname "$pkgdir")"
+        echo "Rebuilding node_modules for $pkgname (this may take a while)..."
+        ( cd "$pkgdir" && (
             # Before bumping anything, first make sure that all projects have
             # a clean and stable node_modules directory and lock files!
             rm -rf node_modules
@@ -161,7 +162,7 @@ check_npm_stuff_is_stable () {
 
             if git is-dirty; then
                 err "I just removed node_modules and reinstalled all package dependencies"
-                err "inside $pkg, and found unexpected changes in the following files:"
+                err "inside $pkgdir, and found unexpected changes in the following files:"
                 err ""
                 ( cd "$ROOT" && git modified )
                 err ""
@@ -238,7 +239,8 @@ build_pkg () {
 
 # Turns "packages/liveblocks-client" => "@liveblocks/client"
 npm_pkgname () {
-    echo "@liveblocks/${1#"packages/liveblocks-"}"
+    PKGDIR="$1"
+    echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
 }
 
 npm_pkg_exists () {
@@ -247,8 +249,7 @@ npm_pkg_exists () {
 }
 
 publish_to_npm () {
-    PKGDIR="$1"
-    PKGNAME="$(npm_pkgname "$1")"
+    PKGNAME="$1"
 
     if npm_pkg_exists "$PKGNAME"; then
         err ""
@@ -286,34 +287,46 @@ commit_to_git () {
 
 # First build and publish the primary package
 ( cd "$PRIMARY_PKG" && (
+    pkgname="$(npm_pkgname "$PRIMARY_PKG")"
     echo "==> Building and publishing $PRIMARY_PKG"
      bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
      build_pkg
-     publish_to_npm "$PRIMARY_PKG"
+     publish_to_npm "$pkgname"
      commit_to_git "$PRIMARY_PKG" 
 ) )
 
 # Then, build and publish all the other packages
-for pkg in ${SECONDARY_PKGS}; do
-    echo "==> Building and publishing ${pkg}"
-    ( cd "$pkg" && (
-        bump_version_in_pkg "$pkg" "$VERSION"
+for pkgdir in ${SECONDARY_PKGS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    echo "==> Building and publishing ${pkgname}"
+    ( cd "$pkgdir" && (
+        bump_version_in_pkg "$pkgdir" "$VERSION"
         build_pkg
-        publish_to_npm "$pkg"
+        publish_to_npm "$pkgname"
     ) )
 done
-commit_to_git "$pkg" 
+commit_to_git ${SECONDARY_PKGS[@]}
 
-echo "==> Pushing changes to GitHub"
-git push-current
-
-# Open browser tab to create new release
-open "${GITHUB_URL}/releases/new?tag=${VERSION}&target=$(git sha)&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
-echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
 echo ""
-echo "You can double-check the published releases here:"
+echo "All published!"
+echo ""
+echo "You can double-check the NPM releases here:"
 echo "  - https://www.npmjs.com/package/@liveblocks/client"
 echo "  - https://www.npmjs.com/package/@liveblocks/react"
 echo "  - https://www.npmjs.com/package/@liveblocks/redux"
 echo "  - https://www.npmjs.com/package/@liveblocks/zustand"
 echo ""
+
+echo "==> Pushing changes to GitHub"
+URL="${GITHUB_URL}/releases/new?tag=${VERSION}&target=$(git current-branch)&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
+if ! git push-current; then
+    err "WARNING: Could not push this branch to GitHub!"
+    err "Please manually fix that now, before writing the release notes!"
+    err
+    err "When you're done, open this link to write the release notes:"
+    err "$URL"
+    err
+else
+    echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
+    open "$URL"
+fi
