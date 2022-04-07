@@ -256,8 +256,10 @@ publish_to_npm () {
 
     if npm_pkg_exists "$PKGNAME"; then
         err ""
+        err "===================================================================="
         err "WARNING: Package $PKGNAME @ $VERSION already exists on NPM!"
         err "Will skip this for now and continue with the rest of the script..."
+        err "===================================================================="
         err ""
         return
     fi
