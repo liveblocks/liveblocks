@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./Avatar.module.css";
-import { AVATAR_SIZE } from "./constants";
+import { AVATAR_SIZE } from "../constants";
 
 export default function Avatar({
   picture,
