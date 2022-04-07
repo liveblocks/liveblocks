@@ -133,15 +133,10 @@ export function useMyPresence<T extends Presence>(): [
 ] {
   const room = useRoom();
   const presence = room.getPresence<T>();
-  const [, update] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
-    function onMyPresenceChange() {
-      update((x) => x + 1);
-    }
-
-    const unsubscribe = room.subscribe("my-presence", onMyPresenceChange);
-
+    const unsubscribe = room.subscribe("my-presence", rerender);
     return () => {
       unsubscribe();
     };
@@ -203,16 +198,10 @@ export function useUpdateMyPresence<T extends Presence>(): (
  */
 export function useOthers<T extends Presence>(): Others<T> {
   const room = useRoom();
-
-  const [, update] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
-    function onOthersChange() {
-      update((x) => x + 1);
-    }
-
-    const unsubscribe = room.subscribe("others", onOthersChange);
-
+    const unsubscribe = room.subscribe("others", rerender);
     return () => {
       unsubscribe();
     };
@@ -267,7 +256,6 @@ export function useErrorListener(callback: (er: Error) => void) {
     const listener = (e: Error) => savedCallback.current(e);
 
     const unsubscribe = room.subscribe("error", listener);
-
     return () => {
       unsubscribe();
     };
@@ -307,7 +295,6 @@ export function useEventListener<TEvent>(
       savedCallback.current(e);
 
     const unsubscribe = room.subscribe("event", listener);
-
     return () => {
       unsubscribe();
     };
