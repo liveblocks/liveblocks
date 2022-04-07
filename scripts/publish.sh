@@ -187,7 +187,7 @@ check_all_the_things () {
     check_up_to_date_with_upstream
     check_cwd
     check_no_local_changes
-    # check_npm_stuff_is_stable # TODO: Put back, this is disabled for speed/testing only
+    check_npm_stuff_is_stable
 }
 
 check_all_the_things
