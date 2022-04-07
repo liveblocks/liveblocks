@@ -34,7 +34,7 @@
   "license": "Apache-2.0",
   "peerDependencies": {
     "@liveblocks/client": "0.15.10",
-    "react": "^16.14.0 || ^17"
+    "react": ">=16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
