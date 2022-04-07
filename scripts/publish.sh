@@ -149,7 +149,7 @@ check_npm_stuff_is_stable () {
                 err "I just removed node_modules and reinstalled all package dependencies"
                 err "inside $pkg, and found unexpected changes in the following files:"
                 err ""
-                git modified
+                ( cd "$ROOT" && git modified )
                 err ""
                 err "Please fix those issues first."
                 exit 2
@@ -177,7 +177,9 @@ check_all_the_things () {
 
 check_all_the_things
 
-echo "The current version is: $(jq -r .version "${PACKAGE_DIRS[0]}/package.json")"
+if [ -z "$VERSION" ]; then
+    echo "The current version is: $(jq -r .version "${PACKAGE_DIRS[0]}/package.json")"
+fi
 
 while ! is_valid_version "$VERSION"; do
     if [ -n "$VERSION" ]; then
