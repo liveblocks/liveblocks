@@ -15,7 +15,7 @@
 
 This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Nuxt.js](https://nuxtjs.org/).
 
-![Live Cursors](.github/assets/examples/live-cursors.png)
+![Live Cursors](/.github/assets/examples/live-cursors.png)
 
 ## Getting started
 

@@ -16,7 +16,7 @@
 
 This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [SvelteKit](https://kit.svelte.dev/).
 
-![Live Cursors](.github/assets/examples/live-cursors.png)
+![Live Cursors](/.github/assets/examples/live-cursors.png)
 
 ## Getting started
 

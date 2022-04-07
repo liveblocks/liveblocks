@@ -16,7 +16,7 @@
 
 This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-![Live Cursors](.github/assets/examples/live-cursors-reactions.png)
+![Live Cursors](/.github/assets/examples/live-cursors-reactions.png)
 
 ## Getting started
 
