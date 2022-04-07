@@ -6,7 +6,7 @@
 
 <br/>
 
-## Live Cursors
+# Live Cursors
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors">
@@ -20,7 +20,7 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 
 ![live-cursors-reactions](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-live-cursors-chat-reactions.png&w=1200&q=90)
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
@@ -28,6 +28,6 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 - Create an `.env.local` file and add your **public** key as the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-#### CodeSandbox
+### CodeSandbox
 
 After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).

@@ -6,7 +6,7 @@
 
 <br/>
 
-## Whiteboard
+# Whiteboard
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-whiteboard">
@@ -19,7 +19,7 @@ This example shows how to build a collaborative whiteboard with [Liveblocks](htt
 
 ![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)

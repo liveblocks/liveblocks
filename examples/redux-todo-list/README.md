@@ -6,7 +6,7 @@
 
 <br/>
 
-## To-do List
+# To-do List
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-todo-list">
@@ -22,7 +22,7 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 ![todo-list-gif](https://liveblocks.io/images/docs/tutorials/todo-list/tutorial-todo-list-1.gif)
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
@@ -30,6 +30,6 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Replace `PUBLIC_KEY` in [`store.js`](./examples/redux-todo-list/src/store.js) by your **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 
-#### Tutorial
+### Tutorial
 
 Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react-redux) to build it from scratch.

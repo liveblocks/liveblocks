@@ -6,7 +6,7 @@
 
 <br/>
 
-## Dashboard
+# Dashboard
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-dashboard">
@@ -17,7 +17,7 @@
 
 This example shows how to build collaborative data visualization with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Recharts](https://recharts.org).
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)

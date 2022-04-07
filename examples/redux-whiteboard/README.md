@@ -6,7 +6,7 @@
 
 <br/>
 
-## Whiteboard
+# Whiteboard
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-whiteboard">
@@ -20,7 +20,7 @@ This example shows how to build a collaborative whiteboard with [Liveblocks](htt
 
 ![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
@@ -28,6 +28,6 @@ This example shows how to build a collaborative whiteboard with [Liveblocks](htt
 - Replace `PUBLIC_KEY` in [`store.js`](./examples/redux-whiteboard/src/store.js) by your **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 
-#### Tutorial
+### Tutorial
 
 Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-redux) to build it from scratch.

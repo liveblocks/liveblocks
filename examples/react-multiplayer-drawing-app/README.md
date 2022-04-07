@@ -6,7 +6,7 @@
 
 <br/>
 
-## Multiplayer Drawing
+# Multiplayer Drawing
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/react-multiplayer-drawing-app">
@@ -17,7 +17,7 @@
 
 This example shows how to build a collaborative drawing app with [Liveblocks](https://liveblocks.io) and [React](https://reactjs.org/).
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)

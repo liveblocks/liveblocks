@@ -6,7 +6,7 @@
 
 <br/>
 
-## Live Cursors
+# Live Cursors
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors">
@@ -17,7 +17,7 @@
 
 This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Nuxt.js](https://nuxtjs.org/).
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)

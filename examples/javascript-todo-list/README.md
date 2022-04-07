@@ -6,7 +6,7 @@
 
 <br/>
 
-## To-do List
+# To-do List
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list">
@@ -19,7 +19,7 @@ This example shows how to build a collaborative to-do list without relying on a 
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
@@ -27,6 +27,6 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./examples/javascript-todo-list/app.js) by your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
 
-#### Tutorial
+### Tutorial
 
 Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/javascript) to build it from scratch.

@@ -6,7 +6,7 @@
 
 <br/>
 
-## Live Cursors
+# Live Cursors
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/express-javascript-live-cursors">
@@ -17,7 +17,7 @@
 
 This example shows how to build live cursors without relying on a front-end framework—using [Express](https://expressjs.com/) for authentication and [esbuild](https://esbuild.github.io/) for bundling.
 
-### Getting started
+## Getting started
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
