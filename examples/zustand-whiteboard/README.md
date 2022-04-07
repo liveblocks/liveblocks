@@ -1,27 +1,33 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/icon-192x192.png" height="96">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
+<br/>
 
-This project shows how to build a collaborative online whiteboard app with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+## Whiteboard
 
-You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-zustand) to build it from scratch.
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/zustand-message?style=flat&color=e47" alt="Zustand" />
+</p>
+
+This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
 
 ![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
 
-## Getting started
-
-### Run examples locally
+### Getting started
 
 - Install all dependencies with `npm install`
-
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `PUBLIC_KEY` in [`store.js`](./examples/zustand-whiteboard/src/store.js) by your **public** key
+- Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 
-- Copy your public key from the [administration](https://liveblocks.io/dashboard/apikeys)
+#### Tutorial
 
-- Replace the constant PUBLIC_KEY in `src/store.js` with your own public key.
-
-- Run `npm start` and go to [http://localhost:3000](http://localhost:3000)
+Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-online-whiteboard/react-zustand) to build it from scratch.

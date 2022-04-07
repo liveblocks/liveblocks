@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark.svg" alt="Liveblocks" />
   </a>
 </p>
 <p align="center">

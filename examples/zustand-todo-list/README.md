@@ -1,29 +1,35 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/icon-192x192.png" height="96">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [Zustand](https://github.com/pmndrs/zustand).
+<br/>
 
-This project shows how to build a collaborative to-do list with [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+## To-do List
 
-As users edit the list, changes will be automatically persisted and synced, allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/zustand-todo-list">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/zustand-message?style=flat&color=e47" alt="Zustand" />
+</p>
 
-You can also follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react-zustand) to build it from scratch.
+This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+
+As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
 ![todo-list-gif](https://liveblocks.io/images/docs/tutorials/todo-list/tutorial-todo-list-1.gif)
 
-## Getting started
-
-### Run examples locally
+### Getting started
 
 - Install all dependencies with `npm install`
-
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `PUBLIC_KEY` in [`store.js`](./examples/zustand-todo-list/src/store.js) by your **public** key
+- Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 
-- Copy your public key from the [administration](https://liveblocks.io/dashboard/apikeys)
+#### Tutorial
 
-- Replace the constant PUBLIC_KEY in `src/store.js` with your own public key.
-
-- Run `npm start` and go to [http://localhost:3000](http://localhost:3000)
+Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react-zustand) to build it from scratch.
