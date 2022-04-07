@@ -236,9 +236,29 @@ build_pkg () {
     npm run build
 }
 
+# Turns "packages/liveblocks-client" => "@liveblocks/client"
+npm_pkgname () {
+    echo "@liveblocks/${1#"packages/liveblocks-"}"
+}
+
+npm_pkg_exists () {
+    PKGNAME="$1"
+    test "$(npm view "$PKGNAME@$VERSION" version)" = "$VERSION"
+}
+
 publish_to_npm () {
-    PKG="$1"
-    echo "I'm ready to publish $PKG to NPM, under $VERSION!"
+    PKGDIR="$1"
+    PKGNAME="$(npm_pkgname "$1")"
+
+    if npm_pkg_exists "$PKGNAME"; then
+        err ""
+        err "WARNING: Package $PKGNAME @ $VERSION already exists on NPM!"
+        err "Will skip this for now and continue with the rest of the script..."
+        err ""
+        return
+    fi
+
+    echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     echo "For this, I'll need the One-Time Password (OTP) token."
 
     OTP=""
