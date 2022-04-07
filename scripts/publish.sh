@@ -21,6 +21,10 @@ is_valid_version () {
     echo "$1" | grep -qEe "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"
 }
 
+is_valid_otp_token () {
+    echo "$1" | grep -qEe "^[0-9]{6}?$"
+}
+
 usage () {
     err "usage: publish.sh [-V <version> [-t <tag>] [-h]"
     # err "usage: publish.sh [-Vtnh]"
@@ -233,7 +237,20 @@ build_pkg () {
 }
 
 publish_to_npm () {
-    read -p "OTP token? " OTP
+    PKG="$1"
+    echo "I'm ready to publish $PKG to NPM, under $VERSION!"
+    echo "For this, I'll need the One-Time Password (OTP) token."
+
+    OTP=""
+    while ! is_valid_otp_token "$OTP"; do
+        if [ -n "$OTP" ]; then
+            err "Invalid OTP token: $OTP"
+            err "Please try again."
+            err ""
+        fi
+        read -p "OTP token? " OTP
+    done
+
     npm publish --tag "${TAG:-latest}" --otp "$OTP"
 }
 
@@ -252,7 +269,7 @@ commit_to_git () {
     echo "==> Building and publishing $PRIMARY_PKG"
      bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
      build_pkg
-     publish_to_npm
+     publish_to_npm "$PRIMARY_PKG"
      commit_to_git "$PRIMARY_PKG" 
 ) )
 
@@ -262,7 +279,7 @@ for pkg in ${SECONDARY_PKGS}; do
     ( cd "$pkg" && (
         bump_version_in_pkg "$pkg" "$VERSION"
         build_pkg
-        publish_to_npm
+        publish_to_npm "$pkg"
     ) )
 done
 commit_to_git "$pkg" 
