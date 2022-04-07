@@ -15,9 +15,15 @@ jobs:
         with:
           repository: liveblocks/liveblocks
           ref: refs/heads/${{ github.head_ref }}
-      - run: npm install
-      - run: npm run build
-      - run: npm run test-ci
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Ensure TypeScript compiles
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm run test-ci
 
   e2e-tests:
     timeout-minutes: 60
