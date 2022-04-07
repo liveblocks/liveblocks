@@ -311,10 +311,10 @@ echo ""
 echo "All published!"
 echo ""
 echo "You can double-check the NPM releases here:"
-echo "  - https://www.npmjs.com/package/@liveblocks/client"
-echo "  - https://www.npmjs.com/package/@liveblocks/react"
-echo "  - https://www.npmjs.com/package/@liveblocks/redux"
-echo "  - https://www.npmjs.com/package/@liveblocks/zustand"
+for pkgdir in ${PACKAGE_DIRS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    echo "  - https://www.npmjs.com/package/$pkgname"
+done
 echo ""
 
 echo "==> Pushing changes to GitHub"
