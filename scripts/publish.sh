@@ -15,6 +15,10 @@ err () {
     echo "$@" >&2
 }
 
+is_valid_version () {
+    echo "$1" | grep -qEe "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"
+}
+
 usage () {
     err "usage: publish.sh [-V <version> [-t <tag>] [-h]"
     # err "usage: publish.sh [-Vtnh]"
@@ -155,6 +159,12 @@ check_npm_stuff_is_stable () {
 }
 
 check_all_the_things () {
+    if [ -n "$VERSION" ] && ! is_valid_version "$VERSION"; then
+        # Check for typos early on
+        err "Invalid version: $VERSION"
+        exit 2
+    fi
+
     check_git_toolbelt_installed
     check_jq_installed
     check_moreutils_installed
@@ -169,7 +179,7 @@ check_all_the_things
 
 echo "The current version is: $(jq -r .version "${PACKAGE_DIRS[0]}/package.json")"
 
-while ! echo "$VERSION" | grep -Ee "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"; do
+while ! is_valid_version "$VERSION"; do
     if [ -n "$VERSION" ]; then
         err "Invalid version number: $VERSION"
         err "Please try again."
