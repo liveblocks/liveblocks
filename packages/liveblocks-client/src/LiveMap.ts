@@ -118,7 +118,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [key, value] of this.#map) {
+    for (const [_key, value] of this.#map) {
       if (isCrdt(value)) {
         value._attach(doc.generateId(), doc);
       }
@@ -132,8 +132,8 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     id: string,
     key: TKey,
     child: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
+    _opId: string,
+    _isLocal: boolean
   ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");

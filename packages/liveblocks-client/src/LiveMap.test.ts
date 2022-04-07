@@ -411,7 +411,7 @@ describe("LiveMap", () => {
   });
 
   it("new Map with already attached live object should throw", async () => {
-    const { storage, assert } = await prepareStorageTest<{
+    const { storage } = await prepareStorageTest<{
       child: LiveObject | null;
       map: LiveMap<string, LiveObject<{ a: number }>> | null;
     }>([createSerializedObject("0:0", { child: null, map: null })], 1);

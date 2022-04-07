@@ -60,7 +60,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
+  _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {

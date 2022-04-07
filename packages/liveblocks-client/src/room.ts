@@ -298,7 +298,7 @@ export function makeStateMachine(
     return [root, parentToChildren];
   }
 
-  function updateRoot<T>(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: SerializedCrdtWithId[]) {
     if (!state.root) {
       return;
     }
