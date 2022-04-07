@@ -19,6 +19,8 @@ This example shows how to build a collaborative to-do list without relying on a 
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
+![To-do List](.github/assets/examples/todo-list.png)
+
 ## Getting started
 
 - Install all dependencies with `npm install`

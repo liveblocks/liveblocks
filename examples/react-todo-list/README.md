@@ -19,7 +19,7 @@ This example shows how to build a collaborative to-do list with [Liveblocks](htt
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
 
-![todo-list-gif](https://liveblocks.io/images/docs/tutorials/todo-list/tutorial-todo-list-1.gif)
+![To-do List](.github/assets/examples/todo-list.png)
 
 ## Getting started
 

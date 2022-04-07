@@ -17,6 +17,8 @@
 
 This example shows how to build live cursors without relying on a front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
 
+![Live Cursors](.github/assets/examples/live-cursors.png)
+
 ## Getting started
 
 - Install all dependencies with `npm install`

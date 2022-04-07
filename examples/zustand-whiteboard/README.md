@@ -18,7 +18,7 @@
 
 This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
 
-![whiteboard-gif](https://liveblocks.io/images/docs/tutorials/whiteboard/tutorial-whiteboard.gif)
+![Whiteboard](.github/assets/examples/whiteboard.png)
 
 ## Getting started
 
