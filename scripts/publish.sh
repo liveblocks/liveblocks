@@ -22,11 +22,11 @@ is_valid_version () {
 }
 
 is_valid_otp_token () {
-    echo "$1" | grep -qEe "^[0-9]{6}?$"
+    echo "$1" | grep -qEe "^[0-9]{6}$"
 }
 
 usage () {
-    err "usage: publish.sh [-V <version> [-t <tag>] [-h]"
+    err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
     # err "usage: publish.sh [-Vtnh]"
     err
     err ""
