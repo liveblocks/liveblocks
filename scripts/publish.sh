@@ -10,6 +10,8 @@ PACKAGE_DIRS=(
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
 )
+PRIMARY_PKG=${PACKAGE_DIRS[0]}
+SECONDARY_PKGS=${PACKAGE_DIRS[@]:1}
 
 err () {
     echo "$@" >&2
@@ -107,8 +109,8 @@ check_jq_installed () {
 
 check_current_branch () {
     # Check we're on the main branch
-    if [ "$(git current-branch)" != "main" ]; then
-        err "To publish this package, you must be on \"main\" branch."
+    if [ -z "$TAG" -a "$(git current-branch)" != "main" ]; then
+        err "To publish a package without a tag, you must be on \"main\" branch."
         exit 2
     fi
 }
@@ -117,7 +119,7 @@ check_up_to_date_with_upstream () {
     # Update to latest version
     git fetch
 
-    if [ "$(git sha main)" != "$(git sha origin/main)" ]; then
+    if [ "$(git sha)" != "$(git sha $(git current-branch))" ]; then
         err "Not up to date with upstream. Please pull/push latest changes before publishing."
         exit 2
     fi
@@ -139,11 +141,19 @@ check_no_local_changes () {
 
 check_npm_stuff_is_stable () {
     for pkg in ${PACKAGE_DIRS[@]}; do
+        echo "Rebuilding node_modules inside $pkg (this may take a while)..."
         ( cd "$pkg" && (
             # Before bumping anything, first make sure that all projects have
             # a clean and stable node_modules directory and lock files!
-            rm -rf node_modules lib
-            npm install
+            rm -rf node_modules
+
+            logfile="$(mktemp)"
+            if ! npm install > "$logfile" 2> "$logfile"; then
+                cat "$logfile" >&2
+                err ""
+                err "The error above happened during the building of $PKGDIR."
+                exit 4
+            fi
 
             if git is-dirty; then
                 err "I just removed node_modules and reinstalled all package dependencies"
@@ -168,17 +178,17 @@ check_all_the_things () {
     check_git_toolbelt_installed
     check_jq_installed
     check_moreutils_installed
-    # check_current_branch   # TODO: Put back, or allow custom branches
+    check_current_branch
     check_up_to_date_with_upstream
     check_cwd
     check_no_local_changes
-    check_npm_stuff_is_stable
+    # check_npm_stuff_is_stable # TODO: Put back, this is disabled for speed/testing only
 }
 
 check_all_the_things
 
 if [ -z "$VERSION" ]; then
-    echo "The current version is: $(jq -r .version "${PACKAGE_DIRS[0]}/package.json")"
+    echo "The current version is: $(jq -r .version "$PRIMARY_PKG/package.json")"
 fi
 
 while ! is_valid_version "$VERSION"; do
@@ -190,47 +200,83 @@ while ! is_valid_version "$VERSION"; do
     read -p "Enter a new version: " VERSION
 done
 
-# Write the same new version to all package.json files
-for pkg in ${PACKAGE_DIRS[@]}; do
-    ( cd "$pkg" && (
-        jq ". + { version: \"$VERSION\" }" package.json | sponge package.json
-        prettier --write package.json
-        npm install
+bump_version_in_pkg () {
+    PKGDIR="$1"
+    VERSION="$2"
 
-        if ! git modified | grep -qEe package-lock.json; then
-            err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
-            exit 5
+    jq ".version=\"$VERSION\"" package.json | sponge package.json
+
+    # If this is one of the client packages, also bump the peer dependency
+    if [ "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
+        jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
+    fi
+
+    prettier --write package.json
+
+    logfile="$(mktemp)"
+    if ! npm install > "$logfile" 2> "$logfile"; then
+        cat "$logfile" >&2
+        err ""
+        err "The error above happened during the building of $PKGDIR."
+        exit 4
+    fi
+
+    if ! git modified | grep -qEe package-lock.json; then
+        err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
+        exit 5
+    fi
+}
+
+build_pkg () {
+    rm -rf lib
+    npm run build
+}
+
+publish_to_npm () {
+    read -p "OTP token? " OTP
+    npm publish --tag "${TAG:-latest}" --otp "$OTP"
+}
+
+commit_to_git () {
+    ( cd "$ROOT" && (
+        git reset --quiet HEAD
+        git add "$@"
+        if git is-dirty -i; then
+            git commit -m "Bump to $VERSION"
         fi
+    ) )
+}
 
-        rm -rf node_modules lib
-        npm run build
-        # TODO: commit changes here?
+# First build and publish the primary package
+( cd "$PRIMARY_PKG" && (
+    echo "==> Building and publishing $PRIMARY_PKG"
+     bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
+     build_pkg
+     publish_to_npm
+     commit_to_git "$PRIMARY_PKG" 
+) )
+
+# Then, build and publish all the other packages
+for pkg in ${SECONDARY_PKGS}; do
+    echo "==> Building and publishing ${pkg}"
+    ( cd "$pkg" && (
+        bump_version_in_pkg "$pkg" "$VERSION"
+        build_pkg
+        publish_to_npm
     ) )
 done
+commit_to_git "$pkg" 
 
-echo "Done"
-exit 33
-
-DIST="${ROOT}/dist"
-
-# Work from the root folder, build the dist/ folder
-cd "$ROOT"
-
-yarn run test
-./bin/build.sh
-
-if git is-dirty; then
-    git commit -m "Bump package `@liveblocks/client` to $VERSION" package.json
-    git push-current
-fi
-
-read -p "OTP token? " OTP
-if [ -z "$OTP" ]; then
-    exit 2
-fi
-
-cd "$DIST" && yarn publish --new-version "$VERSION" --otp "$OTP" "$@"
+echo "==> Pushing changes to GitHub"
+git push-current
 
 # Open browser tab to create new release
-open "${GITHUB_URL}/blob/v${VERSION}/CHANGELOG.md"
-open "${GITHUB_URL}/releases/new?tag=${VERSION}&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
+open "${GITHUB_URL}/releases/new?tag=${VERSION}&target=$(git sha)&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
+echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
+echo ""
+echo "You can double-check the published releases here:"
+echo "  - https://www.npmjs.com/package/@liveblocks/client"
+echo "  - https://www.npmjs.com/package/@liveblocks/react"
+echo "  - https://www.npmjs.com/package/@liveblocks/redux"
+echo "  - https://www.npmjs.com/package/@liveblocks/zustand"
+echo ""
