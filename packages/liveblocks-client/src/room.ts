@@ -70,28 +70,30 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<T extends Presence>(presenceMap: {
+function makeOthers<T extends Presence>(userMap: {
   [key: number]: User<T>;
 }): Others<T> {
-  const array = Object.values(presenceMap).map((presence) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = presence;
+  const users = Object.values(userMap).map((user) => {
+    const { _hasReceivedInitialPresence, ...publicKeys } = user;
     return publicKeys;
   });
 
-  return {
-    get count() {
-      return array.length;
-    },
-    [Symbol.iterator]() {
-      return array[Symbol.iterator]();
-    },
-    map(callback) {
-      return array.map(callback);
-    },
-    toArray() {
-      return array;
-    },
-  };
+  // NOTE: We extend the array instance with custom `count` and `toArray()`
+  // methods here. This is done for backward-compatible reasons. These APIs
+  // will be deprecated in a future version.
+  Object.defineProperty(users, "count", {
+    value: users.length,
+    enumerable: false,
+  });
+  Object.defineProperty(users, "toArray", {
+    value: () => users,
+    enumerable: false,
+  });
+
+  return Object.freeze(users) as Others<T>;
+  //                          ^^^^^^^^^^^^
+  //                          Necessary only while the backward-compatible APIs
+  //                          are getting attached in the lines above.
 }
 
 function log(...params: any[]) {
