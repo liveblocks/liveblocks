@@ -27,7 +27,6 @@ is_valid_otp_token () {
 
 usage () {
     err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
-    # err "usage: publish.sh [-Vtnh]"
     err
     err ""
     err "Publish a new version of the Liveblocks packages to NPM."
@@ -35,19 +34,15 @@ usage () {
     err "Options:"
     err "-V <version>  Set version to publish (default: prompt)"
     err "-t <tag>      Sets the tag to use on NPM (default: latest)"
-    # err "-n            Dry run"
     err "-h            Show this help"
 }
 
 VERSION=
 TAG=
-# dryrun=0
-# while getopts V:t:nh flag; do
 while getopts V:t:h flag; do
     case "$flag" in
         V) VERSION=$OPTARG;;
         t) TAG=$OPTARG;;
-        # n) dryrun=1;;
         *) usage; exit 2;;
     esac
 done
