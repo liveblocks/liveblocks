@@ -16,7 +16,7 @@
 
 This example shows how to build live avatars with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-![Live Avatars](/.github/assets/examples/live-avatars.png)
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="800" alt="Live Avatars" />
 
 ## Getting started
 

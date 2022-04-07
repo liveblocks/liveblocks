@@ -15,7 +15,7 @@
 
 This example shows how to build live cursors without relying on a front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
 
-![Live Cursors](/.github/assets/examples/live-cursors.png)
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="800" alt="Live Cursors" />
 
 ## Getting started
 
