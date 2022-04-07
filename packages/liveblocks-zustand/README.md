@@ -4,8 +4,6 @@
   </a>
 </p>
 
-<br/>
-
 # `@liveblocks/zustand`
 
 <p>

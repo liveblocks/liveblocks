@@ -4,8 +4,6 @@
   </a>
 </p>
 
-<br/>
-
 # Multiplayer Drawing
 
 <p>

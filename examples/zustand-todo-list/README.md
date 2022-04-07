@@ -4,8 +4,6 @@
   </a>
 </p>
 
-<br/>
-
 # To-do List
 
 <p>

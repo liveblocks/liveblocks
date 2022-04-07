@@ -4,8 +4,6 @@
   </a>
 </p>
 
-<br/>
-
 # Live Avatars
 
 <p>
