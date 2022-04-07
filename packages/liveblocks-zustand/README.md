@@ -1,12 +1,24 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/images/blog/introducing-liveblocks.png">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# Liveblocks · [![Twitter Follow](https://shields.io/twitter/follow/liveblocks?label=Follow)](https://twitter.com/liveblocks)
+<br/>
 
-**At [Liveblocks](https://liveblocks.io), we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
+# `@liveblocks/zustand`
+
+<p>
+  <a href="https://npmjs.org/package/@liveblocks/zustand">
+    <img src="https://img.shields.io/npm/v/@liveblocks/zustand?style=flat&label=npm&color=c33" alt="NPM" />
+  </a>
+  <a href="https://bundlephobia.com/package/@liveblocks/zustand">
+    <img src="https://img.shields.io/bundlephobia/minzip/@liveblocks/zustand?style=flat&label=size&color=09f" alt="Size" />
+  </a>
+  <a href="https://github.com/liveblocks/liveblocks/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/liveblocks/liveblocks?style=flat&label=license&color=f80" alt="License" />
+  </a>
+</p>
 
 ## Installation
 
@@ -16,7 +28,7 @@ npm install @liveblocks/client @liveblocks/zustand
 
 ## Documentation
 
-- Start with the [React-Zustand guide](https://liveblocks.io/docs/get-started/react-zustand).
+- Start with the [React and Zustand guide](https://liveblocks.io/docs/get-started/react-zustand).
 - Explore the [API Reference](https://liveblocks.io/docs/api-reference/liveblocks-zustand).
 
 ## Examples
