@@ -192,8 +192,9 @@ check_all_the_things () {
 
 check_all_the_things
 
+CURRENT_VERSION="$(jq -r .version "$PRIMARY_PKG/package.json")"
 if [ -z "$VERSION" ]; then
-    echo "The current version is: $(jq -r .version "$PRIMARY_PKG/package.json")"
+    echo "The current version is: $CURRENT_VERSION"
 fi
 
 while ! is_valid_version "$VERSION"; do
@@ -226,9 +227,11 @@ bump_version_in_pkg () {
         exit 4
     fi
 
-    if ! git modified | grep -qEe package-lock.json; then
-        err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
-        exit 5
+    if [ "$CURRENT_VERSION" != "$VERSION"; then
+        if ! git modified | grep -qEe package-lock.json; then
+            err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
+            exit 5
+        fi
     fi
 }
 
