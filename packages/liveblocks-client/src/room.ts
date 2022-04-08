@@ -79,20 +79,22 @@ function makeOthers<T extends Presence>(userMap: {
     return publicKeys;
   });
 
-  return {
-    get count() {
-      return users.length;
-    },
-    [Symbol.iterator]() {
-      return users[Symbol.iterator]();
-    },
-    map(callback) {
-      return users.map(callback);
-    },
-    toArray() {
-      return users;
-    },
-  };
+  // NOTE: We extend the array instance with custom `count` and `toArray()`
+  // methods here. This is done for backward-compatible reasons. These APIs
+  // will be deprecated in a future version.
+  Object.defineProperty(users, "count", {
+    value: users.length,
+    enumerable: false,
+  });
+  Object.defineProperty(users, "toArray", {
+    value: () => users,
+    enumerable: false,
+  });
+
+  return Object.freeze(users) as Others<T>;
+  //                          ^^^^^^^^^^^^
+  //                          Necessary only while the backward-compatible APIs
+  //                          are getting attached in the lines above.
 }
 
 function log(...params: any[]) {
