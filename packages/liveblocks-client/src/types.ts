@@ -248,6 +248,62 @@ export type OthersEvent<T extends Presence = Presence> =
       type: "reset";
     };
 
+export interface History {
+  /**
+   * Undoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.history.undo();
+   * // room.getPresence() equals { selectedId: "xxx" }
+   */
+  undo: () => void;
+
+  /**
+   * Redoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.history.undo();
+   * // room.getPresence() equals { selectedId: "xxx" }
+   * room.history.redo();
+   * // room.getPresence() equals { selectedId: "yyy" }
+   */
+  redo: () => void;
+
+  /**
+   * All future modifications made on the Room will be merged together to create a single history item until resume is called.
+   *
+   * @example
+   * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+   * room.history.pause();
+   * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+   * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+   * room.history.resume();
+   * room.history.undo();
+   * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
+   */
+  pause: () => void;
+
+  /**
+   * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
+   *
+   * @example
+   * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+   * room.history.pause();
+   * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+   * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+   * room.history.resume();
+   * room.history.undo();
+   * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
+   */
+  resume: () => void;
+}
+
 export type Room = {
   /**
    * The id of the room.
@@ -415,58 +471,7 @@ export type Room = {
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
-  history: {
-    /**
-     * Undoes the last operation executed by the current client.
-     * It does not impact operations made by other clients.
-     *
-     * @example
-     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
-     * room.history.undo();
-     * // room.getPresence() equals { selectedId: "xxx" }
-     */
-    undo: () => void;
-    /**
-     * Redoes the last operation executed by the current client.
-     * It does not impact operations made by other clients.
-     *
-     * @example
-     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
-     * room.history.undo();
-     * // room.getPresence() equals { selectedId: "xxx" }
-     * room.history.redo();
-     * // room.getPresence() equals { selectedId: "yyy" }
-     */
-    redo: () => void;
-    /**
-     * All future modifications made on the Room will be merged together to create a single history item until resume is called.
-     *
-     * @example
-     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
-     * room.history.pause();
-     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
-     * room.history.resume();
-     * room.history.undo();
-     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
-     */
-    pause: () => void;
-    /**
-     * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
-     *
-     * @example
-     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
-     * room.history.pause();
-     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
-     * room.history.resume();
-     * room.history.undo();
-     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
-     */
-    resume: () => void;
-  };
+  history: History;
 
   /**
    * @deprecated use the callback returned by subscribe instead.
