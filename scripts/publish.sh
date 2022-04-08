@@ -54,6 +54,12 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
+# Turns "packages/liveblocks-client" => "@liveblocks/client"
+npm_pkgname () {
+    PKGDIR="$1"
+    echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
+}
+
 check_git_toolbelt_installed () {
     # Test existence of a random toolbelt command
     if ! which -s git-root; then
@@ -232,12 +238,6 @@ bump_version_in_pkg () {
 
 build_pkg () {
     npm run build
-}
-
-# Turns "packages/liveblocks-client" => "@liveblocks/client"
-npm_pkgname () {
-    PKGDIR="$1"
-    echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
 }
 
 npm_pkg_exists () {
