@@ -381,16 +381,16 @@ export function makeStateMachine(
   function notify({
     storageUpdates = new Map<string, StorageUpdate>(),
     presence = false,
-    others = [],
+    others: otherEvents = [],
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     others?: OthersEvent[];
   }) {
-    if (others.length > 0) {
+    if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
 
-      for (const event of others) {
+      for (const event of otherEvents) {
         for (const listener of state.listeners.others) {
           listener(state.others, event);
         }
