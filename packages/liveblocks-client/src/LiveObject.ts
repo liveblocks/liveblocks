@@ -270,11 +270,19 @@ export class LiveObject<
    * @internal
    */
   _toSerializedCrdt(): SerializedCrdt {
+    const data: Record<string, any> = {};
+
+    for (const [key, value] of this._map) {
+      if (value instanceof AbstractCrdt === false) {
+        data[key] = value;
+      }
+    }
+
     return {
       type: CrdtType.Object,
       parentId: this._parent?._id,
       parentKey: this._parentKey,
-      data: this.toObject(),
+      data,
     };
   }
 
