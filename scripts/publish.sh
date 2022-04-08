@@ -1,8 +1,15 @@
 #!/bin/sh
 set -eu
 
-# The output directory for the package build
+# Ensure this script can assume it's run from the repo's
+# root directory, even if the current working directory is
+# different.
 ROOT="$(git rev-parse --show-toplevel)"
+if [ "$(pwd)" != "$ROOT" ]; then
+    ( cd "$ROOT" && exec "$0" "$@" )
+    exit $?
+fi
+
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 PACKAGE_DIRS=(
     "packages/liveblocks-client"
@@ -130,13 +137,6 @@ check_up_to_date_with_upstream () {
     fi
 }
 
-check_cwd () {
-    if [ "$(pwd)" != "$ROOT" ]; then
-        err "This script must be run from the project's root directory."
-        exit 2
-    fi
-}
-
 check_no_local_changes () {
     if git is-dirty; then
         err "There are local changes. Please commit those before publishing."
@@ -186,7 +186,6 @@ check_all_the_things () {
     check_moreutils_installed
     check_current_branch
     check_up_to_date_with_upstream
-    check_cwd
     check_no_local_changes
     check_npm_stuff_is_stable
 }
