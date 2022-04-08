@@ -228,7 +228,7 @@ bump_version_in_pkg () {
         exit 4
     fi
 
-    if [ "$CURRENT_VERSION" != "$VERSION"; then
+    if [ "$CURRENT_VERSION" != "$VERSION" ]; then
         if ! git modified | grep -qEe package-lock.json; then
             err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
             exit 5
