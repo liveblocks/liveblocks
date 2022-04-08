@@ -89,6 +89,24 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
+/**
+ * Any value that is JSON-serializable.
+ */
+export type JSONValue =
+  // TODO: Make this typed correctly by using this definition:
+  //       string | number | boolean | null | JSONArray | JSONObject
+  unknown;
+
+/**
+ * Any array that contains JSON-serializable values.
+ */
+export type JSONArray = readonly JSONValue[];
+
+/**
+ * Any object that only holds JSON-serializable values in its value positions.
+ */
+export type JSONObject = { readonly [key: string]: JSONValue | undefined };
+
 export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.

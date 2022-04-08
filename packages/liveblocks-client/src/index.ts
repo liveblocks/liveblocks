@@ -10,6 +10,9 @@ export type {
   BroadcastOptions,
   StorageUpdate,
   History,
+  JSONArray,
+  JSONObject,
+  JSONValue,
 } from "./types";
 
 export { createClient } from "./client";
