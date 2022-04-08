@@ -1,5 +1,5 @@
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom";
 import "./index.css";
 import App from "./App";
 
@@ -19,13 +19,14 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-ReactDOM.render(
-  <React.StrictMode>
-    <LiveblocksProvider client={client}>
-      <RoomProvider id="react-whiteboard-app">
+const root = createRoot(document.getElementById("root"));
+
+root.render(
+  <LiveblocksProvider client={client}>
+    <RoomProvider id="react-whiteboard-app2">
+      <RoomProvider id="react-whiteboard-app3">
         <App />
       </RoomProvider>
-    </LiveblocksProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
+    </RoomProvider>
+  </LiveblocksProvider>
 );
