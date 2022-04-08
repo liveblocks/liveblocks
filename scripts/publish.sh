@@ -231,7 +231,6 @@ bump_version_in_pkg () {
 }
 
 build_pkg () {
-    rm -rf lib
     npm run build
 }
 
