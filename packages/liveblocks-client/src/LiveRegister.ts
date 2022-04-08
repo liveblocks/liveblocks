@@ -8,18 +8,18 @@ import {
 } from "./live";
 
 /**
- * INTERNAL
+ * @internal
  */
 export class LiveRegister<TValue = any> extends AbstractCrdt {
-  #data: TValue;
+  _data: TValue;
 
   constructor(data: TValue) {
     super();
-    this.#data = data;
+    this._data = data;
   }
 
   get data() {
-    return this.#data;
+    return this._data;
   }
 
   /**
