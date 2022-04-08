@@ -9,6 +9,7 @@ import {
   LiveList,
   BroadcastOptions,
   History,
+  JSONValue,
 } from "@liveblocks/client";
 import * as React from "react";
 import useRerender from "./useRerender";
@@ -224,14 +225,14 @@ export function useOthers<T extends Presence>(): Others<T> {
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
  */
 export function useBroadcastEvent(): (
-  event: any,
+  event: JSONValue /* or JSONObject? */,
   options?: BroadcastOptions
 ) => void {
   const room = useRoom();
 
   return React.useCallback(
     (
-      event: any,
+      event: JSONValue /* or JSONObject? */,
       options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
     ) => {
       room.broadcastEvent(event, options);
