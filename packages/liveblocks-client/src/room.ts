@@ -78,22 +78,20 @@ function makeOthers<T extends Presence>(userMap: {
     return publicKeys;
   });
 
-  // NOTE: We extend the array instance with custom `count` and `toArray()`
-  // methods here. This is done for backward-compatible reasons. These APIs
-  // will be deprecated in a future version.
-  Object.defineProperty(users, "count", {
-    value: users.length,
-    enumerable: false,
-  });
-  Object.defineProperty(users, "toArray", {
-    value: () => users,
-    enumerable: false,
-  });
-
-  return Object.freeze(users) as Others<T>;
-  //                          ^^^^^^^^^^^^
-  //                          Necessary only while the backward-compatible APIs
-  //                          are getting attached in the lines above.
+  return {
+    get count() {
+      return users.length;
+    },
+    [Symbol.iterator]() {
+      return users[Symbol.iterator]();
+    },
+    map(callback) {
+      return users.map(callback);
+    },
+    toArray() {
+      return users;
+    },
+  };
 }
 
 function log(...params: any[]) {
@@ -383,17 +381,17 @@ export function makeStateMachine(
   function notify({
     storageUpdates = new Map<string, StorageUpdate>(),
     presence = false,
-    others = [],
+    others: otherEvents = [],
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     others?: OthersEvent[];
   }) {
-    if (others.length > 0) {
+    if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
 
-      for (const event of others) {
-        for (const listener of state.listeners["others"]) {
+      for (const event of otherEvents) {
+        for (const listener of state.listeners.others) {
           listener(state.others, event);
         }
       }

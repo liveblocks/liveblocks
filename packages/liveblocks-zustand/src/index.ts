@@ -40,7 +40,10 @@ declare module "@liveblocks/client" {
 
 const { patchLiveObjectKey, patchImmutableObject, liveNodeToJson } = internals;
 
-export type LiveblocksState<TState, TPresence = any> = TState & {
+export type LiveblocksState<
+  TState,
+  TPresence extends Presence = Presence
+> = TState & {
   /**
    * Liveblocks extra state attached by the middleware
    */
