@@ -1,11 +1,12 @@
 import { StateCreator, SetState, GetState, StoreApi } from "zustand";
 import {
   Client,
+  internals,
   LiveObject,
-  User,
+  Presence,
   Room,
   StorageUpdate,
-  internals,
+  User,
 } from "@liveblocks/client";
 import {
   mappingShouldBeAnObject,
@@ -39,7 +40,10 @@ declare module "@liveblocks/client" {
 
 const { patchLiveObjectKey, patchImmutableObject, liveNodeToJson } = internals;
 
-export type LiveblocksState<TState, TPresence = any> = TState & {
+export type LiveblocksState<
+  TState,
+  TPresence extends Presence = Presence
+> = TState & {
   /**
    * Liveblocks extra state attached by the middleware
    */
@@ -80,11 +84,9 @@ export type LiveblocksState<TState, TPresence = any> = TState & {
   };
 };
 
-export type Mapping<T> = Partial<
-  {
-    [Property in keyof T]: boolean;
-  }
->;
+export type Mapping<T> = Partial<{
+  [Property in keyof T]: boolean;
+}>;
 
 type Options<T> = {
   /**
@@ -101,7 +103,10 @@ type Options<T> = {
   presenceMapping?: Mapping<T>;
 };
 
-export function middleware<T extends Object, TPresence extends Object = any>(
+export function middleware<
+  T extends Record<string, unknown>,
+  TPresence extends Record<string, unknown> = Presence
+>(
   config: StateCreator<
     T,
     SetState<T>,

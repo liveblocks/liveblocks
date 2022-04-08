@@ -10,19 +10,17 @@ import {
   FIRST_POSITION,
   prepareIsolatedStorageTest,
   reconnect,
-  SECOND_POSITION,
   waitFor,
 } from "../test/utils";
 import {
   ClientMessageType,
   CrdtType,
   SerializedCrdtWithId,
-  ServerMessage,
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
-import { makeStateMachine, Effects, defaultState, createRoom } from "./room";
+import { makeStateMachine, defaultState, createRoom } from "./room";
 import { Authentication, Others } from "./types";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -751,10 +749,9 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 1 })], 1);
+      const { storage, assert, undo, batch } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
@@ -826,7 +823,6 @@ describe("room", () => {
         batch,
         subscribe,
         refSubscribe,
-        refStorage,
         updatePresence,
       } = await prepareStorageTest<{
         items: LiveList<string>;
@@ -1088,7 +1084,10 @@ describe("room", () => {
 
     test("disconnect and reconnect should keep user current presence", async () => {
       const { machine, refMachine, reconnect, ws } =
-        await prepareStorageTest<{}>([createSerializedObject("0:0", {})], 1);
+        await prepareStorageTest<unknown>(
+          [createSerializedObject("0:0", {})],
+          1
+        );
 
       machine.updatePresence({ x: 1 });
 
@@ -1174,6 +1173,67 @@ describe("room", () => {
       );
 
       expect(state.numberOfRetry).toEqual(1);
+    });
+  });
+
+  describe("Initial UpdatePresenceMessage", () => {
+    test("skip UpdatePresence from other when initial full presence has not been received", () => {
+      const effects = mockEffects();
+      const state = defaultState({});
+      const machine = makeStateMachine(state, defaultContext, effects);
+      const ws = new MockWebSocket("");
+      machine.connect();
+      machine.authenticationSuccess({ actor: 0 }, ws);
+      ws.open();
+
+      let others: Others | undefined;
+
+      machine.subscribe("others", (o) => (others = o));
+
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.RoomState,
+          users: { "1": { id: undefined } },
+        })
+      );
+
+      // UpdatePresence sent before the initial full UpdatePresence
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+        },
+      ]);
+
+      // Full UpdatePresence sent as an answer to "UserJoined" message
+      machine.onMessage(
+        serverMessage({
+          type: ServerMessageType.UpdatePresence,
+          data: { x: 2 },
+          actor: 1,
+          targetActor: 0,
+        })
+      );
+
+      expect(others?.toArray()).toEqual([
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+          presence: {
+            x: 2,
+          },
+        },
+      ]);
     });
   });
 });

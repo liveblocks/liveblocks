@@ -125,7 +125,7 @@ export class LiveObject<
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [key, value] of this._map) {
+    for (const [_key, value] of this._map) {
       if (value instanceof AbstractCrdt) {
         value._attach(doc.generateId(), doc);
       }
@@ -300,7 +300,7 @@ export class LiveObject<
       }
     }
 
-    let updateDelta: LiveObjectUpdateDelta<T> = {};
+    const updateDelta: LiveObjectUpdateDelta<T> = {};
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
         this._propToLastUpdate.set(key, op.opId!);

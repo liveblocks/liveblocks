@@ -19,10 +19,10 @@ import {
   useSelf,
 } from "@liveblocks/react";
 import React from "react";
-import Avatar from "./Avatar";
-import Selection from "./Selection";
+import Avatar from "../components/Avatar";
+import Selection from "../components/Selection";
 import styles from "./index.module.css";
-import { COLORS } from "./constants";
+import { COLORS } from "../constants";
 
 type Theme = "light" | "dark";
 

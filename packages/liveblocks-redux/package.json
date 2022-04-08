@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.15.7",
+  "version": "0.15.11-test.1",
   "sideEffects": false,
   "description": "",
   "main": "./lib/index.js",
@@ -36,7 +36,7 @@
     "directory": "packages/liveblocks-redux"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.15.7",
+    "@liveblocks/client": "0.15.11-test.1",
     "redux": "^4"
   },
   "devDependencies": {
@@ -52,7 +52,10 @@
     "@testing-library/react": "^12.1.2",
     "@testing-library/react-hooks": "^7.0.2",
     "@types/jest": "^27.4.1",
+    "@typescript-eslint/eslint-plugin": "^5.18.0",
+    "@typescript-eslint/parser": "^5.18.0",
     "esbuild": "0.14.11",
+    "eslint": "^8.12.0",
     "jest": "^27.4.7",
     "msw": "^0.36.4",
     "redux": "^4.1.2",

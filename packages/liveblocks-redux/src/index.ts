@@ -3,6 +3,7 @@ import {
   User,
   Room,
   LiveObject,
+  Presence,
   internals,
   StorageUpdate,
 } from "@liveblocks/client";
@@ -54,7 +55,10 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
-export type LiveblocksState<TState, TPresence = any> = TState & {
+export type LiveblocksState<
+  TState,
+  TPresence extends Presence = Presence
+> = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
    */

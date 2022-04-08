@@ -1,6 +1,6 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { Client, createClient } from "@liveblocks/client";
+import { createClient, Presence } from "@liveblocks/client";
 import { Mapping, middleware } from ".";
 import create from "zustand";
 import { StateCreator } from "zustand";
@@ -90,7 +90,10 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   setCursor: (cursor: { x: number; y: number }) => set({ cursor }),
 });
 
-function prepareClientAndStore<T extends Object, TPresence = any>(
+function prepareClientAndStore<
+  T extends Record<string, unknown>,
+  TPresence extends Presence = Presence
+>(
   stateCreator: StateCreator<T>,
   options: {
     storageMapping: Mapping<T>;
@@ -111,7 +114,7 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<T extends Object>(
+async function prepareWithStorage<T extends Record<string, unknown>>(
   stateCreator: StateCreator<T>,
   options: {
     storageMapping: Mapping<T>;

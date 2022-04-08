@@ -10,6 +10,7 @@ import {
   BroadcastOptions,
 } from "@liveblocks/client";
 import * as React from "react";
+import useRerender from "./useRerender";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;
@@ -132,15 +133,10 @@ export function useMyPresence<T extends Presence>(): [
 ] {
   const room = useRoom();
   const presence = room.getPresence<T>();
-  const [, update] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
-    function onMyPresenceChange() {
-      update((x) => x + 1);
-    }
-
-    const unsubscribe = room.subscribe("my-presence", onMyPresenceChange);
-
+    const unsubscribe = room.subscribe("my-presence", rerender);
     return () => {
       unsubscribe();
     };
@@ -202,16 +198,10 @@ export function useUpdateMyPresence<T extends Presence>(): (
  */
 export function useOthers<T extends Presence>(): Others<T> {
   const room = useRoom();
-
-  const [, update] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
-    function onOthersChange() {
-      update((x) => x + 1);
-    }
-
-    const unsubscribe = room.subscribe("others", onOthersChange);
-
+    const unsubscribe = room.subscribe("others", rerender);
     return () => {
       unsubscribe();
     };
@@ -266,7 +256,6 @@ export function useErrorListener(callback: (er: Error) => void) {
     const listener = (e: Error) => savedCallback.current(e);
 
     const unsubscribe = room.subscribe("error", listener);
-
     return () => {
       unsubscribe();
     };
@@ -306,7 +295,6 @@ export function useEventListener<TEvent>(
       savedCallback.current(e);
 
     const unsubscribe = room.subscribe("event", listener);
-
     return () => {
       unsubscribe();
     };
@@ -325,15 +313,11 @@ export function useSelf<
   TPresence extends Presence = Presence
 >(): User<TPresence> | null {
   const room = useRoom();
-  const [, update] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
-    function onChange() {
-      update((x) => x + 1);
-    }
-
-    const unsubscribePresence = room.subscribe("my-presence", onChange);
-    const unsubscribeConnection = room.subscribe("connection", onChange);
+    const unsubscribePresence = room.subscribe("my-presence", rerender);
+    const unsubscribeConnection = room.subscribe("connection", rerender);
 
     return () => {
       unsubscribePresence();
@@ -465,7 +449,7 @@ export function useHistory() {
 function useCrdt<T>(key: string, initialCrdt: T): T | null {
   const room = useRoom();
   const [root] = useStorage();
-  const [, setCount] = React.useState(0);
+  const rerender = useRerender();
 
   React.useEffect(() => {
     if (root == null) {
@@ -479,10 +463,6 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
       root.set(key, crdt);
     }
 
-    function onChange() {
-      setCount((x) => x + 1);
-    }
-
     function onRootChange() {
       const newCrdt = root!.get(key);
       if (newCrdt !== crdt) {
@@ -490,22 +470,22 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
         crdt = newCrdt;
         unsubscribeCrdt = room.subscribe(
           crdt as any /* AbstractCrdt */,
-          onChange
+          rerender
         );
-        setCount((x) => x + 1);
+        rerender();
       }
     }
 
     let unsubscribeCrdt = room.subscribe(
       crdt as any /* AbstractCrdt */,
-      onChange
+      rerender
     );
     const unsubscribeRoot = room.subscribe(
       root as any /* AbstractCrdt */,
       onRootChange
     );
 
-    setCount((x) => x + 1);
+    rerender();
 
     return () => {
       unsubscribeRoot();

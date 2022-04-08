@@ -1,8 +1,30 @@
-name: E2E Tests
+name: Tests
 
 on: [pull_request]
 
 jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: packages/liveblocks-client
+
+    steps:
+      - uses: actions/checkout@master
+        with:
+          repository: liveblocks/liveblocks
+          ref: refs/heads/${{ github.head_ref }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Ensure TypeScript compiles
+        run: npm run build
+
+      - name: Run unit tests
+        run: npm run test-ci
+
   e2e-tests:
     timeout-minutes: 60
     env:
@@ -35,5 +57,5 @@ jobs:
         if: always()
         with:
           name: playwright-report
-          path: playwright-report/
-          retention-days: 30
+          path: e2e/next-sandbox/playwright-report
+          retention-days: 14

@@ -8,10 +8,6 @@ import {
   assertContainText,
 } from "../utils";
 
-function getCurrentPresenseCount(page: Page) {
-  return getTextContent(page, "me-count");
-}
-
 function getOthers(page: Page) {
   return getJsonContent(page, "others");
 }
@@ -113,6 +109,45 @@ test.describe("Presence", () => {
     othersSecondPage = await getOthers(secondPage);
     expect(othersSecondPage.length).toEqual(0);
 
+    await secondPage.close();
+  });
+
+  test("client B receives other udpate presence before initial presence", async () => {
+    const testUrl = TEST_URL + "?room=e2e-presence-scenario5";
+    const firstPage = await preparePage(testUrl);
+    const secondPage = await preparePage(testUrl);
+
+    await Promise.all([
+      firstPage.waitForSelector("#others"),
+      secondPage.waitForSelector("#others"),
+    ]);
+
+    await assertContainText([firstPage, secondPage], "1", "othersCount");
+
+    await firstPage.click("#set-second-prop");
+    await firstPage.click("#set-third-prop");
+
+    await delay(1000);
+
+    for (let i = 0; i < 5; i++) {
+      await secondPage.click("#leave-room");
+
+      await secondPage.click("#enter-room");
+      await delay(500);
+      await firstPage.click("#set-second-prop");
+
+      await assertContainText([secondPage], "1", "othersCount");
+
+      let othersSecondPage = await getOthers(secondPage);
+      expect(othersSecondPage[0].presence).toEqual({
+        secondProp: 1,
+        thirdProp: 1,
+      });
+
+      await delay(1000);
+    }
+
+    await firstPage.close();
     await secondPage.close();
   });
 });

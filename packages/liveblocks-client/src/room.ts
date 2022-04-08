@@ -70,23 +70,26 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<T extends Presence>(presenceMap: {
+function makeOthers<T extends Presence>(userMap: {
   [key: number]: User<T>;
 }): Others<T> {
-  const array = Object.values(presenceMap);
+  const users = Object.values(userMap).map((user) => {
+    const { _hasReceivedInitialPresence, ...publicKeys } = user;
+    return publicKeys;
+  });
 
   return {
     get count() {
-      return array.length;
+      return users.length;
     },
     [Symbol.iterator]() {
-      return array[Symbol.iterator]();
+      return users[Symbol.iterator]();
     },
     map(callback) {
-      return array.map(callback);
+      return users.map(callback);
     },
     toArray() {
-      return array;
+      return users;
     },
   };
 }
@@ -293,7 +296,7 @@ export function makeStateMachine(
     return [root, parentToChildren];
   }
 
-  function updateRoot<T>(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: SerializedCrdtWithId[]) {
     if (!state.root) {
       return;
     }
@@ -378,17 +381,17 @@ export function makeStateMachine(
   function notify({
     storageUpdates = new Map<string, StorageUpdate>(),
     presence = false,
-    others = [],
+    others: otherEvents = [],
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     others?: OthersEvent[];
   }) {
-    if (others.length > 0) {
+    if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
 
-      for (const event of others) {
-        for (const listener of state.listeners["others"]) {
+      for (const event of otherEvents) {
+        for (const listener of state.listeners.others) {
           listener(state.others, event);
         }
       }
@@ -775,12 +778,23 @@ See v0.13 release notes for more information.
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceMessage
-  ): OthersEvent {
+  ): OthersEvent | undefined {
     const user = state.users[message.actor];
+    // If the other user initial presence hasn't been received yet, we discard the presence update.
+    // The initial presence update message contains the property "targetActor".
+    if (
+      message.targetActor === undefined &&
+      user != null &&
+      !user._hasReceivedInitialPresence
+    ) {
+      return undefined;
+    }
+
     if (user == null) {
       state.users[message.actor] = {
         connectionId: message.actor,
         presence: message.data,
+        _hasReceivedInitialPresence: true,
       };
     } else {
       state.users[message.actor] = {
@@ -791,8 +805,10 @@ See v0.13 release notes for more information.
           ...user.presence,
           ...message.data,
         },
+        _hasReceivedInitialPresence: true,
       };
     }
+
     return {
       type: "update",
       updates: message.data,
@@ -843,6 +859,7 @@ See v0.13 release notes for more information.
       connectionId: message.actor,
       info: message.info,
       id: message.id,
+      _hasReceivedInitialPresence: true,
     };
 
     if (state.me) {
@@ -886,9 +903,12 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.UpdatePresence: {
-          updates.others.push(
-            onUpdatePresenceMessage(subMessage as UpdatePresenceMessage)
+          const othersPresenceUpdate = onUpdatePresenceMessage(
+            subMessage as UpdatePresenceMessage
           );
+          if (othersPresenceUpdate) {
+            updates.others.push(othersPresenceUpdate);
+          }
           break;
         }
         case ServerMessageType.Event: {

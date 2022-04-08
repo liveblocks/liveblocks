@@ -7,7 +7,6 @@ import {
   createSerializedObject,
   createSerializedList,
   createSerializedMap,
-  FIRST_POSITION,
 } from "../test/utils";
 
 describe("Storage", () => {
@@ -99,7 +98,7 @@ describe("Storage", () => {
     });
 
     test("batch actions on a single LiveObject", async () => {
-      const { storage, assert, assertUndoRedo, subscribe, batch } =
+      const { storage, assertUndoRedo, subscribe, batch } =
         await prepareStorageTest<{
           a: number;
           b: number;

@@ -16,7 +16,7 @@ type AuthorizeOptions = {
   /**
    * The info associated to the user. Can be used to store the name or the profile picture to implement avatar for example. Can't exceed 1KB when serialized as JSON
    */
-  userInfo?: any;
+  userInfo?: unknown;
 };
 
 type AllAuthorizeOptions = AuthorizeOptions & {
