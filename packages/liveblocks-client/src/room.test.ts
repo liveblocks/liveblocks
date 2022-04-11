@@ -38,6 +38,8 @@ const defaultContext = {
 
 describe("room / auth", () => {
   let reqCount = 0;
+  const token =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
   const server = setupServer(
     rest.post("/api/auth", (req, res, ctx) => {
       if (reqCount === 0) {
@@ -45,15 +47,14 @@ describe("room / auth", () => {
         return res(
           ctx.json({
             actor: 0,
-            token:
-              "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw",
+            token: token,
           })
         );
       } else {
         return res(
           ctx.json({
             actor: 1,
-            token: "shouldNotBeCalled",
+            token: token,
           })
         );
       }
@@ -111,6 +112,34 @@ describe("room / auth", () => {
       });
 
       await waitFor(() => room.room.getSelf()?.connectionId === 0);
+    });
+  });
+
+  test("should not reuse token after reconnect when expired", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/auth",
+        },
+      }
+    );
+
+    room.connect();
+
+    await waitFor(() => room.room.getSelf()?.connectionId === 0);
+
+    const tokenExpDate = 1616727267;
+    withDateNow(tokenExpDate + 1, async () => {
+      room.room.internalDevTools.sendCloseEvent({
+        reason: "App error",
+        code: 4002,
+        wasClean: true,
+      });
+
+      await waitFor(() => room.room.getSelf()?.connectionId === 1);
     });
   });
 
