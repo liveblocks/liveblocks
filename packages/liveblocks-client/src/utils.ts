@@ -18,6 +18,7 @@ import {
   LiveMapUpdates,
   LiveObjectUpdates,
   StorageUpdate,
+  JSONObject,
 } from "./types";
 
 export function remove<T>(array: T[], item: T) {
@@ -202,7 +203,7 @@ export function mergeStorageUpdates(
   }
 
   if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates<any /* unknown? */>).updates;
+    const updates = (first as LiveObjectUpdates<JSONObject>).updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;

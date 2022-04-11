@@ -40,14 +40,14 @@ export type LiveMapUpdates<K extends string, V> = {
   updates: Record<K, UpdateDelta>;
 };
 
-export type LiveObjectUpdateDelta<T> = Partial<{
-  [Property in keyof T]: UpdateDelta;
+export type LiveObjectUpdateDelta<T extends JSONObject> = Partial<{
+  [K in keyof T]: UpdateDelta;
 }>;
 
-export type LiveObjectUpdates<TData> = {
+export type LiveObjectUpdates<T extends JSONObject> = {
   type: "LiveObject";
-  node: LiveObject<TData>;
-  updates: LiveObjectUpdateDelta<TData>;
+  node: LiveObject<T>;
+  updates: LiveObjectUpdateDelta<T>;
 };
 
 export type LiveListUpdateDelta =
@@ -84,7 +84,7 @@ export type BroadcastOptions = {
 
 export type StorageUpdate =
   | LiveMapUpdates<string, unknown>
-  | LiveObjectUpdates<any /* unknown? */>
+  | LiveObjectUpdates<JSONObject>
   | LiveListUpdates<unknown>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
