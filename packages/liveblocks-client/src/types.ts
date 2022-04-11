@@ -144,7 +144,7 @@ export type AuthenticationToken = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends Presence = Presence> {
+export interface Others<P extends Presence = Presence> {
   /**
    * Number of other users in the room.
    */
@@ -152,23 +152,23 @@ export interface Others<TPresence extends Presence = Presence> {
   /**
    * Returns a new Iterator object that contains the users.
    */
-  [Symbol.iterator](): IterableIterator<User<TPresence>>;
+  [Symbol.iterator](): IterableIterator<User<P>>;
   /**
    * Returns the array of connected users in room.
    */
-  toArray(): User<TPresence>[];
+  toArray(): User<P>[];
   /**
    * This function let you map over the connected users in the room.
    */
-  map<U>(callback: (user: User<TPresence>) => U): U[];
+  map<U>(callback: (user: User<P>) => U): U[];
 }
 
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
 export type User<
-  TPresence extends Presence = Presence,
-  TInfo extends JSONValue = JSONValue
+  P extends Presence = Presence,
+  I extends JSONValue = JSONValue
 > = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
@@ -182,11 +182,11 @@ export type User<
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  readonly info?: TInfo;
+  readonly info?: I;
   /**
    * The user presence.
    */
-  readonly presence?: TPresence;
+  readonly presence?: P;
 
   /**
    * @internal
@@ -545,7 +545,7 @@ export type Room = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+  getSelf<P extends Presence = Presence>(): User<P> | null;
 
   /**
    * Gets the presence of the current user.
