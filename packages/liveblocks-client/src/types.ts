@@ -648,10 +648,10 @@ export type ToLive<T> =
   T extends LiveMap<infer K, infer V> ? LiveMap<K, ToLive<V>> :
   T extends LiveObject<infer O> ? LiveObject<{ [K in keyof O]: ToLive<O[K]> }> :
   T extends LiveList<infer I> ? LiveList<ToLive<I>> :
-  T extends (infer I)[] ? LiveList<ToLive<I>> :
-  T extends {[key: string]: unknown} ? LiveObject<{ [K in keyof T]: ToLive<T[K]> }> :
-  T extends null | undefined | number | string | boolean ? T :
   T extends Function ? LiveConversionError<'Cannot build Live type from function'> :
+  T extends (infer I)[] ? LiveList<ToLive<I>> :
+  T extends object ? LiveObject<{ [K in keyof T]: ToLive<T[K]> }> :
+  T extends null | undefined | number | string | boolean ? T :
   LiveConversionError<'Cannot build a Live type'>;
 
 type LiveConversionError<Msg extends string> = { error: Msg };
