@@ -13,6 +13,11 @@ cd ../../packages/liveblocks-react
 npm install
 cd -
 
+cd ../../packages/liveblocks-redux
+npm install
+cd -
+
+
 echo "Build @liveblocks/client"
 cd ../../packages/liveblocks-client
 npm run build
@@ -32,7 +37,14 @@ npm link @liveblocks/client ../../e2e/next-sandbox/node_modules/zustand
 npm run build
 npm link
 
-echo "link @liveblocks/client @liveblocks/zustand @liveblocks/react"
+echo "Build @liveblocks/redux"
 cd -
-npm link @liveblocks/client @liveblocks/zustand @liveblocks/react
+cd ../../packages/liveblocks-redux
+npm link @liveblocks/client
+npm run build
+npm link
+
+echo "link @liveblocks/client @liveblocks/zustand @liveblocks/react @liveblocks/react"
+cd -
+npm link @liveblocks/client @liveblocks/zustand @liveblocks/react @liveblocks/redux
 

@@ -23,6 +23,7 @@ import {
   isSameNodeOrChildOf,
   remove,
   mergeStorageUpdates,
+  isTokenValid,
 } from "./utils";
 import {
   ClientMessage,
@@ -105,6 +106,7 @@ type IdFactory = () => string;
 
 export type State = {
   connection: Connection;
+  token: string | null;
   lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
@@ -192,16 +194,23 @@ export function makeStateMachine(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      return auth(context.room)
-        .then(({ token }) => {
-          if (state.connection.state !== "authenticating") {
-            return;
-          }
-          const parsedToken = parseToken(token);
-          const socket = createWebSocket(token);
-          authenticationSuccess(parsedToken, socket);
-        })
-        .catch((er: any) => authenticationFailure(er));
+      if (isTokenValid(state.token)) {
+        const parsedToken = parseToken(state.token!);
+        const socket = createWebSocket(state.token!);
+        authenticationSuccess(parsedToken, socket);
+      } else {
+        return auth(context.room)
+          .then(({ token }) => {
+            if (state.connection.state !== "authenticating") {
+              return;
+            }
+            const parsedToken = parseToken(token);
+            const socket = createWebSocket(token);
+            authenticationSuccess(parsedToken, socket);
+            state.token = token;
+          })
+          .catch((er: any) => authenticationFailure(er));
+      }
     },
     send(messageOrMessages: ClientMessage | ClientMessage[]) {
       if (state.socket == null) {
@@ -764,6 +773,7 @@ See v0.13 release notes for more information.
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
+    state.token = null;
     updateConnection({ state: "unavailable" });
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
@@ -1440,6 +1450,7 @@ export function defaultState(
 ): State {
   return {
     connection: { state: "closed" },
+    token: null,
     lastConnectionId: null,
     socket: null,
     listeners: {
