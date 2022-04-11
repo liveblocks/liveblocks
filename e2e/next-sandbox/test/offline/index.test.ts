@@ -64,6 +64,8 @@ test.describe("Offline", () => {
     await pages[0].click("#push");
     await assertContainText(pages, "1");
 
+    const firstConnectionId = await getJsonContent(pages[0], "connectionId");
+
     await pages[0].click("#closeWebsocket");
     await delay(50);
     await pages[0].click("#push");
@@ -77,9 +79,15 @@ test.describe("Offline", () => {
     expect(secondPageItems.length).toEqual(2);
 
     await pages[0].click("#sendCloseEventAppError");
-    await delay(8000);
+    await delay(5000);
 
     await waitForContentToBeEquals(pages);
+
+    const connectionIdAfterReconnect = await getJsonContent(
+      pages[0],
+      "connectionId"
+    );
+    expect(connectionIdAfterReconnect).toEqual(firstConnectionId);
 
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
