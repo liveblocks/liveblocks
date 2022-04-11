@@ -67,9 +67,9 @@ export type LiveListUpdateDelta =
       type: "move";
     };
 
-export type LiveListUpdates<TItem> = {
+export type LiveListUpdates<T> = {
   type: "LiveList";
-  node: LiveList<TItem>;
+  node: LiveList<T>;
   updates: LiveListUpdateDelta[];
 };
 
