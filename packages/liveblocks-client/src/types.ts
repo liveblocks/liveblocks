@@ -631,3 +631,27 @@ export type Room = {
    */
   batch: (fn: () => void) => void;
 };
+
+/**
+ * Takes any JavaScript value and returns the equivalent "Live" data type for
+ * it. For example:
+ *
+ *   ToLive<string>          // => string
+ *   ToLive<number>          // => number
+ *   ToLive<{ a: number }>   // => LiveMap<{ a: number }>
+ *   ToLive<number[]>        // => LiveList<number>
+ *   ToLive<LiveMap<{ a: LiveList<number> }>>        // => LiveMap<{ a: ListList<number> }>
+ *
+ */
+// prettier-ignore
+export type ToLive<T> =
+  T extends LiveMap<infer K, infer V> ? LiveMap<K, ToLive<V>> :
+  T extends LiveObject<infer O> ? LiveObject<{ [K in keyof O]: ToLive<O[K]> }> :
+  T extends LiveList<infer I> ? LiveList<ToLive<I>> :
+  T extends (infer I)[] ? LiveList<ToLive<I>> :
+  T extends {[key: string]: unknown} ? LiveObject<{ [K in keyof T]: ToLive<T[K]> }> :
+  T extends null | undefined | number | string | boolean ? T :
+  T extends Function ? LiveConversionError<'Cannot build Live type from function'> :
+  LiveConversionError<'Cannot build a Live type'>;
+
+type LiveConversionError<Msg extends string> = { error: Msg };
