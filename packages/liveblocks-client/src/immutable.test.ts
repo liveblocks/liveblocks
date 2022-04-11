@@ -16,8 +16,7 @@ import { StorageUpdate } from "./types";
 function applyStateChanges(state: any, applyChanges: () => void) {
   const oldState = JSON.parse(JSON.stringify(state));
   applyChanges();
-  let newState = JSON.parse(JSON.stringify(state));
-
+  const newState = JSON.parse(JSON.stringify(state));
   return { oldState, newState };
 }
 

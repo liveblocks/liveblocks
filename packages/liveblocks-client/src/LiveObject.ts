@@ -20,11 +20,13 @@ import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
 export class LiveObject<
   T extends Record<string, any> = Record<string, any>
 > extends AbstractCrdt {
-  #map: Map<string, any>;
-  #propToLastUpdate: Map<string, string> = new Map<string, string>();
+  private _map: Map<string, any>;
+  private _propToLastUpdate: Map<string, string>;
 
   constructor(object: T = {} as T) {
     super();
+
+    this._propToLastUpdate = new Map<string, string>();
 
     for (const key in object) {
       const value = object[key] as any;
@@ -33,7 +35,7 @@ export class LiveObject<
       }
     }
 
-    this.#map = new Map(Object.entries(object));
+    this._map = new Map(Object.entries(object));
   }
 
   /**
@@ -56,7 +58,7 @@ export class LiveObject<
 
     ops.push(op);
 
-    for (const [key, value] of this.#map) {
+    for (const [key, value] of this._map) {
       if (value instanceof AbstractCrdt) {
         ops.push(...value._serialize(this._id, key, doc));
       } else {
@@ -111,7 +113,7 @@ export class LiveObject<
 
       const child = deserialize(entry, parentToChildren, doc);
       child._setParentLink(object, crdt.parentKey);
-      object.#map.set(crdt.parentKey, child);
+      object._map.set(crdt.parentKey, child);
     }
 
     return object;
@@ -123,7 +125,7 @@ export class LiveObject<
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [key, value] of this.#map) {
+    for (const [_key, value] of this._map) {
       if (value instanceof AbstractCrdt) {
         value._attach(doc.generateId(), doc);
       }
@@ -145,28 +147,28 @@ export class LiveObject<
     }
 
     if (this._doc.getItem(id) !== undefined) {
-      if (this.#propToLastUpdate.get(key as string) === opId) {
+      if (this._propToLastUpdate.get(key as string) === opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key as string);
+        this._propToLastUpdate.delete(key as string);
       }
 
       return { modified: false };
     }
 
     if (isLocal) {
-      this.#propToLastUpdate.set(key as string, opId);
-    } else if (this.#propToLastUpdate.get(key as string) === undefined) {
+      this._propToLastUpdate.set(key as string, opId);
+    } else if (this._propToLastUpdate.get(key as string) === undefined) {
       // Remote operation with no local change => apply operation
-    } else if (this.#propToLastUpdate.get(key as string) === opId) {
+    } else if (this._propToLastUpdate.get(key as string) === opId) {
       // Acknowlegment from local operation
-      this.#propToLastUpdate.delete(key as string);
+      this._propToLastUpdate.delete(key as string);
       return { modified: false };
     } else {
       // Conflict, ignore remote operation
       return { modified: false };
     }
 
-    const previousValue = this.#map.get(key as string);
+    const previousValue = this._map.get(key as string);
     let reverse: Op[];
     if (isCrdt(previousValue)) {
       reverse = previousValue._serialize(this._id!, key as string);
@@ -185,7 +187,7 @@ export class LiveObject<
       ];
     }
 
-    this.#map.set(key as string, child);
+    this._map.set(key as string, child);
     child._setParentLink(this, key as string);
     child._attach(id, this._doc);
 
@@ -206,9 +208,9 @@ export class LiveObject<
     if (child) {
       const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
-      for (const [key, value] of this.#map) {
+      for (const [key, value] of this._map) {
         if (value === child) {
-          this.#map.delete(key);
+          this._map.delete(key);
         }
       }
 
@@ -232,8 +234,8 @@ export class LiveObject<
    * @internal
    */
   _detachChildren() {
-    for (const [key, value] of this.#map) {
-      this.#map.delete(key);
+    for (const [key, value] of this._map) {
+      this._map.delete(key);
       value._detach();
     }
   }
@@ -244,7 +246,7 @@ export class LiveObject<
   _detach() {
     super._detach();
 
-    for (const value of this.#map.values()) {
+    for (const value of this._map.values()) {
       if (isCrdt(value)) {
         value._detach();
       }
@@ -256,9 +258,9 @@ export class LiveObject<
    */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     if (op.type === OpType.UpdateObject) {
-      return this.#applyUpdate(op, isLocal);
+      return this._applyUpdate(op, isLocal);
     } else if (op.type === OpType.DeleteObjectKey) {
-      return this.#applyDeleteObjectKey(op);
+      return this._applyDeleteObjectKey(op);
     }
 
     return super._apply(op, isLocal);
@@ -268,15 +270,23 @@ export class LiveObject<
    * @internal
    */
   _toSerializedCrdt(): SerializedCrdt {
+    const data: Record<string, any> = {};
+
+    for (const [key, value] of this._map) {
+      if (value instanceof AbstractCrdt === false) {
+        data[key] = value;
+      }
+    }
+
     return {
       type: CrdtType.Object,
       parentId: this._parent?._id,
       parentKey: this._parentKey,
-      data: this.toObject(),
+      data,
     };
   }
 
-  #applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
+  private _applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const reverse: Op[] = [];
     const reverseUpdate: UpdateObjectOp = {
@@ -287,7 +297,7 @@ export class LiveObject<
     reverse.push(reverseUpdate);
 
     for (const key in op.data as Partial<T>) {
-      const oldValue = this.#map.get(key);
+      const oldValue = this._map.get(key);
       if (oldValue instanceof AbstractCrdt) {
         reverse.push(...oldValue._serialize(this._id!, key));
         oldValue._detach();
@@ -298,23 +308,23 @@ export class LiveObject<
       }
     }
 
-    let updateDelta: LiveObjectUpdateDelta<T> = {};
+    const updateDelta: LiveObjectUpdateDelta<T> = {};
     for (const key in op.data as Partial<T>) {
       if (isLocal) {
-        this.#propToLastUpdate.set(key, op.opId!);
-      } else if (this.#propToLastUpdate.get(key) == null) {
+        this._propToLastUpdate.set(key, op.opId!);
+      } else if (this._propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
-      } else if (this.#propToLastUpdate.get(key) === op.opId) {
+      } else if (this._propToLastUpdate.get(key) === op.opId) {
         // Acknowlegment from local operation
-        this.#propToLastUpdate.delete(key);
+        this._propToLastUpdate.delete(key);
         continue;
       } else {
         // Conflict, ignore remote operation
         continue;
       }
 
-      const oldValue = this.#map.get(key);
+      const oldValue = this._map.get(key);
 
       if (isCrdt(oldValue)) {
         oldValue._detach();
@@ -322,7 +332,7 @@ export class LiveObject<
 
       isModified = true;
       updateDelta[key] = { type: "update" };
-      this.#map.set(key, op.data[key]);
+      this._map.set(key, op.data[key]);
     }
 
     if (Object.keys(reverseUpdate.data).length !== 0) {
@@ -341,21 +351,21 @@ export class LiveObject<
       : { modified: false };
   }
 
-  #applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
+  private _applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
     const key = op.key;
 
     // If property does not exist, exit without notifying
-    if (this.#map.has(key) === false) {
+    if (this._map.has(key) === false) {
       return { modified: false };
     }
 
     // If a local operation exists on the same key
     // prevent flickering by not applying delete op.
-    if (this.#propToLastUpdate.get(key) !== undefined) {
+    if (this._propToLastUpdate.get(key) !== undefined) {
       return { modified: false };
     }
 
-    const oldValue = this.#map.get(key);
+    const oldValue = this._map.get(key);
 
     let reverse: Op[] = [];
     if (isCrdt(oldValue)) {
@@ -371,7 +381,7 @@ export class LiveObject<
       ];
     }
 
-    this.#map.delete(key);
+    this._map.delete(key);
     return {
       modified: {
         node: this,
@@ -386,7 +396,7 @@ export class LiveObject<
    * Transform the LiveObject into a javascript object
    */
   toObject(): T {
-    return Object.fromEntries(this.#map) as T;
+    return Object.fromEntries(this._map) as T;
   }
 
   /**
@@ -404,7 +414,7 @@ export class LiveObject<
    * @param key The key of the property to get
    */
   get<TKey extends keyof T>(key: TKey): T[TKey] {
-    return this.#map.get(key as string);
+    return this._map.get(key as string);
   }
 
   /**
@@ -413,7 +423,7 @@ export class LiveObject<
    */
   delete(key: keyof T): void {
     const keyAsString = key as string;
-    const oldValue = this.#map.get(keyAsString);
+    const oldValue = this._map.get(keyAsString);
 
     if (oldValue === undefined) {
       return;
@@ -423,7 +433,7 @@ export class LiveObject<
       if (oldValue instanceof AbstractCrdt) {
         oldValue._detach();
       }
-      this.#map.delete(keyAsString);
+      this._map.delete(keyAsString);
       return;
     }
 
@@ -442,7 +452,7 @@ export class LiveObject<
       ];
     }
 
-    this.#map.delete(keyAsString);
+    this._map.delete(keyAsString);
 
     const storageUpdates = new Map<string, StorageUpdate>();
     storageUpdates.set(this._id, {
@@ -472,7 +482,7 @@ export class LiveObject<
   update(overrides: Partial<T>) {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
-        const oldValue = this.#map.get(key);
+        const oldValue = this._map.get(key);
 
         if (oldValue instanceof AbstractCrdt) {
           oldValue._detach();
@@ -484,7 +494,7 @@ export class LiveObject<
           newValue._setParentLink(this, key);
         }
 
-        this.#map.set(key, newValue);
+        this._map.set(key, newValue);
       }
 
       return;
@@ -505,7 +515,7 @@ export class LiveObject<
     const updateDelta: LiveObjectUpdateDelta<T> = {};
 
     for (const key in overrides) {
-      const oldValue = this.#map.get(key);
+      const oldValue = this._map.get(key);
 
       if (oldValue instanceof AbstractCrdt) {
         reverseOps.push(...oldValue._serialize(this._id, key));
@@ -527,16 +537,16 @@ export class LiveObject<
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
-          this.#propToLastUpdate.set(key, createCrdtOp.opId!);
+          this._propToLastUpdate.set(key, createCrdtOp.opId!);
         }
 
         ops.push(...newAttachChildOps);
       } else {
         updatedProps[key] = newValue;
-        this.#propToLastUpdate.set(key, opId);
+        this._propToLastUpdate.set(key, opId);
       }
 
-      this.#map.set(key, newValue);
+      this._map.set(key, newValue);
       updateDelta[key] = { type: "update" };
     }
 

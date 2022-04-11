@@ -71,26 +71,26 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<T extends Presence>(presenceMap: {
+function makeOthers<T extends Presence>(userMap: {
   [key: number]: User<T>;
 }): Others<T> {
-  const array = Object.values(presenceMap).map((presence) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = presence;
+  const users = Object.values(userMap).map((user) => {
+    const { _hasReceivedInitialPresence, ...publicKeys } = user;
     return publicKeys;
   });
 
   return {
     get count() {
-      return array.length;
+      return users.length;
     },
     [Symbol.iterator]() {
-      return array[Symbol.iterator]();
+      return users[Symbol.iterator]();
     },
     map(callback) {
-      return array.map(callback);
+      return users.map(callback);
     },
     toArray() {
-      return array;
+      return users;
     },
   };
 }
@@ -305,7 +305,7 @@ export function makeStateMachine(
     return [root, parentToChildren];
   }
 
-  function updateRoot<T>(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: SerializedCrdtWithId[]) {
     if (!state.root) {
       return;
     }
@@ -390,17 +390,17 @@ export function makeStateMachine(
   function notify({
     storageUpdates = new Map<string, StorageUpdate>(),
     presence = false,
-    others = [],
+    others: otherEvents = [],
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
     others?: OthersEvent[];
   }) {
-    if (others.length > 0) {
+    if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
 
-      for (const event of others) {
-        for (const listener of state.listeners["others"]) {
+      for (const event of otherEvents) {
+        for (const listener of state.listeners.others) {
           listener(state.others, event);
         }
       }
@@ -939,8 +939,11 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.InitialStorageState: {
+          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+          const offlineOps = new Map(state.offlineOperations);
           createOrUpdateRootFromMessage(subMessage);
-          applyAndSendOfflineOps();
+          applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
           break;
         }
@@ -1111,14 +1114,14 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function applyAndSendOfflineOps() {
-    if (state.offlineOperations.size === 0) {
+  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+    if (offlineOps.size === 0) {
       return;
     }
 
     const messages: ClientMessage[] = [];
 
-    const ops = Array.from(state.offlineOperations.values());
+    const ops = Array.from(offlineOps.values());
 
     const result = apply(ops, true);
 

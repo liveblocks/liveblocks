@@ -20,15 +20,17 @@ type LiveListItem = [crdt: AbstractCrdt, position: string];
  */
 export class LiveList<T> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
-  #items: Array<LiveListItem> = [];
+  private _items: Array<LiveListItem>;
 
   constructor(items: T[] = []) {
     super();
+    this._items = [];
+
     let position = undefined;
     for (let i = 0; i < items.length; i++) {
       const newPosition = makePosition(position);
       const item = selfOrRegister(items[i]);
-      this.#items.push([item, newPosition]);
+      this._items.push([item, newPosition]);
       position = newPosition;
     }
   }
@@ -37,7 +39,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id, item]: [id: string, item: SerializedList],
+    [id]: [id: string, item: SerializedList],
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
@@ -55,8 +57,8 @@ export class LiveList<T> extends AbstractCrdt {
 
       child._setParentLink(list, entry[1].parentKey!);
 
-      list.#items.push([child, entry[1].parentKey!]);
-      list.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+      list._items.push([child, entry[1].parentKey!]);
+      list._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
     }
 
     return list;
@@ -87,7 +89,7 @@ export class LiveList<T> extends AbstractCrdt {
 
     ops.push(op);
 
-    for (const [value, key] of this.#items) {
+    for (const [value, key] of this._items) {
       ops.push(...value._serialize(this._id, key, doc));
     }
 
@@ -98,7 +100,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @internal
    */
   _indexOfPosition(position: string): number {
-    return this.#items.findIndex((item) => item[1] === position);
+    return this._items.findIndex((item) => item[1] === position);
   }
 
   /**
@@ -107,7 +109,7 @@ export class LiveList<T> extends AbstractCrdt {
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [item, position] of this.#items) {
+    for (const [item] of this._items) {
       item._attach(doc.generateId(), doc);
     }
   }
@@ -118,7 +120,7 @@ export class LiveList<T> extends AbstractCrdt {
   _detach() {
     super._detach();
 
-    for (const [value] of this.#items) {
+    for (const [value] of this._items) {
       value._detach();
     }
   }
@@ -130,7 +132,7 @@ export class LiveList<T> extends AbstractCrdt {
     id: string,
     key: string,
     child: AbstractCrdt,
-    opId: string,
+    _opId: string,
     isLocal: boolean
   ): ApplyResult {
     if (this._doc == null) {
@@ -144,7 +146,7 @@ export class LiveList<T> extends AbstractCrdt {
     child._attach(id, this._doc);
     child._setParentLink(this, key);
 
-    const index = this.#items.findIndex((entry) => entry[1] === key);
+    const index = this._items.findIndex((entry) => entry[1] === key);
 
     let newKey = key;
 
@@ -152,23 +154,23 @@ export class LiveList<T> extends AbstractCrdt {
     if (index !== -1) {
       if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
-        let before = this.#items[index] ? this.#items[index][1] : undefined;
-        let after = this.#items[index + 1]
-          ? this.#items[index + 1][1]
+        let before = this._items[index] ? this._items[index][1] : undefined;
+        let after = this._items[index + 1]
+          ? this._items[index + 1][1]
           : undefined;
 
         newKey = makePosition(before, after);
         child._setParentLink(this, newKey);
       } else {
         // If change is remote => assign a temporary position to existing child until we get the fix from the backend
-        this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+        this._items[index][1] = makePosition(key, this._items[index + 1]?.[1]);
       }
     }
 
-    this.#items.push([child, newKey]);
-    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    this._items.push([child, newKey]);
+    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    const newIndex = this.#items.findIndex((entry) => entry[1] === newKey);
+    const newIndex = this._items.findIndex((entry) => entry[1] === newKey);
     return {
       reverse: [{ type: OpType.DeleteCrdt, id }],
       modified: {
@@ -192,8 +194,8 @@ export class LiveList<T> extends AbstractCrdt {
     if (child) {
       const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
-      const indexToDelete = this.#items.findIndex((item) => item[0] === child);
-      this.#items.splice(indexToDelete, 1);
+      const indexToDelete = this._items.findIndex((item) => item[0] === child);
+      this._items.splice(indexToDelete, 1);
 
       child._detach();
 
@@ -219,25 +221,25 @@ export class LiveList<T> extends AbstractCrdt {
   ): ApplyResult {
     child._setParentLink(this, key);
 
-    const previousIndex = this.#items.findIndex(
+    const previousIndex = this._items.findIndex(
       (entry) => entry[0]._id === child._id
     );
-    const index = this.#items.findIndex((entry) => entry[1] === key);
+    const index = this._items.findIndex((entry) => entry[1] === key);
 
     // Assign a temporary position until we get the fix from the backend
     if (index !== -1) {
-      this.#items[index][1] = makePosition(key, this.#items[index + 1]?.[1]);
+      this._items[index][1] = makePosition(key, this._items[index + 1]?.[1]);
     }
 
-    const item = this.#items.find((item) => item[0] === child);
+    const item = this._items.find((item) => item[0] === child);
 
     if (item) {
       item[1] = key;
     }
 
-    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
 
-    const newIndex = this.#items.findIndex(
+    const newIndex = this._items.findIndex(
       (entry) => entry[0]._id === child._id
     );
 
@@ -290,7 +292,7 @@ export class LiveList<T> extends AbstractCrdt {
    * Returns the number of elements.
    */
   get length() {
-    return this.#items.length;
+    return this._items.length;
   }
 
   /**
@@ -307,24 +309,25 @@ export class LiveList<T> extends AbstractCrdt {
    * @param index The index at which you want to insert the element.
    */
   insert(element: T, index: number) {
-    if (index < 0 || index > this.#items.length) {
+    if (index < 0 || index > this._items.length) {
       throw new Error(
-        `Cannot insert list item at index "${index}". index should be between 0 and ${
-          this.#items.length
-        }`
+        `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
       );
     }
 
-    let before = this.#items[index - 1] ? this.#items[index - 1][1] : undefined;
-    let after = this.#items[index] ? this.#items[index][1] : undefined;
+    const before = this._items[index - 1]
+      ? this._items[index - 1][1]
+      : undefined;
+    const after = this._items[index] ? this._items[index][1] : undefined;
+
     const position = makePosition(before, after);
 
     const value = selfOrRegister(element);
     value._setParentLink(this, position);
 
-    this.#items.push([value, position]);
-    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    const newIndex = this.#items.findIndex((entry) => entry[1] === position);
+    this._items.push([value, position]);
+    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    const newIndex = this._items.findIndex((entry) => entry[1] === position);
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -360,7 +363,7 @@ export class LiveList<T> extends AbstractCrdt {
       throw new Error("targetIndex cannot be less than 0");
     }
 
-    if (targetIndex >= this.#items.length) {
+    if (targetIndex >= this._items.length) {
       throw new Error(
         "targetIndex cannot be greater or equal than the list length"
       );
@@ -370,7 +373,7 @@ export class LiveList<T> extends AbstractCrdt {
       throw new Error("index cannot be less than 0");
     }
 
-    if (index >= this.#items.length) {
+    if (index >= this._items.length) {
       throw new Error("index cannot be greater or equal than the list length");
     }
 
@@ -379,24 +382,24 @@ export class LiveList<T> extends AbstractCrdt {
 
     if (index < targetIndex) {
       afterPosition =
-        targetIndex === this.#items.length - 1
+        targetIndex === this._items.length - 1
           ? undefined
-          : this.#items[targetIndex + 1][1];
-      beforePosition = this.#items[targetIndex][1];
+          : this._items[targetIndex + 1][1];
+      beforePosition = this._items[targetIndex][1];
     } else {
-      afterPosition = this.#items[targetIndex][1];
+      afterPosition = this._items[targetIndex][1];
       beforePosition =
-        targetIndex === 0 ? undefined : this.#items[targetIndex - 1][1];
+        targetIndex === 0 ? undefined : this._items[targetIndex - 1][1];
     }
 
     const position = makePosition(beforePosition, afterPosition);
 
-    const item = this.#items[index];
+    const item = this._items[index];
     const previousPosition = item[1];
     item[1] = position;
     item[0]._setParentLink(this, position);
-    this.#items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    const newIndex = this.#items.findIndex((entry) => entry[1] === position);
+    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    const newIndex = this._items.findIndex((entry) => entry[1] === position);
 
     if (this._doc && this._id) {
       const storageUpdates = new Map<string, StorageUpdate>();
@@ -439,17 +442,17 @@ export class LiveList<T> extends AbstractCrdt {
    * @param index The index of the element to delete
    */
   delete(index: number) {
-    if (index < 0 || index >= this.#items.length) {
+    if (index < 0 || index >= this._items.length) {
       throw new Error(
         `Cannot delete list item at index "${index}". index should be between 0 and ${
-          this.#items.length - 1
+          this._items.length - 1
         }`
       );
     }
 
-    const item = this.#items[index];
+    const item = this._items[index];
     item[0]._detach();
-    this.#items.splice(index, 1);
+    this._items.splice(index, 1);
 
     if (this._doc) {
       const childRecordId = item[0]._id;
@@ -478,13 +481,13 @@ export class LiveList<T> extends AbstractCrdt {
 
   clear() {
     if (this._doc) {
-      let ops: Op[] = [];
-      let reverseOps: Op[] = [];
+      const ops: Op[] = [];
+      const reverseOps: Op[] = [];
 
-      let updateDelta: LiveListUpdateDelta[] = [];
+      const updateDelta: LiveListUpdateDelta[] = [];
 
       let i = 0;
-      for (const item of this.#items) {
+      for (const item of this._items) {
         item[0]._detach();
         const childId = item[0]._id;
         if (childId) {
@@ -497,7 +500,7 @@ export class LiveList<T> extends AbstractCrdt {
         i++;
       }
 
-      this.#items = [];
+      this._items = [];
 
       const storageUpdates = new Map<string, StorageUpdate>();
       storageUpdates.set(this._id!, {
@@ -508,10 +511,10 @@ export class LiveList<T> extends AbstractCrdt {
 
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     } else {
-      for (const item of this.#items) {
+      for (const item of this._items) {
         item[0]._detach();
       }
-      this.#items = [];
+      this._items = [];
     }
   }
 
@@ -519,7 +522,7 @@ export class LiveList<T> extends AbstractCrdt {
    * Returns an Array of all the elements in the LiveList.
    */
   toArray(): T[] {
-    return this.#items.map((entry) => selfOrRegisterValue(entry[0]));
+    return this._items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
   /**
@@ -572,11 +575,11 @@ export class LiveList<T> extends AbstractCrdt {
    * @returns The element at the specified index or undefined.
    */
   get(index: number): T | undefined {
-    if (index < 0 || index >= this.#items.length) {
+    if (index < 0 || index >= this._items.length) {
       return undefined;
     }
 
-    return selfOrRegisterValue(this.#items[index][0]);
+    return selfOrRegisterValue(this._items[index][0]);
   }
 
   /**
@@ -605,7 +608,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @returns An array with each element being the result of the callback function.
    */
   map<U>(callback: (value: T, index: number) => U): U[] {
-    return this.#items.map((entry, i) =>
+    return this._items.map((entry, i) =>
       callback(selfOrRegisterValue(entry[0]), i)
     );
   }
@@ -620,15 +623,15 @@ export class LiveList<T> extends AbstractCrdt {
   }
 
   [Symbol.iterator](): IterableIterator<T> {
-    return new LiveListIterator(this.#items);
+    return new LiveListIterator(this._items);
   }
 }
 
 class LiveListIterator<T> implements IterableIterator<T> {
-  #innerIterator: IterableIterator<LiveListItem>;
+  private _innerIterator: IterableIterator<LiveListItem>;
 
   constructor(items: Array<LiveListItem>) {
-    this.#innerIterator = items[Symbol.iterator]();
+    this._innerIterator = items[Symbol.iterator]();
   }
 
   [Symbol.iterator](): IterableIterator<T> {
@@ -636,7 +639,7 @@ class LiveListIterator<T> implements IterableIterator<T> {
   }
 
   next(): IteratorResult<T> {
-    const result = this.#innerIterator.next();
+    const result = this._innerIterator.next();
 
     if (result.done) {
       return {

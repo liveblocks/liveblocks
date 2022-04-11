@@ -75,7 +75,7 @@ export function createClient(options: ClientOptions): Client {
   }
 
   function leave(roomId: string) {
-    let room = rooms.get(roomId);
+    const room = rooms.get(roomId);
     if (room) {
       room.disconnect();
       rooms.delete(roomId);

@@ -15,10 +15,6 @@ module.exports = (api, targets) => {
         },
       ],
     ],
-    plugins: [
-      ["@babel/plugin-proposal-class-properties"],
-      ["@babel/plugin-proposal-private-methods"],
-      ["@babel/plugin-transform-typescript"],
-    ],
+    plugins: [["@babel/plugin-transform-typescript"]],
   };
 };

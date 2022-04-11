@@ -8,18 +8,18 @@ import {
 } from "./live";
 
 /**
- * INTERNAL
+ * @internal
  */
 export class LiveRegister<TValue = any> extends AbstractCrdt {
-  #data: TValue;
+  _data: TValue;
 
   constructor(data: TValue) {
     super();
-    this.#data = data;
+    this._data = data;
   }
 
   get data() {
-    return this.#data;
+    return this._data;
   }
 
   /**
@@ -76,16 +76,16 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
   }
 
   _attachChild(
-    id: string,
-    key: string,
-    crdt: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
+    _id: string,
+    _key: string,
+    _crdt: AbstractCrdt,
+    _opId: string,
+    _isLocal: boolean
   ): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
-  _detachChild(crdt: AbstractCrdt): ApplyResult {
+  _detachChild(_crdt: AbstractCrdt): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

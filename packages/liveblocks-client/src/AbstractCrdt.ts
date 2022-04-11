@@ -20,47 +20,47 @@ export interface Doc {
 }
 
 export abstract class AbstractCrdt {
-  #parent?: AbstractCrdt;
-  #doc?: Doc;
-  #id?: string;
-  #parentKey?: string;
+  private __parent?: AbstractCrdt;
+  private __doc?: Doc;
+  private __id?: string;
+  private __parentKey?: string;
 
   /**
    * @internal
    */
   protected get _doc() {
-    return this.#doc;
+    return this.__doc;
   }
 
   get roomId() {
-    return this.#doc ? this.#doc.roomId : null;
+    return this.__doc ? this.__doc.roomId : null;
   }
 
   /**
    * @internal
    */
   get _id() {
-    return this.#id;
+    return this.__id;
   }
 
   /**
    * @internal
    */
   get _parent() {
-    return this.#parent;
+    return this.__parent;
   }
 
   /**
    * @internal
    */
   get _parentKey() {
-    return this.#parentKey;
+    return this.__parentKey;
   }
 
   /**
    * @internal
    */
-  _apply(op: Op, isLocal: boolean): ApplyResult {
+  _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpType.DeleteCrdt: {
         if (this._parent != null && this._parentKey != null) {
@@ -78,26 +78,26 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _setParentLink(parent: AbstractCrdt, key: string) {
-    if (this.#parent != null && this.#parent !== parent) {
+    if (this.__parent != null && this.__parent !== parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
 
-    this.#parentKey = key;
-    this.#parent = parent;
+    this.__parentKey = key;
+    this.__parent = parent;
   }
 
   /**
    * @internal
    */
   _attach(id: string, doc: Doc) {
-    if (this.#id || this.#doc) {
+    if (this.__id || this.__doc) {
       throw new Error("Cannot attach if CRDT is already attached");
     }
 
     doc.addItem(id, this);
 
-    this.#id = id;
-    this.#doc = doc;
+    this.__id = id;
+    this.__doc = doc;
   }
 
   /**
@@ -115,12 +115,12 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _detach() {
-    if (this.#doc && this.#id) {
-      this.#doc.deleteItem(this.#id);
+    if (this.__doc && this.__id) {
+      this.__doc.deleteItem(this.__id);
     }
 
-    this.#parent = undefined;
-    this.#doc = undefined;
+    this.__parent = undefined;
+    this.__doc = undefined;
   }
 
   /**
