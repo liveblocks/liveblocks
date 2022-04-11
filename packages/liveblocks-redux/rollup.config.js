@@ -47,6 +47,7 @@ function createDeclarationConfig(input, output) {
         declaration: true,
         outDir: output,
         tsconfig: "./tsconfig.build.json",
+        noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
       }),
       {
         closeBundle: async () => {

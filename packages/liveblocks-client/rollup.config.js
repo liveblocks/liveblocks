@@ -49,6 +49,7 @@ function createDeclarationConfig(input, output) {
           declaration: true,
           outDir: `./lib/tmp`, // We need to put it in "lib" because of typescript can't @rollup/plugin-typescript ouput outside tsconfig outDir option
           tsconfig: "./tsconfig.build.json",
+          noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
         }),
       ],
     },
