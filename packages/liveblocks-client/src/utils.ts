@@ -194,17 +194,16 @@ export function getTreesDiffOperations(
   return ops;
 }
 
-export function mergeStorageUpdates(
-  first: StorageUpdate | undefined,
-  second: StorageUpdate
-): StorageUpdate {
+export function mergeStorageUpdates<U extends StorageUpdate>(
+  first: U | undefined,
+  second: U
+): U {
   if (!first) {
     return second;
   }
 
-  if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates<JSONObject>).updates;
-
+  if (first.type === "LiveObject" && second.type === "LiveObject") {
+    const updates = first.updates;
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
     }
@@ -212,9 +211,8 @@ export function mergeStorageUpdates(
       ...second,
       updates: updates,
     };
-  } else if (second.type === "LiveMap") {
-    const updates = (first as LiveMapUpdates<string, unknown>).updates;
-
+  } else if (first.type === "LiveMap" && second.type === "LiveMap") {
+    const updates = first.updates;
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
     }
@@ -222,13 +220,14 @@ export function mergeStorageUpdates(
       ...second,
       updates: updates,
     };
-  } else if (second.type === "LiveList") {
-    const updates = (first as LiveListUpdates<unknown>).updates;
-
+  } else if (first.type === "LiveList" && second.type === "LiveList") {
+    const updates = first.updates;
     return {
       ...second,
       updates: updates.concat(second.updates),
     };
+  } else {
+    // TODO: Throw an error about mismatching StorageUpdate types?
   }
 
   return second;
