@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.15.11-test.1",
+  "version": "0.15.11",
   "description": "",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -33,7 +33,7 @@
   },
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@liveblocks/client": "0.15.11-test.1",
+    "@liveblocks/client": "0.15.11",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
