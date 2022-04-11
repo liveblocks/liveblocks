@@ -34,10 +34,10 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TKey extends string, TValue> = {
+export type LiveMapUpdates<K extends string, V> = {
   type: "LiveMap";
-  node: LiveMap<TKey, TValue>;
-  updates: Record<TKey, UpdateDelta>;
+  node: LiveMap<K, V>;
+  updates: Record<K, UpdateDelta>;
 };
 
 export type LiveObjectUpdateDelta<T> = Partial<{
@@ -392,9 +392,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
-      liveMap: LiveMap<TKey, TValue>,
-      listener: (liveMap: LiveMap<TKey, TValue>) => void
+    <K extends string, V>(
+      liveMap: LiveMap<K, V>,
+      listener: (liveMap: LiveMap<K, V>) => void
     ): () => void;
     /**
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
@@ -444,8 +444,8 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
-      liveMap: LiveMap<TKey, TValue>,
+    <K extends string, V>(
+      liveMap: LiveMap<K, V>,
       callback: (updates: StorageUpdate[]) => void,
       options: { isDeep: true }
     ): () => void;
