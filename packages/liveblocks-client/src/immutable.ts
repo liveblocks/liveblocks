@@ -159,11 +159,11 @@ export function patchLiveList<T>(
   }
 }
 
-export function patchLiveObjectKey<T>(
+export function patchLiveObjectKey<T extends object, K extends keyof T>(
   liveObject: LiveObject<T>,
-  key: keyof T,
-  prev: any,
-  next: any
+  key: K,
+  prev: T[K] | undefined,
+  next: T[K] | undefined
 ) {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
