@@ -1,35 +1,31 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/icon-192x192.png" height="96">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [SvelteKit](https://kit.svelte.dev/).
+# Live Avatars
 
-This repo shows how to implement live avatars with Liveblocks and [SvelteKit](https://kit.svelte.dev/).
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/sveltekit-live-avatars">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/svelte-message?style=flat&logo=svelte&color=f30&logoColor=fff" alt="Svelte" />
+  <img src="https://img.shields.io/badge/sveltekit-message?style=flat&logo=svelte&color=f30&logoColor=fff" alt="SvelteKit" />
+</p>
 
-![live-avatars-screenshot](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-live-avatars.png&w=1200&q=90)
+This example shows how to build live avatars with [Liveblocks](https://liveblocks.io) and [SvelteKit](https://kit.svelte.dev/).
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="800" alt="Live Avatars" />
 
 ## Getting started
 
-### Run examples locally
-
 - Install all dependencies with `npm install`
-
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env.local` file and add your **secret** key as the `VITE_LIVEBLOCKS_SECRET_KEY` environment variable
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-- Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
+### CodeSandbox
 
-- Create a file named `.env.local` and add your Liveblocks secret as environment variable `VITE_LIVEBLOCKS_SECRET_KEY=sk_test_yourkey`
-
-### Run examples on CodeSandbox
-
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/sveltekit-live-avatars-t4vetx)
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-
-- Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
-
-- Create [secret](https://codesandbox.io/docs/secrets) named `VITE_LIVEBLOCKS_SECRET_KEY` with the secret key you just copied. You need to create an account on CodeSandbox to add an environment variable.
-
-- Refresh your browser and you should be good to go!
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/sveltekit-live-avatars) on CodeSandbox, create the `VITE_LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).

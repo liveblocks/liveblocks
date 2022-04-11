@@ -1,20 +1,26 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/icon-192x192.png" height="96">
-    <h3 align="center">Liveblocks</h3>
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# Liveblocks examples without front-end framework
+# Live Cursors
 
-This project contains Liveblocks live cursors example that do not rely on any front-end technologies. It uses [express](https://expressjs.com/) for the authentication endpoint and [esbuild](https://esbuild.github.io/) for the bundling.
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/express-javascript-live-cursors">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
+</p>
+
+This example shows how to build live cursors without relying on a front-end framework—using [Express](https://expressjs.com/) for authentication and [esbuild](https://esbuild.github.io/) for bundling.
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="800" alt="Live Cursors" />
 
 ## Getting started
 
-To run examples locally
-
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your secret key from the [administration](https://liveblocks.io/dashboard/apikeys)
-- Create a file named `.env` and add your Liveblocks secret as environment variable `LIVEBLOCKS_SECRET_KEY=sk_test_yourkey`
+- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
