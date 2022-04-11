@@ -100,12 +100,12 @@ export type JSONValue =
 /**
  * Any array that contains JSON-serializable values.
  */
-export type JSONArray = readonly JSONValue[];
+export type JSONArray = JSONValue[];
 
 /**
  * Any object that only holds JSON-serializable values in its value positions.
  */
-export type JSONObject = { readonly [key: string]: JSONValue | undefined };
+export type JSONObject = { [key: string]: JSONValue | undefined };
 
 export type Client = {
   /**

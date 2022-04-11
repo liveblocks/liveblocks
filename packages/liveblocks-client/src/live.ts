@@ -1,4 +1,4 @@
-import { Presence } from "./types";
+import { Presence, JSONObject, JSONValue } from "./types";
 
 export type ServerMessage =
   | UpdatePresenceMessage
@@ -112,9 +112,7 @@ export type SerializedObject = {
   type: CrdtType.Object;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JSONObject;
 };
 
 export type SerializedList = {
@@ -133,7 +131,7 @@ export type SerializedRegister = {
   type: CrdtType.Register;
   parentId: string;
   parentKey: string;
-  data: any;
+  data: JSONValue;
 };
 
 export type SerializedCrdt =
@@ -168,9 +166,7 @@ export type UpdateObjectOp = {
   opId?: string;
   id: string;
   type: OpType.UpdateObject;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JSONObject;
 };
 
 export type CreateObjectOp = {
@@ -179,9 +175,7 @@ export type CreateObjectOp = {
   type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JSONObject;
 };
 
 export type CreateListOp = {
@@ -206,7 +200,7 @@ export type CreateRegisterOp = {
   type: OpType.CreateRegister;
   parentId: string;
   parentKey: string;
-  data: any;
+  data: JSONValue;
 };
 
 export type DeleteCrdtOp = {
