@@ -202,7 +202,11 @@ export function mergeStorageUpdates<U extends StorageUpdate>(
     return second;
   }
 
-  if (first.type === "LiveObject" && second.type === "LiveObject") {
+  if (
+    // TODO: Should we also enforce that the nodes match?
+    first.type === "LiveObject" &&
+    second.type === "LiveObject"
+  ) {
     const updates = first.updates;
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -211,7 +215,11 @@ export function mergeStorageUpdates<U extends StorageUpdate>(
       ...second,
       updates: updates,
     };
-  } else if (first.type === "LiveMap" && second.type === "LiveMap") {
+  } else if (
+    // TODO: Should we also enforce that the nodes match?
+    first.type === "LiveMap" &&
+    second.type === "LiveMap"
+  ) {
     const updates = first.updates;
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -220,7 +228,11 @@ export function mergeStorageUpdates<U extends StorageUpdate>(
       ...second,
       updates: updates,
     };
-  } else if (first.type === "LiveList" && second.type === "LiveList") {
+  } else if (
+    // TODO: Should we also enforce that the nodes match?
+    first.type === "LiveList" &&
+    second.type === "LiveList"
+  ) {
     const updates = first.updates;
     return {
       ...second,
