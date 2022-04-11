@@ -205,7 +205,7 @@ export function mergeStorageUpdates(
   }
 
   if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates).updates;
+    const updates = (first as LiveObjectUpdates<any /* unknown? */>).updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -215,7 +215,8 @@ export function mergeStorageUpdates(
       updates: updates,
     };
   } else if (second.type === "LiveMap") {
-    const updates = (first as LiveMapUpdates).updates;
+    const updates = (first as LiveMapUpdates<string, any /* unknown? */>)
+      .updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -225,7 +226,7 @@ export function mergeStorageUpdates(
       updates: updates,
     };
   } else if (second.type === "LiveList") {
-    const updates = (first as LiveListUpdates).updates;
+    const updates = (first as LiveListUpdates<any /* unknown? */>).updates;
 
     return {
       ...second,
