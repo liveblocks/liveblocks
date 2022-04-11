@@ -166,7 +166,10 @@ export interface Others<TPresence extends Presence = Presence> {
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends Presence = Presence> = {
+export type User<
+  TPresence extends Presence = Presence,
+  TInfo extends JSONValue = JSONValue
+> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -179,7 +182,7 @@ export type User<TPresence extends Presence = Presence> = {
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  readonly info?: any;
+  readonly info?: TInfo;
   /**
    * The user presence.
    */
