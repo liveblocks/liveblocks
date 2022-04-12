@@ -27,15 +27,15 @@ while getopts h flag; do
 done
 shift $(($OPTIND - 1))
 
-echo ""
-echo "enter ======> $(pwd)"
+# echo ""
+# echo "enter ======> $(pwd)"
 
 THIS_SCRIPT="$0"
 if [ $# -eq 2 ]; then
     LIVEBLOCKS_ROOT="$(realpath "$1")"
     PROJECT_ROOT="$(realpath "$2")"
-    echo LIVEBLOCKS_ROOT="$LIVEBLOCKS_ROOT"
-    echo PROJECT_ROOT="$PROJECT_ROOT"
+    # echo LIVEBLOCKS_ROOT="$LIVEBLOCKS_ROOT"
+    # echo PROJECT_ROOT="$PROJECT_ROOT"
 elif [ $# -eq 1 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
@@ -59,7 +59,7 @@ if starts_with "$(pwd)" "$LIVEBLOCKS_ROOT/packages"; then
 else
     IS_PROJECT=1
 fi
-echo IS_PROJECT="$IS_PROJECT"
+# echo IS_PROJECT="$IS_PROJECT"
 
 # Global that points to the node_modules folder of the current package, to
 # backlink peer dependencies into
@@ -124,7 +124,7 @@ npm_install () {
 # Like `npm link`, but don't show any output unless there's an error
 npm_link () {
     logfile="$(mktemp)"
-    echo npm link "$@"
+    # echo npm link "$@"
     if ! npm link "$@" > "$logfile" 2> "$logfile"; then
         cat "$logfile" >&2
         err ""
@@ -201,7 +201,7 @@ prep_liveblocks_deps () {
 
         # Now cd into the package directory, and rebuild it while linking the
         # peer dependency to the project directory
-        echo "==> Setting up $(liveblocks_pkg_dir "$pkg") to make linkable"
+        # echo "==> Setting up $(liveblocks_pkg_dir "$pkg") to make linkable"
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
             "$THIS_SCRIPT" "$LIVEBLOCKS_ROOT" "$PROJECT_ROOT"
@@ -216,7 +216,7 @@ prep_liveblocks_deps () {
 link_liveblocks_deps () {
     if [ "$(list_liveblocks_dependencies | wc -l)" -eq 0 ]; then
         # No peer dependencies, we can quit early
-        echo "Skipping... no Liveblocks dependencies to link"
+        # echo "Skipping... no Liveblocks dependencies to link"
         return
     fi
 
@@ -229,11 +229,11 @@ link_liveblocks_deps () {
 link_liveblocks_and_peer_deps () {
     if [ "$(list_liveblocks_and_peer_dependencies | wc -l)" -eq 0 ]; then
         # No peer dependencies, we can quit early
-        echo "Skipping... no peer dependencies to link"
+        # echo "Skipping... no peer dependencies to link"
         return
     fi
 
-    echo "==> Linking peer dependencies"
+    echo "==> Linking Liveblocks & peer dependencies"
     npm_link $(list_liveblocks_and_peer_dependencies)
 }
 
@@ -255,7 +255,7 @@ rebuild_if_needed () {
         LIB_TIMESTAMP="$(youngest_file lib)"
         if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
             # Lib build is up-to-date
-            echo "Skipping... (rebuild not needed now)"
+            # echo "Skipping... (rebuild not needed now)"
             return
         fi
     fi
@@ -266,16 +266,4 @@ rebuild_if_needed () {
     npm run build
 }
 
-# echo "Deps:"
-# list_dependencies
-# echo ""
-# echo "Liveblocks deps:"
-# list_liveblocks_dependencies
-# echo ""
-# echo "Liveblocks & peer deps:"
-# list_liveblocks_and_peer_dependencies
-# echo ""
-
 rebuild_if_needed
-echo "exit <======= $(pwd)"
-echo ""
