@@ -13,14 +13,14 @@ import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, StorageUpdate } from "./types";
 import { LiveRegister } from "./LiveRegister";
 
-type LiveListItem = [crdt: AbstractCrdt, position: string];
+type LiveListItemPair = [crdt: AbstractCrdt, position: string];
 
 /**
  * The LiveList class represents an ordered collection of items that is synchorinized across clients.
  */
 export class LiveList<T> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
-  private _items: Array<LiveListItem>;
+  private _items: LiveListItemPair[];
 
   constructor(items: T[] = []) {
     super();
@@ -628,9 +628,9 @@ export class LiveList<T> extends AbstractCrdt {
 }
 
 class LiveListIterator<T> implements IterableIterator<T> {
-  private _innerIterator: IterableIterator<LiveListItem>;
+  private _innerIterator: IterableIterator<LiveListItemPair>;
 
-  constructor(items: Array<LiveListItem>) {
+  constructor(items: Array<LiveListItemPair>) {
     this._innerIterator = items[Symbol.iterator]();
   }
 
