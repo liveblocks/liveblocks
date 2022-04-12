@@ -28,9 +28,6 @@ while getopts h flag; do
 done
 shift $(($OPTIND - 1))
 
-# echo ""
-# echo "enter ======> $(pwd)"
-
 THIS_SCRIPT="$0"
 if [ $# -eq 1 ]; then
     PROJECT_ROOT="$(realpath "$1")"
@@ -56,7 +53,6 @@ if starts_with "$(pwd)" "$LIVEBLOCKS_ROOT/packages"; then
 else
     IS_PROJECT=1
 fi
-# echo IS_PROJECT="$IS_PROJECT"
 
 # Global that points to the node_modules folder of the current package, to
 # backlink peer dependencies into
@@ -121,7 +117,6 @@ npm_install () {
 # Like `npm link`, but don't show any output unless there's an error
 npm_link () {
     logfile="$(mktemp)"
-    # echo npm link "$@"
     if ! npm link "$@" > "$logfile" 2> "$logfile"; then
         cat "$logfile" >&2
         err ""
@@ -129,61 +124,6 @@ npm_link () {
         exit 2
     fi
 }
-
-# Verifies that a given symlink exists
-# symlink node_modules/foo/bar /path/to/target
-# create_symlink () {
-#     if starts_with "$1" "/"; then
-#         err "Unexpected: symlink target $1 should not be an absolute dir"
-#         exit 7
-#     fi
-#     if ! starts_with "$2" "/"; then
-#         err "Unexpected: symlink source $2 should not an absolute dir"
-#         exit 8
-#     fi
-
-#     if [ "$(realpath "$1")" = "$(realpath "$2")" ]; then
-#         # Nothing to link
-#         return
-#     fi
-
-#     if [ -e "$1" ]; then
-#         rm -r "$1"
-#     fi
-
-#     mkdir -p "$(dirname "$1")"
-#     ln -s "$2" "$1"
-#     echo "Linked $1 <- $2"
-# }
-
-#
-# Like `npm link`, but manually creates the appropriate symlinks
-# Will understand to link Liveblocks packages to the Liveblocks source code
-# repo, and other peer dependencies from the project's repo.
-#
-# For example:
-#     link_pkg @liveblocks/client
-#     link_pkg react
-#
-# link_pkg () {
-#     echo "==> Linking $1"
-#     echo "    (inside $(pwd))"
-#     if [ ! -d node_modules ]; then
-#         echo "Unexpected error. Expected to find node_modules inside $(pwd)"
-#         exit 2
-#     fi
-
-#     # Now actually create symbolic links
-#     # Where we link to exactly depends on whether this is a project or
-#     # a library
-#     if starts_with "$1" "@liveblocks/"; then
-#         # create_symlink "node_modules/$1" "$(liveblocks_pkg_dir "$1")"
-#         npm_link "$1"
-#     else
-#         create_symlink "node_modules/$1" "$PROJECT_NODE_MODULES_ROOT/$1"
-#         # npm_link "$PROJECT_NODE_MODULES_ROOT/$1"
-#     fi
-# }
 
 # Given a pkg name like "@liveblocks/client", returns "$LIVEBLOCKS_ROOT/packages/liveblocks-client"
 liveblocks_pkg_dir () {
@@ -198,7 +138,6 @@ prep_liveblocks_deps () {
 
         # Now cd into the package directory, and rebuild it while linking the
         # peer dependency to the project directory
-        # echo "==> Setting up $(liveblocks_pkg_dir "$pkg") to make linkable"
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
             "$THIS_SCRIPT" "$PROJECT_ROOT"
@@ -213,7 +152,6 @@ prep_liveblocks_deps () {
 link_liveblocks_deps () {
     if [ "$(list_liveblocks_dependencies | wc -l)" -eq 0 ]; then
         # No peer dependencies, we can quit early
-        # echo "Skipping... no Liveblocks dependencies to link"
         return
     fi
 
@@ -226,7 +164,6 @@ link_liveblocks_deps () {
 link_liveblocks_and_peer_deps () {
     if [ "$(list_liveblocks_and_peer_dependencies | wc -l)" -eq 0 ]; then
         # No peer dependencies, we can quit early
-        # echo "Skipping... no peer dependencies to link"
         return
     fi
 
@@ -252,7 +189,6 @@ rebuild_if_needed () {
         LIB_TIMESTAMP="$(youngest_file lib)"
         if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
             # Lib build is up-to-date
-            # echo "Skipping... (rebuild not needed now)"
             return
         fi
     fi
