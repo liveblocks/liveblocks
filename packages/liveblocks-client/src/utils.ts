@@ -335,3 +335,31 @@ export function isTokenValid(token: string | null) {
 
   return true;
 }
+
+/**
+ * Drop-in replacement for Object.entries() that retains better types.
+ */
+export function entries<
+  O extends { [key: string]: unknown },
+  K extends keyof O
+>(obj: O): [K, O[K]][] {
+  return Object.entries(obj) as [K, O[K]][];
+}
+
+/**
+ * Drop-in replacement for Object.keys() that retains better types.
+ */
+export function keys<O extends { [key: string]: unknown }, K extends keyof O>(
+  obj: O
+): K[] {
+  return Object.keys(obj) as K[];
+}
+
+/**
+ * Drop-in replacement for Object.values() that retains better types.
+ */
+export function values<O extends { [key: string]: unknown }>(
+  obj: O
+): O[keyof O][] {
+  return Object.values(obj) as O[keyof O][];
+}
