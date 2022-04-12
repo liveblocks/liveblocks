@@ -5,6 +5,10 @@ err () {
     echo "$@" >&2
 }
 
+starts_with () {
+    test "${1#$2}" != "$1"
+}
+
 usage () {
     err "usage: link-liveblocks.sh [-h] <liveblocks-root> [<project-root>]"
     err
@@ -40,6 +44,14 @@ if [ ! -d "$LIVEBLOCKS_ROOT/packages/liveblocks-client" ]; then
     err "$LIVEBLOCKS_ROOT: not a valid checkout of the liveblocks repo."
     err "Please provide the local path to the checked out liveblocks repo."
     exit 2
+fi
+
+# Depending on whether this script is run for a project or for another library,
+# we'll need to perform linking differently
+if starts_with "$PROJECT_ROOT" "$LIVEBLOCKS_ROOT/packages"; then
+    IS_PROJECT=0
+else
+    IS_PROJECT=1
 fi
 
 # Global that points to the node_modules folder of the current package, to
@@ -138,7 +150,7 @@ link_liveblocks_dep () {
 }
 
 is_liveblocks_peer () {
-    test "${1#@liveblocks/}" != "$1"
+    starts_with "$1" "@liveblocks/"
 }
 
 # Given a pkg name like "@liveblocks/client", returns "$LIVEBLOCKS_ROOT/packages/liveblocks-client"
