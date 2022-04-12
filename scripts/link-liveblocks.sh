@@ -6,14 +6,57 @@ set -eu
 # different.
 ROOT="$(git rev-parse --show-toplevel)"
 
-if [ ! -f "package.json" ]; then
-    echo "Please run this script from inside a library or project directory." >&2
+err () {
+    echo "$@" >&2
+}
+
+usage () {
+    err "usage: link-liveblocks.sh [-h] <liveblocks-root> [<project-root>]"
+    err
+    err ""
+    err "Links the NPM project in the current directory to use the local Liveblocks"
+    err "codebase instead of the one currently published to NPM."
+    err
+    err "Options:"
+    err "-h            Show this help"
+}
+
+while getopts h flag; do
+    case "$flag" in
+        *) usage; exit 2;;
+    esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -eq 2 ]; then
+    LIVEBLOCKS_ROOT="$1"
+    PROJECT_ROOT="$2"
+elif [ $# -eq 1 ]; then
+    # If this script is invoked without the second argument, re-invoke itself with
+    # the current directory as an explicit argument.
+    exec "$0" "$1" "$(pwd)"
+    exit $?
+else
+    usage
+    exit 2
+fi
+
+if [ ! -d "$LIVEBLOCKS_ROOT/packages/liveblocks-client" ]; then
+    err "$LIVEBLOCKS_ROOT: not a valid checkout of the liveblocks repo."
+    err "Please provide the local path to the checked out liveblocks repo."
     exit 2
 fi
 
 # Global that points to the node_modules folder of the current package, to
 # backlink peer dependencies into
-PKG_ROOT="$(pwd)/node_modules"
+PROJECT_PACKAGE_JSON="$PROJECT_ROOT/package.json"
+PROJECT_NODE_MODULES_ROOT="$PROJECT_ROOT/node_modules"
+
+if [ ! -f "$PROJECT_PACKAGE_JSON" ]; then
+    err "Cannot find file $PROJECT_PACKAGE_JSON"
+    err "Please run this script from inside a library or project directory."
+    exit 2
+fi
 
 # Returns the modification timestamp for the oldest file found in the given
 # files or directories
@@ -131,7 +174,7 @@ link_peer_deps () {
             npm_link "$peerdep"
         else
             echo "==> Linking peer dependencies in $(basename $(pwd)) <- $peerdep"
-            npm_link "${PKG_ROOT}/${peerdep} "
+            npm_link "${PROJECT_NODE_MODULES_ROOT}/${peerdep} "
         fi
     done
 
