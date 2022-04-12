@@ -95,9 +95,9 @@ function makeOthers<T extends Presence>(userMap: {
   };
 }
 
-function log(...params: any[]) {
+function log(..._params: unknown[]) {
+  // console.log(...params, new Date().toString());
   return;
-  console.log(...params, new Date().toString());
 }
 
 type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
