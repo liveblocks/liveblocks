@@ -12,17 +12,21 @@ starts_with () {
 }
 
 usage () {
-    err "usage: link-liveblocks.sh [-h] [<project-root>]"
+    err "usage: link-liveblocks.sh [-fh] [<project-root>]"
     err
     err "Links the NPM project in the current directory to use the local Liveblocks"
     err "codebase instead of the one currently published to NPM."
     err
     err "Options:"
-    err "-h            Show this help"
+    err "-f    Always rebuild (even if not needed)"
+    err "-h    Show this help"
 }
 
-while getopts h flag; do
+force=0
+force_flag=""
+while getopts fh flag; do
     case "$flag" in
+        f) force=1 ; force_flag="-f" ;;
         *) usage; exit 2;;
     esac
 done
@@ -34,11 +38,11 @@ if [ $# -eq 1 ]; then
 elif [ $# -eq 0 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
-    exec "$THIS_SCRIPT" "$(pwd)"
+    exec "$THIS_SCRIPT" $force_flag "$(pwd)"
     exit $?
 else
     usage
-    exit 2
+    exit 1
 fi
 
 if [ ! -d "$LIVEBLOCKS_ROOT/packages/liveblocks-client" ]; then
@@ -140,7 +144,7 @@ prep_liveblocks_deps () {
         # peer dependency to the project directory
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
-            "$THIS_SCRIPT" "$PROJECT_ROOT"
+            "$THIS_SCRIPT" $force_flag "$PROJECT_ROOT"
 
             # Register this link
             npm_link
@@ -183,7 +187,7 @@ rebuild_if_needed () {
         link_liveblocks_and_peer_deps
     fi
 
-    if [ -d "lib" ]; then
+    if [ $force -eq 0 -a -d "lib" ]; then
         # SRC_TIMESTAMP="$(oldest_file src node_modules)"
         SRC_TIMESTAMP="$(oldest_file src)"
         LIB_TIMESTAMP="$(youngest_file lib)"
