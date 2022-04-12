@@ -105,6 +105,7 @@ describe("room / auth", () => {
 
     const tokenExpDate = 1616727267;
     withDateNow(tokenExpDate - 600, async () => {
+      // @ts-ignore
       room.room.internalDevTools.sendCloseEvent({
         reason: "App error",
         code: 4002,
@@ -133,6 +134,7 @@ describe("room / auth", () => {
 
     const tokenExpDate = 1616727267;
     withDateNow(tokenExpDate + 1, async () => {
+      // @ts-ignore
       room.room.internalDevTools.sendCloseEvent({
         reason: "App error",
         code: 4002,

@@ -1554,6 +1554,7 @@ export function createRoom(
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
+
     // @ts-ignore
     internalDevTools: {
       closeWebsocket: machine.simulateSocketClose,
