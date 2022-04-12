@@ -30,6 +30,8 @@ shift $(($OPTIND - 1))
 if [ $# -eq 2 ]; then
     LIVEBLOCKS_ROOT="$(realpath "$1")"
     PROJECT_ROOT="$(realpath "$2")"
+    echo LIVEBLOCKS_ROOT="$LIVEBLOCKS_ROOT"
+    echo PROJECT_ROOT="$PROJECT_ROOT"
 elif [ $# -eq 1 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
@@ -53,6 +55,7 @@ if starts_with "$PROJECT_ROOT" "$LIVEBLOCKS_ROOT/packages"; then
 else
     IS_PROJECT=1
 fi
+echo IS_PROJECT="$IS_PROJECT"
 
 # Global that points to the node_modules folder of the current package, to
 # backlink peer dependencies into
