@@ -20,7 +20,7 @@ import {
 describe("LiveMap", () => {
   describe("not attached", () => {
     it("basic operations with LiveObjects", () => {
-      const map = new LiveMap<string, LiveObject>([
+      const map = new LiveMap<string, LiveObject<{ a: number }>>([
         ["first", new LiveObject({ a: 0 })],
       ]);
       expect(map.get("first")?.get("a")).toBe(0);
@@ -412,7 +412,7 @@ describe("LiveMap", () => {
 
   it("new Map with already attached live object should throw", async () => {
     const { storage } = await prepareStorageTest<{
-      child: LiveObject | null;
+      child: LiveObject<{ a: number }> | null;
       map: LiveMap<string, LiveObject<{ a: number }>> | null;
     }>([createSerializedObject("0:0", { child: null, map: null })], 1);
 
