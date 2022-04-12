@@ -134,6 +134,23 @@ liveblocks_pkg_dir () {
     echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
 }
 
+rebuild_if_needed () {
+    if [ $force -eq 0 -a -d "lib" ]; then
+        # SRC_TIMESTAMP="$(oldest_file src node_modules)"
+        SRC_TIMESTAMP="$(oldest_file src)"
+        LIB_TIMESTAMP="$(youngest_file lib)"
+        if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
+            # Lib build is up-to-date
+            return
+        fi
+    fi
+
+    # Build is potentially outdated, rebuild it
+    echo "==> Rebuilding (in $(pwd))"
+    rm -rf lib
+    npm run build
+}
+
 prep_liveblocks_deps () {
     for pkg in $(list_liveblocks_dependencies); do
         # We're trying to link the local package to a Liveblocks dependency.
@@ -145,6 +162,8 @@ prep_liveblocks_deps () {
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
             "$THIS_SCRIPT" $force_flag "$PROJECT_ROOT"
+
+            rebuild_if_needed
 
             # Register this link
             npm_link
@@ -175,7 +194,7 @@ link_liveblocks_and_peer_deps () {
     npm_link $(list_liveblocks_and_peer_dependencies)
 }
 
-rebuild_if_needed () {
+main () {
     # Update dependencies
     npm_install
 
@@ -187,20 +206,7 @@ rebuild_if_needed () {
         link_liveblocks_and_peer_deps
     fi
 
-    if [ $force -eq 0 -a -d "lib" ]; then
-        # SRC_TIMESTAMP="$(oldest_file src node_modules)"
-        SRC_TIMESTAMP="$(oldest_file src)"
-        LIB_TIMESTAMP="$(youngest_file lib)"
-        if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
-            # Lib build is up-to-date
-            return
-        fi
-    fi
-
-    # Build is potentially outdated, rebuild it
-    echo "==> Rebuilding (in $(pwd))"
-    rm -rf lib
-    npm run build
+    rebuild_if_needed
 }
 
-rebuild_if_needed
+main
