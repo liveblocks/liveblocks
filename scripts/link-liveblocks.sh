@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+LIVEBLOCKS_ROOT="$(realpath "$(dirname "$0")/..")"
+
 err () {
     echo "$@" >&2
 }
@@ -10,9 +12,8 @@ starts_with () {
 }
 
 usage () {
-    err "usage: link-liveblocks.sh [-h] <liveblocks-root> [<project-root>]"
+    err "usage: link-liveblocks.sh [-h] [<project-root>]"
     err
-    err ""
     err "Links the NPM project in the current directory to use the local Liveblocks"
     err "codebase instead of the one currently published to NPM."
     err
@@ -31,15 +32,12 @@ shift $(($OPTIND - 1))
 # echo "enter ======> $(pwd)"
 
 THIS_SCRIPT="$0"
-if [ $# -eq 2 ]; then
-    LIVEBLOCKS_ROOT="$(realpath "$1")"
-    PROJECT_ROOT="$(realpath "$2")"
-    # echo LIVEBLOCKS_ROOT="$LIVEBLOCKS_ROOT"
-    # echo PROJECT_ROOT="$PROJECT_ROOT"
-elif [ $# -eq 1 ]; then
+if [ $# -eq 1 ]; then
+    PROJECT_ROOT="$(realpath "$1")"
+elif [ $# -eq 0 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
-    exec "$THIS_SCRIPT" "$1" "$(pwd)"
+    exec "$THIS_SCRIPT" "$(pwd)"
     exit $?
 else
     usage
@@ -48,7 +46,6 @@ fi
 
 if [ ! -d "$LIVEBLOCKS_ROOT/packages/liveblocks-client" ]; then
     err "$LIVEBLOCKS_ROOT: not a valid checkout of the liveblocks repo."
-    err "Please provide the local path to the checked out liveblocks repo."
     exit 2
 fi
 
@@ -204,7 +201,7 @@ prep_liveblocks_deps () {
         # echo "==> Setting up $(liveblocks_pkg_dir "$pkg") to make linkable"
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
-            "$THIS_SCRIPT" "$LIVEBLOCKS_ROOT" "$PROJECT_ROOT"
+            "$THIS_SCRIPT" "$PROJECT_ROOT"
 
             # Register this link
             npm_link
