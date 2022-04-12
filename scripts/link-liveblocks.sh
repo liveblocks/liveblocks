@@ -1,11 +1,6 @@
 #!/bin/sh
 set -eu
 
-# Ensure this script can assume it's run from the repo's
-# root directory, even if the current working directory is
-# different.
-ROOT="$(git rev-parse --show-toplevel)"
-
 err () {
     echo "$@" >&2
 }
@@ -29,8 +24,8 @@ done
 shift $(($OPTIND - 1))
 
 if [ $# -eq 2 ]; then
-    LIVEBLOCKS_ROOT="$1"
-    PROJECT_ROOT="$2"
+    LIVEBLOCKS_ROOT="$(realpath "$1")"
+    PROJECT_ROOT="$(realpath "$2")"
 elif [ $# -eq 1 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
@@ -146,9 +141,9 @@ is_liveblocks_peer () {
     test "${1#@liveblocks/}" != "$1"
 }
 
-# Given a pkg name like "@liveblocks/client", returns "$ROOT/packages/liveblocks-client"
+# Given a pkg name like "@liveblocks/client", returns "$LIVEBLOCKS_ROOT/packages/liveblocks-client"
 liveblocks_pkg_dir () {
-    echo "$ROOT/packages/liveblocks-${1#@liveblocks/}"
+    echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
 }
 
 # Links another/normal peer dependency (must link to project's node_modules
@@ -185,17 +180,17 @@ link_peer_deps () {
 
 # First, rebuild all necessary Liveblocks dependencies
 if depends_on "@liveblocks/client"; then
-    ( cd "$ROOT/packages/liveblocks-client" && rebuild_if_needed "@liveblocks/client" )
+    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-client" && rebuild_if_needed "@liveblocks/client" )
 fi
 
 if depends_on "@liveblocks/react"; then
-    ( cd "$ROOT/packages/liveblocks-react" && rebuild_if_needed "@liveblocks/react" )
+    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-react" && rebuild_if_needed "@liveblocks/react" )
 fi
 
 if depends_on "@liveblocks/redux"; then
-    ( cd "$ROOT/packages/liveblocks-redux" && rebuild_if_needed "@liveblocks/redux" )
+    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-redux" && rebuild_if_needed "@liveblocks/redux" )
 fi
 
 if depends_on "@liveblocks/zustand"; then
-    ( cd "$ROOT/packages/liveblocks-zustand" && rebuild_if_needed "@liveblocks/zustand" )
+    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-zustand" && rebuild_if_needed "@liveblocks/zustand" )
 fi
