@@ -3,7 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { StorageUpdate } from "./types";
+import { StorageUpdate, ToLive } from "./types";
 import { findNonSerializableValue } from "./utils";
 
 export function liveObjectToJson(liveObject: LiveObject<any>) {
@@ -162,8 +162,8 @@ export function patchLiveList<T>(
 export function patchLiveObjectKey<T extends object, K extends keyof T>(
   liveObject: LiveObject<T>,
   key: K,
-  prev: T[K] | undefined,
-  next: T[K] | undefined
+  prev: T[K] | ToLive<T[K]> | undefined,
+  next: T[K] | ToLive<T[K]> | undefined
 ) {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
