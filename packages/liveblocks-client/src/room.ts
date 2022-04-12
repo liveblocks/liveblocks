@@ -95,9 +95,9 @@ function makeOthers<T extends Presence>(userMap: {
   };
 }
 
-function log(...params: any[]) {
+function log(..._params: unknown[]) {
+  // console.log(...params, new Date().toString());
   return;
-  console.log(...params, new Date().toString());
 }
 
 type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
@@ -138,7 +138,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: { [key: string]: any };
+  defaultStorageRoot?: { [key: string]: unknown };
 
   clock: number;
   opClock: number;
@@ -977,7 +977,7 @@ See v0.13 release notes for more information.
   //   }
   // }
 
-  function onClose(event: { code: number; wasClean: boolean; reason: any }) {
+  function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     state.socket = null;
 
     clearTimeout(state.timeoutHandles.pongTimeout);
@@ -1391,7 +1391,7 @@ See v0.13 release notes for more information.
   function simulateSendCloseEvent(event: {
     code: number;
     wasClean: boolean;
-    reason: any;
+    reason: string;
   }) {
     if (state.socket) {
       onClose(event);
@@ -1446,7 +1446,7 @@ See v0.13 release notes for more information.
 
 export function defaultState(
   me?: Presence,
-  defaultStorageRoot?: { [key: string]: any }
+  defaultStorageRoot?: { [key: string]: unknown }
 ): State {
   return {
     connection: { state: "closed" },

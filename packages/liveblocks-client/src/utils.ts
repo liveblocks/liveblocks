@@ -78,7 +78,7 @@ export function deserialize(
   }
 }
 
-export function isCrdt(obj: any): obj is AbstractCrdt {
+export function isCrdt(obj: unknown): obj is AbstractCrdt {
   return (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||
@@ -95,7 +95,7 @@ export function selfOrRegisterValue(obj: AbstractCrdt) {
   return obj;
 }
 
-export function selfOrRegister(obj: any): AbstractCrdt {
+export function selfOrRegister(obj: unknown): AbstractCrdt {
   if (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||
@@ -202,7 +202,7 @@ export function mergeStorageUpdates(
   }
 
   if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates).updates;
+    const updates = (first as LiveObjectUpdates<any /* unknown? */>).updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -212,7 +212,7 @@ export function mergeStorageUpdates(
       updates: updates,
     };
   } else if (second.type === "LiveMap") {
-    const updates = (first as LiveMapUpdates).updates;
+    const updates = (first as LiveMapUpdates<string, unknown>).updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;
@@ -222,7 +222,7 @@ export function mergeStorageUpdates(
       updates: updates,
     };
   } else if (second.type === "LiveList") {
-    const updates = (first as LiveListUpdates).updates;
+    const updates = (first as LiveListUpdates<unknown>).updates;
 
     return {
       ...second,
@@ -233,7 +233,7 @@ export function mergeStorageUpdates(
   return second;
 }
 
-function isPlain(value: any) {
+function isPlain(value: unknown) {
   const type = typeof value;
   return (
     type === "undefined" ||
@@ -261,9 +261,9 @@ function isPlainObject(value: unknown): value is object {
 }
 
 export function findNonSerializableValue(
-  value: any,
+  value: unknown,
   path: string = ""
-): { path: string; value: any } | false {
+): { path: string; value: unknown } | false {
   if (!isPlain) {
     return {
       path: path || "root",
