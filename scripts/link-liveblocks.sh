@@ -205,8 +205,6 @@ main () {
     else
         link_liveblocks_and_peer_deps
     fi
-
-    rebuild_if_needed
 }
 
 main
