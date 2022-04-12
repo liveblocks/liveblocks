@@ -27,6 +27,10 @@ while getopts h flag; do
 done
 shift $(($OPTIND - 1))
 
+echo ""
+echo "enter ======> $(pwd)"
+
+THIS_SCRIPT="$0"
 if [ $# -eq 2 ]; then
     LIVEBLOCKS_ROOT="$(realpath "$1")"
     PROJECT_ROOT="$(realpath "$2")"
@@ -35,7 +39,7 @@ if [ $# -eq 2 ]; then
 elif [ $# -eq 1 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
-    exec "$0" "$1" "$(pwd)"
+    exec "$THIS_SCRIPT" "$1" "$(pwd)"
     exit $?
 else
     usage
@@ -50,7 +54,7 @@ fi
 
 # Depending on whether this script is run for a project or for another library,
 # we'll need to perform linking differently
-if starts_with "$PROJECT_ROOT" "$LIVEBLOCKS_ROOT/packages"; then
+if starts_with "$(pwd)" "$LIVEBLOCKS_ROOT/packages"; then
     IS_PROJECT=0
 else
     IS_PROJECT=1
@@ -84,20 +88,26 @@ list_dependencies () {
     jq -r '((.dependencies // {}) + (.devDependencies // {}) + (.peerDependencies // {})) | keys[]' package.json
 }
 
-list_peer_dependencies () {
-    jq -r '(.peerDependencies // {}) | keys[]' package.json
+list_liveblocks_dependencies () {
+    list_dependencies | grep -Ee '^@liveblocks/'
 }
 
-# Checks if the current project depends on the given package name,
-# e.g. depends_on @liveblocks/client
-depends_on () {
-    for item in $(list_dependencies); do
-        if [ "$item" = "$1" ]; then
-            # Found!
-            return 0
+list_liveblocks_and_peer_dependencies_ () {
+    list_liveblocks_dependencies
+    for dep in $(jq -r '(.peerDependencies // {}) | keys[]' package.json); do
+        if starts_with "$dep" "@liveblocks/"; then
+            continue
+        fi
+
+        RELPATH="$(realpath --relative-to=. "$PROJECT_NODE_MODULES_ROOT")/$dep"
+        if starts_with "$RELPATH" ".."; then
+            echo "$RELPATH"
         fi
     done
-    return 1
+}
+
+list_liveblocks_and_peer_dependencies () {
+    list_liveblocks_and_peer_dependencies_ | sort -u
 }
 
 # Like `npm install`, but don't show any output unless there's an error
@@ -114,6 +124,7 @@ npm_install () {
 # Like `npm link`, but don't show any output unless there's an error
 npm_link () {
     logfile="$(mktemp)"
+    echo npm link "$@"
     if ! npm link "$@" > "$logfile" 2> "$logfile"; then
         cat "$logfile" >&2
         err ""
@@ -122,14 +133,121 @@ npm_link () {
     fi
 }
 
-rebuild_if_needed () {
-    pkgname="$1"
+# Verifies that a given symlink exists
+# symlink node_modules/foo/bar /path/to/target
+# create_symlink () {
+#     if starts_with "$1" "/"; then
+#         err "Unexpected: symlink target $1 should not be an absolute dir"
+#         exit 7
+#     fi
+#     if ! starts_with "$2" "/"; then
+#         err "Unexpected: symlink source $2 should not an absolute dir"
+#         exit 8
+#     fi
 
+#     if [ "$(realpath "$1")" = "$(realpath "$2")" ]; then
+#         # Nothing to link
+#         return
+#     fi
+
+#     if [ -e "$1" ]; then
+#         rm -r "$1"
+#     fi
+
+#     mkdir -p "$(dirname "$1")"
+#     ln -s "$2" "$1"
+#     echo "Linked $1 <- $2"
+# }
+
+#
+# Like `npm link`, but manually creates the appropriate symlinks
+# Will understand to link Liveblocks packages to the Liveblocks source code
+# repo, and other peer dependencies from the project's repo.
+#
+# For example:
+#     link_pkg @liveblocks/client
+#     link_pkg react
+#
+# link_pkg () {
+#     echo "==> Linking $1"
+#     echo "    (inside $(pwd))"
+#     if [ ! -d node_modules ]; then
+#         echo "Unexpected error. Expected to find node_modules inside $(pwd)"
+#         exit 2
+#     fi
+
+#     # Now actually create symbolic links
+#     # Where we link to exactly depends on whether this is a project or
+#     # a library
+#     if starts_with "$1" "@liveblocks/"; then
+#         # create_symlink "node_modules/$1" "$(liveblocks_pkg_dir "$1")"
+#         npm_link "$1"
+#     else
+#         create_symlink "node_modules/$1" "$PROJECT_NODE_MODULES_ROOT/$1"
+#         # npm_link "$PROJECT_NODE_MODULES_ROOT/$1"
+#     fi
+# }
+
+# Given a pkg name like "@liveblocks/client", returns "$LIVEBLOCKS_ROOT/packages/liveblocks-client"
+liveblocks_pkg_dir () {
+    echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
+}
+
+prep_liveblocks_deps () {
+    for pkg in $(list_liveblocks_dependencies); do
+        # We're trying to link the local package to a Liveblocks dependency.
+        # This means we'll first have to build that, and then create a symlink
+        # to it.
+
+        # Now cd into the package directory, and rebuild it while linking the
+        # peer dependency to the project directory
+        echo "==> Setting up $(liveblocks_pkg_dir "$pkg") to make linkable"
+        ( cd "$(liveblocks_pkg_dir "$pkg")" && (
+            # Invoke this script to first build the other dependency correctly
+            "$THIS_SCRIPT" "$LIVEBLOCKS_ROOT" "$PROJECT_ROOT"
+
+            # Register this link
+            npm_link
+        ) )
+    done
+}
+
+# Links a Liveblocks peer dependency (must link locally)
+link_liveblocks_deps () {
+    if [ "$(list_liveblocks_dependencies | wc -l)" -eq 0 ]; then
+        # No peer dependencies, we can quit early
+        echo "Skipping... no Liveblocks dependencies to link"
+        return
+    fi
+
+    echo "==> Linking Liveblocks dependencies"
+    npm_link $(list_liveblocks_dependencies)
+}
+
+# Links another/normal peer dependency (must link to project's node_modules
+# directly)
+link_liveblocks_and_peer_deps () {
+    if [ "$(list_liveblocks_and_peer_dependencies | wc -l)" -eq 0 ]; then
+        # No peer dependencies, we can quit early
+        echo "Skipping... no peer dependencies to link"
+        return
+    fi
+
+    echo "==> Linking peer dependencies"
+    npm_link $(list_liveblocks_and_peer_dependencies)
+}
+
+rebuild_if_needed () {
     # Update dependencies
     npm_install
 
     # Link necessary peer dependencies
-    link_peer_deps
+    prep_liveblocks_deps
+    if [ $IS_PROJECT -eq 1 ]; then
+        link_liveblocks_deps
+    else
+        link_liveblocks_and_peer_deps
+    fi
 
     if [ -d "lib" ]; then
         # SRC_TIMESTAMP="$(oldest_file src node_modules)"
@@ -137,75 +255,27 @@ rebuild_if_needed () {
         LIB_TIMESTAMP="$(youngest_file lib)"
         if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
             # Lib build is up-to-date
+            echo "Skipping... (rebuild not needed now)"
             return
         fi
     fi
 
     # Build is potentially outdated, rebuild it
-    echo "==> Rebuilding $pkgname"
+    echo "==> Rebuilding (in $(pwd))"
     rm -rf lib
     npm run build
 }
 
-# Links a Liveblocks peer dependency (must link locally)
-link_liveblocks_dep () {
-    target="$1"  # e.g. client, react, redux, zustand, etc.
-}
+# echo "Deps:"
+# list_dependencies
+# echo ""
+# echo "Liveblocks deps:"
+# list_liveblocks_dependencies
+# echo ""
+# echo "Liveblocks & peer deps:"
+# list_liveblocks_and_peer_dependencies
+# echo ""
 
-is_liveblocks_peer () {
-    starts_with "$1" "@liveblocks/"
-}
-
-# Given a pkg name like "@liveblocks/client", returns "$LIVEBLOCKS_ROOT/packages/liveblocks-client"
-liveblocks_pkg_dir () {
-    echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
-}
-
-# Links another/normal peer dependency (must link to project's node_modules
-# directly)
-link_peer_deps () {
-    if [ "$(list_peer_dependencies | wc -l)" -eq 0 ]; then
-        # No peer dependencies, we can quit early
-        return
-    fi
-
-    link_args=""
-    for peerdep in $(list_peer_dependencies); do
-        # Only re-link things if there is no such link already
-        if [ -L "node_modules/$peerdep" ]; then
-            continue
-        fi
-
-        if is_liveblocks_peer "$peerdep"; then
-            echo "==> Registering $peerdep"
-            ( cd "$(liveblocks_pkg_dir "$peerdep")" && npm_link )
-
-            echo "==> Linking peer dependencies in $(basename $(pwd)) <- $peerdep"
-            npm_link "$peerdep"
-        else
-            echo "==> Linking peer dependencies in $(basename $(pwd)) <- $peerdep"
-            npm_link "${PROJECT_NODE_MODULES_ROOT}/${peerdep} "
-        fi
-    done
-
-    echo "==> Linking peer dependencies"
-    echo npm link $link_args
-    npm_link $link_args
-}
-
-# First, rebuild all necessary Liveblocks dependencies
-if depends_on "@liveblocks/client"; then
-    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-client" && rebuild_if_needed "@liveblocks/client" )
-fi
-
-if depends_on "@liveblocks/react"; then
-    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-react" && rebuild_if_needed "@liveblocks/react" )
-fi
-
-if depends_on "@liveblocks/redux"; then
-    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-redux" && rebuild_if_needed "@liveblocks/redux" )
-fi
-
-if depends_on "@liveblocks/zustand"; then
-    ( cd "$LIVEBLOCKS_ROOT/packages/liveblocks-zustand" && rebuild_if_needed "@liveblocks/zustand" )
-fi
+rebuild_if_needed
+echo "exit <======= $(pwd)"
+echo ""
