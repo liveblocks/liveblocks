@@ -26,11 +26,11 @@ module.exports = {
     // -------------------------------
     "no-restricted-syntax": [
       "error",
-      // {
-      //   selector: "PrivateIdentifier",
-      //   message:
-      //     "Avoid private identifiers to reduce bundle size. Instead of using `#foo`, prefer using `private _foo`.",
-      // },
+      {
+        selector: "PrivateIdentifier",
+        message:
+          "Avoid private identifiers to reduce bundle size. Instead of using `#foo`, prefer using `private _foo`.",
+      },
       // {
       //   selector: "ForOfStatement",
       //   message:
