@@ -8,7 +8,7 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-interface State {
+type State = {
   items: string[];
   addItem: (newTodo: string) => void;
   deleteItem: (index: number) => void;
