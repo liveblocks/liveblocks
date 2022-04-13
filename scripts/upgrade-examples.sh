@@ -1,6 +1,15 @@
 #!/bin/sh
 set -eu
 
+# Ensure this script can assume it's run from the repo's
+# root directory, even if the current working directory is
+# different.
+ROOT="$(git rev-parse --show-toplevel)"
+if [ "$(pwd)" != "$ROOT" ]; then
+    ( cd "$ROOT" && exec "$0" "$@" )
+    exit $?
+fi
+
 err () {
     echo "$@" >&2
 }
