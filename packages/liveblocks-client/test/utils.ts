@@ -17,6 +17,9 @@ import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -130,7 +133,7 @@ function mapToJson<TKey extends string, TValue>(
     .map((entry) => [entry[0], toJson(entry[1])]);
 }
 
-function toJson(value: any) {
+function toJson(value: unknown) {
   if (value instanceof LiveObject) {
     return objectToJson(value);
   } else if (value instanceof LiveList) {
@@ -506,7 +509,7 @@ export function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
-  data: any
+  data: fixme
 ): SerializedCrdtWithId {
   return [
     id,

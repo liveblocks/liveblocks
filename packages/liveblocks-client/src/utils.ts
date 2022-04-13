@@ -20,6 +20,9 @@ import {
   StorageUpdate,
 } from "./types";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {

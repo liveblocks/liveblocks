@@ -3,6 +3,9 @@ import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
