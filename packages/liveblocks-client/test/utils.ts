@@ -45,7 +45,7 @@ export class MockWebSocket implements WebSocket {
     MockWebSocket.instances.push(this);
   }
 
-  close(code?: number, reason?: string): void {
+  close(_code?: number, _reason?: string): void {
     this.readyState = this.CLOSED;
   }
 
@@ -100,7 +100,7 @@ export class MockWebSocket implements WebSocket {
     throw new Error("NOT IMPLEMENTED");
   };
   protocol: string = "";
-  dispatchEvent(event: Event): boolean {
+  dispatchEvent(_event: Event): boolean {
     throw new Error("Method not implemented.");
   }
 }

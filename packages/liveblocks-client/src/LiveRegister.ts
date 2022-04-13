@@ -27,7 +27,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    _parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
     if (item.type !== CrdtType.Register) {
