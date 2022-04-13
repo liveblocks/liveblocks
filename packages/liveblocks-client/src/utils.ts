@@ -16,8 +16,10 @@ import { LiveRegister } from "./LiveRegister";
 import {
   LiveListUpdates,
   LiveMapUpdates,
+  LiveObjectPayload,
   LiveObjectUpdates,
   StorageUpdate,
+  UpdateDelta,
 } from "./types";
 
 // TODO: Further improve this type
@@ -196,41 +198,69 @@ export function getTreesDiffOperations(
   return ops;
 }
 
-export function mergeStorageUpdates(
-  first: StorageUpdate | undefined,
-  second: StorageUpdate
-): StorageUpdate {
+// TODO: FIX TYPE ERRORS HERE
+function mergeObjectStorageUpdates<
+  T1 extends LiveObjectPayload<unknown>,
+  T2 extends LiveObjectPayload<unknown>
+>(
+  first: LiveObjectUpdates<T1>,
+  second: LiveObjectUpdates<T2>
+): LiveObjectUpdates<T1 | T2> {
+  const updates = first.updates as typeof second["updates"];
+  for (const [key, value] of entries(second.updates)) {
+    updates[key] = value;
+  }
+  return {
+    ...second,
+    updates: updates,
+  };
+}
+
+function mergeMapStorageUpdates<K1 extends string, V1, K2 extends string, V2>(
+  first: LiveMapUpdates<K1, V1>,
+  second: LiveMapUpdates<K2, V2>
+): LiveMapUpdates<K1 | K2, V1 | V2> {
+  const updates = first.updates as { [K in K1 | K2]?: UpdateDelta | undefined };
+  for (const [key, value] of entries(second.updates)) {
+    updates[key] = value;
+  }
+  return {
+    ...second,
+    updates: updates,
+  };
+}
+
+function mergeListStorageUpdates<T>(
+  first: LiveListUpdates<unknown>,
+  second: LiveListUpdates<T>
+): LiveListUpdates<T> {
+  const updates = first.updates;
+  return {
+    ...second,
+    updates: updates.concat(second.updates),
+  };
+}
+
+// prettier-ignore
+export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
+// prettier-ignore
+export function mergeStorageUpdates<K1 extends string, V1, K2 extends string, V2>(first: LiveMapUpdates<K1, V1>, second: LiveMapUpdates<K2, V2>): LiveMapUpdates<K1 | K2, V1 | V2>;
+// prettier-ignore
+export function mergeStorageUpdates<T>(first: LiveListUpdates<unknown>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+// prettier-ignore
+export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {
     return second;
   }
 
-  if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates<any /* fixme! */>).updates;
-
-    for (const [key, value] of Object.entries(second.updates)) {
-      updates[key] = value;
-    }
-    return {
-      ...second,
-      updates: updates,
-    };
-  } else if (second.type === "LiveMap") {
-    const updates = (first as LiveMapUpdates<string, fixme>).updates;
-
-    for (const [key, value] of Object.entries(second.updates)) {
-      updates[key] = value;
-    }
-    return {
-      ...second,
-      updates: updates,
-    };
-  } else if (second.type === "LiveList") {
-    const updates = (first as LiveListUpdates<fixme>).updates;
-
-    return {
-      ...second,
-      updates: updates.concat(second.updates),
-    };
+  if (first.type === "LiveObject" && second.type === "LiveObject") {
+    return mergeObjectStorageUpdates(first, second);
+  } else if (first.type === "LiveMap" && second.type === "LiveMap") {
+    return mergeMapStorageUpdates(first, second);
+  } else if (first.type === "LiveList" && second.type === "LiveList") {
+    return mergeListStorageUpdates(first, second);
+  } else {
+    /* Mismatching merge types. Throw an error here? */
   }
 
   return second;

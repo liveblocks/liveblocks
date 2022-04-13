@@ -13,7 +13,7 @@ import {
   CrdtType,
   SerializedCrdt,
 } from "./live";
-import { StorageUpdate } from "./types";
+import { UpdateDelta, LiveMapUpdates } from "./types";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
@@ -191,10 +191,12 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     child._detach();
 
-    const storageUpdate: StorageUpdate = {
-      node: this as any,
+    const storageUpdate: LiveMapUpdates<TKey, TValue> = {
+      node: this,
       type: "LiveMap",
-      updates: { [child._parentKey!]: { type: "delete" } },
+      updates: { [child._parentKey! as TKey]: { type: "delete" } } as {
+        [K in TKey]: UpdateDelta;
+      },
     };
 
     return { modified: storageUpdate, reverse };
@@ -245,11 +247,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
-        updates: { [key]: { type: "update" } },
+        updates: { [key]: { type: "update" } } as { [K in TKey]: UpdateDelta },
       });
 
       this._doc.dispatch(
@@ -293,11 +295,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     this._map.delete(key);
 
     if (this._doc && item._id) {
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
-        updates: { [key as string]: { type: "delete" } },
+        updates: { [key]: { type: "delete" } } as { [K in TKey]: UpdateDelta },
       });
       this._doc.dispatch(
         [

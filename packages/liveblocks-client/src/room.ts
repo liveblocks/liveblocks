@@ -17,6 +17,7 @@ import {
   BroadcastOptions,
   AuthorizeResponse,
   Authentication,
+  LiveObjectPayload,
 } from "./types";
 import {
   getTreesDiffOperations,
@@ -376,7 +377,7 @@ export function makeStateMachine(
         state.batch.updates.storageUpdates.set(
           key,
           mergeStorageUpdates(
-            state.batch.updates.storageUpdates.get(key),
+            state.batch.updates.storageUpdates.get(key) as any, // FIXME
             value
           )
         );
@@ -450,7 +451,10 @@ export function makeStateMachine(
     isLocal: boolean
   ): {
     reverse: HistoryItem;
-    updates: { storageUpdates: Map<string, StorageUpdate>; presence: boolean };
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
   } {
     const result = {
       reverse: [] as HistoryItem,
@@ -494,7 +498,7 @@ export function makeStateMachine(
             mergeStorageUpdates(
               result.updates.storageUpdates.get(
                 applyOpResult.modified.node._id!
-              ),
+              ) as any, // FIXME
               applyOpResult.modified
             )
           );
@@ -607,7 +611,7 @@ export function makeStateMachine(
     liveMap: LiveMap<TKey, TValue>,
     callback: (liveMap: LiveMap<TKey, TValue>) => void
   ): () => void;
-  function subscribe<TData>(
+  function subscribe<TData extends LiveObjectPayload<unknown>>(
     liveObject: LiveObject<TData>,
     callback: (liveObject: LiveObject<TData>) => void
   ): () => void;
@@ -958,7 +962,10 @@ See v0.13 release notes for more information.
           applyResult.updates.storageUpdates.forEach((value, key) => {
             updates.storageUpdates.set(
               key,
-              mergeStorageUpdates(updates.storageUpdates.get(key), value)
+              mergeStorageUpdates(
+                updates.storageUpdates.get(key) as any, // FIXME
+                value
+              )
             );
           });
 

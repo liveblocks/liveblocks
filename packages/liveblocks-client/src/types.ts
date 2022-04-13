@@ -40,14 +40,23 @@ export type UpdateDelta =
 export type LiveMapUpdates<TKey extends string, TValue> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
-  updates: Record<TKey, UpdateDelta>;
+  updates: { [K in TKey]?: UpdateDelta | undefined };
 };
 
-export type LiveObjectUpdateDelta<T> = Partial<{
-  [Property in keyof T]: UpdateDelta;
-}>;
+// NOTE: Temporary helper to help me figure out what type is needed here
+// _exactly_. Is this any object shape, or must this always be a JSONObject?
+export type LiveObjectPayload<FigureMeOutPlz = unknown> = Record<
+  //                          ^^^^^^^^^^^^^^
+  //                          Try to remove this type param!
+  string,
+  FigureMeOutPlz
+>;
 
-export type LiveObjectUpdates<TData> = {
+export type LiveObjectUpdateDelta<O extends LiveObjectPayload> = {
+  [K in keyof O]?: UpdateDelta | undefined;
+};
+
+export type LiveObjectUpdates<TData extends LiveObjectPayload> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
@@ -391,7 +400,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
      * unsubscribe();
      */
-    <TData>(
+    <TData extends LiveObjectPayload<unknown>>(
       liveObject: LiveObject<TData>,
       callback: (liveObject: LiveObject<TData>) => void
     ): () => void;
@@ -428,7 +437,7 @@ export type Room = {
      */
     <TKey extends string, TValue>(
       liveMap: LiveMap<TKey, TValue>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
       options: { isDeep: true }
     ): () => void;
 
@@ -445,9 +454,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TData>(
+    <TData extends LiveObjectPayload>(
       liveObject: LiveObject<TData>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveObjectUpdates<TData>[]) => void,
       options: { isDeep: true }
     ): () => void;
 
@@ -466,7 +475,7 @@ export type Room = {
      */
     <TItem>(
       liveList: LiveList<TItem>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveListUpdates<TItem>[]) => void,
       options: { isDeep: true }
     ): () => void;
   };

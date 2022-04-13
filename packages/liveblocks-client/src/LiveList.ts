@@ -10,7 +10,7 @@ import {
   CrdtType,
 } from "./live";
 import { makePosition, compare } from "./position";
-import { LiveListUpdateDelta, StorageUpdate } from "./types";
+import { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
@@ -199,8 +199,8 @@ export class LiveList<T> extends AbstractCrdt {
 
       child._detach();
 
-      const storageUpdate: StorageUpdate = {
-        node: this as any,
+      const storageUpdate: LiveListUpdates<T> = {
+        node: this,
         type: "LiveList",
         updates: [{ index: indexToDelete, type: "delete" }],
       };
@@ -333,7 +333,7 @@ export class LiveList<T> extends AbstractCrdt {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<T>>();
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
@@ -402,7 +402,7 @@ export class LiveList<T> extends AbstractCrdt {
     const newIndex = this._items.findIndex((entry) => entry[1] === position);
 
     if (this._doc && this._id) {
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<T>>();
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
@@ -457,7 +457,7 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc) {
       const childRecordId = item[0]._id;
       if (childRecordId) {
-        const storageUpdates = new Map<string, StorageUpdate>();
+        const storageUpdates = new Map<string, LiveListUpdates<T>>();
         storageUpdates.set(this._id!, {
           node: this,
           type: "LiveList",
@@ -502,7 +502,7 @@ export class LiveList<T> extends AbstractCrdt {
 
       this._items = [];
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<T>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveList",

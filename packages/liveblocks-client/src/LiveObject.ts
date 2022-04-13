@@ -10,7 +10,12 @@ import {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
-import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
+import {
+  LiveObjectUpdates,
+  UpdateDelta,
+  LiveObjectUpdateDelta,
+  LiveObjectPayload,
+} from "./types";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -18,7 +23,7 @@ import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<
-  T extends Record<string, any> = Record<string, any>
+  T extends LiveObjectPayload<any> = LiveObjectPayload<any>
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
@@ -216,12 +221,12 @@ export class LiveObject<
 
       child._detach();
 
-      const storageUpdate: StorageUpdate = {
+      const storageUpdate: LiveObjectUpdates<T> = {
         node: this as any,
         type: "LiveObject",
         updates: {
           [child._parentKey!]: { type: "delete" },
-        },
+        } as { [K in keyof T]: UpdateDelta },
       };
 
       return { modified: storageUpdate, reverse };
@@ -454,11 +459,13 @@ export class LiveObject<
 
     this._map.delete(keyAsString);
 
-    const storageUpdates = new Map<string, StorageUpdate>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
-      updates: { [key as string]: { type: "delete" } },
+      updates: { [key]: { type: "delete" } } as {
+        [K in keyof T]: UpdateDelta;
+      },
     });
 
     this._doc.dispatch(
@@ -563,7 +570,7 @@ export class LiveObject<
       });
     }
 
-    const storageUpdates = new Map<string, StorageUpdate>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
