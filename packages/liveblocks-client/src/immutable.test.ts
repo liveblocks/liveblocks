@@ -168,6 +168,37 @@ describe("2 ways tests with two clients", () => {
   });
 
   describe("Array/LiveList", () => {
+    test("replace array of 3 elements to 1 element", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          syncList: LiveList<number>;
+        },
+        { syncList: number[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, 1),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList = [2];
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: [2] });
+    });
+
     test("add item to array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
         {
