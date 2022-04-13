@@ -205,7 +205,7 @@ export function mergeStorageUpdates(
   }
 
   if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates<any /* unknown? */>).updates;
+    const updates = (first as LiveObjectUpdates<any /* fixme! */>).updates;
 
     for (const [key, value] of Object.entries(second.updates)) {
       updates[key] = value;

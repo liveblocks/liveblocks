@@ -87,7 +87,7 @@ export type BroadcastOptions = {
 
 export type StorageUpdate =
   | LiveMapUpdates<string, fixme>
-  | LiveObjectUpdates<any /* unknown? */>
+  | LiveObjectUpdates<any /* fixme! */>
   | LiveListUpdates<fixme>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
