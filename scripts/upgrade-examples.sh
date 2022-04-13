@@ -32,7 +32,9 @@ list_all_projects () {
 }
 
 list_liveblocks_deps () {
-    jq -r '(.dependencies // {})|keys[]' package.json | grep -Ee '^@liveblocks'
+    jq -r '(.dependencies // {})|keys[]' package.json \
+        | grep -Ee '^@liveblocks' \
+        | grep -vEe '@liveblocks/node'
 }
 
 list_install_args () {
