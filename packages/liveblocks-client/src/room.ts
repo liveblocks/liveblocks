@@ -141,7 +141,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: { [key: string]: unknown };
+  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ };
 
   clock: number;
   opClock: number;
@@ -1449,7 +1449,7 @@ See v0.13 release notes for more information.
 
 export function defaultState(
   me?: Presence,
-  defaultStorageRoot?: { [key: string]: unknown }
+  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ }
 ): State {
   return {
     connection: { state: "closed" },
