@@ -290,7 +290,7 @@ commit_to_git () {
      bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
      build_pkg
      publish_to_npm "$pkgname"
-     commit_to_git "$PRIMARY_PKG" 
+     commit_to_git "$PRIMARY_PKG"
 ) )
 
 # Then, build and publish all the other packages
@@ -327,4 +327,12 @@ if ! git push-current; then
 else
     echo "Done! Please finish it off by writing a nice changelog entry on GitHub."
     open "$URL"
+    read
 fi
+
+echo "==> Upgrade local examples?"
+echo "Now that you're all finished, you may want to also upgrade all our examples"
+echo "to the latest version. To do so, run:"
+echo
+echo "    upgrade-examples.sh $VERSION"
+echo
