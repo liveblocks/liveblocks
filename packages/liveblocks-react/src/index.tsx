@@ -23,7 +23,9 @@ const RoomContext = React.createContext<Room | null>(null);
 /**
  * Makes the Liveblocks client available in the component hierarchy below.
  */
-export function LiveblocksProvider(props: LiveblocksProviderProps) {
+export function LiveblocksProvider(
+  props: LiveblocksProviderProps
+): JSX.Element {
   return (
     <ClientContext.Provider value={props.client}>
       {props.children}
@@ -103,7 +105,7 @@ export function RoomProvider<TStorageRoot>({
 /**
  * Returns the room of the nearest RoomProvider above in the react component tree
  */
-export function useRoom() {
+export function useRoom(): Room {
   const room = React.useContext(RoomContext);
 
   if (room == null) {
@@ -220,7 +222,10 @@ export function useOthers<T extends Presence>(): Others<T> {
  *
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
  */
-export function useBroadcastEvent() {
+export function useBroadcastEvent(): (
+  event: any,
+  options?: BroadcastOptions
+) => void {
   const room = useRoom();
 
   return React.useCallback(
@@ -244,7 +249,7 @@ export function useBroadcastEvent() {
  *   console.error(er);
  * })
  */
-export function useErrorListener(callback: (er: Error) => void) {
+export function useErrorListener(callback: (err: Error) => void): void {
   const room = useRoom();
   const savedCallback = React.useRef(callback);
 
@@ -282,7 +287,7 @@ export function useEventListener<TEvent>(
     connectionId: number;
     event: TEvent;
   }) => void
-) {
+): void {
   const room = useRoom();
   const savedCallback = React.useRef(callback);
 
@@ -417,7 +422,7 @@ export function useObject<TData>(
  * Returns a function that undoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useUndo() {
+export function useUndo(): () => void {
   return useRoom().history.undo;
 }
 
@@ -425,7 +430,7 @@ export function useUndo() {
  * Returns a function that redoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useRedo() {
+export function useRedo(): () => void {
   return useRoom().history.redo;
 }
 
@@ -435,7 +440,7 @@ export function useRedo() {
  * All the modifications are merged in a single history item (undo/redo).
  * All the subscribers are called only after the batch is over.
  */
-export function useBatch() {
+export function useBatch(): (callback: () => void) => void {
   return useRoom().batch;
 }
 
