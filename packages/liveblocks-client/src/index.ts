@@ -9,6 +9,7 @@ export type {
   User,
   BroadcastOptions,
   StorageUpdate,
+  History,
 } from "./types";
 
 export { createClient } from "./client";

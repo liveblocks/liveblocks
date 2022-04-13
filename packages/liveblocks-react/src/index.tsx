@@ -8,6 +8,7 @@ import {
   User,
   LiveList,
   BroadcastOptions,
+  History,
 } from "@liveblocks/client";
 import * as React from "react";
 import useRerender from "./useRerender";
@@ -447,7 +448,7 @@ export function useBatch(): (callback: () => void) => void {
 /**
  * Returns the room.history
  */
-export function useHistory() {
+export function useHistory(): History {
   return useRoom().history;
 }
 
