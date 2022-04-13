@@ -1,4 +1,26 @@
 #!/bin/sh
+set -eu
+
+err () {
+    echo "$@" >&2
+}
+
+usage () {
+    err "usage: upgrade-examples.sh <version>"
+    err
+    err "Upgrades all the example projects by bumping the Liveblocks dependencies"
+    err "to the given version."
+    err
+    err "Options:"
+    err "-h    Show this help"
+}
+
+if [ $# -ne 1 ]; then
+    usage
+    exit 1
+fi
+
+VERSION="$1"
 
 # E2E tests
 
