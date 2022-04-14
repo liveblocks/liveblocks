@@ -1545,7 +1545,11 @@ export function createRoom(
     /////////////
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
-    subscribe: machine.subscribe,
+
+    // FIXME: There's a type issue here. The types of subscribe and
+    // machine.subscribe are incompatible somewhere.
+    // TODO: Figure out exactly what's wrong here!
+    subscribe: machine.subscribe as any, // FIXME!
     unsubscribe: machine.unsubscribe,
 
     //////////////
