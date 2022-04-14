@@ -372,10 +372,10 @@ export function useStorage<TRoot extends Record<string, any>>(): [
  * const emptyMap = useMap("mapA");
  * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
-export function useMap<TKey extends string, TValue>(
+export function useMap<TValue>(
   key: string,
-  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
-): LiveMap<TKey, TValue> | null {
+  entries?: readonly (readonly [string, TValue])[] | null | undefined
+): LiveMap<TValue> | null {
   return useCrdt(key, new LiveMap(entries));
 }
 
