@@ -13,7 +13,10 @@ import { patchLiveObjectKey, patchImmutableObject } from "./immutable";
 import { LiveObject } from "./LiveObject";
 import { StorageUpdate } from "./types";
 
-function applyStateChanges(state: any, applyChanges: () => void) {
+// TODO: Further improve this type
+type fixme = unknown;
+
+function applyStateChanges(state: fixme, applyChanges: () => void) {
   const oldState = JSON.parse(JSON.stringify(state));
   applyChanges();
   const newState = JSON.parse(JSON.stringify(state));

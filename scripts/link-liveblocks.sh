@@ -135,6 +135,12 @@ liveblocks_pkg_dir () {
 }
 
 rebuild_if_needed () {
+    if [ -e "lib/.built-by-link-script" ]; then
+        # This was already rebuilt by an earlier invocation of this build
+        # script. We don't have to throw away those results!
+        return
+    fi
+
     if [ $force -eq 0 -a -d "lib" ]; then
         # SRC_TIMESTAMP="$(oldest_file src node_modules)"
         SRC_TIMESTAMP="$(oldest_file src)"
@@ -149,6 +155,7 @@ rebuild_if_needed () {
     echo "==> Rebuilding (in $(pwd))"
     rm -rf lib
     npm run build
+    touch "lib/.built-by-link-script"
 }
 
 prep_liveblocks_deps () {
