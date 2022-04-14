@@ -23,6 +23,7 @@ import {
   isSameNodeOrChildOf,
   remove,
   mergeStorageUpdates,
+  isTokenValid,
 } from "./utils";
 import {
   ClientMessage,
@@ -47,6 +48,9 @@ import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
+
+// TODO: Further improve this type
+type fixme = unknown;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -94,9 +98,9 @@ function makeOthers<T extends Presence>(userMap: {
   };
 }
 
-function log(...params: any[]) {
+function log(..._params: unknown[]) {
+  // console.log(...params, new Date().toString());
   return;
-  console.log(...params, new Date().toString());
 }
 
 type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
@@ -105,6 +109,7 @@ type IdFactory = () => string;
 
 export type State = {
   connection: Connection;
+  token: string | null;
   lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
@@ -136,7 +141,7 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: { [key: string]: any };
+  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ };
 
   clock: number;
   opClock: number;
@@ -192,16 +197,23 @@ export function makeStateMachine(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      return auth(context.room)
-        .then(({ token }) => {
-          if (state.connection.state !== "authenticating") {
-            return;
-          }
-          const parsedToken = parseToken(token);
-          const socket = createWebSocket(token);
-          authenticationSuccess(parsedToken, socket);
-        })
-        .catch((er: any) => authenticationFailure(er));
+      if (isTokenValid(state.token)) {
+        const parsedToken = parseToken(state.token!);
+        const socket = createWebSocket(state.token!);
+        authenticationSuccess(parsedToken, socket);
+      } else {
+        return auth(context.room)
+          .then(({ token }) => {
+            if (state.connection.state !== "authenticating") {
+              return;
+            }
+            const parsedToken = parseToken(token);
+            const socket = createWebSocket(token);
+            authenticationSuccess(parsedToken, socket);
+            state.token = token;
+          })
+          .catch((er: any) => authenticationFailure(er));
+      }
     },
     send(messageOrMessages: ClientMessage | ClientMessage[]) {
       if (state.socket == null) {
@@ -716,6 +728,7 @@ See v0.13 release notes for more information.
     if (process.env.NODE_ENV !== "production") {
       console.error("Call to authentication endpoint failed", error);
     }
+    state.token = null;
     updateConnection({ state: "unavailable" });
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
@@ -881,8 +894,11 @@ See v0.13 release notes for more information.
           break;
         }
         case ServerMessageType.InitialStorageState: {
+          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+          const offlineOps = new Map(state.offlineOperations);
           createOrUpdateRootFromMessage(subMessage);
-          applyAndSendOfflineOps();
+          applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
           break;
         }
@@ -916,7 +932,7 @@ See v0.13 release notes for more information.
   //   }
   // }
 
-  function onClose(event: { code: number; wasClean: boolean; reason: any }) {
+  function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     state.socket = null;
 
     clearTimeout(state.timeoutHandles.pongTimeout);
@@ -1053,14 +1069,14 @@ See v0.13 release notes for more information.
     connect();
   }
 
-  function applyAndSendOfflineOps() {
-    if (state.offlineOperations.size === 0) {
+  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+    if (offlineOps.size === 0) {
       return;
     }
 
     const messages: ClientMessage[] = [];
 
-    const ops = Array.from(state.offlineOperations.values());
+    const ops = Array.from(offlineOps.values());
 
     const result = apply(ops, true);
 
@@ -1172,7 +1188,7 @@ See v0.13 release notes for more information.
   }
 
   function broadcastEvent(
-    event: any,
+    event: fixme,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }
@@ -1330,7 +1346,7 @@ See v0.13 release notes for more information.
   function simulateSendCloseEvent(event: {
     code: number;
     wasClean: boolean;
-    reason: any;
+    reason: string;
   }) {
     if (state.socket) {
       onClose(event);
@@ -1385,10 +1401,11 @@ See v0.13 release notes for more information.
 
 export function defaultState(
   me?: Presence,
-  defaultStorageRoot?: { [key: string]: any }
+  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ }
 ): State {
   return {
     connection: { state: "closed" },
+    token: null,
     lastConnectionId: null,
     socket: null,
     listeners: {
@@ -1492,6 +1509,7 @@ export function createRoom(
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
+
     // @ts-ignore
     internalDevTools: {
       closeWebsocket: machine.simulateSocketClose,

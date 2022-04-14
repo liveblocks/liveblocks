@@ -11,6 +11,7 @@ import {
   prepareIsolatedStorageTest,
   reconnect,
   waitFor,
+  withDateNow,
 } from "../test/utils";
 import {
   ClientMessageType,
@@ -35,26 +36,28 @@ const defaultContext = {
   } as Authentication,
 };
 
-function withDateNow(now: number, callback: () => void) {
-  const realDateNow = Date.now.bind(global.Date);
-  global.Date.now = jest.fn(() => now);
-  try {
-    callback();
-  } finally {
-    global.Date.now = realDateNow;
-  }
-}
-
 describe("room / auth", () => {
+  let reqCount = 0;
+  const token =
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
   const server = setupServer(
     rest.post("/api/auth", (req, res, ctx) => {
-      return res(
-        ctx.json({
-          token:
-            // actor = 0
-            "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw",
-        })
-      );
+      if (reqCount === 0) {
+        reqCount++;
+        return res(
+          ctx.json({
+            actor: 0,
+            token: token,
+          })
+        );
+      } else {
+        return res(
+          ctx.json({
+            actor: 1,
+            token: token,
+          })
+        );
+      }
     }),
     rest.post("/api/403", (req, res, ctx) => {
       return res(ctx.status(403));
@@ -82,6 +85,64 @@ describe("room / auth", () => {
   afterEach(() => {
     process.env = originalEnv;
     consoleErrorSpy.mockRestore();
+  });
+
+  test("should reuse token after reconnect", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/auth",
+        },
+      }
+    );
+
+    room.connect();
+
+    await waitFor(() => room.room.getSelf()?.connectionId === 0);
+
+    const tokenExpDate = 1616727267;
+    withDateNow(tokenExpDate - 600, async () => {
+      // @ts-ignore
+      room.room.internalDevTools.sendCloseEvent({
+        reason: "App error",
+        code: 4002,
+        wasClean: true,
+      });
+
+      await waitFor(() => room.room.getSelf()?.connectionId === 0);
+    });
+  });
+
+  test("should not reuse token after reconnect when expired", async () => {
+    const room = createRoom(
+      {},
+      {
+        ...defaultContext,
+        authentication: {
+          type: "private",
+          url: "/api/auth",
+        },
+      }
+    );
+
+    room.connect();
+
+    await waitFor(() => room.room.getSelf()?.connectionId === 0);
+
+    const tokenExpDate = 1616727267;
+    withDateNow(tokenExpDate + 1, async () => {
+      // @ts-ignore
+      room.room.internalDevTools.sendCloseEvent({
+        reason: "App error",
+        code: 4002,
+        wasClean: true,
+      });
+
+      await waitFor(() => room.room.getSelf()?.connectionId === 1);
+    });
   });
 
   test("private authentication with 403 status should throw", async () => {
@@ -1232,6 +1293,38 @@ describe("room", () => {
           presence: {
             x: 2,
           },
+        },
+      ]);
+    });
+  });
+
+  describe("defaultStorage", () => {
+    test("initialize room with defaultStorage should send operation only once", async () => {
+      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+
+      assert({
+        items: [],
+      });
+
+      assertMessagesSent([
+        {
+          data: {},
+          type: ClientMessageType.UpdatePresence,
+        },
+        { type: ClientMessageType.FetchStorage },
+        {
+          type: ClientMessageType.UpdateStorage,
+          ops: [
+            {
+              id: "1:0",
+              opId: "1:1",
+              parentId: "0:0",
+              parentKey: "items",
+              type: 2,
+            },
+          ],
         },
       ]);
     });

@@ -1,38 +1,32 @@
 <p align="center">
   <a href="https://liveblocks.io">
-    <img src="https://liveblocks.io/icon-192x192.png" height="96">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
   </a>
 </p>
 
-# [Liveblocks](https://liveblocks.io) × [Next.js](https://nextjs.org/) x [Three.js](https://threejs.org/)
+# 3D Shoe
 
-This repo shows how to use [Three.js](https://threejs.org/) and [Next.js](https://nextjs.org/) with the storage block.
-You can change the shoe colors by clicking on it and every users in the room will see it in real time.
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/three.js-message?style=flat&logo=three.js&color=7c0&logoColor=fff" alt="Three.js" />
+</p>
 
-![3d-shoe](https://liveblocks.io/_next/image?url=%2Fimages%2Fexamples%2Fthumbnail-shoe-builder.png&w=1200&q=90)
+This example shows how to build a collaborative 3D model editor with [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and [Three.js](https://threejs.org/).
+
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-shoe.png" width="800" alt="3D Shoe" />
 
 ## Getting started
 
-### Run examples locally
-
 - Install all dependencies with `npm install`
-
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-
-- Copy your public key from the [administration](https://liveblocks.io/dashboard/apikeys)
-
-- Create a file named `.env.local` and add your Liveblocks secret as environment variable `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_test_yourkey`
-
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Create an `.env.local` file and add your **public** key as the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-### Run examples on CodeSandbox
+### CodeSandbox
 
-- Open this repository on CodeSandbox with this [link](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe)
-
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-
-- Copy your public key from the [administration](https://liveblocks.io/dashboard/apikeys)
-
-- Create [secret](https://codesandbox.io/docs/secrets) named `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` with the public key you just copied. You need to create an account on CodeSandbox to add an environment variable.
-
-- Refresh your browser and you should be good to go!
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).

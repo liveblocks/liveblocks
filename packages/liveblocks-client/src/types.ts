@@ -3,6 +3,9 @@ import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
@@ -34,7 +37,7 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
+export type LiveMapUpdates<TKey extends string, TValue> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
   updates: Record<TKey, UpdateDelta>;
@@ -46,7 +49,7 @@ export type LiveObjectUpdateDelta<T> = Partial<
   }
 >;
 
-export type LiveObjectUpdates<TData = any> = {
+export type LiveObjectUpdates<TData> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
@@ -74,7 +77,7 @@ export type LiveListUpdateDelta =
       type: "set";
     };
 
-export type LiveListUpdates<TItem = any> = {
+export type LiveListUpdates<TItem> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
@@ -90,9 +93,9 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates
-  | LiveObjectUpdates
-  | LiveListUpdates;
+  | LiveMapUpdates<string, fixme>
+  | LiveObjectUpdates<any /* fixme! */>
+  | LiveListUpdates<fixme>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 

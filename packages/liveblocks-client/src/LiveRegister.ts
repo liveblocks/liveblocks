@@ -11,7 +11,7 @@ import {
 /**
  * @internal
  */
-export class LiveRegister<TValue = any> extends AbstractCrdt {
+export class LiveRegister<TValue> extends AbstractCrdt {
   _data: TValue;
 
   constructor(data: TValue) {
@@ -19,7 +19,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     this._data = data;
   }
 
-  get data() {
+  get data(): TValue {
     return this._data;
   }
 
@@ -28,7 +28,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    _parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
     if (item.type !== CrdtType.Register) {

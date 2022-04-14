@@ -161,6 +161,9 @@ function Sandbox() {
         Redo
       </button>
 
+      <h2>Connection Id</h2>
+      <div id="connectionId">{me.connectionId}</div>
+
       <h2>Items</h2>
       <p id="itemsCount" style={{ visibility: "hidden" }}>
         {list.length}

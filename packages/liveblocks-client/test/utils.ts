@@ -17,6 +17,9 @@ import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -45,7 +48,7 @@ export class MockWebSocket implements WebSocket {
     MockWebSocket.instances.push(this);
   }
 
-  close(code?: number, reason?: string): void {
+  close(_code?: number, _reason?: string): void {
     this.readyState = this.CLOSED;
   }
 
@@ -100,7 +103,7 @@ export class MockWebSocket implements WebSocket {
     throw new Error("NOT IMPLEMENTED");
   };
   protocol: string = "";
-  dispatchEvent(event: Event): boolean {
+  dispatchEvent(_event: Event): boolean {
     throw new Error("Method not implemented.");
   }
 }
@@ -130,7 +133,7 @@ function mapToJson<TKey extends string, TValue>(
     .map((entry) => [entry[0], toJson(entry[1])]);
 }
 
-function toJson(value: any) {
+function toJson(value: unknown) {
   if (value instanceof LiveObject) {
     return objectToJson(value);
   } else if (value instanceof LiveList) {
@@ -162,12 +165,13 @@ const defaultContext = {
 async function prepareRoomWithStorage<T>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
-  onSend: (messages: ClientMessage[]) => void = () => {}
+  onSend: (messages: ClientMessage[]) => void = () => {},
+  defaultStorage = {}
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({});
+  const state = defaultState({}, defaultStorage);
   const machine = makeStateMachine(state, defaultContext, effects);
   const ws = new MockWebSocket("");
 
@@ -196,11 +200,18 @@ async function prepareRoomWithStorage<T>(
 
 export async function prepareIsolatedStorageTest<T>(
   items: SerializedCrdtWithId[],
-  actor: number = 0
+  actor: number = 0,
+  defaultStorage = {}
 ) {
+  const messagesSent: ClientMessage[] = [];
+
   const { machine, storage, ws } = await prepareRoomWithStorage<T>(
     items,
-    actor
+    actor,
+    (messages: ClientMessage[]) => {
+      messagesSent.push(...messages);
+    },
+    defaultStorage
   );
 
   return {
@@ -210,7 +221,10 @@ export async function prepareIsolatedStorageTest<T>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
+    assert: (data: fixme) => expect(objectToJson(storage.root)).toEqual(data),
+    assertMessagesSent: (messages: ClientMessage[]) => {
+      expect(messagesSent).toEqual(messages);
+    },
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({
@@ -271,7 +285,7 @@ export async function prepareStorageTest<T>(
 
   const states: any[] = [];
 
-  function assert(data: any, shouldPushToStates = true) {
+  function assert(data: fixme, shouldPushToStates = true) {
     if (shouldPushToStates) {
       states.push(data);
     }
@@ -413,7 +427,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     { isDeep: true }
   );
 
-  function assert(data: any, itemsCount?: number, storageOpsCount?: number) {
+  function assert(data: fixme, itemsCount?: number, storageOpsCount?: number) {
     assertStorage(data);
 
     if (itemsCount) {
@@ -427,7 +441,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     }
   }
 
-  function assertStorage(data: any) {
+  function assertStorage(data: fixme) {
     const json = objectToJson(storage.root);
     expect(json).toEqual(data);
     expect(objectToJson(refStorage.root)).toEqual(data);
@@ -495,7 +509,7 @@ export function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
-  data: any
+  data: fixme
 ): SerializedCrdtWithId {
   return [
     id,
@@ -545,4 +559,14 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
   }
 
   throw new Error("TIMEOUT");
+}
+
+export function withDateNow(now: number, callback: () => void) {
+  const realDateNow = Date.now.bind(global.Date);
+  global.Date.now = jest.fn(() => now);
+  try {
+    callback();
+  } finally {
+    global.Date.now = realDateNow;
+  }
 }

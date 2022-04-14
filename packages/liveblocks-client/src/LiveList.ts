@@ -22,7 +22,7 @@ import { LiveRegister } from "./LiveRegister";
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
 /**
- * The LiveList class represents an ordered collection of items that is synchorinized across clients.
+ * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
 export class LiveList<T> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
@@ -185,8 +185,8 @@ export class LiveList<T> extends AbstractCrdt {
         };
       } else if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
-        let before = this._items[index] ? this._items[index][1] : undefined;
-        let after = this._items[index + 1]
+        const before = this._items[index] ? this._items[index][1] : undefined;
+        const after = this._items[index + 1]
           ? this._items[index + 1][1]
           : undefined;
 
