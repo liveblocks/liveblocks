@@ -2,9 +2,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-
-// TODO: Further improve this type
-type fixme = unknown;
+import { JsonObject, LiveData, LiveListData, LiveObjectData } from "./json";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -37,26 +35,17 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TValue> = {
+export type LiveMapUpdates<TValue extends LiveData> = {
   type: "LiveMap";
   node: LiveMap<TValue>;
   updates: { [key: string]: UpdateDelta };
 };
 
-// NOTE: Temporary helper to help me figure out what type is needed here
-// _exactly_. Is this any object shape, or must this always be a JSONObject?
-export type LiveObjectPayload<FigureMeOutPlz = unknown> = Record<
-  //                          ^^^^^^^^^^^^^^
-  //                          Try to remove this type param!
-  string,
-  FigureMeOutPlz
->;
-
-export type LiveObjectUpdateDelta<O extends LiveObjectPayload> = {
+export type LiveObjectUpdateDelta<O extends LiveObjectData> = {
   [K in keyof O]?: UpdateDelta | undefined;
 };
 
-export type LiveObjectUpdates<TData extends LiveObjectPayload> = {
+export type LiveObjectUpdates<TData extends LiveObjectData> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
@@ -79,7 +68,7 @@ export type LiveListUpdateDelta =
       type: "move";
     };
 
-export type LiveListUpdates<TItem> = {
+export type LiveListUpdates<TItem extends LiveListData> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
@@ -95,9 +84,9 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates<fixme>
-  | LiveObjectUpdates<any /* fixme! */>
-  | LiveListUpdates<fixme>;
+  | LiveMapUpdates<LiveData>
+  | LiveObjectUpdates<LiveObjectData>
+  | LiveListUpdates<LiveListData>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -383,7 +372,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TValue>(
+    <TValue extends LiveData>(
       liveMap: LiveMap<TValue>,
       listener: (liveMap: LiveMap<TValue>) => void
     ): () => void;
@@ -400,7 +389,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
      * unsubscribe();
      */
-    <TData extends LiveObjectPayload<unknown>>(
+    <TData extends JsonObject>(
       liveObject: LiveObject<TData>,
       callback: (liveObject: LiveObject<TData>) => void
     ): () => void;
@@ -417,7 +406,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { });
      * unsubscribe();
      */
-    <TItem>(
+    <TItem extends LiveListData>(
       liveList: LiveList<TItem>,
       callback: (liveList: LiveList<TItem>) => void
     ): () => void;
@@ -435,7 +424,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TValue>(
+    <TValue extends LiveData>(
       liveMap: LiveMap<TValue>,
       callback: (updates: LiveMapUpdates<TValue>[]) => void,
       options: { isDeep: true }
@@ -454,7 +443,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TData extends LiveObjectPayload>(
+    <TData extends LiveObjectData>(
       liveObject: LiveObject<TData>,
       callback: (updates: LiveObjectUpdates<TData>[]) => void,
       options: { isDeep: true }
@@ -473,7 +462,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TItem>(
+    <TItem extends LiveListData>(
       liveList: LiveList<TItem>,
       callback: (updates: LiveListUpdates<TItem>[]) => void,
       options: { isDeep: true }
@@ -600,7 +589,7 @@ export type Room = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TRoot>() => Promise<{
+  getStorage: <TRoot extends LiveObjectData>() => Promise<{
     root: LiveObject<TRoot>;
   }>;
 

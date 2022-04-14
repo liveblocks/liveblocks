@@ -3,6 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { LiveListData, LiveObjectData } from "./json";
 import { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
@@ -51,6 +52,7 @@ function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
 }
 
 function anyToCrdt(obj: unknown): any {
+  //                              ^^^ LiveData?
   if (obj == null) {
     return obj;
   }
@@ -58,7 +60,7 @@ function anyToCrdt(obj: unknown): any {
     return new LiveList(obj.map(anyToCrdt));
   }
   if (isPlainObject(obj)) {
-    const init: { [key: string]: unknown } = {};
+    const init: LiveObjectData = {};
     for (const key in obj) {
       init[key] = anyToCrdt(obj[key]);
     }
@@ -67,7 +69,7 @@ function anyToCrdt(obj: unknown): any {
   return obj;
 }
 
-export function patchLiveList<T>(
+export function patchLiveList<T extends LiveListData>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
@@ -159,7 +161,7 @@ export function patchLiveList<T>(
   }
 }
 
-export function patchLiveObjectKey<T>(
+export function patchLiveObjectKey<T extends LiveObjectData>(
   liveObject: LiveObject<T>,
   key: keyof T,
   prev: any,

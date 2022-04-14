@@ -1,3 +1,4 @@
+import { Json, JsonObject } from "./json";
 import { Presence } from "./types";
 
 export type ServerMessage =
@@ -112,9 +113,7 @@ export type SerializedObject = {
   type: CrdtType.Object;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JsonObject;
 };
 
 export type SerializedList = {
@@ -133,7 +132,7 @@ export type SerializedRegister = {
   type: CrdtType.Register;
   parentId: string;
   parentKey: string;
-  data: any;
+  data: Json;
 };
 
 export type SerializedCrdt =
@@ -169,7 +168,7 @@ export type UpdateObjectOp = {
   id: string;
   type: OpType.UpdateObject;
   data: {
-    [key: string]: any; // TODO
+    [key: string]: any; // FIXME: This any is a problem!
   };
 };
 
@@ -180,7 +179,7 @@ export type CreateObjectOp = {
   parentId?: string;
   parentKey?: string;
   data: {
-    [key: string]: any; // TODO
+    [key: string]: any; // FIXME: This any is a problem!
   };
 };
 

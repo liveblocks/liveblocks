@@ -13,10 +13,10 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { Json, LiveListData, LiveObjectData, LiveData } from "./json";
 import {
   LiveListUpdates,
   LiveMapUpdates,
-  LiveObjectPayload,
   LiveObjectUpdates,
   StorageUpdate,
 } from "./types";
@@ -96,7 +96,7 @@ export function selfOrRegisterValue(obj: AbstractCrdt) {
   return obj;
 }
 
-export function selfOrRegister(obj: unknown): AbstractCrdt {
+export function selfOrRegister(obj: LiveData): AbstractCrdt {
   if (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||
@@ -108,7 +108,22 @@ export function selfOrRegister(obj: unknown): AbstractCrdt {
       "Internal error. LiveRegister should not be created from selfOrRegister"
     );
   } else {
-    return new LiveRegister(obj);
+    // By now, we've checked that obj isn't a Live storage instance.
+    // Technically what remains here can still be a (1) live data scalar, or
+    // a (2) list of LiveData values, or (3) an object with LiveData values.
+    //
+    // Of these, (1) is fine, because a live data scalar is also a legal Json
+    // scalar.
+    //
+    // But (2) and (3) are only technically fine if those only contain Json
+    // values. Technically, these can still contain nested Live storage
+    // instances, and we should probably assert that they don't at runtime.
+    //
+    // TypeScript understands this and doesn't let us use `obj` until we do :)
+    //
+    return new LiveRegister(obj as Json);
+    //                          ^^^^^^^
+    //                          TODO: Better to assert than to force-cast here!
   }
 }
 
@@ -194,14 +209,13 @@ export function getTreesDiffOperations(
   return ops;
 }
 
-// TODO: FIX TYPE ERRORS HERE
 function mergeObjectStorageUpdates<
-  T1 extends LiveObjectPayload<unknown>,
-  T2 extends LiveObjectPayload<unknown>
+  A extends LiveObjectData,
+  B extends LiveObjectData
 >(
-  first: LiveObjectUpdates<T1>,
-  second: LiveObjectUpdates<T2>
-): LiveObjectUpdates<T1 | T2> {
+  first: LiveObjectUpdates<A>,
+  second: LiveObjectUpdates<B>
+): LiveObjectUpdates<A | B> {
   const updates = first.updates as typeof second["updates"];
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;
@@ -212,7 +226,7 @@ function mergeObjectStorageUpdates<
   };
 }
 
-function mergeMapStorageUpdates<V1, V2>(
+function mergeMapStorageUpdates<V1 extends LiveData, V2 extends LiveData>(
   first: LiveMapUpdates<V1>,
   second: LiveMapUpdates<V2>
 ): LiveMapUpdates<V1 | V2> {
@@ -226,8 +240,8 @@ function mergeMapStorageUpdates<V1, V2>(
   };
 }
 
-function mergeListStorageUpdates<T>(
-  first: LiveListUpdates<unknown>,
+function mergeListStorageUpdates<T extends LiveListData>(
+  first: LiveListUpdates<LiveListData>,
   second: LiveListUpdates<T>
 ): LiveListUpdates<T> {
   const updates = first.updates;
@@ -240,9 +254,9 @@ function mergeListStorageUpdates<T>(
 // prettier-ignore
 export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
 // prettier-ignore
-export function mergeStorageUpdates<V1, V2>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
+export function mergeStorageUpdates<V1 extends LiveData, V2 extends LiveData>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
 // prettier-ignore
-export function mergeStorageUpdates<T>(first: LiveListUpdates<unknown>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+export function mergeStorageUpdates<T extends LiveListData>(first: LiveListUpdates<LiveListData>, second: LiveListUpdates<T>): LiveListUpdates<T>;
 // prettier-ignore
 export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {

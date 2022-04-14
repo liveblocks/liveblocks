@@ -13,14 +13,15 @@ import {
   CrdtType,
   SerializedCrdt,
 } from "./live";
-import { UpdateDelta, LiveMapUpdates } from "./types";
+import { LiveMapUpdates } from "./types";
+import { LiveData } from "./json";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveMap<TValue> extends AbstractCrdt {
+export class LiveMap<TValue extends LiveData> extends AbstractCrdt {
   private _map: Map<string, AbstractCrdt>;
 
   constructor(

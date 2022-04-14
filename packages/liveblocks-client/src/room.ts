@@ -17,8 +17,8 @@ import {
   BroadcastOptions,
   AuthorizeResponse,
   Authentication,
-  LiveObjectPayload,
 } from "./types";
+import { JsonObject, LiveData, LiveListData, LiveObjectData } from "./json";
 import {
   getTreesDiffOperations,
   isSameNodeOrChildOf,
@@ -142,12 +142,12 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ };
+  defaultStorageRoot?: JsonObject;
 
   clock: number;
   opClock: number;
   items: Map<string, AbstractCrdt>;
-  root: LiveObject | undefined;
+  root: LiveObject<LiveObjectData> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
 
@@ -327,7 +327,7 @@ export function makeStateMachine(
     notify(result.updates);
   }
 
-  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+  function load(items: SerializedCrdtWithId[]): LiveObject<LiveObjectData> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
@@ -338,7 +338,7 @@ export function makeStateMachine(
       generateOpId,
       dispatch: storageDispatch,
       roomId: context.room,
-    }) as LiveObject<T>;
+    });
   }
 
   function addItem(id: string, item: AbstractCrdt) {
@@ -607,15 +607,15 @@ export function makeStateMachine(
   }
 
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  function subscribe<TValue>(
+  function subscribe<TValue extends LiveData>(
     liveMap: LiveMap<TValue>,
     callback: (liveMap: LiveMap<TValue>) => void
   ): () => void;
-  function subscribe<TData extends LiveObjectPayload<unknown>>(
+  function subscribe<TData extends LiveObjectData>(
     liveObject: LiveObject<TData>,
     callback: (liveObject: LiveObject<TData>) => void
   ): () => void;
-  function subscribe<TItem>(
+  function subscribe<TItem extends LiveListData>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
@@ -1267,7 +1267,9 @@ See v0.13 release notes for more information.
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
+  function getStorage<TRoot extends LiveObjectData>(): Promise<{
+    root: LiveObject<TRoot>;
+  }> {
     if (state.root) {
       return new Promise((resolve) =>
         resolve({
@@ -1456,7 +1458,7 @@ See v0.13 release notes for more information.
 
 export function defaultState(
   me?: Presence,
-  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ }
+  defaultStorageRoot?: JsonObject
 ): State {
   return {
     connection: { state: "closed" },

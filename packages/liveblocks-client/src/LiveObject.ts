@@ -10,21 +10,15 @@ import {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
-import {
-  LiveObjectUpdates,
-  UpdateDelta,
-  LiveObjectUpdateDelta,
-  LiveObjectPayload,
-} from "./types";
+import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
+import { JsonObject, LiveObjectData } from "./json";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveObject<
-  T extends LiveObjectPayload<any> = LiveObjectPayload<any>
-> extends AbstractCrdt {
+export class LiveObject<T extends LiveObjectData> extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
@@ -97,11 +91,12 @@ export class LiveObject<
   /**
    * @internal
    */
-  static _deserializeChildren(
-    object: LiveObject,
+  static _deserializeChildren<J extends JsonObject>(
+    object: LiveObject<J>,
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
-  ) {
+  ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
+  LiveObject<LiveObjectData> {
     const children = parentToChildren.get(object._id!);
 
     if (children == null) {

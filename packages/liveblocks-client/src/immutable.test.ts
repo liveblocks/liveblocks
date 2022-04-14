@@ -571,7 +571,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject<LiveObjectData>,
         updates: { subsubA: { type: "update" } },
       },
     ];
