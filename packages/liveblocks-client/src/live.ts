@@ -164,6 +164,12 @@ export type Op =
   | CreateMapOp
   | CreateRegisterOp;
 
+export type CreateOp =
+  | CreateObjectOp
+  | CreateRegisterOp
+  | CreateMapOp
+  | CreateListOp;
+
 export type UpdateObjectOp = {
   opId?: string;
   id: string;

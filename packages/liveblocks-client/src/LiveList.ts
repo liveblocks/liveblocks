@@ -1,5 +1,10 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
-import { deserialize, selfOrRegister, selfOrRegisterValue } from "./utils";
+import {
+  deserialize,
+  selfOrRegister,
+  selfOrRegisterValue,
+  creationOpToLiveStructure,
+} from "./utils";
 import {
   SerializedList,
   SerializedCrdtWithId,
@@ -8,6 +13,7 @@ import {
   OpType,
   SerializedCrdt,
   CrdtType,
+  CreateOp,
 } from "./live";
 import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, StorageUpdate } from "./types";
@@ -134,17 +140,14 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: string,
-    child: AbstractCrdt,
-    _opId: string,
-    isLocal: boolean,
-    intent?: "set"
-  ): ApplyResult {
+  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey, intent } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };

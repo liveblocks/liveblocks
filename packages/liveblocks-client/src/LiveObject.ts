@@ -1,8 +1,9 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
-import { deserialize, isCrdt } from "./utils";
+import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
 import {
   CrdtType,
   CreateObjectOp,
+  CreateOp,
   DeleteObjectKeyOp,
   Op,
   OpType,
@@ -141,16 +142,14 @@ export class LiveObject<
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: keyof T,
-    child: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
-  ): ApplyResult {
+  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey, opId } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       if (this._propToLastUpdate.get(key as string) === opId) {
@@ -162,7 +161,7 @@ export class LiveObject<
     }
 
     if (isLocal) {
-      this._propToLastUpdate.set(key as string, opId);
+      this._propToLastUpdate.set(key as string, opId!);
     } else if (this._propToLastUpdate.get(key as string) === undefined) {
       // Remote operation with no local change => apply operation
     } else if (this._propToLastUpdate.get(key as string) === opId) {

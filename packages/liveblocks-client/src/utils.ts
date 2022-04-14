@@ -8,6 +8,11 @@ import {
   SerializedCrdt,
   OpType,
   SerializedObject,
+  CreateRegisterOp,
+  CreateListOp,
+  CreateMapOp,
+  CreateObjectOp,
+  CreateOp,
 } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
@@ -26,6 +31,19 @@ export function remove<T>(array: T[], item: T) {
       array.splice(i, 1);
       break;
     }
+  }
+}
+
+export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
+  switch (op.type) {
+    case OpType.CreateRegister:
+      return new LiveRegister(op.data);
+    case OpType.CreateObject:
+      return new LiveObject(op.data);
+    case OpType.CreateMap:
+      return new LiveMap();
+    case OpType.CreateList:
+      return new LiveList();
   }
 }
 

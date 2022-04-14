@@ -5,6 +5,7 @@ import {
   Op,
   OpType,
   SerializedCrdt,
+  CreateOp,
 } from "./live";
 
 /**
@@ -81,13 +82,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     };
   }
 
-  _attachChild(
-    _id: string,
-    _key: string,
-    _crdt: AbstractCrdt,
-    _opId: string,
-    _isLocal: boolean
-  ): ApplyResult {
+  _attachChild(_op: CreateOp, _isLocal: boolean): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

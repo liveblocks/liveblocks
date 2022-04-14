@@ -1,5 +1,6 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
 import {
+  creationOpToLiveStructure,
   deserialize,
   isCrdt,
   selfOrRegister,
@@ -12,6 +13,7 @@ import {
   SerializedCrdtWithId,
   CrdtType,
   SerializedCrdt,
+  CreateOp,
 } from "./live";
 import { StorageUpdate } from "./types";
 
@@ -134,16 +136,15 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: TKey,
-    child: AbstractCrdt,
-    _opId: string,
-    _isLocal: boolean
-  ): ApplyResult {
+  _attachChild(op: CreateOp, _isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey } = op;
+    const key = parentKey as TKey;
+
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };
