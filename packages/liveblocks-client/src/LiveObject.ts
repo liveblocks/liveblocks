@@ -18,7 +18,9 @@ import { JsonObject, LiveObjectData } from "./json";
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveObject<T extends LiveObjectData> extends AbstractCrdt {
+export class LiveObject<
+  T extends LiveObjectData = LiveObjectData
+> extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 

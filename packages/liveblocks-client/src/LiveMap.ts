@@ -21,7 +21,7 @@ import { LiveData } from "./json";
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveMap<TValue extends LiveData> extends AbstractCrdt {
+export class LiveMap<TValue extends LiveData = LiveData> extends AbstractCrdt {
   private _map: Map<string, AbstractCrdt>;
 
   constructor(
