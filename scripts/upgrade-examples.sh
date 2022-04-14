@@ -15,21 +15,23 @@ err () {
 }
 
 usage () {
-    err "usage: upgrade-examples.sh <version>"
+    err "usage: upgrade-examples.sh [<version>]"
     err
     err "Upgrades all the example projects by bumping the Liveblocks dependencies"
-    err "to the given version."
+    err "to the given version. If not provided, uses the latest version."
     err
     err "Options:"
     err "-h    Show this help"
 }
 
-if [ $# -ne 1 ]; then
-    usage
-    exit 1
-fi
+while getopts h flag; do
+    case "$flag" in
+        *) usage; exit 2;;
+    esac
+done
+shift $(($OPTIND - 1))
 
-VERSION="$1"
+VERSION="${1:-latest}"
 
 list_all_projects () {
     find examples e2e \
