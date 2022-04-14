@@ -71,7 +71,11 @@ function Sandbox() {
       <button
         id="set"
         onClick={() => {
-          const index = generateRandomNumber(list.length);
+          if (list.length === 0) {
+            return;
+          }
+
+          const index = generateRandomNumber(list.length - 1);
           list.set(index, me.connectionId + ":" + item);
           item = String.fromCharCode(item.charCodeAt(0) + 1);
         }}
