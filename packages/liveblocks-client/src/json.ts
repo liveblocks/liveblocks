@@ -35,9 +35,9 @@ export type LiveData =
 
   // Or they are LiveXxx class instances
   | LiveObject<LiveObjectData>
-  | LiveList<LiveListData>
-  | LiveMap<LiveMapData>
-  | LiveRegister<LiveDataScalar>;
+  | LiveList<LiveData>
+  | LiveMap<LiveData>
+  | LiveRegister<Json>;
 
 export type LiveDataScalar = string | number | boolean | null | undefined;
 
@@ -49,5 +49,3 @@ type LiveListData = LiveData[];
  * value or a Live storage data structure (LiveMap, LiveList, etc.)
  */
 export type LiveObjectData = { [key: string]: LiveData | undefined };
-
-export type LiveMapData = { [key: string]: LiveData | undefined };
