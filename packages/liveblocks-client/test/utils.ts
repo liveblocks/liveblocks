@@ -9,6 +9,7 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
+import { Json, LiveData, LiveObjectData } from "../src/json";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
@@ -121,11 +122,13 @@ export function objectToJson(record: LiveObject) {
   return result;
 }
 
-function listToJson<T>(list: LiveList<T>): Array<T> {
+function listToJson<T extends LiveData>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson<TValue>(map: LiveMap<TValue>): Array<[string, TValue]> {
+function mapToJson<TValue extends LiveData>(
+  map: LiveMap<TValue>
+): Array<[string, TValue]> {
   return Array.from(map.entries())
     .sort((entryA, entryB) => entryA[0].localeCompare(entryB[0]))
     .map((entry) => [entry[0], toJson(entry[1])]);
@@ -160,7 +163,7 @@ const defaultContext = {
   WebSocketPolyfill: MockWebSocket as any,
 };
 
-async function prepareRoomWithStorage<T>(
+async function prepareRoomWithStorage<T extends LiveObjectData>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   onSend: (messages: ClientMessage[]) => void = () => {},
@@ -196,7 +199,7 @@ async function prepareRoomWithStorage<T>(
   };
 }
 
-export async function prepareIsolatedStorageTest<T>(
+export async function prepareIsolatedStorageTest<T extends LiveObjectData>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   defaultStorage = {}
@@ -238,7 +241,7 @@ export async function prepareIsolatedStorageTest<T>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<T>(
+export async function prepareStorageTest<T extends LiveObjectData>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
@@ -377,10 +380,10 @@ export async function reconnect(
   );
 }
 
-export async function prepareStorageImmutableTest<T, StateType>(
-  items: SerializedCrdtWithId[],
-  actor: number = 0
-) {
+export async function prepareStorageImmutableTest<
+  T extends LiveObjectData,
+  StateType
+>(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: StateType = {} as any;
   let refState: StateType = {} as any;
 
@@ -507,7 +510,7 @@ export function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
-  data: fixme
+  data: Json
 ): SerializedCrdtWithId {
   return [
     id,

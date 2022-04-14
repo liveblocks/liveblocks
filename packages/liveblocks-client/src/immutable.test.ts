@@ -39,7 +39,7 @@ describe("patchLiveObjectKey", () => {
   test("should set LiveObject if next is object", () => {
     const liveObject = new LiveObject();
     patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
-    const value = liveObject.get("key");
+    const value = liveObject.get("key") as LiveObject;
     expect(value instanceof LiveObject).toBe(true);
     expect(value.toObject()).toEqual({ a: 0 });
   });
@@ -571,7 +571,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA") as LiveObject<LiveObjectData>,
+        node: root.get("subA") as LiveObject,
         updates: { subsubA: { type: "update" } },
       },
     ];
@@ -606,17 +606,17 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject,
         updates: { subsubA: { type: "update" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject,
         updates: { subsubB: { type: "delete" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subB"),
+        node: root.get("subB") as LiveObject,
         updates: { b: { type: "update" } },
       },
     ];
@@ -647,7 +647,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveMap",
-        node: root.get("map"),
+        node: root.get("map") as LiveMap,
         updates: { el2: { type: "update" } },
       },
     ];
@@ -675,7 +675,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveMap",
-        node: root.get("map"),
+        node: root.get("map") as LiveMap,
         updates: { el2: { type: "delete" } },
       },
     ];
@@ -705,7 +705,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 2, item: obj1, type: "insert" }],
       },
     ];
@@ -735,7 +735,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 0, item: newObj, type: "insert" }],
       },
     ];
@@ -769,7 +769,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 0, item: newObj1, type: "insert" },
           { index: 0, item: newObj2, type: "insert" },
@@ -805,7 +805,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 1, item: newObj1, type: "insert" },
           { index: 2, item: newObj2, type: "insert" },
@@ -838,7 +838,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 1, item: newObj, type: "insert" }],
       },
     ];
@@ -866,7 +866,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 1, type: "delete" }],
       },
     ];
@@ -895,7 +895,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 0, type: "delete" }],
       },
     ];
@@ -926,7 +926,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 0, type: "delete" },
           { index: 0, type: "delete" },
@@ -962,7 +962,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 0, previousIndex: 2, item: movedObj, type: "move" },
           ],
@@ -998,7 +998,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 3, previousIndex: 0, item: movedObj, type: "move" },
           ],
@@ -1034,7 +1034,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 3, previousIndex: 1, item: movedObj, type: "move" },
           ],
@@ -1070,7 +1070,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 2, previousIndex: 1, item: movedObj, type: "move" },
           ],
@@ -1110,7 +1110,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 1, previousIndex: 0, item: objA, type: "move" },
             { index: 3, previousIndex: 2, item: objC, type: "move" },
@@ -1150,7 +1150,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 0, previousIndex: 1, item: objB, type: "move" },
             { index: 0, previousIndex: 2, item: objC, type: "move" },
