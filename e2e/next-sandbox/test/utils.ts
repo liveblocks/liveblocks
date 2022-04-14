@@ -80,7 +80,8 @@ export async function waitForContentToBeEquals(
     const firstPageContent = await getTextContent(pages[0], id);
 
     let allEquals = true;
-    for (let pI = 1; i < pages.length; i++) {
+
+    for (let pI = 1; pI < pages.length; pI++) {
       const otherPageContent = await getTextContent(pages[pI], id);
       if (firstPageContent !== otherPageContent) {
         allEquals = false;
