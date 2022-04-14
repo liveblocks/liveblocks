@@ -19,11 +19,7 @@ import {
   LiveObjectPayload,
   LiveObjectUpdates,
   StorageUpdate,
-  UpdateDelta,
 } from "./types";
-
-// TODO: Further improve this type
-type fixme = unknown;
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -216,11 +212,11 @@ function mergeObjectStorageUpdates<
   };
 }
 
-function mergeMapStorageUpdates<K1 extends string, V1, K2 extends string, V2>(
-  first: LiveMapUpdates<K1, V1>,
-  second: LiveMapUpdates<K2, V2>
-): LiveMapUpdates<K1 | K2, V1 | V2> {
-  const updates = first.updates as { [K in K1 | K2]?: UpdateDelta | undefined };
+function mergeMapStorageUpdates<V1, V2>(
+  first: LiveMapUpdates<V1>,
+  second: LiveMapUpdates<V2>
+): LiveMapUpdates<V1 | V2> {
+  const updates = first.updates;
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;
   }
@@ -244,7 +240,7 @@ function mergeListStorageUpdates<T>(
 // prettier-ignore
 export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
 // prettier-ignore
-export function mergeStorageUpdates<K1 extends string, V1, K2 extends string, V2>(first: LiveMapUpdates<K1, V1>, second: LiveMapUpdates<K2, V2>): LiveMapUpdates<K1 | K2, V1 | V2>;
+export function mergeStorageUpdates<V1, V2>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
 // prettier-ignore
 export function mergeStorageUpdates<T>(first: LiveListUpdates<unknown>, second: LiveListUpdates<T>): LiveListUpdates<T>;
 // prettier-ignore

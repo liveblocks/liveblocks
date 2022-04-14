@@ -17,7 +17,7 @@ export function liveObjectToJson(liveObject: LiveObject<any>) {
   return result;
 }
 
-function liveMapToJson(map: LiveMap<any, any>) {
+function liveMapToJson(map: LiveMap<any>) {
   const result: any = {};
   const obj = Object.fromEntries(map);
 
@@ -235,20 +235,14 @@ function getParentsPath(node: AbstractCrdt): Array<string | number> {
   return path;
 }
 
-export function patchImmutableObject<T>(
-  state: T,
-  updates: StorageUpdate[]
-): T {
+export function patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T {
   return updates.reduce(
     (state, update) => patchImmutableObjectWithUpdate(state, update),
     state
   );
 }
 
-function patchImmutableObjectWithUpdate<T>(
-  state: T,
-  update: StorageUpdate
-): T {
+function patchImmutableObjectWithUpdate<T>(state: T, update: StorageUpdate): T {
   const path = getParentsPath(update.node);
   return patchImmutableNode(state, path, update);
 }

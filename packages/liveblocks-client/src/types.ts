@@ -37,10 +37,10 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TKey extends string, TValue> = {
+export type LiveMapUpdates<TValue> = {
   type: "LiveMap";
-  node: LiveMap<TKey, TValue>;
-  updates: { [K in TKey]?: UpdateDelta | undefined };
+  node: LiveMap<TValue>;
+  updates: { [key: string]: UpdateDelta };
 };
 
 // NOTE: Temporary helper to help me figure out what type is needed here
@@ -95,7 +95,7 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates<string, fixme>
+  | LiveMapUpdates<fixme>
   | LiveObjectUpdates<any /* fixme! */>
   | LiveListUpdates<fixme>;
 
@@ -383,9 +383,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
-      liveMap: LiveMap<TKey, TValue>,
-      listener: (liveMap: LiveMap<TKey, TValue>) => void
+    <TValue>(
+      liveMap: LiveMap<TValue>,
+      listener: (liveMap: LiveMap<TValue>) => void
     ): () => void;
     /**
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
@@ -435,9 +435,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
-      liveMap: LiveMap<TKey, TValue>,
-      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
+    <TValue>(
+      liveMap: LiveMap<TValue>,
+      callback: (updates: LiveMapUpdates<TValue>[]) => void,
       options: { isDeep: true }
     ): () => void;
 

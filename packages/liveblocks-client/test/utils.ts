@@ -125,9 +125,7 @@ function listToJson<T>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson<TKey extends string, TValue>(
-  map: LiveMap<TKey, TValue>
-): Array<[string, TValue]> {
+function mapToJson<TValue>(map: LiveMap<TValue>): Array<[string, TValue]> {
   return Array.from(map.entries())
     .sort((entryA, entryB) => entryA[0].localeCompare(entryB[0]))
     .map((entry) => [entry[0], toJson(entry[1])]);

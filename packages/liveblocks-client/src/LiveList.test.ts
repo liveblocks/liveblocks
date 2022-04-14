@@ -185,7 +185,7 @@ describe("LiveList", () => {
 
     it("push LiveMap", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveMap<string, number>>;
+        items: LiveList<LiveMap<number>>;
       }>(
         [
           createSerializedObject("0:0", {}),
@@ -199,7 +199,7 @@ describe("LiveList", () => {
 
       assert({ items: [] });
 
-      items.push(new LiveMap<string, number>([["first", 0]]));
+      items.push(new LiveMap<number>([["first", 0]]));
 
       assert({
         items: [[["first", 0]]],
