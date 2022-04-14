@@ -16,7 +16,7 @@ import { LiveRegister } from "./LiveRegister";
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
 /**
- * The LiveList class represents an ordered collection of items that is synchorinized across clients.
+ * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
 export class LiveList<T> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?

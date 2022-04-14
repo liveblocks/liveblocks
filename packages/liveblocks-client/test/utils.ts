@@ -17,6 +17,9 @@ import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
+// TODO: Further improve this type
+type fixme = unknown;
+
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -45,7 +48,7 @@ export class MockWebSocket implements WebSocket {
     MockWebSocket.instances.push(this);
   }
 
-  close(code?: number, reason?: string): void {
+  close(_code?: number, _reason?: string): void {
     this.readyState = this.CLOSED;
   }
 
@@ -100,7 +103,7 @@ export class MockWebSocket implements WebSocket {
     throw new Error("NOT IMPLEMENTED");
   };
   protocol: string = "";
-  dispatchEvent(event: Event): boolean {
+  dispatchEvent(_event: Event): boolean {
     throw new Error("Method not implemented.");
   }
 }
@@ -130,7 +133,7 @@ function mapToJson<TKey extends string, TValue>(
     .map((entry) => [entry[0], toJson(entry[1])]);
 }
 
-function toJson(value: any) {
+function toJson(value: unknown) {
   if (value instanceof LiveObject) {
     return objectToJson(value);
   } else if (value instanceof LiveList) {
@@ -218,7 +221,7 @@ export async function prepareIsolatedStorageTest<T>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: any) => expect(objectToJson(storage.root)).toEqual(data),
+    assert: (data: fixme) => expect(objectToJson(storage.root)).toEqual(data),
     assertMessagesSent: (messages: ClientMessage[]) => {
       expect(messagesSent).toEqual(messages);
     },
@@ -282,7 +285,7 @@ export async function prepareStorageTest<T>(
 
   const states: any[] = [];
 
-  function assert(data: any, shouldPushToStates = true) {
+  function assert(data: fixme, shouldPushToStates = true) {
     if (shouldPushToStates) {
       states.push(data);
     }
@@ -424,7 +427,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     { isDeep: true }
   );
 
-  function assert(data: any, itemsCount?: number, storageOpsCount?: number) {
+  function assert(data: fixme, itemsCount?: number, storageOpsCount?: number) {
     assertStorage(data);
 
     if (itemsCount) {
@@ -438,7 +441,7 @@ export async function prepareStorageImmutableTest<T, StateType>(
     }
   }
 
-  function assertStorage(data: any) {
+  function assertStorage(data: fixme) {
     const json = objectToJson(storage.root);
     expect(json).toEqual(data);
     expect(objectToJson(refStorage.root)).toEqual(data);
@@ -506,7 +509,7 @@ export function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
-  data: any
+  data: fixme
 ): SerializedCrdtWithId {
   return [
     id,
