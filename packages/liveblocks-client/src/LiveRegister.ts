@@ -10,7 +10,7 @@ import {
 /**
  * @internal
  */
-export class LiveRegister<TValue = any> extends AbstractCrdt {
+export class LiveRegister<TValue> extends AbstractCrdt {
   _data: TValue;
 
   constructor(data: TValue) {
@@ -18,7 +18,7 @@ export class LiveRegister<TValue = any> extends AbstractCrdt {
     this._data = data;
   }
 
-  get data() {
+  get data(): TValue {
     return this._data;
   }
 
