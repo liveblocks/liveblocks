@@ -439,6 +439,29 @@ describe("LiveList", () => {
 
       assertUndoRedo();
     });
+
+    it("set nested object", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+        ],
+        1
+      );
+
+      const root = storage.root;
+      const items = root.toObject().items;
+
+      assert({ items: [{ a: 1 }] });
+
+      items.set(0, new LiveObject({ a: 2 }));
+      assert({ items: [{ a: 2 }] });
+
+      assertUndoRedo();
+    });
   });
 
   describe("apply CreateRegister", () => {
