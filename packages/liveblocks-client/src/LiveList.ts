@@ -67,7 +67,12 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -82,6 +87,7 @@ export class LiveList<T> extends AbstractCrdt {
     const op: CreateListOp = {
       id: this._id,
       opId: doc?.generateOpId(),
+      intent,
       type: OpType.CreateList,
       parentId,
       parentKey,
@@ -133,7 +139,8 @@ export class LiveList<T> extends AbstractCrdt {
     key: string,
     child: AbstractCrdt,
     _opId: string,
-    isLocal: boolean
+    isLocal: boolean,
+    intent?: "set"
   ): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -152,7 +159,28 @@ export class LiveList<T> extends AbstractCrdt {
 
     // If there is a conflict
     if (index !== -1) {
-      if (isLocal) {
+      if (intent === "set") {
+        const existingItem = this._items[index][0];
+        existingItem._detach();
+        const storageUpdate: StorageUpdate = {
+          node: this as any,
+          type: "LiveList",
+          updates: [
+            {
+              index,
+              type: "set",
+              item: child instanceof LiveRegister ? child.data : child,
+            },
+          ],
+        };
+
+        this._items[index][0] = child;
+
+        return {
+          modified: storageUpdate,
+          reverse: existingItem._serialize(this._id!, key, this._doc, "set"),
+        };
+      } else if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
         let before = this._items[index] ? this._items[index][1] : undefined;
         let after = this._items[index + 1]
@@ -515,6 +543,47 @@ export class LiveList<T> extends AbstractCrdt {
         item[0]._detach();
       }
       this._items = [];
+    }
+  }
+
+  set(index: number, item: T) {
+    if (index < 0 || index >= this._items.length) {
+      throw new Error(
+        `Cannot set list item at index "${index}". index should be between 0 and ${
+          this._items.length - 1
+        }`
+      );
+    }
+
+    const [existingItem, position] = this._items[index];
+
+    existingItem._detach();
+
+    const value = selfOrRegister(item);
+    value._setParentLink(this, position);
+    this._items[index][0] = value;
+
+    if (this._doc && this._id) {
+      const id = this._doc.generateId();
+      value._attach(id, this._doc);
+
+      const storageUpdates = new Map<string, StorageUpdate>();
+      storageUpdates.set(this._id, {
+        node: this,
+        type: "LiveList",
+        updates: [
+          {
+            index,
+            item: value instanceof LiveRegister ? value.data : value,
+            type: "set",
+          },
+        ],
+      });
+      this._doc.dispatch(
+        value._serialize(this._id, position, this._doc, "set"),
+        existingItem._serialize(this._id, position, undefined, "set"),
+        storageUpdates
+      );
     }
   }
 

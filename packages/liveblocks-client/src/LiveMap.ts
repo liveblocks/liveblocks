@@ -44,7 +44,12 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -60,6 +65,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       id: this._id,
       opId: doc?.generateOpId(),
       type: OpType.CreateMap,
+      intent,
       parentId,
       parentKey,
     };

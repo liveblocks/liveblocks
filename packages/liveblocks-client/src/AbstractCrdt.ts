@@ -108,7 +108,8 @@ export abstract class AbstractCrdt {
     key: string,
     crdt: AbstractCrdt,
     opId: string,
-    isLocal: boolean
+    isLocal: boolean,
+    intent?: "set"
   ): ApplyResult;
 
   /**
@@ -130,7 +131,12 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+  abstract _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[];
 
   /**
    * @internal

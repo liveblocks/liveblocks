@@ -537,7 +537,8 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveObject(op.data),
           op.opId!,
-          isLocal
+          isLocal,
+          op.intent
         );
       }
       case OpType.CreateList: {
@@ -552,7 +553,8 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveList(),
           op.opId!,
-          isLocal
+          isLocal,
+          op.intent
         );
       }
       case OpType.CreateRegister: {
@@ -567,7 +569,8 @@ export function makeStateMachine(
           op.parentKey!,
           new LiveRegister(op.data),
           op.opId!,
-          isLocal
+          isLocal,
+          op.intent
         );
       }
       case OpType.CreateMap: {

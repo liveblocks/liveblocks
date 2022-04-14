@@ -41,7 +41,12 @@ export class LiveObject<
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -50,6 +55,7 @@ export class LiveObject<
     const op: CreateObjectOp = {
       id: this._id,
       opId: doc?.generateOpId(),
+      intent,
       type: OpType.CreateObject,
       parentId,
       parentKey,

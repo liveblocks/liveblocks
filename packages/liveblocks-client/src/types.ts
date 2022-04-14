@@ -40,9 +40,11 @@ export type LiveMapUpdates<TKey extends string = string, TValue = any> = {
   updates: Record<TKey, UpdateDelta>;
 };
 
-export type LiveObjectUpdateDelta<T> = Partial<{
-  [Property in keyof T]: UpdateDelta;
-}>;
+export type LiveObjectUpdateDelta<T> = Partial<
+  {
+    [Property in keyof T]: UpdateDelta;
+  }
+>;
 
 export type LiveObjectUpdates<TData = any> = {
   type: "LiveObject";
@@ -65,6 +67,11 @@ export type LiveListUpdateDelta =
       previousIndex: number;
       item: AbstractCrdt;
       type: "move";
+    }
+  | {
+      index: number;
+      item: AbstractCrdt;
+      type: "set";
     };
 
 export type LiveListUpdates<TItem = any> = {

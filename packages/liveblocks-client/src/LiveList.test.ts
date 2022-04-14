@@ -405,6 +405,42 @@ describe("LiveList", () => {
     });
   });
 
+  describe("set", () => {
+    it("set register on detached list", () => {
+      const list = new LiveList(["A", "B", "C"]);
+      list.set(0, "D");
+      expect(list.toArray()).toEqual(["D", "B", "C"]);
+    });
+
+    it("set register", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
+
+      const root = storage.root;
+      const items = root.toObject().items;
+
+      assert({ items: ["A", "B", "C"] });
+
+      items.set(0, "D");
+      assert({ items: ["D", "B", "C"] });
+
+      items.set(1, "E");
+      assert({ items: ["D", "E", "C"] });
+
+      assertUndoRedo();
+    });
+  });
+
   describe("apply CreateRegister", () => {
     it("on existing position should give the right update", async () => {
       const { root, assert, applyRemoteOperations, subscribe } =

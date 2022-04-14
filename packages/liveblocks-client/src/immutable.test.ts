@@ -254,7 +254,7 @@ describe("2 ways tests with two clients", () => {
         newState["syncList"]
       );
 
-      assert({ syncList: ["d", "b", "c", "a"] }, 6, 8);
+      assert({ syncList: ["d", "b", "c", "a"] }, 6, 4);
     });
 
     test("array of objects", async () => {
