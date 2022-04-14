@@ -18,7 +18,7 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { JsonObject, LiveData, LiveListData, LiveObjectData } from "./json";
+import { JsonObject, LiveData, LiveObjectData } from "./json";
 import {
   getTreesDiffOperations,
   isSameNodeOrChildOf,
@@ -615,7 +615,7 @@ export function makeStateMachine(
     liveObject: LiveObject<TData>,
     callback: (liveObject: LiveObject<TData>) => void
   ): () => void;
-  function subscribe<TItem extends LiveListData>(
+  function subscribe<TItem extends LiveData>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;

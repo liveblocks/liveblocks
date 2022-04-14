@@ -3,7 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { LiveListData, LiveObjectData } from "./json";
+import { LiveData, LiveObjectData } from "./json";
 import { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
@@ -69,7 +69,7 @@ function anyToCrdt(obj: unknown): any {
   return obj;
 }
 
-export function patchLiveList<T extends LiveListData>(
+export function patchLiveList<T extends LiveData>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>

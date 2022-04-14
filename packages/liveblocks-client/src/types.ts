@@ -2,7 +2,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import { JsonObject, LiveData, LiveListData, LiveObjectData } from "./json";
+import { JsonObject, LiveData, LiveObjectData } from "./json";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -68,7 +68,7 @@ export type LiveListUpdateDelta =
       type: "move";
     };
 
-export type LiveListUpdates<TItem extends LiveListData> = {
+export type LiveListUpdates<TItem extends LiveData> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
@@ -86,7 +86,7 @@ export type BroadcastOptions = {
 export type StorageUpdate =
   | LiveMapUpdates<LiveData>
   | LiveObjectUpdates<LiveObjectData>
-  | LiveListUpdates<LiveListData>;
+  | LiveListUpdates<LiveData>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -406,7 +406,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { });
      * unsubscribe();
      */
-    <TItem extends LiveListData>(
+    <TItem extends LiveData>(
       liveList: LiveList<TItem>,
       callback: (liveList: LiveList<TItem>) => void
     ): () => void;
@@ -462,7 +462,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TItem extends LiveListData>(
+    <TItem extends LiveData>(
       liveList: LiveList<TItem>,
       callback: (updates: LiveListUpdates<TItem>[]) => void,
       options: { isDeep: true }

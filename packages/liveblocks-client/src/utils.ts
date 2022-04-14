@@ -13,7 +13,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json, LiveListData, LiveObjectData, LiveData } from "./json";
+import { Json, LiveData, LiveObjectData } from "./json";
 import {
   LiveListUpdates,
   LiveMapUpdates,
@@ -240,8 +240,8 @@ function mergeMapStorageUpdates<V1 extends LiveData, V2 extends LiveData>(
   };
 }
 
-function mergeListStorageUpdates<T extends LiveListData>(
-  first: LiveListUpdates<LiveListData>,
+function mergeListStorageUpdates<T extends LiveData>(
+  first: LiveListUpdates<LiveData>,
   second: LiveListUpdates<T>
 ): LiveListUpdates<T> {
   const updates = first.updates;
@@ -256,7 +256,7 @@ export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, s
 // prettier-ignore
 export function mergeStorageUpdates<V1 extends LiveData, V2 extends LiveData>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
 // prettier-ignore
-export function mergeStorageUpdates<T extends LiveListData>(first: LiveListUpdates<LiveListData>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+export function mergeStorageUpdates<T extends LiveData>(first: LiveListUpdates<LiveData>, second: LiveListUpdates<T>): LiveListUpdates<T>;
 // prettier-ignore
 export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {

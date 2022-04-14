@@ -42,7 +42,7 @@ export type LiveData =
 export type LiveDataScalar = string | number | boolean | null | undefined;
 
 // TODO: Replace this named type and instead inline LiveData[] in call sites - much clearer!
-export type LiveListData = LiveData[];
+type LiveListData = LiveData[];
 
 /**
  * A mapping of keys to LiveData values. A LiveData value is any valid JSON
