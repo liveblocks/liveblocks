@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/examples-vuejs-live-cursors",
   "version": "1.0.0",
-  "description": "This example shows how to build live cursors with Liveblocks and Nuxt.js.",
+  "description": "This example shows how to build live cursors with Liveblocks and Vue.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
