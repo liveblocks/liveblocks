@@ -10,5 +10,7 @@
  */
 export type Json = JsonScalar | JsonArray | JsonObject;
 export type JsonScalar = string | number | boolean | null | undefined;
+//                                                          ^^^^^^^^^
+//                                                          FIXME: This is a bug!
 export type JsonArray = Json[];
 export type JsonObject = { [key: string]: Json | undefined };

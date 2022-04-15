@@ -20,6 +20,8 @@ export type Lson =
   | LiveRegister<Json>;
 
 export type LsonScalar = string | number | boolean | null | undefined;
+//                                                          ^^^^^^^^^
+//                                                          FIXME: This is a bug!
 
 /**
  * A mapping of keys to Lson values. A Lson value is any valid JSON
