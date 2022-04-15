@@ -12,6 +12,8 @@ export type {
   History,
 } from "./types";
 
+export type { Json, JsonObject, LiveData, LiveObjectData } from "./json";
+
 export { createClient } from "./client";
 
 import {
