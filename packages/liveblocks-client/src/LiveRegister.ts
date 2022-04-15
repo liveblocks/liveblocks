@@ -9,7 +9,9 @@ import {
 import { Json } from "./json";
 
 /**
- * @internal
+ * NOTE: INTERNAL.
+ * This is an internal data structure to Liveblocks. Do not rely on this
+ * publicly.
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _data: TValue;
