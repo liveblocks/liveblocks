@@ -18,6 +18,8 @@
   </a>
 </p>
 
+A [store enhancer](https://redux.js.org/understanding/thinking-in-redux/glossary#store-enhancer) to integrate [Liveblocks](https://liveblocks.io) into [Redux](https://redux-toolkit.js.org/) stores.
+
 ## Installation
 
 ```
