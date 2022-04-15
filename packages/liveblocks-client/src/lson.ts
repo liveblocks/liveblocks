@@ -1,6 +1,8 @@
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
+import type { LiveRegister } from "./LiveRegister";
+import type { Json } from "./json";
 
 /**
  * Think of Lson as a sibling of the Json data tree, except that the nested
@@ -14,7 +16,8 @@ export type Lson =
   // Or they are LiveXxx class instances
   | LiveObject<LsonObject>
   | LiveList<Lson>
-  | LiveMap<Lson>;
+  | LiveMap<Lson>
+  | LiveRegister<Json>;
 
 export type LsonScalar = string | number | boolean | null | undefined;
 
