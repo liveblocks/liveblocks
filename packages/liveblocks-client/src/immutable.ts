@@ -82,7 +82,7 @@ function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
 }
 
 function anyToCrdt(obj: unknown): any {
-  //                              ^^^ Lson?
+  //                              ^^^ AbstractCrdt?
   if (obj == null) {
     return obj;
   }
