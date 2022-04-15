@@ -2,7 +2,8 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import { JsonObject, LiveData, LiveObjectData } from "./json";
+import { JsonObject } from "./json";
+import { LiveData, LiveObjectData } from "./LiveData";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (

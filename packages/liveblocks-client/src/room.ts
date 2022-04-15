@@ -18,7 +18,8 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { JsonObject, LiveData, LiveObjectData } from "./json";
+import { JsonObject } from "./json";
+import { LiveData, LiveObjectData } from "./LiveData";
 import {
   getTreesDiffOperations,
   isSameNodeOrChildOf,

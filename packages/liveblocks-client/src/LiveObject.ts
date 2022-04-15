@@ -11,7 +11,8 @@ import {
   UpdateObjectOp,
 } from "./live";
 import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
-import { JsonObject, LiveObjectData } from "./json";
+import { JsonObject } from "./json";
+import { LiveObjectData } from "./LiveData";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

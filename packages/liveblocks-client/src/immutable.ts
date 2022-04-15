@@ -3,7 +3,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { LiveData, LiveObjectData } from "./json";
+import { LiveData, LiveObjectData } from "./LiveData";
 import { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 

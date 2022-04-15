@@ -9,7 +9,8 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json, LiveData, LiveObjectData } from "../src/json";
+import { Json } from "../src/json";
+import { LiveData, LiveObjectData } from "../src/LiveData";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";

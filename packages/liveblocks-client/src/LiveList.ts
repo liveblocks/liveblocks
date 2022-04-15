@@ -12,7 +12,7 @@ import {
 import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
-import { LiveData } from "./json";
+import { LiveData } from "./LiveData";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 

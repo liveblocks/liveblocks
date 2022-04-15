@@ -13,7 +13,8 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json, LiveData, LiveObjectData } from "./json";
+import { Json } from "./json";
+import { LiveData, LiveObjectData } from "./LiveData";
 import {
   LiveListUpdates,
   LiveMapUpdates,

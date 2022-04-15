@@ -14,7 +14,7 @@ import {
   SerializedCrdt,
 } from "./live";
 import { LiveMapUpdates } from "./types";
-import { LiveData } from "./json";
+import { LiveData } from "./LiveData";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
