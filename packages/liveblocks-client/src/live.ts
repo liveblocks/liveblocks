@@ -1,4 +1,5 @@
 import { Json, JsonObject } from "./json";
+import { LsonObject } from "./lson";
 import { Presence } from "./types";
 
 export type ServerMessage =
@@ -167,9 +168,7 @@ export type UpdateObjectOp = {
   opId?: string;
   id: string;
   type: OpType.UpdateObject;
-  data: {
-    [key: string]: any; // FIXME: This any is a problem!
-  };
+  data: Partial<LsonObject>;
 };
 
 export type CreateObjectOp = {
@@ -178,9 +177,7 @@ export type CreateObjectOp = {
   type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // FIXME: This any is a problem!
-  };
+  data: LsonObject;
 };
 
 export type CreateListOp = {
