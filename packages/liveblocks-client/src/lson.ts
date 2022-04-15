@@ -28,3 +28,48 @@ export type LsonScalar = string | number | boolean | null | undefined;
  * value or a Live storage data structure (LiveMap, LiveList, etc.)
  */
 export type LsonObject = { [key: string]: Lson | undefined };
+
+/**
+ * Helper type to convert any valid Lson type to the equivalent Json type.
+ *
+ * Examples:
+ *
+ *   ToJson<42>                         // 42
+ *   ToJson<'hi'>                       // 'hi'
+ *   ToJson<number>                     // number
+ *   ToJson<string>                     // string
+ *   ToJson<string | number[]>          // string | number[]
+ *   ToJson<LiveMap<LiveList<number>>>  // { [key: string]: number[] }
+ *   ToJson<{ a: number, b: LiveList<string> }>
+ *                                      // { a: number, b: string[] }
+ *   ToJson<LiveObject<{ a: number, b: LiveList<string> }>>
+ *                                      // { a: null, b: string[] }
+ *   ToJson<LiveRegister<{ a: number | null }>>
+ *                                      // { a: number | null }
+ *
+ */
+// prettier-ignore
+export type ToJson<T extends Lson> =
+  // Any Json value already is a legal Json value
+  T extends Json ? T :
+
+  // Any Lson[] recursively becomes a Json[]
+  T extends Lson[] ? ToJson<T[number]>[] :
+
+  // Any LsonObject recursively becomes a JsonObject
+  T extends LsonObject ? { [K in keyof T]: ToJson<T[K]> } :
+
+  // A LiveRegister holds a simple Json value
+  T extends LiveRegister<infer J> ? ToJson<J> :
+
+  // A LiveList serializes to an equivalent JSON array
+  T extends LiveList<infer I> ? ToJson<I>[] :
+
+  // A LiveObject serializes to an equivalent JSON object
+  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<O[K]> } :
+
+  // A LiveMap serializes to a JSON object with string-V pairs
+  T extends LiveMap<infer V> ? { [key: string]: ToJson<V> } :
+
+  // Otherwise, this is not possible
+  never;
