@@ -4,22 +4,30 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { Lson, LsonObject } from "./lson";
+import { Json } from "./json";
 import { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
-export function liveObjectToJson(liveObject: LiveObject<any>) {
-  const result: any = {};
-  const obj = liveObject.toObject();
-
+function lsonObjectToJson<O extends LsonObject>(
+  obj: O
+): { [K in keyof O]: Json } {
+  const result: { [K in keyof O]: Json } = {} as any;
   for (const key in obj) {
     result[key] = lsonToJson(obj[key]);
   }
-
   return result;
 }
 
-function liveMapToJson(map: LiveMap<any>) {
-  const result: any = {};
+export function liveObjectToJson<O extends LsonObject>(
+  liveObject: LiveObject<O>
+): { [K in keyof O]: Json } {
+  return lsonObjectToJson(liveObject.toObject());
+}
+
+function liveMapToJson(map: LiveMap<Lson>): {
+  [key: string]: Json;
+} {
+  const result: { [key: string]: Json } = {} as any;
   const obj = Object.fromEntries(map);
 
   for (const key in obj) {
@@ -29,11 +37,20 @@ function liveMapToJson(map: LiveMap<any>) {
   return result;
 }
 
-function liveListToJson(value: LiveList<any>) {
-  return value.toArray().map(lsonToJson);
+function lsonListToJson(value: Lson[]): Json[] {
+  return value.map(lsonToJson);
 }
 
-export function lsonToJson(value: unknown): any {
+function liveListToJson(value: LiveList<Lson>): Json[] {
+  return lsonListToJson(value.toArray());
+}
+
+export function lsonToJson(value: Lson | AbstractCrdt): Json {
+  //                                     ^^^^^^^^^^^^
+  //                                     FIXME: Remove me later. This requires the
+  //                                     addition of a concrete LiveValue type first.
+
+  // Check for LiveXxx datastructures first
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {
@@ -42,13 +59,26 @@ export function lsonToJson(value: unknown): any {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
     return value.data;
+  } else if (value instanceof AbstractCrdt) {
+    // This code path should never be taken
+    throw new Error("Unhandled subclass of AbstractCrdt encountered");
   }
 
+  // Then for composite Lson values
+  if (Array.isArray(value)) {
+    return lsonListToJson(value);
+  } else if (isPlainObject(value)) {
+    return lsonObjectToJson(value);
+  }
+
+  // Finally, if value is an LsonScalar, then it's also a valid JsonScalar
   return value;
 }
 
 function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
-  return Object.prototype.toString.call(obj) === "[object Object]";
+  return (
+    obj !== null && Object.prototype.toString.call(obj) === "[object Object]"
+  );
 }
 
 function anyToCrdt(obj: unknown): any {
