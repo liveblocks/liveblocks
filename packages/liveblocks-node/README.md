@@ -18,6 +18,8 @@
   </a>
 </p>
 
+A server-side utility that lets you set up a [Liveblocks](https://liveblocks.io) authentication endpoint.
+
 ## Installation
 
 ```
