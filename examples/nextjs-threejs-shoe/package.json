@@ -1,6 +1,8 @@
 {
-  "name": "nextjs-threejs-shoe",
-  "version": "0.1.0",
+  "name": "@liveblocks/examples-nextjs-threejs-shoe",
+  "version": "1.0.0",
+  "description": "This example shows how to build a collaborative 3D model editor with Liveblocks, Next.js and Three.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",

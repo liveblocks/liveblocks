@@ -1,13 +1,14 @@
 {
-  "name": "liveblocks-examples-next-js-whiteboard",
+  "name": "@liveblocks/examples-nextjs-whiteboard",
   "version": "1.0.0",
+  "description": "This example shows how to build a collaborative whiteboard with Liveblocks and Next.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start"
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@liveblocks/client": "^0.16.3",
     "@liveblocks/node": "0.3.0",

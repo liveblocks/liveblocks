@@ -1,6 +1,8 @@
 {
-  "name": "liveblocks-examples-nuxt-js-live-avatars",
+  "name": "@liveblocks/examples-nuxtjs-live-avatars",
   "version": "1.0.0",
+  "description": "This example shows how to build live avatars with Liveblocks and Nuxt.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "nuxt",
@@ -8,7 +10,6 @@
     "start": "nuxt start",
     "generate": "nuxt generate"
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@liveblocks/client": "^0.16.3",
     "@liveblocks/node": "^0.3.0",
