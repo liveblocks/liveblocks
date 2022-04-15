@@ -232,7 +232,7 @@ export function patchLiveObjectKey<T extends LsonObject>(
   }
 }
 
-export function patchLiveObject<T extends Record<string, any>>(
+export function patchLiveObject<T extends LsonObject>(
   root: LiveObject<T>,
   prev: T,
   next: T
