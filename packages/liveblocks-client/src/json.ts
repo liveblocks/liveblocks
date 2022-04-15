@@ -1,13 +1,6 @@
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import type { LiveRegister } from "./LiveRegister";
-
-export type Dict<V> = { [key: string]: V | undefined };
-
-// type Tree<TLeaf> = TLeaf | TreeList<TLeaf> | TreeObject<TLeaf>;
-// type TreeList<TLeaf> = Tree<TLeaf>[];
-// type TreeObject<TLeaf> = { [key: string]: Tree<TLeaf> | undefined };
 
 /**
  * Represents an indefinitely deep arbitrary JSON data structure. There are
@@ -30,19 +23,15 @@ export type JsonObject = { [key: string]: Json | undefined };
  */
 export type LiveData =
   | LiveDataScalar
-  | LiveListData
+  | LiveData[]
   | LiveObjectData
 
   // Or they are LiveXxx class instances
   | LiveObject<LiveObjectData>
   | LiveList<LiveData>
-  | LiveMap<LiveData>
-  | LiveRegister<Json>;
+  | LiveMap<LiveData>;
 
 export type LiveDataScalar = string | number | boolean | null | undefined;
-
-// TODO: Replace this named type and instead inline LiveData[] in call sites - much clearer!
-type LiveListData = LiveData[];
 
 /**
  * A mapping of keys to LiveData values. A LiveData value is any valid JSON
