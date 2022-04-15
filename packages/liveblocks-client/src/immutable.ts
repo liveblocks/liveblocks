@@ -12,7 +12,7 @@ export function liveObjectToJson(liveObject: LiveObject<any>) {
   const obj = liveObject.toObject();
 
   for (const key in obj) {
-    result[key] = liveNodeToJson(obj[key]);
+    result[key] = lsonToJson(obj[key]);
   }
 
   return result;
@@ -23,17 +23,17 @@ function liveMapToJson(map: LiveMap<any>) {
   const obj = Object.fromEntries(map);
 
   for (const key in obj) {
-    result[key] = liveNodeToJson(obj[key]);
+    result[key] = lsonToJson(obj[key]);
   }
 
   return result;
 }
 
 function liveListToJson(value: LiveList<any>) {
-  return value.toArray().map(liveNodeToJson);
+  return value.toArray().map(lsonToJson);
 }
 
-export function liveNodeToJson(value: unknown): any {
+export function lsonToJson(value: unknown): any {
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {
@@ -267,7 +267,7 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = liveNodeToJson(update.node.get(key));
+            newState[key] = lsonToJson(update.node.get(key));
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }
@@ -287,11 +287,11 @@ function patchImmutableNode(
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
-              newState.push(liveNodeToJson(listUpdate.item));
+              newState.push(lsonToJson(listUpdate.item));
             } else {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index),
               ];
             }
@@ -301,7 +301,7 @@ function patchImmutableNode(
             if (listUpdate.previousIndex > listUpdate.index) {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index, listUpdate.previousIndex),
                 ...newState.slice(listUpdate.previousIndex + 1),
               ];
@@ -312,7 +312,7 @@ function patchImmutableNode(
                   listUpdate.previousIndex + 1,
                   listUpdate.index + 1
                 ),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index + 1),
               ];
             }
@@ -331,7 +331,7 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = liveNodeToJson(update.node.get(key));
+            newState[key] = lsonToJson(update.node.get(key));
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }

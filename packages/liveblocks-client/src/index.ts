@@ -19,7 +19,7 @@ export { createClient } from "./client";
 
 import {
   liveObjectToJson,
-  liveNodeToJson,
+  lsonToJson,
   patchLiveList,
   patchImmutableObject,
   patchLiveObject,
@@ -31,7 +31,7 @@ import {
  */
 export const internals = {
   liveObjectToJson,
-  liveNodeToJson,
+  lsonToJson,
   patchLiveList,
   patchImmutableObject,
   patchLiveObject,

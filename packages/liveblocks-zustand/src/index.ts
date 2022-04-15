@@ -35,11 +35,11 @@ declare module "@liveblocks/client" {
       prev: any,
       next: any
     ): void;
-    liveNodeToJson(value: any): any;
+    lsonToJson(value: any): any;
   };
 }
 
-const { patchLiveObjectKey, patchImmutableObject, liveNodeToJson } = internals;
+const { patchLiveObjectKey, patchImmutableObject, lsonToJson } = internals;
 
 export type LiveblocksState<
   TState,
@@ -226,7 +226,7 @@ export function middleware<
               updates[key] = initialState[key];
               patchLiveObjectKey(root, key, undefined, initialState[key]);
             } else {
-              updates[key] = liveNodeToJson(liveblocksStatePart);
+              updates[key] = lsonToJson(liveblocksStatePart);
             }
           }
         });

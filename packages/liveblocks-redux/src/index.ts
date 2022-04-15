@@ -34,11 +34,11 @@ declare module "@liveblocks/client" {
       prev: any,
       next: any
     ): void;
-    liveNodeToJson(value: any): any;
+    lsonToJson(value: any): any;
   };
 }
 
-const { patchImmutableObject, patchLiveObjectKey, liveNodeToJson } = internals;
+const { patchImmutableObject, patchLiveObjectKey, lsonToJson } = internals;
 
 export type Mapping<T> = Partial<{
   [Property in keyof T]: boolean;
@@ -255,7 +255,7 @@ const internalEnhancer = <T>(options: {
                   storageInitialState[key]
                 );
               } else {
-                updates[key] = liveNodeToJson(liveblocksStatePart);
+                updates[key] = lsonToJson(liveblocksStatePart);
               }
             }
           });
