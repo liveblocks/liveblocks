@@ -9,8 +9,8 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json } from "../src/json";
-import { Lson, LsonObject } from "../src/lson";
+import { Json, JsonObject } from "../src/json";
+import { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
@@ -381,12 +381,12 @@ export async function reconnect(
   );
 }
 
-export async function prepareStorageImmutableTest<
-  T extends LsonObject,
-  StateType
->(items: SerializedCrdtWithId[], actor: number = 0) {
-  let state: StateType = {} as any;
-  let refState: StateType = {} as any;
+export async function prepareStorageImmutableTest<T extends LsonObject>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0
+) {
+  let state: ToJson<T> = {} as any;
+  let refState: ToJson<T> = {} as any;
 
   let totalStorageOps = 0;
 
@@ -417,8 +417,8 @@ export async function prepareStorageImmutableTest<
     }
   );
 
-  state = liveObjectToJson(storage.root);
-  refState = liveObjectToJson(refStorage.root);
+  state = liveObjectToJson(storage.root) as ToJson<T>;
+  refState = liveObjectToJson(refStorage.root) as ToJson<T>;
 
   const root = refStorage.root;
   refMachine.subscribe(
