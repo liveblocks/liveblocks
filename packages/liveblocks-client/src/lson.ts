@@ -19,15 +19,13 @@ export type Lson =
   | LiveMap<Lson>
   | LiveRegister<Json>;
 
-export type LsonScalar = string | number | boolean | null | undefined;
-//                                                          ^^^^^^^^^
-//                                                          FIXME: This is a bug!
+export type LsonScalar = string | number | boolean | null;
 
 /**
  * A mapping of keys to Lson values. A Lson value is any valid JSON
  * value or a Live storage data structure (LiveMap, LiveList, etc.)
  */
-export type LsonObject = { [key: string]: Lson | undefined };
+export type LsonObject = { [key: string]: Lson };
 
 /**
  * Helper type to convert any valid Lson type to the equivalent Json type.
@@ -57,7 +55,7 @@ export type ToJson<T extends Lson> =
   T extends Lson[] ? ToJson<T[number]>[] :
 
   // Any LsonObject recursively becomes a JsonObject
-  T extends LsonObject ? { [K in keyof T]: ToJson<T[K]> } :
+  T extends LsonObject ? { [K in keyof T]: ToJson<Exclude<T[K], undefined>> } :
 
   // A LiveRegister holds a simple Json value
   T extends LiveRegister<infer J> ? ToJson<J> :
@@ -66,7 +64,7 @@ export type ToJson<T extends Lson> =
   T extends LiveList<infer I> ? ToJson<I>[] :
 
   // A LiveObject serializes to an equivalent JSON object
-  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<O[K]> } :
+  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<Exclude<O[K], undefined>> } :
 
   // A LiveMap serializes to a JSON object with string-V pairs
   T extends LiveMap<infer V> ? { [key: string]: ToJson<V> } :
