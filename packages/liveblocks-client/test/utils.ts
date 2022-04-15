@@ -10,7 +10,7 @@ import {
   ServerMessageType,
 } from "../src/live";
 import { Json } from "../src/json";
-import { LiveData, LiveObjectData } from "../src/LiveData";
+import { Lson, LsonObject } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
@@ -123,11 +123,11 @@ export function objectToJson(record: LiveObject) {
   return result;
 }
 
-function listToJson<T extends LiveData>(list: LiveList<T>): Array<T> {
+function listToJson<T extends Lson>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson<TValue extends LiveData>(
+function mapToJson<TValue extends Lson>(
   map: LiveMap<TValue>
 ): Array<[string, TValue]> {
   return Array.from(map.entries())
@@ -164,7 +164,7 @@ const defaultContext = {
   WebSocketPolyfill: MockWebSocket as any,
 };
 
-async function prepareRoomWithStorage<T extends LiveObjectData>(
+async function prepareRoomWithStorage<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   onSend: (messages: ClientMessage[]) => void = () => {},
@@ -200,7 +200,7 @@ async function prepareRoomWithStorage<T extends LiveObjectData>(
   };
 }
 
-export async function prepareIsolatedStorageTest<T extends LiveObjectData>(
+export async function prepareIsolatedStorageTest<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   defaultStorage = {}
@@ -242,7 +242,7 @@ export async function prepareIsolatedStorageTest<T extends LiveObjectData>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<T extends LiveObjectData>(
+export async function prepareStorageTest<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
@@ -382,7 +382,7 @@ export async function reconnect(
 }
 
 export async function prepareStorageImmutableTest<
-  T extends LiveObjectData,
+  T extends LsonObject,
   StateType
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: StateType = {} as any;

@@ -2,11 +2,11 @@ import {
   BroadcastOptions,
   Client,
   History,
-  LiveData,
   LiveList,
   LiveMap,
   LiveObject,
-  LiveObjectData,
+  Lson,
+  LsonObject,
   Others,
   Presence,
   Room,
@@ -374,7 +374,7 @@ export function useStorage<TRoot extends Record<string, any>>(): [
  * const emptyMap = useMap("mapA");
  * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
-export function useMap<TValue extends LiveData>(
+export function useMap<TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [string, TValue])[] | null | undefined
 ): LiveMap<TValue> | null {
@@ -393,7 +393,7 @@ export function useMap<TValue extends LiveData>(
  * const emptyList = useList("listA");
  * const listWithItems = useList("listB", ["a", "b", "c"]);
  */
-export function useList<TValue extends LiveData>(
+export function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
@@ -414,7 +414,7 @@ export function useList<TValue extends LiveData>(
  *   website: "https://liveblocks.io"
  * });
  */
-export function useObject<TData extends LiveObjectData>(
+export function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {

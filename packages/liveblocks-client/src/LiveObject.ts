@@ -12,7 +12,7 @@ import {
 } from "./live";
 import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
 import { JsonObject } from "./json";
-import { LiveObjectData } from "./LiveData";
+import { LsonObject } from "./lson";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -20,7 +20,7 @@ import { LiveObjectData } from "./LiveData";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<
-  T extends LiveObjectData = LiveObjectData
+  T extends LsonObject = LsonObject
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
@@ -99,7 +99,7 @@ export class LiveObject<
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
-  LiveObject<LiveObjectData> {
+  LiveObject<LsonObject> {
     const children = parentToChildren.get(object._id!);
 
     if (children == null) {

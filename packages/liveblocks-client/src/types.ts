@@ -3,7 +3,7 @@ import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
 import { JsonObject } from "./json";
-import { LiveData, LiveObjectData } from "./LiveData";
+import { Lson, LsonObject } from "./lson";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -36,17 +36,17 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TValue extends LiveData> = {
+export type LiveMapUpdates<TValue extends Lson> = {
   type: "LiveMap";
   node: LiveMap<TValue>;
   updates: { [key: string]: UpdateDelta };
 };
 
-export type LiveObjectUpdateDelta<O extends LiveObjectData> = {
+export type LiveObjectUpdateDelta<O extends LsonObject> = {
   [K in keyof O]?: UpdateDelta | undefined;
 };
 
-export type LiveObjectUpdates<TData extends LiveObjectData> = {
+export type LiveObjectUpdates<TData extends LsonObject> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
@@ -69,7 +69,7 @@ export type LiveListUpdateDelta =
       type: "move";
     };
 
-export type LiveListUpdates<TItem extends LiveData> = {
+export type LiveListUpdates<TItem extends Lson> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
@@ -85,9 +85,9 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates<LiveData>
-  | LiveObjectUpdates<LiveObjectData>
-  | LiveListUpdates<LiveData>;
+  | LiveMapUpdates<Lson>
+  | LiveObjectUpdates<LsonObject>
+  | LiveListUpdates<Lson>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -373,7 +373,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TValue extends LiveData>(
+    <TValue extends Lson>(
       liveMap: LiveMap<TValue>,
       listener: (liveMap: LiveMap<TValue>) => void
     ): () => void;
@@ -407,7 +407,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { });
      * unsubscribe();
      */
-    <TItem extends LiveData>(
+    <TItem extends Lson>(
       liveList: LiveList<TItem>,
       callback: (liveList: LiveList<TItem>) => void
     ): () => void;
@@ -425,7 +425,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TValue extends LiveData>(
+    <TValue extends Lson>(
       liveMap: LiveMap<TValue>,
       callback: (updates: LiveMapUpdates<TValue>[]) => void,
       options: { isDeep: true }
@@ -444,7 +444,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TData extends LiveObjectData>(
+    <TData extends LsonObject>(
       liveObject: LiveObject<TData>,
       callback: (updates: LiveObjectUpdates<TData>[]) => void,
       options: { isDeep: true }
@@ -463,7 +463,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TItem extends LiveData>(
+    <TItem extends Lson>(
       liveList: LiveList<TItem>,
       callback: (updates: LiveListUpdates<TItem>[]) => void,
       options: { isDeep: true }
@@ -590,7 +590,7 @@ export type Room = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TRoot extends LiveObjectData>() => Promise<{
+  getStorage: <TRoot extends LsonObject>() => Promise<{
     root: LiveObject<TRoot>;
   }>;
 

@@ -14,7 +14,7 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { Json } from "./json";
-import { LiveData, LiveObjectData } from "./LiveData";
+import { Lson, LsonObject } from "./lson";
 import {
   LiveListUpdates,
   LiveMapUpdates,
@@ -97,7 +97,7 @@ export function selfOrRegisterValue(obj: AbstractCrdt) {
   return obj;
 }
 
-export function selfOrRegister(obj: LiveData): AbstractCrdt {
+export function selfOrRegister(obj: Lson): AbstractCrdt {
   if (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||
@@ -111,7 +111,7 @@ export function selfOrRegister(obj: LiveData): AbstractCrdt {
   } else {
     // By now, we've checked that obj isn't a Live storage instance.
     // Technically what remains here can still be a (1) live data scalar, or
-    // a (2) list of LiveData values, or (3) an object with LiveData values.
+    // a (2) list of Lson values, or (3) an object with Lson values.
     //
     // Of these, (1) is fine, because a live data scalar is also a legal Json
     // scalar.
@@ -210,10 +210,7 @@ export function getTreesDiffOperations(
   return ops;
 }
 
-function mergeObjectStorageUpdates<
-  A extends LiveObjectData,
-  B extends LiveObjectData
->(
+function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   first: LiveObjectUpdates<A>,
   second: LiveObjectUpdates<B>
 ): LiveObjectUpdates<A | B> {
@@ -227,7 +224,7 @@ function mergeObjectStorageUpdates<
   };
 }
 
-function mergeMapStorageUpdates<V1 extends LiveData, V2 extends LiveData>(
+function mergeMapStorageUpdates<V1 extends Lson, V2 extends Lson>(
   first: LiveMapUpdates<V1>,
   second: LiveMapUpdates<V2>
 ): LiveMapUpdates<V1 | V2> {
@@ -241,8 +238,8 @@ function mergeMapStorageUpdates<V1 extends LiveData, V2 extends LiveData>(
   };
 }
 
-function mergeListStorageUpdates<T extends LiveData>(
-  first: LiveListUpdates<LiveData>,
+function mergeListStorageUpdates<T extends Lson>(
+  first: LiveListUpdates<Lson>,
   second: LiveListUpdates<T>
 ): LiveListUpdates<T> {
   const updates = first.updates;
@@ -255,9 +252,9 @@ function mergeListStorageUpdates<T extends LiveData>(
 // prettier-ignore
 export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
 // prettier-ignore
-export function mergeStorageUpdates<V1 extends LiveData, V2 extends LiveData>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
+export function mergeStorageUpdates<V1 extends Lson, V2 extends Lson>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
 // prettier-ignore
-export function mergeStorageUpdates<T extends LiveData>(first: LiveListUpdates<LiveData>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+export function mergeStorageUpdates<T extends Lson>(first: LiveListUpdates<Lson>, second: LiveListUpdates<T>): LiveListUpdates<T>;
 // prettier-ignore
 export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {

@@ -13,7 +13,7 @@ export type {
 } from "./types";
 
 export type { Json, JsonObject } from "./json";
-export type { LiveData, LiveObjectData } from "./LiveData";
+export type { Lson, LsonObject } from "./lson";
 
 export { createClient } from "./client";
 

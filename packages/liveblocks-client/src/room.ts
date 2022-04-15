@@ -19,7 +19,7 @@ import {
   Authentication,
 } from "./types";
 import { JsonObject } from "./json";
-import { LiveData, LiveObjectData } from "./LiveData";
+import { Lson, LsonObject } from "./lson";
 import {
   getTreesDiffOperations,
   isSameNodeOrChildOf,
@@ -148,7 +148,7 @@ export type State = {
   clock: number;
   opClock: number;
   items: Map<string, AbstractCrdt>;
-  root: LiveObject<LiveObjectData> | undefined;
+  root: LiveObject<LsonObject> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
 
@@ -328,7 +328,7 @@ export function makeStateMachine(
     notify(result.updates);
   }
 
-  function load(items: SerializedCrdtWithId[]): LiveObject<LiveObjectData> {
+  function load(items: SerializedCrdtWithId[]): LiveObject<LsonObject> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
@@ -608,15 +608,15 @@ export function makeStateMachine(
   }
 
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  function subscribe<TValue extends LiveData>(
+  function subscribe<TValue extends Lson>(
     liveMap: LiveMap<TValue>,
     callback: (liveMap: LiveMap<TValue>) => void
   ): () => void;
-  function subscribe<TData extends LiveObjectData>(
+  function subscribe<TData extends LsonObject>(
     liveObject: LiveObject<TData>,
     callback: (liveObject: LiveObject<TData>) => void
   ): () => void;
-  function subscribe<TItem extends LiveData>(
+  function subscribe<TItem extends Lson>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
@@ -1268,7 +1268,7 @@ See v0.13 release notes for more information.
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TRoot extends LiveObjectData>(): Promise<{
+  function getStorage<TRoot extends LsonObject>(): Promise<{
     root: LiveObject<TRoot>;
   }> {
     if (state.root) {

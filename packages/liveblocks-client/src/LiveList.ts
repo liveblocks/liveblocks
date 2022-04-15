@@ -12,14 +12,14 @@ import {
 import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
-import { LiveData } from "./LiveData";
+import { Lson } from "./lson";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
-export class LiveList<TItem extends LiveData = LiveData> extends AbstractCrdt {
+export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   private _items: Array<LiveListItem>;
 

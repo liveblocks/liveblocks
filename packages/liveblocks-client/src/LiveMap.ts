@@ -14,14 +14,14 @@ import {
   SerializedCrdt,
 } from "./live";
 import { LiveMapUpdates } from "./types";
-import { LiveData } from "./LiveData";
+import { Lson } from "./lson";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveMap<TValue extends LiveData = LiveData> extends AbstractCrdt {
+export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
   private _map: Map<string, AbstractCrdt>;
 
   constructor(
