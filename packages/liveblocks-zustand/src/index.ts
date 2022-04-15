@@ -3,6 +3,7 @@ import {
   Client,
   internals,
   LiveObject,
+  LiveObjectData,
   Presence,
   Room,
   StorageUpdate,
@@ -28,7 +29,7 @@ declare module "@liveblocks/client" {
   const internals: {
     liveObjectToJson(liveObject: LiveObject<any>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<T>(
+    patchLiveObjectKey<T extends LiveObjectData>(
       liveObject: LiveObject<T>,
       key: keyof T,
       prev: any,

@@ -3,6 +3,7 @@ import {
   User,
   Room,
   LiveObject,
+  LiveObjectData,
   Presence,
   internals,
   StorageUpdate,
@@ -27,7 +28,7 @@ declare module "@liveblocks/client" {
   const internals: {
     liveObjectToJson(liveObject: LiveObject<any>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<T>(
+    patchLiveObjectKey<T extends LiveObjectData>(
       liveObject: LiveObject<T>,
       key: keyof T,
       prev: any,
@@ -39,11 +40,9 @@ declare module "@liveblocks/client" {
 
 const { patchImmutableObject, patchLiveObjectKey, liveNodeToJson } = internals;
 
-export type Mapping<T> = Partial<
-  {
-    [Property in keyof T]: boolean;
-  }
->;
+export type Mapping<T> = Partial<{
+  [Property in keyof T]: boolean;
+}>;
 
 const ACTION_TYPES = {
   ENTER: "@@LIVEBLOCKS/ENTER",

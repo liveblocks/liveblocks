@@ -1,14 +1,16 @@
 import {
+  BroadcastOptions,
   Client,
+  History,
+  LiveData,
+  LiveList,
+  LiveMap,
+  LiveObject,
+  LiveObjectData,
   Others,
   Presence,
-  LiveObject,
-  LiveMap,
   Room,
   User,
-  LiveList,
-  BroadcastOptions,
-  History,
 } from "@liveblocks/client";
 import * as React from "react";
 import useRerender from "./useRerender";
@@ -372,7 +374,7 @@ export function useStorage<TRoot extends Record<string, any>>(): [
  * const emptyMap = useMap("mapA");
  * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
-export function useMap<TValue>(
+export function useMap<TValue extends LiveData>(
   key: string,
   entries?: readonly (readonly [string, TValue])[] | null | undefined
 ): LiveMap<TValue> | null {
@@ -391,7 +393,7 @@ export function useMap<TValue>(
  * const emptyList = useList("listA");
  * const listWithItems = useList("listB", ["a", "b", "c"]);
  */
-export function useList<TValue>(
+export function useList<TValue extends LiveData>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
@@ -412,7 +414,7 @@ export function useList<TValue>(
  *   website: "https://liveblocks.io"
  * });
  */
-export function useObject<TData>(
+export function useObject<TData extends LiveObjectData>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
