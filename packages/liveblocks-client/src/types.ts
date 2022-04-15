@@ -58,7 +58,7 @@ export type LiveObjectUpdates<TData> = {
 export type LiveListUpdateDelta =
   | {
       index: number;
-      item: AbstractCrdt;
+      item: any; // Serializable Or LiveStructure
       type: "insert";
     }
   | {
@@ -68,12 +68,12 @@ export type LiveListUpdateDelta =
   | {
       index: number;
       previousIndex: number;
-      item: AbstractCrdt;
+      item: any; // Serializable Or LiveStructure
       type: "move";
     }
   | {
       index: number;
-      item: AbstractCrdt;
+      item: any; // Serializable Or LiveStructure
       type: "set";
     };
 

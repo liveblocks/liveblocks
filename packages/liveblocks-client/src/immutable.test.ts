@@ -9,7 +9,12 @@ import {
   THIRD_POSITION,
   FOURTH_POSITION,
 } from "../test/utils";
-import { patchLiveObjectKey, patchImmutableObject } from "./immutable";
+import {
+  patchLiveObjectKey,
+  patchImmutableObject,
+  liveNodeToJson,
+  patchLiveObject,
+} from "./immutable";
 import { LiveObject } from "./LiveObject";
 import { StorageUpdate } from "./types";
 
@@ -197,6 +202,58 @@ describe("2 ways tests with two clients", () => {
       );
 
       assert({ syncList: ["a"] }, 3, 1);
+    });
+
+    test("replace first item in array", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          list: LiveList<string>;
+        },
+        { list: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "list"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.list[0] = "D";
+      });
+
+      patchLiveObject(storage.root, oldState, newState);
+
+      assert({ list: ["D", "B", "C"] }, 5, 1);
+    });
+
+    test("replace last item in array", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        {
+          list: LiveList<string>;
+        },
+        { list: string[] }
+      >(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "list"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.list[2] = "D";
+      });
+
+      patchLiveObject(storage.root, oldState, newState);
+
+      assert({ list: ["A", "B", "D"] }, 5, 1);
     });
 
     test("insert item at beginning of array", async () => {

@@ -465,6 +465,151 @@ describe("LiveList", () => {
   });
 
   describe("apply CreateRegister", () => {
+    it(`with intent "set" should replace existing item`, async () => {
+      const { assert, applyRemoteOperations, subscribe } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+          ],
+          1
+        );
+
+      assert({
+        items: ["A"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "0:2",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+        },
+      ]);
+
+      assert({
+        items: ["B"],
+      });
+    });
+
+    it(`with intent "set" should notify with a "set" update`, async () => {
+      const { root, applyRemoteOperations, subscribe } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      const callback = jest.fn();
+
+      subscribe(items, callback, { isDeep: true });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "0:2",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+        },
+      ]);
+
+      expect(callback).toHaveBeenCalledWith([
+        {
+          node: items,
+          type: "LiveList",
+          updates: [{ type: "set", index: 0, item: "B" }],
+        },
+      ]);
+    });
+
+    it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
+      const { root, assert, applyRemoteOperations, subscribe } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      assert({
+        items: ["A"],
+      });
+
+      items.delete(0);
+
+      assert({
+        items: [],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "0:2",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+        },
+      ]);
+
+      assert({
+        items: ["B"],
+      });
+    });
+
+    it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
+      const { root, assert, applyRemoteOperations, subscribe } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+      items.delete(0);
+
+      const callback = jest.fn();
+
+      subscribe(items, callback, { isDeep: true });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "0:2",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          intent: "set",
+        },
+      ]);
+
+      expect(callback).toHaveBeenCalledWith([
+        {
+          node: items,
+          type: "LiveList",
+          updates: [{ type: "insert", index: 0, item: "B" }],
+        },
+      ]);
+    });
+
     it("on existing position should give the right update", async () => {
       const { root, assert, applyRemoteOperations, subscribe } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
