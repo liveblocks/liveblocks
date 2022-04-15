@@ -15,7 +15,7 @@ export type EventCallback = ({
   event,
 }: {
   connectionId: number;
-  event: any;
+  event: JsonObject;
 }) => void;
 export type ErrorCallback = (error: Error) => void;
 export type ConnectionCallback = (state: ConnectionState) => void;
@@ -581,7 +581,7 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: any, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: JsonObject, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.

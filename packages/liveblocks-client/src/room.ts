@@ -51,9 +51,6 @@ import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 
-// TODO: Further improve this type
-type fixme = unknown;
-
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 
@@ -1244,7 +1241,7 @@ See v0.13 release notes for more information.
   }
 
   function broadcastEvent(
-    event: fixme,
+    event: JsonObject,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }

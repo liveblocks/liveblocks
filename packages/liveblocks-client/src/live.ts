@@ -54,7 +54,7 @@ export type UserLeftMessage = {
 export type EventMessage = {
   type: ServerMessageType.Event;
   actor: number;
-  event: any;
+  event: JsonObject;
 };
 
 export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
@@ -85,7 +85,7 @@ export enum ClientMessageType {
 
 export type ClientEventMessage = {
   type: ClientMessageType.ClientEvent;
-  event: any;
+  event: JsonObject;
 };
 
 export type UpdatePresenceClientMessage = {
