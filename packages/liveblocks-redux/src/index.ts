@@ -355,8 +355,8 @@ export const enhancer = internalEnhancer as <T>(options: {
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<T>(
-  root: LiveObject,
+function patchLiveblocksStorage<O extends LsonObject, T>(
+  root: LiveObject<O>,
   oldState: T,
   newState: T,
   mapping: Mapping<T>
