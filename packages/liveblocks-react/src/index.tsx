@@ -15,6 +15,7 @@ import {
 } from "@liveblocks/client";
 import * as React from "react";
 import useRerender from "./useRerender";
+export type { Json, JsonObject } from "@liveblocks/client";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;
