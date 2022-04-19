@@ -1,4 +1,11 @@
-import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
+import {
+  Json,
+  RoomProvider,
+  useBroadcastEvent,
+  useEventListener,
+  useMyPresence,
+  useOthers,
+} from "@liveblocks/react";
 import React from "react";
 
 export default function Home() {
@@ -21,7 +28,8 @@ export default function Home() {
       </button>
       {isVisible && (
         <RoomProvider id={roomId}>
-          <Sandbox />
+          <PresenceSandbox />
+          <EventSandbox />
         </RoomProvider>
       )}
     </>
@@ -34,7 +42,7 @@ type Presence = {
   thirdProp?: number;
 };
 
-function Sandbox() {
+function PresenceSandbox() {
   const others = useOthers();
   const [me, updateMyPresence] = useMyPresence<Presence>();
 
@@ -76,6 +84,32 @@ function Sandbox() {
       <div id="others" style={{ whiteSpace: "pre" }}>
         {JSON.stringify(others.toArray(), null, 2)}
       </div>
+    </div>
+  );
+}
+
+function EventSandbox() {
+  const broadcast = useBroadcastEvent();
+  const [received, setReceived] = React.useState<Json[]>([]);
+
+  useEventListener(({ event }) => {
+    setReceived((x) => [...x, event]);
+  });
+
+  return (
+    <div>
+      <h1>Event sandbox</h1>
+      <button
+        id="broadcast-emoji"
+        onClick={() => broadcast({ type: "EMOJI", emoji: "🔥" })}
+      >
+        Broadcast 🔥
+      </button>
+      <button id="broadcast-number" onClick={() => broadcast(42)}>
+        Broadcast 42
+      </button>
+
+      <pre id="events">{JSON.stringify(received, null, 2)}</pre>
     </div>
   );
 }
