@@ -21,15 +21,18 @@ import { Lson } from "./lson";
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
-  private _map: Map<string, AbstractCrdt>;
+export class LiveMap<
+  TKey extends string = string,
+  TValue extends Lson = Lson
+> extends AbstractCrdt {
+  private _map: Map<TKey, AbstractCrdt>;
 
   constructor(
-    entries?: readonly (readonly [string, TValue])[] | null | undefined
+    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
   ) {
     super();
     if (entries) {
-      const mappedEntries: Array<[string, AbstractCrdt]> = [];
+      const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
       for (const entry of entries) {
         const value = selfOrRegister(entry[1]);
         value._setParentLink(this, entry[0]);
@@ -131,7 +134,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    */
   _attachChild(
     id: string,
-    key: string,
+    key: TKey,
     child: AbstractCrdt,
     _opId: string,
     _isLocal: boolean
@@ -192,7 +195,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
 
     child._detach();
 
-    const storageUpdate: LiveMapUpdates<TValue> = {
+    const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
       updates: { [child._parentKey!]: { type: "delete" } },
@@ -217,7 +220,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    * @param key The key of the element to return.
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
    */
-  get(key: string): TValue | undefined {
+  get(key: TKey): TValue | undefined {
     const value = this._map.get(key);
     if (value == undefined) {
       return undefined;
@@ -230,7 +233,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    * @param key The key of the element to add. Should be a string.
    * @param value The value of the element to add. Should be serializable to JSON.
    */
-  set(key: string, value: TValue) {
+  set(key: TKey, value: TValue) {
     const oldValue = this._map.get(key);
 
     if (oldValue) {
@@ -246,7 +249,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, LiveMapUpdates<TValue>>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
@@ -274,7 +277,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    * Returns a boolean indicating whether an element with the specified key exists or not.
    * @param key The key of the element to test for presence.
    */
-  has(key: string): boolean {
+  has(key: TKey): boolean {
     return this._map.has(key);
   }
 
@@ -283,7 +286,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    * @param key The key of the element to remove.
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
-  delete(key: string): boolean {
+  delete(key: TKey): boolean {
     const item = this._map.get(key);
 
     if (item == null) {
@@ -294,7 +297,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
     this._map.delete(key);
 
     if (this._doc && item._id) {
-      const storageUpdates = new Map<string, LiveMapUpdates<TValue>>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
@@ -319,7 +322,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
   /**
    * Returns a new Iterator object that contains the [key, value] pairs for each element.
    */
-  entries(): IterableIterator<[string, TValue]> {
+  entries(): IterableIterator<[TKey, TValue]> {
     const innerIterator = this._map.entries();
 
     return {
@@ -348,14 +351,14 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
   /**
    * Same function object as the initial value of the entries method.
    */
-  [Symbol.iterator](): IterableIterator<[string, TValue]> {
+  [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
     return this.entries();
   }
 
   /**
    * Returns a new Iterator object that contains the keys for each element.
    */
-  keys(): IterableIterator<string> {
+  keys(): IterableIterator<TKey> {
     return this._map.keys();
   }
 
@@ -391,7 +394,7 @@ export class LiveMap<TValue extends Lson = Lson> extends AbstractCrdt {
    * @param callback Function to execute for each entry in the map.
    */
   forEach(
-    callback: (value: TValue, key: string, map: LiveMap<TValue>) => void
+    callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
   ) {
     for (const entry of this) {
       callback(entry[1], entry[0], this);

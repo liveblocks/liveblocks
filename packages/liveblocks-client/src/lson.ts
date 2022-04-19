@@ -16,7 +16,7 @@ export type Lson =
   // Or they are LiveXxx class instances
   | LiveObject<LsonObject>
   | LiveList<Lson>
-  | LiveMap<Lson>
+  | LiveMap<string, Lson>
   | LiveRegister<Json>;
 
 export type LsonScalar = string | number | boolean | null;
@@ -67,7 +67,7 @@ export type ToJson<T extends Lson> =
   T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<Exclude<O[K], undefined>> } :
 
   // A LiveMap serializes to a JSON object with string-V pairs
-  T extends LiveMap<infer V> ? { [key: string]: ToJson<V> } :
+  T extends LiveMap<infer KS, infer V> ? { [K in KS]: ToJson<V> } :
 
   // Otherwise, this is not possible
   never;

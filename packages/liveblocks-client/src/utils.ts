@@ -224,10 +224,15 @@ function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   };
 }
 
-function mergeMapStorageUpdates<V1 extends Lson, V2 extends Lson>(
-  first: LiveMapUpdates<V1>,
-  second: LiveMapUpdates<V2>
-): LiveMapUpdates<V1 | V2> {
+function mergeMapStorageUpdates<
+  K1 extends string,
+  V1 extends Lson,
+  K2 extends string,
+  V2 extends Lson
+>(
+  first: LiveMapUpdates<K1, V1>,
+  second: LiveMapUpdates<K2, V2>
+): LiveMapUpdates<K1 | K2, V1 | V2> {
   const updates = first.updates;
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;
@@ -252,7 +257,7 @@ function mergeListStorageUpdates<T extends Lson>(
 // prettier-ignore
 export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
 // prettier-ignore
-export function mergeStorageUpdates<V1 extends Lson, V2 extends Lson>(first: LiveMapUpdates<V1>, second: LiveMapUpdates<V2>): LiveMapUpdates<V1 | V2>;
+export function mergeStorageUpdates<K1 extends string, V1 extends Lson, K2 extends string, V2 extends Lson>(first: LiveMapUpdates<K1, V1>, second: LiveMapUpdates<K2, V2>): LiveMapUpdates<K1 | K2, V1 | V2>;
 // prettier-ignore
 export function mergeStorageUpdates<T extends Lson>(first: LiveListUpdates<Lson>, second: LiveListUpdates<T>): LiveListUpdates<T>;
 // prettier-ignore

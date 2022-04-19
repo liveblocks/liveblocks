@@ -24,16 +24,13 @@ export function liveObjectToJson<O extends LsonObject>(
   return lsonObjectToJson(liveObject.toObject());
 }
 
-function liveMapToJson(map: LiveMap<Lson>): {
-  [key: string]: Json;
-} {
-  const result: { [key: string]: Json } = {} as any;
-  const obj = Object.fromEntries(map);
-
-  for (const key in obj) {
-    result[key] = lsonToJson(obj[key]);
+function liveMapToJson<TKey extends string>(
+  map: LiveMap<TKey, Lson>
+): { [K in TKey]: Json } {
+  const result: { [K in TKey]: Json } = {} as any;
+  for (const [key, value] of map.entries()) {
+    result[key] = lsonToJson(value);
   }
-
   return result;
 }
 

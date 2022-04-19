@@ -605,9 +605,9 @@ export function makeStateMachine(
   }
 
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  function subscribe<TValue extends Lson>(
-    liveMap: LiveMap<TValue>,
-    callback: (liveMap: LiveMap<TValue>) => void
+  function subscribe<TKey extends string, TValue extends Lson>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
   ): () => void;
   function subscribe<TData extends LsonObject>(
     liveObject: LiveObject<TData>,

@@ -36,9 +36,9 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TValue extends Lson> = {
+export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
   type: "LiveMap";
-  node: LiveMap<TValue>;
+  node: LiveMap<TKey, TValue>;
   updates: { [key: string]: UpdateDelta };
 };
 
@@ -85,7 +85,7 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates<Lson>
+  | LiveMapUpdates<string, Lson>
   | LiveObjectUpdates<LsonObject>
   | LiveListUpdates<Lson>;
 
@@ -374,8 +374,8 @@ export type Room = {
      * unsubscribe();
      */
     <TValue extends Lson>(
-      liveMap: LiveMap<TValue>,
-      listener: (liveMap: LiveMap<TValue>) => void
+      liveMap: LiveMap<string, TValue>,
+      listener: (liveMap: LiveMap<string, TValue>) => void
     ): () => void;
     /**
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
@@ -425,9 +425,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TValue extends Lson>(
-      liveMap: LiveMap<TValue>,
-      callback: (updates: LiveMapUpdates<TValue>[]) => void,
+    <TKey extends string, TValue extends Lson>(
+      liveMap: LiveMap<TKey, TValue>,
+      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
       options: { isDeep: true }
     ): () => void;
 
