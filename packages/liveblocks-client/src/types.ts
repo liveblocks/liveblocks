@@ -373,9 +373,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TValue extends Lson>(
-      liveMap: LiveMap<string, TValue>,
-      listener: (liveMap: LiveMap<string, TValue>) => void
+    <TKey extends string, TValue extends Lson>(
+      liveMap: LiveMap<TKey, TValue>,
+      listener: (liveMap: LiveMap<TKey, TValue>) => void
     ): () => void;
     /**
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
