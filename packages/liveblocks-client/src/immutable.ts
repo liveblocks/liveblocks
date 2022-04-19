@@ -152,9 +152,10 @@ export function patchLiveList<T>(
       liveList.insert(anyToCrdt(next[i]), i);
       i++;
     }
-    while (i <= prevEnd) {
+    let localI = i;
+    while (localI <= prevEnd) {
       liveList.delete(i);
-      i++;
+      localI++;
     }
   }
 }
