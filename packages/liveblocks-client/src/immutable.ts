@@ -191,9 +191,9 @@ export function patchLiveList<T extends Lson>(
 export function patchLiveObjectKey<T extends LsonObject>(
   liveObject: LiveObject<T>,
   key: keyof T,
-  prev: any,
-  next: any
-) {
+  prev: unknown,
+  next: unknown
+): void {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {

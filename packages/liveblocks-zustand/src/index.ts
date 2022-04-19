@@ -2,7 +2,9 @@ import { StateCreator, SetState, GetState, StoreApi } from "zustand";
 import {
   Client,
   internals,
+  Json,
   LiveObject,
+  Lson,
   LsonObject,
   Presence,
   Room,
@@ -27,15 +29,15 @@ import {
  */
 declare module "@liveblocks/client" {
   const internals: {
-    liveObjectToJson(liveObject: LiveObject<any>): void;
+    liveObjectToJson(liveObject: LiveObject<LsonObject>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
     patchLiveObjectKey<T extends LsonObject>(
       liveObject: LiveObject<T>,
       key: keyof T,
-      prev: any,
-      next: any
+      prev: unknown,
+      next: unknown
     ): void;
-    lsonToJson(value: any): any;
+    lsonToJson(value: Lson): Json;
   };
 }
 
