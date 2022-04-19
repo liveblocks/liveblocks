@@ -1,6 +1,5 @@
 import {
   Others,
-  Presence,
   Room,
   MyPresenceCallback,
   OthersEventCallback,

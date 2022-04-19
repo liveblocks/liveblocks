@@ -1,5 +1,4 @@
 import { Json, JsonObject } from "./json";
-import { Presence } from "./types";
 
 /**
  * Messages that can be sent from the server to the client.

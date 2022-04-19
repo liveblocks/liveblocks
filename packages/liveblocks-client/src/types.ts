@@ -205,7 +205,8 @@ export type User<TPresence extends Presence = Presence> = {
   _hasReceivedInitialPresence?: boolean;
 };
 
-export type Presence = Record<string, unknown>;
+// FIXME: Restore to remain backward-compatible!!!!!!
+// export type Presence = Record<string, unknown>;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
