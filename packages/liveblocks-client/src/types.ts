@@ -2,7 +2,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import { JsonObject } from "./json";
+import { Json, JsonObject } from "./json";
 import { Lson, LsonObject } from "./lson";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
@@ -15,7 +15,7 @@ export type EventCallback = ({
   event,
 }: {
   connectionId: number;
-  event: JsonObject;
+  event: Json;
 }) => void;
 export type ErrorCallback = (error: Error) => void;
 export type ConnectionCallback = (state: ConnectionState) => void;

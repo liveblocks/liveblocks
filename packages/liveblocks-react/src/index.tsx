@@ -2,7 +2,7 @@ import {
   BroadcastOptions,
   Client,
   History,
-  JsonObject,
+  Json,
   LiveList,
   LiveMap,
   LiveObject,
@@ -283,7 +283,7 @@ export function useErrorListener(callback: (err: Error) => void): void {
  *   }
  * });
  */
-export function useEventListener<TEvent extends JsonObject>(
+export function useEventListener<TEvent extends Json>(
   callback: ({
     connectionId,
     event,

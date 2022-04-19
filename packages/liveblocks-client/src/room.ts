@@ -18,7 +18,7 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { JsonObject } from "./json";
+import { Json, JsonObject } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
   getTreesDiffOperations,
@@ -1241,7 +1241,7 @@ See v0.13 release notes for more information.
   }
 
   function broadcastEvent(
-    event: JsonObject,
+    event: Json,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }

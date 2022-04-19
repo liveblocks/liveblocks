@@ -430,19 +430,26 @@ describe("room", () => {
       withDateNow(now, () => ws.open());
 
       expect(effects.send).nthCalledWith(1, [
-        {
-          type: ClientMessageType.UpdatePresence,
-          data: {},
-        },
+        { type: ClientMessageType.UpdatePresence, data: {} },
       ]);
 
+      // Event payload can be any JSON value
       withDateNow(now + 1000, () => machine.broadcastEvent({ type: "EVENT" }));
+      withDateNow(now + 2000, () => machine.broadcastEvent([1, 2, 3]));
+      withDateNow(now + 3000, () => machine.broadcastEvent(42));
+      withDateNow(now + 4000, () => machine.broadcastEvent("hi"));
 
       expect(effects.send).nthCalledWith(2, [
-        {
-          type: ClientMessageType.ClientEvent,
-          event: { type: "EVENT" },
-        },
+        { type: ClientMessageType.ClientEvent, event: { type: "EVENT" } },
+      ]);
+      expect(effects.send).nthCalledWith(3, [
+        { type: ClientMessageType.ClientEvent, event: [1, 2, 3] },
+      ]);
+      expect(effects.send).nthCalledWith(4, [
+        { type: ClientMessageType.ClientEvent, event: 42 },
+      ]);
+      expect(effects.send).nthCalledWith(5, [
+        { type: ClientMessageType.ClientEvent, event: "hi" },
       ]);
     });
 
