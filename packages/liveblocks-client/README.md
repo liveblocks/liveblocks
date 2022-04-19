@@ -18,6 +18,8 @@
   </a>
 </p>
 
+A client that lets you interact with [Liveblocks](https://liveblocks.io) servers.
+
 ## Installation
 
 ```
