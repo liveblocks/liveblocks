@@ -31,8 +31,8 @@ declare module "@liveblocks/client" {
     patchLiveObjectKey<T extends LsonObject>(
       liveObject: LiveObject<T>,
       key: keyof T,
-      prev: any,
-      next: any
+      prev: unknown,
+      next: unknown
     ): void;
     lsonToJson(value: any): any;
   };

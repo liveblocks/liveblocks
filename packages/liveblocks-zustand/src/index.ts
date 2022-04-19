@@ -354,11 +354,15 @@ function updatePresence<T>(
   }
 }
 
-function patchLiveblocksStorage<T>(
-  root: LiveObject,
-  oldState: T,
-  newState: T,
-  mapping: Mapping<T>
+function patchLiveblocksStorage<
+  O extends LsonObject,
+  TState extends Record<string, unknown>,
+  TPresence extends Presence
+>(
+  root: LiveObject<O>,
+  oldState: LiveblocksState<TState, TPresence>,
+  newState: LiveblocksState<TState, TPresence>,
+  mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
     if (
