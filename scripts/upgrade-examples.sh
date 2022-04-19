@@ -1,114 +1,60 @@
 #!/bin/sh
+set -eu
 
-# E2E tests
+# Ensure this script can assume it's run from the repo's
+# root directory, even if the current working directory is
+# different.
+ROOT="$(git rev-parse --show-toplevel)"
+if [ "$(pwd)" != "$ROOT" ]; then
+    ( cd "$ROOT" && exec "$0" "$@" )
+    exit $?
+fi
 
-echo "Upgrade next-sandbox to $1"
-cd e2e/next-sandbox
-npm install @liveblocks/client@$1 @liveblocks/react@$1 @liveblocks/zustand@$1 @liveblocks/redux@$1
+err () {
+    echo "$@" >&2
+}
 
-cd -
-echo "Upgrade node-sandbox to $1"
-cd e2e/node-sandbox
-npm install @liveblocks/client@$1
+usage () {
+    err "usage: upgrade-examples.sh [<version>]"
+    err
+    err "Upgrades all the example projects by bumping the Liveblocks dependencies"
+    err "to the given version. If not provided, uses the latest version."
+    err
+    err "Options:"
+    err "-h    Show this help"
+}
 
-# Examples
+while getopts h flag; do
+    case "$flag" in
+        *) usage; exit 2;;
+    esac
+done
+shift $(($OPTIND - 1))
 
-cd -
-echo "Upgrade express-javascript-live-cursors to $1"
-cd examples/express-javascript-live-cursors
-npm install @liveblocks/client@$1
+VERSION="${1:-latest}"
 
-cd -
-echo "Upgrade javascript-live-cursors to $1"
-cd examples/javascript-live-cursors
-npm install @liveblocks/client@$1
+list_all_projects () {
+    find examples e2e \
+        -type d '(' -name node_modules -o -name .next ')' -prune \
+        -o \
+        -name package.json \
+        | grep -Ee package.json \
+        | xargs -n1 dirname
+}
 
-cd -
-echo "Upgrade javascript-todo-list to $1"
-cd examples/javascript-todo-list
-npm install @liveblocks/client@$1
+list_liveblocks_deps () {
+    jq -r '(.dependencies // {})|keys[]' package.json \
+        | grep -Ee '^@liveblocks' \
+        | grep -vEe '@liveblocks/node'
+}
 
-cd -
-echo "Upgrade nextjs-live-avatars to $1"
-cd examples/nextjs-live-avatars
-npm install @liveblocks/client@$1 @liveblocks/react@$1
+list_install_args () {
+    for dep in $(list_liveblocks_deps); do
+        echo "$dep@$VERSION"
+    done
+}
 
-cd -
-echo "Upgrade nextjs-live-cursors to $1"
-cd examples/nextjs-live-cursors
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade nextjs-logo-builder to $1"
-cd examples/nextjs-logo-builder
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade nextjs-threejs-shoe to $1"
-cd examples/nextjs-threejs-shoe
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade nextjs-whiteboard to $1"
-cd examples/nextjs-whiteboard
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade nuxtjs-live-avatars to $1"
-cd examples/nuxtjs-live-avatars
-npm install @liveblocks/client@$1
-
-cd -
-echo "Upgrade react-dashboard to $1"
-cd examples/react-dashboard
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade react-multiplayer-drawing-app to $1"
-cd examples/react-multiplayer-drawing-app
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade react-todo-list to $1"
-cd examples/react-todo-list
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade react-whiteboard to $1"
-cd examples/react-whiteboard
-npm install @liveblocks/client@$1 @liveblocks/react@$1
-
-cd -
-echo "Upgrade redux-todo-list to $1"
-cd examples/redux-todo-list
-npm install @liveblocks/client@$1 @liveblocks/redux@$1
-
-cd -
-echo "Upgrade redux-whiteboard to $1"
-cd examples/redux-whiteboard
-npm install @liveblocks/client@$1 @liveblocks/redux@$1
-
-cd -
-echo "Upgrade sveltekit-live-avatars to $1"
-cd examples/sveltekit-live-avatars
-npm install @liveblocks/client@$1
-
-cd -
-echo "Upgrade sveltekit-live-cursors to $1"
-cd examples/sveltekit-live-cursors
-npm install @liveblocks/client@$1
-
-cd -
-echo "Upgrade vuejs-live-cursors to $1"
-cd examples/vuejs-live-cursors
-npm install @liveblocks/client@$1
-
-cd -
-echo "Upgrade zustand-todo-list to $1"
-cd examples/zustand-todo-list
-npm install @liveblocks/client@$1 @liveblocks/zustand@$1
-
-cd -
-echo "Upgrade zustand-whiteboard to $1"
-cd examples/zustand-whiteboard
-npm install @liveblocks/client@$1 @liveblocks/zustand@$1
+for proj in $(list_all_projects); do
+    echo "==> Upgrade $proj to $VERSION"
+    ( cd "$proj" && npm install $(list_install_args ) )
+done

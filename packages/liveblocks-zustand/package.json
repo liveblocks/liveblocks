@@ -2,7 +2,7 @@
   "name": "@liveblocks/zustand",
   "version": "0.15.11",
   "sideEffects": false,
-  "description": "",
+  "description": "A middleware to integrate Liveblocks into Zustand stores.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [

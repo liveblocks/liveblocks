@@ -32,7 +32,7 @@ function liveListToJson(value: LiveList<any>) {
   return value.toArray().map(liveNodeToJson);
 }
 
-export function liveNodeToJson(value: any): any {
+export function liveNodeToJson(value: unknown): any {
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {
@@ -46,11 +46,11 @@ export function liveNodeToJson(value: any): any {
   return value;
 }
 
-function isPlainObject(obj: any): boolean {
+function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
   return Object.prototype.toString.call(obj) === "[object Object]";
 }
 
-function anyToCrdt(obj: any): any {
+function anyToCrdt(obj: unknown): any {
   if (obj == null) {
     return obj;
   }
@@ -58,7 +58,7 @@ function anyToCrdt(obj: any): any {
     return new LiveList(obj.map(anyToCrdt));
   }
   if (isPlainObject(obj)) {
-    const init: { [key: string]: any } = {};
+    const init: { [key: string]: unknown } = {};
     for (const key in obj) {
       init[key] = anyToCrdt(obj[key]);
     }

@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/react",
   "version": "0.15.11",
-  "description": "",
+  "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
