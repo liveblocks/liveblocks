@@ -58,7 +58,7 @@ export type ToJson<T extends Lson> =
   T extends LsonObject ? { [K in keyof T]: ToJson<Exclude<T[K], undefined>> } :
 
   // A LiveRegister holds a simple Json value
-  T extends LiveRegister<infer J> ? ToJson<J> :
+  T extends LiveRegister<infer J> ? J :
 
   // A LiveList serializes to an equivalent JSON array
   T extends LiveList<infer I> ? ToJson<I>[] :
