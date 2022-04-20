@@ -45,9 +45,9 @@ function liveListToJson(value: LiveList<Lson>): Json[] {
 export function lsonToJson(value: Lson | AbstractCrdt): Json {
   //                                     ^^^^^^^^^^^^
   //                                     FIXME: Remove me later. This requires the
-  //                                     addition of a concrete LiveValue type first.
+  //                                     addition of a concrete LiveStructure type first.
 
-  // Check for LiveXxx datastructures first
+  // Check for LiveStructure datastructures first
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {

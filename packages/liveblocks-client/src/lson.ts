@@ -1,25 +1,19 @@
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import type { LiveRegister } from "./LiveRegister";
 import type { Json } from "./json";
 
 /**
  * Think of Lson as a sibling of the Json data tree, except that the nested
- * data structure can contain a mix of Json values and LiveXxx instances.
+ * data structure can contain a mix of Json values and LiveStructure instances.
  */
 export type Lson =
-  | LsonScalar
-  | Lson[]
-  | LsonObject
+  | Json
 
-  // Or they are LiveXxx class instances
+  // Or they are LiveStructure class instances
   | LiveObject<LsonObject>
   | LiveList<Lson>
-  | LiveMap<string, Lson>
-  | LiveRegister<Json>;
-
-export type LsonScalar = string | number | boolean | null;
+  | LiveMap<string, Lson>;
 
 /**
  * A mapping of keys to Lson values. A Lson value is any valid JSON
@@ -36,10 +30,8 @@ export type LsonObject = { [key: string]: Lson };
  *   ToJson<'hi'>                       // 'hi'
  *   ToJson<number>                     // number
  *   ToJson<string>                     // string
- *   ToJson<string | number[]>          // string | number[]
+ *   ToJson<string | LiveList<number>>  // string | number[]
  *   ToJson<LiveMap<LiveList<number>>>  // { [key: string]: number[] }
- *   ToJson<{ a: number, b: LiveList<string> }>
- *                                      // { a: number, b: string[] }
  *   ToJson<LiveObject<{ a: number, b: LiveList<string> }>>
  *                                      // { a: null, b: string[] }
  *   ToJson<LiveRegister<{ a: number | null }>>
@@ -47,24 +39,18 @@ export type LsonObject = { [key: string]: Lson };
  *
  */
 // prettier-ignore
-export type ToJson<T extends Lson> =
+export type ToJson<T extends Lson | LsonObject> =
   // Any Json value already is a legal Json value
   T extends Json ? T :
 
-  // Any Lson[] recursively becomes a Json[]
-  T extends Lson[] ? ToJson<T[number]>[] :
-
   // Any LsonObject recursively becomes a JsonObject
-  T extends LsonObject ? { [K in keyof T]: ToJson<Exclude<T[K], undefined>> } :
-
-  // A LiveRegister holds a simple Json value
-  T extends LiveRegister<infer J> ? J :
+  T extends LsonObject ? { [K in keyof T]: ToJson<T[K]> } :
 
   // A LiveList serializes to an equivalent JSON array
   T extends LiveList<infer I> ? ToJson<I>[] :
 
   // A LiveObject serializes to an equivalent JSON object
-  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<Exclude<O[K], undefined>> } :
+  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<O[K]> } :
 
   // A LiveMap serializes to a JSON object with string-V pairs
   T extends LiveMap<infer KS, infer V> ? { [K in KS]: ToJson<V> } :
