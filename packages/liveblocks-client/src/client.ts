@@ -1,5 +1,6 @@
 import { createRoom, InternalRoom } from "./room";
 import { ClientOptions, Room, Client, Authentication } from "./types";
+import { JsonObject } from "./json";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -26,28 +27,31 @@ import { ClientOptions, Room, Client, Authentication } from "./types";
  *   }
  * });
  */
-export function createClient(options: ClientOptions): Client {
+export function createClient<
+  TPresence extends JsonObject,
+  TStorageRoot extends JsonObject
+>(options: ClientOptions): Client<TPresence, TStorageRoot> {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom>();
+  const rooms = new Map<string, InternalRoom<TPresence, TStorageRoot>>();
 
-  function getRoom(roomId: string): Room | null {
+  function getRoom(roomId: string): Room<TPresence, TStorageRoot> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom ? internalRoom.room : null;
   }
 
-  function enter<TStorageRoot>(
+  function enter(
     roomId: string,
     options: {
-      defaultPresence?: Presence;
+      defaultPresence?: TPresence;
       defaultStorageRoot?: TStorageRoot;
       /**
        * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
        */
       DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
-  ): Room {
+  ): Room<TPresence, TStorageRoot> {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
