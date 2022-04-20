@@ -107,7 +107,7 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.toObject().map;
     expect(Array.from(map.entries())).toEqual([]);
-    assert({ map: [] });
+    assert({ map: {} });
   });
 
   it("init map with items", async () => {
@@ -134,11 +134,11 @@ describe("LiveMap", () => {
     ]);
 
     assert({
-      map: [
-        ["first", { a: 0 }],
-        ["second", { a: 1 }],
-        ["third", { a: 2 }],
-      ],
+      map: {
+        first: { a: 0 },
+        second: { a: 1 },
+        third: { a: 2 },
+      },
     });
   });
 
@@ -157,28 +157,30 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.toObject().map;
 
-    assert({ map: [] });
+    assert({ map: {} });
 
     map.set("first", 0);
     assert({
-      map: [["first", 0]],
+      map: {
+        first: 0,
+      },
     });
 
     map.set("second", 1);
     assert({
-      map: [
-        ["first", 0],
-        ["second", 1],
-      ],
+      map: {
+        first: 0,
+        second: 1,
+      },
     });
 
     map.set("third", 2);
     assert({
-      map: [
-        ["first", 0],
-        ["second", 1],
-        ["third", 2],
-      ],
+      map: {
+        first: 0,
+        second: 1,
+        third: 2,
+      },
     });
 
     assertUndoRedo();
@@ -201,29 +203,29 @@ describe("LiveMap", () => {
       const map = root.toObject().map;
 
       assert({
-        map: [
-          ["first", 0],
-          ["second", 1],
-          ["third", 2],
-        ],
+        map: {
+          first: 0,
+          second: 1,
+          third: 2,
+        },
       });
 
       map.delete("first");
       assert({
-        map: [
-          ["second", 1],
-          ["third", 2],
-        ],
+        map: {
+          second: 1,
+          third: 2,
+        },
       });
 
       map.delete("second");
       assert({
-        map: [["third", 2]],
+        map: { third: 2 },
       });
 
       map.delete("third");
       assert({
-        map: [],
+        map: {},
       });
 
       assertUndoRedo();
@@ -244,7 +246,9 @@ describe("LiveMap", () => {
         );
 
       assert({
-        map: [["first", { a: 0 }]],
+        map: {
+          first: { a: 0 },
+        },
       });
 
       const root = storage.root;
@@ -255,7 +259,7 @@ describe("LiveMap", () => {
       expect(getItemsCount()).toBe(2);
 
       assert({
-        map: [],
+        map: {},
       });
 
       assertUndoRedo();
@@ -277,7 +281,7 @@ describe("LiveMap", () => {
         );
 
       assert({
-        map: [["first", [0]]],
+        map: { first: [0] },
       });
 
       const root = storage.root;
@@ -288,7 +292,7 @@ describe("LiveMap", () => {
       expect(getItemsCount()).toBe(2);
 
       assert({
-        map: [],
+        map: {},
       });
 
       assertUndoRedo();
@@ -387,13 +391,13 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.toObject().map;
     assert({
-      map: [],
+      map: {},
     });
 
     map.set("first", new LiveObject({ a: 0 }));
 
     assert({
-      map: [["first", { a: 0 }]],
+      map: { first: { a: 0 } },
     });
 
     assertUndoRedo();
@@ -447,7 +451,7 @@ describe("LiveMap", () => {
     );
 
     assert({
-      map: [["first", { a: 0 }]],
+      map: { first: { a: 0 } },
     });
 
     const root = storage.root;
@@ -456,7 +460,7 @@ describe("LiveMap", () => {
     map.set("first", new LiveObject({ a: 1 }));
 
     assert({
-      map: [["first", { a: 1 }]],
+      map: { first: { a: 1 } },
     });
 
     assertUndoRedo();
@@ -468,19 +472,12 @@ describe("LiveMap", () => {
       { map: LiveMap<string, { a: number }> }
     >([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assert({} as any);
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
     assert({
-      map: [
-        [
-          "first",
-          {
-            a: 0,
-          },
-        ],
-      ],
+      map: { first: { a: 0 } },
     });
 
     assertUndoRedo();
@@ -492,19 +489,14 @@ describe("LiveMap", () => {
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assert({} as any);
 
     storage.root.set("map", new LiveMap([["first", new LiveObject({ a: 0 })]]));
 
     assert({
-      map: [
-        [
-          "first",
-          {
-            a: 0,
-          },
-        ],
-      ],
+      map: {
+        first: { a: 0 },
+      },
     });
 
     assertUndoRedo();
@@ -516,19 +508,14 @@ describe("LiveMap", () => {
       { map: LiveMap<string, { a: number }> }
     >([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assert({} as any);
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
     assert({
-      map: [
-        [
-          "first",
-          {
-            a: 0,
-          },
-        ],
-      ],
+      map: {
+        first: { a: 0 },
+      },
     });
 
     assertUndoRedo();
@@ -546,13 +533,13 @@ describe("LiveMap", () => {
       1
     );
 
-    assert({ map: [] });
+    assert({ map: {} });
 
     const map = storage.root.get("map");
     map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
     assert({
-      map: [["list", ["itemA", "itemB", "itemC"]]],
+      map: { list: ["itemA", "itemB", "itemC"] },
     });
 
     assertUndoRedo();
@@ -570,13 +557,13 @@ describe("LiveMap", () => {
       1
     );
 
-    assert({ map: [] });
+    assert({ map: {} });
 
     const map = storage.root.get("map");
     map.set("map", new LiveMap([["first", "itemA"]]));
 
     assert({
-      map: [["map", [["first", "itemA"]]]],
+      map: { map: { first: "itemA" } },
     });
 
     assertUndoRedo();
@@ -670,9 +657,7 @@ describe("LiveMap", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(listItems, mapCallback);
 
-      assert({
-        map: [["first", "a"]],
-      });
+      assert({ map: { first: "a" } });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -707,10 +692,10 @@ describe("LiveMap", () => {
       reconnect(machine, 3, newInitStorage);
 
       assert({
-        map: [
-          ["first", "a"],
-          ["second", "b"],
-        ],
+        map: {
+          first: "a",
+          second: "b",
+        },
       });
 
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);

@@ -208,7 +208,7 @@ describe("LiveList", () => {
       items.push(new LiveMap([["first", 0]]));
 
       assert({
-        items: [[["first", 0]]],
+        items: [{ first: 0 }],
       });
 
       assertUndoRedo();
@@ -230,11 +230,7 @@ describe("LiveList", () => {
       );
 
       assert({
-        items: [
-          {
-            a: 1,
-          },
-        ],
+        items: [{ a: 1 }],
       });
 
       const root = storage.root;
@@ -243,14 +239,7 @@ describe("LiveList", () => {
       items.insert(new LiveObject({ a: 0 }), 0);
 
       assert({
-        items: [
-          {
-            a: 0,
-          },
-          {
-            a: 1,
-          },
-        ],
+        items: [{ a: 0 }, { a: 1 }],
       });
 
       assertUndoRedo();
