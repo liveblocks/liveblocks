@@ -31,11 +31,10 @@ export type LsonObject = { [key: string]: Lson };
  *   ToJson<number>                     // number
  *   ToJson<string>                     // string
  *   ToJson<string | LiveList<number>>  // string | number[]
- *   ToJson<LiveMap<LiveList<number>>>  // { [key: string]: number[] }
+ *   ToJson<LiveMap<string, LiveList<number>>>
+ *                                      // { [key: string]: number[] }
  *   ToJson<LiveObject<{ a: number, b: LiveList<string> }>>
  *                                      // { a: null, b: string[] }
- *   ToJson<LiveRegister<{ a: number | null }>>
- *                                      // { a: number | null }
  *
  */
 // prettier-ignore
