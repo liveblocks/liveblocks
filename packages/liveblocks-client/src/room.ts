@@ -17,6 +17,7 @@ import {
   BroadcastOptions,
   AuthorizeResponse,
   Authentication,
+  ConnectionState,
 } from "./types";
 import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
@@ -190,6 +191,108 @@ type Context = {
   liveblocksServer: string;
 };
 
+export type Machine<
+  TPresence extends JsonObject,
+  TStorageRoot extends LsonObject
+> = {
+  // Internal
+  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  onMessage(event: MessageEvent): void;
+  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  heartbeat(): void;
+  onNavigatorOnline(): void;
+
+  // Internal dev tools
+  simulateSocketClose(): void;
+  simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: string;
+  }): void;
+
+  // onWakeUp,
+  onVisibilityChange(visibilityState: VisibilityState): void;
+  getUndoStack(): HistoryItem<TPresence>[];
+  getItemsCount(): number;
+
+  // Core
+  connect(): null | undefined;
+  disconnect(): void;
+
+  subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  subscribe<TKey extends string, TValue extends Lson>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
+  ): () => void;
+  subscribe<TData extends LsonObject>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  subscribe<TItem extends Lson>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
+  subscribe(
+    type: "my-presence",
+    listener: MyPresenceCallback<TPresence>
+  ): () => void;
+  subscribe(
+    type: "others",
+    listener: OthersEventCallback<TPresence>
+  ): () => void;
+  subscribe(type: "event", listener: EventCallback): () => void;
+  subscribe(type: "error", listener: ErrorCallback): () => void;
+  subscribe(type: "connection", listener: ConnectionCallback): () => void;
+  subscribe<K extends RoomEventName>(
+    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap<TPresence>[K] | any,
+    options?: { isDeep: boolean }
+  ): () => void;
+
+  unsubscribe(
+    type: "my-presence",
+    listener: MyPresenceCallback<TPresence>
+  ): void;
+  unsubscribe(type: "others", listener: OthersEventCallback<TPresence>): void;
+  unsubscribe(type: "event", listener: EventCallback): void;
+  unsubscribe(type: "error", listener: ErrorCallback): void;
+  unsubscribe(type: "connection", listener: ConnectionCallback): void;
+  unsubscribe<K extends RoomEventName>(
+    event: K,
+    callback: RoomEventCallbackMap<TPresence>[K]
+  ): void;
+
+  // Presence
+  updatePresence(
+    overrides: Partial<TPresence>,
+    options?: { addToHistory: boolean }
+  ): void;
+  broadcastEvent(event: Json, options?: BroadcastOptions): void;
+
+  batch(callback: () => void): void;
+  undo(): void;
+  redo(): void;
+  pauseHistory(): void;
+  resumeHistory(): void;
+
+  getStorage(): Promise<{ root: LiveObject<TStorageRoot> }>;
+
+  selectors: {
+    // Core
+    getConnectionState(): ConnectionState;
+    getSelf(): User<TPresence> | null;
+
+    // Presence
+    getPresence(): TPresence;
+    getOthers(): Others<TPresence>;
+  };
+};
+
 export function makeStateMachine<
   TPresence extends JsonObject,
   TStorageRoot extends LsonObject
@@ -197,7 +300,7 @@ export function makeStateMachine<
   state: State<TPresence, TStorageRoot>,
   context: Context,
   mockedEffects?: Effects<TPresence>
-) {
+): Machine<TPresence, TStorageRoot> {
   const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -651,7 +754,7 @@ See v0.13 release notes for more information.
     remove(callbacks, callback);
   }
 
-  function getConnectionState() {
+  function getConnectionState(): ConnectionState {
     return state.connection.state;
   }
 

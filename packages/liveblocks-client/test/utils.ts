@@ -15,7 +15,7 @@ import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
-import { defaultState, Effects, makeStateMachine } from "../src/room";
+import { defaultState, Effects, makeStateMachine, Machine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
@@ -119,8 +119,6 @@ export class MockWebSocket implements WebSocket {
     throw new Error("Method not implemented.");
   }
 }
-
-type Machine = ReturnType<typeof makeStateMachine>;
 
 export function objectToJson(record: LiveObject<LsonObject>) {
   const result: any = {};

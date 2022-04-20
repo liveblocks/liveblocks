@@ -249,7 +249,7 @@ export type Authentication =
       callback: (room: string) => Promise<AuthorizeResponse>;
     };
 
-type ConnectionState =
+export type ConnectionState =
   | "closed"
   | "authenticating"
   | "unavailable"
