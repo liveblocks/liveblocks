@@ -12,6 +12,11 @@ export interface Doc {
   getItem: (id: string) => AbstractCrdt | undefined;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
+  /**
+   * - Send ops to WebSocket servers
+   * - Add reverse operations to the undo/redo stack
+   * - Send updates to room subscribers
+   */
   dispatch: (
     ops: Op[],
     reverseOps: Op[],
