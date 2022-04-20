@@ -1311,7 +1311,7 @@ describe("room", () => {
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
       const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<
-        {},
+        Record<string, never>,
         { items: LiveList<string> }
       >([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
