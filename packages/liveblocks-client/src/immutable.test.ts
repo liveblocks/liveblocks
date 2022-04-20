@@ -158,12 +158,9 @@ describe("2 ways tests with two clients", () => {
 
   describe("Array/LiveList", () => {
     test("replace array of 3 elements to 1 element", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<number>;
-        },
-        { syncList: number[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<number>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
