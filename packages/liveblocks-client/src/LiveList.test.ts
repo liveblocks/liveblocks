@@ -63,7 +63,7 @@ describe("LiveList", () => {
 
   it("create document with list in root", async () => {
     const { assert } = await prepareStorageTest<
-      never, // Not interested in testing Presence API
+      never,
       { items: LiveList<any> }
     >([
       createSerializedObject("0:0", {}),
@@ -77,7 +77,7 @@ describe("LiveList", () => {
 
   it("init list with items", async () => {
     const { assert } = await prepareStorageTest<
-      never, // Not interested in testing Presence API
+      never,
       { items: LiveList<LiveObject<{ a: number }>> }
     >([
       createSerializedObject("0:0", {}),
@@ -95,7 +95,7 @@ describe("LiveList", () => {
   describe("push", () => {
     it("push LiveObject", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -132,7 +132,7 @@ describe("LiveList", () => {
 
     it("push existing LiveObject should throw", async () => {
       const { storage, assert } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -158,7 +158,7 @@ describe("LiveList", () => {
 
     it("push number", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<number> }
       >(
         [
@@ -190,7 +190,7 @@ describe("LiveList", () => {
 
     it("push LiveMap", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveMap<string, number>> }
       >(
         [
@@ -218,7 +218,7 @@ describe("LiveList", () => {
   describe("insert", () => {
     it("insert LiveObject at position 0", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -263,10 +263,7 @@ describe("LiveList", () => {
         storage: doc,
         assert,
         assertUndoRedo,
-      } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
-        { items: LiveList<number> }
-      >([
+      } = await prepareStorageTest<never, { items: LiveList<number> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("0:2", "0:1", FIRST_POSITION, 0),
@@ -292,7 +289,7 @@ describe("LiveList", () => {
     it("delete child LiveObject should remove descendants", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
         await prepareStorageTest<
-          never, // Not interested in testing Presence API
+          never,
           { items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>> }
         >([
           createSerializedObject("0:0", {}),
@@ -326,7 +323,7 @@ describe("LiveList", () => {
   describe("move", () => {
     it("list.move after current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >([
         createSerializedObject("0:0", {}),
@@ -375,7 +372,7 @@ describe("LiveList", () => {
   describe("clear", () => {
     it("should delete all items", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -633,10 +630,7 @@ describe("LiveList", () => {
 
     it("on existing position should give the right update", async () => {
       const { root, assert, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -684,10 +678,7 @@ describe("LiveList", () => {
   describe("conflict", () => {
     it("list conflicts", async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -730,10 +721,7 @@ describe("LiveList", () => {
 
     it("list conflicts 2", async () => {
       const { root, applyRemoteOperations, assert } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -803,10 +791,7 @@ describe("LiveList", () => {
 
     it("list conflicts with offline", async () => {
       const { root, assert, applyRemoteOperations, machine } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -856,10 +841,7 @@ describe("LiveList", () => {
 
     it("list conflicts with undo redo and remote change", async () => {
       const { root, assert, applyRemoteOperations, machine } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -907,10 +889,7 @@ describe("LiveList", () => {
 
     it("list conflicts - move", async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -969,7 +948,7 @@ describe("LiveList", () => {
       assert,
       assertUndoRedo,
     } = await prepareStorageTest<
-      never, // Not interested in testing Presence API
+      never,
       { items: LiveList<LiveObject<{ b: number }>> }
     >(
       [
@@ -1002,7 +981,7 @@ describe("LiveList", () => {
   describe("subscriptions", () => {
     test("simple action", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1028,7 +1007,7 @@ describe("LiveList", () => {
 
     test("deep subscribe", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -1066,10 +1045,7 @@ describe("LiveList", () => {
 
     test("remote move operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1106,10 +1082,7 @@ describe("LiveList", () => {
 
     test("remote delete item operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<
-          never, // Not interested in testing Presence API
-          { items: LiveList<string> }
-        >(
+        await prepareStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1141,7 +1114,7 @@ describe("LiveList", () => {
 
     test("batch multiple actions", async () => {
       const { storage, subscribe, batch, assert } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1182,7 +1155,7 @@ describe("LiveList", () => {
 
     test("batch multiple inserts", async () => {
       const { storage, subscribe, batch, assert } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1213,7 +1186,7 @@ describe("LiveList", () => {
 
     test("clear with deep subscribe ", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -1252,7 +1225,7 @@ describe("LiveList", () => {
 
     test("move with deep subscribe", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -1297,7 +1270,7 @@ describe("LiveList", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1385,7 +1358,7 @@ describe("LiveList", () => {
 
     test("Register moved in list", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1462,7 +1435,7 @@ describe("LiveList", () => {
 
     test("Register deleted from list", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<string> }
       >(
         [
@@ -1532,7 +1505,7 @@ describe("LiveList", () => {
   describe("internal methods", () => {
     test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { items: LiveList<LiveObject<{ a: number }>> }
       >(
         [

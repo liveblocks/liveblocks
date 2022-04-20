@@ -98,7 +98,7 @@ describe("LiveMap", () => {
 
   it("create document with map in root", async () => {
     const { storage, assert } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >([
       createSerializedObject("0:0", {}),
@@ -112,7 +112,7 @@ describe("LiveMap", () => {
 
   it("init map with items", async () => {
     const { storage, assert } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >([
       createSerializedObject("0:0", {}),
@@ -144,7 +144,7 @@ describe("LiveMap", () => {
 
   it("map.set object", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, number> }
     >(
       [
@@ -187,7 +187,7 @@ describe("LiveMap", () => {
   describe("delete", () => {
     it("should delete LiveObject", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, LiveObject<{ a: number }>> }
       >([
         createSerializedObject("0:0", {}),
@@ -232,7 +232,7 @@ describe("LiveMap", () => {
     it("should remove nested data structure from cache", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
         await prepareStorageTest<
-          never, // Not interested in test Presence API
+          never,
           { map: LiveMap<string, LiveObject<{ a: number }>> }
         >(
           [
@@ -264,7 +264,7 @@ describe("LiveMap", () => {
     it("should delete live list", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
         await prepareStorageTest<
-          never, // Not interested in test Presence API
+          never,
           { map: LiveMap<string, LiveList<number>> }
         >(
           [
@@ -297,7 +297,7 @@ describe("LiveMap", () => {
     // https://github.com/liveblocks/liveblocks/issues/95
     it("should have deleted key when subscriber is called", async () => {
       const { root, subscribe } = await prepareIsolatedStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, string> }
       >(
         [
@@ -322,7 +322,7 @@ describe("LiveMap", () => {
 
     it("should call subscribe when key is deleted", async () => {
       const { root, subscribe } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        never,
         { map: LiveMap<string, string> }
       >(
         [
@@ -348,7 +348,7 @@ describe("LiveMap", () => {
 
     it("should not call subscribe when key is not deleted", async () => {
       const { root, subscribe } = await prepareIsolatedStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, string> }
       >(
         [
@@ -374,7 +374,7 @@ describe("LiveMap", () => {
 
   it("map.set live object", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >(
       [
@@ -401,7 +401,7 @@ describe("LiveMap", () => {
 
   it("map.set already attached live object should throw", async () => {
     const { storage } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >([
       createSerializedObject("0:0", {}),
@@ -419,7 +419,7 @@ describe("LiveMap", () => {
 
   it("new Map with already attached live object should throw", async () => {
     const { storage } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       {
         child: LiveObject | null;
         map: LiveMap<string, LiveObject<{ a: number }>> | null;
@@ -435,7 +435,7 @@ describe("LiveMap", () => {
 
   it("map.set live object on existing key", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >(
       [
@@ -464,7 +464,7 @@ describe("LiveMap", () => {
 
   it("attach map with items to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, { a: number }> }
     >([createSerializedObject("0:0", {})], 1);
 
@@ -488,7 +488,7 @@ describe("LiveMap", () => {
 
   it("attach map with live objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveObject<{ a: number }>> }
     >([createSerializedObject("0:0", {})], 1);
 
@@ -512,7 +512,7 @@ describe("LiveMap", () => {
 
   it("attach map with objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, { a: number }> }
     >([createSerializedObject("0:0", {})], 1);
 
@@ -536,7 +536,7 @@ describe("LiveMap", () => {
 
   it("add list in map", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveList<string>> }
     >(
       [
@@ -560,7 +560,7 @@ describe("LiveMap", () => {
 
   it("add map in map", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never, // Not interested in test Presence API
+      never,
       { map: LiveMap<string, LiveMap<string, string>> }
     >(
       [
@@ -585,7 +585,7 @@ describe("LiveMap", () => {
   describe("subscriptions", () => {
     test("simple action", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, string> }
       >(
         [
@@ -611,7 +611,7 @@ describe("LiveMap", () => {
 
     test("deep subscribe", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, LiveObject<{ a: number }>> }
       >(
         [
@@ -651,7 +651,7 @@ describe("LiveMap", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, string> }
       >(
         [
@@ -730,7 +730,7 @@ describe("LiveMap", () => {
   describe("internal methods", () => {
     test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<
-        never, // Not interested in test Presence API
+        never,
         { map: LiveMap<string, LiveObject<{ a: number }>> }
       >(
         [
