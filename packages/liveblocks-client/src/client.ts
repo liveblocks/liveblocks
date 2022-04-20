@@ -1,6 +1,7 @@
 import { createRoom, InternalRoom } from "./room";
 import { ClientOptions, Room, Client, Authentication } from "./types";
 import { JsonObject } from "./json";
+import { LsonObject } from "./lson";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -29,7 +30,7 @@ import { JsonObject } from "./json";
  */
 export function createClient<
   TPresence extends JsonObject,
-  TStorageRoot extends JsonObject
+  TStorageRoot extends LsonObject
 >(options: ClientOptions): Client<TPresence, TStorageRoot> {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);

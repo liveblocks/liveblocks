@@ -125,7 +125,7 @@ export type StorageCallback = (updates: StorageUpdate[]) => void;
 
 export type Client<
   TPresence extends JsonObject,
-  TStorageRoot extends JsonObject
+  TStorageRoot extends LsonObject
 > = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.

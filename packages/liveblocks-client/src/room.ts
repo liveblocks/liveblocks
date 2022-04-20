@@ -192,7 +192,7 @@ type Context = {
 
 export function makeStateMachine<
   TPresence extends JsonObject,
-  TStorageRoot extends JsonObject
+  TStorageRoot extends LsonObject
 >(
   state: State<TPresence, TStorageRoot>,
   context: Context,
@@ -1509,7 +1509,7 @@ export function defaultState<
 
 export type InternalRoom<
   TPresence extends JsonObject,
-  TStorageRoot extends JsonObject
+  TStorageRoot extends LsonObject
 > = {
   room: Room<TPresence, TStorageRoot>;
   connect: () => void;
@@ -1520,7 +1520,7 @@ export type InternalRoom<
 
 export function createRoom<
   TPresence extends JsonObject,
-  TStorageRoot extends JsonObject
+  TStorageRoot extends LsonObject
 >(
   options: {
     defaultPresence?: TPresence;
