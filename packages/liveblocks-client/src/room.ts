@@ -18,6 +18,8 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
+import { Json, JsonObject } from "./json";
+import { Lson, LsonObject } from "./lson";
 import {
   getTreesDiffOperations,
   isSameNodeOrChildOf,
@@ -48,9 +50,6 @@ import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
-
-// TODO: Further improve this type
-type fixme = unknown;
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -141,12 +140,12 @@ export type State = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ };
+  defaultStorageRoot?: JsonObject;
 
   clock: number;
   opClock: number;
   items: Map<string, AbstractCrdt>;
-  root: LiveObject | undefined;
+  root: LiveObject<LsonObject> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
 
@@ -326,7 +325,7 @@ export function makeStateMachine(
     notify(result.updates);
   }
 
-  function load<T>(items: SerializedCrdtWithId[]): LiveObject<T> {
+  function load(items: SerializedCrdtWithId[]): LiveObject<LsonObject> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
@@ -337,7 +336,7 @@ export function makeStateMachine(
       generateOpId,
       dispatch: storageDispatch,
       roomId: context.room,
-    }) as LiveObject<T>;
+    });
   }
 
   function addItem(id: string, item: AbstractCrdt) {
@@ -376,7 +375,7 @@ export function makeStateMachine(
         state.batch.updates.storageUpdates.set(
           key,
           mergeStorageUpdates(
-            state.batch.updates.storageUpdates.get(key),
+            state.batch.updates.storageUpdates.get(key) as any, // FIXME
             value
           )
         );
@@ -450,7 +449,10 @@ export function makeStateMachine(
     isLocal: boolean
   ): {
     reverse: HistoryItem;
-    updates: { storageUpdates: Map<string, StorageUpdate>; presence: boolean };
+    updates: {
+      storageUpdates: Map<string, StorageUpdate>;
+      presence: boolean;
+    };
   } {
     const result = {
       reverse: [] as HistoryItem,
@@ -494,7 +496,7 @@ export function makeStateMachine(
             mergeStorageUpdates(
               result.updates.storageUpdates.get(
                 applyOpResult.modified.node._id!
-              ),
+              ) as any, // FIXME
               applyOpResult.modified
             )
           );
@@ -603,15 +605,15 @@ export function makeStateMachine(
   }
 
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  function subscribe<TKey extends string, TValue>(
+  function subscribe<TKey extends string, TValue extends Lson>(
     liveMap: LiveMap<TKey, TValue>,
     callback: (liveMap: LiveMap<TKey, TValue>) => void
   ): () => void;
-  function subscribe<TData>(
+  function subscribe<TData extends LsonObject>(
     liveObject: LiveObject<TData>,
     callback: (liveObject: LiveObject<TData>) => void
   ): () => void;
-  function subscribe<TItem>(
+  function subscribe<TItem extends Lson>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
@@ -958,7 +960,10 @@ See v0.13 release notes for more information.
           applyResult.updates.storageUpdates.forEach((value, key) => {
             updates.storageUpdates.set(
               key,
-              mergeStorageUpdates(updates.storageUpdates.get(key), value)
+              mergeStorageUpdates(
+                updates.storageUpdates.get(key) as any, // FIXME
+                value
+              )
             );
           });
 
@@ -1236,7 +1241,7 @@ See v0.13 release notes for more information.
   }
 
   function broadcastEvent(
-    event: fixme,
+    event: Json,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }
@@ -1260,7 +1265,9 @@ See v0.13 release notes for more information.
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TRoot>(): Promise<{ root: LiveObject<TRoot> }> {
+  function getStorage<TRoot extends LsonObject>(): Promise<{
+    root: LiveObject<TRoot>;
+  }> {
     if (state.root) {
       return new Promise((resolve) =>
         resolve({
@@ -1449,7 +1456,7 @@ See v0.13 release notes for more information.
 
 export function defaultState(
   me?: Presence,
-  defaultStorageRoot?: { [key: string]: fixme /* JSON only */ }
+  defaultStorageRoot?: JsonObject
 ): State {
   return {
     connection: { state: "closed" },
@@ -1538,7 +1545,11 @@ export function createRoom(
     /////////////
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
-    subscribe: machine.subscribe,
+
+    // FIXME: There's a type issue here. The types of subscribe and
+    // machine.subscribe are incompatible somewhere.
+    // TODO: Figure out exactly what's wrong here!
+    subscribe: machine.subscribe as any, // FIXME!
     unsubscribe: machine.unsubscribe,
 
     //////////////

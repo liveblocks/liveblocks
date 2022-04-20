@@ -2,9 +2,8 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-
-// TODO: Further improve this type
-type fixme = unknown;
+import { Json, JsonObject } from "./json";
+import { Lson, LsonObject } from "./lson";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 export type OthersEventCallback<T extends Presence = Presence> = (
@@ -16,7 +15,7 @@ export type EventCallback = ({
   event,
 }: {
   connectionId: number;
-  event: any;
+  event: Json;
 }) => void;
 export type ErrorCallback = (error: Error) => void;
 export type ConnectionCallback = (state: ConnectionState) => void;
@@ -37,17 +36,20 @@ export type UpdateDelta =
       type: "delete";
     };
 
-export type LiveMapUpdates<TKey extends string, TValue> = {
+export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
-  updates: Record<TKey, UpdateDelta>;
+  updates: { [key: string]: UpdateDelta };
+  //               ^^^^^^
+  //               FIXME: `string` is not specific enough here. See if we can
+  //               improve this type to match TKey!
 };
 
-export type LiveObjectUpdateDelta<T> = Partial<{
-  [Property in keyof T]: UpdateDelta;
-}>;
+export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
+  [K in keyof O]?: UpdateDelta | undefined;
+};
 
-export type LiveObjectUpdates<TData> = {
+export type LiveObjectUpdates<TData extends LsonObject> = {
   type: "LiveObject";
   node: LiveObject<TData>;
   updates: LiveObjectUpdateDelta<TData>;
@@ -70,7 +72,7 @@ export type LiveListUpdateDelta =
       type: "move";
     };
 
-export type LiveListUpdates<TItem> = {
+export type LiveListUpdates<TItem extends Lson> = {
   type: "LiveList";
   node: LiveList<TItem>;
   updates: LiveListUpdateDelta[];
@@ -86,9 +88,9 @@ export type BroadcastOptions = {
 };
 
 export type StorageUpdate =
-  | LiveMapUpdates<string, fixme>
-  | LiveObjectUpdates<any /* fixme! */>
-  | LiveListUpdates<fixme>;
+  | LiveMapUpdates<string, Lson>
+  | LiveObjectUpdates<LsonObject>
+  | LiveListUpdates<Lson>;
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
@@ -251,6 +253,62 @@ export type OthersEvent<T extends Presence = Presence> =
       type: "reset";
     };
 
+export interface History {
+  /**
+   * Undoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.history.undo();
+   * // room.getPresence() equals { selectedId: "xxx" }
+   */
+  undo: () => void;
+
+  /**
+   * Redoes the last operation executed by the current client.
+   * It does not impact operations made by other clients.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.history.undo();
+   * // room.getPresence() equals { selectedId: "xxx" }
+   * room.history.redo();
+   * // room.getPresence() equals { selectedId: "yyy" }
+   */
+  redo: () => void;
+
+  /**
+   * All future modifications made on the Room will be merged together to create a single history item until resume is called.
+   *
+   * @example
+   * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+   * room.history.pause();
+   * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+   * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+   * room.history.resume();
+   * room.history.undo();
+   * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
+   */
+  pause: () => void;
+
+  /**
+   * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
+   *
+   * @example
+   * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+   * room.history.pause();
+   * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+   * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+   * room.history.resume();
+   * room.history.undo();
+   * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
+   */
+  resume: () => void;
+}
+
 export type Room = {
   /**
    * The id of the room.
@@ -318,7 +376,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
+    <TKey extends string, TValue extends Lson>(
       liveMap: LiveMap<TKey, TValue>,
       listener: (liveMap: LiveMap<TKey, TValue>) => void
     ): () => void;
@@ -335,7 +393,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
      * unsubscribe();
      */
-    <TData>(
+    <TData extends JsonObject>(
       liveObject: LiveObject<TData>,
       callback: (liveObject: LiveObject<TData>) => void
     ): () => void;
@@ -352,7 +410,7 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { });
      * unsubscribe();
      */
-    <TItem>(
+    <TItem extends Lson>(
       liveList: LiveList<TItem>,
       callback: (liveList: LiveList<TItem>) => void
     ): () => void;
@@ -370,9 +428,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TKey extends string, TValue>(
+    <TKey extends string, TValue extends Lson>(
       liveMap: LiveMap<TKey, TValue>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
       options: { isDeep: true }
     ): () => void;
 
@@ -389,9 +447,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TData>(
+    <TData extends LsonObject>(
       liveObject: LiveObject<TData>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveObjectUpdates<TData>[]) => void,
       options: { isDeep: true }
     ): () => void;
 
@@ -408,9 +466,9 @@ export type Room = {
      * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TItem>(
+    <TItem extends Lson>(
       liveList: LiveList<TItem>,
-      callback: (updates: StorageUpdate[]) => void,
+      callback: (updates: LiveListUpdates<TItem>[]) => void,
       options: { isDeep: true }
     ): () => void;
   };
@@ -418,58 +476,7 @@ export type Room = {
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
-  history: {
-    /**
-     * Undoes the last operation executed by the current client.
-     * It does not impact operations made by other clients.
-     *
-     * @example
-     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
-     * room.history.undo();
-     * // room.getPresence() equals { selectedId: "xxx" }
-     */
-    undo: () => void;
-    /**
-     * Redoes the last operation executed by the current client.
-     * It does not impact operations made by other clients.
-     *
-     * @example
-     * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-     * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
-     * room.history.undo();
-     * // room.getPresence() equals { selectedId: "xxx" }
-     * room.history.redo();
-     * // room.getPresence() equals { selectedId: "yyy" }
-     */
-    redo: () => void;
-    /**
-     * All future modifications made on the Room will be merged together to create a single history item until resume is called.
-     *
-     * @example
-     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
-     * room.history.pause();
-     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
-     * room.history.resume();
-     * room.history.undo();
-     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
-     */
-    pause: () => void;
-    /**
-     * Resumes history. Modifications made on the Room are not merged into a single history item anymore.
-     *
-     * @example
-     * room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
-     * room.history.pause();
-     * room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
-     * room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
-     * room.history.resume();
-     * room.history.undo();
-     * // room.getPresence() equals { cursor: { x: 0, y: 0 } }
-     */
-    resume: () => void;
-  };
+  history: History;
 
   /**
    * @deprecated use the callback returned by subscribe instead.
@@ -577,7 +584,7 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: any, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: JsonObject, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.
@@ -586,7 +593,7 @@ export type Room = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TRoot>() => Promise<{
+  getStorage: <TRoot extends LsonObject>() => Promise<{
     root: LiveObject<TRoot>;
   }>;
 

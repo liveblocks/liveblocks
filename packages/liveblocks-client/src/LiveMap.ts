@@ -13,14 +13,18 @@ import {
   CrdtType,
   SerializedCrdt,
 } from "./live";
-import { StorageUpdate } from "./types";
+import { LiveMapUpdates } from "./types";
+import { Lson } from "./lson";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
+export class LiveMap<
+  TKey extends string = string,
+  TValue extends Lson = Lson
+> extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
   constructor(
@@ -191,8 +195,8 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
 
     child._detach();
 
-    const storageUpdate: StorageUpdate = {
-      node: this as any,
+    const storageUpdate: LiveMapUpdates<TKey, TValue> = {
+      node: this,
       type: "LiveMap",
       updates: { [child._parentKey!]: { type: "delete" } },
     };
@@ -245,7 +249,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
       const id = this._doc.generateId();
       item._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
@@ -293,11 +297,11 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     this._map.delete(key);
 
     if (this._doc && item._id) {
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveMap",
-        updates: { [key as string]: { type: "delete" } },
+        updates: { [key]: { type: "delete" } },
       });
       this._doc.dispatch(
         [
@@ -318,7 +322,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * Returns a new Iterator object that contains the [key, value] pairs for each element.
    */
-  entries(): IterableIterator<[string, TValue]> {
+  entries(): IterableIterator<[TKey, TValue]> {
     const innerIterator = this._map.entries();
 
     return {
@@ -347,7 +351,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
   /**
    * Same function object as the initial value of the entries method.
    */
-  [Symbol.iterator](): IterableIterator<[string, TValue]> {
+  [Symbol.iterator](): IterableIterator<[TKey, TValue]> {
     return this.entries();
   }
 
@@ -393,7 +397,7 @@ export class LiveMap<TKey extends string, TValue> extends AbstractCrdt {
     callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
   ) {
     for (const entry of this) {
-      callback(entry[1], entry[0] as TKey, this);
+      callback(entry[1], entry[0], this);
     }
   }
 }

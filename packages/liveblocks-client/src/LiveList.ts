@@ -10,19 +10,20 @@ import {
   CrdtType,
 } from "./live";
 import { makePosition, compare } from "./position";
-import { LiveListUpdateDelta, StorageUpdate } from "./types";
+import { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
+import { Lson } from "./lson";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
-export class LiveList<T> extends AbstractCrdt {
+export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   private _items: Array<LiveListItem>;
 
-  constructor(items: T[] = []) {
+  constructor(items: TItem[] = []) {
     super();
     this._items = [];
 
@@ -199,8 +200,8 @@ export class LiveList<T> extends AbstractCrdt {
 
       child._detach();
 
-      const storageUpdate: StorageUpdate = {
-        node: this as any,
+      const storageUpdate: LiveListUpdates<TItem> = {
+        node: this,
         type: "LiveList",
         updates: [{ index: indexToDelete, type: "delete" }],
       };
@@ -299,7 +300,7 @@ export class LiveList<T> extends AbstractCrdt {
    * Adds one element to the end of the LiveList.
    * @param element The element to add to the end of the LiveList.
    */
-  push(element: T) {
+  push(element: TItem) {
     return this.insert(element, this.length);
   }
 
@@ -308,7 +309,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param element The element to insert.
    * @param index The index at which you want to insert the element.
    */
-  insert(element: T, index: number) {
+  insert(element: TItem, index: number) {
     if (index < 0 || index > this._items.length) {
       throw new Error(
         `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
@@ -333,7 +334,7 @@ export class LiveList<T> extends AbstractCrdt {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
@@ -402,7 +403,7 @@ export class LiveList<T> extends AbstractCrdt {
     const newIndex = this._items.findIndex((entry) => entry[1] === position);
 
     if (this._doc && this._id) {
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
@@ -457,7 +458,7 @@ export class LiveList<T> extends AbstractCrdt {
     if (this._doc) {
       const childRecordId = item[0]._id;
       if (childRecordId) {
-        const storageUpdates = new Map<string, StorageUpdate>();
+        const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
         storageUpdates.set(this._id!, {
           node: this,
           type: "LiveList",
@@ -502,7 +503,7 @@ export class LiveList<T> extends AbstractCrdt {
 
       this._items = [];
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id!, {
         node: this,
         type: "LiveList",
@@ -521,7 +522,7 @@ export class LiveList<T> extends AbstractCrdt {
   /**
    * Returns an Array of all the elements in the LiveList.
    */
-  toArray(): T[] {
+  toArray(): TItem[] {
     return this._items.map((entry) => selfOrRegisterValue(entry[0]));
   }
 
@@ -530,7 +531,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param predicate Function to test for each element, taking two arguments (the element and its index).
    * @returns true if the predicate function returns a truthy value for every element. Otherwise, false.
    */
-  every(predicate: (value: T, index: number) => unknown): boolean {
+  every(predicate: (value: TItem, index: number) => unknown): boolean {
     return this.toArray().every(predicate);
   }
 
@@ -539,7 +540,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param predicate Function to test each element of the LiveList. Return a value that coerces to true to keep the element, or to false otherwise.
    * @returns An array with the elements that pass the test.
    */
-  filter(predicate: (value: T, index: number) => unknown): T[] {
+  filter(predicate: (value: TItem, index: number) => unknown): TItem[] {
     return this.toArray().filter(predicate);
   }
 
@@ -548,7 +549,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param predicate Function to execute on each value.
    * @returns The value of the first element in the LiveList that satisfies the provided testing function. Otherwise, undefined is returned.
    */
-  find(predicate: (value: T, index: number) => unknown): T | undefined {
+  find(predicate: (value: TItem, index: number) => unknown): TItem | undefined {
     return this.toArray().find(predicate);
   }
 
@@ -557,7 +558,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param predicate Function to execute on each value until the function returns true, indicating that the satisfying element was found.
    * @returns The index of the first element in the LiveList that passes the test. Otherwise, -1.
    */
-  findIndex(predicate: (value: T, index: number) => unknown): number {
+  findIndex(predicate: (value: TItem, index: number) => unknown): number {
     return this.toArray().findIndex(predicate);
   }
 
@@ -565,7 +566,7 @@ export class LiveList<T> extends AbstractCrdt {
    * Executes a provided function once for each element.
    * @param callbackfn Function to execute on each element.
    */
-  forEach(callbackfn: (value: T, index: number) => void): void {
+  forEach(callbackfn: (value: TItem, index: number) => void): void {
     return this.toArray().forEach(callbackfn);
   }
 
@@ -574,7 +575,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param index The index on the element to get.
    * @returns The element at the specified index or undefined.
    */
-  get(index: number): T | undefined {
+  get(index: number): TItem | undefined {
     if (index < 0 || index >= this._items.length) {
       return undefined;
     }
@@ -588,7 +589,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param fromIndex The index to start the search at.
    * @returns The first index of the element in the LiveList; -1 if not found.
    */
-  indexOf(searchElement: T, fromIndex?: number): number {
+  indexOf(searchElement: TItem, fromIndex?: number): number {
     return this.toArray().indexOf(searchElement, fromIndex);
   }
 
@@ -598,7 +599,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param fromIndex The index at which to start searching backwards.
    * @returns
    */
-  lastIndexOf(searchElement: T, fromIndex?: number): number {
+  lastIndexOf(searchElement: TItem, fromIndex?: number): number {
     return this.toArray().lastIndexOf(searchElement, fromIndex);
   }
 
@@ -607,7 +608,7 @@ export class LiveList<T> extends AbstractCrdt {
    * @param callback Function that is called for every element.
    * @returns An array with each element being the result of the callback function.
    */
-  map<U>(callback: (value: T, index: number) => U): U[] {
+  map<U>(callback: (value: TItem, index: number) => U): U[] {
     return this._items.map((entry, i) =>
       callback(selfOrRegisterValue(entry[0]), i)
     );
@@ -618,11 +619,11 @@ export class LiveList<T> extends AbstractCrdt {
    * @param predicate Function to test for each element.
    * @returns true if the callback function returns a truthy value for at least one element. Otherwise, false.
    */
-  some(predicate: (value: T, index: number) => unknown): boolean {
+  some(predicate: (value: TItem, index: number) => unknown): boolean {
     return this.toArray().some(predicate);
   }
 
-  [Symbol.iterator](): IterableIterator<T> {
+  [Symbol.iterator](): IterableIterator<TItem> {
     return new LiveListIterator(this._items);
   }
 }

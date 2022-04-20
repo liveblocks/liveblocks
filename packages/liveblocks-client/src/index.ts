@@ -9,13 +9,17 @@ export type {
   User,
   BroadcastOptions,
   StorageUpdate,
+  History,
 } from "./types";
+
+export type { Json, JsonObject } from "./json";
+export type { Lson, LsonObject } from "./lson";
 
 export { createClient } from "./client";
 
 import {
   liveObjectToJson,
-  liveNodeToJson,
+  lsonToJson,
   patchLiveList,
   patchImmutableObject,
   patchLiveObject,
@@ -27,7 +31,7 @@ import {
  */
 export const internals = {
   liveObjectToJson,
-  liveNodeToJson,
+  lsonToJson,
   patchLiveList,
   patchImmutableObject,
   patchLiveObject,

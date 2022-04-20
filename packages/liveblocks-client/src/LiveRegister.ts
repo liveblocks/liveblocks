@@ -6,11 +6,12 @@ import {
   OpType,
   SerializedCrdt,
 } from "./live";
+import { Json } from "./json";
 
 /**
  * @internal
  */
-export class LiveRegister<TValue> extends AbstractCrdt {
+export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _data: TValue;
 
   constructor(data: TValue) {

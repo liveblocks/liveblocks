@@ -430,19 +430,26 @@ describe("room", () => {
       withDateNow(now, () => ws.open());
 
       expect(effects.send).nthCalledWith(1, [
-        {
-          type: ClientMessageType.UpdatePresence,
-          data: {},
-        },
+        { type: ClientMessageType.UpdatePresence, data: {} },
       ]);
 
+      // Event payload can be any JSON value
       withDateNow(now + 1000, () => machine.broadcastEvent({ type: "EVENT" }));
+      withDateNow(now + 2000, () => machine.broadcastEvent([1, 2, 3]));
+      withDateNow(now + 3000, () => machine.broadcastEvent(42));
+      withDateNow(now + 4000, () => machine.broadcastEvent("hi"));
 
       expect(effects.send).nthCalledWith(2, [
-        {
-          type: ClientMessageType.ClientEvent,
-          event: { type: "EVENT" },
-        },
+        { type: ClientMessageType.ClientEvent, event: { type: "EVENT" } },
+      ]);
+      expect(effects.send).nthCalledWith(3, [
+        { type: ClientMessageType.ClientEvent, event: [1, 2, 3] },
+      ]);
+      expect(effects.send).nthCalledWith(4, [
+        { type: ClientMessageType.ClientEvent, event: 42 },
+      ]);
+      expect(effects.send).nthCalledWith(5, [
+        { type: ClientMessageType.ClientEvent, event: "hi" },
       ]);
     });
 
@@ -1144,11 +1151,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } =
-        await prepareStorageTest<unknown>(
-          [createSerializedObject("0:0", {})],
-          1
-        );
+      const { machine, refMachine, reconnect, ws } = await prepareStorageTest(
+        [createSerializedObject("0:0", {})],
+        1
+      );
 
       machine.updatePresence({ x: 1 });
 
