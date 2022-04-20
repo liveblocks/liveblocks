@@ -898,10 +898,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<
-        never, // Not interested in testing Presence API
-        { items: LiveList<string> }
-      >(
+      } = await prepareStorageTest<{ x: number }, { items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1316,7 +1313,7 @@ describe("room", () => {
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
       const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<
-        never, // Not interested in testing Presence API
+        {},
         { items: LiveList<string> }
       >([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
