@@ -212,7 +212,8 @@ export async function prepareIsolatedStorageTest<
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: fixme) => expect(objectToJson(storage.root)).toEqual(data),
+    assert: (data: ToJson<TStorageRoot>) =>
+      expect(lsonToJson(storage.root)).toEqual(data),
     assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
       expect(messagesSent).toEqual(messages);
     },
@@ -275,7 +276,7 @@ export async function prepareStorageTest<
 
   const states: any[] = [];
 
-  function assert(data: fixme, shouldPushToStates = true) {
+  function assert(data: ToJson<TStorageRoot>, shouldPushToStates = true) {
     if (shouldPushToStates) {
       states.push(data);
     }
@@ -419,7 +420,11 @@ export async function prepareStorageImmutableTest<
     { isDeep: true }
   );
 
-  function assert(data: fixme, itemsCount?: number, storageOpsCount?: number) {
+  function assert(
+    data: ToJson<TStorageRoot>,
+    itemsCount?: number,
+    storageOpsCount?: number
+  ) {
     assertStorage(data);
 
     if (itemsCount) {
@@ -433,7 +438,7 @@ export async function prepareStorageImmutableTest<
     }
   }
 
-  function assertStorage(data: fixme) {
+  function assertStorage(data: ToJson<TStorageRoot>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
