@@ -43,6 +43,36 @@ module.exports = {
       },
       {
         selector:
+          'TSTypeReference[typeName.name="User"][typeParameters.params.length != 1]',
+        message:
+          "In library code, never write `User` without explicit type params! Type parameter defaults are only meant for end users.",
+      },
+      {
+        selector:
+          'TSTypeReference[typeName.name="Others"][typeParameters.params.length != 1]',
+        message:
+          "In library code, never write `Others` without explicit type params! Type parameter defaults are only meant for end users.",
+      },
+      {
+        selector:
+          'TSTypeReference[typeName.name="OthersEvent"][typeParameters.params.length != 1]',
+        message:
+          "In library code, never write `OthersEvent` without explicit type params! Type parameter defaults are only meant for end users.",
+      },
+      {
+        selector:
+          'TSTypeReference[typeName.name="MyPresenceCallback"][typeParameters.params.length != 1]',
+        message:
+          "In library code, never write `MyPresenceCallback` without explicit type params! Type parameter defaults are only meant for end users.",
+      },
+      {
+        selector:
+          'TSTypeReference[typeName.name="OthersEventCallback"][typeParameters.params.length != 1]',
+        message:
+          "In library code, never write `OthersEventCallback` without explicit type params! Type parameter defaults are only meant for end users.",
+      },
+      {
+        selector:
           'TSTypeReference[typeName.name="LiveObject"][typeParameters.params.length != 1]',
         message:
           "In library code, never write `LiveObject` without explicit type params! Type parameter defaults are only meant for end users.",
