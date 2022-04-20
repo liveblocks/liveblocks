@@ -166,8 +166,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       if (intent === "set") {
         const existingItem = this._items[index][0];
         existingItem._detach();
-        const storageUpdate: StorageUpdate = {
-          node: this as any,
+        const storageUpdate: LiveListUpdates<TItem> = {
+          node: this,
           type: "LiveList",
           updates: [
             {
