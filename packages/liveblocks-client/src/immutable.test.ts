@@ -44,7 +44,7 @@ describe("patchLiveObjectKey", () => {
   test("should set LiveObject if next is object", () => {
     const liveObject = new LiveObject();
     patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
-    const value = liveObject.get("key");
+    const value = liveObject.get("key") as LiveObject;
     expect(value instanceof LiveObject).toBe(true);
     expect(value.toObject()).toEqual({ a: 0 });
   });
@@ -59,12 +59,9 @@ describe("patchLiveObjectKey", () => {
 describe("2 ways tests with two clients", () => {
   describe("Object/LiveObject", () => {
     test("create object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncObj: { a: number };
-        },
-        { syncObj: { a: number } }
-      >([createSerializedObject("0:0", {})], 1);
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncObj: { a: number };
+      }>([createSerializedObject("0:0", {})], 1);
 
       expect(state).toEqual({});
 
@@ -83,12 +80,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("update object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncObj: { a: number };
-        },
-        { syncObj: { a: number } }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncObj: { a: number };
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -113,14 +107,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("add nested object", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncObj: { a: any };
-        },
-        {
-          syncObj: { a: any };
-        }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncObj: { a: any };
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -145,12 +134,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("delete object key", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncObj: { a?: number };
-        },
-        { syncObj: { a?: number } }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncObj: { a?: number };
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -176,13 +162,38 @@ describe("2 ways tests with two clients", () => {
   });
 
   describe("Array/LiveList", () => {
+    test("replace array of 3 elements to 1 element", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<number>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "syncList"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, 1),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, 1),
+        ],
+        1
+      );
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.syncList = [2];
+      });
+
+      patchLiveObjectKey(
+        storage.root,
+        "syncList",
+        oldState["syncList"],
+        newState["syncList"]
+      );
+
+      assert({ syncList: [2] });
+    });
+
     test("add item to array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -257,12 +268,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("insert item at beginning of array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -286,12 +294,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("swap items in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -318,12 +323,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("array of objects", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<LiveObject<{ a: number }>>;
-        },
-        { syncList: any[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -347,12 +349,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("remove first item from array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -377,12 +376,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("remove last item from array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -407,12 +403,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("remove all elements of array except first", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -437,12 +430,9 @@ describe("2 ways tests with two clients", () => {
       assert({ syncList: ["a"] }, 3, 2);
     });
     test("remove all elements of array except last", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -467,12 +457,9 @@ describe("2 ways tests with two clients", () => {
       assert({ syncList: ["c"] }, 3, 2);
     });
     test("remove all elements of array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          syncList: LiveList<string>;
-        },
-        { syncList: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        syncList: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "syncList"),
@@ -514,12 +501,9 @@ describe("2 ways tests with two clients", () => {
 
     test("new state contains a function", async () => {
       const { storage, state, assertStorage } =
-        await prepareStorageImmutableTest<
-          {
-            syncObj: { a: any };
-          },
-          { syncObj: { a: any } }
-        >(
+        await prepareStorageImmutableTest<{
+          syncObj: { a: any };
+        }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -546,12 +530,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("Production env - new state contains a function", async () => {
-      const { storage, state } = await prepareStorageImmutableTest<
-        {
-          syncObj: { a: any };
-        },
-        { syncObj: { a: any } }
-      >(
+      const { storage, state } = await prepareStorageImmutableTest<{
+        syncObj: { a: any };
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -628,7 +609,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject,
         updates: { subsubA: { type: "update" } },
       },
     ];
@@ -663,17 +644,17 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject,
         updates: { subsubA: { type: "update" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subA"),
+        node: root.get("subA") as LiveObject,
         updates: { subsubB: { type: "delete" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subB"),
+        node: root.get("subB") as LiveObject,
         updates: { b: { type: "update" } },
       },
     ];
@@ -704,7 +685,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveMap",
-        node: root.get("map"),
+        node: root.get("map") as LiveMap,
         updates: { el2: { type: "update" } },
       },
     ];
@@ -732,7 +713,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveMap",
-        node: root.get("map"),
+        node: root.get("map") as LiveMap,
         updates: { el2: { type: "delete" } },
       },
     ];
@@ -762,7 +743,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 2, item: obj1, type: "insert" }],
       },
     ];
@@ -792,7 +773,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 0, item: newObj, type: "insert" }],
       },
     ];
@@ -826,7 +807,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 0, item: newObj1, type: "insert" },
           { index: 0, item: newObj2, type: "insert" },
@@ -862,7 +843,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 1, item: newObj1, type: "insert" },
           { index: 2, item: newObj2, type: "insert" },
@@ -895,7 +876,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 1, item: newObj, type: "insert" }],
       },
     ];
@@ -923,7 +904,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 1, type: "delete" }],
       },
     ];
@@ -952,7 +933,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [{ index: 0, type: "delete" }],
       },
     ];
@@ -983,7 +964,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveList",
-        node: root.get("list"),
+        node: root.get("list") as LiveList,
         updates: [
           { index: 0, type: "delete" },
           { index: 0, type: "delete" },
@@ -1019,7 +1000,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 0, previousIndex: 2, item: movedObj, type: "move" },
           ],
@@ -1055,7 +1036,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 3, previousIndex: 0, item: movedObj, type: "move" },
           ],
@@ -1091,7 +1072,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 3, previousIndex: 1, item: movedObj, type: "move" },
           ],
@@ -1127,7 +1108,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 2, previousIndex: 1, item: movedObj, type: "move" },
           ],
@@ -1167,7 +1148,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 1, previousIndex: 0, item: objA, type: "move" },
             { index: 3, previousIndex: 2, item: objC, type: "move" },
@@ -1207,7 +1188,7 @@ describe("patchImmutableObject", () => {
       const updates: StorageUpdate[] = [
         {
           type: "LiveList",
-          node: root.get("list"),
+          node: root.get("list") as LiveList,
           updates: [
             { index: 0, previousIndex: 1, item: objB, type: "move" },
             { index: 0, previousIndex: 2, item: objC, type: "move" },

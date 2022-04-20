@@ -3,36 +3,51 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { Lson, LsonObject } from "./lson";
+import { Json } from "./json";
 import { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
-export function liveObjectToJson(liveObject: LiveObject<any>) {
-  const result: any = {};
-  const obj = liveObject.toObject();
-
+function lsonObjectToJson<O extends LsonObject>(
+  obj: O
+): { [K in keyof O]: Json } {
+  const result: { [K in keyof O]: Json } = {} as any;
   for (const key in obj) {
-    result[key] = liveNodeToJson(obj[key]);
+    result[key] = lsonToJson(obj[key]);
   }
-
   return result;
 }
 
-function liveMapToJson(map: LiveMap<any, any>) {
-  const result: any = {};
-  const obj = Object.fromEntries(map);
+export function liveObjectToJson<O extends LsonObject>(
+  liveObject: LiveObject<O>
+): { [K in keyof O]: Json } {
+  return lsonObjectToJson(liveObject.toObject());
+}
 
-  for (const key in obj) {
-    result[key] = liveNodeToJson(obj[key]);
+function liveMapToJson<TKey extends string>(
+  map: LiveMap<TKey, Lson>
+): { [K in TKey]: Json } {
+  const result: { [K in TKey]: Json } = {} as any;
+  for (const [key, value] of map.entries()) {
+    result[key] = lsonToJson(value);
   }
-
   return result;
 }
 
-function liveListToJson(value: LiveList<any>) {
-  return value.toArray().map(liveNodeToJson);
+function lsonListToJson(value: Lson[]): Json[] {
+  return value.map(lsonToJson);
 }
 
-export function liveNodeToJson(value: unknown): any {
+function liveListToJson(value: LiveList<Lson>): Json[] {
+  return lsonListToJson(value.toArray());
+}
+
+export function lsonToJson(value: Lson | AbstractCrdt): Json {
+  //                                     ^^^^^^^^^^^^
+  //                                     FIXME: Remove me later. This requires the
+  //                                     addition of a concrete LiveStructure type first.
+
+  // Check for LiveStructure datastructures first
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
   } else if (value instanceof LiveList) {
@@ -41,16 +56,30 @@ export function liveNodeToJson(value: unknown): any {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
     return value.data;
+  } else if (value instanceof AbstractCrdt) {
+    // This code path should never be taken
+    throw new Error("Unhandled subclass of AbstractCrdt encountered");
   }
 
+  // Then for composite Lson values
+  if (Array.isArray(value)) {
+    return lsonListToJson(value);
+  } else if (isPlainObject(value)) {
+    return lsonObjectToJson(value);
+  }
+
+  // Finally, if value is an LsonScalar, then it's also a valid JsonScalar
   return value;
 }
 
 function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
-  return Object.prototype.toString.call(obj) === "[object Object]";
+  return (
+    obj !== null && Object.prototype.toString.call(obj) === "[object Object]"
+  );
 }
 
 function anyToCrdt(obj: unknown): any {
+  //                              ^^^ AbstractCrdt?
   if (obj == null) {
     return obj;
   }
@@ -58,7 +87,7 @@ function anyToCrdt(obj: unknown): any {
     return new LiveList(obj.map(anyToCrdt));
   }
   if (isPlainObject(obj)) {
-    const init: { [key: string]: unknown } = {};
+    const init: LsonObject = {};
     for (const key in obj) {
       init[key] = anyToCrdt(obj[key]);
     }
@@ -67,7 +96,7 @@ function anyToCrdt(obj: unknown): any {
   return obj;
 }
 
-export function patchLiveList<T>(
+export function patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
@@ -151,19 +180,20 @@ export function patchLiveList<T>(
       liveList.insert(anyToCrdt(next[i]), i);
       i++;
     }
-    while (i <= prevEnd) {
+    let localI = i;
+    while (localI <= prevEnd) {
       liveList.delete(i);
-      i++;
+      localI++;
     }
   }
 }
 
-export function patchLiveObjectKey<T>(
-  liveObject: LiveObject<T>,
-  key: keyof T,
-  prev: any,
-  next: any
-) {
+export function patchLiveObjectKey<O extends LsonObject>(
+  liveObject: LiveObject<O>,
+  key: keyof O,
+  prev: unknown,
+  next: unknown
+): void {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {
@@ -199,12 +229,12 @@ export function patchLiveObjectKey<T>(
   }
 }
 
-export function patchLiveObject<T extends Record<string, any>>(
-  root: LiveObject<T>,
-  prev: T,
-  next: T
+export function patchLiveObject<O extends LsonObject>(
+  root: LiveObject<O>,
+  prev: O,
+  next: O
 ) {
-  const updates: Partial<T> = {};
+  const updates: Partial<O> = {};
 
   for (const key in next) {
     patchLiveObjectKey(root, key, prev[key], next[key]);
@@ -264,7 +294,7 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = liveNodeToJson(update.node.get(key));
+            newState[key] = lsonToJson(update.node.get(key));
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }
@@ -288,11 +318,11 @@ function patchImmutableNode(
             );
           } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
-              newState.push(liveNodeToJson(listUpdate.item));
+              newState.push(lsonToJson(listUpdate.item));
             } else {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index),
               ];
             }
@@ -302,7 +332,7 @@ function patchImmutableNode(
             if (listUpdate.previousIndex > listUpdate.index) {
               newState = [
                 ...newState.slice(0, listUpdate.index),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index, listUpdate.previousIndex),
                 ...newState.slice(listUpdate.previousIndex + 1),
               ];
@@ -313,7 +343,7 @@ function patchImmutableNode(
                   listUpdate.previousIndex + 1,
                   listUpdate.index + 1
                 ),
-                liveNodeToJson(listUpdate.item),
+                lsonToJson(listUpdate.item),
                 ...newState.slice(listUpdate.index + 1),
               ];
             }
@@ -332,7 +362,7 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = liveNodeToJson(update.node.get(key));
+            newState[key] = lsonToJson(update.node.get(key)!);
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }

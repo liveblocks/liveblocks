@@ -9,6 +9,8 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
+import { Json, JsonObject } from "../src/json";
+import { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
@@ -121,11 +123,11 @@ export function objectToJson(record: LiveObject) {
   return result;
 }
 
-function listToJson<T>(list: LiveList<T>): Array<T> {
+function listToJson<T extends Lson>(list: LiveList<T>): Array<T> {
   return list.toArray().map(toJson);
 }
 
-function mapToJson<TKey extends string, TValue>(
+function mapToJson<TKey extends string, TValue extends Lson>(
   map: LiveMap<TKey, TValue>
 ): Array<[string, TValue]> {
   return Array.from(map.entries())
@@ -162,7 +164,7 @@ const defaultContext = {
   WebSocketPolyfill: MockWebSocket as any,
 };
 
-async function prepareRoomWithStorage<T>(
+async function prepareRoomWithStorage<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   onSend: (messages: ClientMessage[]) => void = () => {},
@@ -198,7 +200,7 @@ async function prepareRoomWithStorage<T>(
   };
 }
 
-export async function prepareIsolatedStorageTest<T>(
+export async function prepareIsolatedStorageTest<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   defaultStorage = {}
@@ -240,7 +242,7 @@ export async function prepareIsolatedStorageTest<T>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<T>(
+export async function prepareStorageTest<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
@@ -379,12 +381,12 @@ export async function reconnect(
   );
 }
 
-export async function prepareStorageImmutableTest<T, StateType>(
+export async function prepareStorageImmutableTest<T extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
-  let state: StateType = {} as any;
-  let refState: StateType = {} as any;
+  let state: ToJson<T> = {} as any;
+  let refState: ToJson<T> = {} as any;
 
   let totalStorageOps = 0;
 
@@ -415,8 +417,8 @@ export async function prepareStorageImmutableTest<T, StateType>(
     }
   );
 
-  state = liveObjectToJson(storage.root);
-  refState = liveObjectToJson(refStorage.root);
+  state = liveObjectToJson(storage.root) as ToJson<T>;
+  refState = liveObjectToJson(refStorage.root) as ToJson<T>;
 
   const root = refStorage.root;
   refMachine.subscribe(
@@ -509,7 +511,7 @@ export function createSerializedRegister(
   id: string,
   parentId: string,
   parentKey: string,
-  data: fixme
+  data: Json
 ): SerializedCrdtWithId {
   return [
     id,

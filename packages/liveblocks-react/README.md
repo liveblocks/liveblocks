@@ -18,6 +18,8 @@
   </a>
 </p>
 
+A set of [React](https://reactjs.org/) hooks and providers to use [Liveblocks](https://liveblocks.io) declaratively.
+
 ## Installation
 
 ```

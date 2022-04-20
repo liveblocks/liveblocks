@@ -1,4 +1,5 @@
 import { chromium, expect, Page } from "@playwright/test";
+import { Json } from "@liveblocks/client";
 
 import randomNumber from "../utils/randomNumber";
 
@@ -42,20 +43,17 @@ export async function assertContainText(
   }
 }
 
-export async function getTextContent(page: Page, id: string) {
+export async function getTextContent(page: Page, id: string): Promise<string> {
   const element = await page.locator(`#${id}`).innerText();
   if (!element) {
-    return null;
+    throw new Error(`Could not find HTML element #${id}`);
   }
   return element;
 }
 
-export async function getJsonContent(page: Page, id: string) {
-  const content = await getTextContent(page, id);
-  if (!content) {
-    return null;
-  }
-  return JSON.parse(content);
+export async function getJsonContent(page: Page, id: string): Promise<Json> {
+  const text = await getTextContent(page, id);
+  return JSON.parse(text);
 }
 
 export async function assertJsonContentAreEquals(
@@ -80,7 +78,8 @@ export async function waitForContentToBeEquals(
     const firstPageContent = await getTextContent(pages[0], id);
 
     let allEquals = true;
-    for (let pI = 1; i < pages.length; i++) {
+
+    for (let pI = 1; pI < pages.length; pI++) {
       const otherPageContent = await getTextContent(pages[pI], id);
       if (firstPageContent !== otherPageContent) {
         allEquals = false;

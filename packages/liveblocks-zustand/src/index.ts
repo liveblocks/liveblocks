@@ -2,7 +2,10 @@ import { StateCreator, SetState, GetState, StoreApi } from "zustand";
 import {
   Client,
   internals,
+  Json,
   LiveObject,
+  Lson,
+  LsonObject,
   Presence,
   Room,
   StorageUpdate,
@@ -26,19 +29,19 @@ import {
  */
 declare module "@liveblocks/client" {
   const internals: {
-    liveObjectToJson(liveObject: LiveObject<any>): void;
+    liveObjectToJson(liveObject: LiveObject<LsonObject>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<T>(
+    patchLiveObjectKey<T extends LsonObject>(
       liveObject: LiveObject<T>,
       key: keyof T,
-      prev: any,
-      next: any
+      prev: unknown,
+      next: unknown
     ): void;
-    liveNodeToJson(value: any): any;
+    lsonToJson(value: Lson): Json;
   };
 }
 
-const { patchLiveObjectKey, patchImmutableObject, liveNodeToJson } = internals;
+const { patchLiveObjectKey, patchImmutableObject, lsonToJson } = internals;
 
 export type LiveblocksState<
   TState,
@@ -225,7 +228,7 @@ export function middleware<
               updates[key] = initialState[key];
               patchLiveObjectKey(root, key, undefined, initialState[key]);
             } else {
-              updates[key] = liveNodeToJson(liveblocksStatePart);
+              updates[key] = lsonToJson(liveblocksStatePart);
             }
           }
         });
@@ -351,11 +354,15 @@ function updatePresence<T>(
   }
 }
 
-function patchLiveblocksStorage<T>(
-  root: LiveObject,
-  oldState: T,
-  newState: T,
-  mapping: Mapping<T>
+function patchLiveblocksStorage<
+  O extends LsonObject,
+  TState extends Record<string, unknown>,
+  TPresence extends Presence
+>(
+  root: LiveObject<O>,
+  oldState: LiveblocksState<TState, TPresence>,
+  newState: LiveblocksState<TState, TPresence>,
+  mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
     if (

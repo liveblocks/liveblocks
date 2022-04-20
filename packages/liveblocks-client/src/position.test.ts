@@ -1,8 +1,12 @@
 import { posCodes, makePosition, pos, min, max } from "./position";
 
-const mid = min + max >> 1;
+const mid = (min + max) >> 1;
 
-function testPosition(before: string | undefined, after: string | undefined, expected: string) {
+function testPosition(
+  before: string | undefined,
+  after: string | undefined,
+  expected: string
+) {
   const result = makePosition(before, after);
   expect(posCodes(result)).toEqual(posCodes(expected));
 }
@@ -32,33 +36,29 @@ describe("makePosition", () => {
     testPosition(pos([min + 1]), pos([min + 4]), pos([min + 2])));
 
   test("Insert between .1 and .2", () =>
-    testPosition(
-      pos([min + 1]), pos([min + 2]),
-      pos([min + 1, mid])
-    ));
+    testPosition(pos([min + 1]), pos([min + 2]), pos([min + 1, mid])));
 
   test("Insert between .11 and .12", () =>
     testPosition(
-      pos([min + 1, min + 1]), pos([min + 1, min + 2]),
+      pos([min + 1, min + 1]),
+      pos([min + 1, min + 2]),
       pos([min + 1, min + 1, mid])
     ));
 
   test("Insert between .09 and .1 should .095", () =>
-    testPosition(
-      pos([min, max]), pos([min + 1]),
-      pos([min, max, mid])
-    ));
+    testPosition(pos([min, max]), pos([min + 1]), pos([min, max, mid])));
 
   test("Insert between .19 and .21 should be .195", () =>
     testPosition(
-      pos([min + 1, max]), pos([min + 2, min + 1]),
+      pos([min + 1, max]),
+      pos([min + 2, min + 1]),
       pos([min + 1, max, mid])
     ));
 
   test("Insert between .11 and .21 should be .15", () =>
     testPosition(
-      pos([min + 1, min + 1]), pos([min + 2, min + 1]),
+      pos([min + 1, min + 1]),
+      pos([min + 2, min + 1]),
       pos([min + 1, (min + 1 + max) >> 1])
     ));
 });
-
