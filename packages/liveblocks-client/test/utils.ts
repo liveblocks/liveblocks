@@ -1,5 +1,5 @@
 import { AbstractCrdt } from "../src/AbstractCrdt";
-import { liveObjectToJson, patchImmutableObject } from "../src/immutable";
+import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import {
   ClientMessage,
   ClientMessageType,
@@ -10,10 +10,10 @@ import {
   ServerMessageType,
 } from "../src/live";
 import { Json, JsonObject } from "../src/json";
-import { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
+import { Lson, LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine, Machine } from "../src/room";
 import { Authentication } from "../src/types";
@@ -118,41 +118,6 @@ export class MockWebSocket implements WebSocket {
   dispatchEvent(_event: Event): boolean {
     throw new Error("Method not implemented.");
   }
-}
-
-export function objectToJson(record: LiveObject<LsonObject>) {
-  const result: any = {};
-  const obj = record.toObject();
-
-  for (const key in obj) {
-    result[key] = toJson(obj[key]);
-  }
-
-  return result;
-}
-
-function listToJson<T extends Lson>(list: LiveList<T>): Array<T> {
-  return list.toArray().map(toJson);
-}
-
-function mapToJson<TKey extends string, TValue extends Lson>(
-  map: LiveMap<TKey, TValue>
-): Array<[string, TValue]> {
-  return Array.from(map.entries())
-    .sort((entryA, entryB) => entryA[0].localeCompare(entryB[0]))
-    .map((entry) => [entry[0], toJson(entry[1])]);
-}
-
-function toJson(value: unknown) {
-  if (value instanceof LiveObject) {
-    return objectToJson(value);
-  } else if (value instanceof LiveList) {
-    return listToJson(value);
-  } else if (value instanceof LiveMap) {
-    return mapToJson(value);
-  }
-
-  return value;
 }
 
 export const FIRST_POSITION = makePosition();
@@ -314,9 +279,9 @@ export async function prepareStorageTest<
     if (shouldPushToStates) {
       states.push(data);
     }
-    const json = objectToJson(storage.root);
+    const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
-    expect(objectToJson(refStorage.root)).toEqual(data);
+    expect(lsonToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
@@ -442,8 +407,8 @@ export async function prepareStorageImmutableTest<
     }
   });
 
-  state = liveObjectToJson(storage.root) as ToJson<TStorageRoot>;
-  refState = liveObjectToJson(refStorage.root) as ToJson<TStorageRoot>;
+  state = lsonToJson(storage.root) as ToJson<TStorageRoot>;
+  refState = lsonToJson(refStorage.root) as ToJson<TStorageRoot>;
 
   const root = refStorage.root;
   refMachine.subscribe(
@@ -469,9 +434,9 @@ export async function prepareStorageImmutableTest<
   }
 
   function assertStorage(data: fixme) {
-    const json = objectToJson(storage.root);
+    const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
-    expect(objectToJson(refStorage.root)).toEqual(data);
+    expect(lsonToJson(refStorage.root)).toEqual(data);
   }
 
   return {
