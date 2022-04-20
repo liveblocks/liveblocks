@@ -550,7 +550,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     }
   }
 
-  set(index: number, item: T) {
+  set(index: number, item: TItem) {
     if (index < 0 || index >= this._items.length) {
       throw new Error(
         `Cannot set list item at index "${index}". index should be between 0 and ${
@@ -571,7 +571,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, StorageUpdate>();
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, {
         node: this,
         type: "LiveList",
