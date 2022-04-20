@@ -18,15 +18,14 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
+import { Json } from "./json";
+import { Lson, LsonObject } from "./lson";
 import {
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,
   StorageUpdate,
 } from "./types";
-
-// TODO: Further improve this type
-type fixme = unknown;
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -116,7 +115,7 @@ export function selfOrRegisterValue(obj: AbstractCrdt) {
   return obj;
 }
 
-export function selfOrRegister(obj: unknown): AbstractCrdt {
+export function selfOrRegister(obj: Lson): AbstractCrdt {
   if (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||
@@ -128,7 +127,22 @@ export function selfOrRegister(obj: unknown): AbstractCrdt {
       "Internal error. LiveRegister should not be created from selfOrRegister"
     );
   } else {
-    return new LiveRegister(obj);
+    // By now, we've checked that obj isn't a Live storage instance.
+    // Technically what remains here can still be a (1) live data scalar, or
+    // a (2) list of Lson values, or (3) an object with Lson values.
+    //
+    // Of these, (1) is fine, because a live data scalar is also a legal Json
+    // scalar.
+    //
+    // But (2) and (3) are only technically fine if those only contain Json
+    // values. Technically, these can still contain nested Live storage
+    // instances, and we should probably assert that they don't at runtime.
+    //
+    // TypeScript understands this and doesn't let us use `obj` until we do :)
+    //
+    return new LiveRegister(obj as Json);
+    //                          ^^^^^^^
+    //                          TODO: Better to assert than to force-cast here!
   }
 }
 
@@ -214,41 +228,70 @@ export function getTreesDiffOperations(
   return ops;
 }
 
-export function mergeStorageUpdates(
-  first: StorageUpdate | undefined,
-  second: StorageUpdate
-): StorageUpdate {
+function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
+  first: LiveObjectUpdates<A>,
+  second: LiveObjectUpdates<B>
+): LiveObjectUpdates<A | B> {
+  const updates = first.updates as typeof second["updates"];
+  for (const [key, value] of entries(second.updates)) {
+    updates[key] = value;
+  }
+  return {
+    ...second,
+    updates: updates,
+  };
+}
+
+function mergeMapStorageUpdates<
+  K1 extends string,
+  V1 extends Lson,
+  K2 extends string,
+  V2 extends Lson
+>(
+  first: LiveMapUpdates<K1, V1>,
+  second: LiveMapUpdates<K2, V2>
+): LiveMapUpdates<K1 | K2, V1 | V2> {
+  const updates = first.updates;
+  for (const [key, value] of entries(second.updates)) {
+    updates[key] = value;
+  }
+  return {
+    ...second,
+    updates: updates,
+  };
+}
+
+function mergeListStorageUpdates<T extends Lson>(
+  first: LiveListUpdates<Lson>,
+  second: LiveListUpdates<T>
+): LiveListUpdates<T> {
+  const updates = first.updates;
+  return {
+    ...second,
+    updates: updates.concat(second.updates),
+  };
+}
+
+// prettier-ignore
+export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
+// prettier-ignore
+export function mergeStorageUpdates<K1 extends string, V1 extends Lson, K2 extends string, V2 extends Lson>(first: LiveMapUpdates<K1, V1>, second: LiveMapUpdates<K2, V2>): LiveMapUpdates<K1 | K2, V1 | V2>;
+// prettier-ignore
+export function mergeStorageUpdates<T extends Lson>(first: LiveListUpdates<Lson>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+// prettier-ignore
+export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {
     return second;
   }
 
-  if (second.type === "LiveObject") {
-    const updates = (first as LiveObjectUpdates<any /* fixme! */>).updates;
-
-    for (const [key, value] of Object.entries(second.updates)) {
-      updates[key] = value;
-    }
-    return {
-      ...second,
-      updates: updates,
-    };
-  } else if (second.type === "LiveMap") {
-    const updates = (first as LiveMapUpdates<string, fixme>).updates;
-
-    for (const [key, value] of Object.entries(second.updates)) {
-      updates[key] = value;
-    }
-    return {
-      ...second,
-      updates: updates,
-    };
-  } else if (second.type === "LiveList") {
-    const updates = (first as LiveListUpdates<fixme>).updates;
-
-    return {
-      ...second,
-      updates: updates.concat(second.updates),
-    };
+  if (first.type === "LiveObject" && second.type === "LiveObject") {
+    return mergeObjectStorageUpdates(first, second);
+  } else if (first.type === "LiveMap" && second.type === "LiveMap") {
+    return mergeMapStorageUpdates(first, second);
+  } else if (first.type === "LiveList" && second.type === "LiveList") {
+    return mergeListStorageUpdates(first, second);
+  } else {
+    /* Mismatching merge types. Throw an error here? */
   }
 
   return second;
@@ -343,4 +386,32 @@ export function isTokenValid(token: string | null) {
   }
 
   return true;
+}
+
+/**
+ * Drop-in replacement for Object.entries() that retains better types.
+ */
+export function entries<
+  O extends { [key: string]: unknown },
+  K extends keyof O
+>(obj: O): [K, O[K]][] {
+  return Object.entries(obj) as [K, O[K]][];
+}
+
+/**
+ * Drop-in replacement for Object.keys() that retains better types.
+ */
+export function keys<O extends { [key: string]: unknown }, K extends keyof O>(
+  obj: O
+): K[] {
+  return Object.keys(obj) as K[];
+}
+
+/**
+ * Drop-in replacement for Object.values() that retains better types.
+ */
+export function values<O extends { [key: string]: unknown }>(
+  obj: O
+): O[keyof O][] {
+  return Object.values(obj) as O[keyof O][];
 }

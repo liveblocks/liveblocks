@@ -1,3 +1,4 @@
+import { Json, JsonObject } from "./json";
 import { Presence } from "./types";
 
 export type ServerMessage =
@@ -52,7 +53,7 @@ export type UserLeftMessage = {
 export type EventMessage = {
   type: ServerMessageType.Event;
   actor: number;
-  event: any;
+  event: Json;
 };
 
 export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
@@ -83,7 +84,7 @@ export enum ClientMessageType {
 
 export type ClientEventMessage = {
   type: ClientMessageType.ClientEvent;
-  event: any;
+  event: Json;
 };
 
 export type UpdatePresenceClientMessage = {
@@ -112,9 +113,7 @@ export type SerializedObject = {
   type: CrdtType.Object;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JsonObject;
 };
 
 export type SerializedList = {
@@ -133,7 +132,7 @@ export type SerializedRegister = {
   type: CrdtType.Register;
   parentId: string;
   parentKey: string;
-  data: any;
+  data: Json;
 };
 
 export type SerializedCrdt =
@@ -174,9 +173,7 @@ export type UpdateObjectOp = {
   opId?: string;
   id: string;
   type: OpType.UpdateObject;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: Partial<JsonObject>;
 };
 
 export type CreateObjectOp = {
@@ -186,9 +183,7 @@ export type CreateObjectOp = {
   type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
-  data: {
-    [key: string]: any; // TODO
-  };
+  data: JsonObject;
 };
 
 export type CreateListOp = {

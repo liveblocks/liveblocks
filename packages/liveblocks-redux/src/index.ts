@@ -3,6 +3,7 @@ import {
   User,
   Room,
   LiveObject,
+  LsonObject,
   Presence,
   internals,
   StorageUpdate,
@@ -27,23 +28,21 @@ declare module "@liveblocks/client" {
   const internals: {
     liveObjectToJson(liveObject: LiveObject<any>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<T>(
+    patchLiveObjectKey<T extends LsonObject>(
       liveObject: LiveObject<T>,
       key: keyof T,
-      prev: any,
-      next: any
+      prev: unknown,
+      next: unknown
     ): void;
-    liveNodeToJson(value: any): any;
+    lsonToJson(value: any): any;
   };
 }
 
-const { patchImmutableObject, patchLiveObjectKey, liveNodeToJson } = internals;
+const { patchImmutableObject, patchLiveObjectKey, lsonToJson } = internals;
 
-export type Mapping<T> = Partial<
-  {
-    [Property in keyof T]: boolean;
-  }
->;
+export type Mapping<T> = Partial<{
+  [Property in keyof T]: boolean;
+}>;
 
 const ACTION_TYPES = {
   ENTER: "@@LIVEBLOCKS/ENTER",
@@ -256,7 +255,7 @@ const internalEnhancer = <T>(options: {
                   storageInitialState[key]
                 );
               } else {
-                updates[key] = liveNodeToJson(liveblocksStatePart);
+                updates[key] = lsonToJson(liveblocksStatePart);
               }
             }
           });
@@ -356,8 +355,8 @@ export const enhancer = internalEnhancer as <T>(options: {
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<T>(
-  root: LiveObject,
+function patchLiveblocksStorage<O extends LsonObject, T>(
+  root: LiveObject<O>,
   oldState: T,
   newState: T,
   mapping: Mapping<T>

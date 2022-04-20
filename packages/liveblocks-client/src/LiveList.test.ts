@@ -199,7 +199,7 @@ describe("LiveList", () => {
 
       assert({ items: [] });
 
-      items.push(new LiveMap<string, number>([["first", 0]]));
+      items.push(new LiveMap([["first", 0]]));
 
       assert({
         items: [[["first", 0]]],

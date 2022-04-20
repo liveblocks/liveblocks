@@ -1,15 +1,20 @@
+import { Json } from "@liveblocks/client";
 import { Page, test, expect } from "@playwright/test";
 import {
   preparePage,
   delay,
   getJsonContent,
-  getTextContent,
-  preparePages,
+  // getTextContent,
+  // preparePages,
   assertContainText,
 } from "../utils";
 
-function getOthers(page: Page) {
+function getOthers(page: Page): Promise<Json> {
   return getJsonContent(page, "others");
+}
+
+function getEvents(page: Page): Promise<Json> {
+  return getJsonContent(page, "events");
 }
 
 const TEST_URL = "http://localhost:3007/presence";
@@ -18,7 +23,6 @@ test.describe("Presence", () => {
   test("connect A => connect B => verify others on A and B", async () => {
     const testUrl = TEST_URL + "?room=e2e-presence-scenario1";
     const firstPage = await preparePage(testUrl);
-
     const secondPage = await preparePage(testUrl);
 
     await Promise.all([
@@ -146,6 +150,45 @@ test.describe("Presence", () => {
 
       await delay(1000);
     }
+
+    await firstPage.close();
+    await secondPage.close();
+  });
+});
+
+test.describe("Broadcast", () => {
+  test("connect A => connect B => broadcast from A => verify B got event", async () => {
+    const testUrl = TEST_URL + "?room=e2e-broadcast-scenario1";
+    const firstPage = await preparePage(testUrl);
+    const secondPage = await preparePage(testUrl);
+
+    await Promise.all([
+      firstPage.waitForSelector("#events"),
+      secondPage.waitForSelector("#events"),
+    ]);
+
+    // Give other clients some time to properly connect to the room
+    await delay(500);
+
+    await firstPage.click("#broadcast-emoji");
+    await delay(500);
+
+    // Now check contents of page
+    let eventsFirstPage = await getEvents(firstPage);
+    let eventsSecondPage = await getEvents(secondPage);
+    expect(eventsFirstPage).toEqual([]);
+    expect(eventsSecondPage).toEqual([{ type: "EMOJI", emoji: "🔥" }]);
+
+    await secondPage.click("#broadcast-number");
+    await secondPage.click("#broadcast-emoji");
+    await secondPage.click("#broadcast-number");
+    await delay(500);
+
+    // Check again
+    eventsFirstPage = await getEvents(firstPage);
+    eventsSecondPage = await getEvents(secondPage);
+    expect(eventsFirstPage).toEqual([42, { type: "EMOJI", emoji: "🔥" }, 42]);
+    expect(eventsSecondPage).toEqual([{ type: "EMOJI", emoji: "🔥" }]);
 
     await firstPage.close();
     await secondPage.close();

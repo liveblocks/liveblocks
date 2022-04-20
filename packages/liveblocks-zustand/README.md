@@ -18,6 +18,8 @@
   </a>
 </p>
 
+A [middleware](https://github.com/pmndrs/zustand#middleware) to integrate [Liveblocks](https://liveblocks.io) into [Zustand](https://github.com/pmndrs/zustand) stores.
+
 ## Installation
 
 ```

@@ -11,7 +11,9 @@ import {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
-import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
+import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
+import { JsonObject } from "./json";
+import { LsonObject, ToJson } from "./lson";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -19,7 +21,7 @@ import { LiveObjectUpdateDelta, StorageUpdate } from "./types";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<
-  T extends Record<string, any> = Record<string, any>
+  T extends LsonObject = LsonObject
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
@@ -99,11 +101,12 @@ export class LiveObject<
   /**
    * @internal
    */
-  static _deserializeChildren(
-    object: LiveObject,
+  static _deserializeChildren<J extends JsonObject>(
+    object: LiveObject<J>,
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
-  ) {
+  ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
+  LiveObject<LsonObject> {
     const children = parentToChildren.get(object._id!);
 
     if (children == null) {
@@ -221,12 +224,12 @@ export class LiveObject<
 
       child._detach();
 
-      const storageUpdate: StorageUpdate = {
+      const storageUpdate: LiveObjectUpdates<T> = {
         node: this as any,
         type: "LiveObject",
         updates: {
           [child._parentKey!]: { type: "delete" },
-        },
+        } as { [K in keyof T]: UpdateDelta },
       };
 
       return { modified: storageUpdate, reverse };
@@ -459,11 +462,13 @@ export class LiveObject<
 
     this._map.delete(keyAsString);
 
-    const storageUpdates = new Map<string, StorageUpdate>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
-      updates: { [key as string]: { type: "delete" } },
+      updates: { [key]: { type: "delete" } } as {
+        [K in keyof T]: UpdateDelta;
+      },
     });
 
     this._doc.dispatch(
@@ -509,7 +514,7 @@ export class LiveObject<
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updatedProps: Partial<T> = {};
+    const updatedProps: Partial<ToJson<T>> = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
@@ -568,7 +573,7 @@ export class LiveObject<
       });
     }
 
-    const storageUpdates = new Map<string, StorageUpdate>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",

@@ -177,7 +177,7 @@ describe("Storage", () => {
         a: number;
         childObj: LiveObject<{ b: number }>;
         childList: LiveList<string>;
-        childMap: LiveMap<string, string>;
+        childMap: LiveMap<string>;
       }>(
         [
           createSerializedObject("0:0", { a: 0 }),
