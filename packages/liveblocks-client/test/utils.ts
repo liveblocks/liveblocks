@@ -243,7 +243,7 @@ export async function prepareIsolatedStorageTest<
     redo: machine.redo,
     ws,
     assert: (data: fixme) => expect(objectToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMessage[]) => {
+    assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
@@ -541,7 +541,7 @@ export function createSerializedRegister(
   ];
 }
 
-export function mockEffects(): Effects {
+export function mockEffects(): Effects<any> {
   return {
     authenticate: jest.fn(),
     delayFlush: jest.fn(),
@@ -552,7 +552,9 @@ export function mockEffects(): Effects {
   };
 }
 
-export function serverMessage(message: ServerMessage) {
+export function serverMessage<TPresence extends JsonObject>(
+  message: ServerMessage<TPresence>
+) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });
