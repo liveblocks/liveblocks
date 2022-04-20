@@ -188,9 +188,9 @@ export function patchLiveList<T extends Lson>(
   }
 }
 
-export function patchLiveObjectKey<T extends LsonObject>(
-  liveObject: LiveObject<T>,
-  key: keyof T,
+export function patchLiveObjectKey<O extends LsonObject>(
+  liveObject: LiveObject<O>,
+  key: keyof O,
   prev: unknown,
   next: unknown
 ): void {
@@ -229,12 +229,12 @@ export function patchLiveObjectKey<T extends LsonObject>(
   }
 }
 
-export function patchLiveObject<T extends LsonObject>(
-  root: LiveObject<T>,
-  prev: T,
-  next: T
+export function patchLiveObject<O extends LsonObject>(
+  root: LiveObject<O>,
+  prev: O,
+  next: O
 ) {
-  const updates: Partial<T> = {};
+  const updates: Partial<O> = {};
 
   for (const key in next) {
     patchLiveObjectKey(root, key, prev[key], next[key]);
