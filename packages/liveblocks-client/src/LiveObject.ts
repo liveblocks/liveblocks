@@ -12,7 +12,7 @@ import {
 } from "./live";
 import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
 import { JsonObject } from "./json";
-import { LsonObject } from "./lson";
+import { LsonObject, ToJson } from "./lson";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -509,7 +509,7 @@ export class LiveObject<
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updatedProps: Partial<T> = {};
+    const updatedProps: Partial<ToJson<T>> = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,

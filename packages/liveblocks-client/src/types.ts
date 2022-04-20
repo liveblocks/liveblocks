@@ -40,9 +40,12 @@ export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
   type: "LiveMap";
   node: LiveMap<TKey, TValue>;
   updates: { [key: string]: UpdateDelta };
+  //               ^^^^^^
+  //               FIXME: `string` is not specific enough here. See if we can
+  //               improve this type to match TKey!
 };
 
-export type LiveObjectUpdateDelta<O extends LsonObject> = {
+export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
   [K in keyof O]?: UpdateDelta | undefined;
 };
 
