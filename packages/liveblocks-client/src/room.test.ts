@@ -509,7 +509,7 @@ describe("room", () => {
 
   test("storage should be initialized properly", async () => {
     const effects = mockEffects();
-    const state = defaultState({});
+    const state = defaultState<never, { x: number }>();
     const machine = makeStateMachine<never, { x: number }>(
       state,
       defaultContext,
@@ -730,7 +730,11 @@ describe("room", () => {
   test("batch without changes should not erase redo stack", async () => {
     const effects = mockEffects();
     const state = defaultState<never, { x: number }>();
-    const room = makeStateMachine(state, defaultContext, effects);
+    const room = makeStateMachine<never, { x: number }>(
+      state,
+      defaultContext,
+      effects
+    );
 
     const ws = new MockWebSocket("");
     room.connect();

@@ -179,12 +179,15 @@ async function prepareRoomWithStorage<
   items: SerializedCrdtWithId[],
   actor: number = 0,
   onSend: (messages: ClientMessage<TPresence>[]) => void = () => {},
-  defaultStorage = {}
+  defaultStorage?: TStorageRoot
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence, TStorageRoot>({}, defaultStorage);
+  const state = defaultState<TPresence, TStorageRoot>(
+    undefined,
+    defaultStorage
+  );
   const machine = makeStateMachine<TPresence, TStorageRoot>(
     state,
     defaultContext,
@@ -218,7 +221,11 @@ async function prepareRoomWithStorage<
 export async function prepareIsolatedStorageTest<
   TPresence extends JsonObject,
   TStorageRoot extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage = {}) {
+>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0,
+  defaultStorage?: TStorageRoot
+) {
   const messagesSent: ClientMessage<TPresence>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
@@ -379,8 +386,11 @@ export async function prepareStorageTest<
   };
 }
 
-export async function reconnect(
-  machine: Machine,
+export async function reconnect<
+  TPresence extends JsonObject,
+  TStorageRoot extends LsonObject
+>(
+  machine: Machine<TPresence, TStorageRoot>,
   actor: number,
   newItems: SerializedCrdtWithId[]
 ) {
