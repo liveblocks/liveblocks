@@ -1,6 +1,5 @@
-import { Client } from "@liveblocks/client";
 import * as React from "react";
-export type { Json, JsonObject } from "@liveblocks/client";
+import { Client } from "@liveblocks/client";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;
