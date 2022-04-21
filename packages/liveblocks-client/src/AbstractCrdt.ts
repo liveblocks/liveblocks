@@ -35,6 +35,7 @@ export enum OpSource {
 }
 
 export abstract class AbstractCrdt {
+  //                  ^^^^^^^^^^^^ TODO: Make this an interface
   private __parent?: AbstractCrdt;
   private __doc?: Doc;
   private __id?: string;
