@@ -123,23 +123,22 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
-export type Client<
-  TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
-> = {
+export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
-  getRoom(roomId: string): Room<TPresence, TStorageRoot> | null;
+  getRoom<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
+    roomId: string
+  ): Room<TPresence, TStorageRoot> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter(
+  enter<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
     roomId: string,
     options?: {
       defaultPresence?: TPresence;

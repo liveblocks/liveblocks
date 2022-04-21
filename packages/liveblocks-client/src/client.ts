@@ -28,21 +28,23 @@ import { LsonObject } from "./lson";
  *   }
  * });
  */
-export function createClient<
-  TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
->(options: ClientOptions): Client<TPresence, TStorageRoot> {
+export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom<TPresence, TStorageRoot>>();
+  const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
 
-  function getRoom(roomId: string): Room<TPresence, TStorageRoot> | null {
+  function getRoom<
+    TPresence extends JsonObject,
+    TStorageRoot extends LsonObject
+  >(roomId: string): Room<TPresence, TStorageRoot> | null {
     const internalRoom = rooms.get(roomId);
-    return internalRoom ? internalRoom.room : null;
+    return internalRoom
+      ? (internalRoom.room as unknown as Room<TPresence, TStorageRoot>)
+      : null;
   }
 
-  function enter(
+  function enter<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
     roomId: string,
     options: {
       defaultPresence?: TPresence;
@@ -53,11 +55,15 @@ export function createClient<
       DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
   ): Room<TPresence, TStorageRoot> {
-    let internalRoom = rooms.get(roomId);
-    if (internalRoom) {
-      return internalRoom.room;
+    const existingInternalRoom = rooms.get(roomId);
+    if (existingInternalRoom) {
+      return existingInternalRoom.room as unknown as Room<
+        TPresence,
+        TStorageRoot
+      >;
     }
-    internalRoom = createRoom(
+
+    const newInternalRoom = createRoom<TPresence, TStorageRoot>(
       {
         defaultPresence: options.defaultPresence,
         defaultStorageRoot: options.defaultStorageRoot,
@@ -72,11 +78,14 @@ export function createClient<
         authentication: prepareAuthentication(clientOptions),
       }
     );
-    rooms.set(roomId, internalRoom);
+    rooms.set(
+      roomId,
+      newInternalRoom as unknown as InternalRoom<JsonObject, LsonObject>
+    );
     if (!options.DO_NOT_USE_withoutConnecting) {
-      internalRoom.connect();
+      newInternalRoom.connect();
     }
-    return internalRoom.room;
+    return newInternalRoom.room;
   }
 
   function leave(roomId: string) {
