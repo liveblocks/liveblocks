@@ -6,6 +6,8 @@ export type ApplyResult =
   | { modified: false };
 
 export interface Doc {
+  //             ^^^ FIXME: Find a better name for "Doc". This is more or less
+  //                        the "RoomContext".
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
