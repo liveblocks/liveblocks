@@ -178,7 +178,11 @@ export type Effects = {
 };
 
 type Context = {
+  /**
+   * @deprecated Use `roomId` instead.
+   */
   room: string;
+  roomId: string;
   throttleDelay: number;
   fetchPolyfill?: typeof fetch;
   WebSocketPolyfill?: typeof WebSocket;
@@ -201,7 +205,7 @@ export function makeStateMachine(
         const socket = createWebSocket(state.token!);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return auth(context.room)
+        return auth(context.roomId)
           .then(({ token }) => {
             if (state.connection.state !== "authenticating") {
               return;
@@ -335,7 +339,7 @@ export function makeStateMachine(
       generateId,
       generateOpId,
       dispatch: storageDispatch,
-      roomId: context.room,
+      roomId: context.roomId,
     });
   }
 
@@ -1539,7 +1543,7 @@ export function createRoom(
   const machine = makeStateMachine(state, context);
 
   const room: Room = {
-    id: context.room,
+    id: context.roomId,
     /////////////
     // Core    //
     /////////////
