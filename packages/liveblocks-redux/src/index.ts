@@ -28,9 +28,9 @@ declare module "@liveblocks/client" {
   const internals: {
     liveObjectToJson(liveObject: LiveObject<any>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<T extends LsonObject>(
-      liveObject: LiveObject<T>,
-      key: keyof T,
+    patchLiveObjectKey<O extends LsonObject>(
+      liveObject: LiveObject<O>,
+      key: keyof O,
       prev: unknown,
       next: unknown
     ): void;

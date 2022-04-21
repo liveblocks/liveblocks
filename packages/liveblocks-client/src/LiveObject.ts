@@ -20,12 +20,12 @@ import { LsonObject, ToJson } from "./lson";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<
-  T extends LsonObject = LsonObject
+  O extends LsonObject = LsonObject
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
-  constructor(object: T = {} as T) {
+  constructor(object: O = {} as O) {
     super();
 
     this._propToLastUpdate = new Map<string, string>();
@@ -140,7 +140,7 @@ export class LiveObject<
    */
   _attachChild(
     id: string,
-    key: keyof T,
+    key: keyof O,
     child: AbstractCrdt,
     opId: string,
     isLocal: boolean
@@ -219,12 +219,12 @@ export class LiveObject<
 
       child._detach();
 
-      const storageUpdate: LiveObjectUpdates<T> = {
+      const storageUpdate: LiveObjectUpdates<O> = {
         node: this as any,
         type: "LiveObject",
         updates: {
           [child._parentKey!]: { type: "delete" },
-        } as { [K in keyof T]: UpdateDelta },
+        } as { [K in keyof O]: UpdateDelta },
       };
 
       return { modified: storageUpdate, reverse };
@@ -299,7 +299,7 @@ export class LiveObject<
     };
     reverse.push(reverseUpdate);
 
-    for (const key in op.data as Partial<T>) {
+    for (const key in op.data as Partial<O>) {
       const oldValue = this._map.get(key);
       if (oldValue instanceof AbstractCrdt) {
         reverse.push(...oldValue._serialize(this._id!, key));
@@ -311,8 +311,8 @@ export class LiveObject<
       }
     }
 
-    const updateDelta: LiveObjectUpdateDelta<T> = {};
-    for (const key in op.data as Partial<T>) {
+    const updateDelta: LiveObjectUpdateDelta<O> = {};
+    for (const key in op.data as Partial<O>) {
       if (isLocal) {
         this._propToLastUpdate.set(key, op.opId!);
       } else if (this._propToLastUpdate.get(key) == null) {
@@ -398,8 +398,8 @@ export class LiveObject<
   /**
    * Transform the LiveObject into a javascript object
    */
-  toObject(): T {
-    return Object.fromEntries(this._map) as T;
+  toObject(): O {
+    return Object.fromEntries(this._map) as O;
   }
 
   /**
@@ -407,16 +407,16 @@ export class LiveObject<
    * @param key The key of the property to add
    * @param value The value of the property to add
    */
-  set<TKey extends keyof T>(key: TKey, value: T[TKey]) {
+  set<TKey extends keyof O>(key: TKey, value: O[TKey]) {
     // TODO: Find out why typescript complains
-    this.update({ [key]: value } as any as Partial<T>);
+    this.update({ [key]: value } as any as Partial<O>);
   }
 
   /**
    * Returns a specified property from the LiveObject.
    * @param key The key of the property to get
    */
-  get<TKey extends keyof T>(key: TKey): T[TKey] {
+  get<TKey extends keyof O>(key: TKey): O[TKey] {
     return this._map.get(key as string);
   }
 
@@ -424,7 +424,7 @@ export class LiveObject<
    * Deletes a key from the LiveObject
    * @param key The key of the property to delete
    */
-  delete(key: keyof T): void {
+  delete(key: keyof O): void {
     const keyAsString = key as string;
     const oldValue = this._map.get(keyAsString);
 
@@ -457,12 +457,12 @@ export class LiveObject<
 
     this._map.delete(keyAsString);
 
-    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
       updates: { [key]: { type: "delete" } } as {
-        [K in keyof T]: UpdateDelta;
+        [K in keyof O]: UpdateDelta;
       },
     });
 
@@ -484,7 +484,7 @@ export class LiveObject<
    * Adds or updates multiple properties at once with an object.
    * @param overrides The object used to overrides properties
    */
-  update(overrides: Partial<T>) {
+  update(overrides: Partial<O>) {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
         const oldValue = this._map.get(key);
@@ -509,7 +509,7 @@ export class LiveObject<
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updatedProps: Partial<ToJson<T>> = {};
+    const updatedProps: Partial<ToJson<O>> = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
@@ -517,7 +517,7 @@ export class LiveObject<
       data: {},
     };
 
-    const updateDelta: LiveObjectUpdateDelta<T> = {};
+    const updateDelta: LiveObjectUpdateDelta<O> = {};
 
     for (const key in overrides) {
       const oldValue = this._map.get(key);
@@ -568,7 +568,7 @@ export class LiveObject<
       });
     }
 
-    const storageUpdates = new Map<string, LiveObjectUpdates<T>>();
+    const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
     storageUpdates.set(this._id, {
       node: this,
       type: "LiveObject",
