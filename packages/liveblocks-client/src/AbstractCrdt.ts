@@ -12,6 +12,13 @@ export interface Doc {
   getItem: (id: string) => AbstractCrdt | undefined;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
+
+  /**
+   * Dispatching has three responsibilities:
+   * - Sends serialized ops to the WebSocket servers
+   * - Add reverse operations to the undo/redo stack
+   * - Notify room subscribers with updates (in-client, no networking)
+   */
   dispatch: (
     ops: Op[],
     reverseOps: Op[],
