@@ -159,12 +159,15 @@ export enum OpType {
   CreateRegister = 8,
 }
 
+/**
+ * These operations are the payload for Storage messages only.
+ */
 export type Op =
   | CreateObjectOp
   | UpdateObjectOp
   | DeleteCrdtOp
   | CreateListOp
-  | SetParentKeyOp
+  | SetParentKeyOp // Only for lists!
   | DeleteObjectKeyOp
   | CreateMapOp
   | CreateRegisterOp;
