@@ -1,6 +1,9 @@
 import { Json, JsonObject } from "./json";
 import { Presence } from "./types";
 
+/**
+ * Messages that can be sent from the server to the client.
+ */
 export type ServerMessage =
   | UpdatePresenceMessage
   | UserJoinMessage
@@ -68,6 +71,9 @@ export type UpdateStorageMessage = {
   ops: Op[];
 };
 
+/**
+ * Messages that can be sent from the client to the server.
+ */
 export type ClientMessage =
   | ClientEventMessage
   | UpdatePresenceClientMessage
