@@ -29,7 +29,6 @@ import {
  */
 declare module "@liveblocks/client" {
   const internals: {
-    liveObjectToJson(liveObject: LiveObject<LsonObject>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
     patchLiveObjectKey<O extends LsonObject>(
       liveObject: LiveObject<O>,
@@ -38,6 +37,7 @@ declare module "@liveblocks/client" {
       next: unknown
     ): void;
     lsonToJson(value: Lson): Json;
+    liveObjectToJson(liveObject: LiveObject<LsonObject>): Json;
   };
 }
 

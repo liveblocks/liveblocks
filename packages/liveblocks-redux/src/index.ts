@@ -7,6 +7,8 @@ import {
   Presence,
   internals,
   StorageUpdate,
+  Json,
+  Lson,
 } from "@liveblocks/client";
 import { StoreEnhancer } from "redux";
 import {
@@ -26,7 +28,6 @@ import {
  */
 declare module "@liveblocks/client" {
   const internals: {
-    liveObjectToJson(liveObject: LiveObject<any>): void;
     patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
     patchLiveObjectKey<O extends LsonObject>(
       liveObject: LiveObject<O>,
@@ -34,7 +35,8 @@ declare module "@liveblocks/client" {
       prev: unknown,
       next: unknown
     ): void;
-    lsonToJson(value: any): any;
+    lsonToJson(value: Lson): Json;
+    liveObjectToJson(liveObject: LiveObject<LsonObject>): Json;
   };
 }
 
