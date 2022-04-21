@@ -1,6 +1,6 @@
+import { useClient } from "./client";
 import {
   BroadcastOptions,
-  Client,
   History,
   Json,
   LiveList,
@@ -15,40 +15,11 @@ import {
 } from "@liveblocks/client";
 import * as React from "react";
 import useRerender from "./useRerender";
+
+export { LiveblocksProvider, useClient } from "./client";
 export type { Json, JsonObject } from "@liveblocks/client";
 
-type LiveblocksProviderProps = {
-  children: React.ReactNode;
-  client: Client;
-};
-
-const ClientContext = React.createContext<Client | null>(null);
 const RoomContext = React.createContext<Room | null>(null);
-
-/**
- * Makes the Liveblocks client available in the component hierarchy below.
- */
-export function LiveblocksProvider(
-  props: LiveblocksProviderProps
-): JSX.Element {
-  return (
-    <ClientContext.Provider value={props.client}>
-      {props.children}
-    </ClientContext.Provider>
-  );
-}
-
-/**
- * Returns the client of the nearest LiveblocksProvider above in the react component tree
- */
-function useClient(): Client {
-  const client = React.useContext(ClientContext);
-  if (client == null) {
-    throw new Error("LiveblocksProvider is missing from the react tree");
-  }
-
-  return client;
-}
 
 type RoomProviderProps<TStorageRoot> = {
   /**
