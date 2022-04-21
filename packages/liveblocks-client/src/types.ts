@@ -210,9 +210,6 @@ export type User<TPresence extends JsonObject = JsonObject> = {
   _hasReceivedInitialPresence?: boolean;
 };
 
-// FIXME: Restore to remain backward-compatible!!!!!!
-// export type Presence = Record<string, unknown>;
-
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
