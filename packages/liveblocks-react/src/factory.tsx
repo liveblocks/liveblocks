@@ -18,9 +18,6 @@ import useRerender from "./useRerender";
 
 type LiveStructure = Exclude<Lson, Json>;
 
-/**
- * @internal
- */
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorageRoot extends LsonObject
