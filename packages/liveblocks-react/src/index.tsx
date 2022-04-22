@@ -17,7 +17,7 @@ export {
   useRedo,
   useBatch,
   useHistory,
-} from "./rooms";
+} from "./compat";
 export { createHooks } from "./factory";
 
 // Re-exports from @liveblocks/client, for convenience
