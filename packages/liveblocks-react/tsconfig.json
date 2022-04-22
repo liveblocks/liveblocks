@@ -19,6 +19,11 @@
     "noUnusedParameters": true,
     "stripInternal": true
   },
-  "include": ["src", "tests"],
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx",
+    "./test/**/*.ts",
+    "./test/**/*.tsx"
+  ],
   "exclude": ["node_modules"]
 }
