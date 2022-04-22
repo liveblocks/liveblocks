@@ -28,6 +28,8 @@ export type RoomEventCallbackMap = {
   connection: ConnectionCallback;
 };
 
+export type RoomEventName = keyof RoomEventCallbackMap;
+
 export type UpdateDelta =
   | {
       type: "update";
