@@ -23,10 +23,8 @@ const root = createRoot(document.getElementById("root"));
 
 root.render(
   <LiveblocksProvider client={client}>
-    <RoomProvider id="react-whiteboard-app2">
-      <RoomProvider id="react-whiteboard-app3">
-        <App />
-      </RoomProvider>
+    <RoomProvider id="react-whiteboard-app">
+      <App />
     </RoomProvider>
   </LiveblocksProvider>
 );
