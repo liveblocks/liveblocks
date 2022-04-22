@@ -10,6 +10,6 @@
     "lib": ["es2019", "dom", "esnext"],
     "stripInternal": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules", "./test/**/*.ts"]
+  "include": ["./src/**/*", "./test/**/*.ts"],
+  "exclude": ["node_modules"]
 }
