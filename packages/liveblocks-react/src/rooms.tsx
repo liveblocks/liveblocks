@@ -4,17 +4,22 @@ import {
   BroadcastOptions,
   History,
   Json,
+  JsonObject,
   LiveList,
   LiveMap,
   LiveObject,
   Lson,
   LsonObject,
   Others,
-  Presence,
-  Room,
+  Room as Room_,
   User,
 } from "@liveblocks/client";
 import useRerender from "./useRerender";
+
+type Presence = JsonObject; // FIXME
+type StorageRoot = LsonObject; // FIXME
+type Room = Room_<Presence, StorageRoot>; // FIXME
+type LiveStructure = Exclude<Lson, Json>; // e.g. LiveMap, LiveList, ListObject
 
 const RoomContext = React.createContext<Room | null>(null);
 
@@ -116,7 +121,8 @@ export function useMyPresence<T extends Presence>(): [
   (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
 ] {
   const room = useRoom();
-  const presence = room.getPresence<T>();
+  const presence = room.getPresence() as T;
+  //                                  ^^^^ FIXME
   const rerender = useRerender();
 
   React.useEffect(() => {
@@ -191,7 +197,8 @@ export function useOthers<T extends Presence>(): Others<T> {
     };
   }, [room]);
 
-  return room.getOthers();
+  return room.getOthers() as Others<T>;
+  //                      ^^^^^^^^^^^^ FIXME
 }
 
 /**
@@ -312,20 +319,26 @@ export function useSelf<
     };
   }, [room]);
 
-  return room.getSelf<TPresence>();
+  return room.getSelf() as User<TPresence> | null;
+  //                    ^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
 }
 
-export function useStorage<TStorageRoot extends Record<string, any>>(): [
+export function useStorage<TStorageRoot extends LsonObject>(): [
   root: LiveObject<TStorageRoot> | null
 ] {
   const room = useRoom();
-  const [root, setState] = React.useState<LiveObject<TStorageRoot> | null>(null);
+  const [root, setState] = React.useState<LiveObject<TStorageRoot> | null>(
+    null
+  );
 
   React.useEffect(() => {
     let didCancel = false;
 
     async function fetchStorage() {
-      const storage = await room.getStorage<TStorageRoot>();
+      const storage = (await room.getStorage()) as {
+        //                                      ^^ FIXME
+        root: LiveObject<TStorageRoot>;
+      };
       if (!didCancel) {
         setState(storage.root);
       }
@@ -433,7 +446,10 @@ export function useHistory(): History {
   return useRoom().history;
 }
 
-function useCrdt<T>(key: string, initialCrdt: T): T | null {
+function useCrdt<T extends LiveStructure>(
+  key: string,
+  initialCrdt: T
+): T | null {
   const room = useRoom();
   const [root] = useStorage();
   const rerender = useRerender();
@@ -443,7 +459,8 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
       return;
     }
 
-    let crdt: null | T = root.get(key);
+    let crdt: T | null = root.get(key) as T | null;
+    //                                 ^^^^^^^^^^^ FIXME
 
     if (crdt == null) {
       crdt = initialCrdt;
@@ -451,10 +468,12 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
     }
 
     function onRootChange() {
-      const newCrdt = root!.get(key);
+      const newCrdt = root!.get(key) as LiveStructure;
+      //                             ^^^^^^^^^^^^^^^^ FIXME
       if (newCrdt !== crdt) {
         unsubscribeCrdt();
-        crdt = newCrdt;
+        crdt = newCrdt as T;
+        //             ^^^^ FIXME
         unsubscribeCrdt = room.subscribe(
           crdt as any /* AbstractCrdt */,
           rerender
@@ -480,5 +499,6 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
     };
   }, [root, room]);
 
-  return root?.get(key) ?? null;
+  return (root?.get(key) as T) ?? null;
+  //                     ^^^^ FIXME
 }
