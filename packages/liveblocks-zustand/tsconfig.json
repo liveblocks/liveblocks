@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2015",
+    "outDir": "./lib/esm",
     "strict": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,
@@ -9,6 +10,6 @@
     "lib": ["es2019", "dom", "esnext"],
     "stripInternal": true
   },
-  "file": ["src/index.ts", "src/index.test.ts"],
+  "include": ["./src/**/*", "./test/**/*.ts"],
   "exclude": ["node_modules"]
 }
