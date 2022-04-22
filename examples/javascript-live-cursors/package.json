@@ -8,7 +8,7 @@
   "author": "",
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "^0.15.11"
+    "@liveblocks/client": "^0.16.0"
   },
   "devDependencies": {
     "dotenv": "^10.0.0",
