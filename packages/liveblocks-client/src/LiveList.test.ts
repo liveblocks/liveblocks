@@ -407,9 +407,19 @@ describe("LiveList", () => {
 
   describe("set", () => {
     it("set register on detached list", () => {
-      const list = new LiveList(["A", "B", "C"]);
+      const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
       expect(list.toArray()).toEqual(["D", "B", "C"]);
+    });
+
+    it("set at invalid position should throw", () => {
+      const list = new LiveList<string>(["A", "B", "C"]);
+      expect(() => list.set(-1, "D")).toThrowError(
+        `Cannot set list item at index "-1". index should be between 0 and 2`
+      );
+      expect(() => list.set(3, "D")).toThrowError(
+        `Cannot set list item at index "3". index should be between 0 and 2`
+      );
     });
 
     it("set register", async () => {
