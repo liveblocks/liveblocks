@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, JsonObject } from "@liveblocks/client";
 import { LiveblocksState, Mapping, enhancer, actions } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -131,7 +131,10 @@ function prepareClientAndBasicStore() {
   );
 }
 
-async function prepareWithStorage<T extends Record<string, unknown>>(
+async function prepareWithStorage<
+  T extends Record<string, unknown>,
+  TPresence extends JsonObject
+>(
   reducer: Reducer<T>,
   preloadedState: T,
   options: {
@@ -163,7 +166,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<TPresence>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -386,7 +389,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as ServerMessage<never>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([

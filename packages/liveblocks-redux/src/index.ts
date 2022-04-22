@@ -1,14 +1,14 @@
 import {
   Client,
-  User,
-  Room,
-  LiveObject,
-  LsonObject,
-  Presence,
   internals,
-  StorageUpdate,
   Json,
+  JsonObject,
+  LiveObject,
   Lson,
+  LsonObject,
+  Room as Room_,
+  StorageUpdate,
+  User,
 } from "@liveblocks/client";
 import { StoreEnhancer } from "redux";
 import {
@@ -18,6 +18,9 @@ import {
   mappingValueShouldBeABoolean,
   missingClient,
 } from "./errors";
+
+type Room = Room_<JsonObject, LsonObject>;
+//   ^^^^ FIXME: Room is unnecessarily opaque here. It doesn't have to be!
 
 // @liveblocks/client export internals API to be used only by our packages.
 // Internals APIs are removed from public d.ts so we patch them manually here to consume them.
@@ -58,7 +61,7 @@ const ACTION_TYPES = {
 
 export type LiveblocksState<
   TState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
@@ -241,7 +244,7 @@ const internalEnhancer = <T>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage<any>().then(({ root }) => {
+        room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {
@@ -387,11 +390,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
+function updatePresence<TPresence extends JsonObject>(
   room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -419,8 +422,11 @@ function validateNoDuplicateKeys<T>(
   }
 }
 
-function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
-  const partialState: Partial<T> = {};
+function patchPresenceState<TPresence extends JsonObject>(
+  presence: TPresence,
+  mapping: Mapping<TPresence>
+): Partial<TPresence> {
+  const partialState: Partial<TPresence> = {};
 
   for (const key in mapping) {
     partialState[key] = presence[key];
