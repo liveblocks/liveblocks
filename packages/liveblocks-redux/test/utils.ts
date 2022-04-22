@@ -3,13 +3,6 @@ import {
   SerializedCrdtWithId,
 } from "@liveblocks/client/lib/internal";
 
-/**
- * https://github.com/Luka967/websocket-close-codes
- */
-enum WebSocketErrorCodes {
-  CLOSE_ABNORMAL = 1006,
-}
-
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {

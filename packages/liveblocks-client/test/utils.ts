@@ -19,9 +19,6 @@ import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
-// TODO: Further improve this type
-type fixme = unknown;
-
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;

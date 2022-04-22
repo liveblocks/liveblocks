@@ -22,7 +22,7 @@ window.WebSocket = MockWebSocket as any;
 const { enterRoom, leaveRoom } = actions;
 
 const server = setupServer(
-  rest.post("/api/auth", (req, res, ctx) => {
+  rest.post("/api/auth", (_req, res, ctx) => {
     return res(
       ctx.json({
         token:
@@ -31,7 +31,7 @@ const server = setupServer(
       })
     );
   }),
-  rest.post("/api/auth-fail", (req, res, ctx) => {
+  rest.post("/api/auth-fail", (_req, res, ctx) => {
     return res(ctx.status(400));
   })
 );
