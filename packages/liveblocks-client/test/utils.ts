@@ -9,7 +9,7 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json, JsonObject } from "../src/json";
+import { Json } from "../src/json";
 import { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
@@ -18,6 +18,9 @@ import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
+
+// TODO: Further improve this type
+type fixme = unknown;
 
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
