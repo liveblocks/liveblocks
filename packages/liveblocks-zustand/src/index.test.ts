@@ -1,6 +1,6 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient, Presence } from "@liveblocks/client";
+import { createClient, JsonObject } from "@liveblocks/client";
 import { Mapping, middleware } from ".";
 import create from "zustand";
 import { StateCreator } from "zustand";
@@ -92,7 +92,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 
 function prepareClientAndStore<
   T extends Record<string, unknown>,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 >(
   stateCreator: StateCreator<T>,
   options: {
@@ -114,7 +114,10 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<T extends Record<string, unknown>>(
+async function prepareWithStorage<
+  T extends Record<string, unknown>,
+  TPresence extends JsonObject
+>(
   stateCreator: StateCreator<T>,
   options: {
     storageMapping: Mapping<T>;
@@ -143,7 +146,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<TPresence>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -341,7 +344,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as ServerMessage<never>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
@@ -704,10 +707,13 @@ describe("middleware", () => {
     });
 
     test("mapping on function should throw", async () => {
-      const { store } = await prepareWithStorage<{
-        value: any;
-        setFunction: () => void;
-      }>(
+      const { store } = await prepareWithStorage<
+        {
+          value: any;
+          setFunction: () => void;
+        },
+        never // No presence
+      >(
         (set) => ({
           value: null,
 
