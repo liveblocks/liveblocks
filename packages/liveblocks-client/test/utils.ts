@@ -9,7 +9,7 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json, JsonObject } from "../src/json";
+import { Json } from "../src/json";
 import { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
@@ -154,7 +154,6 @@ export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 const defaultContext = {
-  room: "room-id",
   roomId: "room-id",
   throttleDelay: -1, // No throttle for standard storage test
   liveblocksServer: "wss://live.liveblocks.io/v5",

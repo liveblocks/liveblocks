@@ -178,10 +178,6 @@ export type Effects = {
 };
 
 type Context = {
-  /**
-   * @deprecated Use `roomId` instead.
-   */
-  room: string;
   roomId: string;
   throttleDelay: number;
   fetchPolyfill?: typeof fetch;

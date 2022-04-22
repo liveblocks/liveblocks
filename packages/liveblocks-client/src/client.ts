@@ -58,7 +58,6 @@ export function createClient(options: ClientOptions): Client {
         defaultStorageRoot: options.defaultStorageRoot,
       },
       {
-        room: roomId, // Deprecated field, will get removed soon
         roomId,
         throttleDelay,
         WebSocketPolyfill: clientOptions.WebSocketPolyfill,
