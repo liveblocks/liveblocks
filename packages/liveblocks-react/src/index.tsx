@@ -1,4 +1,7 @@
 export { LiveblocksProvider, useClient } from "./client";
+export { createHooks } from "./factory";
+
+// Backward-compatible API
 export {
   RoomProvider,
   useRoom,
@@ -18,7 +21,6 @@ export {
   useBatch,
   useHistory,
 } from "./compat";
-export { createHooks } from "./factory";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

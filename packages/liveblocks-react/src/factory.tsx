@@ -18,6 +18,28 @@ import useRerender from "./useRerender";
 
 type LiveStructure = Exclude<Lson, Json>;
 
+/**
+ * @internal
+ */
+export type RoomProviderProps<
+  TPresence extends JsonObject,
+  TStorageRoot extends LsonObject
+> = {
+  /**
+   * The id of the room you want to connect to
+   */
+  id: string;
+  /**
+   * A callback that let you initialize the default presence when entering the room.
+   * If ommited, the default presence will be an empty object
+   */
+  defaultPresence?: () => TPresence;
+
+  defaultStorageRoot?: TStorageRoot;
+
+  children: React.ReactNode;
+};
+
 export function createHooks<
   TPresence extends JsonObject,
   TStorageRoot extends LsonObject
@@ -25,25 +47,6 @@ export function createHooks<
   const RoomContext = React.createContext<Room<TPresence, TStorageRoot> | null>(
     null
   );
-
-  type RoomProviderProps<
-    TPresence extends JsonObject,
-    TStorageRoot extends LsonObject
-  > = {
-    /**
-     * The id of the room you want to connect to
-     */
-    id: string;
-    /**
-     * A callback that let you initialize the default presence when entering the room.
-     * If ommited, the default presence will be an empty object
-     */
-    defaultPresence?: () => TPresence;
-
-    defaultStorageRoot?: TStorageRoot;
-
-    children: React.ReactNode;
-  };
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -414,7 +417,7 @@ export function createHooks<
    * It does not impact operations made by other clients.
    */
   function useUndo(): () => void {
-    return useRoom().history.undo;
+    return useHistory().undo;
   }
 
   /**
@@ -422,7 +425,7 @@ export function createHooks<
    * It does not impact operations made by other clients.
    */
   function useRedo(): () => void {
-    return useRoom().history.redo;
+    return useHistory().redo;
   }
 
   /**

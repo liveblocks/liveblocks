@@ -11,6 +11,7 @@ import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
 import { LiveblocksProvider, createHooks } from ".";
 
+// Liveblocks customers provide these "payload" types
 type Presence = { x: number };
 type Storage = { obj: string };
 
