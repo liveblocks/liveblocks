@@ -1,5 +1,6 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
 import {
+  creationOpToLiveStructure,
   deserialize,
   isCrdt,
   selfOrRegister,
@@ -12,6 +13,7 @@ import {
   SerializedCrdtWithId,
   CrdtType,
   SerializedCrdt,
+  CreateOp,
 } from "./live";
 import { LiveMapUpdates } from "./types";
 import { Lson } from "./lson";
@@ -48,7 +50,12 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -64,6 +71,7 @@ export class LiveMap<
       id: this._id,
       opId: doc?.generateOpId(),
       type: OpType.CreateMap,
+      intent,
       parentId,
       parentKey,
     };
@@ -132,16 +140,15 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: TKey,
-    child: AbstractCrdt,
-    _opId: string,
-    _isLocal: boolean
-  ): ApplyResult {
+  _attachChild(op: CreateOp, _isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey } = op;
+    const key = parentKey as TKey;
+
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };

@@ -60,7 +60,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
 export type LiveListUpdateDelta =
   | {
       index: number;
-      item: AbstractCrdt;
+      item: any; // Serializable Or LiveStructure
       type: "insert";
     }
   | {
@@ -70,8 +70,13 @@ export type LiveListUpdateDelta =
   | {
       index: number;
       previousIndex: number;
-      item: AbstractCrdt;
+      item: any; // Serializable Or LiveStructure
       type: "move";
+    }
+  | {
+      index: number;
+      item: any; // Serializable Or LiveStructure
+      type: "set";
     };
 
 export type LiveListUpdates<TItem extends Lson> = {

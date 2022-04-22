@@ -5,6 +5,7 @@ import {
   Op,
   OpType,
   SerializedCrdt,
+  CreateOp,
 } from "./live";
 import { Json } from "./json";
 
@@ -45,7 +46,12 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
@@ -57,6 +63,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
         type: OpType.CreateRegister,
         opId: doc?.generateOpId(),
         id: this._id,
+        intent,
         parentId,
         parentKey,
         data: this.data,
@@ -76,13 +83,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     };
   }
 
-  _attachChild(
-    _id: string,
-    _key: string,
-    _crdt: AbstractCrdt,
-    _opId: string,
-    _isLocal: boolean
-  ): ApplyResult {
+  _attachChild(_op: CreateOp, _isLocal: boolean): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

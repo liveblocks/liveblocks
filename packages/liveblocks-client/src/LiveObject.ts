@@ -1,8 +1,9 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
-import { deserialize, isCrdt } from "./utils";
+import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
 import {
   CrdtType,
   CreateObjectOp,
+  CreateOp,
   DeleteObjectKeyOp,
   Op,
   OpType,
@@ -43,7 +44,12 @@ export class LiveObject<
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -52,6 +58,7 @@ export class LiveObject<
     const op: CreateObjectOp = {
       id: this._id,
       opId: doc?.generateOpId(),
+      intent,
       type: OpType.CreateObject,
       parentId,
       parentKey,
@@ -138,16 +145,14 @@ export class LiveObject<
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: keyof O,
-    child: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
-  ): ApplyResult {
+  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey, opId } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       if (this._propToLastUpdate.get(key as string) === opId) {
@@ -159,7 +164,7 @@ export class LiveObject<
     }
 
     if (isLocal) {
-      this._propToLastUpdate.set(key as string, opId);
+      this._propToLastUpdate.set(key as string, opId!);
     } else if (this._propToLastUpdate.get(key as string) === undefined) {
       // Remote operation with no local change => apply operation
     } else if (this._propToLastUpdate.get(key as string) === opId) {

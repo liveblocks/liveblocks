@@ -542,63 +542,15 @@ export function makeStateMachine(
         }
         return { modified: false };
       }
-      case OpType.CreateObject: {
+      case OpType.CreateObject:
+      case OpType.CreateList:
+      case OpType.CreateMap:
+      case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId!);
         if (parent == null) {
           return { modified: false };
         }
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveObject(op.data),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateList: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveList(),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateRegister: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveRegister(op.data),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateMap: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveMap(),
-          op.opId!,
-          isLocal
-        );
+        return parent._attachChild(op, isLocal);
       }
     }
 

@@ -1,4 +1,4 @@
-import { Op, OpType, SerializedCrdt } from "./live";
+import { CreateOp, Op, OpType, SerializedCrdt } from "./live";
 import { StorageUpdate } from "./types";
 
 export type ApplyResult =
@@ -12,6 +12,11 @@ export interface Doc {
   getItem: (id: string) => AbstractCrdt | undefined;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
+  /**
+   * - Send ops to WebSocket servers
+   * - Add reverse operations to the undo/redo stack
+   * - Send updates to room subscribers
+   */
   dispatch: (
     ops: Op[],
     reverseOps: Op[],
@@ -103,13 +108,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _attachChild(
-    id: string,
-    key: string,
-    crdt: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
-  ): ApplyResult;
+  abstract _attachChild(op: CreateOp, isLocal: boolean): ApplyResult;
 
   /**
    * @internal
@@ -130,7 +129,12 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+  abstract _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[];
 
   /**
    * @internal

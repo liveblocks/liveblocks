@@ -10,7 +10,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move"]);
+  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -82,6 +82,31 @@ test.describe("Storage - LiveList", () => {
       // no await to create randomness
       pages[0].click("#push");
       pages[1].click("#push");
+      await delay(50);
+    }
+
+    await assertContainText(pages, "20");
+    await waitForContentToBeEquals(pages);
+
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
+  });
+
+  test("set conflicts", async () => {
+    await pages[0].click("#clear");
+    await assertContainText(pages, "0");
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      pages[0].click("#push");
+      pages[1].click("#push");
+      await delay(50);
+    }
+
+    for (let i = 0; i < 10; i++) {
+      // no await to create randomness
+      pages[0].click("#set");
+      pages[1].click("#set");
       await delay(50);
     }
 

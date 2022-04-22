@@ -171,8 +171,7 @@ export function patchLiveList<T extends Lson>(
       ) {
         patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.delete(i);
-        liveList.insert(anyToCrdt(nextNode), i);
+        liveList.set(i, anyToCrdt(nextNode));
       }
 
       i++;
@@ -313,7 +312,11 @@ function patchImmutableNode(
         let newState: any[] = state.map((x: any) => x);
 
         for (const listUpdate of update.updates) {
-          if (listUpdate.type === "insert") {
+          if (listUpdate.type === "set") {
+            newState = newState.map((item, index) =>
+              index === listUpdate.index ? listUpdate.item : item
+            );
+          } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
               newState.push(lsonToJson(listUpdate.item));
             } else {
