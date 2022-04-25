@@ -154,7 +154,7 @@ export const FOURTH_POSITION = makePosition(THIRD_POSITION);
 export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 
 const defaultContext = {
-  room: "room-id",
+  roomId: "room-id",
   throttleDelay: -1, // No throttle for standard storage test
   liveblocksServer: "wss://live.liveblocks.io/v5",
   authentication: {

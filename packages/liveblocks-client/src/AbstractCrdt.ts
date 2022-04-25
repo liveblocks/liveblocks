@@ -6,16 +6,20 @@ export type ApplyResult =
   | { modified: false };
 
 export interface Doc {
+  //             ^^^ FIXME: Find a better name for "Doc". This is more or less
+  //                        the "RoomContext".
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
   getItem: (id: string) => AbstractCrdt | undefined;
   addItem: (id: string, item: AbstractCrdt) => void;
   deleteItem: (id: string) => void;
+
   /**
-   * - Send ops to WebSocket servers
+   * Dispatching has three responsibilities:
+   * - Sends serialized ops to the WebSocket servers
    * - Add reverse operations to the undo/redo stack
-   * - Send updates to room subscribers
+   * - Notify room subscribers with updates (in-client, no networking)
    */
   dispatch: (
     ops: Op[],

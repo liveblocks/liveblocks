@@ -27,7 +27,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 const defaultContext = {
-  room: "room-id",
+  roomId: "room-id",
   throttleDelay: 100,
   liveblocksServer: "wss://live.liveblocks.io/v5",
   authentication: {

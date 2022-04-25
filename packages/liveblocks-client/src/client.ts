@@ -58,7 +58,7 @@ export function createClient(options: ClientOptions): Client {
         defaultStorageRoot: options.defaultStorageRoot,
       },
       {
-        room: roomId,
+        roomId,
         throttleDelay,
         WebSocketPolyfill: clientOptions.WebSocketPolyfill,
         fetchPolyfill: clientOptions.fetchPolyfill,
