@@ -19,9 +19,10 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { Json, JsonObject } from "./json";
+import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
+  compact,
   getTreesDiffOperations,
   isSameNodeOrChildOf,
   remove,
@@ -41,7 +42,6 @@ import {
   SerializedCrdtWithId,
   InitialDocumentStateMessage,
   OpType,
-  UpdateStorageMessage,
   ServerMessage,
   SerializedCrdt,
   WebsocketCloseCodes,
@@ -843,19 +843,36 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function onMessage(event: MessageEvent) {
+  function parseServerMessage(data: Json): ServerMessage | null {
+    if (!isJsonObject(data)) {
+      return null;
+    }
+
+    return data as ServerMessage;
+    //          ^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+  }
+
+  function parseServerMessages(text: string): ServerMessage[] | null {
+    let data: Json | undefined = parseJson(text);
+    if (data === undefined) {
+      return null;
+    } else if (isJsonArray(data)) {
+      return compact(data.map((item) => parseServerMessage(item)));
+    } else {
+      return compact([parseServerMessage(data)]);
+    }
+  }
+
+  function onMessage(event: MessageEvent<string>) {
     if (event.data === "pong") {
       clearTimeout(state.timeoutHandles.pongTimeout);
       return;
     }
 
-    const message = JSON.parse(event.data);
-    let subMessages: ServerMessage[] = [];
-
-    if (Array.isArray(message)) {
-      subMessages = message;
-    } else {
-      subMessages.push(message);
+    const messages: ServerMessage[] | null = parseServerMessages(event.data);
+    if (messages === null || messages.length === 0) {
+      // Unknown incoming message... ignore it
+      return;
     }
 
     const updates = {
