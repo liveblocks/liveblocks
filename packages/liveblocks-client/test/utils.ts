@@ -112,7 +112,7 @@ export class MockWebSocket implements WebSocket {
 
 type Machine = ReturnType<typeof makeStateMachine>;
 
-export function objectToJson(record: LiveObject) {
+export function objectToJson(record: LiveObject<LsonObject>) {
   const result: any = {};
   const obj = record.toObject();
 
@@ -252,7 +252,7 @@ export async function prepareStorageTest<T extends LsonObject>(
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<T>(items, -1);
 
-  let { machine, storage, ws } = await prepareRoomWithStorage<T>(
+  const { machine, storage, ws } = await prepareRoomWithStorage<T>(
     items,
     currentActor,
     (messages: ClientMessage[]) => {

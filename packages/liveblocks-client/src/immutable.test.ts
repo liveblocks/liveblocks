@@ -12,7 +12,6 @@ import {
 import {
   patchLiveObjectKey,
   patchImmutableObject,
-  liveNodeToJson,
   patchLiveObject,
 } from "./immutable";
 import { LiveObject } from "./LiveObject";
@@ -216,12 +215,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("replace first item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          list: LiveList<string>;
-        },
-        { list: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        list: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "list"),
@@ -242,12 +238,9 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("replace last item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<
-        {
-          list: LiveList<string>;
-        },
-        { list: string[] }
-      >(
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        list: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "list"),

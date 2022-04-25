@@ -8,10 +8,6 @@ import {
   SerializedCrdt,
   OpType,
   SerializedObject,
-  CreateRegisterOp,
-  CreateListOp,
-  CreateMapOp,
-  CreateObjectOp,
   CreateOp,
 } from "./live";
 import { LiveList } from "./LiveList";

@@ -476,7 +476,7 @@ describe("LiveList", () => {
 
   describe("apply CreateRegister", () => {
     it(`with intent "set" should replace existing item`, async () => {
-      const { assert, applyRemoteOperations, subscribe } =
+      const { assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
@@ -544,7 +544,7 @@ describe("LiveList", () => {
     });
 
     it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
-      const { root, assert, applyRemoteOperations, subscribe } =
+      const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
@@ -583,7 +583,7 @@ describe("LiveList", () => {
     });
 
     it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
-      const { root, assert, applyRemoteOperations, subscribe } =
+      const { root, applyRemoteOperations, subscribe } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
