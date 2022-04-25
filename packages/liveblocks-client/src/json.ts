@@ -25,3 +25,15 @@ export function parseJson(rawMessage: string): Json | undefined {
     return undefined;
   }
 }
+
+export function isJsonArray(data: Json): data is JsonArray {
+  return Array.isArray(data);
+}
+
+export function isJsonObject(data: Json): data is JsonObject {
+  return data !== null && typeof data === "object" && !isJsonArray(data);
+}
+
+export function isJsonScalar(data: Json): data is JsonScalar {
+  return typeof data !== "object";
+}
