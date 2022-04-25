@@ -1561,14 +1561,23 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = JSON.parse(atob(tokenParts[1]));
-  if (typeof data.actor !== "number") {
-    throw new Error(
-      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
-    );
+  const data = parseJson(atob(tokenParts[1]));
+  if (
+    data !== undefined &&
+    isJsonObject(data) &&
+    typeof data.actor === "number" &&
+    (data.id === undefined || typeof data.id === "string")
+  ) {
+    return {
+      actor: data.actor,
+      id: data.id,
+      info: data.info as Json | undefined,
+    };
   }
 
-  return data;
+  throw new Error(
+    `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+  );
 }
 
 function prepareCreateWebSocket(

@@ -148,7 +148,7 @@ export type Client = {
 export type AuthenticationToken = {
   actor: number;
   id?: string;
-  info?: any;
+  info?: Json;
 };
 
 /**
