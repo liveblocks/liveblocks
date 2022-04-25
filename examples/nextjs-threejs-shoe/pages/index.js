@@ -11,70 +11,64 @@ import styles from "./index.module.css";
  * We use the storage block to persist the show colors even after everyone leaves the room.
  */
 
-export default function Demo() {
-  return (
-    <div className={styles.container}>
-      <ShoeDemo />
-    </div>
-  );
-}
-
-function ShoeDemo() {
+export default function Example() {
   const [material, setMaterial] = useState(null);
   const colors = useObject("colors");
 
   return (
-    <div className={styles.canvas}>
-      <Canvas
-        concurrent
-        pixelRatio={[1, 1.5]}
-        camera={{ position: [0, 0, 2.75] }}
-      >
-        <ambientLight intensity={0.3} />
-        <spotLight
-          intensity={0.3}
-          angle={0.1}
-          penumbra={1}
-          position={[5, 25, 20]}
-        />
-        <Suspense fallback={null}>
-          {colors && (
-            <Shoe
-              snap={colors.toObject()}
-              selectMaterial={(material) => setMaterial(material)}
-            />
-          )}
-          <ContactShadows
-            rotation-x={Math.PI / 2}
-            position={[0, -0.8, 0]}
-            opacity={0.25}
-            width={10}
-            height={10}
-            blur={2}
-            far={1}
+    <div className={styles.container}>
+      <div className={styles.canvas}>
+        <Canvas
+          concurrent
+          pixelRatio={[1, 1.5]}
+          camera={{ position: [0, 0, 2.75] }}
+        >
+          <ambientLight intensity={0.3} />
+          <spotLight
+            intensity={0.3}
+            angle={0.1}
+            penumbra={1}
+            position={[5, 25, 20]}
           />
-        </Suspense>
-        <OrbitControls
-          minPolarAngle={Math.PI / 2}
-          maxPolarAngle={Math.PI / 2}
-          enableZoom={false}
-          enablePan={false}
-        />
-      </Canvas>
+          <Suspense fallback={null}>
+            {colors && (
+              <Shoe
+                snap={colors.toObject()}
+                selectMaterial={(material) => setMaterial(material)}
+              />
+            )}
+            <ContactShadows
+              rotation-x={Math.PI / 2}
+              position={[0, -0.8, 0]}
+              opacity={0.25}
+              width={10}
+              height={10}
+              blur={2}
+              far={1}
+            />
+          </Suspense>
+          <OrbitControls
+            minPolarAngle={Math.PI / 2}
+            maxPolarAngle={Math.PI / 2}
+            enableZoom={false}
+            enablePan={false}
+          />
+        </Canvas>
 
-      <div
-        className={`${
-          material ? styles.colorpicker_active : styles.colorpicker
-        }`}
-      >
-        <HexColorPicker
-          color={material ? colors.get(material) : undefined}
-          onChange={(color) => {
-            if (material) {
-              colors.set(material, color);
-            }
-          }}
-        />
+        <div
+          className={`${
+            material ? styles.colorpicker_active : styles.colorpicker
+          }`}
+        >
+          <HexColorPicker
+            color={material ? colors.get(material) : undefined}
+            onChange={(color) => {
+              if (material) {
+                colors.set(material, color);
+              }
+            }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -150,4 +144,6 @@ export async function getStaticProps() {
       );
     }
   }
+
+  return { props: {} };
 }
