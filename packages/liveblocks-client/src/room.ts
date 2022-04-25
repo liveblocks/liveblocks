@@ -853,7 +853,7 @@ See v0.13 release notes for more information.
   }
 
   function parseServerMessages(text: string): ServerMessage[] | null {
-    let data: Json | undefined = parseJson(text);
+    const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
     } else if (isJsonArray(data)) {
@@ -880,52 +880,45 @@ See v0.13 release notes for more information.
       others: [] as OthersEvent[],
     };
 
-    for (const subMessage of subMessages) {
-      switch (subMessage.type) {
+    for (const message of messages) {
+      switch (message.type) {
         case ServerMessageType.UserJoined: {
-          updates.others.push(onUserJoinedMessage(message as UserJoinMessage));
+          updates.others.push(onUserJoinedMessage(message));
           break;
         }
         case ServerMessageType.UpdatePresence: {
-          const othersPresenceUpdate = onUpdatePresenceMessage(
-            subMessage as UpdatePresenceMessage
-          );
+          const othersPresenceUpdate = onUpdatePresenceMessage(message);
           if (othersPresenceUpdate) {
             updates.others.push(othersPresenceUpdate);
           }
           break;
         }
         case ServerMessageType.Event: {
-          onEvent(subMessage);
+          onEvent(message);
           break;
         }
         case ServerMessageType.UserLeft: {
-          const event = onUserLeftMessage(subMessage as UserLeftMessage);
+          const event = onUserLeftMessage(message);
           if (event) {
             updates.others.push(event);
           }
           break;
         }
         case ServerMessageType.RoomState: {
-          updates.others.push(
-            onRoomStateMessage(subMessage as RoomStateMessage)
-          );
+          updates.others.push(onRoomStateMessage(message));
           break;
         }
         case ServerMessageType.InitialStorageState: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           const offlineOps = new Map(state.offlineOperations);
-          createOrUpdateRootFromMessage(subMessage);
+          createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResult = apply(
-            (subMessage as UpdateStorageMessage).ops,
-            false
-          );
+          const applyResult = apply(message.ops, false);
           applyResult.updates.storageUpdates.forEach((value, key) => {
             updates.storageUpdates.set(
               key,
