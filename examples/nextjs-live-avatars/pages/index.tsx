@@ -3,20 +3,6 @@ import { Avatar } from "../components/Avatar";
 import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
 import styles from "./index.module.css";
 
-export async function getStaticProps() {
-  return {
-    props: {
-      isRunningOnCodeSandbox: process.env.CODESANDBOX_SSE != null,
-      hasSetupLiveblocksKey: process.env.LIVEBLOCKS_SECRET_KEY != null,
-    },
-  };
-}
-
-type Props = {
-  hasSetupLiveblocksKey: boolean;
-  isRunningOnCodeSandbox: boolean;
-};
-
 function Example() {
   const users = useOthers().toArray();
   const currentUser = useSelf();
@@ -47,13 +33,26 @@ function Example() {
   );
 }
 
-export default function Page({
-  hasSetupLiveblocksKey,
-  isRunningOnCodeSandbox,
-}: Props) {
+export default function Page() {
   return (
     <RoomProvider id="nextjs-live-avatars">
       <Example />
     </RoomProvider>
   );
+}
+
+export async function getStaticProps() {
+  if (!process.env.LIVEBLOCKS_SECRET_KEY) {
+    if (process.env.CODESANDBOX_SSE) {
+      throw new Error(
+        `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#codesandbox.`
+      );
+    } else {
+      throw new Error(
+        `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#getting-started.`
+      );
+    }
+  }
 }

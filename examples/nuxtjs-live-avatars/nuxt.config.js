@@ -15,7 +15,4 @@ export default {
   components: true,
   buildModules: ["@nuxtjs/tailwindcss"],
   serverMiddleware: [{ path: "/api", handler: "~/api" }],
-  publicRuntimeConfig: {
-    hasLiveblocksSecretKey: process.env.LIVEBLOCKS_SECRET_KEY != null,
-  },
 };

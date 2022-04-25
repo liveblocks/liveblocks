@@ -17,16 +17,6 @@ const COLORS = [
   "#7986CB",
 ];
 
-export async function getStaticProps() {
-  return {
-    props: {
-      isRunningOnCodeSandbox: process.env.CODESANDBOX_SSE != null,
-      hasSetupLiveblocksKey:
-        process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY != null,
-    },
-  };
-}
-
 type Cursor = {
   x: number;
   y: number;
@@ -34,11 +24,6 @@ type Cursor = {
 
 type Presence = {
   cursor: Cursor | null;
-};
-
-type Props = {
-  hasSetupLiveblocksKey: boolean;
-  isRunningOnCodeSandbox: boolean;
 };
 
 function Example() {
@@ -103,10 +88,7 @@ function Example() {
   );
 }
 
-export default function Page({
-  hasSetupLiveblocksKey,
-  isRunningOnCodeSandbox,
-}: Props) {
+export default function Page() {
   return (
     <RoomProvider
       id="nextjs-live-cursors"
@@ -120,4 +102,20 @@ export default function Page({
       <Example />
     </RoomProvider>
   );
+}
+
+export async function getStaticProps() {
+  if (!process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY) {
+    if (process.env.CODESANDBOX_SSE) {
+      throw new Error(
+        `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#codesandbox.`
+      );
+    } else {
+      throw new Error(
+        `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#getting-started.`
+      );
+    }
+  }
 }

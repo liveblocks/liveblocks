@@ -14,5 +14,6 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     room,
     secret: API_KEY,
   });
+
   return res.status(response.status).end(response.body);
 }

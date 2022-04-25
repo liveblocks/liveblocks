@@ -135,3 +135,19 @@ function Shoe({ snap, selectMaterial }) {
     </group>
   );
 }
+
+export async function getStaticProps() {
+  if (!process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY) {
+    if (process.env.CODESANDBOX_SSE) {
+      throw new Error(
+        `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe#codesandbox.`
+      );
+    } else {
+      throw new Error(
+        `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
+          `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe#getting-started.`
+      );
+    }
+  }
+}

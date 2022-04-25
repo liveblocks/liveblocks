@@ -24,3 +24,7 @@ This example shows how to build live cursors without relying on a front-end fram
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
+
+### CodeSandbox
+
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/express-javascript-live-cursors) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
