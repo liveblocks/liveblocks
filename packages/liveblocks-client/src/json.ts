@@ -12,3 +12,15 @@ export type Json = JsonScalar | JsonArray | JsonObject;
 export type JsonScalar = string | number | boolean | null;
 export type JsonArray = Json[];
 export type JsonObject = { [key: string]: Json };
+
+/**
+ * Alternative to JSON.parse() that will not throw in production. If the passed
+ * string cannot be parsed, this will return `undefined`.
+ */
+export function parseJson(rawMessage: string): Json | undefined {
+  try {
+    return JSON.parse(rawMessage);
+  } catch (e) {
+    return undefined;
+  }
+}
