@@ -40,7 +40,7 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   return items.filter((item: T): item is NonNullable<T> => item != null);
 }
 
-export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
+export function creationOpToLiveNode(op: CreateOp): AbstractCrdt {
   switch (op.type) {
     case OpCode.CREATE_REGISTER:
       return new LiveRegister(op.data);

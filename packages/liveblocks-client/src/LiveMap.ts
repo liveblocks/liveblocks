@@ -14,7 +14,7 @@ import type {
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
   isCrdt,
   selfOrRegister,
@@ -134,7 +134,7 @@ export class LiveMap<
 
     const { id, parentKey: key } = op;
 
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };

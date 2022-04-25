@@ -12,7 +12,7 @@ import type {
 import { CrdtType, OpCode } from "./types";
 
 /**
- * @internal
+ * INTERNAL
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _data: TValue;

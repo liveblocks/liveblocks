@@ -21,7 +21,7 @@ import type {
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
   fromEntries,
   isCrdt,
@@ -147,7 +147,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     const { id, opId, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc.getItem(id) !== undefined) {
       if (this._propToLastUpdate.get(key) === opId) {
@@ -266,7 +266,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   _toSerializedCrdt(): SerializedObject | SerializedRootObject {
     const data: JsonObject = {};
 
-    // Add only the static (non-LiveStructure) data fields into the objects
+    // Add only the static Json data fields into the objects
     for (const [key, value] of this._map) {
       if (value instanceof AbstractCrdt === false) {
         data[key] = value;

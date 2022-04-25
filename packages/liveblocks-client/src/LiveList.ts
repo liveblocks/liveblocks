@@ -17,7 +17,7 @@ import type {
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
   selfOrRegister,
   selfOrRegisterValue,
@@ -141,7 +141,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
     child._attach(id, this._doc);
     child._setParentLink(this, key);
 
@@ -437,7 +437,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applyInsertUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc?.getItem(id) !== undefined) {
       return { modified: false };
@@ -478,7 +478,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applySetUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc?.getItem(id) !== undefined) {
       return { modified: false };
@@ -1207,7 +1207,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     newItem: AbstractCrdt;
     newIndex: number;
   } {
-    const newItem = creationOpToLiveStructure(op);
+    const newItem = creationOpToLiveNode(op);
 
     newItem._attach(op.id, nn(this._doc));
     newItem._setParentLink(this, key);

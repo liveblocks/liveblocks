@@ -8,6 +8,7 @@ export type {
   History,
   Json,
   JsonObject,
+  LiveStructure,
   Lson,
   LsonObject,
   Others,
