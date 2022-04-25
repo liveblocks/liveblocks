@@ -33,7 +33,3 @@ export function isJsonArray(data: Json): data is JsonArray {
 export function isJsonObject(data: Json): data is JsonObject {
   return data !== null && typeof data === "object" && !isJsonArray(data);
 }
-
-export function isJsonScalar(data: Json): data is JsonScalar {
-  return typeof data !== "object";
-}
