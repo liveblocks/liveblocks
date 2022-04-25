@@ -19,6 +19,7 @@ export type JsonObject = { [key: string]: Json };
  */
 export function parseJson(rawMessage: string): Json | undefined {
   try {
+    // eslint-disable-next-line no-restricted-syntax
     return JSON.parse(rawMessage);
   } catch (e) {
     return undefined;
