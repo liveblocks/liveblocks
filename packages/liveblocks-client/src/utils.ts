@@ -14,7 +14,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json } from "./json";
+import { Json, isJsonObject, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
   LiveListUpdates,
@@ -374,8 +374,12 @@ export function isTokenValid(token: string) {
     return false;
   }
 
-  const data = JSON.parse(atob(tokenParts[1]));
-  if (typeof data.exp !== "number") {
+  const data = parseJson(atob(tokenParts[1]));
+  if (
+    data === undefined ||
+    !isJsonObject(data) ||
+    typeof data.exp !== "number"
+  ) {
     return false;
   }
 
