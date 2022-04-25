@@ -32,6 +32,14 @@ export function remove<T>(array: T[], item: T) {
   }
 }
 
+/**
+ * Removes null and undefined values from the array, and reflects this in the
+ * output type.
+ */
+export function compact<T>(items: readonly T[]): NonNullable<T>[] {
+  return items.filter((item: T): item is NonNullable<T> => item != null);
+}
+
 export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
   switch (op.type) {
     case OpType.CreateRegister:
