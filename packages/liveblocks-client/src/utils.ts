@@ -368,11 +368,7 @@ export function findNonSerializableValue(
   return false;
 }
 
-export function isTokenValid(token: string | null) {
-  if (token === null) {
-    return false;
-  }
-
+export function isTokenValid(token: string) {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     return false;

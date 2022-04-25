@@ -196,9 +196,10 @@ export function makeStateMachine(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      if (isTokenValid(state.token)) {
-        const parsedToken = parseToken(state.token!);
-        const socket = createWebSocket(state.token!);
+      const token = state.token;
+      if (token && isTokenValid(token)) {
+        const parsedToken = parseToken(token);
+        const socket = createWebSocket(token);
         authenticationSuccess(parsedToken, socket);
       } else {
         return auth(context.roomId)
