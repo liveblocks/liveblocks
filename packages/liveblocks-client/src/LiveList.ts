@@ -1,5 +1,10 @@
 import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
-import { deserialize, selfOrRegister, selfOrRegisterValue } from "./utils";
+import {
+  deserialize,
+  selfOrRegister,
+  selfOrRegisterValue,
+  creationOpToLiveStructure,
+} from "./utils";
 import {
   SerializedList,
   SerializedCrdtWithId,
@@ -8,6 +13,7 @@ import {
   OpType,
   SerializedCrdt,
   CrdtType,
+  CreateOp,
 } from "./live";
 import { makePosition, compare } from "./position";
 import { LiveListUpdateDelta, LiveListUpdates } from "./types";
@@ -68,7 +74,12 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId?: string,
+    parentKey?: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -83,6 +94,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const op: CreateListOp = {
       id: this._id,
       opId: doc?.generateOpId(),
+      intent,
       type: OpType.CreateList,
       parentId,
       parentKey,
@@ -129,16 +141,14 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(
-    id: string,
-    key: string,
-    child: AbstractCrdt,
-    _opId: string,
-    isLocal: boolean
-  ): ApplyResult {
+  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
+
+    const { id, parentKey, intent } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };
@@ -153,7 +163,28 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
     // If there is a conflict
     if (index !== -1) {
-      if (isLocal) {
+      if (intent === "set") {
+        const existingItem = this._items[index][0];
+        existingItem._detach();
+        const storageUpdate: LiveListUpdates<TItem> = {
+          node: this,
+          type: "LiveList",
+          updates: [
+            {
+              index,
+              type: "set",
+              item: child instanceof LiveRegister ? child.data : child,
+            },
+          ],
+        };
+
+        this._items[index][0] = child;
+
+        return {
+          modified: storageUpdate,
+          reverse: existingItem._serialize(this._id!, key, this._doc, "set"),
+        };
+      } else if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
         const before = this._items[index] ? this._items[index][1] : undefined;
         const after = this._items[index + 1]
@@ -516,6 +547,47 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         item[0]._detach();
       }
       this._items = [];
+    }
+  }
+
+  set(index: number, item: TItem) {
+    if (index < 0 || index >= this._items.length) {
+      throw new Error(
+        `Cannot set list item at index "${index}". index should be between 0 and ${
+          this._items.length - 1
+        }`
+      );
+    }
+
+    const [existingItem, position] = this._items[index];
+
+    existingItem._detach();
+
+    const value = selfOrRegister(item);
+    value._setParentLink(this, position);
+    this._items[index][0] = value;
+
+    if (this._doc && this._id) {
+      const id = this._doc.generateId();
+      value._attach(id, this._doc);
+
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
+      storageUpdates.set(this._id, {
+        node: this,
+        type: "LiveList",
+        updates: [
+          {
+            index,
+            item: value instanceof LiveRegister ? value.data : value,
+            type: "set",
+          },
+        ],
+      });
+      this._doc.dispatch(
+        value._serialize(this._id, position, this._doc, "set"),
+        existingItem._serialize(this._id, position, undefined, "set"),
+        storageUpdates
+      );
     }
   }
 

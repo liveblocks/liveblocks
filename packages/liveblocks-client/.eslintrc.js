@@ -28,7 +28,7 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": [
       "warn",
       // Unused variables are fine if they start with an underscore
-      { argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
+      { args: "all", argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
     ],
 
     // -------------------------------

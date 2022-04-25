@@ -1,4 +1,4 @@
-import { Op, OpType, SerializedCrdt } from "./live";
+import { CreateOp, Op, OpType, SerializedCrdt } from "./live";
 import { StorageUpdate } from "./types";
 
 export type ApplyResult =
@@ -112,13 +112,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _attachChild(
-    id: string,
-    key: string,
-    crdt: AbstractCrdt,
-    opId: string,
-    isLocal: boolean
-  ): ApplyResult;
+  abstract _attachChild(op: CreateOp, isLocal: boolean): ApplyResult;
 
   /**
    * @internal
@@ -139,7 +133,12 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+  abstract _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc,
+    intent?: "set"
+  ): Op[];
 
   /**
    * @internal

@@ -244,6 +244,12 @@ export type Op =
   | CreateMapOp
   | CreateRegisterOp;
 
+export type CreateOp =
+  | CreateObjectOp
+  | CreateRegisterOp
+  | CreateMapOp
+  | CreateListOp;
+
 export type UpdateObjectOp = {
   opId?: string;
   id: string;
@@ -254,6 +260,7 @@ export type UpdateObjectOp = {
 export type CreateObjectOp = {
   opId?: string;
   id: string;
+  intent?: "set";
   type: OpType.CreateObject;
   parentId?: string;
   parentKey?: string;
@@ -263,6 +270,7 @@ export type CreateObjectOp = {
 export type CreateListOp = {
   opId?: string;
   id: string;
+  intent?: "set";
   type: OpType.CreateList;
   parentId: string;
   parentKey: string;
@@ -271,6 +279,7 @@ export type CreateListOp = {
 export type CreateMapOp = {
   opId?: string;
   id: string;
+  intent?: "set";
   type: OpType.CreateMap;
   parentId: string;
   parentKey: string;
@@ -279,6 +288,7 @@ export type CreateMapOp = {
 export type CreateRegisterOp = {
   opId?: string;
   id: string;
+  intent?: "set";
   type: OpType.CreateRegister;
   parentId: string;
   parentKey: string;

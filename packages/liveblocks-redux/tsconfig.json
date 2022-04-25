@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2015",
+    "outDir": "./lib/esm",
     "strict": true,
     "jsx": "react-jsx",
     "esModuleInterop": true,

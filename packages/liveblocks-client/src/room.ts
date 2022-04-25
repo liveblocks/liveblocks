@@ -5,6 +5,7 @@ import {
   MyPresenceCallback,
   OthersEventCallback,
   RoomEventCallbackMap,
+  RoomEventName,
   EventCallback,
   User,
   Connection,
@@ -541,63 +542,15 @@ export function makeStateMachine(
         }
         return { modified: false };
       }
-      case OpType.CreateObject: {
+      case OpType.CreateObject:
+      case OpType.CreateList:
+      case OpType.CreateMap:
+      case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId!);
         if (parent == null) {
           return { modified: false };
         }
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveObject(op.data),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateList: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveList(),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateRegister: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveRegister(op.data),
-          op.opId!,
-          isLocal
-        );
-      }
-      case OpType.CreateMap: {
-        const parent = state.items.get(op.parentId);
-
-        if (parent == null) {
-          return { modified: false };
-        }
-
-        return parent._attachChild(
-          op.id,
-          op.parentKey!,
-          new LiveMap(),
-          op.opId!,
-          isLocal
-        );
+        return parent._attachChild(op, isLocal);
       }
     }
 
@@ -636,9 +589,9 @@ export function makeStateMachine(
     type: "connection",
     listener: ConnectionCallback
   ): () => void;
-  function subscribe<T extends keyof RoomEventCallbackMap>(
-    firstParam: T | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[T] | any,
+  function subscribe<K extends RoomEventName>(
+    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
     if (firstParam instanceof AbstractCrdt) {
@@ -649,12 +602,12 @@ export function makeStateMachine(
       throw new Error(`"${firstParam}" is not a valid event name`);
     }
 
-    (state.listeners[firstParam] as RoomEventCallbackMap[T][]).push(listener);
+    (state.listeners[firstParam] as RoomEventCallbackMap[K][]).push(listener);
 
     return () => {
       const callbacks = state.listeners[
         firstParam
-      ] as RoomEventCallbackMap[T][];
+      ] as RoomEventCallbackMap[K][];
       remove(callbacks, listener);
     };
   }
@@ -670,9 +623,9 @@ export function makeStateMachine(
   function unsubscribe(type: "event", listener: EventCallback): void;
   function unsubscribe(type: "error", listener: ErrorCallback): void;
   function unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  function unsubscribe<T extends keyof RoomEventCallbackMap>(
-    event: T,
-    callback: RoomEventCallbackMap[T]
+  function unsubscribe<K extends RoomEventName>(
+    event: K,
+    callback: RoomEventCallbackMap[K]
   ) {
     console.warn(`unsubscribe is depreacted and will be removed in a future version.
 use the callback returned by subscribe instead.
@@ -681,7 +634,7 @@ See v0.13 release notes for more information.
     if (!isValidRoomEventType(event)) {
       throw new Error(`"${event}" is not a valid event name`);
     }
-    const callbacks = state.listeners[event] as RoomEventCallbackMap[T][];
+    const callbacks = state.listeners[event] as RoomEventCallbackMap[K][];
     remove(callbacks, callback);
   }
 

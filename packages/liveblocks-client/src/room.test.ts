@@ -41,7 +41,7 @@ describe("room / auth", () => {
   const token =
     "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
   const server = setupServer(
-    rest.post("/api/auth", (req, res, ctx) => {
+    rest.post("/api/auth", (_req, res, ctx) => {
       if (reqCount === 0) {
         reqCount++;
         return res(
@@ -59,13 +59,13 @@ describe("room / auth", () => {
         );
       }
     }),
-    rest.post("/api/403", (req, res, ctx) => {
+    rest.post("/api/403", (_req, res, ctx) => {
       return res(ctx.status(403));
     }),
-    rest.post("/api/not-json", (req, res, ctx) => {
+    rest.post("/api/not-json", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.text("this is not json"));
     }),
-    rest.post("/api/missing-token", (req, res, ctx) => {
+    rest.post("/api/missing-token", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.json({}));
     })
   );
@@ -1095,7 +1095,7 @@ describe("room", () => {
         ],
       ];
 
-      await reconnect(2, newInitStorage);
+      reconnect(2, newInitStorage);
 
       assert({
         items: ["A", "B"],
@@ -1165,7 +1165,7 @@ describe("room", () => {
         })
       );
 
-      await reconnect(2);
+      reconnect(2);
 
       const refMachineOthers = refMachine.selectors.getOthers().toArray();
 
