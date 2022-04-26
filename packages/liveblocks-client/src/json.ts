@@ -11,7 +11,7 @@
 export type Json = JsonScalar | JsonArray | JsonObject;
 export type JsonScalar = string | number | boolean | null;
 export type JsonArray = Json[];
-export type JsonObject = { [key: string]: Json };
+export type JsonObject = Partial<{ [key: string]: Json }>;
 
 /**
  * Alternative to JSON.parse() that will not throw in production. If the passed
