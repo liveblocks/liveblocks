@@ -161,9 +161,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
     let newKey = key;
 
-    // If there is a conflict
-    if (index !== -1) {
-      if (intent === "set") {
+    if (intent === "set") {
+      if (index !== -1) {
         const existingItem = this._items[index][0];
         existingItem._detach();
         const storageUpdate: LiveListUpdates<TItem> = {
@@ -180,11 +179,53 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
         this._items[index][0] = child;
 
+        const reverse = existingItem._serialize(
+          this._id!,
+          key,
+          this._doc,
+          "set"
+        );
+        (reverse[0] as any).deletedId = op.id;
+
+        const item = this._doc.getItem((op as any).deletedId);
+        if (item) {
+          item._apply({ type: OpType.DeleteCrdt, id: item._id! }, true);
+        }
+
         return {
           modified: storageUpdate,
-          reverse: existingItem._serialize(this._id!, key, this._doc, "set"),
+          reverse,
         };
-      } else if (isLocal) {
+      } else {
+        this._items.push([child, newKey]);
+        this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+
+        const item = this._doc.getItem((op as any).deletedId);
+        if (item) {
+          item._apply({ type: OpType.DeleteCrdt, id: item._id! }, true);
+        }
+
+        const newIndex = this._items.findIndex((entry) => entry[1] === newKey);
+        return {
+          reverse: [{ type: OpType.DeleteCrdt, id }],
+          modified: {
+            node: this,
+            type: "LiveList",
+            updates: [
+              {
+                index: newIndex,
+                type: "insert",
+                item: child instanceof LiveRegister ? child.data : child,
+              },
+            ],
+          },
+        };
+      }
+    }
+
+    // If there is a conflict
+    if (index !== -1) {
+      if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
         const before = this._items[index] ? this._items[index][1] : undefined;
         const after = this._items[index + 1]
@@ -561,6 +602,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
     const [existingItem, position] = this._items[index];
 
+    const existingId = existingItem._id;
     existingItem._detach();
 
     const value = selfOrRegister(item);
@@ -583,11 +625,19 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           },
         ],
       });
-      this._doc.dispatch(
-        value._serialize(this._id, position, this._doc, "set"),
-        existingItem._serialize(this._id, position, undefined, "set"),
-        storageUpdates
+
+      const ops = value._serialize(this._id, position, this._doc, "set");
+      (ops[0] as any).deletedId = existingId;
+
+      const reverseOps = existingItem._serialize(
+        this._id,
+        position,
+        undefined,
+        "set"
       );
+      (reverseOps[0] as any).deletedId = id;
+
+      this._doc.dispatch(ops, reverseOps, storageUpdates);
     }
   }
 
