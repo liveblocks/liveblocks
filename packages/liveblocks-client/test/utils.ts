@@ -10,17 +10,11 @@ import {
   ServerMessageType,
 } from "../src/live";
 import { Json, JsonObject } from "../src/json";
-import { LiveList } from "../src/LiveList";
-import { LiveMap } from "../src/LiveMap";
-import { LiveObject } from "../src/LiveObject";
-import { Lson, LsonObject, ToJson } from "../src/lson";
+import { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine, Machine } from "../src/room";
 import { Authentication } from "../src/types";
 import { remove } from "../src/utils";
-
-// TODO: Further improve this type
-type fixme = unknown;
 
 /**
  * Deep-clones a JSON-serializable value.
