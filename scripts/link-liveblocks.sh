@@ -121,6 +121,14 @@ npm_install () {
 # Like `npm link`, but don't show any output unless there's an error
 npm_link () {
     logfile="$(mktemp)"
+    if [ $# -gt 0 ]; then
+        err "Linking in $(pwd):"
+        for item in "$@"; do
+            err "- $item"
+        done
+        err
+    fi
+
     if ! npm link "$@" > "$logfile" 2> "$logfile"; then
         cat "$logfile" >&2
         err ""
