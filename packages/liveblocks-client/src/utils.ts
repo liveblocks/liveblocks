@@ -14,7 +14,7 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json } from "./json";
+import { Json, isJsonObject, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
   LiveListUpdates,
@@ -30,6 +30,14 @@ export function remove<T>(array: T[], item: T) {
       break;
     }
   }
+}
+
+/**
+ * Removes null and undefined values from the array, and reflects this in the
+ * output type.
+ */
+export function compact<T>(items: readonly T[]): NonNullable<T>[] {
+  return items.filter((item: T): item is NonNullable<T> => item != null);
 }
 
 export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
@@ -360,18 +368,18 @@ export function findNonSerializableValue(
   return false;
 }
 
-export function isTokenValid(token: string | null) {
-  if (token === null) {
-    return false;
-  }
-
+export function isTokenValid(token: string) {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     return false;
   }
 
-  const data = JSON.parse(atob(tokenParts[1]));
-  if (typeof data.exp !== "number") {
+  const data = parseJson(atob(tokenParts[1]));
+  if (
+    data === undefined ||
+    !isJsonObject(data) ||
+    typeof data.exp !== "number"
+  ) {
     return false;
   }
 

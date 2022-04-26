@@ -19,9 +19,10 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { Json, JsonObject } from "./json";
+import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
+  compact,
   getTreesDiffOperations,
   isSameNodeOrChildOf,
   remove,
@@ -41,7 +42,6 @@ import {
   SerializedCrdtWithId,
   InitialDocumentStateMessage,
   OpType,
-  UpdateStorageMessage,
   ServerMessage,
   SerializedCrdt,
   WebsocketCloseCodes,
@@ -196,9 +196,10 @@ export function makeStateMachine(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      if (isTokenValid(state.token)) {
-        const parsedToken = parseToken(state.token!);
-        const socket = createWebSocket(state.token!);
+      const token = state.token;
+      if (token && isTokenValid(token)) {
+        const parsedToken = parseToken(token);
+        const socket = createWebSocket(token);
         authenticationSuccess(parsedToken, socket);
       } else {
         return auth(context.roomId)
@@ -843,19 +844,36 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function onMessage(event: MessageEvent) {
+  function parseServerMessage(data: Json): ServerMessage | null {
+    if (!isJsonObject(data)) {
+      return null;
+    }
+
+    return data as ServerMessage;
+    //          ^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+  }
+
+  function parseServerMessages(text: string): ServerMessage[] | null {
+    const data: Json | undefined = parseJson(text);
+    if (data === undefined) {
+      return null;
+    } else if (isJsonArray(data)) {
+      return compact(data.map((item) => parseServerMessage(item)));
+    } else {
+      return compact([parseServerMessage(data)]);
+    }
+  }
+
+  function onMessage(event: MessageEvent<string>) {
     if (event.data === "pong") {
       clearTimeout(state.timeoutHandles.pongTimeout);
       return;
     }
 
-    const message = JSON.parse(event.data);
-    let subMessages: ServerMessage[] = [];
-
-    if (Array.isArray(message)) {
-      subMessages = message;
-    } else {
-      subMessages.push(message);
+    const messages: ServerMessage[] | null = parseServerMessages(event.data);
+    if (messages === null || messages.length === 0) {
+      // Unknown incoming message... ignore it
+      return;
     }
 
     const updates = {
@@ -863,52 +881,45 @@ See v0.13 release notes for more information.
       others: [] as OthersEvent[],
     };
 
-    for (const subMessage of subMessages) {
-      switch (subMessage.type) {
+    for (const message of messages) {
+      switch (message.type) {
         case ServerMessageType.UserJoined: {
-          updates.others.push(onUserJoinedMessage(message as UserJoinMessage));
+          updates.others.push(onUserJoinedMessage(message));
           break;
         }
         case ServerMessageType.UpdatePresence: {
-          const othersPresenceUpdate = onUpdatePresenceMessage(
-            subMessage as UpdatePresenceMessage
-          );
+          const othersPresenceUpdate = onUpdatePresenceMessage(message);
           if (othersPresenceUpdate) {
             updates.others.push(othersPresenceUpdate);
           }
           break;
         }
         case ServerMessageType.Event: {
-          onEvent(subMessage);
+          onEvent(message);
           break;
         }
         case ServerMessageType.UserLeft: {
-          const event = onUserLeftMessage(subMessage as UserLeftMessage);
+          const event = onUserLeftMessage(message);
           if (event) {
             updates.others.push(event);
           }
           break;
         }
         case ServerMessageType.RoomState: {
-          updates.others.push(
-            onRoomStateMessage(subMessage as RoomStateMessage)
-          );
+          updates.others.push(onRoomStateMessage(message));
           break;
         }
         case ServerMessageType.InitialStorageState: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           const offlineOps = new Map(state.offlineOperations);
-          createOrUpdateRootFromMessage(subMessage);
+          createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
           break;
         }
         case ServerMessageType.UpdateStorage: {
-          const applyResult = apply(
-            (subMessage as UpdateStorageMessage).ops,
-            false
-          );
+          const applyResult = apply(message.ops, false);
           applyResult.updates.storageUpdates.forEach((value, key) => {
             updates.storageUpdates.set(
               key,
@@ -1551,14 +1562,23 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = JSON.parse(atob(tokenParts[1]));
-  if (typeof data.actor !== "number") {
-    throw new Error(
-      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
-    );
+  const data = parseJson(atob(tokenParts[1]));
+  if (
+    data !== undefined &&
+    isJsonObject(data) &&
+    typeof data.actor === "number" &&
+    (data.id === undefined || typeof data.id === "string")
+  ) {
+    return {
+      actor: data.actor,
+      id: data.id,
+      info: data.info as Json | undefined,
+    };
   }
 
-  return data;
+  throw new Error(
+    `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+  );
 }
 
 function prepareCreateWebSocket(

@@ -22,6 +22,16 @@ import { remove } from "../src/utils";
 // TODO: Further improve this type
 type fixme = unknown;
 
+/**
+ * Deep-clones a JSON-serializable value.
+ */
+function deepClone<T extends Json>(items: T): T {
+  // NOTE: In this case, the combination of JSON.parse() and JSON.stringify
+  // won't lead to type unsafety, so this use case is okay.
+  // eslint-disable-next-line no-restricted-syntax
+  return JSON.parse(JSON.stringify(items));
+}
+
 export class MockWebSocket implements WebSocket {
   CONNECTING = 0;
   OPEN = 1;
@@ -183,7 +193,7 @@ async function prepareRoomWithStorage<T extends LsonObject>(
 
   const getStoragePromise = machine.getStorage<T>();
 
-  const clonedItems = JSON.parse(JSON.stringify(items));
+  const clonedItems = deepClone(items);
   machine.onMessage(
     serverMessage({
       type: ServerMessageType.InitialStorageState,

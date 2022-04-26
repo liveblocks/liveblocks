@@ -65,6 +65,12 @@ module.exports = {
         message:
           "In library code, never write `LiveRegister` without explicit type params! Type parameter defaults are only meant for end users.",
       },
+      {
+        selector:
+          "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
+        message:
+          "Using `JSON.parse()` is type-unsafe. Prefer using the `parseJson()` utility method (from `src/json`).",
+      },
       // {
       //   selector: "ForOfStatement",
       //   message:
