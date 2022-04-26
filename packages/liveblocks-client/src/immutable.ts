@@ -13,7 +13,10 @@ function lsonObjectToJson<O extends LsonObject>(
 ): { [K in keyof O]: Json } {
   const result: { [K in keyof O]: Json } = {} as any;
   for (const key in obj) {
-    result[key] = lsonToJson(obj[key]);
+    const val = obj[key];
+    if (val !== undefined) {
+      result[key] = lsonToJson(val);
+    }
   }
   return result;
 }
@@ -294,7 +297,10 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = lsonToJson(update.node.get(key));
+            const val = update.node.get(key);
+            if (val !== undefined) {
+              newState[key] = lsonToJson(val);
+            }
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }
