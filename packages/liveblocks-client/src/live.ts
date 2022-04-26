@@ -37,7 +37,7 @@ export type RoomStateMessage = {
   users: {
     [actor: number]: {
       id?: string;
-      info?: any;
+      info?: Json;
     };
   };
 };
@@ -89,7 +89,7 @@ export type UserJoinMessage = {
    * Additional user information that has been set in the authentication
    * endpoint.
    */
-  info?: string;
+  info?: Json;
 };
 
 /**
@@ -292,7 +292,7 @@ export type CreateRegisterOp = {
   type: OpType.CreateRegister;
   parentId: string;
   parentKey: string;
-  data: any;
+  data: Json;
 };
 
 export type DeleteCrdtOp = {
