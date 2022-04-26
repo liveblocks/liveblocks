@@ -221,9 +221,10 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("replace first item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        list: LiveList<string>;
-      }>(
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        never,
+        { list: LiveList<string> }
+      >(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "list"),
@@ -244,9 +245,10 @@ describe("2 ways tests with two clients", () => {
     });
 
     test("replace last item in array", async () => {
-      const { storage, state, assert } = await prepareStorageImmutableTest<{
-        list: LiveList<string>;
-      }>(
+      const { storage, state, assert } = await prepareStorageImmutableTest<
+        never,
+        { list: LiveList<string> }
+      >(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "list"),

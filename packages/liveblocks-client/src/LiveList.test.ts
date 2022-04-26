@@ -420,9 +420,10 @@ describe("LiveList", () => {
     });
 
     it("set register", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
+        never,
+        { items: LiveList<string> }
+      >(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -448,9 +449,10 @@ describe("LiveList", () => {
     });
 
     it("set nested object", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
+        never,
+        { items: LiveList<LiveObject<{ a: number }>> }
+      >(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -474,7 +476,7 @@ describe("LiveList", () => {
   describe("apply CreateRegister", () => {
     it(`with intent "set" should replace existing item`, async () => {
       const { assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -505,7 +507,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should notify with a "set" update`, async () => {
       const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -542,7 +544,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -581,7 +583,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
       const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
