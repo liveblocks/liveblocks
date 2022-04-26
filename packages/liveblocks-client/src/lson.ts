@@ -43,7 +43,9 @@ export type ToJson<T extends Lson | LsonObject> =
   T extends Json ? T :
 
   // Any LsonObject recursively becomes a JsonObject
-  T extends LsonObject ? { [K in keyof T]: ToJson<Exclude<T[K], undefined>> } :
+  T extends LsonObject ?
+    { [K in keyof T]: ToJson<Exclude<T[K], undefined>>
+                        | (undefined extends T[K] ? undefined : never) } :
 
   // A LiveList serializes to an equivalent JSON array
   T extends LiveList<infer I> ? ToJson<I>[] :
