@@ -7,6 +7,15 @@ const client = createClient({
 const room = client.enter("express-javascript-live-cursors", { cursor: null });
 
 const cursorsContainer = document.getElementById("cursors-container");
+const text = document.getElementById("text");
+
+room.subscribe("my-presence", (presence) => {
+  const cursor = presence?.cursor ?? null;
+
+  text.innerHTML = cursor
+    ? `${cursor.x} × ${cursor.y}`
+    : "Move your cursor to broadcast its position to other people in the room.";
+});
 
 /**
  * Subscribe to every others presence updates.
@@ -36,7 +45,9 @@ room.subscribe("others", (others, event) => {
 });
 
 document.addEventListener("pointermove", (e) => {
-  room.updatePresence({ cursor: { x: e.clientX, y: e.clientY } });
+  room.updatePresence({
+    cursor: { x: Math.round(e.clientX), y: Math.round(e.clientY) },
+  });
 });
 
 document.addEventListener("pointerleave", (e) => {

@@ -48,7 +48,9 @@
 >
   <!-- Show the current user's cursor location -->
   <div class="text">
-    Move your cursor to broadcast its position to other people in the room.
+    {$myPresence?.cursor
+      ? `${$myPresence.cursor.x} × ${$myPresence.cursor.y}`
+      : "Move your cursor to broadcast its position to other people in the room."}
   </div>
 
   <!-- When others connected, iterate through others and show their cursors -->

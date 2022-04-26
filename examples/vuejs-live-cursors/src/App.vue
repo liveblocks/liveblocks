@@ -5,8 +5,13 @@
     class="container"
   >
     <div class="text">
-      Move your cursor to broadcast its position to other people in the room
+      {{
+        cursor
+          ? `${cursor.x} × ${cursor.y}`
+          : "Move your cursor to broadcast its position to other people in the room."
+      }}
     </div>
+
     <svg
       v-for="cursor in cursors"
       v-bind:key="cursor.connectionId"
@@ -51,16 +56,19 @@ const roomId = "vuejs-live-cursors";
 export default Vue.extend({
   data: function() {
     return {
+      cursor: null,
       cursors: [],
     };
   },
   mounted: function() {
     const room = client.enter(roomId, { cursor: null });
     this._room = room;
-    this._unsubscribe = room.subscribe("others", this.onOthersChange);
+    this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);
+    this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
   },
   destroyed: function() {
     this._unsubscribe();
+    this._unsubscribeOthers();
     client.leave(roomId);
   },
   methods: {
@@ -76,6 +84,9 @@ export default Vue.extend({
       this._room.updatePresence({
         cursor: null,
       });
+    },
+    onPresenceChange: function(presence) {
+      this.cursor = presence?.cursor ?? null;
     },
     onOthersChange: function(others) {
       this.cursors = others
