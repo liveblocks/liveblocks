@@ -49,7 +49,7 @@ export type ToJson<T extends Lson | LsonObject> =
   T extends LiveList<infer I> ? ToJson<I>[] :
 
   // A LiveObject serializes to an equivalent JSON object
-  T extends LiveObject<infer O> ? { [K in keyof O]: ToJson<Exclude<O[K], undefined>> } :
+  T extends LiveObject<infer O> ? ToJson<O> :
 
   // A LiveMap serializes to a JSON object with string-V pairs
   T extends LiveMap<infer KS, infer V> ? { [K in KS]: ToJson<V> } :
