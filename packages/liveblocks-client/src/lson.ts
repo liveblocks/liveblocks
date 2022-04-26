@@ -33,8 +33,8 @@ export type LsonObject = Partial<{ [key: string]: Lson }>;
  *   ToJson<string | LiveList<number>>  // string | number[]
  *   ToJson<LiveMap<string, LiveList<number>>>
  *                                      // { [key: string]: number[] }
- *   ToJson<LiveObject<{ a: number, b: LiveList<string> }>>
- *                                      // { a: null, b: string[] }
+ *   ToJson<LiveObject<{ a: number, b: LiveList<string>, c?: number }>>
+ *                                      // { a: null, b: string[], c?: number }
  *
  */
 // prettier-ignore
