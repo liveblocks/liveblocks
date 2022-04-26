@@ -19,7 +19,7 @@ export type Lson =
  * A mapping of keys to Lson values. A Lson value is any valid JSON
  * value or a Live storage data structure (LiveMap, LiveList, etc.)
  */
-export type LsonObject = Partial<{ [key: string]: Lson }>;
+export type LsonObject = { [key: string]: Lson | undefined };
 
 /**
  * Helper type to convert any valid Lson type to the equivalent Json type.
