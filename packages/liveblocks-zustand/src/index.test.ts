@@ -10,7 +10,7 @@ import {
   SerializedCrdtWithId,
   ServerMessage,
   ServerMessageType,
-} from "@liveblocks/client/lib/internal";
+} from "@liveblocks/client/internal";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 import {
   mappingShouldBeAnObject,

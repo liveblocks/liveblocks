@@ -2,24 +2,24 @@
   "name": "@liveblocks/client",
   "version": "0.16.0",
   "description": "A client that lets you interact with Liveblocks servers.",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "files": [
-    "lib/**"
+    "**"
   ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./lib/index.d.ts",
-      "module": "./lib/esm/index.js",
-      "import": "./lib/esm/index.mjs",
-      "default": "./lib/index.js"
+      "types": "./index.d.ts",
+      "module": "./esm/index.js",
+      "import": "./esm/index.mjs",
+      "default": "./index.js"
     },
     "./internal": {
-      "types": "./lib/internal.d.ts",
-      "module": "./lib/esm/internal.js",
-      "import": "./lib/esm/internal.mjs",
-      "default": "./lib/internal.js"
+      "types": "./internal.d.ts",
+      "module": "./esm/internal.js",
+      "import": "./esm/internal.mjs",
+      "default": "./internal.js"
     }
   },
   "keywords": [
@@ -32,7 +32,7 @@
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "test": "jest --watch",
     "test-ci": "jest"
   },

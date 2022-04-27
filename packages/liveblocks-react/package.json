@@ -2,18 +2,18 @@
   "name": "@liveblocks/react",
   "version": "0.16.0",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
-  "main": "./lib/index.js",
-  "types": "./lib/index.d.ts",
+  "main": "./index.js",
+  "types": "./index.d.ts",
   "files": [
-    "lib/**"
+    "**"
   ],
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "types": "./lib/index.d.ts",
-      "module": "./lib/esm/index.js",
-      "import": "./lib/esm/index.mjs",
-      "default": "./lib/index.js"
+      "types": "./index.d.ts",
+      "module": "./esm/index.js",
+      "import": "./esm/index.mjs",
+      "default": "./index.js"
     }
   },
   "keywords": [
@@ -27,7 +27,7 @@
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "start": "rollup -c -w",
     "test": "jest --watch"
   },

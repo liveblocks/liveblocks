@@ -180,6 +180,9 @@ prep_liveblocks_deps () {
 
             rebuild_if_needed
 
+            # Built package is located in the lib folder, including the package.json
+            cd "./lib"
+
             # Register this link
             npm_link
         ) )

@@ -270,7 +270,7 @@ publish_to_npm () {
         read -p "OTP token? " OTP
     done
 
-    npm publish --tag "${TAG:-latest}" --otp "$OTP"
+    npm publish ./lib --tag "${TAG:-latest}" --otp "$OTP"
 }
 
 commit_to_git () {
