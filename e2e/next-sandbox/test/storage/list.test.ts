@@ -10,7 +10,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
+  return pickRandomItem(["#push", "#delete", "#move"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -117,8 +117,7 @@ test.describe("Storage - LiveList", () => {
     await assertContainText(pages, "0");
   });
 
-  // FIX: Skip failing test for now. Reactivate later! (cc @GuillaumeSalles)
-  test.skip("fuzzy with full undo/redo", async () => {
+  test("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
