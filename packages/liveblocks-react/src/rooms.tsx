@@ -62,6 +62,7 @@ export function RoomProvider<TStorageRoot>({
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
+      DO_NOT_USE_withoutConnecting: typeof window === "undefined",
     } as any)
   );
 
@@ -70,6 +71,7 @@ export function RoomProvider<TStorageRoot>({
       client.enter(id, {
         defaultPresence: defaultPresence ? defaultPresence() : undefined,
         defaultStorageRoot,
+        DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
     );
 
