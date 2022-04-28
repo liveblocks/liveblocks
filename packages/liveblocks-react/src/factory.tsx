@@ -11,19 +11,26 @@ import {
   Lson,
   LsonObject,
   Others,
-  Room as Room_,
+  Room,
   User,
 } from "@liveblocks/client";
 import useRerender from "./useRerender";
 
-type Presence = JsonObject; // FIXME
-type StorageRoot = LsonObject; // FIXME
-type Room = Room_<Presence, StorageRoot>; // FIXME
-type LiveStructure = Exclude<Lson, Json>; // e.g. LiveMap, LiveList, ListObject
+type LiveStructure = Exclude<Lson, Json>;
 
-const RoomContext = React.createContext<Room | null>(null);
+export function createHooks<
+  TPresence extends JsonObject,
+  TStorageRoot extends LsonObject
+>() {
 
-type RoomProviderProps<TStorageRoot> = {
+const RoomContext = React.createContext<Room<TPresence, TStorageRoot> | null>(
+  null
+);
+
+type RoomProviderProps<
+  TPresence extends JsonObject,
+  TStorageRoot extends LsonObject
+> = {
   /**
    * The id of the room you want to connect to
    */
@@ -32,7 +39,7 @@ type RoomProviderProps<TStorageRoot> = {
    * A callback that let you initialize the default presence when entering the room.
    * If ommited, the default presence will be an empty object
    */
-  defaultPresence?: () => Presence;
+  defaultPresence?: () => TPresence;
 
   defaultStorageRoot?: TStorageRoot;
 
@@ -44,12 +51,12 @@ type RoomProviderProps<TStorageRoot> = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider<TStorageRoot>({
+function RoomProvider({
   id,
   children,
   defaultPresence,
   defaultStorageRoot,
-}: RoomProviderProps<TStorageRoot>) {
+}: RoomProviderProps<TPresence, TStorageRoot>) {
   if (process.env.NODE_ENV !== "production") {
     if (id == null) {
       throw new Error(
@@ -63,7 +70,7 @@ export function RoomProvider<TStorageRoot>({
 
   const client = useClient();
 
-  const [room, setRoom] = React.useState(() =>
+  const [room, setRoom] = React.useState<Room<TPresence, TStorageRoot>>(() =>
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
@@ -92,7 +99,7 @@ export function RoomProvider<TStorageRoot>({
  * Returns the Room of the nearest RoomProvider above in the React component
  * tree.
  */
-export function useRoom(): Room {
+function useRoom(): Room<TPresence, TStorageRoot> {
   const room = React.useContext(RoomContext);
 
   if (room == null) {
@@ -116,13 +123,12 @@ export function useRoom(): Room {
  *
  * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
  */
-export function useMyPresence<T extends Presence>(): [
-  T,
-  (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
+function useMyPresence(): [
+  TPresence,
+  (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
 ] {
   const room = useRoom();
-  const presence = room.getPresence() as T;
-  //                                  ^^^^ FIXME
+  const presence = room.getPresence();
   const rerender = useRerender();
 
   React.useEffect(() => {
@@ -133,7 +139,7 @@ export function useMyPresence<T extends Presence>(): [
   }, [room]);
 
   const setPresence = React.useCallback(
-    (overrides: Partial<T>, options?: { addToHistory: boolean }) =>
+    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
       room.updatePresence(overrides, options),
     [room]
   );
@@ -154,14 +160,14 @@ export function useMyPresence<T extends Presence>(): [
  *
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
  */
-export function useUpdateMyPresence<T extends Presence>(): (
-  overrides: Partial<T>,
+function useUpdateMyPresence(): (
+  overrides: Partial<TPresence>,
   options?: { addToHistory: boolean }
 ) => void {
   const room = useRoom();
 
   return React.useCallback(
-    (overrides: Partial<T>, options?: { addToHistory: boolean }) => {
+    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => {
       room.updatePresence(overrides, options);
     },
     [room]
@@ -186,7 +192,7 @@ export function useUpdateMyPresence<T extends Presence>(): (
  *   })
  * }
  */
-export function useOthers<T extends Presence>(): Others<T> {
+function useOthers(): Others<TPresence> {
   const room = useRoom();
   const rerender = useRerender();
 
@@ -197,8 +203,7 @@ export function useOthers<T extends Presence>(): Others<T> {
     };
   }, [room]);
 
-  return room.getOthers() as Others<T>;
-  //                      ^^^^^^^^^^^^ FIXME
+  return room.getOthers();
 }
 
 /**
@@ -211,7 +216,7 @@ export function useOthers<T extends Presence>(): Others<T> {
  *
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
  */
-export function useBroadcastEvent(): (
+function useBroadcastEvent(): (
   event: any,
   options?: BroadcastOptions
 ) => void {
@@ -238,7 +243,7 @@ export function useBroadcastEvent(): (
  *   console.error(er);
  * })
  */
-export function useErrorListener(callback: (err: Error) => void): void {
+function useErrorListener(callback: (err: Error) => void): void {
   const room = useRoom();
   const savedCallback = React.useRef(callback);
 
@@ -268,7 +273,7 @@ export function useErrorListener(callback: (err: Error) => void): void {
  *   }
  * });
  */
-export function useEventListener<TEvent extends Json>(
+function useEventListener<TEvent extends Json>(
   callback: ({
     connectionId,
     event,
@@ -303,9 +308,7 @@ export function useEventListener<TEvent extends Json>(
  *
  * const user = useSelf();
  */
-export function useSelf<
-  TPresence extends Presence = Presence
->(): User<TPresence> | null {
+function useSelf(): User<TPresence> | null {
   const room = useRoom();
   const rerender = useRerender();
 
@@ -319,13 +322,10 @@ export function useSelf<
     };
   }, [room]);
 
-  return room.getSelf() as User<TPresence> | null;
-  //                    ^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
+  return room.getSelf();
 }
 
-export function useStorage<TStorageRoot extends LsonObject>(): [
-  root: LiveObject<TStorageRoot> | null
-] {
+function useStorage(): [root: LiveObject<TStorageRoot> | null] {
   const room = useRoom();
   const [root, setState] = React.useState<LiveObject<TStorageRoot> | null>(
     null
@@ -335,10 +335,7 @@ export function useStorage<TStorageRoot extends LsonObject>(): [
     let didCancel = false;
 
     async function fetchStorage() {
-      const storage = (await room.getStorage()) as {
-        //                                      ^^ FIXME
-        root: LiveObject<TStorageRoot>;
-      };
+      const storage = await room.getStorage();
       if (!didCancel) {
         setState(storage.root);
       }
@@ -366,7 +363,7 @@ export function useStorage<TStorageRoot extends LsonObject>(): [
  * const emptyMap = useMap("mapA");
  * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
  */
-export function useMap<TKey extends string, TValue extends Lson>(
+function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
@@ -385,7 +382,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
  * const emptyList = useList("listA");
  * const listWithItems = useList("listB", ["a", "b", "c"]);
  */
-export function useList<TValue extends Lson>(
+function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
@@ -406,7 +403,7 @@ export function useList<TValue extends Lson>(
  *   website: "https://liveblocks.io"
  * });
  */
-export function useObject<TData extends LsonObject>(
+function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
@@ -417,7 +414,7 @@ export function useObject<TData extends LsonObject>(
  * Returns a function that undoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useUndo(): () => void {
+function useUndo(): () => void {
   return useRoom().history.undo;
 }
 
@@ -425,7 +422,7 @@ export function useUndo(): () => void {
  * Returns a function that redoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useRedo(): () => void {
+function useRedo(): () => void {
   return useRoom().history.redo;
 }
 
@@ -435,19 +432,20 @@ export function useRedo(): () => void {
  * All the modifications are merged in a single history item (undo/redo).
  * All the subscribers are called only after the batch is over.
  */
-export function useBatch(): (callback: () => void) => void {
+function useBatch(): (callback: () => void) => void {
   return useRoom().batch;
 }
 
 /**
  * Returns the room.history
  */
-export function useHistory(): History {
+function useHistory(): History {
   return useRoom().history;
 }
 
 function useCrdt<T extends LiveStructure>(
   key: string,
+  //   ^^^^^^ FIXME... can now be `keyof TStorageRoot` I think!
   initialCrdt: T
 ): T | null {
   const room = useRoom();
@@ -463,8 +461,10 @@ function useCrdt<T extends LiveStructure>(
     //                                 ^^^^^^^^^^^ FIXME
 
     if (crdt == null) {
-      crdt = initialCrdt;
-      root.set(key, crdt);
+      crdt = initialCrdt as T;
+      //                 ^^^^ FIXME
+      root.set(key, crdt as any);
+      //                 ^^^^^^ FIXME
     }
 
     function onRootChange() {
@@ -499,6 +499,28 @@ function useCrdt<T extends LiveStructure>(
     };
   }, [root, room]);
 
-  return (root?.get(key) as T) ?? null;
-  //                     ^^^^ FIXME
+  return (root?.get(key) as T | undefined) ?? null;
+  //                     ^^^^^^^^^^^^^^^^ FIXME
+}
+
+return {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+};
+
 }

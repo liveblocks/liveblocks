@@ -18,6 +18,7 @@ export {
   useBatch,
   useHistory,
 } from "./rooms";
+export { createHooks } from "./factory";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

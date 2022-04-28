@@ -9,13 +9,15 @@ import {
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
-import {
-  LiveblocksProvider,
-  RoomProvider,
-  useMyPresence,
-  useObject,
-  useOthers,
-} from ".";
+import { LiveblocksProvider, createHooks } from ".";
+
+type Presence = { x: number };
+type Storage = { obj: string };
+
+const { RoomProvider, useMyPresence, useObject, useOthers } = createHooks<
+  Presence,
+  Storage
+>();
 
 import {
   ClientMessageType,
@@ -116,7 +118,7 @@ const testIds = {
 };
 
 function PresenceComponent() {
-  const [me, setPresence] = useMyPresence<{ x: number }>();
+  const [me, setPresence] = useMyPresence();
   const others = useOthers();
 
   return (
