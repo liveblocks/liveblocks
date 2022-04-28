@@ -24,8 +24,8 @@ import { Lson } from "./lson";
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveMap<
-  TKey extends string = string,
-  TValue extends Lson = Lson
+  TKey extends string,
+  TValue extends Lson
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
