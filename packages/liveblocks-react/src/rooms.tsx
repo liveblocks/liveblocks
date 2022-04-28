@@ -58,7 +58,7 @@ export function RoomProvider<TStorageRoot>({
 
   const client = useClient();
 
-  const [room, setRoom] = React.useState(
+  const [room, setRoom] = React.useState(() =>
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
