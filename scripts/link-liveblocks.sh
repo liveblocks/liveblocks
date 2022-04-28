@@ -180,8 +180,11 @@ prep_liveblocks_deps () {
 
             rebuild_if_needed
 
-            # Built package is located in the lib folder, including the package.json
-            cd "./lib"
+            # If a `package.json` exists in the dist folder, consider it the
+            # root of the package.
+            if [ -f "./lib/package.json" ]; then
+                cd "./lib"
+            fi
 
             # Register this link
             npm_link
