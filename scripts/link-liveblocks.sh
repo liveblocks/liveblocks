@@ -71,6 +71,14 @@ if [ ! -f "$PROJECT_PACKAGE_JSON" ]; then
     exit 2
 fi
 
+modified_timestamp () {
+    if [ "$(uname -s)" = "Darwin" ]; then
+        stat -f%m "$@"
+    else
+        stat -c %Y "$@"
+    fi
+}
+
 # Returns the modification timestamp for the oldest file found in the given
 # files or directories
 oldest_file () {
@@ -146,7 +154,7 @@ liveblocks_pkg_dir () {
 
 rebuild_if_needed () {
     if [ -e "lib/.built-by-link-script" ]; then
-        if [ "$(stat -f%m lib/.built-by-link-script)" -lt "$now" ]; then
+        if [ "$(modified_timestamp lib/.built-by-link-script)" -lt "$now" ]; then
             # If the "built marker" is older than this script invocation date,
             # remove it.
             rm lib/.built-by-link-script
