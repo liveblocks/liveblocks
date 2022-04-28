@@ -29,9 +29,7 @@ export class LiveMap<
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
-  constructor(
-    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
-  ) {
+  constructor(entries?: readonly (readonly [TKey, TValue])[] | null) {
     super();
     if (entries) {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
