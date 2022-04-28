@@ -43,7 +43,9 @@ describe("patchLiveObjectKey", () => {
   test("should set LiveObject if next is object", () => {
     const liveObject = new LiveObject();
     patchLiveObjectKey(liveObject, "key", undefined, { a: 0 });
-    const value = liveObject.get("key") as LiveObject;
+    const value = liveObject.get("key") as LiveObject<{
+      key: LiveObject<{ a: number }>;
+    }>;
     expect(value instanceof LiveObject).toBe(true);
     expect(value.toObject()).toEqual({ a: 0 });
   });
@@ -579,7 +581,10 @@ describe("patchImmutableObject", () => {
   test("update one sub object", () => {
     const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
 
-    const root = new LiveObject();
+    const root = new LiveObject<{
+      subA: LiveObject<{ subsubA: LiveObject<{ a: number }> }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
     root.set("subA", new LiveObject({ subsubA: new LiveObject({ a: 1 }) }));
     root.set("subB", new LiveObject({ b: 2 }));
 
@@ -604,7 +609,13 @@ describe("patchImmutableObject", () => {
       subB: { b: 1 },
     };
 
-    const root = new LiveObject();
+    const root = new LiveObject<{
+      subA: LiveObject<{
+        subsubA: LiveObject<{ a: number }>;
+        subsubB: LiveObject<{ b: number }>;
+      }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
     root.set(
       "subA",
       new LiveObject({
@@ -617,7 +628,7 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA") as LiveObject,
+        node: root.get("subA"),
         updates: { subsubA: { type: "update" } },
       },
     ];
@@ -640,7 +651,13 @@ describe("patchImmutableObject", () => {
       subB: { b: 1 },
     };
 
-    const root = new LiveObject();
+    const root = new LiveObject<{
+      subA: LiveObject<{
+        subsubA: LiveObject<{ a: number }>;
+        // subsubB:LiveObject<{b:number}>,
+      }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
     root.set(
       "subA",
       new LiveObject({
@@ -652,17 +669,17 @@ describe("patchImmutableObject", () => {
     const updates: StorageUpdate[] = [
       {
         type: "LiveObject",
-        node: root.get("subA") as LiveObject,
+        node: root.get("subA"),
         updates: { subsubA: { type: "update" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subA") as LiveObject,
+        node: root.get("subA"),
         updates: { subsubB: { type: "delete" } },
       },
       {
         type: "LiveObject",
-        node: root.get("subB") as LiveObject,
+        node: root.get("subB"),
         updates: { b: { type: "update" } },
       },
     ];
