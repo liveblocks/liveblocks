@@ -1572,7 +1572,7 @@ function parseToken(token: string): AuthenticationToken {
     return {
       actor: data.actor,
       id: data.id,
-      info: data.info as Json | undefined,
+      info: data.info,
     };
   }
 
