@@ -43,60 +43,6 @@ module.exports = {
       },
       {
         selector:
-          'TSTypeReference[typeName.name="User"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `User` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="Others"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `Others` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="OthersEvent"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `OthersEvent` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="MyPresenceCallback"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `MyPresenceCallback` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="OthersEventCallback"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `OthersEventCallback` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="LiveObject"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `LiveObject` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="LiveMap"][typeParameters.params.length != 2]',
-        message:
-          "In library code, never write `LiveMap` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="LiveList"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `LiveList` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
-          'TSTypeReference[typeName.name="LiveRegister"][typeParameters.params.length != 1]',
-        message:
-          "In library code, never write `LiveRegister` without explicit type params! Type parameter defaults are only meant for end users.",
-      },
-      {
-        selector:
           "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
         message:
           "Using `JSON.parse()` is type-unsafe. Prefer using the `parseJson()` utility method (from `src/json`).",
