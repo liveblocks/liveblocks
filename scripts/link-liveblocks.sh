@@ -180,6 +180,12 @@ prep_liveblocks_deps () {
 
             rebuild_if_needed
 
+            # If a `package.json` exists in the dist folder, consider it the
+            # root of the package.
+            if [ -f "./lib/package.json" ]; then
+                cd "./lib"
+            fi
+
             # Register this link
             npm_link
         ) )

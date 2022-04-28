@@ -270,6 +270,10 @@ publish_to_npm () {
         read -p "OTP token? " OTP
     done
 
+    if [ -f "./lib/package.json" ]; then
+        cd "./lib"
+    fi
+
     npm publish --tag "${TAG:-latest}" --otp "$OTP"
 }
 
