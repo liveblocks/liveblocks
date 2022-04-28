@@ -17,7 +17,6 @@
 
 <main>
   <div class="avatars">
-
     <!-- Show the first 3 users avatars -->
     {#if $users}
       {#each [...$users].slice(0, 3) as { connectionId, info } (connectionId)}
@@ -33,10 +32,12 @@
     <!-- Show the current user's avatar-->
     {#if $currentUser}
       <div class="current_user_container">
-        <Avatar picture={$currentUser.info?.picture} name={$currentUser.info?.name} />
+        <Avatar
+          picture={$currentUser.info?.picture}
+          name={$currentUser.info?.name}
+        />
       </div>
     {/if}
-
   </div>
 </main>
 

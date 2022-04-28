@@ -6,11 +6,11 @@ import { useRoom } from "./useRoom";
 /**
  * No `liveblocks-react` public API equivalent, but useStorage is used internally
  */
-export function useStorage (): Writable<LiveObject> {
+export function useStorage(): Writable<LiveObject> {
   const room = useRoom();
   const rootStore = writable<LiveObject>();
 
-  async function fetchStorage () {
+  async function fetchStorage() {
     const { root }: { root: LiveObject } = await room!.getStorage();
     rootStore.set(root);
   }

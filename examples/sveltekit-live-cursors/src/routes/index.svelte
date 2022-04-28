@@ -13,7 +13,9 @@
   // Set up the client on load
   // Check inside src/routes/api/auth.ts for the serverless function
   onMount(() => {
-    const roomSuffix = new URLSearchParams(window?.location?.search).get("room");
+    const roomSuffix = new URLSearchParams(window?.location?.search).get(
+      "room"
+    );
 
     /**
      * Add a suffix to the room ID using a query parameter.

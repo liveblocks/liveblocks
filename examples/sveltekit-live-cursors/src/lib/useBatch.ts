@@ -9,6 +9,6 @@ import { useRoom } from "./useRoom";
  *   // ...
  * })
  */
-export function useBatch () {
+export function useBatch() {
   return useRoom().batch;
 }

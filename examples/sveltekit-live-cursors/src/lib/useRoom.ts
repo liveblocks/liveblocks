@@ -10,7 +10,7 @@ import { roomSymbol } from "./symbols";
  * const room = useRoom()
  * room.history.undo()
  */
-export function useRoom (): Room {
+export function useRoom(): Room {
   const room = getContext<Room>(roomSymbol);
 
   if (!room) {

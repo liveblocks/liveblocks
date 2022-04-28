@@ -14,14 +14,16 @@ import { useRoom } from "./useRoom";
  * $list.push([{ item: 1 }])
  * console.log([...$list])
  */
-export function useList<T> (name: string, initial?: any[]): Writable<LiveList<T>> {
+export function useList<T>(
+  name: string,
+  initial?: any[]
+): Writable<LiveList<T>> {
   const room = useRoom();
   const rootStore = useStorage();
   const list = writable<LiveList<T>>();
-  let unsubscribe = () => {
-  };
+  let unsubscribe = () => {};
 
-  const unsubscribeRoot = rootStore.subscribe(root => {
+  const unsubscribeRoot = rootStore.subscribe((root) => {
     if (!root) {
       return;
     }
@@ -33,7 +35,7 @@ export function useList<T> (name: string, initial?: any[]): Writable<LiveList<T>
     list.set(root.get(name));
 
     unsubscribe();
-    unsubscribe = room.subscribe(root.get(name) as LiveList<T>, newList => {
+    unsubscribe = room.subscribe(root.get(name) as LiveList<T>, (newList) => {
       list.set(newList);
     });
   });

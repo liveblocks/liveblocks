@@ -11,7 +11,16 @@
     cursor: Cursor | null;
   };
 
-  const COLORS = ["#E57373", "#9575CD", "#4FC3F7", "#81C784", "#FFF176", "#FF8A65", "#F06292", "#7986CB"];
+  const COLORS = [
+    "#E57373",
+    "#9575CD",
+    "#4FC3F7",
+    "#81C784",
+    "#FFF176",
+    "#FF8A65",
+    "#F06292",
+    "#7986CB",
+  ];
 
   /**
    * The main Liveblocks code for the example.
@@ -25,7 +34,7 @@
   let others = useOthers<Presence>();
 
   // Update cursor presence to current mouse location
-  function handleMousemove (event: MouseEvent) {
+  function handleMousemove(event: MouseEvent) {
     myPresence.update({
       cursor: {
         x: Math.round(event.clientX),
@@ -35,17 +44,14 @@
   }
 
   // When the mouse leaves the page, set cursor presence to null
-  function handleMouseleave () {
+  function handleMouseleave() {
     myPresence.update({
       cursor: null,
     });
   }
 </script>
 
-<main
-  on:mouseleave={handleMouseleave}
-  on:mousemove={handleMousemove}
->
+<main on:mouseleave={handleMouseleave} on:mousemove={handleMousemove}>
   <!-- Show the current user's cursor location -->
   <div class="text">
     {$myPresence?.cursor

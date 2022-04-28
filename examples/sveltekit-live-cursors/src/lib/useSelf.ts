@@ -12,7 +12,7 @@ import { useRoom } from "./useRoom";
  * console.log($self.info.id)
  * <div>{$self.info.name}</div>
  */
-export function useSelf (): Writable<any> {
+export function useSelf(): Writable<any> {
   const room = useRoom();
   const self = writable();
 

@@ -50,13 +50,13 @@ const client = createClient({
 const defaultRoomId = "nuxtjs-live-avatars";
 
 export default Vue.extend({
-  data: function() {
+  data: function () {
     return {
       others: [],
       currentUser: null,
     };
   },
-  mounted: function() {
+  mounted: function () {
     const roomSuffix = new URLSearchParams(window?.location?.search).get(
       "room"
     );
@@ -80,13 +80,13 @@ export default Vue.extend({
     );
     this._room = room;
   },
-  destroyed: function() {
+  destroyed: function () {
     this._unsubscribeOthers();
     this._unsubscribeConnection();
     client.leave(roomId);
   },
   methods: {
-    onOthersChange: function(others) {
+    onOthersChange: function (others) {
       // The picture and name are comming from the authentication endpoint
       // See api.js for and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
       this.others = others.map((user) => ({
@@ -95,7 +95,7 @@ export default Vue.extend({
         name: user.info?.name,
       }));
     },
-    onConnectionChange: function() {
+    onConnectionChange: function () {
       this.currentUser = this._room.getSelf();
     },
   },

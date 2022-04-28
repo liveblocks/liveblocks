@@ -14,14 +14,13 @@ import { useRoom } from "./useRoom";
  * $obj.set('name', 'Chris')
  * console.log($obj.get('name'))
  */
-export function useObject (name: string, initial?: any): Writable<LiveObject> {
+export function useObject(name: string, initial?: any): Writable<LiveObject> {
   const room = useRoom();
   const rootStore = useStorage();
   const list = writable<LiveObject>();
-  let unsubscribe = () => {
-  };
+  let unsubscribe = () => {};
 
-  const unsubscribeRoot = rootStore.subscribe(root => {
+  const unsubscribeRoot = rootStore.subscribe((root) => {
     if (!root) {
       return;
     }
@@ -33,7 +32,7 @@ export function useObject (name: string, initial?: any): Writable<LiveObject> {
     list.set(root.get(name));
 
     unsubscribe();
-    unsubscribe = room.subscribe(root.get(name) as LiveObject, newObject => {
+    unsubscribe = room.subscribe(root.get(name) as LiveObject, (newObject) => {
       list.set(newObject);
     });
   });

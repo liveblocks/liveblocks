@@ -7,6 +7,6 @@
  */
 import { useRoom } from "./useRoom";
 
-export function useHistory () {
+export function useHistory() {
   return useRoom().history;
 }

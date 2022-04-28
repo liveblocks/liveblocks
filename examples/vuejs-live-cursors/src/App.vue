@@ -54,13 +54,13 @@ const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 const defaultRoomId = "vuejs-live-cursors";
 
 export default Vue.extend({
-  data: function() {
+  data: function () {
     return {
       cursor: null,
       cursors: [],
     };
   },
-  mounted: function() {
+  mounted: function () {
     const roomSuffix = new URLSearchParams(window?.location?.search).get(
       "room"
     );
@@ -81,13 +81,13 @@ export default Vue.extend({
     this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
   },
-  destroyed: function() {
+  destroyed: function () {
     this._unsubscribe();
     this._unsubscribeOthers();
     client.leave(roomId);
   },
   methods: {
-    pointerMove: function(e) {
+    pointerMove: function (e) {
       this._room.updatePresence({
         cursor: {
           x: Math.round(e.clientX),
@@ -95,15 +95,15 @@ export default Vue.extend({
         },
       });
     },
-    pointerLeave: function() {
+    pointerLeave: function () {
       this._room.updatePresence({
         cursor: null,
       });
     },
-    onPresenceChange: function(presence) {
+    onPresenceChange: function (presence) {
       this.cursor = presence?.cursor ?? null;
     },
-    onOthersChange: function(others) {
+    onOthersChange: function (others) {
       this.cursors = others
         .toArray()
         .filter((user) => user.presence?.cursor)
