@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/examples-sveltekit-live-avatars",
   "version": "1.0.0",
-  "description": "This example shows how to build live avatars with Liveblocks and SvelteKit.",
+  "description": "This example shows how to build a live avatar stack with Liveblocks and SvelteKit.",
   "license": "Apache-2.0",
   "private": true,
   "type": "module",

@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Live Avatars
+# Live Avatar Stack
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars">
@@ -14,9 +14,9 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build live avatars with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
+This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Avatars" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Avatar Stack" />
 
 ## Getting started
 
