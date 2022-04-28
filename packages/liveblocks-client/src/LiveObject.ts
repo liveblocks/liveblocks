@@ -24,19 +24,26 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
-  constructor(object: O = {} as O) {
+  /**
+   * @deprecated Calling `new LiveObject()` without an initial value is
+   * deprecated and will start failing in a future version. Please provide an
+   * initial value.
+   */
+  constructor(initialValue?: undefined);
+  constructor(initialValue: O);
+  constructor(initialValue?: O | undefined) {
     super();
 
     this._propToLastUpdate = new Map<string, string>();
 
-    for (const key in object) {
-      const value = object[key] as any;
+    for (const key in initialValue) {
+      const value = initialValue[key];
       if (value instanceof AbstractCrdt) {
         value._setParentLink(this, key);
       }
     }
 
-    this._map = new Map(Object.entries(object));
+    this._map = new Map(Object.entries(initialValue ?? ({} as O)));
   }
 
   /**
