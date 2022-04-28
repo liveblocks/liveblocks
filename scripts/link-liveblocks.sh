@@ -22,11 +22,13 @@ usage () {
     err "-h    Show this help"
 }
 
+now="$(date +%s)"
 force=0
 force_flag=""
-while getopts fh flag; do
+while getopts ft:h flag; do
     case "$flag" in
-        f) force=1 ; force_flag="-f" ;;
+        f) force=1 ; force_flag="-t $now" ;;
+        t) force=1 ; force_flag="-t $OPTARG" ; now="$OPTARG" ;;
         *) usage; exit 2;;
     esac
 done
@@ -144,9 +146,15 @@ liveblocks_pkg_dir () {
 
 rebuild_if_needed () {
     if [ -e "lib/.built-by-link-script" ]; then
-        # This was already rebuilt by an earlier invocation of this build
-        # script. We don't have to throw away those results!
-        return
+        if [ "$(stat -f%m lib/.built-by-link-script)" -lt "$now" ]; then
+            # If the "built marker" is older than this script invocation date,
+            # remove it.
+            rm lib/.built-by-link-script
+        else
+            # This was already rebuilt by an earlier invocation of this build
+            # script. We don't have to throw away those results!
+            return
+        fi
     fi
 
     if [ $force -eq 0 -a -d "lib" ]; then
