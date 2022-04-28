@@ -58,19 +58,27 @@ export function RoomProvider<TStorageRoot>({
 
   const client = useClient();
 
-  React.useEffect(() => {
-    return () => {
-      client.leave(id);
-    };
-  }, [client, id]);
-
-  const room =
-    client.getRoom(id) ||
+  const [room, setRoom] = React.useState(
     client.enter(id, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
-    } as any);
+    } as any)
+  );
+
+  React.useEffect(() => {
+    setRoom(
+      client.enter(id, {
+        defaultPresence: defaultPresence ? defaultPresence() : undefined,
+        defaultStorageRoot,
+        DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+      } as any)
+    );
+
+    return () => {
+      client.leave(id);
+    };
+  }, [client, id]);
 
   return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
 }
