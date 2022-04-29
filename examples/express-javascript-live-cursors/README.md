@@ -15,7 +15,7 @@
 
 This example shows how to build live cursors without relying on a front-end framework—using [Express](https://expressjs.com/) for authentication and [esbuild](https://esbuild.github.io/) for bundling.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="800" alt="Live Cursors" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="500" alt="Live Cursors" />
 
 ## Getting started
 

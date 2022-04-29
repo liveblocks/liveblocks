@@ -4,19 +4,19 @@
   </a>
 </p>
 
-# Whiteboard
+# Advanced Whiteboard
 
 <p>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard-advanced">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
+This example shows how to build an advanced collaborative whiteboard with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="800" alt="Whiteboard" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard-advanced.png" width="500" alt="Advanced Whiteboard" />
 
 ## Getting started
 
@@ -28,4 +28,4 @@ This example shows how to build a collaborative whiteboard with [Liveblocks](htt
 
 ### CodeSandbox
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-whiteboard-advanced) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).

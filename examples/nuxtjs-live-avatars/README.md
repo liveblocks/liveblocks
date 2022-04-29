@@ -16,7 +16,7 @@
 
 This example shows how to build live avatars with [Liveblocks](https://liveblocks.io) and [Nuxt.js](https://nuxtjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="800" alt="Live Cursors" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Cursors" />
 
 ## Getting started
 

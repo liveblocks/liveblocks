@@ -46,7 +46,7 @@ const MAX_LAYERS = 100;
 export default function Room() {
   return (
     <RoomProvider
-      id={"multiplayer-canvas"}
+      id="nextjs-whiteboard-advanced"
       defaultPresence={() => ({
         selection: [],
         cursor: null,

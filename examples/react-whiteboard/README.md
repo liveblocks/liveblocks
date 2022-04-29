@@ -15,7 +15,7 @@
 
 This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io) and [React](https://reactjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="800" alt="Whiteboard" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="500" alt="Whiteboard" />
 
 ## Getting started
 
