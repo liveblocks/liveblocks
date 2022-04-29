@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.16.1",
+  "version": "0.16.2",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -33,7 +33,7 @@
   },
   "license": "Apache-2.0",
   "peerDependencies": {
-    "@liveblocks/client": "0.16.1",
+    "@liveblocks/client": "0.16.2",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
