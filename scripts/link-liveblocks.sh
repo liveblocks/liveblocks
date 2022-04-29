@@ -161,6 +161,7 @@ rebuild_if_needed () {
         else
             # This was already rebuilt by an earlier invocation of this build
             # script. We don't have to throw away those results!
+            err "Skipping (build still fresh)"
             return
         fi
     fi
