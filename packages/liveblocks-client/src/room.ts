@@ -142,7 +142,7 @@ export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorage;
+  initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
@@ -383,9 +383,9 @@ export function makeStateMachine<
       state.root = load(message.items);
     }
 
-    for (const key in state.defaultStorageRoot) {
+    for (const key in state.initialStorage) {
       if (state.root.get(key) == null) {
-        state.root.set(key, state.defaultStorageRoot[key]);
+        state.root.set(key, state.initialStorage[key]);
       }
     }
   }
@@ -1542,7 +1542,10 @@ See v0.13 release notes for more information.
 export function defaultState<
   TPresence extends JsonObject,
   TStorage extends LsonObject
->(me?: TPresence, defaultStorageRoot?: TStorage): State<TPresence, TStorage> {
+>(
+  initialPresence?: TPresence,
+  initialStorage?: TStorage
+): State<TPresence, TStorage> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1564,19 +1567,19 @@ export function defaultState<
       pongTimeout: 0,
     },
     buffer: {
-      presence: me ?? ({} as TPresence),
-      //              ^^^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
+      presence: initialPresence ?? ({} as TPresence),
+      //                            ^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: me ?? ({} as TPresence),
-    //        ^^^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
+    me: initialPresence ?? ({} as TPresence),
+    //                      ^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
     users: {},
     others: makeOthers({}),
-    defaultStorageRoot,
+    initialStorage,
     idFactory: null,
 
     // Storage
