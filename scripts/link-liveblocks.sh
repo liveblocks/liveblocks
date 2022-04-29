@@ -22,11 +22,13 @@ usage () {
     err "-h    Show this help"
 }
 
+now="$(date +%s)"
 force=0
 force_flag=""
-while getopts fh flag; do
+while getopts ft:h flag; do
     case "$flag" in
-        f) force=1 ; force_flag="-f" ;;
+        f) force=1 ; force_flag="-t $now" ;;
+        t) force=1 ; force_flag="-t $OPTARG" ; now="$OPTARG" ;;
         *) usage; exit 2;;
     esac
 done
@@ -68,6 +70,14 @@ if [ ! -f "$PROJECT_PACKAGE_JSON" ]; then
     err "Please run this script from inside a library or project directory."
     exit 2
 fi
+
+modified_timestamp () {
+    # There's no POSIX-compatible way of getting a file's last modification
+    # date. The best portable shot that works on Mac and Linux platforms is
+    # using Perl, it seems.
+    # Shamelessly stolen from https://unix.stackexchange.com/a/561933
+    perl -MPOSIX -le 'for (@ARGV) { if (@s = lstat$_) {print $s[9]} else {warn "$_: $!\n"} }' -- "$@"
+}
 
 # Returns the modification timestamp for the oldest file found in the given
 # files or directories
@@ -144,9 +154,16 @@ liveblocks_pkg_dir () {
 
 rebuild_if_needed () {
     if [ -e "lib/.built-by-link-script" ]; then
-        # This was already rebuilt by an earlier invocation of this build
-        # script. We don't have to throw away those results!
-        return
+        if [ "$(modified_timestamp lib/.built-by-link-script)" -lt "$now" ]; then
+            # If the "built marker" is older than this script invocation date,
+            # remove it.
+            rm lib/.built-by-link-script
+        else
+            # This was already rebuilt by an earlier invocation of this build
+            # script. We don't have to throw away those results!
+            err "Skipping (build still fresh)"
+            return
+        fi
     fi
 
     if [ $force -eq 0 -a -d "lib" ]; then
