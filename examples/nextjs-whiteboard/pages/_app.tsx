@@ -19,6 +19,8 @@ function App({ Component, pageProps }: AppProps) {
       <LiveblocksProvider client={client}>
         <Head>
           <title>Liveblocks</title>
+          <meta name="robots" content="noindex" />
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
         </Head>
         <Component {...pageProps} />
       </LiveblocksProvider>
