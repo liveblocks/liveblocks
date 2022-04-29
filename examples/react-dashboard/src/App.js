@@ -226,27 +226,23 @@ function Example() {
   );
 }
 
+const query = new URLSearchParams(window?.location?.search);
 const defaultRoomId = "react-dashboard";
 
+const roomSuffix = query.get("room");
+let roomId = defaultRoomId;
+
+/**
+ * Add a suffix to the room ID using a query parameter.
+ * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+ *
+ * http://localhost:3000/?room=1234 → react-dashboard-1234
+ */
+if (roomSuffix) {
+  roomId = `${defaultRoomId}-${roomSuffix}`;
+}
+
 export default function App() {
-  const [roomId, setRoomId] = useState(defaultRoomId);
-
-  /**
-   * Add a suffix to the room ID using a query parameter.
-   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-   *
-   * http://localhost:3000/?room=1234 → react-dashboard-1234
-   */
-  useEffect(() => {
-    const roomSuffix = new URLSearchParams(window?.location?.search).get(
-      "room"
-    );
-
-    if (roomSuffix) {
-      setRoomId(`${defaultRoomId}-${roomSuffix}`);
-    }
-  }, []);
-
   return (
     <RoomProvider
       id={roomId}

@@ -2,7 +2,21 @@ import { useEffect } from "react";
 import useStore from "./store";
 import "./App.css";
 
+const query = new URLSearchParams(window?.location?.search);
 const defaultRoomId = "zustand-whiteboard";
+
+const roomSuffix = query.get("room");
+let roomId = defaultRoomId;
+
+/**
+ * Add a suffix to the room ID using a query parameter.
+ * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+ *
+ * http://localhost:3000/?room=1234 → zustand-whiteboard-1234
+ */
+if (roomSuffix) {
+  roomId = `${defaultRoomId}-${roomSuffix}`;
+}
 
 export default function App() {
   const shapes = useStore((state) => state.shapes);
@@ -20,21 +34,6 @@ export default function App() {
   const isLoading = useStore((state) => state.liveblocks.isLoading);
 
   useEffect(() => {
-    const roomSuffix = new URLSearchParams(window?.location?.search).get(
-      "room"
-    );
-    let roomId = defaultRoomId;
-
-    /**
-     * Add a suffix to the room ID using a query parameter.
-     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-     *
-     * http://localhost:3000/?room=1234 → zustand-whiteboard-1234
-     */
-    if (roomSuffix) {
-      roomId = `${defaultRoomId}-${roomSuffix}`;
-    }
-
     enterRoom(roomId, { shapes: {} });
 
     return () => {

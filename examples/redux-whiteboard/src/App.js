@@ -11,7 +11,21 @@ import {
 } from "./store";
 import "./App.css";
 
+const query = new URLSearchParams(window?.location?.search);
 const defaultRoomId = "redux-whiteboard";
+
+const roomSuffix = query.get("room");
+let roomId = defaultRoomId;
+
+/**
+ * Add a suffix to the room ID using a query parameter.
+ * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+ *
+ * http://localhost:3000/?room=1234 → redux-whiteboard-1234
+ */
+if (roomSuffix) {
+  roomId = `${defaultRoomId}-${roomSuffix}`;
+}
 
 export default function App() {
   const shapes = useSelector((state) => state.shapes);
@@ -22,21 +36,6 @@ export default function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    const roomSuffix = new URLSearchParams(window?.location?.search).get(
-      "room"
-    );
-    let roomId = defaultRoomId;
-
-    /**
-     * Add a suffix to the room ID using a query parameter.
-     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-     *
-     * http://localhost:3000/?room=1234 → redux-whiteboard-1234
-     */
-    if (roomSuffix) {
-      roomId = `${defaultRoomId}-${roomSuffix}`;
-    }
-
     dispatch(
       actions.enterRoom(roomId, {
         shapes: {},
