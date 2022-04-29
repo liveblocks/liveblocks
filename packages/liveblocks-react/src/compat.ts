@@ -45,12 +45,12 @@ const {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-function RoomProvider<TStorageRoot extends LsonObject>(
-  props: RoomProviderProps<OpaquePresence, TStorageRoot>
+function RoomProvider<TStorage extends LsonObject>(
+  props: RoomProviderProps<OpaquePresence, TStorage>
 ) {
   // NOTE: This weird definition is necessary for backward-compatibility. In
   // the "old" version, this type took only one type param, and it was
-  // TStorageRoot. In the new API, this type takes two type params, and the first
+  // TStorage. In the new API, this type takes two type params, and the first
   // one is TPresence.
   return RoomProvider_newAPI(props);
 }

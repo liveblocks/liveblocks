@@ -108,10 +108,7 @@ type HistoryItem<TPresence extends JsonObject> = Array<
 
 type IdFactory = () => string;
 
-export type State<
-  TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
-> = {
+export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
@@ -145,7 +142,7 @@ export type State<
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorageRoot;
+  defaultStorageRoot?: TStorage;
 
   clock: number;
   opClock: number;
@@ -193,7 +190,7 @@ type Context = {
 
 export type Machine<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 > = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
@@ -280,7 +277,7 @@ export type Machine<
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage(): Promise<{ root: LiveObject<TStorageRoot> }>;
+  getStorage(): Promise<{ root: LiveObject<TStorage> }>;
 
   selectors: {
     // Core
@@ -295,12 +292,12 @@ export type Machine<
 
 export function makeStateMachine<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 >(
-  state: State<TPresence, TStorageRoot>,
+  state: State<TPresence, TStorage>,
   context: Context,
   mockedEffects?: Effects<TPresence>
-): Machine<TPresence, TStorageRoot> {
+): Machine<TPresence, TStorage> {
   const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -1272,7 +1269,7 @@ See v0.13 release notes for more information.
     }
   }
 
-  function flushDataToMessages(state: State<TPresence, TStorageRoot>) {
+  function flushDataToMessages(state: State<TPresence, TStorage>) {
     const messages: ClientMessage<TPresence>[] = [];
     if (state.buffer.presence) {
       messages.push({
@@ -1315,9 +1312,8 @@ See v0.13 release notes for more information.
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[
-        key as keyof State<TPresence, TStorageRoot>["listeners"]
-      ] = [];
+      state.listeners[key as keyof State<TPresence, TStorage>["listeners"]] =
+        [];
     }
   }
 
@@ -1355,12 +1351,12 @@ See v0.13 release notes for more information.
   let _getInitialStateResolver: (() => void) | null = null;
 
   function getStorage(): Promise<{
-    root: LiveObject<TStorageRoot>;
+    root: LiveObject<TStorage>;
   }> {
     if (state.root) {
       return new Promise((resolve) =>
         resolve({
-          root: state.root as LiveObject<TStorageRoot>,
+          root: state.root as LiveObject<TStorage>,
         })
       );
     }
@@ -1375,7 +1371,7 @@ See v0.13 release notes for more information.
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TStorageRoot>,
+        root: state.root! as LiveObject<TStorage>,
       };
     });
   }
@@ -1545,11 +1541,8 @@ See v0.13 release notes for more information.
 
 export function defaultState<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
->(
-  me?: TPresence,
-  defaultStorageRoot?: TStorageRoot
-): State<TPresence, TStorageRoot> {
+  TStorage extends LsonObject
+>(me?: TPresence, defaultStorageRoot?: TStorage): State<TPresence, TStorage> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1612,9 +1605,9 @@ export function defaultState<
 
 export type InternalRoom<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 > = {
-  room: Room<TPresence, TStorageRoot>;
+  room: Room<TPresence, TStorage>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
@@ -1623,14 +1616,14 @@ export type InternalRoom<
 
 export function createRoom<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 >(
   options: {
     defaultPresence?: TPresence;
-    defaultStorageRoot?: TStorageRoot;
+    defaultStorageRoot?: TStorage;
   },
   context: Context
-): InternalRoom<TPresence, TStorageRoot> {
+): InternalRoom<TPresence, TStorage> {
   const state = defaultState(
     options.defaultPresence,
     options.defaultStorageRoot
@@ -1638,7 +1631,7 @@ export function createRoom<
 
   const machine = makeStateMachine(state, context);
 
-  const room: Room<TPresence, TStorageRoot> = {
+  const room: Room<TPresence, TStorage> = {
     id: context.roomId,
     /////////////
     // Core    //

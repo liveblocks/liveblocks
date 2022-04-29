@@ -20,7 +20,7 @@ type LiveStructure = Exclude<Lson, Json>;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 > = {
   /**
    * The id of the room you want to connect to
@@ -32,16 +32,16 @@ export type RoomProviderProps<
    */
   defaultPresence?: () => TPresence;
 
-  defaultStorageRoot?: TStorageRoot;
+  defaultStorageRoot?: TStorage;
 
   children: React.ReactNode;
 };
 
 export function createHooks<
   TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
+  TStorage extends LsonObject
 >() {
-  const RoomContext = React.createContext<Room<TPresence, TStorageRoot> | null>(
+  const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
     null
   );
 
@@ -55,7 +55,7 @@ export function createHooks<
     children,
     defaultPresence,
     defaultStorageRoot,
-  }: RoomProviderProps<TPresence, TStorageRoot>) {
+  }: RoomProviderProps<TPresence, TStorage>) {
     if (process.env.NODE_ENV !== "production") {
       if (id == null) {
         throw new Error(
@@ -69,7 +69,7 @@ export function createHooks<
 
     const client = useClient();
 
-    const [room, setRoom] = React.useState<Room<TPresence, TStorageRoot>>(() =>
+    const [room, setRoom] = React.useState<Room<TPresence, TStorage>>(() =>
       client.enter(id, {
         defaultPresence: defaultPresence ? defaultPresence() : undefined,
         defaultStorageRoot,
@@ -98,7 +98,7 @@ export function createHooks<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom(): Room<TPresence, TStorageRoot> {
+  function useRoom(): Room<TPresence, TStorage> {
     const room = React.useContext(RoomContext);
 
     if (room == null) {
@@ -324,11 +324,9 @@ export function createHooks<
     return room.getSelf();
   }
 
-  function useStorage(): [root: LiveObject<TStorageRoot> | null] {
+  function useStorage(): [root: LiveObject<TStorage> | null] {
     const room = useRoom();
-    const [root, setState] = React.useState<LiveObject<TStorageRoot> | null>(
-      null
-    );
+    const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
     React.useEffect(() => {
       let didCancel = false;
@@ -452,7 +450,7 @@ export function createHooks<
 
   function useCrdt<T extends LiveStructure>(
     key: string,
-    //   ^^^^^^ FIXME... can now be `keyof TStorageRoot` I think!
+    //   ^^^^^^ FIXME... can now be `keyof TStorage` I think!
     initialCrdt: T
   ): T | null {
     const room = useRoom();

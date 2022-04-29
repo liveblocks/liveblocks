@@ -129,22 +129,22 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
+  getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string
-  ): Room<TPresence, TStorageRoot> | null;
+  ): Room<TPresence, TStorage> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
+  enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options?: {
       defaultPresence?: TPresence;
-      defaultStorageRoot?: TStorageRoot;
+      defaultStorageRoot?: TStorage;
     }
-  ): Room<TPresence, TStorageRoot>;
+  ): Room<TPresence, TStorage>;
 
   /**
    * Leaves a room.
@@ -338,10 +338,7 @@ export interface History {
   resume: () => void;
 }
 
-export type Room<
-  TPresence extends JsonObject,
-  TStorageRoot extends LsonObject
-> = {
+export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
   /**
    * The id of the room.
    */
@@ -614,7 +611,7 @@ export type Room<
    * const { root } = await room.getStorage();
    */
   getStorage: () => Promise<{
-    root: LiveObject<TStorageRoot>;
+    root: LiveObject<TStorage>;
   }>;
 
   /**

@@ -34,36 +34,32 @@ export function createClient(options: ClientOptions): Client {
 
   const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
 
-  function getRoom<
-    TPresence extends JsonObject,
-    TStorageRoot extends LsonObject
-  >(roomId: string): Room<TPresence, TStorageRoot> | null {
+  function getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+    roomId: string
+  ): Room<TPresence, TStorage> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
-      ? (internalRoom.room as unknown as Room<TPresence, TStorageRoot>)
+      ? (internalRoom.room as unknown as Room<TPresence, TStorage>)
       : null;
   }
 
-  function enter<TPresence extends JsonObject, TStorageRoot extends LsonObject>(
+  function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options: {
       defaultPresence?: TPresence;
-      defaultStorageRoot?: TStorageRoot;
+      defaultStorageRoot?: TStorage;
       /**
        * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
        */
       DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
-  ): Room<TPresence, TStorageRoot> {
+  ): Room<TPresence, TStorage> {
     const existingInternalRoom = rooms.get(roomId);
     if (existingInternalRoom) {
-      return existingInternalRoom.room as unknown as Room<
-        TPresence,
-        TStorageRoot
-      >;
+      return existingInternalRoom.room as unknown as Room<TPresence, TStorage>;
     }
 
-    const newInternalRoom = createRoom<TPresence, TStorageRoot>(
+    const newInternalRoom = createRoom<TPresence, TStorage>(
       {
         defaultPresence: options.defaultPresence,
         defaultStorageRoot: options.defaultStorageRoot,
