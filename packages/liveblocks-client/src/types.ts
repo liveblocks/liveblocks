@@ -4,11 +4,11 @@ import type { LiveObject } from "./LiveObject";
 import { Json, JsonObject } from "./json";
 import { Lson, LsonObject } from "./lson";
 
-export type MyPresenceCallback<TPresence extends JsonObject = JsonObject> = (
+export type MyPresenceCallback<TPresence extends JsonObject> = (
   me: TPresence
 ) => void;
 
-export type OthersEventCallback<TPresence extends JsonObject = JsonObject> = (
+export type OthersEventCallback<TPresence extends JsonObject> = (
   others: Others<TPresence>,
   event: OthersEvent<TPresence>
 ) => void;
@@ -162,7 +162,7 @@ export type AuthenticationToken = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends JsonObject = JsonObject> {
+export interface Others<TPresence extends JsonObject> {
   /**
    * Number of other users in the room.
    */
@@ -184,7 +184,7 @@ export interface Others<TPresence extends JsonObject = JsonObject> {
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends JsonObject = JsonObject> = {
+export type User<TPresence extends JsonObject> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -264,7 +264,7 @@ export type Connection =
       userInfo?: any;
     };
 
-export type OthersEvent<TPresence extends JsonObject = JsonObject> =
+export type OthersEvent<TPresence extends JsonObject> =
   | {
       type: "leave";
       user: User<TPresence>;
