@@ -278,10 +278,13 @@ function mergeListStorageUpdates<T extends Lson>(
 
 // prettier-ignore
 export function mergeStorageUpdates<T extends StorageUpdate>(first: undefined, second: T): T;
+
 // prettier-ignore
 export function mergeStorageUpdates<K1 extends string, V1 extends Lson, K2 extends string, V2 extends Lson>(first: LiveMapUpdates<K1, V1>, second: LiveMapUpdates<K2, V2>): LiveMapUpdates<K1 | K2, V1 | V2>;
+
 // prettier-ignore
 export function mergeStorageUpdates<T extends Lson>(first: LiveListUpdates<Lson>, second: LiveListUpdates<T>): LiveListUpdates<T>;
+
 // prettier-ignore
 export function mergeStorageUpdates(first: StorageUpdate | undefined, second: StorageUpdate): StorageUpdate {
   if (!first) {

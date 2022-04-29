@@ -5,10 +5,12 @@ import { Json, JsonObject } from "./json";
 import { Lson, LsonObject } from "./lson";
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
+
 export type OthersEventCallback<T extends Presence = Presence> = (
   others: Others<T>,
   event: OthersEvent<T>
 ) => void;
+
 export type EventCallback = ({
   connectionId,
   event,
@@ -16,7 +18,9 @@ export type EventCallback = ({
   connectionId: number;
   event: Json;
 }) => void;
+
 export type ErrorCallback = (error: Error) => void;
+
 export type ConnectionCallback = (state: ConnectionState) => void;
 
 export type RoomEventCallbackMap = {
