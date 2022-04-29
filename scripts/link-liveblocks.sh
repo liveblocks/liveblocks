@@ -75,7 +75,7 @@ modified_timestamp () {
     if [ "$(uname -s)" = "Darwin" ]; then
         stat -f%m "$@"
     else
-        stat -c %Y "$@"
+        stat -c %Z "$@"
     fi
 }
 
