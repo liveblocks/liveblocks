@@ -21,7 +21,7 @@ import {
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
-import { makeStateMachine, defaultState, createRoom } from "./room";
+import { makeStateMachine, Effects, defaultState, createRoom } from "./room";
 import { Authentication, Others } from "./types";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -785,9 +785,11 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
+      type P = { x: number };
+      type S = { x: number };
       const effects = mockEffects();
-      const state = defaultState<{ x: number }, { x: number }>();
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const state = defaultState<P, S>();
+      const machine = makeStateMachine<P, S>(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess({ actor: 0 }, ws);
@@ -890,6 +892,9 @@ describe("room", () => {
     });
 
     test("batch storage and presence with changes from server", async () => {
+      type P = { x: number };
+      type S = { items: LiveList<string> };
+
       const {
         storage,
         assert,
@@ -899,7 +904,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{ x: number }, { items: LiveList<string> }>(
+      } = await prepareStorageTest<P, S>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -912,12 +917,11 @@ describe("room", () => {
 
       const itemsSubscriber = jest.fn();
       const refItemsSubscriber = jest.fn();
-      let refOthers: Others | undefined;
-      const refPresenceSubscriber = (o: any) => (refOthers = o);
+      let refOthers: Others<P> | undefined;
 
       subscribe(items, itemsSubscriber);
       refSubscribe(refItems, refItemsSubscriber);
-      refSubscribe("others", refPresenceSubscriber);
+      refSubscribe("others", (o) => (refOthers = o));
 
       batch(() => {
         updatePresence({ x: 0 });
@@ -978,20 +982,23 @@ describe("room", () => {
     });
 
     test("others", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
+      type P = { x: number };
+      type S = never;
+
+      const effects: Effects<P> = mockEffects();
+      const state = defaultState<P, S>({ x: 0 });
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess({ actor: 0 }, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P> | undefined;
 
       const unsubscribe = machine.subscribe("others", (o) => (others = o));
 
       machine.onMessage(
-        serverMessage({
+        serverMessage<P>({
           type: ServerMessageType.UpdatePresence,
           data: { x: 2 },
           actor: 1,
@@ -1001,7 +1008,7 @@ describe("room", () => {
       unsubscribe();
 
       machine.onMessage(
-        serverMessage({
+        serverMessage<P>({
           type: ServerMessageType.UpdatePresence,
           data: { x: 3 },
           actor: 1,
@@ -1051,8 +1058,11 @@ describe("room", () => {
 
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
+      type P = never;
+      type S = { items: LiveList<string> };
+
       const { storage, assert, machine, refStorage, reconnect, ws } =
-        await prepareStorageTest<never, { items: LiveList<string> }>(
+        await prepareStorageTest<P, S>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1252,20 +1262,23 @@ describe("room", () => {
 
   describe("Initial UpdatePresenceMessage", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
+      type P = { x: number };
+      type S = never;
+
       const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const state = defaultState<P, S>({ x: 0 });
+      const machine = makeStateMachine<P, S>(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess({ actor: 0 }, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P> | undefined;
 
       machine.subscribe("others", (o) => (others = o));
 
       machine.onMessage(
-        serverMessage({
+        serverMessage<P>({
           type: ServerMessageType.RoomState,
           users: { "1": { id: undefined } },
         })
@@ -1273,7 +1286,7 @@ describe("room", () => {
 
       // UpdatePresence sent before the initial full UpdatePresence
       machine.onMessage(
-        serverMessage({
+        serverMessage<P>({
           type: ServerMessageType.UpdatePresence,
           data: { x: 2 },
           actor: 1,
