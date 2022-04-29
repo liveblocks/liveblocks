@@ -2,7 +2,7 @@ const express = require("express");
 const { authorize } = require("@liveblocks/node");
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-const API_KEY_ERROR_MESSAGE = process.env.CODESANDBOX_SSE
+const API_KEY_WARNING = process.env.CODESANDBOX_SSE
   ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
     `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/express-javascript-live-cursors#codesandbox.`
   : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
@@ -16,9 +16,9 @@ app.use(express.json());
 
 app.post("/auth", (req, res) => {
   if (!API_KEY) {
-    console.error(API_KEY_ERROR_MESSAGE);
+    console.warn(API_KEY_WARNING);
 
-    return res.status(403).end(API_KEY_ERROR_MESSAGE);
+    return res.status(403).end(API_KEY_WARNING);
   }
 
   return authorize({

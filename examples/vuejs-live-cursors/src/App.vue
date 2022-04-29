@@ -36,10 +36,13 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
+/**
+ * Replace by your public key from https://liveblocks.io/dashboard/apikeys.
+ */
 const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
-  throw new Error(
+  console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors#getting-started.`
   );
