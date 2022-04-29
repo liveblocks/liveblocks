@@ -1,6 +1,6 @@
-# vNEXT
+# v0.17.0-beta1
 
-...
+This release brings many improvements for TypeScript developers using Liveblocks.
 
 # v0.16.2
 
