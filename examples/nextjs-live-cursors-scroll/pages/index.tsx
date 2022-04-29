@@ -4,7 +4,8 @@ import {
   useUpdateMyPresence,
   useOthers,
 } from "@liveblocks/react";
-import React, { useEffect } from "react";
+import { useRouter } from "next/router";
+import React, { useEffect, useMemo } from "react";
 import Cursor from "../components/Cursor";
 
 /**
@@ -177,10 +178,23 @@ function Example() {
   );
 }
 
+const defaultRoomId = "nextjs-live-cursors-scroll";
+
 export default function Page() {
+  const { query } = useRouter();
+  const roomId = useMemo(() => {
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → nextjs-live-cursors-scroll-1234
+     */
+    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  }, [query]);
+
   return (
     <RoomProvider
-      id="nextjs-live-cursors-scroll"
+      id={roomId}
       /**
        * Initialize the cursor position to null when joining the room
        */

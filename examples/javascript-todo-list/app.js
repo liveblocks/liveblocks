@@ -13,8 +13,23 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
+const defaultRoomId = "javascript-todo-list";
+
 async function run() {
-  const room = client.enter("javascript-todo-list");
+  const roomSuffix = new URLSearchParams(window?.location?.search).get("room");
+  let roomId = defaultRoomId;
+
+  /**
+   * Add a suffix to the room ID using a query parameter.
+   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+   *
+   * http://localhost:3000/?room=1234 → javascript-todo-list-1234
+   */
+  if (roomSuffix) {
+    roomId = `${defaultRoomId}-${roomSuffix}`;
+  }
+
+  const room = client.enter(roomId);
 
   const whoIsHere = document.getElementById("who_is_here");
   const todoInput = document.getElementById("todo_input");

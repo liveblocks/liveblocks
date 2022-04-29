@@ -51,7 +51,7 @@ const client = createClient({
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-const roomId = "vuejs-live-cursors";
+const defaultRoomId = "vuejs-live-cursors";
 
 export default Vue.extend({
   data: function() {
@@ -61,6 +61,21 @@ export default Vue.extend({
     };
   },
   mounted: function() {
+    const roomSuffix = new URLSearchParams(window?.location?.search).get(
+      "room"
+    );
+    let roomId = defaultRoomId;
+
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → vuejs-live-cursors-1234
+     */
+    if (roomSuffix) {
+      roomId = `${defaultRoomId}-${roomSuffix}`;
+    }
+
     const room = client.enter(roomId, { cursor: null });
     this._room = room;
     this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);

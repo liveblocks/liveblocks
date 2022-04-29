@@ -33,6 +33,7 @@ import {
 } from "./utils";
 import SelectionBox from "./components/SelectionBox";
 import { nanoid } from "nanoid";
+import { useRouter } from "next/router";
 import LayerComponent from "./components/LayerComponent";
 import SelectionTools from "./components/SelectionTools";
 import useSelectionBounds from "./hooks/useSelectionBounds";
@@ -43,10 +44,23 @@ import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 
+const defaultRoomId = "nextjs-whiteboard-advanced";
+
 export default function Room() {
+  const { query } = useRouter();
+  const roomId = useMemo(() => {
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → nextjs-whiteboard-advanced-1234
+     */
+    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  }, [query]);
+
   return (
     <RoomProvider
-      id="nextjs-whiteboard-advanced"
+      id={roomId}
       defaultPresence={() => ({
         selection: [],
         cursor: null,

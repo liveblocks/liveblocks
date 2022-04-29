@@ -5,7 +5,8 @@ import {
   useMyPresence,
   useOthers,
 } from "@liveblocks/react";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo } from "react";
+import { useRouter } from "next/router";
 import Cursor from "../components/Cursor";
 import FlyingReaction from "../components/FlyingReaction";
 import ReactionSelector from "../components/ReactionSelector";
@@ -287,10 +288,23 @@ function Example() {
   );
 }
 
+const defaultRoomId = "nextjs-live-cursors-chat";
+
 export default function Page() {
+  const { query } = useRouter();
+  const roomId = useMemo(() => {
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → nextjs-live-cursors-chat-1234
+     */
+    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  }, [query]);
+
   return (
     <RoomProvider
-      id="nextjs-live-cursors-chat"
+      id={roomId}
       defaultPresence={() => ({
         cursor: null,
         message: "",

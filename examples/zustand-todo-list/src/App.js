@@ -22,6 +22,8 @@ function SomeoneIsTyping() {
   ) : null;
 }
 
+const defaultRoomId = "zustand-todo-list";
+
 export default function App() {
   const {
     draft,
@@ -33,12 +35,27 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-todo-list", {
+    const roomSuffix = new URLSearchParams(window?.location?.search).get(
+      "room"
+    );
+    let roomId = defaultRoomId;
+
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → zustand-todo-list-1234
+     */
+    if (roomSuffix) {
+      roomId = `${defaultRoomId}-${roomSuffix}`;
+    }
+
+    enterRoom(roomId, {
       todos: [],
     });
 
     return () => {
-      leaveRoom("zustand-todo-list");
+      leaveRoom(roomId);
     };
   }, [enterRoom, leaveRoom]);
 

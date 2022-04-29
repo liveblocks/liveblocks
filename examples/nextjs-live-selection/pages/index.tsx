@@ -3,7 +3,8 @@ import {
   useOthers,
   useUpdateMyPresence,
 } from "@liveblocks/react";
-import React from "react";
+import { useRouter } from "next/router";
+import React, { useMemo } from "react";
 import Selection from "../components/Selection";
 import styles from "./index.module.css";
 
@@ -122,10 +123,23 @@ function Example() {
   );
 }
 
+const defaultRoomId = "nextjs-live-selection";
+
 export default function Page() {
+  const { query } = useRouter();
+  const roomId = useMemo(() => {
+    /**
+     * Add a suffix to the room ID using a query parameter.
+     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+     *
+     * http://localhost:3000/?room=1234 → nextjs-live-selection-1234
+     */
+    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  }, [query]);
+
   return (
     <RoomProvider
-      id="nextjs-live-cursors"
+      id={roomId}
       defaultPresence={() => ({
         selectedId: null,
       })}

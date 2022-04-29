@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   XAxis,
   YAxis,
@@ -226,10 +226,30 @@ function Example() {
   );
 }
 
+const defaultRoomId = "react-dashboard";
+
 export default function App() {
+  const [roomId, setRoomId] = useState(defaultRoomId);
+
+  /**
+   * Add a suffix to the room ID using a query parameter.
+   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+   *
+   * http://localhost:3000/?room=1234 → react-dashboard-1234
+   */
+  useEffect(() => {
+    const roomSuffix = new URLSearchParams(window?.location?.search).get(
+      "room"
+    );
+
+    if (roomSuffix) {
+      setRoomId(`${defaultRoomId}-${roomSuffix}`);
+    }
+  }, []);
+
   return (
     <RoomProvider
-      id="react-dashboard"
+      id={roomId}
       defaultPresence={() => ({ cardId: null, cursor: null })}
     >
       <Example />
