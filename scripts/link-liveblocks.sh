@@ -72,11 +72,11 @@ if [ ! -f "$PROJECT_PACKAGE_JSON" ]; then
 fi
 
 modified_timestamp () {
-    if [ "$(uname -s)" = "Darwin" ]; then
-        stat -f%m "$@"
-    else
-        stat -c %Z "$@"
-    fi
+    # There's no POSIX-compatible way of getting a file's last modification
+    # date. The best portable shot that works on Mac and Linux platforms is
+    # using Perl, it seems.
+    # Shamelessly stolen from https://unix.stackexchange.com/a/561933
+    perl -MPOSIX -le 'for (@ARGV) { if (@s = lstat$_) {print $s[9]} else {warn "$_: $!\n"} }' -- "$@"
 }
 
 # Returns the modification timestamp for the oldest file found in the given
