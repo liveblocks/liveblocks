@@ -29,21 +29,21 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * deprecated and will start failing in a future version. Please provide an
    * initial value.
    */
-  constructor(initialValue?: undefined);
-  constructor(initialValue: O);
-  constructor(initialValue?: O | undefined) {
+  constructor(obj?: undefined);
+  constructor(obj: O);
+  constructor(obj?: O | undefined) {
     super();
 
     this._propToLastUpdate = new Map<string, string>();
 
-    for (const key in initialValue) {
-      const value = initialValue[key];
+    for (const key in obj) {
+      const value = obj[key];
       if (value instanceof AbstractCrdt) {
         value._setParentLink(this, key);
       }
     }
 
-    this._map = new Map(Object.entries(initialValue ?? ({} as O)));
+    this._map = new Map(Object.entries(obj ?? ({} as O)));
   }
 
   /**
