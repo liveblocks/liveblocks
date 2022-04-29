@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "dotenv": "^10.0.0",
-    "esbuild": "^0.12.2"
+    "esbuild": "^0.12.2",
+    "prettier": "^2.6.2"
   }
 }
