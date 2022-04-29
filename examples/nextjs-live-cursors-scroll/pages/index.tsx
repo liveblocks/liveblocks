@@ -178,23 +178,23 @@ function Example() {
   );
 }
 
-const defaultRoomId = "nextjs-live-cursors-scroll";
+const roomId = "nextjs-live-cursors-scroll";
 
 export default function Page() {
   const { query } = useRouter();
-  const roomId = useMemo(() => {
+  const roomIdWithSuffix = useMemo(() => {
     /**
      * Add a suffix to the room ID using a query parameter.
      * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
      *
      * http://localhost:3000/?room=1234 → nextjs-live-cursors-scroll-1234
      */
-    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+    return query?.room ? `${roomId}-${query.room}` : roomId;
   }, [query]);
 
   return (
     <RoomProvider
-      id={roomId}
+      id={roomIdWithSuffix}
       /**
        * Initialize the cursor position to null when joining the room
        */

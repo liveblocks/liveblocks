@@ -2,18 +2,19 @@ import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-const query = new URLSearchParams(window?.location?.search);
-
 /**
  * Replace by your public key from https://liveblocks.io/dashboard/apikeys.
  */
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 /**
+ * @optional
+ *
  * Used for coordinating public API keys from outside (e.g. https://liveblocks.io/examples).
  *
  * http://localhost:3000/?token=pk_live_1234
  */
+const query = new URLSearchParams(window?.location?.search);
 const token = query.get("token");
 
 if (token) {

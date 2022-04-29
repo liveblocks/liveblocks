@@ -10,23 +10,23 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-const defaultRoomId = "nextjs-logo-builder";
+const roomId = "nextjs-logo-builder";
 
 function App({ Component, pageProps }: AppProps) {
   const { query } = useRouter();
-  const roomId = useMemo(() => {
+  const roomIdWithSuffix = useMemo(() => {
     /**
      * Add a suffix to the room ID using a query parameter.
      * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
      *
      * http://localhost:3000/?room=1234 → nextjs-logo-builder-1234
      */
-    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+    return query?.room ? `${roomId}-${query.room}` : roomId;
   }, [query]);
 
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomIdWithSuffix}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />

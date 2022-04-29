@@ -288,23 +288,25 @@ function Example() {
   );
 }
 
-const defaultRoomId = "nextjs-live-cursors-chat";
+const roomId = "nextjs-live-cursors-chat";
 
 export default function Page() {
+  /**
+   * @optional
+   *
+   * Add a suffix to the room ID using a query parameter.
+   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+   *
+   * http://localhost:3000/?room=1234 → nextjs-live-cursors-chat-1234
+   */
   const { query } = useRouter();
-  const roomId = useMemo(() => {
-    /**
-     * Add a suffix to the room ID using a query parameter.
-     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-     *
-     * http://localhost:3000/?room=1234 → nextjs-live-cursors-chat-1234
-     */
-    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  const roomIdWithSuffix = useMemo(() => {
+    return query?.room ? `${roomId}-${query.room}` : roomId;
   }, [query]);
 
   return (
     <RoomProvider
-      id={roomId}
+      id={roomIdWithSuffix}
       defaultPresence={() => ({
         cursor: null,
         message: "",

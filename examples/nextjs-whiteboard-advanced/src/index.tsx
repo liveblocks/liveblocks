@@ -44,23 +44,23 @@ import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 
-const defaultRoomId = "nextjs-whiteboard-advanced";
+const roomId = "nextjs-whiteboard-advanced";
 
 export default function Room() {
   const { query } = useRouter();
-  const roomId = useMemo(() => {
+  const roomIdWithSuffix = useMemo(() => {
     /**
      * Add a suffix to the room ID using a query parameter.
      * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
      *
      * http://localhost:3000/?room=1234 → nextjs-whiteboard-advanced-1234
      */
-    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+    return query?.room ? `${roomId}-${query.room}` : roomId;
   }, [query]);
 
   return (
     <RoomProvider
-      id={roomId}
+      id={roomIdWithSuffix}
       defaultPresence={() => ({
         selection: [],
         cursor: null,

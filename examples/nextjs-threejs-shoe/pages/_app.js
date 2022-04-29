@@ -8,18 +8,20 @@ const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
 });
 
-const defaultRoomId = "nextjs-threejs-shoe";
+const roomId = "nextjs-threejs-shoe";
 
 function App({ Component, pageProps }) {
+  /**
+   * @optional
+   *
+   * Add a suffix to the room ID using a query parameter.
+   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
+   *
+   * http://localhost:3000/?room=1234 → nextjs-threejs-shoe-1234
+   */
   const { query } = useRouter();
-  const roomId = useMemo(() => {
-    /**
-     * Add a suffix to the room ID using a query parameter.
-     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-     *
-     * http://localhost:3000/?room=1234 → nextjs-threejs-shoe-1234
-     */
-    return query?.room ? `${defaultRoomId}-${query.room}` : defaultRoomId;
+  const roomIdWithSuffix = useMemo(() => {
+    return query?.room ? `${roomId}-${query.room}` : roomId;
   }, [query]);
 
   return (
@@ -28,7 +30,7 @@ function App({ Component, pageProps }) {
      * to be able to use Liveblocks react hooks in your components
      **/
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomIdWithSuffix}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />

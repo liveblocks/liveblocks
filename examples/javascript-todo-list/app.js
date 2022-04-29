@@ -9,6 +9,8 @@ async function run() {
   let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
   /**
+   * @optional
+   *
    * Used for coordinating public API keys from outside (e.g. https://liveblocks.io/examples).
    *
    * http://localhost:3000/?token=pk_live_1234
@@ -30,19 +32,20 @@ async function run() {
     publicApiKey: PUBLIC_KEY,
   });
 
-  const defaultRoomId = "javascript-todo-list";
-
-  const roomSuffix = query.get("room");
-  let roomId = defaultRoomId;
+  let roomId = "javascript-todo-list";
 
   /**
+   * @optional
+   *
    * Add a suffix to the room ID using a query parameter.
    * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
    *
    * http://localhost:3000/?room=1234 → javascript-todo-list-1234
    */
+  const roomSuffix = query.get("room");
+
   if (roomSuffix) {
-    roomId = `${defaultRoomId}-${roomSuffix}`;
+    roomId = `${roomId}-${roomSuffix}`;
   }
 
   const room = client.enter(roomId);

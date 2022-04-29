@@ -4,19 +4,21 @@ const client = createClient({
   authEndpoint: "/auth",
 });
 
-const defaultRoomId = "express-javascript-live-cursors";
-
-const roomSuffix = new URLSearchParams(window?.location?.search).get("room");
-let roomId = defaultRoomId;
+let roomId = "express-javascript-live-cursors";
 
 /**
+ * @optional
+ *
  * Add a suffix to the room ID using a query parameter.
  * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
  *
  * http://localhost:3000/?room=1234 → express-javascript-live-cursors-1234
  */
+const query = new URLSearchParams(window?.location?.search);
+const roomSuffix = query.get("room");
+
 if (roomSuffix) {
-  roomId = `${defaultRoomId}-${roomSuffix}`;
+  roomId = `${roomId}-${roomSuffix}`;
 }
 
 const room = client.enter(roomId, { cursor: null });
