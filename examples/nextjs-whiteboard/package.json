@@ -9,9 +9,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "^0.16.1",
+    "@liveblocks/client": "^0.16.2",
     "@liveblocks/node": "0.3.0",
-    "@liveblocks/react": "^0.16.1",
+    "@liveblocks/react": "^0.16.2",
     "nanoid": "^3.1.25",
     "next": "^12.1.5",
     "perfect-freehand": "^0.5.3",
