@@ -364,7 +364,7 @@ export function createHooks<
    */
   function useMap<TKey extends string, TValue extends Lson>(
     key: string,
-    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
+    entries?: readonly (readonly [TKey, TValue])[] | undefined
   ): LiveMap<TKey, TValue> | null {
     return useCrdt(key, new LiveMap(entries));
   }
@@ -406,7 +406,15 @@ export function createHooks<
     key: string,
     initialData?: TData
   ): LiveObject<TData> | null {
-    return useCrdt(key, new LiveObject(initialData));
+    return useCrdt(
+      key,
+      // This looks weird, but it helps TypeScript reason about the correct
+      // function overload, one of which will start erroring once we deprecate
+      // it.
+      initialData === undefined
+        ? new LiveObject(initialData)
+        : new LiveObject(initialData)
+    );
   }
 
   /**
