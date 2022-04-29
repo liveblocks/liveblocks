@@ -1,3 +1,7 @@
+# vNEXT
+
+...
+
 # v0.16.2
 
 ## `@liveblocks/client`
