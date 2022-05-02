@@ -28,9 +28,8 @@ export type RoomProviderProps<P extends Presence, S extends Storage> = {
    * A callback that let you initialize the default presence when entering the room.
    * If ommited, the default presence will be an empty object
    */
-  defaultPresence?: () => P;
-
-  defaultStorageRoot?: S;
+  defaultPresence?: P | ((roomId: string) => P);
+  defaultStorageRoot?: S | ((roomId: string) => S);
 
   children: React.ReactNode;
 };
@@ -43,48 +42,58 @@ export function createHooks<P extends Presence, S extends Storage>() {
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider({
-    id,
-    children,
-    defaultPresence,
-    defaultStorageRoot,
-  }: RoomProviderProps<P, S>) {
+  function RoomProvider(props: RoomProviderProps<P, S>) {
+    const { id: roomId, defaultPresence, defaultStorageRoot } = props;
     if (process.env.NODE_ENV !== "production") {
-      if (id == null) {
+      if (roomId == null) {
         throw new Error(
           "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
         );
       }
-      if (typeof id !== "string") {
-        throw new Error("RoomProvider id property should be a string.");
+      if (typeof roomId !== "string") {
+        throw new Error("RoomProvider roomId property should be a string.");
       }
     }
 
     const client = useClient();
 
     const [room, setRoom] = React.useState<Room<P, S>>(() =>
-      client.enter(id, {
-        defaultPresence: defaultPresence ? defaultPresence() : undefined,
-        defaultStorageRoot,
+      client.enter(roomId, {
+        defaultPresence:
+          typeof defaultPresence === "function"
+            ? defaultPresence(roomId)
+            : defaultPresence,
+        defaultStorageRoot:
+          typeof defaultStorageRoot === "function"
+            ? defaultStorageRoot(roomId)
+            : defaultStorageRoot,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
     );
 
     React.useEffect(() => {
       setRoom(
-        client.enter(id, {
-          defaultPresence: defaultPresence ? defaultPresence() : undefined,
-          defaultStorageRoot,
+        client.enter(roomId, {
+          defaultPresence:
+            typeof defaultPresence === "function"
+              ? defaultPresence(roomId)
+              : defaultPresence,
+          defaultStorageRoot:
+            typeof defaultStorageRoot === "function"
+              ? defaultStorageRoot(roomId)
+              : defaultStorageRoot,
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as any)
       );
 
       return () => {
-        client.leave(id);
+        client.leave(roomId);
       };
-    }, [client, id]);
+    }, [client, roomId]);
 
-    return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
+    return (
+      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+    );
   }
 
   /**
