@@ -357,7 +357,7 @@ export function createHooks<P extends Presence, S extends Storage>() {
     key: string,
     entries?: readonly (readonly [TKey, TValue])[] | undefined
   ): LiveMap<TKey, TValue> | null {
-    return useCrdt(key, new LiveMap(entries));
+    return useStorageValue(key, new LiveMap(entries));
   }
 
   /**
@@ -376,7 +376,7 @@ export function createHooks<P extends Presence, S extends Storage>() {
     key: string,
     items?: TValue[] | undefined
   ): LiveList<TValue> | null {
-    return useCrdt<LiveList<TValue>>(key, new LiveList(items));
+    return useStorageValue<LiveList<TValue>>(key, new LiveList(items));
   }
 
   /**
@@ -397,7 +397,7 @@ export function createHooks<P extends Presence, S extends Storage>() {
     key: string,
     initialData?: TData
   ): LiveObject<TData> | null {
-    return useCrdt(
+    return useStorageValue(
       key,
       // This looks weird, but it helps TypeScript reason about the correct
       // function overload, one of which will start erroring once we deprecate
@@ -441,7 +441,7 @@ export function createHooks<P extends Presence, S extends Storage>() {
     return useRoom().history;
   }
 
-  function useCrdt<T extends LiveStructure>(
+  function useStorageValue<T extends LiveStructure>(
     key: string,
     //   ^^^^^^ FIXME... can now be `keyof S` I think!
     initialCrdt: T
