@@ -1,11 +1,12 @@
 import { Json, JsonObject } from "./json";
+import { BasePresence as Presence } from "./types";
 
 /**
  * Messages that can be sent from the server to the client.
  */
-export type ServerMessage<TPresence extends JsonObject> =
+export type ServerMessage<P extends Presence> =
   // For Presence
-  | UpdatePresenceMessage<TPresence> // Broadcasted
+  | UpdatePresenceMessage<P> // Broadcasted
   | UserJoinMessage // Broadcasted
   | UserLeftMessage // Broadcasted
   | EventMessage // Broadcasted
@@ -52,7 +53,7 @@ export type RoomStateMessage = {
  * those cases, the `targetActor` field indicates the newly connected client,
  * so all other existing clients can ignore this broadcasted message.
  */
-export type UpdatePresenceMessage<TPresence extends JsonObject> = {
+export type UpdatePresenceMessage<P extends Presence> = {
   type: ServerMessageType.UpdatePresence;
   /**
    * The User whose Presence has changed.
@@ -63,7 +64,7 @@ export type UpdatePresenceMessage<TPresence extends JsonObject> = {
    * this will be the full Presence, otherwise it only contain the fields that
    * have changed since the last broadcast.
    */
-  data: TPresence;
+  data: P;
   /**
    * If this message was sent in response to a newly joined user, this field
    * indicates which client this message is for. Other existing clients may
@@ -144,9 +145,9 @@ export type UpdateStorageMessage = {
 /**
  * Messages that can be sent from the client to the server.
  */
-export type ClientMessage<TPresence extends JsonObject> =
+export type ClientMessage<P extends Presence> =
   | ClientEventMessage
-  | UpdatePresenceClientMessage<TPresence>
+  | UpdatePresenceClientMessage<P>
   | UpdateStorageClientMessage
   | FetchStorageClientMessage;
 
@@ -163,9 +164,9 @@ export type ClientEventMessage = {
   event: Json;
 };
 
-export type UpdatePresenceClientMessage<TPresence extends JsonObject> = {
+export type UpdatePresenceClientMessage<P extends Presence> = {
   type: ClientMessageType.UpdatePresence;
-  data: TPresence;
+  data: P;
   targetActor?: number;
 };
 

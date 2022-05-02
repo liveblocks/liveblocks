@@ -18,8 +18,10 @@ import {
   AuthorizeResponse,
   Authentication,
   ConnectionState,
+  BasePresence as Presence,
+  BaseStorage as Storage,
 } from "./types";
-import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
+import { Json, isJsonObject, isJsonArray, parseJson } from "./json";
 import { Lson, LsonObject } from "./lson";
 import {
   compact,
@@ -73,9 +75,9 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<TPresence extends JsonObject>(userMap: {
-  [key: number]: User<TPresence>;
-}): Others<TPresence> {
+function makeOthers<P extends Presence>(userMap: {
+  [key: number]: User<P>;
+}): Others<P> {
   const users = Object.values(userMap).map((user) => {
     const { _hasReceivedInitialPresence, ...publicKeys } = user;
     return publicKeys;
@@ -102,21 +104,21 @@ function log(..._params: unknown[]) {
   return;
 }
 
-type HistoryItem<TPresence extends JsonObject> = Array<
-  Op | { type: "presence"; data: TPresence }
+type HistoryItem<P extends Presence> = Array<
+  Op | { type: "presence"; data: P }
 >;
 
 type IdFactory = () => string;
 
-export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
+export type State<P extends Presence, S extends Storage> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
-    presence: TPresence | null;
-    messages: ClientMessage<TPresence>[];
+    presence: P | null;
+    messages: ClientMessage<P>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -129,35 +131,35 @@ export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   };
   listeners: {
     event: EventCallback[];
-    others: OthersEventCallback<TPresence>[];
-    "my-presence": MyPresenceCallback<TPresence>[];
+    others: OthersEventCallback<P>[];
+    "my-presence": MyPresenceCallback<P>[];
     error: ErrorCallback[];
     connection: ConnectionCallback[];
     storage: StorageCallback[];
   };
-  me: TPresence;
-  others: Others<TPresence>;
+  me: P;
+  others: Others<P>;
   users: {
-    [connectionId: number]: User<TPresence>;
+    [connectionId: number]: User<P>;
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  initialStorage?: TStorage;
+  initialStorage?: S;
 
   clock: number;
   opClock: number;
   items: Map<string, AbstractCrdt>;
   root: LiveObject<LsonObject> | undefined;
-  undoStack: HistoryItem<TPresence>[];
-  redoStack: HistoryItem<TPresence>[];
+  undoStack: HistoryItem<P>[];
+  redoStack: HistoryItem<P>[];
 
   isHistoryPaused: boolean;
-  pausedHistory: HistoryItem<TPresence>;
+  pausedHistory: HistoryItem<P>;
 
   isBatching: boolean;
   batch: {
     ops: Op[];
-    reverseOps: HistoryItem<TPresence>;
+    reverseOps: HistoryItem<P>;
     updates: {
       others: [];
       presence: boolean;
@@ -167,12 +169,12 @@ export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects<TPresence extends JsonObject> = {
+export type Effects<P extends Presence> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMessage<TPresence>[]): void;
+  send(messages: ClientMessage<P>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -188,10 +190,7 @@ type Context = {
   liveblocksServer: string;
 };
 
-export type Machine<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
-> = {
+export type Machine<P extends Presence, S extends Storage> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -209,7 +208,7 @@ export type Machine<
 
   // onWakeUp,
   onVisibilityChange(visibilityState: VisibilityState): void;
-  getUndoStack(): HistoryItem<TPresence>[];
+  getUndoStack(): HistoryItem<P>[];
   getItemsCount(): number;
 
   // Core
@@ -234,39 +233,30 @@ export type Machine<
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
-  subscribe(
-    type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
-  ): () => void;
-  subscribe(
-    type: "others",
-    listener: OthersEventCallback<TPresence>
-  ): () => void;
+  subscribe(type: "my-presence", listener: MyPresenceCallback<P>): () => void;
+  subscribe(type: "others", listener: OthersEventCallback<P>): () => void;
   subscribe(type: "event", listener: EventCallback): () => void;
   subscribe(type: "error", listener: ErrorCallback): () => void;
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap<TPresence>[K] | any,
+    listener?: RoomEventCallbackMap<P>[K] | any,
     options?: { isDeep: boolean }
   ): () => void;
 
-  unsubscribe(
-    type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
-  ): void;
-  unsubscribe(type: "others", listener: OthersEventCallback<TPresence>): void;
+  unsubscribe(type: "my-presence", listener: MyPresenceCallback<P>): void;
+  unsubscribe(type: "others", listener: OthersEventCallback<P>): void;
   unsubscribe(type: "event", listener: EventCallback): void;
   unsubscribe(type: "error", listener: ErrorCallback): void;
   unsubscribe(type: "connection", listener: ConnectionCallback): void;
   unsubscribe<K extends RoomEventName>(
     event: K,
-    callback: RoomEventCallbackMap<TPresence>[K]
+    callback: RoomEventCallbackMap<P>[K]
   ): void;
 
   // Presence
   updatePresence(
-    overrides: Partial<TPresence>,
+    overrides: Partial<P>,
     options?: { addToHistory: boolean }
   ): void;
   broadcastEvent(event: Json, options?: BroadcastOptions): void;
@@ -277,28 +267,27 @@ export type Machine<
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage(): Promise<{ root: LiveObject<TStorage> }>;
+  getStorage(): Promise<{
+    root: LiveObject<S>;
+  }>;
 
   selectors: {
     // Core
     getConnectionState(): ConnectionState;
-    getSelf(): User<TPresence> | null;
+    getSelf(): User<P> | null;
 
     // Presence
-    getPresence(): TPresence;
-    getOthers(): Others<TPresence>;
+    getPresence(): P;
+    getOthers(): Others<P>;
   };
 };
 
-export function makeStateMachine<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(
-  state: State<TPresence, TStorage>,
+export function makeStateMachine<P extends Presence, S extends Storage>(
+  state: State<P, S>,
   context: Context,
-  mockedEffects?: Effects<TPresence>
-): Machine<TPresence, TStorage> {
-  const effects: Effects<TPresence> = mockedEffects || {
+  mockedEffects?: Effects<P>
+): Machine<P, S> {
+  const effects: Effects<P> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
@@ -322,9 +311,7 @@ export function makeStateMachine<
           .catch((er: any) => authenticationFailure(er));
       }
     },
-    send(
-      messageOrMessages: ClientMessage<TPresence> | ClientMessage<TPresence>[]
-    ) {
+    send(messageOrMessages: ClientMessage<P> | ClientMessage<P>[]) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
       }
@@ -461,7 +448,7 @@ export function makeStateMachine<
     return state.items.get(id);
   }
 
-  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
+  function addToUndoStack(historyItem: HistoryItem<P>) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
@@ -506,7 +493,7 @@ export function makeStateMachine<
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
-    others?: OthersEvent<TPresence>[];
+    others?: OthersEvent<P>[];
   }) {
     if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
@@ -555,17 +542,17 @@ export function makeStateMachine<
   }
 
   function apply(
-    item: HistoryItem<TPresence>,
+    item: HistoryItem<P>,
     isLocal: boolean
   ): {
-    reverse: HistoryItem<TPresence>;
+    reverse: HistoryItem<P>;
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem<TPresence>,
+      reverse: [] as HistoryItem<P>,
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -575,7 +562,7 @@ export function makeStateMachine<
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
-          data: {} as TPresence,
+          data: {} as P,
         };
 
         for (const key in op.data) {
@@ -686,11 +673,11 @@ export function makeStateMachine<
   ): () => void;
   function subscribe(
     type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
+    listener: MyPresenceCallback<P>
   ): () => void;
   function subscribe(
     type: "others",
-    listener: OthersEventCallback<TPresence>
+    listener: OthersEventCallback<P>
   ): () => void;
   function subscribe(type: "event", listener: EventCallback): () => void;
   function subscribe(type: "error", listener: ErrorCallback): () => void;
@@ -700,7 +687,7 @@ export function makeStateMachine<
   ): () => void;
   function subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap<TPresence>[K] | any,
+    listener?: RoomEventCallbackMap<P>[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
     if (firstParam instanceof AbstractCrdt) {
@@ -711,32 +698,29 @@ export function makeStateMachine<
       throw new Error(`"${firstParam}" is not a valid event name`);
     }
 
-    (state.listeners[firstParam] as RoomEventCallbackMap<TPresence>[K][]).push(
+    (state.listeners[firstParam] as RoomEventCallbackMap<P>[K][]).push(
       listener
     );
 
     return () => {
       const callbacks = state.listeners[
         firstParam
-      ] as RoomEventCallbackMap<TPresence>[K][];
+      ] as RoomEventCallbackMap<P>[K][];
       remove(callbacks, listener);
     };
   }
 
   function unsubscribe(
     type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
+    listener: MyPresenceCallback<P>
   ): void;
-  function unsubscribe(
-    type: "others",
-    listener: OthersEventCallback<TPresence>
-  ): void;
+  function unsubscribe(type: "others", listener: OthersEventCallback<P>): void;
   function unsubscribe(type: "event", listener: EventCallback): void;
   function unsubscribe(type: "error", listener: ErrorCallback): void;
   function unsubscribe(type: "connection", listener: ConnectionCallback): void;
   function unsubscribe<K extends RoomEventName>(
     event: K,
-    callback: RoomEventCallbackMap<TPresence>[K]
+    callback: RoomEventCallbackMap<P>[K]
   ) {
     console.warn(`unsubscribe is depreacted and will be removed in a future version.
 use the callback returned by subscribe instead.
@@ -745,9 +729,7 @@ See v0.13 release notes for more information.
     if (!isValidRoomEventType(event)) {
       throw new Error(`"${event}" is not a valid event name`);
     }
-    const callbacks = state.listeners[
-      event
-    ] as RoomEventCallbackMap<TPresence>[K][];
+    const callbacks = state.listeners[event] as RoomEventCallbackMap<P>[K][];
     remove(callbacks, callback);
   }
 
@@ -755,14 +737,14 @@ See v0.13 release notes for more information.
     return state.connection.state;
   }
 
-  function getSelf(): User<TPresence> | null {
+  function getSelf(): User<P> | null {
     return state.connection.state === "open" ||
       state.connection.state === "connecting"
       ? {
           connectionId: state.connection.id,
           id: state.connection.userId,
           info: state.connection.userInfo,
-          presence: getPresence() as TPresence,
+          presence: getPresence() as P,
         }
       : null;
   }
@@ -789,13 +771,13 @@ See v0.13 release notes for more information.
   }
 
   function updatePresence(
-    overrides: Partial<TPresence>,
+    overrides: Partial<P>,
     options?: { addToHistory: boolean }
   ) {
-    const oldValues: TPresence = {} as TPresence;
+    const oldValues: P = {} as P;
 
     if (state.buffer.presence == null) {
-      state.buffer.presence = {} as TPresence;
+      state.buffer.presence = {} as P;
     }
 
     for (const key in overrides) {
@@ -856,8 +838,8 @@ See v0.13 release notes for more information.
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceMessage<TPresence>
-  ): OthersEvent<TPresence> | undefined {
+    message: UpdatePresenceMessage<P>
+  ): OthersEvent<P> | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
     // The initial presence update message contains the property "targetActor".
@@ -895,9 +877,7 @@ See v0.13 release notes for more information.
     };
   }
 
-  function onUserLeftMessage(
-    message: UserLeftMessage
-  ): OthersEvent<TPresence> | null {
+  function onUserLeftMessage(message: UserLeftMessage): OthersEvent<P> | null {
     const userLeftMessage: UserLeftMessage = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
@@ -907,10 +887,8 @@ See v0.13 release notes for more information.
     return null;
   }
 
-  function onRoomStateMessage(
-    message: RoomStateMessage
-  ): OthersEvent<TPresence> {
-    const newUsers: { [connectionId: number]: User<TPresence> } = {};
+  function onRoomStateMessage(message: RoomStateMessage): OthersEvent<P> {
+    const newUsers: { [connectionId: number]: User<P> } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
       const user = message.users[key];
@@ -937,9 +915,7 @@ See v0.13 release notes for more information.
     }
   }
 
-  function onUserJoinedMessage(
-    message: UserJoinMessage
-  ): OthersEvent<TPresence> {
+  function onUserJoinedMessage(message: UserJoinMessage): OthersEvent<P> {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
@@ -961,18 +937,16 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMessage<TPresence> | null {
+  function parseServerMessage(data: Json): ServerMessage<P> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMessage<TPresence>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    return data as ServerMessage<P>;
+    //          ^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(
-    text: string
-  ): ServerMessage<TPresence>[] | null {
+  function parseServerMessages(text: string): ServerMessage<P>[] | null {
     const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
@@ -989,9 +963,7 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ServerMessage<TPresence>[] | null = parseServerMessages(
-      event.data
-    );
+    const messages: ServerMessage<P>[] | null = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
       // Unknown incoming message... ignore it
       return;
@@ -999,7 +971,7 @@ See v0.13 release notes for more information.
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as OthersEvent<TPresence>[],
+      others: [] as OthersEvent<P>[],
     };
 
     for (const message of messages) {
@@ -1211,7 +1183,7 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ClientMessage<TPresence>[] = [];
+    const messages: ClientMessage<P>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -1269,8 +1241,8 @@ See v0.13 release notes for more information.
     }
   }
 
-  function flushDataToMessages(state: State<TPresence, TStorage>) {
-    const messages: ClientMessage<TPresence>[] = [];
+  function flushDataToMessages(state: State<P, S>) {
+    const messages: ClientMessage<P>[] = [];
     if (state.buffer.presence) {
       messages.push({
         type: ClientMessageType.UpdatePresence,
@@ -1312,16 +1284,15 @@ See v0.13 release notes for more information.
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State<TPresence, TStorage>["listeners"]] =
-        [];
+      state.listeners[key as keyof State<P, S>["listeners"]] = [];
     }
   }
 
-  function getPresence(): TPresence {
+  function getPresence(): P {
     return state.me;
   }
 
-  function getOthers(): Others<TPresence> {
+  function getOthers(): Others<P> {
     return state.others;
   }
 
@@ -1351,12 +1322,12 @@ See v0.13 release notes for more information.
   let _getInitialStateResolver: (() => void) | null = null;
 
   function getStorage(): Promise<{
-    root: LiveObject<TStorage>;
+    root: LiveObject<S>;
   }> {
     if (state.root) {
       return new Promise((resolve) =>
         resolve({
-          root: state.root as LiveObject<TStorage>,
+          root: state.root as LiveObject<S>,
         })
       );
     }
@@ -1371,7 +1342,7 @@ See v0.13 release notes for more information.
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TStorage>,
+        root: state.root! as LiveObject<S>,
       };
     });
   }
@@ -1539,13 +1510,10 @@ See v0.13 release notes for more information.
   };
 }
 
-export function defaultState<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(
-  initialPresence?: TPresence,
-  initialStorage?: TStorage
-): State<TPresence, TStorage> {
+export function defaultState<P extends Presence, S extends Storage>(
+  initialPresence?: P,
+  initialStorage?: S
+): State<P, S> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1567,16 +1535,16 @@ export function defaultState<
       pongTimeout: 0,
     },
     buffer: {
-      presence: initialPresence ?? ({} as TPresence),
-      //                            ^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
+      presence: initialPresence ?? ({} as P),
+      //                            ^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: initialPresence ?? ({} as TPresence),
-    //                      ^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
+    me: initialPresence ?? ({} as P),
+    //                      ^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
     users: {},
     others: makeOthers({}),
     initialStorage,
@@ -1606,27 +1574,21 @@ export function defaultState<
   };
 }
 
-export type InternalRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
-> = {
-  room: Room<TPresence, TStorage>;
+export type InternalRoom<P extends Presence, S extends Storage> = {
+  room: Room<P, S>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
   onVisibilityChange: (visibilityState: VisibilityState) => void;
 };
 
-export function createRoom<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(
+export function createRoom<P extends Presence, S extends Storage>(
   options: {
-    defaultPresence?: TPresence;
-    defaultStorageRoot?: TStorage;
+    defaultPresence?: P;
+    defaultStorageRoot?: S;
   },
   context: Context
-): InternalRoom<TPresence, TStorage> {
+): InternalRoom<P, S> {
   const state = defaultState(
     options.defaultPresence,
     options.defaultStorageRoot
@@ -1634,7 +1596,7 @@ export function createRoom<
 
   const machine = makeStateMachine(state, context);
 
-  const room: Room<TPresence, TStorage> = {
+  const room: Room<P, S> = {
     id: context.roomId,
     /////////////
     // Core    //

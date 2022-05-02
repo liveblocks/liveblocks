@@ -4,13 +4,17 @@ import type { LiveObject } from "./LiveObject";
 import { Json, JsonObject } from "./json";
 import { Lson, LsonObject } from "./lson";
 
-export type MyPresenceCallback<TPresence extends JsonObject> = (
-  me: TPresence
-) => void;
+export type BasePresence = JsonObject;
+export type BaseStorage = LsonObject;
 
-export type OthersEventCallback<TPresence extends JsonObject> = (
-  others: Others<TPresence>,
-  event: OthersEvent<TPresence>
+type Presence = BasePresence;
+type Storage = BaseStorage;
+
+export type MyPresenceCallback<P extends Presence> = (me: P) => void;
+
+export type OthersEventCallback<P extends Presence> = (
+  others: Others<P>,
+  event: OthersEvent<P>
 ) => void;
 
 export type EventCallback = ({
@@ -25,9 +29,9 @@ export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap<TPresence extends JsonObject> = {
-  "my-presence": MyPresenceCallback<TPresence>;
-  others: OthersEventCallback<TPresence>;
+export type RoomEventCallbackMap<P extends Presence> = {
+  "my-presence": MyPresenceCallback<P>;
+  others: OthersEventCallback<P>;
   event: EventCallback;
   error: ErrorCallback;
   connection: ConnectionCallback;
@@ -129,22 +133,22 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+  getRoom<P extends Presence, S extends Storage>(
     roomId: string
-  ): Room<TPresence, TStorage> | null;
+  ): Room<P, S> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter<TPresence extends JsonObject, TStorage extends LsonObject>(
+  enter<P extends Presence, S extends Storage>(
     roomId: string,
     options?: {
-      defaultPresence?: TPresence;
-      defaultStorageRoot?: TStorage;
+      defaultPresence?: P;
+      defaultStorageRoot?: S;
     }
-  ): Room<TPresence, TStorage>;
+  ): Room<P, S>;
 
   /**
    * Leaves a room.
@@ -162,7 +166,7 @@ export type AuthenticationToken = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends JsonObject> {
+export interface Others<P extends Presence> {
   /**
    * Number of other users in the room.
    */
@@ -170,21 +174,21 @@ export interface Others<TPresence extends JsonObject> {
   /**
    * Returns a new Iterator object that contains the users.
    */
-  [Symbol.iterator](): IterableIterator<User<TPresence>>;
+  [Symbol.iterator](): IterableIterator<User<P>>;
   /**
    * Returns the array of connected users in room.
    */
-  toArray(): User<TPresence>[];
+  toArray(): User<P>[];
   /**
    * This function let you map over the connected users in the room.
    */
-  map<U>(callback: (user: User<TPresence>) => U): U[];
+  map<U>(callback: (user: User<P>) => U): U[];
 }
 
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends JsonObject> = {
+export type User<P extends Presence> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -201,7 +205,7 @@ export type User<TPresence extends JsonObject> = {
   /**
    * The user presence.
    */
-  readonly presence?: TPresence;
+  readonly presence?: P;
 
   /**
    * @internal
@@ -264,19 +268,19 @@ export type Connection =
       userInfo?: any;
     };
 
-export type OthersEvent<TPresence extends JsonObject> =
+export type OthersEvent<P extends Presence> =
   | {
       type: "leave";
-      user: User<TPresence>;
+      user: User<P>;
     }
   | {
       type: "enter";
-      user: User<TPresence>;
+      user: User<P>;
     }
   | {
       type: "update";
-      user: User<TPresence>;
-      updates: Partial<TPresence>;
+      user: User<P>;
+      updates: Partial<P>;
     }
   | {
       type: "reset";
@@ -338,7 +342,7 @@ export interface History {
   resume: () => void;
 }
 
-export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
+export type Room<P extends Presence, S extends Storage> = {
   /**
    * The id of the room.
    */
@@ -355,7 +359,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
      *   // Do something
      * });
      */
-    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+    (type: "my-presence", listener: MyPresenceCallback<P>): () => void;
     /**
      * Subscribe to the other users updates.
      *
@@ -366,7 +370,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
      *   // Do something
      * });
      */
-    (type: "others", listener: OthersEventCallback<TPresence>): () => void;
+    (type: "others", listener: OthersEventCallback<P>): () => void;
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
@@ -512,13 +516,13 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
      * See v0.13 release notes for more information.
      * Will be removed in a future version.
      */
-    (type: "my-presence", listener: MyPresenceCallback<TPresence>): void;
+    (type: "my-presence", listener: MyPresenceCallback<P>): void;
     /**
      * @deprecated use the callback returned by subscribe instead.
      * See v0.13 release notes for more information.
      * Will be removed in a future version.
      */
-    (type: "others", listener: OthersEventCallback<TPresence>): void;
+    (type: "others", listener: OthersEventCallback<P>): void;
     /**
      * @deprecated use the callback returned by subscribe instead.
      * See v0.13 release notes for more information.
@@ -546,7 +550,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf(): User<TPresence> | null;
+  getSelf(): User<P> | null;
 
   /**
    * Gets the presence of the current user.
@@ -554,7 +558,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: () => TPresence;
+  getPresence: () => P;
 
   /**
    * Gets all the other users in the room.
@@ -562,7 +566,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: () => Others<TPresence>;
+  getOthers: () => Others<P>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -577,7 +581,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * // presence is equivalent to { x: 0, y: 0 }
    */
   updatePresence: (
-    overrides: Partial<TPresence>,
+    overrides: Partial<P>,
     options?: {
       /**
        * Whether or not the presence should have an impact on the undo/redo history.
@@ -611,7 +615,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * const { root } = await room.getStorage();
    */
   getStorage: () => Promise<{
-    root: LiveObject<TStorage>;
+    root: LiveObject<S>;
   }>;
 
   /**

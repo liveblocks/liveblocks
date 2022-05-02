@@ -1,4 +1,4 @@
-import { JsonObject, LsonObject } from "@liveblocks/client";
+import { BasePresence, BaseStorage } from "@liveblocks/client";
 import { createHooks, RoomProviderProps } from "./factory";
 
 // If you import the hooks from this module directly, you cannot benefit from
@@ -17,8 +17,6 @@ import { createHooks, RoomProviderProps } from "./factory";
 //                                                                  ^^^^^^^^^^  ^^^^^^^^^
 //                                                                  Provide these types yourself!
 //
-type OpaquePresence = JsonObject;
-type OpaqueStorage = LsonObject;
 
 const {
   RoomProvider: RoomProvider_newAPI,
@@ -38,20 +36,20 @@ const {
   useRedo,
   useBatch,
   useHistory,
-} = createHooks<OpaquePresence, OpaqueStorage>();
+} = createHooks<BasePresence, BaseStorage>();
 
 /**
  * Makes a Room available in the component hierarchy below.
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-function RoomProvider<TStorage extends LsonObject>(
-  props: RoomProviderProps<OpaquePresence, TStorage>
+function RoomProvider<S extends BaseStorage>(
+  props: RoomProviderProps<BasePresence, S>
 ) {
   // NOTE: This weird definition is necessary for backward-compatibility. In
   // the "old" version, this type took only one type param, and it was
-  // TStorage. In the new API, this type takes two type params, and the first
-  // one is TPresence.
+  // S. In the new API, this type takes two type params, and the first
+  // one is P.
   return RoomProvider_newAPI(props);
 }
 

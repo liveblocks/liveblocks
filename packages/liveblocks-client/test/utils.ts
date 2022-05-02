@@ -9,11 +9,15 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json, JsonObject } from "../src/json";
-import { LsonObject, ToJson } from "../src/lson";
+import { Json } from "../src/json";
+import { ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine, Machine } from "../src/room";
-import { Authentication } from "../src/types";
+import {
+  Authentication,
+  BasePresence as Presence,
+  BaseStorage as Storage,
+} from "../src/types";
 import { remove } from "../src/utils";
 
 /**
@@ -131,24 +135,17 @@ const defaultContext = {
   WebSocketPolyfill: MockWebSocket as any,
 };
 
-async function prepareRoomWithStorage<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(
+async function prepareRoomWithStorage<P extends Presence, S extends Storage>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
-  onSend: (messages: ClientMessage<TPresence>[]) => void = () => {},
-  defaultStorage?: TStorage
+  onSend: (messages: ClientMessage<P>[]) => void = () => {},
+  defaultStorage?: S
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence, TStorage>(undefined, defaultStorage);
-  const machine = makeStateMachine<TPresence, TStorage>(
-    state,
-    defaultContext,
-    effects
-  );
+  const state = defaultState<P, S>(undefined, defaultStorage);
+  const machine = makeStateMachine<P, S>(state, defaultContext, effects);
   const ws = new MockWebSocket("");
 
   machine.connect();
@@ -175,18 +172,15 @@ async function prepareRoomWithStorage<
 }
 
 export async function prepareIsolatedStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage?: TStorage) {
-  const messagesSent: ClientMessage<TPresence>[] = [];
+  P extends Presence,
+  S extends Storage
+>(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage?: S) {
+  const messagesSent: ClientMessage<P>[] = [];
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage
-  >(
+  const { machine, storage, ws } = await prepareRoomWithStorage<P, S>(
     items,
     actor,
-    (messages: ClientMessage<TPresence>[]) => {
+    (messages: ClientMessage<P>[]) => {
       messagesSent.push(...messages);
     },
     defaultStorage
@@ -199,9 +193,8 @@ export async function prepareIsolatedStorageTest<
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToJson<TStorage>) =>
-      expect(lsonToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
+    assert: (data: ToJson<S>) => expect(lsonToJson(storage.root)).toEqual(data),
+    assertMessagesSent: (messages: ClientMessage<P>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
@@ -219,51 +212,52 @@ export async function prepareIsolatedStorageTest<
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0) {
+export async function prepareStorageTest<P extends Presence, S extends Storage>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0
+) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<P, S>(items, -1);
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage
-  >(items, currentActor, (messages: ClientMessage<TPresence>[]) => {
-    for (const message of messages) {
-      if (message.type === ClientMessageType.UpdateStorage) {
-        operations.push(...message.ops);
+  const { machine, storage, ws } = await prepareRoomWithStorage<P, S>(
+    items,
+    currentActor,
+    (messages: ClientMessage<P>[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMessageType.UpdateStorage) {
+          operations.push(...message.ops);
 
-        refMachine.onMessage(
-          serverMessage({
-            type: ServerMessageType.UpdateStorage,
-            ops: message.ops,
-          })
-        );
-        machine.onMessage(
-          serverMessage({
-            type: ServerMessageType.UpdateStorage,
-            ops: message.ops,
-          })
-        );
-      } else if (message.type === ClientMessageType.UpdatePresence) {
-        refMachine.onMessage(
-          serverMessage({
-            type: ServerMessageType.UpdatePresence,
-            data: message.data,
-            actor: currentActor,
-          })
-        );
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+        } else if (message.type === ClientMessageType.UpdatePresence) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdatePresence,
+              data: message.data,
+              actor: currentActor,
+            })
+          );
+        }
       }
     }
-  });
+  );
 
   const states: any[] = [];
 
-  function assert(data: ToJson<TStorage>, shouldPushToStates = true) {
+  function assert(data: ToJson<S>, shouldPushToStates = true) {
     if (shouldPushToStates) {
       states.push(data);
     }
@@ -339,11 +333,8 @@ export async function prepareStorageTest<
   };
 }
 
-export async function reconnect<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(
-  machine: Machine<TPresence, TStorage>,
+export async function reconnect<P extends Presence, S extends Storage>(
+  machine: Machine<P, S>,
   actor: number,
   newItems: SerializedCrdtWithId[]
 ) {
@@ -361,42 +352,43 @@ export async function reconnect<
 }
 
 export async function prepareStorageImmutableTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
+  P extends Presence,
+  S extends Storage
 >(items: SerializedCrdtWithId[], actor: number = 0) {
-  let state: ToJson<TStorage> = {} as any;
-  let refState: ToJson<TStorage> = {} as any;
+  let state: ToJson<S> = {} as any;
+  let refState: ToJson<S> = {} as any;
 
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<P, S>(items, -1);
 
-  const { machine, storage } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage
-  >(items, actor, (messages: ClientMessage<TPresence>[]) => {
-    for (const message of messages) {
-      if (message.type === ClientMessageType.UpdateStorage) {
-        totalStorageOps += message.ops.length;
-        refMachine.onMessage(
-          serverMessage({
-            type: ServerMessageType.UpdateStorage,
-            ops: message.ops,
-          })
-        );
-        machine.onMessage(
-          serverMessage({
-            type: ServerMessageType.UpdateStorage,
-            ops: message.ops,
-          })
-        );
+  const { machine, storage } = await prepareRoomWithStorage<P, S>(
+    items,
+    actor,
+    (messages: ClientMessage<P>[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMessageType.UpdateStorage) {
+          totalStorageOps += message.ops.length;
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMessageType.UpdateStorage,
+              ops: message.ops,
+            })
+          );
+        }
       }
     }
-  });
+  );
 
-  state = lsonToJson(storage.root) as ToJson<TStorage>;
-  refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+  state = lsonToJson(storage.root) as ToJson<S>;
+  refState = lsonToJson(refStorage.root) as ToJson<S>;
 
   const root = refStorage.root;
   refMachine.subscribe(
@@ -408,7 +400,7 @@ export async function prepareStorageImmutableTest<
   );
 
   function assert(
-    data: ToJson<TStorage>,
+    data: ToJson<S>,
     itemsCount?: number,
     storageOpsCount?: number
   ) {
@@ -425,7 +417,7 @@ export async function prepareStorageImmutableTest<
     }
   }
 
-  function assertStorage(data: ToJson<TStorage>) {
+  function assertStorage(data: ToJson<S>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
@@ -517,9 +509,7 @@ export function mockEffects(): Effects<any> {
   };
 }
 
-export function serverMessage<TPresence extends JsonObject>(
-  message: ServerMessage<TPresence>
-) {
+export function serverMessage<P extends Presence>(message: ServerMessage<P>) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });

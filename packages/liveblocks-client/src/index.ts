@@ -9,6 +9,8 @@ export type {
   BroadcastOptions,
   StorageUpdate,
   History,
+  BasePresence,
+  BaseStorage,
 } from "./types";
 
 export type { Json, JsonObject } from "./json";

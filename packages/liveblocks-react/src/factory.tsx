@@ -1,10 +1,11 @@
 import * as React from "react";
 import { useClient } from "./client";
 import {
+  BasePresence as Presence,
+  BaseStorage as Storage,
   BroadcastOptions,
   History,
   Json,
-  JsonObject,
   LiveList,
   LiveMap,
   LiveObject,
@@ -18,10 +19,7 @@ import useRerender from "./useRerender";
 
 type LiveStructure = Exclude<Lson, Json>;
 
-export type RoomProviderProps<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
-> = {
+export type RoomProviderProps<P extends Presence, S extends Storage> = {
   /**
    * The id of the room you want to connect to
    */
@@ -30,20 +28,15 @@ export type RoomProviderProps<
    * A callback that let you initialize the default presence when entering the room.
    * If ommited, the default presence will be an empty object
    */
-  defaultPresence?: () => TPresence;
+  defaultPresence?: () => P;
 
-  defaultStorageRoot?: TStorage;
+  defaultStorageRoot?: S;
 
   children: React.ReactNode;
 };
 
-export function createHooks<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->() {
-  const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
-    null
-  );
+export function createHooks<P extends Presence, S extends Storage>() {
+  const RoomContext = React.createContext<Room<P, S> | null>(null);
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -55,7 +48,7 @@ export function createHooks<
     children,
     defaultPresence,
     defaultStorageRoot,
-  }: RoomProviderProps<TPresence, TStorage>) {
+  }: RoomProviderProps<P, S>) {
     if (process.env.NODE_ENV !== "production") {
       if (id == null) {
         throw new Error(
@@ -69,7 +62,7 @@ export function createHooks<
 
     const client = useClient();
 
-    const [room, setRoom] = React.useState<Room<TPresence, TStorage>>(() =>
+    const [room, setRoom] = React.useState<Room<P, S>>(() =>
       client.enter(id, {
         defaultPresence: defaultPresence ? defaultPresence() : undefined,
         defaultStorageRoot,
@@ -98,7 +91,7 @@ export function createHooks<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom(): Room<TPresence, TStorage> {
+  function useRoom(): Room<P, S> {
     const room = React.useContext(RoomContext);
 
     if (room == null) {
@@ -123,8 +116,8 @@ export function createHooks<
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
   function useMyPresence(): [
-    TPresence,
-    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    P,
+    (overrides: Partial<P>, options?: { addToHistory: boolean }) => void
   ] {
     const room = useRoom();
     const presence = room.getPresence();
@@ -138,7 +131,7 @@ export function createHooks<
     }, [room]);
 
     const setPresence = React.useCallback(
-      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
+      (overrides: Partial<P>, options?: { addToHistory: boolean }) =>
         room.updatePresence(overrides, options),
       [room]
     );
@@ -160,13 +153,13 @@ export function createHooks<
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
   function useUpdateMyPresence(): (
-    overrides: Partial<TPresence>,
+    overrides: Partial<P>,
     options?: { addToHistory: boolean }
   ) => void {
     const room = useRoom();
 
     return React.useCallback(
-      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => {
+      (overrides: Partial<P>, options?: { addToHistory: boolean }) => {
         room.updatePresence(overrides, options);
       },
       [room]
@@ -191,7 +184,7 @@ export function createHooks<
    *   })
    * }
    */
-  function useOthers(): Others<TPresence> {
+  function useOthers(): Others<P> {
     const room = useRoom();
     const rerender = useRerender();
 
@@ -307,7 +300,7 @@ export function createHooks<
    *
    * const user = useSelf();
    */
-  function useSelf(): User<TPresence> | null {
+  function useSelf(): User<P> | null {
     const room = useRoom();
     const rerender = useRerender();
 
@@ -324,9 +317,9 @@ export function createHooks<
     return room.getSelf();
   }
 
-  function useStorage(): [root: LiveObject<TStorage> | null] {
+  function useStorage(): [root: LiveObject<S> | null] {
     const room = useRoom();
-    const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
+    const [root, setState] = React.useState<LiveObject<S> | null>(null);
 
     React.useEffect(() => {
       let didCancel = false;
@@ -450,7 +443,7 @@ export function createHooks<
 
   function useCrdt<T extends LiveStructure>(
     key: string,
-    //   ^^^^^^ FIXME... can now be `keyof TStorage` I think!
+    //   ^^^^^^ FIXME... can now be `keyof S` I think!
     initialCrdt: T
   ): T | null {
     const room = useRoom();

@@ -1,7 +1,12 @@
 import { createRoom, InternalRoom } from "./room";
-import { ClientOptions, Room, Client, Authentication } from "./types";
-import { JsonObject } from "./json";
-import { LsonObject } from "./lson";
+import {
+  Authentication,
+  Client,
+  ClientOptions,
+  Room,
+  BasePresence as Presence,
+  BaseStorage as Storage,
+} from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -32,34 +37,32 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
+  const rooms = new Map<string, InternalRoom<Presence, Storage>>();
 
-  function getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+  function getRoom<P extends Presence, S extends Storage>(
     roomId: string
-  ): Room<TPresence, TStorage> | null {
+  ): Room<P, S> | null {
     const internalRoom = rooms.get(roomId);
-    return internalRoom
-      ? (internalRoom.room as unknown as Room<TPresence, TStorage>)
-      : null;
+    return internalRoom ? (internalRoom.room as unknown as Room<P, S>) : null;
   }
 
-  function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
+  function enter<P extends Presence, S extends Storage>(
     roomId: string,
     options: {
-      defaultPresence?: TPresence;
-      defaultStorageRoot?: TStorage;
+      defaultPresence?: P;
+      defaultStorageRoot?: S;
       /**
        * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
        */
       DO_NOT_USE_withoutConnecting?: boolean;
     } = {}
-  ): Room<TPresence, TStorage> {
+  ): Room<P, S> {
     const existingInternalRoom = rooms.get(roomId);
     if (existingInternalRoom) {
-      return existingInternalRoom.room as unknown as Room<TPresence, TStorage>;
+      return existingInternalRoom.room as unknown as Room<P, S>;
     }
 
-    const newInternalRoom = createRoom<TPresence, TStorage>(
+    const newInternalRoom = createRoom<P, S>(
       {
         defaultPresence: options.defaultPresence,
         defaultStorageRoot: options.defaultStorageRoot,
@@ -76,7 +79,7 @@ export function createClient(options: ClientOptions): Client {
     );
     rooms.set(
       roomId,
-      newInternalRoom as unknown as InternalRoom<JsonObject, LsonObject>
+      newInternalRoom as unknown as InternalRoom<Presence, Storage>
     );
     if (!options.DO_NOT_USE_withoutConnecting) {
       newInternalRoom.connect();
