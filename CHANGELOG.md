@@ -2,6 +2,14 @@
 
 ...
 
+## `@liveblocks/zustand` & `@liveblocks/redux`
+
+Fixes an issue when initializing an array with items would result in having duplicated items in other clients.
+Examples:
+
+- Client A updates state : `{ list: [0]}`
+- Client B states is updated to : `{ list: [0, 0]}`
+
 # v0.16.2
 
 ## `@liveblocks/client`
