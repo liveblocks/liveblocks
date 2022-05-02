@@ -50,8 +50,7 @@ export type PathLayer = {
 export type Presence = {
   selection: string[];
   cursor: Point | null;
-  // TODO: Fix Serializable type to support array of array
-  pencilDraft: any[] | null;
+  pencilDraft: [x: number, y: number, pressure: number][] | null;
   penColor: Color | null;
 };
 
