@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./avatar.module.css";
+import styles from "./Avatar.module.css";
 
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
