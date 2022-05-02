@@ -8,12 +8,12 @@ import {
 } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveObject } from "@liveblocks/client";
 import { LiveblocksProvider, createHooks } from ".";
 
 // Liveblocks customers provide these "payload" types
 type Presence = { x: number };
-type Storage = { obj: string };
+type Storage = { obj: LiveObject<{ a: number }> };
 
 const { RoomProvider, useMyPresence, useObject, useOthers } = createHooks<
   Presence,
@@ -419,7 +419,7 @@ describe("presence", () => {
 });
 
 function ObjectComponent() {
-  const obj = useObject("obj", { a: 0 });
+  const obj = useObject("obj");
 
   return (
     <div data-testid={testIds.liveObject}>
