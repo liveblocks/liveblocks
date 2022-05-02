@@ -479,7 +479,7 @@ export function makeStateMachine(
           state.buffer.presence = op.data;
         } else {
           for (const key in op.data) {
-            state.buffer.presence[key] = op.data;
+            state.buffer.presence[key] = op.data[key];
           }
         }
 
