@@ -493,7 +493,7 @@ function Canvas({
 
             setState({ origin: point, mode: CanvasMode.Pressing });
           }}
-          onPointerLeave={(e) => {
+          onPointerLeave={() => {
             setPresence({ cursor: null });
           }}
           onPointerMove={(e) => {
