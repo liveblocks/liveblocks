@@ -523,6 +523,7 @@ export function createHooks<P extends Presence, S extends Storage>() {
     useEventListener,
     useSelf,
     useStorage,
+    useStorageValue,
     useMap,
     useList,
     useObject,
