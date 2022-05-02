@@ -19,7 +19,7 @@ import useRerender from "./useRerender";
 
 type LiveStructure = Exclude<Lson, Json>;
 
-export type RoomProviderProps<P extends Presence, S extends Storage> = {
+type RoomProviderProps<P extends Presence, S extends Storage> = {
   /**
    * The id of the room you want to connect to
    */
