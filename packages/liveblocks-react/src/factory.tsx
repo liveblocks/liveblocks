@@ -9,15 +9,11 @@ import {
   LiveList,
   LiveMap,
   LiveObject,
-  Lson,
-  LsonObject,
   Others,
   Room,
   User,
 } from "@liveblocks/client";
 import useRerender from "./useRerender";
-
-type LiveStructure = Exclude<Lson, Json>;
 
 type RoomProviderProps<P extends Presence, S extends Storage> = {
   /**
@@ -362,11 +358,18 @@ export function createHooks<P extends Presence, S extends Storage>() {
    * const emptyMap = useMap("mapA");
    * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
    */
-  function useMap<TKey extends string, TValue extends Lson>(
-    key: string,
-    entries?: readonly (readonly [TKey, TValue])[] | undefined
-  ): LiveMap<TKey, TValue> | null {
-    return useStorageValue(key, new LiveMap(entries));
+  function useMap<K extends keyof S>(
+    key: K
+    // entries?: readonly (readonly [TKey, TValue])[] | undefined
+  ): S[K] | null {
+    const value = useStorageValue(key);
+    if (value === null || value instanceof LiveMap) {
+      return value;
+    } else {
+      throw new Error(
+        `Expected storage key "${key}" to contain a LiveMap value, but found ${value} instead`
+      );
+    }
   }
 
   /**
@@ -381,11 +384,18 @@ export function createHooks<P extends Presence, S extends Storage>() {
    * const emptyList = useList("listA");
    * const listWithItems = useList("listB", ["a", "b", "c"]);
    */
-  function useList<TValue extends Lson>(
-    key: string,
-    items?: TValue[] | undefined
-  ): LiveList<TValue> | null {
-    return useStorageValue<LiveList<TValue>>(key, new LiveList(items));
+  function useList<K extends keyof S>(
+    key: K
+    // items?: TValue[] | undefined
+  ): S[K] | null {
+    const value = useStorageValue(key);
+    if (value === null || value instanceof LiveList) {
+      return value;
+    } else {
+      throw new Error(
+        `Expected storage key "${key}" to contain a ListList value, but found ${value} instead`
+      );
+    }
   }
 
   /**
@@ -402,19 +412,18 @@ export function createHooks<P extends Presence, S extends Storage>() {
    *   website: "https://liveblocks.io"
    * });
    */
-  function useObject<TData extends LsonObject>(
-    key: string,
-    initialData?: TData
-  ): LiveObject<TData> | null {
-    return useStorageValue(
-      key,
-      // This looks weird, but it helps TypeScript reason about the correct
-      // function overload, one of which will start erroring once we deprecate
-      // it.
-      initialData === undefined
-        ? new LiveObject(initialData)
-        : new LiveObject(initialData)
-    );
+  function useObject<K extends keyof S>(
+    key: K
+    // initialData?: TData
+  ): S[K] | null {
+    const value = useStorageValue(key);
+    if (value === null || value instanceof LiveObject) {
+      return value;
+    } else {
+      throw new Error(
+        `Expected storage key "${key}" to contain a LiveObject value, but found ${value} instead`
+      );
+    }
   }
 
   /**
@@ -450,39 +459,31 @@ export function createHooks<P extends Presence, S extends Storage>() {
     return useRoom().history;
   }
 
-  function useStorageValue<T extends LiveStructure>(
-    key: string,
-    //   ^^^^^^ FIXME... can now be `keyof S` I think!
-    initialCrdt: T
-  ): T | null {
+  function useStorageValue<K extends keyof S>(
+    key: K
+    // initialCrdt: T
+  ): S[K] | null {
     const room = useRoom();
-    const [root] = useStorage();
+    const [rootOrNull] = useStorage();
     const rerender = useRerender();
 
     React.useEffect(() => {
-      if (root == null) {
+      if (rootOrNull == null) {
         return;
       }
 
-      let crdt: T | null = root.get(key) as T | null;
-      //                                 ^^^^^^^^^^^ FIXME
+      const root = rootOrNull;
 
-      if (crdt == null) {
-        crdt = initialCrdt as T;
-        //                 ^^^^ FIXME
-        root.set(key, crdt as any);
-        //                 ^^^^^^ FIXME
-      }
+      let value = root.get(key);
 
       function onRootChange() {
-        const newCrdt = root!.get(key) as LiveStructure;
-        //                             ^^^^^^^^^^^^^^^^ FIXME
-        if (newCrdt !== crdt) {
+        const newValue = root.get(key);
+        if (newValue !== value) {
           unsubscribeCrdt();
-          crdt = newCrdt as T;
-          //             ^^^^ FIXME
+          value = newValue;
           unsubscribeCrdt = room.subscribe(
-            crdt as any /* AbstractCrdt */,
+            value as any,
+            //    ^^^^^^ FIXME: Figure me out!
             rerender
           );
           rerender();
@@ -490,11 +491,13 @@ export function createHooks<P extends Presence, S extends Storage>() {
       }
 
       let unsubscribeCrdt = room.subscribe(
-        crdt as any /* AbstractCrdt */,
+        value as any,
+        //    ^^^^^^ FIXME: Figure me out!
         rerender
       );
       const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */,
+        root as any,
+        //   ^^^^^^ FIXME: Figure me out!
         onRootChange
       );
 
@@ -504,10 +507,9 @@ export function createHooks<P extends Presence, S extends Storage>() {
         unsubscribeRoot();
         unsubscribeCrdt();
       };
-    }, [root, room]);
+    }, [rootOrNull, room]);
 
-    return (root?.get(key) as T | undefined) ?? null;
-    //                     ^^^^^^^^^^^^^^^^ FIXME
+    return rootOrNull?.get(key) ?? null;
   }
 
   return {
