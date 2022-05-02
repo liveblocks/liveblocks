@@ -134,11 +134,11 @@ export type Client = {
    * @param roomId The id of the room
    * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
    */
-  enter<TStorageRoot extends Record<string, any> = Record<string, any>>(
+  enter<TStorage extends Record<string, any> = Record<string, any>>(
     roomId: string,
     options?: {
       defaultPresence?: Presence;
-      defaultStorageRoot?: TStorageRoot;
+      defaultStorageRoot?: TStorage;
     }
   ): Room;
 

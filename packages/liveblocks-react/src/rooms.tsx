@@ -18,7 +18,7 @@ import useRerender from "./useRerender";
 
 const RoomContext = React.createContext<Room | null>(null);
 
-type RoomProviderProps<TStorageRoot> = {
+type RoomProviderProps<TStorage> = {
   /**
    * The id of the room you want to connect to
    */
@@ -29,7 +29,7 @@ type RoomProviderProps<TStorageRoot> = {
    */
   defaultPresence?: () => Presence;
 
-  defaultStorageRoot?: TStorageRoot;
+  defaultStorageRoot?: TStorage;
 
   children: React.ReactNode;
 };
@@ -39,12 +39,12 @@ type RoomProviderProps<TStorageRoot> = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider<TStorageRoot>({
+export function RoomProvider<TStorage>({
   id,
   children,
   defaultPresence,
   defaultStorageRoot,
-}: RoomProviderProps<TStorageRoot>) {
+}: RoomProviderProps<TStorage>) {
   if (process.env.NODE_ENV !== "production") {
     if (id == null) {
       throw new Error(
