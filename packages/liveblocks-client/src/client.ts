@@ -37,11 +37,11 @@ export function createClient(options: ClientOptions): Client {
     return internalRoom ? internalRoom.room : null;
   }
 
-  function enter<TStorageRoot>(
+  function enter<TStorage>(
     roomId: string,
     options: {
       defaultPresence?: Presence;
-      defaultStorageRoot?: TStorageRoot;
+      defaultStorageRoot?: TStorage;
       /**
        * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
        */
