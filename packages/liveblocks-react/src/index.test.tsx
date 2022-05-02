@@ -11,14 +11,10 @@ import { setupServer } from "msw/node";
 import { createClient, LiveObject } from "@liveblocks/client";
 import { LiveblocksProvider, createHooks } from ".";
 
-// Liveblocks customers provide these "payload" types
-type Presence = { x: number };
-type Storage = { obj: LiveObject<{ a: number }> };
-
-const { RoomProvider, useMyPresence, useObject, useOthers } = createHooks<
-  Presence,
-  Storage
->();
+const { RoomProvider, useMyPresence, useObject, useOthers } = createHooks(
+  () => ({ x: 1 }),
+  () => ({ obj: new LiveObject({ a: 0 }) })
+);
 
 import {
   ClientMessageType,
@@ -153,7 +149,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -195,7 +191,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -220,7 +216,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -242,7 +238,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -279,7 +275,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -373,7 +369,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room">
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>

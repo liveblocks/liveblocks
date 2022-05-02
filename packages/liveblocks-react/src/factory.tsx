@@ -15,22 +15,27 @@ import {
 } from "@liveblocks/client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<P extends Presence, S extends Storage> = {
+type RoomProviderProps = {
   /**
    * The id of the room you want to connect to
    */
   id: string;
-  /**
-   * A callback that let you initialize the default presence when entering the room.
-   * If ommited, the default presence will be an empty object
-   */
-  defaultPresence?: P | ((roomId: string) => P);
-  defaultStorageRoot?: S | ((roomId: string) => S);
-
   children: React.ReactNode;
 };
 
-export function createHooks<P extends Presence, S extends Storage>() {
+export function createHooks<P extends Presence, S extends Storage>(
+  /**
+   * Return the initial Presence to use when you enter the room. This is the
+   * value that will get announced to all Users currently connected to the
+   * Room.
+   */
+  initialPresence: P | (() => P),
+
+  /**
+   * Return the initial Storage to use when you enter a new room.
+   */
+  initialStorage: S | (() => S)
+) {
   const RoomContext = React.createContext<Room<P, S> | null>(null);
 
   /**
@@ -38,8 +43,8 @@ export function createHooks<P extends Presence, S extends Storage>() {
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider(props: RoomProviderProps<P, S>) {
-    const { id: roomId, defaultPresence, defaultStorageRoot } = props;
+  function RoomProvider(props: RoomProviderProps) {
+    const { id: roomId } = props;
     if (process.env.NODE_ENV !== "production") {
       if (roomId == null) {
         throw new Error(
@@ -56,13 +61,13 @@ export function createHooks<P extends Presence, S extends Storage>() {
     const [room, setRoom] = React.useState<Room<P, S>>(() =>
       client.enter(roomId, {
         defaultPresence:
-          typeof defaultPresence === "function"
-            ? defaultPresence(roomId)
-            : defaultPresence,
+          typeof initialPresence === "function"
+            ? initialPresence()
+            : initialPresence,
         defaultStorageRoot:
-          typeof defaultStorageRoot === "function"
-            ? defaultStorageRoot(roomId)
-            : defaultStorageRoot,
+          typeof initialStorage === "function"
+            ? initialStorage()
+            : initialStorage,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
     );
@@ -71,13 +76,13 @@ export function createHooks<P extends Presence, S extends Storage>() {
       setRoom(
         client.enter(roomId, {
           defaultPresence:
-            typeof defaultPresence === "function"
-              ? defaultPresence(roomId)
-              : defaultPresence,
+            typeof initialPresence === "function"
+              ? initialPresence()
+              : initialPresence,
           defaultStorageRoot:
-            typeof defaultStorageRoot === "function"
-              ? defaultStorageRoot(roomId)
-              : defaultStorageRoot,
+            typeof initialStorage === "function"
+              ? initialStorage()
+              : initialStorage,
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as any)
       );

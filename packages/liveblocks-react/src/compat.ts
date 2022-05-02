@@ -36,7 +36,10 @@ const {
   useRedo,
   useBatch,
   useHistory,
-} = createHooks<BasePresence, BaseStorage>();
+} = createHooks(
+  (): BasePresence => ({}),
+  (): BaseStorage => ({})
+);
 
 export {
   RoomProvider,
