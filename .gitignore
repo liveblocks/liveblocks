@@ -5,6 +5,9 @@ node_modules/
 /.pnp
 .pnp.js
 
+# typescript
+tsconfig.tsbuildinfo
+
 # testing
 /coverage
 
