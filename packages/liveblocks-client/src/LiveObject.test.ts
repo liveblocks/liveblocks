@@ -712,6 +712,50 @@ describe("LiveObject", () => {
       ]);
     });
 
+    test("subscribe subchild remote operation", async () => {
+      const { storage, subscribe, applyRemoteOperations } =
+        await prepareStorageTest<{
+          child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+            createSerializedObject("0:2", { b: 0 }, "0:1", "subchild"),
+          ],
+          1
+        );
+
+      const callback = jest.fn();
+
+      const root = storage.root;
+
+      const subchild = root.get("child").get("subchild");
+
+      const unsubscribe = subscribe(subchild, callback);
+
+      applyRemoteOperations([
+        {
+          type: OpType.UpdateObject,
+          data: { a: 1 },
+          id: "0:1",
+          opId: "external1",
+        },
+        {
+          type: OpType.UpdateObject,
+          data: { b: 1 },
+          id: "0:2",
+          opId: "external2",
+        },
+      ]);
+
+      unsubscribe();
+
+      root.get("child").get("subchild").set("b", 2);
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith(root.get("child").get("subchild"));
+    });
+
     test("deep subscribe remote and local operation - delete object key", async () => {
       const { storage, subscribe, applyRemoteOperations } =
         await prepareStorageTest<{
