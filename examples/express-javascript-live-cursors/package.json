@@ -1,6 +1,4 @@
 {
-  "name": "@liveblocks/examples-express-javascript-live-cursors",
-  "version": "1.0.0",
   "description": "This example shows how to build live cursors without relying on a front-end framework—using Express for authentication and esbuild for bundling.",
   "license": "Apache-2.0",
   "private": true,

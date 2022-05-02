@@ -1,6 +1,4 @@
 {
-  "name": "@liveblocks/examples-sveltekit-live-cursors",
-  "version": "1.0.0",
   "description": "This example shows how to build live cursors with Liveblocks and SvelteKit.",
   "license": "Apache-2.0",
   "private": true,
