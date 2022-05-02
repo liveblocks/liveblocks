@@ -52,7 +52,13 @@ export default function Example() {
   });
 
   if (!data) {
-    return null;
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+        </div>
+      </div>
+    );
   }
 
   const { theme, name } = data.toObject();

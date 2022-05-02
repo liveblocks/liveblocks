@@ -60,7 +60,11 @@ export default function App() {
   }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
-    return null;
+    return (
+      <div className="loading">
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return (

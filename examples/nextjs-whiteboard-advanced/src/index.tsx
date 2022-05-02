@@ -82,7 +82,13 @@ function WhiteboardTool() {
   const layerIds = useList<string>("layerIds");
 
   if (layerIds == null || layers == null) {
-    return null;
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+        </div>
+      </div>
+    );
   }
 
   return <Canvas layers={layers} layerIds={layerIds} />;

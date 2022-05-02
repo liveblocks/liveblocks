@@ -169,3 +169,19 @@
   box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.1),
     inset 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
 }
+
+.loading {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background-color: var(--color-background);
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}

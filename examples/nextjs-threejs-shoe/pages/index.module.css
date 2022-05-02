@@ -26,3 +26,21 @@
 .colorpicker_active {
   opacity: 1;
 }
+
+.loading {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background: var(--color-background);
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}

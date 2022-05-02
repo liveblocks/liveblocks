@@ -32,7 +32,7 @@ export default function App() {
 
   const enterRoom = useStore((state) => state.liveblocks.enterRoom);
   const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
-  const isLoading = useStore((state) => state.liveblocks.isLoading);
+  const isLoading = useStore((state) => state.liveblocks.isStorageLoading);
 
   useEffect(() => {
     enterRoom(roomId, { shapes: {} });
@@ -43,7 +43,11 @@ export default function App() {
   }, [enterRoom, leaveRoom]);
 
   if (isLoading) {
-    return null;
+    return (
+      <div className="loading">
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return (

@@ -25,7 +25,11 @@ export default function App() {
   const shapes = useMap("shapes");
 
   if (shapes == null) {
-    return null;
+    return (
+      <div className={styles.loading}>
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return <Canvas shapes={shapes} />;

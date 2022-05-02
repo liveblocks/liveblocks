@@ -15,6 +15,16 @@ export default function Example() {
   const [material, setMaterial] = useState(null);
   const colors = useObject("colors");
 
+  if (!colors) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>
+          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.container}>
       <div className={styles.canvas}>
