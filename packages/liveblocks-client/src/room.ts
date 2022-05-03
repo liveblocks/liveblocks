@@ -1631,7 +1631,7 @@ function prepareAuthEndpoint(
   throw new Error("Internal error. Unexpected authentication type");
 }
 
-function fetchAuthEndpoint(
+async function fetchAuthEndpoint(
   fetch: typeof window.fetch,
   endpoint: string,
   body: {
@@ -1639,37 +1639,43 @@ function fetchAuthEndpoint(
     publicApiKey?: string;
   }
 ): Promise<any> {
-  return fetch(endpoint, {
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new AuthenticationError(
-          `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
-        );
-      }
+  });
+  if (!res.ok) {
+    throw new AuthenticationError(
+      `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
+    );
+  }
 
-      return res.json().catch((er) => {
-        throw new AuthenticationError(
-          `Expected a json when doing a POST request on "${endpoint}". ${er}`
-        );
-      });
-    })
-    .then((authResponse) => {
-      if (typeof authResponse.token !== "string") {
-        throw new AuthenticationError(
-          `Expected a json with a string token when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-            authResponse
-          )}`
-        );
-      }
+  let raw: Json;
+  try {
+    raw = await res.json();
+  } catch (er) {
+    throw new AuthenticationError(
+      `Expected a JSON object when doing a POST request on "${endpoint}". ${er}`
+    );
+  }
 
-      return authResponse;
-    });
+  if (!isJsonObject(raw)) {
+    throw new AuthenticationError(
+      `Expected a JSON object when doing a POST request on "${endpoint}".`
+    );
+  }
+
+  const authResponse = raw;
+  if (typeof authResponse.token !== "string") {
+    throw new AuthenticationError(
+      `Expected a JSON object with a string "token" field when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+        authResponse
+      )}`
+    );
+  }
+  return authResponse;
 }
 
 class AuthenticationError extends Error {
