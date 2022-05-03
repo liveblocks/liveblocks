@@ -148,8 +148,8 @@ export type StorageUpdate =
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
 export type RoomInitializers<TPresence, TStorage> = Resolve<{
-  defaultPresence?: TPresence;
-  defaultStorageRoot?: TStorage;
+  defaultPresence?: TPresence | (() => TPresence);
+  defaultStorageRoot?: TStorage | (() => TStorage);
 }>;
 
 export type Client = {

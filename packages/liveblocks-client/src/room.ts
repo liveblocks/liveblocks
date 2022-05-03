@@ -1507,9 +1507,12 @@ export function createRoom(
   options: RoomInitializers<Presence, Record<string, any>>,
   context: Context
 ): InternalRoom {
+  const initialPresence = options.defaultPresence;
+  const initialStorage = options.defaultStorageRoot;
+
   const state = defaultState(
-    options.defaultPresence,
-    options.defaultStorageRoot
+    typeof initialPresence === "function" ? initialPresence() : initialPresence,
+    typeof initialStorage === "function" ? initialStorage() : initialStorage
   );
 
   const machine = makeStateMachine(state, context);
