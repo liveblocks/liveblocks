@@ -348,58 +348,105 @@ export function useStorage<TStorage extends Record<string, any>>(): [
  * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveMap
- * @param entries Optional entries that are used to create the LiveMap for the first time
  * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
  *
  * @example
- * const emptyMap = useMap("mapA");
- * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
+ * const shapesById = useMap<string, Shape>("shapes");
  */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string
+): LiveMap<TKey, TValue> | null;
+/**
+ * @deprecated We no longer recommend initializing the
+ * entries from the useMap() hook. For details, see https://bit.ly/lak1PlM.
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries: readonly (readonly [TKey, TValue])[] | null
+): LiveMap<TKey, TValue> | null;
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
+  if (entries && process.env.NODE_ENV === "development") {
+    console.warn(
+      "We no longer recommend initializing the items from the useMap() hook. Please see https://bit.ly/lak1PlM for details."
+    );
+  }
   return useCrdt(key, new LiveMap(entries));
+  //                  ^^^^^^^^^^^^^^^^^^^^
+  //                  NOTE: This param is scheduled for removal in 0.18
 }
 
 /**
- * Returns the LiveList associated with the provided key. If the LiveList does not exist, a new LiveList will be created.
+ * Returns the LiveList associated with the provided key.
  * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveList
- * @param items Optional items that are used to create the LiveList for the first time
  * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
  *
  * @example
- * const emptyList = useList("listA");
- * const listWithItems = useList("listB", ["a", "b", "c"]);
+ * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
  */
+export function useList<TValue extends Lson>(
+  key: string
+): LiveList<TValue> | null;
+/**
+ * @deprecated We no longer recommend initializing the
+ * items from the useList() hook. For details, see https://bit.ly/lak1PlM.
+ */
+export function useList<TValue extends Lson>(
+  key: string,
+  items: TValue[]
+): LiveList<TValue> | null;
 export function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
+  if (items && process.env.NODE_ENV === "development") {
+    console.warn(
+      "We no longer recommend initializing the items from the useList() hook. Please see https://bit.ly/lak1PlM for details."
+    );
+  }
+
   return useCrdt<LiveList<TValue>>(key, new LiveList(items));
+  //                                    ^^^^^^^^^^^^^^^^^^^
+  //                                    NOTE: This param is scheduled for removal in 0.18
 }
 
 /**
- * Returns the LiveObject associated with the provided key. If the LiveObject does not exist, it will be created with the initialData parameter.
+ * Returns the LiveObject associated with the provided key.
  * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveObject
- * @param initialData Optional data that is used to create the LiveObject for the first time
  * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
  *
  * @example
- * const object = useObject("obj", {
- *   company: "Liveblocks",
- *   website: "https://liveblocks.io"
- * });
+ * const object = useObject("obj");
  */
+export function useObject<TData extends LsonObject>(
+  key: string
+): LiveObject<TData> | null;
+/**
+ * @deprecated We no longer recommend initializing the fields from the
+ * useObject() hook. For details, see https://bit.ly/lak1PlM.
+ */
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData: TData
+): LiveObject<TData> | null;
 export function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
+  if (initialData && process.env.NODE_ENV === "development") {
+    console.warn(
+      "We no longer recommend initializing the items from the useObject() hook. Please see https://bit.ly/lak1PlM for details."
+    );
+  }
   return useCrdt(key, new LiveObject(initialData));
+  //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //                  NOTE: This param is scheduled for removal in 0.18
 }
 
 /**
