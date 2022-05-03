@@ -67,8 +67,10 @@ export function createClient(options: ClientOptions): Client {
     }
     internalRoom = createRoom(
       {
-        defaultPresence: options.defaultPresence,
-        defaultStorageRoot: options.defaultStorageRoot,
+        initialPresence: options.initialPresence,
+        initialStorage: options.initialStorage,
+        defaultPresence: options.defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot: options.defaultStorageRoot, // Will get removed in 0.18
       },
       {
         roomId,

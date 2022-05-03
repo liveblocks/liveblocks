@@ -148,7 +148,24 @@ export type StorageUpdate =
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
 export type RoomInitializers<TPresence, TStorage> = Resolve<{
+  /**
+   * The initial Presence to use and announce when you enter the Room. The
+   * Presence is available on all users in the Room (me & others).
+   */
+  initialPresence?: TPresence | (() => TPresence);
+  /**
+   * The initial Storage to use when entering a new Room.
+   */
+  initialStorage?: TStorage | (() => TStorage);
+  /**
+   * @deprecated Please use `initialPresence` instead. This property is
+   * scheduled for removal in 0.18.
+   */
   defaultPresence?: TPresence | (() => TPresence);
+  /**
+   * @deprecated Please use `initialStorage` instead. This property is
+   * scheduled for removal in 0.18.
+   */
   defaultStorageRoot?: TStorage | (() => TStorage);
 }>;
 

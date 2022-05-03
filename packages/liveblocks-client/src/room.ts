@@ -1507,8 +1507,8 @@ export function createRoom(
   options: RoomInitializers<Presence, Record<string, any>>,
   context: Context
 ): InternalRoom {
-  const initialPresence = options.defaultPresence;
-  const initialStorage = options.defaultStorageRoot;
+  const initialPresence = options.initialPresence ?? options.defaultPresence;
+  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
   const state = defaultState(
     typeof initialPresence === "function" ? initialPresence() : initialPresence,

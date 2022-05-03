@@ -33,7 +33,14 @@ type RoomProviderProps<TStorage> = Resolve<
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
 export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
-  const { id: roomId, defaultPresence, defaultStorageRoot } = props;
+  const {
+    id: roomId,
+    initialPresence,
+    initialStorage,
+    defaultPresence, // Will get removed in 0.18
+    defaultStorageRoot, // Will get removed in 0.18
+  } = props;
+
   if (process.env.NODE_ENV !== "production") {
     if (roomId == null) {
       throw new Error(
@@ -49,8 +56,10 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
 
   const [room, setRoom] = React.useState(() =>
     client.enter(roomId, {
-      defaultPresence,
-      defaultStorageRoot,
+      initialPresence,
+      initialStorage,
+      defaultPresence, // Will get removed in 0.18
+      defaultStorageRoot, // Will get removed in 0.18
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
     } as any)
   );
@@ -58,8 +67,10 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
   React.useEffect(() => {
     setRoom(
       client.enter(roomId, {
-        defaultPresence,
-        defaultStorageRoot,
+        initialPresence,
+        initialStorage,
+        defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
     );
