@@ -315,17 +315,17 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-export function useStorage<TRoot extends Record<string, any>>(): [
-  root: LiveObject<TRoot> | null
+export function useStorage<TStorage extends Record<string, any>>(): [
+  root: LiveObject<TStorage> | null
 ] {
   const room = useRoom();
-  const [root, setState] = React.useState<LiveObject<TRoot> | null>(null);
+  const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
   React.useEffect(() => {
     let didCancel = false;
 
     async function fetchStorage() {
-      const storage = await room.getStorage<TRoot>();
+      const storage = await room.getStorage<TStorage>();
       if (!didCancel) {
         setState(storage.root);
       }

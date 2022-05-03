@@ -1244,13 +1244,13 @@ See v0.13 release notes for more information.
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TRoot extends LsonObject>(): Promise<{
-    root: LiveObject<TRoot>;
+  function getStorage<TStorage extends LsonObject>(): Promise<{
+    root: LiveObject<TStorage>;
   }> {
     if (state.root) {
       return new Promise((resolve) =>
         resolve({
-          root: state.root as LiveObject<TRoot>,
+          root: state.root as LiveObject<TStorage>,
         })
       );
     }
@@ -1265,7 +1265,7 @@ See v0.13 release notes for more information.
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TRoot>,
+        root: state.root! as LiveObject<TStorage>,
       };
     });
   }
