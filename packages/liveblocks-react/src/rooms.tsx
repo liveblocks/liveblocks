@@ -49,7 +49,7 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
 
   const [room, setRoom] = React.useState(() =>
     client.enter(roomId, {
-      defaultPresence: defaultPresence ? defaultPresence() : undefined,
+      defaultPresence,
       defaultStorageRoot,
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
     } as any)
@@ -58,7 +58,7 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
   React.useEffect(() => {
     setRoom(
       client.enter(roomId, {
-        defaultPresence: defaultPresence ? defaultPresence() : undefined,
+        defaultPresence,
         defaultStorageRoot,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
