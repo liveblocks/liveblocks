@@ -620,8 +620,8 @@ export type Room = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TRoot extends LsonObject>() => Promise<{
-    root: LiveObject<TRoot>;
+  getStorage: <TStorage extends LsonObject>() => Promise<{
+    root: LiveObject<TStorage>;
   }>;
 
   /**
