@@ -1434,8 +1434,8 @@ See v0.13 release notes for more information.
 }
 
 export function defaultState(
-  me?: Presence,
-  defaultStorageRoot?: JsonObject
+  initialPresence?: Presence,
+  initialStorage?: JsonObject
 ): State {
   return {
     connection: { state: "closed" },
@@ -1458,17 +1458,17 @@ export function defaultState(
       pongTimeout: 0,
     },
     buffer: {
-      presence: me == null ? {} : me,
+      presence: initialPresence == null ? {} : initialPresence,
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: me == null ? {} : me,
+    me: initialPresence == null ? {} : initialPresence,
     users: {},
     others: makeOthers({}),
-    defaultStorageRoot,
+    defaultStorageRoot: initialStorage,
     idFactory: null,
 
     // Storage
