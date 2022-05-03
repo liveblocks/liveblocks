@@ -58,6 +58,7 @@
     "jest": "^26.6.3",
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1",
+    "regenerator-runtime": "^0.13.9",
     "rollup": "^2.39.0",
     "rollup-plugin-dts": "^4.2.0",
     "rollup-plugin-esbuild": "^4.8.2",
