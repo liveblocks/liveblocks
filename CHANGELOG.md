@@ -1,5 +1,9 @@
 # vNEXT (v0.16.3)
 
+...
+
+# v0.16.3
+
 Fix bug where internal presence state could not get restored correctly after
 undo/redo in certain circumstances.
 
