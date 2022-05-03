@@ -163,7 +163,7 @@ export type Client = {
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
-   * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
   enter<TStorage extends Record<string, any> = Record<string, any>>(
     roomId: string,
