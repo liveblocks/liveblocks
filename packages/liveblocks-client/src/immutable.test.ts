@@ -132,6 +132,72 @@ describe("2 ways tests with two clients", () => {
       assert({ syncObj: { a: { subA: "ok" } } }, 3, 1);
     });
 
+    test("create LiveList with one LiveRegister item in same batch", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        doc: any;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", {}, "0:0", "doc"),
+        ],
+        1
+      );
+
+      expect(state).toEqual({ doc: {} });
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.doc = { sub: [0] };
+      });
+
+      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+
+      assert({ doc: { sub: [0] } }, 4, 2);
+    });
+
+    test("create nested LiveList with one LiveObject item in same batch", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        doc: any;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", {}, "0:0", "doc"),
+        ],
+        1
+      );
+
+      expect(state).toEqual({ doc: {} });
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.doc = { sub: { subSub: [{ a: 1 }] } };
+      });
+
+      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+
+      assert({ doc: { sub: { subSub: [{ a: 1 }] } } }, 5, 3);
+    });
+
+    test("Add nested objects in same batch", async () => {
+      const { storage, state, assert } = await prepareStorageImmutableTest<{
+        doc: any;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", {}, "0:0", "doc"),
+        ],
+        1
+      );
+
+      expect(state).toEqual({ doc: {} });
+
+      const { oldState, newState } = applyStateChanges(state, () => {
+        state.doc = { pos: { a: { b: 1 } } };
+      });
+
+      patchLiveObjectKey(storage.root, "doc", oldState["doc"], newState["doc"]);
+
+      assert({ doc: { pos: { a: { b: 1 } } } }, 4, 2);
+    });
+
     test("delete object key", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<{
         syncObj: { a?: number };

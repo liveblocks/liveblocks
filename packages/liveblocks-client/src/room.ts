@@ -462,6 +462,8 @@ export function makeStateMachine(
         presence: false,
       },
     };
+
+    const createdNodeIds = new Set<string>();
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
@@ -492,16 +494,30 @@ export function makeStateMachine(
         }
         const applyOpResult = applyOp(op, isLocal);
         if (applyOpResult.modified) {
-          result.updates.storageUpdates.set(
-            applyOpResult.modified.node._id!,
-            mergeStorageUpdates(
-              result.updates.storageUpdates.get(
-                applyOpResult.modified.node._id!
-              ) as any, // FIXME
-              applyOpResult.modified
-            )
-          );
-          result.reverse.unshift(...applyOpResult.reverse);
+          const parentId = applyOpResult.modified.node._parent?._id!;
+
+          // If the parent was created in the same batch, we don't want to notify
+          // storage updates for the children.
+          if (!createdNodeIds.has(parentId)) {
+            result.updates.storageUpdates.set(
+              applyOpResult.modified.node._id!,
+              mergeStorageUpdates(
+                result.updates.storageUpdates.get(
+                  applyOpResult.modified.node._id!
+                ) as any, // FIXME
+                applyOpResult.modified
+              )
+            );
+            result.reverse.unshift(...applyOpResult.reverse);
+          }
+
+          if (
+            op.type === OpType.CreateList ||
+            op.type === OpType.CreateMap ||
+            op.type === OpType.CreateObject
+          ) {
+            createdNodeIds.add(applyOpResult.modified.node._id!);
+          }
         }
       }
     }
