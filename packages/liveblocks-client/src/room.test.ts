@@ -541,15 +541,20 @@ describe("room", () => {
     room.authenticationSuccess({ actor: 0 }, ws);
     ws.open();
 
+    expect(state.buffer.presence).toEqual(null);
     room.updatePresence({ x: 0 }, { addToHistory: true });
+    expect(state.buffer.presence).toEqual({ x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
+    expect(state.buffer.presence).toEqual({ x: 1 });
 
     room.undo();
 
+    expect(state.buffer.presence).toEqual({ x: 0 });
     expect(room.selectors.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
+    expect(state.buffer.presence).toEqual({ x: 1 });
     expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
 
@@ -601,12 +606,14 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
+    expect(state.buffer.presence).toEqual({ x: 1 });
 
     room.pauseHistory();
     room.resumeHistory();
 
     room.undo();
 
+    expect(state.buffer.presence).toEqual({ x: 0 });
     expect(room.selectors.getPresence()).toEqual({ x: 0 });
   });
 
@@ -639,23 +646,28 @@ describe("room", () => {
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
+    expect(state.buffer.presence).toEqual({ x: 0 });
 
     room.pauseHistory();
 
     for (let i = 1; i <= 10; i++) {
       room.updatePresence({ x: i }, { addToHistory: true });
+      expect(state.buffer.presence).toEqual({ x: i });
     }
 
     expect(room.selectors.getPresence()).toEqual({ x: 10 });
+    expect(state.buffer.presence).toEqual({ x: 10 });
 
     room.resumeHistory();
 
     room.undo();
 
+    expect(state.buffer.presence).toEqual({ x: 0 });
     expect(room.selectors.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
+    expect(state.buffer.presence).toEqual({ x: 10 });
     expect(room.selectors.getPresence()).toEqual({ x: 10 });
   });
 
@@ -682,6 +694,8 @@ describe("room", () => {
     room.undo();
 
     expect(room.selectors.getPresence()).toEqual({ x: 0 });
+
+    expect(state.buffer.presence).toEqual({ x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {
@@ -712,13 +726,17 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
+    expect(state.buffer.presence).toEqual({ x: 1 });
+
     room.undo();
 
+    expect(state.buffer.presence).toEqual({ x: 0 });
     expect(room.selectors.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
 
+    expect(state.buffer.presence).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
     expect(room.selectors.getPresence()).toEqual({ x: 1 });
   });
