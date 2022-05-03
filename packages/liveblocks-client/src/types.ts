@@ -147,6 +147,11 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
+export type RoomInitializers<TPresence, TStorage> = Resolve<{
+  defaultPresence?: TPresence;
+  defaultStorageRoot?: TStorage;
+}>;
+
 export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
@@ -162,10 +167,7 @@ export type Client = {
    */
   enter<TStorage extends Record<string, any> = Record<string, any>>(
     roomId: string,
-    options?: {
-      defaultPresence?: Presence;
-      defaultStorageRoot?: TStorage;
-    }
+    options?: RoomInitializers<Presence, TStorage>
   ): Room;
 
   /**

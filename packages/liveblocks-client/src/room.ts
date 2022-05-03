@@ -18,6 +18,7 @@ import type {
   BroadcastOptions,
   AuthorizeResponse,
   Authentication,
+  RoomInitializers,
 } from "./types";
 import type { Json, JsonObject } from "./json";
 import { isJsonObject, isJsonArray, parseJson } from "./json";
@@ -1503,10 +1504,7 @@ export type InternalRoom = {
 };
 
 export function createRoom(
-  options: {
-    defaultPresence?: Presence;
-    defaultStorageRoot?: Record<string, any>;
-  },
+  options: RoomInitializers<Presence, Record<string, any>>,
   context: Context
 ): InternalRoom {
   const state = defaultState(

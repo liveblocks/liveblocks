@@ -1,11 +1,25 @@
 import { createRoom, InternalRoom } from "./room";
 import type {
-  ClientOptions,
-  Room,
-  Client,
-  Presence,
   Authentication,
+  Client,
+  ClientOptions,
+  Presence,
+  Resolve,
+  Room,
+  RoomInitializers,
 } from "./types";
+
+type EnterOptions<TPresence, TStorage> = Resolve<
+  // Enter options are just room initializers, plus an internal option
+  RoomInitializers<TPresence, TStorage> & {
+    /**
+     * INTERNAL OPTION: Only used in a SSR context when you want an empty room
+     * to make sure your react tree is rendered properly without connecting to
+     * websocket
+     */
+    DO_NOT_USE_withoutConnecting?: boolean;
+  }
+>;
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -45,14 +59,7 @@ export function createClient(options: ClientOptions): Client {
 
   function enter<TStorage>(
     roomId: string,
-    options: {
-      defaultPresence?: Presence;
-      defaultStorageRoot?: TStorage;
-      /**
-       * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
-       */
-      DO_NOT_USE_withoutConnecting?: boolean;
-    } = {}
+    options: EnterOptions<Presence, TStorage> = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {

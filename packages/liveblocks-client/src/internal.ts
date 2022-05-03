@@ -12,7 +12,7 @@
  */
 
 export type { SerializedCrdtWithId, ServerMessage } from "./live";
-export type { Resolve } from "./types";
+export type { Resolve, RoomInitializers } from "./types";
 
 export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
 export { deprecate, deprecateIf } from "./utils";
