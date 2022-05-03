@@ -186,7 +186,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1`
+        `Expected a JSON object when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1`
       )
     );
   });
@@ -209,7 +209,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}`
+        `Expected a JSON object with a string "token" field when doing a POST request on "/api/missing-token", but got {}`
       )
     );
   });
