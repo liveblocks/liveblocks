@@ -39,12 +39,8 @@ type RoomProviderProps<TStorage> = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider<TStorage>({
-  id,
-  children,
-  defaultPresence,
-  defaultStorageRoot,
-}: RoomProviderProps<TStorage>) {
+export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
+  const { id, children, defaultPresence, defaultStorageRoot } = props;
   if (process.env.NODE_ENV !== "production") {
     if (id == null) {
       throw new Error(
