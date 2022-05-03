@@ -40,14 +40,14 @@ type RoomProviderProps<TStorage> = {
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
 export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
-  const { id, children, defaultPresence, defaultStorageRoot } = props;
+  const { id: roomId, defaultPresence, defaultStorageRoot } = props;
   if (process.env.NODE_ENV !== "production") {
-    if (id == null) {
+    if (roomId == null) {
       throw new Error(
         "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
       );
     }
-    if (typeof id !== "string") {
+    if (typeof roomId !== "string") {
       throw new Error("RoomProvider id property should be a string.");
     }
   }
@@ -55,7 +55,7 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
   const client = useClient();
 
   const [room, setRoom] = React.useState(() =>
-    client.enter(id, {
+    client.enter(roomId, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -64,7 +64,7 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
 
   React.useEffect(() => {
     setRoom(
-      client.enter(id, {
+      client.enter(roomId, {
         defaultPresence: defaultPresence ? defaultPresence() : undefined,
         defaultStorageRoot,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -72,11 +72,13 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
     );
 
     return () => {
-      client.leave(id);
+      client.leave(roomId);
     };
-  }, [client, id]);
+  }, [client, roomId]);
 
-  return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
+  return (
+    <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+  );
 }
 
 /**
