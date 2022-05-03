@@ -553,8 +553,6 @@ export function makeStateMachine(
         return parent._attachChild(op, isLocal);
       }
     }
-
-    return { modified: false };
   }
 
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
