@@ -11,7 +11,8 @@ jobs:
         working-directory: packages/liveblocks-client
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Install dependencies
         run: npm install
@@ -41,7 +42,8 @@ jobs:
         working-directory: e2e/next-sandbox
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
