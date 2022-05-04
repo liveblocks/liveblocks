@@ -12,25 +12,20 @@ import type {
   User,
 } from "@liveblocks/client";
 import { LiveMap, LiveList, LiveObject } from "@liveblocks/client";
+import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import useRerender from "./useRerender";
 
 const RoomContext = React.createContext<Room | null>(null);
 
-type RoomProviderProps<TStorage> = {
-  /**
-   * The id of the room you want to connect to
-   */
-  id: string;
-  /**
-   * A callback that let you initialize the default presence when entering the room.
-   * If ommited, the default presence will be an empty object
-   */
-  defaultPresence?: () => Presence;
-
-  defaultStorageRoot?: TStorage;
-
-  children: React.ReactNode;
-};
+type RoomProviderProps<TStorage> = Resolve<
+  {
+    /**
+     * The id of the room you want to connect to
+     */
+    id: string;
+    children: React.ReactNode;
+  } & RoomInitializers<Presence, TStorage>
+>;
 
 /**
  * Makes a Room available in the component hierarchy below.
