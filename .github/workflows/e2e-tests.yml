@@ -28,6 +28,10 @@ jobs:
   e2e-tests:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        node-version: [16.x]
+
     timeout-minutes: 60
 
     env:
