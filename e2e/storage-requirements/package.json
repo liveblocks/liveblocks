@@ -1,0 +1,23 @@
+{
+  "name": "storage-requirements",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "test": "jest"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^0.16.3",
+    "node-fetch": "2.6.7",
+    "ws": "^8.5.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.5.0",
+    "@types/node-fetch": "^2.6.1",
+    "@types/ws": "^8.5.3",
+    "dotenv": "^16.0.0",
+    "jest": "^28.0.3",
+    "regenerator-runtime": "^0.13.9",
+    "ts-jest": "^28.0.0",
+    "typescript": "^4.6.4"
+  }
+}
