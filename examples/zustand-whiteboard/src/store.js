@@ -2,23 +2,15 @@ import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 
-/**
- * Replace by your public key from https://liveblocks.io/dashboard/apikeys.
- */
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-/**
- * @optional
- *
- * Used for coordinating public API keys from outside (e.g. https://liveblocks.io/examples).
- *
- * http://localhost:3000/?token=pk_live_1234
- */
-const query = new URLSearchParams(window?.location?.search);
-const token = query.get("token");
+overrideApiKey();
 
-if (token) {
-  PUBLIC_KEY = token;
+if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
+  console.warn(
+    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard#getting-started.`
+  );
 }
 
 const client = createClient({
@@ -110,3 +102,16 @@ const useStore = create(
   )
 );
 export default useStore;
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKey() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+}

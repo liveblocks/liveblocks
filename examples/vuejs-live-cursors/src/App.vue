@@ -36,25 +36,10 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
-const query = new URLSearchParams(window?.location?.search);
-
-/**
- * Replace by your public key from https://liveblocks.io/dashboard/apikeys.
- */
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let roomId = "vuejs-live-cursors";
 
-/**
- * @optional
- *
- * Used for coordinating public API keys from outside (e.g. https://liveblocks.io/examples).
- *
- * http://localhost:3000/?token=pk_live_1234
- */
-const token = query.get("token");
-
-if (token) {
-  PUBLIC_KEY = token;
-}
+overrideApiKeyAndRoomId();
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
@@ -68,22 +53,6 @@ const client = createClient({
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
-
-let roomId = "vuejs-live-cursors";
-
-/**
- * @optional
- *
- * Add a suffix to the room ID using a query parameter.
- * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
- *
- * http://localhost:3000/?room=1234 → vuejs-live-cursors-1234
- */
-const roomSuffix = query.get("room");
-
-if (roomSuffix) {
-  roomId = `${roomId}-${roomSuffix}`;
-}
 
 export default Vue.extend({
   data: function () {
@@ -133,4 +102,22 @@ export default Vue.extend({
     },
   },
 });
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKeyAndRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+  const roomIdSuffix = query.get("roomId");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
+}
 </script>

@@ -8,21 +8,8 @@ const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
 });
 
-const roomId = "nextjs-threejs-shoe";
-
 function App({ Component, pageProps }) {
-  /**
-   * @optional
-   *
-   * Add a suffix to the room ID using a query parameter.
-   * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-   *
-   * http://localhost:3000/?room=1234 → nextjs-threejs-shoe-1234
-   */
-  const { query } = useRouter();
-  const roomIdWithSuffix = useMemo(() => {
-    return query?.room ? `${roomId}-${query.room}` : roomId;
-  }, [query]);
+  const roomId = useOverrideRoomId("nextjs-threejs-shoe");
 
   return (
     /**
@@ -30,7 +17,7 @@ function App({ Component, pageProps }) {
      * to be able to use Liveblocks react hooks in your components
      **/
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomIdWithSuffix}>
+      <RoomProvider id={roomId}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />
@@ -54,3 +41,16 @@ function App({ Component, pageProps }) {
   );
 }
 export default App;
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useOverrideRoomId(roomId) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.room ? `${roomId}-${query.room}` : roomId;
+  }, [query, roomId]);
+
+  return overrideRoomId;
+}

@@ -17,6 +17,10 @@ import styles from "./App.module.css";
 import Header from "./components/Header";
 import Card from "./components/Card";
 
+let roomId = "react-dashboard";
+
+overrideRoomId();
+
 function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthers();
@@ -226,23 +230,6 @@ function Example() {
   );
 }
 
-let roomId = "react-dashboard";
-
-/**
- * @optional
- *
- * Add a suffix to the room ID using a query parameter.
- * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
- *
- * http://localhost:3000/?room=1234 → react-dashboard-1234
- */
-const query = new URLSearchParams(window?.location?.search);
-const roomSuffix = query.get("room");
-
-if (roomSuffix) {
-  roomId = `${roomId}-${roomSuffix}`;
-}
-
 export default function App() {
   return (
     <RoomProvider
@@ -252,4 +239,17 @@ export default function App() {
       <Example />
     </RoomProvider>
   );
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const roomIdSuffix = query.get("roomId");
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
 }

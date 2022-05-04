@@ -5,24 +5,9 @@ import { createClient } from "@liveblocks/client";
 import App from "./App";
 import "./index.css";
 
-/**
- * Replace by your public key from https://liveblocks.io/dashboard/apikeys.
- */
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-/**
- * @optional
- *
- * Used for coordinating public API keys from outside (e.g. https://liveblocks.io/examples).
- *
- * http://localhost:3000/?token=pk_live_1234
- */
-const query = new URLSearchParams(window?.location?.search);
-const token = query.get("token");
-
-if (token) {
-  PUBLIC_KEY = token;
-}
+overrideApiKey();
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
@@ -41,3 +26,16 @@ ReactDOM.render(
   </LiveblocksProvider>,
   document.getElementById("root")
 );
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKey() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+}
