@@ -26,7 +26,9 @@
   ],
   "scripts": {
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "lint": "eslint src/ test/",
     "test": "jest --watch",
+    "test-ci": "jest",
     "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
   },
   "license": "Apache-2.0",
