@@ -12,9 +12,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-        with:
-          repository: liveblocks/liveblocks
-          ref: refs/heads/${{ github.head_ref }}
 
       - name: Install dependencies
         run: npm install
@@ -45,9 +42,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@master
-        with:
-          repository: liveblocks/liveblocks
-          ref: refs/heads/${{ github.head_ref }}
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v2
