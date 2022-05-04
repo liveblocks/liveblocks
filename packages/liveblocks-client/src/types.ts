@@ -161,12 +161,12 @@ export type RoomInitializers<TPresence, TStorage> = Resolve<{
    * @deprecated Please use `initialPresence` instead. This property is
    * scheduled for removal in 0.18.
    */
-  defaultPresence?: TPresence | (() => TPresence);
+  defaultPresence?: () => TPresence;
   /**
    * @deprecated Please use `initialStorage` instead. This property is
    * scheduled for removal in 0.18.
    */
-  defaultStorageRoot?: TStorage | (() => TStorage);
+  defaultStorageRoot?: TStorage;
 }>;
 
 export type Client = {
