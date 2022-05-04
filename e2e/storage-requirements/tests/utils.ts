@@ -39,12 +39,24 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     });
   }
 
+  const socketUtils = {
+    pauseAllSockets: () => {
+      sockets[0].pauseSend();
+      sockets[1].pauseSend();
+    },
+    sendMessagesClient1: () => {
+      sockets[0].resumeSend();
+    },
+    sendMessagesClient2: () => {
+      sockets[1].resumeSend();
+    },
+  };
+
   return {
     root1: storageRoot1.root,
     root2: storageRoot2.root,
-    socket1: sockets[0],
-    socket2: sockets[1],
     assert,
+    socketUtils,
   };
 }
 

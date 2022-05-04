@@ -5,7 +5,7 @@ import { prepareTest } from "./utils";
 
 describe("LiveList confict resolution", () => {
   test("push / push", async () => {
-    const { socket1, socket2, root1, root2, assert } = await prepareTest<{
+    const { root1, root2, assert, socketUtils } = await prepareTest<{
       list: LiveList<string>;
     }>({
       list: new LiveList(),
@@ -13,17 +13,16 @@ describe("LiveList confict resolution", () => {
 
     await assert({ list: [] });
 
-    socket1.pauseSend();
-    socket2.pauseSend();
+    socketUtils.pauseAllSockets();
 
-    root1.get("list")?.push("A");
-    root2.get("list")?.push("B");
+    root1.get("list")?.push("A"); // Client 1 push "A"
+    root2.get("list")?.push("B"); // Client 2 push "B"
 
-    socket1.resumeSend();
+    socketUtils.sendMessagesClient1(); // Client 1 push "A" sent to server
 
     await assert({ list: ["A"] }, { list: ["A", "B"] });
 
-    socket2.resumeSend();
+    socketUtils.sendMessagesClient2(); // Client 2 push "B" sent to server
 
     await assert({ list: ["A", "B"] });
   });
