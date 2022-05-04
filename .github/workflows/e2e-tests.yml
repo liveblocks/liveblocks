@@ -25,6 +25,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
+      - name: Link E2E test app to use local Liveblocks build
+        run: ../../scripts/link-liveblocks.sh -f
+
       - name: Install dependencies
         run: npm install
 
