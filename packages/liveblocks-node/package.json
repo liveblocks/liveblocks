@@ -24,7 +24,7 @@
     "build:cjs": "tsc -p tsconfig-cjs.json",
     "lint": "eslint src/",
     "test": "jest --watch",
-    "test-ci": "jest"
+    "test-ci": "jest --passWithNoTests"
   },
   "license": "Apache-2.0",
   "devDependencies": {
