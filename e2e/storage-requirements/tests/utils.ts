@@ -11,37 +11,31 @@ import WebSocket from "ws";
 import { ClientRequestArgs } from "http";
 import { URL } from "url";
 
-export async function prepareTest() {
+export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const client1 = createTestClient();
   const client2 = createTestClient();
 
   const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-  const client1Room = client1.enter(roomName);
+  const client1Room = client1.enter(roomName, {
+    defaultStorageRoot: initialStorage,
+  });
   await waitFor(() => client1Room.getConnectionState() === "open");
   const client2Room = client2.enter(roomName);
   await waitFor(() => client2Room.getConnectionState() === "open");
 
-  const storageRoot1: any = await client1Room.getStorage();
-  const storageRoot2: any = await client2Room.getStorage();
+  const storageRoot1 = await client1Room.getStorage<T>();
+  const storageRoot2 = await client2Room.getStorage<T>();
 
-  async function assert(data: any) {
-    await assertClient1(data);
-    await assertClient2(data);
-  }
-
-  async function assertClient1(data: any) {
+  async function assert(data: any, data2?: any) {
     await waitFor(() => {
       const client1Json = objectToJson(storageRoot1.root);
-
-      return JSON.stringify(client1Json) === JSON.stringify(data);
-    });
-  }
-
-  async function assertClient2(data: any) {
-    await waitFor(() => {
       const client2Json = objectToJson(storageRoot2.root);
-      return JSON.stringify(client2Json) === JSON.stringify(data);
+
+      return (
+        JSON.stringify(client1Json) === JSON.stringify(data) &&
+        JSON.stringify(client2Json) === JSON.stringify(data2 || data)
+      );
     });
   }
 
@@ -51,9 +45,19 @@ export async function prepareTest() {
     socket1: sockets[0],
     socket2: sockets[1],
     assert,
-    assertClient1,
-    assertClient2,
   };
+}
+
+const sockets: MockWebSocket[] = [];
+
+import "dotenv/config";
+
+function createTestClient() {
+  return createClient({
+    publicApiKey: process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
+    fetchPolyfill: fetch,
+    WebSocketPolyfill: MockWebSocket,
+  });
 }
 
 class MockWebSocket extends WebSocket {
@@ -88,18 +92,6 @@ class MockWebSocket extends WebSocket {
       super.send(data);
     }
   }
-}
-
-const sockets: MockWebSocket[] = [];
-
-import "dotenv/config";
-
-function createTestClient() {
-  return createClient({
-    publicApiKey: process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
-    fetchPolyfill: fetch,
-    WebSocketPolyfill: MockWebSocket,
-  });
 }
 
 function wait(ms: number) {
