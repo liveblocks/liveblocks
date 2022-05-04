@@ -33,6 +33,7 @@
   },
   "scripts": {
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "lint": "eslint src/ test/",
     "test": "jest --watch",
     "test-ci": "jest"
   },

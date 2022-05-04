@@ -3,51 +3,78 @@ name: Tests
 on: [pull_request]
 
 jobs:
-  unit-tests:
+  test:
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+        pkg:
+          [
+            "liveblocks-client",
+            "liveblocks-react",
+            "liveblocks-redux",
+            "liveblocks-zustand",
+            "liveblocks-node",
+          ]
 
     defaults:
       run:
-        working-directory: packages/liveblocks-client
+        working-directory: packages/${{ matrix.pkg }}
 
     steps:
-      - uses: actions/checkout@master
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
         with:
-          repository: liveblocks/liveblocks
-          ref: refs/heads/${{ github.head_ref }}
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (and link to local Liveblocks source)
+        run: ../../scripts/link-liveblocks.sh -f
 
-      - name: Ensure TypeScript compiles
+      - name: Build
         run: npm run build
 
       - name: Run unit tests
         run: npm run test-ci
 
+      - name: Run lint checks
+        run: npm run lint
+
   e2e-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
     timeout-minutes: 60
+
     env:
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
       LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
       LIVEBLOCKS_AUTHORIZE_ENDPOINT: ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
-    runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: e2e/next-sandbox
 
     steps:
-      - uses: actions/checkout@master
-        with:
-          repository: liveblocks/liveblocks
-          ref: refs/heads/${{ github.head_ref }}
+      - name: Checkout
+        uses: actions/checkout@v3
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
 
-      - name: Link E2E test app to use local Liveblocks build
+      - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh -f
 
       - name: Install Playwright

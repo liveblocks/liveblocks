@@ -22,7 +22,9 @@
     "build": "npm run build:esm && npm run build:cjs",
     "build:esm": "tsc -p tsconfig.json",
     "build:cjs": "tsc -p tsconfig-cjs.json",
-    "test": "jest --watch"
+    "lint": "eslint src/",
+    "test": "jest --watch",
+    "test-ci": "jest --passWithNoTests"
   },
   "license": "Apache-2.0",
   "devDependencies": {
