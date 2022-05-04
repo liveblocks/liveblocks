@@ -9,7 +9,6 @@
     "@liveblocks/client": "^0.16.3"
   },
   "devDependencies": {
-    "dotenv": "^10.0.0",
     "esbuild": "^0.12.2",
     "prettier": "^2.6.2"
   }
