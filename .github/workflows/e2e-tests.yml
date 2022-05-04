@@ -9,10 +9,18 @@ jobs:
     strategy:
       matrix:
         node-version: [16.x]
+        pkg:
+          [
+            "liveblocks-client",
+            "liveblocks-react",
+            "liveblocks-redux",
+            "liveblocks-zustand",
+            "liveblocks-node",
+          ]
 
     defaults:
       run:
-        working-directory: packages/liveblocks-client
+        working-directory: packages/${{ matrix.pkg }}
 
     steps:
       - name: Checkout
