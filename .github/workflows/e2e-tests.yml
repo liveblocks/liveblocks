@@ -26,12 +26,15 @@ jobs:
         run: npm run test-ci
 
   e2e-tests:
+    runs-on: ubuntu-latest
+
     timeout-minutes: 60
+
     env:
       LIVEBLOCKS_SECRET_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_SECRET_KEY }}
       LIVEBLOCKS_SERVER: ${{ secrets.E2E_TEST_LIVEBLOCKS_SERVER }}
       LIVEBLOCKS_AUTHORIZE_ENDPOINT: ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
-    runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: e2e/next-sandbox
