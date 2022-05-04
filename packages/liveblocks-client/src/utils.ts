@@ -36,8 +36,8 @@ export function deprecate(message: string, key = message) {
   if (process.env.NODE_ENV !== "production") {
     if (!_emittedDeprecationWarnings.has(key)) {
       _emittedDeprecationWarnings.add(key);
+      console.warn(`⚠️  [DEPRECATED] ${message}`);
     }
-    console.warn(`⚠️  [DEPRECATED] ${message}`);
   }
 }
 
