@@ -4,7 +4,6 @@ export { LiveList } from "./LiveList";
 export type {
   Others,
   Presence,
-  Resolve,
   Room,
   Client,
   User,
