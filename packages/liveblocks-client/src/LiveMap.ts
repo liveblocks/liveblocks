@@ -195,7 +195,7 @@ export class LiveMap<
     const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
     for (const [key, value] of this._map) {
-      if (value === (child as any)) {
+      if (value === child) {
         this._map.delete(key);
       }
     }
