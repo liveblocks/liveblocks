@@ -7,6 +7,8 @@
  * time and without announcement. This module purely exists to share code
  * between the several Liveblocks packages.
  *
+ * But since you're so deep inside Liveblocks code... we're hiring!
+ * https://join.team/liveblocks ;)
  */
 
 export * from "./live";
