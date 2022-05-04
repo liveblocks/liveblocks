@@ -33,10 +33,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Link E2E test app to use local Liveblocks build
+      - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh -f
 
       - name: Build
@@ -77,7 +74,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Link E2E test app to use local Liveblocks build
+      - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh -f
 
       - name: Install Playwright
