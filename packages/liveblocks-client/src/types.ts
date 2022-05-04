@@ -26,7 +26,9 @@ import { Lson, LsonObject } from "./lson";
  * This trick comes from:
  * https://effectivetypescript.com/2022/02/25/gentips-4-display/
  */
-export type Resolve<T> = T extends Function ? T : { [K in keyof T]: T[K] };
+export type Resolve<T> =
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  T extends Function ? T : { [K in keyof T]: T[K] };
 
 export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
 
