@@ -37,6 +37,9 @@ jobs:
       - name: Run unit tests
         run: npm run test-ci
 
+      - name: Run lint checks
+        run: npm run lint
+
   e2e-tests:
     runs-on: ubuntu-latest
 
