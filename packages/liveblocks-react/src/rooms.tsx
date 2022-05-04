@@ -380,11 +380,10 @@ export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
-  if (entries && process.env.NODE_ENV === "development") {
-    console.warn(
-      "We no longer recommend initializing the items from the useMap() hook. Please see https://bit.ly/lak1PlM for details."
-    );
-  }
+  deprecateIf(
+    entries,
+    "We no longer recommend initializing the items from the useMap() hook. Please see https://bit.ly/lak1PlM for details."
+  );
   return useCrdt(key, new LiveMap(entries));
   //                  ^^^^^^^^^^^^^^^^^^^^
   //                  NOTE: This param is scheduled for removal in 0.18
@@ -415,12 +414,10 @@ export function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
-  if (items && process.env.NODE_ENV === "development") {
-    console.warn(
-      "We no longer recommend initializing the items from the useList() hook. Please see https://bit.ly/lak1PlM for details."
-    );
-  }
-
+  deprecateIf(
+    items,
+    "We no longer recommend initializing the items from the useList() hook. Please see https://bit.ly/lak1PlM for details."
+  );
   return useCrdt<LiveList<TValue>>(key, new LiveList(items));
   //                                    ^^^^^^^^^^^^^^^^^^^
   //                                    NOTE: This param is scheduled for removal in 0.18
@@ -451,11 +448,10 @@ export function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
-  if (initialData && process.env.NODE_ENV === "development") {
-    console.warn(
-      "We no longer recommend initializing the items from the useObject() hook. Please see https://bit.ly/lak1PlM for details."
-    );
-  }
+  deprecateIf(
+    initialData,
+    "We no longer recommend initializing the items from the useObject() hook. Please see https://bit.ly/lak1PlM for details."
+  );
   return useCrdt(key, new LiveObject(initialData));
   //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
   //                  NOTE: This param is scheduled for removal in 0.18
