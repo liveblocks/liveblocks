@@ -8,6 +8,7 @@ import type {
   Room,
   RoomInitializers,
 } from "./types";
+import { deprecateIf } from "./utils";
 
 type EnterOptions<TPresence, TStorage> = Resolve<
   // Enter options are just room initializers, plus an internal option
@@ -65,6 +66,18 @@ export function createClient(options: ClientOptions): Client {
     if (internalRoom) {
       return internalRoom.room;
     }
+
+    deprecateIf(
+      options.defaultPresence,
+      "Option `defaultPresence` is scheduled for removal in 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/lak1PlM",
+      "defaultPresence"
+    );
+    deprecateIf(
+      options.defaultStorageRoot,
+      "Option `defaultStorageRoot` is scheduled for removal in 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/lak1PlM",
+      "defaultStorageRoot"
+    );
+
     internalRoom = createRoom(
       {
         initialPresence: options.initialPresence,
