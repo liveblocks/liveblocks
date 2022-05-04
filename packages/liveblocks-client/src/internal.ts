@@ -11,8 +11,44 @@
  * https://join.team/liveblocks ;)
  */
 
-export * from "./live";
-export * from "./position";
+export type {
+  ClientEventMessage,
+  ClientMessage,
+  ClientMessageType,
+  CrdtType,
+  CreateListOp,
+  CreateMapOp,
+  CreateObjectOp,
+  CreateOp,
+  CreateRegisterOp,
+  DeleteCrdtOp,
+  DeleteObjectKeyOp,
+  EventMessage,
+  FetchStorageClientMessage,
+  InitialDocumentStateMessage,
+  Op,
+  OpType,
+  RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  ServerMessage,
+  ServerMessageType,
+  SetParentKeyOp,
+  UpdateObjectOp,
+  UpdatePresenceClientMessage,
+  UpdatePresenceMessage,
+  UpdateStorageClientMessage,
+  UpdateStorageMessage,
+  UserJoinMessage,
+  UserLeftMessage,
+  WebsocketCloseCodes,
+} from "./live";
+
+export { min, max, makePosition, posCodes, pos, compare } from "./position";
 
 export { deprecate, deprecateIf } from "./utils";
 
