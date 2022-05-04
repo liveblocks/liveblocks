@@ -18,7 +18,7 @@ import useRerender from "./useRerender";
 
 const RoomContext = React.createContext<Room | null>(null);
 
-type RoomProviderProps<TStorageRoot> = {
+type RoomProviderProps<TStorage> = {
   /**
    * The id of the room you want to connect to
    */
@@ -29,7 +29,7 @@ type RoomProviderProps<TStorageRoot> = {
    */
   defaultPresence?: () => Presence;
 
-  defaultStorageRoot?: TStorageRoot;
+  defaultStorageRoot?: TStorage;
 
   children: React.ReactNode;
 };
@@ -39,19 +39,15 @@ type RoomProviderProps<TStorageRoot> = {
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider<TStorageRoot>({
-  id,
-  children,
-  defaultPresence,
-  defaultStorageRoot,
-}: RoomProviderProps<TStorageRoot>) {
+export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
+  const { id: roomId, defaultPresence, defaultStorageRoot } = props;
   if (process.env.NODE_ENV !== "production") {
-    if (id == null) {
+    if (roomId == null) {
       throw new Error(
         "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
       );
     }
-    if (typeof id !== "string") {
+    if (typeof roomId !== "string") {
       throw new Error("RoomProvider id property should be a string.");
     }
   }
@@ -59,7 +55,7 @@ export function RoomProvider<TStorageRoot>({
   const client = useClient();
 
   const [room, setRoom] = React.useState(() =>
-    client.enter(id, {
+    client.enter(roomId, {
       defaultPresence: defaultPresence ? defaultPresence() : undefined,
       defaultStorageRoot,
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -68,7 +64,7 @@ export function RoomProvider<TStorageRoot>({
 
   React.useEffect(() => {
     setRoom(
-      client.enter(id, {
+      client.enter(roomId, {
         defaultPresence: defaultPresence ? defaultPresence() : undefined,
         defaultStorageRoot,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -76,11 +72,13 @@ export function RoomProvider<TStorageRoot>({
     );
 
     return () => {
-      client.leave(id);
+      client.leave(roomId);
     };
-  }, [client, id]);
+  }, [client, roomId]);
 
-  return <RoomContext.Provider value={room}>{children}</RoomContext.Provider>;
+  return (
+    <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+  );
 }
 
 /**
@@ -315,17 +313,17 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-export function useStorage<TRoot extends Record<string, any>>(): [
-  root: LiveObject<TRoot> | null
+export function useStorage<TStorage extends Record<string, any>>(): [
+  root: LiveObject<TStorage> | null
 ] {
   const room = useRoom();
-  const [root, setState] = React.useState<LiveObject<TRoot> | null>(null);
+  const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
   React.useEffect(() => {
     let didCancel = false;
 
     async function fetchStorage() {
-      const storage = await room.getStorage<TRoot>();
+      const storage = await room.getStorage<TStorage>();
       if (!didCancel) {
         setState(storage.root);
       }
