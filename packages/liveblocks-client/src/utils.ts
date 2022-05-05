@@ -29,20 +29,20 @@ import {
 const _emittedDeprecationWarnings: Set<string> = new Set();
 
 /**
- * Displays a [DEPRECATED] warning in the dev console. Only in dev mode, and
+ * Displays a deprecation warning in the dev console. Only in dev mode, and
  * only once per message/key. In production, this is a no-op.
  */
 export function deprecate(message: string, key = message) {
   if (process.env.NODE_ENV !== "production") {
     if (!_emittedDeprecationWarnings.has(key)) {
       _emittedDeprecationWarnings.add(key);
-      console.warn(`⚠️  [DEPRECATED] ${message}`);
+      console.warn(`DEPRECATION WARNING: ${message}`);
     }
   }
 }
 
 /**
- * Conditionally displays a [DEPRECATED] warning in the dev
+ * Conditionally displays a deprecation warning in the dev
  * console if the first argument is truthy. Only in dev mode, and
  * only once per message/key. In production, this is a no-op.
  */
