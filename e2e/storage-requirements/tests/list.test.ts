@@ -52,8 +52,7 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.sendMessagesClient2();
 
-      // await assert({ list: ["B", "C"] }); // Expected TODO
-      await assertEach({ list: ["C", "B", "A"] }, { list: ["C", "B"] }); // Current
+      await assert({ list: ["C", "B"] });
     });
   });
 
@@ -148,18 +147,18 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //  Client1 sets "A" to "C"
+      root1.get("list")?.set(0, "C"); //  Client1 sets "C" to "A"
       root2.get("list")?.move(0, 1); //   Client2 moves "A" after "B"
+
+      await assertEach({ list: ["C", "B"] }, { list: ["B", "A"] });
 
       socketUtils.sendMessagesClient1();
 
-      // await assertEach({ list: ["C", "B"] }, { list: ["B", "C"] }); // Expected TODO
-      await assertEach({ list: ["C", "B"] }, { list: ["C", "B", "A"] }); // Current
+      await assert({ list: ["C", "B"] });
 
       socketUtils.sendMessagesClient2();
 
-      // await assert({ list: ["B", "C"] }); // Expected TODO
-      await assertEach({ list: ["C", "B"] }, { list: ["C", "B", "A"] }); // Current
+      await assert({ list: ["C", "B"] });
     });
   });
 
@@ -304,4 +303,31 @@ describe("LiveList confict resolution", () => {
   });
 
   test("delete / delete", async () => {});
+
+  test("set + move / set", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list")?.set(0, "C"); //  Client1 sets "A" to "C"
+      root1.get("list")?.move(0, 1); //  Client1 moves "C" after "B"
+      root2.get("list")?.set(0, "D"); //  Client2 sets "A" to "D"
+
+      socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["B", "C"] }, { list: ["B", "C"] });
+
+      socketUtils.sendMessagesClient2();
+
+      await assert({ list: ["D", "B", "C"] });
+    });
+  });
 });

@@ -10,6 +10,8 @@ import fetch from "node-fetch";
 import WebSocket from "ws";
 import { ClientRequestArgs } from "http";
 import { URL } from "url";
+import isEqual from "lodash/isEqual";
+import { diff } from "jest-diff";
 
 import "dotenv/config";
 
@@ -17,11 +19,20 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const sockets: MockWebSocket[] = [];
 
   function createTestClient() {
+    const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
+
+    if (publicApiKey == null) {
+      throw new Error(
+        `Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.`
+      );
+    }
+
     return createClient({
-      publicApiKey: process.env.PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
+      publicApiKey,
       fetchPolyfill: fetch,
       WebSocketPolyfill: MockWebSocket,
-    });
+      liveblocksServer: process.env.LIVEBLOCKS_SERVER,
+    } as any);
   }
 
   class MockWebSocket extends WebSocket {
@@ -74,23 +85,26 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const storageRoot2 = await client2Room.getStorage<T>();
 
   async function assert(data: any, data2?: any) {
-    const val = await waitFor(() => {
+    const areEquals = await waitFor(() => {
       const client1Json = objectToJson(storageRoot1.root);
       const client2Json = objectToJson(storageRoot2.root);
 
-      return (
-        JSON.stringify(client1Json) === JSON.stringify(data) &&
-        JSON.stringify(client2Json) === JSON.stringify(data2 || data)
-      );
+      return isEqual(client1Json, data) && isEqual(client2Json, data2 || data);
     });
 
-    if (!val) {
-      expect(data).toEqual(objectToJson(storageRoot1.root));
-      expect(data2 || data).toEqual(objectToJson(storageRoot2.root));
+    if (!areEquals) {
+      expect(objectToJson(storageRoot1.root)).toEqualWithMessage(
+        data,
+        "Client 1 storage is invalid"
+      );
+      expect(objectToJson(storageRoot2.root)).toEqualWithMessage(
+        data2 || data,
+        "Client 2 storage is invalid"
+      );
     }
   }
 
-  async function assertEach(data1: any, data2: any) {
+  async function assertEach(data1: unknown, data2: unknown) {
     return assert(data1, data2);
   }
 
@@ -182,3 +196,55 @@ function toJson(value: unknown) {
 
   return value;
 }
+
+declare global {
+  namespace jest {
+    interface Matchers<R> {
+      toEqualWithMessage(expected: unknown, message: string): void;
+    }
+  }
+}
+
+expect.extend({
+  toEqualWithMessage(received, expected, message) {
+    if (this.isNot) {
+      throw new Error(
+        "toEqualWithMessage custom matcher didnt implement jest `not`"
+      );
+    }
+
+    const options = {
+      comment: "Object.equal equality",
+      isNot: false,
+      promise: this.promise,
+    };
+
+    const areEquals = isEqual(received, expected);
+    if (areEquals) {
+      return {
+        message: () => "",
+        pass: true,
+      };
+    } else {
+      return {
+        pass: false,
+        message: () => {
+          const diffString = diff(expected, received, {
+            expand: this.expand,
+          });
+
+          return (
+            this.utils.RECEIVED_COLOR(message) +
+            "\n\n" +
+            this.utils.matcherHint("toEqual", undefined, undefined, options) +
+            "\n\n" +
+            (diffString && diffString.includes("- Expect")
+              ? `Difference:\n\n${diffString}`
+              : `Expected: ${this.utils.printExpected(expected)}\n` +
+                `Received: ${this.utils.printReceived(received)}`)
+          );
+        },
+      };
+    }
+  },
+});
