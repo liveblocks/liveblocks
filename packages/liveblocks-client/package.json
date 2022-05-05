@@ -70,5 +70,6 @@
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-client"
-  }
+  },
+  "sideEffects": false
 }
