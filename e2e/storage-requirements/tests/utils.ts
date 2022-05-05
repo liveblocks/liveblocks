@@ -84,6 +84,8 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const storageRoot1 = await client1Room.getStorage<T>();
   const storageRoot2 = await client2Room.getStorage<T>();
 
+  await wait(1000);
+
   async function assert(data: any, data2?: any) {
     const areEquals = await waitFor(() => {
       const client1Json = objectToJson(storageRoot1.root);

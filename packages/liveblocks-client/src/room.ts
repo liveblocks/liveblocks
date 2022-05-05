@@ -525,8 +525,10 @@ export function makeStateMachine(
   }
 
   function applyOp(op: Op, isLocal: boolean): ApplyResult {
+    let isAck = false;
+
     if (op.opId) {
-      state.offlineOperations.delete(op.opId);
+      isAck = state.offlineOperations.delete(op.opId);
     }
 
     switch (op.type) {
@@ -566,6 +568,11 @@ export function makeStateMachine(
         if (parent == null) {
           return { modified: false };
         }
+
+        if (isAck && parent instanceof LiveList && op.intent === undefined) {
+          return { modified: false };
+        }
+
         return parent._attachChild(op, isLocal);
       }
     }

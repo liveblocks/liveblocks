@@ -17,8 +17,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.push("A"); // Client 1 pushes "A"
-      root2.get("list")?.push("B"); // Client 2 pushes "B"
+      root1.get("list").push("A"); // Client 1 pushes "A"
+      root2.get("list").push("B"); // Client 2 pushes "B"
 
       socketUtils.sendMessagesClient1(); // Client 1 push "A" sent to server
 
@@ -43,8 +43,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.move(0, 1); //  Client1 moves "A" after "B"
-      root2.get("list")?.set(0, "C"); // Client2 replaces "A" by "C"
+      root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
+      root2.get("list").set(0, "C"); // Client2 replaces "A" by "C"
 
       socketUtils.sendMessagesClient1();
 
@@ -69,8 +69,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.move(0, 1); //  Client1 moves "A" after "B"
-      root2.get("list")?.delete(0); // Client2 deletes "A"
+      root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
+      root2.get("list").delete(0); // Client2 deletes "A"
 
       socketUtils.sendMessagesClient1();
 
@@ -95,8 +95,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.move(0, 1); //     Client1 moves "A" after "B"
-      root2.get("list")?.insert("C", 0); // Client2 insert "C" at index 0
+      root1.get("list").move(0, 1); //     Client1 moves "A" after "B"
+      root2.get("list").insert("C", 0); // Client2 insert "C" at index 0
 
       socketUtils.sendMessagesClient1();
 
@@ -121,8 +121,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.move(0, 1); //  Client1 moves "A" after "B"
-      root2.get("list")?.move(0, 1); //  Client2 moves "A" after "B"
+      root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
+      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
 
       socketUtils.sendMessagesClient1();
 
@@ -147,8 +147,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //  Client1 sets "C" to "A"
-      root2.get("list")?.move(0, 1); //   Client2 moves "A" after "B"
+      root1.get("list").set(0, "C"); //  Client1 sets "C" to "A"
+      root2.get("list").move(0, 1); //   Client2 moves "A" after "B"
 
       await assertEach({ list: ["C", "B"] }, { list: ["B", "A"] });
 
@@ -175,8 +175,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //  Client1 sets "A" to "C"
-      root2.get("list")?.delete(0); //    Client2 deletes "A"
+      root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
+      root2.get("list").delete(0); //    Client2 deletes "A"
 
       socketUtils.sendMessagesClient1();
 
@@ -201,8 +201,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //     Client1 sets "A" to "C"
-      root2.get("list")?.insert("D", 0); //  Client2 inserts "D" at index 0
+      root1.get("list").set(0, "C"); //     Client1 sets "A" to "C"
+      root2.get("list").insert("D", 0); //  Client2 inserts "D" at index 0
 
       socketUtils.sendMessagesClient1();
 
@@ -227,8 +227,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //  Client1 sets "A" to "C"
-      root2.get("list")?.set(0, "D"); //  Client2 sets "A" to "D"
+      root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
+      root2.get("list").set(0, "D"); //  Client2 sets "A" to "D"
 
       socketUtils.sendMessagesClient1();
 
@@ -257,8 +257,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.insert("C", 0); // Client1 inserts "C" at index 0
-      root2.get("list")?.set(0, "D"); //    Client2 sets "A" to "D"
+      root1.get("list").insert("C", 0); // Client1 inserts "C" at index 0
+      root2.get("list").set(0, "D"); //    Client2 sets "A" to "D"
 
       socketUtils.sendMessagesClient1();
 
@@ -289,8 +289,8 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.delete(0); //   Client1 deletes "A"
-      root2.get("list")?.set(0, "C"); // Client2 sets "A" to "C"
+      root1.get("list").delete(0); //   Client1 deletes "A"
+      root2.get("list").set(0, "C"); // Client2 sets "A" to "C"
 
       socketUtils.sendMessagesClient1();
 
@@ -317,9 +317,9 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list")?.set(0, "C"); //  Client1 sets "A" to "C"
-      root1.get("list")?.move(0, 1); //  Client1 moves "C" after "B"
-      root2.get("list")?.set(0, "D"); //  Client2 sets "A" to "D"
+      root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
+      root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
+      root2.get("list").set(0, "D"); //  Client2 sets "A" to "D"
 
       socketUtils.sendMessagesClient1();
 
@@ -328,6 +328,43 @@ describe("LiveList confict resolution", () => {
       socketUtils.sendMessagesClient2();
 
       await assert({ list: ["D", "B", "C"] });
+    });
+  });
+
+  test("push + set / push + set", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList([]),
+      });
+
+    await run(async () => {
+      await assert({ list: [] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").push("A");
+      root1.get("list").set(0, "B");
+
+      root2.get("list").push("C");
+      root2.get("list").set(0, "D");
+
+      console.log("INITIAL");
+
+      await assertEach({ list: ["B"] }, { list: ["D"] });
+
+      console.log("INTERMEDIATE");
+
+      socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["B"] }, { list: ["B", "D"] });
+
+      console.log("FINISH");
+
+      socketUtils.sendMessagesClient2();
+
+      await assert({ list: ["D"] });
     });
   });
 });
