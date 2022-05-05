@@ -10,7 +10,7 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "lib": ["es2019", "dom", "esnext"],
+    "lib": ["dom", "esnext"],
     "stripInternal": true
   },
   "include": ["./src/**/*.ts", "./test/**/*.ts"],
