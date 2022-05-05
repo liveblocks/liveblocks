@@ -3,6 +3,7 @@
   "version": "0.16.3",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./index.js",
+  "module": "./index.mjs",
   "types": "./index.d.ts",
   "files": [
     "**"
@@ -11,14 +12,14 @@
     "./package.json": "./package.json",
     ".": {
       "types": "./index.d.ts",
-      "module": "./esm/index.js",
-      "import": "./esm/index.mjs",
+      "module": "./index.mjs",
+      "import": "./index.mjs",
       "default": "./index.js"
     },
     "./internal": {
       "types": "./internal.d.ts",
-      "module": "./esm/internal.js",
-      "import": "./esm/internal.mjs",
+      "module": "./internal.mjs",
+      "import": "./internal.mjs",
       "default": "./internal.js"
     }
   },
