@@ -55,12 +55,12 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
 
   deprecateIf(
     defaultPresence,
-    "RoomProvider's `defaultPresence` prop is scheduled for removal in 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/lak1PlM",
+    "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/lak1PlM",
     "defaultPresence"
   );
   deprecateIf(
     defaultStorageRoot,
-    "RoomProvider's `defaultStorageRoot` prop is scheduled for removal in 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/lak1PlM",
+    "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/lak1PlM",
     "defaultStorageRoot"
   );
 
