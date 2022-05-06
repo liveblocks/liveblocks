@@ -8,21 +8,6 @@
   "files": [
     "**"
   ],
-  "exports": {
-    "./package.json": "./package.json",
-    ".": {
-      "types": "./index.d.ts",
-      "module": "./index.mjs",
-      "import": "./index.mjs",
-      "default": "./index.js"
-    },
-    "./internal": {
-      "types": "./internal.d.ts",
-      "module": "./internal.mjs",
-      "import": "./internal.mjs",
-      "default": "./internal.js"
-    }
-  },
   "keywords": [
     "liveblocks",
     "multiplayer",
