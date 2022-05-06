@@ -382,7 +382,20 @@ export function useMap<TKey extends string, TValue extends Lson>(
 ): LiveMap<TKey, TValue> | null {
   deprecateIf(
     entries,
-    "Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
+    `Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveMap(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
   );
   return useCrdt(key, new LiveMap(entries));
   //                  ^^^^^^^^^^^^^^^^^^^^
@@ -416,7 +429,22 @@ export function useList<TValue extends Lson>(
 ): LiveList<TValue> | null {
   deprecateIf(
     items,
-    "Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
+    `Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    import { LiveList } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveList(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
   );
   return useCrdt<LiveList<TValue>>(key, new LiveList(items));
   //                                    ^^^^^^^^^^^^^^^^^^^
@@ -450,7 +478,22 @@ export function useObject<TData extends LsonObject>(
 ): LiveObject<TData> | null {
   deprecateIf(
     initialData,
-    "Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
+    `Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    import { LiveObject } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveObject(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
   );
   return useCrdt(key, new LiveObject(initialData));
   //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
