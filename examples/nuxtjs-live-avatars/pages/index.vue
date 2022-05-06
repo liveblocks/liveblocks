@@ -49,8 +49,6 @@ const client = createClient({
 
 let roomId = "nuxtjs-live-avatars";
 
-overrideRoomId();
-
 export default Vue.extend({
   data: function () {
     return {
@@ -59,6 +57,8 @@ export default Vue.extend({
     };
   },
   mounted: function () {
+    overrideRoomId();
+
     const room = client.enter(roomId);
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
     this._unsubscribeConnection = room.subscribe(

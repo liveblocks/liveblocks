@@ -57,7 +57,7 @@ async function run() {
     room.updatePresence({ isTyping: false });
   });
 
-  function renderTodos() {
+  function render() {
     todosContainer.innerHTML = "";
 
     for (let i = 0; i < todos.length; i++) {
@@ -84,28 +84,28 @@ async function run() {
   }
 
   room.subscribe(todos, () => {
-    renderTodos();
+    render();
   });
 
-  renderTodos();
+  /**
+   * This function is used when deploying an example on liveblocks.io.
+   * You can ignore it completely if you run the example locally.
+   */
+  function overrideApiKeyAndRoomId() {
+    const query = new URLSearchParams(window?.location?.search);
+    const apiKey = query.get("apiKey");
+    const roomIdSuffix = query.get("roomId");
+
+    if (apiKey) {
+      PUBLIC_KEY = apiKey;
+    }
+
+    if (roomIdSuffix) {
+      roomId = `${roomId}-${roomIdSuffix}`;
+    }
+  }
+
+  render();
 }
 
 run();
-
-/**
- * This function is used when deploying an example on liveblocks.io.
- * You can ignore it completely if you run the example locally.
- */
-function overrideApiKeyAndRoomId() {
-  const query = new URLSearchParams(window?.location?.search);
-  const apiKey = query.get("apiKey");
-  const roomIdSuffix = query.get("roomId");
-
-  if (apiKey) {
-    PUBLIC_KEY = apiKey;
-  }
-
-  if (roomIdSuffix) {
-    roomId = `${roomId}-${roomIdSuffix}`;
-  }
-}

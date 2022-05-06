@@ -10,23 +10,12 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-const roomId = "nextjs-logo-builder";
-
 function App({ Component, pageProps }: AppProps) {
-  const { query } = useRouter();
-  const roomIdWithSuffix = useMemo(() => {
-    /**
-     * Add a suffix to the room ID using a query parameter.
-     * Used for coordinating rooms from outside (e.g. https://liveblocks.io/examples).
-     *
-     * http://localhost:3000/?room=1234 → nextjs-logo-builder-1234
-     */
-    return query?.room ? `${roomId}-${query.room}` : roomId;
-  }, [query]);
+  const roomId = useOverrideRoomId("nextjs-logo-builder");
 
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomIdWithSuffix}>
+      <RoomProvider id={roomId}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />
@@ -51,3 +40,16 @@ function App({ Component, pageProps }: AppProps) {
 }
 
 export default App;
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useOverrideRoomId(roomId: string) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
+
+  return overrideRoomId;
+}
