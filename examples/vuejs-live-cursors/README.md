@@ -13,9 +13,9 @@
   <img src="https://img.shields.io/badge/vue.js-message?style=flat&logo=vue.js&color=3b7&logoColor=fff" alt="Vue" />
 </p>
 
-This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Nuxt.js](https://nuxtjs.org/).
+This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [Vue](https://vuejs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="800" alt="Live Cursors" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="500" alt="Live Cursors" />
 
 ## Getting started
 

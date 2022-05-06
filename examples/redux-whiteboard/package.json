@@ -1,6 +1,6 @@
 {
-  "name": "liveblocks-examples-redux-whiteboard",
-  "version": "0.1.0",
+  "description": "This example shows how to build a collaborative whiteboard with Liveblocks, React and Redux.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
@@ -18,12 +18,6 @@
     "react-scripts": "5.0.0",
     "redux": "^4.1.2"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",
@@ -35,5 +29,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
   }
 }

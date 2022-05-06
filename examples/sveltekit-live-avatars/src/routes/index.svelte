@@ -1,47 +1,48 @@
 <script lang="ts">
-import LiveblocksProvider from "../lib-liveblocks/LiveblocksProvider.svelte";
-import RoomProvider from "../lib-liveblocks/RoomProvider.svelte";
-import { createClient } from "@liveblocks/client";
-import { onMount } from "svelte";
-import LiveAvatars from "../LiveAvatars.svelte";
-import ExampleWrapper from "$lib/ExampleWrapper.svelte";
-import { createRoomId } from "$lib/createRoomId";
-import ExampleInfo from "$lib/ExampleInfo.svelte";
+  import LiveblocksProvider from "../lib/LiveblocksProvider.svelte";
+  import RoomProvider from "../lib/RoomProvider.svelte";
+  import { createClient, type Client } from "@liveblocks/client";
+  import { onMount } from "svelte";
+  import App from "../components/App.svelte";
 
-let id;
-let loaded = false;
-let client;
+  let client: Client;
 
-// Set up the client on load
-// Check inside src/routes/api/auth.ts for the serverless function
-onMount(() => {
-  id = createRoomId();
-  client = createClient({
-    authEndpoint: "/api/auth"
+  let roomId = "sveltekit-live-avatars";
+
+  
+  // Set up the client on load
+  // Check inside src/routes/api/auth.ts for the serverless function
+  onMount(() => {
+    overrideRoomId();
+
+    client = createClient({
+      authEndpoint: "/api/auth",
+    });
   });
-  loaded = true;
-});
+
+  /**
+   * This function is used when deploying an example on liveblocks.io.
+   * You can ignore it completely if you run the example locally.
+   */
+  function overrideRoomId() {
+    const query = new URLSearchParams(window?.location?.search);
+    const roomIdSuffix = query.get("roomId");
+
+    if (roomIdSuffix) {
+      roomId = `${roomId}-${roomIdSuffix}`;
+    }
+  }
 </script>
 
-<ExampleWrapper>
-
-  <!--
-      These custom Providers work similarly to the `liveblocks-react` library
-      https://liveblocks.io/docs/api-reference/liveblocks-react
-      More info inside src/lib-liveblocks
-    -->
-  {#if loaded}
-    <LiveblocksProvider {client}>
-      <RoomProvider id={'sveltekit-avatars-' + id}>
-        <LiveAvatars />
-      </RoomProvider>
-    </LiveblocksProvider>
-  {/if}
-
-  <ExampleInfo
-    codeSandboxHref="https://codesandbox.io/s/sveltekit-live-avatars-t4vetx?file=/src/LiveAvatars.svelte"
-    description="Open this link in multiple windows to see the live avatars."
-    githubHref="https://github.com/liveblocks/liveblocks/tree/main/examples/sveltekit-live-avatars"
-    title="Live Avatars"
-  />
-</ExampleWrapper>
+<!--
+  These custom providers work similarly to the `liveblocks-react` library
+  https://liveblocks.io/docs/api-reference/liveblocks-react
+  More info inside src/lib-liveblocks
+-->
+{#if client}
+  <LiveblocksProvider {client}>
+    <RoomProvider id={roomId}>
+      <App />
+    </RoomProvider>
+  </LiveblocksProvider>
+{/if}

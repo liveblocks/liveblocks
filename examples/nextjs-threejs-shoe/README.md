@@ -17,7 +17,7 @@
 
 This example shows how to build a collaborative 3D model editor with [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and [Three.js](https://threejs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-shoe.png" width="800" alt="3D Shoe" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-shoe.png" width="500" alt="3D Shoe" />
 
 ## Getting started
 

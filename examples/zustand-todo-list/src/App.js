@@ -2,6 +2,10 @@ import React, { useEffect } from "react";
 import useStore from "./store";
 import "./App.css";
 
+let roomId = "zustand-todo-list";
+
+overrideRoomId();
+
 function WhoIsHere() {
   const othersUsersCount = useStore((state) => state.liveblocks.others.length);
 
@@ -33,17 +37,21 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-demo-room", {
+    enterRoom(roomId, {
       todos: [],
     });
 
     return () => {
-      leaveRoom("zustand-demo-room");
+      leaveRoom(roomId);
     };
   }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="loading">
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return (
@@ -60,7 +68,7 @@ export default function App() {
             addTodo();
           }
         }}
-      ></input>
+      />
       <SomeoneIsTyping />
       {todos.map((todo, index) => {
         return (
@@ -79,4 +87,17 @@ export default function App() {
       })}
     </div>
   );
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const roomIdSuffix = query.get("roomId");
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
 }

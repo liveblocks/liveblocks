@@ -2,28 +2,23 @@
   <div
     v-on:pointerleave="pointerLeave"
     v-on:pointermove="pointerMove"
-    v-bind:style="{
-      width: '100%',
-      height: '100vh',
-      textAlign: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }"
+    class="container"
   >
-    <div>
-      Move your cursor to broadcast its position to other people in the room
+    <div class="text">
+      {{
+        cursor
+          ? `${cursor.x} × ${cursor.y}`
+          : "Move your cursor to broadcast its position to other people in the room."
+      }}
     </div>
+
     <svg
       v-for="cursor in cursors"
       v-bind:key="cursor.connectionId"
       v-bind:style="{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        transition: 'transform 0.5s cubic-bezier(0.17, 0.93, 0.38, 1)',
         transform: `translateX(${cursor.x}px) translateY(${cursor.y}px)`,
       }"
+      class="cursor"
       width="24"
       height="36"
       viewBox="0 0 24 36"
@@ -41,31 +36,44 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let roomId = "vuejs-live-cursors";
+
+overrideApiKeyAndRoomId();
+
+if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
+  console.warn(
+    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/vuejs-live-cursors#getting-started.`
+  );
+}
+
 const client = createClient({
-  publicApiKey: "pk_xxxxxxxx", // => replace with your public key.
+  publicApiKey: PUBLIC_KEY,
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-const roomId = "vuejs-live-cursors-example";
-
 export default Vue.extend({
-  data: function() {
+  data: function () {
     return {
+      cursor: null,
       cursors: [],
     };
   },
-  mounted: function() {
+  mounted: function () {
     const room = client.enter(roomId, { cursor: null });
     this._room = room;
-    this._unsubscribe = room.subscribe("others", this.onOthersChange);
+    this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);
+    this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
   },
-  destroyed: function() {
+  destroyed: function () {
     this._unsubscribe();
+    this._unsubscribeOthers();
     client.leave(roomId);
   },
   methods: {
-    pointerMove: function(e) {
+    pointerMove: function (e) {
       this._room.updatePresence({
         cursor: {
           x: Math.round(e.clientX),
@@ -73,12 +81,15 @@ export default Vue.extend({
         },
       });
     },
-    pointerLeave: function() {
+    pointerLeave: function () {
       this._room.updatePresence({
         cursor: null,
       });
     },
-    onOthersChange: function(others) {
+    onPresenceChange: function (presence) {
+      this.cursor = presence?.cursor ?? null;
+    },
+    onOthersChange: function (others) {
       this.cursors = others
         .toArray()
         .filter((user) => user.presence?.cursor)
@@ -91,4 +102,22 @@ export default Vue.extend({
     },
   },
 });
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKeyAndRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+  const roomIdSuffix = query.get("roomId");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
+}
 </script>
