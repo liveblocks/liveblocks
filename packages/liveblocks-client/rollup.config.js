@@ -171,7 +171,14 @@ export default async () => {
     force: true,
   });
 
-  const external = [];
+  // NOTE: Make sure this list always matches the names of all dependencies and
+  // peerDependencies from package.json
+  const pkgJson = require("./package.json");
+  const external = [
+    ...Object.keys(pkgJson?.dependencies ?? {}),
+    ...Object.keys(pkgJson?.peerDependencies ?? {}),
+  ];
+
   return [
     // Build modern ES modules (*.mjs)
     buildESM(external),
