@@ -397,9 +397,35 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/lak1PlM for details.`
   );
-  return useCrdt(key, new LiveMap(entries));
-  //                  ^^^^^^^^^^^^^^^^^^^^
-  //                  NOTE: This param is scheduled for removal in 0.18
+  const value = useCrdt(key, new LiveMap(entries));
+  //                         ^^^^^^^^^^^^^^^^^^^^
+  //                         NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useMap() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveMap } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveMap(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
+    );
+    return null;
+  }
 }
 
 /**
@@ -446,9 +472,35 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/lak1PlM for details.`
   );
-  return useCrdt<LiveList<TValue>>(key, new LiveList(items));
-  //                                    ^^^^^^^^^^^^^^^^^^^
-  //                                    NOTE: This param is scheduled for removal in 0.18
+  const value = useCrdt<LiveList<TValue>>(key, new LiveList(items));
+  //                                           ^^^^^^^^^^^^^^^^^^^
+  //                                           NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useList() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveList } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveList(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
+    );
+    return null;
+  }
 }
 
 /**
@@ -495,9 +547,35 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/lak1PlM for details.`
   );
-  return useCrdt(key, new LiveObject(initialData));
-  //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  //                  NOTE: This param is scheduled for removal in 0.18
+  const value = useCrdt(key, new LiveObject(initialData));
+  //                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //                         NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useObject() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveObject } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveObject(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/lak1PlM for details.`
+    );
+    return null;
+  }
 }
 
 /**
@@ -533,7 +611,12 @@ export function useHistory(): History {
   return useRoom().history;
 }
 
-function useCrdt<T>(key: string, initialCrdt: T): T | null {
+type UseCrdtResult<T> =
+  | { status: "ok"; value: T }
+  | { status: "loading" }
+  | { status: "notfound" };
+
+function useCrdt<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
   const room = useRoom();
   const [root] = useStorage();
   const rerender = useRerender();
@@ -580,5 +663,14 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
     };
   }, [root, room]);
 
-  return root?.get(key) ?? null;
+  if (root == null) {
+    return { status: "loading" };
+  } else {
+    const value = root.get(key);
+    if (value == null) {
+      return { status: "notfound" };
+    } else {
+      return { status: "ok", value };
+    }
+  }
 }
