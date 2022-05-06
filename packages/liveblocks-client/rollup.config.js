@@ -4,8 +4,6 @@
 import babelPlugin from "@rollup/plugin-babel";
 import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
-import esbuild from "rollup-plugin-esbuild";
-import path from "path";
 import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescriptPlugin from "@rollup/plugin-typescript";
@@ -39,26 +37,6 @@ function typescriptDeclarations(outDir) {
     tsconfig: "./tsconfig.build.json",
     noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
   });
-}
-
-function getEsbuild(target) {
-  return esbuild({
-    minify: true,
-    target,
-    tsconfig: path.resolve("./tsconfig.build.json"),
-  });
-}
-
-function createESMConfig(input, output) {
-  return {
-    input,
-    // external,
-    output: [
-      { file: `lib/${output}.js`, format: "esm" },
-      { file: `lib/${output}.mjs`, format: "esm" },
-    ],
-    plugins: [getEsbuild("node12")],
-  };
 }
 
 function getBabelOptions(extensions, targets) {
