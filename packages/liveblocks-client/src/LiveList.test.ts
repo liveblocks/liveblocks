@@ -316,6 +316,74 @@ describe("LiveList", () => {
 
   describe("move", () => {
     it("list.move after current position", async () => {
+      const { storage, assert, assertUndoRedo, subscribe } =
+        await prepareStorageTest<{
+          items: LiveList<LiveObject<{ a: number }>>;
+        }>([
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+          createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+        ]);
+
+      const callback = jest.fn();
+
+      subscribe(storage.root, callback, {
+        isDeep: true,
+      });
+
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      const root = storage.root;
+      const items = root.toObject().items;
+      items.move(0, 1);
+
+      expect(callback).toHaveBeenLastCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            {
+              index: 1,
+              previousIndex: 0,
+              item: root.get("items").get(1),
+              type: "move",
+            },
+          ],
+        },
+      ]);
+
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+          {
+            a: 0,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("list.move before current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
@@ -342,7 +410,7 @@ describe("LiveList", () => {
 
       const root = storage.root;
       const items = root.toObject().items;
-      items.move(0, 1);
+      items.move(1, 0);
 
       assert({
         items: [
@@ -354,6 +422,52 @@ describe("LiveList", () => {
           },
           {
             a: 2,
+          },
+        ],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("list.move at the end of the list", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+      ]);
+
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      const root = storage.root;
+      const items = root.toObject().items;
+      items.move(0, 2);
+
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+          {
+            a: 0,
           },
         ],
       });
@@ -1208,48 +1322,6 @@ describe("LiveList", () => {
           updates: [
             { index: 0, type: "delete" },
             { index: 1, type: "delete" },
-          ],
-        },
-      ]);
-    });
-
-    test("move with deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const unsubscribe = subscribe(root.get("items"), callback, {
-        isDeep: true,
-      });
-
-      root.get("items").move(0, 1);
-
-      unsubscribe();
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveList",
-          node: root.get("items"),
-          updates: [
-            {
-              index: 1,
-              previousIndex: 0,
-              item: root.get("items").get(1),
-              type: "move",
-            },
           ],
         },
       ]);

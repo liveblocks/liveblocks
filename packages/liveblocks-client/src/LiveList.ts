@@ -27,7 +27,7 @@ type LiveListItem = [crdt: AbstractCrdt, position: string];
  */
 export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
-  private _items: Array<LiveListItem>;
+  private _items: Array<AbstractCrdt>;
 
   constructor(items: TItem[] = []) {
     super();
@@ -37,7 +37,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     for (let i = 0; i < items.length; i++) {
       const newPosition = makePosition(position);
       const item = selfOrRegister(items[i]);
-      this._items.push([item, newPosition]);
+      item._setParentLink(this, newPosition);
+      this._items.push(item);
       position = newPosition;
     }
   }
@@ -64,8 +65,10 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
       child._setParentLink(list, entry[1].parentKey!);
 
-      list._items.push([child, entry[1].parentKey!]);
-      list._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+      list._items.push(child);
+      list._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
     }
 
     return list;
@@ -102,8 +105,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
     ops.push(op);
 
-    for (const [value, key] of this._items) {
-      ops.push(...value._serialize(this._id, key, doc));
+    for (const item of this._items) {
+      ops.push(...item._serialize(this._id, item._getParentKeyOrThrow(), doc));
     }
 
     return ops;
@@ -113,7 +116,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
    * @internal
    */
   _indexOfPosition(position: string): number {
-    return this._items.findIndex((item) => item[1] === position);
+    return this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === position
+    );
   }
 
   /**
@@ -122,7 +127,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   _attach(id: string, doc: Doc) {
     super._attach(id, doc);
 
-    for (const [item] of this._items) {
+    for (const item of this._items) {
       item._attach(doc.generateId(), doc);
     }
   }
@@ -133,8 +138,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   _detach() {
     super._detach();
 
-    for (const [value] of this._items) {
-      value._detach();
+    for (const item of this._items) {
+      item._detach();
     }
   }
 
@@ -154,30 +159,32 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === key
+    );
+
     child._attach(id, this._doc);
     child._setParentLink(this, key);
-
-    const index = this._items.findIndex((entry) => entry[1] === key);
 
     let newKey = key;
 
     if (intent === "set") {
-      if (index !== -1) {
-        const existingItem = this._items[index][0];
+      if (existingItemIndex !== -1) {
+        const existingItem = this._items[existingItemIndex];
         existingItem._detach();
         const storageUpdate: LiveListUpdates<TItem> = {
           node: this,
           type: "LiveList",
           updates: [
             {
-              index,
+              index: existingItemIndex,
               type: "set",
               item: child instanceof LiveRegister ? child.data : child,
             },
           ],
         };
 
-        this._items[index][0] = child;
+        this._items[existingItemIndex] = child;
 
         const reverse = existingItem._serialize(
           this._id!,
@@ -197,8 +204,10 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           reverse,
         };
       } else {
-        this._items.push([child, newKey]);
-        this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+        this._items.push(child);
+        this._items.sort((itemA, itemB) =>
+          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+        );
 
         const itemToDelete = this._doc.getItem((op as any).deletedId);
         if (itemToDelete) {
@@ -208,7 +217,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           );
         }
 
-        const newIndex = this._items.findIndex((entry) => entry[1] === newKey);
+        const newIndex = this._items.findIndex(
+          (entry) => entry._getParentKeyOrThrow() === newKey
+        );
         return {
           reverse: [{ type: OpType.DeleteCrdt, id }],
           modified: {
@@ -227,26 +238,36 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     }
 
     // If there is a conflict
-    if (index !== -1) {
+    if (existingItemIndex !== -1) {
       if (isLocal) {
         // If change is local => assign a temporary position to newly attached child
-        const before = this._items[index] ? this._items[index][1] : undefined;
-        const after = this._items[index + 1]
-          ? this._items[index + 1][1]
+        const before = this._items[existingItemIndex]
+          ? this._items[existingItemIndex]._getParentKeyOrThrow()
+          : undefined;
+        const after = this._items[existingItemIndex + 1]
+          ? this._items[existingItemIndex + 1]._getParentKeyOrThrow()
           : undefined;
 
         newKey = makePosition(before, after);
         child._setParentLink(this, newKey);
       } else {
         // If change is remote => assign a temporary position to existing child until we get the fix from the backend
-        this._items[index][1] = makePosition(key, this._items[index + 1]?.[1]);
+        const shiftedPosition = makePosition(
+          key,
+          this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+        );
+        this._items[existingItemIndex]._setParentLink(this, shiftedPosition);
       }
     }
 
-    this._items.push([child, newKey]);
-    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
+    this._items.push(child);
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
 
-    const newIndex = this._items.findIndex((entry) => entry[1] === newKey);
+    const newIndex = this._items.findIndex(
+      (entry) => entry._getParentKeyOrThrow() === newKey
+    );
     return {
       reverse: [{ type: OpType.DeleteCrdt, id }],
       modified: {
@@ -270,7 +291,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     if (child) {
       const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
-      const indexToDelete = this._items.findIndex((item) => item[0] === child);
+      const indexToDelete = this._items.findIndex((item) => item === child);
       this._items.splice(indexToDelete, 1);
 
       child._detach();
@@ -295,29 +316,29 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     child: AbstractCrdt,
     previousKey: string
   ): ApplyResult {
-    child._setParentLink(this, key);
-
-    const previousIndex = this._items.findIndex(
-      (entry) => entry[0]._id === child._id
+    const previousIndex = this._items.indexOf(child);
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === key
     );
-    const index = this._items.findIndex((entry) => entry[1] === key);
 
     // Assign a temporary position until we get the fix from the backend
-    if (index !== -1) {
-      this._items[index][1] = makePosition(key, this._items[index + 1]?.[1]);
+    if (existingItemIndex !== -1) {
+      this._items[existingItemIndex]._setParentLink(
+        this,
+        makePosition(
+          key,
+          this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+        )
+      );
     }
 
-    const item = this._items.find((item) => item[0] === child);
+    child._setParentLink(this, key);
 
-    if (item) {
-      item[1] = key;
-    }
-
-    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-
-    const newIndex = this._items.findIndex(
-      (entry) => entry[0]._id === child._id
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
     );
+
+    const newIndex = this._items.indexOf(child);
 
     const updatesDelta: LiveListUpdateDelta[] =
       newIndex === previousIndex
@@ -339,7 +360,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       reverse: [
         {
           type: OpType.SetParentKey,
-          id: item?.[0]._id!,
+          id: child._id!,
           parentKey: previousKey,
         },
       ],
@@ -392,18 +413,21 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     }
 
     const before = this._items[index - 1]
-      ? this._items[index - 1][1]
+      ? this._items[index - 1]._getParentKeyOrThrow()
       : undefined;
-    const after = this._items[index] ? this._items[index][1] : undefined;
+    const after = this._items[index]
+      ? this._items[index]._getParentKeyOrThrow()
+      : undefined;
 
     const position = makePosition(before, after);
 
     const value = selfOrRegister(element);
     value._setParentLink(this, position);
 
-    this._items.push([value, position]);
-    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    const newIndex = this._items.findIndex((entry) => entry[1] === position);
+    this._items.push(value);
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -415,7 +439,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         type: "LiveList",
         updates: [
           {
-            index: newIndex,
+            index: index,
             item: value instanceof LiveRegister ? value.data : value,
             type: "insert",
           },
@@ -460,22 +484,24 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       afterPosition =
         targetIndex === this._items.length - 1
           ? undefined
-          : this._items[targetIndex + 1][1];
-      beforePosition = this._items[targetIndex][1];
+          : this._items[targetIndex + 1]._getParentKeyOrThrow();
+      beforePosition = this._items[targetIndex]._getParentKeyOrThrow();
     } else {
-      afterPosition = this._items[targetIndex][1];
+      afterPosition = this._items[targetIndex]._getParentKeyOrThrow();
       beforePosition =
-        targetIndex === 0 ? undefined : this._items[targetIndex - 1][1];
+        targetIndex === 0
+          ? undefined
+          : this._items[targetIndex - 1]._getParentKeyOrThrow();
     }
 
     const position = makePosition(beforePosition, afterPosition);
 
     const item = this._items[index];
-    const previousPosition = item[1];
-    item[1] = position;
-    item[0]._setParentLink(this, position);
-    this._items.sort((itemA, itemB) => compare(itemA[1], itemB[1]));
-    const newIndex = this._items.findIndex((entry) => entry[1] === position);
+    const previousPosition = item._getParentKeyOrThrow();
+    item._setParentLink(this, position);
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
 
     if (this._doc && this._id) {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
@@ -484,9 +510,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         type: "LiveList",
         updates: [
           {
-            index: newIndex,
+            index: targetIndex,
             previousIndex: index,
-            item: item[0],
+            item: item,
             type: "move",
           },
         ],
@@ -496,7 +522,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         [
           {
             type: OpType.SetParentKey,
-            id: item[0]._id!,
+            id: item._id!,
             opId: this._doc.generateOpId(),
             parentKey: position,
           },
@@ -504,7 +530,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         [
           {
             type: OpType.SetParentKey,
-            id: item[0]._id!,
+            id: item._id!,
             parentKey: previousPosition,
           },
         ],
@@ -527,11 +553,11 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     }
 
     const item = this._items[index];
-    item[0]._detach();
+    item._detach();
     this._items.splice(index, 1);
 
     if (this._doc) {
-      const childRecordId = item[0]._id;
+      const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
         storageUpdates.set(this._id!, {
@@ -548,7 +574,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
               type: OpType.DeleteCrdt,
             },
           ],
-          item[0]._serialize(this._id!, item[1]),
+          item._serialize(this._id!, item._getParentKeyOrThrow()),
           storageUpdates
         );
       }
@@ -564,11 +590,13 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
       let i = 0;
       for (const item of this._items) {
-        item[0]._detach();
-        const childId = item[0]._id;
+        item._detach();
+        const childId = item._id;
         if (childId) {
           ops.push({ id: childId, type: OpType.DeleteCrdt });
-          reverseOps.push(...item[0]._serialize(this._id!, item[1]));
+          reverseOps.push(
+            ...item._serialize(this._id!, item._getParentKeyOrThrow())
+          );
 
           updateDelta.push({ index: i, type: "delete" });
         }
@@ -588,7 +616,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     } else {
       for (const item of this._items) {
-        item[0]._detach();
+        item._detach();
       }
       this._items = [];
     }
@@ -603,14 +631,15 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       );
     }
 
-    const [existingItem, position] = this._items[index];
+    const existingItem = this._items[index];
+    const position = existingItem._getParentKeyOrThrow();
 
     const existingId = existingItem._id;
     existingItem._detach();
 
     const value = selfOrRegister(item);
     value._setParentLink(this, position);
-    this._items[index][0] = value;
+    this._items[index] = value;
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -648,7 +677,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
    * Returns an Array of all the elements in the LiveList.
    */
   toArray(): TItem[] {
-    return this._items.map((entry) => selfOrRegisterValue(entry[0]));
+    return this._items.map((entry) => selfOrRegisterValue(entry));
   }
 
   /**
@@ -705,7 +734,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       return undefined;
     }
 
-    return selfOrRegisterValue(this._items[index][0]);
+    return selfOrRegisterValue(this._items[index]);
   }
 
   /**
@@ -735,7 +764,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
     return this._items.map((entry, i) =>
-      callback(selfOrRegisterValue(entry[0]), i)
+      callback(selfOrRegisterValue(entry), i)
     );
   }
 
@@ -754,9 +783,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 }
 
 class LiveListIterator<T> implements IterableIterator<T> {
-  private _innerIterator: IterableIterator<LiveListItem>;
+  private _innerIterator: IterableIterator<AbstractCrdt>;
 
-  constructor(items: Array<LiveListItem>) {
+  constructor(items: Array<AbstractCrdt>) {
     this._innerIterator = items[Symbol.iterator]();
   }
 
@@ -775,7 +804,7 @@ class LiveListIterator<T> implements IterableIterator<T> {
     }
 
     return {
-      value: selfOrRegisterValue(result.value[0]),
+      value: selfOrRegisterValue(result.value),
     };
   }
 }
