@@ -1,9 +1,7 @@
-/**
- * This configuration is heavily inspired from https://github.com/pmndrs/zustand/blob/main/rollup.config.js
- */
 import babelPlugin from "@rollup/plugin-babel";
 import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
+import path from "path";
 import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescriptPlugin from "@rollup/plugin-typescript";
@@ -48,9 +46,9 @@ function getBabelOptions(extensions, targets) {
   };
 }
 
-function buildESM(external = []) {
+function buildESM(srcFiles, external = []) {
   return {
-    input: ["src/index.ts", "src/internal.ts"],
+    input: srcFiles.map((f) => "src/" + f),
     output: {
       dir: "lib",
       format: "esm",
@@ -62,10 +60,10 @@ function buildESM(external = []) {
   };
 }
 
-function buildCJS(external = []) {
+function buildCJS(srcFiles, external = []) {
   const extensions = [".ts"];
   return {
-    input: ["src/index.ts", "src/internal.ts"],
+    input: srcFiles.map((f) => "src/" + f),
     output: {
       dir: "lib",
       format: "cjs",
@@ -80,14 +78,14 @@ function buildCJS(external = []) {
   };
 }
 
-function buildDTS(external = []) {
+function buildDTS(srcFiles = [], external = []) {
   const tmpDir = "lib/tmp";
   const outDir = "lib";
 
   // Take the TypeScript source code in src/*.ts, and generate lib/types/*.d.ts
   // files for each.
   const step1 = {
-    input: ["src/index.ts", "src/internal.ts"],
+    input: srcFiles.map((f) => "src/" + f),
     output: {
       dir: tmpDir,
     },
@@ -104,11 +102,13 @@ function buildDTS(external = []) {
   };
 
   const step2 = {
-    input: ["index.d.ts", "internal.d.ts"].map((f) => `${tmpDir}/${f}`),
+    input: srcFiles.map(
+      (f) => tmpDir + "/" + path.basename(f, path.extname(f)) + ".d.ts"
+    ),
     output: [
       {
         dir: outDir,
-        entryFileNames: "[name].d.ts",
+        entryFileNames: srcFiles.length > 1 ? "[name].d.ts" : "[name].ts",
         chunkFileNames: "shared.d.ts",
       },
     ],
@@ -137,6 +137,9 @@ function buildDTS(external = []) {
       //     │       └── internal.d.ts
       //     └── shared-b97faa87.d.ts
       //
+      // This only happens if code splitting happens, i.e. if there is more
+      // than one entry file name, hence those srcFiles.length checks in here.
+      //
       // Inside `index.d.ts`, there's a re-export like:
       //
       //     export ... from "../../shared-b97faa87";
@@ -147,19 +150,22 @@ function buildDTS(external = []) {
 
       // Try to "fix" the above by moving the two files manually, and manually
       // fixing the import/export statements.
+      srcFiles.length > 1
+        ? replaceText({
+            // Forgive me, lord 🙈
+            "../../shared": "./shared",
 
-      replaceText({
-        // Forgive me, lord 🙈
-        "../../shared": "./shared",
-
-        delimiters: ["", ""],
-        preventAssignment: true,
-      }),
+            delimiters: ["", ""],
+            preventAssignment: true,
+          })
+        : [],
 
       execute(
-        `mv -v "${outDir}/${tmpDir}/"*.d.ts "${outDir}" && rm -rf "${outDir}/lib"`
+        srcFiles.length > 1
+          ? `mv -n "${outDir}/${tmpDir}/"*.d.ts "${outDir}"; rm -rf "${outDir}/lib"`
+          : `rm -rf "${outDir}/lib"`
       ),
-    ],
+    ].flat(),
   };
 
   return [step1, step2];
@@ -171,6 +177,9 @@ export default async () => {
     force: true,
   });
 
+  // Files relative to `src/`
+  const srcFiles = ["index.ts", "internal.ts"];
+
   // NOTE: Make sure this list always matches the names of all dependencies and
   // peerDependencies from package.json
   const pkgJson = require("./package.json");
@@ -181,12 +190,12 @@ export default async () => {
 
   return [
     // Build modern ES modules (*.mjs)
-    buildESM(external),
+    buildESM(srcFiles, external),
 
     // Build Common JS modules (*.js)
-    buildCJS(external),
+    buildCJS(srcFiles, external),
 
     // Build TypeScript declaration files (*.d.ts)
-    buildDTS(external),
+    buildDTS(srcFiles, external),
   ].flat();
 };
