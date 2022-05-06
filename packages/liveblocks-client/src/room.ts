@@ -525,12 +525,6 @@ export function makeStateMachine(
   }
 
   function applyOp(op: Op, isLocal: boolean): ApplyResult {
-    let isAck = false;
-
-    if (op.opId) {
-      isAck = state.offlineOperations.delete(op.opId);
-    }
-
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
@@ -566,10 +560,6 @@ export function makeStateMachine(
       case OpType.CreateRegister: {
         const parent = state.items.get(op.parentId!);
         if (parent == null) {
-          return { modified: false };
-        }
-
-        if (isAck && parent instanceof LiveList && op.intent === undefined) {
           return { modified: false };
         }
 
