@@ -1,7 +1,8 @@
 import "regenerator-runtime/runtime";
 
 import { LiveList } from "@liveblocks/client";
-import { prepareTest } from "./utils";
+import { objectToJson, prepareTest, wait } from "./utils";
+import isEqual from "lodash/isEqual";
 
 describe("LiveList confict resolution", () => {
   test("push / push", async () => {
@@ -331,6 +332,134 @@ describe("LiveList confict resolution", () => {
     });
   });
 
+  test("set + move / move + move", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
+      root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
+      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
+      root2.get("list").move(0, 1); //  Client2 moves "B" after "A"
+
+      socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["B", "C"] }, { list: ["C", "B"] }); // A(0.3), B(0.4) => C(0.1),B(0.4) => C(0.3),B(0.4)
+
+      socketUtils.sendMessagesClient2();
+
+      await assert({ list: ["C", "B"] });
+    });
+  });
+
+  test("move + move / move + set", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
+      root1.get("list").move(0, 1); //  Client1 moves "B" after "A"
+      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
+      root2.get("list").set(0, "C"); //  Client2 sets "B" to "C"
+
+      socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["A", "B"] }, { list: ["C", "A"] });
+
+      socketUtils.sendMessagesClient2();
+
+      await assert({ list: ["C", "A"] });
+    });
+  });
+
+  test.skip("insert + delete / insert", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList([]),
+      });
+
+    await run(async () => {
+      await assert({ list: [] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").insert("A", 0);
+      root1.get("list").delete(0);
+      root2.get("list").insert("B", 0);
+
+      await assertEach({ list: [] }, { list: ["B"] });
+
+      socketUtils.sendMessagesClient1();
+      await wait(2000);
+
+      await assertEach({ list: [] }, { list: ["B"] }); // B(0.1) => A(0.1) B(0.2) => B(0.2)
+
+      socketUtils.sendMessagesClient2();
+
+      await wait(2000);
+
+      await assert({ list: ["B"] }); // Client 1: B(0,1) // Client 2:  B(0.2)
+
+      // root2.get("list").insert("C", 0); // Client 2: C(0.1) B(0.2)
+
+      // await wait(2000);
+
+      // console.log("after 3");
+
+      // await assertEach({ list: ["B", "C"] }, { list: ["C", "B"] });
+    });
+  }, 10000);
+
+  test("set + delete / move + insert", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").set(0, "C");
+      root1.get("list").delete(0);
+      root2.get("list").move(0, 1);
+      root2.get("list").insert("D", 0);
+
+      await assertEach({ list: ["B"] }, { list: ["D", "B", "A"] });
+
+      socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["B"] }, { list: ["B"] }); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
+
+      socketUtils.sendMessagesClient2();
+
+      await wait(2000);
+
+      await assert({ list: ["D", "B"] });
+    });
+  });
+
   test("push + set / push + set", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
       await prepareTest<{
@@ -366,5 +495,134 @@ describe("LiveList confict resolution", () => {
 
       await assert({ list: ["D"] });
     });
+  });
+
+  describe("all combinations 2 operations each", () => {
+    const client1FirstActions = [
+      { type: "set", index: 0, value: "C1S" },
+      { type: "move", index: 0, target: 1 },
+      { type: "insert", index: 0, value: "C1I" },
+    ];
+    const client1SecondActions = [
+      { type: "set", index: 0, value: "C1S2" },
+      { type: "delete", index: 0 },
+      { type: "move", index: 0, target: 1 },
+      { type: "insert", index: 0, value: "C1I2" },
+      { type: "none" },
+    ];
+    const client2FirstActions = [
+      { type: "set", index: 0, value: "C2S" },
+      { type: "move", index: 0, target: 1 },
+      { type: "insert", index: 0, value: "C2I" },
+    ];
+    const client2SecondActions = [
+      { type: "set", index: 0, value: "C2S2" },
+      { type: "delete", index: 0 },
+      { type: "move", index: 0, target: 1 },
+      { type: "insert", index: 0, value: "C2I2" },
+      { type: "none" },
+    ];
+
+    for (const client1FirstAction of client1FirstActions) {
+      for (const client1SecondAction of client1SecondActions) {
+        for (const client2FirstAction of client2FirstActions) {
+          for (const client2SecondAction of client2SecondActions) {
+            const name = `${client1FirstAction.type},${client1SecondAction.type} / ${client2FirstAction.type},${client2SecondAction.type}`;
+            it(
+              "Test: " + name,
+              async () => {
+                console.log(name);
+
+                const { root1, root2, assert, socketUtils, run } =
+                  await prepareTest<{
+                    list: LiveList<string>;
+                  }>({
+                    list: new LiveList(["A", "B"]),
+                  });
+
+                await run(async () => {
+                  await assert({ list: ["A", "B"] });
+
+                  socketUtils.pauseAllSockets();
+
+                  // Client 1
+                  for (const client1Action of [
+                    client1FirstAction,
+                    client1SecondAction,
+                  ]) {
+                    switch (client1Action.type) {
+                      case "set":
+                        root1
+                          .get("list")
+                          .set(client1Action.index!, client1Action.value!);
+                        break;
+                      case "delete":
+                        root1.get("list").delete(client1Action.index!);
+                        break;
+                      case "move":
+                        root1
+                          .get("list")
+                          .move(client1Action.index!, client1Action.target!);
+                        break;
+                      case "insert":
+                        root1
+                          .get("list")
+                          .insert(client1Action.value!, client1Action.index!);
+                        break;
+                    }
+                  }
+
+                  // Client 2
+                  for (const client2Action of [
+                    client2FirstAction,
+                    client2SecondAction,
+                  ]) {
+                    switch (client2Action.type) {
+                      case "set":
+                        root2
+                          .get("list")
+                          .set(client2Action.index!, client2Action.value!);
+                        break;
+                      case "delete":
+                        root2.get("list").delete(client2Action.index!);
+                        break;
+                      case "move":
+                        root2
+                          .get("list")
+                          .move(client2Action.index!, client2Action.target!);
+                        break;
+                      case "insert":
+                        root1
+                          .get("list")
+                          .insert(client2Action.value!, client2Action.index!);
+                        break;
+                    }
+                  }
+                  socketUtils.sendMessagesClient1();
+
+                  await wait(1000);
+
+                  console.log("Temp client 1: ", objectToJson(root1));
+                  console.log("Temp client 2: ", objectToJson(root2));
+
+                  socketUtils.sendMessagesClient2();
+
+                  await wait(1000);
+
+                  const client1Json = objectToJson(root1);
+                  const client2Json = objectToJson(root2);
+
+                  console.log("Final client 1: ", objectToJson(root1));
+                  console.log("Final client 2: ", objectToJson(root2));
+
+                  expect(isEqual(client1Json, client2Json)).toBeTruthy();
+                });
+              },
+              10000
+            );
+          }
+        }
+      }
+    }
   });
 });
