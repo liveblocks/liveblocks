@@ -621,7 +621,7 @@ function Canvas({
 function useOverrideRoomId(roomId: string) {
   const { query } = useRouter();
   const overrideRoomId = useMemo(() => {
-    return query?.room ? `${roomId}-${query.room}` : roomId;
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
   }, [query, roomId]);
 
   return overrideRoomId;

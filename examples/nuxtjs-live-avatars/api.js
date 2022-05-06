@@ -5,7 +5,7 @@ const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 const API_KEY_WARNING = process.env.CODESANDBOX_SSE
   ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
     `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nuxtjs-live-avatars#codesandbox.`
-  : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+  : `Create an \`.env\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
     `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nuxtjs-live-avatars#getting-started.`;
 
 const app = express();

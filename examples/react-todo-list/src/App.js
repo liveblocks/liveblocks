@@ -31,7 +31,7 @@ export default function App() {
 
   if (todos == null) {
     return (
-      <div className={styles.loading}>
+      <div className="loading">
         <img src="https://liveblocks.io/loading.svg" alt="Loading" />
       </div>
     );
