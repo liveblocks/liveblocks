@@ -170,31 +170,18 @@
     inset 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
 }
 
-.loading_container {
-  background-color: var(--color-background);
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+.loading {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  place-content: center;
+  place-items: center;
+  background-color: var(--color-background);
 }
 
-.loading_svg {
-  animation: spin 1s linear infinite;
-  fill: currentColor;
-  width: 28px;
-  height: auto;
-  color: var(--color-primary);
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
 }

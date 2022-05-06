@@ -1,10 +1,5 @@
 <script lang="ts">
-	import "../app.css";
-	import "../../static/example.css";
+  import "../../static/styles.css";
 </script>
-
-<svelte:head>
-	<title>Live Avatars - Liveblocks Example</title>
-</svelte:head>
 
 <slot />

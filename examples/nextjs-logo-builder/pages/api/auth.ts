@@ -1,5 +1,6 @@
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
+import { NAMES } from "../../constants";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
@@ -16,19 +17,8 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `/assets/avatars/${Math.floor(Math.random() * 10)}.png`,
+      picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
     },
   });
   return res.status(response.status).end(response.body);
 }
-
-const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];
