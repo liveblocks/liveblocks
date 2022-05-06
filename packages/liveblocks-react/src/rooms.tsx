@@ -382,7 +382,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
 ): LiveMap<TKey, TValue> | null {
   deprecateIf(
     entries,
-    "We no longer recommend initializing the items from the useMap() hook. Please see https://bit.ly/lak1PlM for details."
+    "Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
   );
   return useCrdt(key, new LiveMap(entries));
   //                  ^^^^^^^^^^^^^^^^^^^^
@@ -416,7 +416,7 @@ export function useList<TValue extends Lson>(
 ): LiveList<TValue> | null {
   deprecateIf(
     items,
-    "We no longer recommend initializing the items from the useList() hook. Please see https://bit.ly/lak1PlM for details."
+    "Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
   );
   return useCrdt<LiveList<TValue>>(key, new LiveList(items));
   //                                    ^^^^^^^^^^^^^^^^^^^
@@ -450,7 +450,7 @@ export function useObject<TData extends LsonObject>(
 ): LiveObject<TData> | null {
   deprecateIf(
     initialData,
-    "We no longer recommend initializing the items from the useObject() hook. Please see https://bit.ly/lak1PlM for details."
+    "Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18. Please see https://bit.ly/lak1PlM for details."
   );
   return useCrdt(key, new LiveObject(initialData));
   //                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^
