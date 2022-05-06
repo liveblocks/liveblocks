@@ -1,6 +1,3 @@
-/**
- * This configuration is heavily inspired from https://github.com/pmndrs/zustand/blob/main/rollup.config.js
- */
 import babelPlugin from "@rollup/plugin-babel";
 import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
