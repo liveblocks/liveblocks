@@ -4,6 +4,23 @@
 
 - Improve our generated bundles. They are now even more tree-shakable, and smaller!
 
+## `@liveblocks/client`
+
+Some APIs are being **deprecated** and may start showing console warnings when used:
+
+- The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
+- The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+
+## `@liveblocks/react`
+
+Some APIs are being **deprecated** and may start showing console warnings when used:
+
+- The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
+- The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
+- The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
+
+For information, please see https://bit.ly/lak1PlM.
+
 # v0.16.3
 
 Fix bug where internal presence state could not get restored correctly after
