@@ -152,11 +152,11 @@ export type RoomInitializers<TPresence, TStorage> = Resolve<{
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
    */
-  initialPresence?: TPresence | (() => TPresence);
+  initialPresence?: TPresence | ((roomId: string) => TPresence);
   /**
    * The initial Storage to use when entering a new Room.
    */
-  initialStorage?: TStorage | (() => TStorage);
+  initialStorage?: TStorage | ((roomId: string) => TStorage);
   /**
    * @deprecated Please use `initialPresence` instead. This property is
    * scheduled for removal in 0.18.

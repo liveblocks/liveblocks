@@ -1511,8 +1511,12 @@ export function createRoom(
   const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
   const state = defaultState(
-    typeof initialPresence === "function" ? initialPresence() : initialPresence,
-    typeof initialStorage === "function" ? initialStorage() : initialStorage
+    typeof initialPresence === "function"
+      ? initialPresence(context.roomId)
+      : initialPresence,
+    typeof initialStorage === "function"
+      ? initialStorage(context.roomId)
+      : initialStorage
   );
 
   const machine = makeStateMachine(state, context);
