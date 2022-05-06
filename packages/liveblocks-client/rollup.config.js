@@ -6,6 +6,7 @@ import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
 import esbuild from "rollup-plugin-esbuild";
 import path from "path";
+import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
@@ -169,8 +170,16 @@ function buildDTS(external = []) {
       // Try to "fix" the above by moving the two files manually, and manually
       // fixing the import/export statements.
 
+      replaceText({
+        // Forgive me, lord 🙈
+        "../../shared": "./shared",
+
+        delimiters: ["", ""],
+        preventAssignment: true,
+      }),
+
       execute(
-        `mv -v "${outDir}/${tmpDir}/"*.d.ts "${outDir}" && sed -i '' 's,[.][.]/[.][.]/,./,' "${outDir}/"*.d.ts && rm -rf "${outDir}/lib"`
+        `mv -v "${outDir}/${tmpDir}/"*.d.ts "${outDir}" && rm -rf "${outDir}/lib"`
       ),
     ],
   };
