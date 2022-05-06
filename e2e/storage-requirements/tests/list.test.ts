@@ -497,7 +497,7 @@ describe("LiveList confict resolution", () => {
     });
   });
 
-  describe("all combinations 2 operations each", () => {
+  describe.only("all combinations 2 operations each", () => {
     const client1FirstActions = [
       { type: "set", index: 0, value: "C1S" },
       { type: "move", index: 0, target: 1 },
@@ -545,59 +545,30 @@ describe("LiveList confict resolution", () => {
 
                   socketUtils.pauseAllSockets();
 
-                  // Client 1
-                  for (const client1Action of [
-                    client1FirstAction,
-                    client1SecondAction,
-                  ]) {
-                    switch (client1Action.type) {
+                  const rootActionList = [
+                    { action: client1FirstAction, root: root1 },
+                    { action: client1SecondAction, root: root1 },
+                    { action: client2FirstAction, root: root2 },
+                    { action: client2SecondAction, root: root2 },
+                  ];
+
+                  for (const { root, action } of rootActionList) {
+                    switch (action.type) {
                       case "set":
-                        root1
-                          .get("list")
-                          .set(client1Action.index!, client1Action.value!);
+                        root.get("list").set(action.index!, action.value!);
                         break;
                       case "delete":
-                        root1.get("list").delete(client1Action.index!);
+                        root.get("list").delete(action.index!);
                         break;
                       case "move":
-                        root1
-                          .get("list")
-                          .move(client1Action.index!, client1Action.target!);
+                        root.get("list").move(action.index!, action.target!);
                         break;
                       case "insert":
-                        root1
-                          .get("list")
-                          .insert(client1Action.value!, client1Action.index!);
+                        root.get("list").insert(action.value!, action.index!);
                         break;
                     }
                   }
 
-                  // Client 2
-                  for (const client2Action of [
-                    client2FirstAction,
-                    client2SecondAction,
-                  ]) {
-                    switch (client2Action.type) {
-                      case "set":
-                        root2
-                          .get("list")
-                          .set(client2Action.index!, client2Action.value!);
-                        break;
-                      case "delete":
-                        root2.get("list").delete(client2Action.index!);
-                        break;
-                      case "move":
-                        root2
-                          .get("list")
-                          .move(client2Action.index!, client2Action.target!);
-                        break;
-                      case "insert":
-                        root1
-                          .get("list")
-                          .insert(client2Action.value!, client2Action.index!);
-                        break;
-                    }
-                  }
                   socketUtils.sendMessagesClient1();
 
                   await wait(1000);
