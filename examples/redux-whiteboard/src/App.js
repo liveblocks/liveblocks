@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-
 import {
   insertRectangle,
   onShapePointerDown,
@@ -11,8 +9,11 @@ import {
   onCanvasPointerMove,
   client,
 } from "./store";
+import "./App.css";
 
-const roomId = "redux-whiteboard";
+let roomId = "redux-whiteboard";
+
+overrideRoomId();
 
 export default function App() {
   const shapes = useSelector((state) => state.shapes);
@@ -35,7 +36,11 @@ export default function App() {
   }, [dispatch]);
 
   if (isLoading) {
-    return <div className="loading">Loading</div>;
+    return (
+      <div className="loading">
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return (
@@ -107,6 +112,19 @@ const Rectangle = ({ shape, selectionColor, id }) => {
         client.getRoom(roomId).history.pause();
         dispatch(onShapePointerDown(id));
       }}
-    ></div>
+    />
   );
 };
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const roomIdSuffix = query.get("roomId");
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
+}

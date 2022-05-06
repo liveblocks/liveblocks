@@ -1,0 +1,32 @@
+.selection {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.selection_border {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  bottom: -5px;
+  left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-radius: 11px;
+  opacity: 0.2;
+}
+
+.selection_name {
+  position: absolute;
+  top: -29px;
+  right: 0;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 3px;
+  color: white;
+  font-size: 12px;
+  line-height: 20px;
+}

@@ -1,137 +1,73 @@
-import React from "react";
-import Head from "next/head";
-import SingleLineCodeBlock from "../components/SingleLineCodeBlock";
-import InlineCodeBlock from "../components/InlineCodeBlock";
+import React, { useMemo } from "react";
+import { Avatar } from "../components/Avatar";
+import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
+import { useRouter } from "next/router";
+import styles from "./index.module.css";
 
-import Avatar from "./avatars"
+function Example() {
+  const users = useOthers().toArray();
+  const currentUser = useSelf();
+  const hasMoreUsers = users.length > 3;
 
-export async function getStaticProps() {
-  return {
-    props: {
-      isRunningOnCodeSandbox: process.env.CODESANDBOX_SSE != null,
-      hasSetupLiveblocksKey: process.env.LIVEBLOCKS_SECRET_KEY != null,
-    },
-  };
+  return (
+    <main className="flex place-items-center place-content-center w-full h-screen select-none">
+      <div className="flex pl-3">
+        {users.slice(0, 3).map(({ connectionId, info }) => {
+          return (
+            <Avatar
+              key={connectionId}
+              picture={info?.picture}
+              name={info?.name}
+            />
+          );
+        })}
+
+        {hasMoreUsers && <div className={styles.more}>+{users.length - 3}</div>}
+
+        {currentUser && (
+          <div className="relative ml-8">
+            <Avatar picture={currentUser.info?.picture} name="You" />
+          </div>
+        )}
+      </div>
+    </main>
+  );
 }
 
-type Props = {
-  hasSetupLiveblocksKey: boolean;
-  isRunningOnCodeSandbox: boolean;
-};
+export default function Page() {
+  const roomId = useOverrideRoomId("nextjs-live-avatars");
 
-export default function Home({
-  hasSetupLiveblocksKey,
-  isRunningOnCodeSandbox,
-}: Props) {
   return (
-    <div>
-      <Head>
-        <title>Liveblocks</title>
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-      </Head>
-        {hasSetupLiveblocksKey ? (
-          <main>
-            <Avatar />
-          </main>
-        ) : isRunningOnCodeSandbox ? (
-          <main className="container mx-auto px-8">
-          <h1 className="text-3xl font-semibold mt-24 mb-2">
-            Welcome to Liveblocks Next.js live avatars examples
-          </h1>
-            <p className="mt-12 mb-6">
-              To run{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                Liveblocks
-              </a>{" "}
-              examples on CodeSandbox
-            </p>
-            <ul className="list-disc list-inside">
-              <li className="mb-2">
-                Create an account on{" "}
-                <a
-                  href="https://liveblocks.io"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  liveblocks.io
-                </a>
-              </li>
-              <li className="mb-2">
-                Copy your secret key from the administration
-              </li>
-              <li className="mb-2">
-                Add a{" "}
-                <a
-                  href="https://codesandbox.io/docs/secrets"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  secret key
-                </a>{" "}
-                named <InlineCodeBlock>LIVEBLOCKS_SECRET_KEY</InlineCodeBlock>{" "}
-                to your CodeSandbox sandbox.
-              </li>
-              <li className="mb-2">
-                Refresh your browser and you should be good to go!
-              </li>
-            </ul>
-          </main>
-        ) : (
-          <main className="container mx-auto px-8">
-          <h1 className="text-3xl font-semibold mt-24 mb-2">
-            Welcome to Liveblocks Next.js live avatars examples
-          </h1>
-            <p className="mt-12 mb-6">
-              To run{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                Liveblocks
-              </a>{" "}
-              examples locally
-            </p>
-            <ul className="list-disc list-inside">
-              <li className="mb-2">
-                Install all dependencies with{" "}
-                <SingleLineCodeBlock>npm install</SingleLineCodeBlock>
-              </li>
-              <li className="mb-2">
-                Create an account on{" "}
-                <a
-                  href="https://liveblocks.io"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  liveblocks.io
-                </a>
-              </li>
-              <li className="mb-2">
-                Copy your secret key from the administration
-              </li>
-              <li className="mb-2">
-                Create a file named{" "}
-                <InlineCodeBlock>.env.local</InlineCodeBlock> and add your
-                Liveblocks secret as environment variable{" "}
-                <SingleLineCodeBlock>
-                  LIVEBLOCKS_SECRET_KEY=sk_test_yourkey
-                </SingleLineCodeBlock>
-              </li>
-              <li className="mb-2">
-                Run the following command and you should be good to go
-                <SingleLineCodeBlock>npm run dev</SingleLineCodeBlock>
-              </li>
-            </ul>
-          </main>
-        )}
-    </div>
+    <RoomProvider id={roomId}>
+      <Example />
+    </RoomProvider>
   );
+}
+
+export async function getStaticProps() {
+  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
+    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#codesandbox.`
+    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars#getting-started.`;
+
+  if (!API_KEY) {
+    console.warn(API_KEY_WARNING);
+  }
+
+  return { props: {} };
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useOverrideRoomId(roomId: string) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.room ? `${roomId}-${query.room}` : roomId;
+  }, [query, roomId]);
+
+  return overrideRoomId;
 }

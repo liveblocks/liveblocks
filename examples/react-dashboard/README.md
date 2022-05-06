@@ -15,6 +15,8 @@
 
 This example shows how to build collaborative data visualization with [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and [Recharts](https://recharts.org).
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/dashboard.png" width="500" alt="Dashboard" />
+
 ## Getting started
 
 - Install all dependencies with `npm install`

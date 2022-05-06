@@ -16,7 +16,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `/assets/avatars/${Math.floor(Math.random() * 10)}.png`,
+      picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
     },
   });
   return res.status(response.status).end(response.body);

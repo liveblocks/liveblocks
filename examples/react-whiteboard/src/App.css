@@ -2,16 +2,7 @@ body {
   background-color: #eeeeee;
 }
 
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
-  width: 100vw;
-}
-
 .canvas {
-  background-color: #eeeeee;
   touch-action: none;
   width: 100vw;
   height: 100vh;
@@ -19,8 +10,7 @@ body {
 
 .rectangle {
   position: absolute;
-  /* transition: all 0.1s ease; */
-  stroke-width: 1;
+  stroke-width: 1px;
   border-style: solid;
   border-width: 2px;
   height: 100px;
@@ -64,4 +54,19 @@ body {
 
 .toolbar button:active {
   background-color: #eeeeee;
+}
+
+.loading {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
 }

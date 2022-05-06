@@ -1,0 +1,12 @@
+.selection {
+  fill: transparent;
+  stroke: var(--color-primary);
+  stroke-width: 1px;
+  pointer-events: none;
+}
+
+.selection_handle {
+  fill: white;
+  stroke: var(--color-primary);
+  stroke-width: 1px;
+}

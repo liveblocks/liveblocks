@@ -25,7 +25,11 @@ export default function App() {
   const shapes = useMap("shapes");
 
   if (shapes == null) {
-    return <div className="loading">Loading</div>;
+    return (
+      <div className={styles.loading}>
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return <Canvas shapes={shapes} />;
@@ -151,6 +155,6 @@ const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
         backgroundColor: fill ? fill : "#CCC",
         borderColor: selectionColor || "transparent",
       }}
-    ></div>
+    />
   );
 });
