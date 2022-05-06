@@ -1,6 +1,8 @@
-# vNEXT (v0.16.3)
+# vNEXT (v0.16.4)
 
-...
+## `@liveblocks/client`
+
+- Improve our generated bundle. It's now even more tree-shakable, and smaller!
 
 # v0.16.3
 
