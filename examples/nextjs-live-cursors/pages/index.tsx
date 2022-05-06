@@ -1,8 +1,21 @@
 import React from "react";
-import Head from "next/head";
-import ListItem from "../components/ListItem";
-import SingleLineCodeBlock from "../components/SingleLineCodeBlock";
-import InlineCodeBlock from "../components/InlineCodeBlock";
+import { useOthers, useMyPresence, RoomProvider } from "@liveblocks/react";
+import Cursor from "../components/Cursor";
+
+/**
+ * This file shows how to add basic live cursors on your product.
+ */
+
+const COLORS = [
+  "#E57373",
+  "#9575CD",
+  "#4FC3F7",
+  "#81C784",
+  "#FFF176",
+  "#FF8A65",
+  "#F06292",
+  "#7986CB",
+];
 
 export async function getStaticProps() {
   return {
@@ -14,169 +27,97 @@ export async function getStaticProps() {
   };
 }
 
+type Cursor = {
+  x: number;
+  y: number;
+};
+
+type Presence = {
+  cursor: Cursor | null;
+};
+
 type Props = {
   hasSetupLiveblocksKey: boolean;
   isRunningOnCodeSandbox: boolean;
 };
 
-export default function Home({
+function Example() {
+  /**
+   * useMyPresence returns the presence of the current user and a function to update it.
+   * updateMyPresence is different than the setState function returned by the useState hook from React.
+   * You don't need to pass the full presence object to update it.
+   * See https://liveblocks.io/docs/api-reference/liveblocks-react#useMyPresence for more information
+   */
+  const [{ cursor }, updateMyPresence] = useMyPresence<Presence>();
+
+  /**
+   * Return all the other users in the room and their presence (a cursor position in this case)
+   */
+  const others = useOthers<Presence>();
+
+  return (
+    <main
+      className="relative w-full h-screen flex place-content-center place-items-center"
+      onPointerMove={(event) =>
+        // Update the user cursor position on every pointer move
+        updateMyPresence({
+          cursor: {
+            x: Math.round(event.clientX),
+            y: Math.round(event.clientY),
+          },
+        })
+      }
+      onPointerLeave={() =>
+        // When the pointer goes out, set cursor to null
+        updateMyPresence({
+          cursor: null,
+        })
+      }
+    >
+      <div className="max-w-sm text-center">
+        Move your cursor to broadcast its position to other people in the room.
+      </div>
+
+      {
+        /**
+         * Iterate over other users and display a cursor based on their presence
+         */
+        others.map(({ connectionId, presence }) => {
+          if (presence == null || presence.cursor == null) {
+            return null;
+          }
+
+          return (
+            <Cursor
+              key={`cursor-${connectionId}`}
+              // connectionId is an integer that is incremented at every new connections
+              // Assigning a color with a modulo makes sure that a specific user has the same colors on every clients
+              color={COLORS[connectionId % COLORS.length]}
+              x={presence.cursor.x}
+              y={presence.cursor.y}
+            />
+          );
+        })
+      }
+    </main>
+  );
+}
+
+export default function Page({
   hasSetupLiveblocksKey,
   isRunningOnCodeSandbox,
 }: Props) {
   return (
-    <div>
-      <Head>
-        <title>Liveblocks</title>
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="32x32"
-          href="/favicon-32x32.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          sizes="16x16"
-          href="/favicon-16x16.png"
-        />
-      </Head>
-      <main className="container mx-auto px-8">
-        <h1 className="text-3xl font-semibold mt-24 mb-2">
-          Welcome to Liveblocks Next.js Live cursors examples
-        </h1>
-        {hasSetupLiveblocksKey ? (
-          <>
-            <p className="text-gray-400 mb-4 text-lg">
-              Get started with the real-time examples below.
-            </p>
-
-            <div className="grid grid-cols-3 gap-16">
-              <div>
-                <div className="max-w-sm">
-                  <h2 className="mt-12 mb-1 font-medium text-lg">Basic</h2>
-                  <p className="text-gray-400 mb-4">
-                    Basic examples to help you understand how the APIs work for
-                    each block.
-                  </p>
-                </div>
-                <ul className="grid grid-cols-1 gap-4">
-                  <ListItem
-                    label="Presence demo"
-                    href="/live-cursors-basic"
-                    description="Presence"
-                  />
-                </ul>
-              </div>
-
-              <div className="col-span-2">
-                <div className="max-w-sm">
-                  <h2 className="mt-12 mb-1 font-medium text-lg">Use cases</h2>
-                  <p className="text-gray-400 mb-4">
-                    Realistic examples to take inspiration from for your own
-                    production projects.
-                  </p>
-                </div>
-                <ul className="grid grid-cols-2 gap-4">
-                  <ListItem
-                    label="Live cursors with chat and reactions"
-                    href="/live-cursors-chat-reactions"
-                    description="Presence"
-                  />
-                  <ListItem
-                    label="Live cursors scrollable page"
-                    href="/live-cursors-scrollable-page"
-                    description="Presence"
-                  />
-                </ul>
-              </div>
-            </div>
-          </>
-        ) : isRunningOnCodeSandbox ? (
-          <>
-            <p className="mt-12 mb-6">
-              To run{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                Liveblocks
-              </a>{" "}
-              examples on CodeSandbox
-            </p>
-            <ul className="list-disc list-inside">
-              <li className="mb-2">
-                Create an account on{" "}
-                <a
-                  href="https://liveblocks.io"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  liveblocks.io
-                </a>
-              </li>
-              <li className="mb-2">
-                Copy your public key from the administration
-              </li>
-              <li className="mb-2">
-                Add a{" "}
-                <a
-                  href="https://codesandbox.io/docs/secrets"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  public key
-                </a>{" "}
-                named{" "}
-                <InlineCodeBlock>
-                  NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY
-                </InlineCodeBlock>{" "}
-                to your CodeSandbox sandbox.
-              </li>
-              <li className="mb-2">
-                Refresh your browser and you should be good to go!
-              </li>
-            </ul>
-          </>
-        ) : (
-          <>
-            <p className="mt-12 mb-6">
-              To run{" "}
-              <a href="https://liveblocks.io" target="_blank" rel="noreferrer">
-                Liveblocks
-              </a>{" "}
-              examples locally
-            </p>
-            <ul className="list-disc list-inside">
-              <li className="mb-2">
-                Install all dependencies with{" "}
-                <SingleLineCodeBlock>npm install</SingleLineCodeBlock>
-              </li>
-              <li className="mb-2">
-                Create an account on{" "}
-                <a
-                  href="https://liveblocks.io"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  liveblocks.io
-                </a>
-              </li>
-              <li className="mb-2">
-                Copy your public key from the administration
-              </li>
-              <li className="mb-2">
-                Create a file named{" "}
-                <InlineCodeBlock>.env.local</InlineCodeBlock> and add your
-                Liveblocks public key as environment variable{" "}
-                <SingleLineCodeBlock>
-                  NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=pk_test_xx
-                </SingleLineCodeBlock>
-              </li>
-              <li className="mb-2">
-                Run the following command and you should be good to go
-                <SingleLineCodeBlock>npm run dev</SingleLineCodeBlock>
-              </li>
-            </ul>
-          </>
-        )}
-      </main>
-    </div>
+    <RoomProvider
+      id="nextjs-live-cursors"
+      /**
+       * Initialize the cursor position to null when joining the room
+       */
+      defaultPresence={() => ({
+        cursor: null,
+      })}
+    >
+      <Example />
+    </RoomProvider>
   );
 }

@@ -1,7 +1,9 @@
 import { createClient, LiveList } from "@liveblocks/client";
 
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+
 const client = createClient({
-  publicApiKey: "pk_YOUR_PUBLIC_KEY",
+  publicApiKey: PUBLIC_KEY,
 });
 
 async function run() {

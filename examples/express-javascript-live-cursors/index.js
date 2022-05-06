@@ -15,11 +15,11 @@ app.post("/auth", (req, res) => {
     .then((authResponse) => {
       res.send(authResponse.body);
     })
-    .catch((er) => {
+    .catch(() => {
       res.status(403).end();
     });
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Example listening at http://localhost:${port}`);
 });

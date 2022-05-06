@@ -14,10 +14,10 @@ import {
 import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
 import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
 import styles from "./App.module.css";
-import Header from "./Header";
-import Card from "./Card";
+import Header from "./components/Header";
+import Card from "./components/Card";
 
-function BarChartDemo() {
+function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthers();
 
@@ -229,10 +229,10 @@ function BarChartDemo() {
 export default function App() {
   return (
     <RoomProvider
-      id={"example-chartjs"}
+      id="react-dashboard"
       defaultPresence={() => ({ cardId: null, cursor: null })}
     >
-      <BarChartDemo />
+      <Example />
     </RoomProvider>
   );
 }

@@ -1,10 +1,12 @@
 import { createClient } from "@liveblocks/client";
 
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+
 const client = createClient({
-  publicApiKey: "pk_YOUR_PUBLIC_KEY",
+  publicApiKey: PUBLIC_KEY,
 });
 
-const room = client.enter("node-js-example", { cursor: null });
+const room = client.enter("javascript-live-cursors", { cursor: null });
 
 const cursorsContainer = document.getElementById("cursors-container");
 

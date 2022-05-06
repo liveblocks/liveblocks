@@ -2,14 +2,7 @@ import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-// Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_xxxxxxx";
-
-if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
-  throw new Error(
-    "Replace the above constant PUBLIC_KEY with your own Liveblocks public key."
-  );
-}
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 export const client = createClient({
   publicApiKey: PUBLIC_KEY,

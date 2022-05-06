@@ -2,12 +2,13 @@ import React from "react";
 import ReactDOM from "react-dom";
 import { LiveblocksProvider } from "@liveblocks/react";
 import { createClient } from "@liveblocks/client";
-
-import "./index.css";
 import App from "./App";
+import "./index.css";
+
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 const client = createClient({
-  publicApiKey: "pk_YOUR_PUBLIC_KEY", // REPLACE WITH YOUR PUBLIC KEY
+  publicApiKey: PUBLIC_KEY,
 });
 
 ReactDOM.render(

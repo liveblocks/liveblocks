@@ -1,8 +1,6 @@
 import { useEffect } from "react";
-import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-
 import {
   insertRectangle,
   onShapePointerDown,
@@ -11,6 +9,7 @@ import {
   onCanvasPointerMove,
   client,
 } from "./store";
+import "./App.css";
 
 const roomId = "redux-whiteboard";
 
@@ -35,7 +34,7 @@ export default function App() {
   }, [dispatch]);
 
   if (isLoading) {
-    return <div className="loading">Loading</div>;
+    return null;
   }
 
   return (
@@ -107,6 +106,6 @@ const Rectangle = ({ shape, selectionColor, id }) => {
         client.getRoom(roomId).history.pause();
         dispatch(onShapePointerDown(id));
       }}
-    ></div>
+    />
   );
 };

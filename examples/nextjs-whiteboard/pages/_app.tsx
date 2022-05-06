@@ -1,15 +1,15 @@
+import React from "react";
 import { LiveblocksProvider } from "@liveblocks/react";
 import { createClient } from "@liveblocks/client";
 import { AppProps } from "next/app";
-import "tailwindcss/tailwind.css";
-import "../components/globals.css";
-import React from "react";
+import Head from "next/head";
+import "../styles/globals.css";
 
 const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   return (
     /**
      * Add a LiveblocksProvider at the root of your app
@@ -17,9 +17,12 @@ function MyApp({ Component, pageProps }: AppProps) {
      **/
     <React.StrictMode>
       <LiveblocksProvider client={client}>
+        <Head>
+          <title>Liveblocks</title>
+        </Head>
         <Component {...pageProps} />
       </LiveblocksProvider>
     </React.StrictMode>
   );
 }
-export default MyApp;
+export default App;

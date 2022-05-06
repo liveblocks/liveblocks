@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import useStore from "./store";
-
 import "./App.css";
 
 export default function App() {
@@ -27,7 +26,7 @@ export default function App() {
   }, [enterRoom, leaveRoom]);
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return null;
   }
 
   return (
@@ -85,6 +84,6 @@ const Rectangle = ({ shape, selectionColor, id }) => {
         e.stopPropagation();
         onShapePointerDown(id);
       }}
-    ></div>
+    />
   );
 };

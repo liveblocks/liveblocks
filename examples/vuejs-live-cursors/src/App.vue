@@ -2,28 +2,18 @@
   <div
     v-on:pointerleave="pointerLeave"
     v-on:pointermove="pointerMove"
-    v-bind:style="{
-      width: '100%',
-      height: '100vh',
-      textAlign: 'center',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-    }"
+    class="container"
   >
-    <div>
+    <div class="text">
       Move your cursor to broadcast its position to other people in the room
     </div>
     <svg
       v-for="cursor in cursors"
       v-bind:key="cursor.connectionId"
       v-bind:style="{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-        transition: 'transform 0.5s cubic-bezier(0.17, 0.93, 0.38, 1)',
         transform: `translateX(${cursor.x}px) translateY(${cursor.y}px)`,
       }"
+      class="cursor"
       width="24"
       height="36"
       viewBox="0 0 24 36"
@@ -41,13 +31,15 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+
 const client = createClient({
-  publicApiKey: "pk_xxxxxxxx", // => replace with your public key.
+  publicApiKey: PUBLIC_KEY,
 });
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-const roomId = "vuejs-live-cursors-example";
+const roomId = "vuejs-live-cursors";
 
 export default Vue.extend({
   data: function() {

@@ -30,7 +30,7 @@ export default function App() {
   const todos = useList("todos");
 
   if (todos == null) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   return (

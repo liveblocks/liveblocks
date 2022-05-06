@@ -1,9 +1,8 @@
 import React, { useEffect } from "react";
-import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
-
 import { addTodo, deleteTodo, setDraft } from "./store";
+import "./App.css";
 
 function WhoIsHere() {
   const othersUsersCount = useSelector(
@@ -34,18 +33,18 @@ export default function App() {
 
   useEffect(() => {
     dispatch(
-      actions.enterRoom("redux-demo-room", {
+      actions.enterRoom("redux-todo-list", {
         todos: [],
       })
     );
 
     return () => {
-      dispatch(actions.leaveRoom("redux-demo-room"));
+      dispatch(actions.leaveRoom("redux-todo-list"));
     };
   }, [dispatch]);
 
   if (todos == null) {
-    return <div>Loading</div>;
+    return null;
   }
 
   return (
@@ -62,7 +61,7 @@ export default function App() {
             dispatch(addTodo());
           }
         }}
-      ></input>
+      />
       <SomeoneIsTyping />
       {todos.map((todo, index) => {
         return (

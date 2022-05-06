@@ -20,12 +20,6 @@
     "react-scripts": "5.0.0",
     "redux": "^4.1.2"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
   "browserslist": {
     "production": [
       ">0.2%",

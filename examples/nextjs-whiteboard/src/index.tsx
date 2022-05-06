@@ -31,16 +31,15 @@ import {
   pointerEventToCanvasPoint,
   resizeBounds,
 } from "./utils";
-import SelectionBox from "./SelectionBox";
+import SelectionBox from "./components/SelectionBox";
 import { nanoid } from "nanoid";
-import LayerComponent from "./LayerComponent";
-import SelectionTools from "./SelectionTools";
-import LoadingIndicator from "../components/LoadingIndicator";
-import useSelectionBounds from "./useSelectionBounds";
-import useDisableScrollBounce from "./useDisableScrollBounce";
-import MultiplayerGuides from "./MultiplayerGuides";
-import Path from "./Path";
-import ToolsBar from "./ToolsBar";
+import LayerComponent from "./components/LayerComponent";
+import SelectionTools from "./components/SelectionTools";
+import useSelectionBounds from "./hooks/useSelectionBounds";
+import useDisableScrollBounce from "./hooks/useDisableScrollBounce";
+import MultiplayerGuides from "./components/MultiplayerGuides";
+import Path from "./components/Path";
+import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 
@@ -69,7 +68,7 @@ function WhiteboardTool() {
   const layerIds = useList<string>("layerIds");
 
   if (layerIds == null || layers == null) {
-    return <LoadingIndicator />;
+    return null;
   }
 
   return <Canvas layers={layers} layerIds={layerIds} />;

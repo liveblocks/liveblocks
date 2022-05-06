@@ -1,13 +1,12 @@
 import React from "react";
 import styles from "./Selection.module.css";
 
-export default function Selection({
-  name,
-  color,
-}: {
+type Props = {
   name?: string;
   color?: string;
-}) {
+};
+
+export default function Selection({ name, color }: Props) {
   return (
     <div className={styles.selection}>
       <div

@@ -19,7 +19,7 @@ export async function post({ request }) {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `/assets/avatars/${Math.floor(Math.random() * 10)}.png`,
+      picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
     },
   });
 

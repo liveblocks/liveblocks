@@ -2,14 +2,8 @@ import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 
-// Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_xxxxxxx";
+const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
-  throw new Error(
-    "Replace the constant PUBLIC_KEY in store.js with your own Liveblocks public key."
-  );
-}
 const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });

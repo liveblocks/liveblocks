@@ -8,14 +8,14 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-function MyApp({ Component, pageProps }: AppProps) {
+function App({ Component, pageProps }: AppProps) {
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id="logo-builder">
+      <RoomProvider id="nextjs-logo-builder">
         <Component {...pageProps} />
       </RoomProvider>
     </LiveblocksProvider>
   );
 }
 
-export default MyApp;
+export default App;

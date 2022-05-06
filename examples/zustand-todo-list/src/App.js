@@ -33,17 +33,17 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-demo-room", {
+    enterRoom("zustand-todo-list", {
       todos: [],
     });
 
     return () => {
-      leaveRoom("zustand-demo-room");
+      leaveRoom("zustand-todo-list");
     };
   }, [enterRoom, leaveRoom]);
 
   if (isStorageLoading) {
-    return <div>Loading...</div>;
+    return null;
   }
 
   return (
@@ -60,7 +60,7 @@ export default function App() {
             addTodo();
           }
         }}
-      ></input>
+      />
       <SomeoneIsTyping />
       {todos.map((todo, index) => {
         return (

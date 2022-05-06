@@ -1,17 +1,3 @@
-/**
- *
- * This file shows how to create a simple collaborative form.
- * https://liveblocks.io/examples/collaborative-logo-builder
- *
- * We use the presence block to show the currently focused input to everyone in the room.
- * We use the storage block to persist the state of the form even after everyone leaves the room.
- *
- * The users picture and name are not set via the `useMyPresence` hook like the cursors.
- * They are set from the authentication endpoint.
- *
- * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
- */
-
 import {
   useOthers,
   useUpdateMyPresence,
@@ -24,6 +10,18 @@ import Selection from "../components/Selection";
 import styles from "./index.module.css";
 import { COLORS } from "../constants";
 
+/**
+ * This file shows how to create a simple collaborative form.
+ *
+ * We use the presence block to show the currently focused input to everyone in the room.
+ * We use the storage block to persist the state of the form even after everyone leaves the room.
+ *
+ * The users picture and name are not set via the `useMyPresence` hook like the cursors.
+ * They are set from the authentication endpoint.
+ *
+ * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+ */
+
 type Theme = "light" | "dark";
 
 type Presence = {
@@ -35,7 +33,7 @@ type Logo = {
   theme: Theme;
 };
 
-export default function Demo() {
+export default function Example() {
   /**
    * updateMyPresence is used to show the focused input to all the users in the room.
    * It's good way to show to everyone that a user is currently editing a field to avoid potential conflict.
@@ -54,21 +52,7 @@ export default function Demo() {
   });
 
   if (!data) {
-    return (
-      <div className={styles.container}>
-        <span className={styles.loading_container}>
-          <svg
-            className={styles.loading_svg}
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-          >
-            <path d="M16 8C16 9.58225 15.5308 11.129 14.6518 12.4446C13.7727 13.7602 12.5233 14.7855 11.0615 15.391C9.59966 15.9965 7.99113 16.155 6.43928 15.8463C4.88743 15.5376 3.46197 14.7757 2.34315 13.6569C1.22433 12.538 0.4624 11.1126 0.153718 9.56072C-0.154964 8.00887 0.00346269 6.40034 0.608964 4.93853C1.21446 3.47672 2.23984 2.22729 3.55544 1.34824C4.87103 0.469192 6.41775 -1.88681e-08 8 0L8 1.52681C6.71972 1.52681 5.4682 1.90645 4.40369 2.61774C3.33917 3.32902 2.50949 4.33999 2.01955 5.52282C1.52961 6.70564 1.40142 8.00718 1.65119 9.26286C1.90096 10.5185 2.51747 11.6719 3.42276 12.5772C4.32805 13.4825 5.48147 14.099 6.73714 14.3488C7.99282 14.5986 9.29436 14.4704 10.4772 13.9805C11.66 13.4905 12.671 12.6608 13.3823 11.5963C14.0935 10.5318 14.4732 9.28028 14.4732 8H16Z" />
-          </svg>
-        </span>
-      </div>
-    );
+    return null;
   }
 
   const { theme, name } = data.toObject();

@@ -4,7 +4,7 @@ const client = createClient({
   authEndpoint: "/auth",
 });
 
-const room = client.enter("node-js-example", { cursor: null });
+const room = client.enter("express-javascript-live-cursors", { cursor: null });
 
 const cursorsContainer = document.getElementById("cursors-container");
 
