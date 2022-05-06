@@ -525,6 +525,9 @@ export function makeStateMachine(
   }
 
   function applyOp(op: Op, isLocal: boolean): ApplyResult {
+    if (op.opId) {
+      state.offlineOperations.delete(op.opId);
+    }
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
