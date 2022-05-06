@@ -1,20 +1,43 @@
-/**
- * This configuration is heavily inspired from https://github.com/pmndrs/zustand/blob/main/rollup.config.js
- */
-import path from "path";
-import resolve from "@rollup/plugin-node-resolve";
 import babelPlugin from "@rollup/plugin-babel";
-import typescript from "@rollup/plugin-typescript";
-import esbuild from "rollup-plugin-esbuild";
+import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
+import path from "path";
+import replaceText from "@rollup/plugin-replace";
+import resolve from "@rollup/plugin-node-resolve";
+import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
 const createBabelConfig = require("./babel.config");
 
-const extensions = [".tsx", ".ts"];
+function execute(cmd, wait = true) {
+  return commandPlugin(cmd, { exitOnFail: true, wait });
+}
 
-const external = ["react", "@liveblocks/client"];
+/**
+ * TypeScript plugin configured to only produce *.js code files, no *.d.ts
+ * files.
+ */
+function typescriptCompile() {
+  return typescriptPlugin({
+    declaration: false,
+    tsconfig: "./tsconfig.build.json",
+    noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
+  });
+}
 
-function getBabelOptions(targets) {
+/**
+ * TypeScript plugin configured to only produce *.d.ts files, no code
+ * compilation.
+ */
+function typescriptDeclarations(outDir) {
+  return typescriptPlugin({
+    declaration: true,
+    outDir,
+    tsconfig: "./tsconfig.build.json",
+    noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
+  });
+}
+
+function getBabelOptions(extensions, targets) {
   return {
     ...createBabelConfig({ env: (env) => env === "build" }, targets),
     extensions,
@@ -23,76 +46,129 @@ function getBabelOptions(targets) {
   };
 }
 
-function getEsbuild(target) {
-  return esbuild({
-    minify: false,
-    target,
-    tsconfig: path.resolve("./tsconfig.build.json"),
-  });
-}
-
-/**
- * We use @rollup/plugin-typescript to generate typescript definition
- * but it does not support the declarationOnly option so we delete
- * js files and bundle d.ts files with rollup-plugin-dts
- */
-function createDeclarationConfig(input, output) {
-  return [
-    {
-      input,
-      output: {
-        dir: "lib",
-      },
-      external,
-      plugins: [
-        typescript({
-          declaration: true,
-          outDir: `./lib/tmp`, // We need to put it in "lib" because of typescript can't @rollup/plugin-typescript ouput outside tsconfig outDir option
-          tsconfig: "./tsconfig.build.json",
-          noEmitOnError: true, // Let rollup build fail if there are TypeScript errors
-        }),
-      ],
-    },
-    {
-      input: `./lib/tmp/${output}.d.ts`,
-      output: [{ file: `lib/${output}.d.ts`, format: "es" }],
-      plugins: [
-        dts(),
-        {
-          closeBundle: async () => {
-            await promises.rm(`./lib/tmp`, {
-              recursive: true,
-              force: true,
-            });
-          },
-        },
-      ],
-    },
-  ];
-}
-
-function createCommonJSConfig(input, output) {
+function buildESM(srcFiles, external = []) {
   return {
-    input,
-    output: { file: `lib/${output}`, format: "cjs", exports: "named" },
+    input: srcFiles.map((f) => "src/" + f),
+    output: {
+      dir: "lib",
+      format: "esm",
+      entryFileNames: "[name].mjs",
+      chunkFileNames: "shared.mjs",
+    },
+    external,
+    plugins: [typescriptCompile()],
+  };
+}
+
+function buildCJS(srcFiles, external = []) {
+  const extensions = [".tsx", ".ts"];
+  return {
+    input: srcFiles.map((f) => "src/" + f),
+    output: {
+      dir: "lib",
+      format: "cjs",
+      exports: "named",
+      chunkFileNames: "shared.js",
+    },
     external,
     plugins: [
       resolve({ extensions }),
-      babelPlugin(getBabelOptions({ ie: 11 })),
+      babelPlugin(getBabelOptions(extensions, { ie: 11 })),
     ],
   };
 }
 
-function createESMConfig(input, output) {
-  return {
-    input,
+function buildDTS(srcFiles = [], external = []) {
+  const tmpDir = "lib/tmp";
+  const outDir = "lib";
+
+  // Take the TypeScript source code in src/*.ts, and generate lib/types/*.d.ts
+  // files for each.
+  const step1 = {
+    input: srcFiles.map((f) => "src/" + f),
+    output: {
+      dir: tmpDir,
+    },
     external,
-    output: [
-      { file: `lib/${output}.js`, format: "esm" },
-      { file: `lib/${output}.mjs`, format: "esm" },
+    plugins: [
+      // TypeScript plugin always emits compiled source and type
+      // declarations...
+      typescriptDeclarations(tmpDir),
+
+      // ...but we're only interested in keeping the type declarations in this
+      // step, so let's remove all files that aren't *.d.ts files
+      execute(`find ${tmpDir} -type f '!' -iname '*.d.ts' -delete`),
     ],
-    plugins: [getEsbuild("node12")],
   };
+
+  const step2 = {
+    input: srcFiles.map(
+      (f) => tmpDir + "/" + path.basename(f, path.extname(f)) + ".d.ts"
+    ),
+    output: [
+      {
+        dir: outDir,
+        entryFileNames: srcFiles.length > 1 ? "[name].d.ts" : "[name].ts",
+        chunkFileNames: "shared.d.ts",
+      },
+    ],
+    external,
+    plugins: [
+      dts(),
+
+      // We no longer need this tmp dir from step 1 here, so clean it up ASAP
+      // to avoid confusion
+      execute(`rm -rf ${tmpDir}`),
+
+      //
+      // NOTE:
+      // Okay, this is weird, and needs some explanation.
+      //
+      // There's probably some configuration setting for this behavior in the
+      // dts() plugin (or elsewhere) somewhere, but I couldn't find it.
+      //
+      // When using `dts()` to roll up all the type definitions into a compact
+      // bundle, it emits its files in this weird tree:
+      //
+      //     lib/types/
+      //     ├── lib
+      //     │   └── tmp
+      //     │       ├── index.d.ts
+      //     │       └── internal.d.ts
+      //     └── shared-b97faa87.d.ts
+      //
+      // This only happens if code splitting happens, i.e. if there is more
+      // than one entry file name, hence those srcFiles.length checks in here.
+      //
+      // Inside `index.d.ts`, there's a re-export like:
+      //
+      //     export ... from "../../shared-b97faa87";
+      //     //               ^^^^^^
+      //
+      // Baffles me why.
+      //
+
+      // Try to "fix" the above by moving the two files manually, and manually
+      // fixing the import/export statements.
+      srcFiles.length > 1
+        ? replaceText({
+            // Forgive me, lord 🙈
+            "../../shared": "./shared",
+
+            delimiters: ["", ""],
+            preventAssignment: true,
+          })
+        : [],
+
+      execute(
+        srcFiles.length > 1
+          ? `mv -n "${outDir}/${tmpDir}/"*.d.ts "${outDir}"; rm -rf "${outDir}/lib"`
+          : `rm -rf "${outDir}/lib"`
+      ),
+    ].flat(),
+  };
+
+  return [step1, step2];
 }
 
 export default async () => {
@@ -101,9 +177,25 @@ export default async () => {
     force: true,
   });
 
-  return [
-    ...createDeclarationConfig("src/index.tsx", "index"),
-    createCommonJSConfig("src/index.tsx", "index.js"),
-    createESMConfig("src/index.tsx", "esm/index"),
+  // Files relative to `src/`
+  const srcFiles = ["index.tsx"];
+
+  // NOTE: Make sure this list always matches the names of all dependencies and
+  // peerDependencies from package.json
+  const pkgJson = require("./package.json");
+  const external = [
+    ...Object.keys(pkgJson?.dependencies ?? {}),
+    ...Object.keys(pkgJson?.peerDependencies ?? {}),
   ];
+
+  return [
+    // Build modern ES modules (*.mjs)
+    buildESM(srcFiles, external),
+
+    // Build Common JS modules (*.js)
+    buildCJS(srcFiles, external),
+
+    // Build TypeScript declaration files (*.d.ts)
+    buildDTS(srcFiles, external),
+  ].flat();
 };
