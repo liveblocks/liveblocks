@@ -4,6 +4,7 @@
 import babelPlugin from "@rollup/plugin-babel";
 import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
+import path from "path";
 import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import typescriptPlugin from "@rollup/plugin-typescript";
@@ -104,7 +105,9 @@ function buildDTS(srcFiles = [], external = []) {
   };
 
   const step2 = {
-    input: ["index.d.ts"].map((f) => `${tmpDir}/${f}`),
+    input: srcFiles.map(
+      (f) => tmpDir + "/" + path.basename(f, path.extname(f)) + ".d.ts"
+    ),
     output: [
       {
         dir: outDir,
@@ -177,6 +180,9 @@ export default async () => {
     force: true,
   });
 
+  // Files relative to `src/`
+  const srcFiles = ["index.tsx"];
+
   // NOTE: Make sure this list always matches the names of all dependencies and
   // peerDependencies from package.json
   const pkgJson = require("./package.json");
@@ -185,9 +191,6 @@ export default async () => {
     ...Object.keys(pkgJson?.peerDependencies ?? {}),
   ];
 
-  const srcFiles =
-    // Files relative to `src/`
-    ["index.tsx"];
   return [
     // Build modern ES modules (*.mjs)
     buildESM(srcFiles, external),
