@@ -11,54 +11,14 @@
  * https://join.team/liveblocks ;)
  */
 
-export type {
-  ClientEventMessage,
-  ClientMessage,
-  ClientMessageType,
-  CrdtType,
-  CreateListOp,
-  CreateMapOp,
-  CreateObjectOp,
-  CreateOp,
-  CreateRegisterOp,
-  DeleteCrdtOp,
-  DeleteObjectKeyOp,
-  EventMessage,
-  FetchStorageClientMessage,
-  InitialDocumentStateMessage,
-  Op,
-  OpType,
-  RoomStateMessage,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  ServerMessage,
-  ServerMessageType,
-  SetParentKeyOp,
-  UpdateObjectOp,
-  UpdatePresenceClientMessage,
-  UpdatePresenceMessage,
-  UpdateStorageClientMessage,
-  UpdateStorageMessage,
-  UserJoinMessage,
-  UserLeftMessage,
-  WebsocketCloseCodes,
-} from "./live";
+export type { SerializedCrdtWithId, ServerMessage } from "./live";
+export type { Resolve } from "./types";
 
-export { min, max, makePosition, posCodes, pos, compare } from "./position";
-
+export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
 export { deprecate, deprecateIf } from "./utils";
 
 export {
-  liveObjectToJson,
   lsonToJson,
-  patchLiveList,
   patchImmutableObject,
-  patchLiveObject,
   patchLiveObjectKey,
 } from "./immutable";
-
-export type { Resolve } from "./types";
