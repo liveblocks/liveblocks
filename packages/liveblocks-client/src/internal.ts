@@ -11,18 +11,14 @@
  * https://join.team/liveblocks ;)
  */
 
-export * from "./live";
-export * from "./position";
+export type { SerializedCrdtWithId, ServerMessage } from "./live";
+export type { Resolve } from "./types";
 
+export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
 export { deprecate, deprecateIf } from "./utils";
 
 export {
-  liveObjectToJson,
   lsonToJson,
-  patchLiveList,
   patchImmutableObject,
-  patchLiveObject,
   patchLiveObjectKey,
 } from "./immutable";
-
-export type { Resolve } from "./types";
