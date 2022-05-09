@@ -1,5 +1,5 @@
-import { Json, JsonObject } from "./json";
-import { Presence } from "./types";
+import type { Json, JsonObject } from "./json";
+import type { Presence } from "./types";
 
 /**
  * Messages that can be sent from the server to the client.

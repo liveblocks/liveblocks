@@ -3,9 +3,9 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Lson, LsonObject } from "./lson";
-import { Json } from "./json";
-import { StorageUpdate } from "./types";
+import type { Lson, LsonObject } from "./lson";
+import type { Json } from "./json";
+import type { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(

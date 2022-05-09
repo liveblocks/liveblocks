@@ -1,14 +1,18 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient, Presence } from "@liveblocks/client";
-import { Mapping, middleware } from ".";
+import { createClient } from "@liveblocks/client";
+import type { Presence } from "@liveblocks/client";
+import type { Mapping } from ".";
+import { middleware } from ".";
 import create from "zustand";
-import { StateCreator } from "zustand";
+import type { StateCreator } from "zustand";
+import type {
+  SerializedCrdtWithId,
+  ServerMessage,
+} from "@liveblocks/client/internal";
 import {
   ClientMessageType,
   OpType,
-  SerializedCrdtWithId,
-  ServerMessage,
   ServerMessageType,
 } from "@liveblocks/client/internal";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";

@@ -1,4 +1,4 @@
-import { AbstractCrdt } from "../src/AbstractCrdt";
+import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { liveObjectToJson, patchImmutableObject } from "../src/immutable";
 import {
   ClientMessage,
@@ -9,14 +9,14 @@ import {
   ServerMessage,
   ServerMessageType,
 } from "../src/live";
-import { Json } from "../src/json";
-import { Lson, LsonObject, ToJson } from "../src/lson";
+import type { Json } from "../src/json";
+import type { Lson, LsonObject, ToJson } from "../src/lson";
 import { LiveList } from "../src/LiveList";
 import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine } from "../src/room";
-import { Authentication } from "../src/types";
+import type { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
 // TODO: Further improve this type

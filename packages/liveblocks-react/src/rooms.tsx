@@ -1,12 +1,9 @@
 import * as React from "react";
 import { useClient } from "./client";
-import {
+import type {
   BroadcastOptions,
   History,
   Json,
-  LiveList,
-  LiveMap,
-  LiveObject,
   Lson,
   LsonObject,
   Others,
@@ -14,6 +11,7 @@ import {
   Room,
   User,
 } from "@liveblocks/client";
+import { LiveMap, LiveList, LiveObject } from "@liveblocks/client";
 import useRerender from "./useRerender";
 
 const RoomContext = React.createContext<Room | null>(null);

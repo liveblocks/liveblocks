@@ -1,15 +1,19 @@
 import { createClient } from "@liveblocks/client";
-import { LiveblocksState, Mapping, enhancer, actions } from ".";
+import type { LiveblocksState, Mapping } from ".";
+import { enhancer, actions } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { configureStore, Reducer } from "@reduxjs/toolkit";
+import type { Reducer } from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 import {
   ClientMessageType,
   OpType,
+  ServerMessageType,
+} from "@liveblocks/client/internal";
+import type {
   SerializedCrdtWithId,
   ServerMessage,
-  ServerMessageType,
 } from "@liveblocks/client/internal";
 import {
   missingClient,

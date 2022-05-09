@@ -1,4 +1,4 @@
-import {
+import type {
   Others,
   Presence,
   Room,
@@ -19,8 +19,9 @@ import {
   AuthorizeResponse,
   Authentication,
 } from "./types";
-import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
-import { Lson, LsonObject } from "./lson";
+import type { Json, JsonObject } from "./json";
+import { isJsonObject, isJsonArray, parseJson } from "./json";
+import type { Lson, LsonObject } from "./lson";
 import {
   compact,
   getTreesDiffOperations,
@@ -46,7 +47,7 @@ import {
   SerializedCrdt,
   WebsocketCloseCodes,
 } from "./live";
-import { LiveMap } from "./LiveMap";
+import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";

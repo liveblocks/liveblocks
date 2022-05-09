@@ -1,4 +1,4 @@
-import { AbstractCrdt, Doc } from "./AbstractCrdt";
+import type { AbstractCrdt, Doc } from "./AbstractCrdt";
 import {
   SerializedCrdtWithId,
   CrdtType,
@@ -15,8 +15,8 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { Json, isJsonObject, parseJson } from "./json";
-import { Lson, LsonObject } from "./lson";
-import {
+import type { Lson, LsonObject } from "./lson";
+import type {
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,

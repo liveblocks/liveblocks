@@ -1,5 +1,5 @@
-import { StateCreator, SetState, GetState, StoreApi } from "zustand";
-import {
+import type { StateCreator, SetState, GetState, StoreApi } from "zustand";
+import type {
   Client,
   LiveObject,
   LsonObject,
