@@ -34,7 +34,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh -f
+        run: ../../scripts/link-liveblocks.sh
 
       - name: Build
         run: npm run build
@@ -75,7 +75,7 @@ jobs:
           cache-dependency-path: "**/package-lock.json"
 
       - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh -f
+        run: ../../scripts/link-liveblocks.sh
 
       - name: Install Playwright
         run: npx playwright install --with-deps
