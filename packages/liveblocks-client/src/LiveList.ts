@@ -486,7 +486,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           {
             index: newIndex,
             previousIndex: index,
-            item: item[0],
+            item: item instanceof LiveRegister ? item.data : item,
             type: "move",
           },
         ],

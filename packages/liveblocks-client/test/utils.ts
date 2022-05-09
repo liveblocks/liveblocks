@@ -16,7 +16,7 @@ import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine } from "../src/room";
-import { Authentication } from "../src/types";
+import { Authentication, LiveListUpdates, StorageUpdate } from "../src/types";
 import { remove } from "../src/utils";
 
 // TODO: Further improve this type
@@ -295,34 +295,88 @@ export async function prepareStorageTest<T extends LsonObject>(
     }
   );
 
-  const states: any[] = [];
+  const states: ToJson<LsonObject>[] = [];
+  const expectedUpdates: any[][] = [];
+  const expectedUndoUpdates: any[][] = [];
+  const listOfUpdates: any[][] = [];
+  const refListOfUpdates: any[][] = [];
 
-  function assert(data: fixme, shouldPushToStates = true) {
-    if (shouldPushToStates) {
-      states.push(data);
-    }
+  function assertState(data: ToJson<LsonObject>) {
     const json = objectToJson(storage.root);
     expect(json).toEqual(data);
     expect(objectToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
+  function assertLastUpdates(updates: any[]) {
+    expect(updates).toEqual(listOfUpdates[listOfUpdates.length - 1]);
+    expect(updates).toEqual(refListOfUpdates[refListOfUpdates.length - 1]);
+  }
+
+  function assert(
+    data: ToJson<LsonObject>,
+    options?: {
+      updates?: JsonLiveUpdate[];
+      undoUpdates?: JsonLiveUpdate[];
+    }
+  ) {
+    states.push(data);
+
+    if (options?.updates) {
+      expectedUpdates.push(options.updates);
+    }
+    if (options?.undoUpdates) {
+      expectedUndoUpdates.push(options.undoUpdates);
+    }
+
+    assertState(data);
+
+    if (options?.updates) {
+      assertLastUpdates(options.updates);
+    }
+  }
+
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
+      if (expectedUndoUpdates.length > 0)
+        assertLastUpdates(
+          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
+        );
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assert(states[i + 1], false);
+      assertState(states[i + 1]);
+      if (expectedUpdates.length > 0) assertLastUpdates(expectedUpdates[i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
+      if (expectedUndoUpdates.length > 0)
+        assertLastUpdates(
+          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
+        );
     }
   }
+
+  machine.subscribe(
+    storage.root,
+    (updates) => listOfUpdates.push(updates.map(serializeUpdateToJson)),
+    {
+      isDeep: true,
+    }
+  );
+
+  refMachine.subscribe(
+    refStorage.root,
+    (updates) => refListOfUpdates.push(updates.map(serializeUpdateToJson)),
+    {
+      isDeep: true,
+    }
+  );
 
   function reconnect(
     actor: number,
@@ -370,6 +424,85 @@ export async function prepareStorageTest<T extends LsonObject>(
       ),
     reconnect,
     ws,
+  };
+}
+
+type JsonLiveUpdate = JsonLiveListUpdate<Lson>;
+
+type JsonLiveListUpdate<TItem extends Lson> = {
+  type: "LiveList";
+  node: ToJson<LiveList<TItem>>;
+  updates: Array<
+    | {
+        type: "insert";
+        item: ToJson<TItem>;
+        index: number;
+      }
+    | {
+        type: "move";
+        index: number;
+        previousIndex: number;
+        item: ToJson<TItem>;
+      }
+    | {
+        type: "delete";
+        index: number;
+      }
+    | {
+        type: "set";
+        item: ToJson<TItem>;
+        index: number;
+      }
+  >;
+};
+
+function liveListUpdateToJson<TItem extends Lson>(
+  update: LiveListUpdates<TItem>
+): JsonLiveListUpdate<TItem> {
+  return {
+    type: update.type,
+    node: toJson(update.node),
+    updates: update.updates.map((delta) => {
+      switch (delta.type) {
+        case "move": {
+          return {
+            type: delta.type,
+            index: delta.index,
+            previousIndex: delta.previousIndex,
+            item: toJson(delta.item),
+          };
+        }
+        case "delete": {
+          return delta;
+        }
+        case "insert": {
+          return {
+            type: delta.type,
+            index: delta.index,
+            item: toJson(delta.item),
+          };
+        }
+        case "set": {
+          return {
+            type: delta.type,
+            index: delta.index,
+            item: toJson(delta.item),
+          };
+        }
+      }
+    }),
+  };
+}
+
+function serializeUpdateToJson(update: StorageUpdate) {
+  if (update.type === "LiveList") {
+    return liveListUpdateToJson(update);
+  }
+
+  return {
+    type: update.type,
+    node: toJson(update.node),
+    updates: toJson(update.updates),
   };
 }
 
