@@ -16,7 +16,13 @@ import { LiveMap } from "../src/LiveMap";
 import { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
 import { defaultState, Effects, makeStateMachine } from "../src/room";
-import { Authentication, LiveListUpdates, StorageUpdate } from "../src/types";
+import {
+  Authentication,
+  LiveListUpdates,
+  LiveObjectUpdateDelta,
+  StorageUpdate,
+  UpdateDelta,
+} from "../src/types";
 import { remove } from "../src/utils";
 
 // TODO: Further improve this type
@@ -296,10 +302,10 @@ export async function prepareStorageTest<T extends LsonObject>(
   );
 
   const states: ToJson<LsonObject>[] = [];
-  const expectedUpdates: any[][] = [];
-  const expectedUndoUpdates: any[][] = [];
-  const listOfUpdates: any[][] = [];
-  const refListOfUpdates: any[][] = [];
+  const expectedUpdates: JsonStorageUpdate[][] = [];
+  const expectedUndoUpdates: JsonStorageUpdate[][] = [];
+  const listOfUpdates: JsonStorageUpdate[][] = [];
+  const refListOfUpdates: JsonStorageUpdate[][] = [];
 
   function assertState(data: ToJson<LsonObject>) {
     const json = objectToJson(storage.root);
@@ -308,7 +314,7 @@ export async function prepareStorageTest<T extends LsonObject>(
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assertLastUpdates(updates: any[]) {
+  function assertLastUpdates(updates: JsonStorageUpdate[]) {
     expect(updates).toEqual(listOfUpdates[listOfUpdates.length - 1]);
     expect(updates).toEqual(refListOfUpdates[refListOfUpdates.length - 1]);
   }
@@ -316,8 +322,8 @@ export async function prepareStorageTest<T extends LsonObject>(
   function assert(
     data: ToJson<LsonObject>,
     options?: {
-      updates?: JsonLiveUpdate[];
-      undoUpdates?: JsonLiveUpdate[];
+      updates?: JsonStorageUpdate[];
+      undoUpdates?: JsonStorageUpdate[];
     }
   ) {
     states.push(data);
@@ -427,7 +433,10 @@ export async function prepareStorageTest<T extends LsonObject>(
   };
 }
 
-type JsonLiveUpdate = JsonLiveListUpdate<Lson>;
+type JsonStorageUpdate =
+  | JsonLiveListUpdate<Lson>
+  | JsonLiveObjectUpdate<LsonObject>
+  | JsonLiveMapUpdate<string, Lson>;
 
 type JsonLiveListUpdate<TItem extends Lson> = {
   type: "LiveList";
@@ -454,6 +463,18 @@ type JsonLiveListUpdate<TItem extends Lson> = {
         index: number;
       }
   >;
+};
+
+type JsonLiveObjectUpdate<O extends LsonObject> = {
+  type: "LiveObject";
+  node: ToJson<LiveObject<O>>;
+  updates: LiveObjectUpdateDelta<O>;
+};
+
+type JsonLiveMapUpdate<TKey extends string, TValue extends Lson> = {
+  type: "LiveMap";
+  node: ToJson<LiveMap<TKey, TValue>>;
+  updates: { [key: string]: UpdateDelta };
 };
 
 function liveListUpdateToJson<TItem extends Lson>(
@@ -494,16 +515,28 @@ function liveListUpdateToJson<TItem extends Lson>(
   };
 }
 
-function serializeUpdateToJson(update: StorageUpdate) {
+function serializeUpdateToJson(update: StorageUpdate): JsonStorageUpdate {
   if (update.type === "LiveList") {
     return liveListUpdateToJson(update);
   }
 
-  return {
-    type: update.type,
-    node: toJson(update.node),
-    updates: toJson(update.updates),
-  };
+  if (update.type === "LiveObject") {
+    return {
+      type: update.type,
+      node: toJson(update.node),
+      updates: update.updates,
+    };
+  }
+
+  if (update.type === "LiveMap") {
+    return {
+      type: update.type,
+      node: toJson(update.node),
+      updates: update.updates,
+    };
+  }
+
+  throw new Error("Unsupported LiveStructure type");
 }
 
 export async function reconnect(

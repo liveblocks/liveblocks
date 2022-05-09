@@ -20,8 +20,6 @@ import { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
 import { Lson } from "./lson";
 
-type LiveListItem = [crdt: AbstractCrdt, position: string];
-
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
