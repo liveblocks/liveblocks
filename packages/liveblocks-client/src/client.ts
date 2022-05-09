@@ -1,11 +1,26 @@
 import { createRoom, InternalRoom } from "./room";
 import type {
-  ClientOptions,
-  Room,
-  Client,
-  Presence,
   Authentication,
+  Client,
+  ClientOptions,
+  Presence,
+  Resolve,
+  Room,
+  RoomInitializers,
 } from "./types";
+import { deprecateIf } from "./utils";
+
+type EnterOptions<TPresence, TStorage> = Resolve<
+  // Enter options are just room initializers, plus an internal option
+  RoomInitializers<TPresence, TStorage> & {
+    /**
+     * INTERNAL OPTION: Only used in a SSR context when you want an empty room
+     * to make sure your react tree is rendered properly without connecting to
+     * websocket
+     */
+    DO_NOT_USE_withoutConnecting?: boolean;
+  }
+>;
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -45,23 +60,30 @@ export function createClient(options: ClientOptions): Client {
 
   function enter<TStorage>(
     roomId: string,
-    options: {
-      defaultPresence?: Presence;
-      defaultStorageRoot?: TStorage;
-      /**
-       * INTERNAL OPTION: Only used in a SSR context when you want an empty room to make sure your react tree is rendered properly without connecting to websocket
-       */
-      DO_NOT_USE_withoutConnecting?: boolean;
-    } = {}
+    options: EnterOptions<Presence, TStorage> = {}
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
     }
+
+    deprecateIf(
+      options.defaultPresence,
+      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
+      "defaultPresence"
+    );
+    deprecateIf(
+      options.defaultStorageRoot,
+      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
+      "defaultStorageRoot"
+    );
+
     internalRoom = createRoom(
       {
-        defaultPresence: options.defaultPresence,
-        defaultStorageRoot: options.defaultStorageRoot,
+        initialPresence: options.initialPresence,
+        initialStorage: options.initialStorage,
+        defaultPresence: options.defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot: options.defaultStorageRoot, // Will get removed in 0.18
       },
       {
         roomId,

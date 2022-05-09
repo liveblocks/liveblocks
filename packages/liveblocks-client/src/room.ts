@@ -18,6 +18,7 @@ import type {
   BroadcastOptions,
   AuthorizeResponse,
   Authentication,
+  RoomInitializers,
 } from "./types";
 import type { Json, JsonObject } from "./json";
 import { isJsonObject, isJsonArray, parseJson } from "./json";
@@ -1433,8 +1434,8 @@ See v0.13 release notes for more information.
 }
 
 export function defaultState(
-  me?: Presence,
-  defaultStorageRoot?: JsonObject
+  initialPresence?: Presence,
+  initialStorage?: JsonObject
 ): State {
   return {
     connection: { state: "closed" },
@@ -1457,17 +1458,17 @@ export function defaultState(
       pongTimeout: 0,
     },
     buffer: {
-      presence: me == null ? {} : me,
+      presence: initialPresence == null ? {} : initialPresence,
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: me == null ? {} : me,
+    me: initialPresence == null ? {} : initialPresence,
     users: {},
     others: makeOthers({}),
-    defaultStorageRoot,
+    defaultStorageRoot: initialStorage,
     idFactory: null,
 
     // Storage
@@ -1503,15 +1504,19 @@ export type InternalRoom = {
 };
 
 export function createRoom(
-  options: {
-    defaultPresence?: Presence;
-    defaultStorageRoot?: Record<string, any>;
-  },
+  options: RoomInitializers<Presence, Record<string, any>>,
   context: Context
 ): InternalRoom {
+  const initialPresence = options.initialPresence ?? options.defaultPresence;
+  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
+
   const state = defaultState(
-    options.defaultPresence,
-    options.defaultStorageRoot
+    typeof initialPresence === "function"
+      ? initialPresence(context.roomId)
+      : initialPresence,
+    typeof initialStorage === "function"
+      ? initialStorage(context.roomId)
+      : initialStorage
   );
 
   const machine = makeStateMachine(state, context);

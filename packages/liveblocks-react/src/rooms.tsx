@@ -12,25 +12,21 @@ import type {
   User,
 } from "@liveblocks/client";
 import { LiveMap, LiveList, LiveObject } from "@liveblocks/client";
+import { deprecateIf } from "@liveblocks/client/internal";
+import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import useRerender from "./useRerender";
 
 const RoomContext = React.createContext<Room | null>(null);
 
-type RoomProviderProps<TStorage> = {
-  /**
-   * The id of the room you want to connect to
-   */
-  id: string;
-  /**
-   * A callback that let you initialize the default presence when entering the room.
-   * If ommited, the default presence will be an empty object
-   */
-  defaultPresence?: () => Presence;
-
-  defaultStorageRoot?: TStorage;
-
-  children: React.ReactNode;
-};
+type RoomProviderProps<TStorage> = Resolve<
+  {
+    /**
+     * The id of the room you want to connect to
+     */
+    id: string;
+    children: React.ReactNode;
+  } & RoomInitializers<Presence, TStorage>
+>;
 
 /**
  * Makes a Room available in the component hierarchy below.
@@ -38,7 +34,14 @@ type RoomProviderProps<TStorage> = {
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
 export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
-  const { id: roomId, defaultPresence, defaultStorageRoot } = props;
+  const {
+    id: roomId,
+    initialPresence,
+    initialStorage,
+    defaultPresence, // Will get removed in 0.18
+    defaultStorageRoot, // Will get removed in 0.18
+  } = props;
+
   if (process.env.NODE_ENV !== "production") {
     if (roomId == null) {
       throw new Error(
@@ -50,12 +53,25 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
     }
   }
 
+  deprecateIf(
+    defaultPresence,
+    "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
+    "defaultPresence"
+  );
+  deprecateIf(
+    defaultStorageRoot,
+    "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
+    "defaultStorageRoot"
+  );
+
   const client = useClient();
 
   const [room, setRoom] = React.useState(() =>
     client.enter(roomId, {
-      defaultPresence: defaultPresence ? defaultPresence() : undefined,
-      defaultStorageRoot,
+      initialPresence,
+      initialStorage,
+      defaultPresence, // Will get removed in 0.18
+      defaultStorageRoot, // Will get removed in 0.18
       DO_NOT_USE_withoutConnecting: typeof window === "undefined",
     } as any)
   );
@@ -63,8 +79,10 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
   React.useEffect(() => {
     setRoom(
       client.enter(roomId, {
-        defaultPresence: defaultPresence ? defaultPresence() : undefined,
-        defaultStorageRoot,
+        initialPresence,
+        initialStorage,
+        defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as any)
     );
@@ -342,58 +360,222 @@ export function useStorage<TStorage extends Record<string, any>>(): [
  * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveMap
- * @param entries Optional entries that are used to create the LiveMap for the first time
  * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
  *
  * @example
- * const emptyMap = useMap("mapA");
- * const mapWithItems = useMap("mapB", [["keyA", "valueA"], ["keyB", "valueB"]]);
+ * const shapesById = useMap<string, Shape>("shapes");
  */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string
+): LiveMap<TKey, TValue> | null;
+/**
+ * @deprecated We no longer recommend initializing the
+ * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries: readonly (readonly [TKey, TValue])[] | null
+): LiveMap<TKey, TValue> | null;
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
-  return useCrdt(key, new LiveMap(entries));
+  deprecateIf(
+    entries,
+    `Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveMap(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+  );
+  const value = useCrdt(key, new LiveMap(entries));
+  //                         ^^^^^^^^^^^^^^^^^^^^
+  //                         NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useMap() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveMap } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveMap(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+    );
+    return null;
+  }
 }
 
 /**
- * Returns the LiveList associated with the provided key. If the LiveList does not exist, a new LiveList will be created.
+ * Returns the LiveList associated with the provided key.
  * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveList
- * @param items Optional items that are used to create the LiveList for the first time
  * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
  *
  * @example
- * const emptyList = useList("listA");
- * const listWithItems = useList("listB", ["a", "b", "c"]);
+ * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
  */
+export function useList<TValue extends Lson>(
+  key: string
+): LiveList<TValue> | null;
+/**
+ * @deprecated We no longer recommend initializing the
+ * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
+ */
+export function useList<TValue extends Lson>(
+  key: string,
+  items: TValue[]
+): LiveList<TValue> | null;
 export function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
-  return useCrdt<LiveList<TValue>>(key, new LiveList(items));
+  deprecateIf(
+    items,
+    `Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    import { LiveList } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveList(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+  );
+  const value = useCrdt<LiveList<TValue>>(key, new LiveList(items));
+  //                                           ^^^^^^^^^^^^^^^^^^^
+  //                                           NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useList() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveList } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveList(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+    );
+    return null;
+  }
 }
 
 /**
- * Returns the LiveObject associated with the provided key. If the LiveObject does not exist, it will be created with the initialData parameter.
+ * Returns the LiveObject associated with the provided key.
  * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
  *
  * @param key The storage key associated with the LiveObject
- * @param initialData Optional data that is used to create the LiveObject for the first time
  * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
  *
  * @example
- * const object = useObject("obj", {
- *   company: "Liveblocks",
- *   website: "https://liveblocks.io"
- * });
+ * const object = useObject("obj");
  */
+export function useObject<TData extends LsonObject>(
+  key: string
+): LiveObject<TData> | null;
+/**
+ * @deprecated We no longer recommend initializing the fields from the
+ * useObject() hook. For details, see https://bit.ly/3Niy5aP.
+ */
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData: TData
+): LiveObject<TData> | null;
 export function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
-  return useCrdt(key, new LiveObject(initialData));
+  deprecateIf(
+    initialData,
+    `Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18.
+
+Instead, please initialize this data where you set up your RoomProvider:
+
+    import { LiveObject } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveObject(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+  );
+  const value = useCrdt(key, new LiveObject(initialData));
+  //                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //                         NOTE: This param is scheduled for removal in 0.18
+  if (value.status === "ok") {
+    return value.value;
+  } else {
+    deprecateIf(
+      value.status === "notfound",
+      `Key ${JSON.stringify(
+        key
+      )} was not found in Storage. Starting with 0.18, useObject() will no longer automatically create this key.
+
+Instead, please initialize your storage where you set up your RoomProvider:
+
+    import { LiveObject } from "@liveblocks/client";
+
+    const initialStorage = () => {
+      ${JSON.stringify(key)}: new LiveObject(...),
+      ...
+    };
+
+    <RoomProvider initialStorage={initialStorage}>
+      ...
+    </RoomProvider>
+
+Please see https://bit.ly/3Niy5aP for details.`
+    );
+    return null;
+  }
 }
 
 /**
@@ -429,7 +611,12 @@ export function useHistory(): History {
   return useRoom().history;
 }
 
-function useCrdt<T>(key: string, initialCrdt: T): T | null {
+type UseCrdtResult<T> =
+  | { status: "ok"; value: T }
+  | { status: "loading" }
+  | { status: "notfound" };
+
+function useCrdt<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
   const room = useRoom();
   const [root] = useStorage();
   const rerender = useRerender();
@@ -476,5 +663,14 @@ function useCrdt<T>(key: string, initialCrdt: T): T | null {
     };
   }, [root, room]);
 
-  return root?.get(key) ?? null;
+  if (root == null) {
+    return { status: "loading" };
+  } else {
+    const value = root.get(key);
+    if (value == null) {
+      return { status: "notfound" };
+    } else {
+      return { status: "ok", value };
+    }
+  }
 }
