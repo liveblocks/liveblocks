@@ -1,4 +1,4 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt, Doc, ApplyResult, OpSource } from "./AbstractCrdt";
 import {
   creationOpToLiveStructure,
   deserialize,
@@ -140,7 +140,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, _isLocal: boolean): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

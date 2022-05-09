@@ -1,4 +1,4 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt, Doc, ApplyResult, OpSource } from "./AbstractCrdt";
 import {
   deserialize,
   selfOrRegister,
@@ -144,7 +144,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -153,8 +153,11 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const key = parentKey!;
     const child = creationOpToLiveStructure(op);
 
-    if (this._doc.getItem(id) !== undefined) {
-      return this._attachChildServerAcknowledge(this._doc.getItem(id)!, key);
+    if (source === OpSource.ACK) {
+      if (this._doc.getItem(id) !== undefined && op.intent !== "set") {
+        return this._attachChildServerAcknowledge(this._doc.getItem(id)!, key);
+      }
+      return { modified: false };
     }
 
     const existingItemIndex = this._items.findIndex(
@@ -237,7 +240,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
     // If there is a conflict
     if (existingItemIndex !== -1) {
-      if (isLocal) {
+      if (source === OpSource.UNDOREDO) {
         // If change is local => assign a temporary position to newly attached child
         const before = this._items[existingItemIndex]
           ? this._items[existingItemIndex]._getParentKeyOrThrow()

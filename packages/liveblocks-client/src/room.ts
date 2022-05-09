@@ -49,7 +49,7 @@ import {
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
-import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt, ApplyResult, OpSource } from "./AbstractCrdt";
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -488,11 +488,18 @@ export function makeStateMachine(
         result.reverse.unshift(reverse as any);
         result.updates.presence = true;
       } else {
+        let source: OpSource;
         // Ops applied after undo/redo don't have an opId.
-        if (isLocal && !op.opId) {
+        // TODO: can we remove second condition ??
+        if (isLocal) {
           op.opId = generateOpId();
+          source = OpSource.UNDOREDO;
+        } else {
+          const deleted = state.offlineOperations.delete(op.opId!);
+          source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
-        const applyOpResult = applyOp(op, isLocal);
+
+        const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
           const parentId = applyOpResult.modified.node._parent?._id!;
 
@@ -524,10 +531,7 @@ export function makeStateMachine(
     return result;
   }
 
-  function applyOp(op: Op, isLocal: boolean): ApplyResult {
-    if (op.opId) {
-      state.offlineOperations.delete(op.opId);
-    }
+  function applyOp(op: Op, source: OpSource): ApplyResult {
     switch (op.type) {
       case OpType.DeleteObjectKey:
       case OpType.UpdateObject:
@@ -538,7 +542,7 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return item._apply(op, isLocal);
+        return item._apply(op, source === OpSource.UNDOREDO);
       }
       case OpType.SetParentKey: {
         const item = state.items.get(op.id);
@@ -566,7 +570,7 @@ export function makeStateMachine(
           return { modified: false };
         }
 
-        return parent._attachChild(op, isLocal);
+        return parent._attachChild(op, source);
       }
     }
   }
