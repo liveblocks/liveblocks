@@ -5,6 +5,16 @@
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
+  "exports": {
+    "./internal": {
+      "require": "./internal.js",
+      "import": "./internal.mjs"
+    },
+    ".": {
+      "require": "./index.js",
+      "import": "./index.mjs"
+    }
+  },
   "files": [
     "**"
   ],
