@@ -116,7 +116,7 @@ npm_install () {
 npm_link () {
     logfile="$(mktemp)"
     if [ $# -gt 0 ]; then
-        err "Linking in $(pwd):"
+        err "Linking:"
         for item in "$@"; do
             err "- $item"
         done
@@ -148,7 +148,7 @@ rebuild_if_needed () {
         if [ "$(sha_stamp)" = "$(cat lib/.built-by-link-script)" ]; then
             # This was already rebuilt by an earlier invocation of this build
             # script. We don't have to throw away those results!
-            err "Skipping (build still fresh)"
+            err "Skipping build of $(basename $(pwd)) (still fresh)"
             return
         fi
     fi
@@ -193,7 +193,8 @@ link_liveblocks_deps () {
         return
     fi
 
-    echo "==> Linking Liveblocks dependencies"
+    echo
+    echo "==> Linking Liveblocks dependencies of $(basename $(pwd))"
     npm_link $(list_liveblocks_dependencies)
 }
 
@@ -205,7 +206,8 @@ link_liveblocks_and_peer_deps () {
         return
     fi
 
-    echo "==> Linking Liveblocks & peer dependencies"
+    echo
+    echo "==> Linking Liveblocks & peer dependencies of $(basename $(pwd))"
     npm_link $(list_liveblocks_and_peer_dependencies)
 }
 
