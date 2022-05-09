@@ -93,7 +93,7 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
-    it("push LiveObject", async () => {
+    it("LiveObject on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -112,44 +112,43 @@ describe("LiveList", () => {
       });
 
       items.push(new LiveObject({ a: 0 }));
-      assert({
-        items: [{ a: 0 }],
-      });
-
-      items.push(new LiveObject({ a: 1 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }],
-      });
-
-      items.push(new LiveObject({ a: 2 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
-      });
+      assert(
+        {
+          items: [{ a: 0 }],
+        },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: [{ a: 0 }],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: { a: 0 },
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: [],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
 
-    it("push existing LiveObject should throw", async () => {
-      const { storage, assert } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
-
-      const root = storage.root;
-      const items = root.toObject().items;
-
-      const object = new LiveObject({ a: 0 });
-
-      items.push(object);
-      expect(() => items.push(object)).toThrow();
-    });
-
-    it("push number in empty list", async () => {
+    it("push number on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<number>;
       }>(
@@ -200,7 +199,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("push LiveMap in empty list", async () => {
+    it("push LiveMap on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveMap<string, number>>;
       }>(
@@ -252,6 +251,25 @@ describe("LiveList", () => {
       );
 
       assertUndoRedo();
+    });
+
+    it("already attached LiveObject should throw", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = root.toObject().items;
+
+      const object = new LiveObject({ a: 0 });
+
+      items.push(object);
+      expect(() => items.push(object)).toThrow();
     });
   });
 
@@ -1405,31 +1423,6 @@ describe("LiveList", () => {
   });
 
   describe("subscriptions", () => {
-    test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const liveList = root.get("items");
-
-      subscribe(liveList, callback);
-
-      liveList.push("a");
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(liveList);
-    });
-
     test("deep subscribe", async () => {
       const { storage, subscribe } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
