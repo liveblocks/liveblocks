@@ -6,7 +6,7 @@
       "use": "@nuxtjs/vercel-builder",
       "config": {
         "generateStaticRoutes": true,
-        "serverFiles": ["/api"]
+        "serverFiles": ["api.js"]
       }
     }
   ]
