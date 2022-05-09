@@ -28,6 +28,11 @@ export interface Doc {
   ) => void;
 }
 
+export enum OpSource {
+  UNDOREDO,
+  REMOTE,
+  ACK,
+}
 export abstract class AbstractCrdt {
   private __parent?: AbstractCrdt;
   private __doc?: Doc;
@@ -123,7 +128,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _attachChild(op: CreateOp, isLocal: boolean): ApplyResult;
+  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
 
   /**
    * @internal

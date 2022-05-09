@@ -1,4 +1,4 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt, Doc, ApplyResult, OpSource } from "./AbstractCrdt";
 import {
   SerializedCrdtWithId,
   CrdtType,
@@ -83,7 +83,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     };
   }
 
-  _attachChild(_op: CreateOp, _isLocal: boolean): ApplyResult {
+  _attachChild(_op: CreateOp, source: OpSource): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
