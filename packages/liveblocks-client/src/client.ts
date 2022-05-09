@@ -69,12 +69,12 @@ export function createClient(options: ClientOptions): Client {
 
     deprecateIf(
       options.defaultPresence,
-      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/lak1PlM",
+      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
       "defaultPresence"
     );
     deprecateIf(
       options.defaultStorageRoot,
-      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/lak1PlM",
+      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
       "defaultStorageRoot"
     );
 

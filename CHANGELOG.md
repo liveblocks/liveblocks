@@ -19,7 +19,7 @@ Some APIs are being **deprecated** and may start showing console warnings when u
 - The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
 - The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
 
-For information, please see https://bit.ly/lak1PlM.
+For information, please see https://bit.ly/3Niy5aP.
 
 # v0.16.3
 

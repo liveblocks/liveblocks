@@ -55,12 +55,12 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
 
   deprecateIf(
     defaultPresence,
-    "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/lak1PlM",
+    "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
     "defaultPresence"
   );
   deprecateIf(
     defaultStorageRoot,
-    "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/lak1PlM",
+    "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
     "defaultStorageRoot"
   );
 
@@ -370,7 +370,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
 ): LiveMap<TKey, TValue> | null;
 /**
  * @deprecated We no longer recommend initializing the
- * entries from the useMap() hook. For details, see https://bit.ly/lak1PlM.
+ * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
  */
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
@@ -395,7 +395,7 @@ Instead, please initialize this data where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
   );
   const value = useCrdt(key, new LiveMap(entries));
   //                         ^^^^^^^^^^^^^^^^^^^^
@@ -422,7 +422,7 @@ Instead, please initialize your storage where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
     );
     return null;
   }
@@ -443,7 +443,7 @@ export function useList<TValue extends Lson>(
 ): LiveList<TValue> | null;
 /**
  * @deprecated We no longer recommend initializing the
- * items from the useList() hook. For details, see https://bit.ly/lak1PlM.
+ * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
  */
 export function useList<TValue extends Lson>(
   key: string,
@@ -470,7 +470,7 @@ Instead, please initialize this data where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
   );
   const value = useCrdt<LiveList<TValue>>(key, new LiveList(items));
   //                                           ^^^^^^^^^^^^^^^^^^^
@@ -497,7 +497,7 @@ Instead, please initialize your storage where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
     );
     return null;
   }
@@ -518,7 +518,7 @@ export function useObject<TData extends LsonObject>(
 ): LiveObject<TData> | null;
 /**
  * @deprecated We no longer recommend initializing the fields from the
- * useObject() hook. For details, see https://bit.ly/lak1PlM.
+ * useObject() hook. For details, see https://bit.ly/3Niy5aP.
  */
 export function useObject<TData extends LsonObject>(
   key: string,
@@ -545,7 +545,7 @@ Instead, please initialize this data where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
   );
   const value = useCrdt(key, new LiveObject(initialData));
   //                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -572,7 +572,7 @@ Instead, please initialize your storage where you set up your RoomProvider:
       ...
     </RoomProvider>
 
-Please see https://bit.ly/lak1PlM for details.`
+Please see https://bit.ly/3Niy5aP for details.`
     );
     return null;
   }
