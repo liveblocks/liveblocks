@@ -58,6 +58,16 @@ function Sandbox() {
       </button>
 
       <button
+        id="insert"
+        onClick={() => {
+          list.insert(me.connectionId + ":" + item, 0);
+          item = String.fromCharCode(item.charCodeAt(0) + 1);
+        }}
+      >
+        Insert
+      </button>
+
+      <button
         id="move"
         onClick={() => {
           const index = generateRandomNumber(list.length);
@@ -86,8 +96,10 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          const index = generateRandomNumber(list.length);
-          list.delete(index);
+          if (list.length > 0) {
+            const index = generateRandomNumber(list.length);
+            list.delete(index);
+          }
         }}
       >
         Delete
