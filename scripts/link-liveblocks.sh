@@ -76,7 +76,29 @@ modified_timestamp () {
 }
 
 list_dependencies () {
-    jq -r '((.dependencies // {}) + (.devDependencies // {}) + (.peerDependencies // {})) | keys[]' package.json
+    echo '
+      const config = require("./package.json");
+      const deps = new Set([
+          ...(Object.keys(config?.dependencies ?? {})),
+          ...(Object.keys(config?.peerDependencies ?? {})),
+          ...(Object.keys(config?.devDependencies ?? {})),
+      ]);
+      for (const dep of deps) {
+          console.log(dep);
+      }
+    ' | node -
+}
+
+list_peer_dependencies () {
+    echo '
+      const config = require("./package.json");
+      const deps = new Set([
+          ...(Object.keys(config?.peerDependencies ?? {})),
+      ]);
+      for (const dep of deps) {
+          console.log(dep);
+      }
+    ' | node -
 }
 
 list_liveblocks_dependencies () {
@@ -85,7 +107,7 @@ list_liveblocks_dependencies () {
 
 list_liveblocks_and_peer_dependencies_ () {
     list_liveblocks_dependencies
-    for dep in $(jq -r '(.peerDependencies // {}) | keys[]' package.json); do
+    for dep in $(list_peer_dependencies); do
         if starts_with "$dep" "@liveblocks/"; then
             continue
         fi
