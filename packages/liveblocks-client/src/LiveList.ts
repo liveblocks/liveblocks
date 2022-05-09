@@ -154,8 +154,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
+      // Check if Ack from server has a different position.
       if (this._doc.getItem(id)?._getParentKeyOrThrow() !== parentKey) {
-        // check if updated position is already used.
+        // Check if updated position is already used.
         const newPositionIndex = this._items.findIndex(
           (item) => item._getParentKeyOrThrow() === key
         );

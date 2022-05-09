@@ -1203,7 +1203,7 @@ describe("LiveList", () => {
       });
     });
 
-    it(`list conflicts - ack has different position that local`, async () => {
+    it(`list conflicts - ack has different position that local item`, async () => {
       const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1221,6 +1221,7 @@ describe("LiveList", () => {
         items: ["B"],
       });
 
+      // Other client created "A" at the same time but was processed first by the server.
       applyRemoteOperations([
         {
           type: OpType.CreateRegister,
@@ -1231,7 +1232,9 @@ describe("LiveList", () => {
           opId: "2:1",
         },
       ]);
+      // B is shifted to SECOND_POSITION
 
+      // Other client deleted "A" right after creation.
       applyRemoteOperations([
         {
           type: OpType.DeleteCrdt,
@@ -1240,9 +1243,11 @@ describe("LiveList", () => {
         },
       ]);
 
-      // State: ["B"] with B at SECOND_POSITION
+      assert({
+        items: ["B"], // "B" is at SECOND_POSITION
+      });
 
-      // Ack with different position
+      // Server sends ackownledgment for "B" creation with different position/
       applyRemoteOperations([
         {
           type: OpType.CreateRegister,
@@ -1255,9 +1260,10 @@ describe("LiveList", () => {
       ]);
 
       assert({
-        items: ["B"],
+        items: ["B"], // "B" should at FIRST_POSITION
       });
 
+      // Other client creates an item at the SECOND_POSITION
       applyRemoteOperations([
         {
           type: OpType.CreateRegister,
