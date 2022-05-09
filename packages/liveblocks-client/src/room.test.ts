@@ -22,7 +22,7 @@ import {
 } from "./live";
 import { LiveList } from "./LiveList";
 import { makeStateMachine, defaultState, createRoom } from "./room";
-import { Authentication, Others } from "./types";
+import type { Authentication, Others } from "./types";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 

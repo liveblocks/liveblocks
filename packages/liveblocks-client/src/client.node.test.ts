@@ -5,7 +5,7 @@
 import { createClient } from ".";
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response } from "node-fetch";
-import { ClientOptions } from "./types";
+import type { ClientOptions } from "./types";
 import { MockWebSocket } from "../test/utils";
 
 (global as any).atob = (data: string) => Buffer.from(data, "base64");

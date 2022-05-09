@@ -1,8 +1,8 @@
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import { Json, JsonObject } from "./json";
-import { Lson, LsonObject } from "./lson";
+import type { Json, JsonObject } from "./json";
+import type { Lson, LsonObject } from "./lson";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to

@@ -15,7 +15,7 @@ import {
   patchLiveObject,
 } from "./immutable";
 import { LiveObject } from "./LiveObject";
-import { StorageUpdate } from "./types";
+import type { StorageUpdate } from "./types";
 
 // TODO: Further improve this type
 type fixme = unknown;

@@ -1,5 +1,11 @@
 import { createRoom, InternalRoom } from "./room";
-import { ClientOptions, Room, Client, Presence, Authentication } from "./types";
+import type {
+  ClientOptions,
+  Room,
+  Client,
+  Presence,
+  Authentication,
+} from "./types";
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.

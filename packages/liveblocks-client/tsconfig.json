@@ -11,7 +11,9 @@
     "declaration": true,
     "moduleResolution": "node",
     "lib": ["dom", "esnext"],
-    "stripInternal": true
+    "stripInternal": true,
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true
   },
   "include": ["./src/**/*.ts", "./test/**/*.ts"],
   "exclude": ["node_modules"]

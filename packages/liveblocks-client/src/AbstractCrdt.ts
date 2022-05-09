@@ -1,5 +1,6 @@
-import { CreateOp, Op, OpType, SerializedCrdt } from "./live";
-import { StorageUpdate } from "./types";
+import { OpType } from "./live";
+import type { CreateOp, Op, SerializedCrdt } from "./live";
+import type { StorageUpdate } from "./types";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }

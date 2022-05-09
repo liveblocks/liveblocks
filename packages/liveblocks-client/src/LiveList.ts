@@ -1,4 +1,5 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
+import type { Doc, ApplyResult } from "./AbstractCrdt";
 import {
   deserialize,
   selfOrRegister,
@@ -16,9 +17,9 @@ import {
   CreateOp,
 } from "./live";
 import { makePosition, compare } from "./position";
-import { LiveListUpdateDelta, LiveListUpdates } from "./types";
+import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import { LiveRegister } from "./LiveRegister";
-import { Lson } from "./lson";
+import type { Lson } from "./lson";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 

@@ -9,7 +9,9 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "outDir": "./lib/esm"
+    "outDir": "./lib/esm",
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true
   },
   "include": ["./src/**/*"],
   "exclude": ["node_modules", "src/**/*.spec.ts"]

@@ -1,7 +1,7 @@
 import { OpType } from "./live";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
+import type { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import type { LiveObject } from "./LiveObject";
 import {
   prepareStorageTest,
   createSerializedObject,

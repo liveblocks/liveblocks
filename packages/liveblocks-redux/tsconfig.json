@@ -8,7 +8,9 @@
     "moduleResolution": "node",
     "noUncheckedIndexedAccess": true,
     "lib": ["es2019", "dom", "esnext"],
-    "stripInternal": true
+    "stripInternal": true,
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true
   },
   "file": ["src/index.ts", "src/index.test.ts"],
   "exclude": ["node_modules"]
