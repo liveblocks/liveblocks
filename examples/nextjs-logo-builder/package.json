@@ -18,6 +18,6 @@
   "devDependencies": {
     "@types/react": "17.0.33",
     "prettier": "^2.6.2",
-    "typescript": "4.4.4"
+    "typescript": "^4.4.4"
   }
 }
