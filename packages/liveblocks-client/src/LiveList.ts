@@ -154,10 +154,11 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const child = creationOpToLiveStructure(op);
 
     if (source === OpSource.ACK) {
-      if (this._doc.getItem(id) !== undefined && op.intent !== "set") {
+      if (this._doc.getItem(id) !== undefined) {
         return this._attachChildServerAcknowledge(this._doc.getItem(id)!, key);
+      } else if (op.intent !== "set") {
+        return { modified: false };
       }
-      return { modified: false };
     }
 
     const existingItemIndex = this._items.findIndex(
