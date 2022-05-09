@@ -136,11 +136,11 @@ liveblocks_pkg_dir () {
     echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
 }
 
-# Returns a single MD5 string representing the "input state" for this project.
-# It works by taking the MD5 hash of all files in the current worktree known to
+# Returns a single SHA1 string representing the "input state" for this project.
+# It works by taking the SHA1 hash of all files in the current worktree known to
 # Git, then hashing that entire list again.
 sha_stamp () {
-    git ls-files --cached --modified --exclude-standard --deduplicate | xargs md5 -r | md5 -q
+    git ls-files --cached --modified --exclude-standard --deduplicate | xargs sha1sum | sha1sum | cut -d' ' -f1
 }
 
 rebuild_if_needed () {
