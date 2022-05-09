@@ -7,10 +7,12 @@
   "types": "./index.d.ts",
   "exports": {
     "./internal": {
+      "types": "./internal.d.ts",
       "require": "./internal.js",
       "import": "./internal.mjs"
     },
     ".": {
+      "types": "./index.d.ts",
       "require": "./index.js",
       "import": "./index.mjs"
     }
