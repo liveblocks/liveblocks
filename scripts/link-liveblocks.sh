@@ -12,23 +12,18 @@ starts_with () {
 }
 
 usage () {
-    err "usage: link-liveblocks.sh [-fh] [<project-root>]"
+    err "usage: link-liveblocks.sh [-h] [<project-root>]"
     err
     err "Links the NPM project in the current directory to use the local Liveblocks"
     err "codebase instead of the one currently published to NPM."
     err
     err "Options:"
-    err "-f    Always rebuild (even if not needed)"
     err "-h    Show this help"
 }
 
 now="$(date +%s)"
-force=0
-force_flag=""
-while getopts ft:h flag; do
+while getopts h flag; do
     case "$flag" in
-        f) force=1 ; force_flag="-t $now" ;;
-        t) force=1 ; force_flag="-t $OPTARG" ; now="$OPTARG" ;;
         *) usage; exit 2;;
     esac
 done
@@ -40,7 +35,7 @@ if [ $# -eq 1 ]; then
 elif [ $# -eq 0 ]; then
     # If this script is invoked without the second argument, re-invoke itself with
     # the current directory as an explicit argument.
-    exec "$THIS_SCRIPT" $force_flag "$(pwd)"
+    exec "$THIS_SCRIPT" "$(pwd)"
     exit $?
 else
     usage
@@ -77,18 +72,6 @@ modified_timestamp () {
     # using Perl, it seems.
     # Shamelessly stolen from https://unix.stackexchange.com/a/561933
     perl -MPOSIX -le 'for (@ARGV) { if (@s = lstat$_) {print $s[9]} else {warn "$_: $!\n"} }' -- "$@"
-}
-
-# Returns the modification timestamp for the oldest file found in the given
-# files or directories
-oldest_file () {
-    find "$@" -type f -print0 | xargs -0 stat -f%m | sort -r | head -n 1
-}
-
-# Returns the modification timestamp for the youngest file found in the given
-# files or directories
-youngest_file () {
-    find "$@" -type f -print0 | xargs -0 stat -f%m | sort | head -n 1
 }
 
 list_dependencies () {
@@ -152,26 +135,19 @@ liveblocks_pkg_dir () {
     echo "$LIVEBLOCKS_ROOT/packages/liveblocks-${1#@liveblocks/}"
 }
 
+# Returns a single MD5 string representing the "input state" for this project.
+# It works by taking the MD5 hash of all files in the current worktree known to
+# Git, then hashing that entire list again.
+sha_stamp () {
+    git ls-files --cached --modified --exclude-standard --deduplicate | xargs md5 -r | md5 -q
+}
+
 rebuild_if_needed () {
     if [ -e "lib/.built-by-link-script" ]; then
-        if [ "$(modified_timestamp lib/.built-by-link-script)" -lt "$now" ]; then
-            # If the "built marker" is older than this script invocation date,
-            # remove it.
-            rm lib/.built-by-link-script
-        else
+        if [ "$(sha_stamp)" = "$(cat lib/.built-by-link-script)" ]; then
             # This was already rebuilt by an earlier invocation of this build
             # script. We don't have to throw away those results!
             err "Skipping (build still fresh)"
-            return
-        fi
-    fi
-
-    if [ $force -eq 0 -a -d "lib" ]; then
-        # SRC_TIMESTAMP="$(oldest_file src node_modules)"
-        SRC_TIMESTAMP="$(oldest_file src)"
-        LIB_TIMESTAMP="$(youngest_file lib)"
-        if [ $SRC_TIMESTAMP -lt $LIB_TIMESTAMP ]; then
-            # Lib build is up-to-date
             return
         fi
     fi
@@ -180,7 +156,7 @@ rebuild_if_needed () {
     echo "==> Rebuilding (in $(pwd))"
     rm -rf lib
     npm run build
-    touch "lib/.built-by-link-script"
+    sha_stamp > "lib/.built-by-link-script"
 }
 
 prep_liveblocks_deps () {
@@ -193,7 +169,7 @@ prep_liveblocks_deps () {
         # peer dependency to the project directory
         ( cd "$(liveblocks_pkg_dir "$pkg")" && (
             # Invoke this script to first build the other dependency correctly
-            "$THIS_SCRIPT" $force_flag "$PROJECT_ROOT"
+            "$THIS_SCRIPT" "$PROJECT_ROOT"
 
             rebuild_if_needed
 
