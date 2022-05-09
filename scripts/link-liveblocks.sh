@@ -22,8 +22,9 @@ usage () {
 }
 
 now="$(date +%s)"
-while getopts h flag; do
+while getopts hf flag; do
     case "$flag" in
+        f) err "Flag -f is no longer needed or supported" ;;
         *) usage; exit 2;;
     esac
 done
