@@ -154,33 +154,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
-      // Check if Ack from server has a different position.
-      if (this._doc.getItem(id)?._getParentKeyOrThrow() !== parentKey) {
-        // Check if updated position is already used.
-        const newPositionIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === key
-        );
-
-        if (newPositionIndex !== -1) {
-          // Shift position of existing item
-          const shiftedPosition = makePosition(
-            key,
-            this._items.length > newPositionIndex + 1
-              ? this._items[newPositionIndex + 1]?._getParentKeyOrThrow()
-              : undefined
-          );
-
-          this._items[newPositionIndex]._setParentLink(this, shiftedPosition);
-        }
-
-        // Update position of the ACK item.
-        this._doc.getItem(id)?._setParentLink(this, key);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-      }
-
-      return { modified: false };
+      return this._attachChildServerAcknowledge(this._doc.getItem(id)!, key);
     }
 
     const existingItemIndex = this._items.findIndex(
@@ -306,6 +280,65 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         ],
       },
     };
+  }
+
+  /**
+   * @internal
+   */
+  _attachChildServerAcknowledge(item: AbstractCrdt, key: string): ApplyResult {
+    // Check if Ack from server has a different position.
+    if (item._getParentKeyOrThrow() !== key) {
+      // Check if updated position is already used.
+      const newPositionIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === key
+      );
+      const oldPositionIndex = this._items.indexOf(item);
+
+      if (newPositionIndex !== -1) {
+        // Shift position of existing item
+        const shiftedPosition = makePosition(
+          key,
+          this._items.length > newPositionIndex + 1
+            ? this._items[newPositionIndex + 1]?._getParentKeyOrThrow()
+            : undefined
+        );
+
+        this._items[newPositionIndex]._setParentLink(this, shiftedPosition);
+      }
+
+      // Update position of the ACK item.
+      item._setParentLink(this, key);
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      const newIndex = this._items.findIndex(
+        (entry) => entry._getParentKeyOrThrow() === key
+      );
+
+      if (newIndex === oldPositionIndex) {
+        return { modified: false };
+      }
+
+      const updatesDelta: LiveListUpdateDelta[] = [
+        {
+          index: newIndex,
+          item: item instanceof LiveRegister ? item.data : item,
+          previousIndex: oldPositionIndex,
+          type: "move",
+        },
+      ];
+      return {
+        modified: {
+          node: this,
+          type: "LiveList",
+          updates: updatesDelta,
+        },
+        reverse: [],
+      };
+    }
+
+    return { modified: false };
   }
 
   /**
