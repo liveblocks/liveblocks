@@ -19,7 +19,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const sockets: MockWebSocket[] = [];
 
   function createTestClient() {
-    const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
+    const publicApiKey = "pk_live_16AZ2vBHGuzNGamRpUwAHAqZ";
 
     if (publicApiKey == null) {
       throw new Error(
@@ -31,7 +31,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
       publicApiKey,
       fetchPolyfill: fetch,
       WebSocketPolyfill: MockWebSocket,
-      liveblocksServer: process.env.LIVEBLOCKS_SERVER,
+      liveblocksServer: "ws://127.0.0.1:8787/v5",
     } as any);
   }
 
@@ -115,11 +115,13 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
       sockets[0].pauseSend();
       sockets[1].pauseSend();
     },
-    sendMessagesClient1: () => {
+    sendMessagesClient1: async () => {
       sockets[0].resumeSend();
+      await wait(500);
     },
-    sendMessagesClient2: () => {
+    sendMessagesClient2: async () => {
       sockets[1].resumeSend();
+      await wait(500);
     },
   };
 
