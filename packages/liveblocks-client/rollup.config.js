@@ -186,7 +186,10 @@ export default async () => {
   const external = [
     ...Object.keys(pkgJson?.dependencies ?? {}),
     ...Object.keys(pkgJson?.peerDependencies ?? {}),
-  ];
+  ].flatMap((dep) =>
+    // Also include `@liveblocks/.../internal` as an external reference, by convention
+    dep.startsWith("@liveblocks/") ? [dep, dep + "/internal"] : [dep]
+  );
 
   return [
     // Build modern ES modules (*.mjs)
