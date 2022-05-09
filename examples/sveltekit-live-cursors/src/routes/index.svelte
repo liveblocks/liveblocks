@@ -9,12 +9,11 @@
 
   let roomId = "sveltekit-live-cursors";
 
-  
   // Set up the client on load
   // Check inside src/routes/api/auth.ts for the serverless function
   onMount(() => {
     overrideRoomId();
-    
+
     client = createClient({
       authEndpoint: "/api/auth",
     });
