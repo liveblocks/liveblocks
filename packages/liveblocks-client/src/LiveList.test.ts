@@ -450,6 +450,74 @@ describe("LiveList", () => {
 
   describe("move", () => {
     it("list.move after current position", async () => {
+      const { storage, assert, assertUndoRedo, subscribe } =
+        await prepareStorageTest<{
+          items: LiveList<LiveObject<{ a: number }>>;
+        }>([
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+          createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+          createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+        ]);
+
+      const callback = jest.fn();
+
+      subscribe(storage.root, callback, {
+        isDeep: true,
+      });
+
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      const root = storage.root;
+      const items = root.toObject().items;
+      items.move(0, 1);
+
+      expect(callback).toHaveBeenLastCalledWith([
+        {
+          type: "LiveList",
+          node: root.get("items"),
+          updates: [
+            {
+              index: 1,
+              previousIndex: 0,
+              item: root.get("items").get(1),
+              type: "move",
+            },
+          ],
+        },
+      ]);
+
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+          {
+            a: 0,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("list.move before current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -536,7 +604,7 @@ describe("LiveList", () => {
 
       const root = storage.root;
       const items = root.toObject().items;
-      items.move(0, 1);
+      items.move(1, 0);
 
       assert({
         items: [
@@ -548,6 +616,52 @@ describe("LiveList", () => {
           },
           {
             a: 2,
+          },
+        ],
+      });
+
+      assertUndoRedo();
+    });
+
+    it("list.move at the end of the list", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+      ]);
+
+      assert({
+        items: [
+          {
+            a: 0,
+          },
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+        ],
+      });
+
+      const root = storage.root;
+      const items = root.toObject().items;
+      items.move(0, 2);
+
+      assert({
+        items: [
+          {
+            a: 1,
+          },
+          {
+            a: 2,
+          },
+          {
+            a: 0,
           },
         ],
       });
@@ -1124,6 +1238,133 @@ describe("LiveList", () => {
 
       assert({
         items: ["C", "B", "A"],
+      });
+    });
+
+    it(`list conflicts - ack has different position that local`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("B");
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
+        },
+      ]);
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteCrdt,
+          id: "2:0",
+          opId: "2:2",
+        },
+      ]);
+
+      // State: ["B"] with B at SECOND_POSITION
+
+      // Ack with different position
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "C",
+          opId: "2:3",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"],
+      });
+    });
+
+    it(`list conflicts - ack has different position that local and ack position is used`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("B");
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
+        },
+      ]);
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteCrdt,
+          id: "2:0",
+          opId: "2:2",
+        },
+      ]);
+
+      items.insert("C", 0); // Insert at FIRST_POSITION
+
+      // Ack
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"], // C position is shifted
       });
     });
   });

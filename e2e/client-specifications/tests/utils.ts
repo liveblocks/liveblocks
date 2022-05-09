@@ -142,7 +142,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   };
 }
 
-function wait(ms: number) {
+export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -164,7 +164,7 @@ async function waitFor(predicate: () => {}, delay: number = 2000) {
   return false;
 }
 
-function objectToJson(record: LiveObject<LsonObject>) {
+export function objectToJson(record: LiveObject<LsonObject>) {
   const result: any = {};
   const obj = record.toObject();
 

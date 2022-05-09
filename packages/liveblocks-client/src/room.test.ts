@@ -1080,8 +1080,9 @@ describe("room", () => {
       assert({ items: [] });
 
       items.push("A");
+      items.push("C"); // Will be removed by other client when offline
       assert({
-        items: ["A"],
+        items: ["A", "C"],
       });
 
       ws.closeFromBackend(
@@ -1094,8 +1095,11 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
+      // Other client (which is online), deletes "C".
+      refStorage.root.get("items").delete(1);
+
       const storageJson = objectToJson(storage.root);
-      expect(storageJson).toEqual({ items: ["A", "B"] });
+      expect(storageJson).toEqual({ items: ["A", "C", "B"] });
       const refStorageJson = objectToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 

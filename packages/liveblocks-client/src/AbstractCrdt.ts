@@ -37,6 +37,17 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
+  _getParentKeyOrThrow(): string {
+    const key = this.__parentKey;
+    if (key == null) {
+      throw new Error("Parent key is missing");
+    }
+    return key;
+  }
+
+  /**
+   * @internal
+   */
   protected get _doc() {
     return this.__doc;
   }
