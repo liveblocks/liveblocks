@@ -1,16 +1,17 @@
 import { StateCreator, SetState, GetState, StoreApi } from "zustand";
 import {
   Client,
-  internals,
-  Json,
   LiveObject,
-  Lson,
   LsonObject,
   Presence,
   Room,
-  StorageUpdate,
   User,
 } from "@liveblocks/client";
+import {
+  lsonToJson,
+  patchImmutableObject,
+  patchLiveObjectKey,
+} from "@liveblocks/client/internal";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
@@ -19,29 +20,6 @@ import {
   missingClient,
   missingMapping,
 } from "./errors";
-
-// @liveblocks/client export internals API to be used only by our packages.
-// Internals APIs are removed from public d.ts so we patch them manually here to consume them.
-// They are patched inline because @rollup/plugin-typescript does not respect tsconfig typeRoots
-// @internal is necessary to remove it from public d.ts
-/**
- * @internal
- */
-declare module "@liveblocks/client" {
-  const internals: {
-    patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<O extends LsonObject>(
-      liveObject: LiveObject<O>,
-      key: keyof O,
-      prev: unknown,
-      next: unknown
-    ): void;
-    lsonToJson(value: Lson): Json;
-    liveObjectToJson(liveObject: LiveObject<LsonObject>): Json;
-  };
-}
-
-const { patchLiveObjectKey, patchImmutableObject, lsonToJson } = internals;
 
 export type LiveblocksState<
   TState,

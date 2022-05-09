@@ -16,24 +16,3 @@ export type { Json, JsonObject } from "./json";
 export type { Lson, LsonObject } from "./lson";
 
 export { createClient } from "./client";
-
-import {
-  liveObjectToJson,
-  lsonToJson,
-  patchLiveList,
-  patchImmutableObject,
-  patchLiveObject,
-  patchLiveObjectKey,
-} from "./immutable";
-
-/**
- * @internal
- */
-export const internals = {
-  liveObjectToJson,
-  lsonToJson,
-  patchLiveList,
-  patchImmutableObject,
-  patchLiveObject,
-  patchLiveObjectKey,
-};

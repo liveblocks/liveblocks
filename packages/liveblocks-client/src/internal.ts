@@ -16,4 +16,13 @@ export * from "./position";
 
 export { deprecate, deprecateIf } from "./utils";
 
+export {
+  liveObjectToJson,
+  lsonToJson,
+  patchLiveList,
+  patchImmutableObject,
+  patchLiveObject,
+  patchLiveObjectKey,
+} from "./immutable";
+
 export type { Resolve } from "./types";
