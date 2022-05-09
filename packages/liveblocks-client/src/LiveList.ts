@@ -156,6 +156,31 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
+      if (this._doc.getItem(id)?._getParentKeyOrThrow() !== parentKey) {
+        // check if updated position is already used.
+        const newPositionIndex = this._items.findIndex(
+          (item) => item._getParentKeyOrThrow() === key
+        );
+
+        if (newPositionIndex !== -1) {
+          // Shift position of existing item
+          const shiftedPosition = makePosition(
+            key,
+            this._items.length > newPositionIndex + 1
+              ? this._items[newPositionIndex + 1]?._getParentKeyOrThrow()
+              : undefined
+          );
+
+          this._items[newPositionIndex]._setParentLink(this, shiftedPosition);
+        }
+
+        // Update position of the ACK item.
+        this._doc.getItem(id)?._setParentLink(this, key);
+        this._items.sort((itemA, itemB) =>
+          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+        );
+      }
+
       return { modified: false };
     }
 

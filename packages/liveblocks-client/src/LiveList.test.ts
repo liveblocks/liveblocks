@@ -1046,6 +1046,133 @@ describe("LiveList", () => {
         items: ["C", "B", "A"],
       });
     });
+
+    it(`list conflicts - ack has different position that local`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("B");
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
+        },
+      ]);
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteCrdt,
+          id: "2:0",
+          opId: "2:2",
+        },
+      ]);
+
+      // State: ["B"] with B at SECOND_POSITION
+
+      // Ack with different position
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "C",
+          opId: "2:3",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"],
+      });
+    });
+
+    it(`list conflicts - ack has different position that local and ack position is used`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("B");
+
+      assert({
+        items: ["B"],
+      });
+
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
+        },
+      ]);
+
+      applyRemoteOperations([
+        {
+          type: OpType.DeleteCrdt,
+          id: "2:0",
+          opId: "2:2",
+        },
+      ]);
+
+      items.insert("C", 0); // Insert at FIRST_POSITION
+
+      // Ack
+      applyRemoteOperations([
+        {
+          type: OpType.CreateRegister,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"], // C position is shifted
+      });
+    });
   });
 
   it("list.push record then delete", async () => {
