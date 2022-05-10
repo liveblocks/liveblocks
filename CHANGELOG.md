@@ -1,5 +1,8 @@
 # v0.17.0 (not yet released)
 
+TODO: This release brings many improvements for TypeScript developers using Liveblocks.
+TODO: Explain which exactly! :)
+
 ### TypeScript improvements
 
 Various Live structures now take mandatory type params:
