@@ -403,9 +403,9 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/3Niy5aP for details.`
     );
-    const value = useCrdt(key, new LiveMap(entries));
-    //                         ^^^^^^^^^^^^^^^^^^^^
-    //                         NOTE: This param is scheduled for removal in 0.18
+    const value = useStorageValue(key, new LiveMap(entries));
+    //                                 ^^^^^^^^^^^^^^^^^^^^
+    //                                 NOTE: This param is scheduled for removal in 0.18
     if (value.status === "ok") {
       return value.value;
     } else {
@@ -476,9 +476,9 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/3Niy5aP for details.`
     );
-    const value = useCrdt<LiveList<TValue>>(key, new LiveList(items));
-    //                                           ^^^^^^^^^^^^^^^^^^^
-    //                                           NOTE: This param is scheduled for removal in 0.18
+    const value = useStorageValue<LiveList<TValue>>(key, new LiveList(items));
+    //                                                   ^^^^^^^^^^^^^^^^^^^
+    //                                                   NOTE: This param is scheduled for removal in 0.18
     if (value.status === "ok") {
       return value.value;
     } else {
@@ -551,9 +551,9 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/3Niy5aP for details.`
     );
-    const value = useCrdt(key, new LiveObject(initialData));
-    //                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                         NOTE: This param is scheduled for removal in 0.18
+    const value = useStorageValue(key, new LiveObject(initialData));
+    //                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                                 NOTE: This param is scheduled for removal in 0.18
     if (value.status === "ok") {
       return value.value;
     } else {
@@ -615,7 +615,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().history;
   }
 
-  function useCrdt<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
+  function useStorageValue<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
