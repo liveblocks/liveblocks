@@ -38,7 +38,7 @@ const RoomContext = React.createContext<Room | null>(null);
  * When this component is unmounted, the current user leave the room.
  * That means that you can't have 2 RoomProvider with the same room id in your react tree.
  */
-export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
+function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
   const {
     id: roomId,
     initialPresence,
@@ -106,7 +106,7 @@ export function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
  * Returns the Room of the nearest RoomProvider above in the React component
  * tree.
  */
-export function useRoom(): Room {
+function useRoom(): Room {
   const room = React.useContext(RoomContext);
 
   if (room == null) {
@@ -130,7 +130,7 @@ export function useRoom(): Room {
  *
  * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
  */
-export function useMyPresence<T extends Presence>(): [
+function useMyPresence<T extends Presence>(): [
   T,
   (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
 ] {
@@ -167,7 +167,7 @@ export function useMyPresence<T extends Presence>(): [
  *
  * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
  */
-export function useUpdateMyPresence<T extends Presence>(): (
+function useUpdateMyPresence<T extends Presence>(): (
   overrides: Partial<T>,
   options?: { addToHistory: boolean }
 ) => void {
@@ -199,7 +199,7 @@ export function useUpdateMyPresence<T extends Presence>(): (
  *   })
  * }
  */
-export function useOthers<T extends Presence>(): Others<T> {
+function useOthers<T extends Presence>(): Others<T> {
   const room = useRoom();
   const rerender = useRerender();
 
@@ -223,7 +223,7 @@ export function useOthers<T extends Presence>(): Others<T> {
  *
  * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
  */
-export function useBroadcastEvent(): (
+function useBroadcastEvent(): (
   event: any,
   options?: BroadcastOptions
 ) => void {
@@ -250,7 +250,7 @@ export function useBroadcastEvent(): (
  *   console.error(er);
  * })
  */
-export function useErrorListener(callback: (err: Error) => void): void {
+function useErrorListener(callback: (err: Error) => void): void {
   const room = useRoom();
   const savedCallback = React.useRef(callback);
 
@@ -280,7 +280,7 @@ export function useErrorListener(callback: (err: Error) => void): void {
  *   }
  * });
  */
-export function useEventListener<TEvent extends Json>(
+function useEventListener<TEvent extends Json>(
   callback: ({
     connectionId,
     event,
@@ -315,7 +315,7 @@ export function useEventListener<TEvent extends Json>(
  *
  * const user = useSelf();
  */
-export function useSelf<
+function useSelf<
   TPresence extends Presence = Presence
 >(): User<TPresence> | null {
   const room = useRoom();
@@ -334,7 +334,7 @@ export function useSelf<
   return room.getSelf<TPresence>();
 }
 
-export function useStorage<TStorage extends Record<string, any>>(): [
+function useStorage<TStorage extends Record<string, any>>(): [
   root: LiveObject<TStorage> | null
 ] {
   const room = useRoom();
@@ -370,18 +370,18 @@ export function useStorage<TStorage extends Record<string, any>>(): [
  * @example
  * const shapesById = useMap<string, Shape>("shapes");
  */
-export function useMap<TKey extends string, TValue extends Lson>(
+function useMap<TKey extends string, TValue extends Lson>(
   key: string
 ): LiveMap<TKey, TValue> | null;
 /**
  * @deprecated We no longer recommend initializing the
  * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
  */
-export function useMap<TKey extends string, TValue extends Lson>(
+function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries: readonly (readonly [TKey, TValue])[] | null
 ): LiveMap<TKey, TValue> | null;
-export function useMap<TKey extends string, TValue extends Lson>(
+function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
@@ -443,18 +443,18 @@ Please see https://bit.ly/3Niy5aP for details.`
  * @example
  * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
  */
-export function useList<TValue extends Lson>(
+function useList<TValue extends Lson>(
   key: string
 ): LiveList<TValue> | null;
 /**
  * @deprecated We no longer recommend initializing the
  * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
  */
-export function useList<TValue extends Lson>(
+function useList<TValue extends Lson>(
   key: string,
   items: TValue[]
 ): LiveList<TValue> | null;
-export function useList<TValue extends Lson>(
+function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
@@ -518,18 +518,18 @@ Please see https://bit.ly/3Niy5aP for details.`
  * @example
  * const object = useObject("obj");
  */
-export function useObject<TData extends LsonObject>(
+function useObject<TData extends LsonObject>(
   key: string
 ): LiveObject<TData> | null;
 /**
  * @deprecated We no longer recommend initializing the fields from the
  * useObject() hook. For details, see https://bit.ly/3Niy5aP.
  */
-export function useObject<TData extends LsonObject>(
+function useObject<TData extends LsonObject>(
   key: string,
   initialData: TData
 ): LiveObject<TData> | null;
-export function useObject<TData extends LsonObject>(
+function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
@@ -587,7 +587,7 @@ Please see https://bit.ly/3Niy5aP for details.`
  * Returns a function that undoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useUndo(): () => void {
+function useUndo(): () => void {
   return useRoom().history.undo;
 }
 
@@ -595,7 +595,7 @@ export function useUndo(): () => void {
  * Returns a function that redoes the last operation executed by the current client.
  * It does not impact operations made by other clients.
  */
-export function useRedo(): () => void {
+function useRedo(): () => void {
   return useRoom().history.redo;
 }
 
@@ -605,14 +605,14 @@ export function useRedo(): () => void {
  * All the modifications are merged in a single history item (undo/redo).
  * All the subscribers are called only after the batch is over.
  */
-export function useBatch(): (callback: () => void) => void {
+function useBatch(): (callback: () => void) => void {
   return useRoom().batch;
 }
 
 /**
  * Returns the room.history
  */
-export function useHistory(): History {
+function useHistory(): History {
   return useRoom().history;
 }
 
