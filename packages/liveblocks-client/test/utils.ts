@@ -10,10 +10,7 @@ import {
   ServerMessageType,
 } from "../src/live";
 import type { Json, JsonObject } from "../src/json";
-import type { Lson, LsonObject, ToJson } from "../src/lson";
-import { LiveList } from "../src/LiveList";
-import { LiveMap } from "../src/LiveMap";
-import { LiveObject } from "../src/LiveObject";
+import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import { defaultState, makeStateMachine } from "../src/room";
 import type { Effects, Machine } from "../src/room";
@@ -202,7 +199,7 @@ export async function prepareIsolatedStorageTest<
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: fixme) => expect(objectToJson(storage.root)).toEqual(data),
+    assert: (data: fixme) => expect(lsonToJson(storage.root)).toEqual(data),
     assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
       expect(messagesSent).toEqual(messages);
     },

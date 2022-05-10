@@ -208,7 +208,7 @@ describe("LiveList", () => {
       items.push(new LiveMap([["first", 0]]));
 
       assert({
-        items: [[["first", 0]]],
+        items: [{ first: 0 }],
       });
 
       assertUndoRedo();
