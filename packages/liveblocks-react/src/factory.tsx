@@ -16,8 +16,6 @@ import { deprecateIf } from "@liveblocks/client/internal";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import useRerender from "./useRerender";
 
-const RoomContext = React.createContext<Room | null>(null);
-
 type RoomProviderProps<TStorage> = Resolve<
   {
     /**
@@ -32,6 +30,8 @@ type UseCrdtResult<T> =
   | { status: "ok"; value: T }
   | { status: "loading" }
   | { status: "notfound" };
+
+const RoomContext = React.createContext<Room | null>(null);
 
 /**
  * Makes a Room available in the component hierarchy below.
