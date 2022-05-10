@@ -31,6 +31,8 @@ type UseCrdtResult<T> =
   | { status: "loading" }
   | { status: "notfound" };
 
+function create() {
+
 const RoomContext = React.createContext<Room | null>(null);
 
 /**
@@ -674,3 +676,64 @@ function useCrdt<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
     }
   }
 }
+
+return {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+};
+}
+
+const {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+} = create();
+
+export {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+};
