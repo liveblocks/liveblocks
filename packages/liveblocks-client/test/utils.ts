@@ -142,8 +142,12 @@ async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({}, defaultStorage);
-  const machine = makeStateMachine(state, defaultContext, effects);
+  const state = defaultState<TPresence, TStorage>({}, defaultStorage);
+  const machine = makeStateMachine<TPresence, TStorage>(
+    state,
+    defaultContext,
+    effects
+  );
   const ws = new MockWebSocket("");
 
   machine.connect();
@@ -211,24 +215,24 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
 }
 
 /**
- * Create 2 rooms with a loaded storage
+ * Create 2 rooms with a loaded storage.
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<TStorage extends LsonObject>(
-  items: SerializedCrdtWithId[],
-  actor: number = 0
-) {
+export async function prepareStorageTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
+>(items: SerializedCrdtWithId[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<never, TStorage>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    never,
+    TPresence,
     TStorage
-  >(items, currentActor, (messages: ClientMessage<never>[]) => {
+  >(items, currentActor, (messages: ClientMessage<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {
         operations.push(...message.ops);

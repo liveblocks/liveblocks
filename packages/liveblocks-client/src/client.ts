@@ -1,4 +1,6 @@
 import { errorIf } from "./deprecation";
+import type { JsonObject } from "./json";
+import type { LsonObject } from "./lson";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
@@ -47,21 +49,24 @@ type EnterOptions<TPresence, TStorage> = Resolve<
  *   }
  * });
  */
-export function createClient(options: ClientOptions): Client {
+export function createClient<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(options: ClientOptions): Client<TPresence, TStorage> {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom>();
+  const rooms = new Map<string, InternalRoom<TPresence, TStorage>>();
 
-  function getRoom(roomId: string): Room | null {
+  function getRoom(roomId: string): Room<TPresence, TStorage> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom ? internalRoom.room : null;
   }
 
-  function enter<TStorage>(
+  function enter(
     roomId: string,
-    options: EnterOptions<Presence, TStorage> = {}
-  ): Room {
+    options: EnterOptions<TPresence, TStorage> = {}
+  ): Room<TPresence, TStorage> {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
       return internalRoom.room;
