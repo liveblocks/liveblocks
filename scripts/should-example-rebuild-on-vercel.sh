@@ -75,7 +75,9 @@ starts_with () {
 get_all_changed_files () {
     if [ ! -f "changed-files.txt" ]; then
         SHA="$(git rev-parse HEAD)"
-        curl -sH "Accept: application/vnd.github.v3+json" \
+        curl -s \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${GITHUB_ACCESS_TOKEN}" \
             "https://api.github.com/repos/liveblocks/liveblocks/compare/main...$SHA" \
             > diff-since-main.json
 
