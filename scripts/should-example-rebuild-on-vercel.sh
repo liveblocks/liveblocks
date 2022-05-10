@@ -74,10 +74,15 @@ starts_with () {
 
 get_all_changed_files () {
     if [ ! -f "changed-files.txt" ]; then
+        if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
+            err "Please set the GITHUB_ACCESS_TOKEN env var for this Vercel project for this to work."
+            exit 2
+        fi
+
         SHA="$(git rev-parse HEAD)"
         curl -s \
             -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${GITHUB_ACCESS_TOKEN}" \
+            -H "Authorization: Bearer $GITHUB_ACCESS_TOKEN" \
             "https://api.github.com/repos/liveblocks/liveblocks/compare/main...$SHA" \
             > diff-since-main.json
 
