@@ -1,24 +1,25 @@
 import type {
+  Authentication,
+  AuthenticationToken,
+  AuthorizeResponse,
+  BroadcastOptions,
+  Connection,
+  ConnectionCallback,
+  ConnectionState,
+  ErrorCallback,
+  EventCallback,
+  MyPresenceCallback,
   Others,
+  OthersEvent,
+  OthersEventCallback,
   Presence,
   Room,
-  MyPresenceCallback,
-  OthersEventCallback,
   RoomEventCallbackMap,
   RoomEventName,
-  EventCallback,
-  User,
-  Connection,
-  ErrorCallback,
-  OthersEvent,
-  AuthenticationToken,
-  ConnectionCallback,
+  RoomInitializers,
   StorageCallback,
   StorageUpdate,
-  BroadcastOptions,
-  AuthorizeResponse,
-  Authentication,
-  RoomInitializers,
+  User,
 } from "./types";
 import type { Json, JsonObject } from "./json";
 import { isJsonObject, isJsonArray, parseJson } from "./json";
@@ -27,31 +28,135 @@ import {
   compact,
   getTreesDiffOperations,
   isSameNodeOrChildOf,
-  remove,
-  mergeStorageUpdates,
   isTokenValid,
+  mergeStorageUpdates,
+  remove,
 } from "./utils";
 import {
   ClientMessage,
   ClientMessageType,
-  ServerMessageType,
-  UserLeftMessage,
-  Op,
   EventMessage,
+  InitialDocumentStateMessage,
+  Op,
+  OpType,
   RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  ServerMessage,
+  ServerMessageType,
   UpdatePresenceMessage,
   UserJoinMessage,
-  SerializedCrdtWithId,
-  InitialDocumentStateMessage,
-  OpType,
-  ServerMessage,
-  SerializedCrdt,
+  UserLeftMessage,
   WebsocketCloseCodes,
 } from "./live";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
+
+export type Machine = {
+  // Internal
+  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  onMessage(event: MessageEvent<string>): void;
+  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  heartbeat(): void;
+  onNavigatorOnline(): void;
+
+  // Internal dev tools
+  simulateSocketClose(): void;
+  simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: string;
+  }): void;
+
+  // onWakeUp,
+  onVisibilityChange(visibilityState: VisibilityState): void;
+  getUndoStack(): HistoryItem[];
+  getItemsCount(): number;
+
+  // Core
+  connect(): null | undefined;
+  disconnect(): void;
+
+  subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  subscribe<TKey extends string, TValue extends Lson>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
+  ): () => void;
+  subscribe<TData extends LsonObject>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  subscribe<TItem extends Lson>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
+  subscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): () => void;
+  subscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): () => void;
+  subscribe(type: "event", listener: EventCallback): () => void;
+  subscribe(type: "error", listener: ErrorCallback): () => void;
+  subscribe(type: "connection", listener: ConnectionCallback): () => void;
+  subscribe<K extends RoomEventName>(
+    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap[K] | any,
+    options?: { isDeep: boolean }
+  ): () => void;
+
+  unsubscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): void;
+  unsubscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): void;
+  unsubscribe(type: "event", listener: EventCallback): void;
+  unsubscribe(type: "error", listener: ErrorCallback): void;
+  unsubscribe(type: "connection", listener: ConnectionCallback): void;
+  unsubscribe<K extends RoomEventName>(
+    event: K,
+    callback: RoomEventCallbackMap[K]
+  ): void;
+
+  // Presence
+  updatePresence<T extends Presence>(
+    overrides: Partial<T>,
+    options?: { addToHistory: boolean }
+  ): void;
+  broadcastEvent(event: Json, options?: BroadcastOptions): void;
+
+  batch(callback: () => void): void;
+  undo(): void;
+  redo(): void;
+  pauseHistory(): void;
+  resumeHistory(): void;
+
+  getStorage<TStorage extends LsonObject>(): Promise<{
+    root: LiveObject<TStorage>;
+  }>;
+
+  selectors: {
+    // Core
+    getConnectionState(): ConnectionState;
+    getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+
+    // Presence
+    getPresence<T extends Presence>(): T;
+    getOthers<T extends Presence>(): Others<T>;
+  };
+};
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -192,7 +297,7 @@ export function makeStateMachine(
   state: State,
   context: Context,
   mockedEffects?: Effects
-) {
+): Machine {
   const effects: Effects = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -954,16 +1059,6 @@ See v0.13 release notes for more information.
     notify(updates);
   }
 
-  // function onWakeUp() {
-  //   // Sometimes, the browser can put the webpage on pause (computer is on sleep mode for example)
-  //   // The client will not know that the server has probably close the connection even if the readyState is Open
-  //   // One way to detect this kind of pause is to ensure that a setInterval is not taking more than the delay it was configured with
-  //   if (state.connection.state === "open") {
-  //     log("Try to reconnect after laptop wake up");
-  //     reconnect();
-  //   }
-  // }
-
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     state.socket = null;
 
@@ -1397,8 +1492,6 @@ See v0.13 release notes for more information.
     // Internal dev tools
     simulateSocketClose,
     simulateSendCloseEvent,
-
-    // onWakeUp,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
     getItemsCount: () => state.items.size,
