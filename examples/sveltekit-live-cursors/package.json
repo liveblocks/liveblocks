@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@liveblocks/client": "^0.16.4",
-    "@liveblocks/node": "^0.3.0",
-    "@vercel/node": "^1.13.0"
+    "@liveblocks/node": "^0.3.0"
   }
 }
