@@ -171,23 +171,22 @@ export type RoomInitializers<TPresence, TStorage> = Resolve<{
   defaultStorageRoot?: TStorage;
 }>;
 
-export type Client<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
-> = {
+export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
    *
    * @param roomId The id of the room
    */
-  getRoom(roomId: string): Room<TPresence, TStorage> | null;
+  getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+    roomId: string
+  ): Room<TPresence, TStorage> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
-  enter(
+  enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options?: RoomInitializers<TPresence, TStorage>
   ): Room<TPresence, TStorage>;
