@@ -601,6 +601,9 @@ describe("middleware", () => {
 
         store.dispatch({ type: "SET_VALUE", value: 2 });
 
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
+
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
@@ -628,6 +631,9 @@ describe("middleware", () => {
           type: "SET_ITEMS",
           items: [{ text: "A" }, { text: "B" }],
         });
+
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
 
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
