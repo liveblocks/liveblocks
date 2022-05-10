@@ -18,7 +18,7 @@ export {
   useRedo,
   useBatch,
   useHistory,
-} from "./factory";
+} from "./compat";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

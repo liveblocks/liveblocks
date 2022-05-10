@@ -31,7 +31,7 @@ type UseCrdtResult<T> =
   | { status: "loading" }
   | { status: "notfound" };
 
-function create() {
+export function create() {
 
 const RoomContext = React.createContext<Room | null>(null);
 
@@ -697,43 +697,3 @@ return {
   useHistory,
 };
 }
-
-const {
-  RoomProvider,
-  useRoom,
-  useMyPresence,
-  useUpdateMyPresence,
-  useOthers,
-  useBroadcastEvent,
-  useErrorListener,
-  useEventListener,
-  useSelf,
-  useStorage,
-  useMap,
-  useList,
-  useObject,
-  useUndo,
-  useRedo,
-  useBatch,
-  useHistory,
-} = create();
-
-export {
-  RoomProvider,
-  useRoom,
-  useMyPresence,
-  useUpdateMyPresence,
-  useOthers,
-  useBroadcastEvent,
-  useErrorListener,
-  useEventListener,
-  useSelf,
-  useStorage,
-  useMap,
-  useList,
-  useObject,
-  useUndo,
-  useRedo,
-  useBatch,
-  useHistory,
-};
