@@ -64,7 +64,7 @@ describe("LiveList", () => {
   it("create document with list in root", async () => {
     const { assert } = await prepareStorageTest<
       never,
-      { items: LiveList<any> }
+      { items: LiveList<never> }
     >([
       createSerializedObject("0:0", {}),
       createSerializedList("0:1", "0:0", "items"),
