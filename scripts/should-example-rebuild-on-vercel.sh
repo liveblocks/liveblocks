@@ -55,6 +55,8 @@ if [ ! -d "examples/$EXAMPLE" ]; then
 fi
 
 list_dependencies () {
+    # NOTE: This should really just be a simple JQ call, but JQ is unavailable
+    # on Vercel environments
     echo '
       const config = require("./package.json");
       const deps = new Set([
@@ -66,24 +68,31 @@ list_dependencies () {
     ' | node -
 }
 
-make_relative () {
-    while read f; do
-        echo "$(realpath --relative-to=. "$ROOT/$f")"
-    done
-}
-
 starts_with () {
     test "${1#$2}" != "$1"
 }
 
 get_all_changed_files () {
-    git diff --stat --name-only HEAD~1...HEAD -- | make_relative
-    #                           ^^^^^^^^^^^^^
-    #                           Should ideally be origin/main...HEAD, but
-    #                           Vercel does not allow us to do that, because
-    #                           they only take a shallow clone and strip all
-    #                           branch and remote information from their local
-    #                           Git checkouts.
+    if [ ! -f "changed-files.txt" ]; then
+        SHA="$(git rev-parse HEAD)"
+        curl -sH "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/liveblocks/liveblocks/compare/main...$SHA" \
+            > diff-since-main.json
+
+        # NOTE: This should really just be a simple JQ call, but JQ is unavailable
+        # on Vercel environments
+        echo '
+        const data = require("./diff-since-main.json");
+        const files = data?.files ?? [];
+        for (const file of files) {
+            console.log(file.filename);
+        }
+        ' | node - > changed-files.txt
+
+        rm -f diff-since-main.json
+    fi
+
+    cat changed-files.txt
 }
 
 #
@@ -120,6 +129,7 @@ if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
     if [ $verbose -eq 1 ]; then
         err "Example \"$EXAMPLE\" unaffected by change."
     fi
+    rm -f changed-files.txt
     exit 0
 else
     if [ $verbose -eq 1 ]; then
@@ -127,5 +137,6 @@ else
         files_that_should_trigger_rebuild >&2
         err
     fi
+    rm -f changed-files.txt
     exit 1
 fi
