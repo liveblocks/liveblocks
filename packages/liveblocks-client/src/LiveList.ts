@@ -27,9 +27,13 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   private _items: Array<AbstractCrdt>;
 
+  // Temporary
+  private _deletedItems: Map<string, string>; // id / opId
+
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
+    this._deletedItems = new Map();
 
     let position = undefined;
     for (let i = 0; i < items.length; i++) {
@@ -154,9 +158,18 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     const child = creationOpToLiveStructure(op);
 
     if (source === OpSource.ACK) {
+      // ACK from OP that deleted item
+      for (let [key, value] of this._deletedItems.entries()) {
+        if (value === op.opId) {
+          this._deletedItems.delete(key);
+        }
+      }
       if (this._doc.getItem(id) !== undefined) {
         return this._attachChildServerAcknowledge(this._doc.getItem(id)!, key);
-      } else if (op.intent !== "set") {
+      }
+
+      // If item was deleted locally by another op, ACK should not re-create it.
+      if (this._deletedItems.get(id)) {
         return { modified: false };
       }
     }
@@ -729,6 +742,9 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         "set"
       );
       (reverseOps[0] as any).deletedId = id;
+
+      // Temporary
+      this._deletedItems.set(existingId!, ops[0].opId!);
 
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     }
