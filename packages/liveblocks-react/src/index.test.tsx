@@ -16,12 +16,21 @@ import { setupServer } from "msw/node";
 import * as React from "react";
 
 import {
+  create,
   LiveblocksProvider,
   RoomProvider,
   useMyPresence,
   useObject,
   useOthers,
 } from ".";
+
+type Presence = { x: number };
+type Storage = { obj: string };
+
+const { RoomProvider, useMyPresence, useObject, useOthers } = create<
+  Presence,
+  Storage
+>();
 
 /**
  * https://github.com/Luka967/websocket-close-codes
@@ -116,7 +125,7 @@ const testIds = {
 };
 
 function PresenceComponent() {
-  const [me, setPresence] = useMyPresence<{ x: number }>();
+  const [me, setPresence] = useMyPresence();
   const others = useOthers();
 
   return (
