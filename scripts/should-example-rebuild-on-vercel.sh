@@ -77,7 +77,13 @@ starts_with () {
 }
 
 get_all_changed_files () {
-    git diff --stat --name-only origin/main... -- | make_relative
+    git diff --stat --name-only HEAD~1...HEAD -- | make_relative
+    #                           ^^^^^^^^^^^^^
+    #                           Should ideally be origin/main...HEAD, but
+    #                           Vercel does not allow us to do that, because
+    #                           they only take a shallow clone and strip all
+    #                           branch and remote information from their local
+    #                           Git checkouts.
 }
 
 #
