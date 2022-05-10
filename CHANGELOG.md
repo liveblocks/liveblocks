@@ -1,6 +1,6 @@
 # v0.16.5 (not yet released)
 
-...
+- Various internal refactorings
 
 # v0.16.4
 
