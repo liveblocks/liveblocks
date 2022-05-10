@@ -17,9 +17,6 @@ import type { Effects, Machine } from "../src/room";
 import type { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
-// TODO: Further improve this type
-type fixme = unknown;
-
 /**
  * Deep-clones a JSON-serializable value.
  */
