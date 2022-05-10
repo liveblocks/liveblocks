@@ -6,7 +6,6 @@
   import App from "../components/App.svelte";
 
   let client: Client;
-
   let roomId = "sveltekit-live-avatars";
 
   // Set up the client on load

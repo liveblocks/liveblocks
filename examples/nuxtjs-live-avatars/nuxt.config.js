@@ -30,4 +30,7 @@ export default {
   components: true,
   buildModules: ["@nuxtjs/tailwindcss"],
   serverMiddleware: [{ path: "/api", handler: "~/api" }],
+  generate: {
+    routes: ["/"],
+  },
 };
