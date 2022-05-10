@@ -524,6 +524,9 @@ describe("middleware", () => {
 
         store.getState().setValue(2);
 
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
+
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
@@ -548,6 +551,9 @@ describe("middleware", () => {
         ]);
 
         store.getState().setItems([{ text: "A" }, { text: "B" }]);
+
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
 
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
