@@ -288,14 +288,6 @@ export type Authentication =
       callback: (room: string) => Promise<AuthorizeResponse>;
     };
 
-type ConnectionState =
-  | "closed"
-  | "authenticating"
-  | "unavailable"
-  | "failed"
-  | "open"
-  | "connecting";
-
 export type Connection =
   | {
       state: "closed" | "authenticating" | "unavailable" | "failed";
@@ -306,6 +298,8 @@ export type Connection =
       userId?: string;
       userInfo?: any;
     };
+
+export type ConnectionState = Connection["state"];
 
 export type OthersEvent<T extends Presence = Presence> =
   | {
