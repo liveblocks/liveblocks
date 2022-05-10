@@ -28,6 +28,11 @@ type RoomProviderProps<TStorage> = Resolve<
   } & RoomInitializers<Presence, TStorage>
 >;
 
+type UseCrdtResult<T> =
+  | { status: "ok"; value: T }
+  | { status: "loading" }
+  | { status: "notfound" };
+
 /**
  * Makes a Room available in the component hierarchy below.
  * When this component is unmounted, the current user leave the room.
@@ -610,11 +615,6 @@ export function useBatch(): (callback: () => void) => void {
 export function useHistory(): History {
   return useRoom().history;
 }
-
-type UseCrdtResult<T> =
-  | { status: "ok"; value: T }
-  | { status: "loading" }
-  | { status: "notfound" };
 
 function useCrdt<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
   const room = useRoom();
