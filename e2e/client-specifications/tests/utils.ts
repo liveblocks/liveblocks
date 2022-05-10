@@ -110,6 +110,22 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     return assert(data1, data2);
   }
 
+  async function assertConsistancy() {
+    const areEquals = await waitFor(() => {
+      const client1Json = objectToJson(storageRoot1.root);
+      const client2Json = objectToJson(storageRoot2.root);
+
+      return isEqual(client1Json, client2Json);
+    });
+
+    if (!areEquals) {
+      expect(objectToJson(storageRoot1.root)).toEqualWithMessage(
+        objectToJson(storageRoot2.root),
+        "Client 1 & 2 storage not equal"
+      );
+    }
+  }
+
   const socketUtils = {
     pauseAllSockets: () => {
       sockets[0].pauseSend();
@@ -139,6 +155,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     root2: storageRoot2.root,
     assert,
     assertEach,
+    assertConsistancy,
     socketUtils,
     run,
   };
