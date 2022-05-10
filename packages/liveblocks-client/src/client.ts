@@ -5,7 +5,6 @@ import type {
   Authentication,
   Client,
   ClientOptions,
-  Presence,
   Resolve,
   Room,
   RoomInitializers,

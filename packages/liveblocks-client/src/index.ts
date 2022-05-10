@@ -3,7 +3,6 @@ export { LiveMap } from "./LiveMap";
 export { LiveList } from "./LiveList";
 export type {
   Others,
-  Presence,
   Room,
   Client,
   User,

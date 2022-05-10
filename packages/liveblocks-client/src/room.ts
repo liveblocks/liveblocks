@@ -39,7 +39,6 @@ import type {
   Others,
   OthersEvent,
   OthersEventCallback,
-  Presence,
   Room,
   RoomEventCallbackMap,
   RoomEventName,
