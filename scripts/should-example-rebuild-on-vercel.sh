@@ -6,7 +6,8 @@ set -eu
 # different.
 ROOT="$(git rev-parse --show-toplevel)"
 if [ "$(pwd)" != "$ROOT" ]; then
-    ( cd "$ROOT" && exec "$0" "$@" )
+    ARG0="$(realpath --relative-to="$ROOT" "$0")"
+    ( cd "$ROOT" && exec "$ARG0" "$@" )
     exit $?
 fi
 
@@ -66,9 +67,8 @@ list_dependencies () {
 }
 
 make_relative () {
-    root="$(git root)"
     while read f; do
-        echo "$(realpath --relative-to=. "$root/$f")"
+        echo "$(realpath --relative-to=. "$ROOT/$f")"
     done
 }
 
