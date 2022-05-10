@@ -733,32 +733,6 @@ export function makeStateMachine(
     };
   }
 
-  function unsubscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): void;
-  function unsubscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): void;
-  function unsubscribe(type: "event", listener: EventCallback): void;
-  function unsubscribe(type: "error", listener: ErrorCallback): void;
-  function unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  function unsubscribe<K extends RoomEventName>(
-    event: K,
-    callback: RoomEventCallbackMap[K]
-  ) {
-    console.warn(`unsubscribe is depreacted and will be removed in a future version.
-use the callback returned by subscribe instead.
-See v0.13 release notes for more information.
-`);
-    if (!isValidRoomEventType(event)) {
-      throw new Error(`"${event}" is not a valid event name`);
-    }
-    const callbacks = state.listeners[event] as RoomEventCallbackMap[K][];
-    remove(callbacks, callback);
-  }
-
   function getConnectionState() {
     return state.connection.state;
   }
@@ -1500,7 +1474,6 @@ See v0.13 release notes for more information.
     connect,
     disconnect,
     subscribe,
-    unsubscribe,
 
     // Presence
     updatePresence,
@@ -1626,7 +1599,6 @@ export function createRoom(
     // machine.subscribe are incompatible somewhere.
     // TODO: Figure out exactly what's wrong here!
     subscribe: machine.subscribe as any, // FIXME!
-    unsubscribe: machine.unsubscribe,
 
     //////////////
     // Presence //

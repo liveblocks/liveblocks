@@ -545,50 +545,6 @@ export type Room = {
   history: History;
 
   /**
-   * @deprecated use the callback returned by subscribe instead.
-   * See v0.13 release notes for more information.
-   * Will be removed in a future version.
-   */
-  unsubscribe: {
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    <T extends Presence>(
-      type: "my-presence",
-      listener: MyPresenceCallback<T>
-    ): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    <T extends Presence>(
-      type: "others",
-      listener: OthersEventCallback<T>
-    ): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "event", listener: EventCallback): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "error", listener: ErrorCallback): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "connection", listener: ConnectionCallback): void;
-  };
-
-  /**
    * Gets the current user.
    * Returns null if not it is not yet connected to the room.
    *
