@@ -108,8 +108,8 @@ export class LiveObject<
   /**
    * @internal
    */
-  static _deserializeChildren<J extends JsonObject>(
-    object: LiveObject<J>,
+  static _deserializeChildren(
+    object: LiveObject<JsonObject>,
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
