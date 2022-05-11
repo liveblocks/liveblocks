@@ -26,7 +26,7 @@ type RoomProviderProps<TStorage> = Resolve<
   } & RoomInitializers<Presence, TStorage>
 >;
 
-type UseCrdtResult<T> =
+type LookupResult<T> =
   | { status: "ok"; value: T }
   | { status: "loading" }
   | { status: "notfound" };
@@ -615,7 +615,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T>(key: string, initialValue: T): UseCrdtResult<T> {
+  function useStorageValue<T>(key: string, initialValue: T): LookupResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
