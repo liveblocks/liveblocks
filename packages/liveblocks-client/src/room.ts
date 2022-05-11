@@ -56,9 +56,10 @@ import {
   remove,
 } from "./utils";
 
-type FixmePresence = JsonObject;
-
-export type Machine = {
+export type Machine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -76,7 +77,7 @@ export type Machine = {
 
   // onWakeUp,
   onVisibilityChange(visibilityState: VisibilityState): void;
-  getUndoStack(): HistoryItem[];
+  getUndoStack(): HistoryItem<TPresence>[];
   getItemsCount(): number;
 
   // Core
@@ -101,26 +102,26 @@ export type Machine = {
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
-  subscribe<T extends Presence>(
+  subscribe(
     type: "my-presence",
-    listener: MyPresenceCallback<T>
+    listener: MyPresenceCallback<TPresence>
   ): () => void;
-  subscribe<T extends Presence>(
+  subscribe(
     type: "others",
-    listener: OthersEventCallback<T>
+    listener: OthersEventCallback<TPresence>
   ): () => void;
   subscribe(type: "event", listener: EventCallback): () => void;
   subscribe(type: "error", listener: ErrorCallback): () => void;
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
+    listener?: RoomEventCallbackMap<TPresence>[K] | any,
     options?: { isDeep: boolean }
   ): () => void;
 
   // Presence
-  updatePresence<T extends Presence>(
-    overrides: Partial<T>,
+  updatePresence(
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
   broadcastEvent(event: Json, options?: BroadcastOptions): void;
@@ -131,18 +132,16 @@ export type Machine = {
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage<TStorage extends LsonObject>(): Promise<{
-    root: LiveObject<TStorage>;
-  }>;
+  getStorage(): Promise<{ root: LiveObject<TStorage> }>;
 
   selectors: {
     // Core
     getConnectionState(): ConnectionState;
-    getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+    getSelf(): User<TPresence> | null;
 
     // Presence
-    getPresence<T extends Presence>(): T;
-    getOthers<T extends Presence>(): Others<T>;
+    getPresence(): TPresence;
+    getOthers(): Others<TPresence>;
   };
 };
 
@@ -290,7 +289,7 @@ export function makeStateMachine<
   state: State<TPresence, TStorage>,
   context: Context,
   mockedEffects?: Effects<TPresence>
-): Machine {
+): Machine<TPresence, TStorage> {
   const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -730,7 +729,7 @@ export function makeStateMachine<
     };
   }
 
-  function getConnectionState() {
+  function getConnectionState(): ConnectionState {
     return state.connection.state;
   }
 
