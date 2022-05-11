@@ -173,7 +173,7 @@ const defaultContext = {
   WebSocketPolyfill: MockWebSocket as any,
 };
 
-async function prepareRoomWithStorage<T extends LsonObject>(
+async function prepareRoomWithStorage<TStorage extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   onSend: (messages: ClientMessage[]) => void = () => {},
@@ -190,7 +190,7 @@ async function prepareRoomWithStorage<T extends LsonObject>(
   machine.authenticationSuccess({ actor }, ws as any);
   ws.open();
 
-  const getStoragePromise = machine.getStorage<T>();
+  const getStoragePromise = machine.getStorage<TStorage>();
 
   const clonedItems = deepClone(items);
   machine.onMessage(
@@ -209,14 +209,14 @@ async function prepareRoomWithStorage<T extends LsonObject>(
   };
 }
 
-export async function prepareIsolatedStorageTest<T extends LsonObject>(
+export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0,
   defaultStorage = {}
 ) {
   const messagesSent: ClientMessage[] = [];
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<T>(
+  const { machine, storage, ws } = await prepareRoomWithStorage<TStorage>(
     items,
     actor,
     (messages: ClientMessage[]) => {
@@ -251,7 +251,7 @@ export async function prepareIsolatedStorageTest<T extends LsonObject>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<T extends LsonObject>(
+export async function prepareStorageTest<TStorage extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
@@ -259,9 +259,9 @@ export async function prepareStorageTest<T extends LsonObject>(
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<T>(items, -1);
+    await prepareRoomWithStorage<TStorage>(items, -1);
 
-  const { machine, storage, ws } = await prepareRoomWithStorage<T>(
+  const { machine, storage, ws } = await prepareRoomWithStorage<TStorage>(
     items,
     currentActor,
     (messages: ClientMessage[]) => {
@@ -390,19 +390,19 @@ export async function reconnect(
   );
 }
 
-export async function prepareStorageImmutableTest<T extends LsonObject>(
+export async function prepareStorageImmutableTest<TStorage extends LsonObject>(
   items: SerializedCrdtWithId[],
   actor: number = 0
 ) {
-  let state: ToJson<T> = {} as any;
-  let refState: ToJson<T> = {} as any;
+  let state: ToJson<TStorage> = {} as any;
+  let refState: ToJson<TStorage> = {} as any;
 
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<T>(items, -1);
+    await prepareRoomWithStorage<TStorage>(items, -1);
 
-  const { machine, storage } = await prepareRoomWithStorage<T>(
+  const { machine, storage } = await prepareRoomWithStorage<TStorage>(
     items,
     actor,
     (messages: ClientMessage[]) => {
@@ -426,8 +426,8 @@ export async function prepareStorageImmutableTest<T extends LsonObject>(
     }
   );
 
-  state = liveObjectToJson(storage.root) as ToJson<T>;
-  refState = liveObjectToJson(refStorage.root) as ToJson<T>;
+  state = liveObjectToJson(storage.root) as ToJson<TStorage>;
+  refState = liveObjectToJson(refStorage.root) as ToJson<TStorage>;
 
   const root = refStorage.root;
   refMachine.subscribe(
