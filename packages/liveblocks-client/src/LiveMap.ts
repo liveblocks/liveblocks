@@ -25,12 +25,8 @@ import {
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveMap<
-  TKey extends string = string,
-  //                  ^^^^^^^^
-  //                  NOTE: Default arg will be removed in next major version
-  TValue extends Lson = Lson
-  //                  ^^^^^^
-  //                  NOTE: Default arg will be removed in next major version
+  TKey extends string,
+  TValue extends Lson
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
