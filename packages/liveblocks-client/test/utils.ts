@@ -174,9 +174,8 @@ const defaultContext = {
 };
 
 async function prepareRoomWithStorage<
-  TStorage extends LsonObject,
-  // TODO: Flip these params for consistency
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(
   items: SerializedCrdtWithId[],
   actor: number = 0,
@@ -214,15 +213,14 @@ async function prepareRoomWithStorage<
 }
 
 export async function prepareIsolatedStorageTest<
-  TStorage extends LsonObject,
-  // TODO: Flip these params for consistency
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage = {}) {
   const messagesSent: ClientMessage<TPresence>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TStorage,
-    TPresence
+    TPresence,
+    TStorage
   >(
     items,
     actor,
@@ -259,19 +257,18 @@ export async function prepareIsolatedStorageTest<
  * Assertion on the storage validate both rooms
  */
 export async function prepareStorageTest<
-  TStorage extends LsonObject,
-  // TODO: Flip these params for consistency
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TStorage,
-    TPresence
+    TPresence,
+    TStorage
   >(items, currentActor, (messages: ClientMessage<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {
@@ -398,9 +395,8 @@ export async function reconnect(
 }
 
 export async function prepareStorageImmutableTest<
-  TStorage extends LsonObject,
-  // TODO: Flip these params for consistency
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: ToJson<TStorage> = {} as any;
   let refState: ToJson<TStorage> = {} as any;
@@ -408,11 +404,11 @@ export async function prepareStorageImmutableTest<
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
 
   const { machine, storage } = await prepareRoomWithStorage<
-    TStorage,
-    TPresence
+    TPresence,
+    TStorage
   >(items, actor, (messages: ClientMessage<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {

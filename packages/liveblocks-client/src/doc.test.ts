@@ -14,8 +14,8 @@ describe("Storage", () => {
   describe("subscribe generic", () => {
     test("simple action", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        { a: number },
-        FixmePresence
+        FixmePresence,
+        { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
       const callback = jest.fn();
@@ -40,7 +40,7 @@ describe("Storage", () => {
 
     test("remote action", async () => {
       const { storage, applyRemoteOperations, subscribe } =
-        await prepareStorageTest<{ a: number }, FixmePresence>(
+        await prepareStorageTest<FixmePresence, { a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
         );
@@ -71,7 +71,7 @@ describe("Storage", () => {
 
     test("remote action with multipe updates on same object", async () => {
       const { storage, applyRemoteOperations, subscribe } =
-        await prepareStorageTest<{ a: number }, FixmePresence>(
+        await prepareStorageTest<FixmePresence, { a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
         );
@@ -103,7 +103,7 @@ describe("Storage", () => {
 
     test("batch actions on a single LiveObject", async () => {
       const { storage, assertUndoRedo, subscribe, batch } =
-        await prepareStorageTest<{ a: number; b: number }, FixmePresence>(
+        await prepareStorageTest<FixmePresence, { a: number; b: number }>(
           [createSerializedObject("0:0", { a: 0, b: 0 })],
           1
         );
@@ -140,8 +140,8 @@ describe("Storage", () => {
 
     test("batch actions on multiple LiveObjects", async () => {
       const { storage, subscribe, batch } = await prepareStorageTest<
-        { a: number; child: LiveObject<{ b: number }> },
-        FixmePresence
+        FixmePresence,
+        { a: number; child: LiveObject<{ b: number }> }
       >(
         [
           createSerializedObject("0:0", { a: 0 }),
@@ -178,13 +178,13 @@ describe("Storage", () => {
 
     test("batch actions on multiple Live types", async () => {
       const { storage, subscribe, batch } = await prepareStorageTest<
+        FixmePresence,
         {
           a: number;
           childObj: LiveObject<{ b: number }>;
           childList: LiveList<string>;
           childMap: LiveMap<string>;
-        },
-        FixmePresence
+        }
       >(
         [
           createSerializedObject("0:0", { a: 0 }),
@@ -237,8 +237,8 @@ describe("Storage", () => {
   describe("batching", () => {
     it("batching and undo", async () => {
       const { storage, assert, undo, redo, batch } = await prepareStorageTest<
-        { items: LiveList<string> },
-        FixmePresence
+        FixmePresence,
+        { items: LiveList<string> }
       >(
         [
           createSerializedObject("0:0", {}),
@@ -274,8 +274,8 @@ describe("Storage", () => {
 
     it("calling batch during a batch should throw", async () => {
       const { storage, batch } = await prepareStorageTest<
-        { a: number },
-        FixmePresence
+        FixmePresence,
+        { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
       batch(() => {
@@ -289,8 +289,8 @@ describe("Storage", () => {
 
     it("calling undo during a batch should throw", async () => {
       const { undo, batch } = await prepareStorageTest<
-        { a: number },
-        FixmePresence
+        FixmePresence,
+        { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
       batch(() => {
@@ -300,8 +300,8 @@ describe("Storage", () => {
 
     it("calling redo during a batch should throw", async () => {
       const { batch, redo } = await prepareStorageTest<
-        { a: number },
-        FixmePresence
+        FixmePresence,
+        { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
       batch(() => {
@@ -313,8 +313,8 @@ describe("Storage", () => {
   describe("undo / redo", () => {
     it("list.push", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        { items: LiveList<string> },
-        FixmePresence
+        FixmePresence,
+        { items: LiveList<string> }
       >(
         [
           createSerializedObject("0:0", {}),
@@ -342,8 +342,8 @@ describe("Storage", () => {
 
     it("max undo-redo stack", async () => {
       const { storage, assert, undo } = await prepareStorageTest<
-        { a: number },
-        FixmePresence
+        FixmePresence,
+        { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
       for (let i = 0; i < 100; i++) {
@@ -364,8 +364,8 @@ describe("Storage", () => {
 
     it("storage operation should clear redo stack", async () => {
       const { storage, assert, undo, redo } = await prepareStorageTest<
-        { items: LiveList<string> },
-        FixmePresence
+        FixmePresence,
+        { items: LiveList<string> }
       >(
         [
           createSerializedObject("0:0", {}),
