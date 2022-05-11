@@ -54,6 +54,8 @@ import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 
+type FixmePresence = JsonObject;
+
 export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
@@ -1312,7 +1314,7 @@ See v0.13 release notes for more information.
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State["listeners"]] = [];
+      state.listeners[key as keyof State<TPresence>["listeners"]] = [];
     }
   }
 
@@ -1539,7 +1541,7 @@ See v0.13 release notes for more information.
 export function defaultState(
   initialPresence?: Presence,
   initialStorage?: JsonObject
-): State {
+): State<FixmePresence> {
   return {
     connection: { state: "closed" },
     token: null,
