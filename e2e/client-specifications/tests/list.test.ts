@@ -221,7 +221,7 @@ describe("LiveList confict resolution", () => {
         await assert({ list: ["D", "B"] });
         // Client 2: B
       });
-    }, 10000);
+    });
 
     test("set + move / set", async () => {
       const {
@@ -256,7 +256,7 @@ describe("LiveList confict resolution", () => {
         await assertConsistancy();
         // await assert({ list: ["D", "B", "C"] });
       });
-    }, 10000);
+    });
 
     test("set / set + move", async () => {
       const {
@@ -291,7 +291,7 @@ describe("LiveList confict resolution", () => {
         await assertConsistancy();
         // await assert({ list: ["D", "B", "C"] });
       });
-    }, 10000);
+    });
 
     test("push + set / push + set", async () => {
       const {
@@ -336,7 +336,7 @@ describe("LiveList confict resolution", () => {
         // await assertConsistancy();
         await assert({ list: ["D"] });
       });
-    }, 10000);
+    });
 
     test("set / insert + set", async () => {
       const {
@@ -358,25 +358,176 @@ describe("LiveList confict resolution", () => {
 
         socketUtils.pauseAllSockets();
 
-        root1.get("list").set(0, "B");
+        root1.get("list").set(0, "B"); // B(0.1)
         root2.get("list").insert("C", 0);
         root2.get("list").set(0, "D");
 
+        await assertEach({ list: ["B"] }, { list: ["D", "A"] });
+        // 1: B(0.1)
+        // 2: D(0.05) A(0.1)
+
         await socketUtils.sendMessagesClient1();
 
-        // await assertEach({ list: ["B", "C"] }, { list: ["B", "C"] });
+        await assertEach({ list: ["B"] }, { list: ["D", "B"] });
 
         await socketUtils.sendMessagesClient2();
 
-        await assertConsistancy();
-        // await assert({ list: ["D", "C", "B"] });
+        // 1: C(0.05) B(0.1) => D(0.05) B(0.1)
+        // 2:
+
+        // await assertConsistancy();
+        await assert({ list: ["D", "B"] });
       });
-    }, 10000);
+    });
+  });
+
+  test("set / delete + push", async () => {
+    const {
+      root1,
+      root2,
+      assert,
+      assertEach,
+      assertConsistancy,
+      socketUtils,
+      run,
+    } = await prepareTest<{
+      list: LiveList<string>;
+    }>({
+      list: new LiveList(["A", "B"]),
+    });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").set(1, "D");
+
+      root2.get("list").delete(1);
+      root2.get("list").push("C");
+
+      await assertEach({ list: ["A", "D"] }, { list: ["A", "C"] });
+
+      await socketUtils.sendMessagesClient1();
+
+      // 1: A, D
+      // 2: A, D
+
+      await assertEach({ list: ["A", "D"] }, { list: ["A", "D"] });
+
+      await socketUtils.sendMessagesClient2();
+
+      // 1: A, D, C
+      // 2: A, D, C
+
+      // await assertConsistancy();
+      await assert({ list: ["A", "D", "C"] }); // 1: A, D, C
+    });
+  });
+
+  test("delete + push / set", async () => {
+    const {
+      root1,
+      root2,
+      assert,
+      assertEach,
+      assertConsistancy,
+      socketUtils,
+      run,
+    } = await prepareTest<{
+      list: LiveList<string>;
+    }>({
+      list: new LiveList(["A", "B"]),
+    });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").delete(1);
+      root1.get("list").push("C");
+
+      root2.get("list").set(1, "D");
+
+      await assertEach({ list: ["A", "C"] }, { list: ["A", "D"] });
+
+      await socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["A", "C"] }, { list: ["A", "C", "D"] });
+
+      await socketUtils.sendMessagesClient2();
+
+      // await assertConsistancy();
+      await assert({ list: ["A", "D"] });
+    });
+  });
+
+  test("set / delete + move", async () => {
+    const {
+      root1,
+      root2,
+      assert,
+      assertEach,
+      assertConsistancy,
+      socketUtils,
+      run,
+    } = await prepareTest<{
+      list: LiveList<string>;
+    }>({
+      list: new LiveList(["A", "B", "C"]),
+    });
+
+    await run(async () => {
+      await assert({ list: ["A", "B", "C"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").set(0, "D");
+
+      root2.get("list").delete(0);
+      root2.get("list").move(1, 0);
+
+      await assertEach({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
+
+      await socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
+
+      await socketUtils.sendMessagesClient2();
+
+      // await assertConsistancy();
+      await assert({ list: ["D", "B", "C"] }); // 2 missing C
+    });
   });
 
   test("insert / move", async () => {});
 
-  test("insert / delete", async () => {});
+  test("insert / delete", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList([]),
+      });
+
+    await run(async () => {
+      await assert({ list: [] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").insert("A", 0);
+      root1.get("list").delete(0);
+
+      await socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: [] }, { list: [] });
+
+      await socketUtils.sendMessagesClient2();
+
+      await assert({ list: [] });
+    });
+  });
 
   test("insert / set", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
@@ -464,7 +615,7 @@ describe("LiveList confict resolution", () => {
 
       await assert({ list: ["C", "B"] });
     });
-  }, 10000);
+  });
 
   test("delete + insert / set", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
@@ -550,6 +701,34 @@ describe("LiveList confict resolution", () => {
     });
   });
 
+  test("set + move / move + set", async () => {
+    const { root1, root2, assert, assertEach, socketUtils, run } =
+      await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+    await run(async () => {
+      await assert({ list: ["A", "B"] });
+
+      socketUtils.pauseAllSockets();
+
+      root1.get("list").set(0, "C"); //  Client1 moves "A" after "B"
+      root1.get("list").move(0, 1); //  Client1 moves "B" after "A"
+      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
+      root2.get("list").set(0, "D"); //  Client2 sets "B" to "C"
+
+      await socketUtils.sendMessagesClient1();
+
+      await assertEach({ list: ["A", "B"] }, { list: ["C", "A"] });
+
+      await socketUtils.sendMessagesClient2();
+
+      await assert({ list: ["C", "A"] });
+    });
+  });
+
   test.skip("insert + delete / insert", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
       await prepareTest<{
@@ -588,7 +767,7 @@ describe("LiveList confict resolution", () => {
 
       // await assertEach({ list: ["B", "C"] }, { list: ["C", "B"] });
     });
-  }, 10000);
+  });
 
   test("set + delete / move + insert", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
@@ -620,7 +799,7 @@ describe("LiveList confict resolution", () => {
 
       await assert({ list: ["D", "B"] });
     });
-  }, 10000);
+  });
 
   test("push + delete / push", async () => {
     const { root1, root2, assert, assertEach, socketUtils, run } =
@@ -657,7 +836,7 @@ describe("LiveList confict resolution", () => {
 
       // B positions are not the same on both clients
     });
-  }, 100000);
+  });
 
   // describe("all combinations 2 operations each", () => {
   //   const client1FirstActions = [
@@ -733,14 +912,14 @@ describe("LiveList confict resolution", () => {
 
   //                 await socketUtils.sendMessagesClient1();
 
-  //                 await wait(1000);
+  //                 await wait(500);
 
   //                 console.log("Temp client 1: ", objectToJson(root1));
   //                 console.log("Temp client 2: ", objectToJson(root2));
 
   //                 await socketUtils.sendMessagesClient2();
 
-  //                 await wait(1000);
+  //                 await wait(500);
 
   //                 const client1Json = objectToJson(root1);
   //                 const client2Json = objectToJson(root2);
@@ -760,7 +939,7 @@ describe("LiveList confict resolution", () => {
   // });
 });
 
-describe.skip("LiveList conflicts", () => {
+describe.only("LiveList conflicts", () => {
   describe("insert conflicts", () => {
     test("remote insert conflicts with another insert", async () => {
       const { root1, root2, assert, assertEach, socketUtils, run } =
@@ -1137,7 +1316,75 @@ describe.skip("LiveList conflicts", () => {
   });
 
   describe("move conflicts", () => {
-    // TODO
+    test("remote move conflicts with move", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").move(0, 1);
+        root2.get("list").move(0, 1);
+
+        await assertEach({ list: ["B", "A"] }, { list: ["B", "A"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote move conflicts with move via undo", async () => {
+      const {
+        root1,
+        root2,
+        room2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").move(0, 1);
+
+        root2.get("list").move(0, 1);
+        room2.history.undo();
+        room2.history.redo();
+
+        await assertEach({ list: ["B", "A"] }, { list: ["B", "A"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
   });
 
   describe("delete conflicts", () => {
