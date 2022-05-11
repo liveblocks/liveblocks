@@ -145,9 +145,9 @@ export type UpdateStorageMessage = {
 /**
  * Messages that can be sent from the client to the server.
  */
-export type ClientMessage =
+export type ClientMessage<TPresence extends JsonObject> =
   | ClientEventMessage
-  | UpdatePresenceClientMessage
+  | UpdatePresenceClientMessage<TPresence>
   | UpdateStorageClientMessage
   | FetchStorageClientMessage;
 
@@ -164,9 +164,9 @@ export type ClientEventMessage = {
   event: Json;
 };
 
-export type UpdatePresenceClientMessage = {
+export type UpdatePresenceClientMessage<TPresence extends JsonObject> = {
   type: ClientMessageType.UpdatePresence;
-  data: Presence;
+  data: TPresence;
   targetActor?: number;
 };
 
