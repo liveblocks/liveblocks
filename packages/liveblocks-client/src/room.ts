@@ -54,6 +54,8 @@ import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 
+type FixmePresence = JsonObject;
+
 export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
@@ -197,7 +199,7 @@ type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
 
 type IdFactory = () => string;
 
-export type State = {
+export type State<TPresence extends JsonObject> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
@@ -205,7 +207,7 @@ export type State = {
   lastFlushTime: number;
   buffer: {
     presence: Presence | null;
-    messages: ClientMessage[];
+    messages: ClientMessage<TPresence>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -256,12 +258,12 @@ export type State = {
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects = {
+export type Effects<TPresence extends JsonObject> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMessage[]): void;
+  send(messages: ClientMessage<TPresence>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -277,12 +279,12 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine(
-  state: State,
+export function makeStateMachine<TPresence extends JsonObject>(
+  state: State<TPresence>,
   context: Context,
-  mockedEffects?: Effects
+  mockedEffects?: Effects<TPresence>
 ): Machine {
-  const effects: Effects = mockedEffects || {
+  const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
@@ -306,7 +308,9 @@ export function makeStateMachine(
           .catch((er: any) => authenticationFailure(er));
       }
     },
-    send(messageOrMessages: ClientMessage | ClientMessage[]) {
+    send(
+      messageOrMessages: ClientMessage<TPresence> | ClientMessage<TPresence>[]
+    ) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
       }
@@ -914,7 +918,11 @@ export function makeStateMachine(
       // TODO: Consider storing it on the backend
       state.buffer.messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.me!,
+        data: state.me as TPresence,
+        //             ^^^^^^^^^^^^
+        //             TODO: Soon, state.buffer.presence will become
+        //             a TPresence and this force-cast will no longer be
+        //             necessary.
         targetActor: message.actor,
       });
       tryFlushing();
@@ -1159,7 +1167,7 @@ export function makeStateMachine(
       return;
     }
 
-    const messages: ClientMessage[] = [];
+    const messages: ClientMessage<TPresence>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -1217,12 +1225,16 @@ export function makeStateMachine(
     }
   }
 
-  function flushDataToMessages(state: State) {
-    const messages: ClientMessage[] = [];
+  function flushDataToMessages(state: State<TPresence>) {
+    const messages: ClientMessage<TPresence>[] = [];
     if (state.buffer.presence) {
       messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.buffer.presence,
+        data: state.buffer.presence as unknown as TPresence,
+        //                          ^^^^^^^^^^^^^^^^^^^^^^^
+        //                          TODO: In 0.17, state.buffer.presence will
+        //                          become a TPresence and this force-cast will
+        //                          no longer be necessary.
       });
     }
     for (const event of state.buffer.messages) {
@@ -1260,7 +1272,7 @@ export function makeStateMachine(
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State["listeners"]] = [];
+      state.listeners[key as keyof State<TPresence>["listeners"]] = [];
     }
   }
 
@@ -1486,7 +1498,7 @@ export function makeStateMachine(
 export function defaultState(
   initialPresence?: Presence,
   initialStorage?: JsonObject
-): State {
+): State<FixmePresence> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1579,10 +1591,7 @@ export function createRoom(
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
 
-    // FIXME: There's a type issue here. The types of subscribe and
-    // machine.subscribe are incompatible somewhere.
-    // TODO: Figure out exactly what's wrong here!
-    subscribe: machine.subscribe as any, // FIXME!
+    subscribe: machine.subscribe,
 
     //////////////
     // Presence //

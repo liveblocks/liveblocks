@@ -27,6 +27,8 @@ import type { LsonObject, ToJson } from "./lson";
  */
 export class LiveObject<
   O extends LsonObject = LsonObject
+  //                   ^^^^^^^^^^^^
+  //                   NOTE: Default arg will be removed in next major version
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;

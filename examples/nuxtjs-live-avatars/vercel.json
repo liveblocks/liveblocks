@@ -1,5 +1,7 @@
 {
-  "version": 2,
+  "github": {
+    "silent": true
+  },
   "builds": [
     {
       "src": "nuxt.config.js",

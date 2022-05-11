@@ -90,6 +90,14 @@ get_all_changed_files () {
         # on Vercel environments
         echo '
         const data = require("./diff-since-main.json");
+
+        // If some commits on this branch have the phrase "[no vercel]" or
+        // "[skip examples]" or some combination like that in their message, skip
+        // this build
+        if (data?.commits?.some(commit => /\[(no|skip).*(vercel|examples|deploy).*\]/i.test(commit.message))) {
+            process.exit(0);
+        }
+
         const files = data?.files ?? [];
         for (const file of files) {
             console.log(file.filename);
