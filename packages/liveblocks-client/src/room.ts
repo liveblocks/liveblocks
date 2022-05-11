@@ -114,22 +114,6 @@ export type Machine = {
     options?: { isDeep: boolean }
   ): () => void;
 
-  unsubscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): void;
-  unsubscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): void;
-  unsubscribe(type: "event", listener: EventCallback): void;
-  unsubscribe(type: "error", listener: ErrorCallback): void;
-  unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  unsubscribe<K extends RoomEventName>(
-    event: K,
-    callback: RoomEventCallbackMap[K]
-  ): void;
-
   // Presence
   updatePresence<T extends Presence>(
     overrides: Partial<T>,
