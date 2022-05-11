@@ -16,7 +16,6 @@ import {
 } from "./immutable";
 import { LiveObject } from "./LiveObject";
 import type { StorageUpdate } from "./types";
-import type { JsonObject as FixmePresence } from "./json";
 
 // TODO: Further improve this type
 type fixme = unknown;
@@ -60,7 +59,7 @@ describe("2 ways tests with two clients", () => {
   describe("Object/LiveObject", () => {
     test("create object", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncObj: { a: number } }
       >([createSerializedObject("0:0", {})], 1);
 
@@ -82,7 +81,7 @@ describe("2 ways tests with two clients", () => {
 
     test("update object", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncObj: { a: number } }
       >(
         [
@@ -110,7 +109,7 @@ describe("2 ways tests with two clients", () => {
 
     test("add nested object", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncObj: { a: any } }
       >(
         [
@@ -138,7 +137,7 @@ describe("2 ways tests with two clients", () => {
 
     test("create LiveList with one LiveRegister item in same batch", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { doc: any }
       >(
         [
@@ -161,7 +160,7 @@ describe("2 ways tests with two clients", () => {
 
     test("create nested LiveList with one LiveObject item in same batch", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { doc: any }
       >(
         [
@@ -184,7 +183,7 @@ describe("2 ways tests with two clients", () => {
 
     test("Add nested objects in same batch", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { doc: any }
       >(
         [
@@ -207,7 +206,7 @@ describe("2 ways tests with two clients", () => {
 
     test("delete object key", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncObj: { a?: number } }
       >(
         [
@@ -237,7 +236,7 @@ describe("2 ways tests with two clients", () => {
   describe("Array/LiveList", () => {
     test("replace array of 3 elements to 1 element", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<number> }
       >(
         [
@@ -266,7 +265,7 @@ describe("2 ways tests with two clients", () => {
 
     test("add item to array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -292,7 +291,7 @@ describe("2 ways tests with two clients", () => {
 
     test("replace first item in array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { list: LiveList<string> }
       >(
         [
@@ -316,7 +315,7 @@ describe("2 ways tests with two clients", () => {
 
     test("replace last item in array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { list: LiveList<string> }
       >(
         [
@@ -340,7 +339,7 @@ describe("2 ways tests with two clients", () => {
 
     test("insert item at beginning of array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -367,7 +366,7 @@ describe("2 ways tests with two clients", () => {
 
     test("swap items in array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -397,7 +396,7 @@ describe("2 ways tests with two clients", () => {
 
     test("array of objects", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<LiveObject<{ a: number }>> }
       >(
         [
@@ -424,7 +423,7 @@ describe("2 ways tests with two clients", () => {
 
     test("remove first item from array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -452,7 +451,7 @@ describe("2 ways tests with two clients", () => {
 
     test("remove last item from array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -480,7 +479,7 @@ describe("2 ways tests with two clients", () => {
 
     test("remove all elements of array except first", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -508,7 +507,7 @@ describe("2 ways tests with two clients", () => {
     });
     test("remove all elements of array except last", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -536,7 +535,7 @@ describe("2 ways tests with two clients", () => {
     });
     test("remove all elements of array", async () => {
       const { storage, state, assert } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncList: LiveList<string> }
       >(
         [
@@ -580,10 +579,7 @@ describe("2 ways tests with two clients", () => {
 
     test("new state contains a function", async () => {
       const { storage, state, assertStorage } =
-        await prepareStorageImmutableTest<
-          FixmePresence,
-          { syncObj: { a: any } }
-        >(
+        await prepareStorageImmutableTest<never, { syncObj: { a: any } }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedObject("0:1", { a: 0 }, "0:0", "syncObj"),
@@ -611,7 +607,7 @@ describe("2 ways tests with two clients", () => {
 
     test("Production env - new state contains a function", async () => {
       const { storage, state } = await prepareStorageImmutableTest<
-        FixmePresence,
+        never,
         { syncObj: { a: any } }
       >(
         [

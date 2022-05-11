@@ -13,7 +13,6 @@ import {
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from ".";
-import type { JsonObject as FixmePresence } from "./json";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
@@ -32,7 +31,7 @@ describe("LiveObject", () => {
 
     it("should be null after being detached", async () => {
       const { root } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         { child: LiveObject<{ a: number }> }
       >(
         [
@@ -138,7 +137,7 @@ describe("LiveObject", () => {
   it("update with LiveObject", async () => {
     const { storage, assert, operations, assertUndoRedo, getUndoStack } =
       await prepareStorageTest<
-        FixmePresence,
+        never,
         { child: LiveObject<{ a: number }> | null }
       >([createSerializedObject("0:0", { child: null })], 1);
 
@@ -198,7 +197,7 @@ describe("LiveObject", () => {
   it("remove nested grand child record with update", async () => {
     const { storage, assert, assertUndoRedo, getItemsCount } =
       await prepareStorageTest<
-        FixmePresence,
+        never,
         {
           a: number;
           child: LiveObject<{
@@ -236,7 +235,7 @@ describe("LiveObject", () => {
   it("remove nested child record with update", async () => {
     const { storage, assert, assertUndoRedo, getItemsCount } =
       await prepareStorageTest<
-        FixmePresence,
+        never,
         { a: number; child: LiveObject<{ b: number }> | null }
       >([
         createSerializedObject("0:0", { a: 0 }),
@@ -315,7 +314,7 @@ describe("LiveObject", () => {
 
   it("update nested record", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      FixmePresence,
+      never,
       { a: number; child: LiveObject<{ b: number }> }
     >([
       createSerializedObject("0:0", { a: 0 }),
@@ -345,7 +344,7 @@ describe("LiveObject", () => {
 
   it("update deeply nested record", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      FixmePresence,
+      never,
       {
         a: number;
         child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
@@ -393,7 +392,7 @@ describe("LiveObject", () => {
     describe("should ignore incoming updates if current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
         const { root, assert, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<FixmePresence, { a: number }>(
+          await prepareIsolatedStorageTest<never, { a: number }>(
             [createSerializedObject("0:0", { a: 0 })],
             1
           );
@@ -419,7 +418,7 @@ describe("LiveObject", () => {
       it("when value is a LiveObject", async () => {
         const { root, assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<
-            FixmePresence,
+            never,
             { a: LiveObject<{ subA: number }> }
           >(
             [
@@ -452,7 +451,7 @@ describe("LiveObject", () => {
       it("when value is a LiveList with LiveObjects", async () => {
         const { root, assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<
-            FixmePresence,
+            never,
             { a: LiveList<LiveObject<{ b: number }>> }
           >(
             [
@@ -494,7 +493,7 @@ describe("LiveObject", () => {
 
     it("should delete property from the object", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        FixmePresence,
+        never,
         { a?: number }
       >([createSerializedObject("0:0", { a: 0 })]);
       assert({ a: 0 });
@@ -507,7 +506,7 @@ describe("LiveObject", () => {
 
     it("should delete nested crdt", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        FixmePresence,
+        never,
         { child?: LiveObject<{ a: number }> }
       >([
         createSerializedObject("0:0", {}),
@@ -524,7 +523,7 @@ describe("LiveObject", () => {
 
     it("should not notify if property does not exist", async () => {
       const { root, subscribe } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         { a?: number }
       >([createSerializedObject("0:0", {})]);
 
@@ -538,7 +537,7 @@ describe("LiveObject", () => {
 
     it("should notify if property has been deleted", async () => {
       const { root, subscribe } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         { a?: number }
       >([createSerializedObject("0:0", { a: 1 })]);
 
@@ -554,7 +553,7 @@ describe("LiveObject", () => {
   describe("applyDeleteObjectKey", () => {
     it("should not notify if property does not exist", async () => {
       const { root, subscribe, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<FixmePresence, { a?: number }>([
+        await prepareIsolatedStorageTest<never, { a?: number }>([
           createSerializedObject("0:0", {}),
         ]);
 
@@ -570,7 +569,7 @@ describe("LiveObject", () => {
 
     it("should notify if property has been deleted", async () => {
       const { root, subscribe, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<FixmePresence, { a?: number }>([
+        await prepareIsolatedStorageTest<never, { a?: number }>([
           createSerializedObject("0:0", { a: 1 }),
         ]);
 
@@ -588,7 +587,7 @@ describe("LiveObject", () => {
   describe("subscriptions", () => {
     test("simple action", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        FixmePresence,
+        never,
         { a: number }
       >([createSerializedObject("0:0", { a: 0 })], 1);
 
@@ -606,7 +605,7 @@ describe("LiveObject", () => {
 
     test("subscribe multiple actions", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        FixmePresence,
+        never,
         { child: LiveObject<{ a: number }>; child2: LiveObject<{ a: number }> }
       >(
         [
@@ -637,7 +636,7 @@ describe("LiveObject", () => {
 
     test("deep subscribe", async () => {
       const { storage, subscribe } = await prepareStorageTest<
-        FixmePresence,
+        never,
         {
           child: LiveObject<{
             a: number;
@@ -686,7 +685,7 @@ describe("LiveObject", () => {
     test("deep subscribe remote operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
         await prepareStorageTest<
-          FixmePresence,
+          never,
           {
             child: LiveObject<{
               a: number;
@@ -743,7 +742,7 @@ describe("LiveObject", () => {
     test("subscribe subchild remote operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
         await prepareStorageTest<
-          FixmePresence,
+          never,
           {
             child: LiveObject<{
               a: number;
@@ -793,7 +792,7 @@ describe("LiveObject", () => {
     test("deep subscribe remote and local operation - delete object key", async () => {
       const { storage, subscribe, applyRemoteOperations } =
         await prepareStorageTest<
-          FixmePresence,
+          never,
           { child: LiveObject<{ a?: number; b?: number }> }
         >(
           [
@@ -838,7 +837,7 @@ describe("LiveObject", () => {
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         { obj: LiveObject<{ a: number }> }
       >(
         [
@@ -897,7 +896,7 @@ describe("LiveObject", () => {
 
     test("LiveObject updated nested", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         { obj: LiveObject<{ a: number }> }
       >(
         [
@@ -969,7 +968,7 @@ describe("LiveObject", () => {
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
       const { root, assert, subscribe, undo } =
-        await prepareIsolatedStorageTest<FixmePresence, { a: number }>(
+        await prepareIsolatedStorageTest<never, { a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
         );
@@ -993,7 +992,7 @@ describe("LiveObject", () => {
   describe("internal methods", () => {
     test("_detachChild", async () => {
       const { root } = await prepareIsolatedStorageTest<
-        FixmePresence,
+        never,
         {
           obj: LiveObject<{
             a: LiveObject<{ subA: number }>;
