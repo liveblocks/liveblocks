@@ -175,9 +175,8 @@ const defaultContext = {
 
 async function prepareRoomWithStorage<
   TStorage extends LsonObject,
-  // TODO: 1. Flip these params for consistency
-  // TODO: 2. Remove JsonObject default type param
-  TPresence extends JsonObject = JsonObject
+  // TODO: Flip these params for consistency
+  TPresence extends JsonObject
 >(
   items: SerializedCrdtWithId[],
   actor: number = 0,
@@ -216,9 +215,8 @@ async function prepareRoomWithStorage<
 
 export async function prepareIsolatedStorageTest<
   TStorage extends LsonObject,
-  // TODO: 1. Flip these params for consistency
-  // TODO: 2. Remove JsonObject default type param
-  TPresence extends JsonObject = JsonObject
+  // TODO: Flip these params for consistency
+  TPresence extends JsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage = {}) {
   const messagesSent: ClientMessage<TPresence>[] = [];
 
@@ -262,9 +260,8 @@ export async function prepareIsolatedStorageTest<
  */
 export async function prepareStorageTest<
   TStorage extends LsonObject,
-  // TODO: 1. Flip these params for consistency
-  // TODO: 2. Remove JsonObject default type param
-  TPresence extends JsonObject = JsonObject
+  // TODO: Flip these params for consistency
+  TPresence extends JsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
@@ -402,9 +399,8 @@ export async function reconnect(
 
 export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
-  // TODO: 1. Flip these params for consistency
-  // TODO: 2. Remove JsonObject default type param
-  TPresence extends JsonObject = JsonObject
+  // TODO: Flip these params for consistency
+  TPresence extends JsonObject
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: ToJson<TStorage> = {} as any;
   let refState: ToJson<TStorage> = {} as any;

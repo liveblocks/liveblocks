@@ -215,7 +215,7 @@ type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
 
 type IdFactory = () => string;
 
-export type State<TPresence extends JsonObject = JsonObject> = {
+export type State<TPresence extends JsonObject> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
@@ -295,7 +295,7 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine<TPresence extends JsonObject = JsonObject>(
+export function makeStateMachine<TPresence extends JsonObject>(
   state: State<TPresence>,
   context: Context,
   mockedEffects?: Effects<TPresence>
