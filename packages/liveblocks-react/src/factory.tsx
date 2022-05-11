@@ -615,7 +615,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
+  function useStorageValue<T>(key: string, initialValue: T): UseCrdtResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
@@ -628,7 +628,7 @@ Please see https://bit.ly/3Niy5aP for details.`
       let crdt: null | T = root.get(key);
 
       if (crdt == null) {
-        crdt = initialCrdt;
+        crdt = initialValue;
         root.set(key, crdt);
       }
 
