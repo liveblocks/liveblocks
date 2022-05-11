@@ -1103,7 +1103,10 @@ describe("room", () => {
     test("disconnect and reconnect with remote changes", async () => {
       const { assert, machine } = await prepareIsolatedStorageTest<
         never,
-        { items: LiveList<string> }
+        {
+          items?: LiveList<string>;
+          items2?: LiveList<string>;
+        }
       >(
         [
           createSerializedObject("0:0", {}),

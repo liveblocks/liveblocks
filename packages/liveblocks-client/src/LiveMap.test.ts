@@ -189,7 +189,7 @@ describe("LiveMap", () => {
     it("should delete LiveObject", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<
         never,
-        { map: LiveMap<string, LiveObject<{ a: number }>> }
+        { map: LiveMap<string, number> }
       >([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
