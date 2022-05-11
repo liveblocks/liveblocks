@@ -583,6 +583,13 @@ Please see https://bit.ly/3Niy5aP for details.`
   }
 
   /**
+   * Returns the room.history
+   */
+  function useHistory(): History {
+    return useRoom().history;
+  }
+
+  /**
    * Returns a function that undoes the last operation executed by the current client.
    * It does not impact operations made by other clients.
    */
@@ -606,13 +613,6 @@ Please see https://bit.ly/3Niy5aP for details.`
    */
   function useBatch(): (callback: () => void) => void {
     return useRoom().batch;
-  }
-
-  /**
-   * Returns the room.history
-   */
-  function useHistory(): History {
-    return useRoom().history;
   }
 
   function useStorageValue<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
