@@ -26,7 +26,7 @@ type RoomProviderProps<TStorage> = Resolve<
   } & RoomInitializers<Presence, TStorage>
 >;
 
-type UseCrdtResult<T> =
+type LookupResult<T> =
   | { status: "ok"; value: T }
   | { status: "loading" }
   | { status: "notfound" };
@@ -615,7 +615,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
+  function useStorageValue<T>(key: string, initialValue: T): LookupResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
@@ -625,20 +625,20 @@ Please see https://bit.ly/3Niy5aP for details.`
         return;
       }
 
-      let crdt: null | T = root.get(key);
+      let liveValue: null | T = root.get(key);
 
-      if (crdt == null) {
-        crdt = initialCrdt;
-        root.set(key, crdt);
+      if (liveValue == null) {
+        liveValue = initialValue;
+        root.set(key, liveValue);
       }
 
       function onRootChange() {
         const newCrdt = root!.get(key);
-        if (newCrdt !== crdt) {
+        if (newCrdt !== liveValue) {
           unsubscribeCrdt();
-          crdt = newCrdt;
+          liveValue = newCrdt;
           unsubscribeCrdt = room.subscribe(
-            crdt as any /* AbstractCrdt */,
+            liveValue as any /* AbstractCrdt */,
             rerender
           );
           rerender();
@@ -646,7 +646,7 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       let unsubscribeCrdt = room.subscribe(
-        crdt as any /* AbstractCrdt */,
+        liveValue as any /* AbstractCrdt */,
         rerender
       );
       const unsubscribeRoot = room.subscribe(
