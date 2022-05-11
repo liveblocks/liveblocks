@@ -28,7 +28,7 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`store.js`](./examples/redux-todo-list/src/store.js) by your **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in [`store.js`](./src/store.js) by your **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 
 ### Tutorial

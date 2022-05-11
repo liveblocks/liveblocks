@@ -27,7 +27,7 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./examples/javascript-todo-list/app.js) by your **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) by your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
 
 ### Tutorial
