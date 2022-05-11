@@ -894,7 +894,7 @@ describe("LiveObject", () => {
     test("LiveObject updated nested", async () => {
       const { assert, machine, root } = await prepareIsolatedStorageTest<
         never,
-        { obj: LiveObject<{ a: number }> }
+        { obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }> }
       >(
         [
           createSerializedObject("0:0", {}),

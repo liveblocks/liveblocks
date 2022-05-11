@@ -5,7 +5,6 @@ import {
   mockEffects,
   MockWebSocket,
   serverMessage,
-  objectToJson,
   createSerializedRegister,
   FIRST_POSITION,
   prepareIsolatedStorageTest,
@@ -13,6 +12,7 @@ import {
   waitFor,
   withDateNow,
 } from "../test/utils";
+import { lsonToJson } from "./immutable";
 import {
   ClientMessageType,
   CrdtType,
@@ -1068,9 +1068,9 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
-      const storageJson = objectToJson(storage.root);
+      const storageJson = lsonToJson(storage.root);
       expect(storageJson).toEqual({ items: ["A", "B"] });
-      const refStorageJson = objectToJson(refStorage.root);
+      const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: SerializedCrdtWithId[] = [
@@ -1103,7 +1103,10 @@ describe("room", () => {
     test("disconnect and reconnect with remote changes", async () => {
       const { assert, machine } = await prepareIsolatedStorageTest<
         never,
-        { items: LiveList<string> }
+        {
+          items?: LiveList<string>;
+          items2?: LiveList<string>;
+        }
       >(
         [
           createSerializedObject("0:0", {}),
