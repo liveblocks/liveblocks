@@ -638,10 +638,7 @@ describe("LiveObject", () => {
       const { storage, subscribe } = await prepareStorageTest<
         never,
         {
-          child: LiveObject<{
-            a: number;
-            subchild: LiveObject<{ b: number }>;
-          }>;
+          child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
         }
       >(
         [

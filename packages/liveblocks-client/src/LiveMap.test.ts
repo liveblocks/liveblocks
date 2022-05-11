@@ -106,10 +106,7 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.toObject().map;
     expect(Array.from(map.entries())).toEqual([]);
-
-    assert({
-      map: [],
-    });
+    assert({ map: [] });
   });
 
   it("init map with items", async () => {
