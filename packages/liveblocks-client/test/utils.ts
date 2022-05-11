@@ -270,7 +270,7 @@ export async function prepareStorageTest<
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TStorage>(items, -1);
+    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
     TStorage,
@@ -412,7 +412,7 @@ export async function prepareStorageImmutableTest<
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TStorage>(items, -1);
+    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
 
   const { machine, storage } = await prepareRoomWithStorage<
     TStorage,
