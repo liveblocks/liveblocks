@@ -25,6 +25,7 @@ import { makeStateMachine, defaultState, createRoom } from "./room";
 import type { Authentication, Others } from "./types";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+import type { JsonObject as FixmePresence } from "./json";
 
 const defaultContext = {
   roomId: "room-id",
@@ -260,10 +261,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      {
-        type: ClientMessageType.UpdatePresence,
-        data: { x: 0 },
-      },
+      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
     ]);
   });
 
@@ -279,10 +277,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      {
-        type: ClientMessageType.UpdatePresence,
-        data: { x: 0 },
-      },
+      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
     ]);
   });
 
@@ -297,10 +292,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      {
-        type: ClientMessageType.UpdatePresence,
-        data: {},
-      },
+      { type: ClientMessageType.UpdatePresence, data: {} },
     ]);
   });
 
@@ -323,10 +315,7 @@ describe("room", () => {
       defaultContext.throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([
-      {
-        type: ClientMessageType.UpdatePresence,
-        data: { x: 0 },
-      },
+      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
     ]);
     expect(state.buffer.presence).toEqual({ x: 1 });
   });
@@ -469,10 +458,7 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        {
-          type: ClientMessageType.UpdatePresence,
-          data: {},
-        },
+        { type: ClientMessageType.UpdatePresence, data: {} },
       ]);
     });
 
@@ -495,14 +481,8 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        {
-          type: ClientMessageType.UpdatePresence,
-          data: {},
-        },
-        {
-          type: ClientMessageType.ClientEvent,
-          event: { type: "EVENT" },
-        },
+        { type: ClientMessageType.UpdatePresence, data: {} },
+        { type: ClientMessageType.ClientEvent, event: { type: "EVENT" } },
       ]);
     });
   });
@@ -835,9 +815,10 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assert, undo, batch } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 1 })], 1);
+      const { storage, assert, undo, batch } = await prepareStorageTest<
+        FixmePresence,
+        { a: number }
+      >([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
@@ -853,9 +834,7 @@ describe("room", () => {
 
     test("batch storage with changes from server", async () => {
       const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
+        await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -910,9 +889,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
+      } = await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1065,9 +1042,7 @@ describe("room", () => {
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
       const { storage, assert, machine, refStorage, reconnect, ws } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
+        await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1127,9 +1102,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { assert, machine } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>(
+      const { assert, machine } = await prepareIsolatedStorageTest<
+        FixmePresence,
+        { items: LiveList<string> }
+      >(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1292,11 +1268,7 @@ describe("room", () => {
       );
 
       expect(others?.toArray()).toEqual([
-        {
-          connectionId: 1,
-          id: undefined,
-          info: undefined,
-        },
+        { connectionId: 1, id: undefined, info: undefined },
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
@@ -1324,19 +1296,17 @@ describe("room", () => {
 
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
-      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
-        items: LiveList<string>;
-      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<
+        FixmePresence,
+        { items: LiveList<string> }
+      >([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
       assert({
         items: [],
       });
 
       assertMessagesSent([
-        {
-          data: {},
-          type: ClientMessageType.UpdatePresence,
-        },
+        { data: {}, type: ClientMessageType.UpdatePresence },
         { type: ClientMessageType.FetchStorage },
         {
           type: ClientMessageType.UpdateStorage,
