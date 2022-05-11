@@ -57,7 +57,7 @@ import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
-  onMessage(event: MessageEvent): void;
+  onMessage(event: MessageEvent<string>): void;
   authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
