@@ -760,7 +760,7 @@ describe("LiveList confict resolution", () => {
   // });
 });
 
-describe.skip("LiveList conflicts", () => {
+describe("LiveList conflicts", () => {
   describe("insert conflicts", () => {
     test("remote insert conflicts with another insert", async () => {
       const { root1, root2, assert, assertEach, socketUtils, run } =

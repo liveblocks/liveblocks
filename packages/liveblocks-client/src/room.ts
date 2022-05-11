@@ -552,12 +552,7 @@ export function makeStateMachine(
         }
 
         if (item._parent instanceof LiveList) {
-          const previousKey = item._parentKey!;
-          if (previousKey === op.parentKey) {
-            return { modified: false };
-          } else {
-            return item._parent._setChildKey(op.parentKey, item, previousKey);
-          }
+          return item._parent._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
       }
