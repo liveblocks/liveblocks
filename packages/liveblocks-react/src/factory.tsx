@@ -587,7 +587,7 @@ Please see https://bit.ly/3Niy5aP for details.`
    * It does not impact operations made by other clients.
    */
   function useUndo(): () => void {
-    return useRoom().history.undo;
+    return useHistory().undo;
   }
 
   /**
@@ -595,7 +595,7 @@ Please see https://bit.ly/3Niy5aP for details.`
    * It does not impact operations made by other clients.
    */
   function useRedo(): () => void {
-    return useRoom().history.redo;
+    return useHistory().redo;
   }
 
   /**
