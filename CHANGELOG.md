@@ -1,3 +1,13 @@
+# v0.17.0 (not yet released)
+
+## TypeScript improvements
+
+Various Live structures now take mandatory type params:
+
+- `LiveMap<K, V>` (just like `Map<K, V>`)
+- `LiveObject<{ a: number, b: string }>` (just like, for example, `{ a: number, b: string }`)
+- `LiveList<T>` (just like `Array<T>`)
+
 # v0.16.5 (not yet released)
 
 - Various internal refactorings
