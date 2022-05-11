@@ -4,9 +4,9 @@ import type { Presence } from "./types";
 /**
  * Messages that can be sent from the server to the client.
  */
-export type ServerMessage =
+export type ServerMessage<TPresence extends JsonObject> =
   // For Presence
-  | UpdatePresenceMessage // Broadcasted
+  | UpdatePresenceMessage<TPresence> // Broadcasted
   | UserJoinMessage // Broadcasted
   | UserLeftMessage // Broadcasted
   | EventMessage // Broadcasted
@@ -53,7 +53,7 @@ export type RoomStateMessage = {
  * those cases, the `targetActor` field indicates the newly connected client,
  * so all other existing clients can ignore this broadcasted message.
  */
-export type UpdatePresenceMessage = {
+export type UpdatePresenceMessage<TPresence extends JsonObject> = {
   type: ServerMessageType.UpdatePresence;
   /**
    * The User whose Presence has changed.
@@ -64,7 +64,7 @@ export type UpdatePresenceMessage = {
    * this will be the full Presence, otherwise it only contain the fields that
    * have changed since the last broadcast.
    */
-  data: Presence;
+  data: TPresence;
   /**
    * If this message was sent in response to a newly joined user, this field
    * indicates which client this message is for. Other existing clients may

@@ -870,7 +870,7 @@ See v0.13 release notes for more information.
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceMessage
+    message: UpdatePresenceMessage<TPresence>
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
@@ -973,16 +973,18 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMessage | null {
+  function parseServerMessage(data: Json): ServerMessage<TPresence> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMessage;
-    //          ^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    return data as ServerMessage<TPresence>;
+    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(text: string): ServerMessage[] | null {
+  function parseServerMessages(
+    text: string
+  ): ServerMessage<TPresence>[] | null {
     const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
@@ -999,7 +1001,7 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ServerMessage[] | null = parseServerMessages(event.data);
+    const messages = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
       // Unknown incoming message... ignore it
       return;

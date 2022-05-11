@@ -11,7 +11,11 @@
  * https://join.team/liveblocks ;)
  */
 
-export type { SerializedCrdtWithId, ServerMessage } from "./live";
+export type {
+  RoomStateMessage,
+  SerializedCrdtWithId,
+  ServerMessage,
+} from "./live";
 export type { Resolve, RoomInitializers } from "./types";
 
 export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";

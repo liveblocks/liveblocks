@@ -547,7 +547,7 @@ export function mockEffects(): Effects<JsonObject> {
   };
 }
 
-export function serverMessage(message: ServerMessage) {
+export function serverMessage(message: ServerMessage<JsonObject>) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });
