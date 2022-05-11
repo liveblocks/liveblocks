@@ -153,6 +153,8 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   return {
     root1: storageRoot1.root,
     root2: storageRoot2.root,
+    room1: client1Room,
+    room2: client2Room,
     assert,
     assertEach,
     assertConsistancy,

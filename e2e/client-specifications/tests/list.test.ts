@@ -759,3 +759,388 @@ describe("LiveList confict resolution", () => {
   //   }
   // });
 });
+
+describe.skip("LiveList conflicts", () => {
+  describe("insert conflicts", () => {
+    test("remote insert conflicts with another insert", async () => {
+      const { root1, root2, assert, assertEach, socketUtils, run } =
+        await prepareTest<{
+          list: LiveList<string>;
+        }>({
+          list: new LiveList(),
+        });
+
+      await run(async () => {
+        await assert({ list: [] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").push("A");
+        root2.get("list").push("B");
+
+        await assertEach({ list: ["A"] }, { list: ["B"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await assertEach({ list: ["A"] }, { list: ["A", "B"] });
+
+        await socketUtils.sendMessagesClient2();
+
+        await assert({ list: ["A", "B"] });
+      });
+    });
+
+    test("remote insert conflicts with another insert introduced by undo", async () => {
+      const { root1, root2, room2, assert, assertEach, socketUtils, run } =
+        await prepareTest<{
+          list: LiveList<string>;
+        }>({
+          list: new LiveList(),
+        });
+
+      await run(async () => {
+        await assert({ list: [] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").push("A");
+
+        root2.get("list").push("B");
+        root2.get("list").delete(0);
+        room2.history.undo();
+
+        await assertEach({ list: ["A"] }, { list: ["B"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await assertEach({ list: ["A"] }, { list: ["A", "B"] });
+
+        await socketUtils.sendMessagesClient2();
+
+        await assert({ list: ["A", "B"] });
+      });
+    });
+
+    test("remote insert conflicts with a move", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        assertConsistancy,
+        socketUtils,
+        run,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").push("C");
+        root2.get("list").move(0, 1);
+
+        await assertEach({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote insert conflicts with a move via undo", async () => {
+      const {
+        root1,
+        root2,
+        room2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").push("C");
+        root2.get("list").move(0, 1);
+        root2.get("list").move(1, 0);
+        room2.history.undo();
+
+        await assertEach({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote insert conflicts with a set", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(),
+      });
+
+      await run(async () => {
+        await assert({ list: [] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").push("A");
+        root2.get("list").push("B");
+        root2.get("list").set(0, "C");
+
+        await assertEach({ list: ["A"] }, { list: ["C"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+  });
+
+  describe("set conflicts", () => {
+    test("remote set conflicts with a set", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "B");
+        root2.get("list").set(0, "C");
+
+        await assertEach({ list: ["B"] }, { list: ["C"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote set conflicts with a set via undo", async () => {
+      const {
+        root1,
+        root2,
+        room2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "B");
+        root2.get("list").set(0, "C");
+        root2.get("list").set(0, "D");
+        room2.history.undo();
+
+        await assertEach({ list: ["B"] }, { list: ["C"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote set conflicts with an insert", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "B");
+        root2.get("list").delete(0);
+        root2.get("list").push("C");
+
+        await assertEach({ list: ["B"] }, { list: ["C"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote set conflicts with an insert via undo", async () => {
+      const {
+        root1,
+        root2,
+        room2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "B");
+        root2.get("list").delete(0);
+        room2.history.undo();
+
+        await assertEach({ list: ["B"] }, { list: ["A"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote set conflicts with move", async () => {
+      const {
+        root1,
+        root2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B", "C"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B", "C"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "D");
+        root2.get("list").delete(0);
+        root2.get("list").move(1, 0);
+
+        await assertEach({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+
+    test("remote set conflicts with move via undo", async () => {
+      const {
+        root1,
+        root2,
+        room2,
+        assert,
+        assertEach,
+        socketUtils,
+        run,
+        assertConsistancy,
+      } = await prepareTest<{
+        list: LiveList<string>;
+      }>({
+        list: new LiveList(["A", "B", "C"]),
+      });
+
+      await run(async () => {
+        await assert({ list: ["A", "B", "C"] });
+
+        socketUtils.pauseAllSockets();
+
+        root1.get("list").set(0, "D");
+        root2.get("list").delete(0);
+        root2.get("list").move(1, 0);
+        root2.get("list").move(0, 1);
+        room2.history.undo();
+
+        await assertEach({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
+
+        await socketUtils.sendMessagesClient1();
+
+        await socketUtils.sendMessagesClient2();
+
+        await assertConsistancy();
+      });
+    });
+  });
+
+  describe("move conflicts", () => {
+    // TODO
+  });
+
+  describe("delete conflicts", () => {
+    // TODO
+  });
+});
