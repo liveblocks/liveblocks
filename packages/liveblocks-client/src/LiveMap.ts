@@ -25,7 +25,11 @@ import type { Lson } from "./lson";
  */
 export class LiveMap<
   TKey extends string = string,
+  //                  ^^^^^^^^
+  //                  NOTE: Default arg will be removed in next major version
   TValue extends Lson = Lson
+  //                  ^^^^^^
+  //                  NOTE: Default arg will be removed in next major version
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
