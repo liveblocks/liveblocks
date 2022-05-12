@@ -628,7 +628,10 @@ describe("patchImmutableObject", () => {
   test("update one sub object", () => {
     const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
 
-    const root = new LiveObject();
+    const root = new LiveObject<{
+      subA: LiveObject<{ subsubA: LiveObject<{ a: number }> }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
     root.set("subA", new LiveObject({ subsubA: new LiveObject({ a: 1 }) }));
     root.set("subB", new LiveObject({ b: 2 }));
 
