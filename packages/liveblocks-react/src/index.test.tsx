@@ -15,17 +15,10 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
 
-import {
-  create,
-  LiveblocksProvider,
-  RoomProvider,
-  useMyPresence,
-  useObject,
-  useOthers,
-} from ".";
+import { create, LiveblocksProvider } from ".";
 
 type Presence = { x: number };
-type Storage = { obj: string };
+type Storage = { obj: LiveObject<{ a: number }> };
 
 const { RoomProvider, useMyPresence, useObject, useOthers } = create<
   Presence,
