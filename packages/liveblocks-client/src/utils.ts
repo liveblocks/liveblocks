@@ -431,6 +431,20 @@ export function isTokenValid(token: string) {
 }
 
 /**
+ * Polyfill for Object.fromEntries() to be able to target ES2015 output without
+ * including external polyfill dependencies.
+ */
+export function fromEntries<K, V>(
+  iterable: Iterable<[K, V]>
+): { [key: string]: V } {
+  const obj: { [key: string]: V } = {};
+  for (const [key, val] of iterable) {
+    obj[key as unknown as string] = val;
+  }
+  return obj;
+}
+
+/**
  * Drop-in replacement for Object.entries() that retains better types.
  */
 export function entries<

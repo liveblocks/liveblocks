@@ -1,6 +1,11 @@
 import { AbstractCrdt } from "./AbstractCrdt";
 import type { Doc, ApplyResult } from "./AbstractCrdt";
-import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
+import {
+  creationOpToLiveStructure,
+  deserialize,
+  fromEntries,
+  isCrdt,
+} from "./utils";
 import {
   CrdtType,
   CreateObjectOp,
@@ -411,7 +416,7 @@ export class LiveObject<
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return Object.fromEntries(this._map) as O;
+    return fromEntries(this._map) as O;
   }
 
   /**
