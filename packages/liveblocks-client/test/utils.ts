@@ -131,8 +131,8 @@ const defaultContext = {
 };
 
 async function prepareRoomWithStorage<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
 >(
   items: SerializedCrdtWithId[],
   actor: number = 0,
@@ -154,7 +154,7 @@ async function prepareRoomWithStorage<
   machine.authenticationSuccess({ actor }, ws as any);
   ws.open();
 
-  const getStoragePromise = machine.getStorage<TStorage>();
+  const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
   machine.onMessage(
@@ -174,18 +174,18 @@ async function prepareRoomWithStorage<
 }
 
 export async function prepareIsolatedStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
 >(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage?: TStorage) {
   const messagesSent: ClientMessage<TPresence>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    never,
-    TStorage
+    TStorage,
+    TPresence
   >(
     items,
     actor,
-    (messages: ClientMessage<never>[]) => {
+    (messages: ClientMessage<TPresence>[]) => {
       messagesSent.push(...messages);
     },
     defaultStorage
@@ -226,11 +226,11 @@ export async function prepareStorageTest<
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage
+    TStorage,
+    TPresence
   >(items, currentActor, (messages: ClientMessage<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {
@@ -369,11 +369,11 @@ export async function prepareStorageImmutableTest<
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<TStorage, TPresence>(items, -1);
 
   const { machine, storage } = await prepareRoomWithStorage<
-    TPresence,
-    TStorage
+    TStorage,
+    TPresence
   >(items, actor, (messages: ClientMessage<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {
