@@ -404,8 +404,8 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/3Niy5aP for details.`
     );
-    const value = useStorageValue(key, new LiveMap(entries));
-    //                                 ^^^^^^^^^^^^^^^^^^^^
+    const value = useStorageValue(key, new LiveMap(entries ?? undefined));
+    //                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //                                 NOTE: This param is scheduled for removal in 0.18
     if (value.status === "ok") {
       return value.value;

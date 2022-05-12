@@ -12,6 +12,7 @@ import type { Lson } from "./lson";
 import type { LiveMapUpdates } from "./types";
 import {
   creationOpToLiveStructure,
+  deprecateIf,
   deserialize,
   isCrdt,
   selfOrRegister,
@@ -33,10 +34,19 @@ export class LiveMap<
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
+  constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
+  /**
+   * @deprecated Please call as `new LiveMap()` or `new LiveMap([])` instead.
+   */
+  constructor(entries: null);
   constructor(
-    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
+    entries?: readonly (readonly [TKey, TValue])[] | undefined | null
   ) {
     super();
+    deprecateIf(
+      entries === null,
+      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.17. Please call as `new LiveMap()`, or `new LiveMap([])`."
+    );
     if (entries) {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
       for (const entry of entries) {
