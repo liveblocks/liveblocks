@@ -236,7 +236,7 @@ export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorage;
+  initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
@@ -375,9 +375,9 @@ export function makeStateMachine<
       state.root = load(message.items);
     }
 
-    for (const key in state.defaultStorageRoot) {
+    for (const key in state.initialStorage) {
       if (state.root.get(key) == null) {
-        state.root.set(key, state.defaultStorageRoot[key]);
+        state.root.set(key, state.initialStorage[key]);
       }
     }
   }
@@ -1550,7 +1550,7 @@ export function defaultState<
     //                      ^^^^^^^^^^^^^^^ FIXME: This is type-unsafe. Stop doing this.
     users: {},
     others: makeOthers({}),
-    defaultStorageRoot: initialStorage,
+    initialStorage,
     idFactory: null,
 
     // Storage
