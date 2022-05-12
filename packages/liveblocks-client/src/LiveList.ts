@@ -779,6 +779,217 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     return { modified: false };
   }
 
+  _applySetChildKeyRemote(newKey: string, child: AbstractCrdt): ApplyResult {
+    const previousKey = child._parentKey!;
+
+    if (newKey === previousKey) {
+      return {
+        modified: false,
+      };
+    }
+
+    // TODO: should we look at orphan
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === newKey
+    );
+
+    // Normal case
+    if (existingItemIndex === -1) {
+      const previousIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === child._parentKey
+      );
+      child._setParentLink(this, newKey);
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      const newIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === child._parentKey
+      );
+
+      if (newIndex !== previousIndex) {
+        return {
+          modified: {
+            node: this,
+            type: "LiveList",
+            updates: [
+              {
+                index: newIndex,
+                previousIndex: previousIndex,
+                item: child instanceof LiveRegister ? child.data : child,
+                type: "move",
+              },
+            ],
+          },
+          reverse: [],
+        };
+      } else {
+        return {
+          modified: false,
+        };
+      }
+    } else {
+      this._items[existingItemIndex]._setParentLink(
+        this,
+        makePosition(
+          newKey,
+          this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+        )
+      );
+
+      // TODO update for existing item move?
+
+      child._setParentLink(this, newKey);
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      const newIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === child._parentKey
+      );
+
+      if (newIndex !== existingItemIndex) {
+        return {
+          modified: {
+            node: this,
+            type: "LiveList",
+            updates: [
+              {
+                index: newIndex,
+                previousIndex: existingItemIndex,
+                item: child instanceof LiveRegister ? child.data : child,
+                type: "move",
+              },
+            ],
+          },
+          reverse: [],
+        };
+      } else {
+        return {
+          modified: false,
+        };
+      }
+    }
+  }
+
+  _applySetChildKeyAck(newKey: string, child: AbstractCrdt): ApplyResult {
+    const previousKey = child._parentKey!;
+
+    if (this._implicitlyDeletedItems.has(child)) {
+      const existingItemIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === newKey
+      );
+
+      this._implicitlyDeletedItems.delete(child);
+
+      if (existingItemIndex !== -1) {
+        this._items[existingItemIndex]._setParentLink(
+          this,
+          makePosition(
+            newKey,
+            this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+          )
+        );
+      }
+
+      child._setParentLink(this, newKey);
+      this._items.push(child);
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      // TODO
+      return {
+        modified: false,
+      };
+    } else {
+      if (newKey === previousKey) {
+        return {
+          modified: false,
+        };
+      }
+
+      const existingItemIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === newKey
+      );
+
+      if (existingItemIndex !== -1) {
+        this._items[existingItemIndex]._setParentLink(
+          this,
+          makePosition(
+            newKey,
+            this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+          )
+        );
+      }
+
+      child._setParentLink(this, newKey);
+
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      // TODO
+      return {
+        modified: false,
+      };
+    }
+  }
+
+  _applySetChildKeyUndoRedo(newKey: string, child: AbstractCrdt): ApplyResult {
+    const previousKey = child._parentKey!;
+
+    const previousIndex = this._items.indexOf(child);
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === newKey
+    );
+
+    // Assign a temporary position until we get the fix from the backend
+    if (existingItemIndex !== -1) {
+      this._items[existingItemIndex]._setParentLink(
+        this,
+        makePosition(
+          newKey,
+          this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
+        )
+      );
+    }
+
+    child._setParentLink(this, newKey);
+
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
+
+    const newIndex = this._items.indexOf(child);
+
+    const updatesDelta: LiveListUpdateDelta[] =
+      newIndex === previousIndex
+        ? []
+        : [
+            {
+              index: newIndex,
+              item: child instanceof LiveRegister ? child.data : child,
+              previousIndex: previousIndex,
+              type: "move",
+            },
+          ];
+    return {
+      modified: {
+        node: this,
+        type: "LiveList",
+        updates: updatesDelta,
+      },
+      reverse: [
+        {
+          type: OpType.SetParentKey,
+          id: child._id!,
+          parentKey: previousKey,
+        },
+      ],
+    };
+  }
+
   /**
    * @internal
    */
@@ -787,210 +998,13 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     child: AbstractCrdt,
     source: OpSource
   ): ApplyResult {
-    const previousKey = child._parentKey!;
-
     if (source === OpSource.REMOTE) {
-      if (newKey === previousKey) {
-        return {
-          modified: false,
-        };
-      }
-
-      // TODO: should we look at orphan
-      const existingItemIndex = this._items.findIndex(
-        (item) => item._getParentKeyOrThrow() === newKey
-      );
-
-      // Normal case
-      if (existingItemIndex === -1) {
-        const previousIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === child._parentKey
-        );
-        child._setParentLink(this, newKey);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        const newIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === child._parentKey
-        );
-
-        if (newIndex !== previousIndex) {
-          return {
-            modified: {
-              node: this,
-              type: "LiveList",
-              updates: [
-                {
-                  index: newIndex,
-                  previousIndex: previousIndex,
-                  item: child instanceof LiveRegister ? child.data : child,
-                  type: "move",
-                },
-              ],
-            },
-            reverse: [],
-          };
-        } else {
-          return {
-            modified: false,
-          };
-        }
-      } else {
-        this._items[existingItemIndex]._setParentLink(
-          this,
-          makePosition(
-            newKey,
-            this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-          )
-        );
-
-        // TODO update for existing item move?
-
-        child._setParentLink(this, newKey);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        const newIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === child._parentKey
-        );
-
-        if (newIndex !== existingItemIndex) {
-          return {
-            modified: {
-              node: this,
-              type: "LiveList",
-              updates: [
-                {
-                  index: newIndex,
-                  previousIndex: existingItemIndex,
-                  item: child instanceof LiveRegister ? child.data : child,
-                  type: "move",
-                },
-              ],
-            },
-            reverse: [],
-          };
-        } else {
-          return {
-            modified: false,
-          };
-        }
-      }
+      return this._applySetChildKeyRemote(newKey, child);
     } else if (source === OpSource.ACK) {
-      if (this._implicitlyDeletedItems.has(child)) {
-        const existingItemIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === newKey
-        );
-
-        this._implicitlyDeletedItems.delete(child);
-
-        if (existingItemIndex !== -1) {
-          this._items[existingItemIndex]._setParentLink(
-            this,
-            makePosition(
-              newKey,
-              this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-            )
-          );
-        }
-
-        child._setParentLink(this, newKey);
-        this._items.push(child);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        // TODO
-        return {
-          modified: false,
-        };
-      } else {
-        if (newKey === previousKey) {
-          return {
-            modified: false,
-          };
-        }
-
-        const existingItemIndex = this._items.findIndex(
-          (item) => item._getParentKeyOrThrow() === newKey
-        );
-
-        if (existingItemIndex !== -1) {
-          this._items[existingItemIndex]._setParentLink(
-            this,
-            makePosition(
-              newKey,
-              this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-            )
-          );
-        }
-
-        child._setParentLink(this, newKey);
-
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        // TODO
-        return {
-          modified: false,
-        };
-      }
+      return this._applySetChildKeyAck(newKey, child);
     } else {
-      throw new Error("TODO move undo/redo");
+      return this._applySetChildKeyUndoRedo(newKey, child);
     }
-
-    // const previousIndex = this._items.indexOf(child);
-    // const existingItemIndex = this._items.findIndex(
-    //   (item) => item._getParentKeyOrThrow() === newKey
-    // );
-
-    // // Assign a temporary position until we get the fix from the backend
-    // if (existingItemIndex !== -1) {
-    //   this._items[existingItemIndex]._setParentLink(
-    //     this,
-    //     makePosition(
-    //       newKey,
-    //       this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-    //     )
-    //   );
-    // }
-
-    // child._setParentLink(this, newKey);
-
-    // this._items.sort((itemA, itemB) =>
-    //   compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-    // );
-
-    // const newIndex = this._items.indexOf(child);
-
-    // const updatesDelta: LiveListUpdateDelta[] =
-    //   newIndex === previousIndex
-    //     ? []
-    //     : [
-    //         {
-    //           index: newIndex,
-    //           item: child instanceof LiveRegister ? child.data : child,
-    //           previousIndex: previousIndex,
-    //           type: "move",
-    //         },
-    //       ];
-    // return {
-    //   modified: {
-    //     node: this,
-    //     type: "LiveList",
-    //     updates: updatesDelta,
-    //   },
-    //   reverse: [
-    //     {
-    //       type: OpType.SetParentKey,
-    //       id: child._id!,
-    //       parentKey: previousKey,
-    //     },
-    //   ],
-    // };
   }
 
   /**
