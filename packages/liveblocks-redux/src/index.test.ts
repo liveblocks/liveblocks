@@ -138,7 +138,10 @@ function prepareClientAndBasicStore() {
   );
 }
 
-async function prepareWithStorage<T extends Record<string, unknown>>(
+async function prepareWithStorage<
+  T extends Record<string, unknown>,
+  TPresence extends JsonObject = never
+>(
   reducer: Reducer<T>,
   preloadedState: T,
   options: {
@@ -170,7 +173,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
+  function sendMessage(serverMessage: ServerMessage<TPresence>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);

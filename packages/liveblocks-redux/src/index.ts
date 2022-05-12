@@ -1,9 +1,9 @@
 import type {
   Client,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
-  Room,
+  Room as Room_,
   User,
 } from "@liveblocks/client";
 import {
@@ -21,6 +21,9 @@ import {
   missingClient,
 } from "./errors";
 
+type Room = Room_<JsonObject, LsonObject>;
+//   ^^^^ FIXME: Room is unnecessarily opaque here. It doesn't have to be!
+
 export type Mapping<T> = Partial<{
   [Property in keyof T]: boolean;
 }>;
@@ -37,7 +40,7 @@ const ACTION_TYPES = {
 
 export type LiveblocksState<
   TState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
@@ -220,7 +223,7 @@ const internalEnhancer = <T>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage<any>().then(({ root }) => {
+        room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {
@@ -366,11 +369,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
+function updatePresence<TPresence extends JsonObject>(
   room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -398,8 +401,11 @@ function validateNoDuplicateKeys<T>(
   }
 }
 
-function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
-  const partialState: Partial<T> = {};
+function patchPresenceState<TPresence extends JsonObject>(
+  presence: TPresence,
+  mapping: Mapping<TPresence>
+): Partial<TPresence> {
+  const partialState: Partial<TPresence> = {};
 
   for (const key in mapping) {
     partialState[key] = presence[key];
