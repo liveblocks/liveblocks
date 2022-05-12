@@ -135,10 +135,10 @@ describe("LiveObject", () => {
 
   it("update with LiveObject", async () => {
     const { storage, assert, operations, assertUndoRedo, getUndoStack } =
-      await prepareStorageTest<
-        never,
-        { child: LiveObject<{ a: number }> | null }
-      >([createSerializedObject("0:0", { child: null })], 1);
+      await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
+        [createSerializedObject("0:0", { child: null })],
+        1
+      );
 
     const root = storage.root;
 
@@ -195,16 +195,13 @@ describe("LiveObject", () => {
 
   it("remove nested grand child record with update", async () => {
     const { storage, assert, assertUndoRedo, getItemsCount } =
-      await prepareStorageTest<
-        never,
-        {
-          a: number;
-          child: LiveObject<{
-            b: number;
-            grandChild: LiveObject<{ c: number }>;
-          }> | null;
-        }
-      >([
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{
+          b: number;
+          grandChild: LiveObject<{ c: number }>;
+        }> | null;
+      }>([
         createSerializedObject("0:0", { a: 0 }),
         createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
         createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
@@ -233,10 +230,10 @@ describe("LiveObject", () => {
 
   it("remove nested child record with update", async () => {
     const { storage, assert, assertUndoRedo, getItemsCount } =
-      await prepareStorageTest<
-        never,
-        { a: number; child: LiveObject<{ b: number }> | null }
-      >([
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{ b: number }> | null;
+      }>([
         createSerializedObject("0:0", { a: 0 }),
         createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
       ]);
@@ -312,10 +309,10 @@ describe("LiveObject", () => {
   });
 
   it("update nested record", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { a: number; child: LiveObject<{ b: number }> }
-    >([
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{ b: number }>;
+    }>([
       createSerializedObject("0:0", { a: 0 }),
       createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
     ]);
@@ -342,13 +339,10 @@ describe("LiveObject", () => {
   });
 
   it("update deeply nested record", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      {
-        a: number;
-        child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
-      }
-    >([
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      a: number;
+      child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
+    }>([
       createSerializedObject("0:0", { a: 0 }),
       createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
       createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
@@ -487,10 +481,9 @@ describe("LiveObject", () => {
     });
 
     it("should delete property from the object", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { a?: number }
-      >([createSerializedObject("0:0", { a: 0 })]);
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 0 })]);
       assert({ a: 0 });
 
       storage.root.delete("a");
@@ -500,10 +493,9 @@ describe("LiveObject", () => {
     });
 
     it("should delete nested crdt", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { child?: LiveObject<{ a: number }> }
-      >([
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        child?: LiveObject<{ a: number }>;
+      }>([
         createSerializedObject("0:0", {}),
         createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
       ]);
@@ -579,10 +571,10 @@ describe("LiveObject", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { a: number }
-      >([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, subscribe } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       const callback = jest.fn();
 
@@ -597,10 +589,10 @@ describe("LiveObject", () => {
     });
 
     test("subscribe multiple actions", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { child: LiveObject<{ a: number }>; child2: LiveObject<{ a: number }> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        child: LiveObject<{ a: number }>;
+        child2: LiveObject<{ a: number }>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
@@ -628,12 +620,9 @@ describe("LiveObject", () => {
     });
 
     test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        {
-          child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
-        }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        child: LiveObject<{ a: number; subchild: LiveObject<{ b: number }> }>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
@@ -674,15 +663,12 @@ describe("LiveObject", () => {
 
     test("deep subscribe remote operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<
-          never,
-          {
-            child: LiveObject<{
-              a: number;
-              subchild: LiveObject<{ b: number }>;
-            }>;
-          }
-        >(
+        await prepareStorageTest<{
+          child: LiveObject<{
+            a: number;
+            subchild: LiveObject<{ b: number }>;
+          }>;
+        }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
@@ -731,15 +717,12 @@ describe("LiveObject", () => {
 
     test("subscribe subchild remote operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<
-          never,
-          {
-            child: LiveObject<{
-              a: number;
-              subchild: LiveObject<{ b: number }>;
-            }>;
-          }
-        >(
+        await prepareStorageTest<{
+          child: LiveObject<{
+            a: number;
+            subchild: LiveObject<{ b: number }>;
+          }>;
+        }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
@@ -781,10 +764,9 @@ describe("LiveObject", () => {
 
     test("deep subscribe remote and local operation - delete object key", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<
-          never,
-          { child: LiveObject<{ a?: number; b?: number }> }
-        >(
+        await prepareStorageTest<{
+          child: LiveObject<{ a?: number; b?: number }>;
+        }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedObject("0:1", { a: 0, b: 0 }, "0:0", "child"),
