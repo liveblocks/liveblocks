@@ -34,12 +34,17 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   private _propToLastUpdate: Map<string, string>;
 
   /**
+   * Constructs a new LiveObject value from the provided JS object. The
+   * provided object must be JSON-serializable. It may or may not contain
+   * nested Live structures (LiveMap, LiveObject, etc).
+   */
+  constructor(obj: O);
+  /**
    * @deprecated Calling `new LiveObject()` without an initial value is
    * deprecated and will start failing in a future version. Please provide an
    * initial value.
    */
   constructor(obj?: undefined);
-  constructor(obj: O);
   constructor(obj?: O | undefined) {
     super();
 
