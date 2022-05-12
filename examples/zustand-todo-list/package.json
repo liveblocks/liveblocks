@@ -1,6 +1,6 @@
 {
-  "name": "liveblocks-examples-zustand-todo-list",
-  "version": "0.1.0",
+  "description": "This example shows how to build a collaborative to-do list with Liveblocks, React and Zustand.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
@@ -9,18 +9,12 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.3",
-    "@liveblocks/zustand": "^0.16.3",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "5.0.0",
+    "@liveblocks/client": "^0.16.4",
+    "@liveblocks/zustand": "^0.16.4",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-scripts": "^5.0.1",
     "zustand": "^3.7.1"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -33,5 +27,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
   }
 }

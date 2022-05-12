@@ -9,25 +9,27 @@
 
 <style scoped>
 .avatar {
-  height: 56px;
+  display: flex;
+  place-content: center;
+  position: relative;
   width: 56px;
-  min-width: 56px;
+  height: 56px;
 }
 
 .avatar:before {
   content: attr(data-tooltip);
   position: absolute;
+  bottom: 100%;
   opacity: 0;
-  transition: all 0.15s ease;
+  transition: opacity 0.15s ease;
   padding: 5px 10px;
   color: white;
   font-size: 0.75rem;
   border-radius: 8px;
+  margin-bottom: 10px;
   z-index: 1;
   background: black;
   white-space: nowrap;
-  margin-top: 10px;
-  margin-left: 52px;
 }
 
 .avatar:hover:before {
@@ -37,6 +39,6 @@
 
 <script>
 export default {
-  props: ["name", "picture"]
+  props: ["name", "picture"],
 };
 </script>

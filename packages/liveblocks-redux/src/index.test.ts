@@ -1,15 +1,21 @@
 import { createClient } from "@liveblocks/client";
-import { LiveblocksState, Mapping, enhancer, actions } from ".";
+import type { JsonObject } from "@liveblocks/client";
+import type { LiveblocksState, Mapping } from ".";
+import { enhancer, actions } from ".";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { configureStore, Reducer } from "@reduxjs/toolkit";
+import type { Reducer } from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
 import {
   ClientMessageType,
   OpType,
+  ServerMessageType,
+} from "@liveblocks/client/internal";
+import type {
+  RoomStateMessage,
   SerializedCrdtWithId,
   ServerMessage,
-  ServerMessageType,
 } from "@liveblocks/client/internal";
 import {
   missingClient,
@@ -163,7 +169,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -386,7 +392,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as RoomStateMessage),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
@@ -597,6 +603,9 @@ describe("middleware", () => {
 
         store.dispatch({ type: "SET_VALUE", value: 2 });
 
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
+
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
@@ -624,6 +633,9 @@ describe("middleware", () => {
           type: "SET_ITEMS",
           items: [{ text: "A" }, { text: "B" }],
         });
+
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
 
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([

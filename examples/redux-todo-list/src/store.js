@@ -2,12 +2,14 @@ import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
-// Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_xxxxxxx";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
-  throw new Error(
-    "Replace the above constant PUBLIC_KEY with your own Liveblocks public key."
+overrideApiKey();
+
+if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
+  console.warn(
+    `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/redux-todo-list#getting-started.`
   );
 }
 
@@ -58,3 +60,16 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKey() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+}

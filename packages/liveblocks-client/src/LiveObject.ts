@@ -11,9 +11,13 @@ import {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
-import { LiveObjectUpdates, UpdateDelta, LiveObjectUpdateDelta } from "./types";
-import { JsonObject } from "./json";
-import { LsonObject, ToJson } from "./lson";
+import type {
+  LiveObjectUpdates,
+  UpdateDelta,
+  LiveObjectUpdateDelta,
+} from "./types";
+import type { JsonObject } from "./json";
+import type { LsonObject, ToJson } from "./lson";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -22,23 +26,25 @@ import { LsonObject, ToJson } from "./lson";
  */
 export class LiveObject<
   O extends LsonObject = LsonObject
+  //                   ^^^^^^^^^^^^
+  //                   NOTE: Default arg will be removed in next major version
 > extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
-  constructor(object: O = {} as O) {
+  constructor(obj: O = {} as O) {
     super();
 
     this._propToLastUpdate = new Map<string, string>();
 
-    for (const key in object) {
-      const value = object[key] as any;
+    for (const key in obj) {
+      const value = obj[key] as any;
       if (value instanceof AbstractCrdt) {
         value._setParentLink(this, key);
       }
     }
 
-    this._map = new Map(Object.entries(object));
+    this._map = new Map(Object.entries(obj));
   }
 
   /**
@@ -92,25 +98,25 @@ export class LiveObject<
       );
     }
 
-    const object = new LiveObject(item.data);
-    object._attach(id, doc);
+    const liveObj = new LiveObject(item.data);
+    liveObj._attach(id, doc);
 
-    return this._deserializeChildren(object, parentToChildren, doc);
+    return this._deserializeChildren(liveObj, parentToChildren, doc);
   }
 
   /**
    * @internal
    */
-  static _deserializeChildren<J extends JsonObject>(
-    object: LiveObject<J>,
+  static _deserializeChildren(
+    liveObj: LiveObject<JsonObject>,
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
   LiveObject<LsonObject> {
-    const children = parentToChildren.get(object._id!);
+    const children = parentToChildren.get(liveObj._id!);
 
     if (children == null) {
-      return object;
+      return liveObj;
     }
 
     for (const entry of children) {
@@ -122,11 +128,11 @@ export class LiveObject<
       }
 
       const child = deserialize(entry, parentToChildren, doc);
-      child._setParentLink(object, crdt.parentKey);
-      object._map.set(crdt.parentKey, child);
+      child._setParentLink(liveObj, crdt.parentKey);
+      liveObj._map.set(crdt.parentKey, child);
     }
 
-    return object;
+    return liveObj;
   }
 
   /**

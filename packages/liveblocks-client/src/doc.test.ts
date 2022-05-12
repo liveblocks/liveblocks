@@ -1,7 +1,7 @@
 import { OpType } from "./live";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
+import type { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import type { LiveObject } from "./LiveObject";
 import {
   prepareStorageTest,
   createSerializedObject,
@@ -12,9 +12,10 @@ import {
 describe("Storage", () => {
   describe("subscribe generic", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, subscribe } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       const callback = jest.fn();
 
@@ -38,9 +39,10 @@ describe("Storage", () => {
 
     test("remote action", async () => {
       const { storage, applyRemoteOperations, subscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 0 })], 1);
+        await prepareStorageTest<{ a: number }>(
+          [createSerializedObject("0:0", { a: 0 })],
+          1
+        );
 
       const callback = jest.fn();
 
@@ -68,9 +70,10 @@ describe("Storage", () => {
 
     test("remote action with multipe updates on same object", async () => {
       const { storage, applyRemoteOperations, subscribe } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 0 })], 1);
+        await prepareStorageTest<{ a: number }>(
+          [createSerializedObject("0:0", { a: 0 })],
+          1
+        );
 
       const callback = jest.fn();
 
@@ -99,10 +102,10 @@ describe("Storage", () => {
 
     test("batch actions on a single LiveObject", async () => {
       const { storage, assertUndoRedo, subscribe, batch } =
-        await prepareStorageTest<{
-          a: number;
-          b: number;
-        }>([createSerializedObject("0:0", { a: 0, b: 0 })], 1);
+        await prepareStorageTest<{ a: number; b: number }>(
+          [createSerializedObject("0:0", { a: 0, b: 0 })],
+          1
+        );
 
       const callback = jest.fn();
 
@@ -177,7 +180,7 @@ describe("Storage", () => {
         a: number;
         childObj: LiveObject<{ b: number }>;
         childList: LiveList<string>;
-        childMap: LiveMap<string>;
+        childMap: LiveMap<string, string>;
       }>(
         [
           createSerializedObject("0:0", { a: 0 }),
@@ -265,9 +268,10 @@ describe("Storage", () => {
     });
 
     it("calling batch during a batch should throw", async () => {
-      const { storage, batch } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, batch } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       batch(() => {
         expect(() =>
@@ -279,9 +283,10 @@ describe("Storage", () => {
     });
 
     it("calling undo during a batch should throw", async () => {
-      const { undo, batch } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { undo, batch } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       batch(() => {
         expect(() => undo()).toThrow();
@@ -289,9 +294,10 @@ describe("Storage", () => {
     });
 
     it("calling redo during a batch should throw", async () => {
-      const { batch, redo } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { batch, redo } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       batch(() => {
         expect(() => redo()).toThrow();
@@ -329,9 +335,10 @@ describe("Storage", () => {
     });
 
     it("max undo-redo stack", async () => {
-      const { storage, assert, undo } = await prepareStorageTest<{
-        a: number;
-      }>([createSerializedObject("0:0", { a: 0 })], 1);
+      const { storage, assert, undo } = await prepareStorageTest<{ a: number }>(
+        [createSerializedObject("0:0", { a: 0 })],
+        1
+      );
 
       for (let i = 0; i < 100; i++) {
         storage.root.set("a", i + 1);

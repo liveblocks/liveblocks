@@ -16,7 +16,7 @@
 
 This example shows how to build a collaborative logo builder with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/logo-builder.png" width="800" alt="Logo Builder" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/logo-builder.png" width="500" alt="Logo Builder" />
 
 ## Getting started
 

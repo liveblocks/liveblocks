@@ -1,13 +1,13 @@
 {
-  "name": "liveblocks-examples-react-data-visualization-recharts",
-  "version": "1.0.0",
+  "description": "This example shows how to build collaborative data visualization with Liveblocks, React and Recharts.",
+  "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@liveblocks/client": "^0.16.3",
-    "@liveblocks/react": "^0.16.3",
-    "react": "^17.0.2",
-    "react-dom": "^17.0.2",
-    "react-scripts": "4.0.3",
+    "@liveblocks/client": "^0.16.4",
+    "@liveblocks/react": "^0.16.4",
+    "react": "^18.1.0",
+    "react-dom": "^18.1.0",
+    "react-scripts": "^5.0.1",
     "recharts": "^2.1.4"
   },
   "scripts": {
@@ -15,12 +15,6 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
   },
   "browserslist": {
     "production": [
@@ -33,5 +27,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
   }
 }

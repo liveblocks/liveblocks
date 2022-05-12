@@ -1,11 +1,23 @@
 import { createClient, LiveList } from "@liveblocks/client";
 
-const client = createClient({
-  publicApiKey: "pk_YOUR_PUBLIC_KEY",
-});
-
 async function run() {
-  const room = client.enter("javascript-todo-list");
+  let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+  let roomId = "javascript-todo-list";
+
+  overrideApiKeyAndRoomId();
+
+  if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
+    console.warn(
+      `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
+        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/javascript-todo-list#getting-started.`
+    );
+  }
+
+  const client = createClient({
+    publicApiKey: PUBLIC_KEY,
+  });
+
+  const room = client.enter(roomId);
 
   const whoIsHere = document.getElementById("who_is_here");
   const todoInput = document.getElementById("todo_input");
@@ -45,7 +57,7 @@ async function run() {
     room.updatePresence({ isTyping: false });
   });
 
-  function renderTodos() {
+  function render() {
     todosContainer.innerHTML = "";
 
     for (let i = 0; i < todos.length; i++) {
@@ -72,10 +84,28 @@ async function run() {
   }
 
   room.subscribe(todos, () => {
-    renderTodos();
+    render();
   });
 
-  renderTodos();
+  /**
+   * This function is used when deploying an example on liveblocks.io.
+   * You can ignore it completely if you run the example locally.
+   */
+  function overrideApiKeyAndRoomId() {
+    const query = new URLSearchParams(window?.location?.search);
+    const apiKey = query.get("apiKey");
+    const roomIdSuffix = query.get("roomId");
+
+    if (apiKey) {
+      PUBLIC_KEY = apiKey;
+    }
+
+    if (roomIdSuffix) {
+      roomId = `${roomId}-${roomIdSuffix}`;
+    }
+  }
+
+  render();
 }
 
 run();

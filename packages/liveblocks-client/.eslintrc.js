@@ -71,6 +71,16 @@ module.exports = {
         message:
           "Using `JSON.parse()` is type-unsafe. Prefer using the `parseJson()` utility method (from `src/json`).",
       },
+      {
+        selector: "FunctionDeclaration[async=true]",
+        message:
+          "Using `async` functions will emit extra support code in our CommonJS bundle, increasing its size. Using the Promise API instead will lead to a smaller bundle.",
+      },
+      {
+        selector: "ArrowFunctionExpression[async=true]",
+        message:
+          "Using `async` functions will emit extra support code in our CommonJS bundle, increasing its size. Using the Promise API instead will lead to a smaller bundle.",
+      },
       // {
       //   selector: "ForOfStatement",
       //   message:

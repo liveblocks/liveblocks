@@ -1,4 +1,4 @@
-import { AbstractCrdt, Doc } from "./AbstractCrdt";
+import type { AbstractCrdt, Doc } from "./AbstractCrdt";
 import {
   SerializedCrdtWithId,
   CrdtType,
@@ -15,13 +15,48 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import { Json, isJsonObject, parseJson } from "./json";
-import { Lson, LsonObject } from "./lson";
-import {
+import type { Lson, LsonObject } from "./lson";
+import type {
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,
   StorageUpdate,
 } from "./types";
+
+// Keeps a set of deprecation messages in memory that it has warned about
+// already. There will be only one deprecation message in the console, no
+// matter how often it gets called.
+const _emittedDeprecationWarnings: Set<string> = new Set();
+
+/**
+ * Displays a deprecation warning in the dev console. Only in dev mode, and
+ * only once per message/key. In production, this is a no-op.
+ */
+export function deprecate(message: string, key = message) {
+  if (process.env.NODE_ENV !== "production") {
+    if (!_emittedDeprecationWarnings.has(key)) {
+      _emittedDeprecationWarnings.add(key);
+      console.error(`DEPRECATION WARNING: ${message}`);
+    }
+  }
+}
+
+/**
+ * Conditionally displays a deprecation warning in the dev
+ * console if the first argument is truthy. Only in dev mode, and
+ * only once per message/key. In production, this is a no-op.
+ */
+export function deprecateIf(
+  condition: unknown,
+  message: string,
+  key = message
+) {
+  if (process.env.NODE_ENV !== "production") {
+    if (condition) {
+      deprecate(message, key);
+    }
+  }
+}
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {

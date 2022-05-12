@@ -1,5 +1,3 @@
-const path = require("path");
-
 const withTM = require("next-transpile-modules")([
   "three",
   "react-three-fiber",

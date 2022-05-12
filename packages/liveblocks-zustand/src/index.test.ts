@@ -1,14 +1,19 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient, Presence } from "@liveblocks/client";
-import { Mapping, middleware } from ".";
+import { createClient } from "@liveblocks/client";
+import type { JsonObject, Presence } from "@liveblocks/client";
+import type { Mapping } from ".";
+import { middleware } from ".";
 import create from "zustand";
-import { StateCreator } from "zustand";
+import type { StateCreator } from "zustand";
+import type {
+  RoomStateMessage,
+  SerializedCrdtWithId,
+  ServerMessage,
+} from "@liveblocks/client/internal";
 import {
   ClientMessageType,
   OpType,
-  SerializedCrdtWithId,
-  ServerMessage,
   ServerMessageType,
 } from "@liveblocks/client/internal";
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
@@ -143,7 +148,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -341,7 +346,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as RoomStateMessage),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
@@ -520,6 +525,9 @@ describe("middleware", () => {
 
         store.getState().setValue(2);
 
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
+
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
@@ -544,6 +552,9 @@ describe("middleware", () => {
         ]);
 
         store.getState().setItems([{ text: "A" }, { text: "B" }]);
+
+        // Waiting for last update to be sent because of room internal throttling
+        await waitFor(() => socket.sentMessages[1] != null);
 
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([

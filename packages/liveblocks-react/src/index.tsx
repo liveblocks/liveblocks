@@ -1,4 +1,5 @@
 export { LiveblocksProvider, useClient } from "./client";
+
 export {
   RoomProvider,
   useRoom,
@@ -17,7 +18,7 @@ export {
   useRedo,
   useBatch,
   useHistory,
-} from "./rooms";
+} from "./compat";
 
 // Re-exports from @liveblocks/client, for convenience
 export type { Json, JsonObject } from "@liveblocks/client";

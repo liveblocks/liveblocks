@@ -64,7 +64,7 @@ describe("LiveList", () => {
   describe("deserialization", () => {
     it("create document with list in root", async () => {
       const { assert } = await prepareIsolatedStorageTest<{
-        items: LiveList<any>;
+        items: LiveList<never>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
@@ -218,9 +218,7 @@ describe("LiveList", () => {
       items.push(new LiveMap([["first", 0]]));
 
       assert(
-        {
-          items: [[["first", 0]]],
-        },
+        { items: [{ first: 0 }] },
         {
           updates: [
             {
@@ -287,11 +285,7 @@ describe("LiveList", () => {
       );
 
       assert({
-        items: [
-          {
-            a: 1,
-          },
-        ],
+        items: [{ a: 1 }],
       });
 
       const root = storage.root;
@@ -300,16 +294,7 @@ describe("LiveList", () => {
       items.insert(new LiveObject({ a: 0 }), 0);
 
       assert(
-        {
-          items: [
-            {
-              a: 0,
-            },
-            {
-              a: 1,
-            },
-          ],
-        },
+        { items: [{ a: 0 }, { a: 1 }] },
         {
           updates: [
             {
@@ -349,9 +334,7 @@ describe("LiveList", () => {
         storage: doc,
         assert,
         assertUndoRedo,
-      } = await prepareStorageTest<{
-        items: LiveList<number>;
-      }>([
+      } = await prepareStorageTest<{ items: LiveList<number> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
@@ -415,13 +398,7 @@ describe("LiveList", () => {
         ]);
 
       assert({
-        items: [
-          {
-            child: {
-              a: 0,
-            },
-          },
-        ],
+        items: [{ child: { a: 0 } }],
       });
 
       storage.root.toObject().items.delete(0);
@@ -469,7 +446,7 @@ describe("LiveList", () => {
   describe("move", () => {
     it("move after current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
+        items: LiveList<string>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
@@ -487,9 +464,7 @@ describe("LiveList", () => {
       items.move(0, 1);
 
       assert(
-        {
-          items: ["B", "A", "C"],
-        },
+        { items: ["B", "A", "C"] },
         {
           updates: [
             {

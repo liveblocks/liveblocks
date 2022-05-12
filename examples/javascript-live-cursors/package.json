@@ -1,17 +1,15 @@
 {
-  "name": "liveblocks-examples-javascript-live-cursors",
-  "version": "1.0.0",
-  "description": "Liveblocks live cursors example with javascript",
+  "description": "This example shows how to build live cursors without relying on a front-end framework—using esbuild for bundling.",
+  "license": "Apache-2.0",
+  "private": true,
   "scripts": {
     "build": "esbuild app.js --bundle --outfile=static/app.js"
   },
-  "author": "",
-  "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "^0.16.3"
+    "@liveblocks/client": "^0.16.4"
   },
   "devDependencies": {
-    "dotenv": "^10.0.0",
-    "esbuild": "^0.12.2"
+    "esbuild": "^0.12.2",
+    "prettier": "^2.6.2"
   }
 }
