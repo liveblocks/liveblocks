@@ -356,8 +356,8 @@ export async function reconnect(
 }
 
 export async function prepareStorageImmutableTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: ToJson<TStorage> = {} as any;
   let refState: ToJson<TStorage> = {} as any;
