@@ -1417,7 +1417,10 @@ describe("LiveList", () => {
         {
           type: "LiveList",
           node: listItems,
-          updates: [{ index: 0, previousIndex: 1, item: "b", type: "move" }],
+          updates: [
+            { index: 0, previousIndex: 1, item: "a", type: "move" },
+            { index: 0, previousIndex: 1, item: "b", type: "move" },
+          ],
         },
       ]);
 
