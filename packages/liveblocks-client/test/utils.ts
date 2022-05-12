@@ -171,19 +171,20 @@ async function prepareRoomWithStorage<
   };
 }
 
-export async function prepareIsolatedStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage = {}) {
-  const messagesSent: ClientMessage<TPresence>[] = [];
+export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0,
+  defaultStorage = {}
+) {
+  const messagesSent: ClientMessage<never>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
+    never,
     TStorage
   >(
     items,
     actor,
-    (messages: ClientMessage<TPresence>[]) => {
+    (messages: ClientMessage<never>[]) => {
       messagesSent.push(...messages);
     },
     defaultStorage
@@ -198,7 +199,7 @@ export async function prepareIsolatedStorageTest<
     ws,
     assert: (data: ToJson<TStorage>) =>
       expect(lsonToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
+    assertMessagesSent: (messages: ClientMessage<JsonObject>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
@@ -216,20 +217,20 @@ export async function prepareIsolatedStorageTest<
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0) {
+export async function prepareStorageTest<TStorage extends LsonObject>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0
+) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<never, TStorage>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
+    never,
     TStorage
-  >(items, currentActor, (messages: ClientMessage<TPresence>[]) => {
+  >(items, currentActor, (messages: ClientMessage<never>[]) => {
     for (const message of messages) {
       if (message.type === ClientMessageType.UpdateStorage) {
         operations.push(...message.ops);
@@ -355,8 +356,8 @@ export async function reconnect(
 }
 
 export async function prepareStorageImmutableTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
 >(items: SerializedCrdtWithId[], actor: number = 0) {
   let state: ToJson<TStorage> = {} as any;
   let refState: ToJson<TStorage> = {} as any;

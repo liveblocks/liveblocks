@@ -62,10 +62,7 @@ describe("LiveList", () => {
   });
 
   it("create document with list in root", async () => {
-    const { assert } = await prepareStorageTest<
-      never,
-      { items: LiveList<never> }
-    >([
+    const { assert } = await prepareStorageTest<{ items: LiveList<never> }>([
       createSerializedObject("0:0", {}),
       createSerializedList("0:1", "0:0", "items"),
     ]);
@@ -76,10 +73,9 @@ describe("LiveList", () => {
   });
 
   it("init list with items", async () => {
-    const { assert } = await prepareStorageTest<
-      never,
-      { items: LiveList<LiveObject<{ a: number }>> }
-    >([
+    const { assert } = await prepareStorageTest<{
+      items: LiveList<LiveObject<{ a: number }>>;
+    }>([
       createSerializedObject("0:0", {}),
       createSerializedList("0:1", "0:0", "items"),
       createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
@@ -94,10 +90,9 @@ describe("LiveList", () => {
 
   describe("push", () => {
     it("push LiveObject", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -131,10 +126,9 @@ describe("LiveList", () => {
     });
 
     it("push existing LiveObject should throw", async () => {
-      const { storage, assert } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, assert } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -157,10 +151,9 @@ describe("LiveList", () => {
     });
 
     it("push number", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<number> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<number>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -189,10 +182,9 @@ describe("LiveList", () => {
     });
 
     it("push LiveMap", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveMap<string, number>> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveMap<string, number>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -217,10 +209,9 @@ describe("LiveList", () => {
 
   describe("insert", () => {
     it("insert LiveObject at position 0", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -252,7 +243,7 @@ describe("LiveList", () => {
         storage: doc,
         assert,
         assertUndoRedo,
-      } = await prepareStorageTest<never, { items: LiveList<number> }>([
+      } = await prepareStorageTest<{ items: LiveList<number> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("0:2", "0:1", FIRST_POSITION, 0),
@@ -277,10 +268,9 @@ describe("LiveList", () => {
 
     it("delete child LiveObject should remove descendants", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
-        await prepareStorageTest<
-          never,
-          { items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>> }
-        >([
+        await prepareStorageTest<{
+          items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
+        }>([
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
           createSerializedObject("0:2", {}, "0:1", "!"),
@@ -305,10 +295,9 @@ describe("LiveList", () => {
 
   describe("move", () => {
     it("list.move after current position", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >([
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
@@ -334,10 +323,9 @@ describe("LiveList", () => {
 
   describe("clear", () => {
     it("should delete all items", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -394,10 +382,9 @@ describe("LiveList", () => {
     });
 
     it("set register", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -423,10 +410,9 @@ describe("LiveList", () => {
     });
 
     it("set nested object", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -450,7 +436,7 @@ describe("LiveList", () => {
   describe("apply CreateRegister", () => {
     it(`with intent "set" should replace existing item`, async () => {
       const { assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -481,7 +467,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should notify with a "set" update`, async () => {
       const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -518,7 +504,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -557,7 +543,7 @@ describe("LiveList", () => {
 
     it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
       const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
             createSerializedList("0:0", "root", "items"),
@@ -595,7 +581,7 @@ describe("LiveList", () => {
 
     it("on existing position should give the right update", async () => {
       const { root, assert, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -643,7 +629,7 @@ describe("LiveList", () => {
   describe("conflict", () => {
     it("list conflicts", async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -686,7 +672,7 @@ describe("LiveList", () => {
 
     it("list conflicts 2", async () => {
       const { root, applyRemoteOperations, assert } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -756,7 +742,7 @@ describe("LiveList", () => {
 
     it("list conflicts with offline", async () => {
       const { root, assert, applyRemoteOperations, machine } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -806,7 +792,7 @@ describe("LiveList", () => {
 
     it("list conflicts with undo redo and remote change", async () => {
       const { root, assert, applyRemoteOperations, machine } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -854,7 +840,7 @@ describe("LiveList", () => {
 
     it("list conflicts - move", async () => {
       const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { items: LiveList<string> }>(
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -912,10 +898,9 @@ describe("LiveList", () => {
       storage: doc,
       assert,
       assertUndoRedo,
-    } = await prepareStorageTest<
-      never,
-      { items: LiveList<LiveObject<{ b: number }>> }
-    >(
+    } = await prepareStorageTest<{
+      items: LiveList<LiveObject<{ b: number }>>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
@@ -945,10 +930,9 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -971,10 +955,9 @@ describe("LiveList", () => {
     });
 
     test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1010,7 +993,7 @@ describe("LiveList", () => {
 
     test("remote move operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<never, { items: LiveList<string> }>(
+        await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1047,7 +1030,7 @@ describe("LiveList", () => {
 
     test("remote delete item operation", async () => {
       const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<never, { items: LiveList<string> }>(
+        await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1078,10 +1061,9 @@ describe("LiveList", () => {
     });
 
     test("batch multiple actions", async () => {
-      const { storage, subscribe, batch, assert } = await prepareStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1119,10 +1101,9 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { storage, subscribe, batch, assert } = await prepareStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1150,10 +1131,9 @@ describe("LiveList", () => {
     });
 
     test("clear with deep subscribe ", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1189,10 +1169,9 @@ describe("LiveList", () => {
     });
 
     test("move with deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1234,10 +1213,9 @@ describe("LiveList", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1322,10 +1300,9 @@ describe("LiveList", () => {
     });
 
     test("Register moved in list", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1399,10 +1376,9 @@ describe("LiveList", () => {
     });
 
     test("Register deleted from list", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { items: LiveList<string> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1469,10 +1445,9 @@ describe("LiveList", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<
-        never,
-        { items: LiveList<LiveObject<{ a: number }>> }
-      >(
+      const { root } = await prepareIsolatedStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),

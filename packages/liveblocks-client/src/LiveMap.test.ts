@@ -95,10 +95,9 @@ describe("LiveMap", () => {
   });
 
   it("create document with map in root", async () => {
-    const { storage, assert } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >([
+    const { storage, assert } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>([
       createSerializedObject("0:0", {}),
       createSerializedMap("0:1", "0:0", "map"),
     ]);
@@ -110,10 +109,9 @@ describe("LiveMap", () => {
   });
 
   it("init map with items", async () => {
-    const { storage, assert } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >([
+    const { storage, assert } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>([
       createSerializedObject("0:0", {}),
       createSerializedMap("0:1", "0:0", "map"),
       createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
@@ -142,10 +140,9 @@ describe("LiveMap", () => {
   });
 
   it("map.set object", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, number> }
-    >(
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, number>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -187,10 +184,9 @@ describe("LiveMap", () => {
 
   describe("delete", () => {
     it("should delete LiveObject", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-        never,
-        { map: LiveMap<string, number> }
-      >([
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        map: LiveMap<string, number>;
+      }>([
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
         createSerializedRegister("0:2", "0:1", "first", 0),
@@ -232,10 +228,9 @@ describe("LiveMap", () => {
 
     it("should remove nested data structure from cache", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
-        await prepareStorageTest<
-          never,
-          { map: LiveMap<string, LiveObject<{ a: number }>> }
-        >(
+        await prepareStorageTest<{
+          map: LiveMap<string, LiveObject<{ a: number }>>;
+        }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedMap("0:1", "0:0", "map"),
@@ -266,10 +261,7 @@ describe("LiveMap", () => {
 
     it("should delete live list", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
-        await prepareStorageTest<
-          never,
-          { map: LiveMap<string, LiveList<number>> }
-        >(
+        await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedMap("0:1", "0:0", "map"),
@@ -299,10 +291,9 @@ describe("LiveMap", () => {
 
     // https://github.com/liveblocks/liveblocks/issues/95
     it("should have deleted key when subscriber is called", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<
-        never,
-        { map: LiveMap<string, string> }
-      >(
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -324,10 +315,9 @@ describe("LiveMap", () => {
     });
 
     it("should call subscribe when key is deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<
-        never,
-        { map: LiveMap<string, string> }
-      >(
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -350,10 +340,9 @@ describe("LiveMap", () => {
     });
 
     it("should not call subscribe when key is not deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<
-        never,
-        { map: LiveMap<string, string> }
-      >(
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -376,10 +365,9 @@ describe("LiveMap", () => {
   });
 
   it("map.set live object", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >(
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -403,10 +391,9 @@ describe("LiveMap", () => {
   });
 
   it("map.set already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >([
+    const { storage } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>([
       createSerializedObject("0:0", {}),
       createSerializedMap("0:1", "0:0", "map"),
     ]);
@@ -421,13 +408,10 @@ describe("LiveMap", () => {
   });
 
   it("new Map with already attached live object should throw", async () => {
-    const { storage } = await prepareStorageTest<
-      never,
-      {
-        child: LiveObject<{ a: number }> | null;
-        map: LiveMap<string, LiveObject<{ a: number }>> | null;
-      }
-    >([createSerializedObject("0:0", { child: null, map: null })], 1);
+    const { storage } = await prepareStorageTest<{
+      child: LiveObject<{ a: number }> | null;
+      map: LiveMap<string, LiveObject<{ a: number }>> | null;
+    }>([createSerializedObject("0:0", { child: null, map: null })], 1);
 
     const root = storage.root;
     const child = new LiveObject({ a: 0 });
@@ -437,10 +421,9 @@ describe("LiveMap", () => {
   });
 
   it("map.set live object on existing key", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >(
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -466,10 +449,9 @@ describe("LiveMap", () => {
   });
 
   it("attach map with items to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, { a: number }> }
-    >([createSerializedObject("0:0", {})], 1);
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, { a: number }>;
+    }>([createSerializedObject("0:0", {})], 1);
 
     assert({} as any);
 
@@ -483,10 +465,9 @@ describe("LiveMap", () => {
   });
 
   it("attach map with live objects to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveObject<{ a: number }>> }
-    >([createSerializedObject("0:0", {})], 1);
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>([createSerializedObject("0:0", {})], 1);
 
     assert({} as any);
 
@@ -502,10 +483,9 @@ describe("LiveMap", () => {
   });
 
   it("attach map with objects to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, { a: number }> }
-    >([createSerializedObject("0:0", {})], 1);
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, { a: number }>;
+    }>([createSerializedObject("0:0", {})], 1);
 
     assert({} as any);
 
@@ -521,10 +501,9 @@ describe("LiveMap", () => {
   });
 
   it("add list in map", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveList<string>> }
-    >(
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, LiveList<string>>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -545,10 +524,9 @@ describe("LiveMap", () => {
   });
 
   it("add map in map", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<
-      never,
-      { map: LiveMap<string, LiveMap<string, string>> }
-    >(
+    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+      map: LiveMap<string, LiveMap<string, string>>;
+    }>(
       [
         createSerializedObject("0:0", {}),
         createSerializedMap("0:1", "0:0", "map"),
@@ -570,10 +548,9 @@ describe("LiveMap", () => {
 
   describe("subscriptions", () => {
     test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { map: LiveMap<string, string> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -596,10 +573,9 @@ describe("LiveMap", () => {
     });
 
     test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<
-        never,
-        { map: LiveMap<string, LiveObject<{ a: number }>> }
-      >(
+      const { storage, subscribe } = await prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -636,10 +612,9 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { map: LiveMap<string, string> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
@@ -713,10 +688,9 @@ describe("LiveMap", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<
-        never,
-        { map: LiveMap<string, LiveObject<{ a: number }>> }
-      >(
+      const { root } = await prepareIsolatedStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedMap("0:1", "0:0", "map"),
