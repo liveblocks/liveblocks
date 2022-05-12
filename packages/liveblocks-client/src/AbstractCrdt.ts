@@ -30,7 +30,7 @@ export interface Doc {
 }
 
 export enum OpSource {
-  UNDOREDO,
+  UNDOREDO_RECONNECT,
   REMOTE,
   ACK,
 }

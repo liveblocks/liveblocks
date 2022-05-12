@@ -676,7 +676,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
         return this._applyRemoteSet(op);
       }
 
-      if (source === OpSource.UNDOREDO) {
+      if (source === OpSource.UNDOREDO_RECONNECT) {
         return this._applySetUndoRedo(op);
       }
 

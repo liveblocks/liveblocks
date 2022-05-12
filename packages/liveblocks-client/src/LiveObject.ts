@@ -169,7 +169,7 @@ export class LiveObject<
       return { modified: false };
     }
 
-    if (source === OpSource.UNDOREDO) {
+    if (source === OpSource.UNDOREDO_RECONNECT) {
       this._propToLastUpdate.set(key as string, opId!);
     } else if (this._propToLastUpdate.get(key as string) === undefined) {
       // Remote operation with no local change => apply operation

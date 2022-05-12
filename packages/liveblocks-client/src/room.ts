@@ -600,11 +600,14 @@ export function makeStateMachine<TPresence extends JsonObject>(
         result.updates.presence = true;
       } else {
         let source: OpSource;
+
         // Ops applied after undo/redo don't have an opId.
-        // TODO: can we remove second condition ??
-        if (isLocal) {
+        if (!op.opId) {
           op.opId = generateOpId();
-          source = OpSource.UNDOREDO;
+        }
+
+        if (isLocal) {
+          source = OpSource.UNDOREDO_RECONNECT;
         } else {
           const deleted = state.offlineOperations.delete(op.opId!);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
@@ -653,7 +656,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        return item._apply(op, source === OpSource.UNDOREDO);
+        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpType.SetParentKey: {
         const item = state.items.get(op.id);
