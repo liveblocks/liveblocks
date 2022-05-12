@@ -1,24 +1,23 @@
+import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { Doc, ApplyResult } from "./AbstractCrdt";
-import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
-import {
-  CrdtType,
+import type { JsonObject } from "./json";
+import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
   Op,
-  OpType,
   SerializedCrdt,
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
+import { CrdtType, OpType } from "./live";
+import type { LsonObject, ToJson } from "./lson";
 import type {
+  LiveObjectUpdateDelta,
   LiveObjectUpdates,
   UpdateDelta,
-  LiveObjectUpdateDelta,
 } from "./types";
-import type { JsonObject } from "./json";
-import type { LsonObject, ToJson } from "./lson";
+import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

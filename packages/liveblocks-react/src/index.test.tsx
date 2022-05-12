@@ -1,4 +1,9 @@
-import * as React from "react";
+import { createClient } from "@liveblocks/client";
+import {
+  ClientMessageType,
+  CrdtType,
+  ServerMessageType,
+} from "@liveblocks/client/internal";
 import {
   act,
   fireEvent,
@@ -8,12 +13,8 @@ import {
 } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import { createClient } from "@liveblocks/client";
-import {
-  ClientMessageType,
-  CrdtType,
-  ServerMessageType,
-} from "@liveblocks/client/internal";
+import * as React from "react";
+
 import {
   LiveblocksProvider,
   RoomProvider,

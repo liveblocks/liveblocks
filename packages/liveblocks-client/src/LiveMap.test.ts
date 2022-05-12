@@ -1,21 +1,17 @@
 import {
-  prepareStorageTest,
-  createSerializedObject,
-  createSerializedMap,
-  createSerializedRegister,
   createSerializedList,
+  createSerializedMap,
+  createSerializedObject,
+  createSerializedRegister,
   prepareIsolatedStorageTest,
+  prepareStorageTest,
   reconnect,
 } from "../test/utils";
-import { LiveMap } from "./LiveMap";
+import type { SerializedCrdtWithId } from "./live";
+import { CrdtType, OpType, WebsocketCloseCodes } from "./live";
 import { LiveList } from "./LiveList";
+import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
-import {
-  CrdtType,
-  OpType,
-  SerializedCrdtWithId,
-  WebsocketCloseCodes,
-} from "./live";
 
 describe("LiveMap", () => {
   describe("not attached", () => {

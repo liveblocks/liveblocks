@@ -1,19 +1,17 @@
 import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
-import {
+import type { Json, JsonObject } from "../src/json";
+import type {
   ClientMessage,
-  ClientMessageType,
-  CrdtType,
   Op,
   SerializedCrdtWithId,
   ServerMessage,
-  ServerMessageType,
 } from "../src/live";
-import type { Json, JsonObject } from "../src/json";
+import { ClientMessageType, CrdtType, ServerMessageType } from "../src/live";
 import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
-import { defaultState, makeStateMachine } from "../src/room";
 import type { Effects, Machine } from "../src/room";
+import { defaultState, makeStateMachine } from "../src/room";
 import type { Authentication } from "../src/types";
 import { remove } from "../src/utils";
 
