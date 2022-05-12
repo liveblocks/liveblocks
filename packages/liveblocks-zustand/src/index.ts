@@ -1,9 +1,10 @@
 import type {
   Client,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
   Room,
+  Room as Room_,
   User,
 } from "@liveblocks/client";
 import {
@@ -22,9 +23,12 @@ import {
   missingMapping,
 } from "./errors";
 
+type Room = Room_<JsonObject, LsonObject>;
+//   ^^^^ FIXME: Unnecessarily opaque!
+
 export type LiveblocksState<
   TState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -87,7 +91,7 @@ type Options<T> = {
 
 export function middleware<
   T extends Record<string, unknown>,
-  TPresence extends Record<string, unknown> = Presence
+  TPresence extends JsonObject = JsonObject
 >(
   config: StateCreator<
     T,
@@ -196,7 +200,7 @@ export function middleware<
         })
       );
 
-      room.getStorage<any>().then(({ root }) => {
+      room.getStorage().then(({ root }) => {
         const updates: any = {};
 
         room!.batch(() => {
@@ -328,7 +332,7 @@ function updatePresence<T>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] });
+      room.updatePresence({ [key]: newState[key] } as any);
     }
   }
 }
@@ -336,7 +340,7 @@ function updatePresence<T>(
 function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends Record<string, unknown>,
-  TPresence extends Presence
+  TPresence extends JsonObject
 >(
   root: LiveObject<O>,
   oldState: LiveblocksState<TState, TPresence>,

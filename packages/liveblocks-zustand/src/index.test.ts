@@ -1,4 +1,4 @@
-import type { JsonObject, Presence } from "@liveblocks/client";
+import type { JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
   RoomStateMessage,
@@ -98,7 +98,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 
 function prepareClientAndStore<
   T extends Record<string, unknown>,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 >(
   stateCreator: StateCreator<T>,
   options: {
@@ -716,10 +716,13 @@ describe("middleware", () => {
     });
 
     test("mapping on function should throw", async () => {
-      const { store } = await prepareWithStorage<{
-        value: any;
-        setFunction: () => void;
-      }>(
+      const { store } = await prepareWithStorage<
+        {
+          value: any;
+          setFunction: () => void;
+        },
+        never // No presence
+      >(
         (set) => ({
           value: null,
 
