@@ -10,7 +10,10 @@ import {
   ServerMessageType,
 } from "../src/live";
 import type { Json, JsonObject } from "../src/json";
-import type { LsonObject, ToJson } from "../src/lson";
+import type { Lson, LsonObject, ToJson } from "../src/lson";
+import type { LiveList } from "../src/LiveList";
+import type { LiveMap } from "../src/LiveMap";
+import type { LiveObject } from "../src/LiveObject";
 import { makePosition } from "../src/position";
 import { defaultState, makeStateMachine } from "../src/room";
 import type { Effects, Machine } from "../src/room";
@@ -404,7 +407,7 @@ type JsonStorageUpdate =
 
 type JsonLiveListUpdate<TItem extends Lson> = {
   type: "LiveList";
-  node: ToJson<LiveList<TItem>>;
+  node: Array<ToJson<TItem>>;
   updates: Array<
     | {
         type: "insert";
@@ -431,7 +434,7 @@ type JsonLiveListUpdate<TItem extends Lson> = {
 
 type JsonLiveObjectUpdate<O extends LsonObject> = {
   type: "LiveObject";
-  node: ToJson<LiveObject<O>>;
+  node: ToJson<O>;
   updates: LiveObjectUpdateDelta<O>;
 };
 
@@ -446,7 +449,8 @@ function liveListUpdateToJson<TItem extends Lson>(
 ): JsonLiveListUpdate<TItem> {
   return {
     type: update.type,
-    node: toJson(update.node),
+    node: lsonToJson(update.node) as ToJson<TItem>[],
+    //                            ^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
     updates: update.updates.map((delta) => {
       switch (delta.type) {
         case "move": {
@@ -454,7 +458,7 @@ function liveListUpdateToJson<TItem extends Lson>(
             type: delta.type,
             index: delta.index,
             previousIndex: delta.previousIndex,
-            item: toJson(delta.item),
+            item: lsonToJson(delta.item),
           };
         }
         case "delete": {
@@ -464,18 +468,19 @@ function liveListUpdateToJson<TItem extends Lson>(
           return {
             type: delta.type,
             index: delta.index,
-            item: toJson(delta.item),
+            item: lsonToJson(delta.item),
           };
         }
         case "set": {
           return {
             type: delta.type,
             index: delta.index,
-            item: toJson(delta.item),
+            item: lsonToJson(delta.item),
           };
         }
       }
-    }),
+    }) as any,
+    // ^^^^^^ FIXME: TypeScript nags about this correctly. Deal with this later.
   };
 }
 
@@ -487,7 +492,8 @@ function serializeUpdateToJson(update: StorageUpdate): JsonStorageUpdate {
   if (update.type === "LiveObject") {
     return {
       type: update.type,
-      node: toJson(update.node),
+      node: lsonToJson(update.node) as ToJson<typeof update.node>,
+      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
       updates: update.updates,
     };
   }
@@ -495,7 +501,8 @@ function serializeUpdateToJson(update: StorageUpdate): JsonStorageUpdate {
   if (update.type === "LiveMap") {
     return {
       type: update.type,
-      node: toJson(update.node),
+      node: lsonToJson(update.node) as { [key: string]: Json },
+      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
       updates: update.updates,
     };
   }
