@@ -223,12 +223,12 @@ describe("LiveList", () => {
           updates: [
             {
               type: "LiveList",
-              node: [[["first", 0]]],
+              node: [{ first: 0 }],
               updates: [
                 {
                   type: "insert",
                   index: 0,
-                  item: [["first", 0]],
+                  item: { first: 0 },
                 },
               ],
             },
