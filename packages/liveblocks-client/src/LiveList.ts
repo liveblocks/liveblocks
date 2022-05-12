@@ -803,14 +803,39 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
 
       // Normal case
       if (existingItemIndex === -1) {
+        const previousIndex = this._items.findIndex(
+          (item) => item._getParentKeyOrThrow() === child._parentKey
+        );
         child._setParentLink(this, newKey);
         this._items.sort((itemA, itemB) =>
           compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
         );
-        // TODO: update
-        return {
-          modified: false,
-        };
+
+        const newIndex = this._items.findIndex(
+          (item) => item._getParentKeyOrThrow() === child._parentKey
+        );
+
+        if (newIndex !== previousIndex) {
+          return {
+            modified: {
+              node: this,
+              type: "LiveList",
+              updates: [
+                {
+                  index: newIndex,
+                  previousIndex: previousIndex,
+                  item: child instanceof LiveRegister ? child.data : child,
+                  type: "move",
+                },
+              ],
+            },
+            reverse: [],
+          };
+        } else {
+          return {
+            modified: false,
+          };
+        }
       } else {
         this._items[existingItemIndex]._setParentLink(
           this,
@@ -820,15 +845,38 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           )
         );
 
+        // TODO update for existing item move?
+
         child._setParentLink(this, newKey);
         this._items.sort((itemA, itemB) =>
           compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
         );
 
-        // TODO: update
-        return {
-          modified: false,
-        };
+        const newIndex = this._items.findIndex(
+          (item) => item._getParentKeyOrThrow() === child._parentKey
+        );
+
+        if (newIndex !== existingItemIndex) {
+          return {
+            modified: {
+              node: this,
+              type: "LiveList",
+              updates: [
+                {
+                  index: newIndex,
+                  previousIndex: existingItemIndex,
+                  item: child instanceof LiveRegister ? child.data : child,
+                  type: "move",
+                },
+              ],
+            },
+            reverse: [],
+          };
+        } else {
+          return {
+            modified: false,
+          };
+        }
       }
     } else if (source === OpSource.ACK) {
       if (this._implicitlyDeletedItems.has(child)) {
