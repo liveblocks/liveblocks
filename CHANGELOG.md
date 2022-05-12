@@ -1,6 +1,29 @@
-# vNEXT (v0.16.3)
+# v0.16.5 (not yet released)
 
-...
+- Various internal refactorings
+
+# v0.16.4
+
+## All packages
+
+- Improve our generated bundles. They are now even more tree-shakable, and smaller!
+
+## `@liveblocks/client`
+
+Some APIs are being **deprecated** and may start showing console warnings when used:
+
+- The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
+- The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+
+## `@liveblocks/react`
+
+Some APIs are being **deprecated** and may start showing console warnings when used:
+
+- The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
+- The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
+- The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
+
+For information, please see https://bit.ly/3Niy5aP.
 
 # v0.16.3
 

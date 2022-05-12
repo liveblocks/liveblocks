@@ -1,55 +1,164 @@
-import {
+import type {
+  Authentication,
+  AuthenticationToken,
+  AuthorizeResponse,
+  BroadcastOptions,
+  Connection,
+  ConnectionCallback,
+  ConnectionState,
+  ErrorCallback,
+  EventCallback,
+  MyPresenceCallback,
   Others,
+  OthersEvent,
+  OthersEventCallback,
   Presence,
   Room,
-  MyPresenceCallback,
-  OthersEventCallback,
   RoomEventCallbackMap,
   RoomEventName,
-  EventCallback,
-  User,
-  Connection,
-  ErrorCallback,
-  OthersEvent,
-  AuthenticationToken,
-  ConnectionCallback,
+  RoomInitializers,
   StorageCallback,
   StorageUpdate,
-  BroadcastOptions,
-  AuthorizeResponse,
-  Authentication,
+  User,
 } from "./types";
-import { Json, JsonObject, isJsonObject, isJsonArray, parseJson } from "./json";
-import { Lson, LsonObject } from "./lson";
+import type { Json, JsonObject } from "./json";
+import { isJsonObject, isJsonArray, parseJson } from "./json";
+import type { Lson, LsonObject } from "./lson";
 import {
   compact,
   getTreesDiffOperations,
   isSameNodeOrChildOf,
-  remove,
-  mergeStorageUpdates,
   isTokenValid,
+  mergeStorageUpdates,
+  remove,
 } from "./utils";
 import {
   ClientMessage,
   ClientMessageType,
-  ServerMessageType,
-  UserLeftMessage,
-  Op,
   EventMessage,
+  InitialDocumentStateMessage,
+  Op,
+  OpType,
   RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  ServerMessage,
+  ServerMessageType,
   UpdatePresenceMessage,
   UserJoinMessage,
-  SerializedCrdtWithId,
-  InitialDocumentStateMessage,
-  OpType,
-  ServerMessage,
-  SerializedCrdt,
+  UserLeftMessage,
   WebsocketCloseCodes,
 } from "./live";
-import { LiveMap } from "./LiveMap";
+import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveList } from "./LiveList";
 import { AbstractCrdt, ApplyResult, OpSource } from "./AbstractCrdt";
+
+type FixmePresence = JsonObject;
+
+export type Machine = {
+  // Internal
+  onClose(event: { code: number; wasClean: boolean; reason: string }): void;
+  onMessage(event: MessageEvent<string>): void;
+  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  heartbeat(): void;
+  onNavigatorOnline(): void;
+
+  // Internal dev tools
+  simulateSocketClose(): void;
+  simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: string;
+  }): void;
+
+  // onWakeUp,
+  onVisibilityChange(visibilityState: VisibilityState): void;
+  getUndoStack(): HistoryItem[];
+  getItemsCount(): number;
+
+  // Core
+  connect(): null | undefined;
+  disconnect(): void;
+
+  subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  subscribe<TKey extends string, TValue extends Lson>(
+    liveMap: LiveMap<TKey, TValue>,
+    callback: (liveMap: LiveMap<TKey, TValue>) => void
+  ): () => void;
+  subscribe<TData extends LsonObject>(
+    liveObject: LiveObject<TData>,
+    callback: (liveObject: LiveObject<TData>) => void
+  ): () => void;
+  subscribe<TItem extends Lson>(
+    liveList: LiveList<TItem>,
+    callback: (liveList: LiveList<TItem>) => void
+  ): () => void;
+  subscribe<TItem extends AbstractCrdt>(
+    node: TItem,
+    callback: (updates: StorageUpdate[]) => void,
+    options: { isDeep: true }
+  ): () => void;
+  subscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): () => void;
+  subscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): () => void;
+  subscribe(type: "event", listener: EventCallback): () => void;
+  subscribe(type: "error", listener: ErrorCallback): () => void;
+  subscribe(type: "connection", listener: ConnectionCallback): () => void;
+  subscribe<K extends RoomEventName>(
+    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    listener?: RoomEventCallbackMap[K] | any,
+    options?: { isDeep: boolean }
+  ): () => void;
+
+  unsubscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): void;
+  unsubscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): void;
+  unsubscribe(type: "event", listener: EventCallback): void;
+  unsubscribe(type: "error", listener: ErrorCallback): void;
+  unsubscribe(type: "connection", listener: ConnectionCallback): void;
+  unsubscribe<K extends RoomEventName>(
+    event: K,
+    callback: RoomEventCallbackMap[K]
+  ): void;
+
+  // Presence
+  updatePresence<T extends Presence>(
+    overrides: Partial<T>,
+    options?: { addToHistory: boolean }
+  ): void;
+  broadcastEvent(event: Json, options?: BroadcastOptions): void;
+
+  batch(callback: () => void): void;
+  undo(): void;
+  redo(): void;
+  pauseHistory(): void;
+  resumeHistory(): void;
+
+  getStorage<TStorage extends LsonObject>(): Promise<{
+    root: LiveObject<TStorage>;
+  }>;
+
+  selectors: {
+    // Core
+    getConnectionState(): ConnectionState;
+    getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+
+    // Presence
+    getPresence<T extends Presence>(): T;
+    getOthers<T extends Presence>(): Others<T>;
+  };
+};
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
 const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
@@ -106,7 +215,7 @@ type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
 
 type IdFactory = () => string;
 
-export type State = {
+export type State<TPresence extends JsonObject> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
@@ -114,7 +223,7 @@ export type State = {
   lastFlushTime: number;
   buffer: {
     presence: Presence | null;
-    messages: ClientMessage[];
+    messages: ClientMessage<TPresence>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -165,12 +274,12 @@ export type State = {
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects = {
+export type Effects<TPresence extends JsonObject> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMessage[]): void;
+  send(messages: ClientMessage<TPresence>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -186,12 +295,12 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine(
-  state: State,
+export function makeStateMachine<TPresence extends JsonObject>(
+  state: State<TPresence>,
   context: Context,
-  mockedEffects?: Effects
-) {
-  const effects: Effects = mockedEffects || {
+  mockedEffects?: Effects<TPresence>
+): Machine {
+  const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
@@ -215,7 +324,9 @@ export function makeStateMachine(
           .catch((er: any) => authenticationFailure(er));
       }
     },
-    send(messageOrMessages: ClientMessage | ClientMessage[]) {
+    send(
+      messageOrMessages: ClientMessage<TPresence> | ClientMessage<TPresence>[]
+    ) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
       }
@@ -758,7 +869,7 @@ See v0.13 release notes for more information.
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceMessage
+    message: UpdatePresenceMessage<TPresence>
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
@@ -848,7 +959,11 @@ See v0.13 release notes for more information.
       // TODO: Consider storing it on the backend
       state.buffer.messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.me!,
+        data: state.me as TPresence,
+        //             ^^^^^^^^^^^^
+        //             TODO: Soon, state.buffer.presence will become
+        //             a TPresence and this force-cast will no longer be
+        //             necessary.
         targetActor: message.actor,
       });
       tryFlushing();
@@ -857,16 +972,18 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMessage | null {
+  function parseServerMessage(data: Json): ServerMessage<TPresence> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMessage;
-    //          ^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    return data as ServerMessage<TPresence>;
+    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(text: string): ServerMessage[] | null {
+  function parseServerMessages(
+    text: string
+  ): ServerMessage<TPresence>[] | null {
     const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
@@ -883,7 +1000,7 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ServerMessage[] | null = parseServerMessages(event.data);
+    const messages = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
       // Unknown incoming message... ignore it
       return;
@@ -950,16 +1067,6 @@ See v0.13 release notes for more information.
 
     notify(updates);
   }
-
-  // function onWakeUp() {
-  //   // Sometimes, the browser can put the webpage on pause (computer is on sleep mode for example)
-  //   // The client will not know that the server has probably close the connection even if the readyState is Open
-  //   // One way to detect this kind of pause is to ensure that a setInterval is not taking more than the delay it was configured with
-  //   if (state.connection.state === "open") {
-  //     log("Try to reconnect after laptop wake up");
-  //     reconnect();
-  //   }
-  // }
 
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
     state.socket = null;
@@ -1103,7 +1210,7 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ClientMessage[] = [];
+    const messages: ClientMessage<TPresence>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -1161,12 +1268,16 @@ See v0.13 release notes for more information.
     }
   }
 
-  function flushDataToMessages(state: State) {
-    const messages: ClientMessage[] = [];
+  function flushDataToMessages(state: State<TPresence>) {
+    const messages: ClientMessage<TPresence>[] = [];
     if (state.buffer.presence) {
       messages.push({
         type: ClientMessageType.UpdatePresence,
-        data: state.buffer.presence,
+        data: state.buffer.presence as unknown as TPresence,
+        //                          ^^^^^^^^^^^^^^^^^^^^^^^
+        //                          TODO: In 0.17, state.buffer.presence will
+        //                          become a TPresence and this force-cast will
+        //                          no longer be necessary.
       });
     }
     for (const event of state.buffer.messages) {
@@ -1204,7 +1315,7 @@ See v0.13 release notes for more information.
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State["listeners"]] = [];
+      state.listeners[key as keyof State<TPresence>["listeners"]] = [];
     }
   }
 
@@ -1394,8 +1505,6 @@ See v0.13 release notes for more information.
     // Internal dev tools
     simulateSocketClose,
     simulateSendCloseEvent,
-
-    // onWakeUp,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
     getItemsCount: () => state.items.size,
@@ -1431,9 +1540,9 @@ See v0.13 release notes for more information.
 }
 
 export function defaultState(
-  me?: Presence,
-  defaultStorageRoot?: JsonObject
-): State {
+  initialPresence?: Presence,
+  initialStorage?: JsonObject
+): State<FixmePresence> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1455,17 +1564,17 @@ export function defaultState(
       pongTimeout: 0,
     },
     buffer: {
-      presence: me == null ? {} : me,
+      presence: initialPresence == null ? {} : initialPresence,
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: me == null ? {} : me,
+    me: initialPresence == null ? {} : initialPresence,
     users: {},
     others: makeOthers({}),
-    defaultStorageRoot,
+    defaultStorageRoot: initialStorage,
     idFactory: null,
 
     // Storage
@@ -1501,15 +1610,19 @@ export type InternalRoom = {
 };
 
 export function createRoom(
-  options: {
-    defaultPresence?: Presence;
-    defaultStorageRoot?: Record<string, any>;
-  },
+  options: RoomInitializers<Presence, Record<string, any>>,
   context: Context
 ): InternalRoom {
+  const initialPresence = options.initialPresence ?? options.defaultPresence;
+  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
+
   const state = defaultState(
-    options.defaultPresence,
-    options.defaultStorageRoot
+    typeof initialPresence === "function"
+      ? initialPresence(context.roomId)
+      : initialPresence,
+    typeof initialStorage === "function"
+      ? initialStorage(context.roomId)
+      : initialStorage
   );
 
   const machine = makeStateMachine(state, context);
@@ -1522,10 +1635,7 @@ export function createRoom(
     getConnectionState: machine.selectors.getConnectionState,
     getSelf: machine.selectors.getSelf,
 
-    // FIXME: There's a type issue here. The types of subscribe and
-    // machine.subscribe are incompatible somewhere.
-    // TODO: Figure out exactly what's wrong here!
-    subscribe: machine.subscribe as any, // FIXME!
+    subscribe: machine.subscribe,
     unsubscribe: machine.unsubscribe,
 
     //////////////

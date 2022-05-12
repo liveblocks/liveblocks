@@ -1,8 +1,8 @@
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import { Json, JsonObject } from "./json";
-import { Lson, LsonObject } from "./lson";
+import type { Json, JsonObject } from "./json";
+import type { Lson, LsonObject } from "./lson";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -147,6 +147,28 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
+export type RoomInitializers<TPresence, TStorage> = Resolve<{
+  /**
+   * The initial Presence to use and announce when you enter the Room. The
+   * Presence is available on all users in the Room (me & others).
+   */
+  initialPresence?: TPresence | ((roomId: string) => TPresence);
+  /**
+   * The initial Storage to use when entering a new Room.
+   */
+  initialStorage?: TStorage | ((roomId: string) => TStorage);
+  /**
+   * @deprecated Please use `initialPresence` instead. This property is
+   * scheduled for removal in 0.18.
+   */
+  defaultPresence?: () => TPresence;
+  /**
+   * @deprecated Please use `initialStorage` instead. This property is
+   * scheduled for removal in 0.18.
+   */
+  defaultStorageRoot?: TStorage;
+}>;
+
 export type Client = {
   /**
    * Gets a room. Returns null if {@link Client.enter} has not been called previously.
@@ -158,14 +180,11 @@ export type Client = {
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
-   * @param defaultPresence Optional. Should be serializable to JSON. If omitted, an empty object will be used.
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
   enter<TStorage extends Record<string, any> = Record<string, any>>(
     roomId: string,
-    options?: {
-      defaultPresence?: Presence;
-      defaultStorageRoot?: TStorage;
-    }
+    options?: RoomInitializers<Presence, TStorage>
   ): Room;
 
   /**
@@ -269,14 +288,6 @@ export type Authentication =
       callback: (room: string) => Promise<AuthorizeResponse>;
     };
 
-type ConnectionState =
-  | "closed"
-  | "authenticating"
-  | "unavailable"
-  | "failed"
-  | "open"
-  | "connecting";
-
 export type Connection =
   | {
       state: "closed" | "authenticating" | "unavailable" | "failed";
@@ -287,6 +298,8 @@ export type Connection =
       userId?: string;
       userInfo?: any;
     };
+
+export type ConnectionState = Connection["state"];
 
 export type OthersEvent<T extends Presence = Presence> =
   | {

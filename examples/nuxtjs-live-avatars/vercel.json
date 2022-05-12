@@ -1,0 +1,15 @@
+{
+  "github": {
+    "silent": true
+  },
+  "builds": [
+    {
+      "src": "nuxt.config.js",
+      "use": "@nuxtjs/vercel-builder",
+      "config": {
+        "generateStaticRoutes": true,
+        "serverFiles": ["api.js"]
+      }
+    }
+  ]
+}

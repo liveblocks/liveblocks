@@ -1,6 +1,6 @@
 {
-  "name": "liveblocks-examples-react-whiteboard",
-  "version": "0.1.0",
+  "description": "This example shows how to build a collaborative whiteboard with Liveblocks and React.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "start": "react-scripts start",
@@ -9,17 +9,11 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.3",
-    "@liveblocks/react": "^0.16.3",
+    "@liveblocks/client": "^0.16.4",
+    "@liveblocks/react": "^0.16.4",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-scripts": "5.0.0"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "react-scripts": "^5.0.1"
   },
   "browserslist": {
     "production": [
@@ -32,5 +26,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prettier": "^2.6.2"
   }
 }

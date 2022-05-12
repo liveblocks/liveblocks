@@ -1,17 +1,16 @@
 {
-  "name": "javascript-todo-list",
-  "version": "1.0.0",
-  "description": "",
+  "description": "This example shows how to build a collaborative to-do list without relying on a front-end framework—using esbuild for bundling.",
+  "license": "Apache-2.0",
+  "private": true,
   "main": "app.js",
   "scripts": {
     "build": "esbuild app.js --bundle --outfile=static/app.js"
   },
-  "author": "",
-  "license": "Apache-2.0",
   "devDependencies": {
-    "esbuild": "^0.14.25"
+    "esbuild": "^0.14.25",
+    "prettier": "^2.6.2"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.3"
+    "@liveblocks/client": "^0.16.4"
   }
 }

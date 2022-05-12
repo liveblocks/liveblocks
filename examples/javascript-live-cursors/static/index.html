@@ -2,17 +2,27 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Liveblocks demo</title>
+    <title>Liveblocks</title>
+    <meta name="robots" content="noindex" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      href="https://liveblocks.io/favicon-32x32.png"
+      rel="icon"
+      sizes="32x32"
+      type="image/png"
+    />
+    <link
+      href="https://liveblocks.io/favicon-16x16.png"
+      rel="icon"
+      sizes="16x16"
+      type="image/png"
+    />
+    <link rel="stylesheet" type="text/css" href="styles.css" />
   </head>
   <body>
     <svg
+      class="cursor"
       id="cursor-template"
-      style="
-        position: absolute;
-        left: 0;
-        top: 0;
-        transition: transform 0.5s cubic-bezier(0.17, 0.93, 0.38, 1);
-      "
       width="24"
       height="36"
       viewBox="0 0 24 36"
@@ -23,17 +33,10 @@
         d="M5.65376 12.3673H5.46026L5.31717 12.4976L0.500002 16.8829L0.500002 1.19841L11.7841 12.3673H5.65376Z"
       />
     </svg>
-    <div
-      style="
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 100vh;
-      "
-    >
-      Move your cursor to broadcast its position to other people in the room
+    <div id="text">
+      Move your cursor to broadcast its position to other people in the room.
     </div>
-    <div id="cursors-container" style="height: 100vh; width: 100wh"></div>
+    <div id="cursors-container"></div>
     <script src="app.js"></script>
   </body>
 </html>

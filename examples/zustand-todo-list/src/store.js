@@ -2,14 +2,10 @@ import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 
-// Replace this key with your public key provided at https://liveblocks.io/dashboard/apikeys
-const PUBLIC_KEY = "pk_xxxxxxx";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
-if (PUBLIC_KEY.startsWith("pk_xxxxxxx")) {
-  throw new Error(
-    "Replace the constant PUBLIC_KEY in store.js with your own Liveblocks public key."
-  );
-}
+overrideApiKey();
+
 const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
@@ -40,3 +36,16 @@ const useStore = create(
   )
 );
 export default useStore;
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideApiKey() {
+  const query = new URLSearchParams(window?.location?.search);
+  const apiKey = query.get("apiKey");
+
+  if (apiKey) {
+    PUBLIC_KEY = apiKey;
+  }
+}

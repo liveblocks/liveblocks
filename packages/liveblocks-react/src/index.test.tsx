@@ -10,18 +10,17 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import { createClient } from "@liveblocks/client";
 import {
+  ClientMessageType,
+  CrdtType,
+  ServerMessageType,
+} from "@liveblocks/client/internal";
+import {
   LiveblocksProvider,
   RoomProvider,
   useMyPresence,
   useObject,
   useOthers,
 } from ".";
-
-import {
-  ClientMessageType,
-  CrdtType,
-  ServerMessageType,
-} from "@liveblocks/client/internal";
 
 /**
  * https://github.com/Luka967/websocket-close-codes

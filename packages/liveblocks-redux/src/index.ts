@@ -1,16 +1,17 @@
-import {
+import type {
   Client,
   User,
   Room,
   LiveObject,
   LsonObject,
   Presence,
-  internals,
-  StorageUpdate,
-  Json,
-  Lson,
 } from "@liveblocks/client";
-import { StoreEnhancer } from "redux";
+import {
+  patchImmutableObject,
+  patchLiveObjectKey,
+  lsonToJson,
+} from "@liveblocks/client/internal";
+import type { StoreEnhancer } from "redux";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
@@ -18,29 +19,6 @@ import {
   mappingValueShouldBeABoolean,
   missingClient,
 } from "./errors";
-
-// @liveblocks/client export internals API to be used only by our packages.
-// Internals APIs are removed from public d.ts so we patch them manually here to consume them.
-// They are patched inline because @rollup/plugin-typescript does not respect tsconfig typeRoots
-// @internal is necessary to remove it from public d.ts
-/**
- * @internal
- */
-declare module "@liveblocks/client" {
-  const internals: {
-    patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T;
-    patchLiveObjectKey<O extends LsonObject>(
-      liveObject: LiveObject<O>,
-      key: keyof O,
-      prev: unknown,
-      next: unknown
-    ): void;
-    lsonToJson(value: Lson): Json;
-    liveObjectToJson(liveObject: LiveObject<LsonObject>): Json;
-  };
-}
-
-const { patchImmutableObject, patchLiveObjectKey, lsonToJson } = internals;
 
 export type Mapping<T> = Partial<{
   [Property in keyof T]: boolean;

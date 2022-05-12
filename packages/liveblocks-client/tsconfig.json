@@ -10,8 +10,10 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "lib": ["es2019", "dom", "esnext"],
-    "stripInternal": true
+    "lib": ["dom", "esnext"],
+    "stripInternal": true,
+    "importsNotUsedAsValues": "error",
+    "isolatedModules": true
   },
   "include": ["./src/**/*.ts", "./test/**/*.ts"],
   "exclude": ["node_modules"]

@@ -1,0 +1,41 @@
+import { create } from "./factory";
+
+const {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+} = create();
+
+export {
+  RoomProvider,
+  useRoom,
+  useMyPresence,
+  useUpdateMyPresence,
+  useOthers,
+  useBroadcastEvent,
+  useErrorListener,
+  useEventListener,
+  useSelf,
+  useStorage,
+  useMap,
+  useList,
+  useObject,
+  useUndo,
+  useRedo,
+  useBatch,
+  useHistory,
+};

@@ -7,7 +7,7 @@ import {
   SerializedCrdt,
   CreateOp,
 } from "./live";
-import { Json } from "./json";
+import type { Json } from "./json";
 
 /**
  * @internal

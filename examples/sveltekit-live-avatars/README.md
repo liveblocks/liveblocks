@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Live Avatars
+# Live Avatar Stack
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/sveltekit-live-avatars">
@@ -14,9 +14,9 @@
   <img src="https://img.shields.io/badge/sveltekit-message?style=flat&logo=svelte&color=f30&logoColor=fff" alt="SvelteKit" />
 </p>
 
-This example shows how to build live avatars with [Liveblocks](https://liveblocks.io) and [SvelteKit](https://kit.svelte.dev/).
+This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io) and [SvelteKit](https://kit.svelte.dev/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="800" alt="Live Avatars" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Avatar Stack" />
 
 ## Getting started
 

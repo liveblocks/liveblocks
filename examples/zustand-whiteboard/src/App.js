@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import useStore from "./store";
-
 import "./App.css";
+
+let roomId = "zustand-whiteboard";
+
+overrideRoomId();
 
 export default function App() {
   const shapes = useStore((state) => state.shapes);
@@ -16,18 +19,22 @@ export default function App() {
 
   const enterRoom = useStore((state) => state.liveblocks.enterRoom);
   const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
-  const isLoading = useStore((state) => state.liveblocks.isLoading);
+  const isLoading = useStore((state) => state.liveblocks.isStorageLoading);
 
   useEffect(() => {
-    enterRoom("zustand-whiteboard", { shapes: {} });
+    enterRoom(roomId, { shapes: {} });
 
     return () => {
-      leaveRoom("zustand-whiteboard");
+      leaveRoom(roomId);
     };
   }, [enterRoom, leaveRoom]);
 
   if (isLoading) {
-    return <div className="loading">Loading...</div>;
+    return (
+      <div className="loading">
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    );
   }
 
   return (
@@ -85,6 +92,19 @@ const Rectangle = ({ shape, selectionColor, id }) => {
         e.stopPropagation();
         onShapePointerDown(id);
       }}
-    ></div>
+    />
   );
 };
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function overrideRoomId() {
+  const query = new URLSearchParams(window?.location?.search);
+  const roomIdSuffix = query.get("roomId");
+
+  if (roomIdSuffix) {
+    roomId = `${roomId}-${roomIdSuffix}`;
+  }
+}
