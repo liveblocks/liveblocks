@@ -1,12 +1,13 @@
 import each from "jest-each";
 
 import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
-import { CrdtType, OpType, SerializedCrdt } from "./live";
+import type { SerializedCrdt } from "./live";
+import { CrdtType, OpType } from "./live";
 import {
-  getTreesDiffOperations,
-  findNonSerializableValue,
-  isTokenValid,
   compact,
+  findNonSerializableValue,
+  getTreesDiffOperations,
+  isTokenValid,
 } from "./utils";
 
 describe("compact", () => {

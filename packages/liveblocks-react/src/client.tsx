@@ -1,5 +1,5 @@
-import * as React from "react";
 import type { Client } from "@liveblocks/client";
+import * as React from "react";
 
 type LiveblocksProviderProps = {
   children: React.ReactNode;

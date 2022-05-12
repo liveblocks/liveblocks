@@ -1,20 +1,20 @@
 import type { AbstractCrdt, Doc } from "./AbstractCrdt";
-import {
-  SerializedCrdtWithId,
-  CrdtType,
-  SerializedList,
-  SerializedMap,
+import type { Json } from "./json";
+import { isJsonObject, parseJson } from "./json";
+import type {
+  CreateOp,
   Op,
   SerializedCrdt,
-  OpType,
+  SerializedCrdtWithId,
+  SerializedList,
+  SerializedMap,
   SerializedObject,
-  CreateOp,
 } from "./live";
+import { CrdtType, OpType } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json, isJsonObject, parseJson } from "./json";
 import type { Lson, LsonObject } from "./lson";
 import type {
   LiveListUpdates,

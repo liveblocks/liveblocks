@@ -1,18 +1,14 @@
-import { LiveObject } from "./LiveObject";
 import {
-  prepareStorageTest,
+  createSerializedList,
   createSerializedObject,
   prepareIsolatedStorageTest,
+  prepareStorageTest,
   reconnect,
-  createSerializedList,
 } from "../test/utils";
-import {
-  CrdtType,
-  OpType,
-  SerializedCrdtWithId,
-  WebsocketCloseCodes,
-} from "./live";
 import { LiveList } from ".";
+import type { SerializedCrdtWithId } from "./live";
+import { CrdtType, OpType, WebsocketCloseCodes } from "./live";
+import { LiveObject } from "./LiveObject";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
