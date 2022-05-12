@@ -1,6 +1,5 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import { errorIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
@@ -30,20 +29,9 @@ export class LiveMap<
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
-  constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
-  /**
-   * @deprecated Please call as `new LiveMap()` or `new LiveMap([])` instead.
-   */
-  constructor(entries: null);
-  constructor(
-    entries?: readonly (readonly [TKey, TValue])[] | undefined | null
-  ) {
+  constructor(entries: readonly (readonly [TKey, TValue])[] = []) {
     super();
-    errorIf(
-      entries === null,
-      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
-    );
-    if (entries) {
+    if (entries.length > 0) {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
       for (const entry of entries) {
         const value = selfOrRegister(entry[1]);
