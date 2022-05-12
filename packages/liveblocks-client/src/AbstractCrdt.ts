@@ -1,5 +1,5 @@
-import { OpType } from "./live";
 import type { CreateOp, Op, SerializedCrdt } from "./live";
+import { OpType } from "./live";
 import type { StorageUpdate } from "./types";
 
 export type ApplyResult =

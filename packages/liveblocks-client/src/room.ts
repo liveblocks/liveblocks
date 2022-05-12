@@ -1,3 +1,30 @@
+import type { ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
+import type { Json, JsonObject } from "./json";
+import { isJsonArray, isJsonObject, parseJson } from "./json";
+import type {
+  ClientMessage,
+  EventMessage,
+  InitialDocumentStateMessage,
+  Op,
+  RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  ServerMessage,
+  UpdatePresenceMessage,
+  UserJoinMessage,
+  UserLeftMessage,
+} from "./live";
+import {
+  ClientMessageType,
+  OpType,
+  ServerMessageType,
+  WebsocketCloseCodes,
+} from "./live";
+import { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import type { Lson, LsonObject } from "./lson";
 import type {
   Authentication,
   AuthenticationToken,
@@ -21,9 +48,6 @@ import type {
   StorageUpdate,
   User,
 } from "./types";
-import type { Json, JsonObject } from "./json";
-import { isJsonObject, isJsonArray, parseJson } from "./json";
-import type { Lson, LsonObject } from "./lson";
 import {
   compact,
   getTreesDiffOperations,
@@ -32,27 +56,6 @@ import {
   mergeStorageUpdates,
   remove,
 } from "./utils";
-import {
-  ClientMessage,
-  ClientMessageType,
-  EventMessage,
-  InitialDocumentStateMessage,
-  Op,
-  OpType,
-  RoomStateMessage,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  ServerMessage,
-  ServerMessageType,
-  UpdatePresenceMessage,
-  UserJoinMessage,
-  UserLeftMessage,
-  WebsocketCloseCodes,
-} from "./live";
-import type { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import { LiveList } from "./LiveList";
-import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 
 type FixmePresence = JsonObject;
 

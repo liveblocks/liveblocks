@@ -1,4 +1,15 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
+import type {
+  CreateMapOp,
+  CreateOp,
+  Op,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+} from "./live";
+import { CrdtType, OpType } from "./live";
+import type { Lson } from "./lson";
+import type { LiveMapUpdates } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
@@ -6,17 +17,6 @@ import {
   selfOrRegister,
   selfOrRegisterValue,
 } from "./utils";
-import {
-  Op,
-  CreateMapOp,
-  OpType,
-  SerializedCrdtWithId,
-  CrdtType,
-  SerializedCrdt,
-  CreateOp,
-} from "./live";
-import type { LiveMapUpdates } from "./types";
-import type { Lson } from "./lson";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.

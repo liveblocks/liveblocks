@@ -1,5 +1,3 @@
-import * as React from "react";
-import { useClient } from "./client";
 import type {
   BroadcastOptions,
   History,
@@ -11,9 +9,12 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
-import { LiveMap, LiveList, LiveObject } from "@liveblocks/client";
-import { deprecateIf } from "@liveblocks/client/internal";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
+import { deprecateIf } from "@liveblocks/client/internal";
+import * as React from "react";
+
+import { useClient } from "./client";
 import useRerender from "./useRerender";
 
 type RoomProviderProps<TStorage> = Resolve<

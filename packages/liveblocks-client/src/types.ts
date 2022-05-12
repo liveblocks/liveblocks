@@ -1,7 +1,7 @@
+import type { Json, JsonObject } from "./json";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import type { Json, JsonObject } from "./json";
 import type { Lson, LsonObject } from "./lson";
 
 /**

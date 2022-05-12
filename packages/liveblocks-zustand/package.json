@@ -18,6 +18,7 @@
   ],
   "scripts": {
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
     "test": "jest --watch",
     "test-ci": "jest",
@@ -49,6 +50,7 @@
     "@typescript-eslint/eslint-plugin": "^5.18.0",
     "@typescript-eslint/parser": "^5.18.0",
     "eslint": "^8.12.0",
+    "eslint-plugin-simple-import-sort": "^7.0.0",
     "jest": "^27.4.7",
     "msw": "^0.36.4",
     "rollup": "^2.64.0",

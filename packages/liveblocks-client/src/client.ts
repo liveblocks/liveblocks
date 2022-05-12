@@ -1,4 +1,5 @@
-import { createRoom, InternalRoom } from "./room";
+import type { InternalRoom } from "./room";
+import { createRoom } from "./room";
 import type {
   Authentication,
   Client,
