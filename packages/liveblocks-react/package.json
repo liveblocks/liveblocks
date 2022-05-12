@@ -21,6 +21,7 @@
   "scripts": {
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "start": "rollup -c -w",
+    "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --watch",
     "test-ci": "jest"
