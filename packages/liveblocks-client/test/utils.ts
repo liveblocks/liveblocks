@@ -171,19 +171,20 @@ async function prepareRoomWithStorage<
   };
 }
 
-export async function prepareIsolatedStorageTest<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
->(items: SerializedCrdtWithId[], actor: number = 0, defaultStorage = {}) {
-  const messagesSent: ClientMessage<TPresence>[] = [];
+export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
+  items: SerializedCrdtWithId[],
+  actor: number = 0,
+  defaultStorage = {}
+) {
+  const messagesSent: ClientMessage<never>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    TPresence,
+    never,
     TStorage
   >(
     items,
     actor,
-    (messages: ClientMessage<TPresence>[]) => {
+    (messages: ClientMessage<never>[]) => {
       messagesSent.push(...messages);
     },
     defaultStorage
@@ -198,7 +199,7 @@ export async function prepareIsolatedStorageTest<
     ws,
     assert: (data: ToJson<TStorage>) =>
       expect(lsonToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMessage<TPresence>[]) => {
+    assertMessagesSent: (messages: ClientMessage<JsonObject>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>

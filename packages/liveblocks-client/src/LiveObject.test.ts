@@ -30,10 +30,9 @@ describe("LiveObject", () => {
     });
 
     it("should be null after being detached", async () => {
-      const { root } = await prepareIsolatedStorageTest<
-        never,
-        { child: LiveObject<{ a: number }> }
-      >(
+      const { root } = await prepareIsolatedStorageTest<{
+        child: LiveObject<{ a: number }>;
+      }>(
         [
           createSerializedObject("root", {}),
           createSerializedObject("0:0", { a: 0 }, "root", "child"),
@@ -392,7 +391,7 @@ describe("LiveObject", () => {
     describe("should ignore incoming updates if current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
         const { root, assert, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<never, { a: number }>(
+          await prepareIsolatedStorageTest<{ a: number }>(
             [createSerializedObject("0:0", { a: 0 })],
             1
           );
@@ -417,10 +416,7 @@ describe("LiveObject", () => {
 
       it("when value is a LiveObject", async () => {
         const { root, assert, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<
-            never,
-            { a: LiveObject<{ subA: number }> }
-          >(
+          await prepareIsolatedStorageTest<{ a: LiveObject<{ subA: number }> }>(
             [
               createSerializedObject("0:0", {}),
               createSerializedObject("0:1", { subA: 0 }, "0:0", "a"),
@@ -450,10 +446,9 @@ describe("LiveObject", () => {
 
       it("when value is a LiveList with LiveObjects", async () => {
         const { root, assert, applyRemoteOperations } =
-          await prepareIsolatedStorageTest<
-            never,
-            { a: LiveList<LiveObject<{ b: number }>> }
-          >(
+          await prepareIsolatedStorageTest<{
+            a: LiveList<LiveObject<{ b: number }>>;
+          }>(
             [
               createSerializedObject("0:0", {}),
               createSerializedList("0:1", "0:0", "a"),
@@ -522,10 +517,9 @@ describe("LiveObject", () => {
     });
 
     it("should not notify if property does not exist", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<
-        never,
-        { a?: number }
-      >([createSerializedObject("0:0", {})]);
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", {})]);
 
       const callback = jest.fn();
       subscribe(root, callback);
@@ -536,10 +530,9 @@ describe("LiveObject", () => {
     });
 
     it("should notify if property has been deleted", async () => {
-      const { root, subscribe } = await prepareIsolatedStorageTest<
-        never,
-        { a?: number }
-      >([createSerializedObject("0:0", { a: 1 })]);
+      const { root, subscribe } = await prepareIsolatedStorageTest<{
+        a?: number;
+      }>([createSerializedObject("0:0", { a: 1 })]);
 
       const callback = jest.fn();
       subscribe(root, callback);
@@ -553,7 +546,7 @@ describe("LiveObject", () => {
   describe("applyDeleteObjectKey", () => {
     it("should not notify if property does not exist", async () => {
       const { root, subscribe, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { a?: number }>([
+        await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", {}),
         ]);
 
@@ -569,7 +562,7 @@ describe("LiveObject", () => {
 
     it("should notify if property has been deleted", async () => {
       const { root, subscribe, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<never, { a?: number }>([
+        await prepareIsolatedStorageTest<{ a?: number }>([
           createSerializedObject("0:0", { a: 1 }),
         ]);
 
@@ -833,10 +826,9 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { obj: LiveObject<{ a: number }> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number }>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
@@ -892,10 +884,9 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<
-        never,
-        { obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }> }
-      >(
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
@@ -965,7 +956,7 @@ describe("LiveObject", () => {
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
       const { root, assert, subscribe, undo } =
-        await prepareIsolatedStorageTest<never, { a: number }>(
+        await prepareIsolatedStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
         );
@@ -988,15 +979,12 @@ describe("LiveObject", () => {
 
   describe("internal methods", () => {
     test("_detachChild", async () => {
-      const { root } = await prepareIsolatedStorageTest<
-        never,
-        {
-          obj: LiveObject<{
-            a: LiveObject<{ subA: number }>;
-            b: LiveObject<{ subA: number }>;
-          }>;
-        }
-      >(
+      const { root } = await prepareIsolatedStorageTest<{
+        obj: LiveObject<{
+          a: LiveObject<{ subA: number }>;
+          b: LiveObject<{ subA: number }>;
+        }>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedObject("0:1", {}, "0:0", "obj"),

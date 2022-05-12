@@ -1101,13 +1101,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { assert, machine } = await prepareIsolatedStorageTest<
-        never,
-        {
-          items?: LiveList<string>;
-          items2?: LiveList<string>;
-        }
-      >(
+      const { assert, machine } = await prepareIsolatedStorageTest<{
+        items?: LiveList<string>;
+        items2?: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1298,10 +1295,9 @@ describe("room", () => {
 
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
-      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<
-        Record<string, never>,
-        { items: LiveList<string> }
-      >([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
       assert({
         items: [],
