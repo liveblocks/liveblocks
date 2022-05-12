@@ -185,6 +185,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
+        /// positionToOpIdMap get Op
         this._implicitlyDeletedItems.add(existingItem);
 
         this._items[existingItemIndex] = child;
@@ -412,6 +413,127 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     }
   }
 
+  _applyInsertUndoRedo(op: CreateOp): ApplyResult {
+    const { id, parentKey } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
+
+    if (this._doc?.getItem(id) !== undefined) {
+      return { modified: false };
+    }
+
+    child._attach(id, this._doc!);
+    child._setParentLink(this, key);
+
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === key
+    );
+
+    let newKey = key;
+
+    if (existingItemIndex !== -1) {
+      const before = this._items[existingItemIndex]
+        ? this._items[existingItemIndex]._getParentKeyOrThrow()
+        : undefined;
+      const after = this._items[existingItemIndex + 1]
+        ? this._items[existingItemIndex + 1]._getParentKeyOrThrow()
+        : undefined;
+
+      newKey = makePosition(before, after);
+      child._setParentLink(this, newKey);
+    }
+
+    this._items.push(child);
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
+
+    return {
+      modified: false,
+    };
+  }
+
+  _applySetUndoRedo(op: CreateOp): ApplyResult {
+    const { id, parentKey } = op;
+    const key = parentKey!;
+    const child = creationOpToLiveStructure(op);
+
+    if (this._doc?.getItem(id) !== undefined) {
+      return { modified: false };
+    }
+
+    const existingItemIndex = this._items.findIndex(
+      (item) => item._getParentKeyOrThrow() === key
+    );
+
+    child._attach(id, this._doc!);
+    child._setParentLink(this, key);
+
+    let newKey = key;
+
+    if (existingItemIndex !== -1) {
+      const existingItem = this._items[existingItemIndex];
+      existingItem._detach();
+      const storageUpdate: LiveListUpdates<TItem> = {
+        node: this,
+        type: "LiveList",
+        updates: [
+          {
+            index: existingItemIndex,
+            type: "set",
+            item: child instanceof LiveRegister ? child.data : child,
+          },
+        ],
+      };
+
+      this._items[existingItemIndex] = child;
+
+      const reverse = existingItem._serialize(this._id!, key, this._doc, "set");
+      (reverse[0] as any).deletedId = op.id;
+
+      const item = this._doc?.getItem((op as any).deletedId);
+      if (item) {
+        item._apply({ type: OpType.DeleteCrdt, id: item._id! }, true);
+      }
+
+      return {
+        modified: storageUpdate,
+        reverse,
+      };
+    } else {
+      this._items.push(child);
+      this._items.sort((itemA, itemB) =>
+        compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+      );
+
+      const itemToDelete = this._doc?.getItem((op as any).deletedId);
+      if (itemToDelete) {
+        itemToDelete._apply(
+          { type: OpType.DeleteCrdt, id: itemToDelete._id! },
+          true
+        );
+      }
+
+      const newIndex = this._items.findIndex(
+        (entry) => entry._getParentKeyOrThrow() === newKey
+      );
+      return {
+        reverse: [{ type: OpType.DeleteCrdt, id }],
+        modified: {
+          node: this,
+          type: "LiveList",
+          updates: [
+            {
+              index: newIndex,
+              type: "insert",
+              item: child instanceof LiveRegister ? child.data : child,
+            },
+          ],
+        },
+      };
+    }
+  }
+
   /**
    * @internal
    */
@@ -420,85 +542,28 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    if (op.intent === "set" && source === OpSource.REMOTE) {
-      return this._applyRemoteSet(op);
+    if (op.intent === "set") {
+      if (source === OpSource.REMOTE) {
+        return this._applyRemoteSet(op);
+      }
+
+      if (source === OpSource.UNDOREDO) {
+        return this._applySetUndoRedo(op);
+      }
+
+      if (source === OpSource.ACK) {
+        return this._applySetAck(op);
+      }
     }
 
-    if (op.intent === "set" && source === OpSource.UNDOREDO) {
-      throw new Error("TODO implement undo/redo set");
-    }
-
-    if (op.intent === "set" && source === OpSource.ACK) {
-      return this._applySetAck(op);
-    }
-
-    // Remote insert
+    // Insert
     if (source === OpSource.REMOTE) {
       return this._applyRemoteInsert(op);
     } else if (source === OpSource.ACK) {
       return this._applyInsertAck(op);
     } else {
-      throw new Error("TODO implement undo/redo insert");
+      return this._applyInsertUndoRedo(op);
     }
-
-    // const { id, parentKey, intent } = op;
-    // const key = parentKey!;
-    // const child = creationOpToLiveStructure(op);
-
-    // const existingItemIndex = this._items.findIndex(
-    //   (item) => item._getParentKeyOrThrow() === key
-    // );
-
-    // child._attach(id, this._doc);
-    // child._setParentLink(this, key);
-
-    // let newKey = key;
-
-    // // If there is a conflict
-    // if (existingItemIndex !== -1) {
-    //   if (source === OpSource.UNDOREDO) {
-    //     // If change is local => assign a temporary position to newly attached child
-    //     const before = this._items[existingItemIndex]
-    //       ? this._items[existingItemIndex]._getParentKeyOrThrow()
-    //       : undefined;
-    //     const after = this._items[existingItemIndex + 1]
-    //       ? this._items[existingItemIndex + 1]._getParentKeyOrThrow()
-    //       : undefined;
-
-    //     newKey = makePosition(before, after);
-    //     child._setParentLink(this, newKey);
-    //   } else {
-    //     // If change is remote => assign a temporary position to existing child until we get the fix from the backend
-    //     const shiftedPosition = makePosition(
-    //       key,
-    //       this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-    //     );
-    //     this._items[existingItemIndex]._setParentLink(this, shiftedPosition);
-    //   }
-    // }
-
-    // this._items.push(child);
-    // this._items.sort((itemA, itemB) =>
-    //   compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-    // );
-
-    // const newIndex = this._items.findIndex(
-    //   (entry) => entry._getParentKeyOrThrow() === newKey
-    // );
-    // return {
-    //   reverse: [{ type: OpType.DeleteCrdt, id }],
-    //   modified: {
-    //     node: this,
-    //     type: "LiveList",
-    //     updates: [
-    //       {
-    //         index: newIndex,
-    //         type: "insert",
-    //         item: child instanceof LiveRegister ? child.data : child,
-    //       },
-    //     ],
-    //   },
-    // };
   }
 
   /**
@@ -568,8 +633,6 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
       const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
 
       const indexToDelete = this._items.findIndex((item) => item === child);
-
-      // TODO: handle item not found
 
       this._items.splice(indexToDelete, 1);
 
