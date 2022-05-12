@@ -17,7 +17,12 @@ import type {
   LiveObjectUpdates,
   UpdateDelta,
 } from "./types";
-import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
+import {
+  creationOpToLiveStructure,
+  deserialize,
+  fromEntries,
+  isCrdt,
+} from "./utils";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
@@ -410,7 +415,7 @@ export class LiveObject<
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return Object.fromEntries(this._map) as O;
+    return fromEntries(this._map) as O;
   }
 
   /**
