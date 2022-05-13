@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { deprecateIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
@@ -12,7 +13,6 @@ import type { Lson } from "./lson";
 import type { LiveMapUpdates } from "./types";
 import {
   creationOpToLiveStructure,
-  deprecateIf,
   deserialize,
   isCrdt,
   selfOrRegister,
@@ -41,7 +41,7 @@ export class LiveMap<
     super();
     deprecateIf(
       entries === null,
-      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.17. Please call as `new LiveMap()`, or `new LiveMap([])`."
+      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
     if (entries) {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];

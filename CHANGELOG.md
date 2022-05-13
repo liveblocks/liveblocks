@@ -8,7 +8,7 @@ Various Live structures now take mandatory type params:
 - `LiveObject<{ a: number, b: string }>` (just like, for example, `{ a: number, b: string }`)
 - `LiveList<T>` (just like `Array<T>`)
 
-# v0.16.5 (not yet released)
+# v0.16.5
 
 - Various internal refactorings
 
