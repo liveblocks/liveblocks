@@ -129,18 +129,18 @@ describe("LiveList confict resolution", () => {
 
       socketUtils.pauseAllSockets();
 
-      root1.get("list").set(0, "C"); //  Client1 moves "A" after "B"
-      root1.get("list").move(0, 1); //  Client1 moves "B" after "A"
-      root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
-      root2.get("list").set(0, "D"); //  Client2 sets "B" to "C"
+      root1.get("list").set(0, "C");
+      root1.get("list").move(0, 1);
+      root2.get("list").move(0, 1);
+      root2.get("list").set(0, "D");
 
       await socketUtils.sendMessagesClient1();
 
-      await assertEach({ list: ["A", "B"] }, { list: ["C", "A"] });
+      await assertEach({ list: ["B", "C"] }, { list: ["D", "C"] });
 
       await socketUtils.sendMessagesClient2();
 
-      await assert({ list: ["C", "A"] });
+      await assert({ list: ["D", "C"] });
     });
   });
 
