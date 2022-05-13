@@ -1,3 +1,22 @@
+# v0.17.0 (not yet released)
+
+## `@liveblocks/client`
+
+Some APIs are being **deprecated**:
+
+- The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
+- The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+
+## `@liveblocks/react`
+
+Some APIs are being **deprecated**:
+
+- The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
+- The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
+- The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
+
+For information, please see https://bit.ly/3Niy5aP.
+
 # v0.16.5 (not yet released)
 
 - Various internal refactorings
@@ -10,23 +29,8 @@
 ## All packages
 
 - Improve our generated bundles. They are now even more tree-shakable, and smaller!
-
-## `@liveblocks/client`
-
-Some APIs are being **deprecated** and may start showing console warnings when used:
-
-- The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
-- The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
-
-## `@liveblocks/react`
-
-Some APIs are being **deprecated** and may start showing console warnings when used:
-
-- The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
-- The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
-- The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
-
-For information, please see https://bit.ly/3Niy5aP.
+- Some APIs are being deprecation and will show warnings in the dev console
+  when used
 
 # v0.16.3
 
