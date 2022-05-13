@@ -1,23 +1,37 @@
 # v0.17.0 (not yet released)
 
-## `@liveblocks/client`
+### TypeScript improvements
 
-Some APIs are being **deprecated**:
+Various Live structures now take mandatory type params:
 
-- The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
-- The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+- `LiveMap<K, V>` (just like `Map<K, V>`)
+- `LiveObject<{ a: number, b: string }>` (just like, for example, `{ a: number, b: string }`)
+- `LiveList<T>` (just like `Array<T>`)
 
-## `@liveblocks/react`
+### Breaking changes
 
-Some APIs are being **deprecated**:
+- In **@liveblocks/client**:
+  - Removed old `Room.unsubscribe()` API
 
-- The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
-- The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
-- The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
+### New deprecations
+
+- In **@liveblocks/client**:
+
+  - The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
+  - The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+
+- In **@liveblocks/react**:
+  - The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
+  - The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
+  - The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
 
 For information, please see https://bit.ly/3Niy5aP.
 
-# v0.16.5 (not yet released)
+# v0.16.6
+
+Fix bug in example code suggested in deprecation warning.
+
+# v0.16.5
 
 - Various internal refactorings
 

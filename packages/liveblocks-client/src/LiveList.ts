@@ -25,10 +25,7 @@ type LiveListItem = [crdt: AbstractCrdt, position: string];
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
-export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
-  //                                     ^^^^^^
-  //                                     NOTE: Default arg will be removed in next major version
-
+export class LiveList<TItem extends Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   private _items: Array<LiveListItem>;
 

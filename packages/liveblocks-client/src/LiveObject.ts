@@ -29,11 +29,7 @@ import {
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveObject<
-  O extends LsonObject = LsonObject
-  //                   ^^^^^^^^^^^^
-  //                   NOTE: Default arg will be removed in next major version
-> extends AbstractCrdt {
+export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
