@@ -33,14 +33,19 @@ Fix bug in example code suggested in deprecation warning.
 
 # v0.16.5
 
+### All packages
+
 - Various internal refactorings
 
-- Fix: if you're using `@liveblocks/client` in a ES2015 context, you no longer
-  have to polyfill `Object.fromEntries()`.
+### Bug fixes
+
+- In **@liveblocks/client**:
+  - If you're using `@liveblocks/client` in a ES2015 context, you no longer
+    have to polyfill `Object.fromEntries()`.
 
 # v0.16.4
 
-## All packages
+### All packages
 
 - Improve our generated bundles. They are now even more tree-shakable, and smaller!
 - Some APIs are being deprecation and will show warnings in the dev console
