@@ -568,8 +568,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
       },
     };
 
-    const createdNodeIds = new Set<string | undefined>();
-    //                                      ^^^^^^^^^ NOTE: Bug? Unintended?
+    const createdNodeIds = new Set<string>();
+
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
@@ -610,13 +610,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId =
-            // NOTE: Do we intend to wrap this in a nn() here?
-            applyOpResult.modified.node._parent?._id;
+          const parentId = applyOpResult.modified.node._parent?._id;
 
-          // If the parent was created in the same batch, we don't want to notify
+          // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
-          if (!createdNodeIds.has(parentId)) {
+          if (!parentId || !createdNodeIds.has(parentId)) {
             result.updates.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
