@@ -1,6 +1,10 @@
 # v0.17.0 (not yet released)
 
-- ...
+## Breaking changes
+
+- Removed deprecated APIs:
+
+  - `Room.unsubscribe()`
 
 # v0.16.6
 
