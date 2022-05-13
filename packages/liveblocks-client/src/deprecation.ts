@@ -38,3 +38,31 @@ export function deprecateIf(
     }
   }
 }
+
+/**
+ * Throws a deprecation error in the dev console.
+ *
+ * Only triggers in dev mode. In production, this is a no-op.
+ */
+export function throwUsageError(message: string) {
+  if (process.env.NODE_ENV !== "production") {
+    const usageError = new Error(message);
+    usageError.name = "Usage error";
+    throw usageError;
+  }
+}
+
+/**
+ * Conditionally throws a usage error in the dev console if the first argument
+ * is truthy. Use this to "escalate" usage patterns that in previous versions
+ * we already warned about with deprecation warnings.
+ *
+ * Only has effect in dev mode. In production, this is a no-op.
+ */
+export function errorIf(condition: unknown, message: string) {
+  if (process.env.NODE_ENV !== "production") {
+    if (condition) {
+      throwUsageError(message);
+    }
+  }
+}
