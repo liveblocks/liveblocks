@@ -393,10 +393,10 @@ export function create() {
 
 Instead, please initialize this data where you set up your RoomProvider:
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveMap(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
@@ -420,10 +420,10 @@ Instead, please initialize your storage where you set up your RoomProvider:
 
     import { LiveMap } from "@liveblocks/client";
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveMap(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
@@ -466,10 +466,10 @@ Instead, please initialize this data where you set up your RoomProvider:
 
     import { LiveList } from "@liveblocks/client";
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveList(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
@@ -493,10 +493,10 @@ Instead, please initialize your storage where you set up your RoomProvider:
 
     import { LiveList } from "@liveblocks/client";
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveList(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
@@ -541,10 +541,10 @@ Instead, please initialize this data where you set up your RoomProvider:
 
     import { LiveObject } from "@liveblocks/client";
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveObject(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
@@ -568,10 +568,10 @@ Instead, please initialize your storage where you set up your RoomProvider:
 
     import { LiveObject } from "@liveblocks/client";
 
-    const initialStorage = () => {
+    const initialStorage = () => ({
       ${JSON.stringify(key)}: new LiveObject(...),
       ...
-    };
+    });
 
     <RoomProvider initialStorage={initialStorage}>
       ...
