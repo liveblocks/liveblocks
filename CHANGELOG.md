@@ -11,6 +11,7 @@ Various Live structures now take mandatory type params:
 ### Breaking changes
 
 - In **@liveblocks/client**:
+
   - Removed old `Room.unsubscribe()` API
 
 ### New deprecations
@@ -21,15 +22,20 @@ Various Live structures now take mandatory type params:
   - The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
 
 - In **@liveblocks/react**:
+
   - The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
   - The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
   - The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
 
 For information, please see https://bit.ly/3Niy5aP.
 
+---
+
 # v0.16.6
 
 Fix bug in example code suggested in deprecation warning.
+
+---
 
 # v0.16.5
 
@@ -40,8 +46,11 @@ Fix bug in example code suggested in deprecation warning.
 ### Bug fixes
 
 - In **@liveblocks/client**:
+
   - If you're using `@liveblocks/client` in a ES2015 context, you no longer
     have to polyfill `Object.fromEntries()`.
+
+---
 
 # v0.16.4
 
@@ -51,37 +60,53 @@ Fix bug in example code suggested in deprecation warning.
 - Some APIs are being deprecation and will show warnings in the dev console
   when used
 
+---
+
 # v0.16.3
 
-Fix bug where internal presence state could not get restored correctly after
-undo/redo in certain circumstances.
+### Bug fixes
 
-## `@liveblocks/zustand` & `@liveblocks/redux`
+- In **@liveblocks/client**:
 
-Fixes an issue when initializing an array with items would result in having duplicated items in other clients.
-Examples:
+  - Fix bug where internal presence state could not get restored correctly
+    after undo/redo in certain circumstances.
 
-- Client A updates state : `{ list: [0]}`
-- Client B states is updated to : `{ list: [0, 0]}`
+- In **@liveblocks/zustand** and **@liveblocks/redux**:
+
+  - Fixes an issue when initializing an array with items would result in having
+    duplicated items in other clients. Example:
+
+    - Client A updates state : `{ list: [0] }`
+    - Client B states is updated to : `{ list: [0, 0] }`
+
+---
 
 # v0.16.2
 
-## `@liveblocks/client`
+### Bug fixes
 
-Fix small bug related to new `JsonObject` type, which would reject some values
-that were legal JSON objects.
+- In **@liveblocks/client**:
+
+  - Fix small bug related to new `JsonObject` type, which would reject some
+    values that were legal JSON objects.
+
+---
 
 # v0.16.1
 
-## `@liveblocks/react`
+### Bug fixes
 
-Fix issue with React 18 and StrictMode.
+- In **@liveblocks/react**:
+
+  - Fix issue with React 18 and StrictMode.
+
+---
 
 # v0.16.0
 
-## `@liveblocks/client`
+### New APIs
 
-### `LiveList.set`
+#### `LiveList.set`
 
 Set one element at a specified index.
 
@@ -97,7 +122,7 @@ https://github.com/liveblocks/liveblocks/pull/147 for more information
 clients are using `0.16.0`. If a client is connected to a room with version
 `< 0.16`, `LiveList.set` might lead to slightly unexpected behavior._**
 
-### Typescript improvements
+### TypeScript improvements
 
 @nvie improved our typescript definitions! They are more precise and
 restrictive (for your own good :)). If typescript errors appears after
