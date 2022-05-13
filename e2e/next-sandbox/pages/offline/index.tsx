@@ -10,13 +10,13 @@ import {
 import React, { useState } from "react";
 
 type RoomWithDevTools = Room & {
-  internalDevTools: {
-    closeWebsocket: () => void;
-    sendCloseEvent: (event: {
+  __INTERNAL_DO_NOT_USE: {
+    simulateCloseWebsocket(): void;
+    simulateSendCloseEvent(event: {
       code: number;
       wasClean: boolean;
-      reason: any;
-    }) => void;
+      reason: string;
+    }): void;
   };
 };
 
@@ -80,7 +80,7 @@ function Sandbox() {
       <button
         id="closeWebsocket"
         onClick={() => {
-          room.internalDevTools.closeWebsocket();
+          room.__INTERNAL_DO_NOT_USE.simulateCloseWebsocket();
           setStatus("offline");
         }}
       >
@@ -89,7 +89,7 @@ function Sandbox() {
       <button
         id="sendCloseEventConnectionError"
         onClick={() => {
-          room.internalDevTools.sendCloseEvent({
+          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
             reason: "Fake connection error",
             code: 1005,
             wasClean: true,
@@ -101,7 +101,7 @@ function Sandbox() {
       <button
         id="sendCloseEventAppError"
         onClick={() => {
-          room.internalDevTools.sendCloseEvent({
+          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
             reason: "App error",
             code: 4002,
             wasClean: true,

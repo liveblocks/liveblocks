@@ -120,7 +120,7 @@ export type Machine = {
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
+    listener?: RoomEventCallbackMap[K],
     options?: { isDeep: boolean }
   ): () => void;
 
@@ -1620,10 +1620,9 @@ export function createRoom(
       resume: machine.resumeHistory,
     },
 
-    // @ts-ignore
-    internalDevTools: {
-      closeWebsocket: machine.simulateSocketClose,
-      sendCloseEvent: machine.simulateSendCloseEvent,
+    __INTERNAL_DO_NOT_USE: {
+      simulateCloseWebsocket: machine.simulateSocketClose,
+      simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
   };
 
