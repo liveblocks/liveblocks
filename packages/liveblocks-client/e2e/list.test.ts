@@ -277,31 +277,6 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
-      "remote insert conflicts with another insert via undo",
-      prepareTestsConflicts(
-        {
-          list: new LiveList(),
-        },
-        async ({ root1, root2, room2, socketUtils, assert }) => {
-          root1.get("list").push("A");
-          root2.get("list").push("B");
-          root2.get("list").delete(0);
-          room2.history.undo();
-
-          assert({ list: ["A"] }, { list: ["B"] });
-
-          await socketUtils.sendMessagesClient1();
-
-          assert({ list: ["A"] }, { list: ["A", "B"] });
-
-          await socketUtils.sendMessagesClient2();
-
-          assert({ list: ["A", "B"] });
-        }
-      )
-    );
-
     test(
       "remote insert conflicts with move",
       prepareTestsConflicts(
@@ -815,6 +790,64 @@ describe("LiveList conflicts", () => {
           await socketUtils.sendMessagesClient2();
 
           assert({ list: ["A", "D"] });
+        }
+      )
+    );
+
+    test.skip(
+      "remote insert conflicts with another insert via undo",
+      prepareTestsConflicts(
+        {
+          list: new LiveList(),
+        },
+        async ({ root1, root2, room2, socketUtils, assert }) => {
+          root1.get("list").push("A");
+          root2.get("list").push("B");
+          root2.get("list").delete(0);
+          room2.history.undo();
+
+          assert({ list: ["A"] }, { list: ["B"] });
+
+          await socketUtils.sendMessagesClient1();
+
+          assert({ list: ["A"] }, { list: ["A", "B"] });
+
+          await socketUtils.sendMessagesClient2();
+
+          assert({ list: ["A", "B"] });
+        }
+      )
+    );
+
+    test.skip(
+      "undo insert + redo insert / delete",
+      prepareTestsConflicts(
+        {
+          list: new LiveList(),
+        },
+        async ({ root1, root2, room1, socketUtils, assert }) => {
+          root1.get("list").push("A");
+
+          await socketUtils.sendMessagesClient1();
+
+          assert({ list: ["A"] }, { list: ["A"] });
+
+          await socketUtils.pauseAllSockets();
+
+          room1.history.undo();
+          room1.history.redo();
+
+          root2.get("list").delete(0);
+
+          assert({ list: ["A"] }, { list: [] });
+
+          await socketUtils.sendMessagesClient1();
+
+          assert({ list: ["A"] }, { list: ["A"] });
+
+          await socketUtils.sendMessagesClient2();
+
+          assert({ list: [] }, { list: ["A"] }); // CONFLICT
         }
       )
     );
