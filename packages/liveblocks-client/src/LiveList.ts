@@ -1,25 +1,24 @@
+import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { Doc, ApplyResult } from "./AbstractCrdt";
+import type {
+  CreateListOp,
+  CreateOp,
+  Op,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  SerializedList,
+} from "./live";
+import { CrdtType, OpType } from "./live";
+import { LiveRegister } from "./LiveRegister";
+import type { Lson } from "./lson";
+import { compare, makePosition } from "./position";
+import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import {
+  creationOpToLiveStructure,
   deserialize,
   selfOrRegister,
   selfOrRegisterValue,
-  creationOpToLiveStructure,
 } from "./utils";
-import {
-  SerializedList,
-  SerializedCrdtWithId,
-  Op,
-  CreateListOp,
-  OpType,
-  SerializedCrdt,
-  CrdtType,
-  CreateOp,
-} from "./live";
-import { makePosition, compare } from "./position";
-import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
-import { LiveRegister } from "./LiveRegister";
-import type { Lson } from "./lson";
 
 type LiveListItem = [crdt: AbstractCrdt, position: string];
 

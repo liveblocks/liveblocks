@@ -6,9 +6,12 @@
 
   - `Room.unsubscribe()`
 
-# v0.16.5 (not yet released)
+# v0.16.5
 
 - Various internal refactorings
+
+- Fix: if you're using `@liveblocks/client` in a ES2015 context, you no longer
+  have to polyfill `Object.fromEntries()`.
 
 # v0.16.4
 

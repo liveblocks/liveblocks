@@ -1,4 +1,16 @@
-import { AbstractCrdt, Doc, ApplyResult } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
+import { deprecateIf } from "./deprecation";
+import type {
+  CreateMapOp,
+  CreateOp,
+  Op,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+} from "./live";
+import { CrdtType, OpType } from "./live";
+import type { Lson } from "./lson";
+import type { LiveMapUpdates } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
@@ -6,17 +18,6 @@ import {
   selfOrRegister,
   selfOrRegisterValue,
 } from "./utils";
-import {
-  Op,
-  CreateMapOp,
-  OpType,
-  SerializedCrdtWithId,
-  CrdtType,
-  SerializedCrdt,
-  CreateOp,
-} from "./live";
-import type { LiveMapUpdates } from "./types";
-import type { Lson } from "./lson";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.
@@ -33,10 +34,19 @@ export class LiveMap<
 > extends AbstractCrdt {
   private _map: Map<TKey, AbstractCrdt>;
 
+  constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
+  /**
+   * @deprecated Please call as `new LiveMap()` or `new LiveMap([])` instead.
+   */
+  constructor(entries: null);
   constructor(
-    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
+    entries?: readonly (readonly [TKey, TValue])[] | undefined | null
   ) {
     super();
+    deprecateIf(
+      entries === null,
+      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
+    );
     if (entries) {
       const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
       for (const entry of entries) {

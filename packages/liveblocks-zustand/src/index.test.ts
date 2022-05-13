@@ -1,12 +1,7 @@
-import { rest } from "msw";
-import { setupServer } from "msw/node";
+import type { JsonObject, Presence } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import type { Presence } from "@liveblocks/client";
-import type { Mapping } from ".";
-import { middleware } from ".";
-import create from "zustand";
-import type { StateCreator } from "zustand";
 import type {
+  RoomStateMessage,
   SerializedCrdtWithId,
   ServerMessage,
 } from "@liveblocks/client/internal";
@@ -15,7 +10,14 @@ import {
   OpType,
   ServerMessageType,
 } from "@liveblocks/client/internal";
+import { rest } from "msw";
+import { setupServer } from "msw/node";
+import type { StateCreator } from "zustand";
+import create from "zustand";
+
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
+import type { Mapping } from ".";
+import { middleware } from ".";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
@@ -147,7 +149,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -345,7 +347,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as RoomStateMessage),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([

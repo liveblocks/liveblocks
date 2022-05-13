@@ -1,4 +1,3 @@
-import type { StateCreator, SetState, GetState, StoreApi } from "zustand";
 import type {
   Client,
   LiveObject,
@@ -12,6 +11,8 @@ import {
   patchImmutableObject,
   patchLiveObjectKey,
 } from "@liveblocks/client/internal";
+import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
+
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,

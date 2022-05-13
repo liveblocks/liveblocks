@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2015",
-    "module": "es2020",
+    "module": "es2015",
     "outDir": "./lib/esm",
     "strict": true,
     "esModuleInterop": true,
@@ -10,7 +10,7 @@
     "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
-    "lib": ["dom", "esnext"],
+    "lib": ["dom", "es2015"],
     "stripInternal": true,
     "importsNotUsedAsValues": "error",
     "isolatedModules": true

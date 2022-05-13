@@ -1,3 +1,30 @@
+import type { ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
+import type { Json, JsonObject } from "./json";
+import { isJsonArray, isJsonObject, parseJson } from "./json";
+import type {
+  ClientMessage,
+  EventMessage,
+  InitialDocumentStateMessage,
+  Op,
+  RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  ServerMessage,
+  UpdatePresenceMessage,
+  UserJoinMessage,
+  UserLeftMessage,
+} from "./live";
+import {
+  ClientMessageType,
+  OpType,
+  ServerMessageType,
+  WebsocketCloseCodes,
+} from "./live";
+import { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import type { Lson, LsonObject } from "./lson";
 import type {
   Authentication,
   AuthenticationToken,
@@ -21,9 +48,6 @@ import type {
   StorageUpdate,
   User,
 } from "./types";
-import type { Json, JsonObject } from "./json";
-import { isJsonObject, isJsonArray, parseJson } from "./json";
-import type { Lson, LsonObject } from "./lson";
 import {
   compact,
   getTreesDiffOperations,
@@ -32,27 +56,6 @@ import {
   mergeStorageUpdates,
   remove,
 } from "./utils";
-import {
-  ClientMessage,
-  ClientMessageType,
-  EventMessage,
-  InitialDocumentStateMessage,
-  Op,
-  OpType,
-  RoomStateMessage,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  ServerMessage,
-  ServerMessageType,
-  UpdatePresenceMessage,
-  UserJoinMessage,
-  UserLeftMessage,
-  WebsocketCloseCodes,
-} from "./live";
-import type { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import { LiveList } from "./LiveList";
-import { AbstractCrdt, ApplyResult } from "./AbstractCrdt";
 
 type FixmePresence = JsonObject;
 
@@ -828,7 +831,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceMessage
+    message: UpdatePresenceMessage<TPresence>
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
@@ -931,16 +934,18 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMessage | null {
+  function parseServerMessage(data: Json): ServerMessage<TPresence> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMessage;
-    //          ^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    return data as ServerMessage<TPresence>;
+    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(text: string): ServerMessage[] | null {
+  function parseServerMessages(
+    text: string
+  ): ServerMessage<TPresence>[] | null {
     const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
@@ -957,7 +962,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
       return;
     }
 
-    const messages: ServerMessage[] | null = parseServerMessages(event.data);
+    const messages = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
       // Unknown incoming message... ignore it
       return;
@@ -1232,7 +1237,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
         type: ClientMessageType.UpdatePresence,
         data: state.buffer.presence as unknown as TPresence,
         //                          ^^^^^^^^^^^^^^^^^^^^^^^
-        //                          TODO: In 0.17, state.buffer.presence will
+        //                          TODO: In 0.18, state.buffer.presence will
         //                          become a TPresence and this force-cast will
         //                          no longer be necessary.
       });

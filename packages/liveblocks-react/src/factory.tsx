@@ -1,5 +1,3 @@
-import * as React from "react";
-import { useClient } from "./client";
 import type {
   BroadcastOptions,
   History,
@@ -11,9 +9,12 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
-import { LiveMap, LiveList, LiveObject } from "@liveblocks/client";
-import { deprecateIf } from "@liveblocks/client/internal";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
+import { deprecateIf } from "@liveblocks/client/internal";
+import * as React from "react";
+
+import { useClient } from "./client";
 import useRerender from "./useRerender";
 
 type RoomProviderProps<TStorage> = Resolve<
@@ -26,7 +27,7 @@ type RoomProviderProps<TStorage> = Resolve<
   } & RoomInitializers<Presence, TStorage>
 >;
 
-type UseCrdtResult<T> =
+type LookupResult<T> =
   | { status: "ok"; value: T }
   | { status: "loading" }
   | { status: "notfound" };
@@ -403,8 +404,8 @@ Instead, please initialize this data where you set up your RoomProvider:
 
 Please see https://bit.ly/3Niy5aP for details.`
     );
-    const value = useStorageValue(key, new LiveMap(entries));
-    //                                 ^^^^^^^^^^^^^^^^^^^^
+    const value = useStorageValue(key, new LiveMap(entries ?? undefined));
+    //                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //                                 NOTE: This param is scheduled for removal in 0.18
     if (value.status === "ok") {
       return value.value;
@@ -583,11 +584,18 @@ Please see https://bit.ly/3Niy5aP for details.`
   }
 
   /**
+   * Returns the room.history
+   */
+  function useHistory(): History {
+    return useRoom().history;
+  }
+
+  /**
    * Returns a function that undoes the last operation executed by the current client.
    * It does not impact operations made by other clients.
    */
   function useUndo(): () => void {
-    return useRoom().history.undo;
+    return useHistory().undo;
   }
 
   /**
@@ -595,7 +603,7 @@ Please see https://bit.ly/3Niy5aP for details.`
    * It does not impact operations made by other clients.
    */
   function useRedo(): () => void {
-    return useRoom().history.redo;
+    return useHistory().redo;
   }
 
   /**
@@ -608,14 +616,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  /**
-   * Returns the room.history
-   */
-  function useHistory(): History {
-    return useRoom().history;
-  }
-
-  function useStorageValue<T>(key: string, initialCrdt: T): UseCrdtResult<T> {
+  function useStorageValue<T>(key: string, initialValue: T): LookupResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
@@ -625,20 +626,20 @@ Please see https://bit.ly/3Niy5aP for details.`
         return;
       }
 
-      let crdt: null | T = root.get(key);
+      let liveValue: null | T = root.get(key);
 
-      if (crdt == null) {
-        crdt = initialCrdt;
-        root.set(key, crdt);
+      if (liveValue == null) {
+        liveValue = initialValue;
+        root.set(key, liveValue);
       }
 
       function onRootChange() {
         const newCrdt = root!.get(key);
-        if (newCrdt !== crdt) {
+        if (newCrdt !== liveValue) {
           unsubscribeCrdt();
-          crdt = newCrdt;
+          liveValue = newCrdt;
           unsubscribeCrdt = room.subscribe(
-            crdt as any /* AbstractCrdt */,
+            liveValue as any /* AbstractCrdt */,
             rerender
           );
           rerender();
@@ -646,7 +647,7 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       let unsubscribeCrdt = room.subscribe(
-        crdt as any /* AbstractCrdt */,
+        liveValue as any /* AbstractCrdt */,
         rerender
       );
       const unsubscribeRoot = room.subscribe(
@@ -676,21 +677,21 @@ Please see https://bit.ly/3Niy5aP for details.`
 
   return {
     RoomProvider,
-    useRoom,
-    useMyPresence,
-    useUpdateMyPresence,
-    useOthers,
+    useBatch,
     useBroadcastEvent,
     useErrorListener,
     useEventListener,
+    useHistory,
+    useList,
+    useMap,
+    useMyPresence,
+    useObject,
+    useOthers,
+    useRedo,
+    useRoom,
     useSelf,
     useStorage,
-    useMap,
-    useList,
-    useObject,
     useUndo,
-    useRedo,
-    useBatch,
-    useHistory,
+    useUpdateMyPresence,
   };
 }

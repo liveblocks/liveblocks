@@ -1,31 +1,31 @@
+import { rest } from "msw";
+import { setupServer } from "msw/node";
+
 import {
-  prepareStorageTest,
-  createSerializedObject,
   createSerializedList,
-  mockEffects,
-  MockWebSocket,
-  serverMessage,
-  objectToJson,
+  createSerializedObject,
   createSerializedRegister,
   FIRST_POSITION,
+  mockEffects,
+  MockWebSocket,
   prepareIsolatedStorageTest,
+  prepareStorageTest,
   reconnect,
+  serverMessage,
   waitFor,
   withDateNow,
 } from "../test/utils";
+import { lsonToJson } from "./immutable";
+import type { SerializedCrdtWithId } from "./live";
 import {
   ClientMessageType,
   CrdtType,
-  SerializedCrdtWithId,
   ServerMessageType,
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
-import { makeStateMachine, defaultState, createRoom } from "./room";
+import { createRoom, defaultState, makeStateMachine } from "./room";
 import type { Authentication, Others } from "./types";
-import { rest } from "msw";
-import { setupServer } from "msw/node";
-import type { JsonObject as FixmePresence } from "./json";
 
 const defaultContext = {
   roomId: "room-id",
@@ -815,10 +815,9 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assert, undo, batch } = await prepareStorageTest<
-        FixmePresence,
-        { a: number }
-      >([createSerializedObject("0:0", { a: 1 })], 1);
+      const { storage, assert, undo, batch } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
@@ -834,7 +833,7 @@ describe("room", () => {
 
     test("batch storage with changes from server", async () => {
       const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
-        await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
+        await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -889,7 +888,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
+      } = await prepareStorageTest<{ items: LiveList<string> }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1042,7 +1041,7 @@ describe("room", () => {
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
       const { storage, assert, machine, refStorage, reconnect, ws } =
-        await prepareStorageTest<FixmePresence, { items: LiveList<string> }>(
+        await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
@@ -1069,9 +1068,9 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
-      const storageJson = objectToJson(storage.root);
+      const storageJson = lsonToJson(storage.root);
       expect(storageJson).toEqual({ items: ["A", "B"] });
-      const refStorageJson = objectToJson(refStorage.root);
+      const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: SerializedCrdtWithId[] = [
@@ -1102,10 +1101,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { assert, machine } = await prepareIsolatedStorageTest<
-        FixmePresence,
-        { items: LiveList<string> }
-      >(
+      const { assert, machine } = await prepareIsolatedStorageTest<{
+        items?: LiveList<string>;
+        items2?: LiveList<string>;
+      }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1296,10 +1295,9 @@ describe("room", () => {
 
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
-      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<
-        FixmePresence,
-        { items: LiveList<string> }
-      >([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
       assert({
         items: [],

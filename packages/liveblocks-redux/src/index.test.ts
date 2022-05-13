@@ -1,25 +1,28 @@
+import type { JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
-import type { LiveblocksState, Mapping } from ".";
-import { enhancer, actions } from ".";
-import { rest } from "msw";
-import { setupServer } from "msw/node";
-import type { Reducer } from "@reduxjs/toolkit";
-import { configureStore } from "@reduxjs/toolkit";
-import { list, MockWebSocket, obj, waitFor } from "../test/utils";
+import type {
+  RoomStateMessage,
+  SerializedCrdtWithId,
+  ServerMessage,
+} from "@liveblocks/client/internal";
 import {
   ClientMessageType,
   OpType,
   ServerMessageType,
 } from "@liveblocks/client/internal";
-import type {
-  SerializedCrdtWithId,
-  ServerMessage,
-} from "@liveblocks/client/internal";
+import type { Reducer } from "@reduxjs/toolkit";
+import { configureStore } from "@reduxjs/toolkit";
+import { rest } from "msw";
+import { setupServer } from "msw/node";
+
+import { list, MockWebSocket, obj, waitFor } from "../test/utils";
+import type { LiveblocksState, Mapping } from ".";
+import { actions, enhancer } from ".";
 import {
-  missingClient,
   mappingShouldBeAnObject,
-  mappingValueShouldBeABoolean,
   mappingShouldNotHaveTheSameKeys,
+  mappingValueShouldBeABoolean,
+  missingClient,
 } from "./errors";
 window.WebSocket = MockWebSocket as any;
 
@@ -167,7 +170,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage) {
+  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -390,7 +393,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as ServerMessage),
+        } as RoomStateMessage),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([

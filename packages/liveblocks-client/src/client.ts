@@ -1,4 +1,6 @@
-import { createRoom, InternalRoom } from "./room";
+import { deprecateIf } from "./deprecation";
+import type { InternalRoom } from "./room";
+import { createRoom } from "./room";
 import type {
   Authentication,
   Client,
@@ -8,7 +10,6 @@ import type {
   Room,
   RoomInitializers,
 } from "./types";
-import { deprecateIf } from "./utils";
 
 type EnterOptions<TPresence, TStorage> = Resolve<
   // Enter options are just room initializers, plus an internal option
