@@ -1279,7 +1279,7 @@ See v0.13 release notes for more information.
         type: ClientMessageType.UpdatePresence,
         data: state.buffer.presence as unknown as TPresence,
         //                          ^^^^^^^^^^^^^^^^^^^^^^^
-        //                          TODO: In 0.17, state.buffer.presence will
+        //                          TODO: In 0.18, state.buffer.presence will
         //                          become a TPresence and this force-cast will
         //                          no longer be necessary.
       });
