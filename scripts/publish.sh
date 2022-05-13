@@ -320,7 +320,7 @@ done
 echo ""
 
 echo "==> Pushing changes to GitHub"
-URL="${GITHUB_URL}/releases/new?tag=${VERSION}&target=$(git current-branch)&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
+URL="${GITHUB_URL}/releases/new?tag=v${VERSION}&target=$(git current-branch)&title=${VERSION}&body=%23%23%20%60%40liveblocks%2Fclient%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Freact%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fredux%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A%0A%23%23%20%60%40liveblocks%2Fzustand%60%0A%0A-%20%2A%2ATODO%3A%20Describe%20relevant%20changes%20for%20this%20package%2A%2A%0A%0A"
 if ! git push-current; then
     err "WARNING: Could not push this branch to GitHub!"
     err "Please manually fix that now, before writing the release notes!"
