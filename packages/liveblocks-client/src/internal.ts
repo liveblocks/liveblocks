@@ -19,7 +19,12 @@ export type {
 export type { Resolve, RoomInitializers } from "./types";
 
 export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
-export { deprecate, deprecateIf } from "./utils";
+export {
+  deprecate,
+  deprecateIf,
+  errorIf,
+  throwUsageError,
+} from "./deprecation";
 
 export {
   lsonToJson,

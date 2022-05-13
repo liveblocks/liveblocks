@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { deprecateIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
@@ -12,7 +13,6 @@ import type { Lson } from "./lson";
 import type { LiveMapUpdates } from "./types";
 import {
   creationOpToLiveStructure,
-  deprecateIf,
   deserialize,
   isCrdt,
   selfOrRegister,
