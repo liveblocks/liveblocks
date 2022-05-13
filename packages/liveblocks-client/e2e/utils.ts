@@ -2,7 +2,7 @@ import { createClient } from "../src/client";
 import { LiveList } from "../src/LiveList";
 import { LiveObject } from "../src/LiveObject";
 import { LiveMap } from "../src/LiveMap";
-import type { Lson, LsonObject } from "../src/lson";
+import type { Lson, LsonObject, ToJson } from "../src/lson";
 import fetch from "node-fetch";
 import WebSocket from "ws";
 import type { ClientRequestArgs } from "http";
@@ -11,6 +11,38 @@ import isEqual from "lodash/isEqual";
 import diff from "jest-diff";
 
 import "dotenv/config";
+import type { Room } from "../src";
+
+export function prepareTestsConflicts<T extends LsonObject>(
+  initialState: T,
+  callback: (args: {
+    root1: LiveObject<T>;
+    root2: LiveObject<T>;
+    room2: Room;
+    assert: (jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) => void;
+    socketUtils: {
+      sendMessagesClient1: () => Promise<void>;
+      sendMessagesClient2: () => Promise<void>;
+    };
+  }) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const result = await prepareTest<T>(initialState);
+
+    function assert(jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) {
+      if (jsonRoot2 == null) {
+        jsonRoot2 = jsonRoot1;
+      }
+
+      expect(toJson(result.root1)).toEqual(jsonRoot1);
+      expect(toJson(result.root2)).toEqual(jsonRoot2);
+    }
+
+    await result.run(async () => {
+      await callback({ ...result, assert });
+    });
+  };
+}
 
 export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const sockets: MockWebSocket[] = [];
@@ -72,7 +104,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
   const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
   const client1Room = client1.enter(roomName, {
-    defaultStorageRoot: initialStorage,
+    initialStorage,
   });
   await waitFor(() => client1Room.getConnectionState() === "open");
   const client2Room = client2.enter(roomName);
@@ -83,7 +115,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
 
   await wait(1000);
 
-  async function assert(data: any, data2?: any) {
+  async function assert(data: ToJson<T>, data2?: ToJson<T>) {
     const areEquals = await waitFor(() => {
       const client1Json = objectToJson(storageRoot1.root);
       const client2Json = objectToJson(storageRoot2.root);
@@ -103,7 +135,7 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     }
   }
 
-  async function assertEach(data1: unknown, data2: unknown) {
+  async function assertEach(data1: ToJson<T>, data2: ToJson<T>) {
     return assert(data1, data2);
   }
 
@@ -130,13 +162,35 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     },
     sendMessagesClient1: async () => {
       sockets[0].resumeSend();
-      await wait(500);
+      await wait(1000);
     },
     sendMessagesClient2: async () => {
       sockets[1].resumeSend();
-      await wait(500);
+      await wait(1000);
     },
   };
+
+  const logs: string[] = [];
+
+  const root1Snapshots: ToJson<T>[] = [];
+
+  client1Room.subscribe(
+    storageRoot1.root,
+    () => {
+      root1Snapshots.push(objectToJson(storageRoot1.root));
+    },
+    { isDeep: true }
+  );
+
+  const root2Snapshots: ToJson<T>[] = [];
+
+  client2Room.subscribe(
+    storageRoot2.root,
+    () => {
+      root2Snapshots.push(objectToJson(storageRoot2.root));
+    },
+    { isDeep: true }
+  );
 
   async function run(testFunc: () => {}) {
     try {
@@ -146,6 +200,8 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
       client2.leave(roomName);
     }
   }
+
+  socketUtils.pauseAllSockets();
 
   return {
     root1: storageRoot1.root,
@@ -157,6 +213,10 @@ export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
     assertConsistancy,
     socketUtils,
     run,
+    root1Snapshots,
+    root2Snapshots,
+    client1,
+    client2,
   };
 }
 
