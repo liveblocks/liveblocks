@@ -11,7 +11,7 @@ import type {
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
-import { deprecateIf } from "@liveblocks/client/internal";
+import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
 import { useClient } from "./client";
@@ -60,15 +60,13 @@ export function create() {
       }
     }
 
-    deprecateIf(
+    errorIf(
       defaultPresence,
-      "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultPresence"
+      "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP"
     );
-    deprecateIf(
+    errorIf(
       defaultStorageRoot,
-      "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultStorageRoot"
+      "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
     const client = useClient();
@@ -387,7 +385,7 @@ export function create() {
     key: string,
     entries?: readonly (readonly [TKey, TValue])[] | null | undefined
   ): LiveMap<TKey, TValue> | null {
-    deprecateIf(
+    errorIf(
       entries,
       `Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18.
 
@@ -410,7 +408,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     if (value.status === "ok") {
       return value.value;
     } else {
-      deprecateIf(
+      errorIf(
         value.status === "notfound",
         `Key ${JSON.stringify(
           key
@@ -458,7 +456,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     key: string,
     items?: TValue[] | undefined
   ): LiveList<TValue> | null {
-    deprecateIf(
+    errorIf(
       items,
       `Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18.
 
@@ -483,7 +481,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     if (value.status === "ok") {
       return value.value;
     } else {
-      deprecateIf(
+      errorIf(
         value.status === "notfound",
         `Key ${JSON.stringify(
           key
@@ -533,7 +531,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     key: string,
     initialData?: TData
   ): LiveObject<TData> | null {
-    deprecateIf(
+    errorIf(
       initialData,
       `Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18.
 
@@ -558,7 +556,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     if (value.status === "ok") {
       return value.value;
     } else {
-      deprecateIf(
+      errorIf(
         value.status === "notfound",
         `Key ${JSON.stringify(
           key

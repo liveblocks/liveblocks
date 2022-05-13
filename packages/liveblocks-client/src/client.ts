@@ -1,4 +1,4 @@
-import { deprecateIf } from "./deprecation";
+import { errorIf } from "./deprecation";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
@@ -68,15 +68,13 @@ export function createClient(options: ClientOptions): Client {
       return internalRoom.room;
     }
 
-    deprecateIf(
+    errorIf(
       options.defaultPresence,
-      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultPresence"
+      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP"
     );
-    deprecateIf(
+    errorIf(
       options.defaultStorageRoot,
-      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultStorageRoot"
+      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
     internalRoom = createRoom(
