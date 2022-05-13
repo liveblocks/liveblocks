@@ -264,7 +264,8 @@ export type State<TPresence extends JsonObject> = {
       storageUpdates: Map<string, StorageUpdate>;
     };
   };
-  offlineOperations: Map<string, Op>;
+  offlineOperations: Map<string | undefined, Op>;
+  //                              ^^^^^^^^^ NOTE: Bug? Unintended?
 };
 
 export type Effects<TPresence extends JsonObject> = {
@@ -567,7 +568,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
       },
     };
 
-    const createdNodeIds = new Set<string>();
+    const createdNodeIds = new Set<string | undefined>();
+    //                                      ^^^^^^^^^ NOTE: Bug? Unintended?
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
@@ -608,7 +610,9 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId = nn(applyOpResult.modified.node._parent?._id);
+          const parentId =
+            // NOTE: Do we intend to wrap this in a nn() here?
+            applyOpResult.modified.node._parent?._id;
 
           // If the parent was created in the same batch, we don't want to notify
           // storage updates for the children.
@@ -1173,7 +1177,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     connect();
   }
 
-  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+  function applyAndSendOfflineOps(offlineOps: Map<string | undefined, Op>) {
+    //                                                     ^^^^^^^^^ NOTE: Bug? Unintended?
     if (offlineOps.size === 0) {
       return;
     }
@@ -1199,7 +1204,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(nn(op.opId), op);
+        state.offlineOperations.set(
+          /* NOTE: Should we wrap this in a nn()? */ op.opId,
+          op
+        );
       });
     }
 
