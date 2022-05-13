@@ -20,6 +20,7 @@ Various Live structures now take mandatory type params:
 
   - The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
   - The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+  - Calling `new LiveMap(null)` will stop working. Please use `new LiveMap()`, or `new LiveMap([])`
 
 - In **@liveblocks/react**:
 
