@@ -1,5 +1,6 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -607,7 +608,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId = applyOpResult.modified.node._parent?._id!;
+          const parentId = nn(applyOpResult.modified.node._parent?._id);
 
           // If the parent was created in the same batch, we don't want to notify
           // storage updates for the children.

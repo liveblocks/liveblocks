@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { nn } from "./assert";
 import type {
   CreateOp,
   IdTuple,
@@ -66,8 +67,14 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _toSerializedCrdt(): SerializedRegister {
     return {
       type: CrdtType.REGISTER,
-      parentId: this._parent?._id!,
-      parentKey: this._parentKey!,
+      parentId: nn(
+        this._parent?._id,
+        "Cannot serialize Register if parentId is missing"
+      ),
+      parentKey: nn(
+        this._parentKey,
+        "Cannot serialize Register if parentKey is missing"
+      ),
       data: this.data,
     };
   }

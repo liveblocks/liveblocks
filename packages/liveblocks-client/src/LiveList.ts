@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { LiveRegister } from "./LiveRegister";
 import { comparePosition as compare, makePosition } from "./position";
 import type {
@@ -783,7 +784,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       reverse: [
         {
           type: OpCode.SET_PARENT_KEY,
-          id: child._id!,
+          id: nn(child._id),
           parentKey: previousKey,
         },
       ],
@@ -820,8 +821,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   _toSerializedCrdt(): SerializedList {
     return {
       type: CrdtType.LIST,
-      parentId: this._parent?._id!,
-      parentKey: this._parentKey!,
+      parentId: nn(
+        this._parent?._id,
+        "Cannot serialize List if parentId is missing"
+      ),
+      parentKey: nn(
+        this._parentKey,
+        "Cannot serialize List if parentKey is missing"
+      ),
     };
   }
 

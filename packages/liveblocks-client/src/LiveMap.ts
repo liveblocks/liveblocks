@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { errorIf } from "./deprecation";
 import type {
   CreateMapOp,
@@ -203,8 +204,14 @@ export class LiveMap<
   _toSerializedCrdt(): SerializedMap {
     return {
       type: CrdtType.MAP,
-      parentId: this._parent?._id!,
-      parentKey: this._parentKey!,
+      parentId: nn(
+        this._parent?._id,
+        "Cannot serialize Map if parentId is missing"
+      ),
+      parentKey: nn(
+        this._parentKey,
+        "Cannot serialize Map if parentKey is missing"
+      ),
     };
   }
 
