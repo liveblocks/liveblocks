@@ -1,4 +1,4 @@
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveObject } from "@liveblocks/client";
 import {
   ClientMessageType,
   CrdtType,
@@ -150,7 +150,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -192,7 +192,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -217,7 +217,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -239,7 +239,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -276,7 +276,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -370,7 +370,7 @@ describe("presence", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room" defaultPresence={() => ({ x: 1 })}>
+        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
           <PresenceComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -416,8 +416,7 @@ describe("presence", () => {
 });
 
 function ObjectComponent() {
-  const obj = useObject("obj", { a: 0 });
-
+  const obj = useObject("obj");
   return (
     <div data-testid={testIds.liveObject}>
       {obj == null ? "Loading" : JSON.stringify(obj.toObject())}
@@ -449,7 +448,10 @@ describe("Storage", () => {
 
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room">
+        <RoomProvider
+          id="room"
+          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+        >
           <ObjectComponent />
         </RoomProvider>
       </LiveblocksProvider>
@@ -485,10 +487,12 @@ describe("Storage", () => {
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
     const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
       <LiveblocksProvider client={client}>
-        <RoomProvider id="room">
+        <RoomProvider
+          id="room"
+          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+        >
           <UnmountContainer>
             <ObjectComponent />
           </UnmountContainer>
