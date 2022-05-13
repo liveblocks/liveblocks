@@ -2,22 +2,23 @@ export const min = 32;
 export const max = 126;
 
 export function makePosition(before?: string, after?: string): string {
-  // No children
-  if (before == null && after == null) {
-    return pos([min + 1]);
+  // Between
+  if (before != null && after != null) {
+    return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
   }
 
   // Insert at the end
-  if (before != null && after == null) {
+  else if (before != null) {
     return getNextPosition(before);
   }
 
   // Insert at the start
-  if (before == null && after != null) {
+  else if (after != null) {
     return getPreviousPosition(after);
   }
 
-  return pos(makePositionFromCodes(posCodes(before!), posCodes(after!)));
+  // No children
+  return pos([min + 1]);
 }
 
 function getPreviousPosition(after: string) {
