@@ -1,5 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
 import type {
   CreateObjectOp,
   CreateOp,
@@ -109,7 +110,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
   LiveObject<LsonObject> {
-    const children = parentToChildren.get(liveObj._id!);
+    const children = parentToChildren.get(nn(liveObj._id));
 
     if (children == null) {
       return liveObj;
@@ -145,53 +146,52 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey, opId } = op;
-    const key = parentKey!;
+    const { id, opId } = op;
+    const key = nn(op.parentKey);
     const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
-      if (this._propToLastUpdate.get(key as string) === opId) {
+      if (this._propToLastUpdate.get(key) === opId) {
         // Acknowlegment from local operation
-        this._propToLastUpdate.delete(key as string);
+        this._propToLastUpdate.delete(key);
       }
 
       return { modified: false };
     }
 
     if (source === OpSource.UNDOREDO_RECONNECT) {
-      this._propToLastUpdate.set(key as string, opId!);
-    } else if (this._propToLastUpdate.get(key as string) === undefined) {
+      this._propToLastUpdate.set(key, nn(opId));
+    } else if (this._propToLastUpdate.get(key) === undefined) {
       // Remote operation with no local change => apply operation
-    } else if (this._propToLastUpdate.get(key as string) === opId) {
+    } else if (this._propToLastUpdate.get(key) === opId) {
       // Acknowlegment from local operation
-      this._propToLastUpdate.delete(key as string);
+      this._propToLastUpdate.delete(key);
       return { modified: false };
     } else {
       // Conflict, ignore remote operation
       return { modified: false };
     }
 
-    const previousValue = this._map.get(key as string);
+    const thisId = nn(this._id);
+    const previousValue = this._map.get(key);
     let reverse: Op[];
     if (isCrdt(previousValue)) {
-      reverse = previousValue._serialize(this._id!, key as string);
+      reverse = previousValue._serialize(thisId, key);
       previousValue._detach();
     } else if (previousValue === undefined) {
-      reverse = [
-        { type: OpCode.DELETE_OBJECT_KEY, id: this._id!, key: key as string },
-      ];
+      reverse = [{ type: OpCode.DELETE_OBJECT_KEY, id: thisId, key }];
     } else {
       reverse = [
         {
           type: OpCode.UPDATE_OBJECT,
-          id: this._id!,
+          id: thisId,
           data: { [key]: previousValue },
         },
       ];
     }
 
-    this._map.set(key as string, child);
-    child._setParentLink(this, key as string);
+    this._map.set(key, child);
+    child._setParentLink(this, key);
     child._attach(id, this._doc);
 
     return {
@@ -199,7 +199,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       modified: {
         node: this,
         type: "LiveObject",
-        updates: { [key as string]: { type: "update" } },
+        updates: { [key]: { type: "update" } },
       },
     };
   }
@@ -209,7 +209,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
     if (child) {
-      const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
+      const id = nn(this._id);
+      const parentKey = nn(child._parentKey);
+      const reverse = child._serialize(id, parentKey, this._doc);
 
       for (const [key, value] of this._map) {
         if (value === child) {
@@ -223,7 +225,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         node: this,
         type: "LiveObject",
         updates: {
-          [child._parentKey!]: { type: "delete" },
+          [parentKey]: { type: "delete" },
         } as { [K in keyof O]: UpdateDelta },
       };
 
@@ -290,10 +292,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   private _applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
+    const id = nn(this._id);
     const reverse: Op[] = [];
     const reverseUpdate: UpdateObjectOp = {
       type: OpCode.UPDATE_OBJECT,
-      id: this._id!,
+      id,
       data: {},
     };
     reverse.push(reverseUpdate);
@@ -301,19 +304,19 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const key in op.data as Partial<O>) {
       const oldValue = this._map.get(key);
       if (oldValue instanceof AbstractCrdt) {
-        reverse.push(...oldValue._serialize(this._id!, key));
+        reverse.push(...oldValue._serialize(id, key));
         oldValue._detach();
       } else if (oldValue !== undefined) {
         reverseUpdate.data[key] = oldValue;
       } else if (oldValue === undefined) {
-        reverse.push({ type: OpCode.DELETE_OBJECT_KEY, id: this._id!, key });
+        reverse.push({ type: OpCode.DELETE_OBJECT_KEY, id, key });
       }
     }
 
     const updateDelta: LiveObjectUpdateDelta<O> = {};
     for (const key in op.data as Partial<O>) {
       if (isLocal) {
-        this._propToLastUpdate.set(key, op.opId!);
+        this._propToLastUpdate.set(key, nn(op.opId));
       } else if (this._propToLastUpdate.get(key) == null) {
         // Not modified localy so we apply update
         isModified = true;
@@ -369,15 +372,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     const oldValue = this._map.get(key);
 
+    const id = nn(this._id);
     let reverse: Op[] = [];
     if (isCrdt(oldValue)) {
-      reverse = oldValue._serialize(this._id!, op.key);
+      reverse = oldValue._serialize(id, op.key);
       oldValue._detach();
     } else if (oldValue !== undefined) {
       reverse = [
         {
           type: OpCode.UPDATE_OBJECT,
-          id: this._id!,
+          id,
           data: { [key]: oldValue },
         },
       ];
@@ -471,7 +475,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           type: OpCode.DELETE_OBJECT_KEY,
           key: keyAsString,
           id: this._id,
-          opId: this._doc!.generateOpId(),
+          opId: this._doc.generateOpId(),
         },
       ],
       reverse,
@@ -541,7 +545,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           (op: Op & { parentId?: string }) => op.parentId === this._id
         );
         if (createCrdtOp) {
-          this._propToLastUpdate.set(key, createCrdtOp.opId!);
+          this._propToLastUpdate.set(key, nn(createCrdtOp.opId));
         }
 
         ops.push(...newAttachChildOps);

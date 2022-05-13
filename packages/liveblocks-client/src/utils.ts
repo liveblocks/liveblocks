@@ -1,4 +1,5 @@
 import type { AbstractCrdt, Doc } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -171,7 +172,7 @@ export function getTreesDiffOperations(
         ops.push({
           type: OpCode.SET_PARENT_KEY,
           id,
-          parentKey: crdt.parentKey!,
+          parentKey: nn(crdt.parentKey, "Parent key must not be missing"),
         });
       }
     } else {

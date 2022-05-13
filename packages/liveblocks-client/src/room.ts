@@ -614,10 +614,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
           // storage updates for the children.
           if (!createdNodeIds.has(parentId)) {
             result.updates.storageUpdates.set(
-              applyOpResult.modified.node._id!,
+              nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
                 result.updates.storageUpdates.get(
-                  applyOpResult.modified.node._id!
+                  nn(applyOpResult.modified.node._id)
                 ) as any, // FIXME
                 applyOpResult.modified
               )
@@ -630,7 +630,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(applyOpResult.modified.node._id!);
+            createdNodeIds.add(nn(applyOpResult.modified.node._id));
           }
         }
       }
@@ -667,7 +667,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER: {
-        const parent = state.items.get(op.parentId!);
+        const parent = state.items.get(nn(op.parentId));
         if (parent == null) {
           return { modified: false };
         }
@@ -1199,7 +1199,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(op.opId!, op);
+        state.offlineOperations.set(nn(op.opId), op);
       });
     }
 
@@ -1341,7 +1341,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TStorage>,
+        root: nn(state.root) as LiveObject<TStorage>,
       };
     });
   }

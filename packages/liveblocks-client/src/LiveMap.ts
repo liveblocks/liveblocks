@@ -133,7 +133,7 @@ export class LiveMap<
     }
 
     const { id, parentKey } = op;
-    const key = parentKey as TKey;
+    const key = nn(parentKey) as TKey;
 
     const child = creationOpToLiveStructure(op);
 
@@ -144,7 +144,8 @@ export class LiveMap<
     const previousValue = this._map.get(key);
     let reverse: Op[];
     if (previousValue) {
-      reverse = previousValue._serialize(this._id!, key);
+      const thisId = nn(this._id);
+      reverse = previousValue._serialize(thisId, key);
       previousValue._detach();
     } else {
       reverse = [{ type: OpCode.DELETE_CRDT, id }];
@@ -179,7 +180,9 @@ export class LiveMap<
    * @internal
    */
   _detachChild(child: AbstractCrdt): ApplyResult {
-    const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
+    const id = nn(this._id);
+    const parentKey = nn(child._parentKey);
+    const reverse = child._serialize(id, parentKey, this._doc);
 
     for (const [key, value] of this._map) {
       if (value === child) {
@@ -192,7 +195,7 @@ export class LiveMap<
     const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
-      updates: { [child._parentKey!]: { type: "delete" } },
+      updates: { [parentKey]: { type: "delete" } },
     };
 
     return { modified: storageUpdate, reverse };
@@ -250,7 +253,7 @@ export class LiveMap<
       item._attach(id, this._doc);
 
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
-      storageUpdates.set(this._id!, {
+      storageUpdates.set(this._id, {
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "update" } },
@@ -297,8 +300,9 @@ export class LiveMap<
     this._map.delete(key);
 
     if (this._doc && item._id) {
+      const thisId = nn(this._id);
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
-      storageUpdates.set(this._id!, {
+      storageUpdates.set(thisId, {
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "delete" } },
@@ -311,7 +315,7 @@ export class LiveMap<
             opId: this._doc.generateOpId(),
           },
         ],
-        item._serialize(this._id!, key),
+        item._serialize(thisId, key),
         storageUpdates
       );
     }

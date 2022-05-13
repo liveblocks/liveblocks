@@ -366,7 +366,10 @@ function patchImmutableNode(
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
-            newState[key] = lsonToJson(update.node.get(key)!);
+            const value = update.node.get(key);
+            if (value !== undefined) {
+              newState[key] = lsonToJson(value);
+            }
           } else if (update.updates[key]?.type === "delete") {
             delete newState[key];
           }
