@@ -264,8 +264,7 @@ export type State<TPresence extends JsonObject> = {
       storageUpdates: Map<string, StorageUpdate>;
     };
   };
-  offlineOperations: Map<string | undefined, Op>;
-  //                              ^^^^^^^^^ NOTE: Bug? Unintended?
+  offlineOperations: Map<string, Op>;
 };
 
 export type Effects<TPresence extends JsonObject> = {
@@ -1202,10 +1201,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(
-          /* NOTE: Should we wrap this in a nn()? */ op.opId,
-          op
-        );
+        state.offlineOperations.set(nn(op.opId), op);
       });
     }
 

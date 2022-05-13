@@ -1016,7 +1016,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item._detach();
         const childId = item._id;
         if (childId) {
-          ops.push({ id: childId, type: OpCode.DELETE_CRDT });
+          ops.push({
+            type: OpCode.DELETE_CRDT,
+            id: childId,
+            opId: this._doc.generateOpId(),
+          });
           reverseOps.push(
             ...item._serialize(nn(this._id), item._getParentKeyOrThrow())
           );
