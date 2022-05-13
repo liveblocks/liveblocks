@@ -15,7 +15,6 @@ module.exports = {
     // now they're too noisy to enable.
     // ----------------------------------------------------------------------
     "@typescript-eslint/no-explicit-any": "off",
-    // "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
 
     // -------------------------------
