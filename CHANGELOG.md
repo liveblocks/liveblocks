@@ -1,3 +1,7 @@
+# v0.17.0 (not yet released)
+
+- ...
+
 # v0.16.5
 
 - Various internal refactorings
