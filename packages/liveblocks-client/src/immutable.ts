@@ -9,7 +9,7 @@ import { findNonSerializableValue } from "./utils";
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
 ): { [K in keyof O]: Json } {
-  const result: { [K in keyof O]: Json } = {} as any;
+  const result = {} as { [K in keyof O]: Json };
   for (const key in obj) {
     const val = obj[key];
     if (val !== undefined) {
@@ -28,7 +28,7 @@ export function liveObjectToJson<O extends LsonObject>(
 function liveMapToJson<TKey extends string>(
   map: LiveMap<TKey, Lson>
 ): { [K in TKey]: Json } {
-  const result: { [K in TKey]: Json } = {} as any;
+  const result = {} as { [K in TKey]: Json };
   for (const [key, value] of map.entries()) {
     result[key] = lsonToJson(value);
   }
