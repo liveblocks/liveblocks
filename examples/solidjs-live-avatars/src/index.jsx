@@ -1,19 +1,18 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 import { createClient } from "@liveblocks/client";
-
 import "./index.css";
 import App from "./App";
 
-let PUBLIC_KEY = import.meta.env.VITE_PUBLIC_LIVEBLOCKS_PUBLIC_KEY; //"pk_YOUR_PUBLIC_KEY";
-let roomId = "react-todo-list";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let roomId = "solidjs-live-avatars";
 
 overrideApiKeyAndRoomId();
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/react-todo-list#getting-started.`
+    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`
   );
 }
 
@@ -21,7 +20,25 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-render(() => <App />, document.getElementById("root"));
+const NAMES = [
+  "Charlie Layne",
+  "Mislav Abha",
+  "Tatum Paolo",
+  "Anjali Wanda",
+  "Jody Hekla",
+  "Emil Joyce",
+  "Jory Quispe",
+  "Quinn Elton",
+];
+
+const initialPresence = {
+  name: NAMES[Math.floor(Math.random() * NAMES.length)],
+  picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
+};
+
+const room = client.enter(roomId, { initialPresence });
+
+render(() => <App room={room} />, document.getElementById("root"));
 
 /**
  * This function is used when deploying an example on liveblocks.io.
@@ -40,3 +57,4 @@ function overrideApiKeyAndRoomId() {
     roomId = `${roomId}-${roomIdSuffix}`;
   }
 }
+

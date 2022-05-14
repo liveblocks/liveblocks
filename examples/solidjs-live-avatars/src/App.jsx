@@ -1,26 +1,43 @@
-import logo from "./logo.svg";
-import styles from "./App.module.css";
+import { createSignal, onCleanup } from "solid-js";
 import Avatar from "./components/Avatar.jsx";
+import styles from "./App.module.css";
 
-function App() {
+function App({ room }) {
+  const [currentUser, setCurrentUser] = createSignal(room.getPresence());
+  const [users, setUsers] = createSignal([]);
+  const hasMoreUsers = () => users().length > 3;
+
+  const unsubscribePresence = room.subscribe("my-presence", presence => {
+    console.log(presence);
+    setCurrentUser(presence);
+  });
+
+  const unsubscribeOthers = room.subscribe("others", others => {
+    const othersWithPresence = others.toArray().filter(other => other?.presence);
+    setUsers(othersWithPresence);
+  });
+
+  onCleanup(() => {
+    unsubscribePresence();
+    unsubscribeOthers();
+  });
+
   return (
-    <div class={styles.App}>
-      <header class={styles.header}>
-        <img src={logo} class={styles.logo} alt="logo" />
-        <Avatar />
-        <p>
-          Edit <code>src/App.jsx</code> and save to reload.
-        </p>
-        <a
-          class={styles.link}
-          href="https://github.com/solidjs/solid"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn Solid
-        </a>
-      </header>
-    </div>
+    <main class={styles.App}>
+      <For each={users().slice(0, 3)}>{({ presence }) => (
+        <Avatar picture={presence.picture} name={presence.name} />
+      )}</For>
+
+      <Show when={hasMoreUsers()}>
+        <div class={styles.more}>+{users().length - 3}</div>
+      </Show>
+
+      <Show when={currentUser()}>
+        <div class={styles.you}>
+          <Avatar picture={currentUser().picture} name="You" />
+        </div>
+      </Show>
+    </main>
   );
 }
 

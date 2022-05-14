@@ -1,34 +1,27 @@
-## Usage
+<p align="center">
+  <a href="https://liveblocks.io">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
+  </a>
+</p>
 
-Those templates dependencies are maintained via [pnpm](https://pnpm.io) via `pnpm up -Lri`.
+# Live Avatar Stack
 
-This is the reason you see a `pnpm-lock.yaml`. That being said, any package manager will work. This file can be safely be removed once you clone a template.
+<p>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars">
+    <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
+  </a>
+  <img src="https://img.shields.io/badge/solid.js-message?style=flat&logo=solid&color=4F87C5&logoColor=fff" alt="React" />
+  <img src="https://img.shields.io/badge/vite-message?style=flat&logo=vite&color=646CFF&logoColor=fff" alt="Next.js" />
+</p>
 
-```bash
-$ npm install # or pnpm install or yarn install
-```
+This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io) and [Solid.js](https://www.solidjs.com/).
 
-### Learn more on the [Solid Website](https://solidjs.com) and come chat with us on our [Discord](https://discord.com/invite/solidjs)
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Avatar Stack" />
 
-## Available Scripts
+## Getting started
 
-In the project directory, you can run:
-
-### `npm dev` or `npm start`
-
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-The page will reload if you make edits.<br>
-
-### `npm run build`
-
-Builds the app for production to the `dist` folder.<br>
-It correctly bundles Solid in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
-
-## Deployment
-
-You can deploy the `dist` folder to any static host provider (netlify, surge, now, etc.)
+- Install all dependencies with `npm install`
+- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
+- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `pk_YOUR_PUBLIC_KEY` in [`index.jsx`](./examples/react-whiteboard/src/index.js) with your **public** key
+- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)

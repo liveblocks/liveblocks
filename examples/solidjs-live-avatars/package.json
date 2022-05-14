@@ -1,6 +1,6 @@
 {
-  "name": "vite-template-solid",
-  "version": "0.0.0",
+  "name": "solidjs-live-avatars",
+  "license": "Apache-2.0",
   "description": "",
   "scripts": {
     "start": "vite",
@@ -8,7 +8,6 @@
     "build": "vite build",
     "serve": "vite preview"
   },
-  "license": "MIT",
   "devDependencies": {
     "vite": "^2.8.6",
     "vite-plugin-solid": "^2.2.6"

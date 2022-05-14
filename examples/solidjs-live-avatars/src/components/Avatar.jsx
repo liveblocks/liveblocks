@@ -14,12 +14,12 @@ const IMAGE_SIZE = 48;
 
 export default function Avatar({ picture, name }) {
   return (
-    <div className={styles.avatar} data-tooltip={name}>
+    <div class={styles.avatar} data-tooltip={name}>
       <img
         src={picture}
         height={IMAGE_SIZE}
         width={IMAGE_SIZE}
-        className={styles.avatar_picture}
+        class={styles.avatar_picture}
       />
     </div>
   );
