@@ -855,14 +855,36 @@ describe("room", () => {
         items.push("C");
       });
 
-      assert({
-        items: ["A", "B", "C"],
-      });
-
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+      assert(
+        {
+          items: ["A", "B", "C"],
+        },
+        {
+          updates: [
+            {
+              node: ["A", "B", "C"],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: "A",
+                },
+                {
+                  type: "insert",
+                  index: 1,
+                  item: "B",
+                },
+                {
+                  type: "insert",
+                  index: 2,
+                  item: "C",
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       undo();
 
@@ -918,11 +940,6 @@ describe("room", () => {
       assert({
         items: ["A", "B", "C"],
       });
-
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
 
       expect(refOthers?.toArray()).toEqual([
         {
