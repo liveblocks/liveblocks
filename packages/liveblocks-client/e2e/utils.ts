@@ -1,222 +1,139 @@
 import { createClient } from "../src/client";
-import { LiveList } from "../src/LiveList";
-import { LiveObject } from "../src/LiveObject";
-import { LiveMap } from "../src/LiveMap";
-import type { Lson, LsonObject, ToJson } from "../src/lson";
+import type { LiveObject } from "../src/LiveObject";
+import type { LsonObject, ToJson } from "../src/lson";
 import fetch from "node-fetch";
 import WebSocket from "ws";
 import type { ClientRequestArgs } from "http";
 import type { URL } from "url";
-import isEqual from "lodash/isEqual";
-import diff from "jest-diff";
 
 import "dotenv/config";
 import type { Room } from "../src";
+import { lsonToJson } from "../src/immutable";
 
+/**
+ * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
+ */
 export function prepareTestsConflicts<T extends LsonObject>(
-  initialState: T,
+  initialStorage: T,
   callback: (args: {
     root1: LiveObject<T>;
     root2: LiveObject<T>;
     room2: Room;
+    room1: Room;
+    /**
+     * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
+     * If second parameter is ommited, we're assuming that both rooms' storage are equals
+     */
     assert: (jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) => void;
     socketUtils: {
-      sendMessagesClient1: () => Promise<void>;
-      sendMessagesClient2: () => Promise<void>;
+      flushSocket1Messages: () => Promise<void>;
+      flushSocket2Messages: () => Promise<void>;
     };
   }) => Promise<void>
 ): () => Promise<void> {
   return async () => {
-    const result = await prepareTest<T>(initialState);
+    const sockets: MockWebSocket[] = [];
+
+    class MockWebSocket extends WebSocket {
+      sendBuffer: any[] = [];
+      _isSendPaused = false;
+
+      constructor(
+        address: string | URL,
+        protocols: WebSocket.ClientOptions | ClientRequestArgs | undefined
+      ) {
+        super(address, protocols);
+
+        sockets.push(this);
+      }
+
+      pauseSend() {
+        this._isSendPaused = true;
+      }
+
+      resumeSend() {
+        this._isSendPaused = false;
+        for (const item of this.sendBuffer) {
+          super.send(item);
+        }
+        this.sendBuffer = [];
+      }
+
+      send(data: any) {
+        if (this._isSendPaused) {
+          this.sendBuffer.push(data);
+        } else {
+          super.send(data);
+        }
+      }
+    }
+
+    function createTestClient() {
+      const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
+
+      if (publicApiKey == null) {
+        throw new Error(
+          `Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.`
+        );
+      }
+
+      return createClient({
+        publicApiKey,
+        fetchPolyfill: fetch,
+        WebSocketPolyfill: MockWebSocket,
+        liveblocksServer: process.env.LIVEBLOCKS_SERVER,
+      } as any);
+    }
+
+    const client1 = createTestClient();
+    const client2 = createTestClient();
+
+    const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
+
+    const room1 = client1.enter(roomName, {
+      initialStorage,
+    });
+    await waitFor(() => room1.getConnectionState() === "open");
+    const room2 = client2.enter(roomName);
+    await waitFor(() => room2.getConnectionState() === "open");
+
+    const { root: root1 } = await room1.getStorage<T>();
+    const { root: root2 } = await room2.getStorage<T>();
 
     function assert(jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) {
       if (jsonRoot2 == null) {
         jsonRoot2 = jsonRoot1;
       }
 
-      expect(toJson(result.root1)).toEqual(jsonRoot1);
-      expect(toJson(result.root2)).toEqual(jsonRoot2);
+      expect(lsonToJson(root1)).toEqual(jsonRoot1);
+      expect(lsonToJson(root2)).toEqual(jsonRoot2);
     }
 
-    await result.run(async () => {
-      await callback({ ...result, assert });
-    });
-  };
-}
+    const socketUtils = {
+      pauseAllSockets: () => {
+        sockets[0].pauseSend();
+        sockets[1].pauseSend();
+      },
+      flushSocket1Messages: async () => {
+        sockets[0].resumeSend();
+        await wait(1000);
+      },
+      flushSocket2Messages: async () => {
+        sockets[1].resumeSend();
+        await wait(1000);
+      },
+    };
 
-export async function prepareTest<T extends LsonObject>(initialStorage = {}) {
-  const sockets: MockWebSocket[] = [];
+    await wait(1000);
 
-  function createTestClient() {
-    const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
+    socketUtils.pauseAllSockets();
 
-    if (publicApiKey == null) {
-      throw new Error(
-        `Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.`
-      );
-    }
-
-    return createClient({
-      publicApiKey,
-      fetchPolyfill: fetch,
-      WebSocketPolyfill: MockWebSocket,
-      liveblocksServer: process.env.LIVEBLOCKS_SERVER,
-    } as any);
-  }
-
-  class MockWebSocket extends WebSocket {
-    sendBuffer: any[] = [];
-    _isSendPaused = false;
-
-    constructor(
-      address: string | URL,
-      protocols: WebSocket.ClientOptions | ClientRequestArgs | undefined
-    ) {
-      super(address, protocols);
-
-      sockets.push(this);
-    }
-
-    pauseSend() {
-      this._isSendPaused = true;
-    }
-
-    resumeSend() {
-      this._isSendPaused = false;
-      for (const item of this.sendBuffer) {
-        super.send(item);
-      }
-      this.sendBuffer = [];
-    }
-
-    send(data: any) {
-      if (this._isSendPaused) {
-        this.sendBuffer.push(data);
-      } else {
-        super.send(data);
-      }
-    }
-  }
-
-  const client1 = createTestClient();
-  const client2 = createTestClient();
-
-  const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
-
-  const client1Room = client1.enter(roomName, {
-    initialStorage,
-  });
-  await waitFor(() => client1Room.getConnectionState() === "open");
-  const client2Room = client2.enter(roomName);
-  await waitFor(() => client2Room.getConnectionState() === "open");
-
-  const storageRoot1 = await client1Room.getStorage<T>();
-  const storageRoot2 = await client2Room.getStorage<T>();
-
-  await wait(1000);
-
-  async function assert(data: ToJson<T>, data2?: ToJson<T>) {
-    const areEquals = await waitFor(() => {
-      const client1Json = objectToJson(storageRoot1.root);
-      const client2Json = objectToJson(storageRoot2.root);
-
-      return isEqual(client1Json, data) && isEqual(client2Json, data2 || data);
-    });
-
-    if (!areEquals) {
-      expect(objectToJson(storageRoot1.root)).toEqualWithMessage(
-        data,
-        "Client 1 storage is invalid"
-      );
-      expect(objectToJson(storageRoot2.root)).toEqualWithMessage(
-        data2 || data,
-        "Client 2 storage is invalid"
-      );
-    }
-  }
-
-  async function assertEach(data1: ToJson<T>, data2: ToJson<T>) {
-    return assert(data1, data2);
-  }
-
-  async function assertConsistancy() {
-    const areEquals = await waitFor(() => {
-      const client1Json = objectToJson(storageRoot1.root);
-      const client2Json = objectToJson(storageRoot2.root);
-
-      return isEqual(client1Json, client2Json);
-    });
-
-    if (!areEquals) {
-      expect(objectToJson(storageRoot1.root)).toEqualWithMessage(
-        objectToJson(storageRoot2.root),
-        "Client 1 & 2 storage not equal"
-      );
-    }
-  }
-
-  const socketUtils = {
-    pauseAllSockets: () => {
-      sockets[0].pauseSend();
-      sockets[1].pauseSend();
-    },
-    sendMessagesClient1: async () => {
-      sockets[0].resumeSend();
-      await wait(1000);
-    },
-    sendMessagesClient2: async () => {
-      sockets[1].resumeSend();
-      await wait(1000);
-    },
-  };
-
-  const logs: string[] = [];
-
-  const root1Snapshots: ToJson<T>[] = [];
-
-  client1Room.subscribe(
-    storageRoot1.root,
-    () => {
-      root1Snapshots.push(objectToJson(storageRoot1.root));
-    },
-    { isDeep: true }
-  );
-
-  const root2Snapshots: ToJson<T>[] = [];
-
-  client2Room.subscribe(
-    storageRoot2.root,
-    () => {
-      root2Snapshots.push(objectToJson(storageRoot2.root));
-    },
-    { isDeep: true }
-  );
-
-  async function run(testFunc: () => {}) {
     try {
-      await testFunc();
-    } finally {
+      await callback({ room1, room2, root1, root2, socketUtils, assert });
+    } catch (er) {
       client1.leave(roomName);
       client2.leave(roomName);
     }
-  }
-
-  socketUtils.pauseAllSockets();
-
-  return {
-    root1: storageRoot1.root,
-    root2: storageRoot2.root,
-    room1: client1Room,
-    room2: client2Room,
-    assert,
-    assertEach,
-    assertConsistancy,
-    socketUtils,
-    run,
-    root1Snapshots,
-    root2Snapshots,
-    client1,
-    client2,
   };
 }
 
@@ -241,90 +158,3 @@ async function waitFor(predicate: () => {}, delay: number = 2000) {
 
   return false;
 }
-
-export function objectToJson(record: LiveObject<LsonObject>) {
-  const result: any = {};
-  const obj = record.toObject();
-
-  for (const key in obj) {
-    result[key] = toJson(obj[key]);
-  }
-
-  return result;
-}
-
-function listToJson<T extends Lson>(list: LiveList<T>): Array<T> {
-  return list.toArray().map(toJson);
-}
-
-function mapToJson<TKey extends string, TValue extends Lson>(
-  map: LiveMap<TKey, TValue>
-): Array<[string, TValue]> {
-  return Array.from(map.entries())
-    .sort((entryA, entryB) => entryA[0].localeCompare(entryB[0]))
-    .map((entry) => [entry[0], toJson(entry[1])]);
-}
-
-function toJson(value: unknown) {
-  if (value instanceof LiveObject) {
-    return objectToJson(value);
-  } else if (value instanceof LiveList) {
-    return listToJson(value);
-  } else if (value instanceof LiveMap) {
-    return mapToJson(value);
-  }
-
-  return value;
-}
-
-declare global {
-  namespace jest {
-    interface Matchers<R> {
-      toEqualWithMessage(expected: unknown, message: string): void;
-    }
-  }
-}
-
-expect.extend({
-  toEqualWithMessage(received, expected, message) {
-    if (this.isNot) {
-      throw new Error(
-        "toEqualWithMessage custom matcher didnt implement jest `not`"
-      );
-    }
-
-    const options = {
-      comment: "Object.equal equality",
-      isNot: false,
-      promise: this.promise,
-    };
-
-    const areEquals = isEqual(received, expected);
-    if (areEquals) {
-      return {
-        message: () => "",
-        pass: true,
-      };
-    } else {
-      return {
-        pass: false,
-        message: () => {
-          const diffString = diff(expected, received, {
-            expand: this.expand,
-          });
-
-          return (
-            this.utils.RECEIVED_COLOR(message) +
-            "\n\n" +
-            this.utils.matcherHint("toEqual", undefined, undefined, options) +
-            "\n\n" +
-            (diffString && diffString.includes("- Expect")
-              ? `Difference:\n\n${diffString}`
-              : `Expected: ${this.utils.printExpected(expected)}\n` +
-                `Received: ${this.utils.printReceived(received)}`)
-          );
-        },
-      };
-    }
-  },
-});

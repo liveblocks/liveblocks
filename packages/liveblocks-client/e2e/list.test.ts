@@ -15,11 +15,11 @@ describe("LiveList conflicts", () => {
           root1.get("list").push("A");
           root2.get("list").push("B");
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A"] }, { list: ["A", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["A", "B"] });
         }
@@ -38,11 +38,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "C", "A"] });
         }
@@ -63,11 +63,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "C", "A"] });
         }
@@ -87,11 +87,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A"] }, { list: ["C"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A"] }, { list: ["A", "C"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C"] });
         }
@@ -112,11 +112,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["C"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C"] });
         }
@@ -137,11 +137,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["C"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C"] });
         }
@@ -161,15 +161,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["C"] });
 
-          await socketUtils.sendMessagesClient1();
-
-          console.log("hey");
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
-
-          console.log("hoy");
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "C"] });
         }
@@ -189,11 +185,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["A"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "A"] });
         }
@@ -213,11 +209,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
@@ -239,11 +235,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
@@ -262,11 +258,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: [] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B"] }, { list: ["B"] });
         }
@@ -286,11 +282,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "C"] }, { list: ["D", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "C"] }, { list: ["B", "C"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
@@ -310,11 +306,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["C", "B"] }, { list: ["B", "D"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["C", "B"] }, { list: ["C", "B", "D"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "D"] }, { list: ["B", "D"] });
         }
@@ -335,11 +331,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C", "A", "B"] });
         }
@@ -360,11 +356,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C", "A", "B"] });
         }
@@ -384,11 +380,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "D"] });
         }
@@ -410,11 +406,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "D"] });
         }
@@ -433,11 +429,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "A"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "A"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B"] });
         }
@@ -456,11 +452,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "A"] }, { list: ["A", "B", "C"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "A"] }, { list: ["B", "A", "C"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B", "A", "C"] });
         }
@@ -484,11 +480,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["D"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B", "D"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D"] });
         }
@@ -508,11 +504,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["D", "A"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["D", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "B"] });
         }
@@ -532,11 +528,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A", "C"] }, { list: ["A", "D"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A", "C"] }, { list: ["A", "C", "D"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["A", "D"] });
         }
@@ -557,11 +553,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "C"] }, { list: ["A", "B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "C"] }, { list: ["C", "B"] }); // A(0.3), B(0.4) => C(0.1),B(0.4) => C(0.3),B(0.4)
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C", "B"] });
         }
@@ -579,11 +575,11 @@ describe("LiveList conflicts", () => {
           root1.get("list").insert("B", 0);
           root2.get("list").set(0, "C");
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B", "C"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C"] });
         }
@@ -601,9 +597,9 @@ describe("LiveList conflicts", () => {
           root2.get("list").delete(0);
           root2.get("list").insert("B", 0);
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C", "B"] });
         }
@@ -622,11 +618,11 @@ describe("LiveList conflicts", () => {
           root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
           root2.get("list").set(0, "C"); //  Client2 sets "B" to "C"
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A", "B"] }, { list: ["C", "A"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["C", "A"] });
         }
@@ -645,11 +641,11 @@ describe("LiveList conflicts", () => {
           root2.get("list").move(0, 1);
           root2.get("list").set(0, "D");
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B", "C"] }, { list: ["D", "C"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "C"] });
         }
@@ -669,11 +665,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: [] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: [] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B"] });
         }
@@ -694,11 +690,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B"] }, { list: ["D", "B", "A"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["B"] }, { list: ["B"] }); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["D", "B"] });
         }
@@ -719,11 +715,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: [] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: [] }, { list: ["B"] }); // B(0.2)
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["B"] });
         }
@@ -744,11 +740,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A"] }, { list: ["B"] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A"] }, { list: ["A", "B"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: ["A", "B"] });
         }
@@ -764,7 +760,7 @@ describe("LiveList conflicts", () => {
         async ({ root1, root2, room1, socketUtils, assert }) => {
           root1.get("list").push("A");
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A"] }, { list: ["A"] });
 
@@ -775,11 +771,11 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["A"] }, { list: [] });
 
-          await socketUtils.sendMessagesClient1();
+          await socketUtils.flushSocket1Messages();
 
           assert({ list: ["A"] }, { list: ["A"] });
 
-          await socketUtils.sendMessagesClient2();
+          await socketUtils.flushSocket2Messages();
 
           assert({ list: [] }, { list: ["A"] }); // CONFLICT
         }

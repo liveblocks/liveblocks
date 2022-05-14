@@ -59,7 +59,6 @@
     "jest": "^28.0.3",
     "jest-each": "^27.5.1",
     "jest-environment-jsdom": "^28.1.0",
-    "lodash": "^4.17.21",
     "msw": "^0.39.1",
     "node-fetch": "2.6.7",
     "regenerator-runtime": "^0.13.9",
