@@ -7,7 +7,7 @@
 # Live Avatar Stack
 
 <p>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/solid.js-message?style=flat&logo=solid&color=4F87C5&logoColor=fff" alt="React" />
