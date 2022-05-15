@@ -16,6 +16,7 @@ export default function Avatar({ picture, name }) {
   return (
     <div class={styles.avatar} data-tooltip={name}>
       <img
+        alt={name}
         src={picture}
         height={IMAGE_SIZE}
         width={IMAGE_SIZE}

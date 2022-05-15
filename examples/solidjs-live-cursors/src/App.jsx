@@ -42,7 +42,7 @@ function App({ room }) {
             x: Math.round(event.clientX),
             y: Math.round(event.clientY),
           },
-        })
+        });
       }}
       onPointerLeave={() =>
         // When the pointer leaves, set cursor to null
