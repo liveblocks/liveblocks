@@ -1,4 +1,4 @@
-import { createSignal, onCleanup } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import Avatar from "./components/Avatar.jsx";
 import styles from "./App.module.css";
 
@@ -7,19 +7,20 @@ function App({ room }) {
   const [users, setUsers] = createSignal([]);
   const hasMoreUsers = () => users().length > 3;
 
-  const unsubscribePresence = room.subscribe("my-presence", presence => {
-    console.log(presence);
-    setCurrentUser(presence);
-  });
+  onMount(() => {
+    const unsubscribePresence = room.subscribe("my-presence", presence => {
+      setCurrentUser(presence);
+    });
 
-  const unsubscribeOthers = room.subscribe("others", others => {
-    const othersWithPresence = others.toArray().filter(other => other?.presence);
-    setUsers(othersWithPresence);
-  });
+    const unsubscribeOthers = room.subscribe("others", others => {
+      const othersWithPresence = others.toArray().filter(other => other?.presence);
+      setUsers(othersWithPresence);
+    });
 
-  onCleanup(() => {
-    unsubscribePresence();
-    unsubscribeOthers();
+    onCleanup(() => {
+      unsubscribePresence();
+      unsubscribeOthers();
+    });
   });
 
   return (

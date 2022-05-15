@@ -1,4 +1,4 @@
-import { createSignal, onCleanup } from "solid-js";
+import { createSignal, onCleanup, onMount } from "solid-js";
 import { Key } from "@solid-primitives/keyed";
 import Cursor from "./components/Cursor.jsx";
 import styles from "./App.module.css";
@@ -18,18 +18,20 @@ function App({ room }) {
   const [currentUser, setCurrentUser] = createSignal(room.getPresence());
   const [users, setUsers] = createSignal([]);
 
-  const unsubscribePresence = room.subscribe("my-presence", presence => {
-    setCurrentUser(presence);
-  });
+  onMount(() => {
+    const unsubscribePresence = room.subscribe("my-presence", presence => {
+      setCurrentUser(presence);
+    });
 
-  const unsubscribeOthers = room.subscribe("others", others => {
-    const othersWithPresence = others.toArray().filter(other => other?.presence);
-    setUsers(othersWithPresence);
-  });
+    const unsubscribeOthers = room.subscribe("others", others => {
+      const othersWithPresence = others.toArray().filter(other => other?.presence);
+      setUsers(othersWithPresence);
+    });
 
-  onCleanup(() => {
-    unsubscribePresence();
-    unsubscribeOthers();
+    onCleanup(() => {
+      unsubscribePresence();
+      unsubscribeOthers();
+    });
   });
 
   return (
