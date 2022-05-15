@@ -1,7 +1,7 @@
 {
   "name": "solidjs-live-avatars",
+  "description": "This example shows how to build a live avatar stack with Liveblocks and Solid.js",
   "license": "Apache-2.0",
-  "description": "",
   "scripts": {
     "start": "vite",
     "dev": "vite",
