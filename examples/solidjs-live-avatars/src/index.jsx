@@ -1,8 +1,8 @@
 /* @refresh reload */
 import { render } from "solid-js/web";
 import { createClient } from "@liveblocks/client";
-import "./index.css";
 import App from "./App";
+import "./index.css";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 let roomId = "solidjs-live-avatars";
