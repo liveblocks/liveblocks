@@ -11,7 +11,7 @@ import type {
 import { CrdtType, OpType } from "./live";
 import { LiveRegister } from "./LiveRegister";
 import type { Lson } from "./lson";
-import { compare, makePosition } from "./position";
+import { comparePosition as compare, makePosition } from "./position";
 import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import {
   creationOpToLiveStructure,
