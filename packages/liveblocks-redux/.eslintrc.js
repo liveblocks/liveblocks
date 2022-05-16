@@ -2,7 +2,11 @@ module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: { project: ["./tsconfig.json"] },
-  plugins: ["@typescript-eslint"],
+  plugins: [
+    "@typescript-eslint",
+    "eslint-plugin-import",
+    "eslint-plugin-simple-import-sort",
+  ],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
     // ----------------------------------------------------------------------
@@ -19,6 +23,13 @@ module.exports = {
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-inferrable-types": "off",
     "no-constant-condition": "off",
+
+    // -----------------------------
+    // Enable auto-fixes for imports
+    // -----------------------------
+    "import/no-duplicates": "error",
+    "@typescript-eslint/consistent-type-imports": "error",
+    "simple-import-sort/imports": "error",
 
     // ------------------------
     // Customized default rules

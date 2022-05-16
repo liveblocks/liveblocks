@@ -1,17 +1,18 @@
 import type {
   Client,
-  User,
-  Room,
   LiveObject,
   LsonObject,
   Presence,
+  Room,
+  User,
 } from "@liveblocks/client";
 import {
+  lsonToJson,
   patchImmutableObject,
   patchLiveObjectKey,
-  lsonToJson,
 } from "@liveblocks/client/internal";
 import type { StoreEnhancer } from "redux";
+
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,

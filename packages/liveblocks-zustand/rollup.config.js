@@ -4,12 +4,24 @@ import dts from "rollup-plugin-dts";
 import path from "path";
 import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
+import { terser as terserPlugin } from "rollup-plugin-terser";
 import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
 const createBabelConfig = require("./babel.config");
 
 function execute(cmd, wait = true) {
   return commandPlugin(cmd, { exitOnFail: true, wait });
+}
+
+function stripComments() {
+  return terserPlugin({
+    mangle: false,
+    output: {
+      beautify: true,
+      indent_level: 1,
+      comments: false,
+    },
+  });
 }
 
 /**
@@ -56,7 +68,7 @@ function buildESM(srcFiles, external = []) {
       chunkFileNames: "shared.mjs",
     },
     external,
-    plugins: [typescriptCompile()],
+    plugins: [typescriptCompile(), stripComments()],
   };
 }
 
@@ -74,6 +86,7 @@ function buildCJS(srcFiles, external = []) {
     plugins: [
       resolve({ extensions }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
+      stripComments(),
     ],
   };
 }

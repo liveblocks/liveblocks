@@ -1,3 +1,30 @@
+import type { ApplyResult } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { Json, JsonObject } from "./json";
+import { isJsonArray, isJsonObject, parseJson } from "./json";
+import type {
+  ClientMessage,
+  EventMessage,
+  InitialDocumentStateMessage,
+  Op,
+  RoomStateMessage,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  ServerMessage,
+  UpdatePresenceMessage,
+  UserJoinMessage,
+  UserLeftMessage,
+} from "./live";
+import {
+  ClientMessageType,
+  OpType,
+  ServerMessageType,
+  WebsocketCloseCodes,
+} from "./live";
+import { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import type { Lson, LsonObject } from "./lson";
 import type {
   Authentication,
   AuthenticationToken,
@@ -21,9 +48,6 @@ import type {
   StorageUpdate,
   User,
 } from "./types";
-import type { Json, JsonObject } from "./json";
-import { isJsonObject, isJsonArray, parseJson } from "./json";
-import type { Lson, LsonObject } from "./lson";
 import {
   compact,
   getTreesDiffOperations,
@@ -32,27 +56,6 @@ import {
   mergeStorageUpdates,
   remove,
 } from "./utils";
-import {
-  ClientMessage,
-  ClientMessageType,
-  EventMessage,
-  InitialDocumentStateMessage,
-  Op,
-  OpType,
-  RoomStateMessage,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  ServerMessage,
-  ServerMessageType,
-  UpdatePresenceMessage,
-  UserJoinMessage,
-  UserLeftMessage,
-  WebsocketCloseCodes,
-} from "./live";
-import type { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import { LiveList } from "./LiveList";
-import { AbstractCrdt, ApplyResult, OpSource } from "./AbstractCrdt";
 
 type FixmePresence = JsonObject;
 
@@ -115,22 +118,6 @@ export type Machine = {
     listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void;
-
-  unsubscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): void;
-  unsubscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): void;
-  unsubscribe(type: "event", listener: EventCallback): void;
-  unsubscribe(type: "error", listener: ErrorCallback): void;
-  unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  unsubscribe<K extends RoomEventName>(
-    event: K,
-    callback: RoomEventCallbackMap[K]
-  ): void;
 
   // Presence
   updatePresence<T extends Presence>(
@@ -739,32 +726,6 @@ export function makeStateMachine<TPresence extends JsonObject>(
     };
   }
 
-  function unsubscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): void;
-  function unsubscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): void;
-  function unsubscribe(type: "event", listener: EventCallback): void;
-  function unsubscribe(type: "error", listener: ErrorCallback): void;
-  function unsubscribe(type: "connection", listener: ConnectionCallback): void;
-  function unsubscribe<K extends RoomEventName>(
-    event: K,
-    callback: RoomEventCallbackMap[K]
-  ) {
-    console.warn(`unsubscribe is depreacted and will be removed in a future version.
-use the callback returned by subscribe instead.
-See v0.13 release notes for more information.
-`);
-    if (!isValidRoomEventType(event)) {
-      throw new Error(`"${event}" is not a valid event name`);
-    }
-    const callbacks = state.listeners[event] as RoomEventCallbackMap[K][];
-    remove(callbacks, callback);
-  }
-
   function getConnectionState() {
     return state.connection.state;
   }
@@ -1278,7 +1239,7 @@ See v0.13 release notes for more information.
         type: ClientMessageType.UpdatePresence,
         data: state.buffer.presence as unknown as TPresence,
         //                          ^^^^^^^^^^^^^^^^^^^^^^^
-        //                          TODO: In 0.17, state.buffer.presence will
+        //                          TODO: In 0.18, state.buffer.presence will
         //                          become a TPresence and this force-cast will
         //                          no longer be necessary.
       });
@@ -1516,7 +1477,6 @@ See v0.13 release notes for more information.
     connect,
     disconnect,
     subscribe,
-    unsubscribe,
 
     // Presence
     updatePresence,
@@ -1639,7 +1599,6 @@ export function createRoom(
     getSelf: machine.selectors.getSelf,
 
     subscribe: machine.subscribe,
-    unsubscribe: machine.unsubscribe,
 
     //////////////
     // Presence //

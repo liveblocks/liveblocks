@@ -1,32 +1,29 @@
-import { AbstractCrdt, Doc, ApplyResult, OpSource } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type {
+  CreateListOp,
+  CreateOp,
+  Op,
+  SerializedCrdt,
+  SerializedCrdtWithId,
+  SerializedList,
+} from "./live";
+import { CrdtType, OpType } from "./live";
+import { LiveRegister } from "./LiveRegister";
+import type { Lson } from "./lson";
+import { compare, makePosition } from "./position";
+import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
 import {
+  creationOpToLiveStructure,
   deserialize,
   selfOrRegister,
   selfOrRegisterValue,
-  creationOpToLiveStructure,
 } from "./utils";
-import {
-  SerializedList,
-  SerializedCrdtWithId,
-  Op,
-  CreateListOp,
-  OpType,
-  SerializedCrdt,
-  CrdtType,
-  CreateOp,
-} from "./live";
-import { makePosition, compare } from "./position";
-import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
-import { LiveRegister } from "./LiveRegister";
-import type { Lson } from "./lson";
 
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
-export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
-  //                                     ^^^^^^
-  //                                     NOTE: Default arg will be removed in next major version
-
+export class LiveList<TItem extends Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   private _items: Array<AbstractCrdt>;
 
@@ -598,7 +595,7 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
     child._attach(id, this._doc!);
     child._setParentLink(this, key);
 
-    let newKey = key;
+    const newKey = key;
 
     if (existingItemIndex !== -1) {
       const existingItem = this._items[existingItemIndex];

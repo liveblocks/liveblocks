@@ -1,18 +1,18 @@
-import { LiveList, LiveMap } from ".";
 import {
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
-  prepareStorageImmutableTest,
   FIRST_POSITION,
+  FOURTH_POSITION,
+  prepareStorageImmutableTest,
   SECOND_POSITION,
   THIRD_POSITION,
-  FOURTH_POSITION,
 } from "../test/utils";
+import { LiveList, LiveMap } from ".";
 import {
-  patchLiveObjectKey,
   patchImmutableObject,
   patchLiveObject,
+  patchLiveObjectKey,
 } from "./immutable";
 import { LiveObject } from "./LiveObject";
 import type { StorageUpdate } from "./types";

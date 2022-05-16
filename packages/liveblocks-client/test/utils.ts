@@ -1,22 +1,18 @@
 import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
-import {
+import type { Json, JsonObject } from "../src/json";
+import type {
   ClientMessage,
-  ClientMessageType,
-  CrdtType,
   Op,
   SerializedCrdtWithId,
   ServerMessage,
-  ServerMessageType,
 } from "../src/live";
-import type { Json, JsonObject } from "../src/json";
-import type { Lson, LsonObject, ToJson } from "../src/lson";
-import type { LiveList } from "../src/LiveList";
+import { ClientMessageType, CrdtType, ServerMessageType } from "../src/live";
 import type { LiveMap } from "../src/LiveMap";
-import type { LiveObject } from "../src/LiveObject";
+import type { Lson, LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
-import { defaultState, makeStateMachine } from "../src/room";
 import type { Effects, Machine } from "../src/room";
+import { defaultState, makeStateMachine } from "../src/room";
 import type {
   Authentication,
   LiveListUpdates,
