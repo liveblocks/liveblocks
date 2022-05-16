@@ -38,6 +38,9 @@ export type {
   SerializedObject,
   SerializedRegister,
   ServerMessage,
+  SetParentKeyOp,
+  UpdateObjectOp,
+  UserJoinMessage,
 } from "./live";
 export {
   ClientMessageType,

@@ -1,3 +1,9 @@
+# v0.16.8
+
+Fix bug in private/internal code.
+
+---
+
 # v0.16.7
 
 Fix bug in private/internal code.
