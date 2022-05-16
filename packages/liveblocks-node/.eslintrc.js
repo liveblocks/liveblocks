@@ -35,6 +35,7 @@ module.exports = {
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
+    "object-shorthand": "error",
     "no-restricted-syntax": [
       "error",
       {

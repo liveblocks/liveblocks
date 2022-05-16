@@ -484,7 +484,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
       addToUndoStack(reverse);
       state.redoStack = [];
       dispatch(ops);
-      notify({ storageUpdates: storageUpdates });
+      notify({ storageUpdates });
     }
   }
 
@@ -1180,7 +1180,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     messages.push({
       type: ClientMessageType.UpdateStorage,
-      ops: ops,
+      ops,
     });
 
     notify(result.updates);

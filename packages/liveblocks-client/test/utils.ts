@@ -293,7 +293,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: actor }, ws as any);
+    machine.authenticationSuccess({ actor }, ws as any);
     ws.open();
 
     if (newItems) {
@@ -342,7 +342,7 @@ export async function reconnect(
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess({ actor: actor }, ws);
+  machine.authenticationSuccess({ actor }, ws);
   ws.open();
 
   machine.onMessage(
