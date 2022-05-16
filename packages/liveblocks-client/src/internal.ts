@@ -11,23 +11,21 @@
  * https://join.team/liveblocks ;)
  */
 
-export type {
-  RoomStateMessage,
-  SerializedCrdtWithId,
-  ServerMessage,
-} from "./live";
-export type { Resolve, RoomInitializers } from "./types";
-
-export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
 export {
   deprecate,
   deprecateIf,
   errorIf,
   throwUsageError,
 } from "./deprecation";
-
 export {
   lsonToJson,
   patchImmutableObject,
   patchLiveObjectKey,
 } from "./immutable";
+export type {
+  RoomStateMessage,
+  SerializedCrdtWithId,
+  ServerMessage,
+} from "./live";
+export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
+export type { Resolve, RoomInitializers } from "./types";
