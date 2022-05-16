@@ -23,9 +23,31 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export type {
+  CreateListOp,
+  CreateMapOp,
+  CreateObjectOp,
+  CreateRegisterOp,
+  DeleteCrdtOp,
+  DeleteObjectKeyOp,
+  Op,
   RoomStateMessage,
+  SerializedCrdt,
   SerializedCrdtWithId,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
   ServerMessage,
+  SetParentKeyOp,
+  UpdateObjectOp,
+  UserJoinMessage,
 } from "./live";
-export { ClientMessageType, CrdtType, OpType, ServerMessageType } from "./live";
+export {
+  ClientMessageType,
+  CrdtType,
+  OpType,
+  ServerMessageType,
+  WebsocketCloseCodes,
+} from "./live";
+export { comparePosition, makePosition } from "./position";
 export type { Resolve, RoomInitializers } from "./types";
