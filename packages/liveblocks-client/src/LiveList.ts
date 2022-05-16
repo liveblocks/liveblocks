@@ -188,7 +188,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           this._detachChild(item);
         }
 
-        // TODO: update for deleted item
+        // TODO: update for deleted item ??
         return {
           modified: Update(this, [UpdateSet(existingItemIndex, child)]),
           reverse: [],
@@ -221,7 +221,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       updates.push(UpdateInsert(newIndex, child));
 
-      Update(this, updates);
       return {
         reverse: [],
         modified: Update(this, updates),
@@ -279,8 +278,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         if (newIndex !== previousIndex) {
           updates.push(updateMove(previousIndex, newIndex, existingItem));
         }
-
-        Update(this, updates);
 
         return {
           modified: updates.length > 0 ? Update(this, updates) : false,
