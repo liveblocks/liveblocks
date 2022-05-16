@@ -10,8 +10,8 @@
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
-  <img src="https://img.shields.io/badge/solid.js-message?style=flat&logo=solid&color=4F87C5&logoColor=fff" alt="React" />
-  <img src="https://img.shields.io/badge/vite-message?style=flat&logo=vite&color=646CFF&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/solid.js-message?style=flat&logo=solid&color=4F87C5&logoColor=fff" alt="Solid.js" />
+  <img src="https://img.shields.io/badge/vite-message?style=flat&logo=vite&color=646CFF&logoColor=fff" alt="Vite" />
 </p>
 
 This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io) and [Solid.js](https://www.solidjs.com/).

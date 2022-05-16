@@ -1,9 +1,8 @@
 {
-  "name": "solidjs-live-cursors",
   "description": "This example shows how to build live cursors with Liveblocks and Solid.js",
   "license": "Apache-2.0",
+  "private": true,
   "scripts": {
-    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview"

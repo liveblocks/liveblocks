@@ -12,7 +12,7 @@ overrideApiKeyAndRoomId();
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`,
+    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-cursors#getting-started.`,
   );
 }
 

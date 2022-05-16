@@ -5,7 +5,4 @@ node_modules
 !.env.example
 *.tsbuildinfo
 .vercel
-.svelte-kit
-
 dist
-.idea
