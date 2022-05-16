@@ -165,10 +165,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       (item) => item._getParentKeyOrThrow() === key
     );
 
+    // item exists at position
     if (existingItemIndex !== -1) {
       const existingItem = this._items[existingItemIndex];
 
-      // No conflict, expected behavior, replaced item is the same than server
+      // No conflict, item at position to be replaced is the same than server
       if (existingItem._id === deletedId) {
         existingItem._detach();
 
@@ -179,6 +180,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
+        // item at position to be replaced is different from server
         this._implicitlyDeletedItems.add(existingItem);
 
         this._items[existingItemIndex] = child;
@@ -195,13 +197,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
     } else {
-      // Remote set conflicts with delete
+      // Item at position to be replaced doesn't exist
       this._items.push(child);
       this._items.sort((itemA, itemB) =>
         compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
       );
       const updates: LiveListUpdateDelta[] = [];
       const itemToDelete = this._doc.getItem((op as any).deletedId);
+
+      // Item to be replaced has been moved.
       if (itemToDelete) {
         const deletedItemIndex = this._items.findIndex(
           (entry) => entry._getParentKeyOrThrow() === itemToDelete._parentKey
@@ -328,33 +332,22 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey } = op;
-    const key = parentKey!;
-    const child = creationOpToLiveStructure(op);
+    const key = op.parentKey!;
 
     const existingItemIndex = this._items.findIndex(
       (item) => item._getParentKeyOrThrow() === key
     );
-
-    child._attach(id, this._doc);
-    child._setParentLink(this, key);
 
     if (existingItemIndex !== -1) {
       // If change is remote => assign a temporary position to existing child until we get the fix from the backend
       this._shiftItemPosition(existingItemIndex, key);
     }
 
-    this._items.push(child);
-    this._items.sort((itemA, itemB) =>
-      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-    );
+    const { newItem, newIndex } = this._createAttachItemAndSort(op, key);
 
-    const newIndex = this._items.findIndex(
-      (entry) => entry._getParentKeyOrThrow() === child._parentKey
-    );
     // TODO: add move udpate?
     return {
-      modified: Update(this, [UpdateInsert(newIndex, child)]),
+      modified: Update(this, [UpdateInsert(newIndex, newItem)]),
       reverse: [],
     };
   }
