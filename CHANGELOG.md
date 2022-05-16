@@ -1,3 +1,15 @@
+# v0.16.7
+
+Fix bug in private/internal code.
+
+---
+
+# v0.16.6
+
+Fix bug in example code suggested in deprecation warning.
+
+---
+
 # v0.16.5
 
 - Various internal refactorings
