@@ -14,6 +14,22 @@ Various Live structures now take mandatory type params:
 
   - Removed old `Room.unsubscribe()` API
 
+### New deprecations
+
+- In **@liveblocks/client**:
+
+  - The `defaultPresence` option to `client.enter()` will get renamed to `initialPresence`
+  - The `defaultStorageRoot` option to `client.enter()` will get renamed to `initialStorage`
+  - Calling `new LiveMap(null)` will stop working. Please use `new LiveMap()`, or `new LiveMap([])`
+
+- In **@liveblocks/react**:
+
+  - The RoomProvider's `defaultPresence` will get renamed to `initialPresence`
+  - The RoomProvider's `defaultStorageRoot` will get renamed to `initialStorage`
+  - The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
+
+For information, please see https://bit.ly/3Niy5aP.
+
 ---
 
 # v0.16.6

@@ -1,6 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import { deprecateIf } from "./deprecation";
+import { errorIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
@@ -39,7 +39,7 @@ export class LiveMap<
     entries?: readonly (readonly [TKey, TValue])[] | undefined | null
   ) {
     super();
-    deprecateIf(
+    errorIf(
       entries === null,
       "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
