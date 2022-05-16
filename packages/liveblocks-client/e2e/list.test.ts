@@ -5,7 +5,7 @@ import { prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
   describe("insert conflicts", () => {
-    test.only(
+    test(
       "remote insert conflicts with another insert",
       prepareTestsConflicts(
         {
@@ -32,6 +32,12 @@ describe("LiveList conflicts", () => {
 
           expect(room1Updates).toEqual([
             [listUpdate(["A"], [listUpdateInsert(0, "A")])],
+            [listUpdate(["A", "B"], [listUpdateInsert(1, "B")])],
+          ]);
+
+          expect(room2Updates).toEqual([
+            [listUpdate(["B"], [listUpdateInsert(0, "B")])],
+            [listUpdate(["A", "B"], [listUpdateInsert(0, "A")])],
           ]);
         }
       )
