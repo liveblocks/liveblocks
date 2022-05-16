@@ -321,18 +321,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           );
         }
 
-        const newItem = creationOpToLiveStructure(op);
-
-        newItem._attach(op.id, this._doc!);
-        newItem._setParentLink(this, op.parentKey!);
-
-        this._items.push(newItem);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        const newIndex = this._items.findIndex(
-          (entry) => entry._getParentKeyOrThrow() === op.parentKey!
+        const { newItem, newIndex } = this._createAttachItemAndSort(
+          op,
+          op.parentKey!
         );
 
         return {
@@ -470,19 +461,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           );
         }
 
-        const newItem = creationOpToLiveStructure(op);
-
-        newItem._attach(op.id, this._doc!);
-        newItem._setParentLink(this, key);
-
-        this._items.push(newItem);
-        this._items.sort((itemA, itemB) =>
-          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-        );
-
-        const newIndex = this._items.findIndex(
-          (entry) => entry._getParentKeyOrThrow() === key
-        );
+        const { newItem, newIndex } = this._createAttachItemAndSort(op, key);
 
         return {
           modified: Update(this, [UpdateInsert(newIndex, newItem)]),
@@ -1294,6 +1273,30 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   [Symbol.iterator](): IterableIterator<TItem> {
     return new LiveListIterator(this._items);
+  }
+
+  _createAttachItemAndSort(
+    op: CreateOp,
+    key: string
+  ): {
+    newItem: AbstractCrdt;
+    newIndex: number;
+  } {
+    const newItem = creationOpToLiveStructure(op);
+
+    newItem._attach(op.id, this._doc!);
+    newItem._setParentLink(this, key);
+
+    this._items.push(newItem);
+    this._items.sort((itemA, itemB) =>
+      compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+    );
+
+    const newIndex = this._items.findIndex(
+      (entry) => entry._getParentKeyOrThrow() === key
+    );
+
+    return { newItem, newIndex };
   }
 }
 
