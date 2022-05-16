@@ -1,17 +1,24 @@
 import "regenerator-runtime/runtime";
-
 import { LiveList } from "../src/LiveList";
+import { listUpdate, listUpdateInsert } from "../test/updatesUtils";
 import { prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
   describe("insert conflicts", () => {
-    test(
+    test.only(
       "remote insert conflicts with another insert",
       prepareTestsConflicts(
         {
           list: new LiveList(),
         },
-        async ({ root1, root2, socketUtils, assert }) => {
+        async ({
+          root1,
+          root2,
+          socketUtils,
+          assert,
+          room1Updates,
+          room2Updates,
+        }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
 
@@ -22,6 +29,10 @@ describe("LiveList conflicts", () => {
           await socketUtils.flushSocket2Messages();
 
           assert({ list: ["A", "B"] });
+
+          expect(room1Updates).toEqual([
+            [listUpdate(["A"], [listUpdateInsert(0, "A")])],
+          ]);
         }
       )
     );

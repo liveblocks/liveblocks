@@ -9,6 +9,10 @@ import type { URL } from "url";
 import "dotenv/config";
 import type { Room } from "../src";
 import { lsonToJson } from "../src/immutable";
+import {
+  type JsonStorageUpdate,
+  serializeUpdateToJson,
+} from "../test/updatesUtils";
 
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
@@ -20,6 +24,8 @@ export function prepareTestsConflicts<T extends LsonObject>(
     root2: LiveObject<T>;
     room2: Room;
     room1: Room;
+    room1Updates: JsonStorageUpdate[][];
+    room2Updates: JsonStorageUpdate[][];
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
@@ -134,8 +140,33 @@ export function prepareTestsConflicts<T extends LsonObject>(
 
     socketUtils.pauseAllSockets();
 
+    const room1Updates: JsonStorageUpdate[][] = [];
+    const room2Updates: JsonStorageUpdate[][] = [];
+
+    room1.subscribe(
+      root1,
+      (updates) => room1Updates.push(updates.map(serializeUpdateToJson)),
+      {
+        isDeep: true,
+      }
+    );
+    room2.subscribe(
+      root2,
+      (updates) => room2Updates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+
     try {
-      await callback({ room1, room2, root1, root2, socketUtils, assert });
+      await callback({
+        room1,
+        room2,
+        root1,
+        root2,
+        room1Updates,
+        room2Updates,
+        socketUtils,
+        assert,
+      });
       client1.leave(roomName);
       client2.leave(roomName);
     } catch (er) {

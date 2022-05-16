@@ -8,19 +8,13 @@ import type {
   ServerMessage,
 } from "../src/live";
 import { ClientMessageType, CrdtType, ServerMessageType } from "../src/live";
-import type { LiveMap } from "../src/LiveMap";
-import type { Lson, LsonObject, ToJson } from "../src/lson";
+import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
-import type {
-  Authentication,
-  LiveListUpdates,
-  LiveObjectUpdateDelta,
-  StorageUpdate,
-  UpdateDelta,
-} from "../src/types";
+import type { Authentication } from "../src/types";
 import { remove } from "../src/utils";
+import { JsonStorageUpdate, serializeUpdateToJson } from "./updatesUtils";
 
 /**
  * Deep-clones a JSON-serializable value.
@@ -394,116 +388,6 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     reconnect,
     ws,
   };
-}
-
-type JsonStorageUpdate =
-  | JsonLiveListUpdate<Lson>
-  | JsonLiveObjectUpdate<LsonObject>
-  | JsonLiveMapUpdate<string, Lson>;
-
-type JsonLiveListUpdate<TItem extends Lson> = {
-  type: "LiveList";
-  node: Array<ToJson<TItem>>;
-  updates: Array<
-    | {
-        type: "insert";
-        item: ToJson<TItem>;
-        index: number;
-      }
-    | {
-        type: "move";
-        index: number;
-        previousIndex: number;
-        item: ToJson<TItem>;
-      }
-    | {
-        type: "delete";
-        index: number;
-      }
-    | {
-        type: "set";
-        item: ToJson<TItem>;
-        index: number;
-      }
-  >;
-};
-
-type JsonLiveObjectUpdate<O extends LsonObject> = {
-  type: "LiveObject";
-  node: ToJson<O>;
-  updates: LiveObjectUpdateDelta<O>;
-};
-
-type JsonLiveMapUpdate<TKey extends string, TValue extends Lson> = {
-  type: "LiveMap";
-  node: ToJson<LiveMap<TKey, TValue>>;
-  updates: { [key: string]: UpdateDelta };
-};
-
-function liveListUpdateToJson<TItem extends Lson>(
-  update: LiveListUpdates<TItem>
-): JsonLiveListUpdate<TItem> {
-  return {
-    type: update.type,
-    node: lsonToJson(update.node) as ToJson<TItem>[],
-    //                            ^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
-    updates: update.updates.map((delta) => {
-      switch (delta.type) {
-        case "move": {
-          return {
-            type: delta.type,
-            index: delta.index,
-            previousIndex: delta.previousIndex,
-            item: lsonToJson(delta.item),
-          };
-        }
-        case "delete": {
-          return delta;
-        }
-        case "insert": {
-          return {
-            type: delta.type,
-            index: delta.index,
-            item: lsonToJson(delta.item),
-          };
-        }
-        case "set": {
-          return {
-            type: delta.type,
-            index: delta.index,
-            item: lsonToJson(delta.item),
-          };
-        }
-      }
-    }) as any,
-    // ^^^^^^ FIXME: TypeScript nags about this correctly. Deal with this later.
-  };
-}
-
-function serializeUpdateToJson(update: StorageUpdate): JsonStorageUpdate {
-  if (update.type === "LiveList") {
-    return liveListUpdateToJson(update);
-  }
-
-  if (update.type === "LiveObject") {
-    return {
-      type: update.type,
-      node: lsonToJson(update.node) as ToJson<typeof update.node>,
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
-      updates: update.updates,
-    };
-  }
-
-  if (update.type === "LiveMap") {
-    return {
-      type: update.type,
-      node: lsonToJson(update.node) as { [key: string]: Json },
-      //                            ^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Manual cast should eventually not be necessary
-      updates: update.updates,
-    };
-  }
-
-  throw new Error("Unsupported LiveStructure type");
 }
 
 export async function reconnect(
