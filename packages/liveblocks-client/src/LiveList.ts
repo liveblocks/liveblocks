@@ -12,7 +12,11 @@ import { CrdtType, OpType } from "./live";
 import { LiveRegister } from "./LiveRegister";
 import type { Lson } from "./lson";
 import { compare, makePosition } from "./position";
-import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
+import type {
+  LiveListUpdateDelta,
+  LiveListUpdates,
+  StorageUpdate,
+} from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
@@ -171,17 +175,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this._items[existingItemIndex] = child;
 
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: existingItemIndex,
-                type: "set",
-                item: child instanceof LiveRegister ? child.data : child,
-              },
-            ],
-          },
+          modified: Update(this, [UpdateSet(existingItemIndex, child)]),
           reverse: [],
         };
       } else {
@@ -196,21 +190,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         // TODO: update for deleted item
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: existingItemIndex,
-                type: "set",
-                item: child instanceof LiveRegister ? child.data : child,
-              },
-              // {
-              //   type: "delete",
-              //   index: existingItemIndex, // Not needed ?
-              // },
-            ],
-          },
+          modified: Update(this, [UpdateSet(existingItemIndex, child)]),
           reverse: [],
         };
       }
@@ -232,29 +212,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           true
         );
 
-        updates.push({
-          type: "delete",
-          index: deletedItemIndex,
-        });
+        updates.push(UpdateDelete(deletedItemIndex));
       }
 
       const newIndex = this._items.findIndex(
         (entry) => entry._getParentKeyOrThrow() === key
       );
 
-      updates.push({
-        index: newIndex,
-        type: "insert",
-        item: child instanceof LiveRegister ? child.data : child,
-      });
+      updates.push(UpdateInsert(newIndex, child));
 
+      Update(this, updates);
       return {
         reverse: [],
-        modified: {
-          node: this,
-          type: "LiveList",
-          updates,
-        },
+        modified: Update(this, updates),
       };
     }
   }
@@ -284,20 +254,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         // Item exists but not at the right position (local move after set)
 
-        const storageUpdate: LiveListUpdates<TItem> = {
-          node: this,
-          type: "LiveList",
-          updates: [],
-        };
+        const updates: LiveListUpdateDelta[] = [];
 
         if (itemIndexAtPosition !== -1) {
           this._implicitlyDeletedItems.add(this._items[itemIndexAtPosition]);
           this._items.splice(itemIndexAtPosition, 1);
 
-          storageUpdate.updates.push({
-            type: "delete",
-            index: itemIndexAtPosition,
-          });
+          updates.push(UpdateDelete(itemIndexAtPosition));
         }
 
         const previousIndex = this._items.findIndex(
@@ -314,19 +277,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         if (newIndex !== previousIndex) {
-          storageUpdate.updates.push({
-            index: newIndex,
-            previousIndex: previousIndex,
-            type: "move",
-            item:
-              existingItem instanceof LiveRegister
-                ? existingItem.data
-                : existingItem,
-          });
+          updates.push(updateMove(previousIndex, newIndex, existingItem));
         }
 
+        Update(this, updates);
+
         return {
-          modified: storageUpdate.updates.length > 0 ? storageUpdate : false,
+          modified: updates.length > 0 ? Update(this, updates) : false,
           reverse: [],
         };
       }
@@ -348,17 +305,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: recreatedItemIndex,
-                type: "set",
-                item: orphan instanceof LiveRegister ? orphan.data : orphan,
-              },
-            ],
-          },
+          modified: Update(this, [UpdateSet(recreatedItemIndex, orphan)]),
           reverse: [],
         };
       } else {
@@ -392,17 +339,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: newIndex,
-                type: "set",
-                item: newItem instanceof LiveRegister ? newItem.data : newItem,
-              },
-            ],
-          },
+          modified: Update(this, [UpdateSet(newIndex, newItem)]),
           reverse: [],
         };
       }
@@ -444,17 +381,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
     // TODO: add move udpate?
     return {
-      modified: {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index: newIndex,
-            type: "insert",
-            item: child instanceof LiveRegister ? child.data : child,
-          },
-        ],
-      },
+      modified: Update(this, [UpdateInsert(newIndex, child)]),
       reverse: [],
     };
   }
@@ -502,23 +429,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           return { modified: false };
         }
 
-        const updatesDelta: LiveListUpdateDelta[] = [
-          {
-            index: newIndex,
-            item:
-              existingItem instanceof LiveRegister
-                ? existingItem.data
-                : existingItem,
-            previousIndex: oldPositionIndex,
-            type: "move",
-          },
-        ];
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: updatesDelta,
-          },
+          modified: Update(this, [
+            updateMove(oldPositionIndex, newIndex, existingItem),
+          ]),
           reverse: [],
         };
       }
@@ -540,17 +454,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: newIndex,
-                type: "insert",
-                item: orphan instanceof LiveRegister ? orphan.data : orphan,
-              },
-            ],
-          },
+          modified: Update(this, [UpdateInsert(newIndex, orphan)]),
           reverse: [],
         };
       } else {
@@ -584,17 +488,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: newIndex,
-                type: "insert",
-                item: newItem instanceof LiveRegister ? newItem.data : newItem,
-              },
-            ],
-          },
+          modified: Update(this, [UpdateInsert(newIndex, newItem)]),
           reverse: [],
         };
       }
@@ -640,19 +534,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       (entry) => entry._getParentKeyOrThrow() === newKey
     );
 
-    // TODO updates
     return {
-      modified: {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index: newIndex,
-            item: child instanceof LiveRegister ? child.data : child,
-            type: "insert",
-          },
-        ],
-      },
+      modified: Update(this, [UpdateInsert(newIndex, child)]),
       reverse: [{ type: OpType.DeleteCrdt, id }],
     };
   }
@@ -678,17 +561,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (existingItemIndex !== -1) {
       const existingItem = this._items[existingItemIndex];
       existingItem._detach();
-      const storageUpdate: LiveListUpdates<TItem> = {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index: existingItemIndex,
-            type: "set",
-            item: child instanceof LiveRegister ? child.data : child,
-          },
-        ],
-      };
 
       this._items[existingItemIndex] = child;
 
@@ -701,7 +573,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: storageUpdate,
+        modified: Update(this, [UpdateSet(existingItemIndex, child)]),
         reverse,
       };
     } else {
@@ -723,17 +595,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
       return {
         reverse: [{ type: OpType.DeleteCrdt, id }],
-        modified: {
-          node: this,
-          type: "LiveList",
-          updates: [
-            {
-              index: newIndex,
-              type: "insert",
-              item: child instanceof LiveRegister ? child.data : child,
-            },
-          ],
-        },
+        modified: Update(this, [UpdateInsert(newIndex, child)]),
       };
     }
   }
@@ -1463,4 +1325,51 @@ class LiveListIterator<T> implements IterableIterator<T> {
       value: selfOrRegisterValue(result.value),
     };
   }
+}
+
+function Update(
+  liveList: LiveList<any>,
+  deltaUpdates: LiveListUpdateDelta[]
+): StorageUpdate {
+  return {
+    node: liveList,
+    type: "LiveList",
+    updates: deltaUpdates,
+  };
+}
+
+function UpdateSet(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+  return {
+    index,
+    type: "set",
+    item: item instanceof LiveRegister ? item.data : item,
+  };
+}
+
+function UpdateDelete(index: number): LiveListUpdateDelta {
+  return {
+    index,
+    type: "delete",
+  };
+}
+
+function UpdateInsert(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+  return {
+    index,
+    type: "insert",
+    item: item instanceof LiveRegister ? item.data : item,
+  };
+}
+
+function updateMove(
+  previousIndex: number,
+  index: number,
+  item: AbstractCrdt
+): LiveListUpdateDelta {
+  return {
+    index,
+    type: "move",
+    previousIndex,
+    item: item instanceof LiveRegister ? item.data : item,
+  };
 }
