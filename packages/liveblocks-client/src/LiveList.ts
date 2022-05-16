@@ -282,7 +282,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             {
               index: newIndex,
               item: child instanceof LiveRegister ? child.data : child,
-              previousIndex: previousIndex,
+              previousIndex,
               type: "move",
             },
           ];
@@ -493,7 +493,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         storageUpdates.set(this._id!, {
           node: this,
           type: "LiveList",
-          updates: [{ index: index, type: "delete" }],
+          updates: [{ index, type: "delete" }],
         });
 
         this._doc.dispatch(

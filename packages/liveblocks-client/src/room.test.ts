@@ -48,14 +48,14 @@ describe("room / auth", () => {
         return res(
           ctx.json({
             actor: 0,
-            token: token,
+            token,
           })
         );
       } else {
         return res(
           ctx.json({
             actor: 1,
-            token: token,
+            token,
           })
         );
       }

@@ -343,7 +343,7 @@ export class LiveMap<
     const innerIterator = this._map.entries();
 
     return {
-      [Symbol.iterator]: function () {
+      [Symbol.iterator]() {
         return this;
       },
       next() {
@@ -386,7 +386,7 @@ export class LiveMap<
     const innerIterator = this._map.values();
 
     return {
-      [Symbol.iterator]: function () {
+      [Symbol.iterator]() {
         return this;
       },
       next() {

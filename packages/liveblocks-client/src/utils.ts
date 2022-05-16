@@ -161,7 +161,7 @@ export function getTreesDiffOperations(
       // Delete crdt
       ops.push({
         type: OpType.DeleteCrdt,
-        id: id,
+        id,
       });
     }
   });
@@ -176,7 +176,7 @@ export function getTreesDiffOperations(
         ) {
           ops.push({
             type: OpType.UpdateObject,
-            id: id,
+            id,
             data: crdt.data,
           });
         }
@@ -184,7 +184,7 @@ export function getTreesDiffOperations(
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
           type: OpType.SetParentKey,
-          id: id,
+          id,
           parentKey: crdt.parentKey!,
         });
       }
@@ -194,7 +194,7 @@ export function getTreesDiffOperations(
         case CrdtType.Register:
           ops.push({
             type: OpType.CreateRegister,
-            id: id,
+            id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
             data: crdt.data,
@@ -203,7 +203,7 @@ export function getTreesDiffOperations(
         case CrdtType.List:
           ops.push({
             type: OpType.CreateList,
-            id: id,
+            id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
           });
@@ -211,7 +211,7 @@ export function getTreesDiffOperations(
         case CrdtType.Object:
           ops.push({
             type: OpType.CreateObject,
-            id: id,
+            id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
             data: crdt.data,
@@ -220,7 +220,7 @@ export function getTreesDiffOperations(
         case CrdtType.Map:
           ops.push({
             type: OpType.CreateMap,
-            id: id,
+            id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
           });
@@ -242,7 +242,7 @@ function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   }
   return {
     ...second,
-    updates: updates,
+    updates,
   };
 }
 
@@ -261,7 +261,7 @@ function mergeMapStorageUpdates<
   }
   return {
     ...second,
-    updates: updates,
+    updates,
   };
 }
 
@@ -338,7 +338,7 @@ export function findNonSerializableValue(
   if (!isPlain) {
     return {
       path: path || "root",
-      value: value,
+      value,
     };
   }
 
