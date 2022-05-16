@@ -25,6 +25,7 @@ export {
 export type {
   CreateListOp,
   CreateMapOp,
+  CreateObjectOp,
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
@@ -39,6 +40,7 @@ export type {
   ServerMessage,
   SetParentKeyOp,
   UpdateObjectOp,
+  UserJoinMessage,
 } from "./live";
 export {
   ClientMessageType,
