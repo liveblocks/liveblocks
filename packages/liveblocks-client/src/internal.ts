@@ -22,6 +22,7 @@ export {
   patchImmutableObject,
   patchLiveObjectKey,
 } from "./immutable";
+export { parseJson } from "./json";
 export type {
   CreateListOp,
   CreateMapOp,
