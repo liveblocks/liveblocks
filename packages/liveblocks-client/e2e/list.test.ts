@@ -1,6 +1,10 @@
 import "regenerator-runtime/runtime";
 import { LiveList } from "../src/LiveList";
-import { listUpdate, listUpdateInsert } from "../test/updatesUtils";
+import {
+  listUpdate,
+  listUpdateInsert,
+  listUpdateMove,
+} from "../test/updatesUtils";
 import { prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
@@ -24,8 +28,8 @@ describe("LiveList conflicts", () => {
           assert({ list: ["A", "B"] });
 
           expect(updates1).toEqual([
-            [listUpdate(["A"], [{ type: "insert", index: 0, item: "A" }])],
-            [listUpdate(["A", "B"], [{ type: "insert", index: 1, item: "B" }])],
+            [listUpdate(["A"], [listUpdateInsert(0, "A")])],
+            [listUpdate(["A", "B"], [listUpdateInsert(1, "B")])],
           ]);
 
           expect(updates2).toEqual([
@@ -56,7 +60,15 @@ describe("LiveList conflicts", () => {
 
           assert({ list: ["B", "C", "A"] });
 
-          // expect(updates1).toEqual([]);
+          expect(updates1).toEqual([
+            [listUpdate(["A", "B", "C"], [listUpdateInsert(2, "C")])],
+            [listUpdate(["B", "C", "A"], [listUpdateMove(0, 2, "A")])],
+          ]);
+
+          expect(updates2).toEqual([
+            [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+            [listUpdate(["B", "C", "A"], [listUpdateInsert(1, "C")])],
+          ]);
         }
       )
     );

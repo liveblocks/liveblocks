@@ -132,7 +132,7 @@ export function listUpdate<TItem extends Lson>(
   };
 }
 
-export function listUpdateInsert<TItem>(
+export function listUpdateInsert<TItem extends Lson>(
   index: number,
   item: TItem
 ): JsonLiveListUpdateDelta<TItem> {
@@ -140,5 +140,18 @@ export function listUpdateInsert<TItem>(
     type: "insert",
     item,
     index,
+  };
+}
+
+export function listUpdateMove<TItem extends Lson>(
+  previousIndex: number,
+  index: number,
+  item: TItem
+): JsonLiveListUpdateDelta<TItem> {
+  return {
+    type: "move",
+    item,
+    index,
+    previousIndex,
   };
 }
