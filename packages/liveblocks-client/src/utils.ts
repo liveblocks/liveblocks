@@ -1,20 +1,20 @@
 import type { AbstractCrdt, Doc } from "./AbstractCrdt";
-import {
-  SerializedCrdtWithId,
-  CrdtType,
-  SerializedList,
-  SerializedMap,
+import type { Json } from "./json";
+import { isJsonObject, parseJson } from "./json";
+import type {
+  CreateOp,
   Op,
   SerializedCrdt,
-  OpType,
+  SerializedCrdtWithId,
+  SerializedList,
+  SerializedMap,
   SerializedObject,
-  CreateOp,
 } from "./live";
+import { CrdtType, OpType } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import { Json, isJsonObject, parseJson } from "./json";
 import type { Lson, LsonObject } from "./lson";
 import type {
   LiveListUpdates,
@@ -22,41 +22,6 @@ import type {
   LiveObjectUpdates,
   StorageUpdate,
 } from "./types";
-
-// Keeps a set of deprecation messages in memory that it has warned about
-// already. There will be only one deprecation message in the console, no
-// matter how often it gets called.
-const _emittedDeprecationWarnings: Set<string> = new Set();
-
-/**
- * Displays a deprecation warning in the dev console. Only in dev mode, and
- * only once per message/key. In production, this is a no-op.
- */
-export function deprecate(message: string, key = message) {
-  if (process.env.NODE_ENV !== "production") {
-    if (!_emittedDeprecationWarnings.has(key)) {
-      _emittedDeprecationWarnings.add(key);
-      console.error(`DEPRECATION WARNING: ${message}`);
-    }
-  }
-}
-
-/**
- * Conditionally displays a deprecation warning in the dev
- * console if the first argument is truthy. Only in dev mode, and
- * only once per message/key. In production, this is a no-op.
- */
-export function deprecateIf(
-  condition: unknown,
-  message: string,
-  key = message
-) {
-  if (process.env.NODE_ENV !== "production") {
-    if (condition) {
-      deprecate(message, key);
-    }
-  }
-}
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -428,6 +393,20 @@ export function isTokenValid(token: string) {
   }
 
   return true;
+}
+
+/**
+ * Polyfill for Object.fromEntries() to be able to target ES2015 output without
+ * including external polyfill dependencies.
+ */
+export function fromEntries<K, V>(
+  iterable: Iterable<[K, V]>
+): { [key: string]: V } {
+  const obj: { [key: string]: V } = {};
+  for (const [key, val] of iterable) {
+    obj[key as unknown as string] = val;
+  }
+  return obj;
 }
 
 /**

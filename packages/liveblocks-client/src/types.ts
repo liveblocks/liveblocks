@@ -1,7 +1,7 @@
+import type { Json, JsonObject } from "./json";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
-import type { Json, JsonObject } from "./json";
 import type { Lson, LsonObject } from "./lson";
 
 /**
@@ -543,50 +543,6 @@ export type Room = {
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
   history: History;
-
-  /**
-   * @deprecated use the callback returned by subscribe instead.
-   * See v0.13 release notes for more information.
-   * Will be removed in a future version.
-   */
-  unsubscribe: {
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    <T extends Presence>(
-      type: "my-presence",
-      listener: MyPresenceCallback<T>
-    ): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    <T extends Presence>(
-      type: "others",
-      listener: OthersEventCallback<T>
-    ): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "event", listener: EventCallback): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "error", listener: ErrorCallback): void;
-    /**
-     * @deprecated use the callback returned by subscribe instead.
-     * See v0.13 release notes for more information.
-     * Will be removed in a future version.
-     */
-    (type: "connection", listener: ConnectionCallback): void;
-  };
 
   /**
    * Gets the current user.

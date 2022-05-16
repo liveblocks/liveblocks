@@ -1,11 +1,5 @@
-import { rest } from "msw";
-import { setupServer } from "msw/node";
-import { createClient } from "@liveblocks/client";
 import type { JsonObject, Presence } from "@liveblocks/client";
-import type { Mapping } from ".";
-import { middleware } from ".";
-import create from "zustand";
-import type { StateCreator } from "zustand";
+import { createClient } from "@liveblocks/client";
 import type {
   RoomStateMessage,
   SerializedCrdtWithId,
@@ -16,7 +10,14 @@ import {
   OpType,
   ServerMessageType,
 } from "@liveblocks/client/internal";
+import { rest } from "msw";
+import { setupServer } from "msw/node";
+import type { StateCreator } from "zustand";
+import create from "zustand";
+
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
+import type { Mapping } from ".";
+import { middleware } from ".";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,

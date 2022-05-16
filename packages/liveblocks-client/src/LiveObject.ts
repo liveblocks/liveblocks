@@ -1,34 +1,35 @@
-import { AbstractCrdt, Doc, ApplyResult, OpSource } from "./AbstractCrdt";
-import { creationOpToLiveStructure, deserialize, isCrdt } from "./utils";
-import {
-  CrdtType,
+import type { ApplyResult, Doc } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { JsonObject } from "./json";
+import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
   Op,
-  OpType,
   SerializedCrdt,
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
+import { CrdtType, OpType } from "./live";
+import type { LsonObject, ToJson } from "./lson";
 import type {
+  LiveObjectUpdateDelta,
   LiveObjectUpdates,
   UpdateDelta,
-  LiveObjectUpdateDelta,
 } from "./types";
-import type { JsonObject } from "./json";
-import type { LsonObject, ToJson } from "./lson";
+import {
+  creationOpToLiveStructure,
+  deserialize,
+  fromEntries,
+  isCrdt,
+} from "./utils";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.
  * Keys should be a string, and values should be serializable to JSON.
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
-export class LiveObject<
-  O extends LsonObject = LsonObject
-  //                   ^^^^^^^^^^^^
-  //                   NOTE: Default arg will be removed in next major version
-> extends AbstractCrdt {
+export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   private _map: Map<string, any>;
   private _propToLastUpdate: Map<string, string>;
 
@@ -410,7 +411,7 @@ export class LiveObject<
    * Transform the LiveObject into a javascript object
    */
   toObject(): O {
-    return Object.fromEntries(this._map) as O;
+    return fromEntries(this._map) as O;
   }
 
   /**

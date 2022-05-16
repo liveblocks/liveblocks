@@ -1,4 +1,6 @@
-import { createRoom, InternalRoom } from "./room";
+import { errorIf } from "./deprecation";
+import type { InternalRoom } from "./room";
+import { createRoom } from "./room";
 import type {
   Authentication,
   Client,
@@ -8,7 +10,6 @@ import type {
   Room,
   RoomInitializers,
 } from "./types";
-import { deprecateIf } from "./utils";
 
 type EnterOptions<TPresence, TStorage> = Resolve<
   // Enter options are just room initializers, plus an internal option
@@ -67,15 +68,13 @@ export function createClient(options: ClientOptions): Client {
       return internalRoom.room;
     }
 
-    deprecateIf(
+    errorIf(
       options.defaultPresence,
-      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultPresence"
+      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP"
     );
-    deprecateIf(
+    errorIf(
       options.defaultStorageRoot,
-      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP",
-      "defaultStorageRoot"
+      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
     internalRoom = createRoom(

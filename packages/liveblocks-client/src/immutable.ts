@@ -1,10 +1,10 @@
 import { AbstractCrdt } from "./AbstractCrdt";
+import type { Json } from "./json";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { Lson, LsonObject } from "./lson";
-import type { Json } from "./json";
 import type { StorageUpdate } from "./types";
 import { findNonSerializableValue } from "./utils";
 
