@@ -24,14 +24,14 @@ export function prepareTestsConflicts<T extends LsonObject>(
     root2: LiveObject<T>;
     room2: Room;
     room1: Room;
-    room1Updates: JsonStorageUpdate[][];
-    room2Updates: JsonStorageUpdate[][];
+    updates1: JsonStorageUpdate[][];
+    updates2: JsonStorageUpdate[][];
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
      */
     assert: (jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) => void;
-    socketUtils: {
+    wsUtils: {
       flushSocket1Messages: () => Promise<void>;
       flushSocket2Messages: () => Promise<void>;
     };
@@ -162,9 +162,9 @@ export function prepareTestsConflicts<T extends LsonObject>(
         room2,
         root1,
         root2,
-        room1Updates,
-        room2Updates,
-        socketUtils,
+        updates1: room1Updates,
+        updates2: room2Updates,
+        wsUtils: socketUtils,
         assert,
       });
       client1.leave(roomName);
