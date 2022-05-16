@@ -116,23 +116,32 @@ export function prepareTestsConflicts<T extends LsonObject>(
       },
       flushSocket1Messages: async () => {
         sockets[0].resumeSend();
+        // Waiting until every messages are received by all clients.
+        // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(1000);
       },
       flushSocket2Messages: async () => {
         sockets[1].resumeSend();
+        // Waiting until every messages are received by all clients.
+        // We don't have a public way to know if everything has been received so we have to rely on time
         await wait(1000);
       },
     };
 
+    // Waiting until every messages are received by all clients.
+    // We don't have a public way to know if everything has been received so we have to rely on time
     await wait(1000);
 
     socketUtils.pauseAllSockets();
 
     try {
       await callback({ room1, room2, root1, root2, socketUtils, assert });
+      client1.leave(roomName);
+      client2.leave(roomName);
     } catch (er) {
       client1.leave(roomName);
       client2.leave(roomName);
+      throw er;
     }
   };
 }

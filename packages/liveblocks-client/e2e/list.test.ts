@@ -123,7 +123,7 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
+    test(
       "remote set conflicts with a set via undo",
       prepareTestsConflicts(
         {
@@ -172,7 +172,7 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
+    test(
       "remote set conflicts with an insert via undo",
       prepareTestsConflicts(
         {
@@ -391,7 +391,7 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
+    test(
       "remote move conflicts with set via undo",
       prepareTestsConflicts(
         {
@@ -726,7 +726,7 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
+    test(
       "remote insert conflicts with another insert via undo",
       prepareTestsConflicts(
         {
@@ -751,7 +751,7 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test.skip(
+    test(
       "undo insert + redo insert / delete",
       prepareTestsConflicts(
         {
@@ -777,9 +777,12 @@ describe("LiveList conflicts", () => {
 
           await socketUtils.flushSocket2Messages();
 
-          assert({ list: [] }, { list: ["A"] }); // CONFLICT
+          console.log(root1.get("list").toArray(), root2.get("list").toArray());
+
+          assert({ list: [] }, { list: [] }); // CONFLICT
         }
-      )
+      ),
+      100000
     );
   });
 });

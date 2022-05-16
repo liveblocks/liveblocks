@@ -365,9 +365,48 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
-        // Local delete after set (explicit)
+        if (itemIndexAtPosition !== -1) {
+          // Shift position of existing item
+          const shiftedPosition = makePosition(
+            op.parentKey!,
+            this._items.length > itemIndexAtPosition + 1
+              ? this._items[itemIndexAtPosition + 1]?._getParentKeyOrThrow()
+              : undefined
+          );
+
+          this._items[itemIndexAtPosition]._setParentLink(
+            this,
+            shiftedPosition
+          );
+        }
+
+        const newItem = creationOpToLiveStructure(op);
+
+        newItem._attach(op.id, this._doc!);
+        newItem._setParentLink(this, op.parentKey!);
+
+        this._items.push(newItem);
+        this._items.sort((itemA, itemB) =>
+          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+        );
+
+        const newIndex = this._items.findIndex(
+          (entry) => entry._getParentKeyOrThrow() === op.parentKey!
+        );
+
         return {
-          modified: false,
+          modified: {
+            node: this,
+            type: "LiveList",
+            updates: [
+              {
+                index: newIndex,
+                type: "set",
+                item: newItem instanceof LiveRegister ? newItem.data : newItem,
+              },
+            ],
+          },
+          reverse: [],
         };
       }
     }
@@ -518,9 +557,48 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
-        // Local delete after set (explicit)
+        if (itemIndexAtPosition !== -1) {
+          // Shift position of existing item
+          const shiftedPosition = makePosition(
+            key,
+            this._items.length > itemIndexAtPosition + 1
+              ? this._items[itemIndexAtPosition + 1]?._getParentKeyOrThrow()
+              : undefined
+          );
+
+          this._items[itemIndexAtPosition]._setParentLink(
+            this,
+            shiftedPosition
+          );
+        }
+
+        const newItem = creationOpToLiveStructure(op);
+
+        newItem._attach(op.id, this._doc!);
+        newItem._setParentLink(this, key);
+
+        this._items.push(newItem);
+        this._items.sort((itemA, itemB) =>
+          compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
+        );
+
+        const newIndex = this._items.findIndex(
+          (entry) => entry._getParentKeyOrThrow() === key
+        );
+
         return {
-          modified: false,
+          modified: {
+            node: this,
+            type: "LiveList",
+            updates: [
+              {
+                index: newIndex,
+                type: "insert",
+                item: newItem instanceof LiveRegister ? newItem.data : newItem,
+              },
+            ],
+          },
+          reverse: [],
         };
       }
     }
