@@ -307,18 +307,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       } else {
         if (itemIndexAtPosition !== -1) {
-          // Shift position of existing item
-          const shiftedPosition = makePosition(
-            op.parentKey!,
-            this._items.length > itemIndexAtPosition + 1
-              ? this._items[itemIndexAtPosition + 1]?._getParentKeyOrThrow()
-              : undefined
-          );
-
-          this._items[itemIndexAtPosition]._setParentLink(
-            this,
-            shiftedPosition
-          );
+          this._shiftItemPosition(itemIndexAtPosition, op.parentKey!);
         }
 
         const { newItem, newIndex } = this._createAttachItemAndSort(
@@ -352,11 +341,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     if (existingItemIndex !== -1) {
       // If change is remote => assign a temporary position to existing child until we get the fix from the backend
-      const shiftedPosition = makePosition(
-        key,
-        this._items[existingItemIndex + 1]?._getParentKeyOrThrow()
-      );
-      this._items[existingItemIndex]._setParentLink(this, shiftedPosition);
+      this._shiftItemPosition(existingItemIndex, key);
     }
 
     this._items.push(child);
@@ -390,18 +375,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         const oldPositionIndex = this._items.indexOf(existingItem);
         if (itemIndexAtPosition !== -1) {
-          // Shift position of existing item
-          const shiftedPosition = makePosition(
-            key,
-            this._items.length > itemIndexAtPosition + 1
-              ? this._items[itemIndexAtPosition + 1]?._getParentKeyOrThrow()
-              : undefined
-          );
-
-          this._items[itemIndexAtPosition]._setParentLink(
-            this,
-            shiftedPosition
-          );
+          this._shiftItemPosition(itemIndexAtPosition, key);
         }
 
         existingItem._setParentLink(this, key);
@@ -447,18 +421,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       } else {
         if (itemIndexAtPosition !== -1) {
-          // Shift position of existing item
-          const shiftedPosition = makePosition(
-            key,
-            this._items.length > itemIndexAtPosition + 1
-              ? this._items[itemIndexAtPosition + 1]?._getParentKeyOrThrow()
-              : undefined
-          );
-
-          this._items[itemIndexAtPosition]._setParentLink(
-            this,
-            shiftedPosition
-          );
+          this._shiftItemPosition(itemIndexAtPosition, key);
         }
 
         const { newItem, newIndex } = this._createAttachItemAndSort(op, key);
@@ -1297,6 +1260,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
 
     return { newItem, newIndex };
+  }
+
+  _shiftItemPosition(index: number, key: string) {
+    const shiftedPosition = makePosition(
+      key,
+      this._items.length > index + 1
+        ? this._items[index + 1]?._getParentKeyOrThrow()
+        : undefined
+    );
+
+    this._items[index]._setParentLink(this, shiftedPosition);
   }
 }
 
