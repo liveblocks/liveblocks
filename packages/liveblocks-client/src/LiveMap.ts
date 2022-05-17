@@ -4,13 +4,13 @@ import { errorIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
+  LiveMapUpdates,
+  Lson,
   Op,
   SerializedCrdt,
   SerializedCrdtWithId,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import type { Lson } from "./lson";
-import type { LiveMapUpdates } from "./types";
+} from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,

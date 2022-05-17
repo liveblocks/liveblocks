@@ -16,16 +16,15 @@ import {
   withDateNow,
 } from "../test/utils";
 import { lsonToJson } from "./immutable";
-import type { SerializedCrdtWithId } from "./live";
+import { LiveList } from "./LiveList";
+import { createRoom, defaultState, makeStateMachine } from "./room";
+import type { Authentication, Others, SerializedCrdtWithId } from "./types";
 import {
   ClientMsgCode,
   CrdtType,
   ServerMsgCode,
   WebsocketCloseCodes,
-} from "./live";
-import { LiveList } from "./LiveList";
-import { createRoom, defaultState, makeStateMachine } from "./room";
-import type { Authentication, Others } from "./types";
+} from "./types";
 
 const defaultContext = {
   roomId: "room-id",

@@ -6,9 +6,9 @@ import {
   reconnect,
 } from "../test/utils";
 import { LiveList } from ".";
-import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveObject } from "./LiveObject";
+import type { SerializedCrdtWithId } from "./types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
 
 describe("LiveObject", () => {
   describe("roomId", () => {

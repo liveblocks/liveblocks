@@ -1,18 +1,20 @@
 import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
-import type { Json, JsonObject } from "../src/json";
-import type {
-  ClientMsg,
-  Op,
-  SerializedCrdtWithId,
-  ServerMsg,
-} from "../src/live";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/live";
-import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
-import type { Authentication } from "../src/types";
+import type {
+  Authentication,
+  ClientMsg,
+  Json,
+  JsonObject,
+  LsonObject,
+  Op,
+  SerializedCrdtWithId,
+  ServerMsg,
+  ToJson,
+} from "../src/types";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
 import type { JsonStorageUpdate } from "./updatesUtils";
 import { serializeUpdateToJson } from "./updatesUtils";
