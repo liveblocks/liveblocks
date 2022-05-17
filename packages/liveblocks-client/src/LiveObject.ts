@@ -4,20 +4,18 @@ import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
-  Op,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  UpdateObjectOp,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import type {
   JsonObject,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
   LsonObject,
+  Op,
+  SerializedCrdt,
+  SerializedCrdtWithId,
   ToJson,
   UpdateDelta,
+  UpdateObjectOp,
 } from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,

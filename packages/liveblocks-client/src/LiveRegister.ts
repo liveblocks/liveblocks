@@ -2,12 +2,12 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import type {
   CreateOp,
+  Json,
   Op,
   SerializedCrdt,
   SerializedCrdtWithId,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import type { Json } from "./types";
+} from "./types";
+import { CrdtType, OpCode } from "./types";
 
 /**
  * @internal

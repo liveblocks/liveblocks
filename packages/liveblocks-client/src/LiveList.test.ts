@@ -11,11 +11,11 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../test/utils";
-import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
+import type { SerializedCrdtWithId } from "./types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
 
 describe("LiveList", () => {
   describe("not attached", () => {

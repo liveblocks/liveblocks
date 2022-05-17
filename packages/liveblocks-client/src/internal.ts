@@ -23,17 +23,10 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { comparePosition, makePosition } from "./position";
-export type { Resolve, RoomInitializers } from "./types";
 export type {
+  BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
-  FetchStorageClientMsg,
-  UpdatePresenceClientMsg,
-  UpdateStorageClientMsg,
-} from "./types/ClientMsg";
-export { ClientMsgCode } from "./types/ClientMsg";
-export { parseJson } from "./types/Json";
-export type {
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
@@ -41,28 +34,27 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  FetchStorageClientMsg,
+  InitialDocumentStateServerMsg,
   Op,
-  SetParentKeyOp,
-  UpdateObjectOp,
-} from "./types/Op";
-export { OpCode } from "./types/Op";
-export type {
+  Resolve,
+  RoomInitializers,
+  RoomStateServerMsg,
   SerializedCrdt,
+  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
-} from "./types/SerializedCrdt";
-export { CrdtType } from "./types/SerializedCrdt";
-export type {
-  BroadcastedEventServerMsg,
-  InitialDocumentStateServerMsg,
-  RoomStateServerMsg,
-  SerializedCrdtWithId,
   ServerMsg,
+  SetParentKeyOp,
+  UpdateObjectOp,
+  UpdatePresenceClientMsg,
   UpdatePresenceServerMsg,
+  UpdateStorageClientMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-} from "./types/ServerMsg";
-export { ServerMsgCode } from "./types/ServerMsg";
+} from "./types";
+export { ClientMsgCode, CrdtType, OpCode, ServerMsgCode } from "./types";
+export { parseJson } from "./types/Json";

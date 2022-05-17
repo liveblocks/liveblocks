@@ -1,8 +1,8 @@
 import each from "jest-each";
 
 import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
-import type { SerializedCrdt } from "./live";
-import { CrdtType, OpCode } from "./live";
+import type { SerializedCrdt } from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
   compact,
   findNonSerializableValue,

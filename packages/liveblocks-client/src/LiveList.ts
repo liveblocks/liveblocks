@@ -1,17 +1,19 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { LiveRegister } from "./LiveRegister";
+import { comparePosition as compare, makePosition } from "./position";
 import type {
   CreateListOp,
   CreateOp,
+  LiveListUpdateDelta,
+  LiveListUpdates,
+  Lson,
   Op,
   SerializedCrdt,
   SerializedCrdtWithId,
   SerializedList,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import { LiveRegister } from "./LiveRegister";
-import { comparePosition as compare, makePosition } from "./position";
-import type { LiveListUpdateDelta, LiveListUpdates, Lson } from "./types";
+} from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
