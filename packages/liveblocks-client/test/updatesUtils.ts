@@ -1,11 +1,11 @@
-import type { Lson, LsonObject, LiveMap, StorageUpdate, Json } from "../src";
+import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "../src";
 import { lsonToJson } from "../src/immutable";
 import type { ToJson } from "../src/lson";
 import type {
+  LiveListUpdateDelta,
+  LiveListUpdates,
   LiveObjectUpdateDelta,
   UpdateDelta,
-  LiveListUpdates,
-  LiveListUpdateDelta,
 } from "../src/types";
 
 export type JsonStorageUpdate =
@@ -128,7 +128,7 @@ export function listUpdate<TItem extends Lson>(
   return {
     type: "LiveList",
     node: items,
-    updates: updates,
+    updates,
   };
 }
 

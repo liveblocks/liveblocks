@@ -625,7 +625,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             updates: [
               {
                 index: newIndex,
-                previousIndex: previousIndex,
+                previousIndex,
                 item: child instanceof LiveRegister ? child.data : child,
                 type: "move",
               },
@@ -889,7 +889,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         type: "LiveList",
         updates: [
           {
-            index: index,
+            index,
             item: value instanceof LiveRegister ? value.data : value,
             type: "insert",
           },

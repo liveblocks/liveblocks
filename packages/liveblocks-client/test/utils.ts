@@ -14,7 +14,8 @@ import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
 import type { Authentication } from "../src/types";
 import { remove } from "../src/utils";
-import { JsonStorageUpdate, serializeUpdateToJson } from "./updatesUtils";
+import type { JsonStorageUpdate } from "./updatesUtils";
+import { serializeUpdateToJson } from "./updatesUtils";
 
 /**
  * Deep-clones a JSON-serializable value.
