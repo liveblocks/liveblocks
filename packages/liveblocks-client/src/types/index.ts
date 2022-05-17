@@ -1,8 +1,8 @@
-import type { Json, JsonObject } from "./json";
-import type { LiveList } from "./LiveList";
-import type { LiveMap } from "./LiveMap";
-import type { LiveObject } from "./LiveObject";
-import type { Lson, LsonObject } from "./lson";
+import type { LiveList } from "../LiveList";
+import type { LiveMap } from "../LiveMap";
+import type { LiveObject } from "../LiveObject";
+import type { Json, JsonObject } from "./Json";
+import type { Lson, LsonObject } from "./Lson";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -634,3 +634,6 @@ export type Room = {
    */
   batch: (fn: () => void) => void;
 };
+
+export type { Json, JsonObject } from "./Json";
+export type { Lson, LsonObject, ToJson } from "./Lson";

@@ -1,7 +1,5 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { Json, JsonObject } from "./json";
-import { isJsonArray, isJsonObject, parseJson } from "./json";
 import type {
   BroadcastedEventServerMsg,
   ClientMsg,
@@ -24,7 +22,6 @@ import {
 import { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
-import type { Lson, LsonObject } from "./lson";
 import type {
   Authentication,
   AuthenticationToken,
@@ -35,6 +32,10 @@ import type {
   ConnectionState,
   ErrorCallback,
   EventCallback,
+  Json,
+  JsonObject,
+  Lson,
+  LsonObject,
   MyPresenceCallback,
   Others,
   OthersEvent,
@@ -48,6 +49,7 @@ import type {
   StorageUpdate,
   User,
 } from "./types";
+import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
 import {
   compact,
   getTreesDiffOperations,

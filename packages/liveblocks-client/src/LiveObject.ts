@@ -1,6 +1,5 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { JsonObject } from "./json";
 import type {
   CreateObjectOp,
   CreateOp,
@@ -11,10 +10,12 @@ import type {
   UpdateObjectOp,
 } from "./live";
 import { CrdtType, OpCode } from "./live";
-import type { LsonObject, ToJson } from "./lson";
 import type {
+  JsonObject,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
+  LsonObject,
+  ToJson,
   UpdateDelta,
 } from "./types";
 import {

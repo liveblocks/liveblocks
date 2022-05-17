@@ -10,9 +10,8 @@ import type {
 } from "./live";
 import { CrdtType, OpCode } from "./live";
 import { LiveRegister } from "./LiveRegister";
-import type { Lson } from "./lson";
 import { comparePosition as compare, makePosition } from "./position";
-import type { LiveListUpdateDelta, LiveListUpdates } from "./types";
+import type { LiveListUpdateDelta, LiveListUpdates, Lson } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,

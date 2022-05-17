@@ -1,7 +1,7 @@
-import type { Json } from "./json";
-import type { LiveList } from "./LiveList";
-import type { LiveMap } from "./LiveMap";
-import type { LiveObject } from "./LiveObject";
+import type { LiveList } from "../LiveList";
+import type { LiveMap } from "../LiveMap";
+import type { LiveObject } from "../LiveObject";
+import type { Json } from "./Json";
 
 /**
  * Think of Lson as a sibling of the Json data tree, except that the nested

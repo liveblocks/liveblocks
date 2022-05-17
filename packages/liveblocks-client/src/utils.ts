@@ -1,6 +1,4 @@
 import type { AbstractCrdt, Doc } from "./AbstractCrdt";
-import type { Json } from "./json";
-import { isJsonObject, parseJson } from "./json";
 import type {
   CreateOp,
   Op,
@@ -15,13 +13,16 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Lson, LsonObject } from "./lson";
 import type {
+  Json,
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,
+  Lson,
+  LsonObject,
   StorageUpdate,
 } from "./types";
+import { isJsonObject, parseJson } from "./types/Json";
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {

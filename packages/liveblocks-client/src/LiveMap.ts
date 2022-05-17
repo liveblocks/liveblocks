@@ -9,8 +9,7 @@ import type {
   SerializedCrdtWithId,
 } from "./live";
 import { CrdtType, OpCode } from "./live";
-import type { Lson } from "./lson";
-import type { LiveMapUpdates } from "./types";
+import type { LiveMapUpdates, Lson } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
