@@ -12,7 +12,7 @@ import {
   THIRD_POSITION,
 } from "../test/utils";
 import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpType, WebsocketCloseCodes } from "./live";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -447,7 +447,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "0:2",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -480,7 +480,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "0:2",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -523,7 +523,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "0:2",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -557,7 +557,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "0:2",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -600,7 +600,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:1",
           parentId: "0:1",
           parentKey: FIRST_POSITION,
@@ -640,7 +640,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:1",
           parentId: "0:1",
           parentKey: FIRST_POSITION,
@@ -655,7 +655,7 @@ describe("LiveList", () => {
       // Fix from backend
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:0",
           parentKey: SECOND_POSITION,
         },
@@ -684,7 +684,7 @@ describe("LiveList", () => {
       // Should go to pending
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:0",
           parentId: "0:1",
           parentKey: FIRST_POSITION,
@@ -699,7 +699,7 @@ describe("LiveList", () => {
       // Should go to pending
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:1",
           parentId: "0:1",
           parentKey: SECOND_POSITION,
@@ -713,7 +713,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:0",
           parentKey: THIRD_POSITION,
         },
@@ -725,7 +725,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:1",
           parentKey: FOURTH_POSITION,
         },
@@ -775,7 +775,7 @@ describe("LiveList", () => {
       // Fix from backend
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:0",
           parentKey: SECOND_POSITION,
         },
@@ -819,7 +819,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "1:1",
           parentId: "0:1",
           parentKey: FIRST_POSITION,
@@ -865,7 +865,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:1",
           parentKey: FOURTH_POSITION,
         },
@@ -877,7 +877,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:0",
           parentKey: FIFTH_POSITION,
         },
@@ -1014,7 +1014,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: "1:1",
           parentKey: FOURTH_POSITION,
         },
@@ -1047,7 +1047,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.DeleteCrdt,
+          type: OpCode.DELETE_CRDT,
           id: "1:0",
         },
       ]);
@@ -1240,12 +1240,12 @@ describe("LiveList", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
           "0:2",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: FIRST_POSITION,
             data: "a",
@@ -1254,7 +1254,7 @@ describe("LiveList", () => {
         [
           "2:0",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: SECOND_POSITION,
             data: "b",
@@ -1328,12 +1328,12 @@ describe("LiveList", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
           "0:2",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: SECOND_POSITION,
             data: "a",
@@ -1342,7 +1342,7 @@ describe("LiveList", () => {
         [
           "0:3",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: FIRST_POSITION,
             data: "b",
@@ -1404,12 +1404,12 @@ describe("LiveList", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
           "0:2",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: FIRST_POSITION,
             data: "a",
@@ -1471,7 +1471,7 @@ describe("LiveList", () => {
             opId: "1:0",
             parentId: "0:1",
             parentKey: SECOND_POSITION,
-            type: OpType.CreateObject,
+            type: OpCode.CREATE_OBJECT,
           },
         ],
       });

@@ -10,7 +10,7 @@ import type {
   SerializedCrdtWithId,
   UpdateObjectOp,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import type { LsonObject, ToJson } from "./lson";
 import type {
   LiveObjectUpdateDelta,
@@ -70,7 +70,7 @@ export class LiveObject<
       id: this._id,
       opId: doc?.generateOpId(),
       intent,
-      type: OpType.CreateObject,
+      type: OpCode.CREATE_OBJECT,
       parentId,
       parentKey,
       data: {},
@@ -97,7 +97,7 @@ export class LiveObject<
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.Object) {
+    if (item.type !== CrdtType.OBJECT) {
       throw new Error(
         `Tried to deserialize a record but item type is "${item.type}"`
       );
@@ -194,12 +194,12 @@ export class LiveObject<
       previousValue._detach();
     } else if (previousValue === undefined) {
       reverse = [
-        { type: OpType.DeleteObjectKey, id: this._id!, key: key as string },
+        { type: OpCode.DELETE_OBJECT_KEY, id: this._id!, key: key as string },
       ];
     } else {
       reverse = [
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           id: this._id!,
           data: { [key]: previousValue },
         } as any, // TODO
@@ -276,9 +276,9 @@ export class LiveObject<
    * @internal
    */
   _apply(op: Op, isLocal: boolean): ApplyResult {
-    if (op.type === OpType.UpdateObject) {
+    if (op.type === OpCode.UPDATE_OBJECT) {
       return this._applyUpdate(op, isLocal);
-    } else if (op.type === OpType.DeleteObjectKey) {
+    } else if (op.type === OpCode.DELETE_OBJECT_KEY) {
       return this._applyDeleteObjectKey(op);
     }
 
@@ -298,7 +298,7 @@ export class LiveObject<
     }
 
     return {
-      type: CrdtType.Object,
+      type: CrdtType.OBJECT,
       parentId: this._parent?._id,
       parentKey: this._parentKey,
       data,
@@ -309,7 +309,7 @@ export class LiveObject<
     let isModified = false;
     const reverse: Op[] = [];
     const reverseUpdate: UpdateObjectOp = {
-      type: OpType.UpdateObject,
+      type: OpCode.UPDATE_OBJECT,
       id: this._id!,
       data: {},
     };
@@ -323,7 +323,7 @@ export class LiveObject<
       } else if (oldValue !== undefined) {
         reverseUpdate.data[key] = oldValue;
       } else if (oldValue === undefined) {
-        reverse.push({ type: OpType.DeleteObjectKey, id: this._id!, key });
+        reverse.push({ type: OpCode.DELETE_OBJECT_KEY, id: this._id!, key });
       }
     }
 
@@ -393,7 +393,7 @@ export class LiveObject<
     } else if (oldValue !== undefined) {
       reverse = [
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           id: this._id!,
           data: { [key]: oldValue },
         },
@@ -464,7 +464,7 @@ export class LiveObject<
     } else {
       reverse = [
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           data: { [keyAsString]: oldValue },
           id: this._id,
         },
@@ -485,7 +485,7 @@ export class LiveObject<
     this._doc.dispatch(
       [
         {
-          type: OpType.DeleteObjectKey,
+          type: OpCode.DELETE_OBJECT_KEY,
           key: keyAsString,
           id: this._id,
           opId: this._doc!.generateOpId(),
@@ -529,7 +529,7 @@ export class LiveObject<
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
-      type: OpType.UpdateObject,
+      type: OpCode.UPDATE_OBJECT,
       data: {},
     };
 
@@ -542,7 +542,7 @@ export class LiveObject<
         reverseOps.push(...oldValue._serialize(this._id, key));
         oldValue._detach();
       } else if (oldValue === undefined) {
-        reverseOps.push({ type: OpType.DeleteObjectKey, id: this._id, key });
+        reverseOps.push({ type: OpCode.DELETE_OBJECT_KEY, id: this._id, key });
       } else {
         reverseUpdateOp.data[key] = oldValue;
       }
@@ -579,7 +579,7 @@ export class LiveObject<
       ops.unshift({
         opId,
         id: this._id,
-        type: OpType.UpdateObject,
+        type: OpCode.UPDATE_OBJECT,
         data: updatedProps,
       });
     }

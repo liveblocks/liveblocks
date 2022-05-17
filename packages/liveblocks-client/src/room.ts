@@ -3,22 +3,22 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { Json, JsonObject } from "./json";
 import { isJsonArray, isJsonObject, parseJson } from "./json";
 import type {
-  ClientMessage,
-  EventMessage,
-  InitialDocumentStateMessage,
+  BroadcastedEventServerMsg,
+  ClientMsg,
+  InitialDocumentStateServerMsg,
   Op,
-  RoomStateMessage,
+  RoomStateServerMsg,
   SerializedCrdt,
   SerializedCrdtWithId,
-  ServerMessage,
-  UpdatePresenceMessage,
-  UserJoinMessage,
-  UserLeftMessage,
+  ServerMsg,
+  UpdatePresenceServerMsg,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
 } from "./live";
 import {
-  ClientMessageType,
-  OpType,
-  ServerMessageType,
+  ClientMsgCode,
+  OpCode,
+  ServerMsgCode,
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
@@ -226,7 +226,7 @@ export type State<TPresence extends JsonObject> = {
   lastFlushTime: number;
   buffer: {
     presence: Presence | null;
-    messages: ClientMessage<TPresence>[];
+    messages: ClientMsg<TPresence>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -282,7 +282,7 @@ export type Effects<TPresence extends JsonObject> = {
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMessage<TPresence>[]): void;
+  send(messages: ClientMsg<TPresence>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -327,9 +327,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           .catch((er: any) => authenticationFailure(er));
       }
     },
-    send(
-      messageOrMessages: ClientMessage<TPresence> | ClientMessage<TPresence>[]
-    ) {
+    send(messageOrMessages: ClientMsg<TPresence> | ClientMsg<TPresence>[]) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
       }
@@ -377,7 +375,9 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return genericSubscribe(cb);
   }
 
-  function createOrUpdateRootFromMessage(message: InitialDocumentStateMessage) {
+  function createOrUpdateRootFromMessage(
+    message: InitialDocumentStateServerMsg
+  ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
@@ -626,9 +626,9 @@ export function makeStateMachine<TPresence extends JsonObject>(
           }
 
           if (
-            op.type === OpType.CreateList ||
-            op.type === OpType.CreateMap ||
-            op.type === OpType.CreateObject
+            op.type === OpCode.CREATE_LIST ||
+            op.type === OpCode.CREATE_MAP ||
+            op.type === OpCode.CREATE_OBJECT
           ) {
             createdNodeIds.add(applyOpResult.modified.node._id!);
           }
@@ -644,9 +644,9 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
 
     switch (op.type) {
-      case OpType.DeleteObjectKey:
-      case OpType.UpdateObject:
-      case OpType.DeleteCrdt: {
+      case OpCode.DELETE_OBJECT_KEY:
+      case OpCode.UPDATE_OBJECT:
+      case OpCode.DELETE_CRDT: {
         const item = state.items.get(op.id);
 
         if (item == null) {
@@ -655,7 +655,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         return item._apply(op, isLocal);
       }
-      case OpType.SetParentKey: {
+      case OpCode.SET_PARENT_KEY: {
         const item = state.items.get(op.id);
 
         if (item == null) {
@@ -672,10 +672,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
         }
         return { modified: false };
       }
-      case OpType.CreateObject:
-      case OpType.CreateList:
-      case OpType.CreateMap:
-      case OpType.CreateRegister: {
+      case OpCode.CREATE_OBJECT:
+      case OpCode.CREATE_LIST:
+      case OpCode.CREATE_MAP:
+      case OpCode.CREATE_REGISTER: {
         const parent = state.items.get(op.parentId!);
         if (parent == null) {
           return { modified: false };
@@ -873,7 +873,7 @@ See v0.13 release notes for more information.
   }
 
   function onUpdatePresenceMessage(
-    message: UpdatePresenceMessage<TPresence>
+    message: UpdatePresenceServerMsg<TPresence>
   ): OthersEvent | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
@@ -912,8 +912,8 @@ See v0.13 release notes for more information.
     };
   }
 
-  function onUserLeftMessage(message: UserLeftMessage): OthersEvent | null {
-    const userLeftMessage: UserLeftMessage = message;
+  function onUserLeftMessage(message: UserLeftServerMsg): OthersEvent | null {
+    const userLeftMessage: UserLeftServerMsg = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
       delete state.users[userLeftMessage.actor];
@@ -922,7 +922,7 @@ See v0.13 release notes for more information.
     return null;
   }
 
-  function onRoomStateMessage(message: RoomStateMessage): OthersEvent {
+  function onRoomStateMessage(message: RoomStateServerMsg): OthersEvent {
     const newUsers: { [connectionId: number]: User } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
@@ -944,13 +944,13 @@ See v0.13 release notes for more information.
     }
   }
 
-  function onEvent(message: EventMessage) {
+  function onEvent(message: BroadcastedEventServerMsg) {
     for (const listener of state.listeners.event) {
       listener({ connectionId: message.actor, event: message.event });
     }
   }
 
-  function onUserJoinedMessage(message: UserJoinMessage): OthersEvent {
+  function onUserJoinedMessage(message: UserJoinServerMsg): OthersEvent {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
@@ -962,7 +962,7 @@ See v0.13 release notes for more information.
       // Send current presence to new user
       // TODO: Consider storing it on the backend
       state.buffer.messages.push({
-        type: ClientMessageType.UpdatePresence,
+        type: ClientMsgCode.UPDATE_PRESENCE,
         data: state.me as TPresence,
         //             ^^^^^^^^^^^^
         //             TODO: Soon, state.buffer.presence will become
@@ -976,18 +976,16 @@ See v0.13 release notes for more information.
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMessage<TPresence> | null {
+  function parseServerMessage(data: Json): ServerMsg<TPresence> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMessage<TPresence>;
+    return data as ServerMsg<TPresence>;
     //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(
-    text: string
-  ): ServerMessage<TPresence>[] | null {
+  function parseServerMessages(text: string): ServerMsg<TPresence>[] | null {
     const data: Json | undefined = parseJson(text);
     if (data === undefined) {
       return null;
@@ -1017,33 +1015,33 @@ See v0.13 release notes for more information.
 
     for (const message of messages) {
       switch (message.type) {
-        case ServerMessageType.UserJoined: {
+        case ServerMsgCode.USER_JOINED: {
           updates.others.push(onUserJoinedMessage(message));
           break;
         }
-        case ServerMessageType.UpdatePresence: {
+        case ServerMsgCode.UPDATE_PRESENCE: {
           const othersPresenceUpdate = onUpdatePresenceMessage(message);
           if (othersPresenceUpdate) {
             updates.others.push(othersPresenceUpdate);
           }
           break;
         }
-        case ServerMessageType.Event: {
+        case ServerMsgCode.BROADCASTED_EVENT: {
           onEvent(message);
           break;
         }
-        case ServerMessageType.UserLeft: {
+        case ServerMsgCode.USER_LEFT: {
           const event = onUserLeftMessage(message);
           if (event) {
             updates.others.push(event);
           }
           break;
         }
-        case ServerMessageType.RoomState: {
+        case ServerMsgCode.ROOM_STATE: {
           updates.others.push(onRoomStateMessage(message));
           break;
         }
-        case ServerMessageType.InitialStorageState: {
+        case ServerMsgCode.INITIAL_STORAGE_STATE: {
           // createOrUpdateRootFromMessage function could add ops to offlineOperations.
           // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
           const offlineOps = new Map(state.offlineOperations);
@@ -1052,7 +1050,7 @@ See v0.13 release notes for more information.
           _getInitialStateResolver?.();
           break;
         }
-        case ServerMessageType.UpdateStorage: {
+        case ServerMsgCode.UPDATE_STORAGE: {
           const applyResult = apply(message.ops, false);
           applyResult.updates.storageUpdates.forEach((value, key) => {
             updates.storageUpdates.set(
@@ -1162,7 +1160,7 @@ See v0.13 release notes for more information.
       state.lastConnectionId = state.connection.id;
 
       if (state.root) {
-        state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
+        state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       }
       tryFlushing();
     } else {
@@ -1214,15 +1212,15 @@ See v0.13 release notes for more information.
       return;
     }
 
-    const messages: ClientMessage<TPresence>[] = [];
+    const messages: ClientMsg<TPresence>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
     const result = apply(ops, true);
 
     messages.push({
-      type: ClientMessageType.UpdateStorage,
-      ops: ops,
+      type: ClientMsgCode.UPDATE_STORAGE,
+      ops,
     });
 
     notify(result.updates);
@@ -1273,10 +1271,10 @@ See v0.13 release notes for more information.
   }
 
   function flushDataToMessages(state: State<TPresence>) {
-    const messages: ClientMessage<TPresence>[] = [];
+    const messages: ClientMsg<TPresence>[] = [];
     if (state.buffer.presence) {
       messages.push({
-        type: ClientMessageType.UpdatePresence,
+        type: ClientMsgCode.UPDATE_PRESENCE,
         data: state.buffer.presence as unknown as TPresence,
         //                          ^^^^^^^^^^^^^^^^^^^^^^^
         //                          TODO: In 0.18, state.buffer.presence will
@@ -1289,7 +1287,7 @@ See v0.13 release notes for more information.
     }
     if (state.buffer.storageOperations.length > 0) {
       messages.push({
-        type: ClientMessageType.UpdateStorage,
+        type: ClientMsgCode.UPDATE_STORAGE,
         ops: state.buffer.storageOperations,
       });
     }
@@ -1342,7 +1340,7 @@ See v0.13 release notes for more information.
     }
 
     state.buffer.messages.push({
-      type: ClientMessageType.ClientEvent,
+      type: ClientMsgCode.BROADCAST_EVENT,
       event,
     });
     tryFlushing();
@@ -1368,7 +1366,7 @@ See v0.13 release notes for more information.
     }
 
     if (_getInitialStatePromise == null) {
-      state.buffer.messages.push({ type: ClientMessageType.FetchStorage });
+      state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)

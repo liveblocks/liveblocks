@@ -3,27 +3,27 @@ import type { Json, JsonObject } from "./json";
 /**
  * Messages that can be sent from the server to the client.
  */
-export type ServerMessage<TPresence extends JsonObject> =
+export type ServerMsg<TPresence extends JsonObject> =
   // For Presence
-  | UpdatePresenceMessage<TPresence> // Broadcasted
-  | UserJoinMessage // Broadcasted
-  | UserLeftMessage // Broadcasted
-  | EventMessage // Broadcasted
-  | RoomStateMessage // For a single client
+  | UpdatePresenceServerMsg<TPresence> // Broadcasted
+  | UserJoinServerMsg // Broadcasted
+  | UserLeftServerMsg // Broadcasted
+  | BroadcastedEventServerMsg // Broadcasted
+  | RoomStateServerMsg // For a single client
 
   // For Storage
-  | InitialDocumentStateMessage // For a single client
-  | UpdateStorageMessage; // Broadcasted
+  | InitialDocumentStateServerMsg // For a single client
+  | UpdateStorageServerMsg; // Broadcasted
 
-export enum ServerMessageType {
-  UpdatePresence = 100,
-  UserJoined = 101,
-  UserLeft = 102,
-  Event = 103,
-  RoomState = 104,
+export enum ServerMsgCode {
+  UPDATE_PRESENCE = 100,
+  USER_JOINED = 101,
+  USER_LEFT = 102,
+  BROADCASTED_EVENT = 103,
+  ROOM_STATE = 104,
 
-  InitialStorageState = 200,
-  UpdateStorage = 201,
+  INITIAL_STORAGE_STATE = 200,
+  UPDATE_STORAGE = 201,
 }
 
 /**
@@ -31,8 +31,8 @@ export enum ServerMessageType {
  * joining the Room, to provide the initial state of the Room. The payload
  * includes a list of all other Users that already are in the Room.
  */
-export type RoomStateMessage = {
-  type: ServerMessageType.RoomState;
+export type RoomStateServerMsg = {
+  type: ServerMsgCode.ROOM_STATE;
   users: {
     [actor: number]: {
       id?: string;
@@ -52,8 +52,8 @@ export type RoomStateMessage = {
  * those cases, the `targetActor` field indicates the newly connected client,
  * so all other existing clients can ignore this broadcasted message.
  */
-export type UpdatePresenceMessage<TPresence extends JsonObject> = {
-  type: ServerMessageType.UpdatePresence;
+export type UpdatePresenceServerMsg<TPresence extends JsonObject> = {
+  type: ServerMsgCode.UPDATE_PRESENCE;
   /**
    * The User whose Presence has changed.
    */
@@ -76,8 +76,8 @@ export type UpdatePresenceMessage<TPresence extends JsonObject> = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a new User has joined the Room.
  */
-export type UserJoinMessage = {
-  type: ServerMessageType.UserJoined;
+export type UserJoinServerMsg = {
+  type: ServerMsgCode.USER_JOINED;
   actor: number;
   /**
    * The id of the User that has been set in the authentication endpoint.
@@ -95,8 +95,8 @@ export type UserJoinMessage = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a new User has left the Room.
  */
-export type UserLeftMessage = {
-  type: ServerMessageType.UserLeft;
+export type UserLeftServerMsg = {
+  type: ServerMsgCode.USER_LEFT;
   actor: number;
 };
 
@@ -104,8 +104,8 @@ export type UserLeftMessage = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a User broadcasted an Event to everyone in the Room.
  */
-export type EventMessage = {
-  type: ServerMessageType.Event;
+export type BroadcastedEventServerMsg = {
+  type: ServerMsgCode.BROADCASTED_EVENT;
   /**
    * The User who broadcasted the Event.
    */
@@ -124,8 +124,8 @@ export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
  * joining the Room, to provide the initial Storage state of the Room. The
  * payload includes the entire Storage document.
  */
-export type InitialDocumentStateMessage = {
-  type: ServerMessageType.InitialStorageState;
+export type InitialDocumentStateServerMsg = {
+  type: ServerMsgCode.INITIAL_STORAGE_STATE;
   items: SerializedCrdtWithId[];
 };
 
@@ -136,76 +136,76 @@ export type InitialDocumentStateMessage = {
  * The payload of this message contains a list of Ops (aka incremental
  * mutations to make to the initially loaded document).
  */
-export type UpdateStorageMessage = {
-  type: ServerMessageType.UpdateStorage;
+export type UpdateStorageServerMsg = {
+  type: ServerMsgCode.UPDATE_STORAGE;
   ops: Op[];
 };
 
 /**
  * Messages that can be sent from the client to the server.
  */
-export type ClientMessage<TPresence extends JsonObject> =
-  | ClientEventMessage
-  | UpdatePresenceClientMessage<TPresence>
-  | UpdateStorageClientMessage
-  | FetchStorageClientMessage;
+export type ClientMsg<TPresence extends JsonObject> =
+  | BroadcastEventClientMsg
+  | UpdatePresenceClientMsg<TPresence>
+  | UpdateStorageClientMsg
+  | FetchStorageClientMsg;
 
-export enum ClientMessageType {
-  UpdatePresence = 100,
-  ClientEvent = 103,
+export enum ClientMsgCode {
+  UPDATE_PRESENCE = 100,
+  BROADCAST_EVENT = 103,
 
-  FetchStorage = 200,
-  UpdateStorage = 201,
+  FETCH_STORAGE = 200,
+  UPDATE_STORAGE = 201,
 }
 
-export type ClientEventMessage = {
-  type: ClientMessageType.ClientEvent;
+export type BroadcastEventClientMsg = {
+  type: ClientMsgCode.BROADCAST_EVENT;
   event: Json;
 };
 
-export type UpdatePresenceClientMessage<TPresence extends JsonObject> = {
-  type: ClientMessageType.UpdatePresence;
+export type UpdatePresenceClientMsg<TPresence extends JsonObject> = {
+  type: ClientMsgCode.UPDATE_PRESENCE;
   data: TPresence;
   targetActor?: number;
 };
 
-export type UpdateStorageClientMessage = {
-  type: ClientMessageType.UpdateStorage;
+export type UpdateStorageClientMsg = {
+  type: ClientMsgCode.UPDATE_STORAGE;
   ops: Op[];
 };
 
-export type FetchStorageClientMessage = {
-  type: ClientMessageType.FetchStorage;
+export type FetchStorageClientMsg = {
+  type: ClientMsgCode.FETCH_STORAGE;
 };
 
 export enum CrdtType {
-  Object = 0,
-  List = 1,
-  Map = 2,
-  Register = 3,
+  OBJECT = 0,
+  LIST = 1,
+  MAP = 2,
+  REGISTER = 3,
 }
 
 export type SerializedObject = {
-  type: CrdtType.Object;
+  type: CrdtType.OBJECT;
   parentId?: string;
   parentKey?: string;
   data: JsonObject;
 };
 
 export type SerializedList = {
-  type: CrdtType.List;
+  type: CrdtType.LIST;
   parentId: string;
   parentKey: string;
 };
 
 export type SerializedMap = {
-  type: CrdtType.Map;
+  type: CrdtType.MAP;
   parentId: string;
   parentKey: string;
 };
 
 export type SerializedRegister = {
-  type: CrdtType.Register;
+  type: CrdtType.REGISTER;
   parentId: string;
   parentKey: string;
   data: Json;
@@ -217,20 +217,20 @@ export type SerializedCrdt =
   | SerializedMap
   | SerializedRegister;
 
-export enum OpType {
-  Init = 0,
-  SetParentKey = 1,
-  CreateList = 2,
-  UpdateObject = 3,
-  CreateObject = 4,
-  DeleteCrdt = 5,
-  DeleteObjectKey = 6,
-  CreateMap = 7,
-  CreateRegister = 8,
+export enum OpCode {
+  INIT = 0,
+  SET_PARENT_KEY = 1,
+  CREATE_LIST = 2,
+  UPDATE_OBJECT = 3,
+  CREATE_OBJECT = 4,
+  DELETE_CRDT = 5,
+  DELETE_OBJECT_KEY = 6,
+  CREATE_MAP = 7,
+  CREATE_REGISTER = 8,
 }
 
 /**
- * These operations are the payload for {@link UpdateStorageMessage} messages
+ * These operations are the payload for {@link UpdateStorageServerMsg} messages
  * only.
  */
 export type Op =
@@ -252,7 +252,7 @@ export type CreateOp =
 export type UpdateObjectOp = {
   opId?: string;
   id: string;
-  type: OpType.UpdateObject;
+  type: OpCode.UPDATE_OBJECT;
   data: Partial<JsonObject>;
 };
 
@@ -260,7 +260,7 @@ export type CreateObjectOp = {
   opId?: string;
   id: string;
   intent?: "set";
-  type: OpType.CreateObject;
+  type: OpCode.CREATE_OBJECT;
   parentId?: string;
   parentKey?: string;
   data: JsonObject;
@@ -270,7 +270,7 @@ export type CreateListOp = {
   opId?: string;
   id: string;
   intent?: "set";
-  type: OpType.CreateList;
+  type: OpCode.CREATE_LIST;
   parentId: string;
   parentKey: string;
 };
@@ -279,7 +279,7 @@ export type CreateMapOp = {
   opId?: string;
   id: string;
   intent?: "set";
-  type: OpType.CreateMap;
+  type: OpCode.CREATE_MAP;
   parentId: string;
   parentKey: string;
 };
@@ -288,7 +288,7 @@ export type CreateRegisterOp = {
   opId?: string;
   id: string;
   intent?: "set";
-  type: OpType.CreateRegister;
+  type: OpCode.CREATE_REGISTER;
   parentId: string;
   parentKey: string;
   data: Json;
@@ -297,20 +297,20 @@ export type CreateRegisterOp = {
 export type DeleteCrdtOp = {
   opId?: string;
   id: string;
-  type: OpType.DeleteCrdt;
+  type: OpCode.DELETE_CRDT;
 };
 
 export type SetParentKeyOp = {
   opId?: string;
   id: string;
-  type: OpType.SetParentKey;
+  type: OpCode.SET_PARENT_KEY;
   parentKey: string;
 };
 
 export type DeleteObjectKeyOp = {
   opId?: string;
   id: string;
-  type: OpType.DeleteObjectKey;
+  type: OpCode.DELETE_OBJECT_KEY;
   key: string;
 };
 

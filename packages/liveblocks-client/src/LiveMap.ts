@@ -8,7 +8,7 @@ import type {
   SerializedCrdt,
   SerializedCrdtWithId,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import type { Lson } from "./lson";
 import type { LiveMapUpdates } from "./types";
 import {
@@ -84,7 +84,7 @@ export class LiveMap<
     const op: CreateMapOp = {
       id: this._id,
       opId: doc?.generateOpId(),
-      type: OpType.CreateMap,
+      type: OpCode.CREATE_MAP,
       intent,
       parentId,
       parentKey,
@@ -107,7 +107,7 @@ export class LiveMap<
     parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.Map) {
+    if (item.type !== CrdtType.MAP) {
       throw new Error(
         `Tried to deserialize a map but item type is "${item.type}"`
       );
@@ -174,7 +174,7 @@ export class LiveMap<
       reverse = previousValue._serialize(this._id!, key);
       previousValue._detach();
     } else {
-      reverse = [{ type: OpType.DeleteCrdt, id }];
+      reverse = [{ type: OpCode.DELETE_CRDT, id }];
     }
 
     child._setParentLink(this, key);
@@ -230,7 +230,7 @@ export class LiveMap<
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
-      type: CrdtType.Map,
+      type: CrdtType.MAP,
       parentId: this._parent?._id!,
       parentKey: this._parentKey!,
     };
@@ -281,7 +281,7 @@ export class LiveMap<
         item._serialize(this._id, key, this._doc),
         oldValue
           ? oldValue._serialize(this._id, key)
-          : [{ type: OpType.DeleteCrdt, id }],
+          : [{ type: OpCode.DELETE_CRDT, id }],
         storageUpdates
       );
     }
@@ -327,7 +327,7 @@ export class LiveMap<
       this._doc.dispatch(
         [
           {
-            type: OpType.DeleteCrdt,
+            type: OpCode.DELETE_CRDT,
             id: item._id,
             opId: this._doc.generateOpId(),
           },

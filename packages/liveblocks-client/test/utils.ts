@@ -2,12 +2,12 @@ import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import type { Json, JsonObject } from "../src/json";
 import type {
-  ClientMessage,
+  ClientMsg,
   Op,
   SerializedCrdtWithId,
-  ServerMessage,
+  ServerMsg,
 } from "../src/live";
-import { ClientMessageType, CrdtType, ServerMessageType } from "../src/live";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/live";
 import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
@@ -136,7 +136,7 @@ async function prepareRoomWithStorage<
 >(
   items: SerializedCrdtWithId[],
   actor: number = 0,
-  onSend: (messages: ClientMessage<TPresence>[]) => void = () => {},
+  onSend: (messages: ClientMsg<TPresence>[]) => void = () => {},
   defaultStorage = {}
 ) {
   const effects = mockEffects();
@@ -155,7 +155,7 @@ async function prepareRoomWithStorage<
   const clonedItems = deepClone(items);
   machine.onMessage(
     serverMessage({
-      type: ServerMessageType.InitialStorageState,
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: clonedItems,
     })
   );
@@ -174,7 +174,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   actor: number = 0,
   defaultStorage = {}
 ) {
-  const messagesSent: ClientMessage<never>[] = [];
+  const messagesSent: ClientMsg<never>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
     never,
@@ -182,7 +182,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   >(
     items,
     actor,
-    (messages: ClientMessage<never>[]) => {
+    (messages: ClientMsg<never>[]) => {
       messagesSent.push(...messages);
     },
     defaultStorage
@@ -197,13 +197,13 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     ws,
     assert: (data: ToJson<TStorage>) =>
       expect(lsonToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMessage<JsonObject>[]) => {
+    assertMessagesSent: (messages: ClientMsg<JsonObject>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdateStorage,
+          type: ServerMsgCode.UPDATE_STORAGE,
           ops,
         })
       ),
@@ -228,27 +228,27 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
   const { machine, storage, ws } = await prepareRoomWithStorage<
     never,
     TStorage
-  >(items, currentActor, (messages: ClientMessage<never>[]) => {
+  >(items, currentActor, (messages: ClientMsg<never>[]) => {
     for (const message of messages) {
-      if (message.type === ClientMessageType.UpdateStorage) {
+      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         operations.push(...message.ops);
 
         refMachine.onMessage(
           serverMessage({
-            type: ServerMessageType.UpdateStorage,
+            type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
         machine.onMessage(
           serverMessage({
-            type: ServerMessageType.UpdateStorage,
+            type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
-      } else if (message.type === ClientMessageType.UpdatePresence) {
+      } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
         refMachine.onMessage(
           serverMessage({
-            type: ServerMessageType.UpdatePresence,
+            type: ServerMsgCode.UPDATE_PRESENCE,
             data: message.data,
             actor: currentActor,
           })
@@ -299,7 +299,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     if (newItems) {
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.InitialStorageState,
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: newItems,
         })
       );
@@ -326,7 +326,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdateStorage,
+          type: ServerMsgCode.UPDATE_STORAGE,
           ops,
         })
       ),
@@ -347,7 +347,7 @@ export async function reconnect(
 
   machine.onMessage(
     serverMessage({
-      type: ServerMessageType.InitialStorageState,
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: newItems,
     })
   );
@@ -368,19 +368,19 @@ export async function prepareStorageImmutableTest<
   const { machine, storage } = await prepareRoomWithStorage<
     TPresence,
     TStorage
-  >(items, actor, (messages: ClientMessage<TPresence>[]) => {
+  >(items, actor, (messages: ClientMsg<TPresence>[]) => {
     for (const message of messages) {
-      if (message.type === ClientMessageType.UpdateStorage) {
+      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
         refMachine.onMessage(
           serverMessage({
-            type: ServerMessageType.UpdateStorage,
+            type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
         machine.onMessage(
           serverMessage({
-            type: ServerMessageType.UpdateStorage,
+            type: ServerMsgCode.UPDATE_STORAGE,
             ops: message.ops,
           })
         );
@@ -444,7 +444,7 @@ export function createSerializedObject(
   return [
     id,
     {
-      type: CrdtType.Object,
+      type: CrdtType.OBJECT,
       data,
       parentId,
       parentKey,
@@ -460,7 +460,7 @@ export function createSerializedList(
   return [
     id,
     {
-      type: CrdtType.List,
+      type: CrdtType.LIST,
       parentId,
       parentKey,
     },
@@ -475,7 +475,7 @@ export function createSerializedMap(
   return [
     id,
     {
-      type: CrdtType.Map,
+      type: CrdtType.MAP,
       parentId,
       parentKey,
     },
@@ -491,7 +491,7 @@ export function createSerializedRegister(
   return [
     id,
     {
-      type: CrdtType.Register,
+      type: CrdtType.REGISTER,
       parentId,
       parentKey,
       data,
@@ -510,7 +510,7 @@ export function mockEffects(): Effects<JsonObject> {
   };
 }
 
-export function serverMessage(message: ServerMessage<JsonObject>) {
+export function serverMessage(message: ServerMsg<JsonObject>) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });
