@@ -56,5 +56,11 @@ export type {
   UserJoinServerMsg,
   UserLeftServerMsg,
 } from "./types";
-export { ClientMsgCode, CrdtType, OpCode, ServerMsgCode } from "./types";
+export {
+  ClientMsgCode,
+  CrdtType,
+  OpCode,
+  ServerMsgCode,
+  WebsocketCloseCodes,
+} from "./types";
 export { parseJson } from "./types/Json";
