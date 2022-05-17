@@ -4,10 +4,10 @@ import {
   createSerializedObject,
   prepareStorageTest,
 } from "../test/utils";
-import { OpCode } from "./live";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
+import { OpCode } from "./types";
 
 describe("Storage", () => {
   describe("subscribe generic", () => {

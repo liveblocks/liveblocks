@@ -1,22 +1,21 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import type { JsonObject } from "./json";
 import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
+  JsonObject,
+  LiveObjectUpdateDelta,
+  LiveObjectUpdates,
+  LsonObject,
   Op,
   SerializedCrdt,
   SerializedCrdtWithId,
-  UpdateObjectOp,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import type { LsonObject, ToJson } from "./lson";
-import type {
-  LiveObjectUpdateDelta,
-  LiveObjectUpdates,
+  ToJson,
   UpdateDelta,
+  UpdateObjectOp,
 } from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveStructure,
   deserialize,
