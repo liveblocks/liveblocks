@@ -10,7 +10,7 @@ import type {
   SerializedMap,
   SerializedObject,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -42,13 +42,13 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
 
 export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
   switch (op.type) {
-    case OpType.CreateRegister:
+    case OpCode.CREATE_REGISTER:
       return new LiveRegister(op.data);
-    case OpType.CreateObject:
+    case OpCode.CREATE_OBJECT:
       return new LiveObject(op.data);
-    case OpType.CreateMap:
+    case OpCode.CREATE_MAP:
       return new LiveMap();
-    case OpType.CreateList:
+    case OpCode.CREATE_LIST:
       return new LiveList();
   }
 }
@@ -72,24 +72,24 @@ export function deserialize(
   doc: Doc
 ): AbstractCrdt {
   switch (entry[1].type) {
-    case CrdtType.Object: {
+    case CrdtType.OBJECT: {
       return LiveObject._deserialize(entry, parentToChildren, doc);
     }
-    case CrdtType.List: {
+    case CrdtType.LIST: {
       return LiveList._deserialize(
         entry as [string, SerializedList],
         parentToChildren,
         doc
       );
     }
-    case CrdtType.Map: {
+    case CrdtType.MAP: {
       return LiveMap._deserialize(
         entry as [string, SerializedMap],
         parentToChildren,
         doc
       );
     }
-    case CrdtType.Register: {
+    case CrdtType.REGISTER: {
       return LiveRegister._deserialize(
         entry as [string, SerializedMap],
         parentToChildren,
@@ -160,7 +160,7 @@ export function getTreesDiffOperations(
     if (!newItems.get(id)) {
       // Delete crdt
       ops.push({
-        type: OpType.DeleteCrdt,
+        type: OpCode.DELETE_CRDT,
         id,
       });
     }
@@ -169,13 +169,13 @@ export function getTreesDiffOperations(
   newItems.forEach((crdt, id) => {
     const currentCrdt = currentItems.get(id);
     if (currentCrdt) {
-      if (crdt.type === CrdtType.Object) {
+      if (crdt.type === CrdtType.OBJECT) {
         if (
           JSON.stringify(crdt.data) !==
           JSON.stringify((currentCrdt as SerializedObject).data)
         ) {
           ops.push({
-            type: OpType.UpdateObject,
+            type: OpCode.UPDATE_OBJECT,
             id,
             data: crdt.data,
           });
@@ -183,7 +183,7 @@ export function getTreesDiffOperations(
       }
       if (crdt.parentKey !== currentCrdt.parentKey) {
         ops.push({
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id,
           parentKey: crdt.parentKey!,
         });
@@ -191,35 +191,35 @@ export function getTreesDiffOperations(
     } else {
       // new Crdt
       switch (crdt.type) {
-        case CrdtType.Register:
+        case CrdtType.REGISTER:
           ops.push({
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
             data: crdt.data,
           });
           break;
-        case CrdtType.List:
+        case CrdtType.LIST:
           ops.push({
-            type: OpType.CreateList,
+            type: OpCode.CREATE_LIST,
             id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
           });
           break;
-        case CrdtType.Object:
+        case CrdtType.OBJECT:
           ops.push({
-            type: OpType.CreateObject,
+            type: OpCode.CREATE_OBJECT,
             id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,
             data: crdt.data,
           });
           break;
-        case CrdtType.Map:
+        case CrdtType.MAP:
           ops.push({
-            type: OpType.CreateMap,
+            type: OpCode.CREATE_MAP,
             id,
             parentId: crdt.parentId,
             parentKey: crdt.parentKey,

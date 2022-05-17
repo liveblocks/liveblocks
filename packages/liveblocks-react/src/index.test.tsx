@@ -1,8 +1,8 @@
 import { createClient, LiveObject } from "@liveblocks/client";
 import {
-  ClientMessageType,
+  ClientMsgCode,
   CrdtType,
-  ServerMessageType,
+  ServerMsgCode,
 } from "@liveblocks/client/internal";
 import {
   act,
@@ -205,7 +205,7 @@ describe("presence", () => {
     expect(socket.sentMessages[0]).toStrictEqual(
       JSON.stringify([
         {
-          type: ClientMessageType.UpdatePresence,
+          type: ClientMsgCode.UPDATE_PRESENCE,
           data: { x: 1 },
         },
       ])
@@ -252,7 +252,7 @@ describe("presence", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
         }),
@@ -289,7 +289,7 @@ describe("presence", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 0 },
           actor: 1,
         }),
@@ -310,7 +310,7 @@ describe("presence", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { y: 0 },
           actor: 1,
         }),
@@ -359,7 +359,7 @@ describe("presence", () => {
 
   //   expect(socket.sentMessages[0]).toStrictEqual(
   //     JSON.stringify({
-  //       type: ClientMessageType.UpdatePresence,
+  //       type: ClientMsgCode.UPDATE_PRESENCE,
   //       data: { x: 1 },
   //     })
   //   );
@@ -383,7 +383,7 @@ describe("presence", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
         }),
@@ -472,8 +472,8 @@ describe("Storage", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.InitialStorageState,
-          items: [["root", { type: CrdtType.Object, data: {} }]],
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
         }),
       } as MessageEvent);
     });
@@ -519,8 +519,8 @@ describe("Storage", () => {
     act(() => {
       socket.callbacks.message[0]({
         data: JSON.stringify({
-          type: ServerMessageType.InitialStorageState,
-          items: [["root", { type: CrdtType.Object, data: {} }]],
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
         }),
       } as MessageEvent);
     });

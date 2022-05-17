@@ -81,7 +81,7 @@ export function obj(
   return [
     id,
     {
-      type: CrdtType.Object,
+      type: CrdtType.OBJECT,
       data,
       parentId,
       parentKey,
@@ -97,7 +97,7 @@ export function list(
   return [
     id,
     {
-      type: CrdtType.List,
+      type: CrdtType.LIST,
       parentId,
       parentKey,
     },
@@ -112,7 +112,7 @@ export function map(
   return [
     id,
     {
-      type: CrdtType.Map,
+      type: CrdtType.MAP,
       parentId,
       parentKey,
     },
@@ -128,7 +128,7 @@ export function register(
   return [
     id,
     {
-      type: CrdtType.Register,
+      type: CrdtType.REGISTER,
       parentId,
       parentKey,
       data,

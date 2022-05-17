@@ -7,7 +7,7 @@ import type {
   SerializedCrdt,
   SerializedCrdtWithId,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 
 /**
  * @internal
@@ -32,7 +32,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     _parentToChildren: Map<string, SerializedCrdtWithId[]>,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.Register) {
+    if (item.type !== CrdtType.REGISTER) {
       throw new Error(
         `Tried to deserialize a map but item type is "${item.type}"`
       );
@@ -60,7 +60,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
 
     return [
       {
-        type: OpType.CreateRegister,
+        type: OpCode.CREATE_REGISTER,
         opId: doc?.generateOpId(),
         id: this._id,
         intent,
@@ -76,7 +76,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
-      type: CrdtType.Register,
+      type: CrdtType.REGISTER,
       parentId: this._parent?._id!,
       parentKey: this._parentKey!,
       data: this.data,

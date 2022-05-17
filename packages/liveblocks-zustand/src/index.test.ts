@@ -1,14 +1,14 @@
 import type { JsonObject, Presence } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
-  RoomStateMessage,
+  RoomStateServerMsg,
   SerializedCrdtWithId,
-  ServerMessage,
+  ServerMsg,
 } from "@liveblocks/client/internal";
 import {
-  ClientMessageType,
-  OpType,
-  ServerMessageType,
+  ClientMsgCode,
+  OpCode,
+  ServerMsgCode,
 } from "@liveblocks/client/internal";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
@@ -144,12 +144,12 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
 
   socket.callbacks.message[0]!({
     data: JSON.stringify({
-      type: ServerMessageType.InitialStorageState,
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
       items: options.items,
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMessage<JsonObject>) {
+  function sendMessage(serverMessage: ServerMsg<JsonObject>) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -203,7 +203,7 @@ describe("middleware", () => {
 
     socket.callbacks.message[0]!({
       data: JSON.stringify({
-        type: ServerMessageType.InitialStorageState,
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
         items: [obj("root", {})],
       }),
     } as MessageEvent);
@@ -246,11 +246,11 @@ describe("middleware", () => {
       expect(socket.sentMessages[0]).toEqual(
         JSON.stringify([
           {
-            type: ClientMessageType.UpdatePresence,
+            type: ClientMsgCode.UPDATE_PRESENCE,
             data: { cursor: { x: 0, y: 0 } },
           },
           {
-            type: ClientMessageType.FetchStorage,
+            type: ClientMsgCode.FETCH_STORAGE,
           },
         ])
       );
@@ -260,7 +260,7 @@ describe("middleware", () => {
       expect(socket.sentMessages[1]).toEqual(
         JSON.stringify([
           {
-            type: ClientMessageType.UpdatePresence,
+            type: ClientMsgCode.UPDATE_PRESENCE,
             data: { cursor: { x: 100, y: 100 } },
           },
         ])
@@ -281,11 +281,11 @@ describe("middleware", () => {
       expect(socket.sentMessages[0]).toEqual(
         JSON.stringify([
           {
-            type: ClientMessageType.UpdatePresence,
+            type: ClientMsgCode.UPDATE_PRESENCE,
             data: { cursor: { x: 0, y: 0 } },
           },
           {
-            type: ClientMessageType.FetchStorage,
+            type: ClientMsgCode.FETCH_STORAGE,
           },
         ])
       );
@@ -305,11 +305,11 @@ describe("middleware", () => {
       expect(socket.sentMessages[0]).toEqual(
         JSON.stringify([
           {
-            type: ClientMessageType.UpdatePresence,
+            type: ClientMsgCode.UPDATE_PRESENCE,
             data: { cursor: { x: 0, y: 0 } },
           },
           {
-            type: ClientMessageType.FetchStorage,
+            type: ClientMsgCode.FETCH_STORAGE,
           },
         ])
       );
@@ -321,7 +321,7 @@ describe("middleware", () => {
       expect(socket.sentMessages[1]).toEqual(
         JSON.stringify([
           {
-            type: ClientMessageType.UpdatePresence,
+            type: ClientMsgCode.UPDATE_PRESENCE,
             data: { cursor: { x: 1, y: 1 } },
           },
         ])
@@ -341,13 +341,13 @@ describe("middleware", () => {
 
       socket.callbacks.message[0]!({
         data: JSON.stringify({
-          type: ServerMessageType.RoomState,
+          type: ServerMsgCode.ROOM_STATE,
           users: {
             "1": {
               info: { name: "Testy McTester" },
             },
           },
-        } as RoomStateMessage),
+        } as RoomStateServerMsg),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
@@ -405,12 +405,12 @@ describe("middleware", () => {
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
-              type: ClientMessageType.UpdateStorage,
+              type: ClientMsgCode.UPDATE_STORAGE,
               ops: [
                 {
                   opId: "0:0",
                   id: "root",
-                  type: OpType.UpdateObject,
+                  type: OpCode.UPDATE_OBJECT,
                   data: { value: 5 },
                 },
               ],
@@ -437,18 +437,18 @@ describe("middleware", () => {
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
-              type: ClientMessageType.UpdateStorage,
+              type: ClientMsgCode.UPDATE_STORAGE,
               ops: [
                 {
                   opId: "0:0",
                   id: "root",
-                  type: OpType.UpdateObject,
+                  type: OpCode.UPDATE_OBJECT,
                   data: { value: 5 },
                 },
                 {
                   id: "0:0",
                   opId: "0:2", // TODO: We currently have a tiny issue in LiveObject.update who generate an opId 0:1 for a potential UpdateObject
-                  type: OpType.CreateList,
+                  type: OpCode.CREATE_LIST,
                   parentId: "root",
                   parentKey: "items",
                 },
@@ -481,10 +481,10 @@ describe("middleware", () => {
         ]);
 
         sendMessage({
-          type: ServerMessageType.UpdateStorage,
+          type: ServerMsgCode.UPDATE_STORAGE,
           ops: [
             {
-              type: OpType.UpdateObject,
+              type: OpCode.UPDATE_OBJECT,
               id: "root",
               data: {
                 value: 2,
@@ -502,10 +502,10 @@ describe("middleware", () => {
         ]);
 
         sendMessage({
-          type: ServerMessageType.UpdateStorage,
+          type: ServerMsgCode.UPDATE_STORAGE,
           ops: [
             {
-              type: OpType.UpdateObject,
+              type: OpCode.UPDATE_OBJECT,
               id: "root",
               data: {
                 notMapped: "hey",
@@ -532,12 +532,12 @@ describe("middleware", () => {
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
-              type: ClientMessageType.UpdateStorage,
+              type: ClientMsgCode.UPDATE_STORAGE,
               ops: [
                 {
                   opId: "0:0",
                   id: "root",
-                  type: OpType.UpdateObject,
+                  type: OpCode.UPDATE_OBJECT,
                   data: { value: 2 },
                 },
               ],
@@ -560,12 +560,12 @@ describe("middleware", () => {
         expect(socket.sentMessages[1]).toEqual(
           JSON.stringify([
             {
-              type: ClientMessageType.UpdateStorage,
+              type: ClientMsgCode.UPDATE_STORAGE,
               ops: [
                 {
                   id: "0:0",
                   opId: "0:0",
-                  type: OpType.CreateObject,
+                  type: OpCode.CREATE_OBJECT,
                   parentId: "1:0",
                   parentKey: "!",
                   data: { text: "A" },
@@ -573,7 +573,7 @@ describe("middleware", () => {
                 {
                   id: "0:1",
                   opId: "0:1",
-                  type: OpType.CreateObject,
+                  type: OpCode.CREATE_OBJECT,
                   parentId: "1:0",
                   parentKey: '"',
                   data: { text: "B" },

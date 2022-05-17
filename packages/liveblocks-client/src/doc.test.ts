@@ -4,7 +4,7 @@ import {
   createSerializedObject,
   prepareStorageTest,
 } from "../test/utils";
-import { OpType } from "./live";
+import { OpCode } from "./live";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import type { LiveObject } from "./LiveObject";
@@ -49,13 +49,13 @@ describe("Storage", () => {
       const unsubscribe = subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpType.UpdateObject, data: { a: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpType.UpdateObject, data: { a: 2 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -80,14 +80,14 @@ describe("Storage", () => {
       const unsubscribe = subscribe(callback);
 
       applyRemoteOperations([
-        { type: OpType.UpdateObject, data: { a: 1 }, opId: "", id: "0:0" },
-        { type: OpType.UpdateObject, data: { b: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 1 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { b: 1 }, opId: "", id: "0:0" },
       ]);
 
       unsubscribe();
 
       applyRemoteOperations([
-        { type: OpType.UpdateObject, data: { a: 2 }, opId: "", id: "0:0" },
+        { type: OpCode.UPDATE_OBJECT, data: { a: 2 }, opId: "", id: "0:0" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
