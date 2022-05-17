@@ -11,7 +11,7 @@
  * https://join.team/liveblocks ;)
  */
 
-export { assertNever } from "./assert";
+export { assertNever, nn } from "./assert";
 export {
   deprecate,
   deprecateIf,
