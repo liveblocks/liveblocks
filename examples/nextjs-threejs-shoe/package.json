@@ -8,8 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.8",
-    "@liveblocks/react": "^0.16.8",
+    "@liveblocks/client": "^0.16.9",
+    "@liveblocks/react": "^0.16.9",
     "drei": "2.2.12",
     "next": "^12.1.6",
     "next-transpile-modules": "^9.0.0",

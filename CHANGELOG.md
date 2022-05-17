@@ -36,6 +36,12 @@ Various internal refactorings.
 
 ---
 
+# v0.16.9
+
+Restructures a few internals.
+
+---
+
 # v0.16.8
 
 Fix bug in private/internal code.

@@ -9,11 +9,11 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.8",
+    "@liveblocks/client": "^0.16.9",
     "@liveblocks/node": "0.3.0",
-    "@liveblocks/react": "^0.16.8",
-    "@liveblocks/redux": "^0.16.8",
-    "@liveblocks/zustand": "^0.16.8",
+    "@liveblocks/react": "^0.16.9",
+    "@liveblocks/redux": "^0.16.9",
+    "@liveblocks/zustand": "^0.16.9",
     "@reduxjs/toolkit": "1.8.1",
     "encoding": "^0.1.13",
     "next": "12.1.5",
