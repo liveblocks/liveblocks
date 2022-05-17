@@ -1,10 +1,9 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "../src";
 import { lsonToJson } from "../src/immutable";
-import type { ToJson } from "../src/lson";
 import type {
-  LiveListUpdateDelta,
   LiveListUpdates,
   LiveObjectUpdateDelta,
+  ToJson,
   UpdateDelta,
 } from "../src/types";
 
