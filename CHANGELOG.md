@@ -30,6 +30,10 @@ Various Live structures now take mandatory type params:
 
 For information, please see https://bit.ly/3Niy5aP.
 
+### Other
+
+Various internal refactorings.
+
 ---
 
 # v0.16.8
