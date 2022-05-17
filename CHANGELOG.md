@@ -32,6 +32,18 @@ For information, please see https://bit.ly/3Niy5aP.
 
 ---
 
+# v0.16.8
+
+Fix bug in private/internal code.
+
+---
+
+# v0.16.7
+
+Fix bug in private/internal code.
+
+---
+
 # v0.16.6
 
 Fix bug in example code suggested in deprecation warning.

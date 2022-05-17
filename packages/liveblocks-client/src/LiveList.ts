@@ -8,7 +8,7 @@ import type {
   SerializedCrdtWithId,
   SerializedList,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import { LiveRegister } from "./LiveRegister";
 import type { Lson } from "./lson";
 import { compare, makePosition } from "./position";
@@ -103,7 +103,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       id: this._id,
       opId: doc?.generateOpId(),
       intent,
-      type: OpType.CreateList,
+      type: OpCode.CREATE_LIST,
       parentId,
       parentKey,
     };
@@ -780,7 +780,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             {
               index: newIndex,
               item: child instanceof LiveRegister ? child.data : child,
-              previousIndex: previousIndex,
+              previousIndex,
               type: "move",
             },
           ];
@@ -829,7 +829,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
-      type: CrdtType.List,
+      type: CrdtType.LIST,
       parentId: this._parent?._id!,
       parentKey: this._parentKey!,
     };
@@ -897,7 +897,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       });
       this._doc.dispatch(
         value._serialize(this._id, position, this._doc),
-        [{ type: OpType.DeleteCrdt, id }],
+        [{ type: OpCode.DELETE_CRDT, id }],
         storageUpdates
       );
     }
@@ -1013,7 +1013,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         storageUpdates.set(this._id!, {
           node: this,
           type: "LiveList",
-          updates: [{ index: index, type: "delete" }],
+          updates: [{ index, type: "delete" }],
         });
 
         this._doc.dispatch(
@@ -1021,7 +1021,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             {
               id: childRecordId,
               opId: this._doc.generateOpId(),
-              type: OpType.DeleteCrdt,
+              type: OpCode.DELETE_CRDT,
             },
           ],
           item._serialize(this._id!, item._getParentKeyOrThrow()),

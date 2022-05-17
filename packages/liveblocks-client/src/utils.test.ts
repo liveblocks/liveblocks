@@ -2,7 +2,7 @@ import each from "jest-each";
 
 import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
 import type { SerializedCrdt } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import {
   compact,
   findNonSerializableValue,
@@ -29,12 +29,12 @@ describe("compact", () => {
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {
     const currentItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
-      ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
         "0:2",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: FIRST_POSITION,
           data: "A",
@@ -44,7 +44,7 @@ describe("getTreesDiffOperations", () => {
 
     const newItems = new Map(currentItems);
     newItems.set("1:1", {
-      type: CrdtType.Register,
+      type: CrdtType.REGISTER,
       parentId: "0:1",
       parentKey: SECOND_POSITION,
       data: "B",
@@ -54,7 +54,7 @@ describe("getTreesDiffOperations", () => {
 
     expect(ops).toEqual([
       {
-        type: OpType.CreateRegister,
+        type: OpCode.CREATE_REGISTER,
         id: "1:1",
         parentId: "0:1",
         parentKey: SECOND_POSITION,
@@ -65,12 +65,12 @@ describe("getTreesDiffOperations", () => {
 
   test("delete liveList item", () => {
     const currentItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
-      ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
         "0:2",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: FIRST_POSITION,
           data: "A",
@@ -79,7 +79,7 @@ describe("getTreesDiffOperations", () => {
       [
         "0:3",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: SECOND_POSITION,
           data: "B",
@@ -94,7 +94,7 @@ describe("getTreesDiffOperations", () => {
 
     expect(ops).toEqual([
       {
-        type: OpType.DeleteCrdt,
+        type: OpCode.DELETE_CRDT,
         id: "0:2",
       },
     ]);
@@ -102,12 +102,12 @@ describe("getTreesDiffOperations", () => {
 
   test("liveList item moved, added and deleted", () => {
     const currentItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
-      ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
         "0:2",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: FIRST_POSITION,
           data: "A",
@@ -116,7 +116,7 @@ describe("getTreesDiffOperations", () => {
       [
         "0:3",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: SECOND_POSITION,
           data: "B",
@@ -125,12 +125,12 @@ describe("getTreesDiffOperations", () => {
     ]);
 
     const newItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
-      ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
+      ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
         "0:3",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: FIRST_POSITION,
           data: "B",
@@ -139,7 +139,7 @@ describe("getTreesDiffOperations", () => {
       [
         "1:0",
         {
-          type: CrdtType.Register,
+          type: CrdtType.REGISTER,
           parentId: "0:1",
           parentKey: SECOND_POSITION,
           data: "C",
@@ -151,16 +151,16 @@ describe("getTreesDiffOperations", () => {
 
     expect(ops).toEqual([
       {
-        type: OpType.DeleteCrdt,
+        type: OpCode.DELETE_CRDT,
         id: "0:2",
       },
       {
-        type: OpType.SetParentKey,
+        type: OpCode.SET_PARENT_KEY,
         id: "0:3",
         parentKey: FIRST_POSITION,
       },
       {
-        type: OpType.CreateRegister,
+        type: OpCode.CREATE_REGISTER,
         id: "1:0",
         parentId: "0:1",
         parentKey: SECOND_POSITION,
@@ -171,11 +171,11 @@ describe("getTreesDiffOperations", () => {
 
   test("liveObject update", () => {
     const currentItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
       [
         "0:1",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:0",
           parentKey: "item",
           data: { a: 1 },
@@ -184,7 +184,7 @@ describe("getTreesDiffOperations", () => {
       [
         "0:2",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:1",
           parentKey: "subItem",
           data: { b: 1 },
@@ -193,7 +193,7 @@ describe("getTreesDiffOperations", () => {
       [
         "0:3",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:0",
           parentKey: "item2",
           data: { a: 1 },
@@ -202,12 +202,12 @@ describe("getTreesDiffOperations", () => {
     ]);
 
     const newItems = new Map<string, SerializedCrdt>([
-      ["0:0", { type: CrdtType.Object, data: {} }],
+      ["0:0", { type: CrdtType.OBJECT, data: {} }],
       [
         // different value
         "0:1",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:0",
           parentKey: "item",
           data: { a: 2 },
@@ -217,7 +217,7 @@ describe("getTreesDiffOperations", () => {
         // Different key
         "0:2",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:1",
           parentKey: "subItem",
           data: { c: 1 },
@@ -227,7 +227,7 @@ describe("getTreesDiffOperations", () => {
         // Same object
         "0:3",
         {
-          type: CrdtType.Object,
+          type: CrdtType.OBJECT,
           parentId: "0:0",
           parentKey: "item2",
           data: { a: 1 },
@@ -239,12 +239,12 @@ describe("getTreesDiffOperations", () => {
 
     expect(ops).toEqual([
       {
-        type: OpType.UpdateObject,
+        type: OpCode.UPDATE_OBJECT,
         id: "0:1",
         data: { a: 2 },
       },
       {
-        type: OpType.UpdateObject,
+        type: OpCode.UPDATE_OBJECT,
         id: "0:2",
         data: { c: 1 },
       },

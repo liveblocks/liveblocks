@@ -1,5 +1,5 @@
 import type { CreateOp, Op, SerializedCrdt } from "./live";
-import { OpType } from "./live";
+import { OpCode } from "./live";
 import type { StorageUpdate } from "./types";
 
 export type ApplyResult =
@@ -88,7 +88,7 @@ export abstract class AbstractCrdt {
    */
   _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
-      case OpType.DeleteCrdt: {
+      case OpCode.DELETE_CRDT: {
         if (this._parent != null && this._parentKey != null) {
           return this._parent._detachChild(this);
         }

@@ -7,7 +7,7 @@ import {
 } from "../test/utils";
 import { LiveList } from ".";
 import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpType, WebsocketCloseCodes } from "./live";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveObject } from "./LiveObject";
 
 describe("LiveObject", () => {
@@ -151,7 +151,7 @@ describe("LiveObject", () => {
     });
     expect(getUndoStack()[0]).toEqual([
       {
-        type: OpType.UpdateObject,
+        type: OpCode.UPDATE_OBJECT,
         id: "0:0",
         data: {
           child: null,
@@ -162,7 +162,7 @@ describe("LiveObject", () => {
     expect(operations.length).toEqual(1);
     expect(operations).toEqual([
       {
-        type: OpType.CreateObject,
+        type: OpCode.CREATE_OBJECT,
         id: "1:0",
         opId: "1:1",
         data: { a: 0 },
@@ -178,7 +178,7 @@ describe("LiveObject", () => {
     });
     expect(getUndoStack()[1]).toEqual([
       {
-        type: OpType.CreateObject,
+        type: OpCode.CREATE_OBJECT,
         id: "1:0",
         data: { a: 0 },
         parentId: "0:0",
@@ -394,7 +394,7 @@ describe("LiveObject", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.UpdateObject,
+            type: OpCode.UPDATE_OBJECT,
             data: { a: 2 },
             id: "0:0",
             opId: "external",
@@ -422,7 +422,7 @@ describe("LiveObject", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateObject,
+            type: OpCode.CREATE_OBJECT,
             data: { subA: 2 },
             id: "2:0",
             parentKey: "a",
@@ -456,7 +456,7 @@ describe("LiveObject", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateList,
+            type: OpCode.CREATE_LIST,
             id: "2:0",
             parentKey: "a",
             parentId: "0:0",
@@ -542,7 +542,7 @@ describe("LiveObject", () => {
       subscribe(root, callback);
 
       applyRemoteOperations([
-        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+        { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(0);
@@ -558,7 +558,7 @@ describe("LiveObject", () => {
       subscribe(root, callback);
 
       applyRemoteOperations([
-        { type: OpType.DeleteObjectKey, id: "0:0", key: "a" },
+        { type: OpCode.DELETE_OBJECT_KEY, id: "0:0", key: "a" },
       ]);
 
       expect(callback).toHaveBeenCalledTimes(1);
@@ -683,7 +683,7 @@ describe("LiveObject", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
           opId: "external",
@@ -737,13 +737,13 @@ describe("LiveObject", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           data: { a: 1 },
           id: "0:1",
           opId: "external1",
         },
         {
-          type: OpType.UpdateObject,
+          type: OpCode.UPDATE_OBJECT,
           data: { b: 1 },
           id: "0:2",
           opId: "external2",
@@ -777,7 +777,12 @@ describe("LiveObject", () => {
       const unsubscribe = subscribe(root, callback, { isDeep: true });
 
       applyRemoteOperations([
-        { type: OpType.DeleteObjectKey, key: "a", id: "0:1", opId: "external" },
+        {
+          type: OpCode.DELETE_OBJECT_KEY,
+          key: "a",
+          id: "0:1",
+          opId: "external",
+        },
       ]);
 
       root.get("child").delete("b");
@@ -830,11 +835,11 @@ describe("LiveObject", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
           {
-            type: CrdtType.Object,
+            type: CrdtType.OBJECT,
             data: { a: 2 },
             parentId: "0:0",
             parentKey: "obj",
@@ -888,11 +893,11 @@ describe("LiveObject", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
           {
-            type: CrdtType.Object,
+            type: CrdtType.OBJECT,
             data: { a: 1 },
             parentId: "0:0",
             parentKey: "obj",
@@ -901,7 +906,7 @@ describe("LiveObject", () => {
         [
           "0:2",
           {
-            type: CrdtType.Object,
+            type: CrdtType.OBJECT,
             data: { b: 1 },
             parentId: "0:1",
             parentKey: "subObj",
@@ -990,7 +995,7 @@ describe("LiveObject", () => {
             opId: "1:0",
             parentId: "0:1",
             parentKey: "b",
-            type: OpType.CreateObject,
+            type: OpCode.CREATE_OBJECT,
           },
         ],
       });

@@ -108,7 +108,7 @@ export function pos(codes: number[]) {
   return String.fromCharCode(...codes);
 }
 
-export function compare(posA: string, posB: string): number {
+export function comparePosition(posA: string, posB: string): number {
   const aCodes = posCodes(posA);
   const bCodes = posCodes(posB);
 

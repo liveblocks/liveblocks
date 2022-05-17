@@ -18,9 +18,9 @@ import {
 import { lsonToJson } from "./immutable";
 import type { SerializedCrdtWithId } from "./live";
 import {
-  ClientMessageType,
+  ClientMsgCode,
   CrdtType,
-  ServerMessageType,
+  ServerMsgCode,
   WebsocketCloseCodes,
 } from "./live";
 import { LiveList } from "./LiveList";
@@ -48,14 +48,14 @@ describe("room / auth", () => {
         return res(
           ctx.json({
             actor: 0,
-            token: token,
+            token,
           })
         );
       } else {
         return res(
           ctx.json({
             actor: 1,
-            token: token,
+            token,
           })
         );
       }
@@ -261,7 +261,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 } },
     ]);
   });
 
@@ -277,7 +277,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 } },
     ]);
   });
 
@@ -292,7 +292,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMessageType.UpdatePresence, data: {} },
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: {} },
     ]);
   });
 
@@ -315,7 +315,7 @@ describe("room", () => {
       defaultContext.throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMessageType.UpdatePresence, data: { x: 0 } },
+      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 } },
     ]);
     expect(state.buffer.presence).toEqual({ x: 1 });
   });
@@ -358,7 +358,7 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
-        type: ServerMessageType.UpdatePresence,
+        type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
         actor: 1,
       })
@@ -384,7 +384,7 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
-        type: ServerMessageType.UpdatePresence,
+        type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
         actor: 1,
       })
@@ -419,7 +419,7 @@ describe("room", () => {
       withDateNow(now, () => ws.open());
 
       expect(effects.send).nthCalledWith(1, [
-        { type: ClientMessageType.UpdatePresence, data: {} },
+        { type: ClientMsgCode.UPDATE_PRESENCE, data: {} },
       ]);
 
       // Event payload can be any JSON value
@@ -429,16 +429,16 @@ describe("room", () => {
       withDateNow(now + 4000, () => machine.broadcastEvent("hi"));
 
       expect(effects.send).nthCalledWith(2, [
-        { type: ClientMessageType.ClientEvent, event: { type: "EVENT" } },
+        { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
       ]);
       expect(effects.send).nthCalledWith(3, [
-        { type: ClientMessageType.ClientEvent, event: [1, 2, 3] },
+        { type: ClientMsgCode.BROADCAST_EVENT, event: [1, 2, 3] },
       ]);
       expect(effects.send).nthCalledWith(4, [
-        { type: ClientMessageType.ClientEvent, event: 42 },
+        { type: ClientMsgCode.BROADCAST_EVENT, event: 42 },
       ]);
       expect(effects.send).nthCalledWith(5, [
-        { type: ClientMessageType.ClientEvent, event: "hi" },
+        { type: ClientMsgCode.BROADCAST_EVENT, event: "hi" },
       ]);
     });
 
@@ -458,7 +458,7 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMessageType.UpdatePresence, data: {} },
+        { type: ClientMsgCode.UPDATE_PRESENCE, data: {} },
       ]);
     });
 
@@ -481,8 +481,8 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMessageType.UpdatePresence, data: {} },
-        { type: ClientMessageType.ClientEvent, event: { type: "EVENT" } },
+        { type: ClientMsgCode.UPDATE_PRESENCE, data: {} },
+        { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
       ]);
     });
   });
@@ -501,8 +501,8 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
-        type: ServerMessageType.InitialStorageState,
-        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
       })
     );
 
@@ -552,8 +552,8 @@ describe("room", () => {
 
     room.onMessage(
       serverMessage({
-        type: ServerMessageType.InitialStorageState,
-        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
       })
     );
 
@@ -692,8 +692,8 @@ describe("room", () => {
 
     room.onMessage(
       serverMessage({
-        type: ServerMessageType.InitialStorageState,
-        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
       })
     );
 
@@ -735,8 +735,8 @@ describe("room", () => {
 
     room.onMessage(
       serverMessage({
-        type: ServerMessageType.InitialStorageState,
-        items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
       })
     );
 
@@ -787,8 +787,8 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.InitialStorageState,
-          items: [["root", { type: CrdtType.Object, data: { x: 0 } }]],
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: { x: 0 } }]],
         })
       );
 
@@ -998,7 +998,7 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
         })
@@ -1008,7 +1008,7 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 3 },
           actor: 1,
         })
@@ -1040,7 +1040,7 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.Event,
+          type: ServerMsgCode.BROADCASTED_EVENT,
           event: { type: "MY_EVENT" },
           actor: 1,
         })
@@ -1095,12 +1095,12 @@ describe("room", () => {
       expect(refStorageJson).toEqual({ items: ["A"] });
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["0:1", { type: CrdtType.List, parentId: "0:0", parentKey: "items" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
           "1:0",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: "!",
             data: "A",
@@ -1144,12 +1144,12 @@ describe("room", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["2:0", { type: CrdtType.List, parentId: "0:0", parentKey: "items2" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["2:0", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items2" }],
         [
           "2:1",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "2:0",
             parentKey: FIRST_POSITION,
             data: "B",
@@ -1257,7 +1257,7 @@ describe("room", () => {
     });
   });
 
-  describe("Initial UpdatePresenceMessage", () => {
+  describe("Initial UpdatePresenceServerMsg", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
       const effects = mockEffects();
       const state = defaultState({});
@@ -1273,7 +1273,7 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.RoomState,
+          type: ServerMsgCode.ROOM_STATE,
           users: { "1": { id: undefined } },
         })
       );
@@ -1281,7 +1281,7 @@ describe("room", () => {
       // UpdatePresence sent before the initial full UpdatePresence
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
         })
@@ -1294,7 +1294,7 @@ describe("room", () => {
       // Full UpdatePresence sent as an answer to "UserJoined" message
       machine.onMessage(
         serverMessage({
-          type: ServerMessageType.UpdatePresence,
+          type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
           targetActor: 0,
@@ -1325,10 +1325,10 @@ describe("room", () => {
       });
 
       assertMessagesSent([
-        { data: {}, type: ClientMessageType.UpdatePresence },
-        { type: ClientMessageType.FetchStorage },
+        { data: {}, type: ClientMsgCode.UPDATE_PRESENCE },
+        { type: ClientMsgCode.FETCH_STORAGE },
         {
-          type: ClientMessageType.UpdateStorage,
+          type: ClientMsgCode.UPDATE_STORAGE,
           ops: [
             {
               id: "1:0",

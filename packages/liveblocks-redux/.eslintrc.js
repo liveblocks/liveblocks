@@ -30,10 +30,12 @@ module.exports = {
     "import/no-duplicates": "error",
     "@typescript-eslint/consistent-type-imports": "error",
     "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
 
     // ------------------------
     // Customized default rules
     // ------------------------
+    "object-shorthand": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       // Unused variables are fine if they start with an underscore

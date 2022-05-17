@@ -8,7 +8,7 @@ import {
   reconnect,
 } from "../test/utils";
 import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpType, WebsocketCloseCodes } from "./live";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -637,12 +637,12 @@ describe("LiveMap", () => {
       );
 
       const newInitStorage: SerializedCrdtWithId[] = [
-        ["0:0", { type: CrdtType.Object, data: {} }],
-        ["0:1", { type: CrdtType.Map, parentId: "0:0", parentKey: "map" }],
+        ["0:0", { type: CrdtType.OBJECT, data: {} }],
+        ["0:1", { type: CrdtType.MAP, parentId: "0:0", parentKey: "map" }],
         [
           "0:2",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: "first",
             data: "a",
@@ -651,7 +651,7 @@ describe("LiveMap", () => {
         [
           "2:0",
           {
-            type: CrdtType.Register,
+            type: CrdtType.REGISTER,
             parentId: "0:1",
             parentKey: "second",
             data: "b",
@@ -714,7 +714,7 @@ describe("LiveMap", () => {
             opId: "1:0",
             parentId: "0:1",
             parentKey: "el2",
-            type: OpType.CreateObject,
+            type: OpCode.CREATE_OBJECT,
           },
         ],
       });

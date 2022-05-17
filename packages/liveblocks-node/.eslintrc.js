@@ -22,6 +22,7 @@ module.exports = {
     "import/no-duplicates": "error",
     "@typescript-eslint/consistent-type-imports": "error",
     "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
 
     // ------------------------
     // Customized default rules
@@ -35,6 +36,7 @@ module.exports = {
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
+    "object-shorthand": "error",
     "no-restricted-syntax": [
       "error",
       {
