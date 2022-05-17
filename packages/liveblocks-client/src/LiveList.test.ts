@@ -1033,7 +1033,7 @@ describe("LiveList", () => {
       // Other client created "A" at the same time but was processed first by the server.
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -1046,7 +1046,7 @@ describe("LiveList", () => {
       // Other client deleted "A" right after creation.
       applyRemoteOperations([
         {
-          type: OpType.DeleteCrdt,
+          type: OpCode.DELETE_CRDT,
           id: "2:0",
           opId: "2:2",
         },
@@ -1059,7 +1059,7 @@ describe("LiveList", () => {
       // Server sends ackownledgment for "B" creation with different position/
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "1:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -1075,7 +1075,7 @@ describe("LiveList", () => {
       // Other client creates an item at the SECOND_POSITION
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:0",
           parentId: "0:0",
           parentKey: SECOND_POSITION,
@@ -1109,7 +1109,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "2:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -1120,7 +1120,7 @@ describe("LiveList", () => {
 
       applyRemoteOperations([
         {
-          type: OpType.DeleteCrdt,
+          type: OpCode.DELETE_CRDT,
           id: "2:0",
           opId: "2:2",
         },
@@ -1131,7 +1131,7 @@ describe("LiveList", () => {
       // Ack
       applyRemoteOperations([
         {
-          type: OpType.CreateRegister,
+          type: OpCode.CREATE_REGISTER,
           id: "1:0",
           parentId: "0:0",
           parentKey: FIRST_POSITION,
@@ -1547,7 +1547,7 @@ describe("LiveList", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id: "0:2",
             parentId: "0:0",
             parentKey: FIRST_POSITION,
@@ -1580,7 +1580,7 @@ describe("LiveList", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id: "0:2",
             parentId: "0:0",
             parentKey: FIRST_POSITION,
@@ -1623,7 +1623,7 @@ describe("LiveList", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id: "0:2",
             parentId: "0:0",
             parentKey: FIRST_POSITION,
@@ -1657,7 +1657,7 @@ describe("LiveList", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id: "0:2",
             parentId: "0:0",
             parentKey: FIRST_POSITION,
@@ -1700,7 +1700,7 @@ describe("LiveList", () => {
 
         applyRemoteOperations([
           {
-            type: OpType.CreateRegister,
+            type: OpCode.CREATE_REGISTER,
             id: "2:1",
             parentId: "0:1",
             parentKey: FIRST_POSITION,
