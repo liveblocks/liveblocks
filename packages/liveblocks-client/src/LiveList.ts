@@ -8,7 +8,7 @@ import type {
   SerializedCrdtWithId,
   SerializedList,
 } from "./live";
-import { CrdtType, OpType } from "./live";
+import { CrdtType, OpCode } from "./live";
 import { LiveRegister } from "./LiveRegister";
 import type { Lson } from "./lson";
 import { comparePosition as compare, makePosition } from "./position";
@@ -95,7 +95,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       id: this._id,
       opId: doc?.generateOpId(),
       intent,
-      type: OpType.CreateList,
+      type: OpCode.CREATE_LIST,
       parentId,
       parentKey,
     };
@@ -204,7 +204,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const newIndex = this._items.findIndex((entry) => entry[1] === newKey);
     return {
-      reverse: [{ type: OpType.DeleteCrdt, id }],
+      reverse: [{ type: OpCode.DELETE_CRDT, id }],
       modified: {
         node: this,
         type: "LiveList",
@@ -294,7 +294,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       },
       reverse: [
         {
-          type: OpType.SetParentKey,
+          type: OpCode.SET_PARENT_KEY,
           id: item?.[0]._id!,
           parentKey: previousKey,
         },
@@ -314,7 +314,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   _toSerializedCrdt(): SerializedCrdt {
     return {
-      type: CrdtType.List,
+      type: CrdtType.LIST,
       parentId: this._parent?._id!,
       parentKey: this._parentKey!,
     };
@@ -379,7 +379,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       });
       this._doc.dispatch(
         value._serialize(this._id, position, this._doc),
-        [{ type: OpType.DeleteCrdt, id }],
+        [{ type: OpCode.DELETE_CRDT, id }],
         storageUpdates
       );
     }
@@ -451,7 +451,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._doc.dispatch(
         [
           {
-            type: OpType.SetParentKey,
+            type: OpCode.SET_PARENT_KEY,
             id: item[0]._id!,
             opId: this._doc.generateOpId(),
             parentKey: position,
@@ -459,7 +459,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         ],
         [
           {
-            type: OpType.SetParentKey,
+            type: OpCode.SET_PARENT_KEY,
             id: item[0]._id!,
             parentKey: previousPosition,
           },
@@ -501,7 +501,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             {
               id: childRecordId,
               opId: this._doc.generateOpId(),
-              type: OpType.DeleteCrdt,
+              type: OpCode.DELETE_CRDT,
             },
           ],
           item[0]._serialize(this._id!, item[1]),
@@ -523,7 +523,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item[0]._detach();
         const childId = item[0]._id;
         if (childId) {
-          ops.push({ id: childId, type: OpType.DeleteCrdt });
+          ops.push({ id: childId, type: OpCode.DELETE_CRDT });
           reverseOps.push(...item[0]._serialize(this._id!, item[1]));
 
           updateDelta.push({ index: i, type: "delete" });
