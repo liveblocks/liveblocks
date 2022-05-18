@@ -292,12 +292,20 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
     }
 
-    return {
-      type: CrdtType.OBJECT,
-      parentId: this._parent?._id,
-      parentKey: this._parentKey,
-      data,
-    };
+    if (this._parent?._id && this._parentKey) {
+      return {
+        type: CrdtType.OBJECT,
+        parentId: this._parent._id,
+        parentKey: this._parentKey,
+        data,
+      };
+    } else {
+      // Root object has no parent ID/key
+      return {
+        type: CrdtType.OBJECT,
+        data,
+      };
+    }
   }
 
   private _applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {

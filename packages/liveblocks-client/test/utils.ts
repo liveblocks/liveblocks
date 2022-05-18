@@ -440,17 +440,26 @@ export async function prepareStorageImmutableTest<
 export function createSerializedObject(
   id: string,
   data: Record<string, any>,
+  parentId: string,
+  parentKey: string
+): SerializedCrdtWithId;
+export function createSerializedObject(
+  id: string,
+  data: Record<string, any>
+): SerializedCrdtWithId;
+export function createSerializedObject(
+  id: string,
+  data: Record<string, any>,
   parentId?: string,
   parentKey?: string
 ): SerializedCrdtWithId {
   return [
     id,
-    {
-      type: CrdtType.OBJECT,
-      data,
-      parentId,
-      parentKey,
-    },
+    parentId !== undefined && parentKey !== undefined
+      ? // Normal case
+        { type: CrdtType.OBJECT, data, parentId, parentKey }
+      : // Root object
+        { type: CrdtType.OBJECT, data },
   ];
 }
 

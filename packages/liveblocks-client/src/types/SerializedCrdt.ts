@@ -8,15 +8,23 @@ export enum CrdtType {
 }
 
 export type SerializedCrdt =
+  | SerializedRootObject
   | SerializedObject
   | SerializedList
   | SerializedMap
   | SerializedRegister;
 
+export type SerializedRootObject = {
+  type: CrdtType.OBJECT;
+  parentId?: undefined;
+  parentKey?: undefined;
+  data: JsonObject;
+};
+
 export type SerializedObject = {
   type: CrdtType.OBJECT;
-  parentId?: string;
-  parentKey?: string;
+  parentId: string;
+  parentKey: string;
   data: JsonObject;
 };
 
