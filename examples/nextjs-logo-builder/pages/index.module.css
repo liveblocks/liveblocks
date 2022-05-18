@@ -123,7 +123,9 @@
 
 .input {
   width: 100%;
-  padding: 10px 14px;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 11px 15px 9px;
   color: var(--color-foreground-primary);
   background-color: var(--color-background-input) !important;
   border-radius: 6px;
