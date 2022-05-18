@@ -676,6 +676,7 @@ export type {
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
 } from "./SerializedCrdt";
 export { CrdtType } from "./SerializedCrdt";
 export type {

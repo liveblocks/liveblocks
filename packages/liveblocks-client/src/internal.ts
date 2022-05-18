@@ -46,6 +46,7 @@ export type {
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
   ServerMsg,
   SetParentKeyOp,
   UpdateObjectOp,
