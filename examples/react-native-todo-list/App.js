@@ -7,6 +7,7 @@
  */
 
 import React from 'react';
+import {useState} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -16,34 +17,86 @@ import {
   useColorScheme,
   View,
   TextInput,
+  TouchableOpacity,
 } from 'react-native';
 
-import {useOthers, useUpdateMyPresence} from '@liveblocks/react';
+import {useOthers, useUpdateMyPresence, useList} from '@liveblocks/react';
 
 function WhoIsHere() {
   const others = useOthers();
   return <Text>There are {others.count} other users online</Text>;
 }
 
-const App = () => {
-  const backgroundStyle = {
-    backgroundColor: 'rgb(143, 243, 243)',
-    flex: 1,
-    padding: '15%',
-  };
+function SomeoneIsTyping() {
+  const someoneIsTyping = useOthers()
+    .toArray()
+    .some(user => user.presence?.isTyping);
 
   return (
-    <SafeAreaView style={backgroundStyle}>
+    <Text style={{fontStyle: 'italic'}}>
+      {someoneIsTyping ? 'Someone is typing...' : ''}
+    </Text>
+  );
+}
+
+const App = () => {
+  const todos = useList('todos');
+  const [currentText, setCurrentText] = useState('');
+  const updateMyPresence = useUpdateMyPresence();
+  const handleOnSubmitEditing = () => {
+    todos?.push(currentText);
+    setCurrentText('');
+  };
+
+  if (todos == null) {
+    return <Text>Loading...</Text>;
+  }
+
+  return (
+    <SafeAreaView style={styles.backgroundContainer}>
       <ScrollView
         contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
+        style={styles.backgroundContainer}>
         <View
           style={{
             flex: 1,
-            backgroundColor: 'white',
           }}>
           <WhoIsHere></WhoIsHere>
-          <TextInput style={styles.input} />
+          <TextInput
+            style={styles.textInput}
+            value={currentText}
+            onChangeText={e => {
+              setCurrentText(e);
+              updateMyPresence({isTyping: true});
+            }}
+            onSubmitEditing={handleOnSubmitEditing}
+            onKeyPress={e => {
+              if (e.key === 'Enter') {
+                updateMyPresence({isTyping: false});
+                setCurrentText('');
+              }
+            }}
+            onBlur={() => updateMyPresence({isTyping: false})}
+          />
+          <SomeoneIsTyping></SomeoneIsTyping>
+
+          {todos.map((todo, index) => {
+            return (
+              <View
+                key={index}
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  height: 40,
+                }}>
+                <Text style={styles.todoText}>{todo}</Text>
+                <TouchableOpacity onPress={() => todos.delete(index)}>
+                  <Text style={styles.deleteButton}>X</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -51,27 +104,35 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
+  backgroundContainer: {
+    backgroundColor: 'rgb(243, 243, 243)',
+    flex: 1,
+    padding: '15%',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  textInput: {
+    height: 50,
+    width: '100%',
+    borderColor: 'lightgrey',
+    borderWidth: 2,
+    borderRadius: 8,
+    padding: 5,
+    color: 'black',
+    marginVertical: '5%',
+    backgroundColor: 'white',
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  todoText: {
+    fontSize: 16,
+    fontWeight: '500',
   },
   input: {
     height: 40,
     margin: 12,
     borderWidth: 1,
     padding: 10,
+  },
+  deleteButton: {
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
 
