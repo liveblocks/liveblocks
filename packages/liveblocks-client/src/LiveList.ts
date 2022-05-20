@@ -235,14 +235,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    const itemIndexAtPosition = this._items.findIndex(
+    const indexOfItemWithSamePosition = this._items.findIndex(
       (item) => item._parentKey === op.parentKey
     );
     const existingItem = this._items.find((item) => item._id === op.id);
 
+    // If item already exists...
     if (existingItem != null) {
-      // Normal case
+      // ...and if it's at the right position
       if (existingItem._parentKey === op.parentKey) {
+        // ... do nothing
         if (delta.length > 0) {
           return {
             modified: Update(this, delta),
@@ -253,41 +255,41 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             modified: false,
           };
         }
-      } else {
-        // Item exists but not at the right position (local move after set)
-
-        if (itemIndexAtPosition !== -1) {
-          this._implicitlyDeletedItems.add(this._items[itemIndexAtPosition]);
-          this._items.splice(itemIndexAtPosition, 1);
-
-          delta.push(UpdateDelete(itemIndexAtPosition));
-        }
-
-        const previousIndex = this._items.findIndex(
-          (item) => item._parentKey === existingItem._parentKey
-        );
-
-        existingItem._setParentLink(this, op.parentKey!);
-        sortListItem(this._items);
-
-        const newIndex = this._items.findIndex(
-          (item) => item._parentKey === existingItem._parentKey
-        );
-
-        if (newIndex !== previousIndex) {
-          delta.push(updateMove(previousIndex, newIndex, existingItem));
-        }
-
-        return {
-          modified: delta.length > 0 ? Update(this, delta) : false,
-          reverse: [],
-        };
       }
+
+      // Item exists but not at the right position (local move after set)
+      if (indexOfItemWithSamePosition !== -1) {
+        this._implicitlyDeletedItems.add(
+          this._items[indexOfItemWithSamePosition]
+        );
+        this._items.splice(indexOfItemWithSamePosition, 1);
+        delta.push(UpdateDelete(indexOfItemWithSamePosition));
+      }
+
+      const previousIndex = this._items.findIndex(
+        (item) => item._parentKey === existingItem._parentKey
+      );
+
+      existingItem._setParentLink(this, op.parentKey!);
+      sortListItem(this._items);
+
+      const newIndex = this._items.findIndex(
+        (item) => item._parentKey === existingItem._parentKey
+      );
+
+      if (newIndex !== previousIndex) {
+        delta.push(updateMove(previousIndex, newIndex, existingItem));
+      }
+
+      return {
+        modified: delta.length > 0 ? Update(this, delta) : false,
+        reverse: [],
+      };
     } else {
+      // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
       const orphan = this._doc!.getItem(op.id);
 
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
-        // Implicit delete after set
         orphan._setParentLink(this, op.parentKey!);
         this._implicitlyDeletedItems.delete(orphan);
 
@@ -300,23 +302,28 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         return {
           modified: Update(this, [
-            UpdateSet(recreatedItemIndex, orphan),
+            // If there is an item at this position, update is a set, else it's an insert
+            indexOfItemWithSamePosition === -1
+              ? UpdateInsert(recreatedItemIndex, orphan)
+              : UpdateSet(recreatedItemIndex, orphan),
             ...delta,
           ]),
           reverse: [],
         };
       } else {
-        if (itemIndexAtPosition !== -1) {
-          this._shiftItemPosition(itemIndexAtPosition, op.parentKey!);
-        }
-
         const { newItem, newIndex } = this._createAttachItemAndSort(
           op,
           op.parentKey!
         );
 
         return {
-          modified: Update(this, [UpdateSet(newIndex, newItem), ...delta]),
+          modified: Update(this, [
+            // If there is an item at this position, update is a set, else it's an insert
+            indexOfItemWithSamePosition === -1
+              ? UpdateInsert(newIndex, newItem)
+              : UpdateSet(newIndex, newItem),
+            ...delta,
+          ]),
           reverse: [],
         };
       }
