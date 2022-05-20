@@ -177,9 +177,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           modified: Update(this, [UpdateSet(existingItemIndex, child)]),
           reverse: [],
         };
-      }
-      // item at position to be replaced is different from server
-      else {
+      } else {
+        // item at position to be replaced is different from server
         this._implicitlyDeletedItems.add(existingItem);
 
         this._items[existingItemIndex] = child;
@@ -187,17 +186,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const delta: LiveListUpdateDelta[] = [
           UpdateSet(existingItemIndex, child),
         ];
+
         // Even if we implicitly delete the item at the set position
         // We still need to delete the item that was orginaly deleted by the set
-        if (op.deletedId) {
-          const item = this._doc.getItem(op.deletedId);
+        const deleteDelta = this._detachItemAssociatedToSetOperation(
+          op.deletedId
+        );
 
-          if (item) {
-            const update = this._detachChild(item);
-            if (update.modified !== false) {
-              delta.push(...update.modified.updates);
-            }
-          }
+        if (deleteDelta) {
+          delta.push(deleteDelta);
         }
 
         return {
@@ -211,24 +208,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._items.sort((itemA, itemB) =>
         compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
       );
+
       const updates: LiveListUpdateDelta[] = [];
-
-      if (op.deletedId) {
-        const itemToDelete = this._doc.getItem(op.deletedId);
-
-        // Item to be replaced has been moved.
-        if (itemToDelete) {
-          const deletedItemIndex = this._items.findIndex(
-            (entry) => entry._getParentKeyOrThrow() === itemToDelete._parentKey
-          );
-
-          itemToDelete._apply(
-            { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
-            true
-          );
-
-          updates.push(UpdateDelete(deletedItemIndex));
-        }
+      const deleteDelta = this._detachItemAssociatedToSetOperation(
+        op.deletedId
+      );
+      if (deleteDelta) {
+        updates.push(deleteDelta);
       }
 
       const newIndex = this._items.findIndex(
@@ -245,19 +231,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   _applySetAck(op: CreateOp): ApplyResult {
-    const deletedId = op.deletedId;
-
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
-    if (deletedId) {
-      const deletedItem = this._doc!.getItem(deletedId);
-      if (deletedItem) {
-        const update = this._detachChild(deletedItem);
-        if (update.modified !== false) {
-          delta.push(...update.modified.updates);
-        }
-      }
+    const deletedDelta = this._detachItemAssociatedToSetOperation(op.deletedId);
+    if (deletedDelta) {
+      delta.push(deletedDelta);
     }
 
     const itemIndexAtPosition = this._items.findIndex(
@@ -350,6 +329,31 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
     }
+  }
+
+  /**
+   * Returns the index of the deleted item or null
+   */
+  _detachItemAssociatedToSetOperation(
+    deletedId?: string
+  ): LiveListUpdateDelta | null {
+    if (deletedId == null || this._doc == null) {
+      return null;
+    }
+
+    const deletedItem = this._doc.getItem(deletedId);
+
+    if (deletedItem == null) {
+      return null;
+    }
+
+    const result = this._detachChild(deletedItem);
+
+    if (result.modified === false) {
+      return null;
+    }
+
+    return result.modified.updates[0];
   }
 
   _applyRemoteInsert(op: CreateOp): ApplyResult {
@@ -506,7 +510,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
-    const existingItemIndex = this._items.findIndex(
+    const indexOfItemWithSameKey = this._items.findIndex(
       (item) => item._getParentKeyOrThrow() === key
     );
 
@@ -515,24 +519,27 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const newKey = key;
 
-    if (existingItemIndex !== -1) {
-      const existingItem = this._items[existingItemIndex];
+    // If there is already an item at this position
+    if (indexOfItemWithSameKey !== -1) {
+      // TODO: Should we add this item to implictly deleted item?
+      const existingItem = this._items[indexOfItemWithSameKey];
       existingItem._detach();
 
-      this._items[existingItemIndex] = child;
+      this._items[indexOfItemWithSameKey] = child;
 
       const reverse = existingItem._serialize(this._id!, key, this._doc);
       addIntentAndDeletedIdToOperation(reverse, op.id);
 
-      if (op.deletedId) {
-        const item = this._doc?.getItem(op.deletedId);
-        if (item) {
-          item._apply({ type: OpCode.DELETE_CRDT, id: item._id! }, true);
-        }
+      const delta = [UpdateSet(indexOfItemWithSameKey, child)];
+      const deletedDelta = this._detachItemAssociatedToSetOperation(
+        op.deletedId
+      );
+      if (deletedDelta) {
+        delta.push(deletedDelta);
       }
 
       return {
-        modified: Update(this, [UpdateSet(existingItemIndex, child)]),
+        modified: Update(this, delta),
         reverse,
       };
     } else {
@@ -541,19 +548,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
       );
 
-      if (op.deletedId != null) {
-        const itemToDelete = this._doc?.getItem(op.deletedId);
-        if (itemToDelete) {
-          itemToDelete._apply(
-            { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
-            true
-          );
-        }
-      }
+      // TODO: Use delta
+      this._detachItemAssociatedToSetOperation(op.deletedId);
 
       const newIndex = this._items.findIndex(
         (entry) => entry._getParentKeyOrThrow() === newKey
       );
+
       return {
         reverse: [{ type: OpCode.DELETE_CRDT, id }],
         modified: Update(this, [UpdateInsert(newIndex, child)]),
