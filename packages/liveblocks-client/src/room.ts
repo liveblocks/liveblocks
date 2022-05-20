@@ -22,6 +22,7 @@ import type {
   Lson,
   LsonObject,
   MyPresenceCallback,
+  NodeMap,
   Op,
   Others,
   OthersEvent,
@@ -415,7 +416,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
       return;
     }
 
-    const currentItems = new Map<string, SerializedCrdt>();
+    const currentItems: NodeMap = new Map();
     state.items.forEach((liveCrdt, id) => {
       currentItems.set(id, liveCrdt._toSerializedCrdt());
     });

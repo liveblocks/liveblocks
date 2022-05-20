@@ -12,12 +12,10 @@ import type {
   LiveObjectUpdates,
   Lson,
   LsonObject,
+  NodeMap,
   Op,
   ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
   StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
@@ -162,8 +160,8 @@ export function selfOrRegister(obj: Lson): AbstractCrdt {
 }
 
 export function getTreesDiffOperations(
-  currentItems: Map<string, SerializedCrdt>,
-  newItems: Map<string, SerializedCrdt>
+  currentItems: NodeMap,
+  newItems: NodeMap
 ): Op[] {
   const ops: Op[] = [];
 
