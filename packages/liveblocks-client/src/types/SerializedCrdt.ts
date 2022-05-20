@@ -1,5 +1,7 @@
 import type { Json, JsonObject } from "./Json";
 
+export type IdTuple<T> = [id: string, value: T];
+
 export enum CrdtType {
   OBJECT = 0,
   LIST = 1,
@@ -7,8 +9,9 @@ export enum CrdtType {
   REGISTER = 3,
 }
 
-export type SerializedCrdt =
-  | SerializedRootObject
+export type SerializedCrdt = SerializedRootObject | SerializedChild;
+
+export type SerializedChild =
   | SerializedObject
   | SerializedList
   | SerializedMap
@@ -48,3 +51,16 @@ export type SerializedRegister = {
   parentKey: string;
   data: Json;
 };
+
+export function isRootObject(
+  crdt: SerializedCrdt
+): crdt is SerializedRootObject {
+  return (
+    crdt.type === CrdtType.OBJECT &&
+    (crdt.parentId === undefined || crdt.parentKey === undefined)
+  );
+}
+
+export function isChild(crdt: SerializedCrdt): crdt is SerializedChild {
+  return crdt.parentId !== undefined && crdt.parentKey !== undefined;
+}

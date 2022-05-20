@@ -672,6 +672,8 @@ export type {
 } from "./Op";
 export { OpCode } from "./Op";
 export type {
+  IdTuple,
+  SerializedChild,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
@@ -682,7 +684,6 @@ export type {
 export { CrdtType } from "./SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
-  IdTuple,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   SerializedCrdtWithId,
