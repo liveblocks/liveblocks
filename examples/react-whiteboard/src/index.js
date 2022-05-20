@@ -5,8 +5,8 @@ import { createClient } from "@liveblocks/client";
 import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 import "./index.css";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
-let roomId = "react-whiteboard";
+let PUBLIC_KEY = "pk_test_lOMrmwejSWLaPYQc5_JuGH-H";
+let roomId = "react-native-whiteboard";
 
 overrideApiKeyAndRoomId();
 
