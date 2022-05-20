@@ -1,4 +1,11 @@
-import type { SerializedCrdtWithId } from "@liveblocks/client/internal";
+import type {
+  IdTuple,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+} from "@liveblocks/client/internal";
 import { CrdtType } from "@liveblocks/client/internal";
 
 export function remove<T>(array: T[], item: T) {
@@ -75,17 +82,25 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
 export function obj(
   id: string,
   data: Record<string, any>,
+  parentId: string,
+  parentKey: string
+): IdTuple<SerializedObject>;
+export function obj(
+  id: string,
+  data: Record<string, any>
+): IdTuple<SerializedRootObject>;
+export function obj(
+  id: string,
+  data: Record<string, any>,
   parentId?: string,
   parentKey?: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedObject | SerializedRootObject> {
   return [
     id,
-    {
-      type: CrdtType.OBJECT,
-      data,
-      parentId,
-      parentKey,
-    },
+    parentId !== undefined && parentKey !== undefined
+      ? { type: CrdtType.OBJECT, data, parentId, parentKey }
+      : // Root object
+        { type: CrdtType.OBJECT, data },
   ];
 }
 
@@ -93,7 +108,7 @@ export function list(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedList> {
   return [
     id,
     {
@@ -108,7 +123,7 @@ export function map(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedMap> {
   return [
     id,
     {
@@ -124,7 +139,7 @@ export function register(
   parentId: string,
   parentKey: string,
   data: any
-): SerializedCrdtWithId {
+): IdTuple<SerializedRegister> {
   return [
     id,
     {
