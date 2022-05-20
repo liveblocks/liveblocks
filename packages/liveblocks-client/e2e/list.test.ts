@@ -79,7 +79,15 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, room2, wsUtils, assert }) => {
+        async ({
+          root1,
+          root2,
+          updates1,
+          updates2,
+          room2,
+          wsUtils,
+          assert,
+        }) => {
           root1.get("list").push("C");
           root2.get("list").move(0, 1);
           root2.get("list").move(1, 0);
@@ -94,6 +102,24 @@ describe("LiveList conflicts", () => {
           await wsUtils.flushSocket2Messages();
 
           assert({ list: ["B", "C", "A"] });
+
+          expect(updates1).toEqual([
+            [listUpdate(["A", "B", "C"], [listUpdateInsert(2, "C")])],
+            [listUpdate(["B", "C", "A"], [listUpdateMove(0, 2, "A")])],
+            [
+              listUpdate(
+                ["B", "C", "A"],
+                [listUpdateMove(2, 0, "A"), listUpdateMove(0, 2, "A")]
+              ),
+            ],
+          ]);
+
+          expect(updates2).toEqual([
+            [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+            [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
+            [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+            [listUpdate(["B", "C", "A"], [listUpdateInsert(1, "C")])],
+          ]);
         }
       )
     );

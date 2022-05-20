@@ -7,7 +7,7 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import { lsonToJson } from "../src/immutable";
+import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type { LsonObject, ToJson } from "../src/types";
 import {
@@ -113,7 +113,9 @@ export function prepareTestsConflicts<T extends LsonObject>(
       }
 
       expect(lsonToJson(root1)).toEqual(jsonRoot1);
+      // expect(immutableStorage1).toEqual(jsonRoot1);
       expect(lsonToJson(root2)).toEqual(jsonRoot2);
+      // expect(immutableStorage2).toEqual(jsonRoot2);
     }
 
     const socketUtils = {
@@ -141,19 +143,28 @@ export function prepareTestsConflicts<T extends LsonObject>(
 
     socketUtils.pauseAllSockets();
 
+    let immutableStorage1 = lsonToJson(root1);
+    let immutableStorage2 = lsonToJson(root2);
+
     const room1Updates: JsonStorageUpdate[][] = [];
     const room2Updates: JsonStorageUpdate[][] = [];
 
     room1.subscribe(
       root1,
-      (updates) => room1Updates.push(updates.map(serializeUpdateToJson)),
+      (updates) => {
+        immutableStorage1 = patchImmutableObject(immutableStorage1, updates);
+        room1Updates.push(updates.map(serializeUpdateToJson));
+      },
       {
         isDeep: true,
       }
     );
     room2.subscribe(
       root2,
-      (updates) => room2Updates.push(updates.map(serializeUpdateToJson)),
+      (updates) => {
+        immutableStorage2 = patchImmutableObject(immutableStorage2, updates);
+        room2Updates.push(updates.map(serializeUpdateToJson));
+      },
       { isDeep: true }
     );
 
