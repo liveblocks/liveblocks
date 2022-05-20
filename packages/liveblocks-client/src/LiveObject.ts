@@ -115,15 +115,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return liveObj;
     }
 
-    for (const entry of children) {
-      const crdt = entry[1];
-      if (crdt.parentKey == null) {
-        throw new Error(
-          "Tried to deserialize a crdt but it does not have a parentKey and is not the root"
-        );
-      }
-
-      const child = deserialize(entry, parentToChildren, doc);
+    for (const [id, crdt] of children) {
+      const child = deserialize([id, crdt], parentToChildren, doc);
       child._setParentLink(liveObj, crdt.parentKey);
       liveObj._map.set(crdt.parentKey, child);
     }
