@@ -42,7 +42,6 @@ export type {
   RoomInitializers,
   RoomStateServerMsg,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
