@@ -3,6 +3,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type {
   CreateObjectOp,
   CreateOp,
+  CreateRootObjectOp,
   DeleteObjectKeyOp,
   IdTuple,
   JsonObject,
@@ -63,16 +64,23 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       throw new Error("Cannot serialize item is not attached");
     }
 
+    const opId = doc?.generateOpId();
+
     const ops = [];
-    const op: CreateObjectOp = {
-      id: this._id,
-      opId: doc?.generateOpId(),
-      intent,
-      type: OpCode.CREATE_OBJECT,
-      parentId,
-      parentKey,
-      data: {},
-    };
+    const op: CreateObjectOp | CreateRootObjectOp =
+      parentId !== undefined &&
+      (parentKey !== undefined || parentKey === "root")
+        ? {
+            type: OpCode.CREATE_OBJECT,
+            id: this._id,
+            opId,
+            intent,
+            parentId,
+            parentKey,
+            data: {},
+          }
+        : // Root object
+          { type: OpCode.CREATE_OBJECT, id: this._id, opId, intent, data: {} };
 
     ops.push(op);
 
