@@ -139,8 +139,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey } = op;
-    const key = parentKey!;
+    const { id } = op;
+    const key = nn(op.parentKey);
     const child = creationOpToLiveStructure(op);
     child._attach(id, this._doc);
     child._setParentLink(this, key);
@@ -571,7 +571,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     child: AbstractCrdt
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
-      const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
+      const parentKey = nn(child._parentKey);
+      const reverse = child._serialize(nn(this._id), parentKey, this._doc);
 
       const indexToDelete = this._items.indexOf(child);
 
@@ -945,7 +946,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         [
           {
             type: OpCode.SET_PARENT_KEY,
-            id: item._id!,
+            id: nn(item._id),
             opId: this._doc.generateOpId(),
             parentKey: position,
           },
@@ -953,7 +954,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         [
           {
             type: OpCode.SET_PARENT_KEY,
-            id: item._id!,
+            id: nn(item._id),
             parentKey: previousPosition,
           },
         ],
@@ -983,7 +984,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-        storageUpdates.set(this._id!, makeUpdate(this, [deleteDelta(index)]));
+        storageUpdates.set(
+          nn(this._id),
+          makeUpdate(this, [deleteDelta(index)])
+        );
 
         this._doc.dispatch(
           [
@@ -993,7 +997,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
               type: OpCode.DELETE_CRDT,
             },
           ],
-          item._serialize(this._id!, item._getParentKeyOrThrow()),
+          item._serialize(nn(this._id), item._getParentKeyOrThrow()),
           storageUpdates
         );
       }
@@ -1014,7 +1018,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         if (childId) {
           ops.push({ id: childId, type: OpCode.DELETE_CRDT });
           reverseOps.push(
-            ...item._serialize(this._id!, item._getParentKeyOrThrow())
+            ...item._serialize(nn(this._id), item._getParentKeyOrThrow())
           );
 
           updateDelta.push(deleteDelta(i));
@@ -1026,7 +1030,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._items = [];
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id!, makeUpdate(this, updateDelta));
+      storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
 
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     } else {
