@@ -657,6 +657,7 @@ export type {
 export { ClientMsgCode } from "./ClientMsg";
 export type { Json, JsonObject } from "./Json";
 export type { Lson, LsonObject, ToJson } from "./Lson";
+export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
   CreateListOp,
   CreateMapOp,
