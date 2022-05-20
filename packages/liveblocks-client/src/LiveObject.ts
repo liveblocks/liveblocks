@@ -4,13 +4,16 @@ import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
+  IdTuple,
   JsonObject,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
   LsonObject,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
+  SerializedObject,
+  SerializedRootObject,
   ToJson,
   UpdateDelta,
   UpdateObjectOp,
@@ -88,19 +91,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.OBJECT) {
-      throw new Error(
-        `Tried to deserialize a record but item type is "${item.type}"`
-      );
-    }
-
     const liveObj = new LiveObject(item.data);
     liveObj._attach(id, doc);
-
     return this._deserializeChildren(liveObj, parentToChildren, doc);
   }
 
@@ -109,7 +105,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   static _deserializeChildren(
     liveObj: LiveObject<JsonObject>,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
   LiveObject<LsonObject> {
@@ -292,12 +288,20 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
     }
 
-    return {
-      type: CrdtType.OBJECT,
-      parentId: this._parent?._id,
-      parentKey: this._parentKey,
-      data,
-    };
+    if (this._parent?._id !== undefined && this._parentKey !== undefined) {
+      return {
+        type: CrdtType.OBJECT,
+        parentId: this._parent._id,
+        parentKey: this._parentKey,
+        data,
+      };
+    } else {
+      // Root object has no parent ID/key
+      return {
+        type: CrdtType.OBJECT,
+        data,
+      };
+    }
   }
 
   private _applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {

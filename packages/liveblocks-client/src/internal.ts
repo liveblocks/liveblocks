@@ -35,17 +35,21 @@ export type {
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   FetchStorageClientMsg,
+  IdTuple,
   InitialDocumentStateServerMsg,
+  NodeMap,
   Op,
+  ParentToChildNodeMap,
   Resolve,
   RoomInitializers,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
   ServerMsg,
   SetParentKeyOp,
   UpdateObjectOp,
@@ -64,3 +68,5 @@ export {
   WebsocketCloseCodes,
 } from "./types";
 export { parseJson } from "./types/Json";
+export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export { assertNever } from "./utils";

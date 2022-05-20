@@ -1,8 +1,6 @@
 import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
-import type { SerializedCrdt } from "./SerializedCrdt";
-
-export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
+import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
 export enum ServerMsgCode {
   // For Presence
@@ -130,7 +128,7 @@ export type RoomStateServerMsg = {
  */
 export type InitialDocumentStateServerMsg = {
   type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  items: SerializedCrdtWithId[];
+  items: IdTuple<SerializedCrdt>[];
 };
 
 /**

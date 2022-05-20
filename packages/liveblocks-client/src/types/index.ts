@@ -657,6 +657,7 @@ export type {
 export { ClientMsgCode } from "./ClientMsg";
 export type { Json, JsonObject } from "./Json";
 export type { Lson, LsonObject, ToJson } from "./Lson";
+export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
   CreateListOp,
   CreateMapOp,
@@ -671,18 +672,20 @@ export type {
 } from "./Op";
 export { OpCode } from "./Op";
 export type {
+  IdTuple,
+  SerializedChild,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
 } from "./SerializedCrdt";
 export { CrdtType } from "./SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
-  SerializedCrdtWithId,
   ServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,

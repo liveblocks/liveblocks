@@ -18,7 +18,7 @@ import {
 import { lsonToJson } from "./immutable";
 import { LiveList } from "./LiveList";
 import { createRoom, defaultState, makeStateMachine } from "./room";
-import type { Authentication, Others, SerializedCrdtWithId } from "./types";
+import type { Authentication, IdTuple, Others, SerializedCrdt } from "./types";
 import {
   ClientMsgCode,
   CrdtType,
@@ -1072,7 +1072,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
@@ -1121,7 +1121,7 @@ describe("room", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["2:0", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items2" }],
         [

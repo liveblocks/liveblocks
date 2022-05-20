@@ -5,12 +5,13 @@ import { comparePosition as compare, makePosition } from "./position";
 import type {
   CreateListOp,
   CreateOp,
+  IdTuple,
   LiveListUpdateDelta,
   LiveListUpdates,
   Lson,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
@@ -47,8 +48,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id]: [id: string, item: SerializedList],
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id]: IdTuple<SerializedList>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
     const list = new LiveList([]);

@@ -7,7 +7,7 @@ import {
 } from "../test/utils";
 import { LiveList } from ".";
 import { LiveObject } from "./LiveObject";
-import type { SerializedCrdtWithId } from "./types";
+import type { IdTuple, SerializedCrdt } from "./types";
 import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
 
 describe("LiveObject", () => {
@@ -834,7 +834,7 @@ describe("LiveObject", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
@@ -892,7 +892,7 @@ describe("LiveObject", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
