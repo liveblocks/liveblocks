@@ -73,8 +73,7 @@ export class LiveObject<
 
     const ops = [];
     const op: CreateObjectOp | CreateRootObjectOp =
-      parentId !== undefined &&
-      (parentKey !== undefined || parentKey === "root")
+      parentId !== undefined && parentKey !== undefined
         ? {
             type: OpCode.CREATE_OBJECT,
             id: this._id,
