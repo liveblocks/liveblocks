@@ -1,4 +1,5 @@
 import type { Json, JsonObject } from "./json";
+import type { Resolve } from "./types";
 
 export type IdTuple<T> = [id: string, value: T];
 
@@ -270,16 +271,15 @@ export enum OpCode {
  * only.
  */
 export type Op =
-  | CreateObjectOp
+  | CreateOp
   | UpdateObjectOp
   | DeleteCrdtOp
-  | CreateListOp
   | SetParentKeyOp // Only for lists!
-  | DeleteObjectKeyOp
-  | CreateMapOp
-  | CreateRegisterOp;
+  | DeleteObjectKeyOp;
 
-export type CreateOp =
+export type CreateOp = CreateRootObjectOp | CreateChildOp;
+
+export type CreateChildOp =
   | CreateObjectOp
   | CreateRegisterOp
   | CreateMapOp
@@ -297,10 +297,17 @@ export type CreateObjectOp = {
   id: string;
   intent?: "set";
   type: OpCode.CREATE_OBJECT;
-  parentId?: string;
-  parentKey?: string;
+  parentId: string;
+  parentKey: string;
   data: JsonObject;
 };
+
+export type CreateRootObjectOp = Resolve<
+  Omit<CreateObjectOp, "parentId" | "parentKey"> & {
+    parentId?: never;
+    parentKey?: never;
+  }
+>;
 
 export type CreateListOp = {
   opId?: string;

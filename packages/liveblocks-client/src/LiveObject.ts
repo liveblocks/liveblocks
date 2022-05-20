@@ -4,6 +4,7 @@ import type { JsonObject } from "./json";
 import type {
   CreateObjectOp,
   CreateOp,
+  CreateRootObjectOp,
   DeleteObjectKeyOp,
   IdTuple,
   Op,
@@ -68,16 +69,23 @@ export class LiveObject<
       throw new Error("Cannot serialize item is not attached");
     }
 
+    const opId = doc?.generateOpId();
+
     const ops = [];
-    const op: CreateObjectOp = {
-      id: this._id,
-      opId: doc?.generateOpId(),
-      intent,
-      type: OpCode.CREATE_OBJECT,
-      parentId,
-      parentKey,
-      data: {},
-    };
+    const op: CreateObjectOp | CreateRootObjectOp =
+      parentId !== undefined &&
+      (parentKey !== undefined || parentKey === "root")
+        ? {
+            type: OpCode.CREATE_OBJECT,
+            id: this._id,
+            opId,
+            intent,
+            parentId,
+            parentKey,
+            data: {},
+          }
+        : // Root object
+          { type: OpCode.CREATE_OBJECT, id: this._id, opId, intent, data: {} };
 
     ops.push(op);
 

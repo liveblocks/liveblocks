@@ -23,10 +23,12 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export type {
+  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
   CreateRegisterOp,
+  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   FetchStorageClientMsg,
