@@ -659,11 +659,13 @@ export type { Json, JsonObject } from "./Json";
 export type { Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
+  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
   CreateOp,
   CreateRegisterOp,
+  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   Op,
