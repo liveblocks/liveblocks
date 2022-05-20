@@ -4,6 +4,7 @@ import type {
   CreateObjectOp,
   CreateOp,
   DeleteObjectKeyOp,
+  IdTuple,
   JsonObject,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
@@ -11,7 +12,8 @@ import type {
   Op,
   ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
+  SerializedObject,
+  SerializedRootObject,
   ToJson,
   UpdateDelta,
   UpdateObjectOp,
@@ -89,19 +91,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id, item]: SerializedCrdtWithId,
+    [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
     parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.OBJECT) {
-      throw new Error(
-        `Tried to deserialize a record but item type is "${item.type}"`
-      );
-    }
-
     const liveObj = new LiveObject(item.data);
     liveObj._attach(id, doc);
-
     return this._deserializeChildren(liveObj, parentToChildren, doc);
   }
 

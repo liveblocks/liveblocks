@@ -5,6 +5,7 @@ import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
   CreateOp,
+  IdTuple,
   Json,
   LiveListUpdates,
   LiveMapUpdates,
@@ -14,7 +15,6 @@ import type {
   Op,
   ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
@@ -67,34 +67,22 @@ export function isSameNodeOrChildOf(
 }
 
 export function deserialize(
-  entry: SerializedCrdtWithId,
+  [id, crdt]: IdTuple<SerializedCrdt>,
   parentToChildren: ParentToChildNodeMap,
   doc: Doc
 ): AbstractCrdt {
-  switch (entry[1].type) {
+  switch (crdt.type) {
     case CrdtType.OBJECT: {
-      return LiveObject._deserialize(entry, parentToChildren, doc);
+      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.LIST: {
-      return LiveList._deserialize(
-        entry as [string, SerializedList],
-        parentToChildren,
-        doc
-      );
+      return LiveList._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.MAP: {
-      return LiveMap._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.REGISTER: {
-      return LiveRegister._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveRegister._deserialize([id, crdt], parentToChildren, doc);
     }
     default: {
       throw new Error("Unexpected CRDT type");
