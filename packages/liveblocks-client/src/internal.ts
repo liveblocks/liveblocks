@@ -35,6 +35,7 @@ export type {
   DeleteCrdtOp,
   DeleteObjectKeyOp,
   FetchStorageClientMsg,
+  IdTuple,
   InitialDocumentStateServerMsg,
   Op,
   Resolve,

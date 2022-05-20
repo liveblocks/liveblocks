@@ -2,7 +2,9 @@ import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { SerializedCrdt } from "./SerializedCrdt";
 
-export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
+export type IdTuple<T> = [id: string, value: T];
+
+export type SerializedCrdtWithId = IdTuple<SerializedCrdt>;
 
 export enum ServerMsgCode {
   // For Presence

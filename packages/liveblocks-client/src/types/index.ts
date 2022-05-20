@@ -681,6 +681,7 @@ export type {
 export { CrdtType } from "./SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
+  IdTuple,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
   SerializedCrdtWithId,

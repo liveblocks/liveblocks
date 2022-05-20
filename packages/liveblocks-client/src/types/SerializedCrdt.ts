@@ -16,9 +16,11 @@ export type SerializedCrdt =
 
 export type SerializedRootObject = {
   type: CrdtType.OBJECT;
-  parentId?: undefined;
-  parentKey?: undefined;
   data: JsonObject;
+
+  // Root objects don't have a parent relationship
+  parentId?: never;
+  parentKey?: never;
 };
 
 export type SerializedObject = {
