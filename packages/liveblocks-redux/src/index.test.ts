@@ -1,8 +1,9 @@
 import type { JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
+  IdTuple,
   RoomStateServerMsg,
-  SerializedCrdtWithId,
+  SerializedCrdt,
   ServerMsg,
 } from "@liveblocks/client/internal";
 import {
@@ -146,7 +147,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     presenceMapping: Mapping<T>;
     room?: string;
     initialState?: any;
-    items: SerializedCrdtWithId[];
+    items: IdTuple<SerializedCrdt>[];
   }
 ) {
   const { client, store } = prepareClientAndStore(
@@ -182,7 +183,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
 }
 
 async function prepareBasicStoreWithStorage(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   options?: {
     room?: string;
     initialState?: Partial<BasicState>;

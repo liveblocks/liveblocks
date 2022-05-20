@@ -16,7 +16,7 @@ import {
   withDateNow,
 } from "../test/utils";
 import { lsonToJson } from "./immutable";
-import type { SerializedCrdtWithId } from "./live";
+import type { IdTuple, SerializedCrdt } from "./live";
 import {
   ClientMsgCode,
   CrdtType,
@@ -1073,7 +1073,7 @@ describe("room", () => {
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
@@ -1122,7 +1122,7 @@ describe("room", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["2:0", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items2" }],
         [

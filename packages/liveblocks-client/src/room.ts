@@ -5,11 +5,15 @@ import { isJsonArray, isJsonObject, parseJson } from "./json";
 import type {
   BroadcastedEventServerMsg,
   ClientMsg,
+  IdTuple,
   InitialDocumentStateServerMsg,
+  NodeMap,
   Op,
+  ParentToChildNodeMap,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
-  SerializedCrdtWithId,
+  SerializedRootObject,
   ServerMsg,
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
@@ -17,6 +21,7 @@ import type {
 } from "./live";
 import {
   ClientMsgCode,
+  isRootCrdt,
   OpCode,
   ServerMsgCode,
   WebsocketCloseCodes,
@@ -396,21 +401,21 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function buildRootAndParentToChildren(
-    items: SerializedCrdtWithId[]
-  ): [SerializedCrdtWithId, Map<string, SerializedCrdtWithId[]>] {
-    const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
-    let root = null;
+    items: IdTuple<SerializedCrdt>[]
+  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+    const parentToChildren: ParentToChildNodeMap = new Map();
+    let root: IdTuple<SerializedRootObject> | null = null;
 
-    for (const tuple of items) {
-      const parentId = tuple[1].parentId;
-      if (parentId == null) {
-        root = tuple;
+    for (const [id, crdt] of items) {
+      if (isRootCrdt(crdt)) {
+        root = [id, crdt];
       } else {
-        const children = parentToChildren.get(parentId);
+        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const children = parentToChildren.get(crdt.parentId);
         if (children != null) {
           children.push(tuple);
         } else {
-          parentToChildren.set(parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [tuple]);
         }
       }
     }
@@ -422,12 +427,12 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return [root, parentToChildren];
   }
 
-  function updateRoot(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
     if (!state.root) {
       return;
     }
 
-    const currentItems = new Map<string, SerializedCrdt>();
+    const currentItems: NodeMap = new Map();
     state.items.forEach((liveCrdt, id) => {
       currentItems.set(id, liveCrdt._toSerializedCrdt());
     });
@@ -440,7 +445,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     notify(result.updates);
   }
 
-  function load(items: SerializedCrdtWithId[]): LiveObject<LsonObject> {
+  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {

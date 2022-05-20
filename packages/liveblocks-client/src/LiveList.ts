@@ -3,9 +3,10 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type {
   CreateListOp,
   CreateOp,
+  IdTuple,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
 } from "./live";
 import { CrdtType, OpCode } from "./live";
@@ -49,8 +50,8 @@ export class LiveList<TItem extends Lson = Lson> extends AbstractCrdt {
    * @internal
    */
   static _deserialize(
-    [id]: [id: string, item: SerializedList],
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id]: IdTuple<SerializedList>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
     const list = new LiveList([]);

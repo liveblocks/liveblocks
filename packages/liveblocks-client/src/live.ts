@@ -1,5 +1,24 @@
 import type { Json, JsonObject } from "./json";
 
+export type IdTuple<T> = [id: string, value: T];
+
+/**
+ * Lookup table for nodes (= SerializedCrdt values) by their IDs.
+ */
+export type NodeMap = Map<
+  string, // Node ID
+  SerializedCrdt
+>;
+
+/**
+ * Reverse lookup table for all child nodes (= list of SerializedCrdt values)
+ * by their parent node's IDs.
+ */
+export type ParentToChildNodeMap = Map<
+  string, // Parent's node ID
+  IdTuple<SerializedChild>[]
+>;
+
 /**
  * Messages that can be sent from the server to the client.
  */
@@ -117,8 +136,6 @@ export type BroadcastedEventServerMsg = {
   event: Json;
 };
 
-export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
-
 /**
  * Sent by the WebSocket server to a single client in response to the client
  * joining the Room, to provide the initial Storage state of the Room. The
@@ -126,7 +143,7 @@ export type SerializedCrdtWithId = [id: string, crdt: SerializedCrdt];
  */
 export type InitialDocumentStateServerMsg = {
   type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  items: SerializedCrdtWithId[];
+  items: IdTuple<SerializedCrdt>[];
 };
 
 /**
@@ -185,10 +202,19 @@ export enum CrdtType {
   REGISTER = 3,
 }
 
+export type SerializedRootObject = {
+  type: CrdtType.OBJECT;
+  data: JsonObject;
+
+  // Root objects don't have a parent relationship
+  parentId?: never;
+  parentKey?: never;
+};
+
 export type SerializedObject = {
   type: CrdtType.OBJECT;
-  parentId?: string;
-  parentKey?: string;
+  parentId: string;
+  parentKey: string;
   data: JsonObject;
 };
 
@@ -211,11 +237,21 @@ export type SerializedRegister = {
   data: Json;
 };
 
-export type SerializedCrdt =
+export type SerializedCrdt = SerializedRootObject | SerializedChild;
+
+export type SerializedChild =
   | SerializedObject
   | SerializedList
   | SerializedMap
   | SerializedRegister;
+
+export function isRootCrdt(crdt: SerializedCrdt): crdt is SerializedRootObject {
+  return crdt.type === CrdtType.OBJECT && !isChildCrdt(crdt);
+}
+
+export function isChildCrdt(crdt: SerializedCrdt): crdt is SerializedChild {
+  return crdt.parentId !== undefined && crdt.parentKey !== undefined;
+}
 
 export enum OpCode {
   INIT = 0,

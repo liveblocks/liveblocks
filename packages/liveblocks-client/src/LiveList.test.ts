@@ -11,8 +11,14 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../test/utils";
-import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
+import type {
+  IdTuple,
+  SerializedCrdt} from "./live";
+import {
+  CrdtType,
+  OpCode,
+  WebsocketCloseCodes,
+} from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -1239,7 +1245,7 @@ describe("LiveList", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
@@ -1327,7 +1333,7 @@ describe("LiveList", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
@@ -1403,7 +1409,7 @@ describe("LiveList", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [

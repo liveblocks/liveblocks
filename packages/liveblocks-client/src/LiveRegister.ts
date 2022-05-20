@@ -3,9 +3,11 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { Json } from "./json";
 import type {
   CreateOp,
+  IdTuple,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
+  SerializedRegister,
 } from "./live";
 import { CrdtType, OpCode } from "./live";
 
@@ -28,16 +30,10 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
    * INTERNAL
    */
   static _deserialize(
-    [id, item]: SerializedCrdtWithId,
-    _parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id, item]: IdTuple<SerializedRegister>,
+    _parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.REGISTER) {
-      throw new Error(
-        `Tried to deserialize a map but item type is "${item.type}"`
-      );
-    }
-
     const register = new LiveRegister(item.data);
     register._attach(id, doc);
     return register;

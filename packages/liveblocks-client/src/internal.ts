@@ -29,14 +29,20 @@ export type {
   CreateRegisterOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  FetchStorageClientMsg,
+  IdTuple,
+  InitialDocumentStateServerMsg,
+  NodeMap,
   Op,
+  ParentToChildNodeMap,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
   ServerMsg,
   SetParentKeyOp,
   UpdateObjectOp,
@@ -51,3 +57,6 @@ export {
 } from "./live";
 export { comparePosition, makePosition } from "./position";
 export type { Resolve, RoomInitializers } from "./types";
+export { parseJson } from "./json";
+export { isChildCrdt, isRootCrdt } from "./live";
+export { assertNever } from "./utils";
