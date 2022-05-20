@@ -180,8 +180,8 @@ export function getTreesDiffOperations(
     if (currentCrdt) {
       if (crdt.type === CrdtType.OBJECT) {
         if (
-          JSON.stringify(crdt.data) !==
-          JSON.stringify((currentCrdt as SerializedObject).data)
+          currentCrdt.type !== CrdtType.OBJECT ||
+          JSON.stringify(crdt.data) !== JSON.stringify(currentCrdt.data)
         ) {
           ops.push({
             type: OpCode.UPDATE_OBJECT,
