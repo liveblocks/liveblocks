@@ -12,6 +12,7 @@ import type {
   Lson,
   LsonObject,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
   SerializedCrdtWithId,
   SerializedList,
@@ -67,7 +68,7 @@ export function isSameNodeOrChildOf(
 
 export function deserialize(
   entry: SerializedCrdtWithId,
-  parentToChildren: Map<string, SerializedCrdtWithId[]>,
+  parentToChildren: ParentToChildNodeMap,
   doc: Doc
 ): AbstractCrdt {
   switch (entry[1].type) {

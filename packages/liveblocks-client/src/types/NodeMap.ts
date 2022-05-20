@@ -1,5 +1,8 @@
-import type { SerializedCrdt, SerializedRootObject } from "./SerializedCrdt";
-import type { IdTuple } from "./ServerMsg";
+import type {
+  IdTuple,
+  SerializedChild,
+  SerializedCrdt,
+} from "./SerializedCrdt";
 
 /**
  * Lookup table for nodes (= SerializedCrdt values) by their IDs.
@@ -15,9 +18,5 @@ export type NodeMap = Map<
  */
 export type ParentToChildNodeMap = Map<
   string, // Parent's node ID
-  IdTuple<
-    // NOTE: All CRDTs stored in this reverse mapping are guaranteed to have
-    // their parentKey property set
-    Exclude<SerializedCrdt, SerializedRootObject>
-  >[]
+  IdTuple<SerializedChild>[]
 >;

@@ -9,6 +9,7 @@ import type {
   LiveObjectUpdates,
   LsonObject,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
   SerializedCrdtWithId,
   ToJson,
@@ -89,7 +90,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
     if (item.type !== CrdtType.OBJECT) {
@@ -109,7 +110,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   static _deserializeChildren(
     liveObj: LiveObject<JsonObject>,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
   LiveObject<LsonObject> {

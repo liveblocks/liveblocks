@@ -15,6 +15,7 @@ import type {
   ConnectionState,
   ErrorCallback,
   EventCallback,
+  IdTuple,
   InitialDocumentStateServerMsg,
   Json,
   JsonObject,
@@ -25,14 +26,17 @@ import type {
   Others,
   OthersEvent,
   OthersEventCallback,
+  ParentToChildNodeMap,
   Presence,
   Room,
   RoomEventCallbackMap,
   RoomEventName,
   RoomInitializers,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
   SerializedCrdtWithId,
+  SerializedRootObject,
   ServerMsg,
   StorageCallback,
   StorageUpdate,
@@ -48,6 +52,7 @@ import {
   WebsocketCloseCodes,
 } from "./types";
 import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
+import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,
   getTreesDiffOperations,
@@ -381,20 +386,20 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function buildRootAndParentToChildren(
     items: SerializedCrdtWithId[]
-  ): [SerializedCrdtWithId, Map<string, SerializedCrdtWithId[]>] {
-    const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
-    let root = null;
+  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+    const parentToChildren: ParentToChildNodeMap = new Map();
+    let root: IdTuple<SerializedRootObject> | null = null;
 
-    for (const tuple of items) {
-      const parentId = tuple[1].parentId;
-      if (parentId == null) {
-        root = tuple;
+    for (const [id, crdt] of items) {
+      if (isRootCrdt(crdt)) {
+        root = [id, crdt];
       } else {
-        const children = parentToChildren.get(parentId);
+        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const children = parentToChildren.get(crdt.parentId);
         if (children != null) {
           children.push(tuple);
         } else {
-          parentToChildren.set(parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [tuple]);
         }
       }
     }

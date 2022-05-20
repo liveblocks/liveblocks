@@ -39,10 +39,11 @@ export type {
   InitialDocumentStateServerMsg,
   NodeMap,
   Op,
-  ParentToChildrenNodeMap,
+  ParentToChildNodeMap,
   Resolve,
   RoomInitializers,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
@@ -67,3 +68,4 @@ export {
   WebsocketCloseCodes,
 } from "./types";
 export { parseJson } from "./types/Json";
+export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";

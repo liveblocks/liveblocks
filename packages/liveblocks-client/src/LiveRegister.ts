@@ -4,6 +4,7 @@ import type {
   CreateOp,
   Json,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
   SerializedCrdtWithId,
 } from "./types";
@@ -29,7 +30,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
-    _parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    _parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
     if (item.type !== CrdtType.REGISTER) {

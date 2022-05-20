@@ -52,15 +52,10 @@ export type SerializedRegister = {
   data: Json;
 };
 
-export function isRootObject(
-  crdt: SerializedCrdt
-): crdt is SerializedRootObject {
-  return (
-    crdt.type === CrdtType.OBJECT &&
-    (crdt.parentId === undefined || crdt.parentKey === undefined)
-  );
+export function isRootCrdt(crdt: SerializedCrdt): crdt is SerializedRootObject {
+  return crdt.type === CrdtType.OBJECT && !isChildCrdt(crdt);
 }
 
-export function isChild(crdt: SerializedCrdt): crdt is SerializedChild {
+export function isChildCrdt(crdt: SerializedCrdt): crdt is SerializedChild {
   return crdt.parentId !== undefined && crdt.parentKey !== undefined;
 }

@@ -1,9 +1,10 @@
 import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
-import type { SerializedCrdt } from "./SerializedCrdt";
+import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
-export type IdTuple<T> = [id: string, value: T];
-
+/**
+ * Deprecated API. Prefer using IdTuple<SerializedCrdt> directly.
+ */
 export type SerializedCrdtWithId = IdTuple<SerializedCrdt>;
 
 export enum ServerMsgCode {
@@ -132,7 +133,7 @@ export type RoomStateServerMsg = {
  */
 export type InitialDocumentStateServerMsg = {
   type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  items: SerializedCrdtWithId[];
+  items: IdTuple<SerializedCrdt>[];
 };
 
 /**

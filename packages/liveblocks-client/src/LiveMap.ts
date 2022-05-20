@@ -7,6 +7,7 @@ import type {
   LiveMapUpdates,
   Lson,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
   SerializedCrdtWithId,
 } from "./types";
@@ -100,7 +101,7 @@ export class LiveMap<
    */
   static _deserialize(
     [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
     if (item.type !== CrdtType.MAP) {
