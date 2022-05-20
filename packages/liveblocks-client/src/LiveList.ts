@@ -157,7 +157,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     child._attach(id, this._doc);
     child._setParentLink(this, key);
 
-    const deletedId = (op as any).deletedId;
+    const deletedId = op.deletedId;
 
     const existingItemIndex = this._items.findIndex(
       (item) => item._getParentKeyOrThrow() === key
@@ -189,12 +189,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         ];
         // Even if we implicitly delete the item at the set position
         // We still need to delete the item that was orginaly deleted by the set
-        const item = this._doc.getItem((op as any).deletedId);
+        if (op.deletedId) {
+          const item = this._doc.getItem(op.deletedId);
 
-        if (item) {
-          const update = this._detachChild(item);
-          if (update.modified !== false) {
-            delta.push(...update.modified.updates);
+          if (item) {
+            const update = this._detachChild(item);
+            if (update.modified !== false) {
+              delta.push(...update.modified.updates);
+            }
           }
         }
 
@@ -210,20 +212,23 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
       );
       const updates: LiveListUpdateDelta[] = [];
-      const itemToDelete = this._doc.getItem((op as any).deletedId);
 
-      // Item to be replaced has been moved.
-      if (itemToDelete) {
-        const deletedItemIndex = this._items.findIndex(
-          (entry) => entry._getParentKeyOrThrow() === itemToDelete._parentKey
-        );
+      if (op.deletedId) {
+        const itemToDelete = this._doc.getItem(op.deletedId);
 
-        itemToDelete._apply(
-          { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
-          true
-        );
+        // Item to be replaced has been moved.
+        if (itemToDelete) {
+          const deletedItemIndex = this._items.findIndex(
+            (entry) => entry._getParentKeyOrThrow() === itemToDelete._parentKey
+          );
 
-        updates.push(UpdateDelete(deletedItemIndex));
+          itemToDelete._apply(
+            { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
+            true
+          );
+
+          updates.push(UpdateDelete(deletedItemIndex));
+        }
       }
 
       const newIndex = this._items.findIndex(
@@ -240,16 +245,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   _applySetAck(op: CreateOp): ApplyResult {
-    const deletedId = (op as any).deletedId;
+    const deletedId = op.deletedId;
 
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
-    const deletedItem = this._doc!.getItem(deletedId);
-    if (deletedItem) {
-      const update = this._detachChild(deletedItem);
-      if (update.modified !== false) {
-        delta.push(...update.modified.updates);
+    if (deletedId) {
+      const deletedItem = this._doc!.getItem(deletedId);
+      if (deletedItem) {
+        const update = this._detachChild(deletedItem);
+        if (update.modified !== false) {
+          delta.push(...update.modified.updates);
+        }
       }
     }
 
@@ -514,12 +521,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       this._items[existingItemIndex] = child;
 
-      const reverse = existingItem._serialize(this._id!, key, this._doc, "set");
-      (reverse[0] as any).deletedId = op.id;
+      const reverse = existingItem._serialize(this._id!, key, this._doc);
+      addIntentAndDeletedIdToOperation(reverse, op.id);
 
-      const item = this._doc?.getItem((op as any).deletedId);
-      if (item) {
-        item._apply({ type: OpCode.DELETE_CRDT, id: item._id! }, true);
+      if (op.deletedId) {
+        const item = this._doc?.getItem(op.deletedId);
+        if (item) {
+          item._apply({ type: OpCode.DELETE_CRDT, id: item._id! }, true);
+        }
       }
 
       return {
@@ -532,12 +541,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
       );
 
-      const itemToDelete = this._doc?.getItem((op as any).deletedId);
-      if (itemToDelete) {
-        itemToDelete._apply(
-          { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
-          true
-        );
+      if (op.deletedId != null) {
+        const itemToDelete = this._doc?.getItem(op.deletedId);
+        if (itemToDelete) {
+          itemToDelete._apply(
+            { type: OpCode.DELETE_CRDT, id: itemToDelete._id! },
+            true
+          );
+        }
       }
 
       const newIndex = this._items.findIndex(
@@ -1104,7 +1115,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingItem = this._items[index];
     const position = existingItem._getParentKeyOrThrow();
 
-    const existingId = existingItem._id;
+    const existingId = existingItem._id!;
     existingItem._detach();
 
     const value = selfOrRegister(item);
@@ -1128,16 +1139,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         ],
       });
 
-      const ops = value._serialize(this._id, position, this._doc, "set");
-      (ops[0] as any).deletedId = existingId;
-
-      const reverseOps = existingItem._serialize(
-        this._id,
-        position,
-        undefined,
-        "set"
-      );
-      (reverseOps[0] as any).deletedId = id;
+      const ops = value._serialize(this._id, position, this._doc);
+      addIntentAndDeletedIdToOperation(ops, existingId);
+      const reverseOps = existingItem._serialize(this._id, position, undefined);
+      addIntentAndDeletedIdToOperation(reverseOps, id);
 
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     }
@@ -1359,4 +1364,32 @@ function updateMove(
     previousIndex,
     item: item instanceof LiveRegister ? item.data : item,
   };
+}
+
+/**
+ * This function is only temporary.
+ * As soon as we refactor the operations structure,
+ * serializing a LiveStructure should not know anything about intent
+ */
+function addIntentAndDeletedIdToOperation(ops: Op[], deletedId: string) {
+  if (ops.length === 0) {
+    throw new Error(
+      "Internal error. Serialized LiveStructure should have at least 1 operation"
+    );
+  }
+
+  const firstOp = ops[0];
+  if (
+    firstOp.type !== OpCode.CREATE_LIST &&
+    firstOp.type !== OpCode.CREATE_OBJECT &&
+    firstOp.type !== OpCode.CREATE_REGISTER &&
+    firstOp.type !== OpCode.CREATE_MAP
+  ) {
+    throw new Error(
+      "Internal error. Serialized LiveStructure first op should be CreateOp"
+    );
+  }
+
+  firstOp.intent = "set";
+  firstOp.deletedId = deletedId;
 }

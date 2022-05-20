@@ -60,12 +60,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(
-    parentId?: string,
-    parentKey?: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -81,7 +76,6 @@ export class LiveMap<
       id: this._id,
       opId: doc?.generateOpId(),
       type: OpCode.CREATE_MAP,
-      intent,
       parentId,
       parentKey,
     };

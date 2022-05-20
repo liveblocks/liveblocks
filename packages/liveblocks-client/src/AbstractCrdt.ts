@@ -149,12 +149,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(
-    parentId: string,
-    parentKey: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[];
+  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
 
   /**
    * @internal

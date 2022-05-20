@@ -43,6 +43,7 @@ export type CreateObjectOp = {
   opId?: string;
   id: string;
   intent?: "set";
+  deletedId?: string;
   type: OpCode.CREATE_OBJECT;
   parentId?: string;
   parentKey?: string;
@@ -53,6 +54,7 @@ export type CreateListOp = {
   opId?: string;
   id: string;
   intent?: "set";
+  deletedId?: string;
   type: OpCode.CREATE_LIST;
   parentId: string;
   parentKey: string;
@@ -62,6 +64,7 @@ export type CreateMapOp = {
   opId?: string;
   id: string;
   intent?: "set";
+  deletedId?: string;
   type: OpCode.CREATE_MAP;
   parentId: string;
   parentKey: string;
@@ -71,6 +74,7 @@ export type CreateRegisterOp = {
   opId?: string;
   id: string;
   intent?: "set";
+  deletedId?: string;
   type: OpCode.CREATE_REGISTER;
   parentId: string;
   parentKey: string;

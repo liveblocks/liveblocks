@@ -50,12 +50,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(
-    parentId?: string,
-    parentKey?: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -64,7 +59,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const op: CreateObjectOp = {
       id: this._id,
       opId: doc?.generateOpId(),
-      intent,
       type: OpCode.CREATE_OBJECT,
       parentId,
       parentKey,

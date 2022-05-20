@@ -46,12 +46,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(
-    parentId: string,
-    parentKey: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
@@ -63,7 +58,6 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
         type: OpCode.CREATE_REGISTER,
         opId: doc?.generateOpId(),
         id: this._id,
-        intent,
         parentId,
         parentKey,
         data: this.data,
