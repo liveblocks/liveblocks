@@ -69,3 +69,4 @@ export {
 } from "./types";
 export { parseJson } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export { assertNever } from "./utils";
