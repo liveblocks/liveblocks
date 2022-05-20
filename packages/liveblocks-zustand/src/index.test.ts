@@ -244,7 +244,7 @@ describe("middleware", () => {
 
       expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
 
-      expect(JSON.parse(socket.sentMessages[0])).toEqual([
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
           data: { cursor: { x: 0, y: 0 } },
@@ -256,7 +256,7 @@ describe("middleware", () => {
 
       await waitFor(() => socket.sentMessages[1] != null);
 
-      expect(JSON.parse(socket.sentMessages[1])).toEqual([
+      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
           data: { cursor: { x: 100, y: 100 } },
@@ -275,7 +275,7 @@ describe("middleware", () => {
 
       socket.callbacks.open[0]!();
 
-      expect(JSON.parse(socket.sentMessages[0])).toEqual([
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
           data: { cursor: { x: 0, y: 0 } },
@@ -297,7 +297,7 @@ describe("middleware", () => {
 
       socket.callbacks.open[0]!();
 
-      expect(JSON.parse(socket.sentMessages[0])).toEqual([
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
           data: { cursor: { x: 0, y: 0 } },
@@ -311,7 +311,7 @@ describe("middleware", () => {
 
       await waitFor(() => socket.sentMessages[1] != null);
 
-      expect(JSON.parse(socket.sentMessages[1])).toEqual([
+      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
           data: { cursor: { x: 1, y: 1 } },
@@ -393,7 +393,7 @@ describe("middleware", () => {
 
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(JSON.parse(socket.sentMessages[1])).toEqual([
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
           {
             type: ClientMsgCode.UPDATE_STORAGE,
             ops: [
@@ -423,7 +423,7 @@ describe("middleware", () => {
 
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(JSON.parse(socket.sentMessages[1])).toEqual([
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
           {
             type: ClientMsgCode.UPDATE_STORAGE,
             ops: [
@@ -516,7 +516,7 @@ describe("middleware", () => {
         // Waiting for last update to be sent because of room internal throttling
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(JSON.parse(socket.sentMessages[1])).toEqual([
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
           {
             type: ClientMsgCode.UPDATE_STORAGE,
             ops: [
@@ -542,7 +542,7 @@ describe("middleware", () => {
         // Waiting for last update to be sent because of room internal throttling
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(JSON.parse(socket.sentMessages[1])).toEqual([
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
           {
             type: ClientMsgCode.UPDATE_STORAGE,
             ops: [
