@@ -2,11 +2,6 @@ import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 
-/**
- * Deprecated API. Prefer using IdTuple<SerializedCrdt> directly.
- */
-export type SerializedCrdtWithId = IdTuple<SerializedCrdt>;
-
 export enum ServerMsgCode {
   // For Presence
   UPDATE_PRESENCE = 100,

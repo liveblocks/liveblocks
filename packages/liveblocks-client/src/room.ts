@@ -35,7 +35,6 @@ import type {
   RoomStateServerMsg,
   SerializedChild,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedRootObject,
   ServerMsg,
   StorageCallback,
@@ -385,7 +384,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function buildRootAndParentToChildren(
-    items: SerializedCrdtWithId[]
+    items: IdTuple<SerializedCrdt>[]
   ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
     const parentToChildren: ParentToChildNodeMap = new Map();
     let root: IdTuple<SerializedRootObject> | null = null;
@@ -411,7 +410,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return [root, parentToChildren];
   }
 
-  function updateRoot(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
     if (!state.root) {
       return;
     }
@@ -429,7 +428,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     notify(result.updates);
   }
 
-  function load(items: SerializedCrdtWithId[]): LiveObject<LsonObject> {
+  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {

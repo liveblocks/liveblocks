@@ -686,7 +686,6 @@ export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
-  SerializedCrdtWithId,
   ServerMsg,
   UpdatePresenceServerMsg,
   UpdateStorageServerMsg,
