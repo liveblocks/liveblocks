@@ -30,6 +30,7 @@ export function prepareTestsConflicts<T extends LsonObject>(
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
+     * It also ensure that immutable states updated with the updates generated from conflicts are equals
      */
     assert: (jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) => void;
     wsUtils: {
