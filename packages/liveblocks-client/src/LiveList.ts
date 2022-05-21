@@ -278,7 +278,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       );
 
       if (newIndex !== previousIndex) {
-        delta.push(updateMove(previousIndex, newIndex, existingItem));
+        delta.push(UpdateMove(previousIndex, newIndex, existingItem));
       }
 
       return {
@@ -412,7 +412,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         return {
           modified: Update(this, [
-            updateMove(oldPositionIndex, newIndex, existingItem),
+            UpdateMove(oldPositionIndex, newIndex, existingItem),
           ]),
           reverse: [],
         };
@@ -613,7 +613,26 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   _applySetChildKeyRemote(newKey: string, child: AbstractCrdt): ApplyResult {
-    const previousKey = child._parentKey!;
+    if (this._implicitlyDeletedItems.has(child)) {
+      this._implicitlyDeletedItems.delete(child);
+
+      child._setParentLink(this, newKey);
+      this._items.push(child);
+      sortListItem(this._items);
+
+      const newIndex = this._items.findIndex(
+        (item) => item._getParentKeyOrThrow() === child._parentKey
+      );
+
+      // TODO: Shift existing item?
+
+      return {
+        modified: Update(this, [UpdateInsert(newIndex, child)]),
+        reverse: [],
+      };
+    }
+
+    const previousKey = child._parentKey;
 
     if (newKey === previousKey) {
       return {
@@ -736,6 +755,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
 
+      // At this point, it means that the item has been moved before receiving the ack
+      // so we replace it at the right position
+
+      const previousIndex = this._items.findIndex((item) => item === child);
+
       const existingItemIndex = this._items.findIndex(
         (item) => item._getParentKeyOrThrow() === newKey
       );
@@ -751,13 +775,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       child._setParentLink(this, newKey);
-
       sortListItem(this._items);
 
-      // TODO
-      return {
-        modified: false,
-      };
+      const newIndex = this._items.findIndex((item) => item === child);
+
+      if (previousIndex === newIndex) {
+        // parentKey changed but final position in the list didn't
+        return {
+          modified: false,
+        };
+      } else {
+        return {
+          modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+          reverse: [],
+        };
+      }
     }
   }
 
@@ -1329,7 +1361,7 @@ function UpdateInsert(index: number, item: AbstractCrdt): LiveListUpdateDelta {
   };
 }
 
-function updateMove(
+function UpdateMove(
   previousIndex: number,
   index: number,
   item: AbstractCrdt
