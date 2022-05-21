@@ -809,8 +809,6 @@ describe("LiveList conflicts", () => {
 
           await wsUtils.flushSocket2Messages();
 
-          console.log(root1.get("list").toArray(), root2.get("list").toArray());
-
           assert({ list: [] });
         }
       )
