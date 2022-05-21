@@ -577,7 +577,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assert }) => {
+        async ({ root1, root2, updates2, wsUtils, assert }) => {
           root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
           root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
           root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
@@ -811,10 +811,9 @@ describe("LiveList conflicts", () => {
 
           console.log(root1.get("list").toArray(), root2.get("list").toArray());
 
-          assert({ list: [] }, { list: [] }); // CONFLICT
+          assert({ list: [] });
         }
-      ),
-      100000
+      )
     );
   });
 });

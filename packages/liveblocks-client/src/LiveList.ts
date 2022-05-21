@@ -201,8 +201,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       // Item at position to be replaced doesn't exist
-      this._items.push(child);
-      sortListItem(this._items);
 
       const updates: LiveListUpdateDelta[] = [];
       const deleteDelta = this._detachItemAssociatedToSetOperation(
@@ -211,6 +209,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       if (deleteDelta) {
         updates.push(deleteDelta);
       }
+
+      this._items.push(child);
+      sortListItem(this._items);
 
       updates.push(UpdateInsert(this._indexOfPosition(key), child));
 

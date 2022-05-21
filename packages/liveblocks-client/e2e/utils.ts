@@ -113,9 +113,9 @@ export function prepareTestsConflicts<T extends LsonObject>(
       }
 
       expect(lsonToJson(root1)).toEqual(jsonRoot1);
-      // expect(immutableStorage1).toEqual(jsonRoot1);
+      expect(immutableStorage1).toEqual(jsonRoot1);
       expect(lsonToJson(root2)).toEqual(jsonRoot2);
-      // expect(immutableStorage2).toEqual(jsonRoot2);
+      expect(immutableStorage2).toEqual(jsonRoot2);
     }
 
     const socketUtils = {
