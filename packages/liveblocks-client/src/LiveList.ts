@@ -1,3 +1,4 @@
+import { reverse } from "lodash";
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
@@ -620,27 +621,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       sortListItem(this._items);
       const newIndex = this._items.indexOf(child);
 
-      if (newIndex !== previousIndex) {
-        return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: newIndex,
-                previousIndex,
-                item: child instanceof LiveRegister ? child.data : child,
-                type: "move",
-              },
-            ],
-          },
-          reverse: [],
-        };
-      } else {
+      if (newIndex === previousIndex) {
         return {
           modified: false,
         };
       }
+
+      return {
+        modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+        reverse: [],
+      };
     } else {
       this._items[existingItemIndex]._setParentLink(
         this,
@@ -650,34 +640,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         )
       );
 
-      // TODO update for existing item move?
-
+      const previousIndex = this._items.indexOf(child);
       child._setParentLink(this, newKey);
       sortListItem(this._items);
-
       const newIndex = this._items.indexOf(child);
 
-      if (newIndex !== existingItemIndex) {
-        return {
-          modified: {
-            node: this,
-            type: "LiveList",
-            updates: [
-              {
-                index: newIndex,
-                previousIndex: existingItemIndex,
-                item: child instanceof LiveRegister ? child.data : child,
-                type: "move",
-              },
-            ],
-          },
-          reverse: [],
-        };
-      } else {
+      if (newIndex === previousIndex) {
         return {
           modified: false,
         };
       }
+
+      return {
+        modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+        reverse: [],
+      };
     }
   }
 

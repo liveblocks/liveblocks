@@ -357,7 +357,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, wsUtils, assert }) => {
+        async ({ root1, root2, updates2, wsUtils, assert }) => {
           root1.get("list").move(0, 2);
           root2.get("list").move(1, 2);
 
