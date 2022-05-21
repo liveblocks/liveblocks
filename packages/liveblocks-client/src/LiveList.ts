@@ -174,7 +174,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this._items[existingItemIndex] = child;
 
         return {
-          modified: Update(this, [UpdateSet(existingItemIndex, child)]),
+          modified: makeUpdate(this, [setDelta(existingItemIndex, child)]),
           reverse: [],
         };
       } else {
@@ -184,7 +184,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         this._items[existingItemIndex] = child;
 
         const delta: LiveListUpdateDelta[] = [
-          UpdateSet(existingItemIndex, child),
+          setDelta(existingItemIndex, child),
         ];
 
         // Even if we implicitly delete the item at the set position
@@ -198,7 +198,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         }
 
         return {
-          modified: Update(this, delta),
+          modified: makeUpdate(this, delta),
           reverse: [],
         };
       }
@@ -216,11 +216,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._items.push(child);
       sortListItem(this._items);
 
-      updates.push(UpdateInsert(this._indexOfPosition(key), child));
+      updates.push(insertDelta(this._indexOfPosition(key), child));
 
       return {
         reverse: [],
-        modified: Update(this, updates),
+        modified: makeUpdate(this, updates),
       };
     }
   }
@@ -248,7 +248,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         // ... do nothing
         if (delta.length > 0) {
           return {
-            modified: Update(this, delta),
+            modified: makeUpdate(this, delta),
             reverse: [],
           };
         } else {
@@ -264,7 +264,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           this._items[indexOfItemWithSamePosition]
         );
         this._items.splice(indexOfItemWithSamePosition, 1);
-        delta.push(UpdateDelete(indexOfItemWithSamePosition));
+        delta.push(deleteDelta(indexOfItemWithSamePosition));
       }
 
       const previousIndex = this._items.indexOf(existingItem);
@@ -275,11 +275,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const newIndex = this._items.indexOf(existingItem);
 
       if (newIndex !== previousIndex) {
-        delta.push(UpdateMove(previousIndex, newIndex, existingItem));
+        delta.push(moveDelta(previousIndex, newIndex, existingItem));
       }
 
       return {
-        modified: delta.length > 0 ? Update(this, delta) : false,
+        modified: delta.length > 0 ? makeUpdate(this, delta) : false,
         reverse: [],
       };
     } else {
@@ -296,11 +296,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const recreatedItemIndex = this._items.indexOf(orphan);
 
         return {
-          modified: Update(this, [
+          modified: makeUpdate(this, [
             // If there is an item at this position, update is a set, else it's an insert
             indexOfItemWithSamePosition === -1
-              ? UpdateInsert(recreatedItemIndex, orphan)
-              : UpdateSet(recreatedItemIndex, orphan),
+              ? insertDelta(recreatedItemIndex, orphan)
+              : setDelta(recreatedItemIndex, orphan),
             ...delta,
           ]),
           reverse: [],
@@ -312,11 +312,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         );
 
         return {
-          modified: Update(this, [
+          modified: makeUpdate(this, [
             // If there is an item at this position, update is a set, else it's an insert
             indexOfItemWithSamePosition === -1
-              ? UpdateInsert(newIndex, newItem)
-              : UpdateSet(newIndex, newItem),
+              ? insertDelta(newIndex, newItem)
+              : setDelta(newIndex, newItem),
             ...delta,
           ]),
           reverse: [],
@@ -372,7 +372,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     // TODO: add move udpate?
     return {
-      modified: Update(this, [UpdateInsert(newIndex, newItem)]),
+      modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
       reverse: [],
     };
   }
@@ -408,8 +408,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         }
 
         return {
-          modified: Update(this, [
-            UpdateMove(oldPositionIndex, newIndex, existingItem),
+          modified: makeUpdate(this, [
+            moveDelta(oldPositionIndex, newIndex, existingItem),
           ]),
           reverse: [],
         };
@@ -428,7 +428,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const newIndex = this._indexOfPosition(key);
 
         return {
-          modified: Update(this, [UpdateInsert(newIndex, orphan)]),
+          modified: makeUpdate(this, [insertDelta(newIndex, orphan)]),
           reverse: [],
         };
       } else {
@@ -439,7 +439,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         const { newItem, newIndex } = this._createAttachItemAndSort(op, key);
 
         return {
-          modified: Update(this, [UpdateInsert(newIndex, newItem)]),
+          modified: makeUpdate(this, [insertDelta(newIndex, newItem)]),
           reverse: [],
         };
       }
@@ -483,7 +483,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const newIndex = this._indexOfPosition(newKey);
 
     return {
-      modified: Update(this, [UpdateInsert(newIndex, child)]),
+      modified: makeUpdate(this, [insertDelta(newIndex, child)]),
       reverse: [{ type: OpCode.DELETE_CRDT, id }],
     };
   }
@@ -518,7 +518,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const reverse = existingItem._serialize(this._id!, key, this._doc);
       addIntentAndDeletedIdToOperation(reverse, op.id);
 
-      const delta = [UpdateSet(indexOfItemWithSameKey, child)];
+      const delta = [setDelta(indexOfItemWithSameKey, child)];
       const deletedDelta = this._detachItemAssociatedToSetOperation(
         op.deletedId
       );
@@ -527,7 +527,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: Update(this, delta),
+        modified: makeUpdate(this, delta),
         reverse,
       };
     } else {
@@ -541,7 +541,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       return {
         reverse: [{ type: OpCode.DELETE_CRDT, id }],
-        modified: Update(this, [UpdateInsert(newIndex, child)]),
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
       };
     }
   }
@@ -593,13 +593,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       child._detach();
 
-      const storageUpdate: LiveListUpdates<TItem> = {
-        node: this,
-        type: "LiveList",
-        updates: [{ index: indexToDelete, type: "delete" }],
+      return {
+        modified: makeUpdate(this, [deleteDelta(indexToDelete)]),
+        reverse,
       };
-
-      return { modified: storageUpdate, reverse };
     }
 
     return { modified: false };
@@ -621,7 +618,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       // TODO: Shift existing item?
 
       return {
-        modified: Update(this, [UpdateInsert(newIndex, child)]),
+        modified: makeUpdate(this, [insertDelta(newIndex, child)]),
         reverse: [],
       };
     }
@@ -651,7 +648,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
         reverse: [],
       };
     } else {
@@ -675,7 +672,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       return {
-        modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+        modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
         reverse: [],
       };
     }
@@ -746,7 +743,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       } else {
         return {
-          modified: Update(this, [UpdateMove(previousIndex, newIndex, child)]),
+          modified: makeUpdate(this, [
+            moveDelta(previousIndex, newIndex, child),
+          ]),
           reverse: [],
         };
       }
@@ -779,23 +778,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const newIndex = this._items.indexOf(child);
 
-    const updatesDelta: LiveListUpdateDelta[] =
-      newIndex === previousIndex
-        ? []
-        : [
-            {
-              index: newIndex,
-              item: child instanceof LiveRegister ? child.data : child,
-              previousIndex,
-              type: "move",
-            },
-          ];
+    if (previousIndex === newIndex) {
+      return {
+        modified: false,
+      };
+    }
+
     return {
-      modified: {
-        node: this,
-        type: "LiveList",
-        updates: updatesDelta,
-      },
+      modified: makeUpdate(this, [moveDelta(previousIndex, newIndex, child)]),
       reverse: [
         {
           type: OpCode.SET_PARENT_KEY,
@@ -887,22 +877,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const id = this._doc.generateId();
       value._attach(id, this._doc);
 
-      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id, {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index,
-            item: value instanceof LiveRegister ? value.data : value,
-            type: "insert",
-          },
-        ],
-      });
       this._doc.dispatch(
         value._serialize(this._id, position, this._doc),
         [{ type: OpCode.DELETE_CRDT, id }],
-        storageUpdates
+        new Map<string, LiveListUpdates<TItem>>([
+          [this._id, makeUpdate(this, [insertDelta(index, value)])],
+        ])
       );
     }
   }
@@ -956,19 +936,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     sortListItem(this._items);
 
     if (this._doc && this._id) {
-      const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id, {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index: targetIndex,
-            previousIndex: index,
-            item: item instanceof LiveRegister ? item.data : item,
-            type: "move",
-          },
-        ],
-      });
+      const storageUpdates = new Map<string, LiveListUpdates<TItem>>([
+        [this._id, makeUpdate(this, [moveDelta(index, targetIndex, item)])],
+      ]);
 
       this._doc.dispatch(
         [
@@ -1012,11 +982,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-        storageUpdates.set(this._id!, {
-          node: this,
-          type: "LiveList",
-          updates: [{ index, type: "delete" }],
-        });
+        storageUpdates.set(this._id!, makeUpdate(this, [deleteDelta(index)]));
 
         this._doc.dispatch(
           [
@@ -1050,7 +1016,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             ...item._serialize(this._id!, item._getParentKeyOrThrow())
           );
 
-          updateDelta.push({ index: i, type: "delete" });
+          updateDelta.push(deleteDelta(i));
         }
 
         i++;
@@ -1059,11 +1025,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._items = [];
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id!, {
-        node: this,
-        type: "LiveList",
-        updates: updateDelta,
-      });
+      storageUpdates.set(this._id!, makeUpdate(this, updateDelta));
 
       this._doc.dispatch(ops, reverseOps, storageUpdates);
     } else {
@@ -1098,17 +1060,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       value._attach(id, this._doc);
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
-      storageUpdates.set(this._id, {
-        node: this,
-        type: "LiveList",
-        updates: [
-          {
-            index,
-            item: value instanceof LiveRegister ? value.data : value,
-            type: "set",
-          },
-        ],
-      });
+      storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
       const ops = value._serialize(this._id, position, this._doc);
       addIntentAndDeletedIdToOperation(ops, existingId);
@@ -1292,10 +1244,10 @@ class LiveListIterator<T> implements IterableIterator<T> {
   }
 }
 
-function Update(
-  liveList: LiveList<any>,
+function makeUpdate<TItem extends Lson>(
+  liveList: LiveList<TItem>,
   deltaUpdates: LiveListUpdateDelta[]
-): StorageUpdate {
+): LiveListUpdates<TItem> {
   return {
     node: liveList,
     type: "LiveList",
@@ -1303,7 +1255,7 @@ function Update(
   };
 }
 
-function UpdateSet(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+function setDelta(index: number, item: AbstractCrdt): LiveListUpdateDelta {
   return {
     index,
     type: "set",
@@ -1311,14 +1263,14 @@ function UpdateSet(index: number, item: AbstractCrdt): LiveListUpdateDelta {
   };
 }
 
-function UpdateDelete(index: number): LiveListUpdateDelta {
+function deleteDelta(index: number): LiveListUpdateDelta {
   return {
     index,
     type: "delete",
   };
 }
 
-function UpdateInsert(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+function insertDelta(index: number, item: AbstractCrdt): LiveListUpdateDelta {
   return {
     index,
     type: "insert",
@@ -1326,7 +1278,7 @@ function UpdateInsert(index: number, item: AbstractCrdt): LiveListUpdateDelta {
   };
 }
 
-function UpdateMove(
+function moveDelta(
   previousIndex: number,
   index: number,
   item: AbstractCrdt
