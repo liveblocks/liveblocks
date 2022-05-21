@@ -145,6 +145,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  /**
+   * @internal
+   */
   _applyRemoteSet(op: CreateOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -222,6 +225,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  /**
+   * @internal
+   */
   _applySetAck(op: CreateOp): ApplyResult {
     const delta: LiveListUpdateDelta[] = [];
 
@@ -320,7 +326,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /**
-   * Returns the index of the deleted item or null
+   * Returns the update delta of the deletion or null
+   * @internal
    */
   _detachItemAssociatedToSetOperation(
     deletedId?: string
@@ -344,6 +351,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
+  /**
+   * @internal
+   */
   _applyRemoteInsert(op: CreateOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -367,6 +377,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
+  /**
+   * @internal
+   */
   _applyInsertAck(op: CreateOp): ApplyResult {
     const existingItem = this._items.find((item) => item._id === op.id);
     const key = op.parentKey!;
@@ -433,6 +446,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  /**
+   * @internal
+   */
   _applyInsertUndoRedo(op: CreateOp): ApplyResult {
     const { id, parentKey } = op;
     const key = parentKey!;
@@ -472,6 +488,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
+  /**
+   * @internal
+   */
   _applySetUndoRedo(op: CreateOp): ApplyResult {
     const { id, parentKey } = op;
     const key = parentKey!;
@@ -586,6 +605,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return { modified: false };
   }
 
+  /**
+   * @internal
+   */
   _applySetChildKeyRemote(newKey: string, child: AbstractCrdt): ApplyResult {
     if (this._implicitlyDeletedItems.has(child)) {
       this._implicitlyDeletedItems.delete(child);
@@ -659,6 +681,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  /**
+   * @internal
+   */
   _applySetChildKeyAck(newKey: string, child: AbstractCrdt): ApplyResult {
     const previousKey = child._parentKey!;
 
@@ -728,6 +753,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
+  /**
+   * @internal
+   */
   _applySetChildKeyUndoRedo(newKey: string, child: AbstractCrdt): ApplyResult {
     const previousKey = child._parentKey!;
 
@@ -1199,6 +1227,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return new LiveListIterator(this._items);
   }
 
+  /**
+   * @internal
+   */
   _createAttachItemAndSort(
     op: CreateOp,
     key: string
@@ -1219,6 +1250,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return { newItem, newIndex };
   }
 
+  /**
+   * @internal
+   */
   _shiftItemPosition(index: number, key: string) {
     const shiftedPosition = makePosition(
       key,
