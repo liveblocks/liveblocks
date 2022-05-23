@@ -280,13 +280,13 @@ export function create() {
    *   }
    * });
    */
-  function useEventListener<TEvent extends Json>(
+  function useEventListener(
     callback: ({
       connectionId,
       event,
     }: {
       connectionId: number;
-      event: TEvent;
+      event: Json;
     }) => void
   ): void {
     const room = useRoom();
@@ -297,8 +297,9 @@ export function create() {
     });
 
     React.useEffect(() => {
-      const listener = (e: { connectionId: number; event: TEvent }) =>
+      const listener = (e: { connectionId: number; event: Json }) => {
         savedCallback.current(e);
+      };
 
       const unsubscribe = room.subscribe("event", listener);
       return () => {

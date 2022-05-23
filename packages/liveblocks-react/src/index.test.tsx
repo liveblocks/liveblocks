@@ -57,17 +57,38 @@ class MockWebSocket {
     MockWebSocket.instances.push(this);
   }
 
+  addEventListener(event: "open", callback: (event: Event) => void): void;
+  addEventListener(event: "close", callback: (event: CloseEvent) => void): void;
+  addEventListener(
+    event: "message",
+    callback: (event: MessageEvent) => void
+  ): void;
   addEventListener(
     event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
-    this.callbacks[event].push(callback);
+    callback:
+      | ((event: Event) => void)
+      | ((event: CloseEvent) => void)
+      | ((event: MessageEvent) => void)
+  ): void {
+    this.callbacks[event].push(callback as any);
   }
 
+  removeEventListener(event: "open", callback: (event: Event) => void): void;
+  removeEventListener(
+    event: "close",
+    callback: (event: CloseEvent) => void
+  ): void;
+  removeEventListener(
+    event: "message",
+    callback: (event: MessageEvent) => void
+  ): void;
   removeEventListener(
     event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
+    callback:
+      | ((event: Event) => void)
+      | ((event: CloseEvent) => void)
+      | ((event: MessageEvent) => void)
+  ): void {
     remove(this.callbacks[event], callback);
   }
 
