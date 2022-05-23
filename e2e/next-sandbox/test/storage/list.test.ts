@@ -92,7 +92,7 @@ test.describe("Storage - LiveList", () => {
     await assertContainText(pages, "0");
   });
 
-  test("set conflicts", async () => {
+  test.skip("set conflicts", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
