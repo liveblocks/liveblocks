@@ -1,7 +1,7 @@
 import each from "jest-each";
 
 import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
-import type { SerializedCrdt } from "./types";
+import type { NodeMap, SerializedCrdt } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
   compact,
@@ -28,7 +28,7 @@ describe("compact", () => {
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {
-    const currentItems = new Map<string, SerializedCrdt>([
+    const currentItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
@@ -64,7 +64,7 @@ describe("getTreesDiffOperations", () => {
   });
 
   test("delete liveList item", () => {
-    const currentItems = new Map<string, SerializedCrdt>([
+    const currentItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
@@ -101,7 +101,7 @@ describe("getTreesDiffOperations", () => {
   });
 
   test("liveList item moved, added and deleted", () => {
-    const currentItems = new Map<string, SerializedCrdt>([
+    const currentItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
@@ -124,7 +124,7 @@ describe("getTreesDiffOperations", () => {
       ],
     ]);
 
-    const newItems = new Map<string, SerializedCrdt>([
+    const newItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
       [
@@ -170,7 +170,7 @@ describe("getTreesDiffOperations", () => {
   });
 
   test("liveObject update", () => {
-    const currentItems = new Map<string, SerializedCrdt>([
+    const currentItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       [
         "0:1",
@@ -201,7 +201,7 @@ describe("getTreesDiffOperations", () => {
       ],
     ]);
 
-    const newItems = new Map<string, SerializedCrdt>([
+    const newItems: NodeMap = new Map([
       ["0:0", { type: CrdtType.OBJECT, data: {} }],
       [
         // different value

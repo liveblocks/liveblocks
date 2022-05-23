@@ -5,22 +5,44 @@ import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
   CreateOp,
+  IdTuple,
   Json,
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,
   Lson,
   LsonObject,
+  NodeMap,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
   StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import { isJsonObject, parseJson } from "./types/Json";
+
+/**
+ * Helper function that can be used to implement exhaustive switch statements
+ * with TypeScript. Example usage:
+ *
+ *    type Fruit = "🍎" | "🍌";
+ *
+ *    switch (fruit) {
+ *      case "🍎":
+ *      case "🍌":
+ *        return doSomething();
+ *
+ *      default:
+ *        return assertNever(fruit, "Unknown fruit");
+ *    }
+ *
+ * If now the Fruit union is extended (i.e. add "🍒"), TypeScript will catch
+ * this *statically*, rather than at runtime, and force you to handle the
+ * 🍒 case.
+ */
+export function assertNever(_value: never, errmsg: string): never {
+  throw new Error(errmsg);
+}
 
 export function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -66,34 +88,22 @@ export function isSameNodeOrChildOf(
 }
 
 export function deserialize(
-  entry: SerializedCrdtWithId,
-  parentToChildren: Map<string, SerializedCrdtWithId[]>,
+  [id, crdt]: IdTuple<SerializedCrdt>,
+  parentToChildren: ParentToChildNodeMap,
   doc: Doc
 ): AbstractCrdt {
-  switch (entry[1].type) {
+  switch (crdt.type) {
     case CrdtType.OBJECT: {
-      return LiveObject._deserialize(entry, parentToChildren, doc);
+      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.LIST: {
-      return LiveList._deserialize(
-        entry as [string, SerializedList],
-        parentToChildren,
-        doc
-      );
+      return LiveList._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.MAP: {
-      return LiveMap._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.REGISTER: {
-      return LiveRegister._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveRegister._deserialize([id, crdt], parentToChildren, doc);
     }
     default: {
       throw new Error("Unexpected CRDT type");
@@ -150,8 +160,8 @@ export function selfOrRegister(obj: Lson): AbstractCrdt {
 }
 
 export function getTreesDiffOperations(
-  currentItems: Map<string, SerializedCrdt>,
-  newItems: Map<string, SerializedCrdt>
+  currentItems: NodeMap,
+  newItems: NodeMap
 ): Op[] {
   const ops: Op[] = [];
 
@@ -170,8 +180,8 @@ export function getTreesDiffOperations(
     if (currentCrdt) {
       if (crdt.type === CrdtType.OBJECT) {
         if (
-          JSON.stringify(crdt.data) !==
-          JSON.stringify((currentCrdt as SerializedObject).data)
+          currentCrdt.type !== CrdtType.OBJECT ||
+          JSON.stringify(crdt.data) !== JSON.stringify(currentCrdt.data)
         ) {
           ops.push({
             type: OpCode.UPDATE_OBJECT,
@@ -208,13 +218,18 @@ export function getTreesDiffOperations(
           });
           break;
         case CrdtType.OBJECT:
-          ops.push({
-            type: OpCode.CREATE_OBJECT,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
+          ops.push(
+            crdt.parentId
+              ? {
+                  type: OpCode.CREATE_OBJECT,
+                  id,
+                  parentId: crdt.parentId,
+                  parentKey: crdt.parentKey,
+                  data: crdt.data,
+                }
+              : // Root object
+                { type: OpCode.CREATE_OBJECT, id, data: crdt.data }
+          );
           break;
         case CrdtType.MAP:
           ops.push({

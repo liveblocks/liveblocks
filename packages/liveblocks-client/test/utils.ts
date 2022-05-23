@@ -6,11 +6,17 @@ import { defaultState, makeStateMachine } from "../src/room";
 import type {
   Authentication,
   ClientMsg,
+  IdTuple,
   Json,
   JsonObject,
   LsonObject,
   Op,
-  SerializedCrdtWithId,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
   ServerMsg,
   ToJson,
 } from "../src/types";
@@ -138,7 +144,7 @@ async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 >(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   onSend: (messages: ClientMsg<TPresence>[]) => void = () => {},
   defaultStorage = {}
@@ -174,7 +180,7 @@ async function prepareRoomWithStorage<
 }
 
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   defaultStorage = {}
 ) {
@@ -220,7 +226,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
  * Assertion on the storage validate both rooms
  */
 export async function prepareStorageTest<TStorage extends LsonObject>(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   actor: number = 0
 ) {
   let currentActor = actor;
@@ -346,7 +352,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
 
   function reconnect(
     actor: number,
-    newItems?: SerializedCrdtWithId[] | undefined
+    newItems?: IdTuple<SerializedCrdt>[] | undefined
   ): MockWebSocket {
     currentActor = actor;
     const ws = new MockWebSocket("");
@@ -396,7 +402,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
 export async function reconnect(
   machine: Machine,
   actor: number,
-  newItems: SerializedCrdtWithId[]
+  newItems: IdTuple<SerializedCrdt>[]
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
@@ -414,7 +420,7 @@ export async function reconnect(
 export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never
->(items: SerializedCrdtWithId[], actor: number = 0) {
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let state: ToJson<TStorage> = {} as any;
   let refState: ToJson<TStorage> = {} as any;
 
@@ -496,17 +502,26 @@ export async function prepareStorageImmutableTest<
 export function createSerializedObject(
   id: string,
   data: Record<string, any>,
+  parentId: string,
+  parentKey: string
+): IdTuple<SerializedObject>;
+export function createSerializedObject(
+  id: string,
+  data: Record<string, any>
+): IdTuple<SerializedRootObject>;
+export function createSerializedObject(
+  id: string,
+  data: Record<string, any>,
   parentId?: string,
   parentKey?: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedObject | SerializedRootObject> {
   return [
     id,
-    {
-      type: CrdtType.OBJECT,
-      data,
-      parentId,
-      parentKey,
-    },
+    parentId !== undefined && parentKey !== undefined
+      ? // Normal case
+        { type: CrdtType.OBJECT, data, parentId, parentKey }
+      : // Root object
+        { type: CrdtType.OBJECT, data },
   ];
 }
 
@@ -514,30 +529,16 @@ export function createSerializedList(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.LIST,
-      parentId,
-      parentKey,
-    },
-  ];
+): IdTuple<SerializedList> {
+  return [id, { type: CrdtType.LIST, parentId, parentKey }];
 }
 
 export function createSerializedMap(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.MAP,
-      parentId,
-      parentKey,
-    },
-  ];
+): IdTuple<SerializedMap> {
+  return [id, { type: CrdtType.MAP, parentId, parentKey }];
 }
 
 export function createSerializedRegister(
@@ -545,16 +546,8 @@ export function createSerializedRegister(
   parentId: string,
   parentKey: string,
   data: Json
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.REGISTER,
-      parentId,
-      parentKey,
-      data,
-    },
-  ];
+): IdTuple<SerializedRegister> {
+  return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
 export function mockEffects(): Effects<JsonObject> {

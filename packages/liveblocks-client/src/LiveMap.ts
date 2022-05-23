@@ -4,11 +4,13 @@ import { errorIf } from "./deprecation";
 import type {
   CreateMapOp,
   CreateOp,
+  IdTuple,
   LiveMapUpdates,
   Lson,
   Op,
+  ParentToChildNodeMap,
   SerializedCrdt,
-  SerializedCrdtWithId,
+  SerializedMap,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
@@ -93,16 +95,10 @@ export class LiveMap<
    * @internal
    */
   static _deserialize(
-    [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id, _item]: IdTuple<SerializedMap>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
   ) {
-    if (item.type !== CrdtType.MAP) {
-      throw new Error(
-        `Tried to deserialize a map but item type is "${item.type}"`
-      );
-    }
-
     const map = new LiveMap();
     map._attach(id, doc);
 

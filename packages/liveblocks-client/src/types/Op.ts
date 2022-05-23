@@ -1,3 +1,4 @@
+import type { Resolve } from ".";
 import type { Json, JsonObject } from "./Json";
 
 export enum OpCode {
@@ -17,16 +18,15 @@ export enum OpCode {
  * only.
  */
 export type Op =
-  | CreateObjectOp
+  | CreateOp
   | UpdateObjectOp
   | DeleteCrdtOp
-  | CreateListOp
   | SetParentKeyOp // Only for lists!
-  | DeleteObjectKeyOp
-  | CreateMapOp
-  | CreateRegisterOp;
+  | DeleteObjectKeyOp;
 
-export type CreateOp =
+export type CreateOp = CreateRootObjectOp | CreateChildOp;
+
+export type CreateChildOp =
   | CreateObjectOp
   | CreateRegisterOp
   | CreateMapOp
@@ -45,10 +45,17 @@ export type CreateObjectOp = {
   intent?: "set";
   deletedId?: string;
   type: OpCode.CREATE_OBJECT;
-  parentId?: string;
-  parentKey?: string;
+  parentId: string;
+  parentKey: string;
   data: JsonObject;
 };
+
+export type CreateRootObjectOp = Resolve<
+  Omit<CreateObjectOp, "parentId" | "parentKey"> & {
+    parentId?: never;
+    parentKey?: never;
+  }
+>;
 
 export type CreateListOp = {
   opId?: string;
