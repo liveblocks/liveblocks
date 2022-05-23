@@ -9,7 +9,6 @@ import type {
   Lson,
   Op,
   ParentToChildNodeMap,
-  SerializedCrdt,
   SerializedMap,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
@@ -214,7 +213,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedCrdt {
+  _toSerializedCrdt(): SerializedMap {
     return {
       type: CrdtType.MAP,
       parentId: this._parent?._id!,
