@@ -135,13 +135,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applyRemoteSet(op: CreateOp): ApplyResult {
+  private _applyRemoteSet(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id } = op;
-    const key = nn(op.parentKey);
+    const { id, parentKey: key } = op;
     const child = creationOpToLiveStructure(op);
     child._attach(id, this._doc);
     child._setParentLink(this, key);
