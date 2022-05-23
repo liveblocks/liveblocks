@@ -131,7 +131,7 @@ test.describe("Storage - LiveList", () => {
 
     await waitForContentToBeEquals(pages);
 
-    for (let i = 0; i < 300; i++) {
+    for (let i = 0; i < 100; i++) {
       // no await to create randomness
 
       pages.forEach((page) => {
@@ -147,35 +147,6 @@ test.describe("Storage - LiveList", () => {
         } else {
           page.click(pickRandomAction());
         }
-      });
-
-      await delay(50);
-    }
-
-    await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
-  });
-
-  test.only("fuzzy with push insert delete and move", async () => {
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
-
-    for (let i = 0; i < 3; i++) {
-      pages[0].click("#push");
-      await delay(50);
-    }
-
-    await expect(pages[0].locator("#itemsCount")).toContainText("3");
-
-    await waitForContentToBeEquals(pages);
-
-    for (let i = 0; i < 100; i++) {
-      // no await to create randomness
-
-      pages.forEach((page) => {
-        page.click(pickRandomItem(["#push", "#insert", "#delete", "#move"]));
       });
 
       await delay(50);
