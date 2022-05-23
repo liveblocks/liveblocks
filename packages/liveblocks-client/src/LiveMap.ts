@@ -132,8 +132,7 @@ export class LiveMap<
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey } = op;
-    const key = nn(parentKey) as TKey;
+    const { id, parentKey: key } = op;
 
     const child = creationOpToLiveStructure(op);
 
@@ -141,7 +140,8 @@ export class LiveMap<
       return { modified: false };
     }
 
-    const previousValue = this._map.get(key);
+    const previousValue = this._map.get(key as TKey);
+    //                                      ^^^^^^^ TODO: Fix me!
     let reverse: Op[];
     if (previousValue) {
       const thisId = nn(this._id);
@@ -153,7 +153,8 @@ export class LiveMap<
 
     child._setParentLink(this, key);
     child._attach(id, this._doc);
-    this._map.set(key, child);
+    this._map.set(key as TKey, child);
+    //                ^^^^^^^ TODO: Fix me!
 
     return {
       modified: {
