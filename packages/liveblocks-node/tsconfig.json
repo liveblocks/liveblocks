@@ -5,8 +5,6 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strictPropertyInitialization": true,
-    "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
     "outDir": "./lib/esm",

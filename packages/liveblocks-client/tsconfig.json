@@ -6,8 +6,6 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strictPropertyInitialization": true,
-    "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
     "lib": ["dom", "es2015"],
