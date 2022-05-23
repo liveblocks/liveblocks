@@ -57,35 +57,39 @@ describe("LiveList", () => {
     });
   });
 
-  it("create document with list in root", async () => {
-    const { assert } = await prepareStorageTest<{ items: LiveList<never> }>([
-      createSerializedObject("0:0", {}),
-      createSerializedList("0:1", "0:0", "items"),
-    ]);
+  describe("deserialization", () => {
+    it("create document with list in root", async () => {
+      const { assert } = await prepareIsolatedStorageTest<{
+        items: LiveList<never>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+      ]);
 
-    assert({
-      items: [],
+      assert({
+        items: [],
+      });
     });
-  });
 
-  it("init list with items", async () => {
-    const { assert } = await prepareStorageTest<{
-      items: LiveList<LiveObject<{ a: number }>>;
-    }>([
-      createSerializedObject("0:0", {}),
-      createSerializedList("0:1", "0:0", "items"),
-      createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
-      createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
-      createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
-    ]);
+    it("init list with items", async () => {
+      const { assert } = await prepareIsolatedStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
+        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
+        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+      ]);
 
-    assert({
-      items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+      assert({
+        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+      });
     });
   });
 
   describe("push", () => {
-    it("push LiveObject", async () => {
+    it("LiveObject on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -104,49 +108,43 @@ describe("LiveList", () => {
       });
 
       items.push(new LiveObject({ a: 0 }));
-      assert({
-        items: [{ a: 0 }],
-      });
-
-      items.push(new LiveObject({ a: 1 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }],
-      });
-
-      items.push(new LiveObject({ a: 2 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
-      });
+      assert(
+        {
+          items: [{ a: 0 }],
+        },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: [{ a: 0 }],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: { a: 0 },
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: [],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
 
-    it("push existing LiveObject should throw", async () => {
-      const { storage, assert } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
-
-      const root = storage.root;
-      const items = root.toObject().items;
-      expect(items.toArray()).toMatchObject([]);
-
-      assert({
-        items: [],
-      });
-
-      const record = new LiveObject({ a: 0 });
-
-      items.push(record);
-      expect(() => items.push(record)).toThrow();
-    });
-
-    it("push number", async () => {
+    it("push number on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<number>;
       }>(
@@ -163,21 +161,41 @@ describe("LiveList", () => {
       assert({ items: [] });
 
       items.push(0);
-      assert({ items: [0] });
-
-      items.push(1);
-      assert({ items: [0, 1] });
-
-      items.push(2);
-
-      assert({
-        items: [0, 1, 2],
-      });
+      assert(
+        { items: [0] },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: [0],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: 0,
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: [],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
 
-    it("push LiveMap", async () => {
+    it("push LiveMap on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveMap<string, number>>;
       }>(
@@ -195,11 +213,57 @@ describe("LiveList", () => {
 
       items.push(new LiveMap([["first", 0]]));
 
-      assert({
-        items: [{ first: 0 }],
-      });
+      assert(
+        { items: [{ first: 0 }] },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: [{ first: 0 }],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: { first: 0 },
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: [],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
+    });
+
+    it("already attached LiveObject should throw", async () => {
+      const { root } = await prepareIsolatedStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = root.toObject().items;
+
+      const object = new LiveObject({ a: 0 });
+
+      items.push(object);
+      expect(() => items.push(object)).toThrow();
     });
   });
 
@@ -225,9 +289,36 @@ describe("LiveList", () => {
 
       items.insert(new LiveObject({ a: 0 }), 0);
 
-      assert({
-        items: [{ a: 0 }, { a: 1 }],
-      });
+      assert(
+        { items: [{ a: 0 }, { a: 1 }] },
+        {
+          updates: [
+            {
+              node: [{ a: 0 }, { a: 1 }],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: { a: 0 },
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              node: [{ a: 1 }],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
@@ -242,27 +333,56 @@ describe("LiveList", () => {
       } = await prepareStorageTest<{ items: LiveList<number> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
-        createSerializedRegister("0:2", "0:1", FIRST_POSITION, 0),
-        createSerializedRegister("0:3", "0:1", SECOND_POSITION, 1),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
       ]);
 
       const root = doc.root;
       const items = root.toObject().items;
 
       assert({
-        items: [0, 1],
+        items: ["A", "B"],
       });
 
       items.delete(0);
 
-      assert({
-        items: [1],
-      });
+      assert(
+        {
+          items: ["B"],
+        },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: ["B"],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: ["A", "B"],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
 
-    it("delete child LiveObject should remove descendants", async () => {
+    it("delete should remove descendants", async () => {
       const { storage, assert, assertUndoRedo, getItemsCount } =
         await prepareStorageTest<{
           items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
@@ -279,10 +399,40 @@ describe("LiveList", () => {
 
       storage.root.toObject().items.delete(0);
 
-      assert({
-        items: [],
-      });
+      assert(
+        {
+          items: [],
+        },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: [],
+              updates: [
+                {
+                  type: "delete",
+                  index: 0,
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: [{ child: { a: 0 } }],
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: { child: { a: 0 } },
+                },
+              ],
+            },
+          ],
+        }
+      );
 
+      // Ensure that LiveStructure are deleted properly
       expect(getItemsCount()).toBe(2);
 
       assertUndoRedo();
@@ -290,28 +440,176 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
-    it("list.move after current position", async () => {
+    it("move after current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
+        items: LiveList<string>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", FIRST_POSITION),
-        createSerializedObject("0:3", { a: 1 }, "0:1", SECOND_POSITION),
-        createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+        createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
       ]);
 
       assert({
-        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+        items: ["A", "B", "C"],
       });
 
       const root = storage.root;
       const items = root.toObject().items;
       items.move(0, 1);
 
+      assert(
+        { items: ["B", "A", "C"] },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: ["B", "A", "C"],
+              updates: [
+                {
+                  type: "move",
+                  index: 1,
+                  previousIndex: 0,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: ["A", "B", "C"],
+              updates: [
+                {
+                  type: "move",
+                  index: 0,
+                  previousIndex: 1,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+        }
+      );
+
+      assertUndoRedo();
+    });
+
+    it("list.move before current position", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
+
       assert({
-        items: [{ a: 1 }, { a: 0 }, { a: 2 }],
+        items: ["A", "B", "C"],
       });
+
+      const items = storage.root.get("items");
+
+      items.move(0, 1);
+      assert(
+        {
+          items: ["B", "A", "C"],
+        },
+        {
+          updates: [
+            {
+              node: ["B", "A", "C"],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "move",
+                  index: 1,
+                  previousIndex: 0,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              node: ["A", "B", "C"],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "move",
+                  index: 0,
+                  previousIndex: 1,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+        }
+      );
+
+      assertUndoRedo();
+    });
+
+    it("list.move at the end of the list", async () => {
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+        createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+      ]);
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      const root = storage.root;
+      const items = root.toObject().items;
+      items.move(0, 2);
+
+      assert(
+        {
+          items: ["B", "C", "A"],
+        },
+        {
+          updates: [
+            {
+              type: "LiveList",
+              node: ["B", "C", "A"],
+              updates: [
+                {
+                  type: "move",
+                  index: 2,
+                  previousIndex: 0,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+          undoUpdates: [
+            {
+              type: "LiveList",
+              node: ["A", "B", "C"],
+              updates: [
+                {
+                  type: "move",
+                  index: 0,
+                  previousIndex: 2,
+                  item: "A",
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       assertUndoRedo();
     });
@@ -325,6 +623,9 @@ describe("LiveList", () => {
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
         ],
         1
       );
@@ -333,28 +634,44 @@ describe("LiveList", () => {
       const items = root.get("items");
 
       assert({
-        items: [],
-      });
-
-      items.push(new LiveObject({ a: 0 }));
-      assert({
-        items: [{ a: 0 }],
-      });
-
-      items.push(new LiveObject({ a: 1 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }],
-      });
-
-      items.push(new LiveObject({ a: 2 }));
-      assert({
-        items: [{ a: 0 }, { a: 1 }, { a: 2 }],
+        items: ["A", "B", "C"],
       });
 
       items.clear();
       assert({
         items: [],
       });
+
+      assertUndoRedo();
+    });
+  });
+
+  describe("batch", () => {
+    it("batch multiple inserts", async () => {
+      const { storage, assert, assertUndoRedo, batch } =
+        await prepareStorageTest<{
+          items: LiveList<string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
+
+      const items = storage.root.get("items");
+
+      assert({ items: [] });
+
+      batch(() => {
+        items.push("A");
+        items.push("B");
+      });
+
+      assert(
+        { items: ["A", "B"] }
+        // Updates are not tested here because undo/redo is not symetric
+      );
 
       assertUndoRedo();
     });
@@ -426,199 +743,6 @@ describe("LiveList", () => {
       assert({ items: [{ a: 2 }] });
 
       assertUndoRedo();
-    });
-  });
-
-  describe("apply CreateRegister", () => {
-    it(`with intent "set" should replace existing item`, async () => {
-      const { assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("root", {}),
-            createSerializedList("0:0", "root", "items"),
-            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
-          ],
-          1
-        );
-
-      assert({
-        items: ["A"],
-      });
-
-      applyRemoteOperations([
-        {
-          type: OpCode.CREATE_REGISTER,
-          id: "0:2",
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "B",
-          intent: "set",
-        },
-      ]);
-
-      assert({
-        items: ["B"],
-      });
-    });
-
-    it(`with intent "set" should notify with a "set" update`, async () => {
-      const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("root", {}),
-            createSerializedList("0:0", "root", "items"),
-            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
-          ],
-          1
-        );
-
-      const items = root.get("items");
-
-      const callback = jest.fn();
-
-      subscribe(items, callback, { isDeep: true });
-
-      applyRemoteOperations([
-        {
-          type: OpCode.CREATE_REGISTER,
-          id: "0:2",
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "B",
-          intent: "set",
-        },
-      ]);
-
-      expect(callback).toHaveBeenCalledWith([
-        {
-          node: items,
-          type: "LiveList",
-          updates: [{ type: "set", index: 0, item: "B" }],
-        },
-      ]);
-    });
-
-    it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
-      const { root, assert, applyRemoteOperations } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("root", {}),
-            createSerializedList("0:0", "root", "items"),
-            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
-          ],
-          1
-        );
-
-      const items = root.get("items");
-
-      assert({
-        items: ["A"],
-      });
-
-      items.delete(0);
-
-      assert({
-        items: [],
-      });
-
-      applyRemoteOperations([
-        {
-          type: OpCode.CREATE_REGISTER,
-          id: "0:2",
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "B",
-          intent: "set",
-        },
-      ]);
-
-      assert({
-        items: ["B"],
-      });
-    });
-
-    it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
-      const { root, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("root", {}),
-            createSerializedList("0:0", "root", "items"),
-            createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
-          ],
-          1
-        );
-
-      const items = root.get("items");
-      items.delete(0);
-
-      const callback = jest.fn();
-
-      subscribe(items, callback, { isDeep: true });
-
-      applyRemoteOperations([
-        {
-          type: OpCode.CREATE_REGISTER,
-          id: "0:2",
-          parentId: "0:0",
-          parentKey: FIRST_POSITION,
-          data: "B",
-          intent: "set",
-        },
-      ]);
-
-      expect(callback).toHaveBeenCalledWith([
-        {
-          node: items,
-          type: "LiveList",
-          updates: [{ type: "insert", index: 0, item: "B" }],
-        },
-      ]);
-    });
-
-    it("on existing position should give the right update", async () => {
-      const { root, assert, applyRemoteOperations, subscribe } =
-        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
-
-      const items = root.get("items");
-
-      // Register id = 1:0
-      items.push("0");
-
-      assert({
-        items: ["0"],
-      });
-
-      const callback = jest.fn();
-
-      subscribe(items, callback, { isDeep: true });
-
-      applyRemoteOperations([
-        {
-          type: OpCode.CREATE_REGISTER,
-          id: "2:1",
-          parentId: "0:1",
-          parentKey: FIRST_POSITION,
-          data: "1",
-        },
-      ]);
-
-      assert({
-        items: ["1", "0"],
-      });
-
-      expect(callback).toHaveBeenCalledWith([
-        {
-          node: items,
-          type: "LiveList",
-          updates: [{ type: "insert", index: 0, item: "1" }],
-        },
-      ]);
     });
   });
 
@@ -887,175 +1011,142 @@ describe("LiveList", () => {
         items: ["C", "B", "A"],
       });
     });
-  });
 
-  it("list.push record then delete", async () => {
-    const {
-      storage: doc,
-      assert,
-      assertUndoRedo,
-    } = await prepareStorageTest<{
-      items: LiveList<LiveObject<{ b: number }>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
-      ],
-      1
-    );
-
-    const items = doc.root.get("items");
-
-    assert({
-      items: [],
-    });
-
-    items.push(new LiveObject({ b: 0 }));
-
-    assert({
-      items: [{ b: 0 }],
-    });
-
-    items.delete(0);
-    assert({
-      items: [],
-    });
-
-    assertUndoRedo();
-  });
-
-  describe("subscriptions", () => {
-    test("simple action", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const liveList = root.get("items");
-
-      subscribe(liveList, callback);
-
-      liveList.push("a");
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(liveList);
-    });
-
-    test("deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-      const listElement = root.get("items").get(0);
-
-      const unsubscribe = subscribe(root.get("items"), callback, {
-        isDeep: true,
-      });
-
-      listElement?.set("a", 1);
-
-      unsubscribe();
-
-      listElement?.set("a", 2);
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveObject",
-          node: listElement,
-          updates: { a: { type: "update" } },
-        },
-      ]);
-    });
-
-    test("remote move operation", async () => {
-      const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
+    it(`list conflicts - ack has different position that local item`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
           ],
           1
         );
 
-      const callback = jest.fn();
+      const items = root.get("items");
 
-      const root = storage.root;
+      items.push("B");
 
-      const liveList = root.get("items");
+      assert({
+        items: ["B"],
+      });
 
-      // Register id = 1:0
-      liveList.push("A");
-      // Register id = 1:1
-      liveList.push("B");
-      // Register id = 1:2
-      liveList.push("C");
+      // Other client created "A" at the same time but was processed first by the server.
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
+        },
+      ]);
+      // B is shifted to SECOND_POSITION
 
-      subscribe(liveList, callback);
+      // Other client deleted "A" right after creation.
+      applyRemoteOperations([
+        {
+          type: OpCode.DELETE_CRDT,
+          id: "2:0",
+          opId: "2:2",
+        },
+      ]);
+
+      assert({
+        items: ["B"], // "B" is at SECOND_POSITION
+      });
+
+      // Server sends ackownledgment for "B" creation with different position/
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B"], // "B" should at FIRST_POSITION
+      });
+
+      // Other client creates an item at the SECOND_POSITION
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: SECOND_POSITION,
+          data: "C",
+          opId: "2:3",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"],
+      });
+    });
+
+    it(`list conflicts - ack has different position that local and ack position is used`, async () => {
+      const { root, assert, applyRemoteOperations } =
+        await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("root", {}),
+            createSerializedList("0:0", "root", "items"),
+          ],
+          1
+        );
+
+      const items = root.get("items");
+
+      items.push("B");
+
+      assert({
+        items: ["B"],
+      });
 
       applyRemoteOperations([
         {
-          type: OpCode.SET_PARENT_KEY,
-          id: "1:1",
-          parentKey: FOURTH_POSITION,
+          type: OpCode.CREATE_REGISTER,
+          id: "2:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "A",
+          opId: "2:1",
         },
       ]);
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(liveList);
-    });
-
-    test("remote delete item operation", async () => {
-      const { storage, subscribe, applyRemoteOperations } =
-        await prepareStorageTest<{ items: LiveList<string> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const liveList = root.get("items");
-
-      // Register id = 1:0
-      liveList.push("A");
-
-      subscribe(liveList, callback);
 
       applyRemoteOperations([
         {
           type: OpCode.DELETE_CRDT,
-          id: "1:0",
+          id: "2:0",
+          opId: "2:2",
         },
       ]);
 
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith(liveList);
-    });
+      items.insert("C", 0); // Insert at FIRST_POSITION
 
+      // Ack
+      applyRemoteOperations([
+        {
+          type: OpCode.CREATE_REGISTER,
+          id: "1:0",
+          parentId: "0:0",
+          parentKey: FIRST_POSITION,
+          data: "B",
+          opId: "1:0",
+        },
+      ]);
+
+      assert({
+        items: ["B", "C"], // C position is shifted
+      });
+    });
+  });
+
+  describe("subscriptions", () => {
     test("batch multiple actions", async () => {
       const { storage, subscribe, batch, assert } = await prepareStorageTest<{
         items: LiveList<string>;
@@ -1159,48 +1250,6 @@ describe("LiveList", () => {
           updates: [
             { index: 0, type: "delete" },
             { index: 1, type: "delete" },
-          ],
-        },
-      ]);
-    });
-
-    test("move with deep subscribe", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const unsubscribe = subscribe(root.get("items"), callback, {
-        isDeep: true,
-      });
-
-      root.get("items").move(0, 1);
-
-      unsubscribe();
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveList",
-          node: root.get("items"),
-          updates: [
-            {
-              index: 1,
-              previousIndex: 0,
-              item: root.get("items").get(1),
-              type: "move",
-            },
           ],
         },
       ]);
@@ -1474,6 +1523,199 @@ describe("LiveList", () => {
             type: OpCode.CREATE_OBJECT,
           },
         ],
+      });
+    });
+
+    describe("apply CreateRegister", () => {
+      it(`with intent "set" should replace existing item`, async () => {
+        const { assert, applyRemoteOperations } =
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+            [
+              createSerializedObject("root", {}),
+              createSerializedList("0:0", "root", "items"),
+              createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+            ],
+            1
+          );
+
+        assert({
+          items: ["A"],
+        });
+
+        applyRemoteOperations([
+          {
+            type: OpCode.CREATE_REGISTER,
+            id: "0:2",
+            parentId: "0:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+            intent: "set",
+          },
+        ]);
+
+        assert({
+          items: ["B"],
+        });
+      });
+
+      it(`with intent "set" should notify with a "set" update`, async () => {
+        const { root, applyRemoteOperations, subscribe } =
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+            [
+              createSerializedObject("root", {}),
+              createSerializedList("0:0", "root", "items"),
+              createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+            ],
+            1
+          );
+
+        const items = root.get("items");
+
+        const callback = jest.fn();
+
+        subscribe(items, callback, { isDeep: true });
+
+        applyRemoteOperations([
+          {
+            type: OpCode.CREATE_REGISTER,
+            id: "0:2",
+            parentId: "0:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+            intent: "set",
+          },
+        ]);
+
+        expect(callback).toHaveBeenCalledWith([
+          {
+            node: items,
+            type: "LiveList",
+            updates: [{ type: "set", index: 0, item: "B" }],
+          },
+        ]);
+      });
+
+      it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
+        const { root, assert, applyRemoteOperations } =
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+            [
+              createSerializedObject("root", {}),
+              createSerializedList("0:0", "root", "items"),
+              createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+            ],
+            1
+          );
+
+        const items = root.get("items");
+
+        assert({
+          items: ["A"],
+        });
+
+        items.delete(0);
+
+        assert({
+          items: [],
+        });
+
+        applyRemoteOperations([
+          {
+            type: OpCode.CREATE_REGISTER,
+            id: "0:2",
+            parentId: "0:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+            intent: "set",
+          },
+        ]);
+
+        assert({
+          items: ["B"],
+        });
+      });
+
+      it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
+        const { root, applyRemoteOperations, subscribe } =
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+            [
+              createSerializedObject("root", {}),
+              createSerializedList("0:0", "root", "items"),
+              createSerializedRegister("0:1", "0:0", FIRST_POSITION, "A"),
+            ],
+            1
+          );
+
+        const items = root.get("items");
+        items.delete(0);
+
+        const callback = jest.fn();
+
+        subscribe(items, callback, { isDeep: true });
+
+        applyRemoteOperations([
+          {
+            type: OpCode.CREATE_REGISTER,
+            id: "0:2",
+            parentId: "0:0",
+            parentKey: FIRST_POSITION,
+            data: "B",
+            intent: "set",
+          },
+        ]);
+
+        expect(callback).toHaveBeenCalledWith([
+          {
+            node: items,
+            type: "LiveList",
+            updates: [{ type: "insert", index: 0, item: "B" }],
+          },
+        ]);
+      });
+
+      it("on existing position should give the right update", async () => {
+        const { root, assert, applyRemoteOperations, subscribe } =
+          await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
+            [
+              createSerializedObject("0:0", {}),
+              createSerializedList("0:1", "0:0", "items"),
+            ],
+            1
+          );
+
+        const items = root.get("items");
+
+        // Register id = 1:0
+        items.push("0");
+
+        assert({
+          items: ["0"],
+        });
+
+        const callback = jest.fn();
+
+        subscribe(items, callback, { isDeep: true });
+
+        applyRemoteOperations([
+          {
+            type: OpCode.CREATE_REGISTER,
+            id: "2:1",
+            parentId: "0:1",
+            parentKey: FIRST_POSITION,
+            data: "1",
+          },
+        ]);
+
+        assert({
+          items: ["1", "0"],
+        });
+
+        expect(callback).toHaveBeenCalledWith([
+          {
+            node: items,
+            type: "LiveList",
+            updates: [{ type: "insert", index: 0, item: "1" }],
+          },
+        ]);
       });
     });
   });

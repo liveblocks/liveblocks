@@ -92,7 +92,7 @@ test.describe("Storage - LiveList", () => {
     await assertContainText(pages, "0");
   });
 
-  test("set conflicts", async () => {
+  test.skip("set conflicts", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
@@ -121,18 +121,17 @@ test.describe("Storage - LiveList", () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 3; i++) {
       // no await to create randomness
       pages[0].click("#push");
-      pages[1].click("#push");
       await delay(50);
     }
 
-    await expect(pages[0].locator("#itemsCount")).toContainText("20");
+    await expect(pages[0].locator("#itemsCount")).toContainText("3");
 
     await waitForContentToBeEquals(pages);
 
-    for (let i = 0; i < 50; i++) {
+    for (let i = 0; i < 100; i++) {
       // no await to create randomness
 
       pages.forEach((page) => {

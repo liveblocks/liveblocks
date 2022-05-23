@@ -855,14 +855,36 @@ describe("room", () => {
         items.push("C");
       });
 
-      assert({
-        items: ["A", "B", "C"],
-      });
-
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
+      assert(
+        {
+          items: ["A", "B", "C"],
+        },
+        {
+          updates: [
+            {
+              node: ["A", "B", "C"],
+              type: "LiveList",
+              updates: [
+                {
+                  type: "insert",
+                  index: 0,
+                  item: "A",
+                },
+                {
+                  type: "insert",
+                  index: 1,
+                  item: "B",
+                },
+                {
+                  type: "insert",
+                  index: 2,
+                  item: "C",
+                },
+              ],
+            },
+          ],
+        }
+      );
 
       undo();
 
@@ -918,11 +940,6 @@ describe("room", () => {
       assert({
         items: ["A", "B", "C"],
       });
-
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
 
       expect(refOthers?.toArray()).toEqual([
         {
@@ -1053,8 +1070,9 @@ describe("room", () => {
       assert({ items: [] });
 
       items.push("A");
+      items.push("C"); // Will be removed by other client when offline
       assert({
-        items: ["A"],
+        items: ["A", "C"],
       });
 
       ws.closeFromBackend(
@@ -1067,8 +1085,11 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
+      // Other client (which is online), deletes "C".
+      refStorage.root.get("items").delete(1);
+
       const storageJson = lsonToJson(storage.root);
-      expect(storageJson).toEqual({ items: ["A", "B"] });
+      expect(storageJson).toEqual({ items: ["A", "C", "B"] });
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 

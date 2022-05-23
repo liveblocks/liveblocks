@@ -1,5 +1,5 @@
 import type { ApplyResult } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -591,11 +591,21 @@ export function makeStateMachine<TPresence extends JsonObject>(
         result.reverse.unshift(reverse as any);
         result.updates.presence = true;
       } else {
+        let source: OpSource;
+
         // Ops applied after undo/redo don't have an opId.
-        if (isLocal && !op.opId) {
+        if (!op.opId) {
           op.opId = generateOpId();
         }
-        const applyOpResult = applyOp(op, isLocal);
+
+        if (isLocal) {
+          source = OpSource.UNDOREDO_RECONNECT;
+        } else {
+          const deleted = state.offlineOperations.delete(op.opId!);
+          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+        }
+
+        const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
           const parentId = applyOpResult.modified.node._parent?._id!;
 
@@ -627,11 +637,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return result;
   }
 
-  function applyOp(op: Op, isLocal: boolean): ApplyResult {
-    if (op.opId) {
-      state.offlineOperations.delete(op.opId);
-    }
-
+  function applyOp(op: Op, source: OpSource): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
@@ -642,7 +648,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        return item._apply(op, isLocal);
+        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
         const item = state.items.get(op.id);
@@ -652,12 +658,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
         }
 
         if (item._parent instanceof LiveList) {
-          const previousKey = item._parentKey!;
-          if (previousKey === op.parentKey) {
-            return { modified: false };
-          } else {
-            return item._parent._setChildKey(op.parentKey, item, previousKey);
-          }
+          return item._parent._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
       }
@@ -669,7 +670,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
         if (parent == null) {
           return { modified: false };
         }
-        return parent._attachChild(op, isLocal);
+
+        return parent._attachChild(op, source);
       }
     }
   }

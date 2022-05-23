@@ -22,6 +22,8 @@ import type {
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
+import type { JsonStorageUpdate } from "./updatesUtils";
+import { serializeUpdateToJson } from "./updatesUtils";
 
 /**
  * Deep-clones a JSON-serializable value.
@@ -265,34 +267,88 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     }
   });
 
-  const states: any[] = [];
+  const states: ToJson<LsonObject>[] = [];
+  const expectedUpdates: JsonStorageUpdate[][] = [];
+  const expectedUndoUpdates: JsonStorageUpdate[][] = [];
+  const listOfUpdates: JsonStorageUpdate[][] = [];
+  const refListOfUpdates: JsonStorageUpdate[][] = [];
 
-  function assert(data: ToJson<TStorage>, shouldPushToStates = true) {
-    if (shouldPushToStates) {
-      states.push(data);
-    }
+  function assertState(data: ToJson<LsonObject>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
+  function assertLastUpdates(updates: JsonStorageUpdate[]) {
+    expect(updates).toEqual(listOfUpdates[listOfUpdates.length - 1]);
+    expect(updates).toEqual(refListOfUpdates[refListOfUpdates.length - 1]);
+  }
+
+  function assert(
+    data: ToJson<LsonObject>,
+    options?: {
+      updates?: JsonStorageUpdate[];
+      undoUpdates?: JsonStorageUpdate[];
+    }
+  ) {
+    states.push(data);
+
+    if (options?.updates) {
+      expectedUpdates.push(options.updates);
+    }
+    if (options?.undoUpdates) {
+      expectedUndoUpdates.push(options.undoUpdates);
+    }
+
+    assertState(data);
+
+    if (options?.updates) {
+      assertLastUpdates(options.updates);
+    }
+  }
+
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
+      if (expectedUndoUpdates.length > 0)
+        assertLastUpdates(
+          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
+        );
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assert(states[i + 1], false);
+      assertState(states[i + 1]);
+      if (expectedUpdates.length > 0) assertLastUpdates(expectedUpdates[i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
+      if (expectedUndoUpdates.length > 0)
+        assertLastUpdates(
+          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
+        );
     }
   }
+
+  machine.subscribe(
+    storage.root,
+    (updates) => listOfUpdates.push(updates.map(serializeUpdateToJson)),
+    {
+      isDeep: true,
+    }
+  );
+
+  refMachine.subscribe(
+    refStorage.root,
+    (updates) => refListOfUpdates.push(updates.map(serializeUpdateToJson)),
+    {
+      isDeep: true,
+    }
+  );
 
   function reconnect(
     actor: number,

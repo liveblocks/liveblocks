@@ -4,6 +4,8 @@
 # production
 /lib
 
+.env
+
 # misc
 .DS_Store
 *.pem
@@ -13,3 +15,5 @@ npm-debug.log*
 
 # npm pack artifacts
 *.tgz
+
+.env

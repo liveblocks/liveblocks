@@ -28,11 +28,27 @@ export interface Doc {
   ) => void;
 }
 
+export enum OpSource {
+  UNDOREDO_RECONNECT,
+  REMOTE,
+  ACK,
+}
 export abstract class AbstractCrdt {
   private __parent?: AbstractCrdt;
   private __doc?: Doc;
   private __id?: string;
   private __parentKey?: string;
+
+  /**
+   * @internal
+   */
+  _getParentKeyOrThrow(): string {
+    const key = this.__parentKey;
+    if (key == null) {
+      throw new Error("Parent key is missing");
+    }
+    return key;
+  }
 
   /**
    * @internal
@@ -112,7 +128,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _attachChild(op: CreateOp, isLocal: boolean): ApplyResult;
+  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
 
   /**
    * @internal
@@ -133,12 +149,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(
-    parentId: string,
-    parentKey: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[];
+  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
 
   /**
    * @internal

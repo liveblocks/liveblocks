@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc } from "./AbstractCrdt";
+import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { errorIf } from "./deprecation";
 import type {
@@ -62,12 +62,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(
-    parentId?: string,
-    parentKey?: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -83,7 +78,6 @@ export class LiveMap<
       id: this._id,
       opId: doc?.generateOpId(),
       type: OpCode.CREATE_MAP,
-      intent,
       parentId,
       parentKey,
     };
@@ -146,7 +140,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, _isLocal: boolean): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

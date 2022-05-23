@@ -1,5 +1,5 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import type {
   CreateObjectOp,
   CreateOp,
@@ -54,12 +54,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(
-    parentId?: string,
-    parentKey?: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -73,13 +68,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
             type: OpCode.CREATE_OBJECT,
             id: this._id,
             opId,
-            intent,
             parentId,
             parentKey,
             data: {},
           }
         : // Root object
-          { type: OpCode.CREATE_OBJECT, id: this._id, opId, intent, data: {} };
+          { type: OpCode.CREATE_OBJECT, id: this._id, opId, data: {} };
 
     ops.push(op);
 
@@ -154,7 +148,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, isLocal: boolean): ApplyResult {
+  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -172,7 +166,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return { modified: false };
     }
 
-    if (isLocal) {
+    if (source === OpSource.UNDOREDO_RECONNECT) {
       this._propToLastUpdate.set(key as string, opId!);
     } else if (this._propToLastUpdate.get(key as string) === undefined) {
       // Remote operation with no local change => apply operation
