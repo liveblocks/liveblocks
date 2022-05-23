@@ -194,7 +194,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           type: OpCode.UPDATE_OBJECT,
           id: this._id!,
           data: { [key]: previousValue },
-        } as any, // TODO
+        },
       ];
     }
 
@@ -228,7 +228,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       child._detach();
 
       const storageUpdate: LiveObjectUpdates<O> = {
-        node: this as any,
+        node: this,
         type: "LiveObject",
         updates: {
           [child._parentKey!]: { type: "delete" },

@@ -446,10 +446,10 @@ describe("LiveMap", () => {
 
   it("attach map with items to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, { a: number }>;
+      map?: LiveMap<string, { a: number }>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
@@ -462,10 +462,10 @@ describe("LiveMap", () => {
 
   it("attach map with live objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveObject<{ a: number }>>;
+      map?: LiveMap<string, LiveObject<{ a: number }>>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", new LiveObject({ a: 0 })]]));
 
@@ -480,10 +480,10 @@ describe("LiveMap", () => {
 
   it("attach map with objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, { a: number }>;
+      map?: LiveMap<string, { a: number }>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
