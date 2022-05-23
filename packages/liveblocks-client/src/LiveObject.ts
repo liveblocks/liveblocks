@@ -270,10 +270,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @internal
    */
   _toSerializedCrdt(): SerializedObject | SerializedRootObject {
-    const data: Record<string, any> = {};
+    const data: JsonObject = {};
 
+    // Add only the static (non-LiveStructure) data fields into the objects
     for (const [key, value] of this._map) {
-      if (value instanceof AbstractCrdt === false) {
+      if (!(value instanceof AbstractCrdt)) {
         data[key] = value;
       }
     }
