@@ -1,5 +1,5 @@
 import type { AbstractCrdt, Doc } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { assertNever, nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -49,6 +49,8 @@ export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
       return new LiveMap();
     case OpCode.CREATE_LIST:
       return new LiveList();
+    default:
+      return assertNever(op, "Unknown creation Op");
   }
 }
 

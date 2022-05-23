@@ -33,6 +33,7 @@ export enum OpSource {
   REMOTE,
   ACK,
 }
+
 export abstract class AbstractCrdt {
   private __parent?: AbstractCrdt;
   private __doc?: Doc;
