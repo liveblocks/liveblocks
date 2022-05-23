@@ -1,7 +1,7 @@
 import each from "jest-each";
 
 import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
-import type { NodeMap, SerializedCrdt } from "./types";
+import type { NodeMap } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
   compact,

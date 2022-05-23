@@ -325,10 +325,10 @@ export interface History {
    * It does not impact operations made by other clients.
    *
    * @example
-   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yy" }, { addToHistory: true });
    * room.history.undo();
-   * // room.getPresence() equals { selectedId: "xxx" }
+   * // room.getPresence() equals { selectedId: "xx" }
    */
   undo: () => void;
 
@@ -337,12 +337,12 @@ export interface History {
    * It does not impact operations made by other clients.
    *
    * @example
-   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yy" }, { addToHistory: true });
    * room.history.undo();
-   * // room.getPresence() equals { selectedId: "xxx" }
+   * // room.getPresence() equals { selectedId: "xx" }
    * room.history.redo();
-   * // room.getPresence() equals { selectedId: "yyy" }
+   * // room.getPresence() equals { selectedId: "yy" }
    */
   redo: () => void;
 

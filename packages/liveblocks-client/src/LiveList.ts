@@ -1,5 +1,3 @@
-import { reverse } from "lodash";
-
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
@@ -15,7 +13,6 @@ import type {
   ParentToChildNodeMap,
   SerializedCrdt,
   SerializedList,
-  StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
