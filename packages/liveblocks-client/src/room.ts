@@ -668,7 +668,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER: {
-        const parent = state.items.get(nn(op.parentId));
+        if (op.parentId === undefined) {
+          return { modified: false };
+        }
+
+        const parent = state.items.get(op.parentId);
         if (parent == null) {
           return { modified: false };
         }

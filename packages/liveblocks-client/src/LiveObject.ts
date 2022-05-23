@@ -2,8 +2,8 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
+  CreateChildOp,
   CreateObjectOp,
-  CreateOp,
   CreateRootObjectOp,
   DeleteObjectKeyOp,
   IdTuple,
@@ -141,7 +141,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

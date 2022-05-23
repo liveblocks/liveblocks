@@ -3,8 +3,8 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { errorIf } from "./deprecation";
 import type {
+  CreateChildOp,
   CreateMapOp,
-  CreateOp,
   IdTuple,
   LiveMapUpdates,
   Lson,
@@ -127,7 +127,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateOp): ApplyResult {
+  _attachChild(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

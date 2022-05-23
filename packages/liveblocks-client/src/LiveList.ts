@@ -4,6 +4,7 @@ import { nn } from "./assert";
 import { LiveRegister } from "./LiveRegister";
 import { comparePosition as compare, makePosition } from "./position";
 import type {
+  CreateChildOp,
   CreateListOp,
   CreateOp,
   IdTuple,
@@ -214,7 +215,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applySetAck(op: CreateOp): ApplyResult {
+  private _applySetAck(op: CreateChildOp): ApplyResult {
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
@@ -223,7 +224,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
-    const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey!);
+    const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
 
     const existingItem = this._items.find((item) => item._id === op.id);
 
@@ -255,7 +256,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const previousIndex = this._items.indexOf(existingItem);
 
-      existingItem._setParentLink(this, op.parentKey!);
+      existingItem._setParentLink(this, op.parentKey);
       sortListItem(this._items);
 
       const newIndex = this._items.indexOf(existingItem);
@@ -273,7 +274,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const orphan = this._doc!.getItem(op.id);
 
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
-        orphan._setParentLink(this, op.parentKey!);
+        orphan._setParentLink(this, op.parentKey);
         this._implicitlyDeletedItems.delete(orphan);
 
         this._items.push(orphan);
@@ -294,7 +295,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         const { newItem, newIndex } = this._createAttachItemAndSort(
           op,
-          op.parentKey!
+          op.parentKey
         );
 
         return {
@@ -340,12 +341,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applyRemoteInsert(op: CreateOp): ApplyResult {
+  private _applyRemoteInsert(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const key = op.parentKey!;
+    const key = op.parentKey;
 
     const existingItemIndex = this._indexOfPosition(key);
 
@@ -366,9 +367,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applyInsertAck(op: CreateOp): ApplyResult {
+  private _applyInsertAck(op: CreateChildOp): ApplyResult {
     const existingItem = this._items.find((item) => item._id === op.id);
-    const key = op.parentKey!;
+    const key = op.parentKey;
 
     const itemIndexAtPosition = this._indexOfPosition(key);
 
@@ -435,9 +436,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applyInsertUndoRedo(op: CreateOp): ApplyResult {
-    const { id, parentKey } = op;
-    const key = parentKey!;
+  private _applyInsertUndoRedo(op: CreateChildOp): ApplyResult {
+    const { id, parentKey: key } = op;
     const child = creationOpToLiveStructure(op);
 
     if (this._doc?.getItem(id) !== undefined) {
@@ -477,9 +477,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applySetUndoRedo(op: CreateOp): ApplyResult {
-    const { id, parentKey } = op;
-    const key = parentKey!;
+  private _applySetUndoRedo(op: CreateChildOp): ApplyResult {
+    const { id, parentKey: key } = op;
     const child = creationOpToLiveStructure(op);
 
     if (this._doc?.getItem(id) !== undefined) {
@@ -535,7 +534,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

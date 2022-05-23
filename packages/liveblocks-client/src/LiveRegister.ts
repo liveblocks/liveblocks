@@ -2,7 +2,7 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
-  CreateOp,
+  CreateChildOp,
   IdTuple,
   Json,
   Op,
@@ -79,7 +79,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     };
   }
 
-  _attachChild(_op: CreateOp): ApplyResult {
+  _attachChild(_op: CreateChildOp): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
