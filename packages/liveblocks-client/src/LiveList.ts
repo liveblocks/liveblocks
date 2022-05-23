@@ -11,7 +11,6 @@ import type {
   Lson,
   Op,
   ParentToChildNodeMap,
-  SerializedCrdt,
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
@@ -825,7 +824,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedCrdt {
+  _toSerializedCrdt(): SerializedList {
     return {
       type: CrdtType.LIST,
       parentId: this._parent?._id!,

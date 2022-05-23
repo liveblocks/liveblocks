@@ -12,7 +12,6 @@ import type {
   LsonObject,
   Op,
   ParentToChildNodeMap,
-  SerializedCrdt,
   SerializedObject,
   SerializedRootObject,
   ToJson,
@@ -194,7 +193,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
           type: OpCode.UPDATE_OBJECT,
           id: this._id!,
           data: { [key]: previousValue },
-        } as any, // TODO
+        },
       ];
     }
 
@@ -228,7 +227,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       child._detach();
 
       const storageUpdate: LiveObjectUpdates<O> = {
-        node: this as any,
+        node: this,
         type: "LiveObject",
         updates: {
           [child._parentKey!]: { type: "delete" },
@@ -239,16 +238,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     return { modified: false };
-  }
-
-  /**
-   * @internal
-   */
-  _detachChildren() {
-    for (const [key, value] of this._map) {
-      this._map.delete(key);
-      value._detach();
-    }
   }
 
   /**
@@ -280,9 +269,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedCrdt {
-    const data: Record<string, any> = {};
+  _toSerializedCrdt(): SerializedObject | SerializedRootObject {
+    const data: JsonObject = {};
 
+    // Add only the static (non-LiveStructure) data fields into the objects
     for (const [key, value] of this._map) {
       if (value instanceof AbstractCrdt === false) {
         data[key] = value;

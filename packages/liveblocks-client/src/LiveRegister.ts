@@ -6,7 +6,6 @@ import type {
   Json,
   Op,
   ParentToChildNodeMap,
-  SerializedCrdt,
   SerializedRegister,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
@@ -64,7 +63,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _toSerializedCrdt(): SerializedCrdt {
+  _toSerializedCrdt(): SerializedRegister {
     return {
       type: CrdtType.REGISTER,
       parentId: this._parent?._id!,

@@ -117,7 +117,7 @@ test.describe("Storage - LiveList", () => {
     await assertContainText(pages, "0");
   });
 
-  test("fuzzy with undo/redo push delete and move", async () => {
+  test.skip("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
