@@ -240,13 +240,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return { modified: false };
   }
 
-  _detachChildren() {
-    for (const [key, value] of this._map) {
-      this._map.delete(key);
-      value._detach();
-    }
-  }
-
   /**
    * @internal
    */
