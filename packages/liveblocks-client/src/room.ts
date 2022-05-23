@@ -89,17 +89,6 @@ export type Machine = {
   connect(): null | undefined;
   disconnect(): void;
 
-  subscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): () => void;
-  subscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): () => void;
-  subscribe(type: "event", listener: EventCallback): () => void;
-  subscribe(type: "error", listener: ErrorCallback): () => void;
-  subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe(callback: (updates: StorageUpdate) => void): () => void;
   subscribe<TKey extends string, TValue extends Lson>(
     liveMap: LiveMap<TKey, TValue>,
@@ -118,6 +107,17 @@ export type Machine = {
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
+  subscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): () => void;
+  subscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): () => void;
+  subscribe(type: "event", listener: EventCallback): () => void;
+  subscribe(type: "error", listener: ErrorCallback): () => void;
+  subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K] | any,
@@ -676,20 +676,6 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function subscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): () => void;
-  function subscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): () => void;
-  function subscribe(type: "event", listener: EventCallback): () => void;
-  function subscribe(type: "error", listener: ErrorCallback): () => void;
-  function subscribe(
-    type: "connection",
-    listener: ConnectionCallback
-  ): () => void;
   function subscribe(callback: (updates: StorageUpdate) => void): () => void;
   function subscribe<TKey extends string, TValue extends Lson>(
     liveMap: LiveMap<TKey, TValue>,
@@ -707,6 +693,20 @@ export function makeStateMachine<TPresence extends JsonObject>(
     node: TItem,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
+  ): () => void;
+  function subscribe<T extends Presence>(
+    type: "my-presence",
+    listener: MyPresenceCallback<T>
+  ): () => void;
+  function subscribe<T extends Presence>(
+    type: "others",
+    listener: OthersEventCallback<T>
+  ): () => void;
+  function subscribe(type: "event", listener: EventCallback): () => void;
+  function subscribe(type: "error", listener: ErrorCallback): () => void;
+  function subscribe(
+    type: "connection",
+    listener: ConnectionCallback
   ): () => void;
   function subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
