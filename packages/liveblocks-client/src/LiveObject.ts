@@ -146,8 +146,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, opId } = op;
-    const key = nn(op.parentKey);
+    const { id, opId, parentKey: key } = op;
     const child = creationOpToLiveStructure(op);
 
     if (this._doc.getItem(id) !== undefined) {
