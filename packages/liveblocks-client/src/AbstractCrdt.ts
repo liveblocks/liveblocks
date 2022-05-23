@@ -1,4 +1,4 @@
-import type { CreateOp, Op, SerializedCrdt, StorageUpdate } from "./types";
+import type { CreateChildOp, Op, SerializedCrdt, StorageUpdate } from "./types";
 import { OpCode } from "./types";
 
 export type ApplyResult =
@@ -128,7 +128,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _attachChild(op: CreateOp, source: OpSource): ApplyResult;
+  abstract _attachChild(op: CreateChildOp, source: OpSource): ApplyResult;
 
   /**
    * @internal

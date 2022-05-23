@@ -1,7 +1,8 @@
-import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
+import { nn } from "./assert";
 import type {
-  CreateOp,
+  CreateChildOp,
   IdTuple,
   Json,
   Op,
@@ -66,13 +67,19 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _toSerializedCrdt(): SerializedRegister {
     return {
       type: CrdtType.REGISTER,
-      parentId: this._parent?._id!,
-      parentKey: this._parentKey!,
+      parentId: nn(
+        this._parent?._id,
+        "Cannot serialize Register if parentId is missing"
+      ),
+      parentKey: nn(
+        this._parentKey,
+        "Cannot serialize Register if parentKey is missing"
+      ),
       data: this.data,
     };
   }
 
-  _attachChild(_op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(_op: CreateChildOp): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

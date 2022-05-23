@@ -14,7 +14,6 @@ module.exports = {
     // -------------------------------
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-inferrable-types": "off",
-    "no-constant-condition": "off",
 
     // -----------------------------
     // Enable auto-fixes for imports

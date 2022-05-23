@@ -14,10 +14,7 @@ module.exports = {
     // These checks are still GOOD IDEAS to re-enable later on, but for right
     // now they're too noisy to enable.
     // ----------------------------------------------------------------------
-    "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
-    "@typescript-eslint/no-non-null-assertion": "off",
 
     // -------------------------------
     // Not interested in these checks:
@@ -25,6 +22,7 @@ module.exports = {
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-inferrable-types": "off",
     "no-constant-condition": "off",
+    "@typescript-eslint/no-non-null-assertion": "off", // Because we have a custom no-restricted-syntax rule for this
 
     // -----------------------------
     // Enable auto-fixes for imports
@@ -75,6 +73,11 @@ module.exports = {
         selector: "ArrowFunctionExpression[async=true]",
         message:
           "Using `async` functions will emit extra support code in our CommonJS bundle, increasing its size. Using the Promise API instead will lead to a smaller bundle.",
+      },
+      {
+        selector: "TSNonNullExpression",
+        message:
+          "Non-null assertions mask real problems. Please use `nn(...)` (from src/assert.ts) instead.",
       },
       // {
       //   selector: "ForOfStatement",

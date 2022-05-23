@@ -1,5 +1,6 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -120,7 +121,7 @@ export type Machine = {
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
+    listener?: RoomEventCallbackMap[K],
     options?: { isDeep: boolean }
   ): () => void;
 
@@ -567,6 +568,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     };
 
     const createdNodeIds = new Set<string>();
+
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
@@ -601,22 +603,22 @@ export function makeStateMachine<TPresence extends JsonObject>(
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.offlineOperations.delete(op.opId!);
+          const deleted = state.offlineOperations.delete(nn(op.opId));
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId = applyOpResult.modified.node._parent?._id!;
+          const parentId = applyOpResult.modified.node._parent?._id;
 
-          // If the parent was created in the same batch, we don't want to notify
+          // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
-          if (!createdNodeIds.has(parentId)) {
+          if (!parentId || !createdNodeIds.has(parentId)) {
             result.updates.storageUpdates.set(
-              applyOpResult.modified.node._id!,
+              nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
                 result.updates.storageUpdates.get(
-                  applyOpResult.modified.node._id!
+                  nn(applyOpResult.modified.node._id)
                 ) as any, // FIXME
                 applyOpResult.modified
               )
@@ -629,7 +631,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(applyOpResult.modified.node._id!);
+            createdNodeIds.add(nn(applyOpResult.modified.node._id));
           }
         }
       }
@@ -666,7 +668,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER: {
-        const parent = state.items.get(op.parentId!);
+        if (op.parentId === undefined) {
+          return { modified: false };
+        }
+
+        const parent = state.items.get(op.parentId);
         if (parent == null) {
           return { modified: false };
         }
@@ -1172,7 +1178,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     connect();
   }
 
-  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+  function applyAndSendOfflineOps(offlineOps: Map<string | undefined, Op>) {
+    //                                                     ^^^^^^^^^ NOTE: Bug? Unintended?
     if (offlineOps.size === 0) {
       return;
     }
@@ -1198,7 +1205,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(op.opId!, op);
+        state.offlineOperations.set(nn(op.opId), op);
       });
     }
 
@@ -1340,7 +1347,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TStorage>,
+        root: nn(state.root) as LiveObject<TStorage>,
       };
     });
   }
@@ -1620,10 +1627,9 @@ export function createRoom(
       resume: machine.resumeHistory,
     },
 
-    // @ts-ignore
-    internalDevTools: {
-      closeWebsocket: machine.simulateSocketClose,
-      sendCloseEvent: machine.simulateSendCloseEvent,
+    __INTERNAL_DO_NOT_USE: {
+      simulateCloseWebsocket: machine.simulateSocketClose,
+      simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
   };
 

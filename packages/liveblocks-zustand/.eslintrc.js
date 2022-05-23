@@ -14,9 +14,7 @@ module.exports = {
     // These checks are still GOOD IDEAS to re-enable later on, but for right
     // now they're too noisy to enable.
     // ----------------------------------------------------------------------
-    // "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    // "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
 
     // -------------------------------

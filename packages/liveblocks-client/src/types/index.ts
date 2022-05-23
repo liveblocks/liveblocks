@@ -633,6 +633,18 @@ export type Room = {
    * });
    */
   batch: (fn: () => void) => void;
+
+  /**
+   * @internal Utilities only used for unit testing.
+   */
+  __INTERNAL_DO_NOT_USE: {
+    simulateCloseWebsocket(): void;
+    simulateSendCloseEvent(event: {
+      code: number;
+      wasClean: boolean;
+      reason: string;
+    }): void;
+  };
 };
 
 export enum WebsocketCloseCodes {
