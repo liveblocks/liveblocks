@@ -1055,7 +1055,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingItem = this._items[index];
     const position = existingItem._getParentKeyOrThrow();
 
-    const existingId = nn(existingItem._id);
+    const existingId = existingItem._id;
     existingItem._detach();
 
     const value = selfOrRegister(item);
@@ -1309,7 +1309,10 @@ function sortListItem(items: AbstractCrdt[]) {
  * As soon as we refactor the operations structure,
  * serializing a LiveStructure should not know anything about intent
  */
-function addIntentAndDeletedIdToOperation(ops: Op[], deletedId: string) {
+function addIntentAndDeletedIdToOperation(
+  ops: Op[],
+  deletedId: string | undefined
+) {
   if (ops.length === 0) {
     throw new Error(
       "Internal error. Serialized LiveStructure should have at least 1 operation"
