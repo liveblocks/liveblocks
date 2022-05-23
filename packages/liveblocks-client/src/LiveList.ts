@@ -271,7 +271,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       };
     } else {
       // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
-      const orphan = this._doc!.getItem(op.id);
+      const orphan = nn(this._doc).getItem(op.id);
 
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         orphan._setParentLink(this, op.parentKey);
@@ -402,7 +402,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
     } else {
-      const orphan = this._doc!.getItem(op.id);
+      const orphan = nn(this._doc).getItem(op.id);
 
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         // Implicit delete after set
@@ -444,7 +444,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
-    child._attach(id, this._doc!);
+    child._attach(id, nn(this._doc));
     child._setParentLink(this, key);
 
     const existingItemIndex = this._indexOfPosition(key);
@@ -487,7 +487,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
-    child._attach(id, this._doc!);
+    child._attach(id, nn(this._doc));
     child._setParentLink(this, key);
 
     const newKey = key;
@@ -500,7 +500,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       this._items[indexOfItemWithSameKey] = child;
 
-      const reverse = existingItem._serialize(this._id!, key, this._doc);
+      const reverse = existingItem._serialize(nn(this._id), key, this._doc);
       addIntentAndDeletedIdToOperation(reverse, op.id);
 
       const delta = [setDelta(indexOfItemWithSameKey, child)];
@@ -674,7 +674,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     newKey: string,
     child: AbstractCrdt
   ): ApplyResult {
-    const previousKey = child._parentKey!;
+    const previousKey = nn(child._parentKey);
 
     if (this._implicitlyDeletedItems.has(child)) {
       const existingItemIndex = this._indexOfPosition(newKey);
@@ -751,7 +751,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     newKey: string,
     child: AbstractCrdt
   ): ApplyResult {
-    const previousKey = child._parentKey!;
+    const previousKey = nn(child._parentKey);
 
     const previousIndex = this._items.indexOf(child);
     const existingItemIndex = this._indexOfPosition(newKey);
@@ -1056,7 +1056,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingItem = this._items[index];
     const position = existingItem._getParentKeyOrThrow();
 
-    const existingId = existingItem._id!;
+    const existingId = nn(existingItem._id);
     existingItem._detach();
 
     const value = selfOrRegister(item);
@@ -1199,7 +1199,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   } {
     const newItem = creationOpToLiveStructure(op);
 
-    newItem._attach(op.id, this._doc!);
+    newItem._attach(op.id, nn(this._doc));
     newItem._setParentLink(this, key);
 
     this._items.push(newItem);

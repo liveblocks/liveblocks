@@ -603,7 +603,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.offlineOperations.delete(op.opId!);
+          const deleted = state.offlineOperations.delete(nn(op.opId));
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
