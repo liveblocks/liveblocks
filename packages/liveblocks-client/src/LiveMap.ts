@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { errorIf } from "./deprecation";
@@ -127,7 +127,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(op: CreateOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }

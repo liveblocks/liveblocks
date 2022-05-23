@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
@@ -79,7 +79,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     };
   }
 
-  _attachChild(_op: CreateOp, source: OpSource): ApplyResult {
+  _attachChild(_op: CreateOp): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
