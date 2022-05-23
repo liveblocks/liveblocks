@@ -240,6 +240,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return { modified: false };
   }
 
+  _detachChildren() {
+    for (const [key, value] of this._map) {
+      this._map.delete(key);
+      value._detach();
+    }
+  }
+
   /**
    * @internal
    */
@@ -274,7 +281,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // Add only the static (non-LiveStructure) data fields into the objects
     for (const [key, value] of this._map) {
-      if (!(value instanceof AbstractCrdt)) {
+      if (value instanceof AbstractCrdt === false) {
         data[key] = value;
       }
     }
