@@ -114,6 +114,7 @@ export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
   return value instanceof LiveRegister;
 }
 
+// XXX Rename to toLson
 export function selfOrRegisterValue(obj: LiveNode): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
@@ -128,34 +129,15 @@ export function selfOrRegisterValue(obj: LiveNode): Lson {
   }
 }
 
-export function selfOrRegister(obj: Lson): LiveNode {
+export function lsonToLiveNode(value: Lson): LiveNode {
   if (
-    obj instanceof LiveObject ||
-    obj instanceof LiveMap ||
-    obj instanceof LiveList
+    value instanceof LiveObject ||
+    value instanceof LiveMap ||
+    value instanceof LiveList
   ) {
-    return obj;
-  } else if (obj instanceof LiveRegister) {
-    throw new Error(
-      "Internal error. LiveRegister should not be created from selfOrRegister"
-    );
+    return value;
   } else {
-    // By now, we've checked that obj isn't a Live storage instance.
-    // Technically what remains here can still be a (1) live data scalar, or
-    // a (2) list of Lson values, or (3) an object with Lson values.
-    //
-    // Of these, (1) is fine, because a live data scalar is also a legal Json
-    // scalar.
-    //
-    // But (2) and (3) are only technically fine if those only contain Json
-    // values. Technically, these can still contain nested Live storage
-    // instances, and we should probably assert that they don't at runtime.
-    //
-    // TypeScript understands this and doesn't let us use `obj` until we do :)
-    //
-    return new LiveRegister(obj as Json);
-    //                          ^^^^^^^
-    //                          TODO: Better to assert than to force-cast here!
+    return new LiveRegister(value);
   }
 }
 
