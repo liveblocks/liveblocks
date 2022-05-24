@@ -4,16 +4,16 @@ import type { LiveObject } from "../LiveObject";
 import type { LiveRegister } from "../LiveRegister";
 import type { Json } from "./Json";
 
+export type LiveStructure =
+  | LiveObject<LsonObject>
+  | LiveList<Lson>
+  | LiveMap<string, Lson>;
+
 /**
  * Think of Lson as a sibling of the Json data tree, except that the nested
  * data structure can contain a mix of Json values and LiveStructure instances.
  */
 export type Lson = Json | LiveStructure;
-
-export type LiveStructure =
-  | LiveObject<LsonObject>
-  | LiveList<Lson>
-  | LiveMap<string, Lson>;
 
 /**
  * LiveNode is the internal tree for managing Live data structures. The key
