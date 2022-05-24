@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { LiveList } from "./LiveList";
+import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
@@ -59,6 +59,8 @@ import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,
   getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
   isSameNodeOrChildOf,
   isTokenValid,
   mergeStorageUpdates,
@@ -662,7 +664,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        if (item._parent instanceof LiveList) {
+        if (isLiveList(item._parent)) {
           return item._parent._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
@@ -722,7 +724,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
-    if (firstParam instanceof AbstractCrdt) {
+    if (isLiveNode(firstParam)) {
       return crdtSubscribe(firstParam, listener, options);
     } else if (typeof firstParam === "function") {
       return genericSubscribe(firstParam);

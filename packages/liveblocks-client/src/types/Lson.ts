@@ -16,7 +16,9 @@ export type LiveStructure =
   | LiveMap<string, Lson>;
 
 /**
- * Like LiveStructure,
+ * LiveNode is the internal tree for managing Live data structures. The key
+ * difference with Lson is that all the Json values get represented in
+ * a LiveRegister node.
  */
 export type LiveNode =
   | LiveStructure

@@ -1,10 +1,9 @@
-import { AbstractCrdt } from "./AbstractCrdt";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { Json, LiveNode, Lson, LsonObject, StorageUpdate } from "./types";
-import { findNonSerializableValue, isLiveList } from "./utils";
+import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
@@ -53,9 +52,6 @@ export function lsonToJson(value: Lson): Json {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
     return value.data;
-  } else if (value instanceof AbstractCrdt) {
-    // This code path should never be taken
-    throw new Error("Unhandled subclass of AbstractCrdt encountered");
   }
 
   // Then for composite Lson values
@@ -162,7 +158,7 @@ export function patchLiveList<T extends Lson>(
       const liveListNode = liveList.get(i);
 
       if (
-        liveListNode instanceof LiveObject &&
+        isLiveObject(liveListNode) &&
         isPlainObject(prevNode) &&
         isPlainObject(nextNode)
       ) {
@@ -209,18 +205,16 @@ export function patchLiveObjectKey<O extends LsonObject>(
     liveObject.set(key, anyToCrdt(next));
   } else if (prev === next) {
     return;
-  } else if (
-    value instanceof LiveList &&
-    Array.isArray(prev) &&
-    Array.isArray(next)
-  ) {
+  } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
     patchLiveList(value, prev, next);
   } else if (
-    value instanceof LiveObject &&
+    isLiveObject(value) &&
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev, next);
+    patchLiveObject(value, prev as LsonObject, next as LsonObject);
+    //                          ^^^^^^^^^^^^^       ^^^^^^^^^^^^^
+    //                          FIXME! Unsafe cast! Verify instead of cast.
   } else {
     liveObject.set(key, anyToCrdt(next));
   }

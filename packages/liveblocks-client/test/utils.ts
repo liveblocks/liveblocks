@@ -1,4 +1,3 @@
-import type { AbstractCrdt } from "../src/AbstractCrdt";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";

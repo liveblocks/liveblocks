@@ -44,7 +44,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     for (const key in obj) {
       const value = obj[key] as any;
-      if (value instanceof AbstractCrdt) {
+      if (isLiveNode(value)) {
         value._setParentLink(this, key);
       }
     }
@@ -79,7 +79,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     ops.push(op);
 
     for (const [key, value] of this._map) {
-      if (value instanceof AbstractCrdt) {
+      if (isLiveNode(value)) {
         ops.push(...value._serialize(this._id, key, doc));
       } else {
         op.data[key] = value;
@@ -133,7 +133,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
-      if (value instanceof AbstractCrdt) {
+      if (isLiveNode(value)) {
         value._attach(doc.generateId(), doc);
       }
     }
@@ -269,7 +269,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     // Add only the static Json data fields into the objects
     for (const [key, value] of this._map) {
-      if (value instanceof AbstractCrdt === false) {
+      if (!isLiveNode(value)) {
         data[key] = value;
       }
     }
@@ -303,7 +303,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     for (const key in op.data as Partial<O>) {
       const oldValue = this._map.get(key);
-      if (oldValue instanceof AbstractCrdt) {
+      if (isLiveNode(oldValue)) {
         reverse.push(...oldValue._serialize(id, key));
         oldValue._detach();
       } else if (oldValue !== undefined) {
@@ -436,7 +436,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     if (this._doc == null || this._id == null) {
-      if (oldValue instanceof AbstractCrdt) {
+      if (isLiveNode(oldValue)) {
         oldValue._detach();
       }
       this._map.delete(keyAsString);
@@ -445,7 +445,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     let reverse: Op[];
 
-    if (oldValue instanceof AbstractCrdt) {
+    if (isLiveNode(oldValue)) {
       oldValue._detach();
       reverse = oldValue._serialize(this._id, keyAsString);
     } else {
@@ -492,13 +492,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       for (const key in overrides) {
         const oldValue = this._map.get(key);
 
-        if (oldValue instanceof AbstractCrdt) {
+        if (isLiveNode(oldValue)) {
           oldValue._detach();
         }
 
         const newValue = overrides[key] as any;
 
-        if (newValue instanceof AbstractCrdt) {
+        if (isLiveNode(newValue)) {
           newValue._setParentLink(this, key);
         }
 
@@ -525,7 +525,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const key in overrides) {
       const oldValue = this._map.get(key);
 
-      if (oldValue instanceof AbstractCrdt) {
+      if (isLiveNode(oldValue)) {
         reverseOps.push(...oldValue._serialize(this._id, key));
         oldValue._detach();
       } else if (oldValue === undefined) {
@@ -536,7 +536,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
       const newValue = overrides[key] as any;
 
-      if (newValue instanceof AbstractCrdt) {
+      if (isLiveNode(newValue)) {
         newValue._setParentLink(this, key);
         newValue._attach(this._doc.generateId(), this._doc);
         const newAttachChildOps = newValue._serialize(this._id, key, this._doc);
