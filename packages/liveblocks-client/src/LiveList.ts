@@ -20,8 +20,8 @@ import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveNode,
   deserialize,
+  liveNodeToLson,
   lsonToLiveNode,
-  selfOrRegisterValue,
 } from "./utils";
 
 /**
@@ -1077,9 +1077,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   toArray(): TItem[] {
     return this._items.map(
-      (entry) => selfOrRegisterValue(entry) as TItem
-      //                                    ^^^^^^^^
-      //                                    FIXME! This isn't safe.
+      (entry) => liveNodeToLson(entry) as TItem
+      //                               ^^^^^^^^
+      //                               FIXME! This isn't safe.
     );
   }
 
@@ -1137,9 +1137,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return undefined;
     }
 
-    return selfOrRegisterValue(this._items[index]) as TItem | undefined;
-    //                                                ^^^^^^^^^^^^^^^^^
-    //                                                FIXME! This isn't safe.
+    return liveNodeToLson(this._items[index]) as TItem | undefined;
+    //                                           ^^^^^^^^^^^^^^^^^
+    //                                           FIXME! This isn't safe.
   }
 
   /**
@@ -1170,9 +1170,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   map<U>(callback: (value: TItem, index: number) => U): U[] {
     return this._items.map((entry, i) =>
       callback(
-        selfOrRegisterValue(entry) as TItem,
-        //                         ^^^^^^^^
-        //                         FIXME! This isn't safe.
+        liveNodeToLson(entry) as TItem,
+        //                    ^^^^^^^^
+        //                    FIXME! This isn't safe.
         i
       )
     );
@@ -1250,9 +1250,9 @@ class LiveListIterator<T extends Lson> implements IterableIterator<T> {
       };
     }
 
-    const value = selfOrRegisterValue(result.value) as T;
-    //                                              ^^^^
-    //                                              FIXME! This isn't safe.
+    const value = liveNodeToLson(result.value) as T;
+    //                                         ^^^^
+    //                                         FIXME! This isn't safe.
     return { value };
   }
 }

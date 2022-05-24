@@ -114,8 +114,7 @@ export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
   return value instanceof LiveRegister;
 }
 
-// XXX Rename to toLson
-export function selfOrRegisterValue(obj: LiveNode): Lson {
+export function liveNodeToLson(obj: LiveNode): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
   } else if (

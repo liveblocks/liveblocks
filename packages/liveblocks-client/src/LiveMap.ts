@@ -18,8 +18,8 @@ import {
   creationOpToLiveNode,
   deserialize,
   isLiveNode,
+  liveNodeToLson,
   lsonToLiveNode,
-  selfOrRegisterValue,
 } from "./utils";
 
 /**
@@ -230,9 +230,9 @@ export class LiveMap<
     if (value == undefined) {
       return undefined;
     }
-    return selfOrRegisterValue(value) as TValue | undefined;
-    //                                ^^^^^^^^^^^^^^^^^^^^^
-    //                                FIXME! This isn't safe.
+    return liveNodeToLson(value) as TValue | undefined;
+    //                           ^^^^^^^^^^^^^^^^^^^^^
+    //                           FIXME! This isn't safe.
   }
 
   /**
@@ -350,9 +350,9 @@ export class LiveMap<
         const entry = iteratorValue.value;
 
         const key = entry[0];
-        const value = selfOrRegisterValue(iteratorValue.value[1]) as TValue;
-        //                                                        ^^^^^^^^^
-        //                                                        FIXME! This isn't safe.
+        const value = liveNodeToLson(iteratorValue.value[1]) as TValue;
+        //                                                   ^^^^^^^^^
+        //                                                   FIXME! This isn't safe.
         return {
           value: [key, value],
         };
@@ -394,9 +394,9 @@ export class LiveMap<
           };
         }
 
-        const value = selfOrRegisterValue(iteratorValue.value) as TValue;
-        //                                                     ^^^^^^^^^
-        //                                                     FIXME! This isn't safe.
+        const value = liveNodeToLson(iteratorValue.value) as TValue;
+        //                                                ^^^^^^^^^
+        //                                                FIXME! This isn't safe.
 
         return { value };
       },
