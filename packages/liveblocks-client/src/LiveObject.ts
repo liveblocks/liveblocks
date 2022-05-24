@@ -274,11 +274,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
     }
 
-    if (this._parent?._id !== undefined && this._parentKey !== undefined) {
+    if (this._parentInfo?.node?._id) {
       return {
         type: CrdtType.OBJECT,
-        parentId: this._parent._id,
-        parentKey: this._parentKey,
+        parentId: this._parentInfo.node._id,
+        parentKey: this._parentInfo.key,
         data,
       };
     } else {

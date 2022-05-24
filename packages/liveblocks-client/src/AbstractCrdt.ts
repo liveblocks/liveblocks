@@ -52,20 +52,48 @@ function crdtAsLiveNode(
   return value as LiveNode;
 }
 
+/**
+ * Represents the possible states of the parent field pointers.
+ */
+type ParentInfo =
+  // Both the parent node and the parent key are set. This is a normal child.
+  | {
+      readonly node: LiveNode;
+      readonly key: string;
+    }
+
+  // Neither are set. This is the root node.
+  | {
+      readonly node: null;
+      readonly key: null;
+    }
+
+  // -------------------------------------------------------------------------
+  // TODO Refactor this state away!
+  // -------------------------------------------------------------------------
+  // Tricky case! This state is used after the node is detached from its
+  // parent, but we still need to retain the parent key that it was originally
+  // attached under. For example we rely on this to derive the reverse Op to
+  // add. We should be able to get rid of this case by structuring the code
+  // differently!
+  | {
+      readonly node: null;
+      readonly key: string;
+    };
+
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
   private __doc?: Doc;
   private __id?: string;
 
-  private __parent?: LiveNode;
-  private __parentKey?: string;
+  private __parentInfo: ParentInfo = { node: null, key: null };
 
   /**
    * @internal
    */
   _getParentKeyOrThrow(): string {
-    const key = this.__parentKey;
-    if (key == null) {
+    const key = this._parentKey;
+    if (key === null) {
       throw new Error("Parent key is missing");
     }
     return key;
@@ -92,15 +120,22 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  get _parent(): LiveNode | undefined {
-    return this.__parent;
+  get _parentInfo(): ParentInfo {
+    return this.__parentInfo;
   }
 
   /**
    * @internal
    */
-  get _parentKey(): string | undefined {
-    return this.__parentKey;
+  get _parent(): LiveNode | null {
+    return this.__parentInfo?.node ?? null;
+  }
+
+  /**
+   * @internal
+   */
+  get _parentKey(): string | null {
+    return this.__parentInfo?.key ?? null;
   }
 
   /**
@@ -124,12 +159,14 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _setParentLink(parent: LiveNode, key: string): void {
-    if (this.__parent != null && this.__parent !== parent) {
+    if (this.__parentInfo?.node != null && this.__parentInfo.node !== parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
 
-    this.__parentKey = key;
-    this.__parent = crdtAsLiveNode(parent);
+    this.__parentInfo = {
+      node: crdtAsLiveNode(parent),
+      key,
+    };
   }
 
   /**
@@ -159,7 +196,20 @@ export abstract class AbstractCrdt {
       this.__doc.deleteItem(this.__id);
     }
 
-    this.__parent = undefined;
+    // NOTE: Ideally, we should be able to set `this.__parentInfo = undefined`
+    // here, but for now we'll need to retain the last known parent key as
+    // a kind of memento :(
+    this.__parentInfo = this.__parentInfo?.key
+      ? // Memento state! Detach from the node, but remember the key!
+        // TODO: Get rid of this case
+        {
+          node: null,
+          key: this.__parentInfo.key,
+        }
+      : {
+          node: null,
+          key: null,
+        };
     this.__doc = undefined;
   }
 
