@@ -229,7 +229,9 @@ export class LiveMap<
     if (value == undefined) {
       return undefined;
     }
-    return selfOrRegisterValue(value);
+    return selfOrRegisterValue(value) as TValue | undefined;
+    //                                ^^^^^^^^^^^^^^^^^^^^^
+    //                                FIXME! This isn't safe.
   }
 
   /**
@@ -346,8 +348,12 @@ export class LiveMap<
 
         const entry = iteratorValue.value;
 
+        const key = entry[0];
+        const value = selfOrRegisterValue(iteratorValue.value[1]) as TValue;
+        //                                                        ^^^^^^^^^
+        //                                                        FIXME! This isn't safe.
         return {
-          value: [entry[0], selfOrRegisterValue(iteratorValue.value[1])],
+          value: [key, value],
         };
       },
     };
@@ -387,9 +393,11 @@ export class LiveMap<
           };
         }
 
-        return {
-          value: selfOrRegisterValue(iteratorValue.value),
-        };
+        const value = selfOrRegisterValue(iteratorValue.value) as TValue;
+        //                                                     ^^^^^^^^^
+        //                                                     FIXME! This isn't safe.
+
+        return { value };
       },
     };
   }

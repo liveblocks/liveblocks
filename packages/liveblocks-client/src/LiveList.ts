@@ -1082,7 +1082,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Returns an Array of all the elements in the LiveList.
    */
   toArray(): TItem[] {
-    return this._items.map((entry) => selfOrRegisterValue(entry));
+    return this._items.map(
+      (entry) => selfOrRegisterValue(entry) as TItem
+      //                                    ^^^^^^^^
+      //                                    FIXME! This isn't safe.
+    );
   }
 
   /**
@@ -1139,7 +1143,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return undefined;
     }
 
-    return selfOrRegisterValue(this._items[index]);
+    return selfOrRegisterValue(this._items[index]) as TItem | undefined;
+    //                                                ^^^^^^^^^^^^^^^^^
+    //                                                FIXME! This isn't safe.
   }
 
   /**
@@ -1169,7 +1175,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   map<U>(callback: (value: TItem, index: number) => U): U[] {
     return this._items.map((entry, i) =>
-      callback(selfOrRegisterValue(entry), i)
+      callback(
+        selfOrRegisterValue(entry) as TItem,
+        //                         ^^^^^^^^
+        //                         FIXME! This isn't safe.
+        i
+      )
     );
   }
 
@@ -1224,7 +1235,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 }
 
-class LiveListIterator<T> implements IterableIterator<T> {
+class LiveListIterator<T extends Lson> implements IterableIterator<T> {
   private _innerIterator: IterableIterator<AbstractCrdt>;
 
   constructor(items: Array<AbstractCrdt>) {
@@ -1245,9 +1256,10 @@ class LiveListIterator<T> implements IterableIterator<T> {
       };
     }
 
-    return {
-      value: selfOrRegisterValue(result.value),
-    };
+    const value = selfOrRegisterValue(result.value) as T;
+    //                                              ^^^^
+    //                                              FIXME! This isn't safe.
+    return { value };
   }
 }
 

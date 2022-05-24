@@ -1,4 +1,5 @@
-import type { AbstractCrdt, Doc } from "./AbstractCrdt";
+import type { Doc } from "./AbstractCrdt";
+import { AbstractCrdt } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
@@ -100,14 +101,20 @@ export function isCrdt(obj: unknown): obj is AbstractCrdt {
   );
 }
 
-export function selfOrRegisterValue(obj: AbstractCrdt): any {
-  //                                                    ^^^
-  //                                                    FIXME: reflects the current _implicit_ any!
+export function selfOrRegisterValue(obj: AbstractCrdt): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
+  } else if (
+    obj instanceof LiveList ||
+    obj instanceof LiveMap ||
+    obj instanceof LiveObject
+  ) {
+    return obj;
+  } else if (obj instanceof AbstractCrdt) {
+    throw new Error("Unknown AbstractCrdt");
+  } else {
+    return assertNever(obj, "Unknown AbstractCrdt");
   }
-
-  return obj;
 }
 
 export function selfOrRegister(obj: Lson): AbstractCrdt {
