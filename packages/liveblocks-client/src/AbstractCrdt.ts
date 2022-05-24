@@ -54,9 +54,10 @@ function crdtAsLiveNode(
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
-  private __parent?: LiveNode;
   private __doc?: Doc;
   private __id?: string;
+
+  private __parent?: LiveNode;
   private __parentKey?: string;
 
   /**
