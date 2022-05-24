@@ -346,18 +346,17 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return () => remove(state.listeners.storage, callback);
   }
 
-  function crdtSubscribe(
-    // XXX Rename internal variable
-    crdt: LiveStructure,
+  function subscribeToLiveStructure(
+    liveValue: LiveStructure,
     innerCallback: (updates: StorageUpdate[] | LiveStructure) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
       const relatedUpdates: StorageUpdate[] = [];
       for (const update of updates) {
-        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, liveValue)) {
           relatedUpdates.push(update);
-        } else if (update.node._id === crdt._id) {
+        } else if (update.node._id === liveValue._id) {
           innerCallback(update.node);
         }
       }
@@ -725,7 +724,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     options?: { isDeep: boolean }
   ): () => void {
     if (isLiveNode(firstParam)) {
-      return crdtSubscribe(firstParam, listener, options);
+      return subscribeToLiveStructure(firstParam, listener, options);
     } else if (typeof firstParam === "function") {
       return genericSubscribe(firstParam);
     } else if (!isValidRoomEventType(firstParam)) {
