@@ -53,18 +53,18 @@ const Rectangle = ({
         const rectangleX = gestureState.x0 - e.nativeEvent.locationX;
         const rectangleY = gestureState.y0 - e.nativeEvent.locationY;
 
-        console.log(
-          'render moving rectangle at ',
-          'x:',
-          rectangleX,
-          ' - y:',
-          rectangleY,
-        );
+        // console.log(
+        //   'render moving rectangle at ',
+        //   'x:',
+        //   rectangleX,
+        //   ' - y:',
+        //   rectangleY,
+        // );
 
         // Animated.event([null, {dx: pan.x, dy: pan.y}])(e, gestureState);
         pan.x.setValue(gestureState.dx);
         pan.y.setValue(gestureState.dy);
-        onShapePointerDown(id);
+        //  onShapePointerDown(id);
         onGestureStart(id, rectangleX, rectangleY);
       },
       onPanResponderRelease: () => {
@@ -82,15 +82,17 @@ const Rectangle = ({
       <Animated.View
         style={[
           {
-            ...styles.box,
-          },
-          {
             transform: [{translateX: pan.x}, {translateY: pan.y}],
           },
-          {borderColor: selectionColor || 'transparent'},
-          {backgroundColor: shape.fill},
         ]}
-        {...panResponder.panHandlers}></Animated.View>
+        {...panResponder.panHandlers}>
+        <View
+          style={[
+            styles.box,
+            {borderColor: selectionColor || 'transparent'},
+            {backgroundColor: shape.fill},
+          ]}></View>
+      </Animated.View>
     </>
   );
 };
@@ -173,13 +175,13 @@ const App = () => {
                 ? 'green'
                 : undefined;
 
-            console.log(
-              'ask rendering rectangle at ',
-              'x:',
-              shape.x,
-              ' - y:',
-              shape.y,
-            );
+            // console.log(
+            //   'ask rendering rectangle at ',
+            //   'x:',
+            //   shape.x,
+            //   ' - y:',
+            //   shape.y,
+            // );
 
             return (
               <Rectangle
