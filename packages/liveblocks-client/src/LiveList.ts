@@ -54,8 +54,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     [id]: IdTuple<SerializedList>,
     parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
-    const list = new LiveList([]);
+  ): LiveList<Lson> {
+    const list = new LiveList();
     list._attach(id, doc);
 
     const children = parentToChildren.get(id);
@@ -113,7 +113,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc) {
+  _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
     for (const item of this._items) {
@@ -124,7 +124,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _detach() {
+  _detach(): void {
     super._detach();
 
     for (const item of this._items) {
@@ -810,7 +810,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _apply(op: Op, isLocal: boolean) {
+  _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
   }
 
@@ -834,7 +834,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * Returns the number of elements.
    */
-  get length() {
+  get length(): number {
     return this._items.length;
   }
 
@@ -842,7 +842,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Adds one element to the end of the LiveList.
    * @param element The element to add to the end of the LiveList.
    */
-  push(element: TItem) {
+  push(element: TItem): void {
     return this.insert(element, this.length);
   }
 
@@ -851,7 +851,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param element The element to insert.
    * @param index The index at which you want to insert the element.
    */
-  insert(element: TItem, index: number) {
+  insert(element: TItem, index: number): void {
     if (index < 0 || index > this._items.length) {
       throw new Error(
         `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
@@ -892,7 +892,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param index The index of the element to move
    * @param targetIndex The index where the element should be after moving.
    */
-  move(index: number, targetIndex: number) {
+  move(index: number, targetIndex: number): void {
     if (targetIndex < 0) {
       throw new Error("targetIndex cannot be less than 0");
     }
@@ -965,7 +965,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * Deletes an element at the specified index
    * @param index The index of the element to delete
    */
-  delete(index: number) {
+  delete(index: number): void {
     if (index < 0 || index >= this._items.length) {
       throw new Error(
         `Cannot delete list item at index "${index}". index should be between 0 and ${
@@ -1002,7 +1002,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  clear() {
+  clear(): void {
     if (this._doc) {
       const ops: Op[] = [];
       const reverseOps: Op[] = [];
@@ -1043,7 +1043,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  set(index: number, item: TItem) {
+  set(index: number, item: TItem): void {
     if (index < 0 || index >= this._items.length) {
       throw new Error(
         `Cannot set list item at index "${index}". index should be between 0 and ${

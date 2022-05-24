@@ -22,7 +22,7 @@ import type {
 import { CrdtType, OpCode } from "./types";
 import { isJsonObject, parseJson } from "./types/Json";
 
-export function remove<T>(array: T[], item: T) {
+export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {
       array.splice(i, 1);
@@ -100,7 +100,9 @@ export function isCrdt(obj: unknown): obj is AbstractCrdt {
   );
 }
 
-export function selfOrRegisterValue(obj: AbstractCrdt) {
+export function selfOrRegisterValue(obj: AbstractCrdt): any {
+  //                                                    ^^^
+  //                                                    FIXME: reflects the current _implicit_ any!
   if (obj instanceof LiveRegister) {
     return obj.data;
   }
@@ -365,7 +367,7 @@ export function findNonSerializableValue(
   return false;
 }
 
-export function isTokenValid(token: string) {
+export function isTokenValid(token: string): boolean {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     return false;

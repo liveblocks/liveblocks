@@ -54,32 +54,32 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  protected get _doc() {
+  protected get _doc(): Doc | undefined {
     return this.__doc;
   }
 
-  get roomId() {
+  get roomId(): string | null {
     return this.__doc ? this.__doc.roomId : null;
   }
 
   /**
    * @internal
    */
-  get _id() {
+  get _id(): string | undefined {
     return this.__id;
   }
 
   /**
    * @internal
    */
-  get _parent() {
+  get _parent(): AbstractCrdt | undefined {
     return this.__parent;
   }
 
   /**
    * @internal
    */
-  get _parentKey() {
+  get _parentKey(): string | undefined {
     return this.__parentKey;
   }
 
@@ -103,7 +103,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  _setParentLink(parent: AbstractCrdt, key: string) {
+  _setParentLink(parent: AbstractCrdt, key: string): void {
     if (this.__parent != null && this.__parent !== parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
@@ -115,7 +115,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc) {
+  _attach(id: string, doc: Doc): void {
     if (this.__id || this.__doc) {
       throw new Error("Cannot attach if CRDT is already attached");
     }
@@ -134,7 +134,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  _detach() {
+  _detach(): void {
     if (this.__doc && this.__id) {
       this.__doc.deleteItem(this.__id);
     }

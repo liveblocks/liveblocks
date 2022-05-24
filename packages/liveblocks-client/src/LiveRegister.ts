@@ -33,7 +33,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     [id, item]: IdTuple<SerializedRegister>,
     _parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
+  ): LiveRegister<Json> {
     const register = new LiveRegister(item.data);
     register._attach(id, doc);
     return register;
