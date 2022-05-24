@@ -274,7 +274,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
     }
 
-    if (this._parentInfo?.node?._id) {
+    if (this._parentInfo.tag === "HasParent" && this._parentInfo.node._id) {
       return {
         type: CrdtType.OBJECT,
         parentId: this._parentInfo.node._id,
