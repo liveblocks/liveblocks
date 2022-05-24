@@ -95,7 +95,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
     parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
+  ): LiveObject<LsonObject> {
     const liveObj = new LiveObject(item.data);
     liveObj._attach(id, doc);
     return this._deserializeChildren(liveObj, parentToChildren, doc);
@@ -128,7 +128,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc) {
+  _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
@@ -237,7 +237,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _detach() {
+  _detach(): void {
     super._detach();
 
     for (const value of this._map.values()) {
@@ -409,7 +409,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to add
    * @param value The value of the property to add
    */
-  set<TKey extends keyof O>(key: TKey, value: O[TKey]) {
+  set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
     this.update({ [key]: value } as any as Partial<O>);
   }
@@ -486,7 +486,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * Adds or updates multiple properties at once with an object.
    * @param overrides The object used to overrides properties
    */
-  update(overrides: Partial<O>) {
+  update(overrides: Partial<O>): void {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
         const oldValue = this._map.get(key);

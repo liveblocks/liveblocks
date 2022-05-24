@@ -315,7 +315,14 @@ export const actions = {
   leaveRoom,
 };
 
-function enterRoom(roomId: string, initialState?: any) {
+function enterRoom<T>(
+  roomId: string,
+  initialState?: T
+): {
+  type: string;
+  roomId: string;
+  initialState?: T;
+} {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
@@ -323,7 +330,10 @@ function enterRoom(roomId: string, initialState?: any) {
   };
 }
 
-function leaveRoom(roomId: string) {
+function leaveRoom(roomId: string): {
+  type: string;
+  roomId: string;
+} {
   return {
     type: ACTION_TYPES.LEAVE,
     roomId,

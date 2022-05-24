@@ -101,7 +101,7 @@ export function patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
-) {
+): void {
   let i = 0;
   let prevEnd = prev.length - 1;
   let nextEnd = next.length - 1;
@@ -234,7 +234,7 @@ export function patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
   prev: O,
   next: O
-) {
+): void {
   const updates: Partial<O> = {};
 
   for (const key in next) {

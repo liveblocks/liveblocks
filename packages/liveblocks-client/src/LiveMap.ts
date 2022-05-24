@@ -92,7 +92,7 @@ export class LiveMap<
     [id, _item]: IdTuple<SerializedMap>,
     parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
+  ): LiveMap<string, Lson> {
     const map = new LiveMap();
     map._attach(id, doc);
 
@@ -114,7 +114,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc) {
+  _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
@@ -169,7 +169,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _detach() {
+  _detach(): void {
     super._detach();
 
     for (const item of this._map.values()) {
@@ -237,7 +237,7 @@ export class LiveMap<
    * @param key The key of the element to add. Should be a string.
    * @param value The value of the element to add. Should be serializable to JSON.
    */
-  set(key: TKey, value: TValue) {
+  set(key: TKey, value: TValue): void {
     const oldValue = this._map.get(key);
 
     if (oldValue) {
@@ -273,7 +273,7 @@ export class LiveMap<
   /**
    * Returns the number of elements in the LiveMap.
    */
-  get size() {
+  get size(): number {
     return this._map.size;
   }
 
@@ -400,7 +400,7 @@ export class LiveMap<
    */
   forEach(
     callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
-  ) {
+  ): void {
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }
