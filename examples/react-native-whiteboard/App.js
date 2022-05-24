@@ -35,10 +35,13 @@ const Rectangle = ({
   onGestureStart,
   onGestureStop,
 }) => {
+  console.log(shape);
+
   const pan = useRef(new Animated.ValueXY({x: shape.x, y: shape.y})).current;
 
   const panResponder = useRef(
     PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         pan.setOffset({
@@ -50,11 +53,18 @@ const Rectangle = ({
         const rectangleX = gestureState.x0 - e.nativeEvent.locationX;
         const rectangleY = gestureState.y0 - e.nativeEvent.locationY;
 
-        console.log('new rectangle at ', 'x:', rectangleX, ' - y:', rectangleY);
+        console.log(
+          'render moving rectangle at ',
+          'x:',
+          rectangleX,
+          ' - y:',
+          rectangleY,
+        );
 
         // Animated.event([null, {dx: pan.x, dy: pan.y}])(e, gestureState);
         pan.x.setValue(gestureState.dx);
         pan.y.setValue(gestureState.dy);
+        onShapePointerDown(id);
         onGestureStart(id, rectangleX, rectangleY);
       },
       onPanResponderRelease: () => {
@@ -62,28 +72,26 @@ const Rectangle = ({
       },
 
       onPanResponderEnd: () => {
-        //  onGestureStop();
+        onGestureStop();
       },
     }),
   ).current;
 
   return (
-    <Animated.View
-      style={[
-        {
-          transform: [{translateX: pan.x}, {translateY: pan.y}],
-          ...styles.box,
-        },
-        {borderColor: selectionColor || 'transparent'},
-        {backgroundColor: shape.fill},
-      ]}
-      {...panResponder.panHandlers}>
-      {/* <TouchableHighlight
-        onPress={() => onShapePointerDown(id)}
-        style={styles.box}>
-        <View style={[styles.box]}></View>
-      </TouchableHighlight> */}
-    </Animated.View>
+    <>
+      <Animated.View
+        style={[
+          {
+            ...styles.box,
+          },
+          {
+            transform: [{translateX: pan.x}, {translateY: pan.y}],
+          },
+          {borderColor: selectionColor || 'transparent'},
+          {backgroundColor: shape.fill},
+        ]}
+        {...panResponder.panHandlers}></Animated.View>
+    </>
   );
 };
 
@@ -151,10 +159,6 @@ const App = () => {
         style={{
           flex: 1,
         }}>
-        <View style={({backgroundColor: 'white'}, {position: 'absolute'})}>
-          <Button title="Add" onPress={insertRectangle}></Button>
-          <Button title="Delete" onPress={deleteRectangle}></Button>
-        </View>
         <View
           style={{
             flex: 1,
@@ -169,6 +173,14 @@ const App = () => {
                 ? 'green'
                 : undefined;
 
+            console.log(
+              'ask rendering rectangle at ',
+              'x:',
+              shape.x,
+              ' - y:',
+              shape.y,
+            );
+
             return (
               <Rectangle
                 key={shapeId}
@@ -181,6 +193,10 @@ const App = () => {
               />
             );
           })}
+        </View>
+        <View style={({backgroundColor: 'white'}, {position: 'absolute'})}>
+          <Button title="Add" onPress={insertRectangle}></Button>
+          <Button title="Delete" onPress={deleteRectangle}></Button>
         </View>
       </View>
     </SafeAreaView>
