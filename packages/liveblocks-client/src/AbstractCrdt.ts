@@ -40,10 +40,15 @@ export enum OpSource {
   ACK,
 }
 
-// XXX Temporary helper to help convert from AbstractCrdt -> LiveNode
-// XXX Remove me later
-// eslint-disable-next-line no-restricted-syntax
-function crdtAsLiveNode(value: AbstractCrdt): LiveNode {
+// TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
+// needed for within this module. The reason is that AbstractCrdt is an
+// _abstract_ type, and in our LiveNode union we exhaustively include all
+// concrete types.
+// TODO Remove me later, if we inline the abstract base methods in the concrete
+// classes.
+function crdtAsLiveNode(
+  value: AbstractCrdt // eslint-disable-line no-restricted-syntax
+): LiveNode {
   return value as LiveNode;
 }
 
