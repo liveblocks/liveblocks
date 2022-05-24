@@ -3,8 +3,8 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json, Lson, LsonObject, StorageUpdate } from "./types";
-import { findNonSerializableValue } from "./utils";
+import type { Json, LiveNode, Lson, LsonObject, StorageUpdate } from "./types";
+import { findNonSerializableValue, isLiveList } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
@@ -43,11 +43,7 @@ function liveListToJson(value: LiveList<Lson>): Json[] {
   return lsonListToJson(value.toArray());
 }
 
-export function lsonToJson(value: Lson | AbstractCrdt): Json {
-  //                                     ^^^^^^^^^^^^
-  //                                     FIXME: Remove me later. This requires the
-  //                                     addition of a concrete LiveStructure type first.
-
+export function lsonToJson(value: Lson): Json {
   // Check for LiveStructure datastructures first
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
@@ -252,10 +248,10 @@ export function patchLiveObject<O extends LsonObject>(
   }
 }
 
-function getParentsPath(node: AbstractCrdt): Array<string | number> {
+function getParentsPath(node: LiveNode): Array<string | number> {
   const path = [];
   while (node._parentKey != null && node._parent != null) {
-    if (node._parent instanceof LiveList) {
+    if (isLiveList(node._parent)) {
       path.push(node._parent._indexOfPosition(node._parentKey));
     } else {
       path.push(node._parentKey);

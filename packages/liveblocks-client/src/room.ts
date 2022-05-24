@@ -20,6 +20,8 @@ import type {
   InitialDocumentStateServerMsg,
   Json,
   JsonObject,
+  LiveNode,
+  LiveStructure,
   Lson,
   LsonObject,
   MyPresenceCallback,
@@ -103,7 +105,7 @@ export type Machine = {
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  subscribe<TItem extends AbstractCrdt>(
+  subscribe<TItem extends LiveStructure>(
     node: TItem,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
@@ -120,7 +122,7 @@ export type Machine = {
   subscribe(type: "error", listener: ErrorCallback): () => void;
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K],
     options?: { isDeep: boolean }
   ): () => void;
@@ -246,7 +248,7 @@ export type State<TPresence extends JsonObject> = {
 
   clock: number;
   opClock: number;
-  items: Map<string, AbstractCrdt>;
+  items: Map<string, LiveNode>;
   root: LiveObject<LsonObject> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
@@ -342,9 +344,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return () => remove(state.listeners.storage, callback);
   }
 
-  function crdtSubscribe<T extends AbstractCrdt>(
-    crdt: T,
-    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
+  function crdtSubscribe(
+    // XXX Rename internal variable
+    crdt: LiveStructure,
+    innerCallback: (updates: StorageUpdate[] | LiveStructure) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
@@ -444,8 +447,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     });
   }
 
-  function addItem(id: string, item: AbstractCrdt) {
-    state.items.set(id, item);
+  function addItem(id: string, liveItem: LiveNode) {
+    state.items.set(id, liveItem);
   }
 
   function deleteItem(id: string) {
@@ -695,8 +698,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  function subscribe<TItem extends AbstractCrdt>(
-    node: TItem,
+  function subscribe(
+    node: LiveStructure,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
@@ -715,7 +718,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     listener: ConnectionCallback
   ): () => void;
   function subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
@@ -1553,7 +1556,7 @@ export function defaultState(
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, AbstractCrdt>(),
+    items: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],

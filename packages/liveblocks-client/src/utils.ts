@@ -1,5 +1,4 @@
 import type { Doc } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
@@ -11,6 +10,7 @@ import type {
   Json,
   LiveListUpdates,
   LiveMapUpdates,
+  LiveNode,
   LiveObjectUpdates,
   Lson,
   LsonObject,
@@ -40,7 +40,7 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   return items.filter((item: T): item is NonNullable<T> => item != null);
 }
 
-export function creationOpToLiveNode(op: CreateOp): AbstractCrdt {
+export function creationOpToLiveNode(op: CreateOp): LiveNode {
   switch (op.type) {
     case OpCode.CREATE_REGISTER:
       return new LiveRegister(op.data);
@@ -55,10 +55,7 @@ export function creationOpToLiveNode(op: CreateOp): AbstractCrdt {
   }
 }
 
-export function isSameNodeOrChildOf(
-  node: AbstractCrdt,
-  parent: AbstractCrdt
-): boolean {
+export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
   if (node === parent) {
     return true;
   }
@@ -72,7 +69,7 @@ export function deserialize(
   [id, crdt]: IdTuple<SerializedCrdt>,
   parentToChildren: ParentToChildNodeMap,
   doc: Doc
-): AbstractCrdt {
+): LiveNode {
   switch (crdt.type) {
     case CrdtType.OBJECT: {
       return LiveObject._deserialize([id, crdt], parentToChildren, doc);
@@ -92,16 +89,32 @@ export function deserialize(
   }
 }
 
-export function isCrdt(obj: unknown): obj is AbstractCrdt {
+export function isLiveNode(value: unknown): value is LiveNode {
   return (
-    obj instanceof LiveObject ||
-    obj instanceof LiveMap ||
-    obj instanceof LiveList ||
-    obj instanceof LiveRegister
+    isLiveList(value) ||
+    isLiveMap(value) ||
+    isLiveObject(value) ||
+    isLiveRegister(value)
   );
 }
 
-export function selfOrRegisterValue(obj: AbstractCrdt): Lson {
+export function isLiveList(value: unknown): value is LiveList<Lson> {
+  return value instanceof LiveList;
+}
+
+export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
+  return value instanceof LiveMap;
+}
+
+export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
+  return value instanceof LiveObject;
+}
+
+export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
+  return value instanceof LiveRegister;
+}
+
+export function selfOrRegisterValue(obj: LiveNode): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
   } else if (
@@ -110,14 +123,12 @@ export function selfOrRegisterValue(obj: AbstractCrdt): Lson {
     obj instanceof LiveObject
   ) {
     return obj;
-  } else if (obj instanceof AbstractCrdt) {
-    throw new Error("Unknown AbstractCrdt");
   } else {
     return assertNever(obj, "Unknown AbstractCrdt");
   }
 }
 
-export function selfOrRegister(obj: Lson): AbstractCrdt {
+export function selfOrRegister(obj: Lson): LiveNode {
   if (
     obj instanceof LiveObject ||
     obj instanceof LiveMap ||

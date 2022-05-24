@@ -457,7 +457,7 @@ export async function prepareStorageImmutableTest<
 
   const root = refStorage.root;
   refMachine.subscribe(
-    root as AbstractCrdt,
+    root,
     (updates) => {
       refState = patchImmutableObject(refState, updates);
     },

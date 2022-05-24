@@ -7,6 +7,7 @@ import type {
   CreateMapOp,
   IdTuple,
   LiveMapUpdates,
+  LiveNode,
   Lson,
   Op,
   ParentToChildNodeMap,
@@ -16,7 +17,7 @@ import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveNode,
   deserialize,
-  isCrdt,
+  isLiveNode,
   selfOrRegister,
   selfOrRegisterValue,
 } from "./utils";
@@ -30,7 +31,7 @@ export class LiveMap<
   TKey extends string,
   TValue extends Lson
 > extends AbstractCrdt {
-  private _map: Map<TKey, AbstractCrdt>;
+  private _map: Map<TKey, LiveNode>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
   /**
@@ -46,7 +47,7 @@ export class LiveMap<
       "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
     if (entries) {
-      const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
+      const mappedEntries: Array<[TKey, LiveNode]> = [];
       for (const entry of entries) {
         const value = selfOrRegister(entry[1]);
         value._setParentLink(this, entry[0]);
@@ -118,7 +119,7 @@ export class LiveMap<
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
-      if (isCrdt(value)) {
+      if (isLiveNode(value)) {
         value._attach(doc.generateId(), doc);
       }
     }
@@ -180,7 +181,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _detachChild(child: AbstractCrdt): ApplyResult {
+  _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
     const reverse = child._serialize(id, parentKey, this._doc);
