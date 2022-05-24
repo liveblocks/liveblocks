@@ -42,6 +42,7 @@ module.exports = {
     // Custom syntax we want to forbid
     // -------------------------------
     "object-shorthand": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "no-restricted-syntax": [
       "error",
       {
