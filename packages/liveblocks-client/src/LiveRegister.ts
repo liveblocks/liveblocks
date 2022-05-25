@@ -5,6 +5,7 @@ import type {
   CreateChildOp,
   IdTuple,
   Json,
+  LiveNode,
   Op,
   ParentToChildNodeMap,
   SerializedRegister,
@@ -12,7 +13,7 @@ import type {
 import { CrdtType, OpCode } from "./types";
 
 /**
- * @internal
+ * INTERNAL
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _data: TValue;
@@ -83,7 +84,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     throw new Error("Method not implemented.");
   }
 
-  _detachChild(_crdt: AbstractCrdt): ApplyResult {
+  _detachChild(_crdt: LiveNode): ApplyResult {
     throw new Error("Method not implemented.");
   }
 

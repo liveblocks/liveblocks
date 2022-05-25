@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { LiveList } from "./LiveList";
+import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
@@ -20,6 +20,8 @@ import type {
   InitialDocumentStateServerMsg,
   Json,
   JsonObject,
+  LiveNode,
+  LiveStructure,
   Lson,
   LsonObject,
   MyPresenceCallback,
@@ -57,6 +59,8 @@ import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,
   getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
   isSameNodeOrChildOf,
   isTokenValid,
   mergeStorageUpdates,
@@ -103,7 +107,7 @@ export type Machine = {
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  subscribe<TItem extends AbstractCrdt>(
+  subscribe<TItem extends LiveStructure>(
     node: TItem,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
@@ -120,7 +124,7 @@ export type Machine = {
   subscribe(type: "error", listener: ErrorCallback): () => void;
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K],
     options?: { isDeep: boolean }
   ): () => void;
@@ -246,7 +250,7 @@ export type State<TPresence extends JsonObject> = {
 
   clock: number;
   opClock: number;
-  items: Map<string, AbstractCrdt>;
+  items: Map<string, LiveNode>;
   root: LiveObject<LsonObject> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
@@ -342,17 +346,17 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return () => remove(state.listeners.storage, callback);
   }
 
-  function crdtSubscribe<T extends AbstractCrdt>(
-    crdt: T,
-    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
+  function subscribeToLiveStructure(
+    liveValue: LiveStructure,
+    innerCallback: (updates: StorageUpdate[] | LiveStructure) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
       const relatedUpdates: StorageUpdate[] = [];
       for (const update of updates) {
-        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, liveValue)) {
           relatedUpdates.push(update);
-        } else if (update.node._id === crdt._id) {
+        } else if (update.node._id === liveValue._id) {
           innerCallback(update.node);
         }
       }
@@ -444,8 +448,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     });
   }
 
-  function addItem(id: string, item: AbstractCrdt) {
-    state.items.set(id, item);
+  function addItem(id: string, liveItem: LiveNode) {
+    state.items.set(id, liveItem);
   }
 
   function deleteItem(id: string) {
@@ -659,7 +663,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        if (item._parent instanceof LiveList) {
+        if (isLiveList(item._parent)) {
           return item._parent._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
@@ -695,8 +699,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  function subscribe<TItem extends AbstractCrdt>(
-    node: TItem,
+  function subscribe(
+    node: LiveStructure,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
@@ -715,12 +719,12 @@ export function makeStateMachine<TPresence extends JsonObject>(
     listener: ConnectionCallback
   ): () => void;
   function subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
-    if (firstParam instanceof AbstractCrdt) {
-      return crdtSubscribe(firstParam, listener, options);
+    if (isLiveNode(firstParam)) {
+      return subscribeToLiveStructure(firstParam, listener, options);
     } else if (typeof firstParam === "function") {
       return genericSubscribe(firstParam);
     } else if (!isValidRoomEventType(firstParam)) {
@@ -1553,7 +1557,7 @@ export function defaultState(
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, AbstractCrdt>(),
+    items: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],

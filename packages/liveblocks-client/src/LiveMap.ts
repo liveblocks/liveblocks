@@ -7,6 +7,7 @@ import type {
   CreateMapOp,
   IdTuple,
   LiveMapUpdates,
+  LiveNode,
   Lson,
   Op,
   ParentToChildNodeMap,
@@ -14,11 +15,11 @@ import type {
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
-  isCrdt,
-  selfOrRegister,
-  selfOrRegisterValue,
+  isLiveNode,
+  liveNodeToLson,
+  lsonToLiveNode,
 } from "./utils";
 
 /**
@@ -30,7 +31,7 @@ export class LiveMap<
   TKey extends string,
   TValue extends Lson
 > extends AbstractCrdt {
-  private _map: Map<TKey, AbstractCrdt>;
+  private _map: Map<TKey, LiveNode>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
   /**
@@ -46,9 +47,9 @@ export class LiveMap<
       "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
     if (entries) {
-      const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
+      const mappedEntries: Array<[TKey, LiveNode]> = [];
       for (const entry of entries) {
-        const value = selfOrRegister(entry[1]);
+        const value = lsonToLiveNode(entry[1]);
         value._setParentLink(this, entry[0]);
         mappedEntries.push([entry[0], value]);
       }
@@ -118,7 +119,7 @@ export class LiveMap<
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
-      if (isCrdt(value)) {
+      if (isLiveNode(value)) {
         value._attach(doc.generateId(), doc);
       }
     }
@@ -134,7 +135,7 @@ export class LiveMap<
 
     const { id, parentKey: key } = op;
 
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };
@@ -180,7 +181,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _detachChild(child: AbstractCrdt): ApplyResult {
+  _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
     const reverse = child._serialize(id, parentKey, this._doc);
@@ -229,9 +230,9 @@ export class LiveMap<
     if (value == undefined) {
       return undefined;
     }
-    return selfOrRegisterValue(value) as TValue | undefined;
-    //                                ^^^^^^^^^^^^^^^^^^^^^
-    //                                FIXME! This isn't safe.
+    return liveNodeToLson(value) as TValue | undefined;
+    //                           ^^^^^^^^^^^^^^^^^^^^^
+    //                           FIXME! This isn't safe.
   }
 
   /**
@@ -246,7 +247,7 @@ export class LiveMap<
       oldValue._detach();
     }
 
-    const item = selfOrRegister(value);
+    const item = lsonToLiveNode(value);
     item._setParentLink(this, key);
 
     this._map.set(key, item);
@@ -349,9 +350,9 @@ export class LiveMap<
         const entry = iteratorValue.value;
 
         const key = entry[0];
-        const value = selfOrRegisterValue(iteratorValue.value[1]) as TValue;
-        //                                                        ^^^^^^^^^
-        //                                                        FIXME! This isn't safe.
+        const value = liveNodeToLson(iteratorValue.value[1]) as TValue;
+        //                                                   ^^^^^^^^^
+        //                                                   FIXME! This isn't safe.
         return {
           value: [key, value],
         };
@@ -393,9 +394,9 @@ export class LiveMap<
           };
         }
 
-        const value = selfOrRegisterValue(iteratorValue.value) as TValue;
-        //                                                     ^^^^^^^^^
-        //                                                     FIXME! This isn't safe.
+        const value = liveNodeToLson(iteratorValue.value) as TValue;
+        //                                                ^^^^^^^^^
+        //                                                FIXME! This isn't safe.
 
         return { value };
       },

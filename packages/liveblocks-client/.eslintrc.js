@@ -80,6 +80,10 @@ module.exports = {
         message:
           "Non-null assertions mask real problems. Please use `nn(...)` (from src/assert.ts) instead.",
       },
+      {
+        selector: 'TSTypeReference[typeName.name="AbstractCrdt"]',
+        message: "Don't refer to AbstractCrdt as a type. Use LiveNode instead.",
+      },
       // {
       //   selector: "ForOfStatement",
       //   message:

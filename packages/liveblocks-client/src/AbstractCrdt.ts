@@ -1,4 +1,10 @@
-import type { CreateChildOp, Op, SerializedCrdt, StorageUpdate } from "./types";
+import type {
+  CreateChildOp,
+  LiveNode,
+  Op,
+  SerializedCrdt,
+  StorageUpdate,
+} from "./types";
 import { OpCode } from "./types";
 
 export type ApplyResult =
@@ -11,8 +17,8 @@ export interface Doc {
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
-  getItem: (id: string) => AbstractCrdt | undefined;
-  addItem: (id: string, item: AbstractCrdt) => void;
+  getItem: (id: string) => LiveNode | undefined;
+  addItem: (id: string, liveItem: LiveNode) => void;
   deleteItem: (id: string) => void;
 
   /**
@@ -34,8 +40,21 @@ export enum OpSource {
   ACK,
 }
 
+// TODO Temporary helper to help convert from AbstractCrdt -> LiveNode, only
+// needed for within this module. The reason is that AbstractCrdt is an
+// _abstract_ type, and in our LiveNode union we exhaustively include all
+// concrete types.
+// TODO Remove me later, if we inline the abstract base methods in the concrete
+// classes.
+function crdtAsLiveNode(
+  value: AbstractCrdt // eslint-disable-line no-restricted-syntax
+): LiveNode {
+  return value as LiveNode;
+}
+
 export abstract class AbstractCrdt {
-  private __parent?: AbstractCrdt;
+  //                  ^^^^^^^^^^^^ TODO: Make this an interface
+  private __parent?: LiveNode;
   private __doc?: Doc;
   private __id?: string;
   private __parentKey?: string;
@@ -72,7 +91,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  get _parent(): AbstractCrdt | undefined {
+  get _parent(): LiveNode | undefined {
     return this.__parent;
   }
 
@@ -90,7 +109,7 @@ export abstract class AbstractCrdt {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
         if (this._parent != null && this._parentKey != null) {
-          return this._parent._detachChild(this);
+          return this._parent._detachChild(crdtAsLiveNode(this));
         }
 
         return { modified: false };
@@ -103,13 +122,13 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  _setParentLink(parent: AbstractCrdt, key: string): void {
+  _setParentLink(parent: LiveNode, key: string): void {
     if (this.__parent != null && this.__parent !== parent) {
       throw new Error("Cannot attach parent if it already exist");
     }
 
     this.__parentKey = key;
-    this.__parent = parent;
+    this.__parent = crdtAsLiveNode(parent);
   }
 
   /**
@@ -120,7 +139,7 @@ export abstract class AbstractCrdt {
       throw new Error("Cannot attach if CRDT is already attached");
     }
 
-    doc.addItem(id, this);
+    doc.addItem(id, crdtAsLiveNode(this));
 
     this.__id = id;
     this.__doc = doc;
@@ -146,7 +165,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _detachChild(crdt: AbstractCrdt): ApplyResult;
+  abstract _detachChild(crdt: LiveNode): ApplyResult;
   /**
    * @internal
    */

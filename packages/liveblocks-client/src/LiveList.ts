@@ -10,6 +10,7 @@ import type {
   IdTuple,
   LiveListUpdateDelta,
   LiveListUpdates,
+  LiveNode,
   Lson,
   Op,
   ParentToChildNodeMap,
@@ -17,10 +18,10 @@ import type {
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
-  selfOrRegister,
-  selfOrRegisterValue,
+  liveNodeToLson,
+  lsonToLiveNode,
 } from "./utils";
 
 /**
@@ -28,19 +29,19 @@ import {
  */
 export class LiveList<TItem extends Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
-  private _items: Array<AbstractCrdt>;
+  private _items: Array<LiveNode>;
 
-  private _implicitlyDeletedItems: Set<AbstractCrdt>;
+  private _implicitlyDeletedItems: Set<LiveNode>;
 
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
-    this._implicitlyDeletedItems = new Set<AbstractCrdt>();
+    this._implicitlyDeletedItems = new Set();
 
     let position = undefined;
     for (let i = 0; i < items.length; i++) {
       const newPosition = makePosition(position);
-      const item = selfOrRegister(items[i]);
+      const item = lsonToLiveNode(items[i]);
       item._setParentLink(this, newPosition);
       this._items.push(item);
       position = newPosition;
@@ -141,7 +142,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
     child._attach(id, this._doc);
     child._setParentLink(this, key);
 
@@ -437,7 +438,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applyInsertUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc?.getItem(id) !== undefined) {
       return { modified: false };
@@ -478,7 +479,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applySetUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
-    const child = creationOpToLiveStructure(op);
+    const child = creationOpToLiveNode(op);
 
     if (this._doc?.getItem(id) !== undefined) {
       return { modified: false };
@@ -566,7 +567,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @internal
    */
   _detachChild(
-    child: AbstractCrdt
+    child: LiveNode
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
       const parentKey = nn(child._parentKey);
@@ -592,7 +593,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applySetChildKeyRemote(
     newKey: string,
-    child: AbstractCrdt
+    child: LiveNode
   ): ApplyResult {
     if (this._implicitlyDeletedItems.has(child)) {
       this._implicitlyDeletedItems.delete(child);
@@ -669,10 +670,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applySetChildKeyAck(
-    newKey: string,
-    child: AbstractCrdt
-  ): ApplyResult {
+  private _applySetChildKeyAck(newKey: string, child: LiveNode): ApplyResult {
     const previousKey = nn(child._parentKey);
 
     if (this._implicitlyDeletedItems.has(child)) {
@@ -748,7 +746,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   private _applySetChildKeyUndoRedo(
     newKey: string,
-    child: AbstractCrdt
+    child: LiveNode
   ): ApplyResult {
     const previousKey = nn(child._parentKey);
 
@@ -793,11 +791,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _setChildKey(
-    newKey: string,
-    child: AbstractCrdt,
-    source: OpSource
-  ): ApplyResult {
+  _setChildKey(newKey: string, child: LiveNode, source: OpSource): ApplyResult {
     if (source === OpSource.REMOTE) {
       return this._applySetChildKeyRemote(newKey, child);
     } else if (source === OpSource.ACK) {
@@ -867,7 +861,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const position = makePosition(before, after);
 
-    const value = selfOrRegister(element);
+    const value = lsonToLiveNode(element);
     value._setParentLink(this, position);
 
     this._items.push(value);
@@ -1058,7 +1052,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingId = existingItem._id;
     existingItem._detach();
 
-    const value = selfOrRegister(item);
+    const value = lsonToLiveNode(item);
     value._setParentLink(this, position);
     this._items[index] = value;
 
@@ -1083,9 +1077,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    */
   toArray(): TItem[] {
     return this._items.map(
-      (entry) => selfOrRegisterValue(entry) as TItem
-      //                                    ^^^^^^^^
-      //                                    FIXME! This isn't safe.
+      (entry) => liveNodeToLson(entry) as TItem
+      //                               ^^^^^^^^
+      //                               FIXME! This isn't safe.
     );
   }
 
@@ -1143,9 +1137,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return undefined;
     }
 
-    return selfOrRegisterValue(this._items[index]) as TItem | undefined;
-    //                                                ^^^^^^^^^^^^^^^^^
-    //                                                FIXME! This isn't safe.
+    return liveNodeToLson(this._items[index]) as TItem | undefined;
+    //                                           ^^^^^^^^^^^^^^^^^
+    //                                           FIXME! This isn't safe.
   }
 
   /**
@@ -1176,9 +1170,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   map<U>(callback: (value: TItem, index: number) => U): U[] {
     return this._items.map((entry, i) =>
       callback(
-        selfOrRegisterValue(entry) as TItem,
-        //                         ^^^^^^^^
-        //                         FIXME! This isn't safe.
+        liveNodeToLson(entry) as TItem,
+        //                    ^^^^^^^^
+        //                    FIXME! This isn't safe.
         i
       )
     );
@@ -1204,10 +1198,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     op: CreateOp,
     key: string
   ): {
-    newItem: AbstractCrdt;
+    newItem: LiveNode;
     newIndex: number;
   } {
-    const newItem = creationOpToLiveStructure(op);
+    const newItem = creationOpToLiveNode(op);
 
     newItem._attach(op.id, nn(this._doc));
     newItem._setParentLink(this, key);
@@ -1236,9 +1230,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 }
 
 class LiveListIterator<T extends Lson> implements IterableIterator<T> {
-  private _innerIterator: IterableIterator<AbstractCrdt>;
+  private _innerIterator: IterableIterator<LiveNode>;
 
-  constructor(items: Array<AbstractCrdt>) {
+  constructor(items: Array<LiveNode>) {
     this._innerIterator = items[Symbol.iterator]();
   }
 
@@ -1256,9 +1250,9 @@ class LiveListIterator<T extends Lson> implements IterableIterator<T> {
       };
     }
 
-    const value = selfOrRegisterValue(result.value) as T;
-    //                                              ^^^^
-    //                                              FIXME! This isn't safe.
+    const value = liveNodeToLson(result.value) as T;
+    //                                         ^^^^
+    //                                         FIXME! This isn't safe.
     return { value };
   }
 }
@@ -1274,7 +1268,7 @@ function makeUpdate<TItem extends Lson>(
   };
 }
 
-function setDelta(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+function setDelta(index: number, item: LiveNode): LiveListUpdateDelta {
   return {
     index,
     type: "set",
@@ -1289,7 +1283,7 @@ function deleteDelta(index: number): LiveListUpdateDelta {
   };
 }
 
-function insertDelta(index: number, item: AbstractCrdt): LiveListUpdateDelta {
+function insertDelta(index: number, item: LiveNode): LiveListUpdateDelta {
   return {
     index,
     type: "insert",
@@ -1300,7 +1294,7 @@ function insertDelta(index: number, item: AbstractCrdt): LiveListUpdateDelta {
 function moveDelta(
   previousIndex: number,
   index: number,
-  item: AbstractCrdt
+  item: LiveNode
 ): LiveListUpdateDelta {
   return {
     index,
@@ -1310,7 +1304,7 @@ function moveDelta(
   };
 }
 
-function sortListItem(items: AbstractCrdt[]) {
+function sortListItem(items: LiveNode[]) {
   items.sort((itemA, itemB) =>
     compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
   );
