@@ -33,9 +33,9 @@
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
-    "test": "jest --watch --config=./jest.config.js",
-    "test-ci": "jest",
-    "test-e2e": "jest --config=./jest.config.e2e.js"
+    "test": "jest --watch --silent --verbose --config=./jest.config.js",
+    "test-ci": "jest --silent --verbose",
+    "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
   },
   "license": "Apache-2.0",
   "devDependencies": {

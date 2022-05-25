@@ -23,8 +23,8 @@
     "start": "rollup -c -w",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --watch",
-    "test-ci": "jest"
+    "test": "jest --watch --silent --verbose",
+    "test-ci": "jest --silent --verbose"
   },
   "license": "Apache-2.0",
   "peerDependencies": {
