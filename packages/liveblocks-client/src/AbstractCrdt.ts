@@ -100,11 +100,20 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _getParentKeyOrThrow(): string {
-    const key = this._parentKey;
-    if (key === null) {
-      throw new Error("Parent key is missing");
+    const p = this.__parentInfo;
+    switch (p.tag) {
+      case "HasParent":
+        return p.key;
+
+      case "Orphaned":
+        return p.oldKey;
+
+      case "NoParent":
+        throw new Error("Parent key is missing");
+
+      default:
+        return assertNever(p, "Unknown state");
     }
-    return key;
   }
 
   /**
