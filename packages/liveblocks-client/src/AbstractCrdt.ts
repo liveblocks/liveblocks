@@ -257,9 +257,6 @@ export abstract class AbstractCrdt {
       this.__doc.deleteItem(this.__id);
     }
 
-    // NOTE: Ideally, we should be able to set `this.__parentInfo = undefined`
-    // here, but for now we'll need to retain the last known parent key as
-    // a kind of memento :(
     switch (this.parent.type) {
       case "HasParent": {
         this._parent = Orphaned(this.parent.key);
