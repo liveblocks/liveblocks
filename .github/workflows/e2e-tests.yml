@@ -36,9 +36,6 @@ jobs:
       - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh
 
-      - name: TypeScript
-        run: tsc --noEmit
-
       - name: Build
         run: npm run build
 
