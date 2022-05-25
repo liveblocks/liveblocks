@@ -69,13 +69,13 @@ type Orphaned = {
 };
 
 function HasParent(node: LiveNode, key: string): HasParent {
-  return { tag: "HasParent", node, key };
+  return Object.freeze({ tag: "HasParent", node, key });
 }
 
-const NoParent: NoParent = { tag: "NoParent" };
+const NoParent: NoParent = Object.freeze({ tag: "NoParent" });
 
 function Orphaned(oldKey: string): Orphaned {
-  return { tag: "Orphaned", oldKey };
+  return Object.freeze({ tag: "Orphaned", oldKey });
 }
 
 /**
