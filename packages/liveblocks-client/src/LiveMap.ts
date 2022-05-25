@@ -210,7 +210,7 @@ export class LiveMap<
     return {
       type: CrdtType.MAP,
       parentId: nn(
-        this._parent?._id,
+        this._parentNode?._id,
         "Cannot serialize Map if parentId is missing"
       ),
       parentKey: nn(

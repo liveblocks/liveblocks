@@ -815,7 +815,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return {
       type: CrdtType.LIST,
       parentId: nn(
-        this._parent?._id,
+        this._parentNode?._id,
         "Cannot serialize List if parentId is missing"
       ),
       parentKey: nn(

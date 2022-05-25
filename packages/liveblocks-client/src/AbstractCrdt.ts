@@ -135,7 +135,7 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  get _parent(): LiveNode | null {
+  get _parentNode(): LiveNode | null {
     const p = this.__parentInfo;
     switch (p.tag) {
       case "HasParent":
@@ -178,8 +178,8 @@ export abstract class AbstractCrdt {
   _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
-        if (this._parent != null && this._parentKey != null) {
-          return this._parent._detachChild(crdtAsLiveNode(this));
+        if (this._parentNode != null && this._parentKey != null) {
+          return this._parentNode._detachChild(crdtAsLiveNode(this));
         }
 
         return { modified: false };

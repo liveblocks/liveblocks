@@ -244,13 +244,13 @@ export function patchLiveObject<O extends LsonObject>(
 
 function getParentsPath(node: LiveNode): Array<string | number> {
   const path = [];
-  while (node._parentKey != null && node._parent != null) {
-    if (isLiveList(node._parent)) {
-      path.push(node._parent._indexOfPosition(node._parentKey));
+  while (node._parentKey != null && node._parentNode != null) {
+    if (isLiveList(node._parentNode)) {
+      path.push(node._parentNode._indexOfPosition(node._parentKey));
     } else {
       path.push(node._parentKey);
     }
-    node = node._parent;
+    node = node._parentNode;
   }
   return path;
 }
