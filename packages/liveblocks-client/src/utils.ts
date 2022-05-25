@@ -59,8 +59,8 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
   if (node === parent) {
     return true;
   }
-  if (node._parentNode) {
-    return isSameNodeOrChildOf(node._parentNode, parent);
+  if (node.parent.type === "HasParent") {
+    return isSameNodeOrChildOf(node.parent.node, parent);
   }
   return false;
 }

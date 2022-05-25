@@ -66,16 +66,14 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
    * INTERNAL
    */
   _toSerializedCrdt(): SerializedRegister {
+    if (this.parent.type !== "HasParent") {
+      throw new Error("Cannot serialize LiveRegister if parent is missing");
+    }
+
     return {
       type: CrdtType.REGISTER,
-      parentId: nn(
-        this._parentNode?._id,
-        "Cannot serialize Register if parentId is missing"
-      ),
-      parentKey: nn(
-        this._parentKey,
-        "Cannot serialize Register if parentKey is missing"
-      ),
+      parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
+      parentKey: this.parent.key,
       data: this.data,
     };
   }

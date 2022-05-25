@@ -194,8 +194,8 @@ export abstract class AbstractCrdt {
   _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
-        if (this._parentNode != null && this._parentKey != null) {
-          return this._parentNode._detachChild(crdtAsLiveNode(this));
+        if (this.parent.type === "HasParent") {
+          return this.parent.node._detachChild(crdtAsLiveNode(this));
         }
 
         return { modified: false };
