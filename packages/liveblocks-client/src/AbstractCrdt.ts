@@ -54,28 +54,28 @@ function crdtAsLiveNode(
 }
 
 type HasParent = {
-  readonly tag: "HasParent";
+  readonly type: "HasParent";
   readonly node: LiveNode;
   readonly key: string;
 };
 
 type NoParent = {
-  readonly tag: "NoParent";
+  readonly type: "NoParent";
 };
 
 type Orphaned = {
-  readonly tag: "Orphaned";
+  readonly type: "Orphaned";
   readonly oldKey: string;
 };
 
 function HasParent(node: LiveNode, key: string): HasParent {
-  return Object.freeze({ tag: "HasParent", node, key });
+  return Object.freeze({ type: "HasParent", node, key });
 }
 
-const NoParent: NoParent = Object.freeze({ tag: "NoParent" });
+const NoParent: NoParent = Object.freeze({ type: "NoParent" });
 
 function Orphaned(oldKey: string): Orphaned {
-  return Object.freeze({ tag: "Orphaned", oldKey });
+  return Object.freeze({ type: "Orphaned", oldKey });
 }
 
 /**
@@ -110,7 +110,7 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _getParentKeyOrThrow(): string {
-    switch (this.parent.tag) {
+    switch (this.parent.type) {
       case "HasParent":
         return this.parent.key;
 
@@ -154,7 +154,7 @@ export abstract class AbstractCrdt {
    * @internal
    */
   get _parentNode(): LiveNode | null {
-    switch (this.parent.tag) {
+    switch (this.parent.type) {
       case "HasParent":
         return this.parent.node;
 
@@ -173,7 +173,7 @@ export abstract class AbstractCrdt {
    * @internal
    */
   get _parentKey(): string | null {
-    switch (this.parent.tag) {
+    switch (this.parent.type) {
       case "HasParent":
         return this.parent.key;
 
@@ -209,7 +209,7 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _setParentLink(newParentNode: LiveNode, newParentKey: string): void {
-    switch (this.parent.tag) {
+    switch (this.parent.type) {
       case "HasParent":
         if (this.parent.node !== newParentNode) {
           throw new Error("Cannot attach parent if it already exist");
@@ -260,7 +260,7 @@ export abstract class AbstractCrdt {
     // NOTE: Ideally, we should be able to set `this.__parentInfo = undefined`
     // here, but for now we'll need to retain the last known parent key as
     // a kind of memento :(
-    switch (this.parent.tag) {
+    switch (this.parent.type) {
       case "HasParent": {
         this._parent = Orphaned(this.parent.key);
         break;
