@@ -105,11 +105,11 @@ export abstract class AbstractCrdt {
       case "HasParent":
         return p.key;
 
-      case "Orphaned":
-        return p.oldKey;
-
       case "NoParent":
         throw new Error("Parent key is missing");
+
+      case "Orphaned":
+        return p.oldKey;
 
       default:
         return assertNever(p, "Unknown state");
@@ -150,10 +150,10 @@ export abstract class AbstractCrdt {
       case "HasParent":
         return p.node;
 
-      case "Orphaned":
+      case "NoParent":
         return null;
 
-      case "NoParent":
+      case "Orphaned":
         return null;
 
       default:
@@ -170,11 +170,11 @@ export abstract class AbstractCrdt {
       case "HasParent":
         return p.key;
 
-      case "Orphaned":
-        return p.oldKey;
-
       case "NoParent":
         return null;
+
+      case "Orphaned":
+        return p.oldKey;
 
       default:
         return assertNever(p, "Unknown state");
