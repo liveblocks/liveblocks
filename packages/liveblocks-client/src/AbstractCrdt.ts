@@ -94,25 +94,24 @@ export abstract class AbstractCrdt {
   private __doc?: Doc;
   private __id?: string;
 
-  private __parentInfo: ParentInfo = { tag: "NoParent" };
+  private _parent: ParentInfo = { tag: "NoParent" };
 
   /**
    * @internal
    */
   _getParentKeyOrThrow(): string {
-    const p = this.__parentInfo;
-    switch (p.tag) {
+    switch (this.parent.tag) {
       case "HasParent":
-        return p.key;
+        return this.parent.key;
 
       case "NoParent":
         throw new Error("Parent key is missing");
 
       case "Orphaned":
-        return p.oldKey;
+        return this.parent.oldKey;
 
       default:
-        return assertNever(p, "Unknown state");
+        return assertNever(this.parent, "Unknown state");
     }
   }
 
@@ -137,18 +136,17 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  get _parentInfo(): ParentInfo {
-    return this.__parentInfo;
+  get parent(): ParentInfo {
+    return this._parent;
   }
 
   /**
    * @internal
    */
   get _parentNode(): LiveNode | null {
-    const p = this.__parentInfo;
-    switch (p.tag) {
+    switch (this.parent.tag) {
       case "HasParent":
-        return p.node;
+        return this.parent.node;
 
       case "NoParent":
         return null;
@@ -157,7 +155,7 @@ export abstract class AbstractCrdt {
         return null;
 
       default:
-        return assertNever(p, "Unknown state");
+        return assertNever(this.parent, "Unknown state");
     }
   }
 
@@ -165,19 +163,18 @@ export abstract class AbstractCrdt {
    * @internal
    */
   get _parentKey(): string | null {
-    const p = this.__parentInfo;
-    switch (p.tag) {
+    switch (this.parent.tag) {
       case "HasParent":
-        return p.key;
+        return this.parent.key;
 
       case "NoParent":
         return null;
 
       case "Orphaned":
-        return p.oldKey;
+        return this.parent.oldKey;
 
       default:
-        return assertNever(p, "Unknown state");
+        return assertNever(this.parent, "Unknown state");
     }
   }
 
@@ -202,14 +199,13 @@ export abstract class AbstractCrdt {
    * @internal
    */
   _setParentLink(newParentNode: LiveNode, newParentKey: string): void {
-    const curr = this.__parentInfo;
-    switch (curr.tag) {
+    switch (this.parent.tag) {
       case "HasParent":
-        if (curr.node !== newParentNode) {
+        if (this.parent.node !== newParentNode) {
           throw new Error("Cannot attach parent if it already exist");
         } else {
           // Ignore
-          this.__parentInfo = {
+          this.__parent = {
             tag: "HasParent",
             node: crdtAsLiveNode(newParentNode),
             key: newParentKey,
@@ -219,7 +215,7 @@ export abstract class AbstractCrdt {
 
       case "Orphaned":
       case "NoParent": {
-        this.__parentInfo = {
+        this.__parent = {
           tag: "HasParent",
           node: crdtAsLiveNode(newParentNode),
           key: newParentKey,
@@ -228,7 +224,7 @@ export abstract class AbstractCrdt {
       }
 
       default:
-        return assertNever(curr, "Unknown state");
+        return assertNever(this.parent, "Unknown state");
     }
   }
 
@@ -262,10 +258,9 @@ export abstract class AbstractCrdt {
     // NOTE: Ideally, we should be able to set `this.__parentInfo = undefined`
     // here, but for now we'll need to retain the last known parent key as
     // a kind of memento :(
-    const curr = this.__parentInfo;
-    switch (curr.tag) {
+    switch (this.parent.tag) {
       case "HasParent": {
-        this.__parentInfo = {
+        this._parent = {
           tag: "Orphaned",
           oldKey: curr.key,
         };
@@ -274,18 +269,18 @@ export abstract class AbstractCrdt {
 
       case "NoParent": {
         // throw new Error("Node is already detached. Cannot detach twice.");
-        this.__parentInfo = { tag: "NoParent" };
+        this.__parent = { tag: "NoParent" };
         break;
       }
 
       case "Orphaned": {
         // throw new Error("Node is already detached. Cannot detach twice.");
-        this.__parentInfo = { tag: "Orphaned", oldKey: curr.oldKey };
+        this.__parent = { tag: "Orphaned", oldKey: curr.oldKey };
         break;
       }
 
       default:
-        assertNever(curr, "Unknown state");
+        assertNever(this.parent, "Unknown state");
     }
 
     this.__doc = undefined;
