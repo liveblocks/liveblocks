@@ -68,6 +68,16 @@ type Orphaned = {
   readonly oldKey: string;
 };
 
+function HasParent(node: LiveNode, key: string): HasParent {
+  return { tag: "HasParent", node, key };
+}
+
+const NoParent: NoParent = { tag: "NoParent" };
+
+function Orphaned(oldKey: string): Orphaned {
+  return { tag: "Orphaned", oldKey };
+}
+
 /**
  * Represents the possible states of the parent field pointers.
  */
@@ -94,7 +104,7 @@ export abstract class AbstractCrdt {
   private __doc?: Doc;
   private __id?: string;
 
-  private _parent: ParentInfo = { tag: "NoParent" };
+  private _parent: ParentInfo = NoParent;
 
   /**
    * @internal
@@ -205,21 +215,13 @@ export abstract class AbstractCrdt {
           throw new Error("Cannot attach parent if it already exist");
         } else {
           // Ignore
-          this.__parent = {
-            tag: "HasParent",
-            node: crdtAsLiveNode(newParentNode),
-            key: newParentKey,
-          };
+          this._parent = HasParent(newParentNode, newParentKey);
           return;
         }
 
       case "Orphaned":
       case "NoParent": {
-        this.__parent = {
-          tag: "HasParent",
-          node: crdtAsLiveNode(newParentNode),
-          key: newParentKey,
-        };
+        this._parent = HasParent(newParentNode, newParentKey);
         return;
       }
 
@@ -260,22 +262,19 @@ export abstract class AbstractCrdt {
     // a kind of memento :(
     switch (this.parent.tag) {
       case "HasParent": {
-        this._parent = {
-          tag: "Orphaned",
-          oldKey: curr.key,
-        };
+        this._parent = Orphaned(this.parent.key);
         break;
       }
 
       case "NoParent": {
         // throw new Error("Node is already detached. Cannot detach twice.");
-        this.__parent = { tag: "NoParent" };
+        this._parent = NoParent;
         break;
       }
 
       case "Orphaned": {
         // throw new Error("Node is already detached. Cannot detach twice.");
-        this.__parent = { tag: "Orphaned", oldKey: curr.oldKey };
+        this._parent = Orphaned(this.parent.oldKey);
         break;
       }
 
