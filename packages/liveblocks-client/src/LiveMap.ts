@@ -207,16 +207,14 @@ export class LiveMap<
    * @internal
    */
   _toSerializedCrdt(): SerializedMap {
+    if (this.parent.type !== "HasParent") {
+      throw new Error("Cannot serialize LiveMap if parent is missing");
+    }
+
     return {
       type: CrdtType.MAP,
-      parentId: nn(
-        this._parent?._id,
-        "Cannot serialize Map if parentId is missing"
-      ),
-      parentKey: nn(
-        this._parentKey,
-        "Cannot serialize Map if parentKey is missing"
-      ),
+      parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
+      parentKey: this.parent.key,
     };
   }
 

@@ -613,7 +613,13 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId = applyOpResult.modified.node._parent?._id;
+          const parentId =
+            applyOpResult.modified.node.parent.type === "HasParent"
+              ? nn(
+                  applyOpResult.modified.node.parent.node._id,
+                  "Expected parent node to have an ID"
+                )
+              : undefined;
 
           // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
@@ -663,8 +669,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        if (isLiveList(item._parent)) {
-          return item._parent._setChildKey(op.parentKey, item, source);
+        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
+          return item.parent.node._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
       }
