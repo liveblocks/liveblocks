@@ -20,8 +20,8 @@
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
-    "test": "jest --watch",
-    "test-ci": "jest",
+    "test": "jest --watch --silent --verbose",
+    "test-ci": "jest --silent --verbose",
     "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
   },
   "license": "Apache-2.0",
