@@ -6,7 +6,7 @@
  * @flow strict-local
  */
 
-import React, {useLayoutEffect, useRef} from 'react';
+import React, {useEffect, useLayoutEffect, useRef} from 'react';
 import {useState} from 'react';
 import {
   SafeAreaView,
@@ -37,7 +37,12 @@ const Rectangle = ({
 }) => {
   console.log(shape);
 
-  const pan = useRef(new Animated.ValueXY({x: shape.x, y: shape.y})).current;
+  const [initValues] = useState({x: shape.x, y: shape.y});
+  const [isDragging, setIsDragging] = useState(false);
+
+  const pan = useRef(
+    new Animated.ValueXY({x: initValues.x, y: initValues.y}),
+  ).current;
 
   const panResponder = useRef(
     PanResponder.create({
@@ -50,25 +55,20 @@ const Rectangle = ({
         });
       },
       onPanResponderMove: (e, gestureState) => {
-        const rectangleX = gestureState.x0 - e.nativeEvent.locationX;
-        const rectangleY = gestureState.y0 - e.nativeEvent.locationY;
+        setIsDragging(true);
 
-        // console.log(
-        //   'render moving rectangle at ',
-        //   'x:',
-        //   rectangleX,
-        //   ' - y:',
-        //   rectangleY,
-        // );
+        const rectangleX = gestureState.moveX - e.nativeEvent.locationX;
+        const rectangleY = gestureState.moveY - e.nativeEvent.locationY;
 
-        // Animated.event([null, {dx: pan.x, dy: pan.y}])(e, gestureState);
+        console.log({...gestureState});
+
         pan.x.setValue(gestureState.dx);
         pan.y.setValue(gestureState.dy);
-        //  onShapePointerDown(id);
         onGestureStart(id, rectangleX, rectangleY);
       },
       onPanResponderRelease: () => {
         pan.flattenOffset();
+        setIsDragging(false);
       },
 
       onPanResponderEnd: () => {
@@ -76,6 +76,11 @@ const Rectangle = ({
       },
     }),
   ).current;
+
+  if (!isDragging) {
+    pan.x.setValue(shape.x);
+    pan.y.setValue(shape.y);
+  }
 
   return (
     <>
@@ -115,7 +120,9 @@ const App = () => {
   const [{selectedShape}, setPresence] = useMyPresence();
   const others = useOthers();
   const shapes = useMap('shapes');
-  // const [isDragging, setIsDragging] = useState(false);
+  const [localShapes, setLocalShapes] = useState([
+    {id: 1, x: 0, y: 0, fill: 'white'},
+  ]);
 
   if (shapes == null) {
     return <Text>Loading</Text>;
@@ -145,43 +152,56 @@ const App = () => {
   };
 
   const onGestureStart = (id, x, y) => {
-    const shape = shapes.get(id);
+    // const shape = shapes.get(id);
+    // if (shape) {
+    //   shapes.set(id, {
+    //     ...shape,
+    //     x: x,
+    //     y: y,
+    //   });
+    // }
+
+    const shape = localShapes[0];
     if (shape) {
-      shapes.set(id, {
-        ...shape,
-        x: x,
-        y: y,
-      });
+      shape.x = x;
+      shape.y = y;
+      setLocalShapes([shape]);
+    }
+  };
+
+  const moveRight = id => {
+    const shape = localShapes[0];
+    if (shape) {
+      shape.x += 10;
+      setLocalShapes([shape]);
+    }
+  };
+
+  const moveLeft = id => {
+    const shape = localShapes[0];
+    if (shape) {
+      shape.x -= 10;
     }
   };
 
   return (
     <SafeAreaView style={styles.backgroundContainer}>
-      <View
-        style={{
-          flex: 1,
-        }}>
+      <>
         <View
           style={{
             flex: 1,
+            position: 'absolute',
           }}>
-          {Array.from(shapes, ([shapeId, shape]) => {
-            let selectionColor =
-              selectedShape === shapeId
-                ? 'blue'
-                : others
-                    .toArray()
-                    .some(user => user.presence?.selectedShape === shapeId)
-                ? 'green'
-                : undefined;
-
-            // console.log(
-            //   'ask rendering rectangle at ',
-            //   'x:',
-            //   shape.x,
-            //   ' - y:',
-            //   shape.y,
-            // );
+          {localShapes.map((shape, index) => {
+            const shapeId = shape.id;
+            let selectionColor = 'blue';
+            // selectedShape === shapeId
+            //   ? 'blue'
+            //   : others
+            //       .toArray()
+            //       .some(user => user.presence?.selectedShape === shapeId)
+            //   ? 'green'
+            //   : undefined;
 
             return (
               <Rectangle
@@ -199,8 +219,10 @@ const App = () => {
         <View style={({backgroundColor: 'white'}, {position: 'absolute'})}>
           <Button title="Add" onPress={insertRectangle}></Button>
           <Button title="Delete" onPress={deleteRectangle}></Button>
+          <Button title="Right" onPress={moveRight}></Button>
+          <Button title="Left" onPress={moveLeft}></Button>
         </View>
-      </View>
+      </>
     </SafeAreaView>
   );
 };
