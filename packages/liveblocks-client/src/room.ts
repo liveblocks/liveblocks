@@ -1465,7 +1465,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function simulateSocketClose() {
     if (state.socket) {
-      state.socket.close();
+      state.socket = null;
     }
   }
 
@@ -1474,9 +1474,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     wasClean: boolean;
     reason: string;
   }) {
-    if (state.socket) {
-      onClose(event);
-    }
+    onClose(event);
   }
 
   return {
