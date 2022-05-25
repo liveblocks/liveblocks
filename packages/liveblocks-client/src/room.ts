@@ -54,6 +54,7 @@ import {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
+import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
@@ -86,7 +87,7 @@ export type Machine = {
   }): void;
 
   // onWakeUp,
-  onVisibilityChange(visibilityState: VisibilityState): void;
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
   getUndoStack(): HistoryItem[];
   getItemsCount(): number;
 
@@ -846,7 +847,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: VisibilityState) {
+  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (visibilityState === "visible" && state.connection.state === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -1589,7 +1590,7 @@ export type InternalRoom = {
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: VisibilityState) => void;
+  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 };
 
 export function createRoom(
