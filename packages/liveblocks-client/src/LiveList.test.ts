@@ -219,7 +219,7 @@ describe("LiveList", () => {
             createSerializedObject("0:0", {}),
             createSerializedList("0:1", "0:0", "items"),
             createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:2", "0:1", SECOND_POSITION, "C"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "C"),
           ],
           async ({ root, assert, machine }) => {
             root.get("items").insert("B", 1);
@@ -264,6 +264,30 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
+    describe("updates", () => {
+      it(
+        "delete first update",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          ],
+          async ({ root, assert, machine }) => {
+            root.get("items").delete(0);
+            machine.undo();
+            machine.redo();
+
+            assert([
+              [listUpdate([], [listUpdateDelete(0)])],
+              [listUpdate(["A"], [listUpdateInsert(0, "A")])],
+              [listUpdate([], [listUpdateDelete(0)])],
+            ]);
+          }
+        )
+      );
+    });
+
     it("delete first item", async () => {
       const {
         storage: doc,

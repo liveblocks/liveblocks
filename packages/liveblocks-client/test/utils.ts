@@ -404,7 +404,7 @@ export function prepareStorageUpdateTest<T extends LsonObject>(
       expect(refJsonUpdates).toEqual(updates);
     }
 
-    callback({ root: storage.root, machine, assert });
+    await callback({ root: storage.root, machine, assert });
   };
 }
 
