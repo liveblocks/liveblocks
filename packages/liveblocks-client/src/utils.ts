@@ -433,13 +433,26 @@ export function values<O extends { [key: string]: unknown }>(
 }
 
 /**
- * Decode JWT Token payload part. Properly decode utf-8 characters.
+ * Alternative to JSON.parse() that will not throw in production. If the passed
+ * string cannot be parsed, this will return `undefined`.
  */
-export function decodeJwtTokenPayload(payload: string): Json | undefined {
+export function tryParseJson(rawMessage: string): Json | undefined {
   try {
-    const base64Payload = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const payloadJson = decodeURIComponent(
-      atob(base64Payload)
+    // eslint-disable-next-line no-restricted-syntax
+    return JSON.parse(rawMessage);
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Decode base64 string.
+ */
+export function b64decode(b64value: string): string {
+  try {
+    const formattedValue = b64value.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedValue = decodeURIComponent(
+      atob(formattedValue)
         .split("")
         .map(function (c) {
           return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
@@ -447,8 +460,8 @@ export function decodeJwtTokenPayload(payload: string): Json | undefined {
         .join("")
     );
 
-    return parseJson(payloadJson);
+    return decodedValue;
   } catch (err) {
-    return parseJson(atob(payload));
+    return atob(b64value);
   }
 }
