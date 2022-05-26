@@ -95,6 +95,29 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
+    describe("updates", () => {
+      it(
+        "push on empty list update",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          async ({ root, assert, machine }) => {
+            root.get("items").push("a");
+            machine.undo();
+            machine.redo();
+
+            assert([
+              [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+              [listUpdate([], [listUpdateDelete(0)])],
+              [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+            ]);
+          }
+        )
+      );
+    });
+
     it("LiveObject on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
@@ -121,27 +144,6 @@ describe("LiveList", () => {
 
       assertUndoRedo();
     });
-
-    it(
-      "push update",
-      prepareStorageUpdateTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        async ({ root, assert, machine }) => {
-          root.get("items").push("a");
-          machine.undo();
-          machine.redo();
-
-          assert([
-            [listUpdate(["a"], [listUpdateInsert(0, "a")])],
-            [listUpdate([], [listUpdateDelete(0)])],
-            [listUpdate(["a"], [listUpdateInsert(0, "a")])],
-          ]);
-        }
-      )
-    );
 
     it("push number on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
@@ -209,6 +211,31 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
+    describe("updates", () => {
+      it(
+        "insert at the middle update",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:2", "0:1", SECOND_POSITION, "C"),
+          ],
+          async ({ root, assert, machine }) => {
+            root.get("items").insert("B", 1);
+            machine.undo();
+            machine.redo();
+
+            assert([
+              [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
+              [listUpdate(["A", "C"], [listUpdateDelete(1)])],
+              [listUpdate(["A", "B", "C"], [listUpdateInsert(1, "B")])],
+            ]);
+          }
+        )
+      );
+    });
+
     it("insert LiveObject at position 0", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
