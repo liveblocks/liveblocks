@@ -431,3 +431,24 @@ export function values<O extends { [key: string]: unknown }>(
 ): O[keyof O][] {
   return Object.values(obj) as O[keyof O][];
 }
+
+/**
+ * Decode JWT Token payload part. Properly decode utf-8 characters.
+ */
+export function decodeJwtTokenPayload(payload: string) {
+  try {
+    const base64Payload = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const payloadJson = decodeURIComponent(
+      atob(base64Payload)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    return parseJson(payloadJson);
+  } catch (err) {
+    return parseJson(atob(payload));
+  }
+}

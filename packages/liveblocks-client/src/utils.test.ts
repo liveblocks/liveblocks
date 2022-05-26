@@ -5,6 +5,7 @@ import type { NodeMap } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
   compact,
+  decodeJwtTokenPayload,
   findNonSerializableValue,
   getTreesDiffOperations,
   isTokenValid,
@@ -299,6 +300,33 @@ describe("isTokenValid", () => {
 
     withDateNow(now, () => {
       expect(isTokenValid(token)).toBeFalsy();
+    });
+  });
+});
+
+describe("decodeJwtTokenPayload", () => {
+  test("payload contains characters with accents", () => {
+    const tokenPayload =
+      "eyJyb29tSWQiOiJNaDNtTGQ1OUxWSjdLQTJlVWIwTWUiLCJhcHBJZCI6IjYxNDBlMzMyMjliY2ExNWQxNDYxMzBhOSIsImFjdG9yIjo5LCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSIsIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIl0sImluZm8iOnsibmFtZSI6IkNoYXJsacOpIExheW5lIiwicGljdHVyZSI6Ii9hdmF0YXJzLzcucG5nIn0sIm1heENvbm5lY3Rpb25zIjoyMDAwLCJpYXQiOjE2NTM1MTYwODYsImV4cCI6MTY1MzUxOTY4Nn0";
+    const json = decodeJwtTokenPayload(tokenPayload);
+
+    expect(json).toEqual({
+      actor: 9,
+      appId: "6140e33229bca15d146130a9",
+      exp: 1653519686,
+      iat: 1653516086,
+      info: {
+        name: "Charlié Layne",
+        picture: "/avatars/7.png",
+      },
+      maxConnections: 2000,
+      roomId: "Mh3mLd59LVJ7KA2eUb0Me",
+      scopes: [
+        "room:read",
+        "room:write",
+        "websocket:presence",
+        "websocket:storage",
+      ],
     });
   });
 });

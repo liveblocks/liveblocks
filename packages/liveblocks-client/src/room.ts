@@ -59,6 +59,7 @@ import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,
+  decodeJwtTokenPayload,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
@@ -1667,7 +1668,7 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = parseJson(atob(tokenParts[1]));
+  const data = decodeJwtTokenPayload(tokenParts[1]);
   if (
     data !== undefined &&
     isJsonObject(data) &&
