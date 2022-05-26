@@ -29,7 +29,7 @@ test.describe("Offline", () => {
     });
   });
 
-  test.skip("one client offline with offline changes - connection issue (code 1005)", async () => {
+  test("one client offline with offline changes - connection issue (code 1005)", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
@@ -57,7 +57,7 @@ test.describe("Offline", () => {
     await assertContainText(pages, "0");
   });
 
-  test.skip("one client offline with offline changes - app server issue (code 4002)", async () => {
+  test("one client offline with offline changes - app server issue (code 4002)", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
@@ -93,7 +93,7 @@ test.describe("Offline", () => {
     await assertContainText(pages, "0");
   });
 
-  test.skip("fuzzy", async () => {
+  test("fuzzy", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
