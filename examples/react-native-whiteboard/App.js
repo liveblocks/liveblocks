@@ -55,6 +55,7 @@ const Rectangle = ({
         });
       },
       onPanResponderMove: (e, gestureState) => {
+        // debugger;
         setIsDragging(true);
 
         const rectangleX = gestureState.moveX - e.nativeEvent.locationX;
@@ -87,6 +88,7 @@ const Rectangle = ({
       <Animated.View
         style={[
           {
+            position: 'absolute',
             transform: [{translateX: pan.x}, {translateY: pan.y}],
           },
         ]}
@@ -122,6 +124,7 @@ const App = () => {
   const shapes = useMap('shapes');
   const [localShapes, setLocalShapes] = useState([
     {id: 1, x: 0, y: 0, fill: 'white'},
+    {id: 2, x: 0, y: 0, fill: 'red'},
   ]);
 
   if (shapes == null) {
@@ -161,11 +164,11 @@ const App = () => {
     //   });
     // }
 
-    const shape = localShapes[0];
+    const shape = localShapes.find(x => x.id === id);
     if (shape) {
       shape.x = x;
       shape.y = y;
-      setLocalShapes([shape]);
+      setLocalShapes([...localShapes]);
     }
   };
 
@@ -215,12 +218,6 @@ const App = () => {
               />
             );
           })}
-        </View>
-        <View style={({backgroundColor: 'white'}, {position: 'absolute'})}>
-          <Button title="Add" onPress={insertRectangle}></Button>
-          <Button title="Delete" onPress={deleteRectangle}></Button>
-          <Button title="Right" onPress={moveRight}></Button>
-          <Button title="Left" onPress={moveLeft}></Button>
         </View>
       </>
     </SafeAreaView>
