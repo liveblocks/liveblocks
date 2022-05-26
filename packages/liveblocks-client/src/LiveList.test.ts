@@ -1,4 +1,9 @@
 import {
+  listUpdate,
+  listUpdateDelete,
+  listUpdateInsert,
+} from "../test/updatesUtils";
+import {
   createSerializedList,
   createSerializedObject,
   createSerializedRegister,
@@ -7,6 +12,7 @@ import {
   FOURTH_POSITION,
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  prepareStorageUpdateTest,
   reconnect,
   SECOND_POSITION,
   THIRD_POSITION,
@@ -108,41 +114,34 @@ describe("LiveList", () => {
       });
 
       items.push(new LiveObject({ a: 0 }));
-      assert(
-        {
-          items: [{ a: 0 }],
-        },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: [{ a: 0 }],
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: { a: 0 },
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: [],
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-        }
-      );
+
+      assert({
+        items: [{ a: 0 }],
+      });
 
       assertUndoRedo();
     });
+
+    it(
+      "push update",
+      prepareStorageUpdateTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        async ({ root, assert, machine }) => {
+          root.get("items").push("a");
+          machine.undo();
+          machine.redo();
+
+          assert([
+            [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+            [listUpdate([], [listUpdateDelete(0)])],
+            [listUpdate(["a"], [listUpdateInsert(0, "a")])],
+          ]);
+        }
+      )
+    );
 
     it("push number on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
@@ -161,36 +160,7 @@ describe("LiveList", () => {
       assert({ items: [] });
 
       items.push(0);
-      assert(
-        { items: [0] },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: [0],
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: 0,
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: [],
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({ items: [0] });
 
       assertUndoRedo();
     });
@@ -213,36 +183,7 @@ describe("LiveList", () => {
 
       items.push(new LiveMap([["first", 0]]));
 
-      assert(
-        { items: [{ first: 0 }] },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: [{ first: 0 }],
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: { first: 0 },
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: [],
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({ items: [{ first: 0 }] });
 
       assertUndoRedo();
     });
@@ -289,36 +230,7 @@ describe("LiveList", () => {
 
       items.insert(new LiveObject({ a: 0 }), 0);
 
-      assert(
-        { items: [{ a: 0 }, { a: 1 }] },
-        {
-          updates: [
-            {
-              node: [{ a: 0 }, { a: 1 }],
-              type: "LiveList",
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: { a: 0 },
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              node: [{ a: 1 }],
-              type: "LiveList",
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({ items: [{ a: 0 }, { a: 1 }] });
 
       assertUndoRedo();
     });
@@ -346,38 +258,9 @@ describe("LiveList", () => {
 
       items.delete(0);
 
-      assert(
-        {
-          items: ["B"],
-        },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: ["B"],
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: ["A", "B"],
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({
+        items: ["B"],
+      });
 
       assertUndoRedo();
     });
@@ -399,38 +282,9 @@ describe("LiveList", () => {
 
       storage.root.toObject().items.delete(0);
 
-      assert(
-        {
-          items: [],
-        },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: [],
-              updates: [
-                {
-                  type: "delete",
-                  index: 0,
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: [{ child: { a: 0 } }],
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: { child: { a: 0 } },
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({
+        items: [],
+      });
 
       // Ensure that LiveStructure are deleted properly
       expect(getItemsCount()).toBe(2);
@@ -459,39 +313,7 @@ describe("LiveList", () => {
       const items = root.toObject().items;
       items.move(0, 1);
 
-      assert(
-        { items: ["B", "A", "C"] },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: ["B", "A", "C"],
-              updates: [
-                {
-                  type: "move",
-                  index: 1,
-                  previousIndex: 0,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: ["A", "B", "C"],
-              updates: [
-                {
-                  type: "move",
-                  index: 0,
-                  previousIndex: 1,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({ items: ["B", "A", "C"] });
 
       assertUndoRedo();
     });
@@ -517,41 +339,9 @@ describe("LiveList", () => {
       const items = storage.root.get("items");
 
       items.move(0, 1);
-      assert(
-        {
-          items: ["B", "A", "C"],
-        },
-        {
-          updates: [
-            {
-              node: ["B", "A", "C"],
-              type: "LiveList",
-              updates: [
-                {
-                  type: "move",
-                  index: 1,
-                  previousIndex: 0,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              node: ["A", "B", "C"],
-              type: "LiveList",
-              updates: [
-                {
-                  type: "move",
-                  index: 0,
-                  previousIndex: 1,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({
+        items: ["B", "A", "C"],
+      });
 
       assertUndoRedo();
     });
@@ -575,41 +365,9 @@ describe("LiveList", () => {
       const items = root.toObject().items;
       items.move(0, 2);
 
-      assert(
-        {
-          items: ["B", "C", "A"],
-        },
-        {
-          updates: [
-            {
-              type: "LiveList",
-              node: ["B", "C", "A"],
-              updates: [
-                {
-                  type: "move",
-                  index: 2,
-                  previousIndex: 0,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-          undoUpdates: [
-            {
-              type: "LiveList",
-              node: ["A", "B", "C"],
-              updates: [
-                {
-                  type: "move",
-                  index: 0,
-                  previousIndex: 2,
-                  item: "A",
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({
+        items: ["B", "C", "A"],
+      });
 
       assertUndoRedo();
     });
