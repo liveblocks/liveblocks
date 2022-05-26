@@ -4,11 +4,12 @@ import { FIRST_POSITION, SECOND_POSITION, withDateNow } from "../test/utils";
 import type { NodeMap } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
+  b64decode,
   compact,
-  decodeJwtTokenPayload,
   findNonSerializableValue,
   getTreesDiffOperations,
   isTokenValid,
+  tryParseJson,
 } from "./utils";
 
 describe("compact", () => {
@@ -304,11 +305,11 @@ describe("isTokenValid", () => {
   });
 });
 
-describe("decodeJwtTokenPayload", () => {
+describe("b64decode", () => {
   test("payload contains characters with accents", () => {
     const tokenPayload =
       "eyJyb29tSWQiOiJNaDNtTGQ1OUxWSjdLQTJlVWIwTWUiLCJhcHBJZCI6IjYxNDBlMzMyMjliY2ExNWQxNDYxMzBhOSIsImFjdG9yIjo5LCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSIsIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIl0sImluZm8iOnsibmFtZSI6IkNoYXJsacOpIExheW5lIiwicGljdHVyZSI6Ii9hdmF0YXJzLzcucG5nIn0sIm1heENvbm5lY3Rpb25zIjoyMDAwLCJpYXQiOjE2NTM1MTYwODYsImV4cCI6MTY1MzUxOTY4Nn0";
-    const json = decodeJwtTokenPayload(tokenPayload);
+    const json = tryParseJson(b64decode(tokenPayload));
 
     expect(json).toEqual({
       actor: 9,
