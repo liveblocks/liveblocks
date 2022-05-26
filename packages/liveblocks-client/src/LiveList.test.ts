@@ -687,10 +687,10 @@ describe("LiveList", () => {
     it("set at invalid position should throw", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       expect(() => list.set(-1, "D")).toThrowError(
-        `Cannot set list item at index "-1". index should be between 0 and 2`
+        'Cannot set list item at index "-1". index should be between 0 and 2'
       );
       expect(() => list.set(3, "D")).toThrowError(
-        `Cannot set list item at index "3". index should be between 0 and 2`
+        'Cannot set list item at index "3". index should be between 0 and 2'
       );
     });
 
@@ -1012,7 +1012,7 @@ describe("LiveList", () => {
       });
     });
 
-    it(`list conflicts - ack has different position that local item`, async () => {
+    it("list conflicts - ack has different position that local item", async () => {
       const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1089,7 +1089,7 @@ describe("LiveList", () => {
       });
     });
 
-    it(`list conflicts - ack has different position that local and ack position is used`, async () => {
+    it("list conflicts - ack has different position that local and ack position is used", async () => {
       const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
@@ -1527,7 +1527,7 @@ describe("LiveList", () => {
     });
 
     describe("apply CreateRegister", () => {
-      it(`with intent "set" should replace existing item`, async () => {
+      it('with intent "set" should replace existing item', async () => {
         const { assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1558,7 +1558,7 @@ describe("LiveList", () => {
         });
       });
 
-      it(`with intent "set" should notify with a "set" update`, async () => {
+      it('with intent "set" should notify with a "set" update', async () => {
         const { root, applyRemoteOperations, subscribe } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1595,7 +1595,7 @@ describe("LiveList", () => {
         ]);
       });
 
-      it(`with intent "set" should insert item if conflict with a delete operation`, async () => {
+      it('with intent "set" should insert item if conflict with a delete operation', async () => {
         const { root, assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
@@ -1634,7 +1634,7 @@ describe("LiveList", () => {
         });
       });
 
-      it(`with intent "set" should notify with a "insert" update if no item exists at this position`, async () => {
+      it('with intent "set" should notify with a "insert" update if no item exists at this position', async () => {
         const { root, applyRemoteOperations, subscribe } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [

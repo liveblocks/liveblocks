@@ -41,6 +41,7 @@ module.exports = {
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
+    quotes: ["error", "double", "avoid-escape"],
     "object-shorthand": "error",
     "@typescript-eslint/explicit-module-boundary-types": "error",
     "no-restricted-syntax": [

@@ -1662,7 +1662,7 @@ function parseToken(token: string): AuthenticationToken {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
-      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
     );
   }
 
@@ -1681,7 +1681,7 @@ function parseToken(token: string): AuthenticationToken {
   }
 
   throw new Error(
-    `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+    "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
   );
 }
 
