@@ -510,17 +510,17 @@ export async function prepareStorageImmutableTest<
 
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>,
+  data: JsonObject,
   parentId: string,
   parentKey: string
 ): IdTuple<SerializedObject>;
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>
+  data: JsonObject
 ): IdTuple<SerializedRootObject>;
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>,
+  data: JsonObject,
   parentId?: string,
   parentKey?: string
 ): IdTuple<SerializedObject | SerializedRootObject> {
