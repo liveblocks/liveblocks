@@ -435,7 +435,7 @@ export function values<O extends { [key: string]: unknown }>(
 /**
  * Decode JWT Token payload part. Properly decode utf-8 characters.
  */
-export function decodeJwtTokenPayload(payload: string) {
+export function decodeJwtTokenPayload(payload: string): Json | undefined {
   try {
     const base64Payload = payload.replace(/-/g, "+").replace(/_/g, "/");
     const payloadJson = decodeURIComponent(
