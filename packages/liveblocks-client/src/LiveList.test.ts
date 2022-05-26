@@ -2,6 +2,7 @@ import {
   listUpdate,
   listUpdateDelete,
   listUpdateInsert,
+  listUpdateMove,
 } from "../test/updatesUtils";
 import {
   createSerializedList,
@@ -345,6 +346,31 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
+    describe("updates", () => {
+      it(
+        "move at the end update",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          ],
+          async ({ root, assert, machine }) => {
+            root.get("items").move(0, 1);
+            machine.undo();
+            machine.redo();
+
+            assert([
+              [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+              [listUpdate(["A", "B"], [listUpdateMove(1, 0, "A")])],
+              [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
+            ]);
+          }
+        )
+      );
+    });
+
     it("move after current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<string>;
