@@ -118,7 +118,7 @@ describe("LiveList", () => {
       );
     });
 
-    it("LiveObject on empty list", async () => {
+    it("push LiveObject on empty list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -190,7 +190,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("already attached LiveObject should throw", async () => {
+    it("push already attached LiveObject should throw", async () => {
       const { root } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -369,7 +369,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("list.move before current position", async () => {
+    it("move before current position", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<string>;
       }>(
@@ -397,7 +397,7 @@ describe("LiveList", () => {
       assertUndoRedo();
     });
 
-    it("list.move at the end of the list", async () => {
+    it("move at the end of the list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
