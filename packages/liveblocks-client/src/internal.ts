@@ -73,4 +73,4 @@ export {
 } from "./types";
 export { parseJson } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { decodeJwtTokenPayload } from "./utils";
+export { b64decode,tryParseJson } from "./utils";
