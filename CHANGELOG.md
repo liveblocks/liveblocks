@@ -1,3 +1,10 @@
+# v0.16.11
+
+Expose helper type to help users adopt to using Live structures with interfaces
+they don't own.
+
+---
+
 # v0.16.10
 
 Restructures a few more internals.
