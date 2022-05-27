@@ -54,6 +54,7 @@ import type {
   User,
 } from "./types";
 import {
+  b64decode,
   compact,
   getTreesDiffOperations,
   isSameNodeOrChildOf,
@@ -1693,7 +1694,8 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = tryParseJson(atob(tokenParts[1]));
+  const data = tryParseJson(b64decode(tokenParts[1]));
+
   if (
     data !== undefined &&
     isJsonObject(data) &&
