@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import type { Json, JsonObject } from "./json";
-import { isJsonArray, isJsonObject, parseJson } from "./json";
+import { isJsonArray, isJsonObject } from "./json";
 import type {
   BroadcastedEventServerMsg,
   ClientMsg,
@@ -60,6 +60,7 @@ import {
   isTokenValid,
   mergeStorageUpdates,
   remove,
+  tryParseJson,
 } from "./utils";
 
 type FixmePresence = JsonObject;
@@ -991,7 +992,7 @@ See v0.13 release notes for more information.
   }
 
   function parseServerMessages(text: string): ServerMsg<TPresence>[] | null {
-    const data: Json | undefined = parseJson(text);
+    const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
     } else if (isJsonArray(data)) {
@@ -1692,7 +1693,7 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = parseJson(atob(tokenParts[1]));
+  const data = tryParseJson(atob(tokenParts[1]));
   if (
     data !== undefined &&
     isJsonObject(data) &&
