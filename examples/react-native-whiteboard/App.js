@@ -24,7 +24,12 @@ import {
   Dimensions,
 } from 'react-native';
 
-import {useOthers, useUpdateMyPresence, useMyPresence} from '@liveblocks/react';
+import {
+  useOthers,
+  useUpdateMyPresence,
+  useMyPresence,
+  useHistory,
+} from '@liveblocks/react';
 import {useMap} from '@liveblocks/react';
 
 const Rectangle = ({
@@ -106,6 +111,7 @@ function getRandomArbitrary(min, max) {
 const App = () => {
   const [{selectedShape}, setPresence] = useMyPresence();
   const others = useOthers();
+  const history = useHistory();
   const shapes = useMap('shapes');
 
   if (shapes == null) {
@@ -197,6 +203,16 @@ const App = () => {
           <TouchableOpacity onPress={deleteRectangle} style={styles.button}>
             <Text>Delete</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => history.undo()}
+            style={styles.button}>
+            <Text>Undo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => history.redo()}
+            style={styles.button}>
+            <Text>Redo</Text>
+          </TouchableOpacity>
         </View>
       </>
     </SafeAreaView>
@@ -220,7 +236,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     flexDirection: 'row',
     justifyContent: 'space-evenly',
-    padding: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 3,
     borderRadius: 8,
   },
   button: {
