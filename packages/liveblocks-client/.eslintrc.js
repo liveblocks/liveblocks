@@ -64,7 +64,7 @@ module.exports = {
         selector:
           "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
         message:
-          "Using `JSON.parse()` is type-unsafe. Prefer using the `parseJson()` utility method (from `src/json`).",
+          "Using `JSON.parse()` is type-unsafe. Prefer using the `tryParseJson()` utility method (from `src/utils`).",
       },
       {
         selector: "FunctionDeclaration[async=true]",
