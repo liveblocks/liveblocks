@@ -190,9 +190,13 @@ const App = () => {
             );
           })}
         </View>
-        <View style={({backgroundColor: 'white'}, {position: 'absolute'})}>
-          <Button title="Add" onPress={insertRectangle}></Button>
-          <Button title="Delete" onPress={deleteRectangle}></Button>
+        <View style={styles.toolbar}>
+          <TouchableOpacity onPress={insertRectangle} style={styles.button}>
+            <Text>Rectangle</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={deleteRectangle} style={styles.button}>
+            <Text>Delete</Text>
+          </TouchableOpacity>
         </View>
       </>
     </SafeAreaView>
@@ -201,15 +205,30 @@ const App = () => {
 
 const styles = StyleSheet.create({
   backgroundContainer: {
-    backgroundColor: 'rgb(143, 243, 243)',
+    backgroundColor: 'rgb(243, 243, 243)',
     flex: 1,
   },
   box: {
-    height: 150,
-    width: 150,
+    height: 100,
+    width: 100,
     backgroundColor: 'blue',
     borderRadius: 5,
     borderWidth: 5,
+  },
+  toolbar: {
+    margin: '10%',
+    backgroundColor: 'white',
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    padding: 6,
+    borderRadius: 8,
+  },
+  button: {
+    backgroundColor: '#f8f8f8',
+    padding: 8,
+    borderRadius: 8,
+    borderColor: '#181818',
+    borderWidth: 1,
   },
 });
 
