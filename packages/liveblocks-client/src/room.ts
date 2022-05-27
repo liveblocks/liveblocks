@@ -58,6 +58,7 @@ import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
+  b64decode,
   compact,
   getTreesDiffOperations,
   isLiveList,
@@ -66,6 +67,7 @@ import {
   isTokenValid,
   mergeStorageUpdates,
   remove,
+  tryParseJson,
 } from "./utils";
 
 type FixmePresence = JsonObject;
@@ -1665,7 +1667,8 @@ function parseToken(token: string): AuthenticationToken {
     );
   }
 
-  const data = parseJson(atob(tokenParts[1]));
+  const data = tryParseJson(b64decode(tokenParts[1]));
+
   if (
     data !== undefined &&
     isJsonObject(data) &&

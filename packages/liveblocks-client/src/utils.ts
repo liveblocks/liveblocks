@@ -431,3 +431,37 @@ export function values<O extends { [key: string]: unknown }>(
 ): O[keyof O][] {
   return Object.values(obj) as O[keyof O][];
 }
+
+/**
+ * Alternative to JSON.parse() that will not throw in production. If the passed
+ * string cannot be parsed, this will return `undefined`.
+ */
+export function tryParseJson(rawMessage: string): Json | undefined {
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    return JSON.parse(rawMessage);
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Decode base64 string.
+ */
+export function b64decode(b64value: string): string {
+  try {
+    const formattedValue = b64value.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedValue = decodeURIComponent(
+      atob(formattedValue)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    return decodedValue;
+  } catch (err) {
+    return atob(b64value);
+  }
+}
