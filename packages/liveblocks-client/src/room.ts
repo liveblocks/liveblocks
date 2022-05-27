@@ -55,7 +55,7 @@ import {
   WebsocketCloseCodes,
 } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
-import { isJsonArray, isJsonObject, tryParseJson } from "./types/Json";
+import { isJsonArray, isJsonObject } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   b64decode,

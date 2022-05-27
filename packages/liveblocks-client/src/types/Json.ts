@@ -13,19 +13,6 @@ export type JsonScalar = string | number | boolean | null;
 export type JsonArray = Json[];
 export type JsonObject = { [key: string]: Json | undefined };
 
-/**
- * Alternative to JSON.parse() that will not throw in production. If the passed
- * string cannot be parsed, this will return `undefined`.
- */
-export function tryParseJson(rawMessage: string): Json | undefined {
-  try {
-    // eslint-disable-next-line no-restricted-syntax
-    return JSON.parse(rawMessage);
-  } catch (e) {
-    return undefined;
-  }
-}
-
 export function isJsonArray(data: Json): data is JsonArray {
   return Array.isArray(data);
 }

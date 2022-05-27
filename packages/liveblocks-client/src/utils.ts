@@ -21,7 +21,7 @@ import type {
   StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import { isJsonObject, tryParseJson } from "./types/Json";
+import { isJsonObject } from "./types/Json";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
@@ -430,6 +430,19 @@ export function values<O extends { [key: string]: unknown }>(
   obj: O
 ): O[keyof O][] {
   return Object.values(obj) as O[keyof O][];
+}
+
+/**
+ * Alternative to JSON.parse() that will not throw in production. If the passed
+ * string cannot be parsed, this will return `undefined`.
+ */
+export function tryParseJson(rawMessage: string): Json | undefined {
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    return JSON.parse(rawMessage);
+  } catch (e) {
+    return undefined;
+  }
 }
 
 /**
