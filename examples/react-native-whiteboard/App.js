@@ -6,31 +6,23 @@
  * @flow strict-local
  */
 
-import React, {useCallback, useEffect, useLayoutEffect, useRef} from 'react';
+import React, {useRef} from 'react';
 import {useState} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
-  StatusBar,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
   TouchableOpacity,
-  TouchableHighlight,
   PanResponder,
   Animated,
-  Button,
-  Dimensions,
 } from 'react-native';
 
-import {
-  useOthers,
-  useUpdateMyPresence,
-  useMyPresence,
-  useHistory,
-} from '@liveblocks/react';
+import {useOthers, useMyPresence, useHistory} from '@liveblocks/react';
 import {useMap} from '@liveblocks/react';
+
+const RECTANGLE_HEIGHT = 100;
+const RECTANGLE_WIDTH = 100;
 
 const Rectangle = ({
   shape,
@@ -38,7 +30,6 @@ const Rectangle = ({
   onShapePointerDown,
   selectionColor,
   onGestureMove,
-  onGestureStop,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const pan = useRef(new Animated.ValueXY()).current;
@@ -52,6 +43,7 @@ const Rectangle = ({
           y: pan.y._value,
         });
         onShapePointerDown(id);
+        console.log(id);
       },
       onPanResponderMove: (e, gestureState) => {
         setIsDragging(true);
@@ -61,6 +53,7 @@ const Rectangle = ({
 
         pan.x.setValue(gestureState.dx);
         pan.y.setValue(gestureState.dy);
+
         onGestureMove(id, rectangleX, rectangleY);
       },
       onPanResponderRelease: () => {
@@ -69,7 +62,6 @@ const Rectangle = ({
 
       onPanResponderEnd: () => {
         setIsDragging(false);
-        onGestureStop();
       },
     }),
   ).current;
@@ -90,7 +82,11 @@ const Rectangle = ({
           transform: [{translateX: pan.x}, {translateY: pan.y}],
         },
       ]}
-      {...panResponder.panHandlers}></Animated.View>
+      {...panResponder.panHandlers}>
+      <TouchableOpacity
+        style={{height: RECTANGLE_HEIGHT, width: RECTANGLE_WIDTH}}
+        onPress={() => onShapePointerDown(id)}></TouchableOpacity>
+    </Animated.View>
   );
 };
 
@@ -121,8 +117,8 @@ const App = () => {
   const insertRectangle = () => {
     const shapeId = Date.now();
     const rectangle = {
-      x: getRandomArbitrary(0, 50),
-      y: getRandomArbitrary(30, 200),
+      x: getRandomArbitrary(50, 150),
+      y: getRandomArbitrary(250, 200),
       fill: getRandomColor(),
     };
     shapes.set(shapeId, rectangle);
@@ -130,14 +126,12 @@ const App = () => {
 
   const deleteRectangle = () => {
     shapes.delete(selectedShape);
-    setPresence({selectedShape: null});
+    setPresence({selectedShape: null}, {addToHistory: true});
   };
 
   const onShapePointerDown = shapeId => {
-    setPresence({selectedShape: shapeId});
+    setPresence({selectedShape: shapeId}, {addToHistory: true});
   };
-
-  const onGestureStop = () => {};
 
   const onGestureMove = (id, x, y) => {
     const shape = shapes.get(id);
@@ -147,21 +141,6 @@ const App = () => {
         x: x,
         y: y,
       });
-    }
-  };
-
-  const moveRight = id => {
-    const shape = localShapes[0];
-    if (shape) {
-      shape.x += 10;
-      setLocalShapes([shape]);
-    }
-  };
-
-  const moveLeft = id => {
-    const shape = localShapes[0];
-    if (shape) {
-      shape.x -= 10;
     }
   };
 
@@ -190,7 +169,6 @@ const App = () => {
                 id={shapeId}
                 onShapePointerDown={onShapePointerDown}
                 selectionColor={selectionColor}
-                onGestureStop={onGestureStop}
                 onGestureMove={onGestureMove}
               />
             );
@@ -225,8 +203,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   box: {
-    height: 100,
-    width: 100,
+    height: RECTANGLE_HEIGHT,
+    width: RECTANGLE_WIDTH,
     backgroundColor: 'blue',
     borderRadius: 5,
     borderWidth: 5,
