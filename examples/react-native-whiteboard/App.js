@@ -35,29 +35,24 @@ const Rectangle = ({
   onGestureMove,
   onGestureStop,
 }) => {
-  console.log(shape);
-
   const [isDragging, setIsDragging] = useState(false);
   const pan = useRef(new Animated.ValueXY()).current;
 
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: () => true,
       onPanResponderGrant: () => {
         pan.setOffset({
           x: pan.x._value,
           y: pan.y._value,
         });
+        onShapePointerDown(id);
       },
       onPanResponderMove: (e, gestureState) => {
         setIsDragging(true);
-        // onShapePointerDown(id);
 
         const rectangleX = gestureState.moveX - e.nativeEvent.locationX;
         const rectangleY = gestureState.moveY - e.nativeEvent.locationY;
-
-        console.log({...gestureState});
 
         pan.x.setValue(gestureState.dx);
         pan.y.setValue(gestureState.dy);
@@ -65,7 +60,6 @@ const Rectangle = ({
       },
       onPanResponderRelease: () => {
         pan.flattenOffset();
-        // setIsDragging(false);
       },
 
       onPanResponderEnd: () => {
@@ -84,18 +78,14 @@ const Rectangle = ({
     <Animated.View
       style={[
         {
+          ...styles.box,
           position: 'absolute',
+          borderColor: selectionColor || 'transparent',
+          backgroundColor: shape.fill,
           transform: [{translateX: pan.x}, {translateY: pan.y}],
         },
       ]}
-      {...panResponder.panHandlers}>
-      <View
-        style={[
-          styles.box,
-          {borderColor: selectionColor || 'transparent'},
-          {backgroundColor: shape.fill},
-        ]}></View>
-    </Animated.View>
+      {...panResponder.panHandlers}></Animated.View>
   );
 };
 
@@ -117,10 +107,6 @@ const App = () => {
   const [{selectedShape}, setPresence] = useMyPresence();
   const others = useOthers();
   const shapes = useMap('shapes');
-  // const [localShapes, setLocalShapes] = useState([
-  //   {id: 1, x: 0, y: 0, fill: 'white'},
-  //   {id: 2, x: 0, y: 0, fill: 'red'},
-  // ]);
 
   if (shapes == null) {
     return <Text>Loading</Text>;
@@ -145,9 +131,7 @@ const App = () => {
     setPresence({selectedShape: shapeId});
   };
 
-  const onGestureStop = () => {
-    // alert(moving);
-  };
+  const onGestureStop = () => {};
 
   const onGestureMove = (id, x, y) => {
     const shape = shapes.get(id);
