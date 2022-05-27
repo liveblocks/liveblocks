@@ -23,6 +23,8 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export type {
+  BroadcastEventClientMsg,
+  ClientMsg,
   CreateChildOp,
   CreateListOp,
   CreateMapOp,
@@ -48,6 +50,8 @@ export type {
   ServerMsg,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdatePresenceClientMsg,
+  UpdateStorageClientMsg,
   UserJoinServerMsg,
 } from "./live";
 export {
