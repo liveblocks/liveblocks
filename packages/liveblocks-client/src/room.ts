@@ -55,7 +55,7 @@ import {
   WebsocketCloseCodes,
 } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
-import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
+import { isJsonArray, isJsonObject, tryParseJson } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   b64decode,
@@ -970,7 +970,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function parseServerMessages(text: string): ServerMsg<TPresence>[] | null {
-    const data: Json | undefined = parseJson(text);
+    const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
     } else if (isJsonArray(data)) {

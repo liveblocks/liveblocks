@@ -17,7 +17,7 @@ export type JsonObject = { [key: string]: Json | undefined };
  * Alternative to JSON.parse() that will not throw in production. If the passed
  * string cannot be parsed, this will return `undefined`.
  */
-export function parseJson(rawMessage: string): Json | undefined {
+export function tryParseJson(rawMessage: string): Json | undefined {
   try {
     // eslint-disable-next-line no-restricted-syntax
     return JSON.parse(rawMessage);
