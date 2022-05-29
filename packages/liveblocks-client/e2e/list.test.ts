@@ -4,7 +4,7 @@ import { prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
   describe("insert conflicts", () => {
-    test.only(
+    test(
       "remote insert conflicts with another insert",
       prepareTestsConflicts(
         {
@@ -783,4 +783,6 @@ describe("LiveList conflicts", () => {
   });
 });
 
-describe("LiveList fast updates", () => {});
+describe("LiveList single client", () => {
+  test("fast consecutive set on same index", () => {});
+});
