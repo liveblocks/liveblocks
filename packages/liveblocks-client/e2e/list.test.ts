@@ -1,10 +1,5 @@
 import "regenerator-runtime/runtime";
 import { LiveList } from "../src/LiveList";
-import {
-  listUpdate,
-  listUpdateInsert,
-  listUpdateMove,
-} from "../test/updatesUtils";
 import { prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
@@ -15,7 +10,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(),
         },
-        async ({ root1, root2, wsUtils, assert, updates1, updates2 }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
 
@@ -26,16 +21,6 @@ describe("LiveList conflicts", () => {
           await wsUtils.flushSocket2Messages();
 
           assert({ list: ["A", "B"] });
-
-          expect(updates1).toEqual([
-            [listUpdate(["A"], [listUpdateInsert(0, "A")])],
-            [listUpdate(["A", "B"], [listUpdateInsert(1, "B")])],
-          ]);
-
-          expect(updates2).toEqual([
-            [listUpdate(["B"], [listUpdateInsert(0, "B")])],
-            [listUpdate(["A", "B"], [listUpdateInsert(0, "A")])],
-          ]);
         }
       )
     );
@@ -46,7 +31,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assert, updates1, updates2 }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("C");
           root2.get("list").move(0, 1);
 
@@ -59,16 +44,6 @@ describe("LiveList conflicts", () => {
           await wsUtils.flushSocket2Messages();
 
           assert({ list: ["B", "C", "A"] });
-
-          expect(updates1).toEqual([
-            [listUpdate(["A", "B", "C"], [listUpdateInsert(2, "C")])],
-            [listUpdate(["B", "C", "A"], [listUpdateMove(0, 2, "A")])],
-          ]);
-
-          expect(updates2).toEqual([
-            [listUpdate(["B", "A"], [listUpdateMove(0, 1, "A")])],
-            [listUpdate(["B", "C", "A"], [listUpdateInsert(1, "C")])],
-          ]);
         }
       )
     );
@@ -79,15 +54,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({
-          root1,
-          root2,
-          updates1,
-          updates2,
-          room2,
-          wsUtils,
-          assert,
-        }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").push("C");
           root2.get("list").move(0, 1);
           root2.get("list").move(1, 0);
