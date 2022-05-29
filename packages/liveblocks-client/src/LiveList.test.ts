@@ -451,7 +451,38 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
-    it("should delete all items", async () => {
+    describe("updates", () => {
+      it(
+        "clear updates",
+        prepareStorageUpdateTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          ],
+          async ({ root, assert, machine }) => {
+            root.get("items").clear();
+            machine.undo();
+            machine.redo();
+
+            assert([
+              [listUpdate([], [listUpdateDelete(0), listUpdateDelete(0)])],
+              [
+                listUpdate(
+                  ["A", "B"],
+                  [listUpdateInsert(0, "A"), listUpdateInsert(1, "B")]
+                ),
+              ],
+              // Because redo reverse the operations, we delete items from the end
+              [listUpdate([], [listUpdateDelete(1), listUpdateDelete(0)])],
+            ]);
+          }
+        )
+      );
+    });
+
+    it("clear should delete all items", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>(
@@ -1050,44 +1081,6 @@ describe("LiveList", () => {
       assert({ items: ["a", "b", "c"] });
 
       expect(callback).toHaveBeenCalledTimes(1);
-    });
-
-    test("clear with deep subscribe ", async () => {
-      const { storage, subscribe } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          createSerializedObject("0:3", { a: 2 }, "0:1", SECOND_POSITION),
-        ],
-        1
-      );
-
-      const callback = jest.fn();
-
-      const root = storage.root;
-
-      const unsubscribe = subscribe(root.get("items"), callback, {
-        isDeep: true,
-      });
-
-      root.get("items").clear();
-
-      unsubscribe();
-
-      expect(callback).toHaveBeenCalledTimes(1);
-      expect(callback).toHaveBeenCalledWith([
-        {
-          type: "LiveList",
-          node: root.get("items"),
-          updates: [
-            { index: 0, type: "delete" },
-            { index: 1, type: "delete" },
-          ],
-        },
-      ]);
     });
   });
 

@@ -1009,7 +1009,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const updateDelta: LiveListUpdateDelta[] = [];
 
-      let i = 0;
       for (const item of this._items) {
         item._detach();
         const childId = item._id;
@@ -1023,10 +1022,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             ...item._serialize(nn(this._id), item._getParentKeyOrThrow())
           );
 
-          updateDelta.push(deleteDelta(i));
+          // Index is always 0 because updates are applied one after another
+          // when applied on an immutable state
+          updateDelta.push(deleteDelta(0));
         }
-
-        i++;
       }
 
       this._items = [];
