@@ -6,6 +6,7 @@ import { middleware } from "@liveblocks/zustand";
 
 const client = createClient({
   authEndpoint: "/api/auth",
+  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
 });
 
 type State = {
@@ -13,7 +14,7 @@ type State = {
   addItem: (newTodo: string) => void;
   deleteItem: (index: number) => void;
   clear: () => void;
-}
+};
 
 const useStore = create(
   middleware<State>(
