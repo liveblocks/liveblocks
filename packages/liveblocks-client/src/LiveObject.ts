@@ -18,7 +18,6 @@ import type {
   ParentToChildNodeMap,
   SerializedObject,
   SerializedRootObject,
-  ToJson,
   UpdateDelta,
   UpdateObjectOp,
 } from "./types";
@@ -46,8 +45,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._propToLastUpdate = new Map<string, string>();
 
     for (const key in obj) {
-      const value = obj[key] as any;
-      if (isLiveNode(value)) {
+      const value = obj[key];
+      if (value === undefined) {
+        continue;
+      } else if (isLiveNode(value)) {
         value._setParentLink(this, key);
       }
     }
@@ -430,7 +431,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
-    this.update({ [key]: value } as any as Partial<O>);
+    this.update({ [key]: value } as unknown as Partial<O>);
   }
 
   /**
@@ -508,13 +509,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   update(overrides: Partial<O>): void {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
-        const oldValue = this._map.get(key);
+        const newValue = overrides[key];
+        if (newValue === undefined) {
+          continue;
+        }
 
+        const oldValue = this._map.get(key);
         if (isLiveNode(oldValue)) {
           oldValue._detach();
         }
-
-        const newValue = overrides[key] as any;
 
         if (isLiveNode(newValue)) {
           newValue._setParentLink(this, key);
@@ -530,7 +533,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updatedProps: Partial<ToJson<O>> = {};
+    const updatedProps: JsonObject = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
@@ -541,6 +544,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const updateDelta: LiveObjectUpdateDelta<O> = {};
 
     for (const key in overrides) {
+      const newValue: Lson | undefined = overrides[key];
+      if (newValue === undefined) {
+        continue;
+      }
+
       const oldValue = this._map.get(key);
 
       if (isLiveNode(oldValue)) {
@@ -551,8 +559,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       } else {
         reverseUpdateOp.data[key] = oldValue;
       }
-
-      const newValue = overrides[key] as any;
 
       if (isLiveNode(newValue)) {
         newValue._setParentLink(this, key);
