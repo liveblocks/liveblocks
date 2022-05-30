@@ -27,5 +27,5 @@ export function isJsonArray(data: Json): data is JsonArray {
 }
 
 export function isJsonObject(data: Json): data is JsonObject {
-  return !isJsonScalar && !isJsonArray(data);
+  return !isJsonScalar(data) && !isJsonArray(data);
 }
