@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { LiveList } from "./LiveList";
+import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
@@ -20,6 +20,8 @@ import type {
   InitialDocumentStateServerMsg,
   Json,
   JsonObject,
+  LiveNode,
+  LiveStructure,
   Lson,
   LsonObject,
   MyPresenceCallback,
@@ -52,15 +54,20 @@ import {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
-import { isJsonArray, isJsonObject, parseJson } from "./types/Json";
+import type { DocumentVisibilityState } from "./types/_compat";
+import { isJsonArray, isJsonObject } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
+  b64decode,
   compact,
   getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
   isSameNodeOrChildOf,
   isTokenValid,
   mergeStorageUpdates,
   remove,
+  tryParseJson,
 } from "./utils";
 
 type FixmePresence = JsonObject;
@@ -82,7 +89,7 @@ export type Machine = {
   }): void;
 
   // onWakeUp,
-  onVisibilityChange(visibilityState: VisibilityState): void;
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
   getUndoStack(): HistoryItem[];
   getItemsCount(): number;
 
@@ -103,7 +110,7 @@ export type Machine = {
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  subscribe<TItem extends AbstractCrdt>(
+  subscribe<TItem extends LiveStructure>(
     node: TItem,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
@@ -120,7 +127,7 @@ export type Machine = {
   subscribe(type: "error", listener: ErrorCallback): () => void;
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K],
     options?: { isDeep: boolean }
   ): () => void;
@@ -246,7 +253,7 @@ export type State<TPresence extends JsonObject> = {
 
   clock: number;
   opClock: number;
-  items: Map<string, AbstractCrdt>;
+  items: Map<string, LiveNode>;
   root: LiveObject<LsonObject> | undefined;
   undoStack: HistoryItem[];
   redoStack: HistoryItem[];
@@ -342,17 +349,17 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return () => remove(state.listeners.storage, callback);
   }
 
-  function crdtSubscribe<T extends AbstractCrdt>(
-    crdt: T,
-    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
+  function subscribeToLiveStructure(
+    liveValue: LiveStructure,
+    innerCallback: (updates: StorageUpdate[] | LiveStructure) => void,
     options?: { isDeep: boolean }
   ) {
     const cb = (updates: StorageUpdate[]) => {
       const relatedUpdates: StorageUpdate[] = [];
       for (const update of updates) {
-        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
+        if (options?.isDeep && isSameNodeOrChildOf(update.node, liveValue)) {
           relatedUpdates.push(update);
-        } else if (update.node._id === crdt._id) {
+        } else if (update.node._id === liveValue._id) {
           innerCallback(update.node);
         }
       }
@@ -444,8 +451,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     });
   }
 
-  function addItem(id: string, item: AbstractCrdt) {
-    state.items.set(id, item);
+  function addItem(id: string, liveItem: LiveNode) {
+    state.items.set(id, liveItem);
   }
 
   function deleteItem(id: string) {
@@ -609,7 +616,13 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId = applyOpResult.modified.node._parent?._id;
+          const parentId =
+            applyOpResult.modified.node.parent.type === "HasParent"
+              ? nn(
+                  applyOpResult.modified.node.parent.node._id,
+                  "Expected parent node to have an ID"
+                )
+              : undefined;
 
           // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
@@ -659,8 +672,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        if (item._parent instanceof LiveList) {
-          return item._parent._setChildKey(op.parentKey, item, source);
+        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
+          return item.parent.node._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
       }
@@ -695,8 +708,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     liveList: LiveList<TItem>,
     callback: (liveList: LiveList<TItem>) => void
   ): () => void;
-  function subscribe<TItem extends AbstractCrdt>(
-    node: TItem,
+  function subscribe(
+    node: LiveStructure,
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
@@ -715,12 +728,12 @@ export function makeStateMachine<TPresence extends JsonObject>(
     listener: ConnectionCallback
   ): () => void;
   function subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
+    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
     listener?: RoomEventCallbackMap[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
-    if (firstParam instanceof AbstractCrdt) {
-      return crdtSubscribe(firstParam, listener, options);
+    if (isLiveNode(firstParam)) {
+      return subscribeToLiveStructure(firstParam, listener, options);
     } else if (typeof firstParam === "function") {
       return genericSubscribe(firstParam);
     } else if (!isValidRoomEventType(firstParam)) {
@@ -836,7 +849,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: VisibilityState) {
+  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (visibilityState === "visible" && state.connection.state === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -957,7 +970,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function parseServerMessages(text: string): ServerMsg<TPresence>[] | null {
-    const data: Json | undefined = parseJson(text);
+    const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
     } else if (isJsonArray(data)) {
@@ -1455,7 +1468,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function simulateSocketClose() {
     if (state.socket) {
-      state.socket.close();
+      state.socket = null;
     }
   }
 
@@ -1464,9 +1477,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     wasClean: boolean;
     reason: string;
   }) {
-    if (state.socket) {
-      onClose(event);
-    }
+    onClose(event);
   }
 
   return {
@@ -1553,7 +1564,7 @@ export function defaultState(
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, AbstractCrdt>(),
+    items: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],
@@ -1579,7 +1590,7 @@ export type InternalRoom = {
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: VisibilityState) => void;
+  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 };
 
 export function createRoom(
@@ -1652,11 +1663,12 @@ function parseToken(token: string): AuthenticationToken {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
-      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
     );
   }
 
-  const data = parseJson(atob(tokenParts[1]));
+  const data = tryParseJson(b64decode(tokenParts[1]));
+
   if (
     data !== undefined &&
     isJsonObject(data) &&
@@ -1671,7 +1683,7 @@ function parseToken(token: string): AuthenticationToken {
   }
 
   throw new Error(
-    `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
+    "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
   );
 }
 

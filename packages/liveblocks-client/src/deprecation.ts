@@ -13,7 +13,7 @@ const _emittedDeprecationWarnings: Set<string> = new Set();
  * Displays a deprecation warning in the dev console. Only in dev mode, and
  * only once per message/key. In production, this is a no-op.
  */
-export function deprecate(message: string, key = message) {
+export function deprecate(message: string, key = message): void {
   if (process.env.NODE_ENV !== "production") {
     if (!_emittedDeprecationWarnings.has(key)) {
       _emittedDeprecationWarnings.add(key);
@@ -31,7 +31,7 @@ export function deprecateIf(
   condition: unknown,
   message: string,
   key = message
-) {
+): void {
   if (process.env.NODE_ENV !== "production") {
     if (condition) {
       deprecate(message, key);
@@ -44,7 +44,7 @@ export function deprecateIf(
  *
  * Only triggers in dev mode. In production, this is a no-op.
  */
-export function throwUsageError(message: string) {
+export function throwUsageError(message: string): void {
   if (process.env.NODE_ENV !== "production") {
     const usageError = new Error(message);
     usageError.name = "Usage error";
@@ -59,7 +59,7 @@ export function throwUsageError(message: string) {
  *
  * Only has effect in dev mode. In production, this is a no-op.
  */
-export function errorIf(condition: unknown, message: string) {
+export function errorIf(condition: unknown, message: string): void {
   if (process.env.NODE_ENV !== "production") {
     if (condition) {
       throwUsageError(message);

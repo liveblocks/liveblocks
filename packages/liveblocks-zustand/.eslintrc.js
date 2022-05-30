@@ -35,7 +35,9 @@ module.exports = {
     // ------------------------
     // Customized default rules
     // ------------------------
+    quotes: ["error", "double", "avoid-escape"],
     "object-shorthand": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       // Unused variables are fine if they start with an underscore

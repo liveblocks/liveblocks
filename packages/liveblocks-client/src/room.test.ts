@@ -161,7 +161,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a status 200 but got 403 when doing a POST request on "/api/403"`
+        'Expected a status 200 but got 403 when doing a POST request on "/api/403"'
       )
     );
   });
@@ -184,7 +184,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1`
+        'Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
       )
     );
   });
@@ -207,7 +207,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}`
+        'Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}'
       )
     );
   });

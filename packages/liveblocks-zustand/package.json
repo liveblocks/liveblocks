@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "0.16.5",
+  "version": "0.16.13",
   "description": "A middleware to integrate Liveblocks into Zustand stores.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -20,8 +20,8 @@
     "build": "rollup -c && cp ./package.json ./README.md ./lib",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
-    "test": "jest --watch",
-    "test-ci": "jest",
+    "test": "jest --watch --silent --verbose",
+    "test-ci": "jest --silent --verbose",
     "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
   },
   "license": "Apache-2.0",
@@ -31,7 +31,7 @@
     "directory": "packages/liveblocks-zustand"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.16.5",
+    "@liveblocks/client": "0.16.13",
     "zustand": "^3"
   },
   "devDependencies": {
@@ -46,9 +46,9 @@
     "@testing-library/jest-dom": "^5.16.1",
     "@testing-library/react": "^12.1.2",
     "@testing-library/react-hooks": "^7.0.2",
-    "@types/jest": "^27.4.0",
-    "@typescript-eslint/eslint-plugin": "^5.18.0",
-    "@typescript-eslint/parser": "^5.18.0",
+    "@types/jest": "^27.5.1",
+    "@typescript-eslint/eslint-plugin": "^5.26.0",
+    "@typescript-eslint/parser": "^5.26.0",
     "eslint": "^8.12.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-simple-import-sort": "^7.0.0",
@@ -58,6 +58,7 @@
     "rollup-plugin-command": "^1.1.3",
     "rollup-plugin-dts": "^4.2.1",
     "rollup-plugin-terser": "^7.0.2",
+    "typescript": "^4.7.2",
     "whatwg-fetch": "^3.6.2",
     "zustand": "^3.6.9"
   },

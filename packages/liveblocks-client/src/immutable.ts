@@ -1,10 +1,9 @@
-import { AbstractCrdt } from "./AbstractCrdt";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json, Lson, LsonObject, StorageUpdate } from "./types";
-import { findNonSerializableValue } from "./utils";
+import type { Json, LiveNode, Lson, LsonObject, StorageUpdate } from "./types";
+import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
@@ -43,11 +42,7 @@ function liveListToJson(value: LiveList<Lson>): Json[] {
   return lsonListToJson(value.toArray());
 }
 
-export function lsonToJson(value: Lson | AbstractCrdt): Json {
-  //                                     ^^^^^^^^^^^^
-  //                                     FIXME: Remove me later. This requires the
-  //                                     addition of a concrete LiveStructure type first.
-
+export function lsonToJson(value: Lson): Json {
   // Check for LiveStructure datastructures first
   if (value instanceof LiveObject) {
     return liveObjectToJson(value);
@@ -57,9 +52,6 @@ export function lsonToJson(value: Lson | AbstractCrdt): Json {
     return liveMapToJson(value);
   } else if (value instanceof LiveRegister) {
     return value.data;
-  } else if (value instanceof AbstractCrdt) {
-    // This code path should never be taken
-    throw new Error("Unhandled subclass of AbstractCrdt encountered");
   }
 
   // Then for composite Lson values
@@ -101,7 +93,7 @@ export function patchLiveList<T extends Lson>(
   liveList: LiveList<T>,
   prev: Array<T>,
   next: Array<T>
-) {
+): void {
   let i = 0;
   let prevEnd = prev.length - 1;
   let nextEnd = next.length - 1;
@@ -166,7 +158,7 @@ export function patchLiveList<T extends Lson>(
       const liveListNode = liveList.get(i);
 
       if (
-        liveListNode instanceof LiveObject &&
+        isLiveObject(liveListNode) &&
         isPlainObject(prevNode) &&
         isPlainObject(nextNode)
       ) {
@@ -213,18 +205,16 @@ export function patchLiveObjectKey<O extends LsonObject>(
     liveObject.set(key, anyToCrdt(next));
   } else if (prev === next) {
     return;
-  } else if (
-    value instanceof LiveList &&
-    Array.isArray(prev) &&
-    Array.isArray(next)
-  ) {
+  } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
     patchLiveList(value, prev, next);
   } else if (
-    value instanceof LiveObject &&
+    isLiveObject(value) &&
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev, next);
+    patchLiveObject(value, prev as LsonObject, next as LsonObject);
+    //                          ^^^^^^^^^^^^^       ^^^^^^^^^^^^^
+    //                          FIXME! Unsafe cast! Verify instead of cast.
   } else {
     liveObject.set(key, anyToCrdt(next));
   }
@@ -234,7 +224,7 @@ export function patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
   prev: O,
   next: O
-) {
+): void {
   const updates: Partial<O> = {};
 
   for (const key in next) {
@@ -252,15 +242,15 @@ export function patchLiveObject<O extends LsonObject>(
   }
 }
 
-function getParentsPath(node: AbstractCrdt): Array<string | number> {
+function getParentsPath(node: LiveNode): Array<string | number> {
   const path = [];
-  while (node._parentKey != null && node._parent != null) {
-    if (node._parent instanceof LiveList) {
-      path.push(node._parent._indexOfPosition(node._parentKey));
+  while (node.parent.type === "HasParent") {
+    if (isLiveList(node.parent.node)) {
+      path.push(node.parent.node._indexOfPosition(node.parent.key));
     } else {
-      path.push(node._parentKey);
+      path.push(node.parent.key);
     }
-    node = node._parent;
+    node = node.parent.node;
   }
   return path;
 }

@@ -64,7 +64,7 @@ export async function authorize(
   } catch (er) {
     return {
       status: 403,
-      body: `Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.`,
+      body: 'Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.',
       error: er,
     };
   }

@@ -40,6 +40,7 @@ export type {
   FetchStorageClientMsg,
   IdTuple,
   InitialDocumentStateServerMsg,
+  LiveNode,
   NodeMap,
   Op,
   ParentToChildNodeMap,
@@ -70,5 +71,6 @@ export {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
-export { parseJson } from "./types/Json";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export { b64decode, tryParseJson } from "./utils";

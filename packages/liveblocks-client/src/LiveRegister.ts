@@ -3,8 +3,10 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
   CreateChildOp,
+  CreateRegisterOp,
   IdTuple,
   Json,
+  LiveNode,
   Op,
   ParentToChildNodeMap,
   SerializedRegister,
@@ -12,7 +14,7 @@ import type {
 import { CrdtType, OpCode } from "./types";
 
 /**
- * @internal
+ * INTERNAL
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _data: TValue;
@@ -33,7 +35,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     [id, item]: IdTuple<SerializedRegister>,
     _parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
+  ): LiveRegister<Json> {
     const register = new LiveRegister(item.data);
     register._attach(id, doc);
     return register;
@@ -42,7 +44,11 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc
+  ): CreateRegisterOp[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
@@ -65,16 +71,14 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
    * INTERNAL
    */
   _toSerializedCrdt(): SerializedRegister {
+    if (this.parent.type !== "HasParent") {
+      throw new Error("Cannot serialize LiveRegister if parent is missing");
+    }
+
     return {
       type: CrdtType.REGISTER,
-      parentId: nn(
-        this._parent?._id,
-        "Cannot serialize Register if parentId is missing"
-      ),
-      parentKey: nn(
-        this._parentKey,
-        "Cannot serialize Register if parentKey is missing"
-      ),
+      parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
+      parentKey: this.parent.key,
       data: this.data,
     };
   }
@@ -83,7 +87,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     throw new Error("Method not implemented.");
   }
 
-  _detachChild(_crdt: AbstractCrdt): ApplyResult {
+  _detachChild(_crdt: LiveNode): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
