@@ -71,5 +71,6 @@ export {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
 export { b64decode, tryParseJson } from "./utils";
