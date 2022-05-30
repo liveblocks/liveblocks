@@ -42,18 +42,7 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
 }
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
-  switch (op.type) {
-    case OpCode.CREATE_REGISTER:
-      return new LiveRegister(op.data);
-    case OpCode.CREATE_OBJECT:
-      return new LiveObject(op.data);
-    case OpCode.CREATE_MAP:
-      return new LiveMap();
-    case OpCode.CREATE_LIST:
-      return new LiveList();
-    default:
-      return assertNever(op, "Unknown creation Op");
-  }
+  return lsonToLiveNode(creationOpToLson(op));
 }
 
 export function creationOpToLson(op: CreateOp): Lson {
