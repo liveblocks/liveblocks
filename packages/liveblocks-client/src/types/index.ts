@@ -450,7 +450,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
      *
-     * @param listener the callback this called when the {@link LiveObject} changes.
+     * @param callback the callback this called when the {@link LiveObject} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -467,7 +467,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveList}.
      *
-     * @param listener the callback this called when the {@link LiveList} changes.
+     * @param callback the callback this called when the {@link LiveList} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -485,7 +485,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
      *
-     * @param listener the callback this called when the {@link LiveMap} changes.
+     * @param callback the callback this called when the {@link LiveMap} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -504,7 +504,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
      *
-     * @param listener the callback this called when the {@link LiveObject} changes.
+     * @param callback the callback this called when the {@link LiveObject} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -523,7 +523,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveList}.
      *
-     * @param listener the callback this called when the {@link LiveList} changes.
+     * @param callback the callback this called when the {@link LiveList} changes.
      *
      * @returns Unsubscribe function.
      *
