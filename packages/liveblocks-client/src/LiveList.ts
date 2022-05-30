@@ -79,12 +79,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    const ops = [];
+    const ops: CreateChildOp[] = [];
     const op: CreateListOp = {
       id: this._id,
       opId: doc?.generateOpId(),
@@ -1314,7 +1314,7 @@ function sortListItem(items: LiveNode[]) {
  * serializing a LiveStructure should not know anything about intent
  */
 function addIntentAndDeletedIdToOperation(
-  ops: Op[],
+  ops: CreateChildOp[],
   deletedId: string | undefined
 ) {
   if (ops.length === 0) {
@@ -1324,17 +1324,6 @@ function addIntentAndDeletedIdToOperation(
   }
 
   const firstOp = ops[0];
-  if (
-    firstOp.type !== OpCode.CREATE_LIST &&
-    firstOp.type !== OpCode.CREATE_OBJECT &&
-    firstOp.type !== OpCode.CREATE_REGISTER &&
-    firstOp.type !== OpCode.CREATE_MAP
-  ) {
-    throw new Error(
-      "Internal error. Serialized LiveStructure first op should be CreateOp"
-    );
-  }
-
   firstOp.intent = "set";
   firstOp.deletedId = deletedId;
 }

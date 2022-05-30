@@ -4,6 +4,7 @@ import { nn } from "./assert";
 import type {
   CreateChildOp,
   CreateObjectOp,
+  CreateOp,
   CreateRootObjectOp,
   DeleteObjectKeyOp,
   IdTuple,
@@ -55,14 +56,20 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _serialize(parentId?: string, parentKey?: string, doc?: Doc): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[];
+  _serialize(
+    parentId?: undefined,
+    parentKey?: undefined,
+    doc?: Doc
+  ): CreateOp[];
+  _serialize(parentId?: string, parentKey?: string, doc?: Doc): CreateOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
 
     const opId = doc?.generateOpId();
 
-    const ops = [];
+    const ops: CreateOp[] = [];
     const op: CreateObjectOp | CreateRootObjectOp =
       parentId !== undefined && parentKey !== undefined
         ? {

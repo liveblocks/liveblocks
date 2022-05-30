@@ -3,6 +3,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
   CreateChildOp,
+  CreateRegisterOp,
   IdTuple,
   Json,
   LiveNode,
@@ -43,7 +44,11 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /**
    * INTERNAL
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
+  _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc
+  ): CreateRegisterOp[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"

@@ -1,6 +1,7 @@
 import { assertNever } from "./assert";
 import type {
   CreateChildOp,
+  CreateOp,
   LiveNode,
   Op,
   SerializedCrdt,
@@ -289,7 +290,11 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    */
-  abstract _serialize(parentId: string, parentKey: string, doc?: Doc): Op[];
+  abstract _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc
+  ): CreateChildOp[];
 
   /**
    * @internal

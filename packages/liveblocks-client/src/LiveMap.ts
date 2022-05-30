@@ -63,12 +63,12 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    const ops = [];
+    const ops: CreateChildOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
       opId: doc?.generateOpId(),
