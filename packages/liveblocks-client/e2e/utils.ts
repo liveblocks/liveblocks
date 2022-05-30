@@ -191,6 +191,60 @@ export function prepareTestsConflicts<T extends LsonObject>(
   };
 }
 
+/**
+ * Join a room and stop sending socket messages when the storage is initialized
+ */
+export function prepareSingleClientTest<T extends LsonObject>(
+  initialStorage: T,
+  callback: (args: {
+    root: LiveObject<T>;
+    room: Room;
+    /**
+     * Assert that room storage is equal to the provided json
+     */
+    // assert: (jsonRoot: ToJson<T>) => void;
+    flushSocketMessages: () => Promise<void>;
+  }) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
+
+    const { client, room, ws } = await initializeRoomForTest(
+      roomName,
+      initialStorage
+    );
+
+    const { root } = await room.getStorage<T>();
+
+    // Waiting until every messages are received by all clients.
+    // We don't have a public way to know if everything has been received so we have to rely on time
+    await wait(1000);
+
+    ws.pauseSend();
+
+    ws.addEventListener("message", (message) => {
+      console.log(message.data);
+    });
+
+    try {
+      await callback({
+        room,
+        root,
+        flushSocketMessages: async () => {
+          ws.resumeSend();
+          // Waiting until every messages are received by all clients.
+          // We don't have a public way to know if everything has been received so we have to rely on time
+          await wait(1000);
+        },
+      });
+      client.leave(roomName);
+    } catch (er) {
+      client.leave(roomName);
+      throw er;
+    }
+  };
+}
+
 export function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }

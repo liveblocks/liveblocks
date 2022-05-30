@@ -31,11 +31,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _items: Array<AbstractCrdt>;
 
   private _implicitlyDeletedItems: Set<AbstractCrdt>;
+  private _unacknowledgedSets: Map<string, string>;
 
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
-    this._implicitlyDeletedItems = new Set<AbstractCrdt>();
+    this._implicitlyDeletedItems = new Set();
+    this._unacknowledgedSets = new Map();
 
     let position = undefined;
     for (let i = 0; i < items.length; i++) {
@@ -223,6 +225,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       delta.push(deletedDelta);
     }
 
+    const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
+
+    if (unacknowledgedOpId != null) {
+      if (unacknowledgedOpId !== op.opId) {
+        return delta.length === 0
+          ? { modified: false }
+          : { modified: makeUpdate(this, delta), reverse: [] };
+      } else {
+        this._unacknowledgedSets.delete(op.parentKey);
+      }
+    }
+
     const indexOfItemWithSamePosition = this._indexOfPosition(op.parentKey);
 
     const existingItem = this._items.find((item) => item._id === op.id);
@@ -292,6 +306,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           reverse: [],
         };
       } else {
+        if (indexOfItemWithSamePosition !== -1) {
+          this._items.splice(indexOfItemWithSamePosition, 1);
+        }
+
         const { newItem, newIndex } = this._createAttachItemAndSort(
           op,
           op.parentKey
@@ -483,6 +501,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (this._doc?.getItem(id) !== undefined) {
       return { modified: false };
     }
+
+    this._unacknowledgedSets.set(key, op.opId!);
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
@@ -1070,6 +1090,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const ops = value._serialize(this._id, position, this._doc);
       addIntentAndDeletedIdToOperation(ops, existingId);
+      this._unacknowledgedSets.set(position, ops[0].opId!);
       const reverseOps = existingItem._serialize(this._id, position, undefined);
       addIntentAndDeletedIdToOperation(reverseOps, id);
 
