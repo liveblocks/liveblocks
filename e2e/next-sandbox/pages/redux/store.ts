@@ -4,6 +4,7 @@ import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 export const client = createClient({
   authEndpoint: "/api/auth",
+  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
 });
 
 export type State = {

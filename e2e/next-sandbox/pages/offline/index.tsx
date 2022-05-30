@@ -6,8 +6,15 @@ import {
   useSelf,
   useUndo,
   useRoom,
+  LiveblocksProvider,
 } from "@liveblocks/react";
+import { createClient } from "@liveblocks/client";
 import React, { useState } from "react";
+
+const client = createClient({
+  authEndpoint: "/api/auth",
+  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+});
 
 type RoomWithDevTools = Room & {
   __INTERNAL_DO_NOT_USE: {
@@ -29,9 +36,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId}>
-      <Sandbox />
-    </RoomProvider>
+    <LiveblocksProvider client={client}>
+      <RoomProvider id={roomId}>
+        <Sandbox />
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 
