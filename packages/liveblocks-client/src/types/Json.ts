@@ -13,17 +13,13 @@ export type JsonScalar = string | number | boolean | null;
 export type JsonArray = Json[];
 export type JsonObject = { [key: string]: Json | undefined };
 
-/**
- * Alternative to JSON.parse() that will not throw in production. If the passed
- * string cannot be parsed, this will return `undefined`.
- */
-export function parseJson(rawMessage: string): Json | undefined {
-  try {
-    // eslint-disable-next-line no-restricted-syntax
-    return JSON.parse(rawMessage);
-  } catch (e) {
-    return undefined;
-  }
+export function isJsonScalar(data: Json): data is JsonScalar {
+  return (
+    data === null ||
+    typeof data === "string" ||
+    typeof data === "number" ||
+    typeof data === "boolean"
+  );
 }
 
 export function isJsonArray(data: Json): data is JsonArray {
@@ -31,5 +27,5 @@ export function isJsonArray(data: Json): data is JsonArray {
 }
 
 export function isJsonObject(data: Json): data is JsonObject {
-  return data !== null && typeof data === "object" && !isJsonArray(data);
+  return !isJsonScalar(data) && !isJsonArray(data);
 }

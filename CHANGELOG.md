@@ -36,6 +36,42 @@ Various internal refactorings.
 
 ---
 
+# v0.16.15
+
+Internals only.
+
+---
+
+# v0.16.14
+
+Fix an issue where the current user's info would not properly display accented characters.
+
+---
+
+# v0.16.13
+
+(Unpublished.)
+
+---
+
+# v0.16.12
+
+Internals only.
+
+---
+
+# v0.16.11
+
+Expose helper type to help users adopt to using Live structures with interfaces they don't own.
+
+---
+
+# v0.16.10
+
+Restructures a few more internals.
+
+---
+
 # v0.16.9
 
 Restructures a few internals.

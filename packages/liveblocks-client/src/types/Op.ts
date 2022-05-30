@@ -1,4 +1,3 @@
-import type { Resolve } from ".";
 import type { Json, JsonObject } from "./Json";
 
 export enum OpCode {
@@ -50,12 +49,14 @@ export type CreateObjectOp = {
   data: JsonObject;
 };
 
-export type CreateRootObjectOp = Resolve<
-  Omit<CreateObjectOp, "parentId" | "parentKey"> & {
-    parentId?: never;
-    parentKey?: never;
-  }
->;
+export type CreateRootObjectOp = {
+  opId?: string;
+  id: string;
+  type: OpCode.CREATE_OBJECT;
+  data: JsonObject;
+  parentId?: never;
+  parentKey?: never;
+};
 
 export type CreateListOp = {
   opId?: string;

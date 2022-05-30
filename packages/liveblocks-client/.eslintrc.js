@@ -35,7 +35,9 @@ module.exports = {
     // ------------------------
     // Customized default rules
     // ------------------------
+    quotes: ["error", "double", "avoid-escape"],
     "object-shorthand": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       // Unused variables are fine if they start with an underscore
@@ -62,7 +64,7 @@ module.exports = {
         selector:
           "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
         message:
-          "Using `JSON.parse()` is type-unsafe. Prefer using the `parseJson()` utility method (from `src/json`).",
+          "Using `JSON.parse()` is type-unsafe. Prefer using the `tryParseJson()` utility method (from `src/utils`).",
       },
       {
         selector: "FunctionDeclaration[async=true]",
@@ -78,6 +80,10 @@ module.exports = {
         selector: "TSNonNullExpression",
         message:
           "Non-null assertions mask real problems. Please use `nn(...)` (from src/assert.ts) instead.",
+      },
+      {
+        selector: 'TSTypeReference[typeName.name="AbstractCrdt"]',
+        message: "Don't refer to AbstractCrdt as a type. Use LiveNode instead.",
       },
       // {
       //   selector: "ForOfStatement",
@@ -98,6 +104,7 @@ module.exports = {
       // Special config for test files
       rules: {
         "no-restricted-syntax": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
       },
     },
   ],

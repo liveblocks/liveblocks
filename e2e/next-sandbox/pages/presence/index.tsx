@@ -5,8 +5,15 @@ import {
   useEventListener,
   useMyPresence,
   useOthers,
+  LiveblocksProvider,
 } from "@liveblocks/react";
+import { createClient } from "@liveblocks/client";
 import React from "react";
+
+const client = createClient({
+  authEndpoint: "/api/auth",
+  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
+});
 
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
@@ -27,10 +34,12 @@ export default function Home() {
         Enter
       </button>
       {isVisible && (
-        <RoomProvider id={roomId}>
-          <PresenceSandbox />
-          <EventSandbox />
-        </RoomProvider>
+        <LiveblocksProvider client={client}>
+          <RoomProvider id={roomId}>
+            <PresenceSandbox />
+            <EventSandbox />
+          </RoomProvider>
+        </LiveblocksProvider>
       )}
     </>
   );

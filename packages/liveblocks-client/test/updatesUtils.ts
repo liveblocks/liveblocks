@@ -1,4 +1,5 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "../src";
+import { assertNever } from "../src/assert";
 import { lsonToJson } from "../src/immutable";
 import type {
   LiveListUpdates,
@@ -117,7 +118,7 @@ export function serializeUpdateToJson(
     };
   }
 
-  throw new Error("Unsupported LiveStructure type");
+  return assertNever(update, "Unsupported LiveStructure type");
 }
 
 export function listUpdate<TItem extends Lson>(
