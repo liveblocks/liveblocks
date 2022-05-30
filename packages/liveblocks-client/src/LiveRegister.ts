@@ -3,6 +3,7 @@ import { AbstractCrdt } from "./AbstractCrdt";
 import type { Json } from "./json";
 import type {
   CreateOp,
+  CreateRegisterOp,
   IdTuple,
   Op,
   ParentToChildNodeMap,
@@ -47,7 +48,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     parentKey: string,
     doc?: Doc,
     intent?: "set"
-  ): Op[] {
+  ): CreateRegisterOp[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"

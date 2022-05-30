@@ -1,4 +1,4 @@
-import type { CreateOp, Op, SerializedCrdt } from "./live";
+import type { CreateChildOp, CreateOp, Op, SerializedCrdt } from "./live";
 import { OpCode } from "./live";
 import type { StorageUpdate } from "./types";
 
@@ -139,7 +139,7 @@ export abstract class AbstractCrdt {
     parentKey: string,
     doc?: Doc,
     intent?: "set"
-  ): Op[];
+  ): CreateChildOp[];
 
   /**
    * @internal

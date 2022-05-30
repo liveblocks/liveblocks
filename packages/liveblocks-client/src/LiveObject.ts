@@ -2,6 +2,7 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import type { JsonObject } from "./json";
 import type {
+  CreateChildOp,
   CreateObjectOp,
   CreateOp,
   CreateRootObjectOp,
@@ -60,18 +61,24 @@ export class LiveObject<
    * @internal
    */
   _serialize(
+    parentId: string,
+    parentKey: string,
+    doc?: Doc,
+    intent?: "set"
+  ): CreateChildOp[];
+  _serialize(
     parentId?: string,
     parentKey?: string,
     doc?: Doc,
     intent?: "set"
-  ): Op[] {
+  ): CreateOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
 
     const opId = doc?.generateOpId();
 
-    const ops = [];
+    const ops: CreateOp[] = [];
     const op: CreateObjectOp | CreateRootObjectOp =
       parentId !== undefined && parentKey !== undefined
         ? {

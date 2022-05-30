@@ -2,6 +2,7 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { deprecateIf } from "./deprecation";
 import type {
+  CreateChildOp,
   CreateMapOp,
   CreateOp,
   IdTuple,
@@ -67,11 +68,11 @@ export class LiveMap<
    * @internal
    */
   _serialize(
-    parentId?: string,
-    parentKey?: string,
+    parentId: string,
+    parentKey: string,
     doc?: Doc,
     intent?: "set"
-  ): Op[] {
+  ): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -82,7 +83,7 @@ export class LiveMap<
       );
     }
 
-    const ops = [];
+    const ops: CreateChildOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
       opId: doc?.generateOpId(),
