@@ -22,7 +22,8 @@ import type {
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
-import { JsonStorageUpdate, serializeUpdateToJson } from "./updatesUtils";
+import type { JsonStorageUpdate } from "./updatesUtils";
+import { serializeUpdateToJson } from "./updatesUtils";
 
 /**
  * Deep-clones a JSON-serializable value.
