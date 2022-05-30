@@ -291,10 +291,10 @@ export abstract class AbstractCrdt {
    * @internal
    */
   abstract _serialize(
-    parentId?: string,
-    parentKey?: string,
+    parentId: string,
+    parentKey: string,
     doc?: Doc
-  ): CreateOp[];
+  ): CreateChildOp[];
 
   /**
    * @internal
