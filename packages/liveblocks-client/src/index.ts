@@ -29,6 +29,6 @@ export type EnsureJson<T> =
   // Retain `unknown` fields
   [unknown] extends [T] ? T :
   // Retain functions
-  T extends (...args: any[]) => any ? T :
+  T extends (...args: unknown[]) => unknown ? T :
   // Resolve all other values explicitly
   { [K in keyof T]: EnsureJson<T[K]> };
