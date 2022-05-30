@@ -1,4 +1,3 @@
-import type { Resolve } from ".";
 import type { Json, JsonObject } from "./Json";
 
 export enum OpCode {

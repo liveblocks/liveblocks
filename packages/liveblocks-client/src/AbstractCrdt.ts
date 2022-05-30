@@ -1,7 +1,6 @@
 import { assertNever } from "./assert";
 import type {
   CreateChildOp,
-  CreateOp,
   LiveNode,
   Op,
   SerializedCrdt,
