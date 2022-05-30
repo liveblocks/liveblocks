@@ -12,6 +12,7 @@ import type {
   LiveMapUpdates,
   LiveNode,
   LiveObjectUpdates,
+  LiveStructure,
   Lson,
   LsonObject,
   NodeMap,
@@ -44,6 +45,21 @@ export function creationOpToLiveNode(op: CreateOp): LiveNode {
   switch (op.type) {
     case OpCode.CREATE_REGISTER:
       return new LiveRegister(op.data);
+    case OpCode.CREATE_OBJECT:
+      return new LiveObject(op.data);
+    case OpCode.CREATE_MAP:
+      return new LiveMap();
+    case OpCode.CREATE_LIST:
+      return new LiveList();
+    default:
+      return assertNever(op, "Unknown creation Op");
+  }
+}
+
+export function creationOpToLson(op: CreateOp): Lson {
+  switch (op.type) {
+    case OpCode.CREATE_REGISTER:
+      return op.data;
     case OpCode.CREATE_OBJECT:
       return new LiveObject(op.data);
     case OpCode.CREATE_MAP:
@@ -89,13 +105,36 @@ export function deserialize(
   }
 }
 
+export function deserializeToLson(
+  [id, crdt]: IdTuple<SerializedCrdt>,
+  parentToChildren: ParentToChildNodeMap,
+  doc: Doc
+): Lson {
+  switch (crdt.type) {
+    case CrdtType.OBJECT: {
+      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.LIST: {
+      return LiveList._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.MAP: {
+      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.REGISTER: {
+      return crdt.data;
+    }
+    default: {
+      throw new Error("Unexpected CRDT type");
+    }
+  }
+}
+
+export function isLiveStructure(value: unknown): value is LiveStructure {
+  return isLiveList(value) || isLiveMap(value) || isLiveObject(value);
+}
+
 export function isLiveNode(value: unknown): value is LiveNode {
-  return (
-    isLiveList(value) ||
-    isLiveMap(value) ||
-    isLiveObject(value) ||
-    isLiveRegister(value)
-  );
+  return isLiveStructure(value) || isLiveRegister(value);
 }
 
 export function isLiveList(value: unknown): value is LiveList<Lson> {
