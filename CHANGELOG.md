@@ -1,3 +1,21 @@
+# v0.16.15
+
+Internals only.
+
+---
+
+# v0.16.14
+
+Fix an issue where the current user's info would not properly display accented characters.
+
+---
+
+# v0.16.13
+
+(Unpublished.)
+
+---
+
 # v0.16.12
 
 Internals only.
