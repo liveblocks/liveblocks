@@ -262,7 +262,7 @@ export type AuthEndpoint = string | AuthEndpointCallback;
  */
 export type ClientOptions = {
   throttle?: number;
-  fetchPolyfill?: any;
+  fetchPolyfill?: typeof fetch;
   WebSocketPolyfill?: any;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
