@@ -90,7 +90,7 @@ export function createClient(options: ClientOptions): Client {
         WebSocketPolyfill: clientOptions.WebSocketPolyfill,
         fetchPolyfill: clientOptions.fetchPolyfill,
         liveblocksServer:
-          (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v5",
+          (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v6",
         authentication: prepareAuthentication(clientOptions),
       }
     );
