@@ -1,3 +1,4 @@
+import type { LiveObject } from "../src";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
@@ -267,10 +268,6 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
   });
 
   const states: ToJson<LsonObject>[] = [];
-  const expectedUpdates: JsonStorageUpdate[][] = [];
-  const expectedUndoUpdates: JsonStorageUpdate[][] = [];
-  const listOfUpdates: JsonStorageUpdate[][] = [];
-  const refListOfUpdates: JsonStorageUpdate[][] = [];
 
   function assertState(data: ToJson<LsonObject>) {
     const json = lsonToJson(storage.root);
@@ -279,75 +276,27 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assertLastUpdates(updates: JsonStorageUpdate[]) {
-    expect(updates).toEqual(listOfUpdates[listOfUpdates.length - 1]);
-    expect(updates).toEqual(refListOfUpdates[refListOfUpdates.length - 1]);
-  }
-
-  function assert(
-    data: ToJson<LsonObject>,
-    options?: {
-      updates?: JsonStorageUpdate[];
-      undoUpdates?: JsonStorageUpdate[];
-    }
-  ) {
+  function assert(data: ToJson<LsonObject>) {
     states.push(data);
-
-    if (options?.updates) {
-      expectedUpdates.push(options.updates);
-    }
-    if (options?.undoUpdates) {
-      expectedUndoUpdates.push(options.undoUpdates);
-    }
-
     assertState(data);
-
-    if (options?.updates) {
-      assertLastUpdates(options.updates);
-    }
   }
 
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
       assertState(states[states.length - 2 - i]);
-      if (expectedUndoUpdates.length > 0)
-        assertLastUpdates(
-          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
-        );
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
       assertState(states[i + 1]);
-      if (expectedUpdates.length > 0) assertLastUpdates(expectedUpdates[i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
       assertState(states[states.length - 2 - i]);
-      if (expectedUndoUpdates.length > 0)
-        assertLastUpdates(
-          expectedUndoUpdates[expectedUndoUpdates.length - 1 - i]
-        );
     }
   }
-
-  machine.subscribe(
-    storage.root,
-    (updates) => listOfUpdates.push(updates.map(serializeUpdateToJson)),
-    {
-      isDeep: true,
-    }
-  );
-
-  refMachine.subscribe(
-    refStorage.root,
-    (updates) => refListOfUpdates.push(updates.map(serializeUpdateToJson)),
-    {
-      isDeep: true,
-    }
-  );
 
   function reconnect(
     actor: number,
@@ -395,6 +344,67 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
       ),
     reconnect,
     ws,
+  };
+}
+
+/**
+ * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
+ */
+export function prepareStorageUpdateTest<T extends LsonObject>(
+  items: IdTuple<SerializedCrdt>[],
+  callback: (args: {
+    root: LiveObject<T>;
+    machine: Machine;
+    assert: (updates: JsonStorageUpdate[][]) => void;
+  }) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const { storage: refStorage, machine: refMachine } =
+      await prepareRoomWithStorage(items, 1);
+
+    const { storage, machine } = await prepareRoomWithStorage<never, T>(
+      items,
+      0,
+      (messages) => {
+        for (const message of messages) {
+          if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+            refMachine.onMessage(
+              serverMessage({
+                type: ServerMsgCode.UPDATE_STORAGE,
+                ops: message.ops,
+              })
+            );
+            machine.onMessage(
+              serverMessage({
+                type: ServerMsgCode.UPDATE_STORAGE,
+                ops: message.ops,
+              })
+            );
+          }
+        }
+      }
+    );
+
+    const jsonUpdates: JsonStorageUpdate[][] = [];
+    const refJsonUpdates: JsonStorageUpdate[][] = [];
+
+    machine.subscribe(
+      storage.root,
+      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+    refMachine.subscribe(
+      refStorage.root,
+      (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+
+    function assert(updates: JsonStorageUpdate[][]) {
+      expect(jsonUpdates).toEqual(updates);
+      expect(refJsonUpdates).toEqual(updates);
+    }
+
+    await callback({ root: storage.root, machine, assert });
   };
 }
 
