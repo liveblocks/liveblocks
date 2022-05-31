@@ -9,8 +9,6 @@ import { MockWebSocket } from "../test/utils";
 import { createClient } from ".";
 import type { ClientOptions } from "./types";
 
-(global as any).atob = (data: string) => Buffer.from(data, "base64");
-
 const token =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
 
@@ -22,6 +20,10 @@ async function authEndpointCallback() {
   return {
     token,
   };
+}
+
+function atobPolyfillMock(data: string): string {
+  return Buffer.from(data, "base64").toString();
 }
 
 function createClientAndEnter(options: ClientOptions) {
@@ -36,6 +38,7 @@ describe("createClient", () => {
         authEndpoint: "/api/auth",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
       })
     ).not.toThrow();
   });
@@ -46,6 +49,7 @@ describe("createClient", () => {
         publicApiKey: "pk_xxx",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
       })
     ).not.toThrow();
   });
@@ -55,6 +59,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: authEndpointCallback,
         WebSocketPolyfill: MockWebSocket,
+        atobPolyfill: atobPolyfillMock,
       });
     }).not.toThrow();
   });
@@ -64,6 +69,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: "/api/auth",
         WebSocketPolyfill: MockWebSocket,
+        atobPolyfill: atobPolyfillMock,
       })
     ).toThrow(
       "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
@@ -133,5 +139,40 @@ describe("createClient", () => {
     ).toThrowError(
       "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
     );
+  });
+});
+
+describe("when env atob does not exist (atob polyfill handling)", () => {
+  let nativeAtob: typeof atob | null = null;
+
+  beforeAll(() => {
+    nativeAtob = global.atob;
+    (global as any).atob = undefined;
+  });
+
+  afterAll(() => {
+    (global as any).atob = nativeAtob;
+  });
+
+  test("should throw error if atob polyfill is not set", () => {
+    expect(() => {
+      const client = createClient({
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+        atobPolyfill: undefined,
+      } as ClientOptions);
+    }).toThrowError(
+      "You need to polyfill atob operator. Please follow the instructions at https://liveblocks.io/guides/react-native#atob"
+    );
+  });
+
+  test("should not throw error if atob polyfill option is not set", () => {
+    expect(() => {
+      const client = createClient({
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
+      } as ClientOptions);
+    }).not.toThrow();
   });
 });

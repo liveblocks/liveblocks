@@ -52,6 +52,16 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
+  if (typeof atob == "undefined") {
+    if (options.atobPolyfill == undefined) {
+      throw new Error(
+        "You need to polyfill atob operator. Please follow the instructions at https://liveblocks.io/guides/react-native#atob"
+      );
+    }
+    // At this point, atob does not exist so we either on React Native or on Node<16, hence global is available.
+    global.atob = options.atobPolyfill;
+  }
+
   const rooms = new Map<string, InternalRoom>();
 
   function getRoom(roomId: string): Room | null {
