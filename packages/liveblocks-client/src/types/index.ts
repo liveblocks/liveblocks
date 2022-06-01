@@ -244,7 +244,7 @@ export type User<TPresence extends Presence = Presence> = {
   _hasReceivedInitialPresence?: boolean;
 };
 
-export type Presence = Record<string, unknown>;
+export type Presence = JsonObject;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
