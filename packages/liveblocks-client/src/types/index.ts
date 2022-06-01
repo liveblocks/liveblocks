@@ -244,6 +244,21 @@ export type User<TPresence extends Presence = Presence> = {
   _hasReceivedInitialPresence?: boolean;
 };
 
+/**
+ * @deprecated Whatever you want to store as presence is app-specific. Please
+ * define your own Presence type instead of importing it from
+ * `@liveblocks/client`, for example:
+ *
+ *    type Presence = {
+ *      name: string,
+ *      cursor: {
+ *        x: number,
+ *        y: number,
+ *      } | null,
+ *    }
+ *
+ * As long as it only contains JSON-serializable values, you're good!
+ */
 export type Presence = JsonObject;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
