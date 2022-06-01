@@ -8,13 +8,10 @@ import {
   useRoom,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
 import React, { useState } from "react";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 type RoomWithDevTools = Room & {
   __INTERNAL_DO_NOT_USE: {

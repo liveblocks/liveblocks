@@ -1,13 +1,10 @@
 import React, { useEffect } from "react";
 import create from "zustand";
 
-import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 type State = {
   items: string[];

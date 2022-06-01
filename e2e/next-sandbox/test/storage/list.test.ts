@@ -10,7 +10,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move"]);
+  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -121,13 +121,16 @@ test.describe("Storage - LiveList", () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    for (let i = 0; i < 3; i++) {
+    const numberOfItemsAtStart = 10;
+    for (let i = 0; i < numberOfItemsAtStart; i++) {
       // no await to create randomness
       pages[0].click("#push");
       await delay(50);
     }
 
-    await expect(pages[0].locator("#itemsCount")).toContainText("3");
+    await expect(pages[0].locator("#itemsCount")).toContainText(
+      numberOfItemsAtStart.toString()
+    );
 
     await waitForContentToBeEquals(pages);
 

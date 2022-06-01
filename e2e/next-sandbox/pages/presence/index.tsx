@@ -7,13 +7,10 @@ import {
   useOthers,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
 import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);

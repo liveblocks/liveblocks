@@ -6,13 +6,11 @@ import {
   useUndo,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
+import { LiveList } from "@liveblocks/client";
 import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-storage-list";
@@ -24,7 +22,7 @@ export default function Home() {
   }
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
         <Sandbox />
       </RoomProvider>
     </LiveblocksProvider>
