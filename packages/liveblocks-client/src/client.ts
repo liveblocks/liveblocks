@@ -5,7 +5,7 @@ import type {
   Authentication,
   Client,
   ClientOptions,
-  Presence,
+  JsonObject,
   Resolve,
   Room,
   RoomInitializers,
@@ -61,7 +61,10 @@ export function createClient(options: ClientOptions): Client {
 
   function enter<TStorage>(
     roomId: string,
-    options: EnterOptions<Presence, TStorage> = {}
+    options: EnterOptions<JsonObject, TStorage> = {}
+    //                    ^^^^^^^^^^
+    //                    TODO: Generalize this to TPresence, but it will
+    //                    require a breaking API change for enter's type params
   ): Room {
     let internalRoom = rooms.get(roomId);
     if (internalRoom) {
