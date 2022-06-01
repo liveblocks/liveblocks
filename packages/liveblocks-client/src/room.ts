@@ -87,12 +87,7 @@ export type Machine<TPresence extends JsonObject> = {
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryItem<JsonObject>[];
-  //                          ^^^^^^^^^^
-  //                          TODO: Generalize this to TPresence, but this will
-  //                          require a breaking change of the Machine type (=
-  //                          public API), which will need to take a TPresence
-  //                          type arg
+  getUndoStack(): HistoryItem<TPresence>[];
   getItemsCount(): number;
 
   // Core
