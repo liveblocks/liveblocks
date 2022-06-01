@@ -22,8 +22,12 @@ import {
   missingMapping,
 } from "./errors";
 
+export type ZustandState =
+  // TODO: Properly type out the constraints for this type here!
+  Record<string, unknown>;
+
 export type LiveblocksState<
-  TState,
+  TState extends ZustandState,
   TPresence extends Presence = Presence
 > = TState & {
   /**
@@ -86,7 +90,7 @@ type Options<T> = {
 };
 
 export function middleware<
-  T extends Record<string, unknown>,
+  T extends ZustandState,
   TPresence extends Record<string, unknown> = Presence
 >(
   config: StateCreator<
@@ -295,7 +299,7 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
   return partialState;
 }
 
-function updateZustandLiveblocksState<T>(
+function updateZustandLiveblocksState<T extends ZustandState>(
   set: (
     callbackOrPartial: (
       current: LiveblocksState<T>
@@ -335,7 +339,7 @@ function updatePresence<T>(
 
 function patchLiveblocksStorage<
   O extends LsonObject,
-  TState extends Record<string, unknown>,
+  TState extends ZustandState,
   TPresence extends Presence
 >(
   root: LiveObject<O>,
