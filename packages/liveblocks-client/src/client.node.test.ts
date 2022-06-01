@@ -162,7 +162,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
         atobPolyfill: undefined,
       } as ClientOptions);
     }).toThrowError(
-      "You need to polyfill atob operator. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
+      "You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
     );
   });
 
