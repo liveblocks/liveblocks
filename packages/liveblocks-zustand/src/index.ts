@@ -1,5 +1,6 @@
 import type {
   Client,
+  Json,
   LiveObject,
   LsonObject,
   Presence,
@@ -21,6 +22,17 @@ import {
   missingClient,
   missingMapping,
 } from "./errors";
+
+function isJson(value: unknown): value is Json {
+  return (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    (Array.isArray(value) && value.every(isJson)) ||
+    (typeof value === "object" && Object.values(value).every(isJson))
+  );
+}
 
 export type ZustandState =
   // TODO: Properly type out the constraints for this type here!
@@ -356,7 +368,19 @@ function patchLiveblocksStorage<
     }
 
     if (oldState[key] !== newState[key]) {
-      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+      const oldVal: unknown = oldState[key];
+      const newVal: unknown = newState[key];
+
+      // Ensure to only patch values that are actually legal Json values. The
+      // old and new states could well contain functions (the Zustand setters),
+      // and we definitely want to rule those out, even if they make it into
+      // the mapping.
+      if (
+        (oldVal === undefined || isJson(oldVal)) &&
+        (newVal === undefined || isJson(newVal))
+      ) {
+        patchLiveObjectKey(root, key, oldVal, newVal);
+      }
     }
   }
 }
