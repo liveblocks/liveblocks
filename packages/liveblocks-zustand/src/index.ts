@@ -70,9 +70,9 @@ export type LiveblocksState<
   };
 };
 
-export type Mapping<T> = Partial<{
-  [Property in keyof T]: boolean;
-}>;
+export type Mapping<T> = {
+  [K in keyof T]?: boolean;
+};
 
 type Options<T> = {
   /**
