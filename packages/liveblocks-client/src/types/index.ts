@@ -26,7 +26,7 @@ import type { Lson, LsonObject } from "./Lson";
  * This trick comes from:
  * https://effectivetypescript.com/2022/02/25/gentips-4-display/
  */
-export type Resolve<T> = T extends (...args: any[]) => any
+export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
@@ -97,7 +97,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
 export type LiveListUpdateDelta =
   | {
       index: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "insert";
     }
   | {
@@ -107,12 +107,12 @@ export type LiveListUpdateDelta =
   | {
       index: number;
       previousIndex: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "move";
     }
   | {
       index: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "set";
     };
 
@@ -262,7 +262,7 @@ export type AuthEndpoint = string | AuthEndpointCallback;
  */
 export type ClientOptions = {
   throttle?: number;
-  fetchPolyfill?: any;
+  fetchPolyfill?: typeof fetch;
   WebSocketPolyfill?: any;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
@@ -450,7 +450,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
      *
-     * @param listener the callback this called when the {@link LiveObject} changes.
+     * @param callback the callback this called when the {@link LiveObject} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -467,7 +467,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveList}.
      *
-     * @param listener the callback this called when the {@link LiveList} changes.
+     * @param callback the callback this called when the {@link LiveList} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -485,7 +485,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
      *
-     * @param listener the callback this called when the {@link LiveMap} changes.
+     * @param callback the callback this called when the {@link LiveMap} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -504,7 +504,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
      *
-     * @param listener the callback this called when the {@link LiveObject} changes.
+     * @param callback the callback this called when the {@link LiveObject} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -523,7 +523,7 @@ export type Room = {
      * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveList}.
      *
-     * @param listener the callback this called when the {@link LiveList} changes.
+     * @param callback the callback this called when the {@link LiveList} changes.
      *
      * @returns Unsubscribe function.
      *
