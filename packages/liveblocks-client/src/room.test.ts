@@ -853,36 +853,9 @@ describe("room", () => {
         items.push("C");
       });
 
-      assert(
-        {
-          items: ["A", "B", "C"],
-        },
-        {
-          updates: [
-            {
-              node: ["A", "B", "C"],
-              type: "LiveList",
-              updates: [
-                {
-                  type: "insert",
-                  index: 0,
-                  item: "A",
-                },
-                {
-                  type: "insert",
-                  index: 1,
-                  item: "B",
-                },
-                {
-                  type: "insert",
-                  index: 2,
-                  item: "C",
-                },
-              ],
-            },
-          ],
-        }
-      );
+      assert({
+        items: ["A", "B", "C"],
+      });
 
       undo();
 
