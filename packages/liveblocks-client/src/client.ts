@@ -52,16 +52,6 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  if (typeof atob == "undefined") {
-    if (options.atobPolyfill == undefined) {
-      throw new Error(
-        "You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
-      );
-    }
-    // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
-    global.atob = options.atobPolyfill;
-  }
-
   const rooms = new Map<string, InternalRoom>();
 
   function getRoom(roomId: string): Room | null {
@@ -106,6 +96,17 @@ export function createClient(options: ClientOptions): Client {
     );
     rooms.set(roomId, internalRoom);
     if (!options.DO_NOT_USE_withoutConnecting) {
+      // we need to check here because nextjs would fail earlier with Node < 16
+      if (typeof atob == "undefined") {
+        if (clientOptions.atobPolyfill == undefined) {
+          throw new Error(
+            "You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
+          );
+        }
+        // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
+        global.atob = clientOptions.atobPolyfill;
+      }
+
       internalRoom.connect();
     }
     return internalRoom.room;

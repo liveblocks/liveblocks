@@ -156,7 +156,8 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
 
   test("should throw error if atob polyfill is not set", () => {
     expect(() => {
-      const client = createClient({
+      createClientAndEnter({
+        publicApiKey: "pk_xxx",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
         atobPolyfill: undefined,
@@ -166,9 +167,10 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
     );
   });
 
-  test("should not throw error if atob polyfill option is not set", () => {
+  test("should not throw error if atob polyfill option is set", () => {
     expect(() => {
-      const client = createClient({
+      createClientAndEnter({
+        publicApiKey: "pk_xxx",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
         atobPolyfill: atobPolyfillMock,
