@@ -503,7 +503,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return { modified: false };
     }
 
-    this._unacknowledgedSets.set(key, op.opId!);
+    this._unacknowledgedSets.set(key, nn(op.opId));
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
@@ -1082,7 +1082,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const ops = value._serialize(this._id, position, this._doc);
       addIntentAndDeletedIdToOperation(ops, existingId);
-      this._unacknowledgedSets.set(position, ops[0].opId!);
+      this._unacknowledgedSets.set(position, nn(ops[0].opId));
       const reverseOps = existingItem._serialize(this._id, position, undefined);
       addIntentAndDeletedIdToOperation(reverseOps, id);
 
