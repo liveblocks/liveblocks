@@ -149,7 +149,10 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
-export type RoomInitializers<TPresence, TStorage> = Resolve<{
+export type RoomInitializers<
+  TPresence extends JsonObject,
+  TStorage extends Record<string, any>
+> = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
@@ -390,7 +393,7 @@ export interface History {
   resume: () => void;
 }
 
-export type Room = {
+export type Room<TPresence extends JsonObject = JsonObject> = {
   /**
    * The id of the room.
    */
@@ -407,7 +410,7 @@ export type Room = {
      *   // Do something
      * });
      */
-    <TPresence extends JsonObject>(
+    <_ extends JsonObject>(
       type: "my-presence",
       listener: MyPresenceCallback<TPresence>
     ): () => void;
@@ -421,7 +424,7 @@ export type Room = {
      *   // Do something
      * });
      */
-    <TPresence extends JsonObject>(
+    <_ extends JsonObject>(
       type: "others",
       listener: OthersEventCallback<TPresence>
     ): () => void;
@@ -566,7 +569,7 @@ export type Room = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf<TPresence extends JsonObject = JsonObject>(): User<TPresence> | null;
+  getSelf<_ extends JsonObject = JsonObject>(): User<TPresence> | null;
 
   /**
    * Gets the presence of the current user.
@@ -574,7 +577,7 @@ export type Room = {
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: <TPresence extends JsonObject>() => TPresence;
+  getPresence: <_ extends JsonObject>() => TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -582,7 +585,7 @@ export type Room = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: <TPresence extends JsonObject>() => Others<TPresence>;
+  getOthers: <_ extends JsonObject>() => Others<TPresence>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -596,7 +599,7 @@ export type Room = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <TPresence extends JsonObject>(
+  updatePresence: <_ extends JsonObject>(
     overrides: Partial<TPresence>,
     options?: {
       /**

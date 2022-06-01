@@ -794,7 +794,11 @@ describe("room", () => {
       refSubscribe("others", refPresenceSubscriber);
 
       batch(() => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
         updatePresence({ x: 0 });
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
         updatePresence({ x: 1 });
         items.push("A");
         items.push("B");
@@ -1028,6 +1032,8 @@ describe("room", () => {
         1
       );
 
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
       machine.updatePresence({ x: 1 });
 
       ws.closeFromBackend(

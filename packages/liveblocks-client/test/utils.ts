@@ -162,8 +162,8 @@ async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({}, defaultStorage);
-  const machine = makeStateMachine(state, defaultContext, effects);
+  const state = defaultState<TPresence>({} as TPresence, defaultStorage);
+  const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
   const ws = new MockWebSocket("");
 
   machine.connect();
@@ -360,11 +360,14 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareStorageUpdateTest<T extends LsonObject>(
+export function prepareStorageUpdateTest<
+  T extends LsonObject,
+  TPresence extends JsonObject = JsonObject
+>(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
     root: LiveObject<T>;
-    machine: Machine;
+    machine: Machine<TPresence>;
     assert: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
@@ -418,8 +421,8 @@ export function prepareStorageUpdateTest<T extends LsonObject>(
   };
 }
 
-export async function reconnect(
-  machine: Machine,
+export async function reconnect<TPresence extends JsonObject = JsonObject>(
+  machine: Machine<TPresence>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {

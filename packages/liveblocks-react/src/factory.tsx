@@ -2,10 +2,10 @@ import type {
   BroadcastOptions,
   History,
   Json,
+  JsonObject,
   Lson,
   LsonObject,
   Others,
-  Presence,
   Room,
   User,
 } from "@liveblocks/client";
@@ -24,7 +24,9 @@ type RoomProviderProps<TStorage> = Resolve<
      */
     id: string;
     children: React.ReactNode;
-  } & RoomInitializers<Presence, TStorage>
+  } & RoomInitializers<JsonObject, TStorage>
+  //                   ^^^^^^^^^^
+  //                   FIXME: Generalize to TPresence
 >;
 
 type LookupResult<T> =
@@ -130,12 +132,14 @@ export function create() {
    *
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
-  function useMyPresence<T extends Presence>(): [
-    T,
-    (overrides: Partial<T>, options?: { addToHistory: boolean }) => void
+  function useMyPresence<TPresence extends JsonObject>(): [
+    TPresence,
+    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom();
-    const presence = room.getPresence<T>();
+    const room = useRoom() as unknown as Room<TPresence>;
+    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                     FIXME No longer needed once TPresence moves to the factory level
+    const presence = room.getPresence<TPresence>();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -146,7 +150,7 @@ export function create() {
     }, [room]);
 
     const setPresence = React.useCallback(
-      (overrides: Partial<T>, options?: { addToHistory: boolean }) =>
+      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
         room.updatePresence(overrides, options),
       [room]
     );
@@ -167,14 +171,14 @@ export function create() {
    *
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
-  function useUpdateMyPresence<T extends Presence>(): (
-    overrides: Partial<T>,
+  function useUpdateMyPresence<TPresence extends JsonObject>(): (
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
     const room = useRoom();
 
     return React.useCallback(
-      (overrides: Partial<T>, options?: { addToHistory: boolean }) => {
+      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => {
         room.updatePresence(overrides, options);
       },
       [room]
@@ -199,8 +203,10 @@ export function create() {
    *   })
    * }
    */
-  function useOthers<T extends Presence>(): Others<T> {
-    const room = useRoom();
+  function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
+    const room = useRoom() as unknown as Room<TPresence>;
+    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                     FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -317,9 +323,11 @@ export function create() {
    * const user = useSelf();
    */
   function useSelf<
-    TPresence extends Presence = Presence
+    TPresence extends JsonObject = JsonObject
   >(): User<TPresence> | null {
-    const room = useRoom();
+    const room = useRoom() as unknown as Room<TPresence>;
+    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                     FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
     React.useEffect(() => {

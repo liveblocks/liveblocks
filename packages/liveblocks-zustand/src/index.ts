@@ -1,9 +1,9 @@
 import type {
   Client,
   Json,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
   Room,
   User,
 } from "@liveblocks/client";
@@ -40,7 +40,7 @@ export type ZustandState =
 
 export type LiveblocksState<
   TState extends ZustandState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -103,7 +103,7 @@ type Options<T> = {
 
 export function middleware<
   T extends ZustandState,
-  TPresence extends Record<string, unknown> = Presence
+  TPresence extends JsonObject = JsonObject
 >(
   config: StateCreator<
     T,
@@ -344,7 +344,8 @@ function updatePresence<T>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] });
+      const val = newState[key] as unknown as Json | undefined;
+      room.updatePresence({ [key]: val });
     }
   }
 }
@@ -352,7 +353,7 @@ function updatePresence<T>(
 function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends ZustandState,
-  TPresence extends Presence
+  TPresence extends JsonObject
 >(
   root: LiveObject<O>,
   oldState: LiveblocksState<TState, TPresence>,

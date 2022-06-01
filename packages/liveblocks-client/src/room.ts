@@ -32,7 +32,6 @@ import type {
   OthersEvent,
   OthersEventCallback,
   ParentToChildNodeMap,
-  Presence,
   Room,
   RoomEventCallbackMap,
   RoomEventName,
@@ -70,9 +69,7 @@ import {
   tryParseJson,
 } from "./utils";
 
-type FixmePresence = JsonObject;
-
-export type Machine = {
+export type Machine<TPresence extends JsonObject> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -90,7 +87,12 @@ export type Machine = {
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryItem[];
+  getUndoStack(): HistoryItem<JsonObject>[];
+  //                          ^^^^^^^^^^
+  //                          TODO: Generalize this to TPresence, but this will
+  //                          require a breaking change of the Machine type (=
+  //                          public API), which will need to take a TPresence
+  //                          type arg
   getItemsCount(): number;
 
   // Core
@@ -115,13 +117,13 @@ export type Machine = {
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
-  subscribe<T extends Presence>(
+  subscribe<TPresence extends JsonObject>(
     type: "my-presence",
-    listener: MyPresenceCallback<T>
+    listener: MyPresenceCallback<TPresence>
   ): () => void;
-  subscribe<T extends Presence>(
+  subscribe<TPresence extends JsonObject>(
     type: "others",
-    listener: OthersEventCallback<T>
+    listener: OthersEventCallback<TPresence>
   ): () => void;
   subscribe(type: "event", listener: EventCallback): () => void;
   subscribe(type: "error", listener: ErrorCallback): () => void;
@@ -133,8 +135,8 @@ export type Machine = {
   ): () => void;
 
   // Presence
-  updatePresence<T extends Presence>(
-    overrides: Partial<T>,
+  updatePresence(
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
   broadcastEvent(event: Json, options?: BroadcastOptions): void;
@@ -152,11 +154,11 @@ export type Machine = {
   selectors: {
     // Core
     getConnectionState(): ConnectionState;
-    getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+    getSelf<_ extends JsonObject = JsonObject>(): User<TPresence> | null;
 
     // Presence
-    getPresence<T extends Presence>(): T;
-    getOthers<T extends Presence>(): Others<T>;
+    getPresence<_ extends JsonObject>(): TPresence;
+    getOthers<_ extends JsonObject>(): Others<TPresence>;
   };
 };
 
@@ -182,9 +184,9 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<T extends Presence>(userMap: {
-  [key: number]: User<T>;
-}): Others<T> {
+function makeOthers<TPresence extends JsonObject>(userMap: {
+  [key: number]: User<TPresence>;
+}): Others<TPresence> {
   const users = Object.values(userMap).map((user) => {
     const { _hasReceivedInitialPresence, ...publicKeys } = user;
     return publicKeys;
@@ -211,7 +213,13 @@ function log(..._params: unknown[]) {
   return;
 }
 
-type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
+type HistoryItem<TPresence extends JsonObject> = Array<
+  | Op
+  | {
+      type: "presence";
+      data: TPresence;
+    }
+>;
 
 type IdFactory = () => string;
 
@@ -222,7 +230,7 @@ export type State<TPresence extends JsonObject> = {
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
-    presence: Presence | null;
+    presence: TPresence | null;
     messages: ClientMsg<TPresence>[];
     storageOperations: Op[];
   };
@@ -242,7 +250,7 @@ export type State<TPresence extends JsonObject> = {
     connection: ConnectionCallback[];
     storage: StorageCallback[];
   };
-  me: Presence;
+  me: TPresence;
   others: Others;
   users: {
     [connectionId: number]: User;
@@ -255,16 +263,16 @@ export type State<TPresence extends JsonObject> = {
   opClock: number;
   items: Map<string, LiveNode>;
   root: LiveObject<LsonObject> | undefined;
-  undoStack: HistoryItem[];
-  redoStack: HistoryItem[];
+  undoStack: HistoryItem<TPresence>[];
+  redoStack: HistoryItem<TPresence>[];
 
   isHistoryPaused: boolean;
-  pausedHistory: HistoryItem;
+  pausedHistory: HistoryItem<TPresence>;
 
   isBatching: boolean;
   batch: {
     ops: Op[];
-    reverseOps: HistoryItem;
+    reverseOps: HistoryItem<TPresence>;
     updates: {
       others: [];
       presence: boolean;
@@ -299,7 +307,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   state: State<TPresence>,
   context: Context,
   mockedEffects?: Effects<TPresence>
-): Machine {
+): Machine<TPresence> {
   const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -467,7 +475,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return state.items.get(id);
   }
 
-  function addToUndoStack(historyItem: HistoryItem) {
+  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
@@ -561,17 +569,17 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function apply(
-    item: HistoryItem,
+    item: HistoryItem<TPresence>,
     isLocal: boolean
   ): {
-    reverse: HistoryItem;
+    reverse: HistoryItem<TPresence>;
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem,
+      reverse: [] as HistoryItem<TPresence>,
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -584,7 +592,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
-          data: {} as Presence,
+          data: {} as TPresence,
         };
 
         for (const key in op.data) {
@@ -717,13 +725,13 @@ export function makeStateMachine<TPresence extends JsonObject>(
     callback: (updates: StorageUpdate[]) => void,
     options: { isDeep: true }
   ): () => void;
-  function subscribe<T extends Presence>(
+  function subscribe<TPresence extends JsonObject>(
     type: "my-presence",
-    listener: MyPresenceCallback<T>
+    listener: MyPresenceCallback<TPresence>
   ): () => void;
-  function subscribe<T extends Presence>(
+  function subscribe<TPresence extends JsonObject>(
     type: "others",
-    listener: OthersEventCallback<T>
+    listener: OthersEventCallback<TPresence>
   ): () => void;
   function subscribe(type: "event", listener: EventCallback): () => void;
   function subscribe(type: "error", listener: ErrorCallback): () => void;
@@ -759,7 +767,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function getSelf<
-    TPresence extends Presence = Presence
+    _ extends JsonObject = JsonObject
+    //^ TODO Remove this unused type param
   >(): User<TPresence> | null {
     return state.connection.state === "open" ||
       state.connection.state === "connecting"
@@ -793,18 +802,24 @@ export function makeStateMachine<TPresence extends JsonObject>(
     effects.authenticate(auth, createWebSocket);
   }
 
-  function updatePresence<T extends Presence>(
-    overrides: Partial<T>,
+  function updatePresence<_ extends JsonObject>(
+    //                    ^ TODO: Remove this type argument (breaking change)
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) {
-    const oldValues: Presence = {};
+    const oldValues = {} as TPresence;
 
     if (state.buffer.presence == null) {
-      state.buffer.presence = {};
+      state.buffer.presence = {} as TPresence;
     }
 
     for (const key in overrides) {
-      state.buffer.presence[key] = overrides[key];
+      type K = typeof key;
+      const overrideValue: TPresence[K] | undefined = overrides[key];
+      if (overrideValue === undefined) {
+        continue;
+      }
+      state.buffer.presence[key] = overrideValue;
       oldValues[key] = state.me[key];
     }
 
@@ -1307,12 +1322,14 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function getPresence<T extends Presence>(): T {
-    return state.me as T;
+  function getPresence<_ extends JsonObject>(): TPresence {
+    //                 ^ TODO: Remove type param (breaking change)
+    return state.me as TPresence;
   }
 
-  function getOthers<T extends Presence>(): Others<T> {
-    return state.others as Others<T>;
+  function getOthers<_ extends JsonObject>(): Others<TPresence> {
+    //               ^ TODO: Remove type param (breaking change)
+    return state.others as Others<TPresence>;
   }
 
   function broadcastEvent(
@@ -1524,10 +1541,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
   };
 }
 
-export function defaultState(
-  initialPresence?: Presence,
+export function defaultState<TPresence extends JsonObject>(
+  initialPresence?: TPresence,
   initialStorage?: JsonObject
-): State<FixmePresence> {
+  //               ^^^^^^^^^^ TODO: Generalize this to TStorage
+): State<TPresence> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1549,14 +1567,14 @@ export function defaultState(
       pongTimeout: 0,
     },
     buffer: {
-      presence: initialPresence == null ? {} : initialPresence,
+      presence: initialPresence == null ? ({} as TPresence) : initialPresence,
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: initialPresence == null ? {} : initialPresence,
+    me: initialPresence == null ? ({} as TPresence) : initialPresence,
     users: {},
     others: makeOthers({}),
     defaultStorageRoot: initialStorage,
@@ -1586,33 +1604,38 @@ export function defaultState(
   };
 }
 
-export type InternalRoom = {
-  room: Room;
+export type InternalRoom<TPresence extends JsonObject = JsonObject> = {
+  room: Room<TPresence>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
   onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 };
 
-export function createRoom(
-  options: RoomInitializers<Presence, Record<string, any>>,
+export function createRoom<
+  TPresence extends JsonObject = JsonObject,
+  TStorage extends Record<string, any> = Record<string, any>
+>(
+  options: RoomInitializers<TPresence, TStorage>,
   context: Context
-): InternalRoom {
+): InternalRoom<TPresence> {
   const initialPresence = options.initialPresence ?? options.defaultPresence;
   const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
-  const state = defaultState(
+  const state = defaultState<TPresence>(
     typeof initialPresence === "function"
       ? initialPresence(context.roomId)
       : initialPresence,
     typeof initialStorage === "function"
-      ? initialStorage(context.roomId)
-      : initialStorage
+      ? (initialStorage as (roomId: string) => TStorage)(context.roomId)
+      : //              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        //              FIXME Not sure why this is needed here
+        initialStorage
   );
 
-  const machine = makeStateMachine(state, context);
+  const machine = makeStateMachine<TPresence>(state, context);
 
-  const room: Room = {
+  const room: Room<TPresence> = {
     id: context.roomId,
     /////////////
     // Core    //

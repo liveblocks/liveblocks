@@ -11,7 +11,7 @@ import type {
   RoomInitializers,
 } from "./types";
 
-type EnterOptions<TPresence, TStorage> = Resolve<
+type EnterOptions<TPresence extends JsonObject, TStorage> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
     /**
