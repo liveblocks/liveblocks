@@ -342,12 +342,8 @@ function patchImmutableNode<S extends Json>(
           if (listUpdate.type === "set") {
             newState = newState.map((item, index) =>
               index === listUpdate.index
-                ? (listUpdate.item as Json)
-                : //               ^^^^^^^^
-                  //               FIXME Definitely a bug here. listUpdate.item
-                  //               can contain Lson values, but we're trying to
-                  //               return a Json-only list.
-                  item
+                ? lsonToJson(listUpdate.item)
+                : item
             );
           } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
