@@ -1,8 +1,7 @@
 import "regenerator-runtime/runtime";
 import { lsonToJson } from "../src/immutable";
 import { LiveList } from "../src/LiveList";
-import type { Json, ToJson } from "../src/types";
-import { wait } from "../test/utils";
+import type { Json } from "../src/types";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
