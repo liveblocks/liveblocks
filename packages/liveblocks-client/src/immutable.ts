@@ -295,6 +295,10 @@ function patchImmutableNode<S extends Json>(
   path: Array<string | number>,
   update: StorageUpdate
 ): S {
+  // FIXME: Split this function up into a few smaller ones! In each of them,
+  // the types can be define much more narrowly and correctly, and there will
+  // be less type shoehorning necessary.
+
   const pathItem = path.pop();
   if (pathItem === undefined) {
     switch (update.type) {
