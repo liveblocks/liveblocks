@@ -77,6 +77,10 @@ function Sandbox() {
       <button
         id="move"
         onClick={() => {
+          if (list.length < 2) {
+            return;
+          }
+
           const index = generateRandomNumber(list.length);
           const target = generateRandomNumber(list.length, index);
           list.move(index, target);
@@ -112,14 +116,7 @@ function Sandbox() {
         Delete
       </button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (list.length > 0) {
-            list.delete(0);
-          }
-        }}
-      >
+      <button id="clear" onClick={() => list.clear()}>
         Clear
       </button>
 
