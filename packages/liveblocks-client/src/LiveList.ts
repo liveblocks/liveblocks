@@ -138,7 +138,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /**
    * @internal
    */
-  private _applyRemoteSet(op: CreateChildOp): ApplyResult {
+  private _applySetRemote(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
@@ -150,30 +150,36 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const deletedId = op.deletedId;
 
-    const existingItemIndex = this._indexOfPosition(key);
+    const indexOfItemWithSamePosition = this._indexOfPosition(key);
 
     // If there is already an item at this position
-    if (existingItemIndex !== -1) {
-      const existingItem = this._items[existingItemIndex];
+    if (indexOfItemWithSamePosition !== -1) {
+      const itemWithSamePosition = this._items[indexOfItemWithSamePosition];
 
-      // No conflict, item at position to be replaced is the same than server
-      if (existingItem._id === deletedId) {
-        existingItem._detach();
+      // No conflict, the item that is being replaced is the same that was deleted on the sender
+      if (itemWithSamePosition._id === deletedId) {
+        itemWithSamePosition._detach();
 
-        this._items[existingItemIndex] = child;
+        // Replace the existing item with the newly created item without sorting the list
+        this._items[indexOfItemWithSamePosition] = child;
 
         return {
-          modified: makeUpdate(this, [setDelta(existingItemIndex, child)]),
+          modified: makeUpdate(this, [
+            setDelta(indexOfItemWithSamePosition, child),
+          ]),
           reverse: [],
         };
       } else {
-        // item at position to be replaced is different from server
-        this._implicitlyDeletedItems.add(existingItem);
+        // item at position to be replaced is different from server, so we put in a cache
+        // This scenario can happen if an other item has been put at this position
+        // while getting the acknowledgement of the set (move, insert or set)
+        this._implicitlyDeletedItems.add(itemWithSamePosition);
 
-        this._items[existingItemIndex] = child;
+        // Replace the existing item with the newly created item without sorting the list
+        this._items[indexOfItemWithSamePosition] = child;
 
         const delta: LiveListUpdateDelta[] = [
-          setDelta(existingItemIndex, child),
+          setDelta(indexOfItemWithSamePosition, child),
         ];
 
         // Even if we implicitly delete the item at the set position
@@ -193,7 +199,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
     } else {
       // Item at position to be replaced doesn't exist
-
       const updates: LiveListUpdateDelta[] = [];
       const deleteDelta = this._detachItemAssociatedToSetOperation(
         op.deletedId
@@ -218,6 +223,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @internal
    */
   private _applySetAck(op: CreateChildOp): ApplyResult {
+    if (this._doc == null) {
+      throw new Error("Can't attach child if doc is not present");
+    }
+
     const delta: LiveListUpdateDelta[] = [];
 
     // Deleted item can be re-inserted by remote undo/redo
@@ -247,16 +256,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       // ...and if it's at the right position
       if (existingItem._parentKey === op.parentKey) {
         // ... do nothing
-        if (delta.length > 0) {
-          return {
-            modified: makeUpdate(this, delta),
-            reverse: [],
-          };
-        } else {
-          return {
-            modified: false,
-          };
-        }
+        return {
+          modified: delta.length > 0 ? makeUpdate(this, delta) : false,
+          reverse: [],
+        };
       }
 
       // Item exists but not at the right position (local move after set)
@@ -285,10 +288,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       };
     } else {
       // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
-      const orphan = nn(this._doc).getItem(op.id);
+      const orphan = this._doc.getItem(op.id);
 
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
+        // Reattach orphan at the new position
         orphan._setParentLink(this, op.parentKey);
+        // And delete it from the orphan cache
         this._implicitlyDeletedItems.delete(orphan);
 
         this._items.push(orphan);
@@ -561,7 +566,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     if (op.intent === "set") {
       if (source === OpSource.REMOTE) {
-        return this._applyRemoteSet(op);
+        return this._applySetRemote(op);
       }
 
       if (source === OpSource.UNDOREDO_RECONNECT) {
