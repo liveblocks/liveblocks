@@ -71,22 +71,29 @@ function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
   );
 }
 
-function anyToCrdt(obj: unknown): any {
-  //                              ^^^ AbstractCrdt?
-  if (obj == null) {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return new LiveList(obj.map(anyToCrdt));
-  }
-  if (isPlainObject(obj)) {
+/**
+ * Deeply converts all nested lists to LiveLists, and all nested objects to
+ * LiveObjects.
+ *
+ * As such, the returned result will not contain any Json arrays or Json
+ * objects anymore.
+ */
+function deepLiveify(value: Lson | LsonObject): Lson {
+  if (Array.isArray(value)) {
+    return new LiveList(value.map(deepLiveify));
+  } else if (isPlainObject(value)) {
     const init: LsonObject = {};
-    for (const key in obj) {
-      init[key] = anyToCrdt(obj[key]);
+    for (const key in value) {
+      const val = value[key];
+      if (val === undefined) {
+        continue;
+      }
+      init[key] = deepLiveify(val);
     }
     return new LiveObject(init);
+  } else {
+    return value;
   }
-  return obj;
 }
 
 export function patchLiveList<T extends Lson>(
@@ -141,7 +148,8 @@ export function patchLiveList<T extends Lson>(
   if (i > prevEnd) {
     if (i <= nextEnd) {
       while (i <= nextEnd) {
-        liveList.insert(anyToCrdt(next[i]), i);
+        liveList.insert(deepLiveify(next[i]) as T, i);
+        //                                   ^^^^ FIXME Not entirely true
         i++;
       }
     }
@@ -164,13 +172,15 @@ export function patchLiveList<T extends Lson>(
       ) {
         patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.set(i, anyToCrdt(nextNode));
+        liveList.set(i, deepLiveify(nextNode) as T);
+        //                                    ^^^^ FIXME Not entirely true
       }
 
       i++;
     }
     while (i <= nextEnd) {
-      liveList.insert(anyToCrdt(next[i]), i);
+      liveList.insert(deepLiveify(next[i]) as T, i);
+      //                                   ^^^^ FIXME Not entirely true
       i++;
     }
     let localI = i;
@@ -181,12 +191,11 @@ export function patchLiveList<T extends Lson>(
   }
 }
 
-export function patchLiveObjectKey<O extends LsonObject>(
-  liveObject: LiveObject<O>,
-  key: keyof O,
-  prev: unknown,
-  next: unknown
-): void {
+export function patchLiveObjectKey<
+  O extends LsonObject,
+  K extends keyof O,
+  V extends Lson
+>(liveObject: LiveObject<O>, key: K, prev?: V, next?: V): void {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {
@@ -202,7 +211,8 @@ export function patchLiveObjectKey<O extends LsonObject>(
   if (next === undefined) {
     liveObject.delete(key);
   } else if (value === undefined) {
-    liveObject.set(key, anyToCrdt(next));
+    liveObject.set(key, deepLiveify(next) as O[K]);
+    //                                    ^^^^^^^ FIXME Not entirely true
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
@@ -216,7 +226,8 @@ export function patchLiveObjectKey<O extends LsonObject>(
     //                          ^^^^^^^^^^^^^       ^^^^^^^^^^^^^
     //                          FIXME! Unsafe cast! Verify instead of cast.
   } else {
-    liveObject.set(key, anyToCrdt(next));
+    liveObject.set(key, deepLiveify(next) as O[K]);
+    //                                    ^^^^^^^ FIXME Not entirely true
   }
 }
 
