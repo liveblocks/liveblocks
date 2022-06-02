@@ -294,7 +294,7 @@ function patchImmutableNode<S extends Json>(
   state: S,
   path: Array<string | number>,
   update: StorageUpdate
-): any {
+): S {
   const pathItem = path.pop();
   if (pathItem === undefined) {
     switch (update.type) {
@@ -417,22 +417,29 @@ function patchImmutableNode<S extends Json>(
   }
 
   if (Array.isArray(state)) {
-    const newArray = [...state];
+    const newArray: Json[] = [...state];
     newArray[pathItem as number] = patchImmutableNode(
       state[pathItem as number],
       path,
       update
     );
-    return newArray;
+    return newArray as S;
+    //              ^^^^
+    //              FIXME Not completely true, because we could have been
+    //              updating indexes from StorageUpdate here that aren't in S,
+    //              technically.
   } else if (state !== null && typeof state === "object") {
     const node = state[pathItem];
     if (node === undefined) {
       return state;
     } else {
       return {
-        ...state,
+        ...(state as JsonObject),
         [pathItem]: patchImmutableNode(node, path, update),
-      };
+      } as S;
+      //   ^
+      //   FIXME Not completely true, because we could have been updating
+      //   indexes from StorageUpdate here that aren't in S, technically.
     }
   } else {
     return state;
