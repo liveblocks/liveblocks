@@ -341,9 +341,7 @@ function patchImmutableNode<S extends Json>(
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "set") {
             newState = newState.map((item, index) =>
-              index === listUpdate.index
-                ? lsonToJson(listUpdate.item)
-                : item
+              index === listUpdate.index ? lsonToJson(listUpdate.item) : item
             );
           } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
