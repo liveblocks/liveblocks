@@ -15,12 +15,12 @@ import {
   patchLiveObjectKey,
 } from "./immutable";
 import { LiveObject } from "./LiveObject";
-import type { StorageUpdate } from "./types";
+import type { JsonObject, StorageUpdate } from "./types";
 
-// TODO: Further improve this type
-type fixme = unknown;
-
-function applyStateChanges(state: fixme, applyChanges: () => void) {
+function applyStateChanges<T extends JsonObject>(
+  state: T,
+  applyChanges: () => void
+): { oldState: T; newState: T } {
   const oldState = JSON.parse(JSON.stringify(state));
   applyChanges();
   const newState = JSON.parse(JSON.stringify(state));

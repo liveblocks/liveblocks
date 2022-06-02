@@ -2,7 +2,14 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json, LiveNode, Lson, LsonObject, StorageUpdate } from "./types";
+import type {
+  Json,
+  LiveNode,
+  Lson,
+  LsonObject,
+  StorageUpdate,
+  ToJson,
+} from "./types";
 import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
@@ -222,9 +229,7 @@ export function patchLiveObjectKey<
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev as LsonObject, next as LsonObject);
-    //                          ^^^^^^^^^^^^^       ^^^^^^^^^^^^^
-    //                          FIXME! Unsafe cast! Verify instead of cast.
+    patchLiveObject(value, prev, next);
   } else {
     liveObject.set(key, deepLiveify(next) as O[K]);
     //                                    ^^^^^^^ FIXME Not entirely true
@@ -233,8 +238,8 @@ export function patchLiveObjectKey<
 
 export function patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
-  prev: O,
-  next: O
+  prev: ToJson<O>,
+  next: ToJson<O>
 ): void {
   const updates: Partial<O> = {};
 
