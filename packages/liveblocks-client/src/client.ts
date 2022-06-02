@@ -87,8 +87,8 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
-        fetchPolyfill: clientOptions.fetchPolyfill,
+        WebSocketPolyfill: clientOptions.polyfills?.WebSocket,
+        fetchPolyfill: clientOptions.polyfills?.fetch,
         liveblocksServer:
           (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v5",
         authentication: prepareAuthentication(clientOptions),
@@ -98,13 +98,13 @@ export function createClient(options: ClientOptions): Client {
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob == "undefined") {
-        if (clientOptions.atobPolyfill == undefined) {
+        if (clientOptions.polyfills?.atob == undefined) {
           throw new Error(
             "You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );
         }
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
-        global.atob = clientOptions.atobPolyfill;
+        global.atob = clientOptions.polyfills.atob;
       }
 
       internalRoom.connect();

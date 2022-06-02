@@ -256,15 +256,19 @@ type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
+export type Polyfills = {
+  fetch?: any;
+  WebSocket?: any;
+  atob?: (data: string) => string;
+};
+
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
 export type ClientOptions = {
   throttle?: number;
-  fetchPolyfill?: any;
-  WebSocketPolyfill?: any;
-  atobPolyfill?: (data: string) => string;
+  polyfills?: Polyfills;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
