@@ -4,6 +4,7 @@ import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
   Json,
+  JsonObject,
   LiveNode,
   Lson,
   LsonObject,
@@ -271,20 +272,26 @@ function getParentsPath(node: LiveNode): Array<string | number> {
   return path;
 }
 
-export function patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T {
+export function patchImmutableObject<S extends JsonObject>(
+  state: S,
+  updates: StorageUpdate[]
+): S {
   return updates.reduce(
     (state, update) => patchImmutableObjectWithUpdate(state, update),
     state
   );
 }
 
-function patchImmutableObjectWithUpdate<T>(state: T, update: StorageUpdate): T {
+function patchImmutableObjectWithUpdate<S extends JsonObject>(
+  state: S,
+  update: StorageUpdate
+): S {
   const path = getParentsPath(update.node);
   return patchImmutableNode(state, path, update);
 }
 
-function patchImmutableNode(
-  state: any,
+function patchImmutableNode<S extends Json>(
+  state: S,
   path: Array<string | number>,
   update: StorageUpdate
 ): any {
@@ -292,12 +299,17 @@ function patchImmutableNode(
   if (pathItem === undefined) {
     switch (update.type) {
       case "LiveObject": {
-        if (typeof state !== "object") {
+        if (
+          state === null ||
+          typeof state !== "object" ||
+          Array.isArray(state)
+        ) {
           throw new Error(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
-        const newState = Object.assign({}, state);
+
+        const newState = Object.assign({}, state as JsonObject);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -310,21 +322,32 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
+
       case "LiveList": {
-        if (Array.isArray(state) === false) {
+        if (!Array.isArray(state)) {
           throw new Error(
             "Internal: received update on LiveList but state was not an array"
           );
         }
 
-        let newState: any[] = state.map((x: any) => x);
+        let newState: Json[] = state.map((x: Json) => x);
 
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "set") {
             newState = newState.map((item, index) =>
-              index === listUpdate.index ? listUpdate.item : item
+              index === listUpdate.index
+                ? (listUpdate.item as Json)
+                : //               ^^^^^^^^
+                  //               FIXME Definitely a bug here. listUpdate.item
+                  //               can contain Lson values, but we're trying to
+                  //               return a Json-only list.
+                  item
             );
           } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
@@ -360,15 +383,24 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
+
       case "LiveMap": {
-        if (typeof state !== "object") {
+        if (
+          state === null ||
+          typeof state !== "object" ||
+          Array.isArray(state)
+        ) {
           throw new Error(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        const newState = Object.assign({}, state);
+        const newState = Object.assign({}, state as JsonObject);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -381,7 +413,11 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
     }
   }
@@ -394,10 +430,17 @@ function patchImmutableNode(
       update
     );
     return newArray;
+  } else if (state !== null && typeof state === "object") {
+    const node = state[pathItem];
+    if (node === undefined) {
+      return state;
+    } else {
+      return {
+        ...state,
+        [pathItem]: patchImmutableNode(node, path, update),
+      };
+    }
   } else {
-    return {
-      ...state,
-      [pathItem]: patchImmutableNode(state[pathItem], path, update),
-    };
+    return state;
   }
 }
