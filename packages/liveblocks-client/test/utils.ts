@@ -26,13 +26,15 @@ import { remove } from "../src/utils";
 import type { JsonStorageUpdate } from "./updatesUtils";
 import { serializeUpdateToJson } from "./updatesUtils";
 
-const defaultRoomToken: RoomAuthToken = {
-  appId: "my-app",
-  roomId: "my-room",
-  actor: 0,
-  scopes: [],
-  maxConnections: 42,
-};
+function makeRoomToken(actor: number): RoomAuthToken {
+  return {
+    appId: "my-app",
+    roomId: "my-room",
+    actor,
+    scopes: [],
+    maxConnections: 42,
+  };
+}
 
 /**
  * Deep-clones a JSON-serializable value.
@@ -166,7 +168,7 @@ async function prepareRoomWithStorage<
   const ws = new MockWebSocket("");
 
   machine.connect();
-  machine.authenticationSuccess(defaultRoomToken, ws as any);
+  machine.authenticationSuccess(makeRoomToken(actor), ws as any);
   ws.open();
 
   const getStoragePromise = machine.getStorage<TStorage>();
@@ -314,7 +316,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(defaultRoomToken, ws as any);
+    machine.authenticationSuccess(makeRoomToken(actor), ws as any);
     ws.open();
 
     if (newItems) {
@@ -424,7 +426,7 @@ export async function reconnect(
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess(defaultRoomToken, ws);
+  machine.authenticationSuccess(makeRoomToken(actor), ws);
   ws.open();
 
   machine.onMessage(
