@@ -194,7 +194,7 @@ export type Client = {
   leave(roomId: string): void;
 };
 
-export type AuthenticationToken = {
+export type AuthTokenMetadata = {
   actor: number;
   id?: string;
   info?: Json;

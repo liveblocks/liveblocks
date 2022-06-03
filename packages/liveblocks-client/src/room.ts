@@ -6,8 +6,8 @@ import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
-  AuthenticationToken,
   AuthorizeResponse,
+  AuthTokenMetadata,
   BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
@@ -76,7 +76,7 @@ export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  authenticationSuccess(token: AuthTokenMetadata, socket: WebSocket): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -824,10 +824,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function authenticationSuccess(
-    token: AuthenticationToken,
-    socket: WebSocket
-  ) {
+  function authenticationSuccess(token: AuthTokenMetadata, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1663,7 +1660,7 @@ class LiveblocksError extends Error {
   }
 }
 
-function parseToken(token: string): AuthenticationToken {
+function parseToken(token: string): AuthTokenMetadata {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
