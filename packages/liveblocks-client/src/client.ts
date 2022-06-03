@@ -98,6 +98,16 @@ export function createClient(options: ClientOptions): Client {
     );
     rooms.set(roomId, internalRoom);
     if (!options.DO_NOT_USE_withoutConnecting) {
+      // we need to check here because nextjs would fail earlier with Node < 16.
+      if (typeof atob === "undefined") {
+        // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
+        const base64 = tryRequire(
+          "base64Library",
+          `"Could not load library {base64Library}. You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"`
+        );
+
+        global.atob = base64.decode;
+      }
       internalRoom.connect();
     }
     return internalRoom.room;
@@ -111,12 +121,27 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  if (typeof window !== "undefined") {
+  function reconnectRooms(rooms: Map<string, InternalRoom>) {
+    for (const [, room] of rooms) {
+      room.onNavigatorOnline();
+    }
+  }
+
+  if (isInReactNativeEnvironment()) {
+    const NetInfo = tryRequire(
+      "@react-native-community/netinfo",
+      `Could not load library @react-native-community/netinfo. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/react-native-netinfo"`
+    );
+
+    NetInfo.addEventListener((state: any) => {
+      if (state.isInternetReachable) {
+        reconnectRooms(rooms);
+      }
+    });
+  } else if (typeof window !== "undefined") {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
-      for (const [, room] of rooms) {
-        room.onNavigatorOnline();
-      }
+      reconnectRooms(rooms);
     });
   }
 
@@ -177,5 +202,21 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
 
   throw new Error(
     "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+  );
+}
+
+function tryRequire(lib: string, errorMessage: string) {
+  let result = null;
+  try {
+    result = require(lib);
+  } catch {
+    throw new Error(errorMessage);
+  }
+  return result;
+}
+
+function isInReactNativeEnvironment(): boolean {
+  return (
+    typeof navigator !== "undefined" && navigator.product === "ReactNative"
   );
 }
