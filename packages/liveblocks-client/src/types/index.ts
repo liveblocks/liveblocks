@@ -296,7 +296,7 @@ export type Connection =
       state: "open" | "connecting";
       id: number;
       userId?: string;
-      userInfo?: any;
+      userInfo?: Json;
     };
 
 export type ConnectionState = Connection["state"];
