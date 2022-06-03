@@ -157,7 +157,10 @@ async function prepareRoomWithStorage<
   const ws = new MockWebSocket("");
 
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws as any);
+  machine.authenticationSuccess(
+    { appId: "my-app", roomId: "my-room", actor },
+    ws as any
+  );
   ws.open();
 
   const getStoragePromise = machine.getStorage<TStorage>();
@@ -305,7 +308,10 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor }, ws as any);
+    machine.authenticationSuccess(
+      { appId: "my-app", roomId: "my-room", actor },
+      ws as any
+    );
     ws.open();
 
     if (newItems) {
@@ -415,7 +421,10 @@ export async function reconnect(
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws);
+  machine.authenticationSuccess(
+    { appId: "my-app", roomId: "my-room", actor },
+    ws
+  );
   ws.open();
 
   machine.onMessage(
