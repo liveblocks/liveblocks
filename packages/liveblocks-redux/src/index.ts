@@ -21,9 +21,9 @@ import {
   missingClient,
 } from "./errors";
 
-export type Mapping<T> = Partial<{
-  [Property in keyof T]: boolean;
-}>;
+export type Mapping<T> = {
+  [K in keyof T]?: boolean;
+};
 
 const ACTION_TYPES = {
   ENTER: "@@LIVEBLOCKS/ENTER",
@@ -346,11 +346,11 @@ export const enhancer = internalEnhancer as <T>(options: {
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject, T>(
+function patchLiveblocksStorage<O extends LsonObject>(
   root: LiveObject<O>,
-  oldState: T,
-  newState: T,
-  mapping: Mapping<T>
+  oldState: O,
+  newState: O,
+  mapping: Mapping<O>
 ) {
   for (const key in mapping) {
     if (

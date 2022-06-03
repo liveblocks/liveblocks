@@ -90,7 +90,9 @@ export function createClient(options: ClientOptions): Client {
         WebSocketPolyfill: clientOptions.WebSocketPolyfill,
         fetchPolyfill: clientOptions.fetchPolyfill,
         liveblocksServer:
-          (clientOptions as any).liveblocksServer || "wss://liveblocks.net/v5",
+          // TODO Patch this using public but marked internal fields?
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (clientOptions as any)?.liveblocksServer || "wss://liveblocks.net/v6",
         authentication: prepareAuthentication(clientOptions),
       }
     );
@@ -156,6 +158,8 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
       type: "public",
       publicApiKey: clientOptions.publicApiKey,
       url:
+        // TODO Patch this using public but marked internal fields?
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (clientOptions as any).publicAuthorizeEndpoint ||
         "https://liveblocks.io/api/public/authorize",
     };

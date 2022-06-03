@@ -12,21 +12,22 @@ import type {
   LiveNode,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
+  Lson,
   LsonObject,
   Op,
   ParentToChildNodeMap,
   SerializedObject,
   SerializedRootObject,
-  ToJson,
   UpdateDelta,
   UpdateObjectOp,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveNode,
-  deserialize,
+  creationOpToLson,
+  deserializeToLson,
   fromEntries,
   isLiveNode,
+  isLiveStructure,
 } from "./utils";
 
 /**
@@ -35,7 +36,7 @@ import {
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
-  private _map: Map<string, any>;
+  private _map: Map<string, Lson>;
   private _propToLastUpdate: Map<string, string>;
 
   constructor(obj: O = {} as O) {
@@ -44,13 +45,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._propToLastUpdate = new Map<string, string>();
 
     for (const key in obj) {
-      const value = obj[key] as any;
-      if (isLiveNode(value)) {
+      const value = obj[key];
+      if (value === undefined) {
+        continue;
+      } else if (isLiveNode(value)) {
         value._setParentLink(this, key);
       }
     }
 
-    this._map = new Map(Object.entries(obj));
+    this._map = new Map(Object.entries(obj)) as Map<string, Lson>;
   }
 
   /**
@@ -116,8 +119,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     liveObj: LiveObject<JsonObject>,
     parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ): /* FIXME: This should be something like LiveObject<JsonToLive<J>> */
-  LiveObject<LsonObject> {
+  ): LiveObject<LsonObject> {
     const children = parentToChildren.get(nn(liveObj._id));
 
     if (children == null) {
@@ -125,8 +127,10 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, doc);
-      child._setParentLink(liveObj, crdt.parentKey);
+      const child = deserializeToLson([id, crdt], parentToChildren, doc);
+      if (isLiveStructure(child)) {
+        child._setParentLink(liveObj, crdt.parentKey);
+      }
       liveObj._map.set(crdt.parentKey, child);
     }
 
@@ -155,7 +159,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     const { id, opId, parentKey: key } = op;
-    const child = creationOpToLiveNode(op);
+    const child = creationOpToLson(op);
 
     if (this._doc.getItem(id) !== undefined) {
       if (this._propToLastUpdate.get(key) === opId) {
@@ -198,8 +202,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     this._map.set(key, child);
-    child._setParentLink(this, key);
-    child._attach(id, this._doc);
+
+    if (isLiveStructure(child)) {
+      child._setParentLink(this, key);
+      child._attach(id, this._doc);
+    }
 
     return {
       reverse,
@@ -322,6 +329,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     const updateDelta: LiveObjectUpdateDelta<O> = {};
     for (const key in op.data as Partial<O>) {
+      const value = op.data[key];
+      if (value === undefined) {
+        continue;
+      }
+
       if (isLocal) {
         this._propToLastUpdate.set(key, nn(op.opId));
       } else if (this._propToLastUpdate.get(key) == null) {
@@ -344,7 +356,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
       isModified = true;
       updateDelta[key] = { type: "update" };
-      this._map.set(key, op.data[key]);
+      this._map.set(key, value);
     }
 
     if (Object.keys(reverseUpdate.data).length !== 0) {
@@ -419,7 +431,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
-    this.update({ [key]: value } as any as Partial<O>);
+    this.update({ [key]: value } as unknown as Partial<O>);
   }
 
   /**
@@ -427,7 +439,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
-    return this._map.get(key as string);
+    return this._map.get(key as string) as O[TKey];
   }
 
   /**
@@ -497,13 +509,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   update(overrides: Partial<O>): void {
     if (this._doc == null || this._id == null) {
       for (const key in overrides) {
-        const oldValue = this._map.get(key);
+        const newValue = overrides[key];
+        if (newValue === undefined) {
+          continue;
+        }
 
+        const oldValue = this._map.get(key);
         if (isLiveNode(oldValue)) {
           oldValue._detach();
         }
-
-        const newValue = overrides[key] as any;
 
         if (isLiveNode(newValue)) {
           newValue._setParentLink(this, key);
@@ -519,7 +533,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const reverseOps: Op[] = [];
 
     const opId = this._doc.generateOpId();
-    const updatedProps: Partial<ToJson<O>> = {};
+    const updatedProps: JsonObject = {};
 
     const reverseUpdateOp: UpdateObjectOp = {
       id: this._id,
@@ -530,6 +544,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const updateDelta: LiveObjectUpdateDelta<O> = {};
 
     for (const key in overrides) {
+      const newValue: Lson | undefined = overrides[key];
+      if (newValue === undefined) {
+        continue;
+      }
+
       const oldValue = this._map.get(key);
 
       if (isLiveNode(oldValue)) {
@@ -540,8 +559,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       } else {
         reverseUpdateOp.data[key] = oldValue;
       }
-
-      const newValue = overrides[key] as any;
 
       if (isLiveNode(newValue)) {
         newValue._setParentLink(this, key);

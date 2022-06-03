@@ -2,7 +2,15 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json, LiveNode, Lson, LsonObject, StorageUpdate } from "./types";
+import type {
+  Json,
+  JsonObject,
+  LiveNode,
+  Lson,
+  LsonObject,
+  StorageUpdate,
+  ToJson,
+} from "./types";
 import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
@@ -71,22 +79,29 @@ function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
   );
 }
 
-function anyToCrdt(obj: unknown): any {
-  //                              ^^^ AbstractCrdt?
-  if (obj == null) {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return new LiveList(obj.map(anyToCrdt));
-  }
-  if (isPlainObject(obj)) {
+/**
+ * Deeply converts all nested lists to LiveLists, and all nested objects to
+ * LiveObjects.
+ *
+ * As such, the returned result will not contain any Json arrays or Json
+ * objects anymore.
+ */
+function deepLiveify(value: Lson | LsonObject): Lson {
+  if (Array.isArray(value)) {
+    return new LiveList(value.map(deepLiveify));
+  } else if (isPlainObject(value)) {
     const init: LsonObject = {};
-    for (const key in obj) {
-      init[key] = anyToCrdt(obj[key]);
+    for (const key in value) {
+      const val = value[key];
+      if (val === undefined) {
+        continue;
+      }
+      init[key] = deepLiveify(val);
     }
     return new LiveObject(init);
+  } else {
+    return value;
   }
-  return obj;
 }
 
 export function patchLiveList<T extends Lson>(
@@ -141,7 +156,8 @@ export function patchLiveList<T extends Lson>(
   if (i > prevEnd) {
     if (i <= nextEnd) {
       while (i <= nextEnd) {
-        liveList.insert(anyToCrdt(next[i]), i);
+        liveList.insert(deepLiveify(next[i]) as T, i);
+        //                                   ^^^^ FIXME Not entirely true
         i++;
       }
     }
@@ -164,13 +180,15 @@ export function patchLiveList<T extends Lson>(
       ) {
         patchLiveObject(liveListNode, prevNode, nextNode);
       } else {
-        liveList.set(i, anyToCrdt(nextNode));
+        liveList.set(i, deepLiveify(nextNode) as T);
+        //                                    ^^^^ FIXME Not entirely true
       }
 
       i++;
     }
     while (i <= nextEnd) {
-      liveList.insert(anyToCrdt(next[i]), i);
+      liveList.insert(deepLiveify(next[i]) as T, i);
+      //                                   ^^^^ FIXME Not entirely true
       i++;
     }
     let localI = i;
@@ -181,12 +199,11 @@ export function patchLiveList<T extends Lson>(
   }
 }
 
-export function patchLiveObjectKey<O extends LsonObject>(
-  liveObject: LiveObject<O>,
-  key: keyof O,
-  prev: unknown,
-  next: unknown
-): void {
+export function patchLiveObjectKey<
+  O extends LsonObject,
+  K extends keyof O,
+  V extends Lson
+>(liveObject: LiveObject<O>, key: K, prev?: V, next?: V): void {
   if (process.env.NODE_ENV !== "production") {
     const nonSerializableValue = findNonSerializableValue(next);
     if (nonSerializableValue) {
@@ -202,7 +219,8 @@ export function patchLiveObjectKey<O extends LsonObject>(
   if (next === undefined) {
     liveObject.delete(key);
   } else if (value === undefined) {
-    liveObject.set(key, anyToCrdt(next));
+    liveObject.set(key, deepLiveify(next) as O[K]);
+    //                                    ^^^^^^^ FIXME Not entirely true
   } else if (prev === next) {
     return;
   } else if (isLiveList(value) && Array.isArray(prev) && Array.isArray(next)) {
@@ -212,18 +230,17 @@ export function patchLiveObjectKey<O extends LsonObject>(
     isPlainObject(prev) &&
     isPlainObject(next)
   ) {
-    patchLiveObject(value, prev as LsonObject, next as LsonObject);
-    //                          ^^^^^^^^^^^^^       ^^^^^^^^^^^^^
-    //                          FIXME! Unsafe cast! Verify instead of cast.
+    patchLiveObject(value, prev, next);
   } else {
-    liveObject.set(key, anyToCrdt(next));
+    liveObject.set(key, deepLiveify(next) as O[K]);
+    //                                    ^^^^^^^ FIXME Not entirely true
   }
 }
 
 export function patchLiveObject<O extends LsonObject>(
   root: LiveObject<O>,
-  prev: O,
-  next: O
+  prev: ToJson<O>,
+  next: ToJson<O>
 ): void {
   const updates: Partial<O> = {};
 
@@ -255,33 +272,48 @@ function getParentsPath(node: LiveNode): Array<string | number> {
   return path;
 }
 
-export function patchImmutableObject<T>(state: T, updates: StorageUpdate[]): T {
+export function patchImmutableObject<S extends JsonObject>(
+  state: S,
+  updates: StorageUpdate[]
+): S {
   return updates.reduce(
     (state, update) => patchImmutableObjectWithUpdate(state, update),
     state
   );
 }
 
-function patchImmutableObjectWithUpdate<T>(state: T, update: StorageUpdate): T {
+function patchImmutableObjectWithUpdate<S extends JsonObject>(
+  state: S,
+  update: StorageUpdate
+): S {
   const path = getParentsPath(update.node);
   return patchImmutableNode(state, path, update);
 }
 
-function patchImmutableNode(
-  state: any,
+function patchImmutableNode<S extends Json>(
+  state: S,
   path: Array<string | number>,
   update: StorageUpdate
-): any {
+): S {
+  // FIXME: Split this function up into a few smaller ones! In each of them,
+  // the types can be define much more narrowly and correctly, and there will
+  // be less type shoehorning necessary.
+
   const pathItem = path.pop();
   if (pathItem === undefined) {
     switch (update.type) {
       case "LiveObject": {
-        if (typeof state !== "object") {
+        if (
+          state === null ||
+          typeof state !== "object" ||
+          Array.isArray(state)
+        ) {
           throw new Error(
             "Internal: received update on LiveObject but state was not an object"
           );
         }
-        const newState = Object.assign({}, state);
+
+        const newState = Object.assign({}, state as JsonObject);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -294,21 +326,26 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
+
       case "LiveList": {
-        if (Array.isArray(state) === false) {
+        if (!Array.isArray(state)) {
           throw new Error(
             "Internal: received update on LiveList but state was not an array"
           );
         }
 
-        let newState: any[] = state.map((x: any) => x);
+        let newState: Json[] = state.map((x: Json) => x);
 
         for (const listUpdate of update.updates) {
           if (listUpdate.type === "set") {
             newState = newState.map((item, index) =>
-              index === listUpdate.index ? listUpdate.item : item
+              index === listUpdate.index ? lsonToJson(listUpdate.item) : item
             );
           } else if (listUpdate.type === "insert") {
             if (listUpdate.index === newState.length) {
@@ -344,15 +381,24 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
+
       case "LiveMap": {
-        if (typeof state !== "object") {
+        if (
+          state === null ||
+          typeof state !== "object" ||
+          Array.isArray(state)
+        ) {
           throw new Error(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        const newState = Object.assign({}, state);
+        const newState = Object.assign({}, state as JsonObject);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -365,23 +411,41 @@ function patchImmutableNode(
           }
         }
 
-        return newState;
+        return newState as S;
+        //              ^^^^
+        //              FIXME Not completely true, because we could have been
+        //              updating keys from StorageUpdate here that aren't in S,
+        //              technically.
       }
     }
   }
 
   if (Array.isArray(state)) {
-    const newArray = [...state];
+    const newArray: Json[] = [...state];
     newArray[pathItem as number] = patchImmutableNode(
       state[pathItem as number],
       path,
       update
     );
-    return newArray;
+    return newArray as S;
+    //              ^^^^
+    //              FIXME Not completely true, because we could have been
+    //              updating indexes from StorageUpdate here that aren't in S,
+    //              technically.
+  } else if (state !== null && typeof state === "object") {
+    const node = state[pathItem];
+    if (node === undefined) {
+      return state;
+    } else {
+      return {
+        ...(state as JsonObject),
+        [pathItem]: patchImmutableNode(node, path, update),
+      } as S;
+      //   ^
+      //   FIXME Not completely true, because we could have been updating
+      //   indexes from StorageUpdate here that aren't in S, technically.
+    }
   } else {
-    return {
-      ...state,
-      [pathItem]: patchImmutableNode(state[pathItem], path, update),
-    };
+    return state;
   }
 }
