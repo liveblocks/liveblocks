@@ -1,6 +1,6 @@
 import { chromium, expect, Page } from "@playwright/test";
 import { Json } from "@liveblocks/client";
-
+import _ from "lodash";
 import randomNumber from "../utils/randomNumber";
 
 const WIDTH = 640;
@@ -75,13 +75,14 @@ export async function waitForContentToBeEquals(
   id: string = "items"
 ) {
   for (let i = 0; i < 20; i++) {
-    const firstPageContent = await getTextContent(pages[0], id);
+    const firstPageContent = await getJsonContent(pages[0], id);
 
     let allEquals = true;
 
     for (let pI = 1; pI < pages.length; pI++) {
-      const otherPageContent = await getTextContent(pages[pI], id);
-      if (firstPageContent !== otherPageContent) {
+      const otherPageContent = await getJsonContent(pages[pI], id);
+
+      if (!_.isEqual(firstPageContent, otherPageContent)) {
         allEquals = false;
       }
     }
