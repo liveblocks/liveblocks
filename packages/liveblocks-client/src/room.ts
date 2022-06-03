@@ -7,7 +7,7 @@ import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
   AuthorizeResponse,
-  AuthTokenMetadata,
+  AuthToken,
   BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
@@ -77,7 +77,7 @@ export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: AuthTokenMetadata, socket: WebSocket): void;
+  authenticationSuccess(token: AuthToken, socket: WebSocket): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -825,7 +825,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function authenticationSuccess(token: AuthTokenMetadata, socket: WebSocket) {
+  function authenticationSuccess(token: AuthToken, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1661,7 +1661,7 @@ class LiveblocksError extends Error {
   }
 }
 
-function isAuthToken(data: Json): data is AuthTokenMetadata {
+function isAuthToken(data: Json): data is AuthToken {
   if (!isPlainObject(data)) {
     return false;
   }
@@ -1672,7 +1672,7 @@ function isAuthToken(data: Json): data is AuthTokenMetadata {
   );
 }
 
-function parseAuthToken(token: string): AuthTokenMetadata {
+function parseAuthToken(token: string): AuthToken {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
