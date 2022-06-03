@@ -1680,11 +1680,11 @@ function isTokenExpired(token: JwtMetadata): boolean {
   return Date.now() / 1000 > token.exp - 300;
 }
 
-function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
+export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
   return typeof data.appId === "string" && data.roomId === undefined;
 }
 
-function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
+export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   return (
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
@@ -1696,7 +1696,7 @@ function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   );
 }
 
-function isAuthToken(data: JsonObject): data is AuthToken {
+export function isAuthToken(data: JsonObject): data is AuthToken {
   return isAppOnlyAuthToken(data) || isRoomAuthToken(data);
 }
 

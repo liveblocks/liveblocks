@@ -24,7 +24,12 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { comparePosition, makePosition } from "./position";
-export { parseAuthToken } from "./room";
+export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+  parseAuthToken,
+} from "./room";
 export type {
   AppOnlyAuthToken,
   AuthToken,
