@@ -1661,18 +1661,28 @@ class LiveblocksError extends Error {
   }
 }
 
-function isAuthToken(data: Json): data is AuthToken {
+interface JwtMetadata extends JsonObject {
+  iat: number;
+  exp: number;
+}
+
+function hasJwtMeta(data: unknown): data is JwtMetadata {
   if (!isPlainObject(data)) {
     return false;
   }
 
+  const { iat, exp } = data;
+  return typeof iat === "number" && typeof exp === "number";
+}
+
+function isAuthToken(data: JsonObject): data is AuthToken {
   const { actor, id } = data;
   return (
     typeof actor === "number" && (id === undefined || typeof id === "string")
   );
 }
 
-function parseAuthToken(token: string): AuthToken {
+function parseJwtToken(token: string): JwtMetadata {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
@@ -1681,7 +1691,18 @@ function parseAuthToken(token: string): AuthToken {
   }
 
   const data = tryParseJson(b64decode(tokenParts[1]));
-  if (data && isAuthToken(data)) {
+  if (data && hasJwtMeta(data)) {
+    return data;
+  } else {
+    throw new Error(
+      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
+    );
+  }
+}
+
+function parseAuthToken(token: string): AuthToken & JwtMetadata {
+  const data = parseJwtToken(token);
+  if (isAuthToken(data)) {
     return data;
   } else {
     throw new Error(
