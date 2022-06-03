@@ -12,6 +12,13 @@
  */
 
 export { assertNever, nn } from "./assert";
+export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
+export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+  parseAuthToken,
+} from "./AuthToken";
 export {
   deprecate,
   deprecateIf,
@@ -24,15 +31,7 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { comparePosition, makePosition } from "./position";
-export {
-  isAppOnlyAuthToken,
-  isAuthToken,
-  isRoomAuthToken,
-  parseAuthToken,
-} from "./room";
 export type {
-  AppOnlyAuthToken,
-  AuthToken,
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
@@ -53,7 +52,6 @@ export type {
   Op,
   ParentToChildNodeMap,
   Resolve,
-  RoomAuthToken,
   RoomInitializers,
   RoomStateServerMsg,
   SerializedChild,

@@ -1,14 +1,14 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
+import type { AuthToken, RoomAuthToken } from "./AuthToken";
+import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
-  AppOnlyAuthToken,
   Authentication,
   AuthorizeResponse,
-  AuthToken,
   BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
@@ -34,7 +34,6 @@ import type {
   ParentToChildNodeMap,
   Presence,
   Room,
-  RoomAuthToken,
   RoomEventCallbackMap,
   RoomEventName,
   RoomInitializers,
@@ -60,12 +59,10 @@ import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
-  b64decode,
   compact,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
-  isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
   remove,
@@ -1659,84 +1656,6 @@ export function createRoom(
 class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
     super(message);
-  }
-}
-
-interface JwtMetadata extends JsonObject {
-  iat: number;
-  exp: number;
-}
-
-function hasJwtMeta(data: unknown): data is JwtMetadata {
-  if (!isPlainObject(data)) {
-    return false;
-  }
-
-  const { iat, exp } = data;
-  return typeof iat === "number" && typeof exp === "number";
-}
-
-function isTokenExpired(token: JwtMetadata): boolean {
-  return Date.now() / 1000 > token.exp - 300;
-}
-
-export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
-  return typeof data.appId === "string" && data.roomId === undefined;
-}
-
-export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
-  return (
-    typeof data.appId === "string" &&
-    typeof data.roomId === "string" &&
-    typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string")
-    // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
-    // because data is a JsonObject
-    // info?: Json;
-  );
-}
-
-export function isAuthToken(data: JsonObject): data is AuthToken {
-  return isAppOnlyAuthToken(data) || isRoomAuthToken(data);
-}
-
-function parseJwtToken(token: string): JwtMetadata {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
-  }
-
-  const data = tryParseJson(b64decode(tokenParts[1]));
-  if (data && hasJwtMeta(data)) {
-    return data;
-  } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
-  }
-}
-
-function parseRoomAuthToken(token: string): RoomAuthToken & JwtMetadata {
-  const data = parseJwtToken(token);
-  if (data && isRoomAuthToken(data)) {
-    return data;
-  } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
-  }
-}
-
-export function parseAuthToken(token: string): AuthToken & JwtMetadata {
-  const data = parseJwtToken(token);
-  if (data && isAuthToken(data)) {
-    return data;
-  } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
   }
 }
 
