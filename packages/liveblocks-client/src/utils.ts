@@ -22,7 +22,6 @@ import type {
   StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import { isJsonObject } from "./types/Json";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
@@ -410,7 +409,7 @@ export function isTokenValid(token: string): boolean {
   const data = tryParseJson(atob(tokenParts[1]));
   if (
     data === undefined ||
-    !isJsonObject(data) ||
+    !isPlainObject(data) ||
     typeof data.exp !== "number"
   ) {
     return false;
