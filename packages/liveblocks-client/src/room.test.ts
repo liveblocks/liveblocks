@@ -15,6 +15,7 @@ import {
   waitFor,
   withDateNow,
 } from "../test/utils";
+import type { RoomAuthToken } from "./AuthToken";
 import { lsonToJson } from "./immutable";
 import { LiveList } from "./LiveList";
 import { createRoom, defaultState, makeStateMachine } from "./room";
@@ -34,6 +35,14 @@ const defaultContext = {
     type: "private",
     url: "/api/auth",
   } as Authentication,
+};
+
+const defaultRoomToken: RoomAuthToken = {
+  appId: "my-app",
+  roomId: "my-room",
+  actor: 0,
+  scopes: [],
+  maxConnections: 42,
 };
 
 describe("room / auth", () => {
@@ -243,10 +252,7 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      new MockWebSocket("")
-    );
+    machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
     expect(state.connection.state).toBe("connecting");
   });
 
@@ -257,10 +263,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -276,10 +279,7 @@ describe("room", () => {
     const ws = new MockWebSocket("");
     machine.updatePresence({ x: 0 });
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -294,10 +294,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -312,10 +309,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -365,10 +359,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -394,10 +385,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -430,10 +418,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -474,10 +459,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -500,10 +482,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -521,10 +500,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = machine.getStorage<{ x: number }>();
@@ -548,10 +524,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(state.buffer.presence).toEqual(null);
@@ -578,10 +551,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -617,10 +587,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -643,10 +610,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 });
@@ -664,10 +628,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -703,10 +664,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -733,10 +691,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -779,10 +734,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess(
-      { appId: "my-app", roomId: "my-room", actor: 0 },
-      ws
-    );
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -834,10 +786,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       const getStoragePromise = machine.getStorage<{ x: number }>();
@@ -1019,10 +968,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       let others: Others | undefined;
@@ -1064,10 +1010,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       const callback = jest.fn();
@@ -1250,10 +1193,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1278,10 +1218,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1306,10 +1243,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess(
-        { appId: "my-app", roomId: "my-room", actor: 0 },
-        ws
-      );
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       let others: Others | undefined;
