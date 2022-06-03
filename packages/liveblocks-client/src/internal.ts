@@ -24,7 +24,10 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { comparePosition, makePosition } from "./position";
+export { parseAuthToken } from "./room";
 export type {
+  AppOnlyAuthToken,
+  AuthToken,
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
@@ -45,6 +48,7 @@ export type {
   Op,
   ParentToChildNodeMap,
   Resolve,
+  RoomAuthToken,
   RoomInitializers,
   RoomStateServerMsg,
   SerializedChild,

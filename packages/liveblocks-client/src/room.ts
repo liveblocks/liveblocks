@@ -1729,7 +1729,7 @@ function parseRoomAuthToken(token: string): RoomAuthToken & JwtMetadata {
   }
 }
 
-function parseAuthToken(token: string): AuthToken & JwtMetadata {
+export function parseAuthToken(token: string): AuthToken & JwtMetadata {
   const data = parseJwtToken(token);
   if (data && isAuthToken(data)) {
     return data;
