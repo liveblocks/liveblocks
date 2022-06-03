@@ -308,7 +308,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     ) {
       const token = state.token;
       if (token && isTokenValid(token)) {
-        const parsedToken = parseToken(token);
+        const parsedToken = parseAuthToken(token);
         const socket = createWebSocket(token);
         authenticationSuccess(parsedToken, socket);
       } else {
@@ -317,7 +317,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             if (state.connection.state !== "authenticating") {
               return;
             }
-            const parsedToken = parseToken(token);
+            const parsedToken = parseAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
             state.token = token;
@@ -1672,7 +1672,7 @@ function isAuthToken(data: Json): data is AuthTokenMetadata {
   );
 }
 
-function parseToken(token: string): AuthTokenMetadata {
+function parseAuthToken(token: string): AuthTokenMetadata {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
     throw new Error(
