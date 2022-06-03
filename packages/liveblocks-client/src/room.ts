@@ -310,7 +310,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     ) {
       const token = state.token;
       if (token && isTokenValid(token)) {
-        const parsedToken = parseAuthToken(token);
+        const parsedToken = parseRoomAuthToken(token);
         const socket = createWebSocket(token);
         authenticationSuccess(parsedToken, socket);
       } else {
@@ -319,7 +319,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             if (state.connection.state !== "authenticating") {
               return;
             }
-            const parsedToken = parseAuthToken(token);
+            const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
             state.token = token;
@@ -1707,6 +1707,17 @@ function parseJwtToken(token: string): JwtMetadata {
 
   const data = tryParseJson(b64decode(tokenParts[1]));
   if (data && hasJwtMeta(data)) {
+    return data;
+  } else {
+    throw new Error(
+      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
+    );
+  }
+}
+
+function parseRoomAuthToken(token: string): RoomAuthToken & JwtMetadata {
+  const data = parseJwtToken(token);
+  if (data && isRoomAuthToken(data)) {
     return data;
   } else {
     throw new Error(
