@@ -327,10 +327,19 @@ export function mergeStorageUpdates(first: StorageUpdate | undefined, second: St
   return second;
 }
 
-function isPlain(value: unknown) /* TODO: add refinement here */ {
+function isPlain(
+  value: unknown
+): value is
+  | undefined
+  | null
+  | string
+  | boolean
+  | number
+  | unknown[]
+  | { [key: string]: unknown } {
   const type = typeof value;
   return (
-    type === "undefined" ||
+    value === undefined ||
     value === null ||
     type === "string" ||
     type === "boolean" ||
