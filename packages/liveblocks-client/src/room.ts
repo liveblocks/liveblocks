@@ -5,6 +5,7 @@ import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
+  AppOnlyAuthToken,
   Authentication,
   AuthorizeResponse,
   AuthToken,
@@ -33,6 +34,7 @@ import type {
   ParentToChildNodeMap,
   Presence,
   Room,
+  RoomAuthToken,
   RoomEventCallbackMap,
   RoomEventName,
   RoomInitializers,
@@ -825,7 +827,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function authenticationSuccess(token: AuthToken, socket: WebSocket) {
+  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1675,11 +1677,24 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
   return typeof iat === "number" && typeof exp === "number";
 }
 
-function isAuthToken(data: JsonObject): data is AuthToken {
-  const { actor, id } = data;
+function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
+  return typeof data.appId === "string" && data.roomId === undefined;
+}
+
+function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   return (
-    typeof actor === "number" && (id === undefined || typeof id === "string")
+    typeof data.appId === "string" &&
+    typeof data.roomId === "string" &&
+    typeof data.actor === "number" &&
+    (data.id === undefined || typeof data.id === "string")
+    // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
+    // because data is a JsonObject
+    // info?: Json;
   );
+}
+
+function isAuthToken(data: JsonObject): data is AuthToken {
+  return isAppOnlyAuthToken(data) || isRoomAuthToken(data);
 }
 
 function parseJwtToken(token: string): JwtMetadata {
@@ -1702,7 +1717,7 @@ function parseJwtToken(token: string): JwtMetadata {
 
 function parseAuthToken(token: string): AuthToken & JwtMetadata {
   const data = parseJwtToken(token);
-  if (isAuthToken(data)) {
+  if (data && isAuthToken(data)) {
     return data;
   } else {
     throw new Error(

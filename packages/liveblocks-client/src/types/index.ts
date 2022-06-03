@@ -194,11 +194,20 @@ export type Client = {
   leave(roomId: string): void;
 };
 
-export type AuthToken = {
+export type AppOnlyAuthToken = {
+  appId: string;
+  roomId?: never;
+};
+
+export type RoomAuthToken = {
+  appId: string;
+  roomId: string;
   actor: number;
   id?: string;
   info?: Json;
 };
+
+export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
 
 /**
  * Represents all the other users connected in the room. Treated as immutable.
