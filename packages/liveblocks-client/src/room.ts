@@ -67,7 +67,6 @@ import {
   isLiveNode,
   isPlainObject,
   isSameNodeOrChildOf,
-  isTokenValid,
   mergeStorageUpdates,
   remove,
   tryParseJson,
@@ -308,10 +307,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      const token = state.token;
-      if (token && isTokenValid(token)) {
-        const parsedToken = parseRoomAuthToken(token);
-        const socket = createWebSocket(token);
+      const rawToken = state.token;
+      const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
+      if (parsedToken && !isTokenExpired(parsedToken)) {
+        const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
         return auth(context.roomId)
@@ -1675,6 +1674,10 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
 
   const { iat, exp } = data;
   return typeof iat === "number" && typeof exp === "number";
+}
+
+function isTokenExpired(token: JwtMetadata): boolean {
+  return Date.now() / 1000 > token.exp - 300;
 }
 
 function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
