@@ -7,7 +7,11 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import { lsonToJson, patchImmutableObject } from "../src/immutable";
+import {
+  liveObjectToJson,
+  lsonToJson,
+  patchImmutableObject,
+} from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type { LsonObject, ToJson } from "../src/types";
 import {
@@ -81,7 +85,7 @@ export function prepareTestsConflicts<T extends LsonObject>(
 
       if (publicApiKey == null) {
         throw new Error(
-          `Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.`
+          'Environment variable "LIVEBLOCKS_PUBLIC_KEY" is missing.'
         );
       }
 
@@ -144,8 +148,8 @@ export function prepareTestsConflicts<T extends LsonObject>(
 
     socketUtils.pauseAllSockets();
 
-    let immutableStorage1 = lsonToJson(root1);
-    let immutableStorage2 = lsonToJson(root2);
+    let immutableStorage1 = liveObjectToJson(root1);
+    let immutableStorage2 = liveObjectToJson(root2);
 
     const room1Updates: JsonStorageUpdate[][] = [];
     const room2Updates: JsonStorageUpdate[][] = [];
