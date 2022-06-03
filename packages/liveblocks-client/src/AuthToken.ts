@@ -3,12 +3,16 @@ import { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 export type AppOnlyAuthToken = {
   appId: string;
-  roomId?: never;
+  roomId?: never; // Discriminating field for AuthToken type
+  scopes: string[];
 };
 
 export type RoomAuthToken = {
   appId: string;
-  roomId: string;
+  roomId: string; // Discriminating field for AuthToken type
+  scopes: string[];
+
+  maxConnections: number;
   actor: number;
   id?: string;
   info?: Json;
@@ -34,8 +38,18 @@ export function isTokenExpired(token: JwtMetadata): boolean {
   return Date.now() / 1000 > token.exp - 300;
 }
 
+export function isStringList(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) && value.every((scope) => typeof scope === "string")
+  );
+}
+
 export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
-  return typeof data.appId === "string" && data.roomId === undefined;
+  return (
+    typeof data.appId === "string" &&
+    data.roomId === undefined &&
+    isStringList(data.scopes)
+  );
 }
 
 export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
@@ -43,7 +57,9 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
     typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string")
+    (data.id === undefined || typeof data.id === "string") &&
+    isStringList(data.scopes) &&
+    typeof data.maxConnections === "number"
     // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
     // because data is a JsonObject
     // info?: Json;
