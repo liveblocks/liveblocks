@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 
 export async function run () {
-  console.log("eunning");
+  console.log("running");
 
   const name = "my-app";
 

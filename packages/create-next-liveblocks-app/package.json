@@ -37,5 +37,5 @@
   "dependencies": {
     "degit": "^2.8.4"
   },
-  "pre-commit": "build"
+  "pre-commit": ["build"]
 }
