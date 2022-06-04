@@ -16,10 +16,10 @@ export async function run () {
   const emitter = degit("liveblocks/liveblocks/examples/nextjs-live-avatars");
 
   emitter.on("info", ({ code, dest, message, repo }) => {
-    if (code === "success") {
+    if (code === "SUCCESS") {
       // @ts-ignore | Types from @types/degit are incorrect for `repo`
       const { user, name, subdir } = repo;
-      const fromHereToThere = `${user}/${name}/${subdir} to ${dest}`;
+      const fromHereToThere = `${user}/${name}${subdir} to ${dest}`;
       console.log(`Cloned ${fromHereToThere}`);
     } else {
       console.log("Error cloning repository:");
