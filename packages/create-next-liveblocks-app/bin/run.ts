@@ -1,10 +1,8 @@
-import degit from "degit";
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
+import { cloneRepo } from "./cloneRepo.js";
 
 export async function run () {
-  console.log("running");
-
   const name = "my-app";
 
   const appDir = join(process.cwd(), "./" + name);
@@ -13,20 +11,13 @@ export async function run () {
     mkdirSync(appDir);
   }
 
-  const emitter = degit("liveblocks/liveblocks/examples/nextjs-live-avatars");
+  const repoDir = "liveblocks/liveblocks/examples/nextjs-live-avatars";
 
-  emitter.on("info", ({ code, dest, message, repo }) => {
-    if (code === "SUCCESS") {
-      // @ts-ignore | Types from @types/degit are incorrect for `repo`
-      const { user, name, subdir } = repo;
-      const fromHereToThere = `${user}/${name}${subdir} to ${dest}`;
-      console.log(`Cloned ${fromHereToThere}`);
-    } else {
-      console.log("Error cloning repository:");
-      console.log(message);
-    }
-  });
+  const cloneRepoSuccess = await cloneRepo(repoDir, appDir);
 
-  await emitter.clone(appDir);
+  if (!cloneRepoSuccess) {
+    return
+  }
+
   console.log("done");
 }
