@@ -14,7 +14,7 @@ const testDir = join(process.cwd(), "./.demo");
 rmSync(testDir, { recursive: true, force: true });
 mkdirSync(testDir);
 
-execSync(`node ../dist/index.js --skip-install`, {
+execSync(`node ../dist/index.js`, {
   cwd: testDir,
   stdio: 'inherit',
 });

@@ -11,6 +11,10 @@ export const commandLineFlags: OptionDefinition[] = [
     name: "tailwind",
     type: Boolean,
   },
+  {
+    name: "skip-install",
+    type: Boolean
+  },
 ]
 
 export function getTemplatePath({ typescript = false, tailwind = false }: CommandLineOptions) {
