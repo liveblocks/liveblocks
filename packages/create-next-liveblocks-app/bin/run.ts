@@ -5,7 +5,7 @@ import { join } from "path";
 import commandLineArgs from "command-line-args";
 import c from "ansi-colors";
 import { cloneRepo } from "./cloneRepo.js";
-import { getTemplatePath, commandLineFlags } from "./config.js";
+import { commandLineFlags, getTemplatePath } from "./config.js";
 import getPackageManager from "./getPackageManager.js";
 import { getDependencies } from "./getDependencies.js";
 
@@ -22,7 +22,7 @@ export async function run () {
 
   const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
   });
 
   const name = await new Promise((res) => {
@@ -36,7 +36,7 @@ export async function run () {
   console.log();
 
   const packageManager = getPackageManager();
-  const flags = commandLineArgs(commandLineFlags)
+  const flags = commandLineArgs(commandLineFlags);
   const repoDir = getTemplatePath(flags);
   const appDir = join(process.cwd(), "./" + name);
 
@@ -46,12 +46,12 @@ export async function run () {
 
   const cloneRepoSuccess = await cloneRepo(repoDir, appDir);
   if (!cloneRepoSuccess) {
-    return
+    return;
   }
 
   const deps = getDependencies(appDir);
   if (!deps) {
-    return
+    return;
   }
 
   console.log(c.gray("___"));
@@ -63,13 +63,13 @@ export async function run () {
 
     Object.keys(deps).forEach((dep) => {
       console.log(c.gray(`- ${dep}`));
-    })
+    });
     console.log(c.gray("___"));
     console.log();
 
     execSync(`${packageManager} install`, {
       cwd: appDir,
-      stdio: 'inherit',
+      stdio: "inherit",
     });
 
     console.log(c.gray("___"));
@@ -78,7 +78,7 @@ export async function run () {
     console.log(c.yellowBright("Skipping install..."));
   }
 
-  const cmd = `${packageManager}${packageManager === 'npm' ? " run" : ""}`;
+  const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
 
   console.log(` 
 ${c.bold("✨ Success!")}

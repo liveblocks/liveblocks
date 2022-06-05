@@ -6,7 +6,7 @@ export function getDependencies(appDir: string) {
     const data = readFileSync(join(appDir, "package.json"), "utf8");
     return JSON.parse(data).dependencies;
   } catch (err) {
-    console.error(err)
+    console.error(err);
     return null;
   }
 }
