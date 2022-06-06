@@ -26,7 +26,7 @@ const commandLineFlags: OptionDefinition[] = [
   {
     name: "skip-install",
     type: Boolean,
-  }
+  },
 ];
 
 export async function createLiveblocksApp() {
@@ -115,27 +115,3 @@ ${packageManager} install`) : ""}
 ${c.bold.cyanBright(`${cmd} dev`)}
   `);
 }
-
-/*
-// Probably too tacky
-const logo = c.redBright(`
-░█░░░▀█▀░█░█░█▀▀░█▀▄░█░░░█▀█░█▀▀░█░█░█▀▀
-░█░░░░█░░▀▄▀░█▀▀░█▀▄░█░░░█░█░█░░░█▀▄░▀▀█
-░▀▀▀░▀▀▀░░▀░░▀▀▀░▀▀░░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀▀
-`);
-
-// Too much?
-const logo = c.bright(`
-▀█████▀  ▄     ░█░░░▀█▀░█░█░█▀▀░█▀▄░█░░░█▀█░█▀▀░█░█░█▀▀
- ▀██▀  ▄██▄    ░█░░░░█░░▀▄▀░█▀▀░█▀▄░█░░░█░█░█░░░█▀▄░▀▀█
-  ▀  ▄█████▄   ░▀▀▀░▀▀▀░░▀░░▀▀▀░▀▀░░▀▀▀░▀▀▀░▀▀▀░▀░▀░▀▀▀
-`):
-
-// Too large
-const logo = c.redBright(`
- ▀████████▀ ▄
-  ▀█████▀ ▄██▄
-   ▀██▀ ▄█████▄
-    ▀ ▄████████▄
-`);
- */

@@ -8,6 +8,7 @@ type Props = {
   packageManager: string;
 }
 
+// If flags not passed, ask user for info
 export async function getUsersChoices({ flags, packageManager }: Props) {
   let example: string;
   let name: string;

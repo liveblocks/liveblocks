@@ -18,7 +18,7 @@ export async function cloneRepo({ repoDir, appDir }: CloneRepo) {
       // @ts-ignore | Types from @types/degit are incorrect for `repo`
       const exampleName = repo.subdir.split("/").slice(-1)[0];
 
-      // degit does not check if a dir exists, if package was copied then it exists
+      // degit does not check if a dir exists, if package.json was copied then it exists
       if (existsSync(join(appDir, "./package.json"))) {
         success = true;
         console.log(c.bold("Cloning example:"));
