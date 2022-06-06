@@ -294,7 +294,7 @@ export default function Page() {
   return (
     <RoomProvider
       id={roomId}
-      defaultPresence={() => ({
+      initialPresence={() => ({
         cursor: null,
         message: "",
       })}
