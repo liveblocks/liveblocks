@@ -1610,6 +1610,8 @@ export type InternalRoom<TPresence extends JsonObject = JsonObject> = {
 export function createRoom<
   TPresence extends JsonObject = JsonObject,
   TStorage extends Record<string, any> = Record<string, any>
+  //               ^^^^^^^^^^^^^^^^^^^
+  //               FIXME: Generalize this to LsonObject
 >(
   options: RoomInitializers<TPresence, TStorage>,
   context: Context

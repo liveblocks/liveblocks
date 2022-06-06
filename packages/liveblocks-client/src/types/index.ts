@@ -152,6 +152,8 @@ export type StorageCallback = (updates: StorageUpdate[]) => void;
 export type RoomInitializers<
   TPresence extends JsonObject,
   TStorage extends Record<string, any>
+  //               ^^^^^^^^^^^^^^^^^^^
+  //               FIXME: Generalize this to LsonObject
 > = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
