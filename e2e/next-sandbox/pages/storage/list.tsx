@@ -6,13 +6,11 @@ import {
   useUndo,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
+import { LiveList } from "@liveblocks/client";
 import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-storage-list";
@@ -24,7 +22,7 @@ export default function Home() {
   }
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
         <Sandbox />
       </RoomProvider>
     </LiveblocksProvider>
@@ -79,6 +77,10 @@ function Sandbox() {
       <button
         id="move"
         onClick={() => {
+          if (list.length < 2) {
+            return;
+          }
+
           const index = generateRandomNumber(list.length);
           const target = generateRandomNumber(list.length, index);
           list.move(index, target);
@@ -114,14 +116,7 @@ function Sandbox() {
         Delete
       </button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (list.length > 0) {
-            list.delete(0);
-          }
-        }}
-      >
+      <button id="clear" onClick={() => list.clear()}>
         Clear
       </button>
 

@@ -1,11 +1,8 @@
-import { createClient } from "@liveblocks/client";
 import { LiveblocksState, enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import createLiveblocksClient from "../../utils/createClient";
 
-export const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+export const client = createLiveblocksClient();
 
 export type State = {
   items: string[];
