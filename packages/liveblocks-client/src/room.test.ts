@@ -773,7 +773,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{ items: LiveList<string> }>(
+      } = await prepareStorageTest<{ items: LiveList<string> }, { x: number }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -794,11 +794,7 @@ describe("room", () => {
       refSubscribe("others", refPresenceSubscriber);
 
       batch(() => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
         updatePresence({ x: 0 });
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
         updatePresence({ x: 1 });
         items.push("A");
         items.push("B");

@@ -235,20 +235,20 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<TStorage extends LsonObject>(
-  items: IdTuple<SerializedCrdt>[],
-  actor: number = 0
-) {
+export async function prepareStorageTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<never, TStorage>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    never,
+    TPresence,
     TStorage
-  >(items, currentActor, (messages: ClientMsg<never>[]) => {
+  >(items, currentActor, (messages: ClientMsg<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         operations.push(...message.ops);
