@@ -29,7 +29,7 @@ import {
 const defaultContext = {
   roomId: "room-id",
   throttleDelay: 100,
-  liveblocksServer: "wss://live.liveblocks.io/v5",
+  liveblocksServer: "wss://live.liveblocks.io/v6",
   authentication: {
     type: "private",
     url: "/api/auth",
