@@ -1,27 +1,29 @@
 import { execSync } from "child_process";
 
-const managers = ["yarn", "pnpm", "npm"];
+const managers = ["npm", "yarn", "pnpm"];
 
+// Prioritising `npm` (with fallbacks) because we have `package-lock.json` in our examples
 export default function getPackageManager() {
   for (const manager of managers) {
-    if (process.env.npm_execpath && process.env.npm_execpath.includes(manager)) {
-      return manager;
-    }
-
-    if (process.env.npm_config_user_agent && process.env.npm_config_user_agent.includes(manager)) {
+    if (process.env.npm_config_user_agent && process.env.npm_config_user_agent.startsWith(manager)) {
       return manager;
     }
   }
 
   try {
-    try {
-      execSync("yarn --version", { stdio: "ignore" });
-      return "yarn";
-    } catch {
-      execSync("pnpm --version", { stdio: "ignore" });
-      return "pnpm";
-    }
-  } catch {
+    execSync("npm --version", { stdio: "ignore" });
     return "npm";
+  } catch {
+    try {
+      try {
+        execSync("yarn --version", { stdio: "ignore" });
+        return "yarn";
+      } catch {
+        execSync("pnpm --version", { stdio: "ignore" });
+        return "pnpm";
+      }
+    } catch {
+      return "npm";
+    }
   }
 }

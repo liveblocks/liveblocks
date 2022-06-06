@@ -7,8 +7,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
-    "demo": "node scripts/demo.js",
-    "demo-install": "node scripts/demo-install.js"
+    "demo": "node scripts/demo.js"
   },
   "repository": {
     "type": "git",
