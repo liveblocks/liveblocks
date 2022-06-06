@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-import { run } from "./run.js";
+import { createNextLiveblocksApp } from "./createNextLiveblocksApp.js";
 
-run();
+createNextLiveblocksApp();

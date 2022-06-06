@@ -14,7 +14,7 @@ const testDir = join(process.cwd(), "./.demo");
 rmSync(testDir, { recursive: true, force: true });
 mkdirSync(testDir);
 
-execSync(`node ../dist/index.js --skip-install`, {
+execSync(`npx create-liveblocks-app --typescript --tailwind`, {
   cwd: testDir,
   stdio: 'inherit',
 });
