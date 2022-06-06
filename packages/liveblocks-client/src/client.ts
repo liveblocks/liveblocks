@@ -101,13 +101,19 @@ export function createClient(options: ClientOptions): Client {
       // we need to check here because nextjs would fail earlier with Node < 16.
       if (typeof atob === "undefined") {
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
-        const base64 = tryRequire(
-          "base-64",
-          "Could not load library base-64. You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
-        );
+
+        let base64 = null;
+        try {
+          base64 = require("base-64");
+        } catch {
+          throw new Error(
+            "Could not load library base-64. You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
+          );
+        }
 
         global.atob = base64.decode;
       }
+
       internalRoom.connect();
     }
     return internalRoom.room;
@@ -128,10 +134,14 @@ export function createClient(options: ClientOptions): Client {
   }
 
   if (isInReactNativeEnvironment()) {
-    const NetInfo = tryRequire(
-      "@react-native-community/netinfo",
-      "Could not load library @react-native-community/netinfo. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/react-native-netinfo"
-    );
+    let NetInfo = null;
+    try {
+      NetInfo = require("@react-native-community/netinfo");
+    } catch {
+      throw new Error(
+        "Could not load library @react-native-community/netinfo. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/react-native-netinfo"
+      );
+    }
 
     NetInfo.addEventListener((state: any) => {
       if (state.isInternetReachable) {
@@ -205,25 +215,20 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
   );
 }
 
-function tryRequire(lib: string, errorMessage: string) {
-  let result = null;
-  try {
-    console.log(lib);
+// function tryRequire(lib: string, errorMessage: string) {
+//   let result = null;
+//   try {
+//     console.log(lib);
 
-    result = require(lib);
-  } catch (e) {
-    console.log(e);
-    throw new Error(errorMessage);
-  }
-  return result;
-}
+//     result = require(lib);
+//   } catch (e) {
+//     console.log(e);
+//     throw new Error(errorMessage);
+//   }
+//   return result;
+// }
 
 function isInReactNativeEnvironment(): boolean {
-  console.log(
-    "is reactive native: ",
-    typeof navigator !== "undefined" && navigator.product === "ReactNative"
-  );
-
   return (
     typeof navigator !== "undefined" && navigator.product === "ReactNative"
   );
