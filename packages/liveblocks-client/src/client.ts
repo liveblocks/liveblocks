@@ -102,8 +102,8 @@ export function createClient(options: ClientOptions): Client {
       if (typeof atob === "undefined") {
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
         const base64 = tryRequire(
-          "base64Library",
-          `"Could not load library {base64Library}. You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"`
+          "base-64",
+          "Could not load library base-64. You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
         );
 
         global.atob = base64.decode;
@@ -130,7 +130,7 @@ export function createClient(options: ClientOptions): Client {
   if (isInReactNativeEnvironment()) {
     const NetInfo = tryRequire(
       "@react-native-community/netinfo",
-      `Could not load library @react-native-community/netinfo. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/react-native-netinfo"`
+      "Could not load library @react-native-community/netinfo. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/react-native-netinfo"
     );
 
     NetInfo.addEventListener((state: any) => {
@@ -208,14 +208,22 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
 function tryRequire(lib: string, errorMessage: string) {
   let result = null;
   try {
+    console.log(lib);
+
     result = require(lib);
-  } catch {
+  } catch (e) {
+    console.log(e);
     throw new Error(errorMessage);
   }
   return result;
 }
 
 function isInReactNativeEnvironment(): boolean {
+  console.log(
+    "is reactive native: ",
+    typeof navigator !== "undefined" && navigator.product === "ReactNative"
+  );
+
   return (
     typeof navigator !== "undefined" && navigator.product === "ReactNative"
   );
