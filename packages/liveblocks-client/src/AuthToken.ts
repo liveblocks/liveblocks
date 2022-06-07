@@ -22,10 +22,11 @@ export type RoomAuthToken = {
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
   scopes: Scope[];
-
+  actor: number;
   maxConnections: number;
   maxConnectionsPerRoom?: number;
-  actor: number;
+
+  // Extra payload as defined by the customer's own authorization
   id?: string;
   info?: Json;
 };
@@ -56,6 +57,15 @@ export function isScopeList(value: unknown): value is Scope[] {
 }
 
 export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
+  //
+  // NOTE: This is the hard-coded definition of the following decoder:
+  //
+  //   object({
+  //     appId: string,
+  //     roomId?: never,
+  //     scopes: array(scope),
+  //   })
+  //
   return (
     typeof data.appId === "string" &&
     data.roomId === undefined &&
@@ -64,6 +74,20 @@ export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
 }
 
 export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
+  //
+  // NOTE: This is the hard-coded definition of the following decoder:
+  //
+  //   object({
+  //     appId: string,
+  //     roomId: string,
+  //     actor: number,
+  //     scopes: array(scope),
+  //     maxConnections: number,
+  //     maxConnectionsPerRoom: optional(number),
+  //     id: optional(string),
+  //     info: optional(json),
+  //   })
+  //
   return (
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
