@@ -52,8 +52,12 @@ export function isTokenExpired(token: JwtMetadata): boolean {
   return now > token.exp - 300 || now < token.iat + 300;
 }
 
-export function isScopeList(value: unknown): value is Scope[] {
-  return Array.isArray(value) && value.every((scope) => SCOPES.includes(scope));
+export function isScope(value: unknown): value is Scope {
+  return (SCOPES as readonly unknown[]).includes(value);
+}
+
+function isScopeList(value: unknown): value is Scope[] {
+  return Array.isArray(value) && value.every(isScope);
 }
 
 export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {

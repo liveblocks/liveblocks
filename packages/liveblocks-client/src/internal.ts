@@ -22,6 +22,7 @@ export {
   isAppOnlyAuthToken,
   isAuthToken,
   isRoomAuthToken,
+  isScope,
   parseAuthToken,
 } from "./AuthToken";
 export {
