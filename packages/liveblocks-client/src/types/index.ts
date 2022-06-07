@@ -412,7 +412,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
      *   // Do something
      * });
      */
-    <_ extends JsonObject>(
+    <
+      /**
+       * @deprecated This type argument is ignored. If you want to annotate this
+       * type manually, please annotate the Room instance instead.
+       */
+      _ = unknown
+    >(
       type: "my-presence",
       listener: MyPresenceCallback<TPresence>
     ): () => void;
@@ -426,7 +432,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
      *   // Do something
      * });
      */
-    <_ extends JsonObject>(
+    <
+      /**
+       * @deprecated This type argument is ignored. If you want to annotate this
+       * type manually, please annotate the Room instance instead.
+       */
+      _ = unknown
+    >(
       type: "others",
       listener: OthersEventCallback<TPresence>
     ): () => void;
@@ -571,7 +583,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf<_ extends JsonObject = JsonObject>(): User<TPresence> | null;
+  getSelf<
+    /**
+     * @deprecated This type argument is ignored. If you want to annotate this
+     * type manually, please annotate the Room instance instead.
+     */
+    _ = unknown
+  >(): User<TPresence> | null;
 
   /**
    * Gets the presence of the current user.
@@ -579,7 +597,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: <_ extends JsonObject>() => TPresence;
+  getPresence: <
+    /**
+     * @deprecated This type argument is ignored. If you want to annotate this
+     * type manually, please annotate the Room instance instead.
+     */
+    _ = unknown
+  >() => TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -587,7 +611,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: <_ extends JsonObject>() => Others<TPresence>;
+  getOthers: <
+    /**
+     * @deprecated This type argument is ignored. If you want to annotate this
+     * type manually, please annotate the Room instance instead.
+     */
+    _ = unknown
+  >() => Others<TPresence>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -601,7 +631,13 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <_ extends JsonObject>(
+  updatePresence: <
+    /**
+     * @deprecated This type argument is ignored. If you want to annotate this
+     * type manually, please annotate the Room instance instead.
+     */
+    _ = unknown
+  >(
     overrides: Partial<TPresence>,
     options?: {
       /**
