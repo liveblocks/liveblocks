@@ -12,7 +12,7 @@ export type {
   Lson,
   LsonObject,
   Others,
-  Presence,
+  Presence, // Deprecated! Will get removed in 0.18
   Room,
   StorageUpdate,
   User,
