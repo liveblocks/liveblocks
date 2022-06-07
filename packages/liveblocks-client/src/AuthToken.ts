@@ -114,18 +114,14 @@ export function isAuthToken(data: JsonObject): data is AuthToken {
 function parseJwtToken(token: string): JwtMetadata {
   const tokenParts = token.split(".");
   if (tokenParts.length !== 3) {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
+    throw new Error("Authentication error: invalid JWT token");
   }
 
   const data = tryParseJson(b64decode(tokenParts[1]));
   if (data && hasJwtMeta(data)) {
     return data;
   } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
+    throw new Error("Authentication error: missing JWT metadata");
   }
 }
 
@@ -134,9 +130,7 @@ export function parseRoomAuthToken(token: string): RoomAuthToken & JwtMetadata {
   if (data && isRoomAuthToken(data)) {
     return data;
   } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
+    throw new Error("Authentication error: invalid room auth token");
   }
 }
 
