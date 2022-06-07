@@ -149,17 +149,11 @@ export type Machine<TPresence extends JsonObject> = {
   selectors: {
     // Core
     getConnectionState(): ConnectionState;
-    getSelf<
-      _ = unknown // TODO Remove this unused type param
-    >(): User<TPresence> | null;
+    getSelf(): User<TPresence> | null;
 
     // Presence
-    getPresence<
-      _ = unknown // TODO Remove this unused type param
-    >(): TPresence;
-    getOthers<
-      _ = unknown // TODO Remove this unused type param
-    >(): Others<TPresence>;
+    getPresence(): TPresence;
+    getOthers(): Others<TPresence>;
   };
 };
 
@@ -767,9 +761,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return state.connection.state;
   }
 
-  function getSelf<
-    _ = unknown // TODO Remove this unused type param
-  >(): User<TPresence> | null {
+  function getSelf(): User<TPresence> | null {
     return state.connection.state === "open" ||
       state.connection.state === "connecting"
       ? {
@@ -802,9 +794,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     effects.authenticate(auth, createWebSocket);
   }
 
-  function updatePresence<
-    _ = unknown // TODO: Remove this type argument
-  >(overrides: Partial<TPresence>, options?: { addToHistory: boolean }) {
+  function updatePresence(
+    overrides: Partial<TPresence>,
+    options?: { addToHistory: boolean }
+  ) {
     const oldValues = {} as TPresence;
 
     if (state.buffer.presence == null) {
@@ -1320,21 +1313,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function getPresence<
-    /**
-     * @deprecated Avoid using this type param, annotate it on the room instead.
-     */
-    _ = unknown // TODO: Remove type param (breaking change)
-  >(): TPresence {
+  function getPresence(): TPresence {
     return state.me as TPresence;
   }
 
-  function getOthers<
-    /**
-     * @deprecated Avoid using this type param, annotate it on the room instead.
-     */
-    _ = unknown // TODO: Remove type param (breaking change)
-  >(): Others<TPresence> {
+  function getOthers(): Others<TPresence> {
     return state.others as Others<TPresence>;
   }
 
