@@ -47,26 +47,24 @@ const defaultRoomToken: RoomAuthToken = {
 
 describe("room / auth", () => {
   let reqCount = 0;
-  const token =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
+  const tokenForActor0 =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdLCJtYXhDb25uZWN0aW9ucyI6MjAwMH0.-DP9zVtvtkzWsjEpLeP6CuO9mZKC_5Opal3yN4tI6uo";
+  const tokenForActor1 =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MSwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdLCJtYXhDb25uZWN0aW9ucyI6MjAwMH0.HKm1soTdQ0BugfyxzZyB1eu2y_wdUWyOQsGdl476pTk";
   const server = setupServer(
     rest.post("/mocked-api/auth", (_req, res, ctx) => {
+      let token;
       if (reqCount === 0) {
-        reqCount++;
-        return res(
-          ctx.json({
-            actor: 0,
-            token,
-          })
-        );
+        token = tokenForActor0;
+      } else if (reqCount === 1) {
+        token = tokenForActor1;
       } else {
-        return res(
-          ctx.json({
-            actor: 1,
-            token,
-          })
+        throw new Error(
+          "Test isn't prepared for issuing more than 2 test tokens"
         );
       }
+      reqCount++;
+      return res(ctx.json({ token }));
     }),
     rest.post("/mocked-api/403", (_req, res, ctx) => {
       return res(ctx.status(403));
