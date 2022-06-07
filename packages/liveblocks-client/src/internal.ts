@@ -12,7 +12,12 @@
  */
 
 export { assertNever, nn } from "./assert";
-export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
+export type {
+  AppOnlyAuthToken,
+  AuthToken,
+  RoomAuthToken,
+  Scope,
+} from "./AuthToken";
 export {
   isAppOnlyAuthToken,
   isAuthToken,
