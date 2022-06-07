@@ -120,7 +120,10 @@ export function createClient(options: ClientOptions): Client {
     }
   }
 
-  if (typeof window !== "undefined") {
+  if (
+    typeof window !== "undefined" &&
+    typeof window.addEventListener !== "undefined" // e.g. React Native environment doesn't implement window.addEventListener
+  ) {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
       for (const [, room] of rooms) {
