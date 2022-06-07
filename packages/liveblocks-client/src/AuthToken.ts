@@ -46,7 +46,8 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
 }
 
 export function isTokenExpired(token: JwtMetadata): boolean {
-  return Date.now() / 1000 > token.exp - 300;
+  const now = Date.now() / 1000;
+  return now > token.exp - 300 || now < token.iat + 300;
 }
 
 export function isScopeList(value: unknown): value is Scope[] {

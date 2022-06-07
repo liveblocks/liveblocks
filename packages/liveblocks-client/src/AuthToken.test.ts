@@ -1,15 +1,15 @@
-import { isTokenExpired } from "./AuthToken";
 import type { JwtMetadata } from "./AuthToken";
+import { isTokenExpired } from "./AuthToken";
 
-describe("isTokenValid", () => {
-  const ONE_DAY_AGO = Date.now() - 24 * 60 * 60 * 1000;
-  const SIX_MINUTES_AGO = Date.now() - 60 * 60 * 1000 * 6;
-  const IN_FIVE_MINUTES = Date.now() + 60 * 60 * 1000 * 5;
+describe("isTokenExpired", () => {
+  const MINUTES = 60 * 1000;
+  const HOURS = 60 * MINUTES;
+  const DAYS = 24 * HOURS;
 
   test("token is valid", () => {
     const validToken: JwtMetadata = {
-      iat: Date.now(),
-      exp: IN_FIVE_MINUTES,
+      iat: (Date.now() - 15 * MINUTES) / 1000,
+      exp: (Date.now() + 3 * HOURS) / 1000,
     };
 
     expect(isTokenExpired(validToken)).toBe(false);
@@ -17,10 +17,19 @@ describe("isTokenValid", () => {
 
   test("token is expired", () => {
     const expiredToken: JwtMetadata = {
-      iat: ONE_DAY_AGO,
-      exp: SIX_MINUTES_AGO,
+      iat: (Date.now() - 1 * DAYS) / 1000,
+      exp: (Date.now() - 15 * MINUTES) / 1000,
     };
 
     expect(isTokenExpired(expiredToken)).toBe(true);
+  });
+
+  test("future token is invalid", () => {
+    const futureToken: JwtMetadata = {
+      iat: (Date.now() + 15 * MINUTES) / 1000,
+      exp: (Date.now() + 1 * DAYS) / 1000,
+    };
+
+    expect(isTokenExpired(futureToken)).toBe(true);
   });
 });
