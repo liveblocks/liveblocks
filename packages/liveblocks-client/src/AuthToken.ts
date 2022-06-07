@@ -24,6 +24,7 @@ export type RoomAuthToken = {
   scopes: Scope[];
 
   maxConnections: number;
+  maxConnectionsPerRoom?: number;
   actor: number;
   id?: string;
   info?: Json;
@@ -69,7 +70,9 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
     isScopeList(data.scopes) &&
-    typeof data.maxConnections === "number"
+    typeof data.maxConnections === "number" &&
+    (data.maxConnectionsPerRoom === undefined ||
+      typeof data.maxConnectionsPerRoom === "number")
     // NOTE: Nothing to validate for `info` field. It's already Json | undefined,
     // because data is a JsonObject
     // info?: Json;
