@@ -31,7 +31,7 @@ export type RoomAuthToken = {
 
 export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
 
-interface JwtMetadata extends JsonObject {
+export interface JwtMetadata extends JsonObject {
   iat: number;
   exp: number;
 }
