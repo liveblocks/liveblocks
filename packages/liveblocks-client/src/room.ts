@@ -69,7 +69,9 @@ import {
   tryParseJson,
 } from "./utils";
 
-export type Machine<TPresence extends JsonObject> = {
+export type Machine<
+  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
+> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -298,7 +300,9 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine<TPresence extends JsonObject>(
+export function makeStateMachine<
+  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
+>(
   state: State<TPresence>,
   context: Context,
   mockedEffects?: Effects<TPresence>
