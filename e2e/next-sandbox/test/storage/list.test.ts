@@ -10,7 +10,7 @@ import {
 } from "../utils";
 
 function pickRandomAction() {
-  return pickRandomItem(["#push", "#delete", "#move"]);
+  return pickRandomItem(["#push", "#delete", "#move", "#set"]);
 }
 
 const TEST_URL = "http://localhost:3007/storage/list";
@@ -47,9 +47,6 @@ test.describe("Storage - LiveList", () => {
     await pages[0].click("#push");
     await assertContainText(pages, "3");
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 
   test("list move", async () => {
@@ -69,9 +66,6 @@ test.describe("Storage - LiveList", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 
   test("push conflicts", async () => {
@@ -87,12 +81,9 @@ test.describe("Storage - LiveList", () => {
 
     await assertContainText(pages, "20");
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 
-  test.skip("set conflicts", async () => {
+  test("set conflicts", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
@@ -112,28 +103,27 @@ test.describe("Storage - LiveList", () => {
 
     await assertContainText(pages, "20");
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 
-  test.skip("fuzzy with undo/redo push delete and move", async () => {
+  test("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    for (let i = 0; i < 3; i++) {
+    const numberOfItemsAtStart = 10;
+    for (let i = 0; i < numberOfItemsAtStart; i++) {
       // no await to create randomness
       pages[0].click("#push");
       await delay(50);
     }
 
-    await expect(pages[0].locator("#itemsCount")).toContainText("3");
+    await expect(pages[0].locator("#itemsCount")).toContainText(
+      numberOfItemsAtStart.toString()
+    );
 
     await waitForContentToBeEquals(pages);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 50; i++) {
       // no await to create randomness
-
       pages.forEach((page) => {
         const nbofUndoRedo = pickNumberOfUnderRedo();
 
@@ -153,8 +143,5 @@ test.describe("Storage - LiveList", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 });

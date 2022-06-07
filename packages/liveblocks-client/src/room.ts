@@ -321,7 +321,11 @@ export function makeStateMachine<TPresence extends JsonObject>(
             authenticationSuccess(parsedToken, socket);
             state.token = token;
           })
-          .catch((er: any) => authenticationFailure(er));
+          .catch((er: unknown) =>
+            authenticationFailure(
+              er instanceof Error ? er : new Error(String(er))
+            )
+          );
       }
     },
     send(messageOrMessages: ClientMsg<TPresence> | ClientMsg<TPresence>[]) {
@@ -579,7 +583,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
-          type: "presence",
+          type: "presence" as const,
           data: {} as Presence,
         };
 
@@ -597,7 +601,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           }
         }
 
-        result.reverse.unshift(reverse as any);
+        result.reverse.unshift(reverse);
         result.updates.presence = true;
       } else {
         let source: OpSource;
@@ -800,7 +804,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
 
     for (const key in overrides) {
-      state.buffer.presence[key] = overrides[key] as any;
+      state.buffer.presence[key] = overrides[key];
       oldValues[key] = state.me[key];
     }
 

@@ -17,7 +17,7 @@ import type { StateCreator } from "zustand";
 import create from "zustand";
 
 import { list, MockWebSocket, obj, waitFor } from "../test/utils";
-import type { Mapping } from ".";
+import type { Mapping, ZustandState } from ".";
 import { middleware } from ".";
 import {
   mappingShouldBeAnObject,
@@ -63,7 +63,7 @@ async function waitForSocketToBeConnected() {
   return socket;
 }
 
-type BasicStore = {
+interface BasicStore extends ZustandState {
   value: number;
   setValue: (newValue: number) => void;
 
@@ -78,7 +78,7 @@ type BasicStore = {
 
   cursor: { x: number; y: number };
   setCursor: (cursor: { x: number; y: number }) => void;
-};
+}
 
 const basicStateCreator: StateCreator<BasicStore> = (set) => ({
   value: 0,
@@ -98,7 +98,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 });
 
 function prepareClientAndStore<
-  T extends Record<string, unknown>,
+  T extends ZustandState,
   TPresence extends Presence = Presence
 >(
   stateCreator: StateCreator<T>,
@@ -121,7 +121,7 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<T extends Record<string, unknown>>(
+async function prepareWithStorage<T extends ZustandState>(
   stateCreator: StateCreator<T>,
   options: {
     storageMapping: Mapping<T>;

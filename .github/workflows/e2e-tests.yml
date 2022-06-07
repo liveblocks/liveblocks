@@ -89,3 +89,39 @@ jobs:
           name: playwright-report
           path: e2e/next-sandbox/playwright-report
           retention-days: 14
+
+  e2e-client-specs-tests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [16.x]
+
+    timeout-minutes: 60
+
+    env:
+      LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
+
+    defaults:
+      run:
+        working-directory: packages/liveblocks-client
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Run npm install
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Run e2e client specs tests
+        run: npm run test-e2e

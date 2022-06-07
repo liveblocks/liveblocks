@@ -1,6 +1,8 @@
 import "regenerator-runtime/runtime";
+import { lsonToJson } from "../src/immutable";
 import { LiveList } from "../src/LiveList";
-import { prepareTestsConflicts } from "./utils";
+import type { Json } from "../src/types";
+import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveList conflicts", () => {
   describe("insert conflicts", () => {
@@ -324,7 +326,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, updates2, wsUtils, assert }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 2);
           root2.get("list").move(1, 2);
 
@@ -544,7 +546,7 @@ describe("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, updates2, wsUtils, assert }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
           root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
           root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
@@ -781,4 +783,28 @@ describe("LiveList conflicts", () => {
       )
     );
   });
+});
+
+describe("LiveList single client", () => {
+  test(
+    "fast consecutive sets on same index",
+    prepareSingleClientTest(
+      {
+        list: new LiveList(["A"]),
+      },
+      async ({ root, flushSocketMessages, room }) => {
+        const states: Json[] = [];
+        room.subscribe(root, () => states.push(lsonToJson(root)), {
+          isDeep: true,
+        });
+
+        root.get("list").set(0, "B");
+        root.get("list").set(0, "C");
+
+        await flushSocketMessages();
+
+        expect(states).toEqual([{ list: ["B"] }, { list: ["C"] }]);
+      }
+    )
+  );
 });

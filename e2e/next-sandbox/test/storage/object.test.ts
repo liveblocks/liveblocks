@@ -53,9 +53,6 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
   });
 
   test("fuzzy with nested objects", async () => {
@@ -79,9 +76,6 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
   });
 
   test("fuzzy with nested objects and undo/redo", async () => {
@@ -116,8 +110,5 @@ test.describe("Storage - LiveObject", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "{}", "items");
   });
 });

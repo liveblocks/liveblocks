@@ -132,7 +132,7 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 const defaultContext = {
   roomId: "room-id",
   throttleDelay: -1, // No throttle for standard storage test
-  liveblocksServer: "wss://live.liveblocks.io/v5",
+  liveblocksServer: "wss://live.liveblocks.io/v6",
   authentication: {
     type: "private",
     url: "/api/auth",
@@ -510,17 +510,17 @@ export async function prepareStorageImmutableTest<
 
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>,
+  data: JsonObject,
   parentId: string,
   parentKey: string
 ): IdTuple<SerializedObject>;
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>
+  data: JsonObject
 ): IdTuple<SerializedRootObject>;
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>,
+  data: JsonObject,
   parentId?: string,
   parentKey?: string
 ): IdTuple<SerializedObject | SerializedRootObject> {

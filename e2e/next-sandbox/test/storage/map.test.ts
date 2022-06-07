@@ -42,9 +42,6 @@ test.describe("Storage - LiveMap", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 
   test("fuzzy with full undo/redo", async () => {
@@ -75,8 +72,5 @@ test.describe("Storage - LiveMap", () => {
     }
 
     await waitForContentToBeEquals(pages);
-
-    await pages[0].click("#clear");
-    await assertContainText(pages, "0");
   });
 });

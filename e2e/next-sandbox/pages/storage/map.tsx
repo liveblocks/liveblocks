@@ -5,14 +5,12 @@ import {
   useUndo,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
+import { LiveMap } from "@liveblocks/client";
 import React from "react";
 import randomNumber from "../../utils/randomNumber";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-storage-map";
@@ -24,7 +22,10 @@ export default function Home() {
   }
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider
+        id={roomId}
+        initialStorage={{ map: new LiveMap<string, string>() }}
+      >
         <Sandbox />
       </RoomProvider>
     </LiveblocksProvider>

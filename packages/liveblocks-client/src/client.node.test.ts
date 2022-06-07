@@ -12,9 +12,8 @@ import type { ClientOptions } from "./types";
 const token =
   "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
 
-async function fetchMock() {
-  return new Response(JSON.stringify({ token }));
-}
+const fetchMock = (async () =>
+  new Response(JSON.stringify({ token }))) as unknown as typeof fetch;
 
 async function authEndpointCallback() {
   return {
@@ -100,7 +99,7 @@ describe("createClient", () => {
   test("should throw if throttle is not a number", () => {
     expect(() =>
       createClientAndEnter({
-        throttle: "invalid" as any,
+        throttle: "invalid" as unknown as number, // Deliberately use wrong type at runtime
         authEndpoint: "api/auth",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,

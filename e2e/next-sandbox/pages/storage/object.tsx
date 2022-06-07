@@ -6,15 +6,13 @@ import {
   useUndo,
   LiveblocksProvider,
 } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
 import { LiveObject } from "@liveblocks/client";
+import { lsonToJson } from "@liveblocks/client/internal";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-  liveblocksServer: process.env.NEXT_PUBLIC_LIVEBLOCKS_SERVER,
-});
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-storage-object";
@@ -26,36 +24,24 @@ export default function Home() {
   }
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider
+        id={roomId}
+        initialStorage={{
+          object: new LiveObject<{
+            [key: string]: number | LiveObject<{ a: number }>;
+          }>(),
+        }}
+      >
         <Sandbox />
       </RoomProvider>
     </LiveblocksProvider>
   );
 }
 
-function objectToJson(record: LiveObject) {
-  const result: any = {};
-  const obj = record.toObject();
-
-  for (const key in obj) {
-    result[key] = toJson(obj[key]);
-  }
-
-  return result;
-}
-
-function toJson(value: any) {
-  if (value instanceof LiveObject) {
-    return objectToJson(value);
-  }
-
-  return value;
-}
-
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
-  const object = useObject<{ [key: string]: number | LiveObject }>("object");
+  const object = useObject("object");
   const me = useSelf();
 
   if (object == null || me == null) {
@@ -118,7 +104,7 @@ function Sandbox() {
 
       <h2>Items</h2>
       <div id="items" style={{ whiteSpace: "pre" }}>
-        {JSON.stringify(objectToJson(object), null, 2)}
+        {JSON.stringify(lsonToJson(object), null, 2)}
       </div>
     </div>
   );
