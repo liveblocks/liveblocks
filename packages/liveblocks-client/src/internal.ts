@@ -18,6 +18,19 @@ export {
   throwUsageError,
 } from "./deprecation";
 export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+  isScope,
+  parseAuthToken,
+} from "./AuthToken";
+export type {
+  AppOnlyAuthToken,
+  AuthToken,
+  RoomAuthToken,
+  Scope,
+} from "./AuthToken";
+export {
   lsonToJson,
   patchImmutableObject,
   patchLiveObjectKey,

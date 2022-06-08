@@ -332,18 +332,16 @@ function isPlain(value: unknown) /* TODO: add refinement here */ {
   );
 }
 
-function isPlainObject(value: unknown): value is object {
-  if (typeof value !== "object" || value === null) return false;
-
-  const proto = Object.getPrototypeOf(value);
-  if (proto === null) return true;
-
-  let baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
-  }
-
-  return proto === baseProto;
+export function isPlainObject(
+  blob: unknown
+): blob is { [key: string]: unknown } {
+  // Implementation borrowed from pojo decoder, see
+  // https://github.com/nvie/decoders/blob/78849f843193647eb6b5307240387bdcff7161fb/src/lib/objects.js#L10-L41
+  return (
+    blob !== null &&
+    typeof blob === "object" &&
+    Object.prototype.toString.call(blob) === "[object Object]"
+  );
 }
 
 export function findNonSerializableValue(
