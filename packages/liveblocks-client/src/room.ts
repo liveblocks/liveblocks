@@ -1,7 +1,7 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import type { AuthToken, RoomAuthToken } from "./AuthToken";
+import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
