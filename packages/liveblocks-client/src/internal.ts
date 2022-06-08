@@ -12,6 +12,19 @@
  */
 
 export { assertNever, nn } from "./assert";
+export type {
+  AppOnlyAuthToken,
+  AuthToken,
+  RoomAuthToken,
+  Scope,
+} from "./AuthToken";
+export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+  isScope,
+  parseAuthToken,
+} from "./AuthToken";
 export {
   deprecate,
   deprecateIf,

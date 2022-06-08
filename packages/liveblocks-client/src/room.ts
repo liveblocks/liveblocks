@@ -1,12 +1,13 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
+import type { RoomAuthToken } from "./AuthToken";
+import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { LiveList } from "./LiveList";
 import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
-  AuthenticationToken,
   AuthorizeResponse,
   BroadcastedEventServerMsg,
   BroadcastOptions,
@@ -58,13 +59,11 @@ import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject } from "./types/Json";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
-  b64decode,
   compact,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
   isSameNodeOrChildOf,
-  isTokenValid,
   mergeStorageUpdates,
   remove,
   tryParseJson,
@@ -76,7 +75,7 @@ export type Machine = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -305,10 +304,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      const token = state.token;
-      if (token && isTokenValid(token)) {
-        const parsedToken = parseToken(token);
-        const socket = createWebSocket(token);
+      const rawToken = state.token;
+      const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
+      if (parsedToken && !isTokenExpired(parsedToken)) {
+        const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
         return auth(context.roomId)
@@ -316,7 +315,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             if (state.connection.state !== "authenticating") {
               return;
             }
-            const parsedToken = parseToken(token);
+            const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
             state.token = token;
@@ -824,10 +823,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function authenticationSuccess(
-    token: AuthenticationToken,
-    socket: WebSocket
-  ) {
+  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1661,34 +1657,6 @@ class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
     super(message);
   }
-}
-
-function parseToken(token: string): AuthenticationToken {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
-  }
-
-  const data = tryParseJson(b64decode(tokenParts[1]));
-
-  if (
-    data !== undefined &&
-    isJsonObject(data) &&
-    typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string")
-  ) {
-    return {
-      actor: data.actor,
-      id: data.id,
-      info: data.info,
-    };
-  }
-
-  throw new Error(
-    "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-  );
 }
 
 function prepareCreateWebSocket(

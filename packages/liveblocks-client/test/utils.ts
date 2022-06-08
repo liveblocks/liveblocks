@@ -1,4 +1,5 @@
 import type { LiveObject } from "../src";
+import type { RoomAuthToken } from "../src/AuthToken";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
@@ -24,6 +25,16 @@ import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
 import type { JsonStorageUpdate } from "./updatesUtils";
 import { serializeUpdateToJson } from "./updatesUtils";
+
+function makeRoomToken(actor: number): RoomAuthToken {
+  return {
+    appId: "my-app",
+    roomId: "my-room",
+    actor,
+    scopes: [],
+    maxConnections: 42,
+  };
+}
 
 /**
  * Deep-clones a JSON-serializable value.
@@ -157,7 +168,7 @@ async function prepareRoomWithStorage<
   const ws = new MockWebSocket("");
 
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws as any);
+  machine.authenticationSuccess(makeRoomToken(actor), ws as any);
   ws.open();
 
   const getStoragePromise = machine.getStorage<TStorage>();
@@ -305,7 +316,7 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor }, ws as any);
+    machine.authenticationSuccess(makeRoomToken(actor), ws as any);
     ws.open();
 
     if (newItems) {
@@ -415,7 +426,7 @@ export async function reconnect(
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws);
+  machine.authenticationSuccess(makeRoomToken(actor), ws);
   ws.open();
 
   machine.onMessage(

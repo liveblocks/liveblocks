@@ -15,6 +15,7 @@ import {
   waitFor,
   withDateNow,
 } from "../test/utils";
+import type { RoomAuthToken } from "./AuthToken";
 import { lsonToJson } from "./immutable";
 import { LiveList } from "./LiveList";
 import { createRoom, defaultState, makeStateMachine } from "./room";
@@ -32,40 +33,32 @@ const defaultContext = {
   liveblocksServer: "wss://live.liveblocks.io/v6",
   authentication: {
     type: "private",
-    url: "/api/auth",
+    url: "/mocked-api/auth",
   } as Authentication,
 };
 
+const defaultRoomToken: RoomAuthToken = {
+  appId: "my-app",
+  roomId: "my-room",
+  actor: 0,
+  scopes: [],
+  maxConnections: 42,
+};
+
 describe("room / auth", () => {
-  let reqCount = 0;
   const token =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdLCJtYXhDb25uZWN0aW9ucyI6MjAwMH0.-DP9zVtvtkzWsjEpLeP6CuO9mZKC_5Opal3yN4tI6uo";
   const server = setupServer(
-    rest.post("/api/auth", (_req, res, ctx) => {
-      if (reqCount === 0) {
-        reqCount++;
-        return res(
-          ctx.json({
-            actor: 0,
-            token,
-          })
-        );
-      } else {
-        return res(
-          ctx.json({
-            actor: 1,
-            token,
-          })
-        );
-      }
+    rest.post("/mocked-api/auth", (_req, res, ctx) => {
+      return res(ctx.json({ token }));
     }),
-    rest.post("/api/403", (_req, res, ctx) => {
+    rest.post("/mocked-api/403", (_req, res, ctx) => {
       return res(ctx.status(403));
     }),
-    rest.post("/api/not-json", (_req, res, ctx) => {
+    rest.post("/mocked-api/not-json", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.text("this is not json"));
     }),
-    rest.post("/api/missing-token", (_req, res, ctx) => {
+    rest.post("/mocked-api/missing-token", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.json({}));
     })
   );
@@ -87,62 +80,6 @@ describe("room / auth", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test("should reuse token after reconnect", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/api/auth",
-        },
-      }
-    );
-
-    room.connect();
-
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate - 600, async () => {
-      room.room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 0);
-    });
-  });
-
-  test("should not reuse token after reconnect when expired", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/api/auth",
-        },
-      }
-    );
-
-    room.connect();
-
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate + 1, async () => {
-      room.room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 1);
-    });
-  });
-
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
       {},
@@ -150,7 +87,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/403",
+          url: "/mocked-api/403",
         },
       }
     );
@@ -161,7 +98,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        'Expected a status 200 but got 403 when doing a POST request on "/api/403"'
+        'Expected a status 200 but got 403 when doing a POST request on "/mocked-api/403"'
       )
     );
   });
@@ -173,7 +110,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/not-json",
+          url: "/mocked-api/not-json",
         },
       }
     );
@@ -184,7 +121,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        'Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
+        'Expected a json when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
       )
     );
   });
@@ -196,7 +133,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/missing-token",
+          url: "/mocked-api/missing-token",
         },
       }
     );
@@ -207,7 +144,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        'Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}'
+        'Expected a json with a string token when doing a POST request on "/mocked-api/missing-token", but got {}'
       )
     );
   });
@@ -243,7 +180,7 @@ describe("room", () => {
     const state = defaultState({});
     const machine = makeStateMachine(state, defaultContext, effects);
 
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket(""));
+    machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
     expect(state.connection.state).toBe("connecting");
   });
 
@@ -254,7 +191,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -270,7 +207,7 @@ describe("room", () => {
     const ws = new MockWebSocket("");
     machine.updatePresence({ x: 0 });
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -285,7 +222,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -300,7 +237,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -350,7 +287,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -376,7 +313,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -409,7 +346,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -450,7 +387,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -473,7 +410,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -491,7 +428,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = machine.getStorage<{ x: number }>();
@@ -515,7 +452,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(state.buffer.presence).toEqual(null);
@@ -542,7 +479,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -578,7 +515,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -601,7 +538,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 });
@@ -619,7 +556,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -655,7 +592,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -682,7 +619,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -725,7 +662,7 @@ describe("room", () => {
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     const getStoragePromise = room.getStorage<{ x: number }>();
@@ -777,7 +714,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       const getStoragePromise = machine.getStorage<{ x: number }>();
@@ -959,7 +896,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       let others: Others | undefined;
@@ -1001,7 +938,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       const callback = jest.fn();
@@ -1184,7 +1121,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1209,7 +1146,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1234,7 +1171,7 @@ describe("room", () => {
       const machine = makeStateMachine(state, defaultContext, effects);
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       let others: Others | undefined;

@@ -11,7 +11,12 @@ import type {
   StorageUpdate,
   ToJson,
 } from "./types";
-import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
+import {
+  findNonSerializableValue,
+  isLiveList,
+  isLiveObject,
+  isPlainObject,
+} from "./utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
@@ -71,12 +76,6 @@ export function lsonToJson(value: Lson): Json {
 
   // Finally, if value is an LsonScalar, then it's also a valid JsonScalar
   return value;
-}
-
-function isPlainObject(obj: unknown): obj is { [key: string]: unknown } {
-  return (
-    obj !== null && Object.prototype.toString.call(obj) === "[object Object]"
-  );
 }
 
 /**

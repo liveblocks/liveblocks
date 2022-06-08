@@ -194,12 +194,6 @@ export type Client = {
   leave(roomId: string): void;
 };
 
-export type AuthenticationToken = {
-  actor: number;
-  id?: string;
-  info?: Json;
-};
-
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
@@ -297,7 +291,7 @@ export type Connection =
       state: "open" | "connecting";
       id: number;
       userId?: string;
-      userInfo?: any;
+      userInfo?: Json;
     };
 
 export type ConnectionState = Connection["state"];
