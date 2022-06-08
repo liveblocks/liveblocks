@@ -1597,7 +1597,9 @@ export function defaultState<TPresence extends JsonObject>(
   };
 }
 
-export type InternalRoom<TPresence extends JsonObject = JsonObject> = {
+export type InternalRoom<
+  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
+> = {
   room: Room<TPresence>;
   connect: () => void;
   disconnect: () => void;
@@ -1606,7 +1608,7 @@ export type InternalRoom<TPresence extends JsonObject = JsonObject> = {
 };
 
 export function createRoom<
-  TPresence extends JsonObject = JsonObject,
+  TPresence extends JsonObject = JsonObject, // XXX Default arg needed here? Isn't this a private API?
   TStorage extends Record<string, any> = Record<string, any>
   //               ^^^^^^^^^^^^^^^^^^^
   //               FIXME: Generalize this to LsonObject
