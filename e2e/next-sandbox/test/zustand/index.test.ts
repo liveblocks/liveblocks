@@ -77,7 +77,7 @@ test.describe("Zustand", () => {
     await assertContainText(pages, "0");
   });
 
-  test("fuzzy", async () => {
+  test.skip("fuzzy", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
     for (let i = 0; i < 10; i++) {
