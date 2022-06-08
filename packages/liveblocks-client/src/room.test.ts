@@ -1,5 +1,4 @@
 import { rest } from "msw";
-import type { JsonObject } from "./types/Json";
 import { setupServer } from "msw/node";
 
 import {
@@ -28,6 +27,7 @@ import {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
+import type { JsonObject } from "./types/Json";
 
 const defaultContext = {
   roomId: "room-id",
