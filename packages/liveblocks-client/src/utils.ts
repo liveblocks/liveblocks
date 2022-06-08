@@ -22,7 +22,6 @@ import type {
   StorageUpdate,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import { isJsonObject } from "./types/Json";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
@@ -327,10 +326,19 @@ export function mergeStorageUpdates(first: StorageUpdate | undefined, second: St
   return second;
 }
 
-function isPlain(value: unknown) /* TODO: add refinement here */ {
+function isPlain(
+  value: unknown
+): value is
+  | undefined
+  | null
+  | string
+  | boolean
+  | number
+  | unknown[]
+  | { [key: string]: unknown } {
   const type = typeof value;
   return (
-    type === "undefined" ||
+    value === undefined ||
     value === null ||
     type === "string" ||
     type === "boolean" ||
@@ -340,18 +348,16 @@ function isPlain(value: unknown) /* TODO: add refinement here */ {
   );
 }
 
-function isPlainObject(value: unknown): value is object {
-  if (typeof value !== "object" || value === null) return false;
-
-  const proto = Object.getPrototypeOf(value);
-  if (proto === null) return true;
-
-  let baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
-  }
-
-  return proto === baseProto;
+export function isPlainObject(
+  blob: unknown
+): blob is { [key: string]: unknown } {
+  // Implementation borrowed from pojo decoder, see
+  // https://github.com/nvie/decoders/blob/78849f843193647eb6b5307240387bdcff7161fb/src/lib/objects.js#L10-L41
+  return (
+    blob !== null &&
+    typeof blob === "object" &&
+    Object.prototype.toString.call(blob) === "[object Object]"
+  );
 }
 
 export function findNonSerializableValue(
@@ -392,30 +398,6 @@ export function findNonSerializableValue(
   }
 
   return false;
-}
-
-export function isTokenValid(token: string): boolean {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    return false;
-  }
-
-  const data = tryParseJson(atob(tokenParts[1]));
-  if (
-    data === undefined ||
-    !isJsonObject(data) ||
-    typeof data.exp !== "number"
-  ) {
-    return false;
-  }
-
-  const now = Date.now();
-
-  if (now / 1000 > data.exp - 300) {
-    return false;
-  }
-
-  return true;
 }
 
 /**
