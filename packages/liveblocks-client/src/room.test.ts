@@ -46,24 +46,10 @@ const defaultRoomToken: RoomAuthToken = {
 };
 
 describe("room / auth", () => {
-  let reqCount = 0;
-  const tokenForActor0 =
+  const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdLCJtYXhDb25uZWN0aW9ucyI6MjAwMH0.-DP9zVtvtkzWsjEpLeP6CuO9mZKC_5Opal3yN4tI6uo";
-  const tokenForActor1 =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MSwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdLCJtYXhDb25uZWN0aW9ucyI6MjAwMH0.HKm1soTdQ0BugfyxzZyB1eu2y_wdUWyOQsGdl476pTk";
   const server = setupServer(
     rest.post("/mocked-api/auth", (_req, res, ctx) => {
-      let token;
-      if (reqCount === 0) {
-        token = tokenForActor0;
-      } else if (reqCount === 1) {
-        token = tokenForActor1;
-      } else {
-        throw new Error(
-          "Test isn't prepared for issuing more than 2 test tokens"
-        );
-      }
-      reqCount++;
       return res(ctx.json({ token }));
     }),
     rest.post("/mocked-api/403", (_req, res, ctx) => {
@@ -92,62 +78,6 @@ describe("room / auth", () => {
   afterEach(() => {
     process.env = originalEnv;
     consoleErrorSpy.mockRestore();
-  });
-
-  test("should reuse token after reconnect", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/mocked-api/auth",
-        },
-      }
-    );
-
-    room.connect();
-
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate - 600, async () => {
-      room.room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 0);
-    });
-  });
-
-  test("should not reuse token after reconnect when expired", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/mocked-api/auth",
-        },
-      }
-    );
-
-    room.connect();
-
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate + 1, async () => {
-      room.room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 1);
-    });
   });
 
   test("private authentication with 403 status should throw", async () => {
