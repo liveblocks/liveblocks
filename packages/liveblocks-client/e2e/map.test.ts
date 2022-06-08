@@ -1,0 +1,52 @@
+import { Json, LiveMap } from "../src";
+import { lsonToJson } from "../src/immutable";
+import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
+
+describe.only("LiveMap single client", () => {
+  test(
+    "remote set conflicts with another set",
+    prepareTestsConflicts(
+      {
+        map: new LiveMap<string, string>(),
+      },
+      async ({ root1, root2, wsUtils, assert }) => {
+        root1.get("map").set("key", "A");
+        root2.get("map").set("key", "B");
+
+        assert({ map: { key: "A" } }, { map: { key: "B" } });
+
+        await wsUtils.flushSocket1Messages();
+
+        assert({ map: { key: "A" } });
+
+        await wsUtils.flushSocket2Messages();
+
+        assert({ map: { key: "B" } });
+      }
+    )
+  );
+});
+
+describe("LiveMap single client", () => {
+  test(
+    "fast consecutive sets on same key",
+    prepareSingleClientTest(
+      {
+        map: new LiveMap<string, string>(),
+      },
+      async ({ root, flushSocketMessages, room }) => {
+        const states: Json[] = [];
+        room.subscribe(root, () => states.push(lsonToJson(root)), {
+          isDeep: true,
+        });
+
+        root.get("map").set("key", "A");
+        root.get("map").set("key", "B");
+
+        await flushSocketMessages();
+
+        expect(states).toEqual([{ map: { key: "A" } }, { map: { key: "B" } }]);
+      }
+    )
+  );
+});

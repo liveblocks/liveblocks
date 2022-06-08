@@ -59,6 +59,7 @@ async function initializeRoomForTest<T extends LsonObject>(
 
   const client = createClient({
     publicApiKey,
+    publicAuthorizeEndpoint: "http://localhost:3001/api/public/authorize",
     fetchPolyfill: fetch,
     WebSocketPolyfill: MockWebSocket,
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
@@ -202,7 +203,6 @@ export function prepareSingleClientTest<T extends LsonObject>(
     /**
      * Assert that room storage is equal to the provided json
      */
-    // assert: (jsonRoot: ToJson<T>) => void;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {
