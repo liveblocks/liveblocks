@@ -61,6 +61,12 @@ export async function assertJsonContentAreEquals(
   id: string = "items"
 ) {
   const firstPageContent = await getJsonContent(pages[0], id);
+
+  for (const page of pages.slice(1)) {
+    const otherPageContent = await getJsonContent(page, id);
+    await expect(firstPageContent).toEqual(otherPageContent);
+  }
+
   pages.forEach(async (page) => {
     expect(firstPageContent).toEqual(await getJsonContent(page, id));
   });
