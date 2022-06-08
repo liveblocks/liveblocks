@@ -36,6 +36,12 @@ Various internal refactorings.
 
 ---
 
+# v0.16.16
+
+Internals only.
+
+---
+
 # v0.16.15
 
 Internals only.
