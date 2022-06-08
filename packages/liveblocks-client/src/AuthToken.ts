@@ -1,6 +1,7 @@
 import type { Json, JsonObject } from "./types";
 import { b64decode, isPlainObject, tryParseJson } from "./utils";
 
+// yoyoyo
 export const SCOPES = [
   "websocket:presence",
   "websocket:storage",
@@ -15,13 +16,13 @@ export type Scope = typeof SCOPES[number];
 export type AppOnlyAuthToken = {
   appId: string;
   roomId?: never; // Discriminating field for AuthToken type
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
+  scopes: Scope[];
 };
 
 export type RoomAuthToken = {
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
-  scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
+  scopes: Scope[];
   actor: number;
   maxConnections: number;
   maxConnectionsPerRoom?: number;
@@ -56,8 +57,8 @@ export function isScope(value: unknown): value is Scope {
   return (SCOPES as readonly unknown[]).includes(value);
 }
 
-function isStringList(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((i) => typeof i === "string");
+function isScopeList(value: unknown): value is Scope[] {
+  return Array.isArray(value) && value.every(isScope);
 }
 
 export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
@@ -73,7 +74,7 @@ export function isAppOnlyAuthToken(data: JsonObject): data is AppOnlyAuthToken {
   return (
     typeof data.appId === "string" &&
     data.roomId === undefined &&
-    isStringList(data.scopes)
+    isScopeList(data.scopes)
   );
 }
 
@@ -97,7 +98,7 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
     typeof data.roomId === "string" &&
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
-    isStringList(data.scopes) &&
+    isScopeList(data.scopes) &&
     typeof data.maxConnections === "number" &&
     (data.maxConnectionsPerRoom === undefined ||
       typeof data.maxConnectionsPerRoom === "number")
