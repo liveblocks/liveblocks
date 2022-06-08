@@ -18,7 +18,6 @@ import {
 import type { RoomAuthToken } from "./AuthToken";
 import { lsonToJson } from "./immutable";
 import { LiveList } from "./LiveList";
-import type { State } from "./room";
 import { createRoom, defaultState, makeStateMachine } from "./room";
 import type { Authentication, IdTuple, Others, SerializedCrdt } from "./types";
 import {
@@ -49,8 +48,8 @@ const defaultRoomToken: RoomAuthToken = {
 function setupStateMachine<TPresence extends JsonObject>(
   initialPresence?: TPresence
 ) {
-  const effects = mockEffects();
-  const state = defaultState(initialPresence) as State<TPresence>;
+  const effects = mockEffects<TPresence>();
+  const state = defaultState<TPresence>(initialPresence);
   const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
   return { machine, state, effects };
 }

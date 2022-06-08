@@ -91,7 +91,7 @@ module.exports = {
       // optional for our end users, not internally.
       {
         selector:
-          "TSTypeReference[typeName.name=/^(Room|Machine|State|Effects|InternalRoom|User|OthersEvent|MyPresenceCallback|OthersEventCallback)$/][typeParameters.params.length != 1]",
+          "TSTypeReference[typeName.name=/^(Room|Machine|State|Effects|InternalRoom|User|OthersEvent|MyPresenceCallback|RoomEventCallbackMap|OthersEventCallback)$/][typeParameters.params.length != 1]",
         message: "Missing type params.",
       },
 

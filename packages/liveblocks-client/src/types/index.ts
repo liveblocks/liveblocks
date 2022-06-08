@@ -51,15 +51,15 @@ export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap = {
-  "my-presence": MyPresenceCallback;
-  others: OthersEventCallback;
+export type RoomEventCallbackMap<TPresence extends JsonObject = JsonObject> = {
+  "my-presence": MyPresenceCallback<TPresence>;
+  others: OthersEventCallback<TPresence>;
   event: EventCallback;
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
 
-export type RoomEventName = keyof RoomEventCallbackMap;
+export type RoomEventName = keyof RoomEventCallbackMap<never>;
 
 export type UpdateDelta =
   | {
@@ -182,21 +182,23 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom(roomId: string): Room | null;
+  getRoom<TPresence extends JsonObject = JsonObject>(
+    roomId: string
+  ): Room<TPresence> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
-  enter<TStorage extends Record<string, any> = Record<string, any>>(
+  enter<
+    // TODO: In the interest of consistency, swap these type params in 0.18
+    TStorage extends Record<string, any> = Record<string, any>,
+    TPresence extends JsonObject = JsonObject
+  >(
     roomId: string,
-    options?: RoomInitializers<JsonObject, TStorage>
-    //                         ^^^^^^^^^^
-    //                         TODO: Generalize this to TPresence, but it
-    //                         requires a breaking type-level change on enter's
-    //                         type params
-  ): Room;
+    options?: RoomInitializers<TPresence, TStorage>
+  ): Room<TPresence>;
 
   /**
    * Leaves a room.

@@ -572,7 +572,9 @@ export function createSerializedRegister(
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
-export function mockEffects(): Effects<JsonObject> {
+export function mockEffects<
+  TPresence extends JsonObject
+>(): Effects<TPresence> {
   return {
     authenticate: jest.fn(),
     delayFlush: jest.fn(),

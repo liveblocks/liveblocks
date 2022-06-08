@@ -52,23 +52,25 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom>();
+  const rooms = new Map<string, InternalRoom<JsonObject>>();
 
-  function getRoom(roomId: string): Room | null {
+  function getRoom<TPresence extends JsonObject = JsonObject>(
+    roomId: string
+  ): Room<TPresence> | null {
     const internalRoom = rooms.get(roomId);
-    return internalRoom ? internalRoom.room : null;
+    return internalRoom
+      ? (internalRoom.room as unknown as Room<TPresence>)
+      : null;
   }
 
-  function enter<TStorage>(
+  // TODO: In the interest of consistency, swap the param order in 0.18
+  function enter<TStorage, TPresence extends JsonObject = JsonObject>(
     roomId: string,
-    options: EnterOptions<JsonObject, TStorage> = {}
-    //                    ^^^^^^^^^^
-    //                    TODO: Generalize this to TPresence, but it will
-    //                    require a breaking API change for enter's type params
-  ): Room {
-    let internalRoom = rooms.get(roomId);
+    options: EnterOptions<TPresence, TStorage> = {}
+  ): Room<TPresence> {
+    let internalRoom = rooms.get(roomId) as InternalRoom<TPresence> | undefined;
     if (internalRoom) {
-      return internalRoom.room;
+      return internalRoom.room as unknown as Room<TPresence>;
     }
 
     errorIf(
@@ -80,7 +82,7 @@ export function createClient(options: ClientOptions): Client {
       "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    internalRoom = createRoom(
+    internalRoom = createRoom<TPresence, TStorage>(
       {
         initialPresence: options.initialPresence,
         initialStorage: options.initialStorage,
@@ -99,7 +101,7 @@ export function createClient(options: ClientOptions): Client {
         authentication: prepareAuthentication(clientOptions),
       }
     );
-    rooms.set(roomId, internalRoom);
+    rooms.set(roomId, internalRoom as unknown as InternalRoom<JsonObject>);
     if (!options.DO_NOT_USE_withoutConnecting) {
       internalRoom.connect();
     }

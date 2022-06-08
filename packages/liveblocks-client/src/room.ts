@@ -127,7 +127,7 @@ export type Machine<
   subscribe(type: "connection", listener: ConnectionCallback): () => void;
   subscribe<K extends RoomEventName>(
     firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K],
+    listener?: RoomEventCallbackMap<TPresence>[K],
     options?: { isDeep: boolean }
   ): () => void;
 
@@ -241,16 +241,16 @@ export type State<TPresence extends JsonObject> = {
   };
   listeners: {
     event: EventCallback[];
-    others: OthersEventCallback[];
-    "my-presence": MyPresenceCallback[];
+    others: OthersEventCallback<TPresence>[];
+    "my-presence": MyPresenceCallback<TPresence>[];
     error: ErrorCallback[];
     connection: ConnectionCallback[];
     storage: StorageCallback[];
   };
   me: TPresence;
-  others: Others;
+  others: Others<TPresence>;
   users: {
-    [connectionId: number]: User;
+    [connectionId: number]: User<TPresence>;
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
@@ -519,7 +519,7 @@ export function makeStateMachine<
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
-    others?: OthersEvent[];
+    others?: OthersEvent<TPresence>[];
   }) {
     if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
@@ -740,7 +740,7 @@ export function makeStateMachine<
   ): () => void;
   function subscribe<K extends RoomEventName>(
     firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
+    listener?: RoomEventCallbackMap<TPresence>[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
     if (isLiveNode(firstParam)) {
@@ -751,12 +751,14 @@ export function makeStateMachine<
       throw new Error(`"${firstParam}" is not a valid event name`);
     }
 
-    (state.listeners[firstParam] as RoomEventCallbackMap[K][]).push(listener);
+    (state.listeners[firstParam] as RoomEventCallbackMap<TPresence>[K][]).push(
+      listener
+    );
 
     return () => {
       const callbacks = state.listeners[
         firstParam
-      ] as RoomEventCallbackMap[K][];
+      ] as RoomEventCallbackMap<TPresence>[K][];
       remove(callbacks, listener);
     };
   }
@@ -869,7 +871,7 @@ export function makeStateMachine<
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
-  ): OthersEvent | undefined {
+  ): OthersEvent<TPresence> | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
     // The initial presence update message contains the property "targetActor".
@@ -907,7 +909,9 @@ export function makeStateMachine<
     };
   }
 
-  function onUserLeftMessage(message: UserLeftServerMsg): OthersEvent | null {
+  function onUserLeftMessage(
+    message: UserLeftServerMsg
+  ): OthersEvent<TPresence> | null {
     const userLeftMessage: UserLeftServerMsg = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
@@ -917,8 +921,10 @@ export function makeStateMachine<
     return null;
   }
 
-  function onRoomStateMessage(message: RoomStateServerMsg): OthersEvent {
-    const newUsers: { [connectionId: number]: User } = {};
+  function onRoomStateMessage(
+    message: RoomStateServerMsg
+  ): OthersEvent<TPresence> {
+    const newUsers: { [connectionId: number]: User<TPresence> } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
       const user = message.users[key];
@@ -945,7 +951,9 @@ export function makeStateMachine<
     }
   }
 
-  function onUserJoinedMessage(message: UserJoinServerMsg): OthersEvent {
+  function onUserJoinedMessage(
+    message: UserJoinServerMsg
+  ): OthersEvent<TPresence> {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
@@ -1005,7 +1013,7 @@ export function makeStateMachine<
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as OthersEvent[],
+      others: [] as OthersEvent<TPresence>[],
     };
 
     for (const message of messages) {
