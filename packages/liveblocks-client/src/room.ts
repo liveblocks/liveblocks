@@ -63,10 +63,10 @@ import {
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
+  isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
   remove,
-  isPlainObject,
   tryParseJson,
 } from "./utils";
 
