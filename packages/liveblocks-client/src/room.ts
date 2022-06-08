@@ -66,6 +66,7 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
   remove,
+  isPlainObject,
   tryParseJson,
 } from "./utils";
 
@@ -1721,7 +1722,7 @@ function fetchAuthEndpoint(
     room: string;
     publicApiKey?: string;
   }
-): Promise<any> {
+): Promise<{ token: string }> {
   return fetch(endpoint, {
     method: "POST",
     headers: {
@@ -1736,22 +1737,23 @@ function fetchAuthEndpoint(
         );
       }
 
-      return res.json().catch((er) => {
+      return (res.json() as Promise<Json>).catch((er) => {
         throw new AuthenticationError(
-          `Expected a json when doing a POST request on "${endpoint}". ${er}`
+          `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
         );
       });
     })
-    .then((authResponse) => {
-      if (typeof authResponse.token !== "string") {
+    .then((data) => {
+      if (!isPlainObject(data) || typeof data.token !== "string") {
         throw new AuthenticationError(
-          `Expected a json with a string token when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-            authResponse
+          `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+            data
           )}`
         );
       }
 
-      return authResponse;
+      const { token } = data;
+      return { token };
     });
 }
 
