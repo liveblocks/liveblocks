@@ -22,8 +22,8 @@ describe("node e2e", () => {
     let roomAOthers = [];
     let roomBOthers = [];
 
-    const roomA = clientA.enter("node-e2e", { defaultPresence: { name: "A" } });
-    const roomB = clientB.enter("node-e2e", { defaultPresence: { name: "B" } });
+    const roomA = clientA.enter("node-e2e", { initialPresence: { name: "A" } });
+    const roomB = clientB.enter("node-e2e", { initialPresence: { name: "B" } });
 
     roomA.subscribe("others", (others) => (roomAOthers = others.toArray()));
     roomB.subscribe("others", (others) => (roomBOthers = others.toArray()));
