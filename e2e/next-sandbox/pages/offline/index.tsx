@@ -1,4 +1,4 @@
-import { Room } from "@liveblocks/client";
+import { LiveList, Room } from "@liveblocks/client";
 import {
   RoomProvider,
   useList,
@@ -34,7 +34,7 @@ export default function Home() {
   }
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
         <Sandbox />
       </RoomProvider>
     </LiveblocksProvider>
