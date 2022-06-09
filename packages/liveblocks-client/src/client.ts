@@ -102,7 +102,7 @@ export function createClient(options: ClientOptions): Client {
       if (typeof atob == "undefined") {
         if (clientOptions.atobPolyfill == undefined) {
           throw new Error(
-            "You need to polyfill the atob function. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
+            "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );
         }
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
