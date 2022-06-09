@@ -122,10 +122,18 @@ function parseJwtToken(token: string): JwtMetadata {
   }
 }
 
-export function parseRoomAuthToken(token: string): RoomAuthToken & JwtMetadata {
-  const data = parseJwtToken(token);
+export function parseRoomAuthToken(
+  tokenString: string
+): RoomAuthToken & JwtMetadata {
+  const data = parseJwtToken(tokenString);
   if (data && isRoomAuthToken(data)) {
-    return data;
+    const {
+      // If this legacy field is found on the token, pretend it wasn't there,
+      // to make all internally used token payloads uniform
+      maxConnections: _legacyField,
+      ...token
+    } = data;
+    return token;
   } else {
     throw new Error("Authentication error: invalid room auth token");
   }
