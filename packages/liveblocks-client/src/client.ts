@@ -6,6 +6,7 @@ import type {
   Client,
   ClientOptions,
   JsonObject,
+  LsonObject,
   Resolve,
   Room,
   RoomInitializers,
@@ -63,8 +64,7 @@ export function createClient(options: ClientOptions): Client {
       : null;
   }
 
-  // TODO: In the interest of consistency, swap the param order in 0.18
-  function enter<TStorage, TPresence extends JsonObject = JsonObject>(
+  function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
   ): Room<TPresence> {
