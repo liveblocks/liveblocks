@@ -1022,13 +1022,11 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } = await prepareStorageTest(
-        [createSerializedObject("0:0", {})],
-        1
-      );
+      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<
+        never,
+        { x: number }
+      >([createSerializedObject("0:0", {})], 1);
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore - if you want to test presence, then prepareStorageTest isn't the right factory!
       machine.updatePresence({ x: 1 });
 
       ws.closeFromBackend(
