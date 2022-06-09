@@ -32,7 +32,6 @@ function makeRoomToken(actor: number): RoomAuthToken {
     roomId: "my-room",
     actor,
     scopes: [],
-    maxConnections: 42,
   };
 }
 
