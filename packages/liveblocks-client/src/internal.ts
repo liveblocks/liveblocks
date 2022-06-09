@@ -86,4 +86,4 @@ export {
 } from "./types";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, tryParseJson } from "./utils";
+export { b64decode, isPlainObject, tryParseJson } from "./utils";
