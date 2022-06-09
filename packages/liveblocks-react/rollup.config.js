@@ -2,6 +2,7 @@ import babelPlugin from "@rollup/plugin-babel";
 import commandPlugin from "rollup-plugin-command";
 import dts from "rollup-plugin-dts";
 import path from "path";
+import prettierPlugin from "rollup-plugin-prettier";
 import replaceText from "@rollup/plugin-replace";
 import resolve from "@rollup/plugin-node-resolve";
 import { terser as terserPlugin } from "rollup-plugin-terser";
@@ -14,16 +15,12 @@ function execute(cmd, wait = true) {
 }
 
 function stripComments() {
-  return terserPlugin({
-    mangle: false,
-    output: {
-      beautify: true,
-      indent_level: 1,
-      comments: false,
-    },
-  });
+  return terserPlugin({ mangle: false, output: { comments: false } });
 }
 
+function prettier() {
+  return prettierPlugin({ parser: "typescript", tabWidth: 2 });
+}
 /**
  * TypeScript plugin configured to only produce *.js code files, no *.d.ts
  * files.
@@ -68,7 +65,7 @@ function buildESM(srcFiles, external = []) {
       chunkFileNames: "shared.mjs",
     },
     external,
-    plugins: [typescriptCompile(), stripComments()],
+    plugins: [typescriptCompile(), stripComments(), prettier()],
   };
 }
 
@@ -87,6 +84,7 @@ function buildCJS(srcFiles, external = []) {
       resolve({ extensions }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
       stripComments(),
+      prettier(),
     ],
   };
 }
@@ -128,6 +126,7 @@ function buildDTS(srcFiles = [], external = []) {
     external,
     plugins: [
       dts(),
+      prettier(),
 
       // We no longer need this tmp dir from step 1 here, so clean it up ASAP
       // to avoid confusion
