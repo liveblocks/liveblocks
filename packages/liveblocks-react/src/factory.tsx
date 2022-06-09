@@ -17,7 +17,7 @@ import * as React from "react";
 import { useClient } from "./client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<TStorage> = Resolve<
+type RoomProviderProps<TStorage extends LsonObject> = Resolve<
   {
     /**
      * The id of the room you want to connect to
@@ -35,16 +35,21 @@ type LookupResult<T> =
   | { status: "notfound" };
 
 export function create() {
-  const RoomContext = React.createContext<Room<JsonObject> | null>(null);
-  //                                           ^^^^^^^^^^
-  //                                           FIXME: Generalize to TPresence and lift to the `create()` level!
+  const RoomContext = React.createContext<Room<JsonObject, LsonObject> | null>(
+    //                                         ^^^^^^^^^^^^^^^^^^^^^^
+    //                                         FIXME: Generalize to TPresence and TStorage and lift to the `create()` level!
+    null
+  );
 
   /**
    * Makes a Room available in the component hierarchy below.
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
+  function RoomProvider<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(props: RoomProviderProps<TStorage>) {
     const {
       id: roomId,
       initialPresence,
@@ -82,7 +87,7 @@ export function create() {
         defaultPresence, // Will get removed in 0.18
         defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
-      } as any)
+      } as RoomInitializers<TPresence, TStorage>)
     );
 
     React.useEffect(() => {
@@ -93,7 +98,7 @@ export function create() {
           defaultPresence, // Will get removed in 0.18
           defaultStorageRoot, // Will get removed in 0.18
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
-        } as any)
+        } as RoomInitializers<TPresence, TStorage>)
       );
 
       return () => {
@@ -110,10 +115,14 @@ export function create() {
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom<TPresence extends JsonObject>(): Room<TPresence> {
-    const room = React.useContext(RoomContext) as Room<TPresence> | null;
-    //                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                                         FIXME Remove once we lift presence to the create() level
+  function useRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(): Room<TPresence, TStorage> {
+    const room = React.useContext(RoomContext) as Room<
+      TPresence, // FIXME Remove once we lift presence to the create() level
+      TStorage // FIXME Remove once we lift presence to the create() level
+    > | null;
 
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
@@ -136,12 +145,15 @@ export function create() {
    *
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
-  function useMyPresence<TPresence extends JsonObject>(): [
+  function useMyPresence<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(): [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+    const room = useRoom<TPresence, TStorage>();
+    //                   ^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const presence = room.getPresence();
     const rerender = useRerender();
@@ -207,9 +219,12 @@ export function create() {
    *   })
    * }
    */
-  function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+  function useOthers<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(): Others<TPresence> {
+    const room = useRoom<TPresence, TStorage>();
+    //                   ^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
@@ -320,9 +335,12 @@ export function create() {
    *
    * const user = useSelf();
    */
-  function useSelf<TPresence extends JsonObject>(): User<TPresence> | null {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+  function useSelf<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(): User<TPresence> | null {
+    const room = useRoom<TPresence, TStorage>();
+    //                   ^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
@@ -339,7 +357,7 @@ export function create() {
     return room.getSelf();
   }
 
-  function useStorage<TStorage extends Record<string, any>>(): [
+  function useStorage<TStorage extends LsonObject>(): [
     root: LiveObject<TStorage> | null
   ] {
     const room = useRoom();
