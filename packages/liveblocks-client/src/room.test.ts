@@ -769,7 +769,7 @@ describe("room", () => {
     });
 
     test("batch storage and presence with changes from server", async () => {
-      type P = { x: number };
+      type P = { x?: number };
       type S = { items: LiveList<string> };
 
       const {
@@ -795,7 +795,7 @@ describe("room", () => {
       const itemsSubscriber = jest.fn();
       const refItemsSubscriber = jest.fn();
       let refOthers: Others<P> | undefined;
-      const refPresenceSubscriber = (o: any) => (refOthers = o);
+      const refPresenceSubscriber = (o: Others<P>) => (refOthers = o);
 
       subscribe(items, itemsSubscriber);
       refSubscribe(refItems, refItemsSubscriber);
@@ -855,7 +855,7 @@ describe("room", () => {
     test("others", () => {
       type P = { x?: number };
 
-      const { machine } = setupStateMachine<P>({});
+      const { machine } = setupStateMachine<P, never>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
@@ -1122,8 +1122,9 @@ describe("room", () => {
   describe("Initial UpdatePresenceServerMsg", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
       type P = { x?: number };
+      type S = never;
 
-      const { machine } = setupStateMachine<P>({});
+      const { machine } = setupStateMachine<P, S>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
