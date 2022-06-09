@@ -224,7 +224,7 @@ export function create() {
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   function useBroadcastEvent(): (
-    event: any,
+    event: Json,
     options?: BroadcastOptions
   ) => void {
     const room = useRoom();

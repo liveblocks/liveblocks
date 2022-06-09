@@ -600,7 +600,7 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: JsonObject, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: Json, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.
