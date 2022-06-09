@@ -55,7 +55,7 @@ export function createClient(options: ClientOptions): Client {
 
   const rooms = new Map<string, InternalRoom<JsonObject>>();
 
-  function getRoom<TPresence extends JsonObject = JsonObject>(
+  function getRoom<TPresence extends JsonObject>(
     roomId: string
   ): Room<TPresence> | null {
     const internalRoom = rooms.get(roomId);

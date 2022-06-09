@@ -30,11 +30,11 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<TPresence extends JsonObject = JsonObject> = (
+export type MyPresenceCallback<TPresence extends JsonObject> = (
   me: TPresence
 ) => void;
 
-export type OthersEventCallback<TPresence extends JsonObject = JsonObject> = (
+export type OthersEventCallback<TPresence extends JsonObject> = (
   others: Others<TPresence>,
   event: OthersEvent<TPresence>
 ) => void;
@@ -51,7 +51,7 @@ export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap<TPresence extends JsonObject = JsonObject> = {
+export type RoomEventCallbackMap<TPresence extends JsonObject> = {
   "my-presence": MyPresenceCallback<TPresence>;
   others: OthersEventCallback<TPresence>;
   event: EventCallback;
@@ -182,9 +182,7 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom<TPresence extends JsonObject = JsonObject>(
-    roomId: string
-  ): Room<TPresence> | null;
+  getRoom<TPresence extends JsonObject>(roomId: string): Room<TPresence> | null;
 
   /**
    * Enters a room and returns it.
@@ -210,7 +208,7 @@ export type Client = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends JsonObject = JsonObject> {
+export interface Others<TPresence extends JsonObject> {
   /**
    * Number of other users in the room.
    */
@@ -232,7 +230,7 @@ export interface Others<TPresence extends JsonObject = JsonObject> {
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends JsonObject = JsonObject> = {
+export type User<TPresence extends JsonObject> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -323,7 +321,7 @@ export type Connection =
 
 export type ConnectionState = Connection["state"];
 
-export type OthersEvent<TPresence extends JsonObject = JsonObject> =
+export type OthersEvent<TPresence extends JsonObject> =
   | {
       type: "leave";
       user: User<TPresence>;
@@ -397,7 +395,7 @@ export interface History {
   resume: () => void;
 }
 
-export type Room<TPresence extends JsonObject = JsonObject> = {
+export type Room<TPresence extends JsonObject> = {
   /**
    * The id of the room.
    */
