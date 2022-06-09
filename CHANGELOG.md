@@ -36,6 +36,12 @@ Various internal refactorings.
 
 ---
 
+# v0.16.17
+
+Fix bug in internal code where some legal authentication tokens would be considered invalid.
+
+---
+
 # v0.16.16
 
 Internals only.
