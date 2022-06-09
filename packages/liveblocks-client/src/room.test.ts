@@ -27,6 +27,7 @@ import {
   WebsocketCloseCodes,
 } from "./types";
 import type { JsonObject } from "./types/Json";
+import type { LsonObject } from "./types/Lson";
 
 const defaultContext = {
   roomId: "room-id",
@@ -45,12 +46,17 @@ const defaultRoomToken: RoomAuthToken = {
   scopes: [],
 };
 
-function setupStateMachine<TPresence extends JsonObject>(
-  initialPresence?: TPresence
-) {
+function setupStateMachine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(initialPresence?: TPresence) {
   const effects = mockEffects<TPresence>();
-  const state = defaultState<TPresence>(initialPresence);
-  const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
+  const state = defaultState<TPresence, TStorage>(initialPresence);
+  const machine = makeStateMachine<TPresence, TStorage>(
+    state,
+    defaultContext,
+    effects
+  );
   return { machine, state, effects };
 }
 
@@ -405,7 +411,7 @@ describe("room", () => {
     machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = machine.getStorage<{ x: number }>();
+    const getStoragePromise = machine.getStorage();
 
     machine.onMessage(
       serverMessage({
@@ -452,7 +458,7 @@ describe("room", () => {
     room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -582,7 +588,7 @@ describe("room", () => {
     room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -623,7 +629,7 @@ describe("room", () => {
     room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -672,7 +678,7 @@ describe("room", () => {
       machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      const getStoragePromise = machine.getStorage<{ x: number }>();
+      const getStoragePromise = machine.getStorage();
 
       machine.onMessage(
         serverMessage({

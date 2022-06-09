@@ -69,7 +69,10 @@ import {
   tryParseJson,
 } from "./utils";
 
-export type Machine<TPresence extends JsonObject> = {
+export type Machine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -142,7 +145,7 @@ export type Machine<TPresence extends JsonObject> = {
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage<TStorage extends LsonObject>(): Promise<{
+  getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
 
@@ -218,7 +221,7 @@ type HistoryItem<TPresence extends JsonObject> = Array<
 
 type IdFactory = () => string;
 
-export type State<TPresence extends JsonObject> = {
+export type State<TPresence extends JsonObject, TStorage extends LsonObject> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
@@ -252,12 +255,12 @@ export type State<TPresence extends JsonObject> = {
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: JsonObject;
+  defaultStorageRoot?: TStorage;
 
   clock: number;
   opClock: number;
   items: Map<string, LiveNode>;
-  root: LiveObject<LsonObject> | undefined;
+  root: LiveObject<TStorage> | undefined;
   undoStack: HistoryItem<TPresence>[];
   redoStack: HistoryItem<TPresence>[];
 
@@ -298,11 +301,14 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine<TPresence extends JsonObject>(
-  state: State<TPresence>,
+export function makeStateMachine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(
+  state: State<TPresence, TStorage>,
   context: Context,
   mockedEffects?: Effects<TPresence>
-): Machine<TPresence> {
+): Machine<TPresence, TStorage> {
   const effects: Effects<TPresence> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -389,7 +395,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     if (state.root) {
       updateRoot(message.items);
     } else {
-      state.root = load(message.items);
+      // TODO: For now, we'll assume the happy path, but reading this data from
+      // the central storage server, it may very well turn out to not match the
+      // manual type annotation. This will require runtime type validations!
+      state.root = load(message.items) as LiveObject<TStorage>;
     }
 
     for (const key in state.defaultStorageRoot) {
@@ -1270,7 +1279,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function flushDataToMessages(state: State<TPresence>) {
+  function flushDataToMessages(state: State<TPresence, TStorage>) {
     const messages: ClientMsg<TPresence>[] = [];
     if (state.buffer.presence) {
       messages.push({
@@ -1317,7 +1326,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State<TPresence>["listeners"]] = [];
+      state.listeners[key as keyof State<TPresence, TStorage>["listeners"]] =
+        [];
     }
   }
 
@@ -1354,7 +1364,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TStorage extends LsonObject>(): Promise<{
+  function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
     if (state.root) {
@@ -1538,11 +1548,13 @@ export function makeStateMachine<TPresence extends JsonObject>(
   };
 }
 
-export function defaultState<TPresence extends JsonObject>(
+export function defaultState<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(
   initialPresence?: TPresence,
-  initialStorage?: JsonObject
-  //               ^^^^^^^^^^ TODO: Generalize this to TStorage
-): State<TPresence> {
+  initialStorage?: TStorage
+): State<TPresence, TStorage> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1601,8 +1613,11 @@ export function defaultState<TPresence extends JsonObject>(
   };
 }
 
-export type InternalRoom<TPresence extends JsonObject> = {
-  room: Room<TPresence>;
+export type InternalRoom<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = {
+  room: Room<TPresence, TStorage>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
@@ -1611,30 +1626,26 @@ export type InternalRoom<TPresence extends JsonObject> = {
 
 export function createRoom<
   TPresence extends JsonObject,
-  TStorage extends Record<string, any>
-  //               ^^^^^^^^^^^^^^^^^^^
-  //               FIXME: Generalize this to LsonObject
+  TStorage extends LsonObject
 >(
   options: RoomInitializers<TPresence, TStorage>,
   context: Context
-): InternalRoom<TPresence> {
+): InternalRoom<TPresence, TStorage> {
   const initialPresence = options.initialPresence ?? options.defaultPresence;
   const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
-  const state = defaultState<TPresence>(
+  const state = defaultState<TPresence, TStorage>(
     typeof initialPresence === "function"
       ? initialPresence(context.roomId)
       : initialPresence,
     typeof initialStorage === "function"
-      ? (initialStorage as (roomId: string) => TStorage)(context.roomId)
-      : //              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        //              FIXME Not sure why this is needed here
-        initialStorage
+      ? initialStorage(context.roomId)
+      : initialStorage
   );
 
-  const machine = makeStateMachine<TPresence>(state, context);
+  const machine = makeStateMachine<TPresence, TStorage>(state, context);
 
-  const room: Room<TPresence> = {
+  const room: Room<TPresence, TStorage> = {
     id: context.roomId,
     /////////////
     // Core    //

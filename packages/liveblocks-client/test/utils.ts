@@ -157,20 +157,27 @@ async function prepareRoomWithStorage<
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   onSend: (messages: ClientMsg<TPresence>[]) => void = () => {},
-  defaultStorage = {}
+  defaultStorage?: TStorage
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence>({} as TPresence, defaultStorage);
-  const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
+  const state = defaultState<TPresence, TStorage>(
+    {} as TPresence,
+    defaultStorage || ({} as TStorage)
+  );
+  const machine = makeStateMachine<TPresence, TStorage>(
+    state,
+    defaultContext,
+    effects
+  );
   const ws = new MockWebSocket("");
 
   machine.connect();
   machine.authenticationSuccess(makeRoomToken(actor), ws as any);
   ws.open();
 
-  const getStoragePromise = machine.getStorage<TStorage>();
+  const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
   machine.onMessage(
@@ -192,7 +199,7 @@ async function prepareRoomWithStorage<
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  defaultStorage = {}
+  defaultStorage?: TStorage
 ) {
   const messagesSent: ClientMsg<never>[] = [];
 
@@ -205,7 +212,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     (messages: ClientMsg<never>[]) => {
       messagesSent.push(...messages);
     },
-    defaultStorage
+    defaultStorage || ({} as TStorage)
   );
 
   return {
@@ -361,13 +368,13 @@ export async function prepareStorageTest<
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
 export function prepareStorageUpdateTest<
-  T extends LsonObject,
-  TPresence extends JsonObject = JsonObject
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
 >(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
-    root: LiveObject<T>;
-    machine: Machine<TPresence>;
+    root: LiveObject<TStorage>;
+    machine: Machine<TPresence, TStorage>;
     assert: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
@@ -375,28 +382,27 @@ export function prepareStorageUpdateTest<
     const { storage: refStorage, machine: refMachine } =
       await prepareRoomWithStorage(items, 1);
 
-    const { storage, machine } = await prepareRoomWithStorage<never, T>(
-      items,
-      0,
-      (messages) => {
-        for (const message of messages) {
-          if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-            refMachine.onMessage(
-              serverMessage({
-                type: ServerMsgCode.UPDATE_STORAGE,
-                ops: message.ops,
-              })
-            );
-            machine.onMessage(
-              serverMessage({
-                type: ServerMsgCode.UPDATE_STORAGE,
-                ops: message.ops,
-              })
-            );
-          }
+    const { storage, machine } = await prepareRoomWithStorage<
+      TPresence,
+      TStorage
+    >(items, 0, (messages) => {
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
         }
       }
-    );
+    });
 
     const jsonUpdates: JsonStorageUpdate[][] = [];
     const refJsonUpdates: JsonStorageUpdate[][] = [];
@@ -421,8 +427,11 @@ export function prepareStorageUpdateTest<
   };
 }
 
-export async function reconnect<TPresence extends JsonObject = JsonObject>(
-  machine: Machine<TPresence>,
+export async function reconnect<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(
+  machine: Machine<TPresence, TStorage>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
