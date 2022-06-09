@@ -77,5 +77,5 @@ export {
 export { comparePosition, makePosition } from "./position";
 export type { Resolve, RoomInitializers } from "./types";
 export { isChildCrdt, isRootCrdt } from "./live";
-export { assertNever, b64decode, tryParseJson } from "./utils";
+export { assertNever, b64decode, isPlainObject, tryParseJson } from "./utils";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./json";
