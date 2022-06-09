@@ -69,9 +69,7 @@ import {
   tryParseJson,
 } from "./utils";
 
-export type Machine<
-  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
-> = {
+export type Machine<TPresence extends JsonObject> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
@@ -300,9 +298,7 @@ type Context = {
   liveblocksServer: string;
 };
 
-export function makeStateMachine<
-  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
->(
+export function makeStateMachine<TPresence extends JsonObject>(
   state: State<TPresence>,
   context: Context,
   mockedEffects?: Effects<TPresence>
@@ -1605,9 +1601,7 @@ export function defaultState<TPresence extends JsonObject>(
   };
 }
 
-export type InternalRoom<
-  TPresence extends JsonObject = JsonObject // XXX Default arg needed here? Isn't this a private API?
-> = {
+export type InternalRoom<TPresence extends JsonObject> = {
   room: Room<TPresence>;
   connect: () => void;
   disconnect: () => void;
@@ -1616,8 +1610,8 @@ export type InternalRoom<
 };
 
 export function createRoom<
-  TPresence extends JsonObject = JsonObject, // XXX Default arg needed here? Isn't this a private API?
-  TStorage extends Record<string, any> = Record<string, any>
+  TPresence extends JsonObject,
+  TStorage extends Record<string, any>
   //               ^^^^^^^^^^^^^^^^^^^
   //               FIXME: Generalize this to LsonObject
 >(
