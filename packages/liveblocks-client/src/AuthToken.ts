@@ -23,7 +23,6 @@ export type RoomAuthToken = {
   roomId: string; // Discriminating field for AuthToken type
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
   actor: number;
-  maxConnections: number;
   maxConnectionsPerRoom?: number;
 
   // Extra payload as defined by the customer's own authorization
@@ -86,7 +85,6 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   //     roomId: string,
   //     actor: number,
   //     scopes: array(scope),
-  //     maxConnections: number,
   //     maxConnectionsPerRoom: optional(number),
   //     id: optional(string),
   //     info: optional(json),
@@ -98,7 +96,6 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
     isStringList(data.scopes) &&
-    typeof data.maxConnections === "number" &&
     (data.maxConnectionsPerRoom === undefined ||
       typeof data.maxConnectionsPerRoom === "number")
     // NOTE: Nothing to validate for `info` field. It's already Json | undefined,

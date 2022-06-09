@@ -44,7 +44,6 @@ const defaultRoomToken: RoomAuthToken = {
   roomId: "my-room",
   actor: 0,
   scopes: [],
-  maxConnections: 42,
 };
 
 function setupStateMachine<TPresence extends JsonObject>(
