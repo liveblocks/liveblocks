@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveMap } from "@liveblocks/client";
 import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 import "./index.css";
 
@@ -21,20 +21,19 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-function Page() {
-  return (
-    <RoomProvider id={roomId}>
-      <App />
-    </RoomProvider>
-  );
-}
-
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
 root.render(
   <React.StrictMode>
     <LiveblocksProvider client={client}>
-      <Page />
+      <RoomProvider
+        id={roomId}
+        initialStorage={{
+          shapes: new LiveMap(),
+        }}
+      >
+        <App />
+      </RoomProvider>
     </LiveblocksProvider>
   </React.StrictMode>
 );
