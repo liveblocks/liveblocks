@@ -35,10 +35,7 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
-export type LiveblocksState<
-  TState,
-  TPresence extends JsonObject = JsonObject
-> = TState & {
+export type LiveblocksState<TState, TPresence extends JsonObject> = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
    */

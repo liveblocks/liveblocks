@@ -40,7 +40,7 @@ export type ZustandState =
 
 export type LiveblocksState<
   TState extends ZustandState,
-  TPresence extends JsonObject = JsonObject
+  TPresence extends JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -108,7 +108,7 @@ export function middleware<
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<LiveblocksState<T>>,
+    GetState<LiveblocksState<T, TPresence>>,
     StoreApi<T>
   >,
   options: Options<T>
@@ -138,8 +138,8 @@ export function middleware<
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T>
-      ) => LiveblocksState<T> | Partial<T>
+        current: LiveblocksState<T, TPresence>
+      ) => LiveblocksState<T, TPresence> | Partial<T>
     ) => void = set;
 
     let room: Room<TPresence> | null = null;
@@ -319,13 +319,16 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
   return partialState;
 }
 
-function updateZustandLiveblocksState<T extends ZustandState>(
+function updateZustandLiveblocksState<
+  T extends ZustandState,
+  TPresence extends JsonObject
+>(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T>
-    ) => LiveblocksState<T> | Partial<any>
+      current: LiveblocksState<T, TPresence>
+    ) => LiveblocksState<T, TPresence> | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksState<T>["liveblocks"]>
+  partial: Partial<LiveblocksState<T, TPresence>["liveblocks"]>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
