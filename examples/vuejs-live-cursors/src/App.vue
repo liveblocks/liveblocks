@@ -36,7 +36,7 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let PUBLIC_KEY = "pk_live_kLnGu3ec6QmMdg6V1C0hbcap";
 let roomId = "vuejs-live-cursors";
 
 overrideApiKeyAndRoomId();
@@ -62,7 +62,7 @@ export default Vue.extend({
     };
   },
   mounted: function () {
-    const room = client.enter(roomId, { cursor: null });
+    const room = client.enter(roomId, { defaultPresence: { cursor: null } });
     this._room = room;
     this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
