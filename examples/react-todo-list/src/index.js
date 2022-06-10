@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveList } from "@liveblocks/client";
 import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
 import App from "./App";
 import "./index.css";
@@ -21,18 +21,17 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-function Page() {
-  return (
-    <RoomProvider id={roomId}>
-      <App />
-    </RoomProvider>
-  );
-}
-
 ReactDOM.render(
   <React.StrictMode>
     <LiveblocksProvider client={client}>
-      <Page />
+      <RoomProvider
+        id={roomId}
+        initialStorage={{
+          todos: new LiveList(),
+        }}
+      >
+        <App />
+      </RoomProvider>
     </LiveblocksProvider>
   </React.StrictMode>,
   document.getElementById("root")
