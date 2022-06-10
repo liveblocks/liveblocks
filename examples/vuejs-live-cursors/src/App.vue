@@ -36,7 +36,7 @@
 import Vue from "vue";
 import { createClient } from "@liveblocks/client";
 
-let PUBLIC_KEY = "pk_live_kLnGu3ec6QmMdg6V1C0hbcap";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 let roomId = "vuejs-live-cursors";
 
 overrideApiKeyAndRoomId();
