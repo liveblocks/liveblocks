@@ -19,18 +19,20 @@ export default function MultiplayerRoom() {
   let roomId = router.query.id;
   return (
     <RoomProvider id={roomId}>
-      <div className="flex flex-col w-full h-screen select-none">
-        <header className="bg-white flex justify-between items-center py-2 px-4">
-          <div>Multiplayer canvas</div>
-          <div>
-            <LiveAvatars height={42} />
-          </div>
-        </header>
-        <main className="bg-gray-100 flex-grow">
+      <LiveCursors>
+        <div className="flex flex-col w-full h-screen select-none">
+          <header className="bg-white flex justify-between items-center py-2 px-4">
+            <div>Multiplayer canvas</div>
+            <div>
+              <LiveAvatars />
+            </div>
+          </header>
+          <main className="bg-gray-100 flex-grow">
 
-        </main>
-        <LiveCursors />
-      </div>
+          </main>
+
+        </div>
+      </LiveCursors>
     </RoomProvider>
   )
 }

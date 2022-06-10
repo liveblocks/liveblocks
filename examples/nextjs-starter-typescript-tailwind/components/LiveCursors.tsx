@@ -1,4 +1,5 @@
 import React, { useOthers, useUpdateMyPresence } from "@liveblocks/react";
+import { ReactNode } from "react";
 import Cursor from "./Cursor";
 
 /**
@@ -16,7 +17,11 @@ type Presence = {
   cursor: Cursor | null;
 };
 
-export default function LiveCursors() {
+type Props = {
+  children: ReactNode
+}
+
+export default function LiveCursors({ children }: Props) {
   /**
    * useMyPresence returns the presence of the current user and a function to update it.
    * updateMyPresence is different to the setState function returned by the useState hook from React.
@@ -32,7 +37,7 @@ export default function LiveCursors() {
 
   return (
     <div
-      className="absolute top-0 left-0 w-full h-screen flex place-content-center place-items-center"
+      className="flex place-content-center place-items-center overflow-hidden"
       onPointerMove={(event) =>
         // Update the user cursor position on every pointer move
         updateMyPresence({
@@ -49,7 +54,7 @@ export default function LiveCursors() {
         })
       }
     >
-
+      {children}
       {
         /**
          * Iterate over other users and display a cursor based on their presence
