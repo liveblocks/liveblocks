@@ -151,9 +151,7 @@ export type StorageCallback = (updates: StorageUpdate[]) => void;
 
 export type RoomInitializers<
   TPresence extends JsonObject,
-  TStorage extends Record<string, any>
-  //               ^^^^^^^^^^^^^^^^^^^
-  //               FIXME: Generalize this to LsonObject
+  TStorage extends LsonObject
 > = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
@@ -182,21 +180,19 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom<TPresence extends JsonObject>(roomId: string): Room<TPresence> | null;
+  getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+    roomId: string
+  ): Room<TPresence, TStorage> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
-  enter<
-    // TODO: In the interest of consistency, swap these type params in 0.18
-    TStorage extends Record<string, any> = Record<string, any>,
-    TPresence extends JsonObject = JsonObject
-  >(
+  enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options?: RoomInitializers<TPresence, TStorage>
-  ): Room<TPresence>;
+  ): Room<TPresence, TStorage>;
 
   /**
    * Leaves a room.
@@ -395,7 +391,7 @@ export interface History {
   resume: () => void;
 }
 
-export type Room<TPresence extends JsonObject> = {
+export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
   /**
    * The id of the room.
    */
@@ -636,7 +632,13 @@ export type Room<TPresence extends JsonObject> = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TStorage extends LsonObject>() => Promise<{
+  getStorage: <
+    /**
+     * @deprecated This type argument is ignored. If you want to annotate this
+     * type manually, please annotate the Room instance instead.
+     */
+    _ = unknown
+  >() => Promise<{
     root: LiveObject<TStorage>;
   }>;
 

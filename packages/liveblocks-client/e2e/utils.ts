@@ -68,7 +68,7 @@ async function initializeRoomForTest<
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 
-  const room = client.enter<TStorage, TPresence>(roomId, {
+  const room = client.enter<TPresence, TStorage>(roomId, {
     initialStorage,
   });
   await waitFor(() => room.getConnectionState() === "open");
@@ -95,8 +95,9 @@ export function prepareTestsConflicts<
   callback: (args: {
     root1: LiveObject<TStorage>;
     root2: LiveObject<TStorage>;
-    room2: Room<TPresence>;
-    room1: Room<TPresence>;
+    room2: Room<TPresence, TStorage>;
+    room1: Room<TPresence, TStorage>;
+
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
@@ -126,8 +127,8 @@ export function prepareTestsConflicts<
       ws: ws2,
     } = await initializeRoomForTest<TPresence, TStorage>(roomName);
 
-    const { root: root1 } = await room1.getStorage<TStorage>();
-    const { root: root2 } = await room2.getStorage<TStorage>();
+    const { root: root1 } = await room1.getStorage();
+    const { root: root2 } = await room2.getStorage();
 
     function assert(jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) {
       if (jsonRoot2 == null) {
@@ -211,7 +212,7 @@ export function prepareSingleClientTest<
   initialStorage: TStorage,
   callback: (args: {
     root: LiveObject<TStorage>;
-    room: Room<TPresence>;
+    room: Room<TPresence, TStorage>;
     /**
      * Assert that room storage is equal to the provided json
      */
@@ -227,7 +228,7 @@ export function prepareSingleClientTest<
       TStorage
     >(roomName, initialStorage);
 
-    const { root } = await room.getStorage<TStorage>();
+    const { root } = await room.getStorage();
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time

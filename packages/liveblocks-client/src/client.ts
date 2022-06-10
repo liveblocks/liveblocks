@@ -12,7 +12,10 @@ import type {
   RoomInitializers,
 } from "./types";
 
-type EnterOptions<TPresence extends JsonObject, TStorage> = Resolve<
+type EnterOptions<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = Resolve<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
     /**
@@ -53,24 +56,26 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom<JsonObject>>();
+  const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
 
-  function getRoom<TPresence extends JsonObject>(
+  function getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string
-  ): Room<TPresence> | null {
+  ): Room<TPresence, TStorage> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
-      ? (internalRoom.room as unknown as Room<TPresence>)
+      ? (internalRoom.room as unknown as Room<TPresence, TStorage>)
       : null;
   }
 
   function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
-  ): Room<TPresence> {
-    let internalRoom = rooms.get(roomId) as InternalRoom<TPresence> | undefined;
+  ): Room<TPresence, TStorage> {
+    let internalRoom = rooms.get(roomId) as
+      | InternalRoom<TPresence, TStorage>
+      | undefined;
     if (internalRoom) {
-      return internalRoom.room as unknown as Room<TPresence>;
+      return internalRoom.room as unknown as Room<TPresence, TStorage>;
     }
 
     errorIf(
@@ -101,7 +106,10 @@ export function createClient(options: ClientOptions): Client {
         authentication: prepareAuthentication(clientOptions),
       }
     );
-    rooms.set(roomId, internalRoom as unknown as InternalRoom<JsonObject>);
+    rooms.set(
+      roomId,
+      internalRoom as unknown as InternalRoom<JsonObject, LsonObject>
+    );
     if (!options.DO_NOT_USE_withoutConnecting) {
       internalRoom.connect();
     }

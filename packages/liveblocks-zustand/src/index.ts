@@ -40,7 +40,8 @@ export type ZustandState =
 
 export type LiveblocksState<
   TState extends ZustandState,
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -60,7 +61,7 @@ export type LiveblocksState<
     /**
      * The room currently synced to your zustand state.
      */
-    readonly room: Room<TPresence> | null;
+    readonly room: Room<TPresence, TStorage> | null;
     /**
      * Other users in the room. Empty no room is currently synced
      */
@@ -103,20 +104,21 @@ type Options<T> = {
 
 export function middleware<
   T extends ZustandState,
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<LiveblocksState<T, TPresence>>,
+    GetState<LiveblocksState<T, TPresence, TStorage>>,
     StoreApi<T>
   >,
   options: Options<T>
 ): StateCreator<
-  LiveblocksState<T, TPresence>,
-  SetState<LiveblocksState<T, TPresence>>,
-  GetState<LiveblocksState<T, TPresence>>,
-  StoreApi<LiveblocksState<T, TPresence>>
+  LiveblocksState<T, TPresence, TStorage>,
+  SetState<LiveblocksState<T, TPresence, TStorage>>,
+  GetState<LiveblocksState<T, TPresence, TStorage>>,
+  StoreApi<LiveblocksState<T, TPresence, TStorage>>
 > {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
@@ -138,11 +140,11 @@ export function middleware<
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T, TPresence>
-      ) => LiveblocksState<T, TPresence> | Partial<T>
+        current: LiveblocksState<T, TPresence, TStorage>
+      ) => LiveblocksState<T, TPresence, TStorage> | Partial<T>
     ) => void = set;
 
-    let room: Room<TPresence> | null = null;
+    let room: Room<TPresence, TStorage> | null = null;
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
@@ -321,20 +323,21 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
 
 function updateZustandLiveblocksState<
   T extends ZustandState,
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T, TPresence>
-    ) => LiveblocksState<T, TPresence> | Partial<any>
+      current: LiveblocksState<T, TPresence, TStorage>
+    ) => LiveblocksState<T, TPresence, TStorage> | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksState<T, TPresence>["liveblocks"]>
+  partial: Partial<LiveblocksState<T, TPresence, TStorage>["liveblocks"]>
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
 
 function broadcastInitialPresence<T>(
-  room: Room<any>,
+  room: Room<any, any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -343,8 +346,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence>,
+function updatePresence<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(
+  room: Room<TPresence, TStorage>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
@@ -364,11 +370,12 @@ function updatePresence<TPresence extends JsonObject>(
 function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends ZustandState,
-  TPresence extends JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(
   root: LiveObject<O>,
-  oldState: LiveblocksState<TState, TPresence>,
-  newState: LiveblocksState<TState, TPresence>,
+  oldState: LiveblocksState<TState, TPresence, TStorage>,
+  newState: LiveblocksState<TState, TPresence, TStorage>,
   mapping: Mapping<TState>
 ) {
   for (const key in mapping) {

@@ -17,7 +17,7 @@ import * as React from "react";
 import { useClient } from "./client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<TStorage> = Resolve<
+type RoomProviderProps<TStorage extends LsonObject> = Resolve<
   {
     /**
      * The id of the room you want to connect to
@@ -35,16 +35,21 @@ type LookupResult<T> =
   | { status: "notfound" };
 
 export function create() {
-  const RoomContext = React.createContext<Room<JsonObject> | null>(null);
-  //                                           ^^^^^^^^^^
-  //                                           FIXME: Generalize to TPresence and lift to the `create()` level!
+  const RoomContext = React.createContext<Room<JsonObject, LsonObject> | null>(
+    //                                         ^^^^^^^^^^^^^^^^^^^^^^
+    //                                         FIXME: Generalize to TPresence and TStorage and lift to the `create()` level!
+    null
+  );
 
   /**
    * Makes a Room available in the component hierarchy below.
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider<TStorage>(props: RoomProviderProps<TStorage>) {
+  function RoomProvider<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(props: RoomProviderProps<TStorage>) {
     const {
       id: roomId,
       initialPresence,
@@ -82,7 +87,7 @@ export function create() {
         defaultPresence, // Will get removed in 0.18
         defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
-      } as any)
+      } as RoomInitializers<TPresence, TStorage>)
     );
 
     React.useEffect(() => {
@@ -93,7 +98,7 @@ export function create() {
           defaultPresence, // Will get removed in 0.18
           defaultStorageRoot, // Will get removed in 0.18
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
-        } as any)
+        } as RoomInitializers<TPresence, TStorage>)
       );
 
       return () => {
@@ -102,7 +107,15 @@ export function create() {
     }, [client, roomId]);
 
     return (
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+      <RoomContext.Provider
+        value={
+          room as unknown as Room<JsonObject, LsonObject>
+          //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          //   FIXME Not needed anymore when we parameterize the RoomProvider with these
+        }
+      >
+        {props.children}
+      </RoomContext.Provider>
     );
   }
 
@@ -110,10 +123,14 @@ export function create() {
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom<TPresence extends JsonObject>(): Room<TPresence> {
-    const room = React.useContext(RoomContext) as Room<TPresence> | null;
-    //                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                                         FIXME Remove once we lift presence to the create() level
+  function useRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject
+  >(): Room<TPresence, TStorage> {
+    const room = React.useContext(RoomContext) as Room<
+      TPresence, // FIXME Remove once we lift presence to the create() level
+      TStorage // FIXME Remove once we lift presence to the create() level
+    > | null;
 
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
@@ -140,8 +157,8 @@ export function create() {
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+    const room = useRoom<TPresence, JsonObject>();
+    //                   ^^^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const presence = room.getPresence();
     const rerender = useRerender();
@@ -208,8 +225,8 @@ export function create() {
    * }
    */
   function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+    const room = useRoom<TPresence, LsonObject>();
+    //                   ^^^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
@@ -321,8 +338,8 @@ export function create() {
    * const user = useSelf();
    */
   function useSelf<TPresence extends JsonObject>(): User<TPresence> | null {
-    const room = useRoom<TPresence>();
-    //                   ^^^^^^^^^
+    const room = useRoom<TPresence, LsonObject>();
+    //                   ^^^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
@@ -339,10 +356,12 @@ export function create() {
     return room.getSelf();
   }
 
-  function useStorage<TStorage extends Record<string, any>>(): [
+  function useStorage<TStorage extends LsonObject>(): [
     root: LiveObject<TStorage> | null
   ] {
-    const room = useRoom();
+    const room = useRoom<never, TStorage>();
+    //                   ^^^^^^^^^^^^^^^^
+    //                   FIXME No longer needed once TPresence moves to the factory level
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
     React.useEffect(() => {
@@ -619,7 +638,10 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T>(key: string, initialValue: T): LookupResult<T> {
+  function useStorageValue<T extends Lson>(
+    key: string,
+    initialValue: T
+  ): LookupResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
@@ -629,7 +651,7 @@ Please see https://bit.ly/3Niy5aP for details.`
         return;
       }
 
-      let liveValue: null | T = root.get(key);
+      let liveValue: T | undefined = root.get(key) as T | undefined;
 
       if (liveValue == null) {
         liveValue = initialValue;
@@ -637,12 +659,12 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       function onRootChange() {
-        const newCrdt = root!.get(key);
+        const newCrdt = root!.get(key) as T | undefined;
         if (newCrdt !== liveValue) {
           unsubscribeCrdt();
           liveValue = newCrdt;
           unsubscribeCrdt = room.subscribe(
-            liveValue as any /* AbstractCrdt */,
+            liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
             rerender
           );
           rerender();
@@ -650,11 +672,11 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       let unsubscribeCrdt = room.subscribe(
-        liveValue as any /* AbstractCrdt */,
+        liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         rerender
       );
       const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */,
+        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         onRootChange
       );
 
@@ -669,7 +691,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     if (root == null) {
       return { status: "loading" };
     } else {
-      const value = root.get(key);
+      const value = root.get(key) as T | undefined;
       if (value == null) {
         return { status: "notfound" };
       } else {
