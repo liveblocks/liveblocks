@@ -87,7 +87,7 @@ const internalEnhancer = <T>(options: {
 
   return (createStore: any) =>
     (reducer: any, initialState: any, enhancer: any) => {
-      let room: Room | null = null;
+      let room: Room<any> | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<any> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
@@ -367,7 +367,7 @@ function patchLiveblocksStorage<O extends LsonObject>(
 }
 
 function broadcastInitialPresence<T>(
-  room: Room,
+  room: Room<any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -377,7 +377,7 @@ function broadcastInitialPresence<T>(
 }
 
 function updatePresence<TPresence extends JsonObject>(
-  room: Room,
+  room: Room<TPresence>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
@@ -388,7 +388,7 @@ function updatePresence<TPresence extends JsonObject>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] });
+      room.updatePresence({ [key]: newState[key] } as TPresence);
     }
   }
 }
