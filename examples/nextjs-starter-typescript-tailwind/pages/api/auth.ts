@@ -18,6 +18,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
       picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
     },
   });
@@ -33,6 +34,19 @@ const NAMES = [
   "Emil Joyce",
   "Jory Quispe",
   "Quinn Elton",
+];
+
+const COLORS = [
+  "#E57373",
+  "#9575CD",
+  "#4FC3F7",
+  "#81C784",
+  "#FFF176",
+  "#FF8A65",
+  "#F06292",
+  "#7986CB",
+  "#000000",
+  "#ffffff"
 ];
 
 // Just checking you have your liveblocks.io API key added, can be removed

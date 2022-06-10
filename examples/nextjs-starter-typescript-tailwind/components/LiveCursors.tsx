@@ -5,16 +5,7 @@ import Cursor from "./Cursor";
  * This file shows how to add basic live cursors on your product.
  */
 
-const COLORS = [
-  "#E57373",
-  "#9575CD",
-  "#4FC3F7",
-  "#81C784",
-  "#FFF176",
-  "#FF8A65",
-  "#F06292",
-  "#7986CB",
-];
+
 
 type Cursor = {
   x: number;
@@ -63,7 +54,7 @@ export default function LiveCursors() {
         /**
          * Iterate over other users and display a cursor based on their presence
          */
-        others.map(({ connectionId, presence }) => {
+        others.map(({ connectionId, presence, info }) => {
           if (presence == null || presence.cursor == null) {
             return null;
           }
@@ -73,7 +64,7 @@ export default function LiveCursors() {
               key={`cursor-${connectionId}`}
               // connectionId is an integer that is incremented at every new connections
               // Assigning a color with a modulo makes sure that a specific user has the same colors on every clients
-              color={COLORS[connectionId % COLORS.length]}
+              color={info?.color}
               x={presence.cursor.x}
               y={presence.cursor.y}
             />

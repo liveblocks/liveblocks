@@ -1,5 +1,6 @@
 import React from "react";
-import styles from "./Avatar.module.css";
+import Image from "next/image";
+import { getContrastingColor } from "../utils/getContrastingColor";
 
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
@@ -11,23 +12,84 @@ import styles from "./Avatar.module.css";
  * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
  */
 
-const IMAGE_SIZE = 48;
-
-type Props = {
-  picture: string;
+type AvatarProps = {
+  variant?: "avatar";
   name: string;
+  picture?: string;
+  color?: string;
+  size?: number;
+  statusColor?: string;
+  count?: never;
 }
 
-export function Avatar({ picture, name }: Props) {
+type MoreProps = {
+  variant: "more";
+  count: number;
+  size?: number;
+  picture?: never;
+  name?: never;
+  statusColor?: never;
+  color?: never;
+}
+
+export function Avatar({ variant = "avatar", picture = "", name = "", color = "", size = 42, statusColor = "", count = 0 }: AvatarProps | MoreProps) {
+  const innerVariant = (variant === "avatar" && !picture) ? "letter" : variant;
+
   return (
-    <div className={styles.avatar} data-tooltip={name}>
-      <img
-        alt={name}
-        src={picture}
-        height={IMAGE_SIZE}
-        width={IMAGE_SIZE}
-        className={styles.avatar_picture}
-      />
+    <div
+      style={{
+        height: size,
+        width: size,
+      }}
+      className="flex place-content-center relative outline outline-4 outline-white rounded-full -ml-1.5"
+      data-tooltip={name}
+    >
+      {innerVariant === "more" ? (
+        <MoreCircle count={count} />
+      ) : null}
+
+      {innerVariant === "avatar" ? (
+        <PictureCircle
+          name={name}
+          picture={picture}
+          size={size}
+        />
+      ) : null}
+
+      {innerVariant === "letter" ? (
+        <LetterCircle name={name} color={color} />
+      ) : null}
     </div>
   );
+}
+
+function LetterCircle({ name, color }: { name: string, color?: string }) {
+  return (
+    <div
+      className="flex justify-center items-center text-white text-sm font-bold absolute inset-0 rounded-full"
+      style={{ backgroundColor: color, color: color ? getContrastingColor(color) : undefined }}
+    >
+      {name.charAt(0)}
+    </div>
+  )
+}
+
+function PictureCircle({ name, picture, size }: { name: string, picture: string, size: number }) {
+  return (
+    <Image
+      alt={name}
+      src={picture}
+      height={size}
+      width={size}
+      className="rounded-full"
+    />
+  )
+}
+
+function MoreCircle({ count }: { count: number }) {
+  return (
+    <div className="flex justify-center items-center pr-1 text-white text-sm font-medium absolute inset-0 rounded-full bg-gray-600">
+      +{count}
+    </div>
+  )
 }
