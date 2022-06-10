@@ -17,16 +17,17 @@ import * as React from "react";
 import { useClient } from "./client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<TStorage extends LsonObject> = Resolve<
+type RoomProviderProps<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = Resolve<
   {
     /**
      * The id of the room you want to connect to
      */
     id: string;
     children: React.ReactNode;
-  } & RoomInitializers<JsonObject, TStorage>
-  //                   ^^^^^^^^^^
-  //                   FIXME: Generalize to TPresence
+  } & RoomInitializers<TPresence, TStorage>
 >;
 
 type LookupResult<T> =
@@ -34,10 +35,11 @@ type LookupResult<T> =
   | { status: "loading" }
   | { status: "notfound" };
 
-export function create() {
-  const RoomContext = React.createContext<Room<JsonObject, LsonObject> | null>(
-    //                                         ^^^^^^^^^^^^^^^^^^^^^^
-    //                                         FIXME: Generalize to TPresence and TStorage and lift to the `create()` level!
+export function create<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>() {
+  const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
     null
   );
 
@@ -46,10 +48,7 @@ export function create() {
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(props: RoomProviderProps<TStorage>) {
+  function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
     const {
       id: roomId,
       initialPresence,
@@ -107,15 +106,7 @@ export function create() {
     }, [client, roomId]);
 
     return (
-      <RoomContext.Provider
-        value={
-          room as unknown as Room<JsonObject, LsonObject>
-          //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-          //   FIXME Not needed anymore when we parameterize the RoomProvider with these
-        }
-      >
-        {props.children}
-      </RoomContext.Provider>
+      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
     );
   }
 
@@ -123,10 +114,7 @@ export function create() {
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(): Room<TPresence, TStorage> {
+  function useRoom(): Room<TPresence, TStorage> {
     const room = React.useContext(RoomContext) as Room<
       TPresence, // FIXME Remove once we lift presence to the create() level
       TStorage // FIXME Remove once we lift presence to the create() level
@@ -153,13 +141,11 @@ export function create() {
    *
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
-  function useMyPresence<TPresence extends JsonObject>(): [
+  function useMyPresence(): [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom<TPresence, JsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+    const room = useRoom();
     const presence = room.getPresence();
     const rerender = useRerender();
 
@@ -192,7 +178,7 @@ export function create() {
    *
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
-  function useUpdateMyPresence<TPresence extends JsonObject>(): (
+  function useUpdateMyPresence(): (
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
@@ -224,10 +210,8 @@ export function create() {
    *   })
    * }
    */
-  function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
-    const room = useRoom<TPresence, LsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useOthers(): Others<TPresence> {
+    const room = useRoom();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -337,10 +321,8 @@ export function create() {
    *
    * const user = useSelf();
    */
-  function useSelf<TPresence extends JsonObject>(): User<TPresence> | null {
-    const room = useRoom<TPresence, LsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useSelf(): User<TPresence> | null {
+    const room = useRoom();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -356,12 +338,8 @@ export function create() {
     return room.getSelf();
   }
 
-  function useStorage<TStorage extends LsonObject>(): [
-    root: LiveObject<TStorage> | null
-  ] {
-    const room = useRoom<never, TStorage>();
-    //                   ^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useStorage(): [root: LiveObject<TStorage> | null] {
+    const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
     React.useEffect(() => {
@@ -640,6 +618,8 @@ Please see https://bit.ly/3Niy5aP for details.`
 
   function useStorageValue<T extends Lson>(
     key: string,
+    //   ^^^^^^
+    //   FIXME: Generalize to `keyof TStorage`?
     initialValue: T
   ): LookupResult<T> {
     const room = useRoom();
@@ -655,7 +635,8 @@ Please see https://bit.ly/3Niy5aP for details.`
 
       if (liveValue == null) {
         liveValue = initialValue;
-        root.set(key, liveValue);
+        root.set(key, liveValue as unknown as TStorage[string]);
+        //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
       }
 
       function onRootChange() {
