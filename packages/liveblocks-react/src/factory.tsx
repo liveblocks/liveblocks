@@ -224,12 +224,9 @@ export function create() {
    *   })
    * }
    */
-  function useOthers<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(): Others<TPresence> {
-    const room = useRoom<TPresence, TStorage>();
-    //                   ^^^^^^^^^^^^^^^^^^^
+  function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
+    const room = useRoom<TPresence, LsonObject>();
+    //                   ^^^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
