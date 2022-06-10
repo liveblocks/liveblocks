@@ -139,7 +139,7 @@ export function create() {
     const room = useRoom() as unknown as Room<TPresence>;
     //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     //                     FIXME No longer needed once TPresence moves to the factory level
-    const presence = room.getPresence<TPresence>();
+    const presence = room.getPresence();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -334,7 +334,7 @@ export function create() {
       };
     }, [room]);
 
-    return room.getSelf<TPresence>();
+    return room.getSelf();
   }
 
   function useStorage<TStorage extends Record<string, any>>(): [

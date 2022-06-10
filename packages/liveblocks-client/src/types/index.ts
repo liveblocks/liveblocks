@@ -414,16 +414,8 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
      *   // Do something
      * });
      */
-    <
-      /**
-       * @deprecated This type argument is ignored. If you want to annotate this
-       * type manually, please annotate the Room instance instead.
-       */
-      _ = unknown
-    >(
-      type: "my-presence",
-      listener: MyPresenceCallback<TPresence>
-    ): () => void;
+    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+
     /**
      * Subscribe to the other users updates.
      *
@@ -434,16 +426,8 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
      *   // Do something
      * });
      */
-    <
-      /**
-       * @deprecated This type argument is ignored. If you want to annotate this
-       * type manually, please annotate the Room instance instead.
-       */
-      _ = unknown
-    >(
-      type: "others",
-      listener: OthersEventCallback<TPresence>
-    ): () => void;
+    (type: "others", listener: OthersEventCallback<TPresence>): () => void;
+
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
@@ -455,14 +439,17 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
      * });
      */
     (type: "event", listener: EventCallback): () => void;
+
     /**
      * Subscribe to errors thrown in the room.
      */
     (type: "error", listener: ErrorCallback): () => void;
+
     /**
      * Subscribe to connection state updates.
      */
     (type: "connection", listener: ConnectionCallback): () => void;
+
     /**
      * Subscribes to changes made on a {@link LiveMap}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
@@ -480,6 +467,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
       liveMap: LiveMap<TKey, TValue>,
       listener: (liveMap: LiveMap<TKey, TValue>) => void
     ): () => void;
+
     /**
      * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
@@ -497,6 +485,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
       liveObject: LiveObject<TData>,
       callback: (liveObject: LiveObject<TData>) => void
     ): () => void;
+
     /**
      * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveList}.
@@ -585,13 +574,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf<
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >(): User<TPresence> | null;
+  getSelf(): User<TPresence> | null;
 
   /**
    * Gets the presence of the current user.
@@ -599,13 +582,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: <
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >() => TPresence;
+  getPresence: () => TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -613,13 +590,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: <
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >() => Others<TPresence>;
+  getOthers: () => Others<TPresence>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -633,13 +604,7 @@ export type Room<TPresence extends JsonObject = JsonObject> = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >(
+  updatePresence: (
     overrides: Partial<TPresence>,
     options?: {
       /**
