@@ -763,6 +763,9 @@ describe("room", () => {
     });
 
     test("batch storage and presence with changes from server", async () => {
+      type P = { x: number };
+      type S = { items: LiveList<string> };
+
       const {
         storage,
         assert,
@@ -772,7 +775,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{ items: LiveList<string> }, { x: number }>(
+      } = await prepareStorageTest<S, P>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -785,7 +788,7 @@ describe("room", () => {
 
       const itemsSubscriber = jest.fn();
       const refItemsSubscriber = jest.fn();
-      let refOthers: Others | undefined;
+      let refOthers: Others<P> | undefined;
       const refPresenceSubscriber = (o: any) => (refOthers = o);
 
       subscribe(items, itemsSubscriber);
@@ -844,16 +847,18 @@ describe("room", () => {
     });
 
     test("others", () => {
-      const { machine } = setupStateMachine({});
+      type P = { x?: number };
+
+      const { machine } = setupStateMachine<P>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P> | undefined;
 
-      const unsubscribe = machine.subscribe("others", (o) => (others = o));
+      const unsubscribe = machine.subscribe<P>("others", (o) => (others = o));
 
       machine.onMessage(
         serverMessage({
@@ -1110,16 +1115,18 @@ describe("room", () => {
 
   describe("Initial UpdatePresenceServerMsg", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
-      const { machine } = setupStateMachine({});
+      type P = { x?: number };
+
+      const { machine } = setupStateMachine<P>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P> | undefined;
 
-      machine.subscribe("others", (o) => (others = o));
+      machine.subscribe<P>("others", (o) => (others = o));
 
       machine.onMessage(
         serverMessage({

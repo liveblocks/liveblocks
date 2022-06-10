@@ -60,7 +60,7 @@ export type LiveblocksState<
     /**
      * The room currently synced to your zustand state.
      */
-    readonly room: Room | null;
+    readonly room: Room<TPresence> | null;
     /**
      * Other users in the room. Empty no room is currently synced
      */
@@ -103,7 +103,7 @@ type Options<T> = {
 
 export function middleware<
   T extends ZustandState,
-  TPresence extends JsonObject = JsonObject
+  TPresence extends JsonObject
 >(
   config: StateCreator<
     T,
@@ -142,7 +142,7 @@ export function middleware<
       ) => LiveblocksState<T> | Partial<T>
     ) => void = set;
 
-    let room: Room | null = null;
+    let room: Room<TPresence> | null = null;
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
@@ -155,7 +155,12 @@ export function middleware<
 
         if (room) {
           isPatching = true;
-          updatePresence(room!, oldState, newState, presenceMapping as any);
+          updatePresence(
+            room!,
+            oldState as any,
+            newState,
+            presenceMapping as any
+          );
 
           room.batch(() => {
             if (storageRoot) {
@@ -171,7 +176,7 @@ export function middleware<
           isPatching = false;
         }
       },
-      get,
+      get as any,
       api
     );
 
@@ -182,7 +187,10 @@ export function middleware<
 
       room = client.enter(roomId);
 
-      updateZustandLiveblocksState(set, { isStorageLoading: true, room });
+      updateZustandLiveblocksState(set, {
+        isStorageLoading: true,
+        room: room as any,
+      });
 
       const state = get();
 
@@ -323,7 +331,7 @@ function updateZustandLiveblocksState<T extends ZustandState>(
 }
 
 function broadcastInitialPresence<T>(
-  room: Room,
+  room: Room<any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -332,11 +340,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
-  room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+function updatePresence<TPresence extends JsonObject>(
+  room: Room<TPresence>,
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -345,7 +353,7 @@ function updatePresence<T>(
 
     if (oldState[key] !== newState[key]) {
       const val = newState[key] as unknown as Json | undefined;
-      room.updatePresence({ [key]: val });
+      room.updatePresence({ [key]: val } as any);
     }
   }
 }

@@ -86,15 +86,6 @@ module.exports = {
         message: "Don't refer to AbstractCrdt as a type. Use LiveNode instead.",
       },
 
-      // Ensure we always specify all the type params in this code base. Even
-      // though many of these are (temporarily) optional, they are only
-      // optional for our end users, not internally.
-      {
-        selector:
-          "TSTypeReference[typeName.name=/^(Room|Machine|State|Effects|InternalRoom|User|OthersEvent|MyPresenceCallback|RoomEventCallbackMap|OthersEventCallback)$/][typeParameters.params.length != 1]",
-        message: "Missing type params.",
-      },
-
       // {
       //   selector: "ForOfStatement",
       //   message:
