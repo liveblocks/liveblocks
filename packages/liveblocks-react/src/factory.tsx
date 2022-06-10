@@ -17,7 +17,7 @@ import * as React from "react";
 import { useClient } from "./client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<
+export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 > = Resolve<
