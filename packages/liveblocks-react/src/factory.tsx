@@ -133,8 +133,6 @@ export function create<
    * You don't need to pass the full presence object to update it.
    *
    * @example
-   * import { useMyPresence } from "@liveblocks/react";
-   *
    * const [myPresence, updateMyPresence] = useMyPresence();
    * updateMyPresence({ x: 0 });
    * updateMyPresence({ y: 0 });
@@ -170,8 +168,6 @@ export function create<
    * If you don't use the current user presence in your component, but you need to update it (e.g. live cursor), it's better to use useUpdateMyPresence to avoid unnecessary renders.
    *
    * @example
-   * import { useUpdateMyPresence } from "@liveblocks/react";
-   *
    * const updateMyPresence = useUpdateMyPresence();
    * updateMyPresence({ x: 0 });
    * updateMyPresence({ y: 0 });
@@ -196,8 +192,6 @@ export function create<
    * Returns an object that lets you get information about all the the users currently connected in the room.
    *
    * @example
-   * import { useOthers } from "@liveblocks/react";
-   *
    * const others = useOthers();
    *
    * // Example to map all cursors in jsx
@@ -228,8 +222,6 @@ export function create<
    * Returns a callback that lets you broadcast custom events to other users in the room
    *
    * @example
-   * import { useBroadcastEvent } from "@liveblocks/react";
-   *
    * const broadcast = useBroadcastEvent();
    *
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
@@ -255,8 +247,6 @@ export function create<
    * useErrorListener is a react hook that lets you react to potential room connection errors.
    *
    * @example
-   * import { useErrorListener } from "@liveblocks/react";
-   *
    * useErrorListener(er => {
    *   console.error(er);
    * })
@@ -283,8 +273,6 @@ export function create<
    * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
    *
    * @example
-   * import { useEventListener } from "@liveblocks/react";
-   *
    * useEventListener(({ connectionId, event }) => {
    *   if (event.type === "CUSTOM_EVENT") {
    *     // Do something
@@ -317,8 +305,6 @@ export function create<
    * Gets the current user once it is connected to the room.
    *
    * @example
-   * import { useSelf } from "@liveblocks/react";
-   *
    * const user = useSelf();
    */
   function useSelf(): User<TPresence> | null {
