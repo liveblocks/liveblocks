@@ -7,6 +7,10 @@ Various Live structures now take mandatory type params:
 - `LiveMap<K, V>` (just like `Map<K, V>`)
 - `LiveObject<{ a: number, b: string }>` (just like, for example, `{ a: number, b: string }`)
 - `LiveList<T>` (just like `Array<T>`)
+- All APIs that work with Presence data will now require it to be JSON-serializable
+- The built-in `Presence` type is now deprecated and will get removed in 0.18.
+  The idea is that you bring whatever type definition for Presence that makes
+  sense to your own app instead.
 
 ### Breaking changes
 

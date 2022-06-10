@@ -18,7 +18,6 @@ import {
 import type { RoomAuthToken } from "./AuthToken";
 import { lsonToJson } from "./immutable";
 import { LiveList } from "./LiveList";
-import type { State } from "./room";
 import { createRoom, defaultState, makeStateMachine } from "./room";
 import type { Authentication, IdTuple, Others, SerializedCrdt } from "./types";
 import {
@@ -49,8 +48,8 @@ const defaultRoomToken: RoomAuthToken = {
 function setupStateMachine<TPresence extends JsonObject>(
   initialPresence?: TPresence
 ) {
-  const effects = mockEffects();
-  const state = defaultState(initialPresence) as State<TPresence>;
+  const effects = mockEffects<TPresence>();
+  const state = defaultState<TPresence>(initialPresence);
   const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
   return { machine, state, effects };
 }
@@ -773,7 +772,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{ items: LiveList<string> }>(
+      } = await prepareStorageTest<{ items: LiveList<string> }, { x: number }>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -1023,10 +1022,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } = await prepareStorageTest(
-        [createSerializedObject("0:0", {})],
-        1
-      );
+      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<
+        never,
+        { x: number }
+      >([createSerializedObject("0:0", {})], 1);
 
       machine.updatePresence({ x: 1 });
 

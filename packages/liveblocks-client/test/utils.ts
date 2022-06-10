@@ -162,8 +162,8 @@ async function prepareRoomWithStorage<
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({}, defaultStorage);
-  const machine = makeStateMachine(state, defaultContext, effects);
+  const state = defaultState<TPresence>({} as TPresence, defaultStorage);
+  const machine = makeStateMachine<TPresence>(state, defaultContext, effects);
   const ws = new MockWebSocket("");
 
   machine.connect();
@@ -235,20 +235,20 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<TStorage extends LsonObject>(
-  items: IdTuple<SerializedCrdt>[],
-  actor: number = 0
-) {
+export async function prepareStorageTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<never, TStorage>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    never,
+    TPresence,
     TStorage
-  >(items, currentActor, (messages: ClientMsg<never>[]) => {
+  >(items, currentActor, (messages: ClientMsg<TPresence>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         operations.push(...message.ops);
@@ -360,11 +360,14 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareStorageUpdateTest<T extends LsonObject>(
+export function prepareStorageUpdateTest<
+  T extends LsonObject,
+  TPresence extends JsonObject = JsonObject
+>(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
     root: LiveObject<T>;
-    machine: Machine;
+    machine: Machine<TPresence>;
     assert: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
@@ -418,8 +421,8 @@ export function prepareStorageUpdateTest<T extends LsonObject>(
   };
 }
 
-export async function reconnect(
-  machine: Machine,
+export async function reconnect<TPresence extends JsonObject = JsonObject>(
+  machine: Machine<TPresence>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
@@ -569,7 +572,9 @@ export function createSerializedRegister(
   return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
-export function mockEffects(): Effects<JsonObject> {
+export function mockEffects<
+  TPresence extends JsonObject
+>(): Effects<TPresence> {
   return {
     authenticate: jest.fn(),
     delayFlush: jest.fn(),

@@ -131,7 +131,8 @@ function Example() {
     };
   }, [updateMyPresence]);
 
-  useEventListener(({ event }: { event: ReactionEvent }) => {
+  useEventListener((eventData) => {
+    const event = eventData.event as ReactionEvent;
     setReactions((reactions) =>
       reactions.concat([
         {

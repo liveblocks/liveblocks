@@ -1,8 +1,8 @@
 import type {
   Client,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
   Room,
   User,
 } from "@liveblocks/client";
@@ -37,7 +37,7 @@ const ACTION_TYPES = {
 
 export type LiveblocksState<
   TState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject = JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
@@ -376,11 +376,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
+function updatePresence<TPresence extends JsonObject>(
   room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
