@@ -15,9 +15,9 @@ import {
 import type { LiveObject } from "../src/LiveObject";
 import type { LsonObject, ToJson } from "../src/types";
 
-async function initializeRoomForTest<T extends LsonObject>(
+async function initializeRoomForTest<TStorage extends LsonObject>(
   roomId: string,
-  initialStorage?: T
+  initialStorage?: TStorage
 ) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -87,11 +87,11 @@ async function initializeRoomForTest<T extends LsonObject>(
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareTestsConflicts<T extends LsonObject>(
-  initialStorage: T,
+export function prepareTestsConflicts<TStorage extends LsonObject>(
+  initialStorage: TStorage,
   callback: (args: {
-    root1: LiveObject<T>;
-    root2: LiveObject<T>;
+    root1: LiveObject<TStorage>;
+    root2: LiveObject<TStorage>;
     room2: Room;
     room1: Room;
     /**
@@ -99,7 +99,7 @@ export function prepareTestsConflicts<T extends LsonObject>(
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
      * It also ensure that immutable states updated with the updates generated from conflicts are equals
      */
-    assert: (jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) => void;
+    assert: (jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
       flushSocket2Messages: () => Promise<void>;
@@ -120,10 +120,10 @@ export function prepareTestsConflicts<T extends LsonObject>(
       ws: ws2,
     } = await initializeRoomForTest(roomName);
 
-    const { root: root1 } = await room1.getStorage<T>();
-    const { root: root2 } = await room2.getStorage<T>();
+    const { root: root1 } = await room1.getStorage<TStorage>();
+    const { root: root2 } = await room2.getStorage<TStorage>();
 
-    function assert(jsonRoot1: ToJson<T>, jsonRoot2?: ToJson<T>) {
+    function assert(jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) {
       if (jsonRoot2 == null) {
         jsonRoot2 = jsonRoot1;
       }
@@ -198,15 +198,15 @@ export function prepareTestsConflicts<T extends LsonObject>(
 /**
  * Join a room and stop sending socket messages when the storage is initialized
  */
-export function prepareSingleClientTest<T extends LsonObject>(
-  initialStorage: T,
+export function prepareSingleClientTest<TStorage extends LsonObject>(
+  initialStorage: TStorage,
   callback: (args: {
-    root: LiveObject<T>;
+    root: LiveObject<TStorage>;
     room: Room;
     /**
      * Assert that room storage is equal to the provided json
      */
-    // assert: (jsonRoot: ToJson<T>) => void;
+    // assert: (jsonRoot: ToJson<TStorage>) => void;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {
@@ -218,7 +218,7 @@ export function prepareSingleClientTest<T extends LsonObject>(
       initialStorage
     );
 
-    const { root } = await room.getStorage<T>();
+    const { root } = await room.getStorage<TStorage>();
 
     // Waiting until every messages are received by all clients.
     // We don't have a public way to know if everything has been received so we have to rely on time
