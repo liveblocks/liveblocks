@@ -320,9 +320,7 @@ export function create() {
    *
    * const user = useSelf();
    */
-  function useSelf<
-    TPresence extends JsonObject = JsonObject
-  >(): User<TPresence> | null {
+  function useSelf<TPresence extends JsonObject>(): User<TPresence> | null {
     const room = useRoom<TPresence>();
     //                   ^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level

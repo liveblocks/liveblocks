@@ -40,7 +40,7 @@ export type ZustandState =
 
 export type LiveblocksState<
   TState extends ZustandState,
-  TPresence extends JsonObject = JsonObject
+  TPresence extends JsonObject
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
