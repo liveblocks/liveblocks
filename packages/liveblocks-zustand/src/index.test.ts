@@ -1,4 +1,4 @@
-import type { JsonObject } from "@liveblocks/client";
+import type { JsonObject, LsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
   IdTuple,
@@ -98,7 +98,8 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 
 function prepareClientAndStore<
   T extends ZustandState,
-  TPresence extends JsonObject = JsonObject
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
 >(
   stateCreator: StateCreator<T>,
   options: {
@@ -108,7 +109,7 @@ function prepareClientAndStore<
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = create(
-    middleware<T, TPresence>(stateCreator, { ...options, client })
+    middleware<T, TPresence, TStorage>(stateCreator, { ...options, client })
   );
   return { client, store };
 }
