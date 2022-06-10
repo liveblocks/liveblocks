@@ -153,15 +153,12 @@ export function create() {
    *
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
-  function useMyPresence<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(): [
+  function useMyPresence<TPresence extends JsonObject>(): [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom<TPresence, TStorage>();
-    //                   ^^^^^^^^^^^^^^^^^^^
+    const room = useRoom<TPresence, JsonObject>();
+    //                   ^^^^^^^^^^^^^^^^^^^^^
     //                   FIXME No longer needed once TPresence moves to the factory level
     const presence = room.getPresence();
     const rerender = useRerender();
