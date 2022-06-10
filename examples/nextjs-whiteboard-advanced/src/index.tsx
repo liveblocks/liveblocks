@@ -50,12 +50,16 @@ export default function Room() {
   return (
     <RoomProvider
       id={roomId}
-      defaultPresence={() => ({
+      initialPresence={{
         selection: [],
         cursor: null,
         pencilDraft: null,
         penColor: null,
-      })}
+      }}
+      initialStorage={{
+        layers: new LiveMap<string, LiveObject<Layer>>(),
+        layerIds: new LiveList(),
+      }}
     >
       <div className={styles.container}>
         <WhiteboardTool />
