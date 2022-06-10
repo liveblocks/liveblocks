@@ -136,7 +136,7 @@ const testIds = {
 };
 
 function PresenceComponent() {
-  const [me, setPresence] = useMyPresence<{ x: number }>();
+  const [me, setPresence] = useMyPresence<{ x: number }, never>();
   const others = useOthers();
 
   return (

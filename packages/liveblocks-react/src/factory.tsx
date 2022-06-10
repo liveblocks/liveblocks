@@ -107,7 +107,15 @@ export function create() {
     }, [client, roomId]);
 
     return (
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+      <RoomContext.Provider
+        value={
+          room as unknown as Room<JsonObject, LsonObject>
+          //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+          //   FIXME Not needed anymore when we parameterize the RoomProvider with these
+        }
+      >
+        {props.children}
+      </RoomContext.Provider>
     );
   }
 
@@ -360,7 +368,9 @@ export function create() {
   function useStorage<TStorage extends LsonObject>(): [
     root: LiveObject<TStorage> | null
   ] {
-    const room = useRoom();
+    const room = useRoom<never, TStorage>();
+    //                   ^^^^^^^^^^^^^^^^
+    //                   FIXME No longer needed once TPresence moves to the factory level
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
     React.useEffect(() => {
@@ -637,7 +647,10 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T>(key: string, initialValue: T): LookupResult<T> {
+  function useStorageValue<T extends Lson>(
+    key: string,
+    initialValue: T
+  ): LookupResult<T> {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
@@ -647,7 +660,7 @@ Please see https://bit.ly/3Niy5aP for details.`
         return;
       }
 
-      let liveValue: null | T = root.get(key);
+      let liveValue: T | undefined = root.get(key) as T | undefined;
 
       if (liveValue == null) {
         liveValue = initialValue;
@@ -655,12 +668,12 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       function onRootChange() {
-        const newCrdt = root!.get(key);
+        const newCrdt = root!.get(key) as T | undefined;
         if (newCrdt !== liveValue) {
           unsubscribeCrdt();
           liveValue = newCrdt;
           unsubscribeCrdt = room.subscribe(
-            liveValue as any /* AbstractCrdt */,
+            liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
             rerender
           );
           rerender();
@@ -668,11 +681,11 @@ Please see https://bit.ly/3Niy5aP for details.`
       }
 
       let unsubscribeCrdt = room.subscribe(
-        liveValue as any /* AbstractCrdt */,
+        liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         rerender
       );
       const unsubscribeRoot = room.subscribe(
-        root as any /* AbstractCrdt */,
+        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
         onRootChange
       );
 
@@ -687,7 +700,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     if (root == null) {
       return { status: "loading" };
     } else {
-      const value = root.get(key);
+      const value = root.get(key) as T | undefined;
       if (value == null) {
         return { status: "notfound" };
       } else {
