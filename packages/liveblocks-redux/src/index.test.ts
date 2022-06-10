@@ -71,7 +71,7 @@ function prepareClientAndStore<T>(
   preloadedState?: T
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = configureStore<LiveblocksState<BasicState>>({
+  const store = configureStore<LiveblocksState<BasicState, BasicPresence>>({
     reducer: reducer as any,
     enhancers: [enhancer({ client, ...options })],
     preloadedState,
@@ -86,6 +86,8 @@ type BasicState = {
   notMapped: string;
   cursor: { x: number; y: number };
 };
+
+type BasicPresence = Pick<BasicState, "cursor">;
 
 const basicStoreReducer = ((
   state: BasicState = {
