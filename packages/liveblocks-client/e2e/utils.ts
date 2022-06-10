@@ -13,12 +13,12 @@ import {
   patchImmutableObject,
 } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
-import type { LsonObject, ToJson } from "../src/types";
+import type { JsonObject, LsonObject, ToJson } from "../src/types";
 
-async function initializeRoomForTest<TStorage extends LsonObject>(
-  roomId: string,
-  initialStorage?: TStorage
-) {
+async function initializeRoomForTest<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(roomId: string, initialStorage?: TStorage) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
   if (publicApiKey == null) {
@@ -68,7 +68,7 @@ async function initializeRoomForTest<TStorage extends LsonObject>(
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 
-  const room = client.enter(roomId, {
+  const room = client.enter<TStorage, TPresence>(roomId, {
     initialStorage,
   });
   await waitFor(() => room.getConnectionState() === "open");
@@ -87,13 +87,16 @@ async function initializeRoomForTest<TStorage extends LsonObject>(
 /**
  * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
  */
-export function prepareTestsConflicts<TStorage extends LsonObject>(
+export function prepareTestsConflicts<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
+>(
   initialStorage: TStorage,
   callback: (args: {
     root1: LiveObject<TStorage>;
     root2: LiveObject<TStorage>;
-    room2: Room;
-    room1: Room;
+    room2: Room<TPresence>;
+    room1: Room<TPresence>;
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
@@ -113,12 +116,15 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
       client: client1,
       room: room1,
       ws: ws1,
-    } = await initializeRoomForTest(roomName, initialStorage);
+    } = await initializeRoomForTest<TPresence, TStorage>(
+      roomName,
+      initialStorage
+    );
     const {
       client: client2,
       room: room2,
       ws: ws2,
-    } = await initializeRoomForTest(roomName);
+    } = await initializeRoomForTest<TPresence, TStorage>(roomName);
 
     const { root: root1 } = await room1.getStorage<TStorage>();
     const { root: root2 } = await room2.getStorage<TStorage>();
@@ -198,11 +204,14 @@ export function prepareTestsConflicts<TStorage extends LsonObject>(
 /**
  * Join a room and stop sending socket messages when the storage is initialized
  */
-export function prepareSingleClientTest<TStorage extends LsonObject>(
+export function prepareSingleClientTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never
+>(
   initialStorage: TStorage,
   callback: (args: {
     root: LiveObject<TStorage>;
-    room: Room;
+    room: Room<TPresence>;
     /**
      * Assert that room storage is equal to the provided json
      */
@@ -213,10 +222,10 @@ export function prepareSingleClientTest<TStorage extends LsonObject>(
   return async () => {
     const roomName = "storage-requirements-e2e-tests-" + new Date().getTime();
 
-    const { client, room, ws } = await initializeRoomForTest(
-      roomName,
-      initialStorage
-    );
+    const { client, room, ws } = await initializeRoomForTest<
+      TPresence,
+      TStorage
+    >(roomName, initialStorage);
 
     const { root } = await room.getStorage<TStorage>();
 
