@@ -35,7 +35,9 @@ type LookupResult<T> =
   | { status: "notfound" };
 
 export function create() {
-  const RoomContext = React.createContext<Room | null>(null);
+  const RoomContext = React.createContext<Room<JsonObject> | null>(null);
+  //                                           ^^^^^^^^^^
+  //                                           FIXME: Generalize to TPresence and lift to the `create()` level!
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -108,8 +110,10 @@ export function create() {
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom(): Room {
-    const room = React.useContext(RoomContext);
+  function useRoom<TPresence extends JsonObject>(): Room<TPresence> {
+    const room = React.useContext(RoomContext) as Room<TPresence> | null;
+    //                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                                         FIXME Remove once we lift presence to the create() level
 
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
@@ -136,9 +140,9 @@ export function create() {
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom() as unknown as Room<TPresence>;
-    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                     FIXME No longer needed once TPresence moves to the factory level
+    const room = useRoom<TPresence>();
+    //                   ^^^^^^^^^
+    //                   FIXME No longer needed once TPresence moves to the factory level
     const presence = room.getPresence();
     const rerender = useRerender();
 
@@ -204,9 +208,9 @@ export function create() {
    * }
    */
   function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
-    const room = useRoom() as unknown as Room<TPresence>;
-    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                     FIXME No longer needed once TPresence moves to the factory level
+    const room = useRoom<TPresence>();
+    //                   ^^^^^^^^^
+    //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -319,9 +323,9 @@ export function create() {
   function useSelf<
     TPresence extends JsonObject = JsonObject
   >(): User<TPresence> | null {
-    const room = useRoom() as unknown as Room<TPresence>;
-    //                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                     FIXME No longer needed once TPresence moves to the factory level
+    const room = useRoom<TPresence>();
+    //                   ^^^^^^^^^
+    //                   FIXME No longer needed once TPresence moves to the factory level
     const rerender = useRerender();
 
     React.useEffect(() => {
