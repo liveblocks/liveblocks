@@ -15,7 +15,7 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const MAX_OTHERS = 3;
 
-const animationProperties = {
+const animationProps = {
   initial: { width: 0, transformOrigin: "left" },
   animate: { width: "auto", height: "auto" },
   exit: { width: 0 },
@@ -29,12 +29,12 @@ const animationProperties = {
   },
 };
 
-const avatarProperties = {
+const avatarProps = {
   style: { marginLeft: "-0.7rem" },
   size: 52,
   outlineWidth: 4,
   outlineColor: "white",
-}
+};
 
 export default function LiveAvatars() {
   const users = useOthers().toArray();
@@ -42,12 +42,12 @@ export default function LiveAvatars() {
   const hasMoreUsers = users.length > MAX_OTHERS;
 
   return (
-    <div className="flex pl-3 overflow-hidden" style={{ minHeight: avatarProperties.size + "px" }}>
+    <div className="flex pl-3 overflow-hidden" style={{ minHeight: avatarProps.size + "px" }}>
       <AnimatePresence>
         {hasMoreUsers ? (
-          <motion.div {...animationProperties} key="count">
+          <motion.div {...animationProps} key="count">
             <Avatar
-              {...avatarProperties}
+              {...avatarProps}
               variant="more"
               count={users.length - 3}
             />
@@ -55,9 +55,9 @@ export default function LiveAvatars() {
         ) : null}
 
         {users.slice(0, MAX_OTHERS).reverse().map(({ connectionId, info }) => (
-          <motion.div {...animationProperties} key={connectionId}>
+          <motion.div {...animationProps} key={connectionId}>
             <Avatar
-              {...avatarProperties}
+              {...avatarProps}
               picture={info?.picture}
               name={info?.name}
               color={info?.color}
@@ -66,9 +66,9 @@ export default function LiveAvatars() {
         ))}
 
         {currentUser ? (
-          <motion.div {...animationProperties} key="you">
+          <motion.div {...animationProps} key="you">
             <Avatar
-              {...avatarProperties}
+              {...avatarProps}
               picture={currentUser.info?.picture}
               name="You"
               color={currentUser.info?.color}

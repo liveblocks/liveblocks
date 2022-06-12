@@ -1,12 +1,10 @@
-import React, { useOthers, useUpdateMyPresence } from "@liveblocks/react";
-import { ReactNode } from "react";
+import React, { useOthers, useUpdateMyPresence, } from "@liveblocks/react";
+import { MutableRefObject, useEffect, useRef } from "react";
 import Cursor from "./Cursor";
 
 /**
  * This file shows how to add basic live cursors on your product.
  */
-
-
 
 type Cursor = {
   x: number;
@@ -18,10 +16,10 @@ type Presence = {
 };
 
 type Props = {
-  children: ReactNode
-}
+  scrollRef: MutableRefObject<HTMLElement | null>;
+};
 
-export default function LiveCursors({ children }: Props) {
+export default function LiveCursors({ scrollRef }: Props) {
   /**
    * useMyPresence returns the presence of the current user and a function to update it.
    * updateMyPresence is different to the setState function returned by the useState hook from React.
@@ -35,26 +33,68 @@ export default function LiveCursors({ children }: Props) {
    */
   const others = useOthers<Presence>();
 
+  const rect = useRef({ x: 0, y: 0 });
+
+  useEffect(() => {
+    /* === Update bounding rect on window change ========== */
+    const updateRect = () => {
+      if (!scrollRef?.current) {
+        return;
+      }
+      rect.current = scrollRef.current.getBoundingClientRect();
+    };
+
+    window.addEventListener("resize", updateRect);
+    window.addEventListener("orientationchange", updateRect);
+    updateRect();
+
+    if (!(scrollRef?.current instanceof HTMLElement)) {
+      console.warn("Pass `ref` containing HTMLElement to `<LiveCursors scrollRef=\"\"`.");
+      return;
+    }
+
+    /* === If scrollRef, add live cursor listeners ========== */
+    const updateCursor = (event: PointerEvent) => {
+      if (!scrollRef?.current) {
+        return;
+      }
+
+      // (Viewport position) - (element position) + (element scroll amount)
+      const x = event.clientX - rect.current.x + scrollRef.current.scrollLeft;
+      const y = event.clientY - rect.current.y + scrollRef.current.scrollTop;
+
+      updateMyPresence({
+        cursor: {
+          x: Math.round(x),
+          y: Math.round(y),
+        },
+      });
+    };
+
+    const removeCursor = () => {
+      updateMyPresence({
+        cursor: null,
+      });
+    };
+
+    scrollRef.current.addEventListener("pointermove", updateCursor);
+    scrollRef.current.addEventListener("pointerleave", removeCursor);
+
+    /* === Clean up event listeners ========== */
+    const oldRef = scrollRef.current;
+    return () => {
+      window.removeEventListener("resize", updateRect);
+      window.removeEventListener("orientationchange", updateRect);
+      if (!oldRef) {
+        return
+      }
+      oldRef.removeEventListener("pointermove", updateCursor);
+      oldRef.removeEventListener("pointerleave", removeCursor);
+    };
+  }, [updateMyPresence, scrollRef]);
+
   return (
-    <div
-      className="flex place-content-center place-items-center overflow-hidden"
-      onPointerMove={(event) =>
-        // Update the user cursor position on every pointer move
-        updateMyPresence({
-          cursor: {
-            x: Math.round(event.clientX),
-            y: Math.round(event.clientY),
-          },
-        })
-      }
-      onPointerLeave={() =>
-        // When the pointer goes out, set cursor to null
-        updateMyPresence({
-          cursor: null,
-        })
-      }
-    >
-      {children}
+    <>
       {
         /**
          * Iterate over other users and display a cursor based on their presence
@@ -76,6 +116,6 @@ export default function LiveCursors({ children }: Props) {
           );
         })
       }
-    </div>
+    </>
   );
 }
