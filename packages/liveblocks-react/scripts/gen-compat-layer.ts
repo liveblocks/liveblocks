@@ -110,11 +110,14 @@ function getLiveblocksHookDefintions() {
 
   const fns: (FunctionDeclaration & { name: Identifier })[] = [];
   for (const name of exportedNames) {
-    const decl = decls.find((d) => d.name?.text === name);
-    if (!decl) {
+    const found = decls.filter(
+      (d): d is FunctionDeclaration & { name: Identifier } =>
+        d.name?.text === name
+    );
+    if (found.length === 0) {
       throw new Error("Declaration of " + name + " not found!");
     }
-    fns.push(decl as FunctionDeclaration & { name: Identifier });
+    fns.push(...found);
   }
   return fns;
 }
@@ -132,7 +135,9 @@ function getCommentForNode(node: Node): string {
  * Take a Liveblocks hook declaration, and returns the source code to wrap it.
  */
 function wrapHookDeclaration(
-  decl: FunctionDeclaration & { name: Identifier }
+  decl: FunctionDeclaration & { name: Identifier },
+  isOverload: boolean,
+  hasOverloads: boolean
 ): string {
   const name = decl.name.text;
 
@@ -144,7 +149,7 @@ function wrapHookDeclaration(
     if (!p.type || !isTypeNode(p.type)) {
       throw new Error("Param " + p.name.text + " has no type annotation!");
     }
-    return [p.name, p.type] as const;
+    return { name: p.name, type: p.type, optional: !!p.questionToken };
   });
 
   function doesReturnTypeNeed(ref: "TPresence" | "TStorage"): boolean {
@@ -152,7 +157,7 @@ function wrapHookDeclaration(
   }
 
   function doInputParamsNeed(ref: "TPresence" | "TStorage"): boolean {
-    return paramDecls.some(([, type]) => type.getText().includes(ref));
+    return paramDecls.some(({ type }) => type.getText().includes(ref));
   }
 
   const extraTPresence =
@@ -181,30 +186,47 @@ function wrapHookDeclaration(
       : "";
 
   const params = paramDecls
-    .map(([name, type]) => `${name.text}: ${type.getText()}`)
+    .map(
+      ({ name, type, optional }) =>
+        `${name.text}${optional ? "?" : ""}: ${type.getText()}`
+    )
     .join(", ");
 
   const optionalReturnType = decl.type ? `: ${decl.type.getText()}` : "";
 
-  const args = paramDecls.map(([name]) => name.text).join(", ");
+  // If this is a real function with a body, generate a function with a body
+  // here too. Otherwise, it's an overload definition, and we should generate
+  // that instead.
+  if (!isOverload) {
+    const args = paramDecls
+      .map(({ name }) => name.text)
+      .map((arg) => (hasOverloads ? `${arg} as any` : arg))
+      .join(", ");
 
-  const optionalCast =
-    decl.type &&
-    (doesReturnTypeNeed("TPresence") || doesReturnTypeNeed("TStorage"))
-      ? ` as unknown as ${decl.type.getText()}`
-      : "";
+    const optionalCast =
+      decl.type &&
+      (doesReturnTypeNeed("TPresence") || doesReturnTypeNeed("TStorage"))
+        ? ` as unknown as ${decl.type.getText()}`
+        : "";
 
-  const body = `
-    deprecate("The direct import for ${name} will get removed in 0.18. Please consider moving to use new-style factory hooks!");
-    return _hooks.${name}(${args})${optionalCast};
-  `;
+    const body = `
+      deprecate("The direct import for ${name} will get removed in 0.18. Please consider moving to use new-style factory hooks!");
+      return _hooks.${name}(${args})${optionalCast};
+    `;
 
-  // Put together the final source code
-  return `
-    ${jsDocComment}
-    export function ${name}${optionalTypeParams}(${params})${optionalReturnType} {
-      ${body}
-    }`;
+    // Put together the final source code
+    return `
+      ${jsDocComment}
+      export function ${name}${optionalTypeParams}(${params})${optionalReturnType} {
+        ${body}
+      }
+    `;
+  } else {
+    return `
+      ${jsDocComment}
+      export function ${name}${optionalTypeParams}(${params})${optionalReturnType};
+    `;
+  }
 }
 
 console.log(PREAMBLE);
@@ -219,6 +241,11 @@ const _hooks = create();
 
 const liveblocksHooks = getLiveblocksHookDefintions();
 for (const decl of liveblocksHooks) {
+  const isOverload = !decl.body;
+  const hasOverloads =
+    !isOverload &&
+    liveblocksHooks.filter((hook) => hook.name.text === decl.name.text).length >
+      1;
   console.log();
-  console.log(wrapHookDeclaration(decl));
+  console.log(wrapHookDeclaration(decl, isOverload, hasOverloads));
 }

@@ -226,11 +226,39 @@ export function useHistory(): History {
  */
 export function useList<TValue extends Lson>(
   key: string
+): LiveList<TValue> | null;
+
+/**
+ * @deprecated We no longer recommend initializing the
+ * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
+ *
+ * @deprecated Support for importing hooks directly from `@liveblocks/react`
+ * is going to get removed in the next major release (0.18). Please use the new
+ * recommended way of importing your hooks.
+ *
+ * Put the following contents in "./liveblocks.config.ts":
+ *
+ *     import { create } from "@liveblocks/react";
+ *     export default create<MyPresence, MyStorage>();
+ *
+ * Then, import from your local module:
+ *
+ *     import hooks from "./liveblocks.config";
+ *     const { useList } = hooks;
+ */
+export function useList<TValue extends Lson>(
+  key: string,
+  items: TValue[]
+): LiveList<TValue> | null;
+
+export function useList<TValue extends Lson>(
+  key: string,
+  items?: TValue[] | undefined
 ): LiveList<TValue> | null {
   deprecate(
     "The direct import for useList will get removed in 0.18. Please consider moving to use new-style factory hooks!"
   );
-  return _hooks.useList(key);
+  return _hooks.useList(key as any, items as any);
 }
 
 /**
@@ -259,11 +287,39 @@ export function useList<TValue extends Lson>(
  */
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string
+): LiveMap<TKey, TValue> | null;
+
+/**
+ * @deprecated We no longer recommend initializing the
+ * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
+ *
+ * @deprecated Support for importing hooks directly from `@liveblocks/react`
+ * is going to get removed in the next major release (0.18). Please use the new
+ * recommended way of importing your hooks.
+ *
+ * Put the following contents in "./liveblocks.config.ts":
+ *
+ *     import { create } from "@liveblocks/react";
+ *     export default create<MyPresence, MyStorage>();
+ *
+ * Then, import from your local module:
+ *
+ *     import hooks from "./liveblocks.config";
+ *     const { useMap } = hooks;
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries: readonly (readonly [TKey, TValue])[] | null
+): LiveMap<TKey, TValue> | null;
+
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
   deprecate(
     "The direct import for useMap will get removed in 0.18. Please consider moving to use new-style factory hooks!"
   );
-  return _hooks.useMap(key);
+  return _hooks.useMap(key as any, entries as any);
 }
 
 /**
@@ -331,11 +387,39 @@ export function useMyPresence<TPresence extends JsonObject>(): [
  */
 export function useObject<TData extends LsonObject>(
   key: string
+): LiveObject<TData> | null;
+
+/**
+ * @deprecated We no longer recommend initializing the fields from the
+ * useObject() hook. For details, see https://bit.ly/3Niy5aP.
+ *
+ * @deprecated Support for importing hooks directly from `@liveblocks/react`
+ * is going to get removed in the next major release (0.18). Please use the new
+ * recommended way of importing your hooks.
+ *
+ * Put the following contents in "./liveblocks.config.ts":
+ *
+ *     import { create } from "@liveblocks/react";
+ *     export default create<MyPresence, MyStorage>();
+ *
+ * Then, import from your local module:
+ *
+ *     import hooks from "./liveblocks.config";
+ *     const { useObject } = hooks;
+ */
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData: TData
+): LiveObject<TData> | null;
+
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData?: TData
 ): LiveObject<TData> | null {
   deprecate(
     "The direct import for useObject will get removed in 0.18. Please consider moving to use new-style factory hooks!"
   );
-  return _hooks.useObject(key);
+  return _hooks.useObject(key as any, initialData as any);
 }
 
 /**
