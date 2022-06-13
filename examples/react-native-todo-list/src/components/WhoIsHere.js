@@ -6,53 +6,39 @@ import {
   Text
 } from 'react-native';
 
-import { BlueAvatar, PurpleAvatar, GreenAvatar } from '../../assets/svg/Avatars';
+import Avatar from '../../assets/svg/Avatars';
 
-const OneAvatar = () => {
-  return <BlueAvatar />
+const colorPairs = [{
+  startColor: '#002A95', endColor: '#00A0D2'
+}, {
+  startColor: '#6116FF', endColor: '#E32DD1'
+},
+{
+  startColor: '#39C7D1', endColor: '#62CC52'
 }
-
-const TwoAvatar = () => {
-  return (
-    <View style={{ flexDirection: 'row' }}>
-      <OneAvatar />
-      <View style={{ marginLeft: -11 }}>
-        <PurpleAvatar />
-      </View>
-    </View>)
-}
-
-const ThreeAvatar = () => {
-  return (
-    <View style={{ flexDirection: 'row' }}>
-      <TwoAvatar />
-      <View style={{ marginLeft: -11 }}>
-        <GreenAvatar />
-      </View>
-    </View>);
-}
+];
 
 const Avatars = ({ count }) => {
-  if (count === 1) {
-    return <OneAvatar></OneAvatar>
+  const avatars = [];
+
+  for (let i = 0; i < count; i++) {
+    const colorPair = colorPairs[i % colorPairs.length];
+    avatars.push(
+      <View style={{ marginLeft: i === 0 ? 0 : -11 }}>
+        <Avatar startColor={colorPair.startColor} endColor={colorPair.endColor} />
+      </View>
+    );
   }
-  if (count === 2) {
-    return <TwoAvatar></TwoAvatar>
-  }
-  if (count >= 3) {
-    return <ThreeAvatar></ThreeAvatar>
-  }
-  return <></>
+
+  return <>
+    {avatars}
+  </>
 }
 
 const WhoIsHere = ({ count }) => {
-  if (count === 'undefined' || count === 0) {
-    return <></>
-  }
-
   return (
     <View style={styles.container}>
-      <Text style={styles.countText}>{count}</Text>
+      {count === 0 ? <></> : <Text style={styles.countText}>{count}</Text>}
       <Avatars count={count} />
     </View>);
 }

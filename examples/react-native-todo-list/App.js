@@ -44,8 +44,8 @@ const App = () => {
           {
             todos.toArray().length > 0 ?
               <FlatList
-                data={todos.toArray().reverse()}
-                renderItem={({ item, index }) => <Todo text={item.text} onDelete={() => todos.delete(todos.toArray().length - 1 - index)} />}
+                data={todos.toArray()}
+                renderItem={({ item, index }) => <Todo text={item.text} onDelete={() => todos.delete(index)} />}
                 keyExtractor={(_, index) => index}
               />
               : <NoMoreTodos></NoMoreTodos>
