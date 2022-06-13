@@ -36,6 +36,14 @@ jobs:
       - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh
 
+      - name: Run code generation
+        run: npm run codegen
+        if: matrix.pkg == 'liveblocks-react'
+
+      - name: Ensure no files changed
+        run: git diff --exit-code || ( echo && echo "Changes detected! Please run \"npm run generate-compat\" and check in the results." && exit 1 )
+        if: matrix.pkg == 'liveblocks-react'
+
       - name: Build
         run: npm run build
 
@@ -125,35 +133,3 @@ jobs:
 
       - name: Run e2e client specs tests
         run: npm run test-e2e
-
-  codegen:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [16.x]
-
-    defaults:
-      run:
-        working-directory: packages/liveblocks-react
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "**/package-lock.json"
-
-      - name: Install dependencies
-        run: npm i
-
-      - name: Run code generation
-        run: npm run codegen
-
-      - name: Ensure no files changed
-        run: git diff --exit-code || ( echo && echo "Changes detected! Please run \"npm run generate-compat\" and check in the results." && exit 1 )
-        working-directory: packages/liveblocks-react
