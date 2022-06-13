@@ -41,7 +41,7 @@ jobs:
         if: matrix.pkg == 'liveblocks-react'
 
       - name: Ensure no files changed
-        run: git diff --exit-code || ( echo && echo "Changes detected! Please run \"npm run generate-compat\" and check in the results." && exit 1 )
+        run: git diff --exit-code . || ( echo && echo "Changes detected! Please run \"npm run generate-compat\" and check in the results." && exit 1 )
         if: matrix.pkg == 'liveblocks-react'
 
       - name: Build
