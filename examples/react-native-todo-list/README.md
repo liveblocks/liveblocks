@@ -7,7 +7,7 @@
 # To-do List
 
 <p>
-  <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
+   <img src="https://img.shields.io/badge/-react--native-blue?style=flat&logo=react&color=0bd&logoColor=fff" alt="React Native">
 </p>
 
 This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io) and [React Native](https://reactnative.dev/).
