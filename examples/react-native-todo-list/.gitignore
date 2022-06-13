@@ -1,37 +1,7 @@
-Skip to content
-Search or jump to…
-Pull requests
-Issues
-Marketplace
-Explore
- 
-@vinodsantharam 
-/
-Private
-Code
-Issues
-53
-Pull requests
-Actions
-Projects
-2
-Security
-Insights
-Settings
-@vinodsantharam
-vinodsantharam Feature/android (#26)
-…
-Latest commit 7daf129 on 27 Feb 2021
- History
- 1 contributor
-67 lines (58 sloc)  926 Bytes
-   
 # OSX
-#
 .DS_Store
 
 # Xcode
-#
 build/
 *.pbxuser
 !default.pbxuser
@@ -50,7 +20,6 @@ DerivedData
 *.xcuserstate
 
 # Android/IntelliJ
-#
 build/
 .idea
 .gradle
@@ -61,12 +30,7 @@ android/app/*/*.aab
 android/vendor
 android/.bundle
 
-# Visual Studio Code
-#
-#.vscode/
-
 # node.js
-#
 node_modules/
 npm-debug.log
 yarn-error.log
@@ -78,12 +42,6 @@ buck-out/
 !debug.keystore
 
 # fastlane
-#
-# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
-# screenshots whenever they are needed.
-# For more information about the recommended setup visit:
-# https://docs.fastlane.tools/best-practices/source-control/
-
 */fastlane/
 
 # Bundle artifact
@@ -91,16 +49,3 @@ buck-out/
 
 # CocoaPods
 /ios/Pods/
-© 2022 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
-Loading complete
