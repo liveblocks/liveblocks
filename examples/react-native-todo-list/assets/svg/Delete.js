@@ -1,4 +1,4 @@
-import  React from 'react';
+import React from 'react';
 import { SvgXml } from 'react-native-svg';
 
 const xml = ` 
@@ -8,4 +8,4 @@ const xml = `
 </svg>
 `;
 
-export default () => <SvgXml xml={xml}/>;
+export default () => <SvgXml xml={xml} />;

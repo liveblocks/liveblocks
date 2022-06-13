@@ -1,4 +1,4 @@
-import  React from 'react';
+import React from 'react';
 import { SvgXml } from 'react-native-svg';
 
 const todayText = `
@@ -13,4 +13,4 @@ const todayText = `
 </svg>
 `;
 
-export default () => <SvgXml xml={todayText}/>;
+export default () => <SvgXml xml={todayText} />;

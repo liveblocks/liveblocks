@@ -39,7 +39,7 @@ const App = () => {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.container}>
-       <>
+        <>
           <Header whoIsHereCount={others?.count} />
           {
             todos.toArray().length > 0 ?
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   noTodos: {
-    flex: 1, 
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center'
   },
