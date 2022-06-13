@@ -46,10 +46,7 @@ export default function Example() {
    * It's using the storage block so the data is persisted even after all the users leave the room.
    * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useObject
    */
-  const data = useObject<Logo>("logo", {
-    name: "Acme Inc.",
-    theme: "light",
-  });
+  const data = useObject<Logo>("logo");
 
   if (!data) {
     return (

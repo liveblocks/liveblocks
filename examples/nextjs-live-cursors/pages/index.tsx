@@ -100,9 +100,9 @@ export default function Page() {
       /**
        * Initialize the cursor position to null when joining the room
        */
-      defaultPresence={() => ({
+      initialPresence={{
         cursor: null,
-      })}
+      }}
     >
       <Example />
     </RoomProvider>

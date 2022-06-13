@@ -15,7 +15,13 @@ function App({ Component, pageProps }: AppProps) {
 
   return (
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider
+        id={roomId}
+        initialStorage={{
+          name: "Acme Inc.",
+          theme: "light",
+        }}
+      >
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />
