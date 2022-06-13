@@ -29,6 +29,13 @@ const PREAMBLE = `
 `;
 
 function getDeprecationMessage(hookName: string): string {
+  // XXX Use markdown to highlight these
+
+  // XXX Use {@link } syntax to link to new definition
+
+  // XXX Figure out final name of "liveblocks.config" module. Perhaps `room.config`?
+
+  // XXX Upgrade all examples to this new API, and see what we'll hit
   return `
  *
  * @deprecated Support for importing hooks directly from \`@liveblocks/react\`
@@ -37,13 +44,17 @@ function getDeprecationMessage(hookName: string): string {
  *
  * Put the following contents in "./liveblocks.config.ts":
  *
- *     import { create } from "@liveblocks/react";
- *     export default create<MyPresence, MyStorage>();
+ * \`\`\`
+ * import { create } from "@liveblocks/react";
+ * export default create<MyPresence, MyStorage>();
+ * \`\`\`
  *
  * Then, import from your local module:
- *
- *     import hooks from "./liveblocks.config";
- *     const { ${hookName} } = hooks;
+ * 
+ * \`\`\`
+ * import hooks from "./liveblocks.config";
+ * const { ${hookName} } = hooks;
+ * \`\`\`
 `;
 }
 
@@ -170,6 +181,7 @@ function wrapHookDeclaration(
       ? "TStorage extends LsonObject"
       : "";
 
+  // XXX Replace, don't append deprecation message!
   const jsDocComment = getCommentForNode(decl).replace(
     "*/",
     `${getDeprecationMessage(name).trim()}\n*/`
