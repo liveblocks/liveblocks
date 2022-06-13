@@ -194,7 +194,10 @@ function wrapHookDeclaration(
       ? ` as unknown as ${decl.type.getText()}`
       : "";
 
-  const body = `return _hooks.${name}(${args})${optionalCast};`;
+  const body = `
+    deprecate("The direct import for ${name} will get removed in 0.18. Please consider moving to use new-style factory hooks!");
+    return _hooks.${name}(${args})${optionalCast};
+  `;
 
   // Put together the final source code
   return `
@@ -209,6 +212,7 @@ console.log(`
 import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { create } from "./factory";
+import { deprecate } from "@liveblocks/client/internal";
 
 const _hooks = create();
 `);

@@ -19,6 +19,7 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
+import { deprecate } from "@liveblocks/client/internal";
 
 import type { RoomProviderProps } from "./factory";
 import { create } from "./factory";
@@ -48,6 +49,9 @@ export function RoomProvider<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 >(props: RoomProviderProps<TPresence, TStorage>) {
+  deprecate(
+    "The direct import for RoomProvider will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.RoomProvider(props);
 }
 
@@ -72,6 +76,9 @@ export function RoomProvider<
  *     const { useBatch } = hooks;
  */
 export function useBatch(): (callback: () => void) => void {
+  deprecate(
+    "The direct import for useBatch will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useBatch();
 }
 
@@ -101,6 +108,9 @@ export function useBroadcastEvent(): (
   event: Json,
   options?: BroadcastOptions
 ) => void {
+  deprecate(
+    "The direct import for useBroadcastEvent will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useBroadcastEvent();
 }
 
@@ -127,6 +137,9 @@ export function useBroadcastEvent(): (
  *     const { useErrorListener } = hooks;
  */
 export function useErrorListener(callback: (err: Error) => void): void {
+  deprecate(
+    "The direct import for useErrorListener will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useErrorListener(callback);
 }
 
@@ -157,6 +170,9 @@ export function useErrorListener(callback: (err: Error) => void): void {
 export function useEventListener(
   callback: (eventData: { connectionId: number; event: Json }) => void
 ): void {
+  deprecate(
+    "The direct import for useEventListener will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useEventListener(callback);
 }
 
@@ -178,6 +194,9 @@ export function useEventListener(
  *     const { useHistory } = hooks;
  */
 export function useHistory(): History {
+  deprecate(
+    "The direct import for useHistory will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useHistory();
 }
 
@@ -208,6 +227,9 @@ export function useHistory(): History {
 export function useList<TValue extends Lson>(
   key: string
 ): LiveList<TValue> | null {
+  deprecate(
+    "The direct import for useList will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useList(key);
 }
 
@@ -238,6 +260,9 @@ export function useList<TValue extends Lson>(
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string
 ): LiveMap<TKey, TValue> | null {
+  deprecate(
+    "The direct import for useMap will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useMap(key);
 }
 
@@ -271,6 +296,9 @@ export function useMyPresence<TPresence extends JsonObject>(): [
   TPresence,
   (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
 ] {
+  deprecate(
+    "The direct import for useMyPresence will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useMyPresence() as unknown as [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
@@ -304,6 +332,9 @@ export function useMyPresence<TPresence extends JsonObject>(): [
 export function useObject<TData extends LsonObject>(
   key: string
 ): LiveObject<TData> | null {
+  deprecate(
+    "The direct import for useObject will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useObject(key);
 }
 
@@ -338,6 +369,9 @@ export function useObject<TData extends LsonObject>(
  *     const { useOthers } = hooks;
  */
 export function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
+  deprecate(
+    "The direct import for useOthers will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useOthers() as unknown as Others<TPresence>;
 }
 
@@ -360,6 +394,9 @@ export function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
  *     const { useRedo } = hooks;
  */
 export function useRedo(): () => void {
+  deprecate(
+    "The direct import for useRedo will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useRedo();
 }
 
@@ -385,6 +422,9 @@ export function useRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 >(): Room<TPresence, TStorage> {
+  deprecate(
+    "The direct import for useRoom will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useRoom() as unknown as Room<TPresence, TStorage>;
 }
 
@@ -411,12 +451,18 @@ export function useRoom<
 export function useSelf<
   TPresence extends JsonObject
 >(): User<TPresence> | null {
+  deprecate(
+    "The direct import for useSelf will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useSelf() as unknown as User<TPresence> | null;
 }
 
 export function useStorage<TStorage extends LsonObject>(): [
   root: LiveObject<TStorage> | null
 ] {
+  deprecate(
+    "The direct import for useStorage will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useStorage() as unknown as [root: LiveObject<TStorage> | null];
 }
 
@@ -439,6 +485,9 @@ export function useStorage<TStorage extends LsonObject>(): [
  *     const { useUndo } = hooks;
  */
 export function useUndo(): () => void {
+  deprecate(
+    "The direct import for useUndo will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useUndo();
 }
 
@@ -471,6 +520,9 @@ export function useUpdateMyPresence<TPresence extends JsonObject>(): (
   overrides: Partial<TPresence>,
   options?: { addToHistory: boolean }
 ) => void {
+  deprecate(
+    "The direct import for useUpdateMyPresence will get removed in 0.18. Please consider moving to use new-style factory hooks!"
+  );
   return _hooks.useUpdateMyPresence() as unknown as (
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
