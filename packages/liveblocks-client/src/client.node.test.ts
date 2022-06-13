@@ -21,6 +21,10 @@ async function authEndpointCallback() {
   };
 }
 
+function atobPolyfillMock(data: string): string {
+  return Buffer.from(data, "base64").toString();
+}
+
 function createClientAndEnter(options: ClientOptions) {
   const client = createClient(options);
   client.enter("room");
@@ -33,6 +37,7 @@ describe("createClient", () => {
         authEndpoint: "/api/auth",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
       })
     ).not.toThrow();
   });
@@ -43,6 +48,7 @@ describe("createClient", () => {
         publicApiKey: "pk_xxx",
         WebSocketPolyfill: MockWebSocket,
         fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
       })
     ).not.toThrow();
   });
@@ -52,6 +58,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: authEndpointCallback,
         WebSocketPolyfill: MockWebSocket,
+        atobPolyfill: atobPolyfillMock,
       });
     }).not.toThrow();
   });
@@ -61,6 +68,7 @@ describe("createClient", () => {
       createClientAndEnter({
         authEndpoint: "/api/auth",
         WebSocketPolyfill: MockWebSocket,
+        atobPolyfill: atobPolyfillMock,
       })
     ).toThrow(
       "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
@@ -130,5 +138,42 @@ describe("createClient", () => {
     ).toThrowError(
       "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
     );
+  });
+});
+
+describe("when env atob does not exist (atob polyfill handling)", () => {
+  let nativeAtob: typeof atob | null = null;
+
+  beforeAll(() => {
+    nativeAtob = global.atob;
+    (global as any).atob = undefined;
+  });
+
+  afterAll(() => {
+    (global as any).atob = nativeAtob;
+  });
+
+  test("should throw error if atob polyfill is not set", () => {
+    expect(() => {
+      createClientAndEnter({
+        publicApiKey: "pk_xxx",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+        atobPolyfill: undefined,
+      } as ClientOptions);
+    }).toThrowError(
+      "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
+    );
+  });
+
+  test("should not throw error if atob polyfill option is set", () => {
+    expect(() => {
+      createClientAndEnter({
+        publicApiKey: "pk_xxx",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
+      } as ClientOptions);
+    }).not.toThrow();
   });
 });

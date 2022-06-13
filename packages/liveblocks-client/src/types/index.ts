@@ -280,6 +280,7 @@ export type ClientOptions = {
   throttle?: number;
   fetchPolyfill?: typeof fetch;
   WebSocketPolyfill?: any;
+  atobPolyfill?: (data: string) => string;
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
