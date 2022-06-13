@@ -17,7 +17,9 @@ async function run() {
     publicApiKey: PUBLIC_KEY,
   });
 
-  const room = client.enter(roomId);
+  const room = client.enter(roomId, {
+    initialStorage: { todos: new LiveList() },
+  });
 
   const whoIsHere = document.getElementById("who_is_here");
   const todoInput = document.getElementById("todo_input");
@@ -37,11 +39,6 @@ async function run() {
   const { root } = await room.getStorage();
 
   let todos = root.get("todos");
-
-  if (todos == null) {
-    todos = new LiveList();
-    root.set("todos", todos);
-  }
 
   todoInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {

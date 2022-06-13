@@ -8,14 +8,14 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.9",
-    "@liveblocks/react": "^0.16.9",
+    "@liveblocks/client": "^0.16.17",
+    "@liveblocks/react": "^0.16.17",
     "drei": "2.2.12",
     "next": "^12.1.6",
     "next-transpile-modules": "^9.0.0",
-    "react": "^18.1.0",
+    "react": "17.0.2",
     "react-colorful": "^5.5.0",
-    "react-dom": "^18.1.0",
+    "react-dom": "17.0.2",
     "react-three-fiber": "5.3.10",
     "three": "0.123.0"
   },

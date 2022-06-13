@@ -62,7 +62,7 @@ export default Vue.extend({
     };
   },
   mounted: function () {
-    const room = client.enter(roomId, { cursor: null });
+    const room = client.enter(roomId, { initialPresence: { cursor: null } });
     this._room = room;
     this._unsubscribe = room.subscribe("my-presence", this.onPresenceChange);
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
