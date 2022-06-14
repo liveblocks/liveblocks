@@ -114,80 +114,6 @@ export function useHistory(): History {
 
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
- * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useList<TValue extends Lson>(
-  key: string
-): LiveList<TValue> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useList<TValue extends Lson>(
-  key: string,
-  items: TValue[]
-): LiveList<TValue> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useList<TValue extends Lson>(
-  key: string,
-  items?: TValue[] | undefined
-): LiveList<TValue> | null {
-  deprecate(
-    "Please use `createRoomContext()` instead of importing `useList` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
-  );
-  return _hooks.deprecated_useList(key as any, items as any);
-}
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useMap<TKey extends string, TValue extends Lson>(
-  key: string
-): LiveMap<TKey, TValue> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useMap<TKey extends string, TValue extends Lson>(
-  key: string,
-  entries: readonly (readonly [TKey, TValue])[] | null
-): LiveMap<TKey, TValue> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useMap<TKey extends string, TValue extends Lson>(
-  key: string,
-  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
-): LiveMap<TKey, TValue> | null {
-  deprecate(
-    "Please use `createRoomContext()` instead of importing `useMap` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
-  );
-  return _hooks.deprecated_useMap(key as any, entries as any);
-}
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
  * `useMyPresence` from `@liveblocks/react` directly. See
  * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
  * details.
@@ -203,43 +129,6 @@ export function useMyPresence<TPresence extends JsonObject>(): [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ];
-}
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useObject<TData extends LsonObject>(
-  key: string
-): LiveObject<TData> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useObject<TData extends LsonObject>(
-  key: string,
-  initialData: TData
-): LiveObject<TData> | null;
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
- */
-export function useObject<TData extends LsonObject>(
-  key: string,
-  initialData?: TData
-): LiveObject<TData> | null {
-  deprecate(
-    "Please use `createRoomContext()` instead of importing `useObject` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
-  );
-  return _hooks.deprecated_useObject(key as any, initialData as any);
 }
 
 /**
@@ -344,4 +233,115 @@ export function useUpdateMyPresence<TPresence extends JsonObject>(): (
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void;
+}
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useList` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useList<TValue extends Lson>(
+  key: string
+): LiveList<TValue> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useList` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useList<TValue extends Lson>(
+  key: string,
+  items: TValue[]
+): LiveList<TValue> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useList` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useList<TValue extends Lson>(
+  key: string,
+  items?: TValue[] | undefined
+): LiveList<TValue> | null {
+  deprecate(
+    "Please use `createRoomContext()` instead of importing `useList` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+  );
+  return _hooks.deprecated_useList(key as any, items as any);
+}
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useMap` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string
+): LiveMap<TKey, TValue> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useMap` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries: readonly (readonly [TKey, TValue])[] | null
+): LiveMap<TKey, TValue> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useMap` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useMap<TKey extends string, TValue extends Lson>(
+  key: string,
+  entries?: readonly (readonly [TKey, TValue])[] | null | undefined
+): LiveMap<TKey, TValue> | null {
+  deprecate(
+    "Please use `createRoomContext()` instead of importing `useMap` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+  );
+  return _hooks.deprecated_useMap(key as any, entries as any);
+}
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useObject` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useObject<TData extends LsonObject>(
+  key: string
+): LiveObject<TData> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useObject` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData: TData
+): LiveObject<TData> | null;
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
+ * `useObject` from `@liveblocks/react` directly. See
+ * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+ * details.
+ */
+export function useObject<TData extends LsonObject>(
+  key: string,
+  initialData?: TData
+): LiveObject<TData> | null {
+  deprecate(
+    "Please use `createRoomContext()` instead of importing `useObject` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+  );
+  return _hooks.deprecated_useObject(key as any, initialData as any);
 }
