@@ -1,5 +1,6 @@
 import type {
   BroadcastOptions,
+  Client,
   History,
   Json,
   JsonObject,
@@ -14,7 +15,7 @@ import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
-import { useClient } from "./client";
+import { useClient as _useClient } from "./client";
 import useRerender from "./useRerender";
 
 export type RoomProviderProps<
@@ -38,7 +39,14 @@ type LookupResult<T> =
 export function configureRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject
->() {
+>(client?: Client) {
+  let useClient: () => Client;
+  if (client !== undefined) {
+    useClient = () => client;
+  } else {
+    useClient = _useClient;
+  }
+
   const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
     null
   );
@@ -77,10 +85,10 @@ export function configureRoom<
       "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    const client = useClient();
+    const _client = useClient();
 
     const [room, setRoom] = React.useState(() =>
-      client.enter(roomId, {
+      _client.enter(roomId, {
         initialPresence,
         initialStorage,
         defaultPresence, // Will get removed in 0.18
@@ -91,7 +99,7 @@ export function configureRoom<
 
     React.useEffect(() => {
       setRoom(
-        client.enter(roomId, {
+        _client.enter(roomId, {
           initialPresence,
           initialStorage,
           defaultPresence, // Will get removed in 0.18
@@ -101,9 +109,9 @@ export function configureRoom<
       );
 
       return () => {
-        client.leave(roomId);
+        _client.leave(roomId);
       };
-    }, [client, roomId]);
+    }, [_client, roomId]);
 
     return (
       <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
