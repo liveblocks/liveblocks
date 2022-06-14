@@ -29,10 +29,8 @@ const PREAMBLE = `
 function getDeprecationMessage(hookName: string): string {
   return `
     /**
-     * @deprecated Importing \`${hookName}\` from \`@liveblocks/react\`
-     * directly is deprecated, and support for it will get removed in 0.18.
-     * Please instantiate your hooks using the \`configureRoom()\` factory
-     * function instead. See
+     * @deprecated Please use \`configureRoom()\` instead of importing
+     * \`${hookName}\` from \`@liveblocks/react\` directly. See
      * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
      * details.
      */
@@ -188,7 +186,7 @@ function wrapHookDeclaration(
         : "";
 
     const body = `
-      deprecate("Importing \`${name}\` from \`@liveblocks/react\` directly is deprecated, and support for it will get removed in 0.18. Please instantiate your hooks using the \`configureRoom()\` factory function instead. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
+      deprecate("Please use \`configureRoom()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
       return _hooks.${name}(${args})${optionalCast};
     `;
 
