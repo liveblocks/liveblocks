@@ -1,4 +1,4 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
 import {
   BlockLike,
   FunctionDeclaration,
@@ -208,15 +208,19 @@ function wrapHookDeclaration(
   }
 }
 
-console.log(PREAMBLE);
-console.log(`
+let output = "";
+
+output += PREAMBLE;
+output += "\n";
+output += `
 import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { configureRoom } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
 
 const _hooks = configureRoom();
-`);
+`;
+output += "\n";
 
 const liveblocksHooks = getLiveblocksHookDefintions();
 for (const decl of liveblocksHooks) {
@@ -225,6 +229,9 @@ for (const decl of liveblocksHooks) {
     !isOverload &&
     liveblocksHooks.filter((hook) => hook.name.text === decl.name.text).length >
       1;
-  console.log();
-  console.log(wrapHookDeclaration(decl, isOverload, hasOverloads));
+  output += "\n";
+  output += wrapHookDeclaration(decl, isOverload, hasOverloads);
+  output += "\n";
 }
+
+writeFileSync("src/compat.tsx", output, { encoding: "utf-8" });
