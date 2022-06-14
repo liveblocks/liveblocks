@@ -1,5 +1,6 @@
 import type {
   BroadcastOptions,
+  Client,
   History,
   Json,
   JsonObject,
@@ -14,19 +15,20 @@ import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
-import { useClient } from "./client";
+import { useClient as _useClient } from "./client";
 import useRerender from "./useRerender";
 
-type RoomProviderProps<TStorage extends LsonObject> = Resolve<
+export type RoomProviderProps<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = Resolve<
   {
     /**
      * The id of the room you want to connect to
      */
     id: string;
     children: React.ReactNode;
-  } & RoomInitializers<JsonObject, TStorage>
-  //                   ^^^^^^^^^^
-  //                   FIXME: Generalize to TPresence
+  } & RoomInitializers<TPresence, TStorage>
 >;
 
 type LookupResult<T> =
@@ -34,10 +36,18 @@ type LookupResult<T> =
   | { status: "loading" }
   | { status: "notfound" };
 
-export function create() {
-  const RoomContext = React.createContext<Room<JsonObject, LsonObject> | null>(
-    //                                         ^^^^^^^^^^^^^^^^^^^^^^
-    //                                         FIXME: Generalize to TPresence and TStorage and lift to the `create()` level!
+export function createRoomContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+>(client?: Client) {
+  let useClient: () => Client;
+  if (client !== undefined) {
+    useClient = () => client;
+  } else {
+    useClient = _useClient;
+  }
+
+  const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
     null
   );
 
@@ -46,10 +56,7 @@ export function create() {
    * When this component is unmounted, the current user leave the room.
    * That means that you can't have 2 RoomProvider with the same room id in your react tree.
    */
-  function RoomProvider<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(props: RoomProviderProps<TStorage>) {
+  function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
     const {
       id: roomId,
       initialPresence,
@@ -78,10 +85,10 @@ export function create() {
       "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    const client = useClient();
+    const _client = useClient();
 
     const [room, setRoom] = React.useState(() =>
-      client.enter(roomId, {
+      _client.enter(roomId, {
         initialPresence,
         initialStorage,
         defaultPresence, // Will get removed in 0.18
@@ -92,7 +99,7 @@ export function create() {
 
     React.useEffect(() => {
       setRoom(
-        client.enter(roomId, {
+        _client.enter(roomId, {
           initialPresence,
           initialStorage,
           defaultPresence, // Will get removed in 0.18
@@ -102,20 +109,12 @@ export function create() {
       );
 
       return () => {
-        client.leave(roomId);
+        _client.leave(roomId);
       };
-    }, [client, roomId]);
+    }, [_client, roomId]);
 
     return (
-      <RoomContext.Provider
-        value={
-          room as unknown as Room<JsonObject, LsonObject>
-          //   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-          //   FIXME Not needed anymore when we parameterize the RoomProvider with these
-        }
-      >
-        {props.children}
-      </RoomContext.Provider>
+      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
     );
   }
 
@@ -123,19 +122,11 @@ export function create() {
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject
-  >(): Room<TPresence, TStorage> {
-    const room = React.useContext(RoomContext) as Room<
-      TPresence, // FIXME Remove once we lift presence to the create() level
-      TStorage // FIXME Remove once we lift presence to the create() level
-    > | null;
-
+  function useRoom(): Room<TPresence, TStorage> {
+    const room = React.useContext(RoomContext);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
     }
-
     return room;
   }
 
@@ -145,21 +136,17 @@ export function create() {
    * You don't need to pass the full presence object to update it.
    *
    * @example
-   * import { useMyPresence } from "@liveblocks/react";
-   *
    * const [myPresence, updateMyPresence] = useMyPresence();
    * updateMyPresence({ x: 0 });
    * updateMyPresence({ y: 0 });
    *
    * // At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
    */
-  function useMyPresence<TPresence extends JsonObject>(): [
+  function useMyPresence(): [
     TPresence,
     (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
-    const room = useRoom<TPresence, JsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+    const room = useRoom();
     const presence = room.getPresence();
     const rerender = useRerender();
 
@@ -184,15 +171,13 @@ export function create() {
    * If you don't use the current user presence in your component, but you need to update it (e.g. live cursor), it's better to use useUpdateMyPresence to avoid unnecessary renders.
    *
    * @example
-   * import { useUpdateMyPresence } from "@liveblocks/react";
-   *
    * const updateMyPresence = useUpdateMyPresence();
    * updateMyPresence({ x: 0 });
    * updateMyPresence({ y: 0 });
    *
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
-  function useUpdateMyPresence<TPresence extends JsonObject>(): (
+  function useUpdateMyPresence(): (
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
@@ -210,8 +195,6 @@ export function create() {
    * Returns an object that lets you get information about all the the users currently connected in the room.
    *
    * @example
-   * import { useOthers } from "@liveblocks/react";
-   *
    * const others = useOthers();
    *
    * // Example to map all cursors in jsx
@@ -224,10 +207,8 @@ export function create() {
    *   })
    * }
    */
-  function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
-    const room = useRoom<TPresence, LsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useOthers(): Others<TPresence> {
+    const room = useRoom();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -244,8 +225,6 @@ export function create() {
    * Returns a callback that lets you broadcast custom events to other users in the room
    *
    * @example
-   * import { useBroadcastEvent } from "@liveblocks/react";
-   *
    * const broadcast = useBroadcastEvent();
    *
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
@@ -271,8 +250,6 @@ export function create() {
    * useErrorListener is a react hook that lets you react to potential room connection errors.
    *
    * @example
-   * import { useErrorListener } from "@liveblocks/react";
-   *
    * useErrorListener(er => {
    *   console.error(er);
    * })
@@ -299,8 +276,6 @@ export function create() {
    * useEventListener is a react hook that lets you react to event broadcasted by other users in the room.
    *
    * @example
-   * import { useEventListener } from "@liveblocks/react";
-   *
    * useEventListener(({ connectionId, event }) => {
    *   if (event.type === "CUSTOM_EVENT") {
    *     // Do something
@@ -333,14 +308,10 @@ export function create() {
    * Gets the current user once it is connected to the room.
    *
    * @example
-   * import { useSelf } from "@liveblocks/react";
-   *
    * const user = useSelf();
    */
-  function useSelf<TPresence extends JsonObject>(): User<TPresence> | null {
-    const room = useRoom<TPresence, LsonObject>();
-    //                   ^^^^^^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useSelf(): User<TPresence> | null {
+    const room = useRoom();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -356,12 +327,8 @@ export function create() {
     return room.getSelf();
   }
 
-  function useStorage<TStorage extends LsonObject>(): [
-    root: LiveObject<TStorage> | null
-  ] {
-    const room = useRoom<never, TStorage>();
-    //                   ^^^^^^^^^^^^^^^^
-    //                   FIXME No longer needed once TPresence moves to the factory level
+  function useStorage(): [root: LiveObject<TStorage> | null] {
+    const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
     React.useEffect(() => {
@@ -394,18 +361,18 @@ export function create() {
    * @example
    * const shapesById = useMap<string, Shape>("shapes");
    */
-  function useMap<TKey extends string, TValue extends Lson>(
+  function deprecated_useMap<TKey extends string, TValue extends Lson>(
     key: string
   ): LiveMap<TKey, TValue> | null;
   /**
    * @deprecated We no longer recommend initializing the
    * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  function useMap<TKey extends string, TValue extends Lson>(
+  function deprecated_useMap<TKey extends string, TValue extends Lson>(
     key: string,
     entries: readonly (readonly [TKey, TValue])[] | null
   ): LiveMap<TKey, TValue> | null;
-  function useMap<TKey extends string, TValue extends Lson>(
+  function deprecated_useMap<TKey extends string, TValue extends Lson>(
     key: string,
     entries?: readonly (readonly [TKey, TValue])[] | null | undefined
   ): LiveMap<TKey, TValue> | null {
@@ -467,16 +434,18 @@ Please see https://bit.ly/3Niy5aP for details.`
    * @example
    * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
    */
-  function useList<TValue extends Lson>(key: string): LiveList<TValue> | null;
+  function deprecated_useList<TValue extends Lson>(
+    key: string
+  ): LiveList<TValue> | null;
   /**
    * @deprecated We no longer recommend initializing the
    * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  function useList<TValue extends Lson>(
+  function deprecated_useList<TValue extends Lson>(
     key: string,
     items: TValue[]
   ): LiveList<TValue> | null;
-  function useList<TValue extends Lson>(
+  function deprecated_useList<TValue extends Lson>(
     key: string,
     items?: TValue[] | undefined
   ): LiveList<TValue> | null {
@@ -540,18 +509,18 @@ Please see https://bit.ly/3Niy5aP for details.`
    * @example
    * const object = useObject("obj");
    */
-  function useObject<TData extends LsonObject>(
+  function deprecated_useObject<TData extends LsonObject>(
     key: string
   ): LiveObject<TData> | null;
   /**
    * @deprecated We no longer recommend initializing the fields from the
    * useObject() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  function useObject<TData extends LsonObject>(
+  function deprecated_useObject<TData extends LsonObject>(
     key: string,
     initialData: TData
   ): LiveObject<TData> | null;
-  function useObject<TData extends LsonObject>(
+  function deprecated_useObject<TData extends LsonObject>(
     key: string,
     initialData?: TData
   ): LiveObject<TData> | null {
@@ -605,6 +574,24 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
+  function useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey
+  ): TStorage[TKey] | null {
+    return deprecated_useList(key) as unknown as TStorage[TKey];
+  }
+
+  function useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey
+  ): TStorage[TKey] | null {
+    return deprecated_useMap(key) as unknown as TStorage[TKey];
+  }
+
+  function useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey
+  ): TStorage[TKey] | null {
+    return deprecated_useObject(key) as unknown as TStorage[TKey];
+  }
+
   /**
    * Returns the room.history
    */
@@ -640,6 +627,8 @@ Please see https://bit.ly/3Niy5aP for details.`
 
   function useStorageValue<T extends Lson>(
     key: string,
+    //   ^^^^^^
+    //   FIXME: Generalize to `keyof TStorage`?
     initialValue: T
   ): LookupResult<T> {
     const room = useRoom();
@@ -655,7 +644,8 @@ Please see https://bit.ly/3Niy5aP for details.`
 
       if (liveValue == null) {
         liveValue = initialValue;
-        root.set(key, liveValue);
+        root.set(key, liveValue as unknown as TStorage[string]);
+        //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
       }
 
       function onRootChange() {
@@ -718,5 +708,9 @@ Please see https://bit.ly/3Niy5aP for details.`
     useStorage,
     useUndo,
     useUpdateMyPresence,
+
+    deprecated_useList,
+    deprecated_useMap,
+    deprecated_useObject,
   };
 }
