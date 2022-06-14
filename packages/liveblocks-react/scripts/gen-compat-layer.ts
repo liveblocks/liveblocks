@@ -30,30 +30,17 @@ const PREAMBLE = `
 function getDeprecationMessage(hookName: string): string {
   // XXX Use markdown to highlight these
 
-  // XXX Figure out final name of "liveblocks.config" module. Perhaps `room.config`?
-
   // XXX Upgrade all examples to this new API, and see what we'll hit
   return `
     /**
-     *
-     * @deprecated Support for importing hooks directly from \`@liveblocks/react\`
-     * is going to get removed in the next major release (0.18). Please use the new
-     * recommended way of importing your hooks.
-     *
-     * Put the following contents in "./liveblocks.config.ts":
-     *
-     * \`\`\`
-     * import { create } from "@liveblocks/react";
-     * export default create<MyPresence, MyStorage>();
-     * \`\`\`
-     *
-     * Then, import from your local module:
-     * 
-     * \`\`\`
-     * import hooks from "./liveblocks.config";
-     * const { ${hookName} } = hooks;
-     * \`\`\`
-  `;
+     * @deprecated Importing \`${hookName}\` from \`@liveblocks/react\`
+     * directly is deprecated, and support for it will get removed in 0.18.
+     * Please instantiate your hooks using the \`create()\` factory
+     * function instead. See
+     * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
+     * details.
+     */
+`;
 }
 
 function getFunctionDeclarations(block: BlockLike): FunctionDeclaration[] {
@@ -205,7 +192,7 @@ function wrapHookDeclaration(
         : "";
 
     const body = `
-      deprecate("The direct import for ${name} will get removed in 0.18. Please consider moving to use new-style factory hooks!");
+      deprecate("Importing \`${name}\` from \`@liveblocks/react\` directly is deprecated, and support for it will get removed in 0.18. Please instantiate your hooks using the \`configureRoom()\` factory function instead. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
       return _hooks.${name}(${args})${optionalCast};
     `;
 
