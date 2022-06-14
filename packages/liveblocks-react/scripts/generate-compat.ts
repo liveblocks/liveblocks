@@ -223,7 +223,7 @@ import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
 
-const _hooks = createRoomContext();
+const _hooks = createRoomContext("__legacy" as any);
 `;
 output += "\n";
 
