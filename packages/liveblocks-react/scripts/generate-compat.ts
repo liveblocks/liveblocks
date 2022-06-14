@@ -118,7 +118,10 @@ function wrapHookDeclaration(
   isOverload: boolean,
   hasOverloads: boolean
 ): string {
-  const name = decl.name.text;
+  const internalName = decl.name.text;
+  const name = decl.name.text.startsWith("deprecated_")
+    ? decl.name.text.slice("deprecated_".length)
+    : decl.name.text;
 
   // Extract function parameter names and their type annotations
   const paramDecls = decl.parameters.map((p) => {
@@ -187,7 +190,7 @@ function wrapHookDeclaration(
 
     const body = `
       deprecate("Please use \`configureRoom()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
-      return _hooks.${name}(${args})${optionalCast};
+      return _hooks.${internalName}(${args})${optionalCast};
     `;
 
     // Put together the final source code
@@ -221,11 +224,25 @@ output += "\n";
 
 const liveblocksHooks = getLiveblocksHookDefintions();
 for (const decl of liveblocksHooks) {
+  const isDeprecatedVersion = decl.name.text.startsWith("deprecated_");
+
+  if (
+    !isDeprecatedVersion &&
+    liveblocksHooks.filter(
+      (hook) => hook.name.text === "deprecated_" + decl.name.text
+    ).length >= 1
+  ) {
+    // Skip over APIs that have a deprecated version - we'll be using those in
+    // the compat layer!
+    continue;
+  }
+
   const isOverload = !decl.body;
   const hasOverloads =
     !isOverload &&
     liveblocksHooks.filter((hook) => hook.name.text === decl.name.text).length >
       1;
+
   output += "\n";
   output += wrapHookDeclaration(decl, isOverload, hasOverloads);
   output += "\n";
