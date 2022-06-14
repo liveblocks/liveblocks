@@ -3,7 +3,6 @@ import {
   BlockLike,
   FunctionDeclaration,
   ScriptTarget,
-  getLeadingCommentRanges,
   createSourceFile,
   Node,
   TypeParameterDeclaration,
@@ -31,31 +30,30 @@ const PREAMBLE = `
 function getDeprecationMessage(hookName: string): string {
   // XXX Use markdown to highlight these
 
-  // XXX Use {@link } syntax to link to new definition
-
   // XXX Figure out final name of "liveblocks.config" module. Perhaps `room.config`?
 
   // XXX Upgrade all examples to this new API, and see what we'll hit
   return `
- *
- * @deprecated Support for importing hooks directly from \`@liveblocks/react\`
- * is going to get removed in the next major release (0.18). Please use the new
- * recommended way of importing your hooks.
- *
- * Put the following contents in "./liveblocks.config.ts":
- *
- * \`\`\`
- * import { create } from "@liveblocks/react";
- * export default create<MyPresence, MyStorage>();
- * \`\`\`
- *
- * Then, import from your local module:
- * 
- * \`\`\`
- * import hooks from "./liveblocks.config";
- * const { ${hookName} } = hooks;
- * \`\`\`
-`;
+    /**
+     *
+     * @deprecated Support for importing hooks directly from \`@liveblocks/react\`
+     * is going to get removed in the next major release (0.18). Please use the new
+     * recommended way of importing your hooks.
+     *
+     * Put the following contents in "./liveblocks.config.ts":
+     *
+     * \`\`\`
+     * import { create } from "@liveblocks/react";
+     * export default create<MyPresence, MyStorage>();
+     * \`\`\`
+     *
+     * Then, import from your local module:
+     * 
+     * \`\`\`
+     * import hooks from "./liveblocks.config";
+     * const { ${hookName} } = hooks;
+     * \`\`\`
+  `;
 }
 
 function getFunctionDeclarations(block: BlockLike): FunctionDeclaration[] {
@@ -81,8 +79,6 @@ const srcFile = createSourceFile(
   ScriptTarget.ESNext,
   /* setParentNodes */ true
 );
-
-const fullSrcText = srcFile.getFullText();
 
 /**
  * Reads the src/factory.tsx source file, and returns the list of
@@ -133,15 +129,6 @@ function getLiveblocksHookDefintions() {
   return fns;
 }
 
-function getCommentForNode(node: Node): string {
-  const comms = getLeadingCommentRanges(fullSrcText, node.getFullStart());
-  if (comms) {
-    return comms.map((r) => fullSrcText.slice(r.pos, r.end)).join("");
-  } else {
-    return "";
-  }
-}
-
 /**
  * Take a Liveblocks hook declaration, and returns the source code to wrap it.
  */
@@ -181,11 +168,7 @@ function wrapHookDeclaration(
       ? "TStorage extends LsonObject"
       : "";
 
-  // XXX Replace, don't append deprecation message!
-  const jsDocComment = getCommentForNode(decl).replace(
-    "*/",
-    `${getDeprecationMessage(name).trim()}\n*/`
-  );
+  const jsDocComment = getDeprecationMessage(name).trim();
 
   const optionalTypeParams: string =
     decl.typeParameters || extraTPresence || extraTStorage
