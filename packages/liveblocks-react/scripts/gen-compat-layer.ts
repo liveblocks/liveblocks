@@ -28,14 +28,12 @@ const PREAMBLE = `
 `;
 
 function getDeprecationMessage(hookName: string): string {
-  // XXX Use markdown to highlight these
-
   // XXX Upgrade all examples to this new API, and see what we'll hit
   return `
     /**
      * @deprecated Importing \`${hookName}\` from \`@liveblocks/react\`
      * directly is deprecated, and support for it will get removed in 0.18.
-     * Please instantiate your hooks using the \`create()\` factory
+     * Please instantiate your hooks using the \`configureRoom()\` factory
      * function instead. See
      * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
      * details.
@@ -73,19 +71,19 @@ const srcFile = createSourceFile(
  * `useList`, `useHistory`, etc.
  */
 function getLiveblocksHookDefintions() {
-  const liveblocksFactoryFn = findFunctionDeclaration(srcFile, "create");
+  const liveblocksFactoryFn = findFunctionDeclaration(srcFile, "configureRoom");
 
   // Get all of the things returned by this function. These represent the
   // "exports".
   const exportStm =
     liveblocksFactoryFn.body?.statements?.find(isReturnStatement);
   if (!exportStm) {
-    throw new Error("Couldn't find return statement in `create()`");
+    throw new Error("Couldn't find return statement in `configureRoom()`");
   }
 
   const exportedObj = exportStm.expression;
   if (!exportedObj || !isObjectLiteralExpression(exportedObj)) {
-    throw new Error("Expected `create()` to return an object literal");
+    throw new Error("Expected `configureRoom()` to return an object literal");
   }
 
   const exportedNames: string[] = exportedObj.properties.map((p) => {
@@ -215,10 +213,10 @@ console.log(PREAMBLE);
 console.log(`
 import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
-import { create } from "./factory";
+import { configureRoom } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
 
-const _hooks = create();
+const _hooks = configureRoom();
 `);
 
 const liveblocksHooks = getLiveblocksHookDefintions();

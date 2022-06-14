@@ -1,5 +1,7 @@
 export { LiveblocksProvider, useClient } from "./client";
 
+export { configureRoom } from "./factory";
+
 export {
   RoomProvider,
   useRoom,
