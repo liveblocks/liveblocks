@@ -12,7 +12,7 @@ const ClientContext = React.createContext<Client | null>(null);
  * Makes the Liveblocks client available in the component hierarchy below.
  *
  * @deprecated Liveblocks is no longer needed if you set up your Liveblocks
- * context using `configureRoom()`. See
+ * context using `createRoomContext()`. See
  * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.
  */
 export function LiveblocksProvider(

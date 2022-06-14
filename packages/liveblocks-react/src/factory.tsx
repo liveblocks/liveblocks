@@ -36,7 +36,7 @@ type LookupResult<T> =
   | { status: "loading" }
   | { status: "notfound" };
 
-export function configureRoom<
+export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 >(client?: Client) {

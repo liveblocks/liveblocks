@@ -29,7 +29,7 @@ const PREAMBLE = `
 function getDeprecationMessage(hookName: string): string {
   return `
     /**
-     * @deprecated Please use \`configureRoom()\` instead of importing
+     * @deprecated Please use \`createRoomContext()\` instead of importing
      * \`${hookName}\` from \`@liveblocks/react\` directly. See
      * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
      * details.
@@ -67,19 +67,24 @@ const srcFile = createSourceFile(
  * `useList`, `useHistory`, etc.
  */
 function getLiveblocksHookDefintions() {
-  const liveblocksFactoryFn = findFunctionDeclaration(srcFile, "configureRoom");
+  const liveblocksFactoryFn = findFunctionDeclaration(
+    srcFile,
+    "createRoomContext"
+  );
 
   // Get all of the things returned by this function. These represent the
   // "exports".
   const exportStm =
     liveblocksFactoryFn.body?.statements?.find(isReturnStatement);
   if (!exportStm) {
-    throw new Error("Couldn't find return statement in `configureRoom()`");
+    throw new Error("Couldn't find return statement in `createRoomContext()`");
   }
 
   const exportedObj = exportStm.expression;
   if (!exportedObj || !isObjectLiteralExpression(exportedObj)) {
-    throw new Error("Expected `configureRoom()` to return an object literal");
+    throw new Error(
+      "Expected `createRoomContext()` to return an object literal"
+    );
   }
 
   const exportedNames: string[] = exportedObj.properties.map((p) => {
@@ -189,7 +194,7 @@ function wrapHookDeclaration(
         : "";
 
     const body = `
-      deprecate("Please use \`configureRoom()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
+      deprecate("Please use \`createRoomContext()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
       return _hooks.${internalName}(${args})${optionalCast};
     `;
 
@@ -215,10 +220,10 @@ output += "\n";
 output += `
 import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
-import { configureRoom } from "./factory";
+import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
 
-const _hooks = configureRoom();
+const _hooks = createRoomContext();
 `;
 output += "\n";
 

@@ -1,6 +1,6 @@
 export { LiveblocksProvider, useClient } from "./client";
 
-export { configureRoom } from "./factory";
+export { createRoomContext } from "./factory";
 
 export {
   RoomProvider,
