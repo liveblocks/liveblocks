@@ -146,7 +146,7 @@ export function useList<TValue extends Lson>(
   deprecate(
     "Please use `configureRoom()` instead of importing `useList` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useList(key as any, items as any);
+  return _hooks.deprecated_useList(key as any, items as any);
 }
 
 /**
@@ -183,7 +183,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
   deprecate(
     "Please use `configureRoom()` instead of importing `useMap` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useMap(key as any, entries as any);
+  return _hooks.deprecated_useMap(key as any, entries as any);
 }
 
 /**
@@ -239,7 +239,7 @@ export function useObject<TData extends LsonObject>(
   deprecate(
     "Please use `configureRoom()` instead of importing `useObject` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useObject(key as any, initialData as any);
+  return _hooks.deprecated_useObject(key as any, initialData as any);
 }
 
 /**
