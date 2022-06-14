@@ -28,7 +28,6 @@ const PREAMBLE = `
 `;
 
 function getDeprecationMessage(hookName: string): string {
-  // XXX Upgrade all examples to this new API, and see what we'll hit
   return `
     /**
      * @deprecated Importing \`${hookName}\` from \`@liveblocks/react\`
