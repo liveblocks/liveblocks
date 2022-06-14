@@ -21,7 +21,6 @@ const animationProps = {
   exit: { width: 0 },
   transition: {
     type: "spring",
-    bounce: 0.6,
     damping: 28,
     mass: 1,
     stiffness: 300,
@@ -30,8 +29,8 @@ const animationProps = {
 };
 
 const avatarProps = {
-  style: { marginLeft: "-0.7rem" },
-  size: 52,
+  style: { marginLeft: "-0.45rem" },
+  size: 48,
   outlineWidth: 4,
   outlineColor: "white",
 };
@@ -70,7 +69,7 @@ export default function LiveAvatars() {
             <Avatar
               {...avatarProps}
               picture={currentUser.info?.picture}
-              name="You"
+              name={currentUser.info?.name + " (you)"}
               color={currentUser.info?.color}
             />
           </motion.div>

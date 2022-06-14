@@ -2,6 +2,7 @@ import { RoomProvider } from "@liveblocks/react";
 import { useRouter } from "next/router";
 import LiveCursors from "../../components/LiveCursors";
 import LiveAvatars from "../../components/LiveAvatars";
+import { useRef } from "react";
 
 /*
 const roomId = typeof window !==  "undefined"
@@ -10,6 +11,7 @@ const roomId = typeof window !==  "undefined"
  */
 
 export default function MultiplayerRoom() {
+  const cursorPanel = useRef(null);
   const router = useRouter();
 
   if (!router.query.id || Array.isArray(router.query.id)) {
@@ -19,9 +21,9 @@ export default function MultiplayerRoom() {
   let roomId = router.query.id;
   return (
     <RoomProvider id={roomId}>
-      <main className="flex place-items-center place-content-center w-full h-screen select-none">
+      <main ref={cursorPanel} className="flex justify-center items-center absolute inset-0 overflow-hidden">
         <LiveAvatars />
-        <LiveCursors />
+        <LiveCursors cursorPanel={cursorPanel} />
       </main>
     </RoomProvider>
   )

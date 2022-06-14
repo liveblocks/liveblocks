@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import Image from "next/image";
 import classNames from "classnames";
 import { getContrastingColor } from "../utils/getContrastingColor";
@@ -11,16 +11,16 @@ type BothProps = {
   borderRadius?: number;
   className?: string;
   style?: Record<string, string>;
-}
+};
 
-type AvatarProps = BothProps & {
+type PictureProps = BothProps & {
   variant?: "avatar";
-  name: string;
+  name?: string;
   picture?: string;
   color?: string;
   statusColor?: string;
   count?: never;
-}
+};
 
 type MoreProps = BothProps & {
   variant: "more";
@@ -29,7 +29,9 @@ type MoreProps = BothProps & {
   name?: never;
   statusColor?: never;
   color?: never;
-}
+};
+
+type AvatarProps = PictureProps | MoreProps;
 
 export function Avatar({
   variant = "avatar",
@@ -44,7 +46,7 @@ export function Avatar({
   className = "",
   style = {},
   count = 0
-}: AvatarProps | MoreProps) {
+}: AvatarProps){
   const innerVariant = (variant === "avatar" && !picture) ? "letter" : variant;
   const realSize = size - (outlineWidth * 2);
 
@@ -99,31 +101,36 @@ export function Avatar({
   );
 }
 
-function LetterCircle({ name, color, borderRadius }: {
-  name: string,
-  color?: string,
-  borderRadius: number
-}) {
+function LetterCircle({ name, color, borderRadius }:
+  Pick<PictureProps, "name" | "color" | "borderRadius">
+) {
+  const textColor = useMemo(() => color ? getContrastingColor(color) : undefined, [color]);
   return (
     <div
       style={{
         backgroundColor: color,
-        color: color ? getContrastingColor(color) : undefined,
         borderRadius,
       }}
-      className="flex justify-center items-center text-white text-sm font-bold absolute inset-0 rounded-full"
+      className="flex justify-center items-center absolute inset-0 rounded-full overflow-hidden isolate"
     >
-      {name.charAt(0)}
+      <div
+        style={{
+          maskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          WebkitMaskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          backgroundColor: color,
+        }}
+        className="-hue-rotate-60 absolute inset-0"
+      />
+      <div className="z-10 font-semibold text-white" style={{ color: textColor }}>
+        {name ? name.charAt(0) : null}
+      </div>
     </div>
   )
 }
 
-function PictureCircle({ name, picture, size, borderRadius }: {
-  name: string,
-  picture: string,
-  size: number,
-  borderRadius: number
-}) {
+function PictureCircle({ name, picture = "", size, borderRadius }:
+  Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">
+) {
   return (
     <Image
       alt={name}
@@ -135,10 +142,9 @@ function PictureCircle({ name, picture, size, borderRadius }: {
   )
 }
 
-function MoreCircle({ count, borderRadius }: {
-  count: number,
-  borderRadius: number
-}) {
+function MoreCircle({ count, borderRadius }:
+  Pick<MoreProps, "count" | "borderRadius">
+) {
   return (
     <div
       style={{ borderRadius }}
