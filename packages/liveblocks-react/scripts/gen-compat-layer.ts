@@ -37,7 +37,7 @@ function getDeprecationMessage(hookName: string): string {
      * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
      * details.
      */
-`;
+  `;
 }
 
 function getFunctionDeclarations(block: BlockLike): FunctionDeclaration[] {
