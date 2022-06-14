@@ -4,7 +4,6 @@ import {
   FunctionDeclaration,
   ScriptTarget,
   createSourceFile,
-  Node,
   TypeParameterDeclaration,
   Identifier,
   isFunctionDeclaration,
