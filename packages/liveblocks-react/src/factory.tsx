@@ -703,9 +703,12 @@ Please see https://bit.ly/3Niy5aP for details.`
     useEventListener,
     useHistory,
     useList,
+    deprecated_useList,
     useMap,
+    deprecated_useMap,
     useMyPresence,
     useObject,
+    deprecated_useObject,
     useOthers,
     useRedo,
     useRoom,
@@ -713,9 +716,5 @@ Please see https://bit.ly/3Niy5aP for details.`
     useStorage,
     useUndo,
     useUpdateMyPresence,
-
-    deprecated_useList,
-    deprecated_useMap,
-    deprecated_useObject,
   };
 }
