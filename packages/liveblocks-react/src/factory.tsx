@@ -123,15 +123,10 @@ export function configureRoom<
    * tree.
    */
   function useRoom(): Room<TPresence, TStorage> {
-    const room = React.useContext(RoomContext) as Room<
-      TPresence, // FIXME Remove once we lift presence to the create() level
-      TStorage // FIXME Remove once we lift presence to the create() level
-    > | null;
-
+    const room = React.useContext(RoomContext);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
     }
-
     return room;
   }
 
