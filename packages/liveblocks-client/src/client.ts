@@ -181,6 +181,10 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 function prepareAuthentication(clientOptions: ClientOptions): Authentication {
   // TODO: throw descriptive errors for invalid options
   if (typeof clientOptions.publicApiKey === "string") {
+    if (clientOptions.publicApiKey.startsWith("sk_"))
+      throw new Error(
+        "Invalid key. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+      );
     return {
       type: "public",
       publicApiKey: clientOptions.publicApiKey,

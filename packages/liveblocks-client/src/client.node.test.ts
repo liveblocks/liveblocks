@@ -53,6 +53,19 @@ describe("createClient", () => {
     ).not.toThrow();
   });
 
+  test("should throw if secret key is used instead of the public key", () => {
+    expect(() =>
+      createClientAndEnter({
+        publicApiKey: "sk_xxx",
+        WebSocketPolyfill: MockWebSocket,
+        fetchPolyfill: fetchMock,
+        atobPolyfill: atobPolyfillMock,
+      })
+    ).toThrowError(
+      "Invalid key. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+    );
+  });
+
   test("should not throw if WebSocketPolyfill is set", () => {
     expect(() => {
       createClientAndEnter({
