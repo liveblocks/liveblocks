@@ -25,7 +25,7 @@
     "lint": "eslint src/",
     "test": "jest --watch --silent --verbose",
     "test-ci": "jest --silent --verbose",
-    "codegen": "tsc scripts/gen-compat-layer.ts && node scripts/gen-compat-layer.js > src/compat.tsx && eslint --fix src/compat.tsx && prettier --write src/compat.tsx"
+    "codegen": "tsc scripts/generate-compat.ts && node scripts/generate-compat.js && eslint --fix src/compat.tsx && prettier --write src/compat.tsx"
   },
   "license": "Apache-2.0",
   "peerDependencies": {
