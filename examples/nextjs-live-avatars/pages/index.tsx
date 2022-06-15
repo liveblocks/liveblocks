@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Avatar } from "../components/Avatar";
-import { RoomProvider, useOthers, useSelf } from "@liveblocks/react";
+import { RoomProvider, useOthers, useSelf } from "../liveblocks.config";
 import { useRouter } from "next/router";
 import styles from "./index.module.css";
 
