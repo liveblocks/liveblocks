@@ -126,7 +126,6 @@ function parseJwtToken(token: string): JwtMetadata {
 export function parseRoomAuthToken(
   tokenString: string
 ): RoomAuthToken & JwtMetadata {
-  // TODO: check if token is indeed a string here
   const data = parseJwtToken(tokenString);
   if (data && isRoomAuthToken(data)) {
     const {
