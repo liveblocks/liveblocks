@@ -24,7 +24,7 @@ import { deprecate } from "@liveblocks/client/internal";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 
-const _hooks = createRoomContext();
+const _hooks = createRoomContext("__legacy" as any);
 
 /**
  * @deprecated Please use `createRoomContext()` instead of importing

@@ -39,9 +39,9 @@ type LookupResult<T> =
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject
->(client?: Client) {
+>(client: Client) {
   let useClient: () => Client;
-  if (client !== undefined) {
+  if ((client as unknown) !== "__legacy") {
     useClient = () => client;
   } else {
     useClient = _useClient;
