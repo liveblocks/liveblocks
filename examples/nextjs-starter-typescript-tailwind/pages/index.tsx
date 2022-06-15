@@ -179,8 +179,8 @@ function CreateRoom() {
           <motion.div
             initial={{
               opacity: 0,
-              translateY: 4,
-              scale: 0.95,
+              translateY: 8,
+              scale: 0.9,
               translateX: "-50%",
             }}
             animate={{
@@ -208,12 +208,10 @@ function CreateRoom() {
         initial={{
           opacity: 0,
           translateY: 40,
-          scale: 0.8,
         }}
         animate={{
           opacity: 1,
           translateY: 0,
-          scale: 1,
         }}
         transition={{
           opacity: {
@@ -235,7 +233,8 @@ function CreateRoom() {
       >
         <motion.button
           whileTap={{
-            scale: 0.97,
+            translateY: 1,
+            scale: 0.99,
             translateZ: 0,
             transition: { duration: 0.1 },
           }}
