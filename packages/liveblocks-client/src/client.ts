@@ -98,11 +98,9 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
 
-        // XXX Also put `polyfills` field on `createRoom` options, and just pass them in here as-is?
-        WebSocketPolyfill:
-          clientOptions.polyfills?.WebSocket ?? clientOptions.WebSocketPolyfill,
-        fetchPolyfill:
-          clientOptions.polyfills?.fetch ?? clientOptions.fetchPolyfill,
+        polyfills: clientOptions.polyfills,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
+        fetchPolyfill: clientOptions.fetchPolyfill,
 
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?

@@ -32,6 +32,7 @@ import type {
   OthersEvent,
   OthersEventCallback,
   ParentToChildNodeMap,
+  Polyfills,
   Room,
   RoomEventCallbackMap,
   RoomEventName,
@@ -295,10 +296,20 @@ export type Effects<TPresence extends JsonObject> = {
 type Context = {
   roomId: string;
   throttleDelay: number;
-  fetchPolyfill?: typeof fetch;
-  WebSocketPolyfill?: typeof WebSocket;
   authentication: Authentication;
   liveblocksServer: string;
+
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: typeof fetch;
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: typeof WebSocket;
 };
 
 export function makeStateMachine<
@@ -794,11 +805,11 @@ export function makeStateMachine<
 
     const auth = prepareAuthEndpoint(
       context.authentication,
-      context.fetchPolyfill
+      context.polyfills?.fetch ?? context.fetchPolyfill
     );
     const createWebSocket = prepareCreateWebSocket(
       context.liveblocksServer,
-      context.WebSocketPolyfill
+      context.polyfills?.WebSocket ?? context.WebSocketPolyfill
     );
 
     updateConnection({ state: "authenticating" });

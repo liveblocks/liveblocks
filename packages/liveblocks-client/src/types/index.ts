@@ -272,7 +272,7 @@ type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
-type Polyfills = {
+export type Polyfills = {
   atob?: (data: string) => string;
   fetch?: typeof fetch;
   WebSocket?: any;
