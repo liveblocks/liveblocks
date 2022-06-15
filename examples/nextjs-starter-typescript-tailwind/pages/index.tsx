@@ -45,18 +45,18 @@ const cards = [
 
 export default function Home() {
   const cardsContainer = {
-    hidden: { opacity: 0, translateY: 8 },
+    hidden: { opacity: 0, translateY: 12 },
     show: {
       opacity: 1,
       translateY: 0,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.075,
       },
     },
   };
 
   const card = {
-    hidden: { opacity: 0, translateY: 8 },
+    hidden: { opacity: 0, translateY: 12 },
     show: { opacity: 1, translateY: 0 },
   };
 
@@ -98,7 +98,7 @@ export default function Home() {
               variants={card}
               transition={{
                 opacity: {
-                  duration: 1,
+                  duration: 0.8,
                   ease: "easeOut",
                 },
                 translateY: {
@@ -173,7 +173,7 @@ function CreateRoom() {
   const [selected, setSelected] = useState<keyof typeof links>("basic");
 
   return (
-    <div className="fixed left-1/2 -translate-x-1/2 bottom-10 sm:bottom-12 text-sm">
+    <div className="fixed left-1/2 -translate-x-1/2 bottom-6 sm:bottom-[5vh] text-sm">
       <AnimatePresence>
         {menuOpen ? (
           <motion.div
@@ -217,27 +217,27 @@ function CreateRoom() {
         }}
         transition={{
           opacity: {
-            duration: 0.4,
+            duration: 0.6,
             ease: "easeOut",
-            delay: 1,
+            delay: 0.7,
           },
           translateY: {
             duration: 0.8,
             ease: "backOut",
-            delay: 0.8,
+            delay: 0.5,
           },
           scale: {
             duration: 0.8,
             ease: "backOut",
-            delay: 0.8,
+            delay: 0.5,
           },
         }}
       >
         <motion.button
           whileTap={{
-            scale: 0.98,
+            scale: 0.97,
             translateZ: 0,
-            transition: { duration: 0.15 },
+            transition: { duration: 0.1 },
           }}
           className="text-white bg-gradient-to-r from-gray-700 to-gray-900 h-12 px-5 rounded-xl flex justify-center items-center group font-medium hover:shadow-2xl shadow-lg ease-out duration-500"
           onClick={() => setMenuOpen(!menuOpen)}
