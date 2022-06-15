@@ -139,11 +139,15 @@ function wrapHookDeclaration(
     return { name: p.name, type: p.type, optional: !!p.questionToken };
   });
 
-  function doesReturnTypeNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doesReturnTypeNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return !!decl.type && decl.type.getText().includes(ref);
   }
 
-  function doInputParamsNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doInputParamsNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return paramDecls.some(({ type }) => type.getText().includes(ref));
   }
 
@@ -157,12 +161,31 @@ function wrapHookDeclaration(
       ? "TStorage extends LsonObject"
       : "";
 
+  const extraTUserMeta =
+    doesReturnTypeNeed("TUserMeta") || doInputParamsNeed("TUserMeta")
+      ? "TUserMeta extends UserMetadata"
+      : "";
+
+  const extraTEvent =
+    doesReturnTypeNeed("TEvent") || doInputParamsNeed("TEvent")
+      ? "TEvent extends Json"
+      : "";
+
   const jsDocComment = getDeprecationMessage(name).trim();
 
   const optionalTypeParams: string =
-    decl.typeParameters || extraTPresence || extraTStorage
+    decl.typeParameters ||
+    extraTPresence ||
+    extraTStorage ||
+    extraTUserMeta ||
+    extraTEvent
       ? `<${[
-          ...[extraTPresence, extraTStorage].filter(Boolean),
+          ...[
+            extraTPresence,
+            extraTStorage,
+            extraTUserMeta,
+            extraTEvent,
+          ].filter(Boolean),
           ...(decl.typeParameters ?? []).map(
             (tparam: TypeParameterDeclaration) => tparam.getText()
           ),
@@ -189,7 +212,10 @@ function wrapHookDeclaration(
 
     const optionalCast =
       decl.type &&
-      (doesReturnTypeNeed("TPresence") || doesReturnTypeNeed("TStorage"))
+      (doesReturnTypeNeed("TPresence") ||
+        doesReturnTypeNeed("TStorage") ||
+        doesReturnTypeNeed("TUserMeta") ||
+        doesReturnTypeNeed("TEvent"))
         ? ` as unknown as ${decl.type.getText()}`
         : "";
 
@@ -218,7 +244,7 @@ let output = "";
 output += PREAMBLE;
 output += "\n";
 output += `
-import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
+import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, UserMetadata } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
