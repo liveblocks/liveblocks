@@ -33,6 +33,18 @@ export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
   try {
+    const { room, userId, userInfo, secret } = options;
+
+    if (secret.startsWith("pk_")) {
+      throw new Error(
+        "Invalid key. You are using the public key which is not supported. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      );
+    } else if (!secret.startsWith("sk_")) {
+      throw new Error(
+        "Invalid key. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      );
+    }
+
     const result = await fetch(
       (options as AllAuthorizeOptions).liveblocksAuthorizeEndpoint ||
         "https://liveblocks.io/api/authorize",
@@ -43,9 +55,9 @@ export async function authorize(
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          room: options.room,
-          userId: options.userId,
-          userInfo: options.userInfo,
+          room,
+          userId,
+          userInfo,
         }),
       }
     );
@@ -61,11 +73,11 @@ export async function authorize(
       status: 200,
       body: await result.text(),
     };
-  } catch (er) {
+  } catch (error) {
     return {
       status: 403,
       body: 'Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.',
-      error: er,
+      error,
     };
   }
 }
