@@ -93,6 +93,7 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   return (
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
+    // TODO: throw specific error if actor is not a number
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
     isStringList(data.scopes) &&
@@ -125,6 +126,7 @@ function parseJwtToken(token: string): JwtMetadata {
 export function parseRoomAuthToken(
   tokenString: string
 ): RoomAuthToken & JwtMetadata {
+  // TODO: check if token is indeed a string here
   const data = parseJwtToken(tokenString);
   if (data && isRoomAuthToken(data)) {
     const {

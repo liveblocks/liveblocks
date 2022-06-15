@@ -320,21 +320,26 @@ export function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return auth(context.roomId)
-          .then(({ token }) => {
-            if (state.connection.state !== "authenticating") {
-              return;
-            }
-            const parsedToken = parseRoomAuthToken(token);
-            const socket = createWebSocket(token);
-            authenticationSuccess(parsedToken, socket);
-            state.token = token;
-          })
-          .catch((er: unknown) =>
-            authenticationFailure(
-              er instanceof Error ? er : new Error(String(er))
+        // token is expired or invalid
+        // therefore we authenticate
+        return (
+          auth(context.roomId)
+            // TODO: provide a meaningful error message when token is undefined here
+            .then(({ token }) => {
+              if (state.connection.state !== "authenticating") {
+                return;
+              }
+              const parsedToken = parseRoomAuthToken(token);
+              const socket = createWebSocket(token);
+              authenticationSuccess(parsedToken, socket);
+              state.token = token;
+            })
+            .catch((er: unknown) =>
+              authenticationFailure(
+                er instanceof Error ? er : new Error(String(er))
+              )
             )
-          );
+        );
       }
     },
     send(messageOrMessages: ClientMsg<TPresence> | ClientMsg<TPresence>[]) {
@@ -792,6 +797,7 @@ export function makeStateMachine<
       return null;
     }
 
+    // auth prepared here, a Promise, but not resolved yet.
     const auth = prepareAuthEndpoint(
       context.authentication,
       context.fetchPolyfill
@@ -802,6 +808,7 @@ export function makeStateMachine<
     );
 
     updateConnection({ state: "authenticating" });
+    // auth passed in authenticate effect
     effects.authenticate(auth, createWebSocket);
   }
 

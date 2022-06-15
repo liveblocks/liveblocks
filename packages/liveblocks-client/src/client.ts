@@ -48,7 +48,7 @@ type EnterOptions<
  *       body: JSON.stringify({ room })
  *     });
  *
- *     return await response.json();
+ *     return await response.json(); // should be: { token: "..." }
  *   }
  * });
  */
@@ -103,6 +103,8 @@ export function createClient(options: ClientOptions): Client {
           // TODO Patch this using public but marked internal fields?
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (clientOptions as any)?.liveblocksServer || "wss://liveblocks.net/v6",
+        // authentication is prepped here, but it's not used until the room is created
+        // passed as the context for `createRoom`
         authentication: prepareAuthentication(clientOptions),
       }
     );
