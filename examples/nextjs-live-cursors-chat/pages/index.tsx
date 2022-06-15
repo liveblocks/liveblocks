@@ -4,7 +4,7 @@ import {
   useEventListener,
   useMyPresence,
   useOthers,
-} from "@liveblocks/react";
+} from "../liveblocks.config";
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import Cursor from "../components/Cursor";
@@ -20,14 +20,6 @@ import useInterval from "../hooks/useInterval";
  */
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
-
-type Presence = {
-  cursor: {
-    x: number;
-    y: number;
-  } | null;
-  message: string;
-};
 
 enum CursorMode {
   Hidden,
@@ -67,8 +59,8 @@ type ReactionEvent = {
 };
 
 function Example() {
-  const others = useOthers<Presence>();
-  const [{ cursor }, updateMyPresence] = useMyPresence<Presence>();
+  const others = useOthers();
+  const [{ cursor }, updateMyPresence] = useMyPresence();
   const broadcast = useBroadcastEvent();
   const [state, setState] = useState<CursorState>({ mode: CursorMode.Hidden });
   const [reactions, setReactions] = useState<Reaction[]>([]);
