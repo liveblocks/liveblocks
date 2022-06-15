@@ -98,6 +98,7 @@ export function createClient(options: ClientOptions): Client {
         roomId,
         throttleDelay,
 
+        // XXX Also put `polyfills` field on `createRoom` options, and just pass them in here as-is?
         WebSocketPolyfill:
           clientOptions.polyfills?.WebSocket ?? clientOptions.WebSocketPolyfill,
         fetchPolyfill:
