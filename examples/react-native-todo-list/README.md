@@ -14,8 +14,8 @@ This example shows how to build a collaborative to-do list with [Liveblocks](htt
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across native apps. Users will also be able to see who else is currently online and when a user is typing.
 
-TODO REPLACE
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="500" alt="To-do List" />
+![liveblocks-react-native-todo](https://user-images.githubusercontent.com/8995991/173797740-26c2135a-e57c-454a-b04d-9618d9a5a1fb.png)
+
 
 ## Getting started
 
