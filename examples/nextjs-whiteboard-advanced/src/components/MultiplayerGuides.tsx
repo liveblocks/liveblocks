@@ -1,12 +1,11 @@
-import { useOthers } from "@liveblocks/react";
+import { useOthers } from "../../liveblocks.config";
 import React from "react";
 import { colorToCss, connectionIdToColor } from "../utils";
-import { Presence } from "../types";
 import Cursor from "./Cursor";
 import Path from "./Path";
 
 const MultiplayerGuides = React.memo(() => {
-  const others = useOthers<Presence>();
+  const others = useOthers();
   return (
     <>
       {others.map((user) => {

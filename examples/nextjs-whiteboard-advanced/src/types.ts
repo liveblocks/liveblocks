@@ -1,3 +1,5 @@
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+
 export type Color = {
   r: number;
   g: number;
@@ -45,6 +47,11 @@ export type PathLayer = {
   width: number;
   fill: Color;
   points: number[][];
+};
+
+export type Storage = {
+  layers: LiveMap<string, LiveObject<Layer>>;
+  layerIds: LiveList<string>;
 };
 
 export type Presence = {

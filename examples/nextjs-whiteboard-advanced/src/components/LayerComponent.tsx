@@ -1,5 +1,5 @@
 import { LiveObject } from "@liveblocks/client";
-import { useRoom } from "@liveblocks/react";
+import { useRoom } from "../../liveblocks.config";
 import React, { memo, useEffect, useState } from "react";
 import Ellipse from "./Ellipse";
 import Path from "./Path";
