@@ -99,8 +99,8 @@ export function createClient(options: ClientOptions): Client {
         throttleDelay,
 
         polyfills: clientOptions.polyfills,
-        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
-        fetchPolyfill: clientOptions.fetchPolyfill,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill, // Backward-compatible API for setting polyfills
+        fetchPolyfill: clientOptions.fetchPolyfill, // Backward-compatible API for setting polyfills
 
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?
