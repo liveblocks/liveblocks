@@ -304,12 +304,12 @@ type Context = {
   /**
    * Backward-compatible way to set `polyfills.fetch`.
    */
-  fetchPolyfill?: typeof fetch;
+  fetchPolyfill?: Polyfills["fetch"];
 
   /**
    * Backward-compatible way to set `polyfills.WebSocket`.
    */
-  WebSocketPolyfill?: typeof WebSocket;
+  WebSocketPolyfill?: Polyfills["WebSocket"];
 };
 
 export function makeStateMachine<
