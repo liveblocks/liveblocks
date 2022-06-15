@@ -190,7 +190,7 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
   if (typeof publicApiKey === "string") {
     if (publicApiKey.startsWith("sk_")) {
       throw new Error(
-        "Invalid key. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+        "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
       );
     } else if (!publicApiKey.startsWith("pk_")) {
       throw new Error(

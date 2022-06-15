@@ -51,7 +51,7 @@ describe("createClient", () => {
     [
       "sk_xxx",
       undefined,
-      "Invalid key. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey",
+      "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey",
     ],
     [
       "pk_xxx",
