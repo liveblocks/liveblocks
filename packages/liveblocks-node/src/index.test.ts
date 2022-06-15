@@ -8,7 +8,7 @@ describe("authorize", () => {
     });
 
     expect(response.status).toBe(403);
-    expect(response.error.message).toBe(
+    expect(response.error && response.error.message).toBe(
       "Invalid key. You are using the public key which is not supported. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
     );
   });
@@ -20,7 +20,7 @@ describe("authorize", () => {
     });
 
     expect(response.status).toBe(403);
-    expect(response.error.message).toBe(
+    expect(response.error && response.error.message).toBe(
       "Invalid key. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
     );
   });
