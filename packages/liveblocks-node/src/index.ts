@@ -29,6 +29,24 @@ type AuthorizeResponse = {
   error?: Error;
 };
 
+/**
+ * @example
+ * export default async function auth(req, res) {
+ *
+ * // Implement your own security here.
+ *
+ * const room = req.body.room;
+ * const response = await authorize({
+ *   room,
+ *   secret,
+ *   userId: "123", // Optional
+ *   userInfo: {    // Optional
+ *     name: "Ada Lovelace"
+ *   }
+ * });
+ * return res.status(response.status).end(response.body);
+ * }
+ */
 export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
