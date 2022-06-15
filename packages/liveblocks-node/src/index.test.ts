@@ -5,6 +5,7 @@ describe("authorize", () => {
     "should check that room is a non-empty string",
     async (room) => {
       await authorize({
+        // @ts-expect-error: we want to test for anything passed as room
         room,
         secret: "sk_xxx",
       }).then((response) => {
