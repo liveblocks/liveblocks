@@ -248,6 +248,8 @@ export class LiveMap<
    * @returns The element associated with the specified key, or undefined if the key can't be found in the LiveMap.
    */
   get(key: TKey): TValue | undefined {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     const value = this._map.get(key);
     if (value == undefined) {
       return undefined;
@@ -263,6 +265,8 @@ export class LiveMap<
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue): void {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     const oldValue = this._map.get(key);
 
     if (oldValue) {
@@ -311,6 +315,8 @@ export class LiveMap<
    * @param key The key of the element to test for presence.
    */
   has(key: TKey): boolean {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     return this._map.has(key);
   }
 
@@ -320,6 +326,8 @@ export class LiveMap<
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     const item = this._map.get(key);
 
     if (item == null) {

@@ -423,6 +423,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param value The value of the property to add
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     // TODO: Find out why typescript complains
     this.update({ [key]: value } as unknown as Partial<O>);
   }
@@ -432,6 +434,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to get
    */
   get<TKey extends keyof O>(key: TKey): O[TKey] {
+    key = typeof key === "string" ? key : (String(key) as TKey); // For non-TS users
+
     return this._map.get(key as string) as O[TKey];
   }
 
@@ -440,6 +444,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to delete
    */
   delete(key: keyof O): void {
+    key = typeof key === "string" ? key : (String(key) as keyof O); // For non-TS users
+
     const keyAsString = key as string;
     const oldValue = this._map.get(keyAsString);
 
