@@ -1,37 +1,65 @@
 import { ReactNode, useState } from "react";
-import Head from 'next/head'
-import Image from 'next/image'
+import Head from "next/head";
+import Image from "next/image";
 import logo from "../public/liveblocks.svg";
 import iconKey from "../public/icon-key.svg";
 import iconChat from "../public/icon-chat.svg";
 import iconDocs from "../public/icon-docs.svg";
 import iconGithub from "../public/icon-github.svg";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 
 const cards = [
   {
     title: "Get your API key",
     icon: iconKey,
-    content: <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    content: (
+      <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    ),
   },
   {
     title: "Get your API key",
     icon: iconDocs,
-    content: <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    content: (
+      <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    ),
   },
   {
     title: "Get your API key",
     icon: iconGithub,
-    content: <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    content: (
+      <>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do.</>
+    ),
   },
   {
     title: "Get support on Discord",
     icon: iconChat,
-    content: <>Join our discord server to share projects you{"'"}ve built and find support.</>
-  }
+    content: (
+      <>
+        Join our discord server to share projects you{"'"}ve built and find
+        support.
+      </>
+    ),
+  },
 ];
 
 export default function Home() {
+  const cardsContainer = {
+    hidden: { opacity: 0, translateY: 8 },
+    show: {
+      opacity: 1,
+      translateY: 0,
+      transition: {
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const card = {
+    hidden: { opacity: 0, translateY: 8 },
+    show: { opacity: 1, translateY: 0 },
+  };
+
   return (
     <div>
       <Head>
@@ -40,44 +68,97 @@ export default function Home() {
       </Head>
 
       <main className="min-h-screen bg-gradient-to-b from-white via-white to-[#FEFBFC] relative flex flex-col justify-start items-center isolate">
-        <div className="mt-10" >
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          transition={{
+            opacity: {
+              duration: 1.2,
+              ease: "easeOut",
+            },
+          }}
+          className="fixed top-10 left-1/2 -translate-x-1/2"
+        >
           <Image alt="Liveblocks logo" src={logo} />
-        </div>
-        <div className="mt-32 grid grid-cols-2 max-w-screen-md gap-5">
+        </motion.div>
+
+        <motion.ul
+          variants={cardsContainer}
+          initial="hidden"
+          animate="show"
+          className="grid sm:grid-cols-2 max-w-screen-md gap-3 sm:gap-5 px-5 mt-32 sm:mt-52"
+        >
           {cards.map(({ title, icon, content }) => (
-            <Card key={title} title={title} icon={icon}>
-              {content}
-            </Card>
+            <motion.li
+              key={title}
+              variants={card}
+              transition={{
+                opacity: {
+                  duration: 1,
+                  ease: "easeOut",
+                },
+                translateY: {
+                  duration: 1,
+                  ease: "circOut",
+                },
+              }}
+            >
+              <Card title={title} icon={icon}>
+                {content}
+              </Card>
+            </motion.li>
           ))}
-        </div>
+        </motion.ul>
 
         <div>
           <CreateRoom />
         </div>
 
-        <div className="pointer-events-none -z-10 opacity-50">
+        <motion.div
+          initial={{
+            opacity: 0,
+          }}
+          animate={{
+            opacity: 1,
+          }}
+          transition={{
+            opacity: {
+              duration: 1.2,
+              ease: "easeOut",
+            },
+          }}
+          className="pointer-events-none -z-10 opacity-50"
+        >
           <div className="fixed w-full h-full -bottom-1/2 -left-1/2 bg-rose-500 rounded-full blur-3xl opacity-5" />
           <div className="fixed w-full h-full -bottom-1/2 -right-1/2 bg-orange-500 rounded-full blur-3xl opacity-5" />
-        </div>
+        </motion.div>
       </main>
-
     </div>
   );
 }
 
-
-function Card({ children, title, icon }: { children: ReactNode, title: string, icon: string }) {
+function Card({
+  children,
+  title,
+  icon,
+}: {
+  children: ReactNode;
+  title: string;
+  icon: string;
+}) {
   return (
-    <div className="bg-gray-50 p-6 rounded-2xl">
+    <div className="bg-black/[.02] p-6 rounded-2xl">
       <div className="bg-white rounded-xl w-14 h-14 p-3 shadow-lg shadow-orange-500/20">
         <Image alt={title} src={icon} />
       </div>
-      <div className="text-lg font-medium text-black mt-5">
+      <div className="text-lg font-medium text-black mt-3 tracking-tight leading-tight">
         {title}
       </div>
-      <div className="text-gray-600 mt-0.5">
-        {children}
-      </div>
+      <div className="text-black/60 mt-1 text-sm">{children}</div>
     </div>
   );
 }
@@ -92,24 +173,81 @@ function CreateRoom() {
   const [selected, setSelected] = useState<keyof typeof links>("basic");
 
   return (
-    <div className="mt-40 relative">
-      {menuOpen ? (
-        <div className="absolute bottom-full mb-4 bg-white shadow-xl p-3 rounded-xl">
-          {Object.entries(links).map(([key, { text, href }]) => (
-            <Link key={key} href={href}>
-              <a className="whitespace-nowrap px-3 py-1.5 hover:bg-gray-100 block rounded-lg transition-colors">
-                {text}
-              </a>
-            </Link>
-          ))}
-        </div>
-      ) : null}
-      <button
-        className="text-white bg-gray-800 py-3 px-6 rounded-xl flex justify-center items-center"
-        onClick={() => setMenuOpen(!menuOpen)}
+    <div className="fixed left-1/2 -translate-x-1/2 bottom-10 sm:bottom-12 text-sm">
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.div
+            initial={{
+              opacity: 0,
+              translateY: 4,
+              scale: 0.95,
+              translateX: "-50%",
+            }}
+            animate={{
+              opacity: 1,
+              translateY: 0,
+              scale: 1,
+              translateX: "-50%",
+            }}
+            transition={{
+              ease: "backOut",
+            }}
+            className="absolute bottom-full mb-3 bg-white shadow-2xl p-2 rounded-xl left-1/2 -translate-x-1/2"
+          >
+            {Object.entries(links).map(([key, { text, href }]) => (
+              <Link key={key} href={href}>
+                <a className="whitespace-nowrap py-2 px-3 hover:bg-gray-100 focus:bg-gray-100 block rounded-lg ease-out duration-200">
+                  {text}
+                </a>
+              </Link>
+            ))}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+      <motion.div
+        initial={{
+          opacity: 0,
+          translateY: 40,
+          scale: 0.8,
+        }}
+        animate={{
+          opacity: 1,
+          translateY: 0,
+          scale: 1,
+        }}
+        transition={{
+          opacity: {
+            duration: 0.4,
+            ease: "easeOut",
+            delay: 1,
+          },
+          translateY: {
+            duration: 0.8,
+            ease: "backOut",
+            delay: 0.8,
+          },
+          scale: {
+            duration: 0.8,
+            ease: "backOut",
+            delay: 0.8,
+          },
+        }}
       >
-        <span className="text-gray-500 mr-2 text-2xl -mt-1">+</span> Create room
-      </button>
+        <motion.button
+          whileTap={{
+            scale: 0.98,
+            translateZ: 0,
+            transition: { duration: 0.15 },
+          }}
+          className="text-white bg-gradient-to-r from-gray-700 to-gray-900 h-12 px-5 rounded-xl flex justify-center items-center group font-medium hover:shadow-2xl shadow-lg ease-out duration-500"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          <span className="text-white opacity-50 ease-out duration-500 text-xl mr-2 -mt-0.5 group-hover:opacity-70">
+            +
+          </span>
+          <span>Create room</span>
+        </motion.button>
+      </motion.div>
     </div>
   );
 }
