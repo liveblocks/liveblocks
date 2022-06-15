@@ -1,4 +1,4 @@
-import { useOthers } from "@liveblocks/react";
+import { useOthers } from "../liveblocks.config";
 import Avatar from "./Avatar";
 import { COLORS_PRESENCE } from "../constants";
 import styles from "./Header.module.css";
