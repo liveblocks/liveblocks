@@ -5,11 +5,13 @@ import type {
   Authentication,
   Client,
   ClientOptions,
+  Json,
   JsonObject,
   LsonObject,
   Resolve,
   Room,
   RoomInitializers,
+  UserMetadata,
 } from "./types";
 
 type EnterOptions<
@@ -56,26 +58,47 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
+  const rooms = new Map<
+    string,
+    InternalRoom<JsonObject, LsonObject, UserMetadata, Json>
+  >();
 
-  function getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
-    roomId: string
-  ): Room<TPresence, TStorage> | null {
+  function getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TEvent> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
-      ? (internalRoom.room as unknown as Room<TPresence, TStorage>)
+      ? (internalRoom.room as unknown as Room<
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TEvent
+        >)
       : null;
   }
 
-  function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
+  function enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
-  ): Room<TPresence, TStorage> {
+  ): Room<TPresence, TStorage, TUserMeta, TEvent> {
     let internalRoom = rooms.get(roomId) as
-      | InternalRoom<TPresence, TStorage>
+      | InternalRoom<TPresence, TStorage, TUserMeta, TEvent>
       | undefined;
     if (internalRoom) {
-      return internalRoom.room as unknown as Room<TPresence, TStorage>;
+      return internalRoom.room as unknown as Room<
+        TPresence,
+        TStorage,
+        TUserMeta,
+        TEvent
+      >;
     }
 
     errorIf(
@@ -87,7 +110,7 @@ export function createClient(options: ClientOptions): Client {
       "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    internalRoom = createRoom<TPresence, TStorage>(
+    internalRoom = createRoom<TPresence, TStorage, TUserMeta, TEvent>(
       {
         initialPresence: options.initialPresence,
         initialStorage: options.initialStorage,
@@ -108,7 +131,12 @@ export function createClient(options: ClientOptions): Client {
     );
     rooms.set(
       roomId,
-      internalRoom as unknown as InternalRoom<JsonObject, LsonObject>
+      internalRoom as unknown as InternalRoom<
+        JsonObject,
+        LsonObject,
+        UserMetadata,
+        Json
+      >
     );
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16

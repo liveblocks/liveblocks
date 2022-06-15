@@ -13,11 +13,19 @@ import {
   patchImmutableObject,
 } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
-import type { JsonObject, LsonObject, ToJson } from "../src/types";
+import type {
+  Json,
+  JsonObject,
+  LsonObject,
+  ToJson,
+  UserMetadata,
+} from "../src/types";
 
 async function initializeRoomForTest<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(roomId: string, initialStorage?: TStorage) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -68,7 +76,7 @@ async function initializeRoomForTest<
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 
-  const room = client.enter<TPresence, TStorage>(roomId, {
+  const room = client.enter<TPresence, TStorage, TUserMeta, TEvent>(roomId, {
     initialStorage,
   });
   await waitFor(() => room.getConnectionState() === "open");
@@ -89,14 +97,16 @@ async function initializeRoomForTest<
  */
 export function prepareTestsConflicts<
   TStorage extends LsonObject,
-  TPresence extends JsonObject = never
+  TPresence extends JsonObject = never,
+  TUserMeta extends UserMetadata = never,
+  TEvent extends Json = never
 >(
   initialStorage: TStorage,
   callback: (args: {
     root1: LiveObject<TStorage>;
     root2: LiveObject<TStorage>;
-    room2: Room<TPresence, TStorage>;
-    room1: Room<TPresence, TStorage>;
+    room2: Room<TPresence, TStorage, TUserMeta, TEvent>;
+    room1: Room<TPresence, TStorage, TUserMeta, TEvent>;
 
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
@@ -117,7 +127,7 @@ export function prepareTestsConflicts<
       client: client1,
       room: room1,
       ws: ws1,
-    } = await initializeRoomForTest<TPresence, TStorage>(
+    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TEvent>(
       roomName,
       initialStorage
     );
@@ -125,7 +135,9 @@ export function prepareTestsConflicts<
       client: client2,
       room: room2,
       ws: ws2,
-    } = await initializeRoomForTest<TPresence, TStorage>(roomName);
+    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TEvent>(
+      roomName
+    );
 
     const { root: root1 } = await room1.getStorage();
     const { root: root2 } = await room2.getStorage();
@@ -207,12 +219,14 @@ export function prepareTestsConflicts<
  */
 export function prepareSingleClientTest<
   TStorage extends LsonObject,
-  TPresence extends JsonObject = never
+  TPresence extends JsonObject = never,
+  TUserMeta extends UserMetadata = never,
+  TEvent extends Json = never
 >(
   initialStorage: TStorage,
   callback: (args: {
     root: LiveObject<TStorage>;
-    room: Room<TPresence, TStorage>;
+    room: Room<TPresence, TStorage, TUserMeta, TEvent>;
     /**
      * Assert that room storage is equal to the provided json
      */
@@ -225,7 +239,9 @@ export function prepareSingleClientTest<
 
     const { client, room, ws } = await initializeRoomForTest<
       TPresence,
-      TStorage
+      TStorage,
+      TUserMeta,
+      TEvent
     >(roomName, initialStorage);
 
     const { root } = await room.getStorage();
