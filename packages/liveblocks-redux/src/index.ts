@@ -5,6 +5,7 @@ import type {
   LsonObject,
   Room,
   User,
+  UserMetadata,
 } from "@liveblocks/client";
 import {
   lsonToJson,
@@ -35,7 +36,11 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
-export type LiveblocksState<TState, TPresence extends JsonObject> = TState & {
+export type LiveblocksState<
+  TState,
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+> = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
    */
@@ -43,7 +48,7 @@ export type LiveblocksState<TState, TPresence extends JsonObject> = TState & {
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence>>;
+    readonly others: Array<User<TPresence, TUserMeta>>;
     /**
      * Whether or not the room storage is currently loading
      */
@@ -84,7 +89,7 @@ const internalEnhancer = <T>(options: {
 
   return (createStore: any) =>
     (reducer: any, initialState: any, enhancer: any) => {
-      let room: Room<any, any> | null = null;
+      let room: Room<any, any, any, any> | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<any> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
@@ -364,7 +369,7 @@ function patchLiveblocksStorage<O extends LsonObject>(
 }
 
 function broadcastInitialPresence<T>(
-  room: Room<any, any>,
+  room: Room<any, any, any, any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -374,7 +379,7 @@ function broadcastInitialPresence<T>(
 }
 
 function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence, any>,
+  room: Room<TPresence, any, any, any>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
