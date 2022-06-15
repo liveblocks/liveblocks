@@ -76,7 +76,6 @@ export type {
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  UserMetadata,
 } from "./types";
 export {
   ClientMsgCode,
