@@ -207,7 +207,18 @@ function wrapHookDeclaration(
   if (!isOverload) {
     const args = paramDecls
       .map(({ name }) => name.text)
-      .map((arg) => (hasOverloads ? `${arg} as any` : arg))
+      .map((arg) =>
+        hasOverloads ||
+        // This condition should not be checking the name of the hook, of
+        // course! Really it should be checking whether the injected type
+        // argument is used in a contravariant type position (for example,
+        // a function argument to a callback function). Currently, that's only
+        // the case in the `useEventListener` callback, though. So YOLO.
+        // (This script only has to live one release anyway.)
+        name === "useEventListener"
+          ? `${arg} as any`
+          : arg
+      )
       .join(", ");
 
     const optionalCast =
