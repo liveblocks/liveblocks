@@ -49,17 +49,17 @@ describe("createClient", () => {
       "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint",
     ],
     [
-      "sk_test_123",
+      "sk_xxx",
       undefined,
       "Invalid key. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey",
     ],
     [
-      "pk_test_123",
+      "pk_xxx",
       "/api/auth",
       "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
     ],
     [
-      "pk_test_123",
+      "pk_xxx",
       authEndpointCallback,
       "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
     ],
