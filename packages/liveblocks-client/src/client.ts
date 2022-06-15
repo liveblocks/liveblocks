@@ -199,7 +199,7 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
     }
     return {
       type: "public",
-      publicApiKey: publicApiKey,
+      publicApiKey,
       url:
         // TODO Patch this using public but marked internal fields?
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
