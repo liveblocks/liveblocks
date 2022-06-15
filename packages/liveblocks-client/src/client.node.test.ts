@@ -31,6 +31,55 @@ function createClientAndEnter(options: ClientOptions) {
 }
 
 describe("createClient", () => {
+  test.each([
+    // [publicApiKey, authEndpoint, errorMessage]
+    [
+      undefined,
+      undefined,
+      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+    ],
+    [
+      null,
+      undefined,
+      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+    ],
+    [
+      undefined,
+      null,
+      "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint",
+    ],
+    [
+      "sk_xxx",
+      undefined,
+      "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey",
+    ],
+    [
+      "pk_xxx",
+      "/api/auth",
+      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+    ],
+    [
+      "pk_xxx",
+      authEndpointCallback,
+      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient",
+    ],
+  ])(
+    "should throw if publicApiKey & authEndpoint are misconfigured",
+    (publicApiKey, authEndpoint, errorMessage) => {
+      expect(() =>
+        createClientAndEnter({
+          // @ts-expect-error: publicApiKey could be anything for a non-typescript user so we want to allow for this test
+          publicApiKey,
+          // @ts-expect-error: authEndpoint could be anything for a non-typescript user so we want to allow for this test
+          authEndpoint,
+          WebSocketPolyfill: MockWebSocket,
+          fetchPolyfill: fetchMock,
+          atobPolyfill: atobPolyfillMock,
+        })
+      ).toThrowError(errorMessage);
+    }
+  );
+
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
     expect(() =>
       createClientAndEnter({
@@ -127,17 +176,6 @@ describe("createClient", () => {
         fetchPolyfill: fetchMock,
       })
     ).toThrowError("throttle should be a number between 80 and 1000.");
-  });
-
-  test("should throw if publicApiKey and authEndpoint are undefined", () => {
-    expect(() =>
-      createClientAndEnter({
-        WebSocketPolyfill: MockWebSocket,
-        fetchPolyfill: fetchMock,
-      } as ClientOptions)
-    ).toThrowError(
-      "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
-    );
   });
 });
 

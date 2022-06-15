@@ -179,27 +179,49 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 }
 
 function prepareAuthentication(clientOptions: ClientOptions): Authentication {
-  // TODO: throw descriptive errors for invalid options
-  if (typeof clientOptions.publicApiKey === "string") {
+  const { publicApiKey, authEndpoint } = clientOptions;
+
+  if (authEndpoint !== undefined && publicApiKey !== undefined) {
+    throw new Error(
+      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+    );
+  }
+
+  if (typeof publicApiKey === "string") {
+    if (publicApiKey.startsWith("sk_")) {
+      throw new Error(
+        "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+      );
+    } else if (!publicApiKey.startsWith("pk_")) {
+      throw new Error(
+        "Invalid key. Please use the public key format: pk_<public key>. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+      );
+    }
     return {
       type: "public",
-      publicApiKey: clientOptions.publicApiKey,
+      publicApiKey,
       url:
         // TODO Patch this using public but marked internal fields?
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (clientOptions as any).publicAuthorizeEndpoint ||
         "https://liveblocks.io/api/public/authorize",
     };
-  } else if (typeof clientOptions.authEndpoint === "string") {
+  }
+
+  if (typeof authEndpoint === "string") {
     return {
       type: "private",
-      url: clientOptions.authEndpoint,
+      url: authEndpoint,
     };
-  } else if (typeof clientOptions.authEndpoint === "function") {
+  } else if (typeof authEndpoint === "function") {
     return {
       type: "custom",
-      callback: clientOptions.authEndpoint,
+      callback: authEndpoint,
     };
+  } else if (authEndpoint !== undefined) {
+    throw new Error(
+      "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint"
+    );
   }
 
   throw new Error(
