@@ -60,7 +60,7 @@ function setupStateMachine<
   return { machine, state, effects };
 }
 
-describe("room / auth", () => {
+describe.only("room / auth", () => {
   const token =
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4";
   const server = setupServer(
@@ -94,6 +94,36 @@ describe("room / auth", () => {
     process.env = originalEnv;
     consoleErrorSpy.mockRestore();
   });
+
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should throw",
+    async (response) => {
+      const room = createRoom(
+        {},
+        {
+          ...defaultContext,
+          authentication: {
+            type: "custom",
+            callback: (room) =>
+              new Promise((resolve, reject) => {
+                // @ts-expect-error: testing for missing token in callback response
+                resolve(response);
+              }),
+          },
+        }
+      );
+
+      room.connect();
+      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+      room.disconnect();
+
+      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+        new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it did not. Hint: the return value should look like { token: "..." }'
+        )
+      );
+    }
+  );
 
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(

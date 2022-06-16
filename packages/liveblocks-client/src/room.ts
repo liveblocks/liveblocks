@@ -1749,18 +1749,18 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "custom") {
-    const validateCallback = (room: string) => {
+    const authWithResponseValidation = (room: string) => {
       return authentication.callback(room).then((response) => {
-        if (!response.token) {
+        if (!response || !response.token) {
           throw new Error(
-            'Authentication error. We expect the authentication callback to return { token: "..." }, but it did not. Please check the return value of the callback.'
+            'Authentication error. We expect the authentication callback to return a token, but it did not. Hint: the return value should look like { token: "..." }'
           );
         }
         return response;
       });
     };
 
-    return validateCallback;
+    return authWithResponseValidation;
   }
 
   throw new Error("Internal error. Unexpected authentication type");
