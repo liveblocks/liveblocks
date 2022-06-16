@@ -9,6 +9,7 @@ import type {
   Others,
   Room,
   User,
+  UserMetadata,
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
@@ -38,7 +39,9 @@ type LookupResult<T> =
 
 export function createRoomContext<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject = {},
+  TUserMeta extends UserMetadata = UserMetadata,
+  TEvent extends Json = never
 >(client: Client) {
   let useClient: () => Client;
   if ((client as unknown) !== "__legacy") {
@@ -47,9 +50,12 @@ export function createRoomContext<
     useClient = _useClient;
   }
 
-  const RoomContext = React.createContext<Room<TPresence, TStorage> | null>(
-    null
-  );
+  const RoomContext = React.createContext<Room<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TEvent
+  > | null>(null);
 
   /**
    * Makes a Room available in the component hierarchy below.
@@ -87,7 +93,9 @@ export function createRoomContext<
 
     const _client = useClient();
 
-    const [room, setRoom] = React.useState(() =>
+    const [room, setRoom] = React.useState<
+      Room<TPresence, TStorage, TUserMeta, TEvent>
+    >(() =>
       _client.enter(roomId, {
         initialPresence,
         initialStorage,
@@ -122,7 +130,7 @@ export function createRoomContext<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom(): Room<TPresence, TStorage> {
+  function useRoom(): Room<TPresence, TStorage, TUserMeta, TEvent> {
     const room = React.useContext(RoomContext);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
@@ -207,7 +215,7 @@ export function createRoomContext<
    *   })
    * }
    */
-  function useOthers(): Others<TPresence> {
+  function useOthers(): Others<TPresence, TUserMeta> {
     const room = useRoom();
     const rerender = useRerender();
 
@@ -230,14 +238,14 @@ export function createRoomContext<
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   function useBroadcastEvent(): (
-    event: Json,
+    event: TEvent,
     options?: BroadcastOptions
   ) => void {
     const room = useRoom();
 
     return React.useCallback(
       (
-        event: any,
+        event: TEvent,
         options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
       ) => {
         room.broadcastEvent(event, options);
@@ -283,7 +291,7 @@ export function createRoomContext<
    * });
    */
   function useEventListener(
-    callback: (eventData: { connectionId: number; event: Json }) => void
+    callback: (eventData: { connectionId: number; event: TEvent }) => void
   ): void {
     const room = useRoom();
     const savedCallback = React.useRef(callback);
@@ -293,7 +301,7 @@ export function createRoomContext<
     });
 
     React.useEffect(() => {
-      const listener = (eventData: { connectionId: number; event: Json }) => {
+      const listener = (eventData: { connectionId: number; event: TEvent }) => {
         savedCallback.current(eventData);
       };
 
@@ -310,7 +318,7 @@ export function createRoomContext<
    * @example
    * const user = useSelf();
    */
-  function useSelf(): User<TPresence> | null {
+  function useSelf(): User<TPresence, TUserMeta> | null {
     const room = useRoom();
     const rerender = useRerender();
 
