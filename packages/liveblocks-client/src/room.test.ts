@@ -26,9 +26,9 @@ import {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
+import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
-import type { BaseUserMeta } from "./types/BaseUserMeta";
 
 const defaultContext = {
   roomId: "room-id",

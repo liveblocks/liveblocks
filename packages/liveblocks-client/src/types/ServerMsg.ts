@@ -1,7 +1,7 @@
+import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
-import type { BaseUserMeta } from "./BaseUserMeta";
 
 export enum ServerMsgCode {
   // For Presence

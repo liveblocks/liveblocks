@@ -1,9 +1,9 @@
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
+import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Json, JsonObject } from "./Json";
 import type { Lson, LsonObject } from "./Lson";
-import type { BaseUserMeta } from "./BaseUserMeta";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -731,6 +731,7 @@ export enum WebsocketCloseCodes {
   CLOSE_WITHOUT_RETRY = 4999,
 }
 
+export type { BaseUserMeta } from "./BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -779,4 +780,3 @@ export type {
   UserLeftServerMsg,
 } from "./ServerMsg";
 export { ServerMsgCode } from "./ServerMsg";
-export type { BaseUserMeta } from "./BaseUserMeta";

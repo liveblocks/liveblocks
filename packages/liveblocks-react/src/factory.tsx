@@ -1,4 +1,5 @@
 import type {
+  BaseUserMeta,
   BroadcastOptions,
   Client,
   History,
@@ -9,7 +10,6 @@ import type {
   Others,
   Room,
   User,
-  BaseUserMeta,
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";

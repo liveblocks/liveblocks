@@ -1,8 +1,8 @@
 import type {
+  BaseUserMeta,
   Json,
   JsonObject,
   LsonObject,
-  BaseUserMeta,
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {

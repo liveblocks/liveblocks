@@ -1,4 +1,4 @@
-import type { Json, JsonObject, BaseUserMeta } from "@liveblocks/client";
+import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
   IdTuple,

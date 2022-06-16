@@ -3,6 +3,7 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export type {
+  BaseUserMeta,
   BroadcastOptions,
   Client,
   History,
@@ -16,7 +17,6 @@ export type {
   Room,
   StorageUpdate,
   User,
-  BaseUserMeta,
 } from "./types";
 
 /**

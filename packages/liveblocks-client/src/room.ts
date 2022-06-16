@@ -9,6 +9,7 @@ import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
   AuthorizeResponse,
+  BaseUserMeta,
   BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
@@ -48,7 +49,6 @@ import type {
   User,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  BaseUserMeta,
 } from "./types";
 import {
   ClientMsgCode,

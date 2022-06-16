@@ -1,11 +1,11 @@
 import type {
+  BaseUserMeta,
   Client,
   JsonObject,
   LiveObject,
   LsonObject,
   Room,
   User,
-  BaseUserMeta,
 } from "@liveblocks/client";
 import {
   lsonToJson,

@@ -6,6 +6,7 @@ import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
 import type {
   Authentication,
+  BaseUserMeta,
   ClientMsg,
   IdTuple,
   Json,
@@ -20,7 +21,6 @@ import type {
   SerializedRootObject,
   ServerMsg,
   ToJson,
-  BaseUserMeta,
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";

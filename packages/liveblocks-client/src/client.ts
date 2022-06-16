@@ -3,6 +3,7 @@ import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
   Authentication,
+  BaseUserMeta,
   Client,
   ClientOptions,
   Json,
@@ -11,7 +12,6 @@ import type {
   Resolve,
   Room,
   RoomInitializers,
-  BaseUserMeta,
 } from "./types";
 
 type EnterOptions<

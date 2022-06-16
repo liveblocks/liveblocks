@@ -6,6 +6,7 @@
  */
 
 import type {
+  BaseUserMeta,
   BroadcastOptions,
   History,
   Json,
@@ -18,7 +19,6 @@ import type {
   Others,
   Room,
   User,
-  BaseUserMeta,
 } from "@liveblocks/client";
 import { deprecate } from "@liveblocks/client/internal";
 
