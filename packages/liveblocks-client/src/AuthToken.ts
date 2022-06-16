@@ -140,15 +140,3 @@ export function parseRoomAuthToken(
     );
   }
 }
-
-// TODO: unused in all packages & not accessible from @liveblocks/client users, remove?
-export function parseAuthToken(token: string): AuthToken & JwtMetadata {
-  const data = parseJwtToken(token);
-  if (data && isAuthToken(data)) {
-    return data;
-  } else {
-    throw new Error(
-      "Authentication error. Liveblocks could not parse the response of your authentication endpoint"
-    );
-  }
-}
