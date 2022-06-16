@@ -30,15 +30,14 @@ const _hooks = createRoomContext("__legacy" as any);
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `RoomProvider` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function RoomProvider<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 >(props: RoomProviderProps<TPresence, TStorage>) {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `RoomProvider` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `RoomProvider` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.RoomProvider(props);
 }
@@ -46,12 +45,11 @@ export function RoomProvider<
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useBatch` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useBatch(): (callback: () => void) => void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useBatch` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useBatch` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useBatch();
 }
@@ -59,15 +57,14 @@ export function useBatch(): (callback: () => void) => void {
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useBroadcastEvent` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useBroadcastEvent<TEvent extends Json>(): (
   event: TEvent,
   options?: BroadcastOptions
 ) => void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useBroadcastEvent` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useBroadcastEvent` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useBroadcastEvent() as unknown as (
     event: TEvent,
@@ -78,12 +75,11 @@ export function useBroadcastEvent<TEvent extends Json>(): (
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useErrorListener` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useErrorListener(callback: (err: Error) => void): void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useErrorListener` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useErrorListener` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useErrorListener(callback);
 }
@@ -91,14 +87,13 @@ export function useErrorListener(callback: (err: Error) => void): void {
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useEventListener` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useEventListener<TEvent extends Json>(
   callback: (eventData: { connectionId: number; event: TEvent }) => void
 ): void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useEventListener` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useEventListener` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useEventListener(callback as any);
 }
@@ -106,12 +101,11 @@ export function useEventListener<TEvent extends Json>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useHistory` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useHistory(): History {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useHistory` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useHistory` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useHistory();
 }
@@ -119,15 +113,14 @@ export function useHistory(): History {
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useMyPresence` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useMyPresence<TPresence extends JsonObject>(): [
   TPresence,
   (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
 ] {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useMyPresence` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useMyPresence` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useMyPresence() as unknown as [
     TPresence,
@@ -138,15 +131,14 @@ export function useMyPresence<TPresence extends JsonObject>(): [
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useOthers` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useOthers<
   TPresence extends JsonObject,
   TUserMeta extends UserMetadata
 >(): Others<TPresence, TUserMeta> {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useOthers` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useOthers` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useOthers() as unknown as Others<TPresence, TUserMeta>;
 }
@@ -154,12 +146,11 @@ export function useOthers<
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useRedo` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useRedo(): () => void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useRedo` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useRedo` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useRedo();
 }
@@ -167,8 +158,7 @@ export function useRedo(): () => void {
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useRoom` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useRoom<
   TPresence extends JsonObject,
@@ -177,7 +167,7 @@ export function useRoom<
   TEvent extends Json
 >(): Room<TPresence, TStorage, TUserMeta, TEvent> {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useRoom` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useRoom` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useRoom() as unknown as Room<
     TPresence,
@@ -190,15 +180,14 @@ export function useRoom<
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useSelf` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useSelf<
   TPresence extends JsonObject,
   TUserMeta extends UserMetadata
 >(): User<TPresence, TUserMeta> | null {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useSelf` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useSelf` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useSelf() as unknown as User<TPresence, TUserMeta> | null;
 }
@@ -206,14 +195,13 @@ export function useSelf<
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useStorage` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useStorage<TStorage extends LsonObject>(): [
   root: LiveObject<TStorage> | null
 ] {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useStorage` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useStorage` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useStorage() as unknown as [root: LiveObject<TStorage> | null];
 }
@@ -221,12 +209,11 @@ export function useStorage<TStorage extends LsonObject>(): [
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useUndo` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useUndo(): () => void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useUndo` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useUndo` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useUndo();
 }
@@ -234,15 +221,14 @@ export function useUndo(): () => void {
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useUpdateMyPresence` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useUpdateMyPresence<TPresence extends JsonObject>(): (
   overrides: Partial<TPresence>,
   options?: { addToHistory: boolean }
 ) => void {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useUpdateMyPresence` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useUpdateMyPresence` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useUpdateMyPresence() as unknown as (
     overrides: Partial<TPresence>,
@@ -253,8 +239,7 @@ export function useUpdateMyPresence<TPresence extends JsonObject>(): (
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useList<TValue extends Lson>(
   key: string
@@ -263,8 +248,7 @@ export function useList<TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useList<TValue extends Lson>(
   key: string,
@@ -274,15 +258,14 @@ export function useList<TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useList` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useList<TValue extends Lson>(
   key: string,
   items?: TValue[] | undefined
 ): LiveList<TValue> | null {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useList` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useList` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.deprecated_useList(key as any, items as any);
 }
@@ -290,8 +273,7 @@ export function useList<TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string
@@ -300,8 +282,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
@@ -311,15 +292,14 @@ export function useMap<TKey extends string, TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useMap` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useMap<TKey extends string, TValue extends Lson>(
   key: string,
   entries?: readonly (readonly [TKey, TValue])[] | null | undefined
 ): LiveMap<TKey, TValue> | null {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useMap` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useMap` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.deprecated_useMap(key as any, entries as any);
 }
@@ -327,8 +307,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useObject<TData extends LsonObject>(
   key: string
@@ -337,8 +316,7 @@ export function useObject<TData extends LsonObject>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useObject<TData extends LsonObject>(
   key: string,
@@ -348,15 +326,14 @@ export function useObject<TData extends LsonObject>(
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
  * `useObject` from `@liveblocks/react` directly. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
- * details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
 export function useObject<TData extends LsonObject>(
   key: string,
   initialData?: TData
 ): LiveObject<TData> | null {
   deprecate(
-    "Please use `createRoomContext()` instead of importing `useObject` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "Please use `createRoomContext()` instead of importing `useObject` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.deprecated_useObject(key as any, initialData as any);
 }
