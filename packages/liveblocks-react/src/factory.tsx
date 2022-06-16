@@ -39,7 +39,7 @@ type LookupResult<T> =
 
 export function createRoomContext<
   TPresence extends JsonObject,
-  TStorage extends LsonObject = {},
+  TStorage extends LsonObject = LsonObject,
   TUserMeta extends UserMetadata = UserMetadata,
   TEvent extends Json = never
 >(client: Client) {
