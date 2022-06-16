@@ -26,8 +26,9 @@ import {
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
-import type { JsonObject } from "./types/Json";
+import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
+import type { UserMetadata } from "./types/UserMetadata";
 
 const defaultContext = {
   roomId: "room-id",
@@ -48,11 +49,15 @@ const defaultRoomToken: RoomAuthToken = {
 
 function setupStateMachine<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(initialPresence?: TPresence) {
-  const effects = mockEffects<TPresence>();
-  const state = defaultState<TPresence, TStorage>(initialPresence);
-  const machine = makeStateMachine<TPresence, TStorage>(
+  const effects = mockEffects<TPresence, TEvent>();
+  const state = defaultState<TPresence, TStorage, TUserMeta, TEvent>(
+    initialPresence
+  );
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TEvent>(
     state,
     defaultContext,
     effects
@@ -94,6 +99,36 @@ describe("room / auth", () => {
     process.env = originalEnv;
     consoleErrorSpy.mockRestore();
   });
+
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should throw",
+    async (response) => {
+      const room = createRoom(
+        {},
+        {
+          ...defaultContext,
+          authentication: {
+            type: "custom",
+            callback: (_room) =>
+              new Promise((resolve) => {
+                // @ts-expect-error: testing for missing token in callback response
+                resolve(response);
+              }),
+          },
+        }
+      );
+
+      room.connect();
+      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+      room.disconnect();
+
+      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+        new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        )
+      );
+    }
+  );
 
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
@@ -771,6 +806,8 @@ describe("room", () => {
     test("batch storage and presence with changes from server", async () => {
       type P = { x?: number };
       type S = { items: LiveList<string> };
+      type M = never;
+      type E = never;
 
       const {
         storage,
@@ -781,7 +818,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<S, P>(
+      } = await prepareStorageTest<S, P, M, E>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -794,8 +831,8 @@ describe("room", () => {
 
       const itemsSubscriber = jest.fn();
       const refItemsSubscriber = jest.fn();
-      let refOthers: Others<P> | undefined;
-      const refPresenceSubscriber = (o: Others<P>) => (refOthers = o);
+      let refOthers: Others<P, M> | undefined;
+      const refPresenceSubscriber = (o: Others<P, M>) => (refOthers = o);
 
       subscribe(items, itemsSubscriber);
       refSubscribe(refItems, refItemsSubscriber);
@@ -855,14 +892,14 @@ describe("room", () => {
     test("others", () => {
       type P = { x?: number };
 
-      const { machine } = setupStateMachine<P, never>({});
+      const { machine } = setupStateMachine<P, never, never, never>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others<P> | undefined;
+      let others: Others<P, never> | undefined;
 
       const unsubscribe = machine.subscribe<P>("others", (o) => (others = o));
 
@@ -1123,15 +1160,17 @@ describe("room", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
       type P = { x?: number };
       type S = never;
+      type M = never;
+      type E = never;
 
-      const { machine } = setupStateMachine<P, S>({});
+      const { machine } = setupStateMachine<P, S, M, E>({});
 
       const ws = new MockWebSocket("");
       machine.connect();
       machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others<P> | undefined;
+      let others: Others<P, M> | undefined;
 
       machine.subscribe<P>("others", (o) => (others = o));
 

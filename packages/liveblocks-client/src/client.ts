@@ -5,11 +5,13 @@ import type {
   Authentication,
   Client,
   ClientOptions,
+  Json,
   JsonObject,
   LsonObject,
   Resolve,
   Room,
   RoomInitializers,
+  UserMetadata,
 } from "./types";
 
 type EnterOptions<
@@ -48,7 +50,7 @@ type EnterOptions<
  *       body: JSON.stringify({ room })
  *     });
  *
- *     return await response.json();
+ *     return await response.json(); // should be: { token: "..." }
  *   }
  * });
  */
@@ -56,26 +58,47 @@ export function createClient(options: ClientOptions): Client {
   const clientOptions = options;
   const throttleDelay = getThrottleDelayFromOptions(options);
 
-  const rooms = new Map<string, InternalRoom<JsonObject, LsonObject>>();
+  const rooms = new Map<
+    string,
+    InternalRoom<JsonObject, LsonObject, UserMetadata, Json>
+  >();
 
-  function getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
-    roomId: string
-  ): Room<TPresence, TStorage> | null {
+  function getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TEvent> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
-      ? (internalRoom.room as unknown as Room<TPresence, TStorage>)
+      ? (internalRoom.room as unknown as Room<
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TEvent
+        >)
       : null;
   }
 
-  function enter<TPresence extends JsonObject, TStorage extends LsonObject>(
+  function enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
-  ): Room<TPresence, TStorage> {
+  ): Room<TPresence, TStorage, TUserMeta, TEvent> {
     let internalRoom = rooms.get(roomId) as
-      | InternalRoom<TPresence, TStorage>
+      | InternalRoom<TPresence, TStorage, TUserMeta, TEvent>
       | undefined;
     if (internalRoom) {
-      return internalRoom.room as unknown as Room<TPresence, TStorage>;
+      return internalRoom.room as unknown as Room<
+        TPresence,
+        TStorage,
+        TUserMeta,
+        TEvent
+      >;
     }
 
     errorIf(
@@ -87,7 +110,7 @@ export function createClient(options: ClientOptions): Client {
       "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    internalRoom = createRoom<TPresence, TStorage>(
+    internalRoom = createRoom<TPresence, TStorage, TUserMeta, TEvent>(
       {
         initialPresence: options.initialPresence,
         initialStorage: options.initialStorage,
@@ -97,8 +120,11 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
-        fetchPolyfill: clientOptions.fetchPolyfill,
+
+        polyfills: clientOptions.polyfills,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill, // Backward-compatible API for setting polyfills
+        fetchPolyfill: clientOptions.fetchPolyfill, // Backward-compatible API for setting polyfills
+
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -108,18 +134,23 @@ export function createClient(options: ClientOptions): Client {
     );
     rooms.set(
       roomId,
-      internalRoom as unknown as InternalRoom<JsonObject, LsonObject>
+      internalRoom as unknown as InternalRoom<
+        JsonObject,
+        LsonObject,
+        UserMetadata,
+        Json
+      >
     );
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob == "undefined") {
-        if (clientOptions.atobPolyfill == undefined) {
+        if (clientOptions.polyfills?.atob == undefined) {
           throw new Error(
             "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );
         }
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
-        global.atob = clientOptions.atobPolyfill;
+        global.atob = clientOptions.polyfills.atob;
       }
 
       internalRoom.connect();
@@ -179,27 +210,49 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 }
 
 function prepareAuthentication(clientOptions: ClientOptions): Authentication {
-  // TODO: throw descriptive errors for invalid options
-  if (typeof clientOptions.publicApiKey === "string") {
+  const { publicApiKey, authEndpoint } = clientOptions;
+
+  if (authEndpoint !== undefined && publicApiKey !== undefined) {
+    throw new Error(
+      "You cannot use both publicApiKey and authEndpoint. Please use either publicApiKey or authEndpoint, but not both. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+    );
+  }
+
+  if (typeof publicApiKey === "string") {
+    if (publicApiKey.startsWith("sk_")) {
+      throw new Error(
+        "Invalid publicApiKey. You are using the secret key which is not supported. Please use the public key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+      );
+    } else if (!publicApiKey.startsWith("pk_")) {
+      throw new Error(
+        "Invalid key. Please use the public key format: pk_<public key>. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientPublicKey"
+      );
+    }
     return {
       type: "public",
-      publicApiKey: clientOptions.publicApiKey,
+      publicApiKey,
       url:
         // TODO Patch this using public but marked internal fields?
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (clientOptions as any).publicAuthorizeEndpoint ||
         "https://liveblocks.io/api/public/authorize",
     };
-  } else if (typeof clientOptions.authEndpoint === "string") {
+  }
+
+  if (typeof authEndpoint === "string") {
     return {
       type: "private",
-      url: clientOptions.authEndpoint,
+      url: authEndpoint,
     };
-  } else if (typeof clientOptions.authEndpoint === "function") {
+  } else if (typeof authEndpoint === "function") {
     return {
       type: "custom",
-      callback: clientOptions.authEndpoint,
+      callback: authEndpoint,
     };
+  } else if (authEndpoint !== undefined) {
+    throw new Error(
+      "authEndpoint must be a string or a function. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientAuthEndpoint"
+    );
   }
 
   throw new Error(

@@ -14,6 +14,9 @@ import {
   isTypeNode,
 } from "typescript";
 
+const migrationGuideLink =
+  "https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17";
+
 const SRC_FILE = "src/factory.tsx";
 const TARGET_FILE = "src/compat.tsx";
 
@@ -31,8 +34,7 @@ function getDeprecationMessage(hookName: string): string {
     /**
      * @deprecated Please use \`createRoomContext()\` instead of importing
      * \`${hookName}\` from \`@liveblocks/react\` directly. See
-     * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
-     * details.
+     * ${migrationGuideLink} for details.
      */
   `;
 }
@@ -139,11 +141,15 @@ function wrapHookDeclaration(
     return { name: p.name, type: p.type, optional: !!p.questionToken };
   });
 
-  function doesReturnTypeNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doesReturnTypeNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return !!decl.type && decl.type.getText().includes(ref);
   }
 
-  function doInputParamsNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doInputParamsNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return paramDecls.some(({ type }) => type.getText().includes(ref));
   }
 
@@ -157,12 +163,31 @@ function wrapHookDeclaration(
       ? "TStorage extends LsonObject"
       : "";
 
+  const extraTUserMeta =
+    doesReturnTypeNeed("TUserMeta") || doInputParamsNeed("TUserMeta")
+      ? "TUserMeta extends UserMetadata"
+      : "";
+
+  const extraTEvent =
+    doesReturnTypeNeed("TEvent") || doInputParamsNeed("TEvent")
+      ? "TEvent extends Json"
+      : "";
+
   const jsDocComment = getDeprecationMessage(name).trim();
 
   const optionalTypeParams: string =
-    decl.typeParameters || extraTPresence || extraTStorage
+    decl.typeParameters ||
+    extraTPresence ||
+    extraTStorage ||
+    extraTUserMeta ||
+    extraTEvent
       ? `<${[
-          ...[extraTPresence, extraTStorage].filter(Boolean),
+          ...[
+            extraTPresence,
+            extraTStorage,
+            extraTUserMeta,
+            extraTEvent,
+          ].filter(Boolean),
           ...(decl.typeParameters ?? []).map(
             (tparam: TypeParameterDeclaration) => tparam.getText()
           ),
@@ -184,17 +209,31 @@ function wrapHookDeclaration(
   if (!isOverload) {
     const args = paramDecls
       .map(({ name }) => name.text)
-      .map((arg) => (hasOverloads ? `${arg} as any` : arg))
+      .map((arg) =>
+        hasOverloads ||
+        // This condition should not be checking the name of the hook, of
+        // course! Really it should be checking whether the injected type
+        // argument is used in a contravariant type position (for example,
+        // a function argument to a callback function). Currently, that's only
+        // the case in the `useEventListener` callback, though. So YOLO.
+        // (This script only has to live one release anyway.)
+        name === "useEventListener"
+          ? `${arg} as any`
+          : arg
+      )
       .join(", ");
 
     const optionalCast =
       decl.type &&
-      (doesReturnTypeNeed("TPresence") || doesReturnTypeNeed("TStorage"))
+      (doesReturnTypeNeed("TPresence") ||
+        doesReturnTypeNeed("TStorage") ||
+        doesReturnTypeNeed("TUserMeta") ||
+        doesReturnTypeNeed("TEvent"))
         ? ` as unknown as ${decl.type.getText()}`
         : "";
 
     const body = `
-      deprecate("Please use \`createRoomContext()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
+      deprecate(\`Please use \\\`createRoomContext()\\\` instead of importing \\\`${name}\\\` from \\\`@liveblocks/react\\\` directly. See ${migrationGuideLink} for details.\`);
       return _hooks.${internalName}(${args})${optionalCast};
     `;
 
@@ -218,7 +257,7 @@ let output = "";
 output += PREAMBLE;
 output += "\n";
 output += `
-import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
+import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, UserMetadata } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";

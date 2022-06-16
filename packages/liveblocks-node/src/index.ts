@@ -33,6 +33,24 @@ const unknownSecretKeyError = new Error(
   'We expect a secret key ("sk_") here, but we found an unknown key instead. Hint: You can find your secret key at https://liveblocks.io/dashboard/apikeys. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
 );
 
+/**
+ * @example
+ * export default async function auth(req, res) {
+ *
+ * // Implement your own security here.
+ *
+ * const room = req.body.room;
+ * const response = await authorize({
+ *   room,
+ *   secret,
+ *   userId: "123", // Optional
+ *   userInfo: {    // Optional
+ *     name: "Ada Lovelace"
+ *   }
+ * });
+ * return res.status(response.status).end(response.body);
+ * }
+ */
 export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
@@ -55,13 +73,19 @@ export async function authorize(
   }
 
   try {
+    if (!(typeof room === "string" && room.length > 0)) {
+      throw new Error(
+        "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      );
+    }
+
     const result = await fetch(
       (options as AllAuthorizeOptions).liveblocksAuthorizeEndpoint ||
         "https://liveblocks.io/api/authorize",
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer: ${options.secret}`,
+          Authorization: `Bearer: ${secret}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

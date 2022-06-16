@@ -14,13 +14,14 @@ const ClientContext = React.createContext<Client | null>(null);
  *
  * @deprecated LiveblocksProvider is no longer needed in your component tree if
  * you set up your Liveblocks context using `createRoomContext()`. See
- * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for
+ * details.
  */
 export function LiveblocksProvider(
   props: LiveblocksProviderProps
 ): JSX.Element {
   deprecate(
-    "LiveblocksProvider is no longer needed in your component tree if you set up your Liveblocks context using `createRoomContext()`. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
+    "LiveblocksProvider is no longer needed in your component tree if you set up your Liveblocks context using `createRoomContext()`. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return (
     <ClientContext.Provider value={props.client}>

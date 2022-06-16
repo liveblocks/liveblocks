@@ -3,6 +3,7 @@ import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
 import type { Json, JsonObject } from "./Json";
 import type { Lson, LsonObject } from "./Lson";
+import type { UserMetadata } from "./UserMetadata";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -34,32 +35,39 @@ export type MyPresenceCallback<TPresence extends JsonObject> = (
   me: TPresence
 ) => void;
 
-export type OthersEventCallback<TPresence extends JsonObject> = (
-  others: Others<TPresence>,
-  event: OthersEvent<TPresence>
+export type OthersEventCallback<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+> = (
+  others: Others<TPresence, TUserMeta>,
+  event: OthersEvent<TPresence, TUserMeta>
 ) => void;
 
-export type EventCallback = ({
+export type EventCallback<TEvent extends Json> = ({
   connectionId,
   event,
 }: {
   connectionId: number;
-  event: Json;
+  event: TEvent;
 }) => void;
 
 export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap<TPresence extends JsonObject> = {
+export type RoomEventCallbackMap<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
+> = {
   "my-presence": MyPresenceCallback<TPresence>;
-  others: OthersEventCallback<TPresence>;
-  event: EventCallback;
+  others: OthersEventCallback<TPresence, TUserMeta>;
+  event: EventCallback<TEvent>;
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
 
-export type RoomEventName = keyof RoomEventCallbackMap<never>;
+export type RoomEventName = keyof RoomEventCallbackMap<never, never, never>;
 
 export type UpdateDelta =
   | {
@@ -180,19 +188,29 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom<TPresence extends JsonObject, TStorage extends LsonObject>(
+  getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(
     roomId: string
-  ): Room<TPresence, TStorage> | null;
+  ): Room<TPresence, TStorage, TUserMeta, TEvent> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
-  enter<TPresence extends JsonObject, TStorage extends LsonObject>(
+  enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends UserMetadata,
+    TEvent extends Json
+  >(
     roomId: string,
     options?: RoomInitializers<TPresence, TStorage>
-  ): Room<TPresence, TStorage>;
+  ): Room<TPresence, TStorage, TUserMeta, TEvent>;
 
   /**
    * Leaves a room.
@@ -204,7 +222,10 @@ export type Client = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends JsonObject> {
+export interface Others<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+> {
   /**
    * Number of other users in the room.
    */
@@ -212,21 +233,24 @@ export interface Others<TPresence extends JsonObject> {
   /**
    * Returns a new Iterator object that contains the users.
    */
-  [Symbol.iterator](): IterableIterator<User<TPresence>>;
+  [Symbol.iterator](): IterableIterator<User<TPresence, TUserMeta>>;
   /**
    * Returns the array of connected users in room.
    */
-  toArray(): User<TPresence>[];
+  toArray(): User<TPresence, TUserMeta>[];
   /**
    * This function let you map over the connected users in the room.
    */
-  map<U>(callback: (user: User<TPresence>) => U): U[];
+  map<U>(callback: (user: User<TPresence, TUserMeta>) => U): U[];
 }
 
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends JsonObject> = {
+export type User<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -235,16 +259,15 @@ export type User<TPresence extends JsonObject> = {
    * The id of the user that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
-  readonly id?: string;
+  readonly id: TUserMeta["id"];
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  readonly info?: any;
+  readonly info: TUserMeta["info"];
   /**
    * The user presence.
    */
   readonly presence?: TPresence;
-
   /**
    * @internal
    */
@@ -272,15 +295,29 @@ type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
 
+export type Polyfills = {
+  atob?: (data: string) => string;
+  fetch?: typeof fetch;
+  WebSocket?: any;
+};
+
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
  * Can be an url or a callback if you need to add additional headers.
  */
 export type ClientOptions = {
   throttle?: number;
-  fetchPolyfill?: typeof fetch;
-  WebSocketPolyfill?: any;
-  atobPolyfill?: (data: string) => string;
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: Polyfills["fetch"];
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: Polyfills["WebSocket"];
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -318,18 +355,21 @@ export type Connection =
 
 export type ConnectionState = Connection["state"];
 
-export type OthersEvent<TPresence extends JsonObject> =
+export type OthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+> =
   | {
       type: "leave";
-      user: User<TPresence>;
+      user: User<TPresence, TUserMeta>;
     }
   | {
       type: "enter";
-      user: User<TPresence>;
+      user: User<TPresence, TUserMeta>;
     }
   | {
       type: "update";
-      user: User<TPresence>;
+      user: User<TPresence, TUserMeta>;
       updates: Partial<TPresence>;
     }
   | {
@@ -392,7 +432,12 @@ export interface History {
   resume: () => void;
 }
 
-export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
+export type Room<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
+> = {
   /**
    * The id of the room.
    */
@@ -421,7 +466,10 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
      *   // Do something
      * });
      */
-    (type: "others", listener: OthersEventCallback<TPresence>): () => void;
+    (
+      type: "others",
+      listener: OthersEventCallback<TPresence, TUserMeta>
+    ): () => void;
 
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
@@ -433,7 +481,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
      *   // Do something
      * });
      */
-    (type: "event", listener: EventCallback): () => void;
+    (type: "event", listener: EventCallback<TEvent>): () => void;
 
     /**
      * Subscribe to errors thrown in the room.
@@ -569,7 +617,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf(): User<TPresence> | null;
+  getSelf(): User<TPresence, TUserMeta> | null;
 
   /**
    * Gets the presence of the current user.
@@ -585,7 +633,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: () => Others<TPresence>;
+  getOthers: () => Others<TPresence, TUserMeta>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -624,7 +672,7 @@ export type Room<TPresence extends JsonObject, TStorage extends LsonObject> = {
    *   }
    * });
    */
-  broadcastEvent: (event: Json, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: TEvent, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.
@@ -731,3 +779,4 @@ export type {
   UserLeftServerMsg,
 } from "./ServerMsg";
 export { ServerMsgCode } from "./ServerMsg";
+export type { UserMetadata } from "./UserMetadata";

@@ -6,6 +6,7 @@ import type {
   LsonObject,
   Room,
   User,
+  UserMetadata,
 } from "@liveblocks/client";
 import {
   lsonToJson,
@@ -41,7 +42,9 @@ export type ZustandState =
 export type LiveblocksState<
   TState extends ZustandState,
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -61,11 +64,11 @@ export type LiveblocksState<
     /**
      * The room currently synced to your zustand state.
      */
-    readonly room: Room<TPresence, TStorage> | null;
+    readonly room: Room<TPresence, TStorage, TUserMeta, TEvent> | null;
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence>>;
+    readonly others: Array<User<TPresence, TStorage>>;
     /**
      * Whether or not the room storage is currently loading
      */
@@ -105,20 +108,22 @@ type Options<T> = {
 export function middleware<
   T extends ZustandState,
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<LiveblocksState<T, TPresence, TStorage>>,
+    GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>>,
     StoreApi<T>
   >,
   options: Options<T>
 ): StateCreator<
-  LiveblocksState<T, TPresence, TStorage>,
-  SetState<LiveblocksState<T, TPresence, TStorage>>,
-  GetState<LiveblocksState<T, TPresence, TStorage>>,
-  StoreApi<LiveblocksState<T, TPresence, TStorage>>
+  LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>,
+  SetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>>,
+  GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>>,
+  StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>>
 > {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
@@ -140,11 +145,13 @@ export function middleware<
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T, TPresence, TStorage>
-      ) => LiveblocksState<T, TPresence, TStorage> | Partial<T>
+        current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>
+      ) =>
+        | LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>
+        | Partial<T>
     ) => void = set;
 
-    let room: Room<TPresence, TStorage> | null = null;
+    let room: Room<TPresence, TStorage, TUserMeta, TEvent> | null = null;
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
@@ -324,20 +331,26 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
 function updateZustandLiveblocksState<
   T extends ZustandState,
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T, TPresence, TStorage>
-    ) => LiveblocksState<T, TPresence, TStorage> | Partial<any>
+      current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>
+    ) =>
+      | LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>
+      | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksState<T, TPresence, TStorage>["liveblocks"]>
+  partial: Partial<
+    LiveblocksState<T, TPresence, TStorage, TUserMeta, TEvent>["liveblocks"]
+  >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
 
 function broadcastInitialPresence<T>(
-  room: Room<any, any>,
+  room: Room<any, any, any, any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -348,9 +361,11 @@ function broadcastInitialPresence<T>(
 
 function updatePresence<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(
-  room: Room<TPresence, TStorage>,
+  room: Room<TPresence, TStorage, TUserMeta, TEvent>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
@@ -371,11 +386,13 @@ function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends ZustandState,
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
 >(
   root: LiveObject<O>,
-  oldState: LiveblocksState<TState, TPresence, TStorage>,
-  newState: LiveblocksState<TState, TPresence, TStorage>,
+  oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TEvent>,
+  newState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TEvent>,
   mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
