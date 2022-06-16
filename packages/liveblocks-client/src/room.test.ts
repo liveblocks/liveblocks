@@ -104,8 +104,8 @@ describe("room / auth", () => {
           ...defaultContext,
           authentication: {
             type: "custom",
-            callback: (room) =>
-              new Promise((resolve, reject) => {
+            callback: (_room) =>
+              new Promise((resolve) => {
                 // @ts-expect-error: testing for missing token in callback response
                 resolve(response);
               }),
