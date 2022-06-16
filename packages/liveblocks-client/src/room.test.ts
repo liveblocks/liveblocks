@@ -119,7 +119,7 @@ describe.only("room / auth", () => {
 
       expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
         new Error(
-          'Authentication error. We expect the authentication callback to return a token, but it did not. Hint: the return value should look like { token: "..." }'
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like { token: "..." }'
         )
       );
     }
