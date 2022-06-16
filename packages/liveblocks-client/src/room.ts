@@ -320,7 +320,7 @@ export function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        // token is expired or invalid
+        // token is expired, invalid, or does not exist
         // therefore we authenticate
         return (
           auth(context.roomId)
@@ -1749,7 +1749,18 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "custom") {
-    return authentication.callback;
+    const validateCallback = (room: string) => {
+      return authentication.callback(room).then((response) => {
+        if (!response.token) {
+          throw new Error(
+            "We expect the authentication callback to return a token, but it did not. Please check the return value of your callback, it should return `{ token: '...'}"
+          );
+        }
+        return response;
+      });
+    };
+
+    return validateCallback;
   }
 
   throw new Error("Internal error. Unexpected authentication type");
