@@ -9,6 +9,7 @@ type Presence = {
   selectedId: string | null;
 };
 
+// Storage not used in this example
 type Storage = {};
 
 const { RoomProvider, useOthers, useUpdateMyPresence } = createRoomContext<

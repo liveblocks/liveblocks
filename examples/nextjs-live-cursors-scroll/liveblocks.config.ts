@@ -14,6 +14,7 @@ type Presence = {
   cursor: Cursor | null;
 };
 
+// Storage not used in this example
 type Storage = {};
 
 const { RoomProvider, useOthers, useUpdateMyPresence } = createRoomContext<

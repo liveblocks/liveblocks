@@ -13,6 +13,7 @@ type Presence = {
   message: string;
 };
 
+// Storage not used in this example
 type Storage = {};
 
 const {
