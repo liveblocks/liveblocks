@@ -6,7 +6,7 @@ import {
   Text
 } from 'react-native';
 
-import Avatar from '../../assets/svg/Avatars';
+import Avatar, { MoreAvatars } from '../../assets/svg/Avatars';
 
 const colorPairs = [{
   startColor: '#002A95', endColor: '#00A0D2', id: 1
@@ -21,7 +21,7 @@ const colorPairs = [{
 const Avatars = ({ count }) => {
   const avatars = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < Math.min(3, count); i++) {
     const colorPair = colorPairs[i % colorPairs.length];
     avatars.push(
       <View style={{ marginLeft: i === 0 ? 0 : -11 }} key={colorPair.id}>
@@ -36,11 +36,16 @@ const Avatars = ({ count }) => {
 }
 
 const WhoIsHere = ({ count }) => {
+  const hasMoreUsers = count > 3;
+
   return (
     <View style={styles.container}>
       {count === 0 ? null : <Text style={styles.countText}>{count}</Text>}
       <Avatars count={count} />
-    </View>);
+      {
+        hasMoreUsers ? (<View style={{ marginLeft: -11 }}><MoreAvatars count={count - 3} /></View>) : null
+      }
+    </View >);
 }
 
 const styles = StyleSheet.create({
