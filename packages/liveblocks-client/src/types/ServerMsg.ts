@@ -1,7 +1,7 @@
 import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
-import type { UserMetadata } from "./UserMetadata";
+import type { BaseUserMeta } from "./BaseUserMeta";
 
 export enum ServerMsgCode {
   // For Presence
@@ -21,7 +21,7 @@ export enum ServerMsgCode {
  */
 export type ServerMsg<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > =
   // For Presence
@@ -70,7 +70,7 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a new User has joined the Room.
  */
-export type UserJoinServerMsg<TUserMeta extends UserMetadata> = {
+export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
   type: ServerMsgCode.USER_JOINED;
   actor: number;
   /**
@@ -116,7 +116,7 @@ export type BroadcastedEventServerMsg<TEvent extends Json> = {
  * joining the Room, to provide the initial state of the Room. The payload
  * includes a list of all other Users that already are in the Room.
  */
-export type RoomStateServerMsg<TUserMeta extends UserMetadata> = {
+export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   type: ServerMsgCode.ROOM_STATE;
   users: {
     [actor: number]: TUserMeta;

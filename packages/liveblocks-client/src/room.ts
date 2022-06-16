@@ -48,7 +48,7 @@ import type {
   User,
   UserJoinServerMsg,
   UserLeftServerMsg,
-  UserMetadata,
+  BaseUserMeta,
 } from "./types";
 import {
   ClientMsgCode,
@@ -74,7 +74,7 @@ import {
 export type Machine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = {
   // Internal
@@ -188,7 +188,7 @@ function makeIdFactory(connectionId: number): IdFactory {
 
 function makeOthers<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 >(userMap: {
   [key: number]: User<TPresence, TUserMeta>;
 }): Others<TPresence, TUserMeta> {
@@ -231,7 +231,7 @@ type IdFactory = () => string;
 export type State<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = {
   connection: Connection;
@@ -326,7 +326,7 @@ type Context = {
 export function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   state: State<TPresence, TStorage, TUserMeta, TEvent>,
@@ -1597,7 +1597,7 @@ export function makeStateMachine<
 export function defaultState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   initialPresence?: TPresence,
@@ -1664,7 +1664,7 @@ export function defaultState<
 export type InternalRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = {
   room: Room<TPresence, TStorage, TUserMeta, TEvent>;
@@ -1677,7 +1677,7 @@ export type InternalRoom<
 export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   options: RoomInitializers<TPresence, TStorage>,

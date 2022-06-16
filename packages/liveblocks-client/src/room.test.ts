@@ -28,7 +28,7 @@ import {
 } from "./types";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
-import type { UserMetadata } from "./types/UserMetadata";
+import type { BaseUserMeta } from "./types/BaseUserMeta";
 
 const defaultContext = {
   roomId: "room-id",
@@ -50,7 +50,7 @@ const defaultRoomToken: RoomAuthToken = {
 function setupStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(initialPresence?: TPresence) {
   const effects = mockEffects<TPresence, TEvent>();

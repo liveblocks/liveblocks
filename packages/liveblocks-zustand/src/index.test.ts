@@ -2,7 +2,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
-  UserMetadata,
+  BaseUserMeta,
 } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
@@ -105,7 +105,7 @@ function prepareClientAndStore<
   T extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   stateCreator: StateCreator<T>,
@@ -161,7 +161,7 @@ async function prepareWithStorage<T extends ZustandState>(
   } as MessageEvent);
 
   function sendMessage(
-    serverMessage: ServerMsg<JsonObject, UserMetadata, Json>
+    serverMessage: ServerMsg<JsonObject, BaseUserMeta, Json>
   ) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
@@ -350,7 +350,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as RoomStateServerMsg<UserMetadata>),
+        } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([

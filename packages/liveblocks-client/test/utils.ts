@@ -20,7 +20,7 @@ import type {
   SerializedRootObject,
   ServerMsg,
   ToJson,
-  UserMetadata,
+  BaseUserMeta,
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
@@ -156,7 +156,7 @@ const defaultContext = {
 async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   items: IdTuple<SerializedCrdt>[],
@@ -252,7 +252,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
 export async function prepareStorageTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
-  TUserMeta extends UserMetadata = never,
+  TUserMeta extends BaseUserMeta = never,
   TEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let currentActor = actor;
@@ -384,7 +384,7 @@ export async function prepareStorageTest<
 export function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
-  TUserMeta extends UserMetadata = never,
+  TUserMeta extends BaseUserMeta = never,
   TEvent extends Json = never
 >(
   items: IdTuple<SerializedCrdt>[],
@@ -448,7 +448,7 @@ export function prepareStorageUpdateTest<
 export async function reconnect<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   machine: Machine<TPresence, TStorage, TUserMeta, TEvent>,
@@ -471,7 +471,7 @@ export async function reconnect<
 export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
-  TUserMeta extends UserMetadata = never,
+  TUserMeta extends BaseUserMeta = never,
   TEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let state = {} as ToJson<TStorage>;
@@ -623,7 +623,7 @@ export function mockEffects<
 }
 
 export function serverMessage(
-  message: ServerMsg<JsonObject, UserMetadata, Json>
+  message: ServerMsg<JsonObject, BaseUserMeta, Json>
 ) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),

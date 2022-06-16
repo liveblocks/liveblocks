@@ -1,4 +1,4 @@
-import type { Json, JsonObject, UserMetadata } from "@liveblocks/client";
+import type { Json, JsonObject, BaseUserMeta } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
   IdTuple,
@@ -175,7 +175,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
   } as MessageEvent);
 
   function sendMessage(
-    serverMessage: ServerMsg<JsonObject, UserMetadata, Json>
+    serverMessage: ServerMsg<JsonObject, BaseUserMeta, Json>
   ) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
@@ -387,7 +387,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as RoomStateServerMsg<UserMetadata>),
+        } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
