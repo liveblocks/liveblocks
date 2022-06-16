@@ -137,7 +137,7 @@ export function parseRoomAuthToken(
     return token;
   } else {
     throw new Error(
-      "Authentication error: we expected a room token. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+      "Authentication error: we expected a room token. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientWithCallback"
     );
   }
 }
