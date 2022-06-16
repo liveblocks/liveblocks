@@ -136,10 +136,13 @@ export function parseRoomAuthToken(
     } = data;
     return token;
   } else {
-    throw new Error("Authentication error: invalid room auth token");
+    throw new Error(
+      "Authentication error: we expected a room token. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
+    );
   }
 }
 
+// TODO: unused in all packages & not accessible from @liveblocks/client users, remove?
 export function parseAuthToken(token: string): AuthToken & JwtMetadata {
   const data = parseJwtToken(token);
   if (data && isAuthToken(data)) {
