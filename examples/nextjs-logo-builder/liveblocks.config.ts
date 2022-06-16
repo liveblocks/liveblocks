@@ -20,7 +20,14 @@ type Storage = {
   logo: LiveObject<Logo>;
 };
 
+type UserMeta = {
+  info: {
+    name: string;
+    picture: string;
+  };
+};
+
 const { RoomProvider, useOthers, useUpdateMyPresence, useObject, useSelf } =
-  createRoomContext<Presence, Storage>(client);
+  createRoomContext<Presence, Storage, UserMeta>(client);
 
 export { RoomProvider, useOthers, useUpdateMyPresence, useObject, useSelf };

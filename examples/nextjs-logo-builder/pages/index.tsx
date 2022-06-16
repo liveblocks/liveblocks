@@ -174,7 +174,7 @@ function Selections({ id }: { id: string }) {
           return (
             <Selection
               key={connectionId}
-              name={info?.name}
+              name={info.name}
               color={COLORS[connectionId % COLORS.length]}
             />
           );
@@ -194,14 +194,14 @@ function Avatars() {
         return (
           <Avatar
             key={connectionId}
-            picture={info?.picture}
-            name={info?.name}
+            picture={info.picture}
+            name={info.name}
             color={COLORS[connectionId % COLORS.length]}
           />
         );
       })}
 
-      {currentUser && <Avatar picture={currentUser.info?.picture} name="You" />}
+      {currentUser && <Avatar picture={currentUser.info.picture} name="You" />}
     </div>
   );
 }
