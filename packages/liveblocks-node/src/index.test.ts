@@ -9,19 +9,23 @@ describe("authorize", () => {
 
     expect(response.status).toBe(403);
     expect(response.error && response.error.message).toBe(
-      "Invalid key. You are using the public key which is not supported. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      'We expect a secret key ("sk_") here, but we found a public key ("pk_") instead. Hint: You can find your secret key at https://liveblocks.io/dashboard/apikeys. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
     );
   });
 
-  test("should error if unknown key is used", async () => {
-    const response = await authorize({
-      secret: "unknown",
-      room: "room",
-    });
+  test.each(["unknown", undefined, null, "", {}])(
+    "should error if unknown key is used",
+    async (secret) => {
+      const response = await authorize({
+        // @ts-expect-error: we want to test for anything passed as secret
+        secret,
+        room: "room",
+      });
 
-    expect(response.status).toBe(403);
-    expect(response.error && response.error.message).toBe(
-      "Invalid key. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-    );
-  });
+      expect(response.status).toBe(403);
+      expect(response.error && response.error.message).toBe(
+        'We expect a secret key ("sk_") here, but we found an unknown key instead. Hint: You can find your secret key at https://liveblocks.io/dashboard/apikeys. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
+      );
+    }
+  );
 });

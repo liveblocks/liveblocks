@@ -29,22 +29,32 @@ type AuthorizeResponse = {
   error?: Error;
 };
 
+const unknownSecretKeyError = new Error(
+  'We expect a secret key ("sk_") here, but we found an unknown key instead. Hint: You can find your secret key at https://liveblocks.io/dashboard/apikeys. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
+);
+
 export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
+  const { room, userId, userInfo, secret } = options;
+
+  if (!(typeof secret === "string" && secret.length > 0)) {
+    return unauthorized(unknownSecretKeyError);
+  }
+
+  if (secret.startsWith("pk_")) {
+    return unauthorized(
+      new Error(
+        'We expect a secret key ("sk_") here, but we found a public key ("pk_") instead. Hint: You can find your secret key at https://liveblocks.io/dashboard/apikeys. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize'
+      )
+    );
+  }
+
+  if (!secret.startsWith("sk_")) {
+    return unauthorized(unknownSecretKeyError);
+  }
+
   try {
-    const { room, userId, userInfo, secret } = options;
-
-    if (secret.startsWith("pk_")) {
-      throw new Error(
-        "Invalid key. You are using the public key which is not supported. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    } else if (!secret.startsWith("sk_")) {
-      throw new Error(
-        "Invalid key. Please use the secret key instead. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
-      );
-    }
-
     const result = await fetch(
       (options as AllAuthorizeOptions).liveblocksAuthorizeEndpoint ||
         "https://liveblocks.io/api/authorize",
@@ -74,10 +84,18 @@ export async function authorize(
       body: await result.text(),
     };
   } catch (error) {
-    return {
-      status: 403,
-      body: 'Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.',
-      error,
-    };
+    return unauthorized(error);
   }
+}
+
+function unauthorized(error?: Error) {
+  return {
+    status: 403,
+    body: 'Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.',
+    error:
+      error ||
+      new Error(
+        "Unknown error. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      ),
+  };
 }
