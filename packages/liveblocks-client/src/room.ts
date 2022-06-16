@@ -320,23 +320,21 @@ export function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return (
-          auth(context.roomId)
-            .then(({ token }) => {
-              if (state.connection.state !== "authenticating") {
-                return;
-              }
-              const parsedToken = parseRoomAuthToken(token);
-              const socket = createWebSocket(token);
-              authenticationSuccess(parsedToken, socket);
-              state.token = token;
-            })
-            .catch((er: unknown) =>
-              authenticationFailure(
-                er instanceof Error ? er : new Error(String(er))
-              )
+        return auth(context.roomId)
+          .then(({ token }) => {
+            if (state.connection.state !== "authenticating") {
+              return;
+            }
+            const parsedToken = parseRoomAuthToken(token);
+            const socket = createWebSocket(token);
+            authenticationSuccess(parsedToken, socket);
+            state.token = token;
+          })
+          .catch((er: unknown) =>
+            authenticationFailure(
+              er instanceof Error ? er : new Error(String(er))
             )
-        );
+          );
       }
     },
     send(messageOrMessages: ClientMsg<TPresence> | ClientMsg<TPresence>[]) {
