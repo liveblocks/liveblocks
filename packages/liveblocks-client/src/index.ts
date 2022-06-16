@@ -16,6 +16,7 @@ export type {
   Room,
   StorageUpdate,
   User,
+  UserMetadata,
 } from "./types";
 
 /**

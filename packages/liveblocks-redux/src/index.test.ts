@@ -1,4 +1,4 @@
-import type { JsonObject } from "@liveblocks/client";
+import type { Json, JsonObject, UserMetadata } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
   IdTuple,
@@ -71,7 +71,9 @@ function prepareClientAndStore<T>(
   preloadedState?: T
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = configureStore<LiveblocksState<BasicState, BasicPresence>>({
+  const store = configureStore<
+    LiveblocksState<BasicState, BasicPresence, never>
+  >({
     reducer: reducer as any,
     enhancers: [enhancer({ client, ...options })],
     preloadedState,
@@ -172,7 +174,9 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMsg<JsonObject>) {
+  function sendMessage(
+    serverMessage: ServerMsg<JsonObject, UserMetadata, Json>
+  ) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -383,7 +387,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as RoomStateServerMsg),
+        } as RoomStateServerMsg<UserMetadata>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
