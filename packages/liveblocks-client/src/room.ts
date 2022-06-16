@@ -320,11 +320,8 @@ export function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        // token is expired, invalid, or does not exist
-        // therefore we authenticate
         return (
           auth(context.roomId)
-            // TODO: provide a meaningful error message when token is undefined here
             .then(({ token }) => {
               if (state.connection.state !== "authenticating") {
                 return;
@@ -797,7 +794,6 @@ export function makeStateMachine<
       return null;
     }
 
-    // auth prepared here, a Promise, but not resolved yet.
     const auth = prepareAuthEndpoint(
       context.authentication,
       context.fetchPolyfill
@@ -808,7 +804,6 @@ export function makeStateMachine<
     );
 
     updateConnection({ state: "authenticating" });
-    // auth passed in authenticate effect
     effects.authenticate(auth, createWebSocket);
   }
 
