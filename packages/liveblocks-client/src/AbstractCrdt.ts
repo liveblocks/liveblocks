@@ -101,9 +101,12 @@ type ParentInfo =
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
+  /** @internal */
   private __doc?: Doc;
+  /** @internal */
   private __id?: string;
 
+  /** @internal */
   private _parent: ParentInfo = NoParent;
 
   /** @internal */
