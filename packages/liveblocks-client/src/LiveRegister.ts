@@ -17,6 +17,7 @@ import { CrdtType, OpCode } from "./types";
  * INTERNAL
  */
 export class LiveRegister<TValue extends Json> extends AbstractCrdt {
+  /** @internal */
   _data: TValue;
 
   constructor(data: TValue) {
@@ -28,9 +29,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return this._data;
   }
 
-  /**
-   * INTERNAL
-   */
+  /** @internal */
   static _deserialize(
     [id, item]: IdTuple<SerializedRegister>,
     _parentToChildren: ParentToChildNodeMap,
@@ -41,9 +40,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return register;
   }
 
-  /**
-   * INTERNAL
-   */
+  /** @internal */
   _serialize(
     parentId: string,
     parentKey: string,
@@ -67,9 +64,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     ];
   }
 
-  /**
-   * INTERNAL
-   */
+  /** @internal */
   _toSerializedCrdt(): SerializedRegister {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveRegister if parent is missing");
@@ -83,14 +78,17 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     };
   }
 
+  /** @internal */
   _attachChild(_op: CreateChildOp): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
+  /** @internal */
   _detachChild(_crdt: LiveNode): ApplyResult {
     throw new Error("Method not implemented.");
   }
 
+  /** @internal */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
   }
