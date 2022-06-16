@@ -63,8 +63,10 @@ async function initializeRoomForTest<
 
   const client = createClient({
     publicApiKey,
-    fetchPolyfill: fetch,
-    WebSocketPolyfill: MockWebSocket,
+    polyfills: {
+      fetch,
+      WebSocket: MockWebSocket,
+    },
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 

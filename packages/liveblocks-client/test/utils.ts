@@ -147,7 +147,9 @@ const defaultContext = {
     type: "private",
     url: "/api/auth",
   } as Authentication,
-  WebSocketPolyfill: MockWebSocket as any,
+  polyfills: {
+    WebSocket: MockWebSocket as any,
+  },
 };
 
 async function prepareRoomWithStorage<

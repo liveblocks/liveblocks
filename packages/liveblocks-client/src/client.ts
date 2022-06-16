@@ -97,8 +97,11 @@ export function createClient(options: ClientOptions): Client {
       {
         roomId,
         throttleDelay,
-        WebSocketPolyfill: clientOptions.WebSocketPolyfill,
-        fetchPolyfill: clientOptions.fetchPolyfill,
+
+        polyfills: clientOptions.polyfills,
+        WebSocketPolyfill: clientOptions.WebSocketPolyfill, // Backward-compatible API for setting polyfills
+        fetchPolyfill: clientOptions.fetchPolyfill, // Backward-compatible API for setting polyfills
+
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -113,13 +116,13 @@ export function createClient(options: ClientOptions): Client {
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob == "undefined") {
-        if (clientOptions.atobPolyfill == undefined) {
+        if (clientOptions.polyfills?.atob == undefined) {
           throw new Error(
             "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );
         }
         // At this point, atob does not exist so we are either on React Native or on Node < 16, hence global is available.
-        global.atob = clientOptions.atobPolyfill;
+        global.atob = clientOptions.polyfills.atob;
       }
 
       internalRoom.connect();
