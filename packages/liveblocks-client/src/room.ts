@@ -1746,7 +1746,7 @@ function prepareAuthEndpoint(
       return authentication.callback(room).then((response) => {
         if (!response || !response.token) {
           throw new Error(
-            'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like { token: "..." }'
+            'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like `{ token: "..." }`'
           );
         }
         return response;
