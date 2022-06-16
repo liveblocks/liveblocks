@@ -343,7 +343,7 @@ export function createRoomContext<
       let didCancel = false;
 
       async function fetchStorage() {
-        const storage = await room.getStorage<TStorage>();
+        const storage = await room.getStorage();
         if (!didCancel) {
           setState(storage.root);
         }

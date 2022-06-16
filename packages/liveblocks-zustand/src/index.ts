@@ -229,7 +229,7 @@ export function middleware<
         })
       );
 
-      room.getStorage<any>().then(({ root }) => {
+      room.getStorage().then(({ root }) => {
         const updates: any = {};
 
         room!.batch(() => {

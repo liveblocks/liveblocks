@@ -222,7 +222,7 @@ const internalEnhancer = <T>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage<any>().then(({ root }) => {
+        room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {

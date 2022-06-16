@@ -681,13 +681,7 @@ export type Room<
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >() => Promise<{
+  getStorage: () => Promise<{
     root: LiveObject<TStorage>;
   }>;
 
