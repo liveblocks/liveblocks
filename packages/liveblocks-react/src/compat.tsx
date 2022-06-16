@@ -18,13 +18,14 @@ import type {
   Others,
   Room,
   User,
+  UserMetadata,
 } from "@liveblocks/client";
 import { deprecate } from "@liveblocks/client/internal";
 
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 
-const _hooks = createRoomContext();
+const _hooks = createRoomContext("__legacy" as any);
 
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
@@ -61,14 +62,17 @@ export function useBatch(): (callback: () => void) => void {
  * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
  * details.
  */
-export function useBroadcastEvent(): (
-  event: Json,
+export function useBroadcastEvent<TEvent extends Json>(): (
+  event: TEvent,
   options?: BroadcastOptions
 ) => void {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useBroadcastEvent` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useBroadcastEvent();
+  return _hooks.useBroadcastEvent() as unknown as (
+    event: TEvent,
+    options?: BroadcastOptions
+  ) => void;
 }
 
 /**
@@ -90,13 +94,13 @@ export function useErrorListener(callback: (err: Error) => void): void {
  * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
  * details.
  */
-export function useEventListener(
-  callback: (eventData: { connectionId: number; event: Json }) => void
+export function useEventListener<TEvent extends Json>(
+  callback: (eventData: { connectionId: number; event: TEvent }) => void
 ): void {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useEventListener` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useEventListener(callback);
+  return _hooks.useEventListener(callback as any);
 }
 
 /**
@@ -137,11 +141,14 @@ export function useMyPresence<TPresence extends JsonObject>(): [
  * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
  * details.
  */
-export function useOthers<TPresence extends JsonObject>(): Others<TPresence> {
+export function useOthers<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+>(): Others<TPresence, TUserMeta> {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useOthers` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useOthers() as unknown as Others<TPresence>;
+  return _hooks.useOthers() as unknown as Others<TPresence, TUserMeta>;
 }
 
 /**
@@ -165,12 +172,19 @@ export function useRedo(): () => void {
  */
 export function useRoom<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
->(): Room<TPresence, TStorage> {
+  TStorage extends LsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
+>(): Room<TPresence, TStorage, TUserMeta, TEvent> {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useRoom` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useRoom() as unknown as Room<TPresence, TStorage>;
+  return _hooks.useRoom() as unknown as Room<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TEvent
+  >;
 }
 
 /**
@@ -180,12 +194,13 @@ export function useRoom<
  * details.
  */
 export function useSelf<
-  TPresence extends JsonObject
->(): User<TPresence> | null {
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata
+>(): User<TPresence, TUserMeta> | null {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useSelf` from `@liveblocks/react` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details."
   );
-  return _hooks.useSelf() as unknown as User<TPresence> | null;
+  return _hooks.useSelf() as unknown as User<TPresence, TUserMeta> | null;
 }
 
 /**

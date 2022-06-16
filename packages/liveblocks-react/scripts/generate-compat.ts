@@ -139,11 +139,15 @@ function wrapHookDeclaration(
     return { name: p.name, type: p.type, optional: !!p.questionToken };
   });
 
-  function doesReturnTypeNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doesReturnTypeNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return !!decl.type && decl.type.getText().includes(ref);
   }
 
-  function doInputParamsNeed(ref: "TPresence" | "TStorage"): boolean {
+  function doInputParamsNeed(
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+  ): boolean {
     return paramDecls.some(({ type }) => type.getText().includes(ref));
   }
 
@@ -157,12 +161,31 @@ function wrapHookDeclaration(
       ? "TStorage extends LsonObject"
       : "";
 
+  const extraTUserMeta =
+    doesReturnTypeNeed("TUserMeta") || doInputParamsNeed("TUserMeta")
+      ? "TUserMeta extends UserMetadata"
+      : "";
+
+  const extraTEvent =
+    doesReturnTypeNeed("TEvent") || doInputParamsNeed("TEvent")
+      ? "TEvent extends Json"
+      : "";
+
   const jsDocComment = getDeprecationMessage(name).trim();
 
   const optionalTypeParams: string =
-    decl.typeParameters || extraTPresence || extraTStorage
+    decl.typeParameters ||
+    extraTPresence ||
+    extraTStorage ||
+    extraTUserMeta ||
+    extraTEvent
       ? `<${[
-          ...[extraTPresence, extraTStorage].filter(Boolean),
+          ...[
+            extraTPresence,
+            extraTStorage,
+            extraTUserMeta,
+            extraTEvent,
+          ].filter(Boolean),
           ...(decl.typeParameters ?? []).map(
             (tparam: TypeParameterDeclaration) => tparam.getText()
           ),
@@ -184,12 +207,26 @@ function wrapHookDeclaration(
   if (!isOverload) {
     const args = paramDecls
       .map(({ name }) => name.text)
-      .map((arg) => (hasOverloads ? `${arg} as any` : arg))
+      .map((arg) =>
+        hasOverloads ||
+        // This condition should not be checking the name of the hook, of
+        // course! Really it should be checking whether the injected type
+        // argument is used in a contravariant type position (for example,
+        // a function argument to a callback function). Currently, that's only
+        // the case in the `useEventListener` callback, though. So YOLO.
+        // (This script only has to live one release anyway.)
+        name === "useEventListener"
+          ? `${arg} as any`
+          : arg
+      )
       .join(", ");
 
     const optionalCast =
       decl.type &&
-      (doesReturnTypeNeed("TPresence") || doesReturnTypeNeed("TStorage"))
+      (doesReturnTypeNeed("TPresence") ||
+        doesReturnTypeNeed("TStorage") ||
+        doesReturnTypeNeed("TUserMeta") ||
+        doesReturnTypeNeed("TEvent"))
         ? ` as unknown as ${decl.type.getText()}`
         : "";
 
@@ -218,12 +255,12 @@ let output = "";
 output += PREAMBLE;
 output += "\n";
 output += `
-import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User } from "@liveblocks/client";
+import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, UserMetadata } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";
 
-const _hooks = createRoomContext();
+const _hooks = createRoomContext("__legacy" as any);
 `;
 output += "\n";
 

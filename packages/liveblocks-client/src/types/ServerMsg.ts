@@ -1,6 +1,7 @@
 import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
+import type { UserMetadata } from "./UserMetadata";
 
 export enum ServerMsgCode {
   // For Presence
@@ -18,13 +19,17 @@ export enum ServerMsgCode {
 /**
  * Messages that can be sent from the server to the client.
  */
-export type ServerMsg<TPresence extends JsonObject> =
+export type ServerMsg<
+  TPresence extends JsonObject,
+  TUserMeta extends UserMetadata,
+  TEvent extends Json
+> =
   // For Presence
   | UpdatePresenceServerMsg<TPresence> // Broadcasted
-  | UserJoinServerMsg // Broadcasted
+  | UserJoinServerMsg<TUserMeta> // Broadcasted
   | UserLeftServerMsg // Broadcasted
-  | BroadcastedEventServerMsg // Broadcasted
-  | RoomStateServerMsg // For a single client
+  | BroadcastedEventServerMsg<TEvent> // Broadcasted
+  | RoomStateServerMsg<TUserMeta> // For a single client
 
   // For Storage
   | InitialDocumentStateServerMsg // For a single client
@@ -65,19 +70,19 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a new User has joined the Room.
  */
-export type UserJoinServerMsg = {
+export type UserJoinServerMsg<TUserMeta extends UserMetadata> = {
   type: ServerMsgCode.USER_JOINED;
   actor: number;
   /**
    * The id of the User that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
-  id?: string;
+  id: TUserMeta["id"];
   /**
    * Additional user information that has been set in the authentication
    * endpoint.
    */
-  info?: Json;
+  info: TUserMeta["info"];
 };
 
 /**
@@ -93,7 +98,7 @@ export type UserLeftServerMsg = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a User broadcasted an Event to everyone in the Room.
  */
-export type BroadcastedEventServerMsg = {
+export type BroadcastedEventServerMsg<TEvent extends Json> = {
   type: ServerMsgCode.BROADCASTED_EVENT;
   /**
    * The User who broadcasted the Event.
@@ -103,7 +108,7 @@ export type BroadcastedEventServerMsg = {
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.
    */
-  event: Json;
+  event: TEvent;
 };
 
 /**
@@ -111,13 +116,10 @@ export type BroadcastedEventServerMsg = {
  * joining the Room, to provide the initial state of the Room. The payload
  * includes a list of all other Users that already are in the Room.
  */
-export type RoomStateServerMsg = {
+export type RoomStateServerMsg<TUserMeta extends UserMetadata> = {
   type: ServerMsgCode.ROOM_STATE;
   users: {
-    [actor: number]: {
-      id?: string;
-      info?: Json;
-    };
+    [actor: number]: TUserMeta;
   };
 };
 
