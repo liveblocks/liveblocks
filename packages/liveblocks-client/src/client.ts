@@ -50,7 +50,7 @@ type EnterOptions<
  *       body: JSON.stringify({ room })
  *     });
  *
- *     return await response.json();
+ *     return await response.json(); // should be: { token: "..." }
  *   }
  * });
  */

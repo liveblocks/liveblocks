@@ -23,7 +23,6 @@ export {
   isAuthToken,
   isRoomAuthToken,
   isScope,
-  parseAuthToken,
 } from "./AuthToken";
 export {
   deprecate,

@@ -100,6 +100,36 @@ describe("room / auth", () => {
     consoleErrorSpy.mockRestore();
   });
 
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should throw",
+    async (response) => {
+      const room = createRoom(
+        {},
+        {
+          ...defaultContext,
+          authentication: {
+            type: "custom",
+            callback: (_room) =>
+              new Promise((resolve) => {
+                // @ts-expect-error: testing for missing token in callback response
+                resolve(response);
+              }),
+          },
+        }
+      );
+
+      room.connect();
+      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+      room.disconnect();
+
+      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+        new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        )
+      );
+    }
+  );
+
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
       {},
