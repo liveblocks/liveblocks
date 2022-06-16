@@ -9,12 +9,12 @@ import {
 import Avatar from '../../assets/svg/Avatars';
 
 const colorPairs = [{
-  startColor: '#002A95', endColor: '#00A0D2'
+  startColor: '#002A95', endColor: '#00A0D2', id: 1
 }, {
-  startColor: '#6116FF', endColor: '#E32DD1'
+  startColor: '#6116FF', endColor: '#E32DD1', id: 2
 },
 {
-  startColor: '#39C7D1', endColor: '#62CC52'
+  startColor: '#39C7D1', endColor: '#62CC52', id: 3
 }
 ];
 
@@ -24,7 +24,7 @@ const Avatars = ({ count }) => {
   for (let i = 0; i < count; i++) {
     const colorPair = colorPairs[i % colorPairs.length];
     avatars.push(
-      <View style={{ marginLeft: i === 0 ? 0 : -11 }}>
+      <View style={{ marginLeft: i === 0 ? 0 : -11 }} key={colorPair.id}>
         <Avatar startColor={colorPair.startColor} endColor={colorPair.endColor} />
       </View>
     );
@@ -38,7 +38,7 @@ const Avatars = ({ count }) => {
 const WhoIsHere = ({ count }) => {
   return (
     <View style={styles.container}>
-      {count === 0 ? <></> : <Text style={styles.countText}>{count}</Text>}
+      {count === 0 ? null : <Text style={styles.countText}>{count}</Text>}
       <Avatars count={count} />
     </View>);
 }

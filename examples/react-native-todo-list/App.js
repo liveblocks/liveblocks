@@ -25,11 +25,11 @@ const App = () => {
   const todos = useList('todos');
   const others = useOthers();
   const updateMyPresence = useUpdateMyPresence();
-  const isSomeoneIsTyping = others
+  const isSomeoneTyping = others
     .toArray()
     .some(user => user.presence?.isTyping);
 
-  if (todos == null) {
+  if (todos === null) {
     return <View style={styles.noTodos}><Text>Loading...</Text></View>;
   }
 
@@ -52,7 +52,7 @@ const App = () => {
           }
           <View style={styles.bottomContainer}>
             <TextInputWithButton
-              isSomeoneIsTyping={isSomeoneIsTyping}
+              isSomeoneTyping={isSomeoneTyping}
               updateTypingStatus={(isTyping) => updateMyPresence({ isTyping: isTyping })}
               handleOnSubmitEditing={(todo) => todos.push({ text: todo })}>
             </TextInputWithButton>
