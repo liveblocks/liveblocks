@@ -93,7 +93,6 @@ export function isRoomAuthToken(data: JsonObject): data is RoomAuthToken {
   return (
     typeof data.appId === "string" &&
     typeof data.roomId === "string" &&
-    // TODO: throw specific error if actor is not a number
     typeof data.actor === "number" &&
     (data.id === undefined || typeof data.id === "string") &&
     isStringList(data.scopes) &&
@@ -137,7 +136,7 @@ export function parseRoomAuthToken(
     return token;
   } else {
     throw new Error(
-      "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientWithCallback"
+      "Authentication error: we expected a room token but did not get one. Hint: if you are using a callback, ensure the room is passed when creating the token. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClientCallback"
     );
   }
 }
