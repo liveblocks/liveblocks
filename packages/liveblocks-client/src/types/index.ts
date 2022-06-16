@@ -268,9 +268,7 @@ export type User<
    * The user presence.
    */
   readonly presence?: TPresence;
-  /**
-   * @internal
-   */
+  /** @internal */
   _hasReceivedInitialPresence?: boolean;
 };
 

@@ -106,9 +106,7 @@ export abstract class AbstractCrdt {
 
   private _parent: ParentInfo = NoParent;
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _getParentKeyOrThrow(): string {
     switch (this.parent.type) {
       case "HasParent":
@@ -125,9 +123,7 @@ export abstract class AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   protected get _doc(): Doc | undefined {
     return this.__doc;
   }
@@ -136,23 +132,17 @@ export abstract class AbstractCrdt {
     return this.__doc ? this.__doc.roomId : null;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   get _id(): string | undefined {
     return this.__id;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   get parent(): ParentInfo {
     return this._parent;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   get _parentNode(): LiveNode | null {
     switch (this.parent.type) {
       case "HasParent":
@@ -169,9 +159,7 @@ export abstract class AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   get _parentKey(): string | null {
     switch (this.parent.type) {
       case "HasParent":
@@ -188,9 +176,7 @@ export abstract class AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _apply(op: Op, _isLocal: boolean): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_CRDT: {
@@ -205,9 +191,7 @@ export abstract class AbstractCrdt {
     return { modified: false };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _setParentLink(newParentNode: LiveNode, newParentKey: string): void {
     switch (this.parent.type) {
       case "HasParent":
@@ -230,9 +214,7 @@ export abstract class AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attach(id: string, doc: Doc): void {
     if (this.__id || this.__doc) {
       throw new Error("Cannot attach if CRDT is already attached");
@@ -244,14 +226,10 @@ export abstract class AbstractCrdt {
     this.__doc = doc;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   abstract _attachChild(op: CreateChildOp, source: OpSource): ApplyResult;
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detach(): void {
     if (this.__doc && this.__id) {
       this.__doc.deleteItem(this.__id);
@@ -282,21 +260,15 @@ export abstract class AbstractCrdt {
     this.__doc = undefined;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
-  /**
-   * @internal
-   */
+  /** @internal */
   abstract _serialize(
     parentId: string,
     parentKey: string,
     doc?: Doc
   ): CreateChildOp[];
 
-  /**
-   * @internal
-   */
+  /** @internal */
   abstract _toSerializedCrdt(): SerializedCrdt;
 }
