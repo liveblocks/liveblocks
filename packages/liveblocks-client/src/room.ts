@@ -1753,7 +1753,7 @@ function prepareAuthEndpoint(
       return authentication.callback(room).then((response) => {
         if (!response.token) {
           throw new Error(
-            "We expect the authentication callback to return a token, but it did not. Please check the return value of your callback, it should return `{ token: '...'}"
+            'Authentication error. We expect the authentication callback to return { token: "..." }, but it did not. Please check the return value of the callback.'
           );
         }
         return response;
