@@ -31,6 +31,7 @@ export class LiveMap<
   TKey extends string,
   TValue extends Lson
 > extends AbstractCrdt {
+  /** @internal */
   private _map: Map<TKey, LiveNode>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);

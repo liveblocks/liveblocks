@@ -1,4 +1,5 @@
 import type {
+  BaseUserMeta,
   BroadcastOptions,
   Client,
   History,
@@ -9,7 +10,6 @@ import type {
   Others,
   Room,
   User,
-  UserMetadata,
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
@@ -40,7 +40,7 @@ type LookupResult<T> =
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
-  TUserMeta extends UserMetadata = UserMetadata,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
   TEvent extends Json = never
 >(client: Client) {
   let useClient: () => Client;
@@ -343,7 +343,7 @@ export function createRoomContext<
       let didCancel = false;
 
       async function fetchStorage() {
-        const storage = await room.getStorage<TStorage>();
+        const storage = await room.getStorage();
         if (!didCancel) {
           setState(storage.root);
         }

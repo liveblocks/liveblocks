@@ -1,9 +1,9 @@
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
+import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Json, JsonObject } from "./Json";
 import type { Lson, LsonObject } from "./Lson";
-import type { UserMetadata } from "./UserMetadata";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -37,7 +37,7 @@ export type MyPresenceCallback<TPresence extends JsonObject> = (
 
 export type OthersEventCallback<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 > = (
   others: Others<TPresence, TUserMeta>,
   event: OthersEvent<TPresence, TUserMeta>
@@ -57,7 +57,7 @@ export type ConnectionCallback = (state: ConnectionState) => void;
 
 export type RoomEventCallbackMap<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = {
   "my-presence": MyPresenceCallback<TPresence>;
@@ -191,7 +191,7 @@ export type Client = {
   getRoom<
     TPresence extends JsonObject,
     TStorage extends LsonObject,
-    TUserMeta extends UserMetadata,
+    TUserMeta extends BaseUserMeta,
     TEvent extends Json
   >(
     roomId: string
@@ -205,7 +205,7 @@ export type Client = {
   enter<
     TPresence extends JsonObject,
     TStorage extends LsonObject,
-    TUserMeta extends UserMetadata,
+    TUserMeta extends BaseUserMeta,
     TEvent extends Json
   >(
     roomId: string,
@@ -224,7 +224,7 @@ export type Client = {
  */
 export interface Others<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 > {
   /**
    * Number of other users in the room.
@@ -249,7 +249,7 @@ export interface Others<
  */
 export type User<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 > = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
@@ -268,9 +268,7 @@ export type User<
    * The user presence.
    */
   readonly presence?: TPresence;
-  /**
-   * @internal
-   */
+  /** @internal */
   _hasReceivedInitialPresence?: boolean;
 };
 
@@ -357,7 +355,7 @@ export type ConnectionState = Connection["state"];
 
 export type OthersEvent<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 > =
   | {
       type: "leave";
@@ -435,7 +433,7 @@ export interface History {
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = {
   /**
@@ -681,13 +679,7 @@ export type Room<
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <
-    /**
-     * @deprecated This type argument is ignored. If you want to annotate this
-     * type manually, please annotate the Room instance instead.
-     */
-    _ = unknown
-  >() => Promise<{
+  getStorage: () => Promise<{
     root: LiveObject<TStorage>;
   }>;
 
@@ -731,6 +723,7 @@ export enum WebsocketCloseCodes {
   CLOSE_WITHOUT_RETRY = 4999,
 }
 
+export type { BaseUserMeta } from "./BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -779,4 +772,3 @@ export type {
   UserLeftServerMsg,
 } from "./ServerMsg";
 export { ServerMsgCode } from "./ServerMsg";
-export type { UserMetadata } from "./UserMetadata";

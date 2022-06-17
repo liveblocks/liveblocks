@@ -29,9 +29,13 @@ import {
  */
 export class LiveList<TItem extends Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
+  /** @internal */
   private _items: Array<LiveNode>;
 
+  /** @internal */
   private _implicitlyDeletedItems: Set<LiveNode>;
+
+  /** @internal */
   private _unacknowledgedSets: Map<string, string>;
 
   constructor(items: TItem[] = []) {
@@ -50,9 +54,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   static _deserialize(
     [id]: IdTuple<SerializedList>,
     parentToChildren: ParentToChildNodeMap,
@@ -78,9 +80,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return list;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
@@ -104,18 +104,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return ops;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _indexOfPosition(position: string): number {
     return this._items.findIndex(
       (item) => item._getParentKeyOrThrow() === position
     );
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
@@ -124,9 +120,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detach(): void {
     super._detach();
 
@@ -135,9 +129,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetRemote(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -219,9 +211,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetAck(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -361,9 +351,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return result.modified.updates[0];
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applyRemoteInsert(op: CreateChildOp): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -387,9 +375,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applyInsertAck(op: CreateChildOp): ApplyResult {
     const existingItem = this._items.find((item) => item._id === op.id);
     const key = op.parentKey;
@@ -456,9 +442,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applyInsertUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
@@ -497,9 +481,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetUndoRedo(op: CreateChildOp): ApplyResult {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
@@ -556,9 +538,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -588,9 +568,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detachChild(
     child: LiveNode
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
@@ -613,9 +591,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return { modified: false };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetChildKeyRemote(
     newKey: string,
     child: LiveNode
@@ -692,9 +668,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetChildKeyAck(newKey: string, child: LiveNode): ApplyResult {
     const previousKey = nn(child._parentKey);
 
@@ -766,9 +740,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _applySetChildKeyUndoRedo(
     newKey: string,
     child: LiveNode
@@ -813,9 +785,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _setChildKey(newKey: string, child: LiveNode, source: OpSource): ApplyResult {
     if (source === OpSource.REMOTE) {
       return this._applySetChildKeyRemote(newKey, child);
@@ -826,16 +796,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _toSerializedCrdt(): SerializedList {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveList if parent is missing");
@@ -1214,9 +1180,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return new LiveListIterator(this._items);
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _createAttachItemAndSort(
     op: CreateOp,
     key: string
@@ -1237,9 +1201,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     return { newItem, newIndex };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   private _shiftItemPosition(index: number, key: string) {
     const shiftedPosition = makePosition(
       key,

@@ -14,6 +14,9 @@ import {
   isTypeNode,
 } from "typescript";
 
+const migrationGuideLink =
+  "https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17";
+
 const SRC_FILE = "src/factory.tsx";
 const TARGET_FILE = "src/compat.tsx";
 
@@ -31,8 +34,7 @@ function getDeprecationMessage(hookName: string): string {
     /**
      * @deprecated Please use \`createRoomContext()\` instead of importing
      * \`${hookName}\` from \`@liveblocks/react\` directly. See
-     * https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for
-     * details.
+     * ${migrationGuideLink} for details.
      */
   `;
 }
@@ -163,7 +165,7 @@ function wrapHookDeclaration(
 
   const extraTUserMeta =
     doesReturnTypeNeed("TUserMeta") || doInputParamsNeed("TUserMeta")
-      ? "TUserMeta extends UserMetadata"
+      ? "TUserMeta extends BaseUserMeta"
       : "";
 
   const extraTEvent =
@@ -231,7 +233,7 @@ function wrapHookDeclaration(
         : "";
 
     const body = `
-      deprecate("Please use \`createRoomContext()\` instead of importing \`${name}\` from \`@liveblocks/react\` directly. See https://gist.github.com/nvie/5e718902c51ea7dad93cd6952fe1af03 for details.");
+      deprecate(\`Please use \\\`createRoomContext()\\\` instead of importing \\\`${name}\\\` from \\\`@liveblocks/react\\\` directly. See ${migrationGuideLink} for details.\`);
       return _hooks.${internalName}(${args})${optionalCast};
     `;
 
@@ -255,7 +257,7 @@ let output = "";
 output += PREAMBLE;
 output += "\n";
 output += `
-import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, UserMetadata } from "@liveblocks/client";
+import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, BaseUserMeta } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";

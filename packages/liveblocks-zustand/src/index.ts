@@ -1,4 +1,5 @@
 import type {
+  BaseUserMeta,
   Client,
   Json,
   JsonObject,
@@ -6,7 +7,6 @@ import type {
   LsonObject,
   Room,
   User,
-  UserMetadata,
 } from "@liveblocks/client";
 import {
   lsonToJson,
@@ -43,7 +43,7 @@ export type LiveblocksState<
   TState extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 > = TState & {
   /**
@@ -109,7 +109,7 @@ export function middleware<
   T extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   config: StateCreator<
@@ -229,7 +229,7 @@ export function middleware<
         })
       );
 
-      room.getStorage<any>().then(({ root }) => {
+      room.getStorage().then(({ root }) => {
         const updates: any = {};
 
         room!.batch(() => {
@@ -332,7 +332,7 @@ function updateZustandLiveblocksState<
   T extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   set: (
@@ -362,7 +362,7 @@ function broadcastInitialPresence<T>(
 function updatePresence<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   room: Room<TPresence, TStorage, TUserMeta, TEvent>,
@@ -387,7 +387,7 @@ function patchLiveblocksStorage<
   TState extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(
   root: LiveObject<O>,

@@ -36,7 +36,10 @@ import {
  * If multiple clients update the same property simultaneously, the last modification received by the Liveblocks servers is the winner.
  */
 export class LiveObject<O extends LsonObject> extends AbstractCrdt {
+  /** @internal */
   private _map: Map<string, Lson>;
+
+  /** @internal */
   private _propToLastUpdate: Map<string, string>;
 
   constructor(obj: O = {} as O) {
@@ -56,15 +59,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._map = new Map(Object.entries(obj)) as Map<string, Lson>;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[];
+  /** @internal */
   _serialize(
     parentId?: undefined,
     parentKey?: undefined,
     doc?: Doc
   ): CreateOp[];
+  /** @internal */
   _serialize(parentId?: string, parentKey?: string, doc?: Doc): CreateOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
@@ -99,9 +102,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return ops;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   static _deserialize(
     [id, item]: IdTuple<SerializedObject | SerializedRootObject>,
     parentToChildren: ParentToChildNodeMap,
@@ -112,9 +113,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return this._deserializeChildren(liveObj, parentToChildren, doc);
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   static _deserializeChildren(
     liveObj: LiveObject<JsonObject>,
     parentToChildren: ParentToChildNodeMap,
@@ -137,9 +136,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return liveObj;
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
@@ -150,9 +147,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
@@ -218,9 +213,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     };
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _detachChild(child: LiveNode): ApplyResult {
     if (child) {
       const id = nn(this._id);
@@ -262,9 +255,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
   }
 
-  /**
-   * @internal
-   */
+  /** @internal */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     if (op.type === OpCode.UPDATE_OBJECT) {
       return this._applyUpdate(op, isLocal);
@@ -304,6 +295,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
   }
 
+  /** @internal */
   private _applyUpdate(op: UpdateObjectOp, isLocal: boolean): ApplyResult {
     let isModified = false;
     const id = nn(this._id);
@@ -375,6 +367,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       : { modified: false };
   }
 
+  /** @internal */
   private _applyDeleteObjectKey(op: DeleteObjectKeyOp): ApplyResult {
     const key = op.key;
 

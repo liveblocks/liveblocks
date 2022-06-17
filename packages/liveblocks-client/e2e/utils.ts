@@ -18,13 +18,13 @@ import type {
   JsonObject,
   LsonObject,
   ToJson,
-  UserMetadata,
+  BaseUserMeta,
 } from "../src/types";
 
 async function initializeRoomForTest<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(roomId: string, initialStorage?: TStorage) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
@@ -100,7 +100,7 @@ async function initializeRoomForTest<
 export function prepareTestsConflicts<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
-  TUserMeta extends UserMetadata = never,
+  TUserMeta extends BaseUserMeta = never,
   TEvent extends Json = never
 >(
   initialStorage: TStorage,
@@ -222,7 +222,7 @@ export function prepareTestsConflicts<
 export function prepareSingleClientTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
-  TUserMeta extends UserMetadata = never,
+  TUserMeta extends BaseUserMeta = never,
   TEvent extends Json = never
 >(
   initialStorage: TStorage,
