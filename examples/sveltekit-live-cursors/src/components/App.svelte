@@ -1,15 +1,47 @@
 <script lang="ts">
-  import { useMyPresence, useOthers } from "../lib";
   import Cursor from "./Cursor.svelte";
+  import { type Room } from "@liveblocks/client";
+  import { onDestroy } from "svelte";
 
-  type Cursor = {
-    x: number;
-    y: number;
-  };
+  /**
+   * The main Liveblocks code for the example.
+   * Check in src/routes/index.svelte to see the setup code.
+   */
 
-  type Presence = {
-    cursor: Cursor | null;
-  };
+  export let room: Room;
+
+  let myPresence;
+  let others;
+
+  const unsubscribeMyPresence = room.subscribe("my-presence", (presence) => {
+    myPresence = presence;
+  });
+
+  const unsubscribeOthers = room.subscribe("others", (otherUsers) => {
+    others = otherUsers;
+  });
+
+  onDestroy(() => {
+    unsubscribeMyPresence();
+    unsubscribeOthers();
+  });
+
+  // Update cursor presence to current mouse location
+  function handleMousemove (event: MouseEvent) {
+    room.updatePresence({
+      cursor: {
+        x: Math.round(event.clientX),
+        y: Math.round(event.clientY),
+      },
+    });
+  }
+
+  // When the mouse leaves the page, set cursor presence to null
+  function handleMouseleave () {
+    room.updatePresence({
+      cursor: null,
+    });
+  }
 
   const COLORS = [
     "#E57373",
@@ -21,47 +53,19 @@
     "#F06292",
     "#7986CB",
   ];
-
-  /**
-   * The main Liveblocks code for the example.
-   * Check in src/routes/index.svelte to see the setup code.
-   *
-   * The two hooks below work similarly to the `liveblocks-react` library
-   * https://liveblocks.io/docs/api-reference/liveblocks-react
-   */
-
-  let myPresence = useMyPresence<Presence>();
-  let others = useOthers<Presence>();
-
-  // Update cursor presence to current mouse location
-  function handleMousemove(event: MouseEvent) {
-    myPresence.update({
-      cursor: {
-        x: Math.round(event.clientX),
-        y: Math.round(event.clientY),
-      },
-    });
-  }
-
-  // When the mouse leaves the page, set cursor presence to null
-  function handleMouseleave() {
-    myPresence.update({
-      cursor: null,
-    });
-  }
 </script>
 
 <main on:mouseleave={handleMouseleave} on:mousemove={handleMousemove}>
   <!-- Show the current user's cursor location -->
   <div class="text">
-    {$myPresence?.cursor
-      ? `${$myPresence.cursor.x} × ${$myPresence.cursor.y}`
+    {myPresence?.cursor
+      ? `${myPresence.cursor.x} × ${myPresence.cursor.y}`
       : "Move your cursor to broadcast its position to other people in the room."}
   </div>
 
   <!-- When others connected, iterate through others and show their cursors -->
-  {#if $others}
-    {#each [...$others] as { connectionId, presence } (connectionId)}
+  {#if others}
+    {#each [...others] as { connectionId, presence } (connectionId)}
       {#if presence?.cursor}
         <Cursor
           color={COLORS[connectionId % COLORS.length]}
