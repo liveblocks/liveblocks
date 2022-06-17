@@ -67,7 +67,20 @@ export type RoomEventCallbackMap<
   connection: ConnectionCallback;
 };
 
-export type RoomEventName = keyof RoomEventCallbackMap<never, never, never>;
+export type RoomEventName = Extract<
+  keyof RoomEventCallbackMap<never, never, never>,
+  string
+>;
+
+export function isRoomEventName(value: string): value is RoomEventName {
+  return (
+    value === "my-presence" ||
+    value === "others" ||
+    value === "event" ||
+    value === "error" ||
+    value === "connection"
+  );
+}
 
 export type UpdateDelta =
   | {

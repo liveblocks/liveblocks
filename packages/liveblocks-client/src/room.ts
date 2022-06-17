@@ -52,6 +52,7 @@ import type {
 } from "./types";
 import {
   ClientMsgCode,
+  isRoomEventName,
   OpCode,
   ServerMsgCode,
   WebsocketCloseCodes,
@@ -170,16 +171,6 @@ const BACKOFF_RETRY_DELAYS_SLOW = [2000, 30000, 60000, 300000];
 const HEARTBEAT_INTERVAL = 30000;
 // const WAKE_UP_CHECK_INTERVAL = 2000;
 const PONG_TIMEOUT = 2000;
-
-function isValidRoomEventType(value: string) {
-  return (
-    value === "my-presence" ||
-    value === "others" ||
-    value === "event" ||
-    value === "error" ||
-    value === "connection"
-  );
-}
 
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
@@ -783,7 +774,7 @@ export function makeStateMachine<
       return subscribeToLiveStructure(firstParam, listener, options);
     } else if (typeof firstParam === "function") {
       return genericSubscribe(firstParam);
-    } else if (!isValidRoomEventType(firstParam)) {
+    } else if (!isRoomEventName(firstParam)) {
       throw new Error(`"${firstParam}" is not a valid event name`);
     }
 
