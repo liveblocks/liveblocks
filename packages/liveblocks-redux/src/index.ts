@@ -1,11 +1,11 @@
 import type {
+  BaseUserMeta,
   Client,
   JsonObject,
   LiveObject,
   LsonObject,
   Room,
   User,
-  UserMetadata,
 } from "@liveblocks/client";
 import {
   lsonToJson,
@@ -39,7 +39,7 @@ const ACTION_TYPES = {
 export type LiveblocksState<
   TState,
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 > = TState & {
   /**
    * Liveblocks extra state attached by the enhancer

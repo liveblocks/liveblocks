@@ -3,6 +3,7 @@ import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
   Authentication,
+  BaseUserMeta,
   Client,
   ClientOptions,
   Json,
@@ -11,7 +12,6 @@ import type {
   Resolve,
   Room,
   RoomInitializers,
-  UserMetadata,
 } from "./types";
 
 type EnterOptions<
@@ -60,13 +60,13 @@ export function createClient(options: ClientOptions): Client {
 
   const rooms = new Map<
     string,
-    InternalRoom<JsonObject, LsonObject, UserMetadata, Json>
+    InternalRoom<JsonObject, LsonObject, BaseUserMeta, Json>
   >();
 
   function getRoom<
     TPresence extends JsonObject,
     TStorage extends LsonObject,
-    TUserMeta extends UserMetadata,
+    TUserMeta extends BaseUserMeta,
     TEvent extends Json
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TEvent> | null {
     const internalRoom = rooms.get(roomId);
@@ -83,7 +83,7 @@ export function createClient(options: ClientOptions): Client {
   function enter<
     TPresence extends JsonObject,
     TStorage extends LsonObject,
-    TUserMeta extends UserMetadata,
+    TUserMeta extends BaseUserMeta,
     TEvent extends Json
   >(
     roomId: string,
@@ -137,7 +137,7 @@ export function createClient(options: ClientOptions): Client {
       internalRoom as unknown as InternalRoom<
         JsonObject,
         LsonObject,
-        UserMetadata,
+        BaseUserMeta,
         Json
       >
     );

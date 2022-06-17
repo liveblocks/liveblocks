@@ -165,7 +165,7 @@ function wrapHookDeclaration(
 
   const extraTUserMeta =
     doesReturnTypeNeed("TUserMeta") || doInputParamsNeed("TUserMeta")
-      ? "TUserMeta extends UserMetadata"
+      ? "TUserMeta extends BaseUserMeta"
       : "";
 
   const extraTEvent =
@@ -257,7 +257,7 @@ let output = "";
 output += PREAMBLE;
 output += "\n";
 output += `
-import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, UserMetadata } from "@liveblocks/client";
+import type { BroadcastOptions, History, Json, JsonObject, LiveList, LiveMap, LiveObject, Lson, LsonObject, Others, Room, User, BaseUserMeta } from "@liveblocks/client";
 import type { RoomProviderProps } from "./factory";
 import { createRoomContext } from "./factory";
 import { deprecate } from "@liveblocks/client/internal";

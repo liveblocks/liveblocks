@@ -6,6 +6,7 @@
  */
 
 import type {
+  BaseUserMeta,
   BroadcastOptions,
   History,
   Json,
@@ -18,7 +19,6 @@ import type {
   Others,
   Room,
   User,
-  UserMetadata,
 } from "@liveblocks/client";
 import { deprecate } from "@liveblocks/client/internal";
 
@@ -135,7 +135,7 @@ export function useMyPresence<TPresence extends JsonObject>(): [
  */
 export function useOthers<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 >(): Others<TPresence, TUserMeta> {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useOthers` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
@@ -163,7 +163,7 @@ export function useRedo(): () => void {
 export function useRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
-  TUserMeta extends UserMetadata,
+  TUserMeta extends BaseUserMeta,
   TEvent extends Json
 >(): Room<TPresence, TStorage, TUserMeta, TEvent> {
   deprecate(
@@ -184,7 +184,7 @@ export function useRoom<
  */
 export function useSelf<
   TPresence extends JsonObject,
-  TUserMeta extends UserMetadata
+  TUserMeta extends BaseUserMeta
 >(): User<TPresence, TUserMeta> | null {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useSelf` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
