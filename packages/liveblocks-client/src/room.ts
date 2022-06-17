@@ -102,7 +102,7 @@ export type Machine<
   connect(): null | undefined;
   disconnect(): void;
 
-  subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  subscribe(callback: StorageCallback): () => void;
   subscribe<TKey extends string, TValue extends Lson>(
     liveMap: LiveMap<TKey, TValue>,
     callback: (liveMap: LiveMap<TKey, TValue>) => void
@@ -730,7 +730,7 @@ export function makeStateMachine<
     }
   }
 
-  function subscribe(callback: (updates: StorageUpdate) => void): () => void;
+  function subscribe(callback: StorageCallback): () => void;
   function subscribe<TKey extends string, TValue extends Lson>(
     liveMap: LiveMap<TKey, TValue>,
     callback: (liveMap: LiveMap<TKey, TValue>) => void
@@ -766,7 +766,7 @@ export function makeStateMachine<
     listener: ConnectionCallback
   ): () => void;
   function subscribe<K extends RoomEventName>(
-    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
+    firstParam: StorageCallback | K | LiveStructure,
     listener?: RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[K] | any,
     options?: { isDeep: boolean }
   ): () => void {
