@@ -1,5 +1,4 @@
 <script lang="ts">
-  import "../../static/styles.css";
-</script>
+  import "../styles.css";</script>
 
 <slot />
