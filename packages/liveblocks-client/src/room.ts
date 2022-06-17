@@ -767,7 +767,7 @@ export function makeStateMachine<
   ): () => void;
   function subscribe<K extends RoomEventName>(
     firstParam: StorageCallback | K | LiveStructure,
-    listener?: RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[K] | any,
+    listener?: RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[K],
     options?: { isDeep: boolean }
   ): () => void {
     if (isLiveNode(firstParam)) {
