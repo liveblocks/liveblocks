@@ -10,9 +10,11 @@
 
   export let room: Room;
 
-  let myPresence;
-  let others;
+  // Get initial values for presence and others
+  let myPresence = room.getPresence();
+  let others = room.getOthers();
 
+  // Subscribe to further changes
   const unsubscribeMyPresence = room.subscribe("my-presence", (presence) => {
     myPresence = presence;
   });
@@ -21,6 +23,7 @@
     others = otherUsers;
   });
 
+  // Unsubscribe when unmounting
   onDestroy(() => {
     unsubscribeMyPresence();
     unsubscribeOthers();

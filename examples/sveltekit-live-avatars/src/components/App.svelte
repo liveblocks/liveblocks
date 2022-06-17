@@ -10,9 +10,11 @@
 
   export let room: Room;
 
-  let users;
-  let currentUser;
+  // Get initial values for others and self
+  let users = room.getOthers();
+  let currentUser = room.getSelf();
 
+  // Subscribe to further changes
   const unsubscribeOthers = room.subscribe("others", (others) => {
     users = others;
   });
@@ -21,6 +23,7 @@
     currentUser = room.getSelf();
   });
 
+  // Unsubscribe when unmounting
   onDestroy(() => {
     unsubscribeOthers();
     unsubscribeConnection();
