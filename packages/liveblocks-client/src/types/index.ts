@@ -55,7 +55,7 @@ export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap<
+type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TEvent extends Json
@@ -70,6 +70,20 @@ export type RoomEventCallbackMap<
 export type RoomEventName = Extract<
   keyof RoomEventCallbackMap<never, never, never>,
   string
+>;
+
+export type RoomEventCallbackFor<
+  E extends RoomEventName,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TEvent extends Json
+> = RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[E];
+
+export type RoomEventCallback = RoomEventCallbackFor<
+  RoomEventName,
+  JsonObject,
+  BaseUserMeta,
+  Json
 >;
 
 export function isRoomEventName(value: string): value is RoomEventName {
