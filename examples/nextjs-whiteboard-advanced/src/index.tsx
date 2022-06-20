@@ -15,7 +15,6 @@ import {
   LayerType,
   CanvasState,
   CanvasMode,
-  Presence,
   Camera,
   Side,
   XYWH,
