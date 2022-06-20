@@ -14,7 +14,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 
-import { useOthers, useList, useUpdateMyPresence } from '@liveblocks/react';
+import { useOthers, useList, useUpdateMyPresence } from './liveblocks.config';
 
 import Header from './src/components/Header';
 import Todo from './src/components/Todo';
