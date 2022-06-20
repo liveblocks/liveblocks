@@ -3,7 +3,7 @@ import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Json, JsonObject } from "./Json";
-import type { Lson, LsonObject } from "./Lson";
+import type { LiveStructure, Lson, LsonObject } from "./Lson";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -522,7 +522,7 @@ export type Room<
      * Subscribes to changes made on a {@link LiveMap}. Returns an unsubscribe function.
      * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
      *
-     * @param listener the callback this called when the {@link LiveMap} changes.
+     * @param callback The callback this called when the {@link LiveMap} changes.
      *
      * @returns Unsubscribe function.
      *
@@ -531,9 +531,9 @@ export type Room<
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TKey extends string, TValue extends Lson>(
-      liveMap: LiveMap<TKey, TValue>,
-      listener: (liveMap: LiveMap<TKey, TValue>) => void
+    <L extends LiveMap<string, Lson>>(
+      liveMap: L,
+      callback: (node: L) => void
     ): () => void;
 
     /**
@@ -549,9 +549,9 @@ export type Room<
      * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
      * unsubscribe();
      */
-    <TData extends JsonObject>(
-      liveObject: LiveObject<TData>,
-      callback: (liveObject: LiveObject<TData>) => void
+    <L extends LiveObject<JsonObject>>(
+      liveObject: L,
+      callback: (node: L) => void
     ): () => void;
 
     /**
@@ -567,65 +567,29 @@ export type Room<
      * const unsubscribe = room.subscribe(liveList, (liveList) => { });
      * unsubscribe();
      */
-    <TItem extends Lson>(
-      liveList: LiveList<TItem>,
-      callback: (liveList: LiveList<TItem>) => void
+    <L extends LiveList<Lson>>(
+      liveList: L,
+      callback: (node: L) => void
     ): () => void;
 
     /**
-     * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     * Subscribes to changes made on a Live structure and all the nested data
+     * structures. Returns an unsubscribe function. In a future version, we
+     * will also expose what exactly changed in the Live structure.
      *
-     * @param callback the callback this called when the {@link LiveMap} changes.
+     * @param callback The callback this called when the Live structure, or any
+     * of its nested values, changes.
      *
      * @returns Unsubscribe function.
      *
      * @example
      * const liveMap = new LiveMap();
-     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
+     * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TKey extends string, TValue extends Lson>(
-      liveMap: LiveMap<TKey, TValue>,
-      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
-     *
-     * @param callback the callback this called when the {@link LiveObject} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveObject = new LiveObject();
-     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <TData extends LsonObject>(
-      liveObject: LiveObject<TData>,
-      callback: (updates: LiveObjectUpdates<TData>[]) => void,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
-     *
-     * @param callback the callback this called when the {@link LiveList} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveList = new LiveList();
-     * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <TItem extends Lson>(
-      liveList: LiveList<TItem>,
-      callback: (updates: LiveListUpdates<TItem>[]) => void,
+    <L extends LiveStructure>(
+      liveStructure: L,
+      callback: StorageCallback,
       options: { isDeep: true }
     ): () => void;
   };
