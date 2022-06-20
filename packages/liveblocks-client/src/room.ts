@@ -100,25 +100,15 @@ export type Machine<
   connect(): null | undefined;
   disconnect(): void;
 
+  // Generic storage callbacks
   subscribe(callback: StorageCallback): () => void;
-  subscribe<L extends LiveStructure>(
-    liveStructure: L,
-    callback: (node: L) => void
-  ): () => void;
-  subscribe(
-    node: LiveStructure,
-    callback: StorageCallback,
-    options: { isDeep: true }
-  ): () => void;
-  subscribe<E extends RoomEventName>(
-    type: E,
-    listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>
-  ): () => void;
-  subscribe<L extends LiveStructure, E extends RoomEventName>(
-    first: StorageCallback | L | E,
-    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
-    options?: { isDeep: boolean }
-  ): () => void;
+
+  // Storage callbacks filtered by Live structure
+  subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+
+  // Room event callbacks
+  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
 
   // Presence
   updatePresence(
@@ -717,19 +707,13 @@ export function makeStateMachine<
     }
   }
 
-  // Generic storage callbacks -----------------------------------------------------------------------
-  // prettier-ignore
-  function subscribe(callback: StorageCallback): () => void;
-
-  // Storage callbacks filtered by Live structure ----------------------------------------------------
-  // prettier-ignore
-  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void;
-  // prettier-ignore
-  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void;
-
-  // RoomEventCallbacks ------------------------------------------------------------------------------
-  // prettier-ignore
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void;
+  // Generic storage callbacks
+  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
+  // Storage callbacks filtered by Live structure
+  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  // Room event callbacks
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
 
   function subscribe<L extends LiveStructure, E extends RoomEventName>(
     first: StorageCallback | L | E,
