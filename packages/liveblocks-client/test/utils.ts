@@ -157,21 +157,21 @@ async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend: (messages: ClientMsg<TPresence, TEvent>[]) => void = () => {},
+  onSend: (messages: ClientMsg<TPresence, TRoomEvent>[]) => void = () => {},
   defaultStorage?: TStorage
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState<TPresence, TStorage, TUserMeta, TEvent>(
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     {} as TPresence,
     defaultStorage || ({} as TStorage)
   );
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TEvent>(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
     defaultContext,
     effects
@@ -253,13 +253,13 @@ export async function prepareStorageTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TEvent>(
+    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
       items,
       -1
     );
@@ -268,8 +268,8 @@ export async function prepareStorageTest<
     TPresence,
     TStorage,
     TUserMeta,
-    TEvent
-  >(items, currentActor, (messages: ClientMsg<TPresence, TEvent>[]) => {
+    TRoomEvent
+  >(items, currentActor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         operations.push(...message.ops);
@@ -385,12 +385,12 @@ export function prepareStorageUpdateTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
     root: LiveObject<TStorage>;
-    machine: Machine<TPresence, TStorage, TUserMeta, TEvent>;
+    machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
     assert: (updates: JsonStorageUpdate[][]) => void;
   }) => Promise<void>
 ): () => Promise<void> {
@@ -402,7 +402,7 @@ export function prepareStorageUpdateTest<
       TPresence,
       TStorage,
       TUserMeta,
-      TEvent
+      TRoomEvent
     >(items, 0, (messages) => {
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
@@ -449,9 +449,9 @@ export async function reconnect<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
-  machine: Machine<TPresence, TStorage, TUserMeta, TEvent>,
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>,
   actor: number,
   newItems: IdTuple<SerializedCrdt>[]
 ) {
@@ -472,7 +472,7 @@ export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let state = {} as ToJson<TStorage>;
   let refState = {} as ToJson<TStorage>;
@@ -480,7 +480,7 @@ export async function prepareStorageImmutableTest<
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TEvent>(
+    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
       items,
       -1
     );
@@ -489,8 +489,8 @@ export async function prepareStorageImmutableTest<
     TPresence,
     TStorage,
     TUserMeta,
-    TEvent
-  >(items, actor, (messages: ClientMsg<TPresence, TEvent>[]) => {
+    TRoomEvent
+  >(items, actor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
@@ -610,8 +610,8 @@ export function createSerializedRegister(
 
 export function mockEffects<
   TPresence extends JsonObject,
-  TEvent extends Json
->(): Effects<TPresence, TEvent> {
+  TRoomEvent extends Json
+>(): Effects<TPresence, TRoomEvent> {
   return {
     authenticate: jest.fn(),
     delayFlush: jest.fn(),

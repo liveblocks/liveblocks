@@ -22,13 +22,13 @@ export enum ServerMsgCode {
 export type ServerMsg<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > =
   // For Presence
   | UpdatePresenceServerMsg<TPresence> // Broadcasted
   | UserJoinServerMsg<TUserMeta> // Broadcasted
   | UserLeftServerMsg // Broadcasted
-  | BroadcastedEventServerMsg<TEvent> // Broadcasted
+  | BroadcastedEventServerMsg<TRoomEvent> // Broadcasted
   | RoomStateServerMsg<TUserMeta> // For a single client
 
   // For Storage
@@ -98,7 +98,7 @@ export type UserLeftServerMsg = {
  * Sent by the WebSocket server and broadcasted to all clients to announce that
  * a User broadcasted an Event to everyone in the Room.
  */
-export type BroadcastedEventServerMsg<TEvent extends Json> = {
+export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
   type: ServerMsgCode.BROADCASTED_EVENT;
   /**
    * The User who broadcasted the Event.
@@ -108,7 +108,7 @@ export type BroadcastedEventServerMsg<TEvent extends Json> = {
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.
    */
-  event: TEvent;
+  event: TRoomEvent;
 };
 
 /**

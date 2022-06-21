@@ -142,13 +142,13 @@ function wrapHookDeclaration(
   });
 
   function doesReturnTypeNeed(
-    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TRoomEvent"
   ): boolean {
     return !!decl.type && decl.type.getText().includes(ref);
   }
 
   function doInputParamsNeed(
-    ref: "TPresence" | "TStorage" | "TUserMeta" | "TEvent"
+    ref: "TPresence" | "TStorage" | "TUserMeta" | "TRoomEvent"
   ): boolean {
     return paramDecls.some(({ type }) => type.getText().includes(ref));
   }
@@ -168,9 +168,9 @@ function wrapHookDeclaration(
       ? "TUserMeta extends BaseUserMeta"
       : "";
 
-  const extraTEvent =
-    doesReturnTypeNeed("TEvent") || doInputParamsNeed("TEvent")
-      ? "TEvent extends Json"
+  const extraTRoomEvent =
+    doesReturnTypeNeed("TRoomEvent") || doInputParamsNeed("TRoomEvent")
+      ? "TRoomEvent extends Json"
       : "";
 
   const jsDocComment = getDeprecationMessage(name).trim();
@@ -180,13 +180,13 @@ function wrapHookDeclaration(
     extraTPresence ||
     extraTStorage ||
     extraTUserMeta ||
-    extraTEvent
+    extraTRoomEvent
       ? `<${[
           ...[
             extraTPresence,
             extraTStorage,
             extraTUserMeta,
-            extraTEvent,
+            extraTRoomEvent,
           ].filter(Boolean),
           ...(decl.typeParameters ?? []).map(
             (tparam: TypeParameterDeclaration) => tparam.getText()
@@ -228,7 +228,7 @@ function wrapHookDeclaration(
       (doesReturnTypeNeed("TPresence") ||
         doesReturnTypeNeed("TStorage") ||
         doesReturnTypeNeed("TUserMeta") ||
-        doesReturnTypeNeed("TEvent"))
+        doesReturnTypeNeed("TRoomEvent"))
         ? ` as unknown as ${decl.type.getText()}`
         : "";
 
