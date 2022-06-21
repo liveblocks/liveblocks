@@ -901,7 +901,7 @@ describe("room", () => {
 
       let others: Others<P, never> | undefined;
 
-      const unsubscribe = machine.subscribe<P>("others", (o) => (others = o));
+      const unsubscribe = machine.subscribe("others", (o) => (others = o));
 
       machine.onMessage(
         serverMessage({
@@ -1172,7 +1172,7 @@ describe("room", () => {
 
       let others: Others<P, M> | undefined;
 
-      machine.subscribe<P>("others", (o) => (others = o));
+      machine.subscribe("others", (o) => (others = o));
 
       machine.onMessage(
         serverMessage({

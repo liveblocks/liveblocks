@@ -3,8 +3,6 @@ import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import type { LiveList } from "./LiveList";
-import type { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
@@ -24,7 +22,6 @@ import type {
   JsonObject,
   LiveNode,
   LiveStructure,
-  Lson,
   LsonObject,
   MyPresenceCallback,
   NodeMap,
@@ -35,7 +32,8 @@ import type {
   ParentToChildNodeMap,
   Polyfills,
   Room,
-  RoomEventCallbackMap,
+  RoomEventCallback,
+  RoomEventCallbackFor,
   RoomEventName,
   RoomInitializers,
   RoomStateServerMsg,
@@ -102,40 +100,15 @@ export type Machine<
   connect(): null | undefined;
   disconnect(): void;
 
+  // Generic storage callbacks
   subscribe(callback: StorageCallback): () => void;
-  subscribe<TKey extends string, TValue extends Lson>(
-    liveMap: LiveMap<TKey, TValue>,
-    callback: (liveMap: LiveMap<TKey, TValue>) => void
-  ): () => void;
-  subscribe<TData extends LsonObject>(
-    liveObject: LiveObject<TData>,
-    callback: (liveObject: LiveObject<TData>) => void
-  ): () => void;
-  subscribe<TItem extends Lson>(
-    liveList: LiveList<TItem>,
-    callback: (liveList: LiveList<TItem>) => void
-  ): () => void;
-  subscribe<TItem extends LiveStructure>(
-    node: TItem,
-    callback: (updates: StorageUpdate[]) => void,
-    options: { isDeep: true }
-  ): () => void;
-  subscribe<TPresence extends JsonObject>(
-    type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
-  ): () => void;
-  subscribe<TPresence extends JsonObject>(
-    type: "others",
-    listener: OthersEventCallback<TPresence, TUserMeta>
-  ): () => void;
-  subscribe(type: "event", listener: EventCallback<TEvent>): () => void;
-  subscribe(type: "error", listener: ErrorCallback): () => void;
-  subscribe(type: "connection", listener: ConnectionCallback): () => void;
-  subscribe<K extends RoomEventName>(
-    firstParam: K | LiveStructure | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[K],
-    options?: { isDeep: boolean }
-  ): () => void;
+
+  // Storage callbacks filtered by Live structure
+  subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+
+  // Room event callbacks
+  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
 
   // Presence
   updatePresence(
@@ -381,27 +354,31 @@ export function makeStateMachine<
     return () => remove(state.listeners.storage, callback);
   }
 
-  function subscribeToLiveStructure(
-    liveValue: LiveStructure,
-    innerCallback: (updates: StorageUpdate[] | LiveStructure) => void,
-    options?: { isDeep: boolean }
-  ) {
-    const cb = (updates: StorageUpdate[]) => {
-      const relatedUpdates: StorageUpdate[] = [];
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return genericSubscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
+
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return genericSubscribe((updates) => {
       for (const update of updates) {
-        if (options?.isDeep && isSameNodeOrChildOf(update.node, liveValue)) {
-          relatedUpdates.push(update);
-        } else if (update.node._id === liveValue._id) {
-          innerCallback(update.node);
+        if (update.node._id === node._id) {
+          callback(update.node as L);
         }
       }
-
-      if (options?.isDeep && relatedUpdates.length > 0) {
-        innerCallback(relatedUpdates);
-      }
-    };
-
-    return genericSubscribe(cb);
+    });
   }
 
   function createOrUpdateRootFromMessage(
@@ -730,69 +707,54 @@ export function makeStateMachine<
     }
   }
 
-  function subscribe(callback: StorageCallback): () => void;
-  function subscribe<TKey extends string, TValue extends Lson>(
-    liveMap: LiveMap<TKey, TValue>,
-    callback: (liveMap: LiveMap<TKey, TValue>) => void
-  ): () => void;
-  function subscribe<TData extends LsonObject>(
-    liveObject: LiveObject<TData>,
-    callback: (liveObject: LiveObject<TData>) => void
-  ): () => void;
-  function subscribe<TItem extends Lson>(
-    liveList: LiveList<TItem>,
-    callback: (liveList: LiveList<TItem>) => void
-  ): () => void;
-  function subscribe(
-    node: LiveStructure,
-    callback: (updates: StorageUpdate[]) => void,
-    options: { isDeep: true }
-  ): () => void;
-  function subscribe<TPresence extends JsonObject>(
-    type: "my-presence",
-    listener: MyPresenceCallback<TPresence>
-  ): () => void;
-  function subscribe<TPresence extends JsonObject>(
-    type: "others",
-    listener: OthersEventCallback<TPresence, TUserMeta>
-  ): () => void;
-  function subscribe(
-    type: "event",
-    listener: EventCallback<TEvent>
-  ): () => void;
-  function subscribe(type: "error", listener: ErrorCallback): () => void;
-  function subscribe(
-    type: "connection",
-    listener: ConnectionCallback
-  ): () => void;
-  function subscribe<K extends RoomEventName>(
-    firstParam: StorageCallback | K | LiveStructure,
-    listener?: RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[K] | any,
+  // Generic storage callbacks
+  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
+  // Storage callbacks filtered by Live structure
+  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  // Room event callbacks
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
+
+  function subscribe<L extends LiveStructure, E extends RoomEventName>(
+    first: StorageCallback | L | E,
+    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
-    if (isLiveNode(firstParam)) {
-      return subscribeToLiveStructure(firstParam, listener, options);
-    } else if (typeof firstParam === "function") {
-      return genericSubscribe(firstParam);
-    } else if (!isRoomEventName(firstParam)) {
-      throw new Error(`"${firstParam}" is not a valid event name`);
+    if (second === undefined || typeof first === "function") {
+      if (typeof first === "function") {
+        const storageCallback = first;
+        return genericSubscribe(storageCallback);
+      } else {
+        throw new Error("Please specify a listener callback");
+      }
     }
 
-    (
-      state.listeners[firstParam] as RoomEventCallbackMap<
-        TPresence,
-        TUserMeta,
-        TEvent
-      >[K][]
-    ).push(listener);
+    if (isLiveNode(first)) {
+      const node = first;
+      if (options?.isDeep) {
+        const storageCallback = second as StorageCallback;
+        return subscribeToLiveStructureDeeply(node, storageCallback);
+      } else {
+        const nodeCallback = second as (node: L) => void;
+        return subscribeToLiveStructureShallowly(node, nodeCallback);
+      }
+    }
+
+    if (!isRoomEventName(first)) {
+      throw new Error(`"${first}" is not a valid event name`);
+    }
+
+    type EventListener = RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>;
+    type EventQueue = EventListener[];
+
+    const eventName = first;
+    const eventListener = second as EventListener;
+
+    (state.listeners[eventName] as EventQueue).push(eventListener);
 
     return () => {
-      const callbacks = state.listeners[firstParam] as RoomEventCallbackMap<
-        TPresence,
-        TUserMeta,
-        TEvent
-      >[K][];
-      remove(callbacks, listener);
+      const callbacks = state.listeners[eventName] as EventQueue;
+      remove(callbacks, eventListener);
     };
   }
 
