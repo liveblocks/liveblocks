@@ -2,7 +2,7 @@ import { Json, LiveMap } from "../src";
 import { lsonToJson } from "../src/immutable";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
-describe.only("LiveMap single client", () => {
+describe("LiveMap single client", () => {
   test(
     "remote set conflicts with another set",
     prepareTestsConflicts(
@@ -25,9 +25,32 @@ describe.only("LiveMap single client", () => {
       }
     )
   );
+
+  test(
+    "remote set conflicts with a delete",
+    prepareTestsConflicts(
+      {
+        map: new LiveMap<string, string>([["key", "A"]]),
+      },
+      async ({ root1, root2, wsUtils, assert }) => {
+        root1.get("map").delete("key");
+        root2.get("map").set("key", "B");
+
+        assert({ map: {} }, { map: { key: "B" } });
+
+        await wsUtils.flushSocket1Messages();
+
+        assert({ map: {} }, { map: { key: "B" } });
+
+        await wsUtils.flushSocket2Messages();
+
+        assert({ map: { key: "B" } });
+      }
+    )
+  );
 });
 
-describe.only("LiveMap single client", () => {
+describe("LiveMap single client", () => {
   test(
     "fast consecutive sets on same key",
     prepareSingleClientTest(
