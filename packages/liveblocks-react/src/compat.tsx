@@ -59,15 +59,15 @@ export function useBatch(): (callback: () => void) => void {
  * `useBroadcastEvent` from `@liveblocks/react` directly. See
  * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
-export function useBroadcastEvent<TEvent extends Json>(): (
-  event: TEvent,
+export function useBroadcastEvent<TRoomEvent extends Json>(): (
+  event: TRoomEvent,
   options?: BroadcastOptions
 ) => void {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useBroadcastEvent` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
   return _hooks.useBroadcastEvent() as unknown as (
-    event: TEvent,
+    event: TRoomEvent,
     options?: BroadcastOptions
   ) => void;
 }
@@ -89,8 +89,8 @@ export function useErrorListener(callback: (err: Error) => void): void {
  * `useEventListener` from `@liveblocks/react` directly. See
  * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
-export function useEventListener<TEvent extends Json>(
-  callback: (eventData: { connectionId: number; event: TEvent }) => void
+export function useEventListener<TRoomEvent extends Json>(
+  callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
 ): void {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useEventListener` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
@@ -164,8 +164,8 @@ export function useRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
->(): Room<TPresence, TStorage, TUserMeta, TEvent> {
+  TRoomEvent extends Json
+>(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
   deprecate(
     "Please use `createRoomContext()` instead of importing `useRoom` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
@@ -173,7 +173,7 @@ export function useRoom<
     TPresence,
     TStorage,
     TUserMeta,
-    TEvent
+    TRoomEvent
   >;
 }
 

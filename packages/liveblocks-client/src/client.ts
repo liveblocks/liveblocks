@@ -67,15 +67,15 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject,
     TUserMeta extends BaseUserMeta,
-    TEvent extends Json
-  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TEvent> | null {
+    TRoomEvent extends Json
+  >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
       ? (internalRoom.room as unknown as Room<
           TPresence,
           TStorage,
           TUserMeta,
-          TEvent
+          TRoomEvent
         >)
       : null;
   }
@@ -84,20 +84,20 @@ export function createClient(options: ClientOptions): Client {
     TPresence extends JsonObject,
     TStorage extends LsonObject,
     TUserMeta extends BaseUserMeta,
-    TEvent extends Json
+    TRoomEvent extends Json
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
-  ): Room<TPresence, TStorage, TUserMeta, TEvent> {
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     let internalRoom = rooms.get(roomId) as
-      | InternalRoom<TPresence, TStorage, TUserMeta, TEvent>
+      | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
       | undefined;
     if (internalRoom) {
       return internalRoom.room as unknown as Room<
         TPresence,
         TStorage,
         TUserMeta,
-        TEvent
+        TRoomEvent
       >;
     }
 
@@ -110,7 +110,7 @@ export function createClient(options: ClientOptions): Client {
       "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
     );
 
-    internalRoom = createRoom<TPresence, TStorage, TUserMeta, TEvent>(
+    internalRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
         initialPresence: options.initialPresence,
         initialStorage: options.initialStorage,

@@ -25,7 +25,7 @@ async function initializeRoomForTest<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(roomId: string, initialStorage?: TStorage) {
   const publicApiKey = process.env.LIVEBLOCKS_PUBLIC_KEY;
 
@@ -78,7 +78,7 @@ async function initializeRoomForTest<
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 
-  const room = client.enter<TPresence, TStorage, TUserMeta, TEvent>(roomId, {
+  const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(roomId, {
     initialStorage,
   });
   await waitFor(() => room.getConnectionState() === "open");
@@ -101,14 +101,14 @@ export function prepareTestsConflicts<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(
   initialStorage: TStorage,
   callback: (args: {
     root1: LiveObject<TStorage>;
     root2: LiveObject<TStorage>;
-    room2: Room<TPresence, TStorage, TUserMeta, TEvent>;
-    room1: Room<TPresence, TStorage, TUserMeta, TEvent>;
+    room2: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    room1: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
     /**
      * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
@@ -129,7 +129,7 @@ export function prepareTestsConflicts<
       client: client1,
       room: room1,
       ws: ws1,
-    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TEvent>(
+    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TRoomEvent>(
       roomName,
       initialStorage
     );
@@ -137,7 +137,7 @@ export function prepareTestsConflicts<
       client: client2,
       room: room2,
       ws: ws2,
-    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TEvent>(
+    } = await initializeRoomForTest<TPresence, TStorage, TUserMeta, TRoomEvent>(
       roomName
     );
 
@@ -223,12 +223,12 @@ export function prepareSingleClientTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(
   initialStorage: TStorage,
   callback: (args: {
     root: LiveObject<TStorage>;
-    room: Room<TPresence, TStorage, TUserMeta, TEvent>;
+    room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
     /**
      * Assert that room storage is equal to the provided json
      */
@@ -243,7 +243,7 @@ export function prepareSingleClientTest<
       TPresence,
       TStorage,
       TUserMeta,
-      TEvent
+      TRoomEvent
     >(roomName, initialStorage);
 
     const { root } = await room.getStorage();

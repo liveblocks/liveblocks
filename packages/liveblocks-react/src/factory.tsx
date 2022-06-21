@@ -41,7 +41,7 @@ export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TEvent extends Json = never
+  TRoomEvent extends Json = never
 >(client: Client) {
   let useClient: () => Client;
   if ((client as unknown) !== "__legacy") {
@@ -54,7 +54,7 @@ export function createRoomContext<
     TPresence,
     TStorage,
     TUserMeta,
-    TEvent
+    TRoomEvent
   > | null>(null);
 
   /**
@@ -94,7 +94,7 @@ export function createRoomContext<
     const _client = useClient();
 
     const [room, setRoom] = React.useState<
-      Room<TPresence, TStorage, TUserMeta, TEvent>
+      Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
       _client.enter(roomId, {
         initialPresence,
@@ -130,7 +130,7 @@ export function createRoomContext<
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
-  function useRoom(): Room<TPresence, TStorage, TUserMeta, TEvent> {
+  function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     const room = React.useContext(RoomContext);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
@@ -238,14 +238,14 @@ export function createRoomContext<
    * broadcast({ type: "CUSTOM_EVENT", data: { x: 0, y: 0 } });
    */
   function useBroadcastEvent(): (
-    event: TEvent,
+    event: TRoomEvent,
     options?: BroadcastOptions
   ) => void {
     const room = useRoom();
 
     return React.useCallback(
       (
-        event: TEvent,
+        event: TRoomEvent,
         options: BroadcastOptions = { shouldQueueEventIfNotReady: false }
       ) => {
         room.broadcastEvent(event, options);
@@ -291,7 +291,7 @@ export function createRoomContext<
    * });
    */
   function useEventListener(
-    callback: (eventData: { connectionId: number; event: TEvent }) => void
+    callback: (eventData: { connectionId: number; event: TRoomEvent }) => void
   ): void {
     const room = useRoom();
     const savedCallback = React.useRef(callback);
@@ -301,7 +301,10 @@ export function createRoomContext<
     });
 
     React.useEffect(() => {
-      const listener = (eventData: { connectionId: number; event: TEvent }) => {
+      const listener = (eventData: {
+        connectionId: number;
+        event: TRoomEvent;
+      }) => {
         savedCallback.current(eventData);
       };
 
