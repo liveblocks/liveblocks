@@ -1,4 +1,5 @@
 import { createClient } from "@liveblocks/client";
+import type { BaseUserMeta } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -33,9 +34,13 @@ type Storage = {
 //   info?: Json,  // Accessible through `user.info`
 // };
 
-// Optionally, type of custom Events your app sends when broadcasting or
+// Type of custom Events your app sends when broadcasting or
 // listening to events. Must be JSON-serializable.
-// type Event = {};
+type Event = {
+  x: number;
+  y: number;
+  value: string;
+};
 
 const {
   RoomProvider,
@@ -43,7 +48,7 @@ const {
   useBroadcastEvent,
   useEventListener,
   useMyPresence,
-} = createRoomContext<Presence, Storage /* UserMeta, Event */>(client);
+} = createRoomContext<Presence, Storage, BaseUserMeta, Event>(client);
 
 export {
   RoomProvider,
