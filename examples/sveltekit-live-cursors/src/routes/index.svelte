@@ -34,9 +34,9 @@
   //   info?: Json,  // Accessible through `user.info`
   // };
 
-  // Optionally, type of custom Events your app sends when broadcasting or
-  // listening to events. Must be JSON-serializable.
-  // type Event = {};
+  // Optionally, the type of custom events broadcasted and listened for in this
+  // room. Must be JSON-serializable.
+  // type RoomEvent = {};
 
   // Set up the client on load
   // Check inside src/routes/api/auth.ts for the serverless function
@@ -47,7 +47,7 @@
       authEndpoint: "/api/auth",
     });
 
-    room = client.enter<Presence, Storage /* UserMeta, Event */>(roomId);
+    room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId);
   });
 
   onDestroy(() => {

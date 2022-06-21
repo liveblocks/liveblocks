@@ -29,13 +29,13 @@ type Storage = {
 //   info?: Json,  // Accessible through `user.info`
 // };
 
-// Optionally, type of custom Events your app sends when broadcasting or
-// listening to events. Must be JSON-serializable.
-// type Event = {};
+// Optionally, the type of custom events broadcasted and listened for in this
+// room. Must be JSON-serializable.
+// type RoomEvent = {};
 
 const { RoomProvider, useOthers, useMyPresence } = createRoomContext<
   Presence,
-  Storage /* UserMeta, Event */
+  Storage /* UserMeta, RoomEvent */
 >(client);
 
 export { RoomProvider, useOthers, useMyPresence };

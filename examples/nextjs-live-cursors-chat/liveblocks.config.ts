@@ -33,10 +33,11 @@ type Storage = {
 //   id?: string,  // Accessible through `user.id`
 //   info?: Json,  // Accessible through `user.info`
 // };
+type UserMeta = BaseUserMeta;
 
-// Type of custom Events your app sends when broadcasting or
-// listening to events. Must be JSON-serializable.
-type Event = {
+// The type of custom events broadcasted and listened for in this
+// room. Must be JSON-serializable.
+type RoomEvent = {
   x: number;
   y: number;
   value: string;
@@ -48,7 +49,7 @@ const {
   useBroadcastEvent,
   useEventListener,
   useMyPresence,
-} = createRoomContext<Presence, Storage, BaseUserMeta, Event>(client);
+} = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
 
 export {
   RoomProvider,
