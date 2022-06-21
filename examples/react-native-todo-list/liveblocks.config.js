@@ -6,8 +6,11 @@ const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
 const client = createClient({
   publicApiKey: PUBLIC_KEY,
-  atobPolyfill: decode,
+  polyfills: {
+    atob: decode,
+  },
 });
 
-const { RoomProvider, useMyPresence, useOthers, useList, useUpdateMyPresence } = createRoomContext(client);
+const { RoomProvider, useMyPresence, useOthers, useList, useUpdateMyPresence } =
+  createRoomContext(client);
 export { RoomProvider, useMyPresence, useOthers, useList, useUpdateMyPresence };
