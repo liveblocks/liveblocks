@@ -51,13 +51,13 @@ function setupStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(initialPresence?: TPresence) {
-  const effects = mockEffects<TPresence, TEvent>();
-  const state = defaultState<TPresence, TStorage, TUserMeta, TEvent>(
+  const effects = mockEffects<TPresence, TRoomEvent>();
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     initialPresence
   );
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TEvent>(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
     defaultContext,
     effects

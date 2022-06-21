@@ -43,12 +43,12 @@ export type OthersEventCallback<
   event: OthersEvent<TPresence, TUserMeta>
 ) => void;
 
-export type EventCallback<TEvent extends Json> = ({
+export type EventCallback<TRoomEvent extends Json> = ({
   connectionId,
   event,
 }: {
   connectionId: number;
-  event: TEvent;
+  event: TRoomEvent;
 }) => void;
 
 export type ErrorCallback = (error: Error) => void;
@@ -58,11 +58,11 @@ export type ConnectionCallback = (state: ConnectionState) => void;
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > = {
   "my-presence": MyPresenceCallback<TPresence>;
   others: OthersEventCallback<TPresence, TUserMeta>;
-  event: EventCallback<TEvent>;
+  event: EventCallback<TRoomEvent>;
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
@@ -76,8 +76,8 @@ export type RoomEventCallbackFor<
   E extends RoomEventName,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
-> = RoomEventCallbackMap<TPresence, TUserMeta, TEvent>[E];
+  TRoomEvent extends Json
+> = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
 
 export type RoomEventCallback = RoomEventCallbackFor<
   RoomEventName,
@@ -219,10 +219,10 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject,
     TUserMeta extends BaseUserMeta,
-    TEvent extends Json
+    TRoomEvent extends Json
   >(
     roomId: string
-  ): Room<TPresence, TStorage, TUserMeta, TEvent> | null;
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
 
   /**
    * Enters a room and returns it.
@@ -233,11 +233,11 @@ export type Client = {
     TPresence extends JsonObject,
     TStorage extends LsonObject,
     TUserMeta extends BaseUserMeta,
-    TEvent extends Json
+    TRoomEvent extends Json
   >(
     roomId: string,
     options?: RoomInitializers<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TEvent>;
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
    * Leaves a room.
@@ -461,7 +461,7 @@ export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > = {
   /**
    * The id of the room.
@@ -506,7 +506,7 @@ export type Room<
      *   // Do something
      * });
      */
-    (type: "event", listener: EventCallback<TEvent>): () => void;
+    (type: "event", listener: EventCallback<TRoomEvent>): () => void;
 
     /**
      * Subscribe to errors thrown in the room.
@@ -625,7 +625,7 @@ export type Room<
    *   }
    * });
    */
-  broadcastEvent: (event: TEvent, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: TRoomEvent, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.

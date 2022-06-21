@@ -106,7 +106,7 @@ function prepareClientAndStore<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
   stateCreator: StateCreator<T>,
   options: {
@@ -116,7 +116,7 @@ function prepareClientAndStore<
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = create(
-    middleware<T, TPresence, TStorage, TUserMeta, TEvent>(stateCreator, {
+    middleware<T, TPresence, TStorage, TUserMeta, TRoomEvent>(stateCreator, {
       ...options,
       client,
     })

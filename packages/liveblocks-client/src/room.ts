@@ -74,7 +74,7 @@ export type Machine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
@@ -108,14 +108,14 @@ export type Machine<
   subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
 
   // Room event callbacks
-  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
+  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
   // Presence
   updatePresence(
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
-  broadcastEvent(event: TEvent, options?: BroadcastOptions): void;
+  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
   batch(callback: () => void): void;
   undo(): void;
@@ -196,7 +196,7 @@ export type State<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > = {
   connection: Connection;
   token: string | null;
@@ -205,7 +205,7 @@ export type State<
   lastFlushTime: number;
   buffer: {
     presence: TPresence | null;
-    messages: ClientMsg<TPresence, TEvent>[];
+    messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -217,7 +217,7 @@ export type State<
     heartbeat: number;
   };
   listeners: {
-    event: EventCallback<TEvent>[];
+    event: EventCallback<TRoomEvent>[];
     others: OthersEventCallback<TPresence, TUserMeta>[];
     "my-presence": MyPresenceCallback<TPresence>[];
     error: ErrorCallback[];
@@ -256,12 +256,12 @@ export type State<
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects<TPresence extends JsonObject, TEvent extends Json> = {
+export type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMsg<TPresence, TEvent>[]): void;
+  send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -291,13 +291,13 @@ export function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
-  state: State<TPresence, TStorage, TUserMeta, TEvent>,
+  state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
   context: Context,
-  mockedEffects?: Effects<TPresence, TEvent>
-): Machine<TPresence, TStorage, TUserMeta, TEvent> {
-  const effects: Effects<TPresence, TEvent> = mockedEffects || {
+  mockedEffects?: Effects<TPresence, TRoomEvent>
+): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
@@ -327,8 +327,8 @@ export function makeStateMachine<
     },
     send(
       messageOrMessages:
-        | ClientMsg<TPresence, TEvent>
-        | ClientMsg<TPresence, TEvent>[]
+        | ClientMsg<TPresence, TRoomEvent>
+        | ClientMsg<TPresence, TRoomEvent>[]
     ) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
@@ -713,7 +713,7 @@ export function makeStateMachine<
   function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
   function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
   // Room event callbacks
-  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>): () => void; // prettier-ignore
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
   function subscribe<L extends LiveStructure, E extends RoomEventName>(
     first: StorageCallback | L | E,
@@ -744,7 +744,12 @@ export function makeStateMachine<
       throw new Error(`"${first}" is not a valid event name`);
     }
 
-    type EventListener = RoomEventCallbackFor<E, TPresence, TUserMeta, TEvent>;
+    type EventListener = RoomEventCallbackFor<
+      E,
+      TPresence,
+      TUserMeta,
+      TRoomEvent
+    >;
     type EventQueue = EventListener[];
 
     const eventName = first;
@@ -942,7 +947,7 @@ export function makeStateMachine<
     }
   }
 
-  function onEvent(message: BroadcastedEventServerMsg<TEvent>) {
+  function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
     for (const listener of state.listeners.event) {
       listener({ connectionId: message.actor, event: message.event });
     }
@@ -978,18 +983,18 @@ export function makeStateMachine<
 
   function parseServerMessage(
     data: Json
-  ): ServerMsg<TPresence, TUserMeta, TEvent> | null {
+  ): ServerMsg<TPresence, TUserMeta, TRoomEvent> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMsg<TPresence, TUserMeta, TEvent>;
+    return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
     //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
   function parseServerMessages(
     text: string
-  ): ServerMsg<TPresence, TUserMeta, TEvent>[] | null {
+  ): ServerMsg<TPresence, TUserMeta, TRoomEvent>[] | null {
     const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
@@ -1217,7 +1222,7 @@ export function makeStateMachine<
       return;
     }
 
-    const messages: ClientMsg<TPresence, TEvent>[] = [];
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -1276,9 +1281,9 @@ export function makeStateMachine<
   }
 
   function flushDataToMessages(
-    state: State<TPresence, TStorage, TUserMeta, TEvent>
+    state: State<TPresence, TStorage, TUserMeta, TRoomEvent>
   ) {
-    const messages: ClientMsg<TPresence, TEvent>[] = [];
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
     if (state.buffer.presence) {
       messages.push({
         type: ClientMsgCode.UPDATE_PRESENCE,
@@ -1325,7 +1330,12 @@ export function makeStateMachine<
   function clearListeners() {
     for (const key in state.listeners) {
       state.listeners[
-        key as keyof State<TPresence, TStorage, TUserMeta, TEvent>["listeners"]
+        key as keyof State<
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TRoomEvent
+        >["listeners"]
       ] = [];
     }
   }
@@ -1339,7 +1349,7 @@ export function makeStateMachine<
   }
 
   function broadcastEvent(
-    event: TEvent,
+    event: TRoomEvent,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }
@@ -1551,11 +1561,11 @@ export function defaultState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
   initialPresence?: TPresence,
   initialStorage?: TStorage
-): State<TPresence, TStorage, TUserMeta, TEvent> {
+): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1618,9 +1628,9 @@ export type InternalRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 > = {
-  room: Room<TPresence, TStorage, TUserMeta, TEvent>;
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
@@ -1631,15 +1641,15 @@ export function createRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
-  TEvent extends Json
+  TRoomEvent extends Json
 >(
   options: RoomInitializers<TPresence, TStorage>,
   context: Context
-): InternalRoom<TPresence, TStorage, TUserMeta, TEvent> {
+): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence = options.initialPresence ?? options.defaultPresence;
   const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
-  const state = defaultState<TPresence, TStorage, TUserMeta, TEvent>(
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"
       ? initialPresence(context.roomId)
       : initialPresence,
@@ -1648,12 +1658,12 @@ export function createRoom<
       : initialStorage
   );
 
-  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TEvent>(
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
     context
   );
 
-  const room: Room<TPresence, TStorage, TUserMeta, TEvent> = {
+  const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     id: context.roomId,
     /////////////
     // Core    //

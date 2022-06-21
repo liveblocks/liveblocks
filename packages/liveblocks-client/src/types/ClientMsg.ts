@@ -14,18 +14,18 @@ export enum ClientMsgCode {
 /**
  * Messages that can be sent from the client to the server.
  */
-export type ClientMsg<TPresence extends JsonObject, TEvent extends Json> =
+export type ClientMsg<TPresence extends JsonObject, TRoomEvent extends Json> =
   // For Presence
-  | BroadcastEventClientMsg<TEvent>
+  | BroadcastEventClientMsg<TRoomEvent>
   | UpdatePresenceClientMsg<TPresence>
 
   // For Storage
   | UpdateStorageClientMsg
   | FetchStorageClientMsg;
 
-export type BroadcastEventClientMsg<TEvent extends Json> = {
+export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
   type: ClientMsgCode.BROADCAST_EVENT;
-  event: TEvent;
+  event: TRoomEvent;
 };
 
 export type UpdatePresenceClientMsg<TPresence extends JsonObject> = {
