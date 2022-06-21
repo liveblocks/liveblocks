@@ -1,5 +1,5 @@
-import { ApplyResult, Doc, OpSource } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import type { ApplyResult, Doc } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { errorIf } from "./deprecation";
 import type {
