@@ -1,3 +1,4 @@
+import type { BaseUserMeta } from "@liveblocks/client";
 import { useOthers } from "@liveblocks/react";
 import React from "react";
 import { colorToCss, connectionIdToColor } from "../utils";
@@ -6,7 +7,7 @@ import Cursor from "./Cursor";
 import Path from "./Path";
 
 const MultiplayerGuides = React.memo(() => {
-  const others = useOthers<Presence>();
+  const others = useOthers<Presence, BaseUserMeta>();
   return (
     <>
       {others.map((user) => {
