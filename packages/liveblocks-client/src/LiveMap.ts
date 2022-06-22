@@ -1,5 +1,5 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { errorIf } from "./deprecation";
 import type {
@@ -33,6 +33,8 @@ export class LiveMap<
 > extends AbstractCrdt {
   /** @internal */
   private _map: Map<TKey, LiveNode>;
+  /** @internal */
+  private unacknowledgedSet: Map<TKey, string>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
   /**
@@ -47,6 +49,9 @@ export class LiveMap<
       entries === null,
       "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
+
+    this.unacknowledgedSet = new Map<TKey, string>();
+
     if (entries) {
       const mappedEntries: Array<[TKey, LiveNode]> = [];
       for (const entry of entries) {
@@ -129,12 +134,15 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateChildOp): ApplyResult {
+  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey: key } = op;
+    const { id, parentKey, opId } = op;
+
+    const key = parentKey as TKey;
+    //                    ^^^^^^^ TODO: Fix me!
 
     const child = creationOpToLiveNode(op);
 
@@ -142,8 +150,24 @@ export class LiveMap<
       return { modified: false };
     }
 
-    const previousValue = this._map.get(key as TKey);
-    //                                      ^^^^^^^ TODO: Fix me!
+    if (source === OpSource.ACK) {
+      const lastUpdateOpId = this.unacknowledgedSet.get(key);
+      if (lastUpdateOpId === opId) {
+        // Acknowlegment from local operation
+        this.unacknowledgedSet.delete(key);
+        return { modified: false };
+      } else if (lastUpdateOpId != null) {
+        // Another local set has overriden the value, so we do nothing
+        return { modified: false };
+      }
+    } else if (source === OpSource.REMOTE) {
+      // If a remote operation set an item,
+      // delete the unacknowledgedSet associated to the key
+      // to make sure any future ack can override it
+      this.unacknowledgedSet.delete(key);
+    }
+
+    const previousValue = this._map.get(key);
     let reverse: Op[];
     if (previousValue) {
       const thisId = nn(this._id);
@@ -155,8 +179,7 @@ export class LiveMap<
 
     child._setParentLink(this, key);
     child._attach(id, this._doc);
-    this._map.set(key as TKey, child);
-    //                ^^^^^^^ TODO: Fix me!
+    this._map.set(key, child);
 
     return {
       modified: {
@@ -261,6 +284,10 @@ export class LiveMap<
         type: "LiveMap",
         updates: { [key]: { type: "update" } },
       });
+
+      const ops = item._serialize(this._id, key, this._doc);
+
+      this.unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._doc.dispatch(
         item._serialize(this._id, key, this._doc),
