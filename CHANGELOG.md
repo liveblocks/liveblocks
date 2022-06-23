@@ -43,7 +43,9 @@ Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17).
 - In **@liveblocks/react**:
 
   - Importing the React hooks directly is deprecated, instead use the new
-    `createRoomContext()` helper - see [recommended upgrade steps](https://preview.liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
+    `createRoomContext()` helper. For help, read the
+    [Recommended Upgrade Steps section](https://preview.liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
+    within our [Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
   - The RoomProvider's `defaultStorageRoot` is renamed to `initialStorage`
