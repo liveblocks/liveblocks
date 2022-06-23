@@ -14,11 +14,11 @@ import {
 } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type {
+  BaseUserMeta,
   Json,
   JsonObject,
   LsonObject,
   ToJson,
-  BaseUserMeta,
 } from "../src/types";
 
 async function initializeRoomForTest<
@@ -78,9 +78,10 @@ async function initializeRoomForTest<
     liveblocksServer: process.env.LIVEBLOCKS_SERVER,
   } as any);
 
-  const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(roomId, {
-    initialStorage,
-  });
+  const room = client.enter<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    roomId,
+    { initialStorage }
+  );
   await waitFor(() => room.getConnectionState() === "open");
 
   if (ws == null) {
