@@ -13,6 +13,7 @@ fi
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 PACKAGE_DIRS=(
     "packages/liveblocks-client"
+    "packages/liveblocks-node"
     "packages/liveblocks-react"
     "packages/liveblocks-redux"
     "packages/liveblocks-zustand"
