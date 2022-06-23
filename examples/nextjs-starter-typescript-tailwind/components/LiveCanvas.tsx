@@ -5,6 +5,16 @@ import { motion } from "framer-motion";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
 import { nanoid } from "nanoid";
 
+/**
+ * TODO
+ * remove avatar stack and cursors for new example
+ * keep complexity in basic components
+ * remove framer-motion
+ * remove tailwind
+ * show liveblocks features e.g. undo/redo
+ * maybe add css animations
+ */
+
 /*
 export default function LiveCanvas() {
   const shapes = useMap("shapes");
