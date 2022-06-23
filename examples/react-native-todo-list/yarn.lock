@@ -1051,15 +1051,15 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@liveblocks/client@^0.16.9", "@liveblocks/client@0.16.9":
-  "integrity" "sha512-xeg6USi/iqSDKDU9xPTpNXYaz/2GfNdAczKLpIOV/nU60XDx5uiQuP4+KCYY1eBtgfPnYnM9gndvFciTimgbIQ=="
-  "resolved" "https://registry.npmjs.org/@liveblocks/client/-/client-0.16.9.tgz"
-  "version" "0.16.9"
+"@liveblocks/client@^0.17.0-beta2", "@liveblocks/client@0.17.0-beta2":
+  "integrity" "sha512-V8LOv6BIDQvLl2LLcdDWIK6Ow3hMSpmIYk5T+NbNC34MM04bdhBU3C4EHg4qRnTPtOxm4NylRiVbNDwfwmMNjw=="
+  "resolved" "https://registry.npmjs.org/@liveblocks/client/-/client-0.17.0-beta2.tgz"
+  "version" "0.17.0-beta2"
 
-"@liveblocks/react@^0.16.9":
-  "integrity" "sha512-/jLBQRKxE+KYTinHngpBoAaS0ttjofxFgI9TdBxkUsIJYvR9D+jusqMOSIa0Ja4fz44Cfw34DC8DHAxTp3jOMg=="
-  "resolved" "https://registry.npmjs.org/@liveblocks/react/-/react-0.16.9.tgz"
-  "version" "0.16.9"
+"@liveblocks/react@^0.17.0-beta2":
+  "integrity" "sha512-g7XSias4M2nl6eao8JxS5ynyjTvkV4FF8PavvAd9aO5sLz++1qrPW0XCXq2jle2sOyM9act/nMX35FedXvXPFA=="
+  "resolved" "https://registry.npmjs.org/@liveblocks/react/-/react-0.17.0-beta2.tgz"
+  "version" "0.17.0-beta2"
 
 "@react-native-community/cli-debugger-ui@^7.0.3":
   "integrity" "sha512-G4SA6jFI0j22o+j+kYP8/7sxzbCDqSp2QiHA/X5E0lsGEd2o9qN2zbIjiFr8b8k+VVAYSUONhoC0+uKuINvmkA=="

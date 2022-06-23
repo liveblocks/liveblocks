@@ -10,8 +10,8 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.9",
-    "@liveblocks/react": "^0.16.9",
+    "@liveblocks/client": "^0.17.0-beta2",
+    "@liveblocks/react": "^0.17.0-beta2",
     "base-64": "^1.0.0",
     "react": "17.0.2",
     "react-native": "0.68.2",
