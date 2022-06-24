@@ -34,6 +34,10 @@ type MoreProps = BothProps & {
 
 type AvatarProps = PictureProps | MoreProps;
 
+/**
+ * Can present avatars as gradients with letters, as pictures, or as a count (e.g +3)
+ * Size, outline color, color, radius can all be changed, a status circle can be added
+ */
 export function Avatar({
   variant = "avatar",
   picture = "",

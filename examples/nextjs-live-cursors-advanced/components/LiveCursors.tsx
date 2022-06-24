@@ -3,10 +3,6 @@ import { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
 
-/**
- * This file shows how to add basic live cursors on your product.
- */
-
 type Cursor = {
   x: number;
   y: number;
@@ -22,6 +18,9 @@ type Props = {
 };
 
 /**
+ * This file shows you how to create a reusable live cursors component for your product.
+ * The component takes a reference to another element ref `cursorPanel` and renders
+ * cursors according to the location and scroll position of this panel.
  * Make sure that cursorPanel has a CSS position set, and that LiveCursors is placed inside
  */
 export default function LiveCursors({ cursorPanel }: Props) {
