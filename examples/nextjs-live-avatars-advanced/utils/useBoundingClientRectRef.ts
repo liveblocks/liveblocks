@@ -16,7 +16,9 @@ const initialRect = {
  * Returns a ref containing the results of `getBoundingClientRect` for `ref`
  * Updates on window changes
  */
-export function useBoundingClientRectRef(ref: MutableRefObject<Element | null>) {
+export function useBoundingClientRectRef(
+  ref: MutableRefObject<Element | null>
+) {
   const rectRef = useRef<DOMRect>(initialRect);
 
   useEffect(() => {
@@ -34,7 +36,7 @@ export function useBoundingClientRectRef(ref: MutableRefObject<Element | null>) 
     return () => {
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("orientationchange", updateRect);
-    }
+    };
   }, [ref]);
 
   return rectRef;

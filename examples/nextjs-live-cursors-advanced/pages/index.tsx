@@ -14,7 +14,7 @@ export default function Example() {
         <LiveCursors cursorPanel={cursorPanel} />
       </main>
     </RoomProvider>
-  )
+  );
 }
 
 /**

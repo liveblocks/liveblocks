@@ -1,5 +1,5 @@
-import '../styles/globals.css'
-import type { AppProps } from 'next/app'
+import "../styles/globals.css";
+import type { AppProps } from "next/app";
 import { LiveblocksProvider } from "@liveblocks/react";
 import { createClient } from "@liveblocks/client";
 import Head from "next/head";
@@ -37,16 +37,16 @@ function MyApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default MyApp
+export default MyApp;
 
 // Just checking you have your liveblocks.io API key added, can be deleted
 export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_SECRET_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
     ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#codesandbox.`
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#codesandbox.`
     : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#getting-started.`;
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#getting-started.`;
 
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);

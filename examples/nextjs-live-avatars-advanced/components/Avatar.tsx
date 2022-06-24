@@ -46,10 +46,10 @@ export function Avatar({
   borderRadius = 9999,
   className = "",
   style = {},
-  count = 0
-}: AvatarProps){
-  const innerVariant = (variant === "avatar" && !picture) ? "letter" : variant;
-  const realSize = size - (outlineWidth * 2);
+  count = 0,
+}: AvatarProps) {
+  const innerVariant = variant === "avatar" && !picture ? "letter" : variant;
+  const realSize = size - outlineWidth * 2;
 
   return (
     <div
@@ -62,17 +62,11 @@ export function Avatar({
         borderRadius,
         ...style,
       }}
-      className={classNames(
-        styles.avatar,
-        className
-      )}
+      className={classNames(styles.avatar, className)}
       data-tooltip={name}
     >
       {innerVariant === "more" ? (
-        <MoreCircle
-          count={count}
-          borderRadius={borderRadius}
-        />
+        <MoreCircle count={count} borderRadius={borderRadius} />
       ) : null}
 
       {innerVariant === "avatar" ? (
@@ -85,11 +79,7 @@ export function Avatar({
       ) : null}
 
       {innerVariant === "letter" ? (
-        <LetterCircle
-          name={name}
-          color={color}
-          borderRadius={borderRadius}
-        />
+        <LetterCircle name={name} color={color} borderRadius={borderRadius} />
       ) : null}
 
       {statusColor ? (
@@ -102,10 +92,15 @@ export function Avatar({
   );
 }
 
-function LetterCircle({ name, color, borderRadius }:
-  Pick<PictureProps, "name" | "color" | "borderRadius">
-) {
-  const textColor = useMemo(() => color ? getContrastingColor(color) : undefined, [color]);
+function LetterCircle({
+  name,
+  color,
+  borderRadius,
+}: Pick<PictureProps, "name" | "color" | "borderRadius">) {
+  const textColor = useMemo(
+    () => (color ? getContrastingColor(color) : undefined),
+    [color]
+  );
   return (
     <div
       style={{
@@ -117,7 +112,8 @@ function LetterCircle({ name, color, borderRadius }:
       <div
         style={{
           maskImage: "linear-gradient(to bottom right, transparent, #fff)",
-          WebkitMaskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom right, transparent, #fff)",
           backgroundColor: color,
         }}
         className={styles.letterBackground}
@@ -126,12 +122,15 @@ function LetterCircle({ name, color, borderRadius }:
         {name ? name.charAt(0) : null}
       </div>
     </div>
-  )
+  );
 }
 
-function PictureCircle({ name, picture = "", size, borderRadius }:
-  Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">
-) {
+function PictureCircle({
+  name,
+  picture = "",
+  size,
+  borderRadius,
+}: Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">) {
   return (
     <Image
       alt={name}
@@ -140,18 +139,16 @@ function PictureCircle({ name, picture = "", size, borderRadius }:
       width={size}
       style={{ borderRadius }}
     />
-  )
+  );
 }
 
-function MoreCircle({ count, borderRadius }:
-  Pick<MoreProps, "count" | "borderRadius">
-) {
+function MoreCircle({
+  count,
+  borderRadius,
+}: Pick<MoreProps, "count" | "borderRadius">) {
   return (
-    <div
-      style={{ borderRadius }}
-      className={styles.more}
-    >
+    <div style={{ borderRadius }} className={styles.more}>
       +{count}
     </div>
-  )
+  );
 }

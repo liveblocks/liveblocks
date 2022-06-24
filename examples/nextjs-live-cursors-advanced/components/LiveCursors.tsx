@@ -1,4 +1,4 @@
-import React, { useOthers, useUpdateMyPresence, } from "@liveblocks/react";
+import React, { useOthers, useUpdateMyPresence } from "@liveblocks/react";
 import { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
@@ -41,7 +41,9 @@ export default function LiveCursors({ cursorPanel }: Props) {
 
   useEffect(() => {
     if (!(cursorPanel?.current instanceof HTMLElement)) {
-      console.warn("Pass `ref` containing HTMLElement to `<LiveCursors scrollRef=\"\"`.");
+      console.warn(
+        'Pass `ref` containing HTMLElement to `<LiveCursors scrollRef=""`.'
+      );
       return;
     }
 
@@ -52,8 +54,10 @@ export default function LiveCursors({ cursorPanel }: Props) {
       }
 
       // (Viewport position) - (element position) + (element scroll amount)
-      const x = event.clientX - rectRef.current.x + cursorPanel.current.scrollLeft;
-      const y = event.clientY - rectRef.current.y + cursorPanel.current.scrollTop;
+      const x =
+        event.clientX - rectRef.current.x + cursorPanel.current.scrollLeft;
+      const y =
+        event.clientY - rectRef.current.y + cursorPanel.current.scrollTop;
 
       updateMyPresence({
         cursor: {
@@ -76,7 +80,7 @@ export default function LiveCursors({ cursorPanel }: Props) {
     const oldRef = cursorPanel.current;
     return () => {
       if (!oldRef) {
-        return
+        return;
       }
       oldRef.removeEventListener("pointermove", updateCursor);
       oldRef.removeEventListener("pointerleave", removeCursor);

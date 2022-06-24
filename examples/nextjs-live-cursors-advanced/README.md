@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Advanced Live Cursors 
+# Advanced Live Cursors
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-advanced">
