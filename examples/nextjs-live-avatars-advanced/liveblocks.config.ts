@@ -37,6 +37,6 @@ type Storage = {
 const { RoomProvider, useOthers, useMyPresence } = createRoomContext<
   Presence,
   Storage /* UserMeta, RoomEvent */
-  >(client);
+>(client);
 
 export { RoomProvider, useOthers, useMyPresence };
