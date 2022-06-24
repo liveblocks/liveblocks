@@ -1,0 +1,157 @@
+import React, { useMemo } from "react";
+import Image from "next/image";
+import classNames from "classnames";
+import { getContrastingColor } from "../utils/getContrastingColor";
+import styles from "./Avatars.module.css";
+
+type BothProps = {
+  variant?: "avatar" | "more";
+  size?: number;
+  outlineColor?: string;
+  outlineWidth?: number;
+  borderRadius?: number;
+  className?: string;
+  style?: Record<string, string>;
+};
+
+type PictureProps = BothProps & {
+  variant?: "avatar";
+  name?: string;
+  picture?: string;
+  color?: string;
+  statusColor?: string;
+  count?: never;
+};
+
+type MoreProps = BothProps & {
+  variant: "more";
+  count: number;
+  picture?: never;
+  name?: never;
+  statusColor?: never;
+  color?: never;
+};
+
+type AvatarProps = PictureProps | MoreProps;
+
+export function Avatar({
+  variant = "avatar",
+  picture = "",
+  name = "",
+  color = "",
+  size = 52,
+  statusColor = "",
+  outlineColor = "",
+  outlineWidth = 4,
+  borderRadius = 9999,
+  className = "",
+  style = {},
+  count = 0
+}: AvatarProps){
+  const innerVariant = (variant === "avatar" && !picture) ? "letter" : variant;
+  const realSize = size - (outlineWidth * 2);
+
+  return (
+    <div
+      style={{
+        height: realSize,
+        width: realSize,
+        outlineColor,
+        outlineWidth,
+        margin: outlineWidth,
+        borderRadius,
+        ...style,
+      }}
+      className={classNames(
+        styles.avatar,
+        className
+      )}
+      data-tooltip={name}
+    >
+      {innerVariant === "more" ? (
+        <MoreCircle
+          count={count}
+          borderRadius={borderRadius}
+        />
+      ) : null}
+
+      {innerVariant === "avatar" ? (
+        <PictureCircle
+          name={name}
+          picture={picture}
+          size={realSize}
+          borderRadius={borderRadius}
+        />
+      ) : null}
+
+      {innerVariant === "letter" ? (
+        <LetterCircle
+          name={name}
+          color={color}
+          borderRadius={borderRadius}
+        />
+      ) : null}
+
+      {statusColor ? (
+        <span
+          style={{ backgroundColor: statusColor }}
+          className={styles.status}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function LetterCircle({ name, color, borderRadius }:
+  Pick<PictureProps, "name" | "color" | "borderRadius">
+) {
+  const textColor = useMemo(() => color ? getContrastingColor(color) : undefined, [color]);
+  return (
+    <div
+      style={{
+        backgroundColor: color,
+        borderRadius,
+      }}
+      className={styles.letter}
+    >
+      <div
+        style={{
+          maskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          WebkitMaskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          backgroundColor: color,
+        }}
+        className={styles.letterBackground}
+      />
+      <div className={styles.letterCharacter} style={{ color: textColor }}>
+        {name ? name.charAt(0) : null}
+      </div>
+    </div>
+  )
+}
+
+function PictureCircle({ name, picture = "", size, borderRadius }:
+  Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">
+) {
+  return (
+    <Image
+      alt={name}
+      src={picture}
+      height={size}
+      width={size}
+      style={{ borderRadius }}
+    />
+  )
+}
+
+function MoreCircle({ count, borderRadius }:
+  Pick<MoreProps, "count" | "borderRadius">
+) {
+  return (
+    <div
+      style={{ borderRadius }}
+      className={styles.more}
+    >
+      +{count}
+    </div>
+  )
+}

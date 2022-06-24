@@ -1,0 +1,47 @@
+.cursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.nameWrapper {
+  position: relative;
+}
+
+.cursorSvg {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.namePill {
+  position: absolute;
+  overflow: hidden;
+  top: 1rem;
+  left: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 9999px;
+}
+
+.namePillBackground {
+  filter: hue-rotate(-60deg);
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.namePillName {
+  z-index: 10;
+  position: relative;
+}

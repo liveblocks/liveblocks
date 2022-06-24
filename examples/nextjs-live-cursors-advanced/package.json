@@ -1,0 +1,30 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@liveblocks/client": "^0.16.15",
+    "@liveblocks/node": "^0.3.0",
+    "@liveblocks/react": "^0.16.15",
+    "framer-motion": "^6.3.6",
+    "next": "12.1.6",
+    "react": "18.1.0",
+    "react-dom": "18.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "17.0.38",
+    "@types/react": "18.0.10",
+    "@types/react-dom": "18.0.5",
+    "@types/uuid": "^8.3.4",
+    "autoprefixer": "^10.4.7",
+    "eslint": "8.16.0",
+    "eslint-config-next": "12.1.6",
+    "prettier": "^2.7.1",
+    "typescript": "4.7.2"
+  }
+}
