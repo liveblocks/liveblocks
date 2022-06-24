@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
 import {
   View,
@@ -6,40 +6,40 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Keyboard
-} from 'react-native';
+  Keyboard,
+} from "react-native";
 
-import { ActiveIcon, InactiveIcon } from '../../assets/svg/ConfirmIcon';
+import { ActiveIcon, InactiveIcon } from "../../assets/svg/ConfirmIcon";
 
 const SomeoneIsTyping = () => {
-  return (
-    <Text style={styles.someoneIsTypingText}>
-      Someone is typing...
-    </Text>
-  );
-}
+  return <Text style={styles.someoneIsTypingText}>Someone is typing...</Text>;
+};
 
-const TextInputWithButton = ({ handleOnSubmitEditing, updateTypingStatus, isSomeoneIsTyping }) => {
-  const [currentText, setCurrentText] = useState('');
+const TextInputWithButton = ({
+  handleOnSubmitEditing,
+  updateTypingStatus,
+  isSomeoneIsTyping,
+}) => {
+  const [currentText, setCurrentText] = useState("");
   const [isInputFocused, setIsInputFocused] = useState(false);
 
   const validateText = () => {
     if (currentText) {
       handleOnSubmitEditing(currentText);
-      setCurrentText('');
+      setCurrentText("");
     }
-  }
+  };
 
   return (
     <>
       <View style={styles.container}>
         <TextInput
           placeholderTextColor="#BCC2CC"
-          placeholder='What needs to be done?'
+          placeholder="What needs to be done?"
           style={styles.textInput}
           value={currentText}
           onFocus={() => setIsInputFocused(true)}
-          onChangeText={e => {
+          onChangeText={(e) => {
             setCurrentText(e);
             updateTypingStatus(true);
           }}
@@ -48,10 +48,10 @@ const TextInputWithButton = ({ handleOnSubmitEditing, updateTypingStatus, isSome
               validateText();
             }
           }}
-          onKeyPress={e => {
-            if (e.key === 'Enter') {
+          onKeyPress={(e) => {
+            if (e.key === "Enter") {
               updateTypingStatus(false);
-              setCurrentText('');
+              setCurrentText("");
             }
           }}
           onBlur={() => {
@@ -59,44 +59,44 @@ const TextInputWithButton = ({ handleOnSubmitEditing, updateTypingStatus, isSome
             setIsInputFocused(false);
           }}
         />
-        <TouchableOpacity onPress={() => {
-          validateText();
-          Keyboard.dismiss();
-        }}>
+        <TouchableOpacity
+          onPress={() => {
+            validateText();
+            Keyboard.dismiss();
+          }}
+        >
           {isInputFocused ? <ActiveIcon /> : <InactiveIcon />}
         </TouchableOpacity>
       </View>
-      {
-        isSomeoneIsTyping && isInputFocused ? <SomeoneIsTyping /> : <></>
-      }
+      {isSomeoneIsTyping && isInputFocused ? <SomeoneIsTyping /> : <></>}
     </>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   textInput: {
-    color: '#1F242B',
-    fontWeight: '400',
+    color: "#1F242B",
+    fontWeight: "400",
     fontSize: 16,
     flex: 1,
   },
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderColor: '#E9EDF2',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderColor: "#E9EDF2",
     borderWidth: 1,
     borderRadius: 8,
-    paddingHorizontal: '2%',
-    paddingVertical: '1%',
-    backgroundColor: 'white'
+    paddingHorizontal: "2%",
+    paddingVertical: "1%",
+    backgroundColor: "white",
   },
   someoneIsTypingText: {
-    color: '#676F7A',
-    fontWeight: '400',
+    color: "#676F7A",
+    fontWeight: "400",
     fontSize: 14,
-    marginTop: 8
-  }
+    marginTop: 8,
+  },
 });
 
 export default TextInputWithButton;

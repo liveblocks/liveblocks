@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 
 const NoMoreTodos = () => {
   return (
@@ -7,18 +7,18 @@ const NoMoreTodos = () => {
       <Text style={styles.text}>You're done 🙌</Text>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
   },
   text: {
-    color: '#4E5561',
-    fontSize: 16
-  }
+    color: "#4E5561",
+    fontSize: 16,
+  },
 });
 
 export default NoMoreTodos;
