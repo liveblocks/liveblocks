@@ -578,6 +578,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const indexToDelete = this._items.indexOf(child);
 
+      if (indexToDelete === -1) {
+        return {
+          modified: false,
+        };
+      }
+
       this._items.splice(indexToDelete, 1);
 
       child._detach();
