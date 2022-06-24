@@ -14,7 +14,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build an advanced live avatar stack with [Liveblocks](https://liveblocks.io), [Framer Motion](https://www.framer.com/docs/), [Tailwind](https://tailwindcss.com/), and [Next.js](https://nextjs.org/).
+This example shows how to build an advanced live avatar stack with [Liveblocks](https://liveblocks.io), [Framer Motion](https://www.framer.com/docs/), and [Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars-advanced.png" width="500" alt="Live Avatar Stack Advanced" />
 
