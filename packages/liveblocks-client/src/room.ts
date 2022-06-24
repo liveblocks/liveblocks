@@ -1,69 +1,85 @@
 import type { ApplyResult } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
-import type { Json, JsonObject } from "./json";
-import { isJsonArray, isJsonObject, parseJson } from "./json";
-import type {
-  BroadcastedEventServerMsg,
-  ClientMsg,
-  InitialDocumentStateServerMsg,
-  Op,
-  RoomStateServerMsg,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  ServerMsg,
-  UpdatePresenceServerMsg,
-  UserJoinServerMsg,
-  UserLeftServerMsg,
-} from "./live";
-import {
-  ClientMsgCode,
-  OpCode,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./live";
-import { LiveList } from "./LiveList";
-import type { LiveMap } from "./LiveMap";
+import { OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
+import type { RoomAuthToken } from "./AuthToken";
+import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import { LiveObject } from "./LiveObject";
-import type { Lson, LsonObject } from "./lson";
 import type {
   Authentication,
-  AuthenticationToken,
   AuthorizeResponse,
+  BaseUserMeta,
+  BroadcastedEventServerMsg,
   BroadcastOptions,
+  ClientMsg,
   Connection,
   ConnectionCallback,
   ConnectionState,
   ErrorCallback,
   EventCallback,
+  IdTuple,
+  InitialDocumentStateServerMsg,
+  Json,
+  JsonObject,
+  LiveNode,
+  LiveStructure,
+  LsonObject,
   MyPresenceCallback,
+  NodeMap,
+  Op,
   Others,
   OthersEvent,
   OthersEventCallback,
-  Presence,
+  ParentToChildNodeMap,
+  Polyfills,
   Room,
-  RoomEventCallbackMap,
+  RoomEventCallback,
+  RoomEventCallbackFor,
   RoomEventName,
   RoomInitializers,
+  RoomStateServerMsg,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedRootObject,
+  ServerMsg,
   StorageCallback,
   StorageUpdate,
+  UpdatePresenceServerMsg,
   User,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
 } from "./types";
+import {
+  ClientMsgCode,
+  isRoomEventName,
+  OpCode,
+  ServerMsgCode,
+  WebsocketCloseCodes,
+} from "./types";
+import type { DocumentVisibilityState } from "./types/_compat";
+import { isJsonArray, isJsonObject } from "./types/Json";
+import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,
   getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
+  isPlainObject,
   isSameNodeOrChildOf,
-  isTokenValid,
   mergeStorageUpdates,
   remove,
+  tryParseJson,
 } from "./utils";
 
-type FixmePresence = JsonObject;
-
-export type Machine = {
+export type Machine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
   // Internal
   onClose(event: { code: number; wasClean: boolean; reason: string }): void;
   onMessage(event: MessageEvent<string>): void;
-  authenticationSuccess(token: AuthenticationToken, socket: WebSocket): void;
+  authenticationSuccess(token: RoomAuthToken, socket: WebSocket): void;
   heartbeat(): void;
   onNavigatorOnline(): void;
 
@@ -76,55 +92,30 @@ export type Machine = {
   }): void;
 
   // onWakeUp,
-  onVisibilityChange(visibilityState: VisibilityState): void;
-  getUndoStack(): HistoryItem[];
+  onVisibilityChange(visibilityState: DocumentVisibilityState): void;
+  getUndoStack(): HistoryItem<TPresence>[];
   getItemsCount(): number;
 
   // Core
   connect(): null | undefined;
   disconnect(): void;
 
-  subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  subscribe<TKey extends string, TValue extends Lson>(
-    liveMap: LiveMap<TKey, TValue>,
-    callback: (liveMap: LiveMap<TKey, TValue>) => void
-  ): () => void;
-  subscribe<TData extends LsonObject>(
-    liveObject: LiveObject<TData>,
-    callback: (liveObject: LiveObject<TData>) => void
-  ): () => void;
-  subscribe<TItem extends Lson>(
-    liveList: LiveList<TItem>,
-    callback: (liveList: LiveList<TItem>) => void
-  ): () => void;
-  subscribe<TItem extends AbstractCrdt>(
-    node: TItem,
-    callback: (updates: StorageUpdate[]) => void,
-    options: { isDeep: true }
-  ): () => void;
-  subscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): () => void;
-  subscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): () => void;
-  subscribe(type: "event", listener: EventCallback): () => void;
-  subscribe(type: "error", listener: ErrorCallback): () => void;
-  subscribe(type: "connection", listener: ConnectionCallback): () => void;
-  subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
-    options?: { isDeep: boolean }
-  ): () => void;
+  // Generic storage callbacks
+  subscribe(callback: StorageCallback): () => void;
+
+  // Storage callbacks filtered by Live structure
+  subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+
+  // Room event callbacks
+  subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
 
   // Presence
-  updatePresence<T extends Presence>(
-    overrides: Partial<T>,
+  updatePresence(
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
-  broadcastEvent(event: Json, options?: BroadcastOptions): void;
+  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
   batch(callback: () => void): void;
   undo(): void;
@@ -132,18 +123,18 @@ export type Machine = {
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorage<TStorage extends LsonObject>(): Promise<{
+  getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
 
   selectors: {
     // Core
     getConnectionState(): ConnectionState;
-    getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+    getSelf(): User<TPresence, TUserMeta> | null;
 
     // Presence
-    getPresence<T extends Presence>(): T;
-    getOthers<T extends Presence>(): Others<T>;
+    getPresence(): TPresence;
+    getOthers(): Others<TPresence, TUserMeta>;
   };
 };
 
@@ -154,24 +145,17 @@ const HEARTBEAT_INTERVAL = 30000;
 // const WAKE_UP_CHECK_INTERVAL = 2000;
 const PONG_TIMEOUT = 2000;
 
-function isValidRoomEventType(value: string) {
-  return (
-    value === "my-presence" ||
-    value === "others" ||
-    value === "event" ||
-    value === "error" ||
-    value === "connection"
-  );
-}
-
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<T extends Presence>(userMap: {
-  [key: number]: User<T>;
-}): Others<T> {
+function makeOthers<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+>(userMap: {
+  [key: number]: User<TPresence, TUserMeta>;
+}): Others<TPresence, TUserMeta> {
   const users = Object.values(userMap).map((user) => {
     const { _hasReceivedInitialPresence, ...publicKeys } = user;
     return publicKeys;
@@ -198,19 +182,30 @@ function log(..._params: unknown[]) {
   return;
 }
 
-type HistoryItem = Array<Op | { type: "presence"; data: Presence }>;
+type HistoryItem<TPresence extends JsonObject> = Array<
+  | Op
+  | {
+      type: "presence";
+      data: TPresence;
+    }
+>;
 
 type IdFactory = () => string;
 
-export type State<TPresence extends JsonObject> = {
+export type State<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
   connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
-    presence: Presence | null;
-    messages: ClientMsg<TPresence>[];
+    presence: TPresence | null;
+    messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -222,36 +217,36 @@ export type State<TPresence extends JsonObject> = {
     heartbeat: number;
   };
   listeners: {
-    event: EventCallback[];
-    others: OthersEventCallback[];
-    "my-presence": MyPresenceCallback[];
+    event: EventCallback<TRoomEvent>[];
+    others: OthersEventCallback<TPresence, TUserMeta>[];
+    "my-presence": MyPresenceCallback<TPresence>[];
     error: ErrorCallback[];
     connection: ConnectionCallback[];
     storage: StorageCallback[];
   };
-  me: Presence;
-  others: Others;
+  me: TPresence;
+  others: Others<TPresence, TUserMeta>;
   users: {
-    [connectionId: number]: User;
+    [connectionId: number]: User<TPresence, TUserMeta>;
   };
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: JsonObject;
+  defaultStorageRoot?: TStorage;
 
   clock: number;
   opClock: number;
-  items: Map<string, AbstractCrdt>;
-  root: LiveObject<LsonObject> | undefined;
-  undoStack: HistoryItem[];
-  redoStack: HistoryItem[];
+  items: Map<string, LiveNode>;
+  root: LiveObject<TStorage> | undefined;
+  undoStack: HistoryItem<TPresence>[];
+  redoStack: HistoryItem<TPresence>[];
 
   isHistoryPaused: boolean;
-  pausedHistory: HistoryItem;
+  pausedHistory: HistoryItem<TPresence>;
 
   isBatching: boolean;
   batch: {
     ops: Op[];
-    reverseOps: HistoryItem;
+    reverseOps: HistoryItem<TPresence>;
     updates: {
       others: [];
       presence: boolean;
@@ -261,12 +256,12 @@ export type State<TPresence extends JsonObject> = {
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects<TPresence extends JsonObject> = {
+export type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
   ): void;
-  send(messages: ClientMsg<TPresence>[]): void;
+  send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
   delayFlush(delay: number): number;
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
@@ -276,26 +271,41 @@ export type Effects<TPresence extends JsonObject> = {
 type Context = {
   roomId: string;
   throttleDelay: number;
-  fetchPolyfill?: typeof fetch;
-  WebSocketPolyfill?: typeof WebSocket;
   authentication: Authentication;
   liveblocksServer: string;
+
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: Polyfills["fetch"];
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: Polyfills["WebSocket"];
 };
 
-export function makeStateMachine<TPresence extends JsonObject>(
-  state: State<TPresence>,
+export function makeStateMachine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
   context: Context,
-  mockedEffects?: Effects<TPresence>
-): Machine {
-  const effects: Effects<TPresence> = mockedEffects || {
+  mockedEffects?: Effects<TPresence, TRoomEvent>
+): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
       createWebSocket: (token: string) => WebSocket
     ) {
-      const token = state.token;
-      if (token && isTokenValid(token)) {
-        const parsedToken = parseToken(token);
-        const socket = createWebSocket(token);
+      const rawToken = state.token;
+      const parsedToken = rawToken !== null && parseRoomAuthToken(rawToken);
+      if (parsedToken && !isTokenExpired(parsedToken)) {
+        const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
         return auth(context.roomId)
@@ -303,15 +313,23 @@ export function makeStateMachine<TPresence extends JsonObject>(
             if (state.connection.state !== "authenticating") {
               return;
             }
-            const parsedToken = parseToken(token);
+            const parsedToken = parseRoomAuthToken(token);
             const socket = createWebSocket(token);
             authenticationSuccess(parsedToken, socket);
             state.token = token;
           })
-          .catch((er: any) => authenticationFailure(er));
+          .catch((er: unknown) =>
+            authenticationFailure(
+              er instanceof Error ? er : new Error(String(er))
+            )
+          );
       }
     },
-    send(messageOrMessages: ClientMsg<TPresence> | ClientMsg<TPresence>[]) {
+    send(
+      messageOrMessages:
+        | ClientMsg<TPresence, TRoomEvent>
+        | ClientMsg<TPresence, TRoomEvent>[]
+    ) {
       if (state.socket == null) {
         throw new Error("Can't send message if socket is null");
       }
@@ -336,27 +354,31 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return () => remove(state.listeners.storage, callback);
   }
 
-  function crdtSubscribe<T extends AbstractCrdt>(
-    crdt: T,
-    innerCallback: (updates: StorageUpdate[] | AbstractCrdt) => void,
-    options?: { isDeep: boolean }
-  ) {
-    const cb = (updates: StorageUpdate[]) => {
-      const relatedUpdates: StorageUpdate[] = [];
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return genericSubscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
+
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return genericSubscribe((updates) => {
       for (const update of updates) {
-        if (options?.isDeep && isSameNodeOrChildOf(update.node, crdt)) {
-          relatedUpdates.push(update);
-        } else if (update.node._id === crdt._id) {
-          innerCallback(update.node);
+        if (update.node._id === node._id) {
+          callback(update.node as L);
         }
       }
-
-      if (options?.isDeep && relatedUpdates.length > 0) {
-        innerCallback(relatedUpdates);
-      }
-    };
-
-    return genericSubscribe(cb);
+    });
   }
 
   function createOrUpdateRootFromMessage(
@@ -369,7 +391,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     if (state.root) {
       updateRoot(message.items);
     } else {
-      state.root = load(message.items);
+      // TODO: For now, we'll assume the happy path, but reading this data from
+      // the central storage server, it may very well turn out to not match the
+      // manual type annotation. This will require runtime type validations!
+      state.root = load(message.items) as LiveObject<TStorage>;
     }
 
     for (const key in state.defaultStorageRoot) {
@@ -380,21 +405,21 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function buildRootAndParentToChildren(
-    items: SerializedCrdtWithId[]
-  ): [SerializedCrdtWithId, Map<string, SerializedCrdtWithId[]>] {
-    const parentToChildren = new Map<string, SerializedCrdtWithId[]>();
-    let root = null;
+    items: IdTuple<SerializedCrdt>[]
+  ): [IdTuple<SerializedRootObject>, ParentToChildNodeMap] {
+    const parentToChildren: ParentToChildNodeMap = new Map();
+    let root: IdTuple<SerializedRootObject> | null = null;
 
-    for (const tuple of items) {
-      const parentId = tuple[1].parentId;
-      if (parentId == null) {
-        root = tuple;
+    for (const [id, crdt] of items) {
+      if (isRootCrdt(crdt)) {
+        root = [id, crdt];
       } else {
-        const children = parentToChildren.get(parentId);
+        const tuple: IdTuple<SerializedChild> = [id, crdt];
+        const children = parentToChildren.get(crdt.parentId);
         if (children != null) {
           children.push(tuple);
         } else {
-          parentToChildren.set(parentId, [tuple]);
+          parentToChildren.set(crdt.parentId, [tuple]);
         }
       }
     }
@@ -406,12 +431,12 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return [root, parentToChildren];
   }
 
-  function updateRoot(items: SerializedCrdtWithId[]) {
+  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
     if (!state.root) {
       return;
     }
 
-    const currentItems = new Map<string, SerializedCrdt>();
+    const currentItems: NodeMap = new Map();
     state.items.forEach((liveCrdt, id) => {
       currentItems.set(id, liveCrdt._toSerializedCrdt());
     });
@@ -424,7 +449,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     notify(result.updates);
   }
 
-  function load(items: SerializedCrdtWithId[]): LiveObject<LsonObject> {
+  function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
 
     return LiveObject._deserialize(root, parentToChildren, {
@@ -438,8 +463,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
     });
   }
 
-  function addItem(id: string, item: AbstractCrdt) {
-    state.items.set(id, item);
+  function addItem(id: string, liveItem: LiveNode) {
+    state.items.set(id, liveItem);
   }
 
   function deleteItem(id: string) {
@@ -450,7 +475,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return state.items.get(id);
   }
 
-  function addToUndoStack(historyItem: HistoryItem) {
+  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
@@ -495,7 +520,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }: {
     storageUpdates?: Map<string, StorageUpdate>;
     presence?: boolean;
-    others?: OthersEvent[];
+    others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
       state.others = makeOthers(state.users);
@@ -544,17 +569,17 @@ export function makeStateMachine<TPresence extends JsonObject>(
   }
 
   function apply(
-    item: HistoryItem,
+    item: HistoryItem<TPresence>,
     isLocal: boolean
   ): {
-    reverse: HistoryItem;
+    reverse: HistoryItem<TPresence>;
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem,
+      reverse: [] as HistoryItem<TPresence>,
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -562,11 +587,12 @@ export function makeStateMachine<TPresence extends JsonObject>(
     };
 
     const createdNodeIds = new Set<string>();
+
     for (const op of item) {
       if (op.type === "presence") {
         const reverse = {
-          type: "presence",
-          data: {} as Presence,
+          type: "presence" as const,
+          data: {} as TPresence,
         };
 
         for (const key in op.data) {
@@ -583,25 +609,41 @@ export function makeStateMachine<TPresence extends JsonObject>(
           }
         }
 
-        result.reverse.unshift(reverse as any);
+        result.reverse.unshift(reverse);
         result.updates.presence = true;
       } else {
+        let source: OpSource;
+
         // Ops applied after undo/redo don't have an opId.
-        if (isLocal && !op.opId) {
+        if (!op.opId) {
           op.opId = generateOpId();
         }
-        const applyOpResult = applyOp(op, isLocal);
-        if (applyOpResult.modified) {
-          const parentId = applyOpResult.modified.node._parent?._id!;
 
-          // If the parent was created in the same batch, we don't want to notify
+        if (isLocal) {
+          source = OpSource.UNDOREDO_RECONNECT;
+        } else {
+          const deleted = state.offlineOperations.delete(nn(op.opId));
+          source = deleted ? OpSource.ACK : OpSource.REMOTE;
+        }
+
+        const applyOpResult = applyOp(op, source);
+        if (applyOpResult.modified) {
+          const parentId =
+            applyOpResult.modified.node.parent.type === "HasParent"
+              ? nn(
+                  applyOpResult.modified.node.parent.node._id,
+                  "Expected parent node to have an ID"
+                )
+              : undefined;
+
+          // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
-          if (!createdNodeIds.has(parentId)) {
+          if (!parentId || !createdNodeIds.has(parentId)) {
             result.updates.storageUpdates.set(
-              applyOpResult.modified.node._id!,
+              nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
                 result.updates.storageUpdates.get(
-                  applyOpResult.modified.node._id!
+                  nn(applyOpResult.modified.node._id)
                 ) as any, // FIXME
                 applyOpResult.modified
               )
@@ -614,7 +656,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(applyOpResult.modified.node._id!);
+            createdNodeIds.add(nn(applyOpResult.modified.node._id));
           }
         }
       }
@@ -622,11 +664,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return result;
   }
 
-  function applyOp(op: Op, isLocal: boolean): ApplyResult {
-    if (op.opId) {
-      state.offlineOperations.delete(op.opId);
-    }
-
+  function applyOp(op: Op, source: OpSource): ApplyResult {
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
@@ -637,7 +675,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        return item._apply(op, isLocal);
+        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
         const item = state.items.get(op.id);
@@ -646,13 +684,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
           return { modified: false };
         }
 
-        if (item._parent instanceof LiveList) {
-          const previousKey = item._parentKey!;
-          if (previousKey === op.parentKey) {
-            return { modified: false };
-          } else {
-            return item._parent._setChildKey(op.parentKey, item, previousKey);
-          }
+        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
+          return item.parent.node._setChildKey(op.parentKey, item, source);
         }
         return { modified: false };
       }
@@ -660,67 +693,73 @@ export function makeStateMachine<TPresence extends JsonObject>(
       case OpCode.CREATE_LIST:
       case OpCode.CREATE_MAP:
       case OpCode.CREATE_REGISTER: {
-        const parent = state.items.get(op.parentId!);
+        if (op.parentId === undefined) {
+          return { modified: false };
+        }
+
+        const parent = state.items.get(op.parentId);
         if (parent == null) {
           return { modified: false };
         }
-        return parent._attachChild(op, isLocal);
+
+        return parent._attachChild(op, source);
       }
     }
   }
 
-  function subscribe(callback: (updates: StorageUpdate) => void): () => void;
-  function subscribe<TKey extends string, TValue extends Lson>(
-    liveMap: LiveMap<TKey, TValue>,
-    callback: (liveMap: LiveMap<TKey, TValue>) => void
-  ): () => void;
-  function subscribe<TData extends LsonObject>(
-    liveObject: LiveObject<TData>,
-    callback: (liveObject: LiveObject<TData>) => void
-  ): () => void;
-  function subscribe<TItem extends Lson>(
-    liveList: LiveList<TItem>,
-    callback: (liveList: LiveList<TItem>) => void
-  ): () => void;
-  function subscribe<TItem extends AbstractCrdt>(
-    node: TItem,
-    callback: (updates: StorageUpdate[]) => void,
-    options: { isDeep: true }
-  ): () => void;
-  function subscribe<T extends Presence>(
-    type: "my-presence",
-    listener: MyPresenceCallback<T>
-  ): () => void;
-  function subscribe<T extends Presence>(
-    type: "others",
-    listener: OthersEventCallback<T>
-  ): () => void;
-  function subscribe(type: "event", listener: EventCallback): () => void;
-  function subscribe(type: "error", listener: ErrorCallback): () => void;
-  function subscribe(
-    type: "connection",
-    listener: ConnectionCallback
-  ): () => void;
-  function subscribe<K extends RoomEventName>(
-    firstParam: K | AbstractCrdt | ((updates: StorageUpdate[]) => void),
-    listener?: RoomEventCallbackMap[K] | any,
+  // Generic storage callbacks
+  function subscribe(callback: StorageCallback): () => void; // prettier-ignore
+  // Storage callbacks filtered by Live structure
+  function subscribe<L extends LiveStructure>(liveStructure: L, callback: (node: L) => void): () => void; // prettier-ignore
+  function subscribe(node: LiveStructure, callback: StorageCallback, options: { isDeep: true }): () => void; // prettier-ignore
+  // Room event callbacks
+  function subscribe<E extends RoomEventName>(type: E, listener: RoomEventCallbackFor<E, TPresence, TUserMeta, TRoomEvent>): () => void; // prettier-ignore
+
+  function subscribe<L extends LiveStructure, E extends RoomEventName>(
+    first: StorageCallback | L | E,
+    second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
-    if (firstParam instanceof AbstractCrdt) {
-      return crdtSubscribe(firstParam, listener, options);
-    } else if (typeof firstParam === "function") {
-      return genericSubscribe(firstParam);
-    } else if (!isValidRoomEventType(firstParam)) {
-      throw new Error(`"${firstParam}" is not a valid event name`);
+    if (second === undefined || typeof first === "function") {
+      if (typeof first === "function") {
+        const storageCallback = first;
+        return genericSubscribe(storageCallback);
+      } else {
+        throw new Error("Please specify a listener callback");
+      }
     }
 
-    (state.listeners[firstParam] as RoomEventCallbackMap[K][]).push(listener);
+    if (isLiveNode(first)) {
+      const node = first;
+      if (options?.isDeep) {
+        const storageCallback = second as StorageCallback;
+        return subscribeToLiveStructureDeeply(node, storageCallback);
+      } else {
+        const nodeCallback = second as (node: L) => void;
+        return subscribeToLiveStructureShallowly(node, nodeCallback);
+      }
+    }
+
+    if (!isRoomEventName(first)) {
+      throw new Error(`"${first}" is not a valid event name`);
+    }
+
+    type EventListener = RoomEventCallbackFor<
+      E,
+      TPresence,
+      TUserMeta,
+      TRoomEvent
+    >;
+    type EventQueue = EventListener[];
+
+    const eventName = first;
+    const eventListener = second as EventListener;
+
+    (state.listeners[eventName] as EventQueue).push(eventListener);
 
     return () => {
-      const callbacks = state.listeners[
-        firstParam
-      ] as RoomEventCallbackMap[K][];
-      remove(callbacks, listener);
+      const callbacks = state.listeners[eventName] as EventQueue;
+      remove(callbacks, eventListener);
     };
   }
 
@@ -728,9 +767,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return state.connection.state;
   }
 
-  function getSelf<
-    TPresence extends Presence = Presence
-  >(): User<TPresence> | null {
+  function getSelf(): User<TPresence, TUserMeta> | null {
     return state.connection.state === "open" ||
       state.connection.state === "connecting"
       ? {
@@ -752,29 +789,34 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     const auth = prepareAuthEndpoint(
       context.authentication,
-      context.fetchPolyfill
+      context.polyfills?.fetch ?? context.fetchPolyfill
     );
     const createWebSocket = prepareCreateWebSocket(
       context.liveblocksServer,
-      context.WebSocketPolyfill
+      context.polyfills?.WebSocket ?? context.WebSocketPolyfill
     );
 
     updateConnection({ state: "authenticating" });
     effects.authenticate(auth, createWebSocket);
   }
 
-  function updatePresence<T extends Presence>(
-    overrides: Partial<T>,
+  function updatePresence(
+    overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) {
-    const oldValues: Presence = {};
+    const oldValues = {} as TPresence;
 
     if (state.buffer.presence == null) {
-      state.buffer.presence = {};
+      state.buffer.presence = {} as TPresence;
     }
 
     for (const key in overrides) {
-      state.buffer.presence[key] = overrides[key] as any;
+      type K = typeof key;
+      const overrideValue: TPresence[K] | undefined = overrides[key];
+      if (overrideValue === undefined) {
+        continue;
+      }
+      state.buffer.presence[key] = overrideValue;
       oldValues[key] = state.me[key];
     }
 
@@ -794,10 +836,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function authenticationSuccess(
-    token: AuthenticationToken,
-    socket: WebSocket
-  ) {
+  function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -823,7 +862,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
 
-  function onVisibilityChange(visibilityState: VisibilityState) {
+  function onVisibilityChange(visibilityState: DocumentVisibilityState) {
     if (visibilityState === "visible" && state.connection.state === "open") {
       log("Heartbeat after visibility change");
       heartbeat();
@@ -832,7 +871,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
-  ): OthersEvent | undefined {
+  ): OthersEvent<TPresence, TUserMeta> | undefined {
     const user = state.users[message.actor];
     // If the other user initial presence hasn't been received yet, we discard the presence update.
     // The initial presence update message contains the property "targetActor".
@@ -848,6 +887,8 @@ export function makeStateMachine<TPresence extends JsonObject>(
       state.users[message.actor] = {
         connectionId: message.actor,
         presence: message.data,
+        id: undefined,
+        info: undefined,
         _hasReceivedInitialPresence: true,
       };
     } else {
@@ -870,7 +911,9 @@ export function makeStateMachine<TPresence extends JsonObject>(
     };
   }
 
-  function onUserLeftMessage(message: UserLeftServerMsg): OthersEvent | null {
+  function onUserLeftMessage(
+    message: UserLeftServerMsg
+  ): OthersEvent<TPresence, TUserMeta> | null {
     const userLeftMessage: UserLeftServerMsg = message;
     const user = state.users[userLeftMessage.actor];
     if (user) {
@@ -880,8 +923,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return null;
   }
 
-  function onRoomStateMessage(message: RoomStateServerMsg): OthersEvent {
-    const newUsers: { [connectionId: number]: User } = {};
+  function onRoomStateMessage(
+    message: RoomStateServerMsg<TUserMeta>
+  ): OthersEvent<TPresence, TUserMeta> {
+    const newUsers: { [connectionId: number]: User<TPresence, TUserMeta> } = {};
     for (const key in message.users) {
       const connectionId = Number.parseInt(key);
       const user = message.users[key];
@@ -902,13 +947,15 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function onEvent(message: BroadcastedEventServerMsg) {
+  function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
     for (const listener of state.listeners.event) {
       listener({ connectionId: message.actor, event: message.event });
     }
   }
 
-  function onUserJoinedMessage(message: UserJoinServerMsg): OthersEvent {
+  function onUserJoinedMessage(
+    message: UserJoinServerMsg<TUserMeta>
+  ): OthersEvent<TPresence, TUserMeta> {
     state.users[message.actor] = {
       connectionId: message.actor,
       info: message.info,
@@ -934,17 +981,21 @@ export function makeStateMachine<TPresence extends JsonObject>(
     return { type: "enter", user: state.users[message.actor] };
   }
 
-  function parseServerMessage(data: Json): ServerMsg<TPresence> | null {
+  function parseServerMessage(
+    data: Json
+  ): ServerMsg<TPresence, TUserMeta, TRoomEvent> | null {
     if (!isJsonObject(data)) {
       return null;
     }
 
-    return data as ServerMsg<TPresence>;
-    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
+    return data as ServerMsg<TPresence, TUserMeta, TRoomEvent>;
+    //          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME: Properly validate incoming external data instead!
   }
 
-  function parseServerMessages(text: string): ServerMsg<TPresence>[] | null {
-    const data: Json | undefined = parseJson(text);
+  function parseServerMessages(
+    text: string
+  ): ServerMsg<TPresence, TUserMeta, TRoomEvent>[] | null {
+    const data: Json | undefined = tryParseJson(text);
     if (data === undefined) {
       return null;
     } else if (isJsonArray(data)) {
@@ -968,7 +1019,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     const updates = {
       storageUpdates: new Map<string, StorageUpdate>(),
-      others: [] as OthersEvent[],
+      others: [] as OthersEvent<TPresence, TUserMeta>[],
     };
 
     for (const message of messages) {
@@ -1165,12 +1216,13 @@ export function makeStateMachine<TPresence extends JsonObject>(
     connect();
   }
 
-  function applyAndSendOfflineOps(offlineOps: Map<string, Op>) {
+  function applyAndSendOfflineOps(offlineOps: Map<string | undefined, Op>) {
+    //                                                     ^^^^^^^^^ NOTE: Bug? Unintended?
     if (offlineOps.size === 0) {
       return;
     }
 
-    const messages: ClientMsg<TPresence>[] = [];
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
 
     const ops = Array.from(offlineOps.values());
 
@@ -1191,7 +1243,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(op.opId!, op);
+        state.offlineOperations.set(nn(op.opId), op);
       });
     }
 
@@ -1228,8 +1280,10 @@ export function makeStateMachine<TPresence extends JsonObject>(
     }
   }
 
-  function flushDataToMessages(state: State<TPresence>) {
-    const messages: ClientMsg<TPresence>[] = [];
+  function flushDataToMessages(
+    state: State<TPresence, TStorage, TUserMeta, TRoomEvent>
+  ) {
+    const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
     if (state.buffer.presence) {
       messages.push({
         type: ClientMsgCode.UPDATE_PRESENCE,
@@ -1275,20 +1329,27 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function clearListeners() {
     for (const key in state.listeners) {
-      state.listeners[key as keyof State<TPresence>["listeners"]] = [];
+      state.listeners[
+        key as keyof State<
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TRoomEvent
+        >["listeners"]
+      ] = [];
     }
   }
 
-  function getPresence<T extends Presence>(): T {
-    return state.me as T;
+  function getPresence(): TPresence {
+    return state.me as TPresence;
   }
 
-  function getOthers<T extends Presence>(): Others<T> {
-    return state.others as Others<T>;
+  function getOthers(): Others<TPresence, TUserMeta> {
+    return state.others as Others<TPresence, TUserMeta>;
   }
 
   function broadcastEvent(
-    event: Json,
+    event: TRoomEvent,
     options: BroadcastOptions = {
       shouldQueueEventIfNotReady: false,
     }
@@ -1312,7 +1373,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage<TStorage extends LsonObject>(): Promise<{
+  function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
     if (state.root) {
@@ -1333,7 +1394,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
     return _getInitialStatePromise.then(() => {
       return {
-        root: state.root! as LiveObject<TStorage>,
+        root: nn(state.root) as LiveObject<TStorage>,
       };
     });
   }
@@ -1441,7 +1502,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
 
   function simulateSocketClose() {
     if (state.socket) {
-      state.socket.close();
+      state.socket = null;
     }
   }
 
@@ -1450,9 +1511,7 @@ export function makeStateMachine<TPresence extends JsonObject>(
     wasClean: boolean;
     reason: string;
   }) {
-    if (state.socket) {
-      onClose(event);
-    }
+    onClose(event);
   }
 
   return {
@@ -1498,10 +1557,15 @@ export function makeStateMachine<TPresence extends JsonObject>(
   };
 }
 
-export function defaultState(
-  initialPresence?: Presence,
-  initialStorage?: JsonObject
-): State<FixmePresence> {
+export function defaultState<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  initialPresence?: TPresence,
+  initialStorage?: TStorage
+): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   return {
     connection: { state: "closed" },
     token: null,
@@ -1523,14 +1587,14 @@ export function defaultState(
       pongTimeout: 0,
     },
     buffer: {
-      presence: initialPresence == null ? {} : initialPresence,
+      presence: initialPresence == null ? ({} as TPresence) : initialPresence,
       messages: [],
       storageOperations: [],
     },
     intervalHandles: {
       heartbeat: 0,
     },
-    me: initialPresence == null ? {} : initialPresence,
+    me: initialPresence == null ? ({} as TPresence) : initialPresence,
     users: {},
     others: makeOthers({}),
     defaultStorageRoot: initialStorage,
@@ -1539,7 +1603,7 @@ export function defaultState(
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, AbstractCrdt>(),
+    items: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],
@@ -1560,22 +1624,32 @@ export function defaultState(
   };
 }
 
-export type InternalRoom = {
-  room: Room;
+export type InternalRoom<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   connect: () => void;
   disconnect: () => void;
   onNavigatorOnline: () => void;
-  onVisibilityChange: (visibilityState: VisibilityState) => void;
+  onVisibilityChange: (visibilityState: DocumentVisibilityState) => void;
 };
 
-export function createRoom(
-  options: RoomInitializers<Presence, Record<string, any>>,
+export function createRoom<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  options: RoomInitializers<TPresence, TStorage>,
   context: Context
-): InternalRoom {
+): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const initialPresence = options.initialPresence ?? options.defaultPresence;
   const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
 
-  const state = defaultState(
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"
       ? initialPresence(context.roomId)
       : initialPresence,
@@ -1584,9 +1658,12 @@ export function createRoom(
       : initialStorage
   );
 
-  const machine = makeStateMachine(state, context);
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    state,
+    context
+  );
 
-  const room: Room = {
+  const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
     id: context.roomId,
     /////////////
     // Core    //
@@ -1613,10 +1690,9 @@ export function createRoom(
       resume: machine.resumeHistory,
     },
 
-    // @ts-ignore
-    internalDevTools: {
-      closeWebsocket: machine.simulateSocketClose,
-      sendCloseEvent: machine.simulateSendCloseEvent,
+    __INTERNAL_DO_NOT_USE: {
+      simulateCloseWebsocket: machine.simulateSocketClose,
+      simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
   };
 
@@ -1633,33 +1709,6 @@ class LiveblocksError extends Error {
   constructor(message: string, public code: number) {
     super(message);
   }
-}
-
-function parseToken(token: string): AuthenticationToken {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    throw new Error(
-      `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
-    );
-  }
-
-  const data = parseJson(atob(tokenParts[1]));
-  if (
-    data !== undefined &&
-    isJsonObject(data) &&
-    typeof data.actor === "number" &&
-    (data.id === undefined || typeof data.id === "string")
-  ) {
-    return {
-      actor: data.actor,
-      id: data.id,
-      info: data.info,
-    };
-  }
-
-  throw new Error(
-    `Authentication error. Liveblocks could not parse the response of your authentication endpoint`
-  );
 }
 
 function prepareCreateWebSocket(
@@ -1711,7 +1760,18 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "custom") {
-    return authentication.callback;
+    const authWithResponseValidation = (room: string) => {
+      return authentication.callback(room).then((response) => {
+        if (!response || !response.token) {
+          throw new Error(
+            'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+          );
+        }
+        return response;
+      });
+    };
+
+    return authWithResponseValidation;
   }
 
   throw new Error("Internal error. Unexpected authentication type");
@@ -1724,7 +1784,7 @@ function fetchAuthEndpoint(
     room: string;
     publicApiKey?: string;
   }
-): Promise<any> {
+): Promise<{ token: string }> {
   return fetch(endpoint, {
     method: "POST",
     headers: {
@@ -1739,22 +1799,23 @@ function fetchAuthEndpoint(
         );
       }
 
-      return res.json().catch((er) => {
+      return (res.json() as Promise<Json>).catch((er) => {
         throw new AuthenticationError(
-          `Expected a json when doing a POST request on "${endpoint}". ${er}`
+          `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
         );
       });
     })
-    .then((authResponse) => {
-      if (typeof authResponse.token !== "string") {
+    .then((data) => {
+      if (!isPlainObject(data) || typeof data.token !== "string") {
         throw new AuthenticationError(
-          `Expected a json with a string token when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-            authResponse
+          `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+            data
           )}`
         );
       }
 
-      return authResponse;
+      const { token } = data;
+      return { token };
     });
 }
 

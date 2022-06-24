@@ -1,8 +1,9 @@
-import type { JsonObject } from "@liveblocks/client";
+import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
 import { createClient } from "@liveblocks/client";
 import type {
+  IdTuple,
   RoomStateServerMsg,
-  SerializedCrdtWithId,
+  SerializedCrdt,
   ServerMsg,
 } from "@liveblocks/client/internal";
 import {
@@ -33,8 +34,7 @@ const server = setupServer(
     return res(
       ctx.json({
         token:
-          // actor = 0
-          "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4",
       })
     );
   }),
@@ -71,7 +71,9 @@ function prepareClientAndStore<T>(
   preloadedState?: T
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = configureStore<LiveblocksState<BasicState>>({
+  const store = configureStore<
+    LiveblocksState<BasicState, BasicPresence, never>
+  >({
     reducer: reducer as any,
     enhancers: [enhancer({ client, ...options })],
     preloadedState,
@@ -86,6 +88,8 @@ type BasicState = {
   notMapped: string;
   cursor: { x: number; y: number };
 };
+
+type BasicPresence = Pick<BasicState, "cursor">;
 
 const basicStoreReducer = ((
   state: BasicState = {
@@ -146,7 +150,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     presenceMapping: Mapping<T>;
     room?: string;
     initialState?: any;
-    items: SerializedCrdtWithId[];
+    items: IdTuple<SerializedCrdt>[];
   }
 ) {
   const { client, store } = prepareClientAndStore(
@@ -170,7 +174,9 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     }),
   } as MessageEvent);
 
-  function sendMessage(serverMessage: ServerMsg<JsonObject>) {
+  function sendMessage(
+    serverMessage: ServerMsg<JsonObject, BaseUserMeta, Json>
+  ) {
     socket.callbacks.message[0]!({
       data: JSON.stringify(serverMessage),
     } as MessageEvent);
@@ -182,7 +188,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
 }
 
 async function prepareBasicStoreWithStorage(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   options?: {
     room?: string;
     initialState?: Partial<BasicState>;
@@ -267,28 +273,24 @@ describe("middleware", () => {
 
       expect(store.getState().cursor).toEqual({ x: 100, y: 100 });
 
-      expect(socket.sentMessages[0]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 0, y: 0 } },
-          },
-          {
-            type: ClientMsgCode.FETCH_STORAGE,
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 0, y: 0 } },
+        },
+        {
+          type: ClientMsgCode.FETCH_STORAGE,
+        },
+      ]);
 
       await waitFor(() => socket.sentMessages[1] != null);
 
-      expect(socket.sentMessages[1]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 100, y: 100 } },
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 100, y: 100 } },
+        },
+      ]);
     });
 
     test("should broadcast presence when connecting to the room", async () => {
@@ -300,17 +302,15 @@ describe("middleware", () => {
 
       socket.callbacks.open[0]!();
 
-      expect(socket.sentMessages[0]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 0, y: 0 } },
-          },
-          {
-            type: ClientMsgCode.FETCH_STORAGE,
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 0, y: 0 } },
+        },
+        {
+          type: ClientMsgCode.FETCH_STORAGE,
+        },
+      ]);
     });
 
     test("should update presence if state is updated", async () => {
@@ -322,30 +322,26 @@ describe("middleware", () => {
 
       socket.callbacks.open[0]!();
 
-      expect(socket.sentMessages[0]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 0, y: 0 } },
-          },
-          {
-            type: ClientMsgCode.FETCH_STORAGE,
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 0, y: 0 } },
+        },
+        {
+          type: ClientMsgCode.FETCH_STORAGE,
+        },
+      ]);
 
       store.dispatch({ type: "SET_CURSOR", cursor: { x: 1, y: 1 } });
 
       await waitFor(() => socket.sentMessages[1] != null);
 
-      expect(socket.sentMessages[1]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 1, y: 1 } },
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 1, y: 1 } },
+        },
+      ]);
     });
 
     test("should not update presence if state is updated after leaving the room", async () => {
@@ -357,17 +353,15 @@ describe("middleware", () => {
 
       socket.callbacks.open[0]!();
 
-      expect(socket.sentMessages[0]).toEqual(
-        JSON.stringify([
-          {
-            type: ClientMsgCode.UPDATE_PRESENCE,
-            data: { cursor: { x: 0, y: 0 } },
-          },
-          {
-            type: ClientMsgCode.FETCH_STORAGE,
-          },
-        ])
-      );
+      expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_PRESENCE,
+          data: { cursor: { x: 0, y: 0 } },
+        },
+        {
+          type: ClientMsgCode.FETCH_STORAGE,
+        },
+      ]);
 
       store.dispatch(leaveRoom("room"));
 
@@ -393,7 +387,7 @@ describe("middleware", () => {
               info: { name: "Testy McTester" },
             },
           },
-        } as RoomStateServerMsg),
+        } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
       expect(store.getState().liveblocks.others).toEqual([
@@ -448,21 +442,19 @@ describe("middleware", () => {
 
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(socket.sentMessages[1]).toEqual(
-          JSON.stringify([
-            {
-              type: ClientMsgCode.UPDATE_STORAGE,
-              ops: [
-                {
-                  opId: "0:0",
-                  id: "root",
-                  type: OpCode.UPDATE_OBJECT,
-                  data: { value: 5 },
-                },
-              ],
-            },
-          ])
-        );
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                opId: "0:0",
+                id: "root",
+                type: OpCode.UPDATE_OBJECT,
+                data: { value: 5 },
+              },
+            ],
+          },
+        ]);
       });
 
       test("should initialize with LiveList if key is missing from liveblocks storage and initial value is an array", async () => {
@@ -479,22 +471,20 @@ describe("middleware", () => {
 
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(socket.sentMessages[1]).toEqual(
-          JSON.stringify([
-            {
-              type: ClientMsgCode.UPDATE_STORAGE,
-              ops: [
-                {
-                  id: "0:0",
-                  opId: "0:1",
-                  type: OpCode.CREATE_LIST,
-                  parentId: "root",
-                  parentKey: "items",
-                },
-              ],
-            },
-          ])
-        );
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                id: "0:0",
+                opId: "0:1",
+                type: OpCode.CREATE_LIST,
+                parentId: "root",
+                parentKey: "items",
+              },
+            ],
+          },
+        ]);
       });
 
       test("should batch initialization", async () => {
@@ -512,28 +502,26 @@ describe("middleware", () => {
 
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(socket.sentMessages[1]).toEqual(
-          JSON.stringify([
-            {
-              type: ClientMsgCode.UPDATE_STORAGE,
-              ops: [
-                {
-                  opId: "0:0",
-                  id: "root",
-                  type: OpCode.UPDATE_OBJECT,
-                  data: { value: 5 },
-                },
-                {
-                  id: "0:0",
-                  opId: "0:2", // TODO: We currently have a tiny issue in LiveObject.update who generate an opId 0:1 for a potential UpdateObject
-                  type: OpCode.CREATE_LIST,
-                  parentId: "root",
-                  parentKey: "items",
-                },
-              ],
-            },
-          ])
-        );
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                opId: "0:0",
+                id: "root",
+                type: OpCode.UPDATE_OBJECT,
+                data: { value: 5 },
+              },
+              {
+                id: "0:0",
+                opId: "0:2", // TODO: We currently have a tiny issue in LiveObject.update who generate an opId 0:1 for a potential UpdateObject
+                type: OpCode.CREATE_LIST,
+                parentId: "root",
+                parentKey: "items",
+              },
+            ],
+          },
+        ]);
       });
 
       test("should not override liveblocks state with initial state if key exists", async () => {
@@ -607,21 +595,19 @@ describe("middleware", () => {
         // Waiting for last update to be sent because of room internal throttling
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(socket.sentMessages[1]).toEqual(
-          JSON.stringify([
-            {
-              type: ClientMsgCode.UPDATE_STORAGE,
-              ops: [
-                {
-                  opId: "0:0",
-                  id: "root",
-                  type: OpCode.UPDATE_OBJECT,
-                  data: { value: 2 },
-                },
-              ],
-            },
-          ])
-        );
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                opId: "0:0",
+                id: "root",
+                type: OpCode.UPDATE_OBJECT,
+                data: { value: 2 },
+              },
+            ],
+          },
+        ]);
       });
 
       test("should batch modifications", async () => {
@@ -638,31 +624,29 @@ describe("middleware", () => {
         // Waiting for last update to be sent because of room internal throttling
         await waitFor(() => socket.sentMessages[1] != null);
 
-        expect(socket.sentMessages[1]).toEqual(
-          JSON.stringify([
-            {
-              type: ClientMsgCode.UPDATE_STORAGE,
-              ops: [
-                {
-                  id: "0:0",
-                  opId: "0:0",
-                  type: OpCode.CREATE_OBJECT,
-                  parentId: "1:0",
-                  parentKey: "!",
-                  data: { text: "A" },
-                },
-                {
-                  id: "0:1",
-                  opId: "0:1",
-                  type: OpCode.CREATE_OBJECT,
-                  parentId: "1:0",
-                  parentKey: '"',
-                  data: { text: "B" },
-                },
-              ],
-            },
-          ])
-        );
+        expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+          {
+            type: ClientMsgCode.UPDATE_STORAGE,
+            ops: [
+              {
+                id: "0:0",
+                opId: "0:0",
+                type: OpCode.CREATE_OBJECT,
+                parentId: "1:0",
+                parentKey: "!",
+                data: { text: "A" },
+              },
+              {
+                id: "0:1",
+                opId: "0:1",
+                type: OpCode.CREATE_OBJECT,
+                parentId: "1:0",
+                parentKey: '"',
+                data: { text: "B" },
+              },
+            ],
+          },
+        ]);
       });
     });
   });

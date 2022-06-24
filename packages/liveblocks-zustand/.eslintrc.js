@@ -14,9 +14,7 @@ module.exports = {
     // These checks are still GOOD IDEAS to re-enable later on, but for right
     // now they're too noisy to enable.
     // ----------------------------------------------------------------------
-    // "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-explicit-any": "off",
-    // "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
 
     // -------------------------------
@@ -37,12 +35,20 @@ module.exports = {
     // ------------------------
     // Customized default rules
     // ------------------------
+    quotes: ["error", "double", "avoid-escape"],
     "object-shorthand": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "@typescript-eslint/no-unused-vars": [
       "warn",
       // Unused variables are fine if they start with an underscore
       { args: "all", argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
     ],
+
+    // --------------------------------------------------------------
+    // "The Code is the To-Do List"
+    // https://www.executeprogram.com/blog/the-code-is-the-to-do-list
+    // --------------------------------------------------------------
+    "no-warning-comments": ["error", { terms: ["xxx"], location: "anywhere" }],
 
     // -------------------------------
     // Custom syntax we want to forbid

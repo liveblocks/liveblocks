@@ -6,9 +6,9 @@ import {
   reconnect,
 } from "../test/utils";
 import { LiveList } from ".";
-import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveObject } from "./LiveObject";
+import type { IdTuple, SerializedCrdt } from "./types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
@@ -834,7 +834,7 @@ describe("LiveObject", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",
@@ -892,7 +892,7 @@ describe("LiveObject", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         [
           "0:1",

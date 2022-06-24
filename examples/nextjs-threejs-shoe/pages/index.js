@@ -6,7 +6,7 @@ import { HexColorPicker } from "react-colorful";
 import styles from "./index.module.css";
 
 /**
- * This file shows how to create a simple collaborative form.
+ * This file shows how to create a simple 3D editor using react-three-fiber and Liveblocks
  *
  * We use the storage block to persist the show colors even after everyone leaves the room.
  */

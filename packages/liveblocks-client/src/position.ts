@@ -2,25 +2,26 @@ export const min = 32;
 export const max = 126;
 
 export function makePosition(before?: string, after?: string): string {
-  // No children
-  if (before == null && after == null) {
-    return pos([min + 1]);
+  // Between
+  if (before != null && after != null) {
+    return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
   }
 
   // Insert at the end
-  if (before != null && after == null) {
+  else if (before != null) {
     return getNextPosition(before);
   }
 
   // Insert at the start
-  if (before == null && after != null) {
+  else if (after != null) {
     return getPreviousPosition(after);
   }
 
-  return pos(makePositionFromCodes(posCodes(before!), posCodes(after!)));
+  // No children
+  return pos([min + 1]);
 }
 
-function getPreviousPosition(after: string) {
+function getPreviousPosition(after: string): string {
   const result = [];
   const afterCodes = posCodes(after);
   for (let i = 0; i < afterCodes.length; i++) {
@@ -41,7 +42,7 @@ function getPreviousPosition(after: string) {
   return pos(result);
 }
 
-function getNextPosition(before: string) {
+function getNextPosition(before: string): string {
   const result = [];
   const beforeCodes = posCodes(before);
   for (let i = 0; i < beforeCodes.length; i++) {
@@ -96,7 +97,7 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
   return result;
 }
 
-export function posCodes(str: string) {
+export function posCodes(str: string): number[] {
   const codes: number[] = [];
   for (let i = 0; i < str.length; i++) {
     codes.push(str.charCodeAt(i));
@@ -104,7 +105,7 @@ export function posCodes(str: string) {
   return codes;
 }
 
-export function pos(codes: number[]) {
+export function pos(codes: number[]): string {
   return String.fromCharCode(...codes);
 }
 

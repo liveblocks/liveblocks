@@ -57,17 +57,38 @@ class MockWebSocket {
     MockWebSocket.instances.push(this);
   }
 
+  addEventListener(event: "open", callback: (event: Event) => void): void;
+  addEventListener(event: "close", callback: (event: CloseEvent) => void): void;
+  addEventListener(
+    event: "message",
+    callback: (event: MessageEvent) => void
+  ): void;
   addEventListener(
     event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
-    this.callbacks[event].push(callback);
+    callback:
+      | ((event: Event) => void)
+      | ((event: CloseEvent) => void)
+      | ((event: MessageEvent) => void)
+  ): void {
+    this.callbacks[event].push(callback as any);
   }
 
+  removeEventListener(event: "open", callback: (event: Event) => void): void;
+  removeEventListener(
+    event: "close",
+    callback: (event: CloseEvent) => void
+  ): void;
+  removeEventListener(
+    event: "message",
+    callback: (event: MessageEvent) => void
+  ): void;
   removeEventListener(
     event: "open" | "close" | "message",
-    callback: (event: any) => void
-  ) {
+    callback:
+      | ((event: Event) => void)
+      | ((event: CloseEvent) => void)
+      | ((event: MessageEvent) => void)
+  ): void {
     remove(this.callbacks[event], callback);
   }
 
@@ -85,8 +106,7 @@ const server = setupServer(
     return res(
       ctx.json({
         token:
-          // actor = 0
-          "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw",
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4",
       })
     );
   }),

@@ -1,19 +1,17 @@
 import React, { useEffect } from "react";
 import create from "zustand";
 
-import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
+import createLiveblocksClient from "../../utils/createClient";
 
-const client = createClient({
-  authEndpoint: "/api/auth",
-});
+const client = createLiveblocksClient();
 
 type State = {
   items: string[];
   addItem: (newTodo: string) => void;
   deleteItem: (index: number) => void;
   clear: () => void;
-}
+};
 
 const useStore = create(
   middleware<State>(

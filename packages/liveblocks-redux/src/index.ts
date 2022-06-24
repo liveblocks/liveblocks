@@ -1,8 +1,9 @@
 import type {
+  BaseUserMeta,
   Client,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
   Room,
   User,
 } from "@liveblocks/client";
@@ -21,9 +22,9 @@ import {
   missingClient,
 } from "./errors";
 
-export type Mapping<T> = Partial<{
-  [Property in keyof T]: boolean;
-}>;
+export type Mapping<T> = {
+  [K in keyof T]?: boolean;
+};
 
 const ACTION_TYPES = {
   ENTER: "@@LIVEBLOCKS/ENTER",
@@ -37,7 +38,8 @@ const ACTION_TYPES = {
 
 export type LiveblocksState<
   TState,
-  TPresence extends Presence = Presence
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
 > = TState & {
   /**
    * Liveblocks extra state attached by the enhancer
@@ -46,7 +48,7 @@ export type LiveblocksState<
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence>>;
+    readonly others: Array<User<TPresence, TUserMeta>>;
     /**
      * Whether or not the room storage is currently loading
      */
@@ -87,7 +89,7 @@ const internalEnhancer = <T>(options: {
 
   return (createStore: any) =>
     (reducer: any, initialState: any, enhancer: any) => {
-      let room: Room | null = null;
+      let room: Room<any, any, any, any> | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<any> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
@@ -220,7 +222,7 @@ const internalEnhancer = <T>(options: {
           type: ACTION_TYPES.START_LOADING_STORAGE,
         });
 
-        room.getStorage<any>().then(({ root }) => {
+        room.getStorage().then(({ root }) => {
           const updates: any = {};
 
           room!.batch(() => {
@@ -315,7 +317,14 @@ export const actions = {
   leaveRoom,
 };
 
-function enterRoom(roomId: string, initialState?: any) {
+function enterRoom<T>(
+  roomId: string,
+  initialState?: T
+): {
+  type: string;
+  roomId: string;
+  initialState?: T;
+} {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
@@ -323,7 +332,10 @@ function enterRoom(roomId: string, initialState?: any) {
   };
 }
 
-function leaveRoom(roomId: string) {
+function leaveRoom(roomId: string): {
+  type: string;
+  roomId: string;
+} {
   return {
     type: ACTION_TYPES.LEAVE,
     roomId,
@@ -336,11 +348,11 @@ export const enhancer = internalEnhancer as <T>(options: {
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject, T>(
+function patchLiveblocksStorage<O extends LsonObject>(
   root: LiveObject<O>,
-  oldState: T,
-  newState: T,
-  mapping: Mapping<T>
+  oldState: O,
+  newState: O,
+  mapping: Mapping<O>
 ) {
   for (const key in mapping) {
     if (
@@ -357,7 +369,7 @@ function patchLiveblocksStorage<O extends LsonObject, T>(
 }
 
 function broadcastInitialPresence<T>(
-  room: Room,
+  room: Room<any, any, any, any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -366,11 +378,11 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
-  room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+function updatePresence<TPresence extends JsonObject>(
+  room: Room<TPresence, any, any, any>,
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -378,7 +390,7 @@ function updatePresence<T>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] });
+      room.updatePresence({ [key]: newState[key] } as TPresence);
     }
   }
 }

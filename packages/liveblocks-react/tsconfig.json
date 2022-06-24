@@ -2,6 +2,7 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
+    "strict": true,
     "outDir": "lib",
     "rootDir": "src",
     "lib": ["dom", "es2015"],
@@ -11,9 +12,6 @@
     "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

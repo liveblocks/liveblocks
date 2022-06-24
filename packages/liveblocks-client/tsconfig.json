@@ -6,8 +6,6 @@
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strictPropertyInitialization": true,
-    "strictFunctionTypes": true,
     "declaration": true,
     "moduleResolution": "node",
     "lib": ["dom", "es2015"],
@@ -15,6 +13,6 @@
     "importsNotUsedAsValues": "error",
     "isolatedModules": true
   },
-  "include": ["./src/**/*.ts", "./test/**/*.ts"],
+  "include": ["./src/**/*.ts", "./test/**/*.ts", "./e2e/**/*.ts"],
   "exclude": ["node_modules"]
 }

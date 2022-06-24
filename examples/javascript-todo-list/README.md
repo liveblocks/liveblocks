@@ -16,9 +16,12 @@
   <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
 </p>
 
-This example shows how to build a collaborative to-do list without relying on a front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
+This example shows how to build a collaborative to-do list without relying on a
+front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
 
-As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across clients. Users will also be able to see who else is currently online and when a user is typing.
+As users edit the list, changes will be automatically persisted and
+synced—allowing for a list that updates in real-time across clients. Users will
+also be able to see who else is currently online and when a user is typing.
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="500" alt="To-do List" />
 
@@ -26,10 +29,13 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) by your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
 
 ### Tutorial
 
-Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/javascript) to build it from scratch.
+Follow our
+[step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/javascript)
+to build it from scratch.

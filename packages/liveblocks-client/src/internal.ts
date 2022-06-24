@@ -11,6 +11,19 @@
  * https://join.team/liveblocks ;)
  */
 
+export { assertNever, nn } from "./assert";
+export type {
+  AppOnlyAuthToken,
+  AuthToken,
+  RoomAuthToken,
+  Scope,
+} from "./AuthToken";
+export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+  isScope,
+} from "./AuthToken";
 export {
   deprecate,
   deprecateIf,
@@ -22,33 +35,54 @@ export {
   patchImmutableObject,
   patchLiveObjectKey,
 } from "./immutable";
-export { parseJson } from "./json";
+export { comparePosition, makePosition } from "./position";
 export type {
+  BroadcastedEventServerMsg,
+  BroadcastEventClientMsg,
+  ClientMsg,
+  CreateChildOp,
   CreateListOp,
   CreateMapOp,
   CreateObjectOp,
+  CreateOp,
   CreateRegisterOp,
+  CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
+  FetchStorageClientMsg,
+  IdTuple,
+  InitialDocumentStateServerMsg,
+  LiveNode,
+  NodeMap,
   Op,
+  ParentToChildNodeMap,
+  Resolve,
+  RoomInitializers,
   RoomStateServerMsg,
+  SerializedChild,
   SerializedCrdt,
-  SerializedCrdtWithId,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
+  SerializedRootObject,
   ServerMsg,
   SetParentKeyOp,
   UpdateObjectOp,
+  UpdatePresenceClientMsg,
+  UpdatePresenceServerMsg,
+  UpdateStorageClientMsg,
+  UpdateStorageServerMsg,
   UserJoinServerMsg,
-} from "./live";
+  UserLeftServerMsg,
+} from "./types";
 export {
   ClientMsgCode,
   CrdtType,
   OpCode,
   ServerMsgCode,
   WebsocketCloseCodes,
-} from "./live";
-export { comparePosition, makePosition } from "./position";
-export type { Resolve, RoomInitializers } from "./types";
+} from "./types";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
+export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export { b64decode, isPlainObject, tryParseJson } from "./utils";

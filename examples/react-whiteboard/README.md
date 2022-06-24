@@ -16,7 +16,8 @@
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
 </p>
 
-This example shows how to build a collaborative whiteboard with [Liveblocks](https://liveblocks.io) and [React](https://reactjs.org/).
+This example shows how to build a collaborative whiteboard with
+[Liveblocks](https://liveblocks.io) and [React](https://reactjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="500" alt="Whiteboard" />
 
@@ -24,6 +25,8 @@ This example shows how to build a collaborative whiteboard with [Liveblocks](htt
 
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`index.js`](./src/index.js) by your **public** key
+- Copy your **public** key from the
+  [dashboard](https://liveblocks.io/dashboard/apikeys)
+- Replace `pk_YOUR_PUBLIC_KEY` in [`index.js`](./src/index.js) by your
+  **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)

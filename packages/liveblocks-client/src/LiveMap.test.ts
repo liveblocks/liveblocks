@@ -7,11 +7,11 @@ import {
   prepareStorageTest,
   reconnect,
 } from "../test/utils";
-import type { SerializedCrdtWithId } from "./live";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./live";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
+import type { IdTuple, SerializedCrdt } from "./types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
 
 describe("LiveMap", () => {
   describe("not attached", () => {
@@ -446,10 +446,10 @@ describe("LiveMap", () => {
 
   it("attach map with items to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, { a: number }>;
+      map?: LiveMap<string, { a: number }>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
@@ -462,10 +462,10 @@ describe("LiveMap", () => {
 
   it("attach map with live objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveObject<{ a: number }>>;
+      map?: LiveMap<string, LiveObject<{ a: number }>>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", new LiveObject({ a: 0 })]]));
 
@@ -480,10 +480,10 @@ describe("LiveMap", () => {
 
   it("attach map with objects to root", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, { a: number }>;
+      map?: LiveMap<string, { a: number }>;
     }>([createSerializedObject("0:0", {})], 1);
 
-    assert({} as any);
+    assert({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
@@ -636,7 +636,7 @@ describe("LiveMap", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.MAP, parentId: "0:0", parentKey: "map" }],
         [

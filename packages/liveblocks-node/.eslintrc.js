@@ -14,7 +14,6 @@ module.exports = {
     // -------------------------------
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-inferrable-types": "off",
-    "no-constant-condition": "off",
 
     // -----------------------------
     // Enable auto-fixes for imports
@@ -33,10 +32,18 @@ module.exports = {
       { argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
     ],
 
+    // --------------------------------------------------------------
+    // "The Code is the To-Do List"
+    // https://www.executeprogram.com/blog/the-code-is-the-to-do-list
+    // --------------------------------------------------------------
+    "no-warning-comments": ["error", { terms: ["xxx"], location: "anywhere" }],
+
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
+    quotes: ["error", "double", "avoid-escape"],
     "object-shorthand": "error",
+    "@typescript-eslint/explicit-module-boundary-types": "error",
     "no-restricted-syntax": [
       "error",
       {

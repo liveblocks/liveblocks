@@ -1,3 +1,4 @@
+import { LiveMap } from "@liveblocks/client";
 import {
   RoomProvider,
   useBatch,
@@ -7,9 +8,12 @@ import {
   useUndo,
   useOthers,
   useMyPresence,
-  useStorage,
+  LiveblocksProvider,
 } from "@liveblocks/react";
 import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
+
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-batching-presence-storage";
@@ -20,9 +24,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId}>
-      <Sandbox />
-    </RoomProvider>
+    <LiveblocksProvider client={client}>
+      <RoomProvider id={roomId} initialStorage={{ liveMap: new LiveMap() }}>
+        <Sandbox />
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 

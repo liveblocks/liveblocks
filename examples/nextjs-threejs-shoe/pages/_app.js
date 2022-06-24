@@ -2,7 +2,7 @@ import Head from "next/head";
 import { useMemo } from "react";
 import { useRouter } from "next/router";
 import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
-import { createClient } from "@liveblocks/client";
+import { createClient, LiveObject } from "@liveblocks/client";
 
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
@@ -17,7 +17,7 @@ function App({ Component, pageProps }) {
      * to be able to use Liveblocks react hooks in your components
      **/
     <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId}>
+      <RoomProvider id={roomId} initialStorage={{ colors: new LiveObject() }}>
         <Head>
           <title>Liveblocks</title>
           <meta name="robots" content="noindex" />

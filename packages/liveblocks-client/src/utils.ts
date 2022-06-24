@@ -1,29 +1,29 @@
-import type { AbstractCrdt, Doc } from "./AbstractCrdt";
-import type { Json } from "./json";
-import { isJsonObject, parseJson } from "./json";
-import type {
-  CreateOp,
-  Op,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
+import type { Doc } from "./AbstractCrdt";
+import { assertNever, nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Lson, LsonObject } from "./lson";
 import type {
+  CreateOp,
+  IdTuple,
+  Json,
   LiveListUpdates,
   LiveMapUpdates,
+  LiveNode,
   LiveObjectUpdates,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  NodeMap,
+  Op,
+  ParentToChildNodeMap,
+  SerializedCrdt,
   StorageUpdate,
 } from "./types";
+import { CrdtType, OpCode } from "./types";
 
-export function remove<T>(array: T[], item: T) {
+export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {
       array.splice(i, 1);
@@ -40,61 +40,52 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   return items.filter((item: T): item is NonNullable<T> => item != null);
 }
 
-export function creationOpToLiveStructure(op: CreateOp): AbstractCrdt {
+export function creationOpToLiveNode(op: CreateOp): LiveNode {
+  return lsonToLiveNode(creationOpToLson(op));
+}
+
+export function creationOpToLson(op: CreateOp): Lson {
   switch (op.type) {
     case OpCode.CREATE_REGISTER:
-      return new LiveRegister(op.data);
+      return op.data;
     case OpCode.CREATE_OBJECT:
       return new LiveObject(op.data);
     case OpCode.CREATE_MAP:
       return new LiveMap();
     case OpCode.CREATE_LIST:
       return new LiveList();
+    default:
+      return assertNever(op, "Unknown creation Op");
   }
 }
 
-export function isSameNodeOrChildOf(
-  node: AbstractCrdt,
-  parent: AbstractCrdt
-): boolean {
+export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
   if (node === parent) {
     return true;
   }
-  if (node._parent) {
-    return isSameNodeOrChildOf(node._parent, parent);
+  if (node.parent.type === "HasParent") {
+    return isSameNodeOrChildOf(node.parent.node, parent);
   }
   return false;
 }
 
 export function deserialize(
-  entry: SerializedCrdtWithId,
-  parentToChildren: Map<string, SerializedCrdtWithId[]>,
+  [id, crdt]: IdTuple<SerializedCrdt>,
+  parentToChildren: ParentToChildNodeMap,
   doc: Doc
-): AbstractCrdt {
-  switch (entry[1].type) {
+): LiveNode {
+  switch (crdt.type) {
     case CrdtType.OBJECT: {
-      return LiveObject._deserialize(entry, parentToChildren, doc);
+      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.LIST: {
-      return LiveList._deserialize(
-        entry as [string, SerializedList],
-        parentToChildren,
-        doc
-      );
+      return LiveList._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.MAP: {
-      return LiveMap._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
     }
     case CrdtType.REGISTER: {
-      return LiveRegister._deserialize(
-        entry as [string, SerializedMap],
-        parentToChildren,
-        doc
-      );
+      return LiveRegister._deserialize([id, crdt], parentToChildren, doc);
     }
     default: {
       throw new Error("Unexpected CRDT type");
@@ -102,57 +93,83 @@ export function deserialize(
   }
 }
 
-export function isCrdt(obj: unknown): obj is AbstractCrdt {
-  return (
-    obj instanceof LiveObject ||
-    obj instanceof LiveMap ||
-    obj instanceof LiveList ||
-    obj instanceof LiveRegister
-  );
+export function deserializeToLson(
+  [id, crdt]: IdTuple<SerializedCrdt>,
+  parentToChildren: ParentToChildNodeMap,
+  doc: Doc
+): Lson {
+  switch (crdt.type) {
+    case CrdtType.OBJECT: {
+      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.LIST: {
+      return LiveList._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.MAP: {
+      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
+    }
+    case CrdtType.REGISTER: {
+      return crdt.data;
+    }
+    default: {
+      throw new Error("Unexpected CRDT type");
+    }
+  }
 }
 
-export function selfOrRegisterValue(obj: AbstractCrdt) {
+export function isLiveStructure(value: unknown): value is LiveStructure {
+  return isLiveList(value) || isLiveMap(value) || isLiveObject(value);
+}
+
+export function isLiveNode(value: unknown): value is LiveNode {
+  return isLiveStructure(value) || isLiveRegister(value);
+}
+
+export function isLiveList(value: unknown): value is LiveList<Lson> {
+  return value instanceof LiveList;
+}
+
+export function isLiveMap(value: unknown): value is LiveMap<string, Lson> {
+  return value instanceof LiveMap;
+}
+
+export function isLiveObject(value: unknown): value is LiveObject<LsonObject> {
+  return value instanceof LiveObject;
+}
+
+export function isLiveRegister(value: unknown): value is LiveRegister<Json> {
+  return value instanceof LiveRegister;
+}
+
+export function liveNodeToLson(obj: LiveNode): Lson {
   if (obj instanceof LiveRegister) {
     return obj.data;
-  }
-
-  return obj;
-}
-
-export function selfOrRegister(obj: Lson): AbstractCrdt {
-  if (
-    obj instanceof LiveObject ||
+  } else if (
+    obj instanceof LiveList ||
     obj instanceof LiveMap ||
-    obj instanceof LiveList
+    obj instanceof LiveObject
   ) {
     return obj;
-  } else if (obj instanceof LiveRegister) {
-    throw new Error(
-      "Internal error. LiveRegister should not be created from selfOrRegister"
-    );
   } else {
-    // By now, we've checked that obj isn't a Live storage instance.
-    // Technically what remains here can still be a (1) live data scalar, or
-    // a (2) list of Lson values, or (3) an object with Lson values.
-    //
-    // Of these, (1) is fine, because a live data scalar is also a legal Json
-    // scalar.
-    //
-    // But (2) and (3) are only technically fine if those only contain Json
-    // values. Technically, these can still contain nested Live storage
-    // instances, and we should probably assert that they don't at runtime.
-    //
-    // TypeScript understands this and doesn't let us use `obj` until we do :)
-    //
-    return new LiveRegister(obj as Json);
-    //                          ^^^^^^^
-    //                          TODO: Better to assert than to force-cast here!
+    return assertNever(obj, "Unknown AbstractCrdt");
+  }
+}
+
+export function lsonToLiveNode(value: Lson): LiveNode {
+  if (
+    value instanceof LiveObject ||
+    value instanceof LiveMap ||
+    value instanceof LiveList
+  ) {
+    return value;
+  } else {
+    return new LiveRegister(value);
   }
 }
 
 export function getTreesDiffOperations(
-  currentItems: Map<string, SerializedCrdt>,
-  newItems: Map<string, SerializedCrdt>
+  currentItems: NodeMap,
+  newItems: NodeMap
 ): Op[] {
   const ops: Op[] = [];
 
@@ -171,8 +188,8 @@ export function getTreesDiffOperations(
     if (currentCrdt) {
       if (crdt.type === CrdtType.OBJECT) {
         if (
-          JSON.stringify(crdt.data) !==
-          JSON.stringify((currentCrdt as SerializedObject).data)
+          currentCrdt.type !== CrdtType.OBJECT ||
+          JSON.stringify(crdt.data) !== JSON.stringify(currentCrdt.data)
         ) {
           ops.push({
             type: OpCode.UPDATE_OBJECT,
@@ -185,7 +202,7 @@ export function getTreesDiffOperations(
         ops.push({
           type: OpCode.SET_PARENT_KEY,
           id,
-          parentKey: crdt.parentKey!,
+          parentKey: nn(crdt.parentKey, "Parent key must not be missing"),
         });
       }
     } else {
@@ -209,13 +226,18 @@ export function getTreesDiffOperations(
           });
           break;
         case CrdtType.OBJECT:
-          ops.push({
-            type: OpCode.CREATE_OBJECT,
-            id,
-            parentId: crdt.parentId,
-            parentKey: crdt.parentKey,
-            data: crdt.data,
-          });
+          ops.push(
+            crdt.parentId
+              ? {
+                  type: OpCode.CREATE_OBJECT,
+                  id,
+                  parentId: crdt.parentId,
+                  parentKey: crdt.parentKey,
+                  data: crdt.data,
+                }
+              : // Root object
+                { type: OpCode.CREATE_OBJECT, id, data: crdt.data }
+          );
           break;
         case CrdtType.MAP:
           ops.push({
@@ -304,10 +326,19 @@ export function mergeStorageUpdates(first: StorageUpdate | undefined, second: St
   return second;
 }
 
-function isPlain(value: unknown) /* TODO: add refinement here */ {
+function isPlain(
+  value: unknown
+): value is
+  | undefined
+  | null
+  | string
+  | boolean
+  | number
+  | unknown[]
+  | { [key: string]: unknown } {
   const type = typeof value;
   return (
-    type === "undefined" ||
+    value === undefined ||
     value === null ||
     type === "string" ||
     type === "boolean" ||
@@ -317,18 +348,16 @@ function isPlain(value: unknown) /* TODO: add refinement here */ {
   );
 }
 
-function isPlainObject(value: unknown): value is object {
-  if (typeof value !== "object" || value === null) return false;
-
-  const proto = Object.getPrototypeOf(value);
-  if (proto === null) return true;
-
-  let baseProto = proto;
-  while (Object.getPrototypeOf(baseProto) !== null) {
-    baseProto = Object.getPrototypeOf(baseProto);
-  }
-
-  return proto === baseProto;
+export function isPlainObject(
+  blob: unknown
+): blob is { [key: string]: unknown } {
+  // Implementation borrowed from pojo decoder, see
+  // https://github.com/nvie/decoders/blob/78849f843193647eb6b5307240387bdcff7161fb/src/lib/objects.js#L10-L41
+  return (
+    blob !== null &&
+    typeof blob === "object" &&
+    Object.prototype.toString.call(blob) === "[object Object]"
+  );
 }
 
 export function findNonSerializableValue(
@@ -371,30 +400,6 @@ export function findNonSerializableValue(
   return false;
 }
 
-export function isTokenValid(token: string) {
-  const tokenParts = token.split(".");
-  if (tokenParts.length !== 3) {
-    return false;
-  }
-
-  const data = parseJson(atob(tokenParts[1]));
-  if (
-    data === undefined ||
-    !isJsonObject(data) ||
-    typeof data.exp !== "number"
-  ) {
-    return false;
-  }
-
-  const now = Date.now();
-
-  if (now / 1000 > data.exp - 300) {
-    return false;
-  }
-
-  return true;
-}
-
 /**
  * Polyfill for Object.fromEntries() to be able to target ES2015 output without
  * including external polyfill dependencies.
@@ -435,4 +440,38 @@ export function values<O extends { [key: string]: unknown }>(
   obj: O
 ): O[keyof O][] {
   return Object.values(obj) as O[keyof O][];
+}
+
+/**
+ * Alternative to JSON.parse() that will not throw in production. If the passed
+ * string cannot be parsed, this will return `undefined`.
+ */
+export function tryParseJson(rawMessage: string): Json | undefined {
+  try {
+    // eslint-disable-next-line no-restricted-syntax
+    return JSON.parse(rawMessage);
+  } catch (e) {
+    return undefined;
+  }
+}
+
+/**
+ * Decode base64 string.
+ */
+export function b64decode(b64value: string): string {
+  try {
+    const formattedValue = b64value.replace(/-/g, "+").replace(/_/g, "/");
+    const decodedValue = decodeURIComponent(
+      atob(formattedValue)
+        .split("")
+        .map(function (c) {
+          return "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2);
+        })
+        .join("")
+    );
+
+    return decodedValue;
+  } catch (err) {
+    return atob(b64value);
+  }
 }

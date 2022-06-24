@@ -1,22 +1,25 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
-import { AbstractCrdt } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import { nn } from "./assert";
 import { errorIf } from "./deprecation";
 import type {
+  CreateChildOp,
   CreateMapOp,
-  CreateOp,
+  IdTuple,
+  LiveMapUpdates,
+  LiveNode,
+  Lson,
   Op,
-  SerializedCrdt,
-  SerializedCrdtWithId,
-} from "./live";
-import { CrdtType, OpCode } from "./live";
-import type { Lson } from "./lson";
-import type { LiveMapUpdates } from "./types";
+  ParentToChildNodeMap,
+  SerializedMap,
+} from "./types";
+import { CrdtType, OpCode } from "./types";
 import {
-  creationOpToLiveStructure,
+  creationOpToLiveNode,
   deserialize,
-  isCrdt,
-  selfOrRegister,
-  selfOrRegisterValue,
+  isLiveNode,
+  liveNodeToLson,
+  lsonToLiveNode,
 } from "./utils";
 
 /**
@@ -28,7 +31,10 @@ export class LiveMap<
   TKey extends string,
   TValue extends Lson
 > extends AbstractCrdt {
-  private _map: Map<TKey, AbstractCrdt>;
+  /** @internal */
+  private _map: Map<TKey, LiveNode>;
+  /** @internal */
+  private unacknowledgedSet: Map<TKey, string>;
 
   constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
   /**
@@ -43,10 +49,13 @@ export class LiveMap<
       entries === null,
       "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
     );
+
+    this.unacknowledgedSet = new Map<TKey, string>();
+
     if (entries) {
-      const mappedEntries: Array<[TKey, AbstractCrdt]> = [];
+      const mappedEntries: Array<[TKey, LiveNode]> = [];
       for (const entry of entries) {
-        const value = selfOrRegister(entry[1]);
+        const value = lsonToLiveNode(entry[1]);
         value._setParentLink(this, entry[0]);
         mappedEntries.push([entry[0], value]);
       }
@@ -60,28 +69,16 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(
-    parentId?: string,
-    parentKey?: string,
-    doc?: Doc,
-    intent?: "set"
-  ): Op[] {
+  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
 
-    if (parentId == null || parentKey == null) {
-      throw new Error(
-        "Cannot serialize map if parentId or parentKey is undefined"
-      );
-    }
-
-    const ops = [];
+    const ops: CreateChildOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
       opId: doc?.generateOpId(),
       type: OpCode.CREATE_MAP,
-      intent,
       parentId,
       parentKey,
     };
@@ -99,16 +96,10 @@ export class LiveMap<
    * @internal
    */
   static _deserialize(
-    [id, item]: SerializedCrdtWithId,
-    parentToChildren: Map<string, SerializedCrdtWithId[]>,
+    [id, _item]: IdTuple<SerializedMap>,
+    parentToChildren: ParentToChildNodeMap,
     doc: Doc
-  ) {
-    if (item.type !== CrdtType.MAP) {
-      throw new Error(
-        `Tried to deserialize a map but item type is "${item.type}"`
-      );
-    }
-
+  ): LiveMap<string, Lson> {
     const map = new LiveMap();
     map._attach(id, doc);
 
@@ -118,15 +109,8 @@ export class LiveMap<
       return map;
     }
 
-    for (const entry of children) {
-      const crdt = entry[1];
-      if (crdt.parentKey == null) {
-        throw new Error(
-          "Tried to deserialize a crdt but it does not have a parentKey and is not the root"
-        );
-      }
-
-      const child = deserialize(entry, parentToChildren, doc);
+    for (const [id, crdt] of children) {
+      const child = deserialize([id, crdt], parentToChildren, doc);
       child._setParentLink(map, crdt.parentKey);
       map._map.set(crdt.parentKey, child);
     }
@@ -137,11 +121,11 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc) {
+  _attach(id: string, doc: Doc): void {
     super._attach(id, doc);
 
     for (const [_key, value] of this._map) {
-      if (isCrdt(value)) {
+      if (isLiveNode(value)) {
         value._attach(doc.generateId(), doc);
       }
     }
@@ -150,24 +134,44 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attachChild(op: CreateOp, _isLocal: boolean): ApplyResult {
+  _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
     if (this._doc == null) {
       throw new Error("Can't attach child if doc is not present");
     }
 
-    const { id, parentKey } = op;
-    const key = parentKey as TKey;
+    const { id, parentKey, opId } = op;
 
-    const child = creationOpToLiveStructure(op);
+    const key = parentKey as TKey;
+    //                    ^^^^^^^ TODO: Fix me!
+
+    const child = creationOpToLiveNode(op);
 
     if (this._doc.getItem(id) !== undefined) {
       return { modified: false };
     }
 
+    if (source === OpSource.ACK) {
+      const lastUpdateOpId = this.unacknowledgedSet.get(key);
+      if (lastUpdateOpId === opId) {
+        // Acknowlegment from local operation
+        this.unacknowledgedSet.delete(key);
+        return { modified: false };
+      } else if (lastUpdateOpId != null) {
+        // Another local set has overriden the value, so we do nothing
+        return { modified: false };
+      }
+    } else if (source === OpSource.REMOTE) {
+      // If a remote operation set an item,
+      // delete the unacknowledgedSet associated to the key
+      // to make sure any future ack can override it
+      this.unacknowledgedSet.delete(key);
+    }
+
     const previousValue = this._map.get(key);
     let reverse: Op[];
     if (previousValue) {
-      reverse = previousValue._serialize(this._id!, key);
+      const thisId = nn(this._id);
+      reverse = previousValue._serialize(thisId, key);
       previousValue._detach();
     } else {
       reverse = [{ type: OpCode.DELETE_CRDT, id }];
@@ -190,7 +194,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _detach() {
+  _detach(): void {
     super._detach();
 
     for (const item of this._map.values()) {
@@ -201,8 +205,10 @@ export class LiveMap<
   /**
    * @internal
    */
-  _detachChild(child: AbstractCrdt): ApplyResult {
-    const reverse = child._serialize(this._id!, child._parentKey!, this._doc);
+  _detachChild(child: LiveNode): ApplyResult {
+    const id = nn(this._id);
+    const parentKey = nn(child._parentKey);
+    const reverse = child._serialize(id, parentKey, this._doc);
 
     for (const [key, value] of this._map) {
       if (value === child) {
@@ -215,7 +221,7 @@ export class LiveMap<
     const storageUpdate: LiveMapUpdates<TKey, TValue> = {
       node: this,
       type: "LiveMap",
-      updates: { [child._parentKey!]: { type: "delete" } },
+      updates: { [parentKey]: { type: "delete" } },
     };
 
     return { modified: storageUpdate, reverse };
@@ -224,11 +230,15 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedCrdt {
+  _toSerializedCrdt(): SerializedMap {
+    if (this.parent.type !== "HasParent") {
+      throw new Error("Cannot serialize LiveMap if parent is missing");
+    }
+
     return {
       type: CrdtType.MAP,
-      parentId: this._parent?._id!,
-      parentKey: this._parentKey!,
+      parentId: nn(this.parent.node._id, "Parent node expected to have ID"),
+      parentKey: this.parent.key,
     };
   }
 
@@ -242,7 +252,9 @@ export class LiveMap<
     if (value == undefined) {
       return undefined;
     }
-    return selfOrRegisterValue(value);
+    return liveNodeToLson(value) as TValue | undefined;
+    //                           ^^^^^^^^^^^^^^^^^^^^^
+    //                           FIXME! This isn't safe.
   }
 
   /**
@@ -250,14 +262,14 @@ export class LiveMap<
    * @param key The key of the element to add. Should be a string.
    * @param value The value of the element to add. Should be serializable to JSON.
    */
-  set(key: TKey, value: TValue) {
+  set(key: TKey, value: TValue): void {
     const oldValue = this._map.get(key);
 
     if (oldValue) {
       oldValue._detach();
     }
 
-    const item = selfOrRegister(value);
+    const item = lsonToLiveNode(value);
     item._setParentLink(this, key);
 
     this._map.set(key, item);
@@ -267,11 +279,15 @@ export class LiveMap<
       item._attach(id, this._doc);
 
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
-      storageUpdates.set(this._id!, {
+      storageUpdates.set(this._id, {
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "update" } },
       });
+
+      const ops = item._serialize(this._id, key, this._doc);
+
+      this.unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._doc.dispatch(
         item._serialize(this._id, key, this._doc),
@@ -286,7 +302,7 @@ export class LiveMap<
   /**
    * Returns the number of elements in the LiveMap.
    */
-  get size() {
+  get size(): number {
     return this._map.size;
   }
 
@@ -314,8 +330,9 @@ export class LiveMap<
     this._map.delete(key);
 
     if (this._doc && item._id) {
+      const thisId = nn(this._id);
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
-      storageUpdates.set(this._id!, {
+      storageUpdates.set(thisId, {
         node: this,
         type: "LiveMap",
         updates: { [key]: { type: "delete" } },
@@ -328,7 +345,7 @@ export class LiveMap<
             opId: this._doc.generateOpId(),
           },
         ],
-        item._serialize(this._id!, key),
+        item._serialize(thisId, key),
         storageUpdates
       );
     }
@@ -358,8 +375,12 @@ export class LiveMap<
 
         const entry = iteratorValue.value;
 
+        const key = entry[0];
+        const value = liveNodeToLson(iteratorValue.value[1]) as TValue;
+        //                                                   ^^^^^^^^^
+        //                                                   FIXME! This isn't safe.
         return {
-          value: [entry[0], selfOrRegisterValue(iteratorValue.value[1])],
+          value: [key, value],
         };
       },
     };
@@ -399,9 +420,11 @@ export class LiveMap<
           };
         }
 
-        return {
-          value: selfOrRegisterValue(iteratorValue.value),
-        };
+        const value = liveNodeToLson(iteratorValue.value) as TValue;
+        //                                                ^^^^^^^^^
+        //                                                FIXME! This isn't safe.
+
+        return { value };
       },
     };
   }
@@ -412,7 +435,7 @@ export class LiveMap<
    */
   forEach(
     callback: (value: TValue, key: TKey, map: LiveMap<TKey, TValue>) => void
-  ) {
+  ): void {
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }

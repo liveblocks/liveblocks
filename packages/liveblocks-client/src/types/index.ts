@@ -1,8 +1,9 @@
-import type { Json, JsonObject } from "./json";
-import type { LiveList } from "./LiveList";
-import type { LiveMap } from "./LiveMap";
-import type { LiveObject } from "./LiveObject";
-import type { Lson, LsonObject } from "./lson";
+import type { LiveList } from "../LiveList";
+import type { LiveMap } from "../LiveMap";
+import type { LiveObject } from "../LiveObject";
+import type { BaseUserMeta } from "./BaseUserMeta";
+import type { Json, JsonObject } from "./Json";
+import type { LiveStructure, Lson, LsonObject } from "./Lson";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -26,38 +27,74 @@ import type { Lson, LsonObject } from "./lson";
  * This trick comes from:
  * https://effectivetypescript.com/2022/02/25/gentips-4-display/
  */
-export type Resolve<T> =
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  T extends Function ? T : { [K in keyof T]: T[K] };
+export type Resolve<T> = T extends (...args: unknown[]) => unknown
+  ? T
+  : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<T extends Presence = Presence> = (me: T) => void;
-
-export type OthersEventCallback<T extends Presence = Presence> = (
-  others: Others<T>,
-  event: OthersEvent<T>
+export type MyPresenceCallback<TPresence extends JsonObject> = (
+  me: TPresence
 ) => void;
 
-export type EventCallback = ({
+export type OthersEventCallback<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = (
+  others: Others<TPresence, TUserMeta>,
+  event: OthersEvent<TPresence, TUserMeta>
+) => void;
+
+export type EventCallback<TRoomEvent extends Json> = ({
   connectionId,
   event,
 }: {
   connectionId: number;
-  event: Json;
+  event: TRoomEvent;
 }) => void;
 
 export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
-export type RoomEventCallbackMap = {
-  "my-presence": MyPresenceCallback;
-  others: OthersEventCallback;
-  event: EventCallback;
+type RoomEventCallbackMap<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  "my-presence": MyPresenceCallback<TPresence>;
+  others: OthersEventCallback<TPresence, TUserMeta>;
+  event: EventCallback<TRoomEvent>;
   error: ErrorCallback;
   connection: ConnectionCallback;
 };
 
-export type RoomEventName = keyof RoomEventCallbackMap;
+export type RoomEventName = Extract<
+  keyof RoomEventCallbackMap<never, never, never>,
+  string
+>;
+
+export type RoomEventCallbackFor<
+  E extends RoomEventName,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
+
+export type RoomEventCallback = RoomEventCallbackFor<
+  RoomEventName,
+  JsonObject,
+  BaseUserMeta,
+  Json
+>;
+
+export function isRoomEventName(value: string): value is RoomEventName {
+  return (
+    value === "my-presence" ||
+    value === "others" ||
+    value === "event" ||
+    value === "error" ||
+    value === "connection"
+  );
+}
 
 export type UpdateDelta =
   | {
@@ -97,7 +134,7 @@ export type LiveObjectUpdates<TData extends LsonObject> = {
 export type LiveListUpdateDelta =
   | {
       index: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "insert";
     }
   | {
@@ -107,12 +144,12 @@ export type LiveListUpdateDelta =
   | {
       index: number;
       previousIndex: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "move";
     }
   | {
       index: number;
-      item: any; // Serializable Or LiveStructure
+      item: Lson;
       type: "set";
     };
 
@@ -147,7 +184,10 @@ export type StorageUpdate =
 
 export type StorageCallback = (updates: StorageUpdate[]) => void;
 
-export type RoomInitializers<TPresence, TStorage> = Resolve<{
+export type RoomInitializers<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = Resolve<{
   /**
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
@@ -175,17 +215,29 @@ export type Client = {
    *
    * @param roomId The id of the room
    */
-  getRoom(roomId: string): Room | null;
+  getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends BaseUserMeta,
+    TRoomEvent extends Json
+  >(
+    roomId: string
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
 
   /**
    * Enters a room and returns it.
    * @param roomId The id of the room
    * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
    */
-  enter<TStorage extends Record<string, any> = Record<string, any>>(
+  enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject,
+    TUserMeta extends BaseUserMeta,
+    TRoomEvent extends Json
+  >(
     roomId: string,
-    options?: RoomInitializers<Presence, TStorage>
-  ): Room;
+    options?: RoomInitializers<TPresence, TStorage>
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
    * Leaves a room.
@@ -194,16 +246,13 @@ export type Client = {
   leave(roomId: string): void;
 };
 
-export type AuthenticationToken = {
-  actor: number;
-  id?: string;
-  info?: Json;
-};
-
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<TPresence extends Presence = Presence> {
+export interface Others<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> {
   /**
    * Number of other users in the room.
    */
@@ -211,21 +260,24 @@ export interface Others<TPresence extends Presence = Presence> {
   /**
    * Returns a new Iterator object that contains the users.
    */
-  [Symbol.iterator](): IterableIterator<User<TPresence>>;
+  [Symbol.iterator](): IterableIterator<User<TPresence, TUserMeta>>;
   /**
    * Returns the array of connected users in room.
    */
-  toArray(): User<TPresence>[];
+  toArray(): User<TPresence, TUserMeta>[];
   /**
    * This function let you map over the connected users in the room.
    */
-  map<U>(callback: (user: User<TPresence>) => U): U[];
+  map<U>(callback: (user: User<TPresence, TUserMeta>) => U): U[];
 }
 
 /**
  * Represents a user connected in a room. Treated as immutable.
  */
-export type User<TPresence extends Presence = Presence> = {
+export type User<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = {
   /**
    * The connection id of the user. It is unique and increment at every new connection.
    */
@@ -234,27 +286,45 @@ export type User<TPresence extends Presence = Presence> = {
    * The id of the user that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
-  readonly id?: string;
+  readonly id: TUserMeta["id"];
   /**
    * Additional user information that has been set in the authentication endpoint.
    */
-  readonly info?: any;
+  readonly info: TUserMeta["info"];
   /**
    * The user presence.
    */
   readonly presence?: TPresence;
-
-  /**
-   * @internal
-   */
+  /** @internal */
   _hasReceivedInitialPresence?: boolean;
 };
 
-export type Presence = Record<string, unknown>;
+/**
+ * @deprecated Whatever you want to store as presence is app-specific. Please
+ * define your own Presence type instead of importing it from
+ * `@liveblocks/client`, for example:
+ *
+ *    type Presence = {
+ *      name: string,
+ *      cursor: {
+ *        x: number,
+ *        y: number,
+ *      } | null,
+ *    }
+ *
+ * As long as it only contains JSON-serializable values, you're good!
+ */
+export type Presence = JsonObject;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;
+
+export type Polyfills = {
+  atob?: (data: string) => string;
+  fetch?: typeof fetch;
+  WebSocket?: any;
+};
 
 /**
  * The authentication endpoint that is called to ensure that the current user has access to a room.
@@ -262,8 +332,17 @@ export type AuthEndpoint = string | AuthEndpointCallback;
  */
 export type ClientOptions = {
   throttle?: number;
-  fetchPolyfill?: any;
-  WebSocketPolyfill?: any;
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: Polyfills["fetch"];
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: Polyfills["WebSocket"];
 } & (
   | { publicApiKey: string; authEndpoint?: never }
   | { publicApiKey?: never; authEndpoint: AuthEndpoint }
@@ -296,24 +375,27 @@ export type Connection =
       state: "open" | "connecting";
       id: number;
       userId?: string;
-      userInfo?: any;
+      userInfo?: Json;
     };
 
 export type ConnectionState = Connection["state"];
 
-export type OthersEvent<T extends Presence = Presence> =
+export type OthersEvent<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> =
   | {
       type: "leave";
-      user: User<T>;
+      user: User<TPresence, TUserMeta>;
     }
   | {
       type: "enter";
-      user: User<T>;
+      user: User<TPresence, TUserMeta>;
     }
   | {
       type: "update";
-      user: User<T>;
-      updates: Partial<T>;
+      user: User<TPresence, TUserMeta>;
+      updates: Partial<TPresence>;
     }
   | {
       type: "reset";
@@ -325,10 +407,10 @@ export interface History {
    * It does not impact operations made by other clients.
    *
    * @example
-   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yy" }, { addToHistory: true });
    * room.history.undo();
-   * // room.getPresence() equals { selectedId: "xxx" }
+   * // room.getPresence() equals { selectedId: "xx" }
    */
   undo: () => void;
 
@@ -337,12 +419,12 @@ export interface History {
    * It does not impact operations made by other clients.
    *
    * @example
-   * room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
-   * room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * room.updatePresence({ selectedId: "yy" }, { addToHistory: true });
    * room.history.undo();
-   * // room.getPresence() equals { selectedId: "xxx" }
+   * // room.getPresence() equals { selectedId: "xx" }
    * room.history.redo();
-   * // room.getPresence() equals { selectedId: "yyy" }
+   * // room.getPresence() equals { selectedId: "yy" }
    */
   redo: () => void;
 
@@ -375,7 +457,12 @@ export interface History {
   resume: () => void;
 }
 
-export type Room = {
+export type Room<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
   /**
    * The id of the room.
    */
@@ -392,10 +479,8 @@ export type Room = {
      *   // Do something
      * });
      */
-    <T extends Presence>(
-      type: "my-presence",
-      listener: MyPresenceCallback<T>
-    ): () => void;
+    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+
     /**
      * Subscribe to the other users updates.
      *
@@ -406,10 +491,11 @@ export type Room = {
      *   // Do something
      * });
      */
-    <T extends Presence>(
+    (
       type: "others",
-      listener: OthersEventCallback<T>
+      listener: OthersEventCallback<TPresence, TUserMeta>
     ): () => void;
+
     /**
      * Subscribe to events broadcasted by {@link Room.broadcastEvent}
      *
@@ -420,121 +506,54 @@ export type Room = {
      *   // Do something
      * });
      */
-    (type: "event", listener: EventCallback): () => void;
+    (type: "event", listener: EventCallback<TRoomEvent>): () => void;
+
     /**
      * Subscribe to errors thrown in the room.
      */
     (type: "error", listener: ErrorCallback): () => void;
+
     /**
      * Subscribe to connection state updates.
      */
     (type: "connection", listener: ConnectionCallback): () => void;
+
     /**
-     * Subscribes to changes made on a {@link LiveMap}. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
+     * In a future version, we will also expose what exactly changed in the Live structure.
      *
-     * @param listener the callback this called when the {@link LiveMap} changes.
+     * @param callback The callback this called when the Live structure changes.
      *
      * @returns Unsubscribe function.
      *
      * @example
-     * const liveMap = new LiveMap();
+     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
      * const unsubscribe = room.subscribe(liveMap, (liveMap) => { });
      * unsubscribe();
      */
-    <TKey extends string, TValue extends Lson>(
-      liveMap: LiveMap<TKey, TValue>,
-      listener: (liveMap: LiveMap<TKey, TValue>) => void
-    ): () => void;
-    /**
-     * Subscribes to changes made on a {@link LiveObject}. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
-     *
-     * @param listener the callback this called when the {@link LiveObject} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveObject = new LiveObject();
-     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { });
-     * unsubscribe();
-     */
-    <TData extends JsonObject>(
-      liveObject: LiveObject<TData>,
-      callback: (liveObject: LiveObject<TData>) => void
-    ): () => void;
-    /**
-     * Subscribes to changes made on a {@link LiveList}. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
-     *
-     * @param listener the callback this called when the {@link LiveList} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveList = new LiveList();
-     * const unsubscribe = room.subscribe(liveList, (liveList) => { });
-     * unsubscribe();
-     */
-    <TItem extends Lson>(
-      liveList: LiveList<TItem>,
-      callback: (liveList: LiveList<TItem>) => void
+    <L extends LiveStructure>(
+      liveStructure: L,
+      callback: (node: L) => void
     ): () => void;
 
     /**
-     * Subscribes to changes made on a {@link LiveMap} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveMap}.
+     * Subscribes to changes made on a Live structure and all the nested data
+     * structures. Returns an unsubscribe function. In a future version, we
+     * will also expose what exactly changed in the Live structure.
      *
-     * @param listener the callback this called when the {@link LiveMap} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveMap = new LiveMap();
-     * const unsubscribe = room.subscribe(liveMap, (liveMap) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <TKey extends string, TValue extends Lson>(
-      liveMap: LiveMap<TKey, TValue>,
-      callback: (updates: LiveMapUpdates<TKey, TValue>[]) => void,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a {@link LiveObject} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveObject}.
-     *
-     * @param listener the callback this called when the {@link LiveObject} changes.
+     * @param callback The callback this called when the Live structure, or any
+     * of its nested values, changes.
      *
      * @returns Unsubscribe function.
      *
      * @example
-     * const liveObject = new LiveObject();
-     * const unsubscribe = room.subscribe(liveObject, (liveObject) => { }, { isDeep: true });
+     * const liveMap = new LiveMap();  // Could also be LiveList or LiveObject
+     * const unsubscribe = room.subscribe(liveMap, (updates) => { }, { isDeep: true });
      * unsubscribe();
      */
-    <TData extends LsonObject>(
-      liveObject: LiveObject<TData>,
-      callback: (updates: LiveObjectUpdates<TData>[]) => void,
-      options: { isDeep: true }
-    ): () => void;
-
-    /**
-     * Subscribes to changes made on a {@link LiveList} and all the nested data structures. Returns an unsubscribe function.
-     * In a future version, we will also expose what exactly changed in the {@link LiveList}.
-     *
-     * @param listener the callback this called when the {@link LiveList} changes.
-     *
-     * @returns Unsubscribe function.
-     *
-     * @example
-     * const liveList = new LiveList();
-     * const unsubscribe = room.subscribe(liveList, (liveList) => { }, { isDeep: true });
-     * unsubscribe();
-     */
-    <TItem extends Lson>(
-      liveList: LiveList<TItem>,
-      callback: (updates: LiveListUpdates<TItem>[]) => void,
+    <L extends LiveStructure>(
+      liveStructure: L,
+      callback: StorageCallback,
       options: { isDeep: true }
     ): () => void;
   };
@@ -551,7 +570,7 @@ export type Room = {
    * @example
    * const user = room.getSelf();
    */
-  getSelf<TPresence extends Presence = Presence>(): User<TPresence> | null;
+  getSelf(): User<TPresence, TUserMeta> | null;
 
   /**
    * Gets the presence of the current user.
@@ -559,7 +578,7 @@ export type Room = {
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: <T extends Presence>() => T;
+  getPresence: () => TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -567,7 +586,7 @@ export type Room = {
    * @example
    * const others = room.getOthers();
    */
-  getOthers: <T extends Presence>() => Others<T>;
+  getOthers: () => Others<TPresence, TUserMeta>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -581,8 +600,8 @@ export type Room = {
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: <T extends Presence>(
-    overrides: Partial<T>,
+  updatePresence: (
+    overrides: Partial<TPresence>,
     options?: {
       /**
        * Whether or not the presence should have an impact on the undo/redo history.
@@ -606,7 +625,7 @@ export type Room = {
    *   }
    * });
    */
-  broadcastEvent: (event: JsonObject, options?: BroadcastOptions) => void;
+  broadcastEvent: (event: TRoomEvent, options?: BroadcastOptions) => void;
 
   /**
    * Get the room's storage asynchronously.
@@ -615,7 +634,7 @@ export type Room = {
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: <TStorage extends LsonObject>() => Promise<{
+  getStorage: () => Promise<{
     root: LiveObject<TStorage>;
   }>;
 
@@ -633,4 +652,78 @@ export type Room = {
    * });
    */
   batch: (fn: () => void) => void;
+
+  /**
+   * @internal Utilities only used for unit testing.
+   */
+  __INTERNAL_DO_NOT_USE: {
+    simulateCloseWebsocket(): void;
+    simulateSendCloseEvent(event: {
+      code: number;
+      wasClean: boolean;
+      reason: string;
+    }): void;
+  };
 };
+
+export enum WebsocketCloseCodes {
+  CLOSE_ABNORMAL = 1006,
+
+  INVALID_MESSAGE_FORMAT = 4000,
+  NOT_ALLOWED = 4001,
+  MAX_NUMBER_OF_MESSAGES_PER_SECONDS = 4002,
+  MAX_NUMBER_OF_CONCURRENT_CONNECTIONS = 4003,
+  MAX_NUMBER_OF_MESSAGES_PER_DAY_PER_APP = 4004,
+  MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
+  CLOSE_WITHOUT_RETRY = 4999,
+}
+
+export type { BaseUserMeta } from "./BaseUserMeta";
+export type {
+  BroadcastEventClientMsg,
+  ClientMsg,
+  FetchStorageClientMsg,
+  UpdatePresenceClientMsg,
+  UpdateStorageClientMsg,
+} from "./ClientMsg";
+export { ClientMsgCode } from "./ClientMsg";
+export type { Json, JsonObject } from "./Json";
+export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
+export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
+export type {
+  CreateChildOp,
+  CreateListOp,
+  CreateMapOp,
+  CreateObjectOp,
+  CreateOp,
+  CreateRegisterOp,
+  CreateRootObjectOp,
+  DeleteCrdtOp,
+  DeleteObjectKeyOp,
+  Op,
+  SetParentKeyOp,
+  UpdateObjectOp,
+} from "./Op";
+export { OpCode } from "./Op";
+export type {
+  IdTuple,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+} from "./SerializedCrdt";
+export { CrdtType } from "./SerializedCrdt";
+export type {
+  BroadcastedEventServerMsg,
+  InitialDocumentStateServerMsg,
+  RoomStateServerMsg,
+  ServerMsg,
+  UpdatePresenceServerMsg,
+  UpdateStorageServerMsg,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
+} from "./ServerMsg";
+export { ServerMsgCode } from "./ServerMsg";

@@ -7,7 +7,12 @@ import {
   useHistory,
   useBatch,
 } from "@liveblocks/react";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import {
+  BaseUserMeta,
+  LiveList,
+  LiveMap,
+  LiveObject,
+} from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Color,
@@ -50,12 +55,16 @@ export default function Room() {
   return (
     <RoomProvider
       id={roomId}
-      defaultPresence={() => ({
+      initialPresence={{
         selection: [],
         cursor: null,
         pencilDraft: null,
         penColor: null,
-      })}
+      }}
+      initialStorage={{
+        layers: new LiveMap<string, LiveObject<Layer>>(),
+        layerIds: new LiveList(),
+      }}
     >
       <div className={styles.container}>
         <WhiteboardTool />
@@ -90,7 +99,10 @@ function Canvas({
   layerIds: LiveList<string>;
   layers: LiveMap<string, LiveObject<Layer>>;
 }) {
-  const [{ selection, pencilDraft }, setPresence] = useMyPresence<Presence>();
+  const [{ selection, pencilDraft }, setPresence] = useMyPresence<
+    Presence,
+    BaseUserMeta
+  >();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
   });

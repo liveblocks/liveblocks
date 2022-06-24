@@ -13,3 +13,6 @@ npm-debug.log*
 
 # npm pack artifacts
 *.tgz
+
+# TypeScript build output for local scripts
+/scripts/*.js

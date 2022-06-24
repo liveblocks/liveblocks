@@ -7,6 +7,7 @@
     "jsx": "react-jsx",
     "esModuleInterop": true,
     "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
     "noUncheckedIndexedAccess": true,
     "lib": ["dom", "es2015"],
     "stripInternal": true,

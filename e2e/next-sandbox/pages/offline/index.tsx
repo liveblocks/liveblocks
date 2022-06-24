@@ -1,4 +1,4 @@
-import { Room } from "@liveblocks/client";
+import { LiveList, Room } from "@liveblocks/client";
 import {
   RoomProvider,
   useList,
@@ -6,17 +6,21 @@ import {
   useSelf,
   useUndo,
   useRoom,
+  LiveblocksProvider,
 } from "@liveblocks/react";
 import React, { useState } from "react";
+import createLiveblocksClient from "../../utils/createClient";
+
+const client = createLiveblocksClient();
 
 type RoomWithDevTools = Room & {
-  internalDevTools: {
-    closeWebsocket: () => void;
-    sendCloseEvent: (event: {
+  __INTERNAL_DO_NOT_USE: {
+    simulateCloseWebsocket(): void;
+    simulateSendCloseEvent(event: {
       code: number;
       wasClean: boolean;
-      reason: any;
-    }) => void;
+      reason: string;
+    }): void;
   };
 };
 
@@ -29,9 +33,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId}>
-      <Sandbox />
-    </RoomProvider>
+    <LiveblocksProvider client={client}>
+      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
+        <Sandbox />
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 
@@ -80,7 +86,7 @@ function Sandbox() {
       <button
         id="closeWebsocket"
         onClick={() => {
-          room.internalDevTools.closeWebsocket();
+          room.__INTERNAL_DO_NOT_USE.simulateCloseWebsocket();
           setStatus("offline");
         }}
       >
@@ -89,7 +95,7 @@ function Sandbox() {
       <button
         id="sendCloseEventConnectionError"
         onClick={() => {
-          room.internalDevTools.sendCloseEvent({
+          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
             reason: "Fake connection error",
             code: 1005,
             wasClean: true,
@@ -101,7 +107,7 @@ function Sandbox() {
       <button
         id="sendCloseEventAppError"
         onClick={() => {
-          room.internalDevTools.sendCloseEvent({
+          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
             reason: "App error",
             code: 4002,
             wasClean: true,

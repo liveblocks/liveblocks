@@ -1,7 +1,15 @@
-import type { SerializedCrdtWithId } from "@liveblocks/client/internal";
+import type { Json } from "@liveblocks/client";
+import type {
+  IdTuple,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+} from "@liveblocks/client/internal";
 import { CrdtType } from "@liveblocks/client/internal";
 
-export function remove<T>(array: T[], item: T) {
+export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {
       array.splice(i, 1);
@@ -31,26 +39,26 @@ export class MockWebSocket {
   addEventListener(
     event: "open" | "close" | "message",
     callback: (event: any) => void
-  ) {
+  ): void {
     this.callbacks[event].push(callback);
   }
 
   removeEventListener(
     event: "open" | "close" | "message",
     callback: (event: any) => void
-  ) {
+  ): void {
     // TODO: Fix TS issue
     remove(this.callbacks[event] as any, callback);
   }
 
-  send(message: string) {
+  send(message: string): void {
     this.sentMessages.push(message);
   }
 
-  close() {}
+  close(): void {}
 }
 
-export function wait(delay: number) {
+export function wait(delay: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
@@ -75,17 +83,25 @@ export async function waitFor(predicate: () => boolean): Promise<void> {
 export function obj(
   id: string,
   data: Record<string, any>,
+  parentId: string,
+  parentKey: string
+): IdTuple<SerializedObject>;
+export function obj(
+  id: string,
+  data: Record<string, any>
+): IdTuple<SerializedRootObject>;
+export function obj(
+  id: string,
+  data: Record<string, any>,
   parentId?: string,
   parentKey?: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedObject | SerializedRootObject> {
   return [
     id,
-    {
-      type: CrdtType.OBJECT,
-      data,
-      parentId,
-      parentKey,
-    },
+    parentId !== undefined && parentKey !== undefined
+      ? { type: CrdtType.OBJECT, data, parentId, parentKey }
+      : // Root object
+        { type: CrdtType.OBJECT, data },
   ];
 }
 
@@ -93,7 +109,7 @@ export function list(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedList> {
   return [
     id,
     {
@@ -108,7 +124,7 @@ export function map(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedMap> {
   return [
     id,
     {
@@ -123,8 +139,8 @@ export function register(
   id: string,
   parentId: string,
   parentKey: string,
-  data: any
-): SerializedCrdtWithId {
+  data: Json
+): IdTuple<SerializedRegister> {
   return [
     id,
     {

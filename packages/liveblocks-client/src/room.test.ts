@@ -15,58 +15,70 @@ import {
   waitFor,
   withDateNow,
 } from "../test/utils";
+import type { RoomAuthToken } from "./AuthToken";
 import { lsonToJson } from "./immutable";
-import type { SerializedCrdtWithId } from "./live";
+import { LiveList } from "./LiveList";
+import { createRoom, defaultState, makeStateMachine } from "./room";
+import type { Authentication, IdTuple, Others, SerializedCrdt } from "./types";
 import {
   ClientMsgCode,
   CrdtType,
   ServerMsgCode,
   WebsocketCloseCodes,
-} from "./live";
-import { LiveList } from "./LiveList";
-import { createRoom, defaultState, makeStateMachine } from "./room";
-import type { Authentication, Others } from "./types";
+} from "./types";
+import type { BaseUserMeta } from "./types/BaseUserMeta";
+import type { Json, JsonObject } from "./types/Json";
+import type { LsonObject } from "./types/Lson";
 
 const defaultContext = {
   roomId: "room-id",
   throttleDelay: 100,
-  liveblocksServer: "wss://live.liveblocks.io/v5",
+  liveblocksServer: "wss://live.liveblocks.io/v6",
   authentication: {
     type: "private",
-    url: "/api/auth",
+    url: "/mocked-api/auth",
   } as Authentication,
 };
 
+const defaultRoomToken: RoomAuthToken = {
+  appId: "my-app",
+  roomId: "my-room",
+  actor: 0,
+  scopes: [],
+};
+
+function setupStateMachine<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(initialPresence?: TPresence) {
+  const effects = mockEffects<TPresence, TRoomEvent>();
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    initialPresence
+  );
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    state,
+    defaultContext,
+    effects
+  );
+  return { machine, state, effects };
+}
+
 describe("room / auth", () => {
-  let reqCount = 0;
   const token =
-    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb29tSWQiOiJrNXdtaDBGOVVMbHJ6TWdadFMyWl8iLCJhcHBJZCI6IjYwNWE0ZmQzMWEzNmQ1ZWE3YTJlMDkxNCIsImFjdG9yIjowLCJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2N30.AinBUN1gzA1-QdwrQ3cT1X4tNM_7XYCkKgHH94M5wszX-1AEDIgsBdM_7qN9cv0Y7SDFTUVGYLinHgpBonE8tYiNTe4uSpVUmmoEWuYLgsdUccHj5IJYlxPDGb1mgesSNKdeyfkFnu8nFjramLQXBa5aBb5Xq721m4Lgy2dtL_nFicavhpyCsdTVLSjloCDlQpQ99UPY--3ODNbbznHGYu8IyI1DnqQgDPlbAbFPRF6CBZiaUZjSFTRGnVVPE0VN3NunKHimMagBfHrl4AMmxG4kFN8ImK1_7oXC_br1cqoyyBTs5_5_XeA9MTLwbNDX8YBPtjKP1z2qTDpEc22Oxw";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4";
   const server = setupServer(
-    rest.post("/api/auth", (_req, res, ctx) => {
-      if (reqCount === 0) {
-        reqCount++;
-        return res(
-          ctx.json({
-            actor: 0,
-            token,
-          })
-        );
-      } else {
-        return res(
-          ctx.json({
-            actor: 1,
-            token,
-          })
-        );
-      }
+    rest.post("/mocked-api/auth", (_req, res, ctx) => {
+      return res(ctx.json({ token }));
     }),
-    rest.post("/api/403", (_req, res, ctx) => {
+    rest.post("/mocked-api/403", (_req, res, ctx) => {
       return res(ctx.status(403));
     }),
-    rest.post("/api/not-json", (_req, res, ctx) => {
+    rest.post("/mocked-api/not-json", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.text("this is not json"));
     }),
-    rest.post("/api/missing-token", (_req, res, ctx) => {
+    rest.post("/mocked-api/missing-token", (_req, res, ctx) => {
       return res(ctx.status(202), ctx.json({}));
     })
   );
@@ -88,63 +100,35 @@ describe("room / auth", () => {
     consoleErrorSpy.mockRestore();
   });
 
-  test("should reuse token after reconnect", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/api/auth",
-        },
-      }
-    );
+  test.each([{ notAToken: "" }, undefined, null, ""])(
+    "custom authentication with missing token in callback response should throw",
+    async (response) => {
+      const room = createRoom(
+        {},
+        {
+          ...defaultContext,
+          authentication: {
+            type: "custom",
+            callback: (_room) =>
+              new Promise((resolve) => {
+                // @ts-expect-error: testing for missing token in callback response
+                resolve(response);
+              }),
+          },
+        }
+      );
 
-    room.connect();
+      room.connect();
+      await waitFor(() => consoleErrorSpy.mock.calls.length > 0);
+      room.disconnect();
 
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate - 600, async () => {
-      // @ts-ignore
-      room.room.internalDevTools.sendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 0);
-    });
-  });
-
-  test("should not reuse token after reconnect when expired", async () => {
-    const room = createRoom(
-      {},
-      {
-        ...defaultContext,
-        authentication: {
-          type: "private",
-          url: "/api/auth",
-        },
-      }
-    );
-
-    room.connect();
-
-    await waitFor(() => room.room.getSelf()?.connectionId === 0);
-
-    const tokenExpDate = 1616727267;
-    withDateNow(tokenExpDate + 1, async () => {
-      // @ts-ignore
-      room.room.internalDevTools.sendCloseEvent({
-        reason: "App error",
-        code: 4002,
-        wasClean: true,
-      });
-
-      await waitFor(() => room.room.getSelf()?.connectionId === 1);
-    });
-  });
+      expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
+        new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        )
+      );
+    }
+  );
 
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
@@ -153,7 +137,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/403",
+          url: "/mocked-api/403",
         },
       }
     );
@@ -164,7 +148,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a status 200 but got 403 when doing a POST request on "/api/403"`
+        'Expected a status 200 but got 403 when doing a POST request on "/mocked-api/403"'
       )
     );
   });
@@ -176,7 +160,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/not-json",
+          url: "/mocked-api/not-json",
         },
       }
     );
@@ -187,7 +171,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json when doing a POST request on "/api/not-json". SyntaxError: Unexpected token h in JSON at position 1`
+        'Expected a JSON response when doing a POST request on "/mocked-api/not-json". SyntaxError: Unexpected token h in JSON at position 1'
       )
     );
   });
@@ -199,7 +183,7 @@ describe("room / auth", () => {
         ...defaultContext,
         authentication: {
           type: "private",
-          url: "/api/missing-token",
+          url: "/mocked-api/missing-token",
         },
       }
     );
@@ -210,7 +194,7 @@ describe("room / auth", () => {
 
     expect(consoleErrorSpy.mock.calls[0][1]).toEqual(
       new Error(
-        `Expected a json with a string token when doing a POST request on "/api/missing-token", but got {}`
+        'Expected a JSON response of the form `{ token: "..." }` when doing a POST request on "/mocked-api/missing-token", but got {}'
       )
     );
   });
@@ -218,46 +202,33 @@ describe("room / auth", () => {
 
 describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
-
+    const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-
     expect(state.connection.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
-
+    const { machine, state, effects } = setupStateMachine({});
     machine.connect();
     expect(state.connection.state).toEqual("authenticating");
-
     machine.connect();
     expect(state.connection.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
-
-    machine.authenticationSuccess({ actor: 0 }, new MockWebSocket(""));
+    const { machine, state } = setupStateMachine({});
+    machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
     expect(state.connection.state).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {
-    const effects = mockEffects();
-    const state = defaultState({ x: 0 });
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, effects } = setupStateMachine({ x: 0 });
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -266,14 +237,12 @@ describe("room", () => {
   });
 
   test("if presence has been updated before the connection, it should be sent when the connection is ready", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, effects } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     machine.updatePresence({ x: 0 });
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -282,13 +251,11 @@ describe("room", () => {
   });
 
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const effects = mockEffects();
-    const state = defaultState();
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, effects } = setupStateMachine();
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
@@ -297,13 +264,11 @@ describe("room", () => {
   });
 
   test("initial presence followed by updatePresence should delay sending the second presence event", () => {
-    const effects = mockEffects();
-    const state = defaultState({ x: 0 });
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, state, effects } = setupStateMachine({ x: 0 });
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
 
     const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -321,9 +286,7 @@ describe("room", () => {
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, state } = setupStateMachine({});
 
     machine.updatePresence({ x: 0 });
 
@@ -332,9 +295,7 @@ describe("room", () => {
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine, state } = setupStateMachine({});
 
     machine.updatePresence({ x: 0 });
 
@@ -347,13 +308,11 @@ describe("room", () => {
   });
 
   test("others should be iterable", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -373,13 +332,11 @@ describe("room", () => {
   });
 
   test("should clear users when socket close", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     machine.onMessage(
@@ -406,13 +363,11 @@ describe("room", () => {
 
   describe("broadcast", () => {
     test("should send event to other users", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine, effects } = setupStateMachine({});
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
 
       const now = new Date(2021, 1, 1, 0, 0, 0, 0).getTime();
 
@@ -443,9 +398,7 @@ describe("room", () => {
     });
 
     test("should not send event to other users if not connected", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine, effects } = setupStateMachine({});
 
       machine.broadcastEvent({ type: "EVENT" });
 
@@ -453,7 +406,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -463,9 +416,7 @@ describe("room", () => {
     });
 
     test("should queue event if socket is not ready and shouldQueueEventsIfNotReady is true", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine, effects } = setupStateMachine({});
 
       machine.broadcastEvent(
         { type: "EVENT" },
@@ -476,7 +427,7 @@ describe("room", () => {
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       expect(effects.send).toBeCalledTimes(1);
@@ -488,16 +439,14 @@ describe("room", () => {
   });
 
   test("storage should be initialized properly", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const machine = makeStateMachine(state, defaultContext, effects);
+    const { machine } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor: 0 }, ws);
+    machine.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = machine.getStorage<{ x: number }>();
+    const getStoragePromise = machine.getStorage();
 
     machine.onMessage(
       serverMessage({
@@ -512,13 +461,11 @@ describe("room", () => {
   });
 
   test("undo redo with presence", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room, state } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     expect(state.buffer.presence).toEqual(null);
@@ -539,16 +486,14 @@ describe("room", () => {
   });
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -575,13 +520,11 @@ describe("room", () => {
   });
 
   test("if nothing happened while the history was paused, the undo stack should not be impacted", () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room, state } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -598,13 +541,11 @@ describe("room", () => {
   });
 
   test("undo redo with presence that do not impact presence", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 });
@@ -616,13 +557,11 @@ describe("room", () => {
   });
 
   test("pause / resume history", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room, state } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -652,13 +591,11 @@ describe("room", () => {
   });
 
   test("undo while history is paused", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room, state } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
@@ -679,16 +616,14 @@ describe("room", () => {
   });
 
   test("undo redo with presence + storage", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room, state } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -722,16 +657,14 @@ describe("room", () => {
   });
 
   test("batch without changes should not erase redo stack", async () => {
-    const effects = mockEffects();
-    const state = defaultState({});
-    const room = makeStateMachine(state, defaultContext, effects);
+    const { machine: room } = setupStateMachine({});
 
     const ws = new MockWebSocket("");
     room.connect();
-    room.authenticationSuccess({ actor: 0 }, ws);
+    room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    const getStoragePromise = room.getStorage<{ x: number }>();
+    const getStoragePromise = room.getStorage();
 
     room.onMessage(
       serverMessage({
@@ -757,9 +690,7 @@ describe("room", () => {
 
   describe("subscription", () => {
     test("batch my-presence", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine } = setupStateMachine({});
 
       const callback = jest.fn();
 
@@ -775,15 +706,14 @@ describe("room", () => {
     });
 
     test("batch storage and presence", async () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine } = setupStateMachine({});
+
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      const getStoragePromise = machine.getStorage<{ x: number }>();
+      const getStoragePromise = machine.getStorage();
 
       machine.onMessage(
         serverMessage({
@@ -860,11 +790,6 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
 
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
-
       undo();
 
       assert({
@@ -879,6 +804,11 @@ describe("room", () => {
     });
 
     test("batch storage and presence with changes from server", async () => {
+      type P = { x?: number };
+      type S = { items: LiveList<string> };
+      type M = never;
+      type E = never;
+
       const {
         storage,
         assert,
@@ -888,7 +818,7 @@ describe("room", () => {
         subscribe,
         refSubscribe,
         updatePresence,
-      } = await prepareStorageTest<{ items: LiveList<string> }>(
+      } = await prepareStorageTest<S, P, M, E>(
         [
           createSerializedObject("0:0", {}),
           createSerializedList("0:1", "0:0", "items"),
@@ -901,8 +831,8 @@ describe("room", () => {
 
       const itemsSubscriber = jest.fn();
       const refItemsSubscriber = jest.fn();
-      let refOthers: Others | undefined;
-      const refPresenceSubscriber = (o: any) => (refOthers = o);
+      let refOthers: Others<P, M> | undefined;
+      const refPresenceSubscriber = (o: Others<P, M>) => (refOthers = o);
 
       subscribe(items, itemsSubscriber);
       refSubscribe(refItems, refItemsSubscriber);
@@ -919,11 +849,6 @@ describe("room", () => {
       assert({
         items: ["A", "B", "C"],
       });
-
-      expect(itemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(itemsSubscriber).toHaveBeenCalledWith(items);
-      expect(refItemsSubscriber).toHaveBeenCalledTimes(1);
-      expect(refItemsSubscriber).toHaveBeenCalledWith(refItems);
 
       expect(refOthers?.toArray()).toEqual([
         {
@@ -948,9 +873,7 @@ describe("room", () => {
     });
 
     test("my-presence", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine } = setupStateMachine({});
 
       const callback = jest.fn();
 
@@ -967,15 +890,16 @@ describe("room", () => {
     });
 
     test("others", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      type P = { x?: number };
+
+      const { machine } = setupStateMachine<P, never, never, never>({});
+
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P, never> | undefined;
 
       const unsubscribe = machine.subscribe("others", (o) => (others = o));
 
@@ -1008,13 +932,11 @@ describe("room", () => {
     });
 
     test("event", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine } = setupStateMachine({});
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       const callback = jest.fn();
@@ -1054,8 +976,9 @@ describe("room", () => {
       assert({ items: [] });
 
       items.push("A");
+      items.push("C"); // Will be removed by other client when offline
       assert({
-        items: ["A"],
+        items: ["A", "C"],
       });
 
       ws.closeFromBackend(
@@ -1068,12 +991,15 @@ describe("room", () => {
       // Operation done offline
       items.push("B");
 
+      // Other client (which is online), deletes "C".
+      refStorage.root.get("items").delete(1);
+
       const storageJson = lsonToJson(storage.root);
-      expect(storageJson).toEqual({ items: ["A", "B"] });
+      expect(storageJson).toEqual({ items: ["A", "C", "B"] });
       const refStorageJson = lsonToJson(refStorage.root);
       expect(refStorageJson).toEqual({ items: ["A"] });
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["0:1", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items" }],
         [
@@ -1122,7 +1048,7 @@ describe("room", () => {
         })
       );
 
-      const newInitStorage: SerializedCrdtWithId[] = [
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
         ["0:0", { type: CrdtType.OBJECT, data: {} }],
         ["2:0", { type: CrdtType.LIST, parentId: "0:0", parentKey: "items2" }],
         [
@@ -1144,10 +1070,10 @@ describe("room", () => {
     });
 
     test("disconnect and reconnect should keep user current presence", async () => {
-      const { machine, refMachine, reconnect, ws } = await prepareStorageTest(
-        [createSerializedObject("0:0", {})],
-        1
-      );
+      const { machine, refMachine, reconnect, ws } = await prepareStorageTest<
+        never,
+        { x: number }
+      >([createSerializedObject("0:0", {})], 1);
 
       machine.updatePresence({ x: 1 });
 
@@ -1186,14 +1112,11 @@ describe("room", () => {
     });
 
     test("when error code 1006", () => {
-      const effects = mockEffects();
-
-      const state = defaultState({ x: 0 });
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine, state } = setupStateMachine({ x: 0 });
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1211,14 +1134,11 @@ describe("room", () => {
     });
 
     test("when error code 4002", () => {
-      const effects = mockEffects();
-
-      const state = defaultState({ x: 0 });
-      const machine = makeStateMachine(state, defaultContext, effects);
+      const { machine, state } = setupStateMachine({ x: 0 });
 
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
       ws.closeFromBackend(
@@ -1238,15 +1158,19 @@ describe("room", () => {
 
   describe("Initial UpdatePresenceServerMsg", () => {
     test("skip UpdatePresence from other when initial full presence has not been received", () => {
-      const effects = mockEffects();
-      const state = defaultState({});
-      const machine = makeStateMachine(state, defaultContext, effects);
+      type P = { x?: number };
+      type S = never;
+      type M = never;
+      type E = never;
+
+      const { machine } = setupStateMachine<P, S, M, E>({});
+
       const ws = new MockWebSocket("");
       machine.connect();
-      machine.authenticationSuccess({ actor: 0 }, ws);
+      machine.authenticationSuccess(defaultRoomToken, ws);
       ws.open();
 
-      let others: Others | undefined;
+      let others: Others<P, M> | undefined;
 
       machine.subscribe("others", (o) => (others = o));
 

@@ -1,8 +1,10 @@
 import type {
+  BaseUserMeta,
   Client,
+  Json,
+  JsonObject,
   LiveObject,
   LsonObject,
-  Presence,
   Room,
   User,
 } from "@liveblocks/client";
@@ -22,9 +24,27 @@ import {
   missingMapping,
 } from "./errors";
 
+function isJson(value: unknown): value is Json {
+  return (
+    value === null ||
+    typeof value === "string" ||
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    (Array.isArray(value) && value.every(isJson)) ||
+    (typeof value === "object" && Object.values(value).every(isJson))
+  );
+}
+
+export type ZustandState =
+  // TODO: Properly type out the constraints for this type here!
+  Record<string, unknown>;
+
 export type LiveblocksState<
-  TState,
-  TPresence extends Presence = Presence
+  TState extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -44,11 +64,11 @@ export type LiveblocksState<
     /**
      * The room currently synced to your zustand state.
      */
-    readonly room: Room | null;
+    readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence>>;
+    readonly others: Array<User<TPresence, TStorage>>;
     /**
      * Whether or not the room storage is currently loading
      */
@@ -66,9 +86,9 @@ export type LiveblocksState<
   };
 };
 
-export type Mapping<T> = Partial<{
-  [Property in keyof T]: boolean;
-}>;
+export type Mapping<T> = {
+  [K in keyof T]?: boolean;
+};
 
 type Options<T> = {
   /**
@@ -86,21 +106,24 @@ type Options<T> = {
 };
 
 export function middleware<
-  T extends Record<string, unknown>,
-  TPresence extends Record<string, unknown> = Presence
+  T extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
 >(
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<LiveblocksState<T>>,
+    GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
     StoreApi<T>
   >,
   options: Options<T>
 ): StateCreator<
-  LiveblocksState<T, TPresence>,
-  SetState<LiveblocksState<T, TPresence>>,
-  GetState<LiveblocksState<T, TPresence>>,
-  StoreApi<LiveblocksState<T, TPresence>>
+  LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  SetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
@@ -122,11 +145,13 @@ export function middleware<
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T>
-      ) => LiveblocksState<T> | Partial<T>
+        current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      ) =>
+        | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+        | Partial<T>
     ) => void = set;
 
-    let room: Room | null = null;
+    let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
@@ -139,7 +164,12 @@ export function middleware<
 
         if (room) {
           isPatching = true;
-          updatePresence(room!, oldState, newState, presenceMapping as any);
+          updatePresence(
+            room!,
+            oldState as any,
+            newState,
+            presenceMapping as any
+          );
 
           room.batch(() => {
             if (storageRoot) {
@@ -155,7 +185,7 @@ export function middleware<
           isPatching = false;
         }
       },
-      get,
+      get as any,
       api
     );
 
@@ -166,7 +196,10 @@ export function middleware<
 
       room = client.enter(roomId);
 
-      updateZustandLiveblocksState(set, { isStorageLoading: true, room });
+      updateZustandLiveblocksState(set, {
+        isStorageLoading: true,
+        room: room as any,
+      });
 
       const state = get();
 
@@ -196,7 +229,7 @@ export function middleware<
         })
       );
 
-      room.getStorage<any>().then(({ root }) => {
+      room.getStorage().then(({ root }) => {
         const updates: any = {};
 
         room!.batch(() => {
@@ -295,19 +328,29 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
   return partialState;
 }
 
-function updateZustandLiveblocksState<T>(
+function updateZustandLiveblocksState<
+  T extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T>
-    ) => LiveblocksState<T> | Partial<any>
+      current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+    ) =>
+      | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      | Partial<any>
   ) => void,
-  partial: Partial<LiveblocksState<T>["liveblocks"]>
+  partial: Partial<
+    LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>["liveblocks"]
+  >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
 }
 
 function broadcastInitialPresence<T>(
-  room: Room,
+  room: Room<any, any, any, any>,
   state: T,
   mapping: Mapping<T>
 ) {
@@ -316,11 +359,16 @@ function broadcastInitialPresence<T>(
   }
 }
 
-function updatePresence<T>(
-  room: Room,
-  oldState: T,
-  newState: T,
-  presenceMapping: Mapping<T>
+function updatePresence<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
+  oldState: TPresence,
+  newState: TPresence,
+  presenceMapping: Mapping<TPresence>
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
@@ -328,19 +376,23 @@ function updatePresence<T>(
     }
 
     if (oldState[key] !== newState[key]) {
-      room.updatePresence({ [key]: newState[key] });
+      const val = newState[key] as unknown as Json | undefined;
+      room.updatePresence({ [key]: val } as any);
     }
   }
 }
 
 function patchLiveblocksStorage<
   O extends LsonObject,
-  TState extends Record<string, unknown>,
-  TPresence extends Presence
+  TState extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
 >(
   root: LiveObject<O>,
-  oldState: LiveblocksState<TState, TPresence>,
-  newState: LiveblocksState<TState, TPresence>,
+  oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  newState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
   mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
@@ -352,7 +404,19 @@ function patchLiveblocksStorage<
     }
 
     if (oldState[key] !== newState[key]) {
-      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+      const oldVal: unknown = oldState[key];
+      const newVal: unknown = newState[key];
+
+      // Ensure to only patch values that are actually legal Json values. The
+      // old and new states could well contain functions (the Zustand setters),
+      // and we definitely want to rule those out, even if they make it into
+      // the mapping.
+      if (
+        (oldVal === undefined || isJson(oldVal)) &&
+        (newVal === undefined || isJson(newVal))
+      ) {
+        patchLiveObjectKey(root, key, oldVal, newVal);
+      }
     }
   }
 }

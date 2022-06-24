@@ -1,19 +1,40 @@
-import type { AbstractCrdt } from "../src/AbstractCrdt";
+import type { LiveObject } from "../src";
+import type { RoomAuthToken } from "../src/AuthToken";
 import { lsonToJson, patchImmutableObject } from "../src/immutable";
-import type { Json, JsonObject } from "../src/json";
-import type {
-  ClientMsg,
-  Op,
-  SerializedCrdtWithId,
-  ServerMsg,
-} from "../src/live";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/live";
-import type { LsonObject, ToJson } from "../src/lson";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
-import type { Authentication } from "../src/types";
+import type {
+  Authentication,
+  BaseUserMeta,
+  ClientMsg,
+  IdTuple,
+  Json,
+  JsonObject,
+  LsonObject,
+  Op,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+  ServerMsg,
+  ToJson,
+} from "../src/types";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
+import type { JsonStorageUpdate } from "./updatesUtils";
+import { serializeUpdateToJson } from "./updatesUtils";
+
+function makeRoomToken(actor: number): RoomAuthToken {
+  return {
+    appId: "my-app",
+    roomId: "my-room",
+    actor,
+    scopes: [],
+  };
+}
 
 /**
  * Deep-clones a JSON-serializable value.
@@ -122,35 +143,46 @@ export const FIFTH_POSITION = makePosition(FOURTH_POSITION);
 const defaultContext = {
   roomId: "room-id",
   throttleDelay: -1, // No throttle for standard storage test
-  liveblocksServer: "wss://live.liveblocks.io/v5",
+  liveblocksServer: "wss://live.liveblocks.io/v6",
   authentication: {
     type: "private",
     url: "/api/auth",
   } as Authentication,
-  WebSocketPolyfill: MockWebSocket as any,
+  polyfills: {
+    WebSocket: MockWebSocket as any,
+  },
 };
 
 async function prepareRoomWithStorage<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
 >(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  onSend: (messages: ClientMsg<TPresence>[]) => void = () => {},
-  defaultStorage = {}
+  onSend: (messages: ClientMsg<TPresence, TRoomEvent>[]) => void = () => {},
+  defaultStorage?: TStorage
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
 
-  const state = defaultState({}, defaultStorage);
-  const machine = makeStateMachine(state, defaultContext, effects);
+  const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    {} as TPresence,
+    defaultStorage || ({} as TStorage)
+  );
+  const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
+    state,
+    defaultContext,
+    effects
+  );
   const ws = new MockWebSocket("");
 
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws as any);
+  machine.authenticationSuccess(makeRoomToken(actor), ws as any);
   ws.open();
 
-  const getStoragePromise = machine.getStorage<TStorage>();
+  const getStoragePromise = machine.getStorage();
 
   const clonedItems = deepClone(items);
   machine.onMessage(
@@ -170,22 +202,24 @@ async function prepareRoomWithStorage<
 }
 
 export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
-  items: SerializedCrdtWithId[],
+  items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
-  defaultStorage = {}
+  defaultStorage?: TStorage
 ) {
-  const messagesSent: ClientMsg<never>[] = [];
+  const messagesSent: ClientMsg<never, never>[] = [];
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
     never,
-    TStorage
+    TStorage,
+    never,
+    never
   >(
     items,
     actor,
-    (messages: ClientMsg<never>[]) => {
+    (messages: ClientMsg<never, never>[]) => {
       messagesSent.push(...messages);
     },
-    defaultStorage
+    defaultStorage || ({} as TStorage)
   );
 
   return {
@@ -197,7 +231,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     ws,
     assert: (data: ToJson<TStorage>) =>
       expect(lsonToJson(storage.root)).toEqual(data),
-    assertMessagesSent: (messages: ClientMsg<JsonObject>[]) => {
+    assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
     applyRemoteOperations: (ops: Op[]) =>
@@ -215,20 +249,27 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
  * All operations made on the main room are forwarded to the other room
  * Assertion on the storage validate both rooms
  */
-export async function prepareStorageTest<TStorage extends LsonObject>(
-  items: SerializedCrdtWithId[],
-  actor: number = 0
-) {
+export async function prepareStorageTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never,
+  TUserMeta extends BaseUserMeta = never,
+  TRoomEvent extends Json = never
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<never, TStorage>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
+      items,
+      -1
+    );
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
-    never,
-    TStorage
-  >(items, currentActor, (messages: ClientMsg<never>[]) => {
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, currentActor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         operations.push(...message.ops);
@@ -257,43 +298,45 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
     }
   });
 
-  const states: any[] = [];
+  const states: ToJson<LsonObject>[] = [];
 
-  function assert(data: ToJson<TStorage>, shouldPushToStates = true) {
-    if (shouldPushToStates) {
-      states.push(data);
-    }
+  function assertState(data: ToJson<LsonObject>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
+  function assert(data: ToJson<LsonObject>) {
+    states.push(data);
+    assertState(data);
+  }
+
   function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assert(states[i + 1], false);
+      assertState(states[i + 1]);
     }
 
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assert(states[states.length - 2 - i], false);
+      assertState(states[states.length - 2 - i]);
     }
   }
 
   function reconnect(
     actor: number,
-    newItems?: SerializedCrdtWithId[] | undefined
+    newItems?: IdTuple<SerializedCrdt>[] | undefined
   ): MockWebSocket {
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess({ actor }, ws as any);
+    machine.authenticationSuccess(makeRoomToken(actor), ws as any);
     ws.open();
 
     if (newItems) {
@@ -335,14 +378,86 @@ export async function prepareStorageTest<TStorage extends LsonObject>(
   };
 }
 
-export async function reconnect(
-  machine: Machine,
+/**
+ * Join the same room with 2 different clients and stop sending socket messages when the storage is initialized
+ */
+export function prepareStorageUpdateTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never,
+  TUserMeta extends BaseUserMeta = never,
+  TRoomEvent extends Json = never
+>(
+  items: IdTuple<SerializedCrdt>[],
+  callback: (args: {
+    root: LiveObject<TStorage>;
+    machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    assert: (updates: JsonStorageUpdate[][]) => void;
+  }) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const { storage: refStorage, machine: refMachine } =
+      await prepareRoomWithStorage(items, 1);
+
+    const { storage, machine } = await prepareRoomWithStorage<
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >(items, 0, (messages) => {
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        }
+      }
+    });
+
+    const jsonUpdates: JsonStorageUpdate[][] = [];
+    const refJsonUpdates: JsonStorageUpdate[][] = [];
+
+    machine.subscribe(
+      storage.root,
+      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+    refMachine.subscribe(
+      refStorage.root,
+      (updates) => refJsonUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+
+    function assert(updates: JsonStorageUpdate[][]) {
+      expect(jsonUpdates).toEqual(updates);
+      expect(refJsonUpdates).toEqual(updates);
+    }
+
+    await callback({ root: storage.root, machine, assert });
+  };
+}
+
+export async function reconnect<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>,
   actor: number,
-  newItems: SerializedCrdtWithId[]
+  newItems: IdTuple<SerializedCrdt>[]
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess({ actor }, ws);
+  machine.authenticationSuccess(makeRoomToken(actor), ws);
   ws.open();
 
   machine.onMessage(
@@ -355,20 +470,27 @@ export async function reconnect(
 
 export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
-  TPresence extends JsonObject = never
->(items: SerializedCrdtWithId[], actor: number = 0) {
-  let state: ToJson<TStorage> = {} as any;
-  let refState: ToJson<TStorage> = {} as any;
+  TPresence extends JsonObject = never,
+  TUserMeta extends BaseUserMeta = never,
+  TRoomEvent extends Json = never
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
+  let state = {} as ToJson<TStorage>;
+  let refState = {} as ToJson<TStorage>;
 
   let totalStorageOps = 0;
 
   const { machine: refMachine, storage: refStorage } =
-    await prepareRoomWithStorage<TPresence, TStorage>(items, -1);
+    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
+      items,
+      -1
+    );
 
   const { machine, storage } = await prepareRoomWithStorage<
     TPresence,
-    TStorage
-  >(items, actor, (messages: ClientMsg<TPresence>[]) => {
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, actor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
     for (const message of messages) {
       if (message.type === ClientMsgCode.UPDATE_STORAGE) {
         totalStorageOps += message.ops.length;
@@ -393,7 +515,7 @@ export async function prepareStorageImmutableTest<
 
   const root = refStorage.root;
   refMachine.subscribe(
-    root as AbstractCrdt,
+    root,
     (updates) => {
       refState = patchImmutableObject(refState, updates);
     },
@@ -437,18 +559,27 @@ export async function prepareStorageImmutableTest<
 
 export function createSerializedObject(
   id: string,
-  data: Record<string, any>,
+  data: JsonObject,
+  parentId: string,
+  parentKey: string
+): IdTuple<SerializedObject>;
+export function createSerializedObject(
+  id: string,
+  data: JsonObject
+): IdTuple<SerializedRootObject>;
+export function createSerializedObject(
+  id: string,
+  data: JsonObject,
   parentId?: string,
   parentKey?: string
-): SerializedCrdtWithId {
+): IdTuple<SerializedObject | SerializedRootObject> {
   return [
     id,
-    {
-      type: CrdtType.OBJECT,
-      data,
-      parentId,
-      parentKey,
-    },
+    parentId !== undefined && parentKey !== undefined
+      ? // Normal case
+        { type: CrdtType.OBJECT, data, parentId, parentKey }
+      : // Root object
+        { type: CrdtType.OBJECT, data },
   ];
 }
 
@@ -456,30 +587,16 @@ export function createSerializedList(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.LIST,
-      parentId,
-      parentKey,
-    },
-  ];
+): IdTuple<SerializedList> {
+  return [id, { type: CrdtType.LIST, parentId, parentKey }];
 }
 
 export function createSerializedMap(
   id: string,
   parentId: string,
   parentKey: string
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.MAP,
-      parentId,
-      parentKey,
-    },
-  ];
+): IdTuple<SerializedMap> {
+  return [id, { type: CrdtType.MAP, parentId, parentKey }];
 }
 
 export function createSerializedRegister(
@@ -487,19 +604,14 @@ export function createSerializedRegister(
   parentId: string,
   parentKey: string,
   data: Json
-): SerializedCrdtWithId {
-  return [
-    id,
-    {
-      type: CrdtType.REGISTER,
-      parentId,
-      parentKey,
-      data,
-    },
-  ];
+): IdTuple<SerializedRegister> {
+  return [id, { type: CrdtType.REGISTER, parentId, parentKey, data }];
 }
 
-export function mockEffects(): Effects<JsonObject> {
+export function mockEffects<
+  TPresence extends JsonObject,
+  TRoomEvent extends Json
+>(): Effects<TPresence, TRoomEvent> {
   return {
     authenticate: jest.fn(),
     delayFlush: jest.fn(),
@@ -510,7 +622,9 @@ export function mockEffects(): Effects<JsonObject> {
   };
 }
 
-export function serverMessage(message: ServerMsg<JsonObject>) {
+export function serverMessage(
+  message: ServerMsg<JsonObject, BaseUserMeta, Json>
+) {
   return new MessageEvent("message", {
     data: JSON.stringify(message),
   });

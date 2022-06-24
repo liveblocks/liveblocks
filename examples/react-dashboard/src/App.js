@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   XAxis,
   YAxis,
@@ -232,10 +232,7 @@ function Example() {
 
 export default function App() {
   return (
-    <RoomProvider
-      id={roomId}
-      defaultPresence={() => ({ cardId: null, cursor: null })}
-    >
+    <RoomProvider id={roomId} initialPresence={{ cardId: null, cursor: null }}>
       <Example />
     </RoomProvider>
   );

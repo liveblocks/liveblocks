@@ -129,9 +129,9 @@ export default function Page() {
   return (
     <RoomProvider
       id={roomId}
-      defaultPresence={() => ({
+      initialPresence={{
         selectedId: null,
-      })}
+      }}
     >
       <Example />
     </RoomProvider>

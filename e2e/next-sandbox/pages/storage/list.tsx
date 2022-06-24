@@ -4,8 +4,13 @@ import {
   useRedo,
   useSelf,
   useUndo,
+  LiveblocksProvider,
 } from "@liveblocks/react";
+import { LiveList } from "@liveblocks/client";
 import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
+
+const client = createLiveblocksClient();
 
 export default function Home() {
   let roomId = "e2e-storage-list";
@@ -16,9 +21,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId}>
-      <Sandbox />
-    </RoomProvider>
+    <LiveblocksProvider client={client}>
+      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
+        <Sandbox />
+      </RoomProvider>
+    </LiveblocksProvider>
   );
 }
 
@@ -58,8 +65,22 @@ function Sandbox() {
       </button>
 
       <button
+        id="insert"
+        onClick={() => {
+          list.insert(me.connectionId + ":" + item, 0);
+          item = String.fromCharCode(item.charCodeAt(0) + 1);
+        }}
+      >
+        Insert
+      </button>
+
+      <button
         id="move"
         onClick={() => {
+          if (list.length < 2) {
+            return;
+          }
+
           const index = generateRandomNumber(list.length);
           const target = generateRandomNumber(list.length, index);
           list.move(index, target);
@@ -86,21 +107,16 @@ function Sandbox() {
       <button
         id="delete"
         onClick={() => {
-          const index = generateRandomNumber(list.length);
-          list.delete(index);
+          if (list.length > 0) {
+            const index = generateRandomNumber(list.length);
+            list.delete(index);
+          }
         }}
       >
         Delete
       </button>
 
-      <button
-        id="clear"
-        onClick={() => {
-          while (list.length > 0) {
-            list.delete(0);
-          }
-        }}
-      >
+      <button id="clear" onClick={() => list.clear()}>
         Clear
       </button>
 
