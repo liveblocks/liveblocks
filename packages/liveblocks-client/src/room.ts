@@ -1724,7 +1724,9 @@ function prepareCreateWebSocket(
   const ws = WebSocketPolyfill || WebSocket;
 
   return (token: string): WebSocket => {
-    return new ws(`${liveblocksServer}/?token=${token}`);
+    return new ws(
+      `${liveblocksServer}/?token=${token}&version=__PACKAGE_VERSION__`
+    );
   };
 }
 
