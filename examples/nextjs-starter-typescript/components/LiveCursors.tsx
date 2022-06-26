@@ -1,20 +1,7 @@
-import React, { useOthers, useUpdateMyPresence, } from "@liveblocks/react";
-import { MutableRefObject, useEffect } from "react";
+import { useOthers, useUpdateMyPresence } from "@liveblocks/react";
+import React, { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
-
-/**
- * This file shows how to add basic live cursors on your product.
- */
-
-type Cursor = {
-  x: number;
-  y: number;
-};
-
-type Presence = {
-  cursor: Cursor | null;
-};
 
 type Props = {
   // The element that's used for pointer events and scroll position
@@ -22,38 +9,45 @@ type Props = {
 };
 
 /**
+ * This file shows you how to create a reusable live cursors component for your product.
+ * The component takes a reference to another element ref `cursorPanel` and renders
+ * cursors according to the location and scroll position of this panel.
  * Make sure that cursorPanel has a CSS position set, and that LiveCursors is placed inside
  */
 export default function LiveCursors({ cursorPanel }: Props) {
   /**
-   * useMyPresence returns the presence of the current user and a function to update it.
+   * useMyPresence returns a function to update  the current user's presence.
    * updateMyPresence is different to the setState function returned by the useState hook from React.
    * You don't need to pass the full presence object to update it.
-   * See https://liveblocks.io/docs/api-reference/liveblocks-react#useMyPresence for more information
+   * See https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateMyPresence for more information
    */
-  const updateMyPresence = useUpdateMyPresence<Presence>();
+  const updateMyPresence = useUpdateMyPresence();
 
   /**
    * Return all the other users in the room and their presence (a cursor position in this case)
    */
-  const others = useOthers<Presence>();
+  const others = useOthers();
   const rectRef = useBoundingClientRectRef(cursorPanel);
 
   useEffect(() => {
     if (!(cursorPanel?.current instanceof HTMLElement)) {
-      console.warn("Pass `ref` containing HTMLElement to `<LiveCursors scrollRef=\"\"`.");
+      console.warn(
+        'Pass `ref` containing HTMLElement to `<LiveCursors scrollRef=""`.'
+      );
       return;
     }
 
-    /* === If cursorPanel, add live cursor listeners ========== */
+    // If cursorPanel, add live cursor listeners
     const updateCursor = (event: PointerEvent) => {
       if (!cursorPanel?.current) {
         return;
       }
 
       // (Viewport position) - (element position) + (element scroll amount)
-      const x = event.clientX - rectRef.current.x + cursorPanel.current.scrollLeft;
-      const y = event.clientY - rectRef.current.y + cursorPanel.current.scrollTop;
+      const x =
+        event.clientX - rectRef.current.x + cursorPanel.current.scrollLeft;
+      const y =
+        event.clientY - rectRef.current.y + cursorPanel.current.scrollTop;
 
       updateMyPresence({
         cursor: {
@@ -72,11 +66,11 @@ export default function LiveCursors({ cursorPanel }: Props) {
     cursorPanel.current.addEventListener("pointermove", updateCursor);
     cursorPanel.current.addEventListener("pointerleave", removeCursor);
 
-    /* === Clean up event listeners ========== */
+    // Clean up event listeners
     const oldRef = cursorPanel.current;
     return () => {
       if (!oldRef) {
-        return
+        return;
       }
       oldRef.removeEventListener("pointermove", updateCursor);
       oldRef.removeEventListener("pointerleave", removeCursor);

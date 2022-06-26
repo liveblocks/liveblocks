@@ -21,9 +21,9 @@ const animationProps = {
   exit: { width: 0 },
   transition: {
     type: "spring",
-    damping: 28,
+    damping: 15,
     mass: 1,
-    stiffness: 300,
+    stiffness: 200,
     restSpeed: 0.01,
   },
 };
@@ -41,28 +41,34 @@ export default function LiveAvatars() {
   const hasMoreUsers = users.length > MAX_OTHERS;
 
   return (
-    <div className="flex pl-3 overflow-hidden" style={{ minHeight: avatarProps.size + "px" }}>
+    <div
+      style={{
+        minHeight: avatarProps.size + "px",
+        display: "flex",
+        paddingLeft: "0.75rem",
+        overflow: "hidden",
+      }}
+    >
       <AnimatePresence>
         {hasMoreUsers ? (
           <motion.div {...animationProps} key="count">
-            <Avatar
-              {...avatarProps}
-              variant="more"
-              count={users.length - 3}
-            />
+            <Avatar {...avatarProps} variant="more" count={users.length - 3} />
           </motion.div>
         ) : null}
 
-        {users.slice(0, MAX_OTHERS).reverse().map(({ connectionId, info }) => (
-          <motion.div {...animationProps} key={connectionId}>
-            <Avatar
-              {...avatarProps}
-              picture={info?.picture}
-              name={info?.name}
-              color={info?.color}
-            />
-          </motion.div>
-        ))}
+        {users
+          .slice(0, MAX_OTHERS)
+          .reverse()
+          .map(({ connectionId, info }) => (
+            <motion.div {...animationProps} key={connectionId}>
+              <Avatar
+                {...avatarProps}
+                picture={info?.picture}
+                name={info?.name}
+                color={info?.color}
+              />
+            </motion.div>
+          ))}
 
         {currentUser ? (
           <motion.div {...animationProps} key="you">

@@ -15,7 +15,7 @@ import { nanoid } from "nanoid";
  * maybe add css animations
  */
 
-/*
+
 export default function LiveCanvas() {
   const shapes = useMap("shapes");
   if (!shapes) {
@@ -161,5 +161,3 @@ function getRandomColor() {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-
- */

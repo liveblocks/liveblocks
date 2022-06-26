@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import classNames from "classnames";
 import { getContrastingColor } from "../utils/getContrastingColor";
+import styles from "./Avatars.module.css";
 
 type BothProps = {
   variant?: "avatar" | "more";
@@ -33,6 +34,10 @@ type MoreProps = BothProps & {
 
 type AvatarProps = PictureProps | MoreProps;
 
+/**
+ * Can present avatars as gradients with letters, as pictures, or as a count (e.g +3)
+ * Size, outline color, color, radius can all be changed, a status circle can be added
+ */
 export function Avatar({
   variant = "avatar",
   picture = "",
@@ -45,10 +50,10 @@ export function Avatar({
   borderRadius = 9999,
   className = "",
   style = {},
-  count = 0
-}: AvatarProps){
-  const innerVariant = (variant === "avatar" && !picture) ? "letter" : variant;
-  const realSize = size - (outlineWidth * 2);
+  count = 0,
+}: AvatarProps) {
+  const innerVariant = variant === "avatar" && !picture ? "letter" : variant;
+  const realSize = size - outlineWidth * 2;
 
   return (
     <div
@@ -61,17 +66,11 @@ export function Avatar({
         borderRadius,
         ...style,
       }}
-      className={classNames(
-        "flex place-content-center relative outline outline-4 outline-white",
-        className
-      )}
+      className={classNames(styles.avatar, className)}
       data-tooltip={name}
     >
       {innerVariant === "more" ? (
-        <MoreCircle
-          count={count}
-          borderRadius={borderRadius}
-        />
+        <MoreCircle count={count} borderRadius={borderRadius} />
       ) : null}
 
       {innerVariant === "avatar" ? (
@@ -84,53 +83,58 @@ export function Avatar({
       ) : null}
 
       {innerVariant === "letter" ? (
-        <LetterCircle
-          name={name}
-          color={color}
-          borderRadius={borderRadius}
-        />
+        <LetterCircle name={name} color={color} borderRadius={borderRadius} />
       ) : null}
 
       {statusColor ? (
         <span
           style={{ backgroundColor: statusColor }}
-          className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full ring-2 ring-white"
+          className={styles.status}
         />
       ) : null}
     </div>
   );
 }
 
-function LetterCircle({ name, color, borderRadius }:
-  Pick<PictureProps, "name" | "color" | "borderRadius">
-) {
-  const textColor = useMemo(() => color ? getContrastingColor(color) : undefined, [color]);
+function LetterCircle({
+  name,
+  color,
+  borderRadius,
+}: Pick<PictureProps, "name" | "color" | "borderRadius">) {
+  const textColor = useMemo(
+    () => (color ? getContrastingColor(color) : undefined),
+    [color]
+  );
   return (
     <div
       style={{
         backgroundColor: color,
         borderRadius,
       }}
-      className="flex justify-center items-center absolute inset-0 rounded-full overflow-hidden isolate"
+      className={styles.letter}
     >
       <div
         style={{
           maskImage: "linear-gradient(to bottom right, transparent, #fff)",
-          WebkitMaskImage: "linear-gradient(to bottom right, transparent, #fff)",
+          WebkitMaskImage:
+            "linear-gradient(to bottom right, transparent, #fff)",
           backgroundColor: color,
         }}
-        className="-hue-rotate-60 absolute inset-0"
+        className={styles.letterBackground}
       />
-      <div className="z-10 font-semibold text-white" style={{ color: textColor }}>
+      <div className={styles.letterCharacter} style={{ color: textColor }}>
         {name ? name.charAt(0) : null}
       </div>
     </div>
-  )
+  );
 }
 
-function PictureCircle({ name, picture = "", size, borderRadius }:
-  Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">
-) {
+function PictureCircle({
+  name,
+  picture = "",
+  size,
+  borderRadius,
+}: Pick<PictureProps, "name" | "picture" | "size" | "borderRadius">) {
   return (
     <Image
       alt={name}
@@ -139,18 +143,16 @@ function PictureCircle({ name, picture = "", size, borderRadius }:
       width={size}
       style={{ borderRadius }}
     />
-  )
+  );
 }
 
-function MoreCircle({ count, borderRadius }:
-  Pick<MoreProps, "count" | "borderRadius">
-) {
+function MoreCircle({
+  count,
+  borderRadius,
+}: Pick<MoreProps, "count" | "borderRadius">) {
   return (
-    <div
-      style={{ borderRadius }}
-      className="flex justify-center items-center pr-1 text-white text-sm font-medium absolute inset-0 bg-gray-600"
-    >
+    <div style={{ borderRadius }} className={styles.more}>
       +{count}
     </div>
-  )
+  );
 }
