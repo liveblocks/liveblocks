@@ -2,7 +2,7 @@ import {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
-} from "@liveblocks/react";
+} from "../liveblocks.config";
 import { useRouter } from "next/router";
 import React, { useMemo } from "react";
 import Selection from "../components/Selection";
@@ -15,12 +15,8 @@ import styles from "./index.module.css";
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 const NAMES = ["User A", "User B", "User C", "User D", "User E"];
 
-type User = {
-  selectedId: string | null;
-};
-
 function Selections({ id }: { id: string }) {
-  const users = useOthers<User>().toArray();
+  const users = useOthers().toArray();
 
   return (
     <>
@@ -40,7 +36,7 @@ function Selections({ id }: { id: string }) {
 }
 
 function Example() {
-  const updateMyPresence = useUpdateMyPresence<User>();
+  const updateMyPresence = useUpdateMyPresence();
 
   return (
     <div className={styles.container}>

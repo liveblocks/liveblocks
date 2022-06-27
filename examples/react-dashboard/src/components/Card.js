@@ -1,5 +1,5 @@
 import styles from "./Card.module.css";
-import { useUpdateMyPresence, useOthers } from "@liveblocks/react";
+import { useUpdateMyPresence, useOthers } from "../liveblocks.config";
 import { useEffect, useRef, useState } from "react";
 import { COLORS_PRESENCE } from "../constants";
 import Cursor from "./Cursor";

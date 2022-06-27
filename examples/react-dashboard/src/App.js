@@ -12,7 +12,7 @@ import {
   BarChart,
 } from "recharts";
 import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
-import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
+import { RoomProvider, useMyPresence, useOthers } from "./liveblocks.config";
 import styles from "./App.module.css";
 import Header from "./components/Header";
 import Card from "./components/Card";

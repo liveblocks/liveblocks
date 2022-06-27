@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useRouter } from "next/router";
-import { useOthers, useMyPresence, RoomProvider } from "@liveblocks/react";
+import { RoomProvider, useOthers, useMyPresence } from "../liveblocks.config";
 import Cursor from "../components/Cursor";
 
 /**
@@ -18,15 +18,6 @@ const COLORS = [
   "#7986CB",
 ];
 
-type Cursor = {
-  x: number;
-  y: number;
-};
-
-type Presence = {
-  cursor: Cursor | null;
-};
-
 function Example() {
   /**
    * useMyPresence returns the presence of the current user and a function to update it.
@@ -34,12 +25,12 @@ function Example() {
    * You don't need to pass the full presence object to update it.
    * See https://liveblocks.io/docs/api-reference/liveblocks-react#useMyPresence for more information
    */
-  const [{ cursor }, updateMyPresence] = useMyPresence<Presence>();
+  const [{ cursor }, updateMyPresence] = useMyPresence();
 
   /**
    * Return all the other users in the room and their presence (a cursor position in this case)
    */
-  const others = useOthers<Presence>();
+  const others = useOthers();
 
   return (
     <main

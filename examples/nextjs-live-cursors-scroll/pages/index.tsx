@@ -1,9 +1,8 @@
-import { User } from "@liveblocks/client";
 import {
   RoomProvider,
   useUpdateMyPresence,
   useOthers,
-} from "@liveblocks/react";
+} from "../liveblocks.config";
 import { useRouter } from "next/router";
 import React, { useEffect, useMemo } from "react";
 import Cursor from "../components/Cursor";
@@ -17,17 +16,8 @@ import Cursor from "../components/Cursor";
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-type Cursor = {
-  x: number;
-  y: number;
-};
-
-type Presence = {
-  cursor: Cursor | null;
-};
-
-function useLiveCursors(): (User<Presence> & Cursor)[] {
-  const updateMyPresence = useUpdateMyPresence<Presence>();
+function useLiveCursors() {
+  const updateMyPresence = useUpdateMyPresence();
 
   useEffect(() => {
     let scroll = {
@@ -35,9 +25,9 @@ function useLiveCursors(): (User<Presence> & Cursor)[] {
       y: window.scrollY,
     };
 
-    let lastPosition: Cursor | null = null;
+    let lastPosition: { x: number; y: number } | null = null;
 
-    function transformPosition(cursor: Cursor) {
+    function transformPosition(cursor: { x: number; y: number }) {
       return {
         x: cursor.x / window.innerWidth,
         y: cursor.y,
@@ -88,21 +78,21 @@ function useLiveCursors(): (User<Presence> & Cursor)[] {
     };
   }, [updateMyPresence]);
 
-  const others = useOthers<Presence>();
+  const others = useOthers();
 
-  return others
-    .toArray()
-    .filter((user) => user.presence?.cursor != null)
-    .map(({ connectionId, presence, id, info }) => {
-      return {
-        x: ((presence as Presence).cursor as Cursor).x * window.innerWidth,
-        y: ((presence as Presence).cursor as Cursor).y,
+  const cursors = [];
+
+  for (const { connectionId, presence } of others) {
+    if (presence?.cursor) {
+      cursors.push({
+        x: presence.cursor.x * window.innerWidth,
+        y: presence.cursor.y,
         connectionId,
-        id,
-        info,
-        presence,
-      };
-    });
+      });
+    }
+  }
+
+  return cursors;
 }
 
 function Example() {

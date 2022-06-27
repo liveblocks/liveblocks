@@ -6,7 +6,7 @@ import {
   useBatch,
   useRoom,
   useOthers,
-} from "@liveblocks/react";
+} from "./liveblocks.config";
 import { LiveObject } from "@liveblocks/client";
 
 import "./App.css";
@@ -45,7 +45,7 @@ function Canvas({ shapes }) {
 
   const insertRectangle = () => {
     batch(() => {
-      const shapeId = Date.now();
+      const shapeId = Date.now().toString();
       const shape = new LiveObject({
         x: getRandomInt(300),
         y: getRandomInt(300),
