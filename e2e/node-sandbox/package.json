@@ -9,7 +9,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@liveblocks/client": "^0.17.0-beta2",
+    "@liveblocks/client": "^0.17.0",
     "node-fetch": "2.6.7",
     "ws": "^8.5.0"
   },
