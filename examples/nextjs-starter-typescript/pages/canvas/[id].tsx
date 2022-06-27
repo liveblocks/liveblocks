@@ -4,12 +4,17 @@ import { RoomProvider } from "@liveblocks/react";
 import LiveCanvas from "../../components/LiveCanvas";
 import LiveCursors from "../../components/LiveCursors";
 import LiveAvatars from "../../components/LiveAvatars";
+import { LiveMap } from "@liveblocks/client";
 
 /*
 const roomId = typeof window !==  "undefined"
   ? new URL(window.location.href).pathname.split('/room/')[1]
   : "";
  */
+
+const initialStorage = () => ({
+  shapes: new LiveMap()
+})
 
 export default function MultiplayerRoom() {
   const router = useRouter();
@@ -21,7 +26,7 @@ export default function MultiplayerRoom() {
 
   const roomId = router.query.id;
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={"nextjs-starter-canvas-" + roomId} initialStorage={initialStorage}>
       <div className="fixed inset-0 overflow-hidden flex flex-col">
         <header className="bg-white flex justify-center items-center py-10 px-4">
           <LiveAvatars />

@@ -1,0 +1,64 @@
+.note {
+  position: absolute;
+  width: auto;
+  min-width: 250px;
+  max-width: 400px;
+  min-height: 100px;
+  border-radius: 16px;
+  padding: 5px;
+}
+
+.noteInner {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px 0 #00000008;
+  outline: 2px solid #fff;
+  transition: all 0.1s ease-in-out;
+}
+
+.note:hover .noteInner {
+  border-color: rgba(0, 0, 0, 0.25);
+}
+
+.noteHeader {
+  flex-grow: 0;
+  margin: 12px 12px 8px;
+}
+
+.noteDelete {
+  display: inline-block;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+}
+
+.noteBody {
+  position: relative;
+  flex-grow: 1;
+  margin: 0 12px 12px;
+}
+
+.noteTextareaSize {
+  width: 100%;
+  max-width: 100%;
+  visibility: hidden;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  overflow: hidden;
+}
+
+.noteTextarea {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  resize: none;
+  word-wrap: break-word;
+  border-radius: 8px;
+}
+

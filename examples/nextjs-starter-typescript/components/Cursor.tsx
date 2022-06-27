@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { motion } from "framer-motion";
 import { getContrastingColor } from "../utils/getContrastingColor";
 import styles from "./Cursor.module.css";
 
@@ -30,22 +29,15 @@ export default function Cursor({
   name,
 }: CursorProps) {
   return (
-    <motion.div
+    <div
       className={styles.cursor}
-      initial={{ x, y }}
-      animate={{ x, y }}
-      transition={{
-        type: "spring",
-        bounce: 0.6,
-        damping: 30,
-        mass: 0.8,
-        stiffness: 350,
-        restSpeed: 0.01,
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
       }}
     >
       {variant === "basic" ? <BasicCursor color={color} /> : null}
       {variant === "name" ? <NameCursor color={color} name={name} /> : null}
-    </motion.div>
+    </div>
   );
 }
 

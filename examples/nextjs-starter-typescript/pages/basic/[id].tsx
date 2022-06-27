@@ -20,7 +20,7 @@ export default function MultiplayerRoom() {
 
   let roomId = router.query.id;
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={"nextjs-starter-basic-" + roomId}>
       <main ref={cursorPanel} className="flex justify-center items-center absolute inset-0 overflow-hidden">
         <LiveAvatars />
         <LiveCursors cursorPanel={cursorPanel} />

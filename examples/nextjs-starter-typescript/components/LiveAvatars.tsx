@@ -1,7 +1,6 @@
 import React from "react";
 import { Avatar } from "./Avatar";
 import { useOthers, useSelf } from "@liveblocks/react";
-import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
@@ -14,19 +13,6 @@ import { AnimatePresence, motion } from "framer-motion";
  */
 
 const MAX_OTHERS = 3;
-
-const animationProps = {
-  initial: { width: 0, transformOrigin: "left" },
-  animate: { width: "auto", height: "auto" },
-  exit: { width: 0 },
-  transition: {
-    type: "spring",
-    damping: 15,
-    mass: 1,
-    stiffness: 200,
-    restSpeed: 0.01,
-  },
-};
 
 const avatarProps = {
   style: { marginLeft: "-0.45rem" },
@@ -49,38 +35,37 @@ export default function LiveAvatars() {
         overflow: "hidden",
       }}
     >
-      <AnimatePresence>
         {hasMoreUsers ? (
-          <motion.div {...animationProps} key="count">
-            <Avatar {...avatarProps} variant="more" count={users.length - 3} />
-          </motion.div>
+          <Avatar
+            key="count"
+            variant="more"
+            count={users.length - 3}
+            {...avatarProps}
+          />
         ) : null}
 
         {users
           .slice(0, MAX_OTHERS)
           .reverse()
           .map(({ connectionId, info }) => (
-            <motion.div {...animationProps} key={connectionId}>
-              <Avatar
-                {...avatarProps}
-                picture={info?.picture}
-                name={info?.name}
-                color={info?.color}
-              />
-            </motion.div>
+            <Avatar
+              key={connectionId}
+              picture={info?.picture}
+              name={info?.name}
+              color={info?.color}
+              {...avatarProps}
+            />
           ))}
 
         {currentUser ? (
-          <motion.div {...animationProps} key="you">
-            <Avatar
-              {...avatarProps}
-              picture={currentUser.info?.picture}
-              name={currentUser.info?.name + " (you)"}
-              color={currentUser.info?.color}
-            />
-          </motion.div>
+          <Avatar
+            key="you"
+            picture={currentUser.info?.picture}
+            name={currentUser.info?.name + " (you)"}
+            color={currentUser.info?.color}
+            {...avatarProps}
+          />
         ) : null}
-      </AnimatePresence>
     </div>
   );
 }

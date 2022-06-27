@@ -1,33 +1,32 @@
-import { memo, useEffect, useRef, useState } from "react";
-import { useBatch, useHistory, useMap, useMyPresence, useOthers, useRoom } from "@liveblocks/react";
+import { useRef, useState } from "react";
+import { useBatch, useHistory, useMap, useMyPresence, useOthers } from "@liveblocks/react";
 import { LiveObject } from "@liveblocks/client";
-import { motion } from "framer-motion";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
 import { nanoid } from "nanoid";
+import styles from "./LiveCanvas.module.css";
+import Note from "./Note";
 
 /**
  * TODO
  * remove avatar stack and cursors for new example
  * keep complexity in basic components
- * remove framer-motion
  * remove tailwind
  * show liveblocks features e.g. undo/redo
  * maybe add css animations
  */
 
-
 export default function LiveCanvas() {
   const shapes = useMap("shapes");
+
   if (!shapes) {
     return <div>Loading...</div>;
   }
+
   return <Canvas shapes={shapes} />;
 }
 
 function Canvas({ shapes }) {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const [{ selectedShape }, setPresence] = useMyPresence();
+  const [myPresence, updateMyPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();
   const others = useOthers();
@@ -35,87 +34,101 @@ function Canvas({ shapes }) {
   const canvasRef = useRef(null);
   const rectRef = useBoundingClientRectRef(canvasRef);
 
-  const insertRectangle = () => {
+  const [isDragging, setIsDragging] = useState(false);
+  const dragInfo = useRef(null);
+
+  function insertNote() {
     batch(() => {
       const shapeId = nanoid();
       const shape = new LiveObject({
         x: getRandomInt(300),
         y: getRandomInt(300),
-        fill: getRandomColor(),
+        text: "",
+        selectedBy: null,
+        id: shapeId,
       });
       shapes.set(shapeId, shape);
-      setPresence({ selectedShape: shapeId }, { addToHistory: true });
+      updateMyPresence({ selectedShape: shapeId }, { addToHistory: true });
     });
-  };
+  }
 
-  const deleteRectangle = () => {
-    shapes.delete(selectedShape);
-  };
+  function deleteNote(shapeId = myPresence.selectedShape) {
+    shapes.delete(shapeId);
+  }
 
-  const onShapePointerDown = (e, shapeId) => {
+  function handleNotePointerDown(e, shapeId) {
     history.pause();
     e.stopPropagation();
+    const element = document.querySelector(`[data-note="${shapeId}"]`);
+    const rect = element.getBoundingClientRect();
+    const position = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    };
+    dragInfo.current = { element, position };
 
-    setPresence({ selectedShape: shapeId }, { addToHistory: true });
-
+    updateMyPresence({ selectedShape: shapeId }, { addToHistory: true });
     setIsDragging(true);
-  };
+  }
 
-  const onCanvasPointerUp = () => {
+  function handleCanvasPointerUp() {
     if (!isDragging) {
-      setPresence({ selectedShape: null }, { addToHistory: true });
+      updateMyPresence({ selectedShape: null }, { addToHistory: true });
     }
 
     setIsDragging(false);
-
+    dragInfo.current = null;
     history.resume();
-  };
+  }
 
-  const onCanvasPointerMove = (e) => {
+  function handleCanvasPointerMove(e) {
     e.preventDefault();
 
-    if (isDragging) {
-      const shape = shapes.get(selectedShape);
+    if (isDragging && dragInfo.current) {
+      const shape = shapes.get(myPresence.selectedShape);
       if (shape) {
+        const { x, y } = dragInfo.current.position;
         shape.update({
-          x: e.clientX - 100 - rectRef.current.x,
-          y: e.clientY - 100 - rectRef.current.y,
+          x: e.clientX - rectRef.current.x - x,
+          y: e.clientY - rectRef.current.y - y,
         });
       }
     }
-  };
+  }
 
   return (
-    <div ref={canvasRef} className="w-full h-full bg-gray-100 relative overflow-hidden">
+    <div ref={canvasRef} className={styles.canvas}>
       <div
-        className="canvas"
-        onPointerMove={onCanvasPointerMove}
-        onPointerUp={onCanvasPointerUp}
+        className={styles.canvasPanel}
+        onPointerMove={handleCanvasPointerMove}
+        onPointerUp={handleCanvasPointerUp}
       >
-        {Array.from(shapes, ([shapeId, shape]) => {
-          let selectionColor =
-            selectedShape === shapeId
+        {[...shapes.values()].map((shape) => {
+          const id = shape.get("id");
+          const selectionColor =
+            myPresence.selectedShape === shape.id
               ? "blue"
               : others
                 .toArray()
-                .some((user) => user.presence?.selectedShape === shapeId)
+                .some((user) => user.presence?.selectedShape === id)
                 ? "green"
                 : undefined;
 
           return (
-            <Rectangle
-              key={shapeId}
-              id={shapeId}
-              onShapePointerDown={onShapePointerDown}
+            <Note
+              key={id}
               shape={shape}
+              onPointerDown={(e) => handleNotePointerDown(e, id)}
+              onDelete={() => deleteNote(id)}
               selectionColor={selectionColor}
             />
           );
         })}
       </div>
-      <div className="toolbar">
-        <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteRectangle} disabled={selectedShape == null}>
+
+      <div className={styles.toolbar}>
+        <button onClick={insertNote}>Rectangle</button>
+        <button onClick={deleteNote} disabled={myPresence.selectedShape == null}>
           Delete
         </button>
         <button onClick={history.undo}>Undo</button>
@@ -125,39 +138,6 @@ function Canvas({ shapes }) {
   );
 }
 
-const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
-  const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
-
-  const room = useRoom();
-
-  useEffect(() => {
-    function onChange() {
-      setShapeData(shape.toObject());
-    }
-
-    return room.subscribe(shape, onChange);
-  }, [room, shape]);
-
-  return (
-    <motion.div
-      onPointerDown={(e) => onShapePointerDown(e, id)}
-      className="w-96 h-96 absolute border-2"
-      style={{
-        backgroundColor: fill ? fill : "#CCC",
-        borderColor: selectionColor || "transparent",
-      }}
-      animate={{ x, y }}
-    />
-  );
-});
-
-const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
-
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
-
-function getRandomColor() {
-  return COLORS[getRandomInt(COLORS.length)];
-}
-

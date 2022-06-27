@@ -13,7 +13,6 @@
     "@liveblocks/node": "^0.3.0",
     "@liveblocks/react": "^0.16.15",
     "classnames": "^2.3.1",
-    "framer-motion": "^6.3.6",
     "nanoid": "^3.3.4",
     "next": "12.1.6",
     "react": "18.1.0",
