@@ -1,7 +1,11 @@
-# v0.17.0 (not yet released)
+# v0.17.1 (not yet released)
+
+...
+
+# v0.17.0
 
 For information, please read our
-[Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
 
 ### TypeScript improvements ✨
 
@@ -12,7 +16,7 @@ longer need to provide any extra type annotations anywhere for your Liveblocks
 code! 🙌
 
 To learn how to set that up, follow the instructions in our
-[Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17).
+[Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17).
 
 - No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
@@ -30,22 +34,22 @@ To learn how to set that up, follow the instructions in our
 
 We now support React Native! To learn how to use Liveblocks in your React Native
 projects, see our
-[API reference](https://preview.liveblocks.io/docs/api-reference/liveblocks-client#createClientReactNative).
+[API reference](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientReactNative).
 It's surprisingly simple!
 
 ### New APIs ✨
 
 - In **@liveblocks/react**:
 
-  - [`createRoomContext()`](https://preview.liveblocks.io/docs/api-reference/liveblocks-react#createRoomContext)
+  - [`createRoomContext()`](https://liveblocks.io/docs/api-reference/liveblocks-react#createRoomContext)
     is now the preferred way to initialize hooks.
 
 - In the API:
 
   - New endpoint to
-    [Get Users in a Room](https://preview.liveblocks.io/docs/api-reference/rest-api-endpoints#GetRoomUsers)
+    [Get Users in a Room](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRoomUsers)
   - New endpoint to
-    [Get a list of all Rooms](https://preview.liveblocks.io/docs/api-reference/rest-api-endpoints#GetRooms)
+    [Get a list of all Rooms](https://liveblocks.io/docs/api-reference/rest-api-endpoints#GetRooms)
 
 ### Bug fixes 🐛
 
@@ -73,9 +77,9 @@ It's surprisingly simple!
 
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
-    [Recommended Upgrade Steps section](https://preview.liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
+    [Recommended Upgrade Steps section](https://liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
     within our
-    [Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17)
+    [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
