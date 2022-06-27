@@ -279,11 +279,13 @@ publish_to_npm () {
 }
 
 commit_to_git () {
+    msg="$1"
+    shift 1
     ( cd "$ROOT" && (
         git reset --quiet HEAD
         git add "$@"
         if git is-dirty -i; then
-            git commit -m "Bump to $VERSION"
+            git commit -m "$msg"
         fi
     ) )
 }
@@ -292,10 +294,10 @@ commit_to_git () {
 ( cd "$PRIMARY_PKG" && (
     pkgname="$(npm_pkgname "$PRIMARY_PKG")"
     echo "==> Building and publishing $PRIMARY_PKG"
-     bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
-     build_pkg
-     publish_to_npm "$pkgname"
-     commit_to_git "$PRIMARY_PKG"
+    bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
+    build_pkg
+    publish_to_npm "$pkgname"
+    commit_to_git "Bump to $VERSION" "$PRIMARY_PKG"
 ) )
 
 # Then, build and publish all the other packages
@@ -308,7 +310,7 @@ for pkgdir in ${SECONDARY_PKGS[@]}; do
         publish_to_npm "$pkgname"
     ) )
 done
-commit_to_git ${SECONDARY_PKGS[@]}
+commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
 
 echo ""
 echo "All published!"
