@@ -68,7 +68,10 @@ function buildESM(srcFiles, external = []) {
     },
     external,
     plugins: [
-      replaceText({ __PACKAGE_VERSION__: packageJson.version }),
+      replaceText({
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
       typescriptCompile(),
       stripComments(),
       prettier(),
@@ -89,7 +92,10 @@ function buildCJS(srcFiles, external = []) {
     external,
     plugins: [
       resolve({ extensions }),
-      replaceText({ __PACKAGE_VERSION__: packageJson.version }),
+      replaceText({
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
       stripComments(),
       prettier(),
