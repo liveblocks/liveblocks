@@ -1,11 +1,4 @@
-import {
-  RoomProvider,
-  useObject,
-  useRedo,
-  useSelf,
-  useUndo,
-  LiveblocksProvider,
-} from "@liveblocks/react";
+import { createRoomContext } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
 import { LiveObject } from "@liveblocks/client";
@@ -13,6 +6,16 @@ import { lsonToJson } from "@liveblocks/client/internal";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
+
+const { RoomProvider, useObject, useRedo, useSelf, useUndo } =
+  createRoomContext<
+    never,
+    {
+      object: LiveObject<{
+        [key: string]: number | LiveObject<{ a: number }>;
+      }>;
+    }
+  >(client);
 
 export default function Home() {
   let roomId = "e2e-storage-object";
@@ -23,18 +26,16 @@ export default function Home() {
     }
   }
   return (
-    <LiveblocksProvider client={client}>
-      <RoomProvider
-        id={roomId}
-        initialStorage={{
-          object: new LiveObject<{
-            [key: string]: number | LiveObject<{ a: number }>;
-          }>(),
-        }}
-      >
-        <Sandbox />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <RoomProvider
+      id={roomId}
+      initialStorage={{
+        object: new LiveObject<{
+          [key: string]: number | LiveObject<{ a: number }>;
+        }>(),
+      }}
+    >
+      <Sandbox />
+    </RoomProvider>
   );
 }
 

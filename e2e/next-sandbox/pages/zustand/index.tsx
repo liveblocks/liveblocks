@@ -14,7 +14,7 @@ type State = {
 };
 
 const useStore = create(
-  middleware<State>(
+  middleware<State, never, never, never, never>(
     (set) => ({
       items: [],
       addItem: (newItem: string) =>
