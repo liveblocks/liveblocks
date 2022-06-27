@@ -208,13 +208,19 @@ while ! is_valid_version "$VERSION"; do
 done
 
 bump_version_in_pkg () {
+    SKIP_PEERS=0
+    if [ "$1" = "--no-peers" ]; then
+        SKIP_PEERS=1
+        shift 1
+    fi
+
     PKGDIR="$1"
     VERSION="$2"
 
     jq ".version=\"$VERSION\"" package.json | sponge package.json
 
     # If this is one of the client packages, also bump the peer dependency
-    if [ "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
+    if [ "$SKIP_PEERS" -eq 0 -a "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
         jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
     fi
 
@@ -279,11 +285,13 @@ publish_to_npm () {
 }
 
 commit_to_git () {
+    msg="$1"
+    shift 1
     ( cd "$ROOT" && (
         git reset --quiet HEAD
         git add "$@"
         if git is-dirty -i; then
-            git commit -m "Bump to $VERSION"
+            git commit -m "$msg"
         fi
     ) )
 }
@@ -292,10 +300,10 @@ commit_to_git () {
 ( cd "$PRIMARY_PKG" && (
     pkgname="$(npm_pkgname "$PRIMARY_PKG")"
     echo "==> Building and publishing $PRIMARY_PKG"
-     bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
-     build_pkg
-     publish_to_npm "$pkgname"
-     commit_to_git "$PRIMARY_PKG"
+    bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
+    build_pkg
+    publish_to_npm "$pkgname"
+    commit_to_git "Bump to $VERSION" "$PRIMARY_PKG"
 ) )
 
 # Then, build and publish all the other packages
@@ -308,7 +316,7 @@ for pkgdir in ${SECONDARY_PKGS[@]}; do
         publish_to_npm "$pkgname"
     ) )
 done
-commit_to_git ${SECONDARY_PKGS[@]}
+commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
 
 echo ""
 echo "All published!"
@@ -335,6 +343,14 @@ else
     open "$URL"
     read
 fi
+
+echo "==> Bumping to next dev versions"
+( cd "$PRIMARY_PKG" && bump_version_in_pkg --no-peers "$PRIMARY_PKG" "$VERSION-dev" )
+for pkgdir in ${SECONDARY_PKGS[@]}; do
+    ( cd "$pkgdir" && bump_version_in_pkg --no-peers "$pkgdir" "$VERSION-dev" )
+done
+commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
+git push-current
 
 echo "==> Upgrade local examples?"
 echo "Now that you're all finished, you may want to also upgrade all our examples"
