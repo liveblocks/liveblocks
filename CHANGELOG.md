@@ -3,32 +3,54 @@
 For information, please read our
 [Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17).
 
-### TypeScript improvements
+### TypeScript improvements ✨
 
 This release contains major TypeScript improvements. The recommended setup now
 is that you define your own Presence and Storage types at the highest level
-(i.e. where you set up the room).
-
-After that initial one-time setup, you will not need any extra type annotations
-anywhere for your Liveblocks code, and every Liveblocks API will now know about
-your own Presence and Storage shapes and support auto-completion.
+(i.e. where you set up the room). After that initial one-time setup, you will no
+longer need to provide any extra type annotations anywhere for your Liveblocks
+code! 🙌
 
 To learn how to set that up, follow the instructions in our
 [Upgrade Guide](https://preview.liveblocks.io/docs/guides/upgrading/0.17).
 
-- There are no more `any` types in `@liveblocks/client` and `@liveblocks/react`
+- No more `any` types used (in `@liveblocks/client` and `@liveblocks/react`)
 - All APIs that work with Presence data will now require it to be
   JSON-serializable
 - All APIs that work with Storage data will now require it to be LSON (= JSON +
   Live structures)
-- Various Live structures now take mandatory type params:
-  - `LiveMap<K, V>` (just like `Map<K, V>`)
-  - `LiveObject<{ a: number, b: string }>` (just like, for example,
+- All Live structures now take mandatory type params for their payloads, just
+  like the built-in array, object, and map types do:
+  - `LiveMap<K, V>` (like `Map<K, V>`)
+  - `LiveObject<{ a: number, b: string }>` (like, for example,
     `{ a: number, b: string }`)
-  - `LiveList<T>` (just like `Array<T>`)
-- The built-in `Presence` type is now deprecated and will get removed in 0.18.
-  The idea is that you bring whatever type definition for Presence that makes
-  sense to your own app instead.
+  - `LiveList<T>` (like `Array<T>`)
+
+### React Native support ✨
+
+We now support React Native! To learn how to use Liveblocks in your React Native
+projects, see our
+[API reference](https://preview.liveblocks.io/docs/api-reference/liveblocks-client#createClientReactNative).
+It's surprisingly simple!
+
+### New APIs ✨
+
+- In **@liveblocks/react**:
+
+  - [`createRoomContext()`](https://preview.liveblocks.io/docs/api-reference/liveblocks-react#createRoomContext)
+    is now the preferred way to initialize hooks.
+
+- In the API:
+
+  - New endpoint to
+    [Get Users in a Room](https://preview.liveblocks.io/docs/api-reference/rest-api-endpoints#GetRoomUsers)
+  - New endpoint to
+    [Get a list of all Rooms](https://preview.liveblocks.io/docs/api-reference/rest-api-endpoints#GetRooms)
+
+### Bug fixes 🐛
+
+- Improved conflict resolution on LiveList
+- Various minor internal bug fixes
 
 ### Breaking changes
 
@@ -58,10 +80,6 @@ To learn how to set that up, follow the instructions in our
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`
   - The RoomProvider's `defaultStorageRoot` is renamed to `initialStorage`
-
-### Other
-
-Various internal refactorings.
 
 ---
 

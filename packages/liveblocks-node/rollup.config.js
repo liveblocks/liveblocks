@@ -8,8 +8,7 @@ import resolve from "@rollup/plugin-node-resolve";
 import { terser as terserPlugin } from "rollup-plugin-terser";
 import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
-const packageJson = require("./package.json");
-const createBabelConfig = require("./babel.config");
+const babelConfig = require("./babel.config");
 
 function execute(cmd, wait = true) {
   return commandPlugin(cmd, { exitOnFail: true, wait });
@@ -50,7 +49,7 @@ function typescriptDeclarations(outDir) {
 
 function getBabelOptions(extensions, targets) {
   return {
-    ...createBabelConfig({ env: (env) => env === "build" }, targets),
+    ...babelConfig,
     extensions,
     comments: false,
     babelHelpers: "bundled",
@@ -67,12 +66,7 @@ function buildESM(srcFiles, external = []) {
       chunkFileNames: "shared.mjs",
     },
     external,
-    plugins: [
-      replaceText({ __PACKAGE_VERSION__: packageJson.version }),
-      typescriptCompile(),
-      stripComments(),
-      prettier(),
-    ],
+    plugins: [typescriptCompile(), stripComments(), prettier()],
   };
 }
 
@@ -89,7 +83,6 @@ function buildCJS(srcFiles, external = []) {
     external,
     plugins: [
       resolve({ extensions }),
-      replaceText({ __PACKAGE_VERSION__: packageJson.version }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
       stripComments(),
       prettier(),
@@ -198,7 +191,7 @@ export default async () => {
   });
 
   // Files relative to `src/`
-  const srcFiles = ["index.ts", "internal.ts"];
+  const srcFiles = ["index.ts"];
 
   // NOTE: Make sure this list always matches the names of all dependencies and
   // peerDependencies from package.json

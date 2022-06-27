@@ -15,8 +15,6 @@ function pickRandomAction() {
 
 const TEST_URL = "http://localhost:3007/storage/list";
 
-// test.describe.configure({ mode: "parallel" });
-
 test.describe("Storage - LiveList", () => {
   let pages: Page[];
 
@@ -83,11 +81,11 @@ test.describe("Storage - LiveList", () => {
     await waitForContentToBeEquals(pages);
   });
 
-  test.skip("set conflicts", async () => {
+  test("set conflicts", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 1; i++) {
       await pages[0].click("#push");
       await delay(50);
     }
@@ -99,15 +97,15 @@ test.describe("Storage - LiveList", () => {
       await delay(50);
     }
 
-    await assertContainText(pages, "5");
+    await assertContainText(pages, "1");
     await waitForContentToBeEquals(pages);
   });
 
-  test.skip("fuzzy with undo/redo push delete and move", async () => {
+  test("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
-    const numberOfItemsAtStart = 10;
+    const numberOfItemsAtStart = 5;
     for (let i = 0; i < numberOfItemsAtStart; i++) {
       // no await to create randomness
       pages[0].click("#push");

@@ -65,9 +65,9 @@ export function createClient(options: ClientOptions): Client {
 
   function getRoom<
     TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
   >(roomId: string): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null {
     const internalRoom = rooms.get(roomId);
     return internalRoom
@@ -82,9 +82,9 @@ export function createClient(options: ClientOptions): Client {
 
   function enter<
     TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
   >(
     roomId: string,
     options: EnterOptions<TPresence, TStorage> = {}
