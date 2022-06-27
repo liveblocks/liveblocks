@@ -338,6 +338,14 @@ else
     read
 fi
 
+echo "==> Bumping to next dev versions"
+bump_version_in_pkg "$PRIMARY_PKG" "$VERSION-dev"
+for pkgdir in ${SECONDARY_PKGS[@]}; do
+    bump_version_in_pkg "$pkgdir" "$VERSION-dev"
+done
+commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
+git push-current
+
 echo "==> Upgrade local examples?"
 echo "Now that you're all finished, you may want to also upgrade all our examples"
 echo "to the latest version. To do so, run:"
