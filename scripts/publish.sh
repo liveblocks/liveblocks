@@ -208,13 +208,19 @@ while ! is_valid_version "$VERSION"; do
 done
 
 bump_version_in_pkg () {
+    SKIP_PEERS=0
+    if [ "$1" = "--no-peers" ]; then
+        SKIP_PEERS=1
+        shift 1
+    fi
+
     PKGDIR="$1"
     VERSION="$2"
 
     jq ".version=\"$VERSION\"" package.json | sponge package.json
 
     # If this is one of the client packages, also bump the peer dependency
-    if [ "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
+    if [ "$SKIP_PEERS" -eq 0 -a "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
         jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
     fi
 
@@ -339,9 +345,9 @@ else
 fi
 
 echo "==> Bumping to next dev versions"
-bump_version_in_pkg "$PRIMARY_PKG" "$VERSION-dev"
+( cd "$PRIMARY_PKG" && bump_version_in_pkg --no-peers "$PRIMARY_PKG" "$VERSION-dev" )
 for pkgdir in ${SECONDARY_PKGS[@]}; do
-    bump_version_in_pkg "$pkgdir" "$VERSION-dev"
+    ( cd "$pkgdir" && bump_version_in_pkg --no-peers "$pkgdir" "$VERSION-dev" )
 done
 commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
 git push-current
