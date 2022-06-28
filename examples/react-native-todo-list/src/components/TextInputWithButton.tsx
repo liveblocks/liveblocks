@@ -7,8 +7,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   Keyboard,
-  NativeSyntheticEvent,
-  TextInputKeyPressEventData,
 } from "react-native";
 
 import { ActiveIcon, InactiveIcon } from "../../assets/svg/ConfirmIcon";
@@ -56,8 +54,8 @@ const TextInputWithButton = ({
               validateText();
             }
           }}
-          onKeyPress={(e: NativeSyntheticEvent<TextInputKeyPressEventData>) => {
-            if (e.key === "Enter") {
+          onKeyPress={(e) => {
+            if (e.nativeEvent.key === "Enter") {
               updateTypingStatus(false);
               setCurrentText("");
             }
