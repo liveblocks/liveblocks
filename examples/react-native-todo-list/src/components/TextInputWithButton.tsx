@@ -13,7 +13,7 @@ import {
 
 import { ActiveIcon, InactiveIcon } from "../../assets/svg/ConfirmIcon";
 
-export type TextInputWithButtonProps = {
+type TextInputWithButtonProps = {
   handleOnSubmitEditing: (text: string) => void;
   updateTypingStatus: (isUpdating: boolean) => void;
   isSomeoneTyping: boolean;

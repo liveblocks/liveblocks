@@ -1,7 +1,6 @@
 import { createClient, LiveList } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 import { decode } from "base-64";
-import { Todo } from "./src/types/todo";
 
 const PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 

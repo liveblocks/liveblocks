@@ -4,7 +4,7 @@ import { StyleSheet, View } from "react-native";
 import WhoIsHere from "./WhoIsHere";
 import Today from "../../assets/svg/Today";
 
-export type HeaderProps = {
+type HeaderProps = {
   whoIsHereCount: number;
 };
 

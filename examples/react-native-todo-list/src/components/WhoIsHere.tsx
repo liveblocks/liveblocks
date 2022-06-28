@@ -21,11 +21,11 @@ const colorPairs = [
   },
 ];
 
-export type AvatarsTypeProps = {
+type AvatarsTypeProps = {
   count: number;
 };
 
-export type WhoIsHereProps = {
+type WhoIsHereProps = {
   count: number;
 };
 

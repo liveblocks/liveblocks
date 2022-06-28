@@ -47,7 +47,7 @@ const App = () => {
       >
         <>
           <Header whoIsHereCount={others?.count} />
-          {todos?.toArray().length > 0 ? (
+          {todos.length > 0 ? (
             <FlatList
               data={todos.toArray()}
               renderItem={({ item, index }) => (

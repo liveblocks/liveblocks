@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import Delete from "../../assets/svg/Delete";
 
-export type TodoProps = {
+type TodoProps = {
   onDelete: () => void;
   text: string;
 };

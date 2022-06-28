@@ -1,3 +1,3 @@
-export type Todo = {
+type Todo = {
   text: string;
 };
