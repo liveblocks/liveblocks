@@ -420,7 +420,7 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
   return partialState;
 }
 
-function patchState<T>(
+function patchState<T extends JsonObject>(
   state: T,
   updates: any[], // StorageUpdate
   mapping: Mapping<T>
