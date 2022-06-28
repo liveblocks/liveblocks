@@ -51,8 +51,8 @@ const COLORS = [
 // Just checking you have your liveblocks.io API key added, can be removed
 function noKeyWarning() {
   return process.env.CODESANDBOX_SSE
-    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#codesandbox.\n`
-    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-starter-typescript-tailwind#getting-started.\n`;
+    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced#codesandbox.\n`
+    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced#getting-started.\n`;
 }

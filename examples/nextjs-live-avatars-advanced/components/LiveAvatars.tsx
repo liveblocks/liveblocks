@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from "framer-motion";
 
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.
- * https://liveblocks.io/docs/examples/live-avatars
  *
  * The users picture and name are not set via the `useMyPresence` hook like the cursors.
  * They are set from the authentication endpoint.

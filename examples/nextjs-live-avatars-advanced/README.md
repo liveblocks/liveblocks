@@ -12,11 +12,12 @@
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
+  <img src="https://img.shields.io/badge/framer motion-message?style=flat&logo=framer&color=C114C5&logoColor=fff" alt="Framer Motion" />
 </p>
 
-This example shows how to build an advanced live avatar stack with [Liveblocks](https://liveblocks.io), [Framer Motion](https://www.framer.com/docs/), and [Next.js](https://nextjs.org/).
+This example shows how to build an advanced live avatar stack with [Liveblocks](https://liveblocks.io), [Framer Motion](https://www.framer.com/motion/), and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars-advanced.png" width="500" alt="Live Avatar Stack Advanced" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars-advanced.png" width="500" alt="Advanced Live Avatar Stack" />
 
 ## Getting started
 

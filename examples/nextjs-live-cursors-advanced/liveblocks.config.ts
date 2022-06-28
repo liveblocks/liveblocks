@@ -24,18 +24,21 @@ type Storage = {
 // Optionally, UserMeta represents static/readonly metadata on each User, as
 // provided by your own custom auth backend (if used). Useful for data that
 // will not change during a session, like a User's name or avatar.
-// type UserMeta = {
-//   id?: string,  // Accessible through `user.id`
-//   info?: Json,  // Accessible through `user.info`
-// };
+type UserMeta = {
+  info: {
+    name: string;
+    color: string;
+  }
+};
 
 // Optionally, the type of custom events broadcasted and listened for in this
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-const { RoomProvider, useOthers, useMyPresence } = createRoomContext<
+const { RoomProvider, useOthers, useUpdateMyPresence } = createRoomContext<
   Presence,
-  Storage /* UserMeta, RoomEvent */
+  Storage,
+  UserMeta /* RoomEvent */
 >(client);
 
-export { RoomProvider, useOthers, useMyPresence };
+export { RoomProvider, useOthers, useUpdateMyPresence };

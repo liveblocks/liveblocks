@@ -1,5 +1,6 @@
 {
-  "version": "0.1.0",
+  "description": "This example shows how to build an advanced live avatar stack with Liveblocks, Framer Motion, and Next.js.",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -8,9 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.15",
+    "@liveblocks/client": "^0.17.0",
     "@liveblocks/node": "^0.3.0",
-    "@liveblocks/react": "^0.16.15",
+    "@liveblocks/react": "^0.17.0",
     "classnames": "^2.3.1",
     "framer-motion": "^6.3.6",
     "next": "12.1.6",
