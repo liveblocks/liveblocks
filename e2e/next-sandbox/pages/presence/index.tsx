@@ -1,16 +1,27 @@
-import {
-  Json,
+import { Json, createRoomContext } from "@liveblocks/react";
+import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
+
+const client = createLiveblocksClient();
+
+type Presence = {
+  count?: number;
+  secondProp?: number;
+  thirdProp?: number;
+};
+
+const {
   RoomProvider,
   useBroadcastEvent,
   useEventListener,
   useMyPresence,
   useOthers,
-  LiveblocksProvider,
-} from "@liveblocks/react";
-import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
-
-const client = createLiveblocksClient();
+} = createRoomContext<
+  Presence,
+  never,
+  never,
+  { emoji: string; type: "EMOJI" } | number
+>(client);
 
 export default function Home() {
   const [isVisible, setIsVisible] = React.useState(true);
@@ -31,26 +42,18 @@ export default function Home() {
         Enter
       </button>
       {isVisible && (
-        <LiveblocksProvider client={client}>
-          <RoomProvider id={roomId}>
-            <PresenceSandbox />
-            <EventSandbox />
-          </RoomProvider>
-        </LiveblocksProvider>
+        <RoomProvider id={roomId}>
+          <PresenceSandbox />
+          <EventSandbox />
+        </RoomProvider>
       )}
     </>
   );
 }
 
-type Presence = {
-  count?: number;
-  secondProp?: number;
-  thirdProp?: number;
-};
-
 function PresenceSandbox() {
   const others = useOthers();
-  const [me, updateMyPresence] = useMyPresence<Presence>();
+  const [me, updateMyPresence] = useMyPresence();
 
   return (
     <div>

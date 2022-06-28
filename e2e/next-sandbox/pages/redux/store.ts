@@ -46,7 +46,8 @@ const store = makeStore();
 
 export type AppState = LiveblocksState<
   ReturnType<typeof store.getState>,
-  { items: string[] }
+  { items: string[] },
+  never
 >;
 
 export type AppDispatch = typeof store.dispatch;

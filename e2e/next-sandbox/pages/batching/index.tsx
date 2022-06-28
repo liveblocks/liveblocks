@@ -1,5 +1,15 @@
 import { LiveMap } from "@liveblocks/client";
-import {
+import { createRoomContext } from "@liveblocks/react";
+import React from "react";
+import createLiveblocksClient from "../../utils/createClient";
+
+const client = createLiveblocksClient();
+
+type Presence = {
+  count?: number;
+};
+
+const {
   RoomProvider,
   useBatch,
   useMap,
@@ -8,12 +18,7 @@ import {
   useUndo,
   useOthers,
   useMyPresence,
-  LiveblocksProvider,
-} from "@liveblocks/react";
-import React from "react";
-import createLiveblocksClient from "../../utils/createClient";
-
-const client = createLiveblocksClient();
+} = createRoomContext<Presence, { liveMap: LiveMap<string, number> }>(client);
 
 export default function Home() {
   let roomId = "e2e-batching-presence-storage";
@@ -24,26 +29,20 @@ export default function Home() {
     }
   }
   return (
-    <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId} initialStorage={{ liveMap: new LiveMap() }}>
-        <Sandbox />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <RoomProvider id={roomId} initialStorage={{ liveMap: new LiveMap() }}>
+      <Sandbox />
+    </RoomProvider>
   );
 }
-
-type Presence = {
-  count?: number;
-};
 
 function Sandbox() {
   const undo = useUndo();
   const redo = useRedo();
   const batch = useBatch();
-  const liveMap = useMap<string, number>("liveMap");
+  const liveMap = useMap("liveMap");
 
   const others = useOthers();
-  const [myPresence, updateMyPresence] = useMyPresence<Presence>();
+  const [myPresence, updateMyPresence] = useMyPresence();
   const me = useSelf();
 
   if (liveMap == null || me == null) {
