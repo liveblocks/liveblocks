@@ -1,9 +1,9 @@
 import { useRef } from "react";
 import { useRouter } from "next/router";
-import { RoomProvider } from "@liveblocks/react";
 import LiveCanvas from "../../components/LiveCanvas";
 import LiveCursors from "../../components/LiveCursors";
 import LiveAvatars from "../../components/LiveAvatars";
+import { RoomProvider } from "../../liveblocks.config";
 import { LiveMap } from "@liveblocks/client";
 
 /*
@@ -14,7 +14,7 @@ const roomId = typeof window !==  "undefined"
 
 const initialStorage = () => ({
   shapes: new LiveMap()
-})
+});
 
 export default function MultiplayerRoom() {
   const router = useRouter();

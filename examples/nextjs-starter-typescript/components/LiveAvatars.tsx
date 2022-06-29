@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar } from "./Avatar";
-import { useOthers, useSelf } from "@liveblocks/react";
+import { useOthers, useSelf } from "../liveblocks.config";
 
 /**
  * This file shows how to add live avatars like you can see them at the top right of a Google Doc or a Figma file.

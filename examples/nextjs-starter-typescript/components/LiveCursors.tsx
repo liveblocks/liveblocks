@@ -1,4 +1,4 @@
-import { useOthers, useUpdateMyPresence } from "@liveblocks/react";
+import { useOthers, useUpdateMyPresence } from "../liveblocks.config";
 import React, { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";

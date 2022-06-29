@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useBatch, useHistory, useMap, useMyPresence, useOthers } from "@liveblocks/react";
+import { Shapes, useBatch, useHistory, useMap, useMyPresence, useOthers } from "../liveblocks.config";
 import { LiveObject } from "@liveblocks/client";
 import { useBoundingClientRectRef } from "../utils/useBoundingClientRectRef";
 import { nanoid } from "nanoid";
@@ -25,7 +25,7 @@ export default function LiveCanvas() {
   return <Canvas shapes={shapes} />;
 }
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: { shapes: Shapes }) {
   const [myPresence, updateMyPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();

@@ -1,8 +1,16 @@
 import { memo, useEffect, useState } from "react";
-import { useRoom } from "@liveblocks/react";
+import { Shape, useRoom } from "../liveblocks.config";
 import styles from "./Note.module.css";
+import { LiveObject } from "@liveblocks/client";
 
-function Note ({ shape, onPointerDown, selectionColor, onDelete }) {
+type NoteProps = {
+  shape: LiveObject<Shape>;
+  onPointerDown: (e: React.PointerEvent) => void;
+  selectionColor: string;
+  onDelete: () => void;
+}
+
+function Note ({ shape, onPointerDown, selectionColor, onDelete }: NoteProps) {
   const room = useRoom();
 
   const [{ x, y, text, id }, setShapeData] = useState(shape.toObject());
