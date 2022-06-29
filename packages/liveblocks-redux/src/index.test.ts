@@ -76,7 +76,7 @@ function prepareClientAndStore<T>(
   >({
     reducer: reducer as any,
     enhancers: [enhancer({ client, ...options })],
-    preloadedState,
+    preloadedState: preloadedState as any,
   });
   return { client, store };
 }
