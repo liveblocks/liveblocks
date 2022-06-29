@@ -1,4 +1,4 @@
-import { createClient, LiveMap, LiveObject } from "@liveblocks/client";
+import { createClient, LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
@@ -20,15 +20,15 @@ type CanvasPresence = {
 
 type Presence = BasicPresence | CanvasPresence;
 
-export type Shape = {
+export type Shape = LiveObject<{
   x: number;
   y: number;
   text: string;
-  selectedBy: number | null;
+  selectedBy: UserMeta["info"] | null;
   id: string;
-};
+}>;
 
-export type Shapes = LiveMap<string, LiveObject<Shape>>;
+export type Shapes = LiveMap<string, Shape>;
 
 // Optionally, Storage represents the shared document that persists in the
 // Room, even after all Users leave. Fields under Storage typically are
@@ -47,7 +47,6 @@ type UserMeta = {
   info: {
     name: string;
     color: string;
-    picture?: string;
   }
 };
 

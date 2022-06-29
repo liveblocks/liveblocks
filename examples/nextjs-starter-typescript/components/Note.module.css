@@ -5,7 +5,7 @@
   max-width: 400px;
   min-height: 100px;
   border-radius: 16px;
-  padding: 5px;
+  padding: 4px;
 }
 
 .noteInner {
@@ -24,6 +24,9 @@
 }
 
 .noteHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-grow: 0;
   margin: 12px 12px 8px;
 }
@@ -60,5 +63,7 @@
   resize: none;
   word-wrap: break-word;
   border-radius: 8px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
 }
 

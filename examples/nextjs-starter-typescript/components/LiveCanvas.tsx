@@ -52,7 +52,7 @@ function Canvas({ shapes }: { shapes: Shapes }) {
     });
   }
 
-  function deleteNote(shapeId = myPresence.selectedShape) {
+  function handleNoteDelete(shapeId) {
     shapes.delete(shapeId);
   }
 
@@ -103,34 +103,18 @@ function Canvas({ shapes }: { shapes: Shapes }) {
         onPointerMove={handleCanvasPointerMove}
         onPointerUp={handleCanvasPointerUp}
       >
-        {[...shapes.values()].map((shape) => {
-          const id = shape.get("id");
-          const selectionColor =
-            myPresence.selectedShape === shape.id
-              ? "blue"
-              : others
-                .toArray()
-                .some((user) => user.presence?.selectedShape === id)
-                ? "green"
-                : undefined;
-
-          return (
-            <Note
-              key={id}
-              shape={shape}
-              onPointerDown={(e) => handleNotePointerDown(e, id)}
-              onDelete={() => deleteNote(id)}
-              selectionColor={selectionColor}
-            />
-          );
-        })}
+        {Array.from(shapes.values()).map((shape) => (
+          <Note
+            key={shape.get("id")}
+            shape={shape}
+            onPointerDown={(e) => handleNotePointerDown(e, shape.get("id"))}
+            onDelete={() => handleNoteDelete(shape.get("id"))}
+          />
+        ))}
       </div>
 
       <div className={styles.toolbar}>
         <button onClick={insertNote}>Rectangle</button>
-        <button onClick={deleteNote} disabled={myPresence.selectedShape == null}>
-          Delete
-        </button>
         <button onClick={history.undo}>Undo</button>
         <button onClick={history.redo}>Redo</button>
       </div>
