@@ -25,6 +25,6 @@
   },
   "dependencies": {
     "@liveblocks/client": "^0.17.1",
-    "@liveblocks/node": "^0.3.0"
+    "@liveblocks/node": "^0.17.1"
   }
 }
