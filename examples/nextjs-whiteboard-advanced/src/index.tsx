@@ -43,6 +43,16 @@ import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 
+function Loading() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.loading}>
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    </div>
+  );
+}
+
 export default function Room() {
   const roomId = useOverrideRoomId("nextjs-whiteboard-advanced");
 
@@ -74,13 +84,7 @@ function WhiteboardTool() {
   const layerIds = useList("layerIds");
 
   if (layerIds == null || layers == null) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loading}>
-          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
-        </div>
-      </div>
-    );
+    return <Loading />;
   }
 
   return <Canvas layers={layers} layerIds={layerIds} />;
