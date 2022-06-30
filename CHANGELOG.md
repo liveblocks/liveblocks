@@ -1,3 +1,7 @@
+# v0.17.2
+
+Fix missing documentation for hooks created via `createRoomContext()`.
+
 # v0.17.1
 
 Fix `@liveblocks/nodes` packaging.
