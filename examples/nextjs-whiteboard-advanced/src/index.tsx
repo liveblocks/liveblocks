@@ -8,7 +8,13 @@ import {
   useBatch,
 } from "../liveblocks.config";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Color,
   Layer,
@@ -43,6 +49,23 @@ import ToolsBar from "./components/ToolsBar";
 
 const MAX_LAYERS = 100;
 
+function ClientSideSuspense(props: {
+  fallback: JSX.Element;
+  children: () => JSX.Element;
+}) {
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // We're on the server side, render the fallback
+  if (typeof window === "undefined" || !mounted) {
+    return props.fallback;
+  } else {
+    return <Suspense fallback={props.fallback}>{props.children()}</Suspense>;
+  }
+}
+
 function Loading() {
   return (
     <div className={styles.container}>
@@ -71,32 +94,23 @@ export default function Room() {
       }}
     >
       <div className={styles.container}>
-        <WhiteboardTool />
+        <ClientSideSuspense fallback={<h1>hahaha</h1>}>
+          {
+            /* This component tree will only run on the client, never during SSR */
+            () => <Canvas />
+          }
+        </ClientSideSuspense>
       </div>
     </RoomProvider>
   );
 }
 
-function WhiteboardTool() {
+function Canvas() {
   // layers is a LiveMap that contains all the shapes drawn on the canvas
-  const layers = useMap("layers");
+  const layers = useMap("layers", { suspense: true });
   // layerIds is LiveList of all the layer ids ordered by their z-index
-  const layerIds = useList("layerIds");
+  const layerIds = useList("layerIds", { suspense: true });
 
-  if (layerIds == null || layers == null) {
-    return <Loading />;
-  }
-
-  return <Canvas layers={layers} layerIds={layerIds} />;
-}
-
-function Canvas({
-  layerIds,
-  layers,
-}: {
-  layerIds: LiveList<string>;
-  layers: LiveMap<string, LiveObject<Layer>>;
-}) {
   const [{ selection, pencilDraft }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
