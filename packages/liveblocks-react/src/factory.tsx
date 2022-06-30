@@ -169,7 +169,7 @@ type RoomContext<
    * @example
    * const others = useOthers();
    *
-   * // Example to map all cursors in jsx
+   * // Example to map all cursors in JSX
    * {
    *   others.map((user) => {
    *     if (user.presence?.cursor == null) {
