@@ -50,7 +50,7 @@ export function createRoomContext<
     useClient = _useClient;
   }
 
-  const RoomContext = React.createContext<Room<
+  const RoomCtx = React.createContext<Room<
     TPresence,
     TStorage,
     TUserMeta,
@@ -121,9 +121,7 @@ export function createRoomContext<
       };
     }, [_client, roomId]);
 
-    return (
-      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
-    );
+    return <RoomCtx.Provider value={room}>{props.children}</RoomCtx.Provider>;
   }
 
   /**
@@ -131,7 +129,7 @@ export function createRoomContext<
    * tree.
    */
   function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const room = React.useContext(RoomContext);
+    const room = React.useContext(RoomCtx);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
     }
