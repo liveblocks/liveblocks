@@ -16,7 +16,8 @@
   border-radius: 12px;
   box-shadow: 0 4px 12px 0 #00000008;
   outline: 2px solid #fff;
-  transition: all 0.1s ease-in-out;
+  transition: all 150ms ease-in-out;
+  overflow: hidden;
 }
 
 .note:hover .noteInner {
@@ -24,11 +25,11 @@
 }
 
 .noteHeader {
+  margin: 12px 12px 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-grow: 0;
-  margin: 12px 12px 8px;
 }
 
 .noteDelete {
@@ -36,6 +37,11 @@
   padding: 12px;
   background: rgba(0, 0, 0, 0.02);
   border-radius: 8px;
+  transition: background 100ms ease-in-out;
+}
+
+.noteDelete:hover{
+  background: rgba(0, 0, 0, 0.08);
 }
 
 .noteBody {

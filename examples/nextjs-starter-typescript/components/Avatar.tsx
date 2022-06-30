@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import Image from "next/image";
 import classNames from "classnames";
 import { getContrastingColor } from "../utils/getContrastingColor";
-import styles from "./Avatars.module.css";
+import styles from "./Avatar.module.css";
 
 type BothProps = {
   variant?: "avatar" | "more";

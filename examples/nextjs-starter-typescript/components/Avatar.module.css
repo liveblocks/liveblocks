@@ -3,6 +3,7 @@
   position: relative;
   place-content: center;
   outline: 2px solid white;
+  animation: slideIn 0.4s ease-in-out;
 }
 
 .status {
@@ -61,4 +62,15 @@
   font-weight: 600;
   justify-content: center;
   align-items: center;
+}
+
+@keyframes slideIn {
+  0% {
+    opacity: 0;
+    transform: translate(100%, 0);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }

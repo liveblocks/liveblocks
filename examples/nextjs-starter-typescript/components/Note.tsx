@@ -1,15 +1,18 @@
-import { memo, useEffect, useState } from "react";
+import { ChangeEventHandler, FocusEventHandler, memo, PointerEventHandler, useEffect, useState } from "react";
 import { Shape, useRoom, useSelf } from "../liveblocks.config";
 import styles from "./Note.module.css";
 import { Avatar } from "./Avatar";
 
 type NoteProps = {
   shape: Shape;
-  onPointerDown: (e: React.PointerEvent) => void;
+  onPointerDown: PointerEventHandler<HTMLDivElement>;
   onDelete: () => void;
+  onChange: ChangeEventHandler<HTMLTextAreaElement>;
+  onFocus: FocusEventHandler<HTMLTextAreaElement>;
+  onBlur: FocusEventHandler<HTMLTextAreaElement>;
 }
 
-function Note ({ shape, onPointerDown, onDelete }: NoteProps) {
+function Note ({ shape, onPointerDown, onDelete, onChange, onFocus, onBlur }: NoteProps) {
   const room = useRoom();
   const self = useSelf();
 
@@ -73,11 +76,9 @@ function Note ({ shape, onPointerDown, onDelete }: NoteProps) {
               placeholder="Write note"
               value={text}
               onPointerDown={(e) => e.stopPropagation()}
-              onChange={(e) => {
-                shape.update({ text: e.target.value, selectedBy: self.info })
-              }}
-              onFocus={() => self ? shape.update({ selectedBy: self.info }) : null}
-              onBlur={() => shape.set("selectedBy", null)}
+              onChange={onChange}
+              onFocus={onFocus}
+              onBlur={onBlur}
             />
           </div>
         </div>
