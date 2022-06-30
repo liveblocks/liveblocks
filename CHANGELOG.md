@@ -1,6 +1,6 @@
-# v0.17.1 (not yet released)
+# v0.17.1
 
-...
+Fix `@liveblocks/nodes` packaging.
 
 # v0.17.0
 
