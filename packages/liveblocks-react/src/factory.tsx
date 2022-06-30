@@ -126,7 +126,7 @@ type RoomContext<
    * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
    *
    * @example
-   * const shapesById = useMap<string, Shape>("shapes");
+   * const shapesById = useMap("shapes");
    */
   useMap<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
@@ -171,11 +171,11 @@ type RoomContext<
    *
    * // Example to map all cursors in jsx
    * {
-   *   others.map(({ connectionId, presence }) => {
-   *     if(presence == null || presence.cursor == null) {
+   *   others.map((user) => {
+   *     if (user.presence?.cursor == null) {
    *       return null;
    *     }
-   *     return <Cursor key={connectionId} cursor={presence.cursor} />
+   *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
    *   })
    * }
    */
@@ -251,7 +251,7 @@ type RoomContext<
    * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
    *
    * @example
-   * const shapesById = useMap<string, Shape>("shapes");
+   * const shapesById = useMap("shapes");
    */
   deprecated_useMap<TKey extends string, TValue extends Lson>(
     key: string
