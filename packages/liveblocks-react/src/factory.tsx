@@ -514,7 +514,7 @@ export function createRoomContext<
     return room.getSelf();
   }
 
-  function useStorage(): [root: LiveObject<TStorage> | null] {
+  function useStorage_classic(): [root: LiveObject<TStorage> | null] {
     const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
@@ -536,6 +536,10 @@ export function createRoomContext<
     }, [room]);
 
     return [root];
+  }
+
+  function useStorage(): [root: LiveObject<TStorage> | null] {
+    return useStorage_classic();
   }
 
   function deprecated_useMap<TKey extends string, TValue extends Lson>(
