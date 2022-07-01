@@ -115,7 +115,12 @@ type RoomContext<
    * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
    */
   useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -129,7 +134,12 @@ type RoomContext<
    * const shapesById = useMap("shapes");
    */
   useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -143,7 +153,12 @@ type RoomContext<
    * const object = useObject("obj");
    */
   useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -202,7 +217,10 @@ type RoomContext<
    * @example
    * const [root] = useStorage();
    */
-  useStorage(): [root: LiveObject<TStorage> | null];
+  useStorage(options: { suspense: true }): LiveObject<TStorage>;
+  useStorage(options?: {
+    suspense: false;
+  }): [root: LiveObject<TStorage> | null];
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -514,7 +532,39 @@ export function createRoomContext<
     return room.getSelf();
   }
 
-  function useStorage_classic(): [root: LiveObject<TStorage> | null] {
+  const _storagePromisesInflight = new Map<string, Promise<void>>();
+  const _storageCache = new Map<string, LiveObject<TStorage>>();
+
+  function useStorageWithSuspense(): LiveObject<TStorage> {
+    if (typeof window === "undefined") {
+      throw new Error(
+        "You cannot use useStorage({ suspense: true }) server-side, because Suspense isn't supported in a server-side context."
+      );
+    }
+
+    const room = useRoom();
+
+    // XXX Restructure the code below to deal with _changing_ room IDs!
+
+    const cached = _storageCache.get(room.id);
+    if (cached) {
+      return cached;
+    }
+
+    // Else, we'll need to fire off our fetch, and store it in our promise cache
+    let inflight = _storagePromisesInflight.get(room.id);
+    if (!inflight) {
+      // Fire off the fetch right now, and keep the promise in cache
+      const inflight = room.getStorage().then((resp) => {
+        _storageCache.set(room.id, resp.root);
+      });
+      _storagePromisesInflight.set(room.id, inflight);
+    }
+
+    throw inflight;
+  }
+
+  function useStorageWithoutSuspense(): [root: LiveObject<TStorage> | null] {
     const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
@@ -538,8 +588,18 @@ export function createRoomContext<
     return [root];
   }
 
-  function useStorage(): [root: LiveObject<TStorage> | null] {
-    return useStorage_classic();
+  function useStorage(options: { suspense: true }): LiveObject<TStorage>;
+  function useStorage(options?: {
+    suspense: false;
+  }): [root: LiveObject<TStorage> | null];
+  function useStorage(options?: {
+    suspense?: boolean;
+  }): LiveObject<TStorage> | [root: LiveObject<TStorage> | null] {
+    if (options?.suspense) {
+      return useStorageWithSuspense();
+    } else {
+      return useStorageWithoutSuspense();
+    }
   }
 
   function deprecated_useMap<TKey extends string, TValue extends Lson>(
@@ -724,21 +784,63 @@ Please see https://bit.ly/3Niy5aP for details.`
   }
 
   function useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
+  function useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null {
-    return deprecated_useList(key) as unknown as TStorage[TKey];
+    if (options?.suspense) {
+      const root = useStorage({ suspense: true });
+      return root.get(key);
+    } else {
+      return deprecated_useList(key) as unknown as TStorage[TKey];
+    }
   }
 
   function useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
+  function useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null {
-    return deprecated_useMap(key) as unknown as TStorage[TKey];
+    if (options?.suspense) {
+      const root = useStorage({ suspense: true });
+      return root.get(key);
+    } else {
+      return deprecated_useMap(key) as unknown as TStorage[TKey];
+    }
   }
 
   function useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
+  function useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null {
-    return deprecated_useObject(key) as unknown as TStorage[TKey];
+    if (options?.suspense) {
+      const root = useStorage({ suspense: true });
+      return root.get(key);
+    } else {
+      return deprecated_useObject(key) as unknown as TStorage[TKey];
+    }
   }
 
   function useHistory(): History {
