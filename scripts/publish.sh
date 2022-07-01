@@ -281,7 +281,7 @@ publish_to_npm () {
         cd "./lib"
     fi
 
-    npm publish --tag "${TAG:-latest}" --otp "$OTP"
+    npm publish --tag private --otp "$OTP"
 }
 
 commit_to_git () {
@@ -317,6 +317,31 @@ for pkgdir in ${SECONDARY_PKGS[@]}; do
     ) )
 done
 commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
+
+# By now, all packages should be published under a "private" tag.
+# We'll verify that now, and if indeed correct, we'll "assign" the intended tag
+# instead. Afterwards, we'll remove the "private" tags again.
+echo ""
+echo "Assigning definitive NPM tags"
+for pkgdir in ${PACKAGE_DIRS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    while true; do
+        if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
+            echo "==> $pkgname"
+            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
+            break
+        else
+            err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
+            read
+        fi
+    done
+done
+
+# Clean up those temporary "private" tags
+for pkgdir in ${PACKAGE_DIRS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    npm dist-tag rm "$pkgname@$VERSION" private
+done
 
 echo ""
 echo "All published!"
