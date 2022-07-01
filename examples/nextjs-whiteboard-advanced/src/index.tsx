@@ -94,7 +94,19 @@ export default function Room() {
       }}
     >
       <div className={styles.container}>
-        <ClientSideSuspense fallback={<h1>hahaha</h1>}>
+        {
+          //
+          // XXX Not sure what is the best way to make Suspense and SSR best
+          // friends. The new NextJS and React 18 might have a better way to
+          // offer this.
+          //
+          // This client-side-only Suspense trick works.
+          //
+          // Either way, it's important to realize that this is not related to
+          // Liveblocks at all. All Suspense-aware components have this issue.
+          //
+        }
+        <ClientSideSuspense fallback={<Loading />}>
           {
             /* This component tree will only run on the client, never during SSR */
             () => <Canvas />
