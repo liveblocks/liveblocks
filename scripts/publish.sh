@@ -29,10 +29,6 @@ is_valid_version () {
     echo "$1" | grep -qEe "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"
 }
 
-is_valid_otp_token () {
-    echo "$1" | grep -qEe "^[0-9]{6}$"
-}
-
 usage () {
     err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
     err
@@ -253,13 +249,19 @@ npm_pkg_exists () {
 
 # This global variable will store the pasted OTP token
 OTP=""
+OTP_TMPFILE="$(mktemp)"
+
+is_valid_otp_token () {
+    echo "$OTP" | grep -qEe "^[0-9]{6}$"
+}
 
 #
 # Does all the interactive prompting to get a legal OTP token, and writes it
 # into the OTP variable, so you can reuse it for multiple commands in a row.
 #
 collect_otp_token () {
-    while ! is_valid_otp_token "$OTP"; do
+    OTP="$(cat "$OTP_TMPFILE")"
+    while ! is_valid_otp_token; do
         if [ -n "$OTP" ]; then
             err "Invalid OTP token: $OTP"
             err "Please try again."
@@ -268,6 +270,7 @@ collect_otp_token () {
             err "To enable writes to the NPM registry, you'll need a One-Time Password (OTP) token."
         fi
         read -p "OTP token? " OTP
+        echo "$OTP" > "$OTP_TMPFILE"
     done
 }
 
