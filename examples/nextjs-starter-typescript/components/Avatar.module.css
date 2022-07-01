@@ -45,6 +45,7 @@
   z-index: 10;
   color: #ffffff;
   font-weight: 600;
+  user-select: none;
 }
 
 .more {

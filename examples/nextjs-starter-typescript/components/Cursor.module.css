@@ -4,7 +4,6 @@
   left: 0;
   pointer-events: none;
   user-select: none;
-  //transition: transform 0.5s cubic-bezier(.17, .93, .38, 1);
   transition: transform 120ms linear;
 }
 

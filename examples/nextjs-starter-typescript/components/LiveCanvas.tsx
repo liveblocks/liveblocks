@@ -12,6 +12,12 @@ import Note from "./Note";
  * remove Inter font later
  */
 
+/**
+ * This file shows how to create a multiplayer canvas with draggable notes.
+ * The notes allow you to add text, display who's currently editing them, and can be removed.
+ * There's also a toolbar allowing you to undo/redo your actions and add more notes.
+ */
+
 export default function LiveCanvas () {
   const shapes = useMap("shapes");
   const currentUser = useSelf();

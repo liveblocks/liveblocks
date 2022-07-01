@@ -5,12 +5,6 @@ import LiveAvatars from "../../components/LiveAvatars";
 import { useRef } from "react";
 import styles from "../../styles/Basic.module.css";
 
-/*
-const roomId = typeof window !==  "undefined"
-  ? new URL(window.location.href).pathname.split('/room/')[1]
-  : "";
- */
-
 export default function MultiplayerRoom() {
   const cursorPanel = useRef(null);
   const router = useRouter();

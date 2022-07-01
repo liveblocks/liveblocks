@@ -13,6 +13,7 @@ type NoteProps = {
   onBlur: FocusEventHandler<HTMLTextAreaElement>;
 }
 
+// A note to be used on LiveCanvas. Takes a number of event handlers, and a LiveObject (shape)
 function Note ({ shape, dragged, onPointerDown, onDelete, onChange, onFocus, onBlur }: NoteProps) {
   // Get current shape's props
   const [{ x, y, text, id, selectedBy }, setShapeData] = useState(shape.toObject());

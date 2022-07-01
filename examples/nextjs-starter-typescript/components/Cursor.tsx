@@ -21,6 +21,10 @@ type NameCursorProps = BothProps & {
 
 type CursorProps = BasicCursorProps | NameCursorProps;
 
+/**
+ * Cursors can be simple colored cursors, or colored cursors with a name alongside.
+ * They're animated with CSS transitions.
+ */
 export default function Cursor({
   variant = "basic",
   x,
