@@ -1,4 +1,6 @@
-import { Html, Head, Main, NextScript } from 'next/document'
+import { Html, Head, Main, NextScript } from "next/document";
+
+// TODO will remove this file later (Inter makes for nice Twitter videos)
 
 export default function Document() {
   return (

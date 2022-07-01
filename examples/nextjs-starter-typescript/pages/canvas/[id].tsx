@@ -7,6 +7,9 @@ import { RoomProvider } from "../../liveblocks.config";
 import { LiveMap } from "@liveblocks/client";
 import styles from "../../styles/Canvas.module.css";
 
+// `id` param is automatically added to any pages that don't have it
+// Check inside /middleware.ts
+
 export default function MultiplayerRoom() {
   const router = useRouter();
   const cursorPanel = useRef<HTMLDivElement>(null);

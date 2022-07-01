@@ -5,6 +5,9 @@ import LiveAvatars from "../../components/LiveAvatars";
 import { useRef } from "react";
 import styles from "../../styles/Basic.module.css";
 
+// `id` param is automatically added to any pages that don't have it
+// Check inside /middleware.ts
+
 export default function MultiplayerRoom() {
   const cursorPanel = useRef(null);
   const router = useRouter();
