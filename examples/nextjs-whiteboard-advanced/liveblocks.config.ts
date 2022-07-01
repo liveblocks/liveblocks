@@ -38,7 +38,7 @@ type Storage = {
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-const {
+export const {
   useMyPresence,
   useOthers,
   useList,
@@ -48,14 +48,3 @@ const {
   useBatch,
   useRoom,
 } = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
-
-export {
-  useMyPresence,
-  useOthers,
-  useList,
-  RoomProvider,
-  useMap,
-  useHistory,
-  useBatch,
-  useRoom,
-};
