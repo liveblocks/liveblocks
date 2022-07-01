@@ -24,6 +24,14 @@ import { useInitial, useRerender } from "./hooks";
 
 const noop = () => {};
 
+/**
+ * Freezes the first value passed-in. On subsequent renders, never changes its
+ * value.
+ */
+function useFreeze<T>(value: T): T {
+  return React.useRef(value).current;
+}
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -127,7 +135,12 @@ type RoomContextBundle<
    * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
    */
   useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -141,7 +154,12 @@ type RoomContextBundle<
    * const shapesById = useMap("shapes");
    */
   useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -155,7 +173,12 @@ type RoomContextBundle<
    * const object = useObject("obj");
    */
   useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
   ): TStorage[TKey] | null;
 
   /**
@@ -222,7 +245,8 @@ type RoomContextBundle<
    * @example
    * const root = useStorage();
    */
-  useStorage(): LiveObject<TStorage> | null;
+  useStorage(options: { suspense: true }): LiveObject<TStorage>;
+  useStorage(options?: { suspense: boolean }): LiveObject<TStorage> | null;
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -443,10 +467,17 @@ export function createRoomContext<
     return room.getSelf();
   }
 
-  function useStorage(): LiveObject<TStorage> | null {
+  function useStorage(options: { suspense: true }): LiveObject<TStorage>;
+  function useStorage(options?: {
+    suspense: boolean;
+  }): LiveObject<TStorage> | null;
+  function useStorage(options?: {
+    suspense: boolean;
+  }): LiveObject<TStorage> | null {
     type Snapshot = LiveObject<TStorage> | null;
 
     const room = useRoom();
+    const suspense = useFreeze(options?.suspense);
 
     const subscribe = room.events.storageHasLoaded.subscribe;
 
@@ -457,7 +488,30 @@ export function createRoomContext<
 
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    const root = useSyncExternalStore(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot
+    );
+
+    if (root == null) {
+      // Error early if suspense is used in a server-side context
+      if (suspense && typeof window === "undefined") {
+        throw new Error(
+          // XXX Fill in documentation URL
+          "You cannot call useStorage() in Suspense mode on the server side. Make sure to only call Suspense APIs on the client side. For tips for structuring your app, see XXX"
+        );
+      }
+
+      // Throw a _promise_. Suspense will suspend the component tree until this
+      // promise resolves (aka until storage has loaded). After that, it will
+      // render this component tree again.
+      throw new Promise((res) => {
+        room.onStorageLoaded(() => res(undefined));
+      });
+    }
+
+    return root;
   }
 
   function useHistory(): History {
@@ -476,9 +530,52 @@ export function createRoomContext<
     return useRoom().batch;
   }
 
-  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] | null {
+  function useStorageValueWithSuspense<
+    TKey extends Extract<keyof TStorage, string>
+  >(key: TKey): TStorage[TKey] {
+    const room = useRoom();
+    const root = useStorage({ suspense: true });
+    const rerender = useRerender();
+
+    React.useEffect(() => {
+      let liveValue = root.get(key);
+
+      function onRootChange() {
+        const newCrdt = root!.get(key);
+        if (newCrdt !== liveValue) {
+          unsubscribeCrdt();
+          liveValue = newCrdt;
+          unsubscribeCrdt = room.subscribe(
+            liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
+            rerender
+          );
+          rerender();
+        }
+      }
+
+      let unsubscribeCrdt = room.subscribe(
+        liveValue as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
+        rerender
+      );
+      const unsubscribeRoot = room.subscribe(
+        root as any /* AbstractCrdt */, // TODO: This is hiding a bug! If `liveValue` happens to be the string `"event"` this actually subscribes an event handler!
+        onRootChange
+      );
+
+      rerender();
+
+      return () => {
+        unsubscribeRoot();
+        unsubscribeCrdt();
+      };
+    }, [root, room, key, rerender]);
+
+    return root.get(key);
+  }
+
+  function useStorageValueWithoutSuspense<
+    TKey extends Extract<keyof TStorage, string>
+  >(key: TKey): TStorage[TKey] | null {
     const room = useRoom();
     const root = useStorage();
     const rerender = useRerender();
@@ -525,6 +622,21 @@ export function createRoomContext<
     } else {
       return root.get(key);
     }
+  }
+
+  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null {
+    return (
+      useFreeze(options?.suspense)
+        ? useStorageValueWithSuspense
+        : useStorageValueWithoutSuspense
+    )(key);
   }
 
   function useSelector<T>(
