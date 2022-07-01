@@ -532,19 +532,33 @@ export function createRoomContext<
     return room.getSelf();
   }
 
+  // NOTE: State/cache need to be kept outside of the hooks/components, because
+  // React will throw away the component state between Suspense renders.
   const _storagePromisesInflight = new Map<string, Promise<void>>();
   const _storageCache = new Map<string, LiveObject<TStorage>>();
 
+  //
+  // XXX This is not production-ready code
+  //
   function useStorageWithSuspense(): LiveObject<TStorage> {
+    // XXX Is this on us to error about? This is a problem with using _any_
+    // Suspense API on the server, not just Liveblocks.
     if (typeof window === "undefined") {
       throw new Error(
-        "You cannot use useStorage({ suspense: true }) server-side, because Suspense isn't supported in a server-side context."
+        "You should not invoke useStorage({ suspense: true }) server-side, only client-side."
       );
     }
 
     const room = useRoom();
 
+    //
     // XXX Restructure the code below to deal with _changing_ room IDs!
+    //
+    // XXX This will need a cleanup function to release loaded storage for
+    // a room when all components using that room get unmounted
+    //
+    // XXX Think about cancellation before the promise is resolved
+    //
 
     const cached = _storageCache.get(room.id);
     if (cached) {
