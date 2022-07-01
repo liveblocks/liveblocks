@@ -15,4 +15,50 @@
 
 .toolbar {
   position: absolute;
+  bottom: 40px;
+  left: 50%;
+  display: flex;
+  background: #fff;
+  transform: translateX(-50%);
+  z-index: 100;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  outline: 2px solid #fff;
+  box-shadow: 0 4px 12px 0 #00000008;
+}
+
+.toolbarButton {
+  display: inline-block;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+  color: #888888;
+  transition: all 100ms ease-in-out;
+}
+
+.toolbarButton:hover {
+  background: rgba(0, 0, 0, 0.04);
+  color: #000;
+}
+
+.loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+
+.loadingIcon {
+  color: rgba(0, 0, 0, 0.6);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }

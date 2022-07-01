@@ -47,7 +47,7 @@
 .noteBody {
   position: relative;
   flex-grow: 1;
-  margin: 0 12px 12px;
+  margin: 0 12px 10px;
 }
 
 .noteTextareaSize {
@@ -57,19 +57,28 @@
   word-wrap: break-word;
   white-space: pre-wrap;
   overflow: hidden;
+  padding-bottom: 2px;
 }
 
 .noteTextarea {
   position: absolute;
+  display: block;
   top: 0;
   left: 0;
   margin: 0;
   height: 100%;
   width: 100%;
+  padding-bottom: 2px;
   resize: none;
   word-wrap: break-word;
-  border-radius: 8px;
   outline: 2px solid transparent;
   outline-offset: 2px;
+  overflow: hidden;
+  border-bottom: 2px solid transparent;
+  transition: border 150ms ease-in-out;
+}
+
+.noteTextarea:focus {
+  border-color: rgba(0, 0, 0, 0.08);
 }
 

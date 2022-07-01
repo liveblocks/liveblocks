@@ -4,25 +4,49 @@ import { NextApiRequest, NextApiResponse } from "next";
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 const API_KEY_WARNING = noKeyWarning();
 
+// Authentication endpoint
+// This
+// Auth endpoint is called from within `/liveblocks.config.ts`
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);
     return res.status(403).end();
   }
 
-  // For the avatar example, we're generating random users
-  // and set their info from the authentication endpoint
+  // Do your authentication here
+  // Pass any necessary data/tokens to this endpoint within the body
+  // More info in `/liveblocks.config.ts`
+
+  // Get current user's info from your API
+  const userId = req.body.userId;
+  const { name, color, picture } = await getUserInfo(userId);
+
+  // Authenticate Liveblocks and return token
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
-    userInfo: {
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      //picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
-    },
+
+    // `userId` is a property that can be assigned to each user, to help on the client end
+    userId: `${userId}`,
+
+    // `userInfo` data will be available to use in Liveblocks hooks for cursors, avatars etc.
+    // Add your custom user info here
+    userInfo: { name, color, picture },
   });
   return res.status(response.status).end(response.body);
+}
+
+// Simulating calling an API and getting a user's info
+async function getUserInfo(userId: number) {
+  return {
+    name: NAMES[userId],
+    color: COLORS[userId],
+
+    // Uncomment to see picture avatars
+    // picture: `/avatars/${userId}.png`,
+    picture: undefined,
+  }
 }
 
 const NAMES = [
@@ -44,6 +68,7 @@ const COLORS = [
   "#48C9A1",
   "#64c948",
   "#ce521d",
+  "#eadf06",
 ];
 
 // Just checking you have your liveblocks.io API key added, can be removed

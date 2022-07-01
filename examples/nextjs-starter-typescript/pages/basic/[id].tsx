@@ -3,6 +3,7 @@ import { useRouter } from "next/router";
 import LiveCursors from "../../components/LiveCursors";
 import LiveAvatars from "../../components/LiveAvatars";
 import { useRef } from "react";
+import styles from "../../styles/Basic.module.css";
 
 /*
 const roomId = typeof window !==  "undefined"
@@ -20,11 +21,22 @@ export default function MultiplayerRoom() {
 
   let roomId = router.query.id;
   return (
-    <RoomProvider id={"nextjs-starter-basic-" + roomId}>
-      <main ref={cursorPanel} className="flex justify-center items-center absolute inset-0 overflow-hidden">
-        <LiveAvatars />
-        <LiveCursors cursorPanel={cursorPanel} />
-      </main>
-    </RoomProvider>
+    <>
+      {/*
+        * Pass the name of the current Liveblocks room to `id`.
+        *
+        * `initialPresence holds the initial Liveblocks presence,
+        * which in this example is a cursor with no position.
+        */}
+      <RoomProvider
+        id={"nextjs-starter-basic-" + roomId}
+        initialPresence={{ cursor: null }}
+      >
+        <main ref={cursorPanel} className={styles.main}>
+          <LiveAvatars />
+          <LiveCursors cursorPanel={cursorPanel} />
+        </main>
+      </RoomProvider>
+    </>
   )
 }
