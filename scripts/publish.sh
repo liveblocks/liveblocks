@@ -251,6 +251,26 @@ npm_pkg_exists () {
     test "$(npm view "$PKGNAME@$VERSION" version)" = "$VERSION"
 }
 
+# This global variable will store the pasted OTP token
+OTP=""
+
+#
+# Does all the interactive prompting to get a legal OTP token, and writes it
+# into the OTP variable, so you can reuse it for multiple commands in a row.
+#
+collect_otp_token () {
+    while ! is_valid_otp_token "$OTP"; do
+        if [ -n "$OTP" ]; then
+            err "Invalid OTP token: $OTP"
+            err "Please try again."
+            err ""
+        else
+            err "To enable writes to the NPM registry, you'll need a One-Time Password (OTP) token."
+        fi
+        read -p "OTP token? " OTP
+    done
+}
+
 publish_to_npm () {
     PKGNAME="$1"
 
@@ -264,23 +284,12 @@ publish_to_npm () {
         return
     fi
 
-    echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    echo "For this, I'll need the One-Time Password (OTP) token."
-
-    OTP=""
-    while ! is_valid_otp_token "$OTP"; do
-        if [ -n "$OTP" ]; then
-            err "Invalid OTP token: $OTP"
-            err "Please try again."
-            err ""
-        fi
-        read -p "OTP token? " OTP
-    done
-
     if [ -f "./lib/package.json" ]; then
         cd "./lib"
     fi
 
+    echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
+    collect_otp_token
     npm publish --tag private --otp "$OTP"
 }
 
@@ -328,7 +337,8 @@ for pkgdir in ${PACKAGE_DIRS[@]}; do
     while true; do
         if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
             echo "==> $pkgname"
-            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}"
+            collect_otp_token
+            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}" --otp "$OTP"
             break
         else
             err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
@@ -340,7 +350,8 @@ done
 # Clean up those temporary "private" tags
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    npm dist-tag rm "$pkgname@$VERSION" private
+    collect_otp_token
+    npm dist-tag rm "$pkgname@$VERSION" private --otp "$OTP"
 done
 
 echo ""
