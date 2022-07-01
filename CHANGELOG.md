@@ -1,3 +1,11 @@
+# v0.17.4
+
+Fix for NPM registry issues. (Same version as 0.17.2 though.)
+
+# v0.17.3
+
+Fix for NPM registry issues. (Same version as 0.17.2 though.)
+
 # v0.17.2
 
 Fix missing documentation for hooks created via `createRoomContext()`.
