@@ -26,6 +26,10 @@ type Storage = {
   todos: LiveList<Todo>;
 };
 
-const { RoomProvider, useMyPresence, useOthers, useList, useUpdateMyPresence } =
-  createRoomContext<Presence, Storage>(client);
-export { RoomProvider, useMyPresence, useOthers, useList, useUpdateMyPresence };
+export const {
+  RoomProvider,
+  useMyPresence,
+  useOthers,
+  useList,
+  useUpdateMyPresence,
+} = createRoomContext<Presence, Storage>(client);
