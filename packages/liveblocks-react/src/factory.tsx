@@ -797,14 +797,13 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
-  function useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options: { suspense: true }
-  ): TStorage[TKey];
-  function useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options?: { suspense: boolean }
-  ): TStorage[TKey] | null;
+  // XXX Think about how to expose these APIs:
+  //
+  // Some alternatives:
+  // 1. useList('xxx', { suspense: true })
+  // 2. export const { useList } = createRoomContext(client, { suspense: true });
+  // 3. import { createRoomContext } from '@liveblocks/react/suspense'
+  //
   function useList<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
     options?: { suspense: boolean }
@@ -817,14 +816,13 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
-  function useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options: { suspense: true }
-  ): TStorage[TKey];
-  function useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options?: { suspense: boolean }
-  ): TStorage[TKey] | null;
+  // XXX Think about how to expose these APIs:
+  //
+  // Some alternatives:
+  // 1. useMap('xxx', { suspense: true })
+  // 2. export const { useMap } = createRoomContext(client, { suspense: true });
+  // 3. import { createRoomContext } from '@liveblocks/react/suspense'
+  //
   function useMap<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
     options?: { suspense: boolean }
@@ -837,14 +835,13 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
-  function useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options: { suspense: true }
-  ): TStorage[TKey];
-  function useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey,
-    options?: { suspense: boolean }
-  ): TStorage[TKey] | null;
+  // XXX Think about how to expose these APIs:
+  //
+  // Some alternatives:
+  // 1. useObject('xxx', { suspense: true })
+  // 2. export const { useObject } = createRoomContext(client, { suspense: true });
+  // 3. import { createRoomContext } from '@liveblocks/react/suspense'
+  //
   function useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
     options?: { suspense: boolean }
