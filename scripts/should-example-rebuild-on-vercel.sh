@@ -79,11 +79,21 @@ get_all_changed_files () {
             exit 2
         fi
 
-        SHA="$(git rev-parse HEAD)"
+        # If this is a check on the main branch, then compare the latest commit
+        # against the last one. Otherwise this is a PR, and we'll get the file
+        # diff against main.
+        if [ "$VERCEL_GIT_COMMIT_REF" == "main" ]; then
+          PREV_SHA="main~"
+          CURR_SHA="main"
+        else
+          PREV_SHA="main"
+          CURR_SHA="$(git rev-parse HEAD)"
+        fi
+
         curl -s \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer $GITHUB_ACCESS_TOKEN" \
-            "https://api.github.com/repos/liveblocks/liveblocks/compare/main...$SHA" \
+            "https://api.github.com/repos/liveblocks/liveblocks/compare/${PREV_SHA}...${CURR_SHA}" \
             > diff-since-main.json
 
         # NOTE: This should really just be a simple JQ call, but JQ is unavailable
