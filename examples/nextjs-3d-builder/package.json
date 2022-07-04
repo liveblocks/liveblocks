@@ -10,14 +10,14 @@
   "dependencies": {
     "@liveblocks/client": "^0.17.1",
     "@liveblocks/react": "^0.17.1",
-    "drei": "2.2.12",
+    "@react-three/drei": "^9.16.0",
+    "@react-three/fiber": "^8.0.27",
     "next": "^12.1.6",
     "next-transpile-modules": "^9.0.0",
-    "react": "17.0.2",
-    "react-colorful": "^5.5.0",
-    "react-dom": "17.0.2",
-    "react-three-fiber": "5.3.10",
-    "three": "0.123.0"
+    "react": "18.2.0",
+    "react-colorful": "^5.5.1",
+    "react-dom": "18.2.0",
+    "three": "0.142.0"
   },
   "devDependencies": {
     "prettier": "^2.6.2"
