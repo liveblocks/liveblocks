@@ -15,13 +15,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
 
-import {
-  LiveblocksProvider,
-  RoomProvider,
-  useMyPresence,
-  useObject,
-  useOthers,
-} from ".";
+import { createRoomContext } from "./factory";
 
 /**
  * https://github.com/Luka967/websocket-close-codes
@@ -29,6 +23,23 @@ import {
 enum WebSocketErrorCodes {
   CLOSE_ABNORMAL = 1006,
 }
+
+type Presence = {
+  x: number;
+};
+
+type Storage = {
+  obj: LiveObject<{
+    a: number;
+  }>;
+};
+
+const client = createClient({ authEndpoint: "/api/auth" });
+
+const { RoomProvider, useObject, useOthers, useMyPresence } = createRoomContext<
+  Presence,
+  Storage
+>(client);
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -136,7 +147,7 @@ const testIds = {
 };
 
 function PresenceComponent() {
-  const [me, setPresence] = useMyPresence<{ x: number }>();
+  const [me, setPresence] = useMyPresence();
   const others = useOthers();
 
   return (
@@ -166,14 +177,10 @@ async function waitForSocketToBeConnected() {
 
 describe("presence", () => {
   test("initial presence should be set on state immediately", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     expect(screen.getByTestId(testIds.meX).textContent).toBe("1");
@@ -208,14 +215,10 @@ describe("presence", () => {
   // });
 
   test("initial presence should be sent to other users when socket is connected", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -233,14 +236,10 @@ describe("presence", () => {
   });
 
   test("set presence should replace current presence", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     await waitForSocketToBeConnected();
@@ -255,14 +254,10 @@ describe("presence", () => {
   });
 
   test("others presence should be set on update", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -292,14 +287,10 @@ describe("presence", () => {
   });
 
   test("others presence should be merged on update", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -386,14 +377,10 @@ describe("presence", () => {
   // });
 
   test("others presence should be cleared on close", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -464,17 +451,13 @@ function UnmountContainer({ children }: { children: React.ReactElement }) {
 
 describe("Storage", () => {
   test("useObject initialization", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider
-          id="room"
-          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
-        >
-          <ObjectComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <ObjectComponent />
+      </RoomProvider>
     );
 
     expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
@@ -506,18 +489,15 @@ describe("Storage", () => {
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider
-          id="room"
-          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
-        >
-          <UnmountContainer>
-            <ObjectComponent />
-          </UnmountContainer>
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <UnmountContainer>
+          <ObjectComponent />
+        </UnmountContainer>
+      </RoomProvider>
     );
 
     expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
