@@ -1,40 +1,57 @@
-<script>
-  import { useOthers, useSelf } from "../lib";
+<script lang="ts">
   import Avatar from "./Avatar.svelte";
+  import { type Room } from "@liveblocks/client";
+  import { onDestroy } from "svelte";
 
   /**
    * The main Liveblocks code for the example.
    * Check in src/routes/index.svelte to see the setup code.
-   *
-   * The two hooks below work similarly to the `liveblocks-react` library
-   * https://liveblocks.io/docs/api-reference/liveblocks-react
    */
 
-  let users = useOthers();
-  let currentUser = useSelf();
-  $: hasMoreUsers = $users ? [...$users].length > 3 : false;
+  export let room: Room;
+
+  // Get initial values for others and self
+  let users = room.getOthers();
+  let currentUser = room.getSelf();
+
+  // Subscribe to further changes
+  const unsubscribeOthers = room.subscribe("others", (others) => {
+    users = others;
+  });
+
+  const unsubscribeConnection = room.subscribe("connection", () => {
+    currentUser = room.getSelf();
+  });
+
+  // Unsubscribe when unmounting
+  onDestroy(() => {
+    unsubscribeOthers();
+    unsubscribeConnection();
+  });
+
+  $: hasMoreUsers = users ? [...users].length > 3 : false;
 </script>
 
 <main>
   <div class="avatars">
-    <!-- Show the first 3 users avatars -->
-    {#if $users}
-      {#each [...$users].slice(0, 3) as { connectionId, info } (connectionId)}
+    <!-- Show the first 3 users' avatars -->
+    {#if users}
+      {#each [...users].slice(0, 3) as { connectionId, info } (connectionId)}
         <Avatar picture={info?.picture} name={info?.name} />
       {/each}
     {/if}
 
     <!-- Show the amount of people online past the third user -->
     {#if hasMoreUsers}
-      <div class="more">+ {[...$users]?.length - 3}</div>
+      <div class="more">+ {[...users]?.length - 3}</div>
     {/if}
 
     <!-- Show the current user's avatar-->
-    {#if $currentUser}
+    {#if currentUser}
       <div class="current_user_container">
         <Avatar
-          picture={$currentUser.info?.picture}
-          name={$currentUser.info?.name}
+          picture={currentUser.info?.picture}
+          name={currentUser.info?.name}
         />
       </div>
     {/if}

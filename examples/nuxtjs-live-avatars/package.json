@@ -9,8 +9,8 @@
     "generate": "nuxt generate"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.16.17",
-    "@liveblocks/node": "^0.3.0",
+    "@liveblocks/client": "^0.17.1",
+    "@liveblocks/node": "^0.17.1",
     "core-js": "^3.9.1",
     "express": "^4.17.1",
     "nuxt": "^2.15.3"

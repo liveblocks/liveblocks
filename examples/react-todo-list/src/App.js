@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOthers, useUpdateMyPresence, useList } from "@liveblocks/react";
+import { useOthers, useUpdateMyPresence, useList } from "./liveblocks.config";
 import "./App.css";
 
 function WhoIsHere() {

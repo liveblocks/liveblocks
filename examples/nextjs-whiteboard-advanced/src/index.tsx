@@ -6,13 +6,8 @@ import {
   useMap,
   useHistory,
   useBatch,
-} from "@liveblocks/react";
-import {
-  BaseUserMeta,
-  LiveList,
-  LiveMap,
-  LiveObject,
-} from "@liveblocks/client";
+} from "../liveblocks.config";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Color,
@@ -20,7 +15,6 @@ import {
   LayerType,
   CanvasState,
   CanvasMode,
-  Presence,
   Camera,
   Side,
   XYWH,
@@ -75,9 +69,9 @@ export default function Room() {
 
 function WhiteboardTool() {
   // layers is a LiveMap that contains all the shapes drawn on the canvas
-  const layers = useMap<string, LiveObject<Layer>>("layers");
+  const layers = useMap("layers");
   // layerIds is LiveList of all the layer ids ordered by their z-index
-  const layerIds = useList<string>("layerIds");
+  const layerIds = useList("layerIds");
 
   if (layerIds == null || layers == null) {
     return (
@@ -99,10 +93,7 @@ function Canvas({
   layerIds: LiveList<string>;
   layers: LiveMap<string, LiveObject<Layer>>;
 }) {
-  const [{ selection, pencilDraft }, setPresence] = useMyPresence<
-    Presence,
-    BaseUserMeta
-  >();
+  const [{ selection, pencilDraft }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
   });
@@ -450,7 +441,7 @@ function Canvas({
 
   // TODO: Expose a hook to observe only one key of the others presence to improve performance
   // For example, multiplayer selection should not be re-render if only a cursor move
-  const others = useOthers<Presence>();
+  const others = useOthers();
 
   /**
    * Create a map layerId to color based on the selection of all the users in the room

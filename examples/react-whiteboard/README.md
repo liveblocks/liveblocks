@@ -27,6 +27,6 @@ This example shows how to build a collaborative whiteboard with
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`index.js`](./src/index.js) by your
-  **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in
+  [`liveblocks.config.js`](./liveblocks.config.js) by your **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)

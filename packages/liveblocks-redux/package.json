@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.17.0-beta2",
+  "version": "0.17.4-dev",
   "description": "A store enhancer to integrate Liveblocks into Redux stores.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -31,7 +31,7 @@
     "directory": "packages/liveblocks-redux"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.17.0-beta2",
+    "@liveblocks/client": "0.17.4",
     "redux": "^4"
   },
   "devDependencies": {
