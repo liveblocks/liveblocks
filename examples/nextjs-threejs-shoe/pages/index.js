@@ -1,4 +1,4 @@
-import { useObject } from "@liveblocks/react";
+import { useObject } from "../liveblocks.config";
 import { Canvas } from "react-three-fiber";
 import React, { useState, Suspense } from "react";
 import { useGLTF, OrbitControls, ContactShadows } from "drei";
