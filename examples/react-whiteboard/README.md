@@ -25,5 +25,6 @@ This example shows how to build a collaborative whiteboard with
 - Copy your **public** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in
-  [`index.js`](./examples/react-whiteboard/src/index.js) by your **public** key
+  [`liveblocks.config.js`](./examples/react-whiteboard/src/liveblocks.config.js)
+  by your **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
