@@ -140,6 +140,26 @@ files_that_should_trigger_rebuild () {
         | grep -Ee "$(make_filter_pattern)"
 }
 
+if [ $verbose -eq 1 ]; then
+    err "--- START of DEBUG output --------------------------"
+    err ""
+    err "==> All changed files (from Git)"
+    get_all_changed_files >&2
+
+    err ""
+    err "----------------------------------------------------"
+    err "==> Considered interesting (that will be considered)"
+    get_interesting_changed_files >&2
+
+    err
+    err "----------------------------------------------------"
+    err "==> Files that should definitely trigger a rebuild"
+    files_that_should_trigger_rebuild >&2
+
+    err
+    err "--- END of DEBUG output --------------------------"
+fi
+
 if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
     if [ $verbose -eq 1 ]; then
         err "Example \"$EXAMPLE\" unaffected by change."
