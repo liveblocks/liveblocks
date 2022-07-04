@@ -806,6 +806,14 @@ Please see https://bit.ly/3Niy5aP for details.`
   //
   function useList<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
+  function useList<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
     options?: { suspense: boolean }
   ): TStorage[TKey] | null {
     if (options?.suspense) {
@@ -825,6 +833,14 @@ Please see https://bit.ly/3Niy5aP for details.`
   //
   function useMap<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
+  function useMap<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
     options?: { suspense: boolean }
   ): TStorage[TKey] | null {
     if (options?.suspense) {
@@ -842,6 +858,14 @@ Please see https://bit.ly/3Niy5aP for details.`
   // 2. export const { useObject } = createRoomContext(client, { suspense: true });
   // 3. import { createRoomContext } from '@liveblocks/react/suspense'
   //
+  function useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options: { suspense: true }
+  ): TStorage[TKey];
+  function useObject<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey,
+    options?: { suspense: boolean }
+  ): TStorage[TKey] | null;
   function useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey,
     options?: { suspense: boolean }
