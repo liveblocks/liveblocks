@@ -569,7 +569,7 @@ export function createRoomContext<
     let inflight = _storagePromisesInflight.get(room.id);
     if (!inflight) {
       // Fire off the fetch right now, and keep the promise in cache
-      const inflight = room.getStorage().then((resp) => {
+      inflight = room.getStorage().then((resp) => {
         _storageCache.set(room.id, resp.root);
       });
       _storagePromisesInflight.set(room.id, inflight);
