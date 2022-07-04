@@ -2,7 +2,11 @@
 
 ### Breaking changes
 
-...
+- Remove direct hook imports from **@liveblocks/client** (e.g.
+  `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
+  these imports, read the
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) if
+  you aren't using this construct yet.
 
 ---
 
