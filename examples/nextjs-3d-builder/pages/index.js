@@ -1,12 +1,12 @@
-import { useObject } from "@liveblocks/react";
-import { Canvas } from "react-three-fiber";
+import { Canvas } from "@react-three/fiber";
 import React, { useState, Suspense } from "react";
-import { useGLTF, OrbitControls, ContactShadows } from "drei";
+import { useGLTF, OrbitControls, ContactShadows } from "@react-three/drei";
 import { HexColorPicker } from "react-colorful";
+import { useObject } from "../liveblocks.config";
 import styles from "./index.module.css";
 
 /**
- * This file shows how to create a simple 3D editor using react-three-fiber and Liveblocks
+ * This file shows how to create a simple 3D builder using React Three Fiber and Liveblocks
  *
  * We use the storage block to persist the show colors even after everyone leaves the room.
  */
@@ -28,11 +28,7 @@ export default function Example() {
   return (
     <div className={styles.container}>
       <div className={styles.canvas}>
-        <Canvas
-          concurrent
-          pixelRatio={[1, 1.5]}
-          camera={{ position: [0, 0, 2.75] }}
-        >
+        <Canvas pixelRatio={[1, 1.5]} camera={{ position: [0, 0, 2.75] }}>
           <ambientLight intensity={0.3} />
           <spotLight
             intensity={0.3}
@@ -48,11 +44,9 @@ export default function Example() {
               />
             )}
             <ContactShadows
-              rotation-x={Math.PI / 2}
               position={[0, -0.8, 0]}
               opacity={0.25}
-              width={10}
-              height={10}
+              scale={10}
               blur={2}
               far={1}
             />
@@ -144,9 +138,9 @@ export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
     ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe#codesandbox.`
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-3d-builder#codesandbox.`
     : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe#getting-started.`;
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-3d-builder#getting-started.`;
 
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);

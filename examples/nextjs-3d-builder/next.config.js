@@ -1,7 +1,7 @@
 const withTM = require("next-transpile-modules")([
   "three",
-  "react-three-fiber",
-  "drei",
+  "@react-three/fiber",
+  "@react-three/drei",
 ]);
 
 module.exports = withTM({
