@@ -1,3 +1,11 @@
+# v0.18.0 (not released yet)
+
+### Breaking changes
+
+...
+
+---
+
 # v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
