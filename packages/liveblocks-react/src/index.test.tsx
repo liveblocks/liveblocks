@@ -13,6 +13,7 @@ import {
 } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+import { Suspense } from "react";
 import * as React from "react";
 
 import { createRoomContext } from "./factory";
@@ -431,6 +432,13 @@ function ObjectComponent() {
   );
 }
 
+function ObjectComponentWithSuspense() {
+  const obj = useObject("obj", { suspense: true });
+  return (
+    <div data-testid={testIds.liveObject}>{JSON.stringify(obj.toObject())}</div>
+  );
+}
+
 function UnmountContainer({ children }: { children: React.ReactElement }) {
   const [isVisible, setIsVisible] = React.useState(true);
 
@@ -510,6 +518,88 @@ describe("Storage", () => {
 
     expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
       "Loading"
+    );
+
+    act(() => {
+      fireEvent.click(screen.getByTestId(testIds.unmount));
+    });
+
+    act(() => {
+      socket.callbacks.message[0]({
+        data: JSON.stringify({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+        }),
+      } as MessageEvent);
+    });
+  });
+});
+
+describe("Storage (with Suspense)", () => {
+  test("useObject initialization", async () => {
+    render(
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <Suspense fallback={"Suspended..."}>
+          <ObjectComponent />
+        </Suspense>
+      </RoomProvider>
+    );
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Suspended..."
+    );
+
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]();
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Suspended..."
+    );
+
+    act(() => {
+      socket.callbacks.message[0]({
+        data: JSON.stringify({
+          type: ServerMsgCode.INITIAL_STORAGE_STATE,
+          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+        }),
+      } as MessageEvent);
+    });
+
+    await waitFor(() =>
+      expect(screen.getByTestId(testIds.liveObject).textContent).toBe(
+        JSON.stringify({ a: 0 })
+      )
+    );
+  });
+
+  test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
+    render(
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <Suspense fallback={"Suspended..."}>
+          <UnmountContainer>
+            <ObjectComponentWithSuspense />
+          </UnmountContainer>
+        </Suspense>
+      </RoomProvider>
+    );
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Suspended..."
+    );
+
+    const socket = await waitForSocketToBeConnected();
+
+    socket.callbacks.open[0]();
+
+    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
+      "Suspended..."
     );
 
     act(() => {
