@@ -1,5 +1,5 @@
 {
-  "description": "This example shows how to build a collaborative 3D model editor with Liveblocks, Next.js and Three.js.",
+  "description": "This example shows how to build a collaborative 3D builder with Liveblocks, Next.js and Three.js.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {

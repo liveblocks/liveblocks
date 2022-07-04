@@ -9,7 +9,7 @@ const client = createClient({
 });
 
 function App({ Component, pageProps }) {
-  const roomId = useOverrideRoomId("nextjs-threejs-shoe");
+  const roomId = useOverrideRoomId("nextjs-3d-builder");
 
   return (
     /**

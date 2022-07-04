@@ -4,10 +4,10 @@
   </a>
 </p>
 
-# 3D Shoe
+# 3D Builder
 
 <p>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe">
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-3d-builder">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
@@ -15,9 +15,9 @@
   <img src="https://img.shields.io/badge/three.js-message?style=flat&logo=three.js&color=7c0&logoColor=fff" alt="Three.js" />
 </p>
 
-This example shows how to build a collaborative 3D model editor with [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and [Three.js](https://threejs.org/).
+This example shows how to build a collaborative 3D builder with [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and [Three.js](https://threejs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-shoe.png" width="500" alt="3D Shoe" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-builder.png" width="500" alt="3D Builder" />
 
 ## Getting started
 
@@ -29,4 +29,4 @@ This example shows how to build a collaborative 3D model editor with [Liveblocks
 
 ### CodeSandbox
 
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-threejs-shoe) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
+After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-3d-builder) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
