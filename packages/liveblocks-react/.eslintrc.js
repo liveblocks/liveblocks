@@ -6,6 +6,7 @@ module.exports = {
     "@typescript-eslint",
     "eslint-plugin-import",
     "eslint-plugin-simple-import-sort",
+    "react-hooks",
   ],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
@@ -23,6 +24,12 @@ module.exports = {
     "@typescript-eslint/no-empty-function": "off",
     "@typescript-eslint/no-inferrable-types": "off",
     "no-constant-condition": "off",
+
+    // -------------------------------
+    // Enforce React best practices
+    // -------------------------------
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "error",
 
     // -----------------------------
     // Enable auto-fixes for imports
