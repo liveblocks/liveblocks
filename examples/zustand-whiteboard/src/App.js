@@ -61,6 +61,7 @@ export default function App() {
               id={shapeId}
               shape={shape}
               selectionColor={selectionColor}
+              transition={selectedShape !== shapeId}
             />
           );
         })}
@@ -77,7 +78,7 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id }) => {
+const Rectangle = ({ shape, selectionColor, id, transition }) => {
   const onShapePointerDown = useStore((state) => state.onShapePointerDown);
 
   return (
@@ -85,6 +86,7 @@ const Rectangle = ({ shape, selectionColor, id }) => {
       className="rectangle"
       style={{
         transform: `translate(${shape.x}px, ${shape.y}px)`,
+        transition: transition ? "transform 120ms linear" : "none",
         backgroundColor: shape.fill ? shape.fill : "#CCC",
         borderColor: selectionColor,
       }}

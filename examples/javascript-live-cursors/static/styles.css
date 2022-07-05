@@ -5,6 +5,7 @@ html {
 
 body {
   position: relative;
+  overflow: hidden;
   display: flex;
   margin: 0;
   width: 100vw;
