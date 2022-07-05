@@ -5,8 +5,9 @@
 - Remove support for directly importing hooks from **@liveblocks/client** (e.g.
   `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
   these imports, see the
-  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17)
-  for instructions.
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
+  instructions.
+- `useStorage()` now returns `root` directory, no longer wrapped in `[root]`
 
 ---
 
