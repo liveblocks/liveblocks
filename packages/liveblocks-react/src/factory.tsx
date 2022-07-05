@@ -19,6 +19,23 @@ import * as React from "react";
 import { useClient as _useClient } from "./client";
 import useRerender from "./useRerender";
 
+/**
+ * Wraps the given value in a mutable ref, so it can be passed into
+ * a useEffect deps array, without triggering a rerun every time the
+ * value changes.
+ *
+ * This would be the same as not-including it in the dependency array, except
+ * that that might look like a bug. This does an explicit opt-out.
+ *
+ * When used in the useEffect() hook though, the value `box.current` will
+ * always contain the latest version we received through props.
+ */
+function useBox<T>(value: T) {
+  const box = React.useRef(value);
+  box.current = value;
+  return box;
+}
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -232,13 +249,13 @@ type RoomContext<
    * @example
    * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
    */
-  deprecated_useList<TValue extends Lson>(key: string): LiveList<TValue> | null;
+  useList_deprecated<TValue extends Lson>(key: string): LiveList<TValue> | null;
 
   /**
    * @deprecated We no longer recommend initializing the
    * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  deprecated_useList<TValue extends Lson>(
+  useList_deprecated<TValue extends Lson>(
     key: string,
     items: TValue[]
   ): LiveList<TValue> | null;
@@ -253,7 +270,7 @@ type RoomContext<
    * @example
    * const shapesById = useMap("shapes");
    */
-  deprecated_useMap<TKey extends string, TValue extends Lson>(
+  useMap_deprecated<TKey extends string, TValue extends Lson>(
     key: string
   ): LiveMap<TKey, TValue> | null;
 
@@ -261,7 +278,7 @@ type RoomContext<
    * @deprecated We no longer recommend initializing the
    * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  deprecated_useMap<TKey extends string, TValue extends Lson>(
+  useMap_deprecated<TKey extends string, TValue extends Lson>(
     key: string,
     entries: readonly (readonly [TKey, TValue])[] | null
   ): LiveMap<TKey, TValue> | null;
@@ -276,7 +293,7 @@ type RoomContext<
    * @example
    * const object = useObject("obj");
    */
-  deprecated_useObject<TData extends LsonObject>(
+  useObject_deprecated<TData extends LsonObject>(
     key: string
   ): LiveObject<TData> | null;
 
@@ -284,7 +301,7 @@ type RoomContext<
    * @deprecated We no longer recommend initializing the fields from the
    * useObject() hook. For details, see https://bit.ly/3Niy5aP.
    */
-  deprecated_useObject<TData extends LsonObject>(
+  useObject_deprecated<TData extends LsonObject>(
     key: string,
     initialData: TData
   ): LiveObject<TData> | null;
@@ -346,6 +363,15 @@ export function createRoomContext<
 
     const _client = useClient();
 
+    // NOTE: Boxing deliberately avoids this value from triggering effects
+    // through the exhaustive-deps array.
+    const box = useBox({
+      initialPresence,
+      initialStorage,
+      defaultPresence, // Will get removed in 0.18
+      defaultStorageRoot, // Will get removed in 0.18
+    });
+
     const [room, setRoom] = React.useState<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
@@ -361,10 +387,10 @@ export function createRoomContext<
     React.useEffect(() => {
       setRoom(
         _client.enter(roomId, {
-          initialPresence,
-          initialStorage,
-          defaultPresence, // Will get removed in 0.18
-          defaultStorageRoot, // Will get removed in 0.18
+          initialPresence: box.current.initialPresence,
+          initialStorage: box.current.initialStorage,
+          defaultPresence: box.current.defaultPresence, // Will get removed in 0.18
+          defaultStorageRoot: box.current.defaultStorageRoot, // Will get removed in 0.18
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as RoomInitializers<TPresence, TStorage>)
       );
@@ -372,7 +398,7 @@ export function createRoomContext<
       return () => {
         _client.leave(roomId);
       };
-    }, [_client, roomId]);
+    }, [_client, roomId, box]);
 
     return <RoomCtx.Provider value={room}>{props.children}</RoomCtx.Provider>;
   }
@@ -398,7 +424,7 @@ export function createRoomContext<
       return () => {
         unsubscribe();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     const setPresence = React.useCallback(
       (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
@@ -432,7 +458,7 @@ export function createRoomContext<
       return () => {
         unsubscribe();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     return room.getOthers();
   }
@@ -509,7 +535,7 @@ export function createRoomContext<
         unsubscribePresence();
         unsubscribeConnection();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     return room.getSelf();
   }
@@ -538,14 +564,14 @@ export function createRoomContext<
     return [root];
   }
 
-  function deprecated_useMap<TKey extends string, TValue extends Lson>(
+  function useMap_deprecated<TKey extends string, TValue extends Lson>(
     key: string
   ): LiveMap<TKey, TValue> | null;
-  function deprecated_useMap<TKey extends string, TValue extends Lson>(
+  function useMap_deprecated<TKey extends string, TValue extends Lson>(
     key: string,
     entries: readonly (readonly [TKey, TValue])[] | null
   ): LiveMap<TKey, TValue> | null;
-  function deprecated_useMap<TKey extends string, TValue extends Lson>(
+  function useMap_deprecated<TKey extends string, TValue extends Lson>(
     key: string,
     entries?: readonly (readonly [TKey, TValue])[] | null | undefined
   ): LiveMap<TKey, TValue> | null {
@@ -597,14 +623,14 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
-  function deprecated_useList<TValue extends Lson>(
+  function useList_deprecated<TValue extends Lson>(
     key: string
   ): LiveList<TValue> | null;
-  function deprecated_useList<TValue extends Lson>(
+  function useList_deprecated<TValue extends Lson>(
     key: string,
     items: TValue[]
   ): LiveList<TValue> | null;
-  function deprecated_useList<TValue extends Lson>(
+  function useList_deprecated<TValue extends Lson>(
     key: string,
     items?: TValue[] | undefined
   ): LiveList<TValue> | null {
@@ -658,14 +684,14 @@ Please see https://bit.ly/3Niy5aP for details.`
     }
   }
 
-  function deprecated_useObject<TData extends LsonObject>(
+  function useObject_deprecated<TData extends LsonObject>(
     key: string
   ): LiveObject<TData> | null;
-  function deprecated_useObject<TData extends LsonObject>(
+  function useObject_deprecated<TData extends LsonObject>(
     key: string,
     initialData: TData
   ): LiveObject<TData> | null;
-  function deprecated_useObject<TData extends LsonObject>(
+  function useObject_deprecated<TData extends LsonObject>(
     key: string,
     initialData?: TData
   ): LiveObject<TData> | null {
@@ -722,19 +748,19 @@ Please see https://bit.ly/3Niy5aP for details.`
   function useList<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return deprecated_useList(key) as unknown as TStorage[TKey];
+    return useList_deprecated(key) as unknown as TStorage[TKey];
   }
 
   function useMap<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return deprecated_useMap(key) as unknown as TStorage[TKey];
+    return useMap_deprecated(key) as unknown as TStorage[TKey];
   }
 
   function useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return deprecated_useObject(key) as unknown as TStorage[TKey];
+    return useObject_deprecated(key) as unknown as TStorage[TKey];
   }
 
   function useHistory(): History {
@@ -763,6 +789,10 @@ Please see https://bit.ly/3Niy5aP for details.`
     const [root] = useStorage();
     const rerender = useRerender();
 
+    // NOTE: Boxing deliberately avoids this value from triggering effects
+    // through the exhaustive-deps array.
+    const boxedInitialValue = useBox(initialValue);
+
     React.useEffect(() => {
       if (root == null) {
         return;
@@ -771,7 +801,7 @@ Please see https://bit.ly/3Niy5aP for details.`
       let liveValue: T | undefined = root.get(key) as T | undefined;
 
       if (liveValue == null) {
-        liveValue = initialValue;
+        liveValue = boxedInitialValue.current;
         root.set(key, liveValue as unknown as TStorage[string]);
         //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
       }
@@ -804,7 +834,7 @@ Please see https://bit.ly/3Niy5aP for details.`
         unsubscribeRoot();
         unsubscribeCrdt();
       };
-    }, [root, room]);
+    }, [root, room, key, boxedInitialValue, rerender]);
 
     if (root == null) {
       return { status: "loading" };
@@ -837,8 +867,8 @@ Please see https://bit.ly/3Niy5aP for details.`
     useUndo,
     useUpdateMyPresence,
 
-    deprecated_useList,
-    deprecated_useMap,
-    deprecated_useObject,
+    useList_deprecated,
+    useMap_deprecated,
+    useObject_deprecated,
   };
 }
