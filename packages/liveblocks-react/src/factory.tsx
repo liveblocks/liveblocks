@@ -5,13 +5,12 @@ import type {
   History,
   Json,
   JsonObject,
-  Lson,
+  LiveObject,
   LsonObject,
   Others,
   Room,
   User,
 } from "@liveblocks/client";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
@@ -237,11 +236,6 @@ type RoomContext<
     options?: { addToHistory: boolean }
   ) => void;
 };
-
-type LookupResult<T> =
-  | { status: "ok"; value: T }
-  | { status: "loading" }
-  | { status: "notfound" };
 
 export function createRoomContext<
   TPresence extends JsonObject,
@@ -495,203 +489,22 @@ export function createRoomContext<
     return [root];
   }
 
-  function useMap_deprecated<TKey extends string, TValue extends Lson>(
-    key: string
-  ): LiveMap<TKey, TValue> | null;
-  function useMap_deprecated<TKey extends string, TValue extends Lson>(
-    key: string,
-    entries: readonly (readonly [TKey, TValue])[] | null
-  ): LiveMap<TKey, TValue> | null;
-  function useMap_deprecated<TKey extends string, TValue extends Lson>(
-    key: string,
-    entries?: readonly (readonly [TKey, TValue])[] | null | undefined
-  ): LiveMap<TKey, TValue> | null {
-    errorIf(
-      entries,
-      `Support for initializing entries in useMap() directly will be removed in @liveblocks/react 0.18.
-
-Instead, please initialize this data where you set up your RoomProvider:
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveMap(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-    );
-    const value = useStorageValue(key, new LiveMap(entries ?? undefined));
-    //                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                                 NOTE: This param is scheduled for removal in 0.18
-    if (value.status === "ok") {
-      return value.value;
-    } else {
-      errorIf(
-        value.status === "notfound",
-        `Key ${JSON.stringify(
-          key
-        )} was not found in Storage. Starting with 0.18, useMap() will no longer automatically create this key.
-
-Instead, please initialize your storage where you set up your RoomProvider:
-
-    import { LiveMap } from "@liveblocks/client";
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveMap(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-      );
-      return null;
-    }
-  }
-
-  function useList_deprecated<TValue extends Lson>(
-    key: string
-  ): LiveList<TValue> | null;
-  function useList_deprecated<TValue extends Lson>(
-    key: string,
-    items: TValue[]
-  ): LiveList<TValue> | null;
-  function useList_deprecated<TValue extends Lson>(
-    key: string,
-    items?: TValue[] | undefined
-  ): LiveList<TValue> | null {
-    errorIf(
-      items,
-      `Support for initializing items in useList() directly will be removed in @liveblocks/react 0.18.
-
-Instead, please initialize this data where you set up your RoomProvider:
-
-    import { LiveList } from "@liveblocks/client";
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveList(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-    );
-    const value = useStorageValue<LiveList<TValue>>(key, new LiveList(items));
-    //                                                   ^^^^^^^^^^^^^^^^^^^
-    //                                                   NOTE: This param is scheduled for removal in 0.18
-    if (value.status === "ok") {
-      return value.value;
-    } else {
-      errorIf(
-        value.status === "notfound",
-        `Key ${JSON.stringify(
-          key
-        )} was not found in Storage. Starting with 0.18, useList() will no longer automatically create this key.
-
-Instead, please initialize your storage where you set up your RoomProvider:
-
-    import { LiveList } from "@liveblocks/client";
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveList(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-      );
-      return null;
-    }
-  }
-
-  function useObject_deprecated<TData extends LsonObject>(
-    key: string
-  ): LiveObject<TData> | null;
-  function useObject_deprecated<TData extends LsonObject>(
-    key: string,
-    initialData: TData
-  ): LiveObject<TData> | null;
-  function useObject_deprecated<TData extends LsonObject>(
-    key: string,
-    initialData?: TData
-  ): LiveObject<TData> | null {
-    errorIf(
-      initialData,
-      `Support for initializing data in useObject() directly will be removed in @liveblocks/react 0.18.
-
-Instead, please initialize this data where you set up your RoomProvider:
-
-    import { LiveObject } from "@liveblocks/client";
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveObject(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-    );
-    const value = useStorageValue(key, new LiveObject(initialData));
-    //                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                                 NOTE: This param is scheduled for removal in 0.18
-    if (value.status === "ok") {
-      return value.value;
-    } else {
-      errorIf(
-        value.status === "notfound",
-        `Key ${JSON.stringify(
-          key
-        )} was not found in Storage. Starting with 0.18, useObject() will no longer automatically create this key.
-
-Instead, please initialize your storage where you set up your RoomProvider:
-
-    import { LiveObject } from "@liveblocks/client";
-
-    const initialStorage = () => ({
-      ${JSON.stringify(key)}: new LiveObject(...),
-      ...
-    });
-
-    <RoomProvider initialStorage={initialStorage}>
-      ...
-    </RoomProvider>
-
-Please see https://bit.ly/3Niy5aP for details.`
-      );
-      return null;
-    }
-  }
-
   function useList<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return useList_deprecated(key) as unknown as TStorage[TKey];
+    return useStorageValue(key);
   }
 
   function useMap<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return useMap_deprecated(key) as unknown as TStorage[TKey];
+    return useStorageValue(key);
   }
 
   function useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
-    return useObject_deprecated(key) as unknown as TStorage[TKey];
+    return useStorageValue(key);
   }
 
   function useHistory(): History {
@@ -710,35 +523,22 @@ Please see https://bit.ly/3Niy5aP for details.`
     return useRoom().batch;
   }
 
-  function useStorageValue<T extends Lson>(
-    key: string,
-    //   ^^^^^^
-    //   FIXME: Generalize to `keyof TStorage`?
-    initialValue: T
-  ): LookupResult<T> {
+  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey
+  ): TStorage[TKey] | null {
     const room = useRoom();
     const [root] = useStorage();
     const rerender = useRerender();
-
-    // NOTE: Boxing deliberately avoids this value from triggering effects
-    // through the exhaustive-deps array.
-    const boxedInitialValue = useBox(initialValue);
 
     React.useEffect(() => {
       if (root == null) {
         return;
       }
 
-      let liveValue: T | undefined = root.get(key) as T | undefined;
-
-      if (liveValue == null) {
-        liveValue = boxedInitialValue.current;
-        root.set(key, liveValue as unknown as TStorage[string]);
-        //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
-      }
+      let liveValue = root.get(key);
 
       function onRootChange() {
-        const newCrdt = root!.get(key) as T | undefined;
+        const newCrdt = root!.get(key);
         if (newCrdt !== liveValue) {
           unsubscribeCrdt();
           liveValue = newCrdt;
@@ -765,17 +565,12 @@ Please see https://bit.ly/3Niy5aP for details.`
         unsubscribeRoot();
         unsubscribeCrdt();
       };
-    }, [root, room, key, boxedInitialValue, rerender]);
+    }, [root, room, key, rerender]);
 
     if (root == null) {
-      return { status: "loading" };
+      return null;
     } else {
-      const value = root.get(key) as T | undefined;
-      if (value == null) {
-        return { status: "notfound" };
-      } else {
-        return { status: "ok", value };
-      }
+      return root.get(key);
     }
   }
 
