@@ -19,6 +19,23 @@ import * as React from "react";
 import { useClient as _useClient } from "./client";
 import useRerender from "./useRerender";
 
+/**
+ * Wraps the given value in a mutable ref, so it can be passed into
+ * a useEffect deps array, without triggering a rerun every time the
+ * value changes.
+ *
+ * This would be the same as not-including it in the dependency array, except
+ * that that might look like a bug. This does an explicit opt-out.
+ *
+ * When used in the useEffect() hook though, the value `box.current` will
+ * always contain the latest version we received through props.
+ */
+function useBox<T>(value: T) {
+  const box = React.useRef(value);
+  box.current = value;
+  return box;
+}
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -346,14 +363,23 @@ export function createRoomContext<
 
     const _client = useClient();
 
+    // NOTE: Boxing deliberately avoids this value from triggering effects
+    // through the exhaustive-deps array.
+    const box = useBox({
+      initialPresence,
+      initialStorage,
+      defaultPresence, // Will get removed in 0.18
+      defaultStorageRoot, // Will get removed in 0.18
+    });
+
     const [room, setRoom] = React.useState<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
       _client.enter(roomId, {
-        initialPresence,
-        initialStorage,
-        defaultPresence, // Will get removed in 0.18
-        defaultStorageRoot, // Will get removed in 0.18
+        initialPresence: box.current.initialPresence,
+        initialStorage: box.current.initialStorage,
+        defaultPresence: box.current.defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot: box.current.defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as RoomInitializers<TPresence, TStorage>)
     );
@@ -361,10 +387,10 @@ export function createRoomContext<
     React.useEffect(() => {
       setRoom(
         _client.enter(roomId, {
-          initialPresence,
-          initialStorage,
-          defaultPresence, // Will get removed in 0.18
-          defaultStorageRoot, // Will get removed in 0.18
+          initialPresence: box.current.initialPresence,
+          initialStorage: box.current.initialStorage,
+          defaultPresence: box.current.defaultPresence, // Will get removed in 0.18
+          defaultStorageRoot: box.current.defaultStorageRoot, // Will get removed in 0.18
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as RoomInitializers<TPresence, TStorage>)
       );
@@ -372,7 +398,7 @@ export function createRoomContext<
       return () => {
         _client.leave(roomId);
       };
-    }, [_client, roomId]);
+    }, [_client, roomId, box]);
 
     return <RoomCtx.Provider value={room}>{props.children}</RoomCtx.Provider>;
   }
@@ -763,6 +789,10 @@ Please see https://bit.ly/3Niy5aP for details.`
     const [root] = useStorage();
     const rerender = useRerender();
 
+    // NOTE: Boxing deliberately avoids this value from triggering effects
+    // through the exhaustive-deps array.
+    const boxedInitialValue = useBox(initialValue);
+
     React.useEffect(() => {
       if (root == null) {
         return;
@@ -771,7 +801,7 @@ Please see https://bit.ly/3Niy5aP for details.`
       let liveValue: T | undefined = root.get(key) as T | undefined;
 
       if (liveValue == null) {
-        liveValue = initialValue;
+        liveValue = boxedInitialValue.current;
         root.set(key, liveValue as unknown as TStorage[string]);
         //                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ FIXME
       }
@@ -804,7 +834,7 @@ Please see https://bit.ly/3Niy5aP for details.`
         unsubscribeRoot();
         unsubscribeCrdt();
       };
-    }, [root, room]);
+    }, [root, room, key, boxedInitialValue, rerender]);
 
     if (root == null) {
       return { status: "loading" };
