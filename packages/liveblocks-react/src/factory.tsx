@@ -210,9 +210,9 @@ type RoomContext<
    * Storage.
    *
    * @example
-   * const [root] = useStorage();
+   * const root = useStorage();
    */
-  useStorage(): [root: LiveObject<TStorage> | null];
+  useStorage(): LiveObject<TStorage> | null;
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -533,7 +533,7 @@ export function createRoomContext<
     return room.getSelf();
   }
 
-  function useStorage(): [root: LiveObject<TStorage> | null] {
+  function useStorage(): LiveObject<TStorage> | null {
     const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
@@ -554,7 +554,7 @@ export function createRoomContext<
       };
     }, [room]);
 
-    return [root];
+    return root;
   }
 
   function useMap_deprecated<TKey extends string, TValue extends Lson>(
@@ -779,7 +779,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     initialValue: T
   ): LookupResult<T> {
     const room = useRoom();
-    const [root] = useStorage();
+    const root = useStorage();
     const rerender = useRerender();
 
     // Note: We'll hold on to the initial value given here, and ignore any
