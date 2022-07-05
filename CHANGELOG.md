@@ -8,6 +8,8 @@
   [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
   instructions.
 - Remove second argument to `useMap()`, `useList()`, and `useObject()`.
+- Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
+  `new LiveMap([])`.)
 
 ---
 
