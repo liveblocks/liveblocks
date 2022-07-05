@@ -197,16 +197,6 @@ export type RoomInitializers<
    * The initial Storage to use when entering a new Room.
    */
   initialStorage?: TStorage | ((roomId: string) => TStorage);
-  /**
-   * @deprecated Please use `initialPresence` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultPresence?: () => TPresence;
-  /**
-   * @deprecated Please use `initialStorage` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultStorageRoot?: TStorage;
 }>;
 
 export type Client = {

@@ -1646,8 +1646,7 @@ export function createRoom<
   options: RoomInitializers<TPresence, TStorage>,
   context: Context
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const initialPresence = options.initialPresence ?? options.defaultPresence;
-  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
+  const { initialPresence, initialStorage } = options;
 
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"

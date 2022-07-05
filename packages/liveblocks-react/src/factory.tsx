@@ -12,7 +12,6 @@ import type {
   User,
 } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
-import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
 import { useClient as _useClient } from "./client";
@@ -258,13 +257,7 @@ export function createRoomContext<
   > | null>(null);
 
   function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
-    const {
-      id: roomId,
-      initialPresence,
-      initialStorage,
-      defaultPresence, // Will get removed in 0.18
-      defaultStorageRoot, // Will get removed in 0.18
-    } = props;
+    const { id: roomId, initialPresence, initialStorage } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (roomId == null) {
@@ -277,15 +270,6 @@ export function createRoomContext<
       }
     }
 
-    errorIf(
-      defaultPresence,
-      "RoomProvider's `defaultPresence` prop will be removed in @liveblocks/react 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP"
-    );
-    errorIf(
-      defaultStorageRoot,
-      "RoomProvider's `defaultStorageRoot` prop will be removed in @liveblocks/react 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
-    );
-
     const _client = useClient();
 
     // NOTE: Boxing deliberately avoids this value from triggering effects
@@ -293,8 +277,6 @@ export function createRoomContext<
     const box = useBox({
       initialPresence,
       initialStorage,
-      defaultPresence, // Will get removed in 0.18
-      defaultStorageRoot, // Will get removed in 0.18
     });
 
     const [room, setRoom] = React.useState<
@@ -303,8 +285,6 @@ export function createRoomContext<
       _client.enter(roomId, {
         initialPresence,
         initialStorage,
-        defaultPresence, // Will get removed in 0.18
-        defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as RoomInitializers<TPresence, TStorage>)
     );
@@ -314,8 +294,6 @@ export function createRoomContext<
         _client.enter(roomId, {
           initialPresence: box.current.initialPresence,
           initialStorage: box.current.initialStorage,
-          defaultPresence: box.current.defaultPresence, // Will get removed in 0.18
-          defaultStorageRoot: box.current.defaultStorageRoot, // Will get removed in 0.18
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as RoomInitializers<TPresence, TStorage>)
       );
