@@ -1,3 +1,10 @@
+# v0.17.5
+
+In **@liveblocks/react**:
+
+- Fix bug in `useMap()`, `useList()`, and `useObject()` that pops up when the
+  `key` argument changes between renders.
+
 # v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
