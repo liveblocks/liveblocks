@@ -68,6 +68,7 @@ export type {
   SerializedRootObject,
   ServerMsg,
   SetParentKeyOp,
+  ToJson,
   UpdateObjectOp,
   UpdatePresenceClientMsg,
   UpdatePresenceServerMsg,
