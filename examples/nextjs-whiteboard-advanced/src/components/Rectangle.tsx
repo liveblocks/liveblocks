@@ -22,7 +22,7 @@ export default function Rectangle({
     <rect
       onPointerDown={(e) => onPointerDown(e, id)}
       style={{
-        transition: isAnimated ? "all 0.1s ease" : "",
+        transition: isAnimated ? "all 120ms linear" : "",
         transform: `translate(${x}px, ${y}px)`,
       }}
       x={0}
