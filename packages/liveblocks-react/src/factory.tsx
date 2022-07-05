@@ -376,10 +376,10 @@ export function createRoomContext<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
       _client.enter(roomId, {
-        initialPresence: box.current.initialPresence,
-        initialStorage: box.current.initialStorage,
-        defaultPresence: box.current.defaultPresence, // Will get removed in 0.18
-        defaultStorageRoot: box.current.defaultStorageRoot, // Will get removed in 0.18
+        initialPresence,
+        initialStorage,
+        defaultPresence, // Will get removed in 0.18
+        defaultStorageRoot, // Will get removed in 0.18
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as RoomInitializers<TPresence, TStorage>)
     );
