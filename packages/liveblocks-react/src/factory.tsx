@@ -398,7 +398,7 @@ export function createRoomContext<
       return () => {
         unsubscribe();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     const setPresence = React.useCallback(
       (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
@@ -432,7 +432,7 @@ export function createRoomContext<
       return () => {
         unsubscribe();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     return room.getOthers();
   }
@@ -509,7 +509,7 @@ export function createRoomContext<
         unsubscribePresence();
         unsubscribeConnection();
       };
-    }, [room]);
+    }, [room, rerender]);
 
     return room.getSelf();
   }
