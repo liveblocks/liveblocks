@@ -489,24 +489,6 @@ export function createRoomContext<
     return [root];
   }
 
-  function useList<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] | null {
-    return useStorageValue(key);
-  }
-
-  function useMap<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] | null {
-    return useStorageValue(key);
-  }
-
-  function useObject<TKey extends Extract<keyof TStorage, string>>(
-    key: TKey
-  ): TStorage[TKey] | null {
-    return useStorageValue(key);
-  }
-
   function useHistory(): History {
     return useRoom().history;
   }
@@ -581,10 +563,7 @@ export function createRoomContext<
     useErrorListener,
     useEventListener,
     useHistory,
-    useList,
-    useMap,
     useMyPresence,
-    useObject,
     useOthers,
     useRedo,
     useRoom,
@@ -592,5 +571,10 @@ export function createRoomContext<
     useStorage,
     useUndo,
     useUpdateMyPresence,
+
+    // These are just aliases. The passed-in key will define their return values.
+    useList: useStorageValue,
+    useMap: useStorageValue,
+    useObject: useStorageValue,
   };
 }
