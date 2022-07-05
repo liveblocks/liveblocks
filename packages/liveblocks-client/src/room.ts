@@ -1287,11 +1287,7 @@ export function makeStateMachine<
     if (state.buffer.presence) {
       messages.push({
         type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.buffer.presence as unknown as TPresence,
-        //                          ^^^^^^^^^^^^^^^^^^^^^^^
-        //                          TODO: In 0.18, state.buffer.presence will
-        //                          become a TPresence and this force-cast will
-        //                          no longer be necessary.
+        data: state.buffer.presence,
       });
     }
     for (const event of state.buffer.messages) {
