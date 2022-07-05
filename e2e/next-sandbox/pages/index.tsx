@@ -30,6 +30,11 @@ export default function Home() {
                 <a>/storage/object</a>
               </Link>
             </li>
+            <li>
+              <Link href="/storage/selector">
+                <a>/storage/selector</a>
+              </Link>
+            </li>
           </ul>
         </li>
         <li>
