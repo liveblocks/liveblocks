@@ -47,6 +47,12 @@ fi
 
 EXAMPLE="${1%/}"
 
+if [[ "$VERCEL_GIT_COMMIT_REF" != "main"  ]] ; then
+  # Don't build
+  echo "🛑 - Example are only deployed from the main branch"
+  exit 0;
+fi
+
 if [ ! -d "examples/$EXAMPLE" ]; then
     err "Unknown example: $EXAMPLE"
     err "Valid examples are:"
