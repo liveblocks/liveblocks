@@ -236,75 +236,6 @@ type RoomContext<
     overrides: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void;
-
-  // ....................................................................................
-
-  /**
-   * Returns the LiveList associated with the provided key.
-   * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
-   *
-   * @param key The storage key associated with the LiveList
-   * @returns null while the storage is loading, otherwise, returns the LiveList associated to the storage
-   *
-   * @example
-   * const animals = useList("animals");  // e.g. [] or ["🦁", "🐍", "🦍"]
-   */
-  useList_deprecated<TValue extends Lson>(key: string): LiveList<TValue> | null;
-
-  /**
-   * @deprecated We no longer recommend initializing the
-   * items from the useList() hook. For details, see https://bit.ly/3Niy5aP.
-   */
-  useList_deprecated<TValue extends Lson>(
-    key: string,
-    items: TValue[]
-  ): LiveList<TValue> | null;
-
-  /**
-   * Returns the LiveMap associated with the provided key. If the LiveMap does not exist, a new empty LiveMap will be created.
-   * The hook triggers a re-render if the LiveMap is updated, however it does not triggers a re-render if a nested CRDT is updated.
-   *
-   * @param key The storage key associated with the LiveMap
-   * @returns null while the storage is loading, otherwise, returns the LiveMap associated to the storage
-   *
-   * @example
-   * const shapesById = useMap("shapes");
-   */
-  useMap_deprecated<TKey extends string, TValue extends Lson>(
-    key: string
-  ): LiveMap<TKey, TValue> | null;
-
-  /**
-   * @deprecated We no longer recommend initializing the
-   * entries from the useMap() hook. For details, see https://bit.ly/3Niy5aP.
-   */
-  useMap_deprecated<TKey extends string, TValue extends Lson>(
-    key: string,
-    entries: readonly (readonly [TKey, TValue])[] | null
-  ): LiveMap<TKey, TValue> | null;
-
-  /**
-   * Returns the LiveObject associated with the provided key.
-   * The hook triggers a re-render if the LiveObject is updated, however it does not triggers a re-render if a nested CRDT is updated.
-   *
-   * @param key The storage key associated with the LiveObject
-   * @returns null while the storage is loading, otherwise, returns the LveObject associated to the storage
-   *
-   * @example
-   * const object = useObject("obj");
-   */
-  useObject_deprecated<TData extends LsonObject>(
-    key: string
-  ): LiveObject<TData> | null;
-
-  /**
-   * @deprecated We no longer recommend initializing the fields from the
-   * useObject() hook. For details, see https://bit.ly/3Niy5aP.
-   */
-  useObject_deprecated<TData extends LsonObject>(
-    key: string,
-    initialData: TData
-  ): LiveObject<TData> | null;
 };
 
 type LookupResult<T> =
@@ -866,9 +797,5 @@ Please see https://bit.ly/3Niy5aP for details.`
     useStorage,
     useUndo,
     useUpdateMyPresence,
-
-    useList_deprecated,
-    useMap_deprecated,
-    useObject_deprecated,
   };
 }
