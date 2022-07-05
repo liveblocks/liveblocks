@@ -12,6 +12,7 @@
 - Remove second argument to `useMap()`, `useList()`, and `useObject()`.
 - Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
   `new LiveMap([])`.)
+- `useStorage()` now returns `root` directory, no longer wrapped in `[root]`
 
 ---
 
