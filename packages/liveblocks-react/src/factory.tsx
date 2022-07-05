@@ -11,20 +11,16 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
-import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
+import type {
+  Resolve,
+  RoomInitializers,
+  ToJson,
+} from "@liveblocks/client/internal";
+import { lsonToJson } from "@liveblocks/client/internal";
 import * as React from "react";
 
-import { useRerender } from "./hooks";
-
-/**
- * "Freezes" a given value, so that it will return the same value/instance on
- * each subsequent render. This can be used to freeze "initial" values for
- * custom hooks, much like how `useState(initialState)` or
- * `useRef(initialValue)` works.
- */
-function useInitial<T>(value: T): T {
-  return React.useRef(value).current;
-}
+import { deepEqual } from "./deepEqual";
+import { useBox, useInitial, useRerender } from "./hooks";
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -169,6 +165,11 @@ type RoomContextBundle<
   useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null;
+
+  /**
+   * TODO: Document me
+   */
+  useSelector<T>(selector: (root: ToJson<TStorage>) => T): T | null;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -570,6 +571,62 @@ export function createRoomContext<
     }
   }
 
+  /**
+   * Register a callback function that will get executed every time Storage is
+   * updated.
+   */
+  function useOnStorageChange(callback: (root: LiveObject<TStorage>) => void) {
+    const room = useRoom();
+    const rootOrNull = useStorage();
+    const box = useBox(callback);
+
+    React.useEffect(() => {
+      if (rootOrNull == null) {
+        return;
+      }
+
+      const root = rootOrNull;
+
+      // When we land here, `root` has just jumped from `null` to something, so
+      // let's invoke the callback now.
+      box.current(root);
+
+      // Then, set up a subscription, so we can invoke the callback again every
+      // time anything in storage is updated
+      return room.subscribe(root, () => box.current(root), { isDeep: true });
+    }, [room, rootOrNull, box]);
+  }
+
+  function useSelector<T>(
+    selector: (root: ToJson<TStorage>) => T,
+    equalFn: (prev: T | null, curr: T) => boolean = deepEqual
+  ): T | null {
+    // Initial value is `null` while storage is loading
+    const [prev, setPrev] = React.useState<T | null>(null);
+
+    useOnStorageChange(
+      React.useCallback(
+        (root: LiveObject<TStorage>) => {
+          // XXX This is a hot code path -- make this as efficient as possible!
+
+          const jsonRoot =
+            // XXX This lsonToJson() is too slow and should be cached!
+            lsonToJson(root) as ToJson<TStorage>;
+          const newValue = selector(jsonRoot);
+
+          // Only trigger a re-render if the returned computation from the selector
+          // is different from the previous one!
+          if (!equalFn(prev, newValue)) {
+            setPrev(newValue);
+          }
+        },
+        [selector, equalFn, prev]
+      )
+    );
+
+    return prev;
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -583,6 +640,7 @@ export function createRoomContext<
     useOthers,
     useRedo,
     useRoom,
+    useSelector,
     useSelf,
     useStorage,
     useUndo,
