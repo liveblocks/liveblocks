@@ -1,6 +1,16 @@
 #!/bin/sh
 set -eu
 
+#
+# See https://vercel.com/docs/concepts/projects/overview#ignored-build-step
+#
+# The required exit codes are a little bit unintuitive. The script needs to
+# define whether the build should get _cancelled_ or not.
+#
+# Exit code 0 means "cancel the build".
+# Exit code 1 (non-zero) means "proceed with the build".
+#
+
 # Ensure this script can assume it's run from the repo's
 # root directory, even if the current working directory is
 # different.
@@ -47,10 +57,10 @@ fi
 
 EXAMPLE="${1%/}"
 
-if [[ "$VERCEL_GIT_COMMIT_REF" != "main"  ]] ; then
-  # Don't build
-  echo "🛑 - Example are only deployed from the main branch"
-  exit 0;
+# Only deploy to Vercel from the main branch
+if [ "$VERCEL_GIT_COMMIT_REF" != "main" ]; then
+  err "🛑 Cancelled. Examples are only deployed from the main branch"
+  exit 0
 fi
 
 if [ ! -d "examples/$EXAMPLE" ]; then
