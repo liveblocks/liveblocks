@@ -26,18 +26,21 @@ err () {
 }
 
 usage () {
-    err "usage: should-example-rebuild-on-vercel.sh [-h] <example-name>"
+    err "usage: should-example-rebuild-on-vercel.sh [-hvp] <example-name>"
     err
     err "Returns a 0 or 1 exit code, indicating whether the given example should be redeployed."
     err
     err "Options:"
+    err "-p    Also trigger on updates to packages dir (default is examples dir only)"
     err "-v    Be verbose"
     err "-h    Show this help"
 }
 
+trigger_on_packages=0
 verbose=0
-while getopts vh flag; do
+while getopts vhp flag; do
     case "$flag" in
+        p) trigger_on_packages=1 ;;
         v) verbose=1 ;;
         h) usage; exit 0;;
         *) usage; exit 2;;
@@ -56,12 +59,6 @@ elif [ "$#" -gt 1 ]; then
 fi
 
 EXAMPLE="${1%/}"
-
-# Only deploy to Vercel from the main branch
-if [ "$VERCEL_GIT_COMMIT_REF" != "main" ]; then
-  err "🛑 Cancelled. Examples are only deployed from the main branch"
-  exit 0
-fi
 
 if [ ! -d "examples/$EXAMPLE" ]; then
     err "Unknown example: $EXAMPLE"
@@ -141,8 +138,13 @@ get_all_changed_files () {
 # any other changed files.
 #
 get_interesting_changed_files () {
+    default_match='^examples/'
+    if [ "$trigger_on_packages" -eq 1 ]; then
+        default_match='^(examples|packages)/'
+    fi
+
     get_all_changed_files \
-      | grep -Ee '^(examples|packages)/' \
+      | grep -Ee "$default_match" \
       | grep -vEe "/[.]" \
       | grep -vEe "(\.md)\$" \
       | grep -vEe "\b(test|jest)\b"
@@ -151,11 +153,13 @@ get_interesting_changed_files () {
 make_filter_pattern () {
     PAT="(examples/$EXAMPLE"
 
-    for dep in $( cd "examples/$EXAMPLE" && list_dependencies ); do
-        if starts_with "$dep" "@liveblocks/"; then
-            PAT="$PAT|packages/liveblocks-${dep#@liveblocks/}"
-        fi
-    done
+    if [ "$trigger_on_packages" -eq 1 ]; then
+        for dep in $( cd "examples/$EXAMPLE" && list_dependencies ); do
+            if starts_with "$dep" "@liveblocks/"; then
+                PAT="$PAT|packages/liveblocks-${dep#@liveblocks/}"
+            fi
+        done
+    fi
 
     PAT="$PAT)"
     echo $PAT
@@ -165,26 +169,6 @@ files_that_should_trigger_rebuild () {
     get_interesting_changed_files \
         | grep -Ee "$(make_filter_pattern)"
 }
-
-if [ $verbose -eq 1 ]; then
-    err "--- START of DEBUG output --------------------------"
-    err ""
-    err "==> All changed files (from Git)"
-    get_all_changed_files >&2
-
-    err ""
-    err "----------------------------------------------------"
-    err "==> Considered interesting (that will be considered)"
-    get_interesting_changed_files >&2
-
-    err
-    err "----------------------------------------------------"
-    err "==> Files that should definitely trigger a rebuild"
-    files_that_should_trigger_rebuild >&2
-
-    err
-    err "--- END of DEBUG output --------------------------"
-fi
 
 if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
     if [ $verbose -eq 1 ]; then
