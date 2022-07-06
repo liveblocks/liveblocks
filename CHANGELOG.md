@@ -2,8 +2,10 @@
 
 In **@liveblocks/react**:
 
-- Fix bug in `useMap()`, `useList()`, and `useObject()` that pops up when the
-  `key` argument changes between renders.
+- Fix bug where changing the `key` argument of
+  `useMap()`, `useList()`, `useObject()` did not work.
+- Ignore changes to the `RoomProvider`'s initial presence/storage props on
+  subsequent renders. This makes it behave closer to `useState(initialState)`.
 
 # v0.17.4
 
