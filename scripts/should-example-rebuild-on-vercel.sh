@@ -26,7 +26,7 @@ err () {
 }
 
 usage () {
-    err "usage: should-example-rebuild-on-vercel.sh [-hvp] <example-name>"
+    err "usage: should-example-rebuild-on-vercel.sh [-hv] <example-name>"
     err
     err "Returns a 0 or 1 exit code, indicating whether the given example should be redeployed."
     err
@@ -36,11 +36,9 @@ usage () {
     err "-h    Show this help"
 }
 
-trigger_on_packages=0
 verbose=0
-while getopts vhp flag; do
+while getopts vh flag; do
     case "$flag" in
-        p) trigger_on_packages=1 ;;
         v) verbose=1 ;;
         h) usage; exit 0;;
         *) usage; exit 2;;
@@ -66,24 +64,6 @@ if [ ! -d "examples/$EXAMPLE" ]; then
     ls examples/ | cat >&2
     exit 2
 fi
-
-list_dependencies () {
-    # NOTE: This should really just be a simple JQ call, but JQ is unavailable
-    # on Vercel environments
-    echo '
-      const config = require("./package.json");
-      const deps = new Set([
-          ...(Object.keys(config?.dependencies ?? {})),
-      ]);
-      for (const dep of deps) {
-          console.log(dep);
-      }
-    ' | node -
-}
-
-starts_with () {
-    test "${1#$2}" != "$1"
-}
 
 get_all_changed_files () {
     if [ ! -f "changed-files.txt" ]; then
@@ -138,36 +118,16 @@ get_all_changed_files () {
 # any other changed files.
 #
 get_interesting_changed_files () {
-    default_match='^examples/'
-    if [ "$trigger_on_packages" -eq 1 ]; then
-        default_match='^(examples|packages)/'
-    fi
-
     get_all_changed_files \
-      | grep -Ee "$default_match" \
+      | grep -Ee '^examples/' \
       | grep -vEe "/[.]" \
       | grep -vEe "(\.md)\$" \
       | grep -vEe "\b(test|jest)\b"
 }
 
-make_filter_pattern () {
-    PAT="(examples/$EXAMPLE"
-
-    if [ "$trigger_on_packages" -eq 1 ]; then
-        for dep in $( cd "examples/$EXAMPLE" && list_dependencies ); do
-            if starts_with "$dep" "@liveblocks/"; then
-                PAT="$PAT|packages/liveblocks-${dep#@liveblocks/}"
-            fi
-        done
-    fi
-
-    PAT="$PAT)"
-    echo $PAT
-}
-
 files_that_should_trigger_rebuild () {
     get_interesting_changed_files \
-        | grep -Ee "$(make_filter_pattern)"
+        | grep -Ee "examples/$EXAMPLE"
 }
 
 if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
