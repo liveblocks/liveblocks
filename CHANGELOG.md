@@ -1,3 +1,12 @@
+# v0.17.5
+
+In **@liveblocks/react**:
+
+- Fix bug where changing the `key` argument of
+  `useMap()`, `useList()`, `useObject()` did not work.
+- Ignore changes to the `RoomProvider`'s initial presence/storage props on
+  subsequent renders. This makes it behave closer to `useState(initialState)`.
+
 # v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
