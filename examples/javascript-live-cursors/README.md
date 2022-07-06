@@ -13,7 +13,7 @@
   <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
 </p>
 
-This example shows how to build live cursors without relying on a front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
+This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [esbuild](https://esbuild.github.io/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="500" alt="Live Cursors" />
 
