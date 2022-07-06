@@ -1,5 +1,5 @@
 {
-  "description": "This example shows how to build a collaborative to-do list without relying on a front-end framework—using esbuild for bundling.",
+  "description": "This example shows how to build a collaborative to-do list with Liveblocks and esbuild.",
   "license": "Apache-2.0",
   "private": true,
   "main": "app.js",
