@@ -593,7 +593,12 @@ export function createRoomContext<
 
       // Then, set up a subscription, so we can invoke the callback again every
       // time anything in storage is updated
-      return room.subscribe(root, () => box.current(root), { isDeep: true });
+      return room.subscribe(root, (
+        // XXX Use this param!
+        /* updates */
+        ) => box.current(root), {
+        isDeep: true,
+      });
     }, [room, rootOrNull, box]);
   }
 
