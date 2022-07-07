@@ -19,8 +19,7 @@ import type {
 import { lsonToJson } from "@liveblocks/client/internal";
 import * as React from "react";
 
-import { deepEqual } from "./deepEqual";
-import { useBox, useInitial, useRerender } from "./hooks";
+import { useInitial, useRerender } from "./hooks";
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
