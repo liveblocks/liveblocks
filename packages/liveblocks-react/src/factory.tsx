@@ -599,7 +599,8 @@ export function createRoomContext<
 
   function useSelector<T>(
     selector: (root: ToJson<TStorage>) => T,
-    equalFn: (prev: T | null, curr: T) => boolean = deepEqual
+    // XXX Make Object.is the default!
+    equalFn: (prev: T | null, curr: T) => boolean = deepEqual // Object.is
   ): T | null {
     // Initial value is `null` while storage is loading
     const [prev, setPrev] = React.useState<T | null>(null);
