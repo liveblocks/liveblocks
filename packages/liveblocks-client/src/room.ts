@@ -544,9 +544,8 @@ export function makeStateMachine<
     }
 
     if (storageUpdates.size > 0) {
-      for (const subscriber of state.listeners.storage) {
-        subscriber(Array.from(storageUpdates.values()));
-      }
+      const updates = Array.from(storageUpdates.values());
+      state.listeners.storage.forEach((subscriber) => subscriber(updates));
     }
   }
 
