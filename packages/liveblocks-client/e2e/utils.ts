@@ -82,7 +82,7 @@ async function initializeRoomForTest<
     roomId,
     { initialStorage }
   );
-  await waitFor(() => room.getConnectionState() === "open");
+  await waitFor(() => room.getConnectionState() === "open", 4000);
 
   if (ws == null) {
     throw new Error("Websocket should be initialized at this point");
