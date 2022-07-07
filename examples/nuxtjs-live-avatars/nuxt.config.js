@@ -9,7 +9,7 @@ export default {
       { charset: "utf-8" },
 
       { name: "robots", content: "noindex" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, user-scalable=no" },
     ],
     link: [
       {
