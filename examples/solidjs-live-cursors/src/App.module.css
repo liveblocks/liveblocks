@@ -5,6 +5,7 @@
   align-items: center;
   justify-content: center;
   text-align: center;
+  touch-action: none;
 }
 
 .Text {

@@ -34,16 +34,17 @@ function Example() {
 
   return (
     <main
-      className="relative w-full h-screen flex place-content-center place-items-center"
-      onPointerMove={(event) =>
+      className="relative w-full h-screen flex place-content-center place-items-center touch-none"
+      onPointerMove={(event) => {
+        event.preventDefault();
         // Update the user cursor position on every pointer move
         updateMyPresence({
           cursor: {
             x: Math.round(event.clientX),
             y: Math.round(event.clientY),
           },
-        })
-      }
+        });
+      }}
       onPointerLeave={() =>
         // When the pointer goes out, set cursor to null
         updateMyPresence({

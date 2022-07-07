@@ -139,7 +139,7 @@ function Example() {
   return (
     <>
       <div
-        className="relative h-screen w-full flex items-center justify-center overflow-hidden"
+        className="relative h-screen w-full flex items-center justify-center overflow-hidden touch-none"
         style={{
           cursor:
             state.mode === CursorMode.Chat
@@ -147,6 +147,7 @@ function Example() {
               : "url(cursor.svg) 0 0, auto",
         }}
         onPointerMove={(event) => {
+          event.preventDefault();
           if (cursor == null || state.mode !== CursorMode.ReactionSelector) {
             updateMyPresence({
               cursor: {

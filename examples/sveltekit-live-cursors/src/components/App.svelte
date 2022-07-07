@@ -29,8 +29,9 @@
     unsubscribeOthers();
   });
 
-  // Update cursor presence to current mouse location
-  function handleMousemove(event: MouseEvent) {
+  // Update cursor presence to current pointer location
+  function handlePointerMove(event: PointerEvent) {
+    event.preventDefault();
     room.updatePresence({
       cursor: {
         x: Math.round(event.clientX),
@@ -39,8 +40,8 @@
     });
   }
 
-  // When the mouse leaves the page, set cursor presence to null
-  function handleMouseleave() {
+  // When the pointer leaves the page, set cursor presence to null
+  function handlePointerLeave() {
     room.updatePresence({
       cursor: null,
     });
@@ -58,7 +59,7 @@
   ];
 </script>
 
-<main on:mouseleave={handleMouseleave} on:mousemove={handleMousemove}>
+<main on:pointerleave={handlePointerLeave} on:pointermove={handlePointerMove}>
   <!-- Show the current user's cursor location -->
   <div class="text">
     {myPresence?.cursor
@@ -90,6 +91,7 @@
     display: flex;
     place-content: center;
     place-items: center;
+    touch-action: none;
   }
 
   .text {

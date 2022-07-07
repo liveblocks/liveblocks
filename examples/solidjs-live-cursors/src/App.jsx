@@ -40,6 +40,7 @@ function App({ room }) {
     <main
       class={styles.App}
       onPointerMove={(event) => {
+        event.preventDefault();
         // Update the user cursor position on every pointer move
         room.updatePresence({
           cursor: {

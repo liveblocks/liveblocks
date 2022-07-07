@@ -18,6 +18,7 @@ body {
   display: flex;
   place-content: center;
   place-items: center;
+  touch-action: none;
 }
 
 .text {
