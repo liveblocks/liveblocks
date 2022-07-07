@@ -14,7 +14,7 @@ import { useReducer } from "react";
  *   )
  *
  */
-export default function useRerender(): () => void {
+export function useRerender(): () => void {
   const [, update] = useReducer(
     // This implementation works by incrementing a hidden counter value that is
     // never consumed. Simply incrementing the counter changes the component's

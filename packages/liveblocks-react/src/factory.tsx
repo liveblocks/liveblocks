@@ -17,7 +17,7 @@ import { errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
 import { useClient as _useClient } from "./client";
-import useRerender from "./useRerender";
+import { useRerender } from "./hooks";
 
 /**
  * "Freezes" a given value, so that it will return the same value/instance on
