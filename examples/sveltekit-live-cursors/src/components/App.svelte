@@ -30,7 +30,7 @@
   });
 
   // Update cursor presence to current mouse location
-  function handleMousemove (event: MouseEvent) {
+  function handleMousemove(event: MouseEvent) {
     room.updatePresence({
       cursor: {
         x: Math.round(event.clientX),
@@ -40,7 +40,7 @@
   }
 
   // When the mouse leaves the page, set cursor presence to null
-  function handleMouseleave () {
+  function handleMouseleave() {
     room.updatePresence({
       cursor: null,
     });
@@ -94,6 +94,7 @@
 
   .text {
     max-width: 380px;
+    margin: 0 16px;
     text-align: center;
   }
 </style>

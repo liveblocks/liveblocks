@@ -51,7 +51,7 @@ function Example() {
         })
       }
     >
-      <div className="max-w-sm text-center">
+      <div className="max-w-sm mx-4 text-center">
         {cursor
           ? `${cursor.x} × ${cursor.y}`
           : "Move your cursor to broadcast its position to other people in the room."}

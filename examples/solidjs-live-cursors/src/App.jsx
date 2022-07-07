@@ -19,12 +19,14 @@ function App({ room }) {
   const [users, setUsers] = createSignal([]);
 
   onMount(() => {
-    const unsubscribePresence = room.subscribe("my-presence", presence => {
+    const unsubscribePresence = room.subscribe("my-presence", (presence) => {
       setCurrentUser(presence);
     });
 
-    const unsubscribeOthers = room.subscribe("others", others => {
-      const othersWithPresence = others.toArray().filter(other => other?.presence);
+    const unsubscribeOthers = room.subscribe("others", (others) => {
+      const othersWithPresence = others
+        .toArray()
+        .filter((other) => other?.presence);
       setUsers(othersWithPresence);
     });
 
@@ -53,7 +55,7 @@ function App({ room }) {
         })
       }
     >
-      <div>
+      <div class={styles.Text}>
         {currentUser().cursor
           ? `${currentUser().cursor.x} × ${currentUser().cursor.y}`
           : "Move your cursor to broadcast its position to other people in the room."}
@@ -66,15 +68,17 @@ function App({ room }) {
         from @solid-primitives with `user => user.connectionId` as the key, to
         retain the elements and their animations.
       */}
-      <Key each={users()} by="connectionId">{(user) => (
-        <Show when={user().presence?.cursor}>
-          <Cursor
-            x={user().presence.cursor.x}
-            y={user().presence.cursor.y}
-            color={COLORS[user().connectionId % COLORS.length]}
-          />
-        </Show>
-      )}</Key>
+      <Key each={users()} by="connectionId">
+        {(user) => (
+          <Show when={user().presence?.cursor}>
+            <Cursor
+              x={user().presence.cursor.x}
+              y={user().presence.cursor.y}
+              color={COLORS[user().connectionId % COLORS.length]}
+            />
+          </Show>
+        )}
+      </Key>
     </main>
   );
 }
