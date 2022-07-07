@@ -21,6 +21,6 @@
   color: white;
 }
 
-.you {
+.you:not(:first-child) {
   margin-left: 32px;
 }
