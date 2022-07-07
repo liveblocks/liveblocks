@@ -117,6 +117,7 @@ function Canvas({ shapes }) {
               onShapePointerDown={onShapePointerDown}
               shape={shape}
               selectionColor={selectionColor}
+              transition={selectedShape !== shapeId}
             />
           );
         })}
@@ -133,28 +134,31 @@ function Canvas({ shapes }) {
   );
 }
 
-const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
-  const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
+const Rectangle = memo(
+  ({ shape, id, onShapePointerDown, selectionColor, transition }) => {
+    const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
 
-  const room = useRoom();
+    const room = useRoom();
 
-  useEffect(() => {
-    function onChange() {
-      setShapeData(shape.toObject());
-    }
+    useEffect(() => {
+      function onChange() {
+        setShapeData(shape.toObject());
+      }
 
-    return room.subscribe(shape, onChange);
-  }, [room, shape]);
+      return room.subscribe(shape, onChange);
+    }, [room, shape]);
 
-  return (
-    <div
-      onPointerDown={(e) => onShapePointerDown(e, id)}
-      className="rectangle"
-      style={{
-        transform: `translate(${x}px, ${y}px)`,
-        backgroundColor: fill ? fill : "#CCC",
-        borderColor: selectionColor || "transparent",
-      }}
-    />
-  );
-});
+    return (
+      <div
+        onPointerDown={(e) => onShapePointerDown(e, id)}
+        className="rectangle"
+        style={{
+          transform: `translate(${x}px, ${y}px)`,
+          transition: transition ? "transform 120ms linear" : "none",
+          backgroundColor: fill ? fill : "#CCC",
+          borderColor: selectionColor || "transparent",
+        }}
+      />
+    );
+  }
+);

@@ -126,8 +126,8 @@ function wrapHookDeclaration(
   hasOverloads: boolean
 ): string {
   const internalName = decl.name.text;
-  const name = decl.name.text.startsWith("deprecated_")
-    ? decl.name.text.slice("deprecated_".length)
+  const name = decl.name.text.endsWith("_deprecated")
+    ? decl.name.text.slice(0, decl.name.text.length - "_deprecated".length)
     : decl.name.text;
 
   // Extract function parameter names and their type annotations
@@ -268,12 +268,12 @@ output += "\n";
 
 const liveblocksHooks = getLiveblocksHookDefintions();
 for (const decl of liveblocksHooks) {
-  const isDeprecatedVersion = decl.name.text.startsWith("deprecated_");
+  const isDeprecatedVersion = decl.name.text.endsWith("_deprecated");
 
   if (
     !isDeprecatedVersion &&
     liveblocksHooks.filter(
-      (hook) => hook.name.text === "deprecated_" + decl.name.text
+      (hook) => hook.name.text === decl.name.text + "_deprecated"
     ).length >= 1
   ) {
     // Skip over APIs that have a deprecated version - we'll be using those in

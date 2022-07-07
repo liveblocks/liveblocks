@@ -20,7 +20,7 @@ export default function Ellipse({
     <ellipse
       onPointerDown={(e) => onPointerDown(e, id)}
       style={{
-        transition: isAnimated ? "all 0.1s ease" : "",
+        transition: isAnimated ? "all 120ms linear" : "",
         transform: `translate(${layer.x}px, ${layer.y}px)`,
       }}
       cx={layer.width / 2}

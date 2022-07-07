@@ -1,12 +1,12 @@
 {
-  "description": "This example shows how to build live cursors without relying on a front-end framework—using esbuild for bundling.",
+  "description": "This example shows how to build live cursors with Liveblocks and esbuild.",
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "build": "esbuild app.js --bundle --outfile=static/app.js"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.17.1"
+    "@liveblocks/client": "^0.17.5"
   },
   "devDependencies": {
     "esbuild": "^0.12.2",

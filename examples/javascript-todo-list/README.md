@@ -16,8 +16,8 @@
   <img src="https://img.shields.io/badge/javascript-message?style=flat&logo=javascript&color=db0&logoColor=fff" alt="JavaScript" />
 </p>
 
-This example shows how to build a collaborative to-do list without relying on a
-front-end framework—using [esbuild](https://esbuild.github.io/) for bundling.
+This example shows how to build a collaborative to-do list with
+[Liveblocks](https://liveblocks.io) and [esbuild](https://esbuild.github.io/).
 
 As users edit the list, changes will be automatically persisted and
 synced—allowing for a list that updates in real-time across clients. Users will
