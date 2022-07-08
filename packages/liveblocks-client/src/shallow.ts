@@ -12,7 +12,7 @@ function shallowArray(xs: unknown[], ys: unknown[]): boolean {
   return true;
 }
 
-function shallowObj<T>(objA: T, objB: T): boolean {
+function shallowObj<T, U>(objA: T, objB: U): boolean {
   if (
     typeof objA !== "object" ||
     objA === null ||
@@ -38,7 +38,7 @@ function shallowObj<T>(objA: T, objB: T): boolean {
   return keysA.every(
     (key) =>
       Object.prototype.hasOwnProperty.call(objB, key) &&
-      Object.is(objA[key as keyof T], objB[key as keyof T])
+      Object.is(objA[key as keyof T], objB[key as keyof U])
   );
 }
 
@@ -51,7 +51,7 @@ function shallowObj<T>(objA: T, objB: T): boolean {
  *
  * Testing goes one level deep.
  */
-export function shallow<T>(a: T, b: T): boolean {
+export function shallow(a: unknown, b: unknown): boolean {
   if (Object.is(a, b)) {
     return true;
   }
