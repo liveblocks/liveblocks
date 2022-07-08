@@ -1,5 +1,15 @@
 function shallowArray(xs: unknown[], ys: unknown[]): boolean {
-  return xs.length === ys.length && xs.every((x, idx) => Object.is(x, ys[idx]));
+  if (xs.length !== ys.length) {
+    return false;
+  }
+
+  for (let i = 0; i < xs.length; i++) {
+    if (!Object.is(xs[i], ys[i])) {
+      return false;
+    }
+  }
+
+  return true;
 }
 
 function shallowObj<T>(objA: T, objB: T): boolean {

@@ -77,6 +77,14 @@ describe("shallow", () => {
     expect(shallow(new Date(), [])).toBe(false);
     expect(shallow({}, new Date())).toBe(false);
   });
+
+  it("sparse arrays", () => {
+    // Sparse arrays should not break
+    expect(shallow([,], ["oops", 1])).toBe(false);
+    expect(shallow(["oops", 1], [,])).toBe(false);
+    expect(shallow([, , ,], [, , ,])).toBe(true);
+    expect(shallow([, , , "hi"], [, , , "hi"])).toBe(true);
+  });
 });
 
 describe("shallow (properties)", () => {
