@@ -5,7 +5,19 @@ import shallow from "./shallow";
 const scalar = () => fc.jsonValue({ maxDepth: 0 });
 
 const complex = () =>
-  fc.anything().filter((value) => value !== null && typeof value === "object");
+  fc
+    .anything({
+      withBigInt: true,
+      withBoxedValues: true,
+      withDate: true,
+      withMap: true,
+      withNullPrototype: true,
+      withObjectString: true,
+      withSet: true,
+      withTypedArray: true,
+      withSparseArray: true,
+    })
+    .filter((value) => value !== null && typeof value === "object");
 
 describe("shallow", () => {
   it("scalar values", () => {
