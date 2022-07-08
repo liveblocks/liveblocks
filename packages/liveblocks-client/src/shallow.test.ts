@@ -80,10 +80,12 @@ describe("shallow", () => {
 
   it("sparse arrays", () => {
     // Sparse arrays should not break
+    /* eslint-disable no-sparse-arrays */
     expect(shallow([,], ["oops", 1])).toBe(false);
     expect(shallow(["oops", 1], [,])).toBe(false);
     expect(shallow([, , ,], [, , ,])).toBe(true);
     expect(shallow([, , , "hi"], [, , , "hi"])).toBe(true);
+    /* eslint-enable no-sparse-arrays */
   });
 });
 
