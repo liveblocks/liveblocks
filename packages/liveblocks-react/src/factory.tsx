@@ -18,7 +18,9 @@ import type {
 } from "@liveblocks/client/internal";
 import { lsonToJson } from "@liveblocks/client/internal";
 import * as React from "react";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
+import { deepEqual } from "./deepEqual";
 import { useInitial, useRerender } from "./hooks";
 
 export type RoomProviderProps<
@@ -168,7 +170,12 @@ type RoomContextBundle<
   /**
    * TODO: Document me
    */
-  useSelector<T>(selector: (root: ToJson<TStorage>) => T): T | null;
+  useSelector<T>(
+    selector: (root: ToJson<TStorage> | null) => T,
+    //                                  ^^^^
+    //                                  Ugh. Try to get rid of this!
+    isEqual?: (a: T, b: T) => boolean
+  ): T /* | null */;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -570,66 +577,57 @@ export function createRoomContext<
     }
   }
 
-  /**
-   * Register a callback function that will get executed every time Storage is
-   * updated.
-   */
-  function useOnStorageChange(callback: (root: LiveObject<TStorage>) => void) {
+  function useSelector<T>(
+    selector: (root: ToJson<TStorage> | null) => T,
+    //                                  ^^^^ Ugh. Try to get rid of this!
+    isEqual?: (a: T, b: T) => boolean
+  ): T /* | null */ {
     const room = useRoom();
     const rootOrNull = useStorage();
-    const box = useBox(callback);
 
-    React.useEffect(() => {
-      if (rootOrNull == null) {
-        return;
-      }
-
-      const root = rootOrNull;
-
-      // When we land here, `root` has just jumped from `null` to something, so
-      // let's invoke the callback now.
-      box.current(root);
-
-      // Then, set up a subscription, so we can invoke the callback again every
-      // time anything in storage is updated
-      return room.subscribe(root, (
-        // XXX Use this param!
-        /* updates */
-        ) => box.current(root), {
-        isDeep: true,
-      });
-    }, [room, rootOrNull, box]);
-  }
-
-  function useSelector<T>(
-    selector: (root: ToJson<TStorage>) => T,
-    // XXX Make Object.is the default!
-    equalFn: (prev: T | null, curr: T) => boolean = deepEqual // Object.is
-  ): T | null {
-    // Initial value is `null` while storage is loading
-    const [prev, setPrev] = React.useState<T | null>(null);
-
-    useOnStorageChange(
-      React.useCallback(
-        (root: LiveObject<TStorage>) => {
-          // XXX This is a hot code path -- make this as efficient as possible!
-
-          const jsonRoot =
-            // XXX This lsonToJson() is too slow and should be cached!
-            lsonToJson(root) as ToJson<TStorage>;
-          const newValue = selector(jsonRoot);
-
-          // Only trigger a re-render if the returned computation from the selector
-          // is different from the previous one!
-          if (!equalFn(prev, newValue)) {
-            setPrev(newValue);
-          }
-        },
-        [selector, equalFn, prev]
-      )
+    const subscribe = React.useCallback(
+      (listener: () => void) => {
+        const unsub =
+          rootOrNull != null
+            ? room.subscribe(rootOrNull, listener, { isDeep: true })
+            : () => {
+                console.log("unsubbing the null sub");
+              };
+        return () => {
+          unsub();
+        };
+      },
+      [room, rootOrNull]
     );
 
-    return prev;
+    const cache: { _last: ToJson<TStorage> | null } = { _last: null };
+
+    const getSnapshot = React.useCallback(() => {
+      console.log("getSnapshot called", { rootOrNull });
+      if (rootOrNull == null) {
+        return null;
+      } else {
+        const root = rootOrNull;
+
+        // XXX This completely recomputes the entire immutable JSON tree
+        // XXX equivalent to the Live root. Inefficient! Optimize!
+        const rv = lsonToJson(root) as ToJson<TStorage>;
+        if (!deepEqual(cache._last, rv)) {
+          cache._last = rv;
+        }
+        return cache._last;
+      }
+    }, [rootOrNull, cache]);
+
+    const getServerSnapshot = React.useCallback(() => null, []);
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector,
+      isEqual
+    );
   }
 
   return {
