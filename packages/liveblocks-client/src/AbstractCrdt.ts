@@ -1,6 +1,7 @@
 import { assertNever } from "./assert";
 import type {
   CreateChildOp,
+  Json,
   LiveNode,
   Op,
   SerializedCrdt,
@@ -265,6 +266,7 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
+
   /** @internal */
   abstract _serialize(
     parentId: string,
@@ -274,4 +276,45 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   abstract _toSerializedCrdt(): SerializedCrdt;
+
+  /**
+   * @internal
+   *
+   * This caches the result of the last .toJson() call for any Live node.
+   */
+  _cachedJson?: Json;
+
+  /**
+   * @internal
+   *
+   * Clear the JSON cache, so that the next call to `.toJson()` will
+   * recompute the equivalent JSON value again.  Call this after every mutation
+   * to the Live node.
+   */
+  invalidate(): void {
+    if (this._cachedJson !== undefined) {
+      this._cachedJson = undefined;
+
+      if (this.parent.type === "HasParent") {
+        this.parent.node.invalidate();
+      }
+    }
+  }
+
+  /** @internal */
+  abstract _toJson(): Json;
+
+  /**
+   * Return a JSON representation for this Live node and its children.
+   */
+  toJson(): Json {
+    if (this._cachedJson) {
+      // Return cached version if not invalidated
+      return this._cachedJson;
+    } else {
+      const j = this._toJson(); // Object.freeze?
+      this._cachedJson = j;
+      return j;
+    }
+  }
 }

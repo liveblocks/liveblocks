@@ -92,4 +92,9 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
   }
+
+  /** @internal */
+  _toJson(): Json {
+    return this._data;
+  }
 }

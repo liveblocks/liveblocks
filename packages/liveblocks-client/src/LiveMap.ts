@@ -1,10 +1,12 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
+import { liveMapToJson } from "./immutable";
 import type {
   CreateChildOp,
   CreateMapOp,
   IdTuple,
+  Json,
   LiveMapUpdates,
   LiveNode,
   Lson,
@@ -100,6 +102,7 @@ export class LiveMap<
       const child = deserialize([id, crdt], parentToChildren, doc);
       child._setParentLink(map, crdt.parentKey);
       map._map.set(crdt.parentKey, child);
+      map.invalidate();
     }
 
     return map;
@@ -167,6 +170,7 @@ export class LiveMap<
     child._setParentLink(this, key);
     child._attach(id, this._doc);
     this._map.set(key, child);
+    this.invalidate();
 
     return {
       modified: {
@@ -200,6 +204,7 @@ export class LiveMap<
     for (const [key, value] of this._map) {
       if (value === child) {
         this._map.delete(key);
+        this.invalidate();
       }
     }
 
@@ -260,6 +265,7 @@ export class LiveMap<
     item._setParentLink(this, key);
 
     this._map.set(key, item);
+    this.invalidate();
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -315,6 +321,7 @@ export class LiveMap<
 
     item._detach();
     this._map.delete(key);
+    this.invalidate();
 
     if (this._doc && item._id) {
       const thisId = nn(this._id);
@@ -426,5 +433,10 @@ export class LiveMap<
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }
+  }
+
+  /** @internal */
+  _toJson(): { [K in TKey]: Json } {
+    return liveMapToJson(this);
   }
 }
