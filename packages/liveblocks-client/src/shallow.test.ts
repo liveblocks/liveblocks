@@ -1,6 +1,6 @@
 import fc from "fast-check";
 
-import shallow from "./shallow";
+import { shallow } from "./shallow";
 
 const anything = () =>
   fc.anything({

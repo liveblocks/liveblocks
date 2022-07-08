@@ -41,7 +41,7 @@ function shallowObj<T>(objA: T, objB: T): boolean {
  *
  * Testing goes one level deep.
  */
-export default function shallow<T>(a: T, b: T): boolean {
+export function shallow<T>(a: T, b: T): boolean {
   if (Object.is(a, b)) {
     return true;
   }
