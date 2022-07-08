@@ -73,11 +73,19 @@ describe("shallow (properties)", () => {
           expect(shallow([scalar1], [scalar2])).toBe(true);
           expect(shallow([scalar1, scalar1], [scalar2, scalar2])).toBe(true);
 
+          // ...but wrapping twice is _never_ going to be equal
+          expect(shallow([[scalar1]], [[scalar2]])).toBe(false);
+
           // Ditto for objects
           expect(shallow({ a: scalar1 }, { a: scalar2 })).toBe(true);
           expect(
             shallow({ a: scalar1, b: scalar1 }, { a: scalar2, b: scalar2 })
           ).toBe(true);
+
+          // ...but nesting twice is _never_ going to be equal
+          expect(shallow({ a: { b: scalar1 } }, { a: { b: scalar2 } })).toBe(
+            false
+          );
         }
       )
     );
