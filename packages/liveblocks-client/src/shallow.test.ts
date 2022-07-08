@@ -2,22 +2,23 @@ import fc from "fast-check";
 
 import shallow from "./shallow";
 
+const anything = () =>
+  fc.anything({
+    withBigInt: true,
+    withBoxedValues: true,
+    withDate: true,
+    withMap: true,
+    withNullPrototype: true,
+    withObjectString: true,
+    withSet: true,
+    withTypedArray: true,
+    withSparseArray: true,
+  });
+
 const scalar = () => fc.jsonValue({ maxDepth: 0 });
 
 const complex = () =>
-  fc
-    .anything({
-      withBigInt: true,
-      withBoxedValues: true,
-      withDate: true,
-      withMap: true,
-      withNullPrototype: true,
-      withObjectString: true,
-      withSet: true,
-      withTypedArray: true,
-      withSparseArray: true,
-    })
-    .filter((value) => value !== null && typeof value === "object");
+  anything().filter((value) => value !== null && typeof value === "object");
 
 describe("shallow", () => {
   it("scalar values", () => {
@@ -66,6 +67,15 @@ describe("shallow", () => {
     // Weird exceptions
     expect(shallow({ k: NaN }, { k: NaN })).toBe(true);
     expect(shallow({ k: -0 }, { k: +0 })).toBe(false);
+  });
+
+  it("different outer types are never equal", () => {
+    expect(shallow({}, [])).toBe(false);
+    expect(shallow([], {})).toBe(false);
+    expect(shallow(new Date(), new Date())).toBe(false);
+    expect(shallow(new Date("1970-01-01"), new Date())).toBe(false);
+    expect(shallow(new Date(), [])).toBe(false);
+    expect(shallow({}, new Date())).toBe(false);
   });
 });
 
@@ -135,17 +145,61 @@ describe("shallow (properties)", () => {
           // Property: _if_ two complex values are considered shallowly equal,
           // then wrapping them in an array (one level) will guarantee they're
           // not shallowly equal
-          expect(
-            // Read as: if complex1 = complex2, then also [complex1] != [complex2]
-            !shallow(complex1, complex2) || !shallow([complex1], [complex2])
-          ).toBe(true);
+          if (shallow(complex1, complex2)) {
+            expect(shallow([complex1], [complex2])).toBe(false);
+          }
 
           // Ditto for objects
-          expect(
-            // Read as: if complex1 = complex2, then also [complex1] != [complex2]
-            !shallow(complex1, complex2) ||
-              !shallow({ k: complex1 }, { k: complex2 })
-          ).toBe(true);
+          if (shallow(complex1, complex2)) {
+            expect(shallow({ k: complex1 }, { k: complex2 })).toBe(false);
+          }
+        }
+      )
+    );
+  });
+
+  it("consistency", () => {
+    fc.assert(
+      fc.property(
+        // Inputs
+        fc.oneof(
+          fc.tuple(anything(), anything()),
+
+          // Add a few clones in the mix too, to ensure we'll have different and equal values
+          fc.clone(anything(), 2)
+        ),
+
+        // Unit test
+        ([value1, value2]) => {
+          // _If_ sticking these values in an array makes them shallow-equal,
+          // then they should also always be equal without the array wrappers
+          if (shallow([value1], [value2])) {
+            expect(shallow(value1, value2)).toBe(true);
+          }
+
+          if (shallow({ k: value1 }, { k: value2 })) {
+            expect(shallow(value1, value2)).toBe(true);
+          }
+        }
+      )
+    );
+  });
+
+  it("argument ordering does not matter", () => {
+    fc.assert(
+      fc.property(
+        // Inputs
+        fc.oneof(
+          fc.tuple(anything(), anything()),
+
+          // Add a few clones in the mix too, to ensure we'll have different and equal values
+          fc.clone(anything(), 2)
+        ),
+
+        // Unit test
+        ([value1, value2]) => {
+          // Order doesn't matter when comparing
+          expect(shallow(value1, value2)).toBe(shallow(value2, value1));
         }
       )
     );

@@ -1,10 +1,5 @@
-function shallowArray(xs: unknown, ys: unknown): boolean {
-  return (
-    Array.isArray(xs) &&
-    Array.isArray(ys) &&
-    xs.length === ys.length &&
-    xs.every((x, idx) => Object.is(x, ys[idx]))
-  );
+function shallowArray(xs: unknown[], ys: unknown[]): boolean {
+  return xs.length === ys.length && xs.every((x, idx) => Object.is(x, ys[idx]));
 }
 
 function shallowObj<T>(objA: T, objB: T): boolean {
@@ -47,5 +42,19 @@ function shallowObj<T>(objA: T, objB: T): boolean {
  * Testing goes one level deep.
  */
 export default function shallow<T>(a: T, b: T): boolean {
-  return Object.is(a, b) || shallowArray(a, b) || shallowObj(a, b);
+  if (Object.is(a, b)) {
+    return true;
+  }
+
+  const isArrayA = Array.isArray(a);
+  const isArrayB = Array.isArray(b);
+  if (isArrayA || isArrayB) {
+    if (!isArrayA || !isArrayB) {
+      return false;
+    }
+
+    return shallowArray(a, b);
+  }
+
+  return shallowObj(a, b);
 }
