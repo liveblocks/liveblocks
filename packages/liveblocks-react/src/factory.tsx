@@ -16,11 +16,9 @@ import type {
   RoomInitializers,
   ToJson,
 } from "@liveblocks/client/internal";
-import { lsonToJson } from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
-import { deepEqual } from "./deepEqual";
 import { useInitial, useRerender } from "./hooks";
 
 export type RoomProviderProps<
@@ -591,7 +589,7 @@ export function createRoomContext<
           rootOrNull != null
             ? room.subscribe(rootOrNull, listener, { isDeep: true })
             : () => {
-                console.log("unsubbing the null sub");
+                //console.log("unsubbing the null sub");
               };
         return () => {
           unsub();
@@ -600,24 +598,15 @@ export function createRoomContext<
       [room, rootOrNull]
     );
 
-    const cache: { _last: ToJson<TStorage> | null } = { _last: null };
-
     const getSnapshot = React.useCallback(() => {
-      console.log("getSnapshot called", { rootOrNull });
       if (rootOrNull == null) {
         return null;
       } else {
         const root = rootOrNull;
-
-        // XXX This completely recomputes the entire immutable JSON tree
-        // XXX equivalent to the Live root. Inefficient! Optimize!
-        const rv = lsonToJson(root) as ToJson<TStorage>;
-        if (!deepEqual(cache._last, rv)) {
-          cache._last = rv;
-        }
-        return cache._last;
+        const json = root.toJson();
+        return json as ToJson<TStorage>;
       }
-    }, [rootOrNull, cache]);
+    }, [rootOrNull]);
 
     const getServerSnapshot = React.useCallback(() => null, []);
 

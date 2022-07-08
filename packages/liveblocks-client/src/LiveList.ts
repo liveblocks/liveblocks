@@ -1,6 +1,7 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
+import { liveListToJson } from "./immutable";
 import { LiveRegister } from "./LiveRegister";
 import { comparePosition, makePosition } from "./position";
 import type {
@@ -8,6 +9,7 @@ import type {
   CreateListOp,
   CreateOp,
   IdTuple,
+  Json,
   LiveListUpdateDelta,
   LiveListUpdates,
   LiveNode,
@@ -123,6 +125,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   _sortItems(): void {
     this._items.sort(compareNodePosition);
+    this.invalidate();
   }
 
   /** @internal */
@@ -175,6 +178,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         // Replace the existing item with the newly created item without sorting the list
         this._items[indexOfItemWithSamePosition] = child;
+        this.invalidate();
 
         return {
           modified: makeUpdate(this, [
@@ -190,6 +194,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         // Replace the existing item with the newly created item without sorting the list
         this._items[indexOfItemWithSamePosition] = child;
+        this.invalidate();
 
         const delta: LiveListUpdateDelta[] = [
           setDelta(indexOfItemWithSamePosition, child),
@@ -278,6 +283,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           this._items[indexOfItemWithSamePosition]
         );
         this._items.splice(indexOfItemWithSamePosition, 1);
+        this.invalidate();
         delta.push(deleteDelta(indexOfItemWithSamePosition));
       }
 
@@ -323,6 +329,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         if (indexOfItemWithSamePosition !== -1) {
           this._items.splice(indexOfItemWithSamePosition, 1);
+          this.invalidate();
         }
 
         const { newItem, newIndex } = this._createAttachItemAndSort(
@@ -601,6 +608,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items.splice(indexToDelete, 1);
+      this.invalidate();
 
       child._detach();
 
@@ -979,6 +987,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const item = this._items[index];
     item._detach();
     this._items.splice(index, 1);
+    this.invalidate();
 
     if (this._doc) {
       const childRecordId = item._id;
@@ -1031,6 +1040,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items = [];
+      this.invalidate();
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
@@ -1041,6 +1051,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item._detach();
       }
       this._items = [];
+      this.invalidate();
     }
   }
 
@@ -1062,6 +1073,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const value = lsonToLiveNode(item);
     value._setParentLink(this, position);
     this._items[index] = value;
+    this.invalidate();
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -1229,6 +1241,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
 
     this._items[index]._setParentLink(this, shiftedPosition);
+  }
+
+  /** @internal */
+  _toJson(): Json[] {
+    return liveListToJson(this);
   }
 }
 
