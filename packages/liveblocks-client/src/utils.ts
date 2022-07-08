@@ -268,15 +268,10 @@ function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   };
 }
 
-function mergeMapStorageUpdates<
-  K1 extends string,
-  V1 extends Lson,
-  K2 extends string,
-  V2 extends Lson
->(
-  first: LiveMapUpdates<K1, V1>,
+function mergeMapStorageUpdates<K2 extends string, V2 extends Lson>(
+  first: LiveMapUpdates<string, Lson>,
   second: LiveMapUpdates<K2, V2>
-): LiveMapUpdates<K1 | K2, V1 | V2> {
+): LiveMapUpdates<K2, V2> {
   const updates = first.updates;
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;
