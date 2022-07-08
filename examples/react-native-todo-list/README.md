@@ -21,7 +21,7 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.ts`](./examples/react-native-todo-list/liveblocks.config.ts) by your **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.ts`](./liveblocks.config.ts) by your **public** key
 - For iOS run `ios\pod install` and `npx react-native run-ios`
 - For Android run `npx react-native run-android`
 
