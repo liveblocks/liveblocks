@@ -23,7 +23,7 @@
 .form_container {
   display: flex;
   align-items: center;
-  padding: 96px;
+  padding: 42px 16px 0px;
 }
 
 .form_content {
@@ -72,6 +72,8 @@
 }
 
 .input {
+  appearance: none;
+  margin: 0;
   width: 100%;
   padding: 10px 14px;
   border: none;

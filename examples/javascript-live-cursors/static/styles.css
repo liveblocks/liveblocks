@@ -1,6 +1,7 @@
 html {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  touch-action: none;
 }
 
 body {
@@ -23,6 +24,7 @@ body {
 
 #text {
   max-width: 380px;
+  margin: 0 16px;
   text-align: center;
 }
 
