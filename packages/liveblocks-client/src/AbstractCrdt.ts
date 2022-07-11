@@ -282,7 +282,7 @@ export abstract class AbstractCrdt {
    *
    * This caches the result of the last .toJson() call for any Live node.
    */
-  _cachedJson?: Json;
+  private _cachedJson?: Json;
 
   /**
    * @internal
@@ -308,13 +308,11 @@ export abstract class AbstractCrdt {
    * Return a JSON representation for this Live node and its children.
    */
   toJson(): Json {
-    if (this._cachedJson) {
-      // Return cached version if not invalidated
-      return this._cachedJson;
-    } else {
-      const j = this._toJson(); // Object.freeze?
-      this._cachedJson = j;
-      return j;
+    if (this._cachedJson === undefined) {
+      this._cachedJson = this._toJson(); // Object.freeze?
     }
+
+    // Return cached version
+    return this._cachedJson;
   }
 }
