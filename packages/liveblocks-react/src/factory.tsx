@@ -21,6 +21,8 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { useInitial, useRerender } from "./hooks";
 
+const noop = () => {};
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -169,11 +171,9 @@ type RoomContextBundle<
    * TODO: Document me
    */
   useSelector<T>(
-    selector: (root: ToJson<TStorage> | null) => T,
-    //                                  ^^^^
-    //                                  Ugh. Try to get rid of this!
-    isEqual?: (a: T, b: T) => boolean
-  ): T /* | null */;
+    selector: (root: ToJson<TStorage>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -576,30 +576,31 @@ export function createRoomContext<
   }
 
   function useSelector<T>(
-    selector: (root: ToJson<TStorage> | null) => T,
-    //                                  ^^^^ Ugh. Try to get rid of this!
-    isEqual?: (a: T, b: T) => boolean
-  ): T /* | null */ {
+    selector: (root: ToJson<TStorage>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null {
+    type Snapshot = ToJson<TStorage> | null;
+    type Selection = T | null;
+
     const room = useRoom();
     const rootOrNull = useStorage();
 
+    const wrappedSelector = React.useCallback(
+      (rootOrNull: Snapshot): Selection =>
+        rootOrNull !== null ? selector(rootOrNull) : null,
+      [selector]
+    );
+
     const subscribe = React.useCallback(
-      (listener: () => void) => {
-        const unsub =
-          rootOrNull != null
-            ? room.subscribe(rootOrNull, listener, { isDeep: true })
-            : () => {
-                //console.log("unsubbing the null sub");
-              };
-        return () => {
-          unsub();
-        };
-      },
+      (onStoreChange: () => void) =>
+        rootOrNull !== null
+          ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
+          : noop,
       [room, rootOrNull]
     );
 
-    const getSnapshot = React.useCallback(() => {
-      if (rootOrNull == null) {
+    const getSnapshot = React.useCallback((): Snapshot => {
+      if (rootOrNull === null) {
         return null;
       } else {
         const root = rootOrNull;
@@ -608,13 +609,13 @@ export function createRoomContext<
       }
     }, [rootOrNull]);
 
-    const getServerSnapshot = React.useCallback(() => null, []);
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,
       getServerSnapshot,
-      selector,
+      wrappedSelector,
       isEqual
     );
   }
