@@ -307,12 +307,12 @@ export abstract class AbstractCrdt {
   /**
    * Return a JSON representation for this Live node and its children.
    */
-  toJson(): ReturnType<this["_toJson"]> {
+  toJson(): Json {
     if (this._cachedJson === undefined) {
       this._cachedJson = this._toJson(); // Object.freeze?
     }
 
     // Return cached version
-    return this._cachedJson as ReturnType<this["_toJson"]>;
+    return this._cachedJson;
   }
 }
