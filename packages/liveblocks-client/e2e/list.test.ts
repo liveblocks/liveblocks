@@ -321,8 +321,8 @@ describe("LiveList conflicts", () => {
   });
 
   describe("move conflicts", () => {
-    // TODO: This test is flaky and occasionally fails in CI--make it more
-    // robust
+    // TODO: This test is flaky and occasionally fails in CI--make it more robust
+    // See https://github.com/liveblocks/liveblocks/runs/7278337421?check_suite_focus=true#step:6:52
     test.skip(
       "remote move conflicts with move",
       prepareTestsConflicts(
@@ -543,8 +543,8 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    // TODO: This test is flaky and occasionally fails in CI--make it more
-    // robust
+    // TODO: This test is flaky and occasionally fails in CI--make it more robust
+    // See https://github.com/liveblocks/liveblocks/runs/7278076193?check_suite_focus=true#step:6:52
     test.skip(
       "set + move / move + move",
       prepareTestsConflicts(
