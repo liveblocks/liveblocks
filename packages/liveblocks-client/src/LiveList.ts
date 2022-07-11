@@ -1,7 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { liveListToJson } from "./immutable";
 import { LiveRegister } from "./LiveRegister";
 import { comparePosition, makePosition } from "./position";
 import type {
@@ -22,6 +21,7 @@ import { CrdtType, OpCode } from "./types";
 import {
   creationOpToLiveNode,
   deserialize,
+  isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./utils";
@@ -1245,7 +1245,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _toJson(): Json[] {
-    return liveListToJson(this);
+    return this._items.map((node) => node.toJson());
   }
 }
 

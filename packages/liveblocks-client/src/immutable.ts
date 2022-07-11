@@ -37,7 +37,7 @@ export function liveObjectToJson<O extends LsonObject>(
   return lsonObjectToJson(liveObject.toObject());
 }
 
-export function liveMapToJson<TKey extends string>(
+function liveMapToJson<TKey extends string>(
   map: LiveMap<TKey, Lson>
 ): { [K in TKey]: Json } {
   const result = {} as { [K in TKey]: Json };
@@ -51,7 +51,7 @@ function lsonListToJson(value: Lson[]): Json[] {
   return value.map(lsonToJson);
 }
 
-export function liveListToJson(value: LiveList<Lson>): Json[] {
+function liveListToJson(value: LiveList<Lson>): Json[] {
   return lsonListToJson(value.toArray());
 }
 

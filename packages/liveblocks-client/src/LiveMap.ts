@@ -1,12 +1,11 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { liveMapToJson } from "./immutable";
 import type {
   CreateChildOp,
   CreateMapOp,
   IdTuple,
-  Json,
+  JsonObject,
   LiveMapUpdates,
   LiveNode,
   Lson,
@@ -436,7 +435,11 @@ export class LiveMap<
   }
 
   /** @internal */
-  _toJson(): { [K in TKey]: Json } {
-    return liveMapToJson(this);
+  _toJson(): JsonObject {
+    const result: JsonObject = {};
+    for (const [key, value] of this._map) {
+      result[key] = value.toJson();
+    }
+    return result;
   }
 }

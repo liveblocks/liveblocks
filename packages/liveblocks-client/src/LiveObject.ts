@@ -1,7 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { liveObjectToJson } from "./immutable";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -9,7 +8,6 @@ import type {
   CreateRootObjectOp,
   DeleteObjectKeyOp,
   IdTuple,
-  Json,
   JsonObject,
   LiveNode,
   LiveObjectUpdateDelta,
@@ -609,7 +607,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toJson(): { [K in keyof O]: Json } {
-    return liveObjectToJson(this);
+  _toJson(): JsonObject {
+    const result: JsonObject = {};
+    for (const [key, val] of this._map) {
+      result[key] = isLiveStructure(val) ? val.toJson() : val;
+    }
+    return result;
   }
 }
