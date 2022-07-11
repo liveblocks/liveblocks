@@ -1,13 +1,32 @@
 import { createRoomContext } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React, { useRef } from "react";
-import { LiveObject, LiveMap, LiveList, shallow } from "@liveblocks/client";
+import { LiveList, LiveMap, LiveObject, shallow } from "@liveblocks/client";
 import createLiveblocksClient from "../../utils/createClient";
 import { nanoid } from "nanoid";
 
+function replacer(_key: string, value: unknown): unknown {
+  if (value instanceof Map) {
+    return Object.fromEntries(value.entries());
+  } else {
+    return value;
+  }
+}
+
+/**
+ * Drop-in replacement for JSON.stringify() that will also
+ * serialize ES6 Map instances as plain objects.
+ */
+// XXX Ship this as a Liveblocks utility?
+function stringify(value: undefined, indent?: number): undefined;
+function stringify(value: unknown, indent?: number): string;
+function stringify(value: unknown, indent?: number): string | undefined {
+  return JSON.stringify(value, replacer, indent);
+}
+
 const client = createLiveblocksClient();
 
-const { RoomProvider, useBatch, useSelector, useObject } = createRoomContext<
+const { RoomProvider, useBatch, useSelector, useMutable } = createRoomContext<
   never,
   {
     version: number;
@@ -86,14 +105,14 @@ export default function Home() {
 
 function Toolbar() {
   const renderCount = useRenderCount();
-  const mutableNestedOrNull = useObject("nest1")?.get("nest2") ?? null;
+  const mutableA = useMutable((root) => root.nest1.nest2.a);
+  const mutableB = useMutable((root) => root.nest1.nest2.b);
+  const mutableC = useMutable((root) => root.nest1.nest2.c);
   const batch = useBatch();
 
-  if (mutableNestedOrNull == null) {
+  if (mutableA == null || mutableB == null || mutableC == null) {
     return <div>Loading {renderCount}</div>;
   }
-
-  const mutableNested = mutableNestedOrNull;
 
   return (
     <div>
@@ -101,7 +120,6 @@ function Toolbar() {
         <button
           id="addA"
           onClick={() => {
-            const mutableA = mutableNested.get("a");
             mutableA.push(nanoid(7));
           }}
         >
@@ -111,7 +129,6 @@ function Toolbar() {
         <button
           id="addB"
           onClick={() => {
-            const mutableB = mutableNested.get("b");
             mutableB.insert(Math.floor(1_000_000 * Math.random()), 0);
           }}
         >
@@ -121,13 +138,12 @@ function Toolbar() {
         <button
           id="addC"
           onClick={() => {
-            const mutableC = mutableNested.get("c");
             const id = nanoid(7);
             mutableC.set(
               id,
               new LiveObject({
-                x: Math.floor(10 - 20 * Math.random()),
-                y: Math.floor(10 - 20 * Math.random()),
+                x: Math.floor(50 * Math.random()),
+                y: Math.floor(30 * Math.random()),
               })
             );
           }}
@@ -139,10 +155,6 @@ function Toolbar() {
           id="addAll"
           onClick={() => {
             batch(() => {
-              const mutableA = mutableNested.get("a");
-              const mutableB = mutableNested.get("b");
-              const mutableC = mutableNested.get("c");
-
               const id = nanoid(7);
 
               mutableA.push(id);
@@ -167,7 +179,6 @@ function Toolbar() {
         <button
           id="deleteA"
           onClick={() => {
-            const mutableA = mutableNested.get("a");
             if (mutableA.length === 0) return;
 
             const index = randomNumber(mutableA.length);
@@ -180,7 +191,6 @@ function Toolbar() {
         <button
           id="deleteB"
           onClick={() => {
-            const mutableB = mutableNested.get("b");
             if (mutableB.length === 0) return;
 
             const index = randomNumber(mutableB.length);
@@ -193,7 +203,6 @@ function Toolbar() {
         <button
           id="deleteC"
           onClick={() => {
-            const mutableC = mutableNested.get("c");
             const keys = Array.from(mutableC.keys());
             if (keys.length === 0) return;
 
@@ -219,7 +228,7 @@ function A() {
 
   return (
     <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-      {JSON.stringify({ renderCount, nest1: { nest2: { a } } }, null, 2)}
+      {stringify({ renderCount, nest1: { nest2: { a } } }, 2)}
     </pre>
   );
 }
@@ -249,7 +258,7 @@ function AFilter() {
       />
 
       <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-        {JSON.stringify({ renderCount, q, matches }, null, 2)}
+        {stringify({ renderCount, q, matches }, 2)}
       </pre>
     </div>
   );
@@ -266,7 +275,7 @@ function B() {
   return (
     <div style={{ minHeight: 300 }}>
       <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-        {JSON.stringify({ renderCount, nest1: { nest2: { b } } }, null, 2)}
+        {stringify({ renderCount, nest1: { nest2: { b } } }, 2)}
       </pre>
     </div>
   );
@@ -288,7 +297,7 @@ function BOnlyEvens() {
     <div style={{ minHeight: 200 }}>
       <strong>Only evens</strong>
       <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-        {JSON.stringify({ renderCount, evens }, null, 2)}
+        {stringify({ renderCount, evens }, 2)}
       </pre>
     </div>
   );
@@ -310,7 +319,7 @@ function BOnlyOdds() {
     <div style={{ minHeight: 200 }}>
       <strong>Only odds</strong>
       <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-        {JSON.stringify({ renderCount, odds }, null, 2)}
+        {stringify({ renderCount, odds }, 2)}
       </pre>
     </div>
   );
@@ -319,15 +328,54 @@ function BOnlyOdds() {
 function C() {
   const renderCount = useRenderCount();
   const c = useSelector((root) => root.nest1.nest2.c);
+  const mutableC = useMutable((root) => root.nest1.nest2.c);
 
-  if (c == null) {
+  if (c == null || mutableC == null) {
     return <div>Loading {renderCount}</div>;
   }
 
   return (
-    <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-      {JSON.stringify({ renderCount, nest1: { nest2: { c } } }, null, 2)}
-    </pre>
+    <div>
+      <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
+        {stringify({ renderCount }, 2)}
+      </pre>
+      <ul>
+        {Array.from(c.entries()).map(([k, v]) => (
+          <li
+            key={k}
+            style={{
+              cursor: "pointer",
+              position: "relative",
+              minHeight: 30,
+              background: "yellow",
+              margin: 5,
+            }}
+            onClick={(e) => {
+              mutableC.set(
+                k,
+                new LiveObject({
+                  x: e.pageX - e.currentTarget.offsetLeft,
+                  y: e.pageY - e.currentTarget.offsetTop,
+                })
+              );
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                width: 5,
+                height: 5,
+                background: "red",
+                borderRadius: "100%",
+                left: v.x,
+                top: v.y,
+              }}
+            />
+            {stringify(v)}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -341,7 +389,7 @@ function Version() {
 
   return (
     <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-      {JSON.stringify({ renderCount, version }, null, 2)}
+      {stringify({ renderCount, version }, 2)}
     </pre>
   );
 }
@@ -356,7 +404,7 @@ function Full() {
 
   return (
     <pre id="list" style={{ fontSize: 10, whiteSpace: "pre" }}>
-      {JSON.stringify({ renderCount, root }, null, 2)}
+      {stringify({ renderCount, root }, 2)}
     </pre>
   );
 }
