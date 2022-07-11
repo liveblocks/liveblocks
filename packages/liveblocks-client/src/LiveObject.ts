@@ -606,6 +606,13 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._doc.dispatch(ops, reverseOps, storageUpdates);
   }
 
+  toJson(): JsonObject {
+    // Don't implement actual toJson logic in here. Implement it in ._toJson()
+    // instead. This helper merely exists to help TypeScript infer better
+    // return types.
+    return super.toJson() as JsonObject;
+  }
+
   /** @internal */
   _toJson(): JsonObject {
     const result: JsonObject = {};

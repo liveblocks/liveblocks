@@ -1243,6 +1243,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._items[index]._setParentLink(this, shiftedPosition);
   }
 
+  toJson(): Json[] {
+    // Don't implement actual toJson logic in here. Implement it in ._toJson()
+    // instead. This helper merely exists to help TypeScript infer better
+    // return types.
+    return super.toJson() as Json[];
+  }
+
   /** @internal */
   _toJson(): Json[] {
     return this._items.map((node) => node.toJson());
