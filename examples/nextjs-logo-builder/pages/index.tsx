@@ -1,8 +1,9 @@
 import {
   useOthers,
-  useUpdateMyPresence,
-  useObject,
+  useSelector,
   useSelf,
+  useStorage,
+  useUpdateMyPresence,
 } from "../liveblocks.config";
 import React from "react";
 import Avatar from "../components/Avatar";
@@ -35,9 +36,10 @@ export default function Example() {
    * It's using the storage block so the data is persisted even after all the users leave the room.
    * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useObject
    */
-  const data = useObject("logo");
+  const root = useStorage();
+  const logo = useSelector((root) => root.logo);
 
-  if (!data) {
+  if (!logo || !root) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
@@ -47,7 +49,7 @@ export default function Example() {
     );
   }
 
-  const { theme, name } = data.toObject();
+  const { theme, name } = logo;
 
   return (
     <div className={styles.container}>
@@ -81,7 +83,7 @@ export default function Example() {
                   onFocus={(e) => updateMyPresence({ focusedId: e.target.id })}
                   onBlur={() => updateMyPresence({ focusedId: null })}
                   onChange={(e) => {
-                    data.set("name", e.target.value);
+                    root.get("logo").set("name", e.target.value);
                   }}
                   maxLength={20}
                 />
@@ -102,7 +104,7 @@ export default function Example() {
                         : styles.button_theme
                     }
                     onClick={() => {
-                      data.set("theme", "light");
+                      root.get("logo").set("theme", "light");
                     }}
                     onFocus={(e) =>
                       updateMyPresence({ focusedId: e.target.id })
@@ -133,7 +135,7 @@ export default function Example() {
                         : styles.button_theme
                     }
                     onClick={() => {
-                      data.set("theme", "dark");
+                      root.get("logo").set("theme", "dark");
                     }}
                     onFocus={(e) =>
                       updateMyPresence({ focusedId: e.target.id })
