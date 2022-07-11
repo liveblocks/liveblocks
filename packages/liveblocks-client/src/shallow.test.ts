@@ -20,6 +20,21 @@ const scalar = () => fc.jsonValue({ maxDepth: 0 });
 const complex = () =>
   anything().filter((value) => value !== null && typeof value === "object");
 
+// Generate some arbitrary values that are "objects" according to JavaScript, but that aren't "pojos".
+const nonpojo = () =>
+  fc.oneof(
+    // Dates
+    fc.date(),
+
+    // Sets
+    fc.array(fc.anything()).map((items) => new Set(items)),
+
+    // Maps
+    fc
+      .dictionary(fc.string(), fc.anything())
+      .map((d) => new Map(Object.entries(d)))
+  );
+
 describe("shallow", () => {
   it("scalar values", () => {
     expect(shallow(0, 0)).toBe(true);
@@ -215,18 +230,22 @@ describe("shallow (properties)", () => {
     );
   });
 
-  it("dates are always considered unequal", () => {
+  it("date (and other non-pojos) are never considered equal", () => {
     fc.assert(
       fc.property(
         // Inputs
-        fc.date(),
-        fc.date(),
+        fc.oneof(
+          fc.tuple(nonpojo(), nonpojo()),
+
+          // Add a few clones in the mix too, to ensure we'll have different and equal values
+          fc.clone(nonpojo(), 2)
+        ),
 
         // Unit test
-        (date1, date2) => {
-          expect(shallow(date1, date2)).toBe(false);
-          expect(shallow([date1], [date2])).toBe(false);
-          expect(shallow({ k: date1 }, { k: date2 })).toBe(false);
+        ([v1, v2]) => {
+          expect(shallow(v1, v2)).toBe(false);
+          expect(shallow([v1], [v2])).toBe(false);
+          expect(shallow({ k: v1 }, { k: v2 })).toBe(false);
         }
       )
     );

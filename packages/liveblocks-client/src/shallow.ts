@@ -13,19 +13,15 @@ function shallowArray(xs: unknown[], ys: unknown[]): boolean {
 }
 
 function shallowObj<T, U>(objA: T, objB: U): boolean {
+  // Only try to compare keys/values if these objects are both "pojos" (plain
+  // old JavaScript objects)
   if (
     typeof objA !== "object" ||
     objA === null ||
     typeof objB !== "object" ||
-    objB === null
-  ) {
-    return false;
-  }
-
-  // Specific exception for dates
-  if (
-    Object.prototype.toString.call(objA) === "[object Date]" ||
-    Object.prototype.toString.call(objB) === "[object Date]"
+    objB === null ||
+    Object.prototype.toString.call(objA) !== "[object Object]" ||
+    Object.prototype.toString.call(objB) !== "[object Object]"
   ) {
     return false;
   }
