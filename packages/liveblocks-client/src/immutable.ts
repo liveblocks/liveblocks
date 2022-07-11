@@ -1,7 +1,5 @@
 import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
-import { LiveRegister } from "./LiveRegister";
 import type {
   Json,
   JsonObject,
@@ -14,68 +12,18 @@ import type {
 import {
   findNonSerializableValue,
   isLiveList,
+  isLiveNode,
   isLiveObject,
   isPlainObject,
 } from "./utils";
 
-function lsonObjectToJson<O extends LsonObject>(
-  obj: O
-): { [K in keyof O]: Json } {
-  const result = {} as { [K in keyof O]: Json };
-  for (const key in obj) {
-    const val = obj[key];
-    if (val !== undefined) {
-      result[key] = lsonToJson(val);
-    }
-  }
-  return result;
-}
-
-export function liveObjectToJson<O extends LsonObject>(
-  liveObject: LiveObject<O>
-): { [K in keyof O]: Json } {
-  return lsonObjectToJson(liveObject.toObject());
-}
-
-function liveMapToJson<TKey extends string>(
-  map: LiveMap<TKey, Lson>
-): { [K in TKey]: Json } {
-  const result = {} as { [K in TKey]: Json };
-  for (const [key, value] of map.entries()) {
-    result[key] = lsonToJson(value);
-  }
-  return result;
-}
-
-function lsonListToJson(value: Lson[]): Json[] {
-  return value.map(lsonToJson);
-}
-
-function liveListToJson(value: LiveList<Lson>): Json[] {
-  return lsonListToJson(value.toArray());
-}
-
 export function lsonToJson(value: Lson): Json {
   // Check for LiveStructure datastructures first
-  if (value instanceof LiveObject) {
-    return liveObjectToJson(value);
-  } else if (value instanceof LiveList) {
-    return liveListToJson(value);
-  } else if (value instanceof LiveMap) {
-    return liveMapToJson(value);
-  } else if (value instanceof LiveRegister) {
-    return value.data;
+  if (isLiveNode(value)) {
+    return value.toJson();
+  } else {
+    return value;
   }
-
-  // Then for composite Lson values
-  if (Array.isArray(value)) {
-    return lsonListToJson(value);
-  } else if (isPlainObject(value)) {
-    return lsonObjectToJson(value);
-  }
-
-  // Finally, if value is an LsonScalar, then it's also a valid JsonScalar
-  return value;
 }
 
 /**
