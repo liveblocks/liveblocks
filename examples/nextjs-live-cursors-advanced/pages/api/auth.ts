@@ -10,9 +10,6 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).end();
   }
 
-  // For the avatar example, we're generating random users
-  // and set their info from the authentication endpoint
-  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
@@ -43,6 +40,7 @@ const COLORS = [
   "#48C9A1",
   "#64c948",
   "#ce521d",
+  "#eadf06",
 ];
 
 // Just checking you have your liveblocks.io API key added, can be removed

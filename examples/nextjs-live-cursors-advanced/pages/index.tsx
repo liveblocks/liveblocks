@@ -25,21 +25,6 @@ export default function Example() {
   );
 }
 
-export async function getStaticProps() {
-  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
-    ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#codesandbox.`
-    : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors#getting-started.`;
-
-  if (!API_KEY) {
-    console.warn(API_KEY_WARNING);
-  }
-
-  return { props: {} };
-}
-
 /**
  * This function is used when deploying an example on liveblocks.io.
  * You can ignore it completely if you run the example locally.

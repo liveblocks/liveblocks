@@ -46,6 +46,7 @@ const COLORS = [
   "#48C9A1",
   "#64c948",
   "#ce521d",
+  "#eadf06",
 ];
 
 // Just checking you have your liveblocks.io API key added, can be removed
