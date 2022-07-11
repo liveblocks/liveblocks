@@ -115,13 +115,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    *
    * Adds a new item into the sorted list, in the correct position.
    */
-  _insortItem(item: LiveNode) {
+  _insortItem(item: LiveNode): void {
     this._items.push(item);
     this._sortItems();
   }
 
   /** @internal */
-  _sortItems() {
+  _sortItems(): void {
     this._items.sort(compareNodePosition);
   }
 
