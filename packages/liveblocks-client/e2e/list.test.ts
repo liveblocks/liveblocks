@@ -540,7 +540,9 @@ describe("LiveList conflicts", () => {
       )
     );
 
-    test(
+    // TODO: This test is flaky and occasionally fails in CI--make it more
+    // robust
+    test.skip(
       "set + move / move + move",
       prepareTestsConflicts(
         {
