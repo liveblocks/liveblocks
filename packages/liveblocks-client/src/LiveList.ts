@@ -2,7 +2,7 @@ import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { LiveRegister } from "./LiveRegister";
-import { comparePosition as compare, makePosition } from "./position";
+import { comparePosition, makePosition } from "./position";
 import type {
   CreateChildOp,
   CreateListOp,
@@ -24,13 +24,20 @@ import {
   lsonToLiveNode,
 } from "./utils";
 
+function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
+  return comparePosition(
+    itemA._getParentKeyOrThrow(),
+    itemB._getParentKeyOrThrow()
+  );
+}
+
 /**
  * The LiveList class represents an ordered collection of items that is synchronized across clients.
  */
 export class LiveList<TItem extends Lson> extends AbstractCrdt {
   // TODO: Naive array at first, find a better data structure. Maybe an Order statistics tree?
   /** @internal */
-  private _items: Array<LiveNode>;
+  private _items: LiveNode[];
 
   /** @internal */
   private _implicitlyDeletedItems: Set<LiveNode>;
@@ -73,8 +80,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const child = deserialize([id, crdt], parentToChildren, doc);
 
       child._setParentLink(list, crdt.parentKey);
-      list._items.push(child);
-      sortListItem(list._items);
+      list._insertAndSort(child);
     }
 
     return list;
@@ -102,6 +108,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     }
 
     return ops;
+  }
+
+  /**
+   * @internal
+   *
+   * Adds a new item into the sorted list, in the correct position.
+   */
+  _insertAndSort(item: LiveNode): void {
+    this._items.push(item);
+    this._sortItems();
+  }
+
+  /** @internal */
+  _sortItems(): void {
+    this._items.sort(compareNodePosition);
   }
 
   /** @internal */
@@ -199,8 +220,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         updates.push(deleteDelta);
       }
 
-      this._items.push(child);
-      sortListItem(this._items);
+      this._insertAndSort(child);
 
       updates.push(insertDelta(this._indexOfPosition(key), child));
 
@@ -264,7 +284,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const previousIndex = this._items.indexOf(existingItem);
 
       existingItem._setParentLink(this, op.parentKey);
-      sortListItem(this._items);
+      this._sortItems();
 
       const newIndex = this._items.indexOf(existingItem);
 
@@ -286,8 +306,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         // And delete it from the orphan cache
         this._implicitlyDeletedItems.delete(orphan);
 
-        this._items.push(orphan);
-        sortListItem(this._items);
+        this._insertAndSort(orphan);
 
         const recreatedItemIndex = this._items.indexOf(orphan);
 
@@ -395,7 +414,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         }
 
         existingItem._setParentLink(this, key);
-        sortListItem(this._items);
+        this._sortItems();
 
         const newIndex = this._indexOfPosition(key);
 
@@ -418,8 +437,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         orphan._setParentLink(this, key);
         this._implicitlyDeletedItems.delete(orphan);
 
-        this._items.push(orphan);
-        sortListItem(this._items);
+        this._insertAndSort(orphan);
 
         const newIndex = this._indexOfPosition(key);
 
@@ -470,8 +488,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       child._setParentLink(this, newKey);
     }
 
-    this._items.push(child);
-    sortListItem(this._items);
+    this._insertAndSort(child);
 
     const newIndex = this._indexOfPosition(newKey);
 
@@ -523,8 +540,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         reverse,
       };
     } else {
-      this._items.push(child);
-      sortListItem(this._items);
+      this._insertAndSort(child);
 
       // TODO: Use delta
       this._detachItemAssociatedToSetOperation(op.deletedId);
@@ -606,8 +622,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       this._implicitlyDeletedItems.delete(child);
 
       child._setParentLink(this, newKey);
-      this._items.push(child);
-      sortListItem(this._items);
+      this._insertAndSort(child);
 
       const newIndex = this._items.indexOf(child);
 
@@ -634,7 +649,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     if (existingItemIndex === -1) {
       const previousIndex = this._items.indexOf(child);
       child._setParentLink(this, newKey);
-      sortListItem(this._items);
+      this._sortItems();
       const newIndex = this._items.indexOf(child);
 
       if (newIndex === previousIndex) {
@@ -658,7 +673,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       const previousIndex = this._items.indexOf(child);
       child._setParentLink(this, newKey);
-      sortListItem(this._items);
+      this._sortItems();
       const newIndex = this._items.indexOf(child);
 
       if (newIndex === previousIndex) {
@@ -694,8 +709,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       child._setParentLink(this, newKey);
-      this._items.push(child);
-      sortListItem(this._items);
+      this._insertAndSort(child);
 
       // TODO
       return {
@@ -726,7 +740,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       child._setParentLink(this, newKey);
-      sortListItem(this._items);
+      this._sortItems();
 
       const newIndex = this._items.indexOf(child);
 
@@ -769,7 +783,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     child._setParentLink(this, newKey);
 
-    sortListItem(this._items);
+    this._sortItems();
 
     const newIndex = this._items.indexOf(child);
 
@@ -859,8 +873,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const value = lsonToLiveNode(element);
     value._setParentLink(this, position);
 
-    this._items.push(value);
-    sortListItem(this._items);
+    this._insertAndSort(value);
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -922,7 +935,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const item = this._items[index];
     const previousPosition = item._getParentKeyOrThrow();
     item._setParentLink(this, position);
-    sortListItem(this._items);
+    this._sortItems();
 
     if (this._doc && this._id) {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>([
@@ -1199,8 +1212,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     newItem._attach(op.id, nn(this._doc));
     newItem._setParentLink(this, key);
 
-    this._items.push(newItem);
-    sortListItem(this._items);
+    this._insertAndSort(newItem);
 
     const newIndex = this._indexOfPosition(key);
 
@@ -1293,12 +1305,6 @@ function moveDelta(
     previousIndex,
     item: item instanceof LiveRegister ? item.data : item,
   };
-}
-
-function sortListItem(items: LiveNode[]) {
-  items.sort((itemA, itemB) =>
-    compare(itemA._getParentKeyOrThrow(), itemB._getParentKeyOrThrow())
-  );
 }
 
 /**
