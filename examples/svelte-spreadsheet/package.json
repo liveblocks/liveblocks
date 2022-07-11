@@ -1,0 +1,46 @@
+{
+	"name": "svelte-spreadsheet",
+	"version": "0.0.1",
+	"scripts": {
+		"test": "jest",
+		"dev": "svelte-kit dev",
+		"build": "svelte-kit build",
+		"package": "svelte-kit package",
+		"preview": "svelte-kit preview",
+		"prepare": "svelte-kit sync",
+		"check": "svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch",
+		"lint": "prettier --check --plugin-search-dir=. . && eslint .",
+		"format": "prettier --write --plugin-search-dir=. ."
+	},
+	"devDependencies": {
+		"@babel/core": "^7.18.6",
+		"@babel/preset-env": "^7.18.6",
+		"@babel/preset-typescript": "^7.18.6",
+		"@sveltejs/adapter-auto": "next",
+		"@sveltejs/kit": "next",
+		"@testing-library/svelte": "^3.1.3",
+		"@types/jest": "^28.1.4",
+		"@typescript-eslint/eslint-plugin": "^5.27.0",
+		"@typescript-eslint/parser": "^5.27.0",
+		"babel-jest": "^28.1.2",
+		"eslint": "^8.16.0",
+		"eslint-config-prettier": "^8.3.0",
+		"eslint-plugin-svelte3": "^4.0.0",
+		"jest": "^28.1.2",
+		"jest-environment-jsdom": "^28.1.2",
+		"prettier": "^2.6.2",
+		"prettier-plugin-svelte": "^2.7.0",
+		"svelte": "^3.44.0",
+		"svelte-check": "^2.7.1",
+		"svelte-preprocess": "^4.10.6",
+		"ts-jest": "^28.0.5",
+		"tslib": "^2.3.1",
+		"typescript": "^4.7.4"
+	},
+	"type": "module",
+	"dependencies": {
+		"@liveblocks/client": "^0.17.4",
+		"nanoid": "^4.0.0"
+	}
+}
