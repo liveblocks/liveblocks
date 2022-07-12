@@ -1,13 +1,13 @@
 import { assertNever } from "./assert";
 import type {
   CreateChildOp,
-  Json,
   LiveNode,
   Op,
   SerializedCrdt,
   StorageUpdate,
 } from "./types";
 import { OpCode } from "./types";
+import type { Immutable, ImmutableRef } from "./types/Immutable";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -280,20 +280,20 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * This caches the result of the last .toJson() call for any Live node.
+   * This caches the result of the last .toImmutable() call for any Live node.
    */
-  private _cachedJson?: Json;
+  private _cachedImmutable?: Immutable;
 
   /**
    * @internal
    *
-   * Clear the JSON cache, so that the next call to `.toJson()` will
-   * recompute the equivalent JSON value again.  Call this after every mutation
-   * to the Live node.
+   * Clear the Immutable cache, so that the next call to `.toImmutable()` will
+   * recompute the equivalent Immutable value again.  Call this after every
+   * mutation to the Live node.
    */
   invalidate(): void {
-    if (this._cachedJson !== undefined) {
-      this._cachedJson = undefined;
+    if (this._cachedImmutable !== undefined) {
+      this._cachedImmutable = undefined;
 
       if (this.parent.type === "HasParent") {
         this.parent.node.invalidate();
@@ -302,17 +302,17 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toJson(): Json;
+  abstract _toImmutable(): Immutable;
 
   /**
    * Return a JSON representation for this Live node and its children.
    */
-  toJson(): Json {
-    if (this._cachedJson === undefined) {
-      this._cachedJson = this._toJson(); // Object.freeze?
+  toImmutable(): Immutable {
+    if (this._cachedImmutable === undefined) {
+      this._cachedImmutable = this._toImmutable();
     }
 
     // Return cached version
-    return this._cachedJson;
+    return this._cachedImmutable;
   }
 }
