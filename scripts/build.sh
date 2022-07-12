@@ -5,13 +5,13 @@ set -eu
 # root directory, even if the current working directory is
 # different.
 ROOT="$(git rev-parse --show-toplevel)"
-if [ ! -f "./package.json" ]; then
-    echo "This script should be run from inside a package directory" >&2
-    exit 1
-fi
 
 # Target dir to place file into
 DIST="lib"
+
+err () {
+    echo "$@" >&2
+}
 
 check_jq_installed () {
     if ! which -s jq; then
@@ -48,5 +48,10 @@ main () {
 
     prettier --write "$DIST/package.json"
 }
+
+if [ ! -f "./package.json" ]; then
+    err "This script should be run from inside a package directory"
+    exit 1
+fi
 
 main
