@@ -187,9 +187,16 @@ type RoomContextBundle<
   /**
    * TODO: Document me
    */
-  useMutable<TImmutableRef extends ImmutableRef>(
-    selector: (root: ToImmutable<TStorage>) => TImmutableRef
-  ): ToLive<TImmutableRef> | null;
+  useMutable<Imm extends ImmutableRef>(
+    selector: (root: ToImmutable<TStorage>) => Imm
+  ): ToLive<Imm> | null;
+
+  /**
+   * TODO: Document me
+   */
+  useSelectorAndMutable<Imm extends ImmutableRef>(
+    selector: (root: ToImmutable<TStorage>) => Imm
+  ): [Imm | null, ToLive<Imm> | null];
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -624,6 +631,14 @@ export function createRoomContext<
     return rev;
   }
 
+  function useSelectorAndMutable<Imm extends ImmutableRef>(
+    selector: (root: ToImmutable<TStorage>) => Imm
+  ): [Imm | null, ToLive<Imm> | null] {
+    const immutable = useSelector(selector);
+    const mutable = useMutable(selector);
+    return [immutable, mutable];
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -637,6 +652,7 @@ export function createRoomContext<
     useRedo,
     useRoom,
     useSelector,
+    useSelectorAndMutable,
     useSelf,
     useStorage,
     useUndo,
