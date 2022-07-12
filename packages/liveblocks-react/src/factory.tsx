@@ -14,7 +14,7 @@ import type {
 import type {
   Resolve,
   RoomInitializers,
-  ToJson,
+  ToImmutable,
 } from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
@@ -171,7 +171,7 @@ type RoomContextBundle<
    * TODO: Document me
    */
   useSelector<T>(
-    selector: (root: ToJson<TStorage>) => T,
+    selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null;
 
@@ -576,10 +576,10 @@ export function createRoomContext<
   }
 
   function useSelector<T>(
-    selector: (root: ToJson<TStorage>) => T,
+    selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null {
-    type Snapshot = ToJson<TStorage> | null;
+    type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
 
     const room = useRoom();
@@ -604,8 +604,8 @@ export function createRoomContext<
         return null;
       } else {
         const root = rootOrNull;
-        const json = root.toJson();
-        return json as ToJson<TStorage>;
+        const imm = root.toImmutable();
+        return imm as ToImmutable<TStorage>;
       }
     }, [rootOrNull]);
 

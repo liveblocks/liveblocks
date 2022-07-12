@@ -5,7 +5,6 @@ import type {
   CreateChildOp,
   CreateMapOp,
   IdTuple,
-  JsonObject,
   LiveMapUpdates,
   LiveNode,
   Lson,
@@ -14,6 +13,7 @@ import type {
   SerializedMap,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { Immutable, ImmutableMap, ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -434,19 +434,19 @@ export class LiveMap<
     }
   }
 
-  toJson(): JsonObject {
-    // Don't implement actual toJson logic in here. Implement it in ._toJson()
-    // instead. This helper merely exists to help TypeScript infer better
-    // return types.
-    return super.toJson() as JsonObject;
+  toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
+    // Don't implement actual toImmutable logic in here. Implement it in
+    // ._toImmutable() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
   }
 
   /** @internal */
-  _toJson(): JsonObject {
-    const result: JsonObject = {};
+  _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
+    const result: Map<TKey, ToImmutable<TValue>> = new Map();
     for (const [key, value] of this._map) {
-      result[key] = value.toJson();
+      result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
-    return result;
+    return Object.freeze(result);
   }
 }

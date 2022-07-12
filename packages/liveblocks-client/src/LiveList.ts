@@ -8,7 +8,6 @@ import type {
   CreateListOp,
   CreateOp,
   IdTuple,
-  Json,
   LiveListUpdateDelta,
   LiveListUpdates,
   LiveNode,
@@ -18,10 +17,10 @@ import type {
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { ImmutableList } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
-  isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./utils";
@@ -1243,16 +1242,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._items[index]._setParentLink(this, shiftedPosition);
   }
 
-  toJson(): Json[] {
-    // Don't implement actual toJson logic in here. Implement it in ._toJson()
+  toImmutable(): ImmutableList {
+    // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
     // instead. This helper merely exists to help TypeScript infer better
     // return types.
-    return super.toJson() as Json[];
+    return super.toImmutable() as ImmutableList;
   }
 
   /** @internal */
-  _toJson(): Json[] {
-    return this._items.map((node) => node.toJson());
+  _toImmutable(): ImmutableList {
+    return Object.freeze(this._items.map((node) => node.toImmutable()));
   }
 }
 

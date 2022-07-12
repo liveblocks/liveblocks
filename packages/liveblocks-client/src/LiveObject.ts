@@ -22,6 +22,11 @@ import type {
   UpdateObjectOp,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type {
+  Immutable,
+  ImmutableObject,
+  ToImmutable,
+} from "./types/Immutable";
 import {
   creationOpToLson,
   deserializeToLson,
@@ -606,19 +611,19 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     this._doc.dispatch(ops, reverseOps, storageUpdates);
   }
 
-  toJson(): JsonObject {
-    // Don't implement actual toJson logic in here. Implement it in ._toJson()
-    // instead. This helper merely exists to help TypeScript infer better
-    // return types.
-    return super.toJson() as JsonObject;
+  toImmutable(): ToImmutable<O> {
+    // Don't implement actual toImmutable logic in here. Implement it in
+    // ._toImmutable() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toImmutable() as ToImmutable<O>;
   }
 
   /** @internal */
-  _toJson(): JsonObject {
-    const result: JsonObject = {};
+  _toImmutable(): ToImmutable<O> {
+    const result: { [key: string]: unknown } = {};
     for (const [key, val] of this._map) {
-      result[key] = isLiveStructure(val) ? val.toJson() : val;
+      result[key] = isLiveStructure(val) ? val.toImmutable() : val;
     }
-    return result;
+    return Object.freeze(result) as unknown as ToImmutable<O>;
   }
 }

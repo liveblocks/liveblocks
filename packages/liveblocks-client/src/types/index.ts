@@ -714,6 +714,13 @@ export type {
   UpdateStorageClientMsg,
 } from "./ClientMsg";
 export { ClientMsgCode } from "./ClientMsg";
+export type {
+  Immutable,
+  ImmutableList,
+  ImmutableMap,
+  ImmutableObject,
+  ImmutableRef, // ToImmutable,
+} from "./Immutable";
 export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";

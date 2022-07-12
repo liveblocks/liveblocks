@@ -12,6 +12,7 @@ import type {
   SerializedRegister,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { Immutable } from "./types/Immutable";
 
 /**
  * INTERNAL
@@ -94,7 +95,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toJson(): Json {
+  _toImmutable(): Immutable {
     return this._data;
   }
 }
