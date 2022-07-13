@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.17.5-dev",
+  "version": "0.17.6",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./index.js",
   "module": "./index.mjs",
