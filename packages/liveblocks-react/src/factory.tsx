@@ -293,7 +293,7 @@ export function createRoomContext<
       return () => {
         client.leave(roomId);
       };
-    }, [client, roomId, frozen]);
+    }, [roomId, frozen]);
 
     return (
       <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
