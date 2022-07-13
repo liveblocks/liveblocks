@@ -42,12 +42,19 @@ export type RoomProviderProps<
   } & RoomInitializers<TPresence, TStorage>
 >;
 
-type RoomContext<
+type RoomContextBundle<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
+  RoomContext: React.Context<Room<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  > | null>;
+
   /**
    * Makes a Room available in the component hierarchy below.
    * When this component is unmounted, the current user leave the room.
@@ -310,7 +317,9 @@ export function createRoomContext<
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TRoomEvent extends Json = never
->(client: Client): RoomContext<TPresence, TStorage, TUserMeta, TRoomEvent> {
+>(
+  client: Client
+): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
   let useClient: () => Client;
   if ((client as unknown) !== "__legacy") {
     useClient = () => client;
@@ -318,7 +327,7 @@ export function createRoomContext<
     useClient = _useClient;
   }
 
-  const RoomCtx = React.createContext<Room<
+  const RoomContext = React.createContext<Room<
     TPresence,
     TStorage,
     TUserMeta,
@@ -393,11 +402,13 @@ export function createRoomContext<
       };
     }, [_client, roomId, frozen]);
 
-    return <RoomCtx.Provider value={room}>{props.children}</RoomCtx.Provider>;
+    return (
+      <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
+    );
   }
 
   function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
-    const room = React.useContext(RoomCtx);
+    const room = React.useContext(RoomContext);
     if (room == null) {
       throw new Error("RoomProvider is missing from the react tree");
     }
@@ -859,6 +870,11 @@ Please see https://bit.ly/3Niy5aP for details.`
     useStorage,
     useUndo,
     useUpdateMyPresence,
+
+    // You normally don't need to directly interact with the RoomContext, but
+    // it can be necessary if you're building an advanced app where you need to
+    // set up a context bridge between two React renderers.
+    RoomContext,
 
     useList_deprecated,
     useMap_deprecated,

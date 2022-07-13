@@ -1,3 +1,9 @@
+# v0.17.6
+
+In **@liveblocks/react**:
+
+- Expose `RoomContext` in the return value of `createRoomContext()`
+
 # v0.17.5
 
 In **@liveblocks/react**:

@@ -110,7 +110,7 @@ function getLiveblocksHookDefintions() {
         d.name?.text === name
     );
     if (found.length === 0) {
-      throw new Error("Declaration of " + name + " not found!");
+      continue;
     }
     fns.push(...found);
   }
