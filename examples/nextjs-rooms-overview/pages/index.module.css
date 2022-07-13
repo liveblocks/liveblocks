@@ -1,0 +1,192 @@
+@import url("https://fonts.googleapis.com/css2?family=Gochi+Hand&display=swap");
+
+.container {
+  --color-background: #fff;
+  --color-background-input: #fff;
+  --color-primary: #0044ff;
+  --color-primary-faded: #dbe4fd;
+  --color-background-preview: #f3f3f3;
+  --color-foreground-primary: #222;
+  --color-foreground-secondary: #777;
+
+  --color-background-preview-dark: #111;
+  --color-foreground-primary-dark: #f3f3f3;
+  --color-foreground-secondary-dark: #666;
+
+  background: var(--color-background);
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 960px) {
+  .container {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+  }
+
+  .preview_container,
+  .preview_container_dark {
+    min-height: 200px;
+  }
+}
+
+.container *::selection {
+  background-color: var(--color-primary-faded);
+  color: var(--color-primary);
+}
+
+.preview_container,
+.preview_container_dark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-family: "Gochi Hand", cursive;
+  user-select: none;
+}
+
+.preview_container {
+  color: var(--color-foreground-primary);
+  background: var(--color-background-preview);
+}
+
+.preview_container_dark {
+  color: var(--color-foreground-primary-dark);
+  background: var(--color-background-preview-dark);
+}
+
+.preview {
+  font-size: 48px;
+  transform: rotate(-6deg);
+}
+
+.form_container {
+  display: flex;
+  align-items: center;
+  padding: 96px;
+}
+
+.form_content {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.avatars {
+  border-radius: 6px;
+  min-height: 32px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-bottom: 48px;
+}
+
+.form {
+  width: 100%;
+}
+
+.heading {
+  color: var(--color-foreground-primary);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.description {
+  color: var(--color-foreground-secondary);
+  font-size: 16px;
+  margin-top: 8px;
+  margin-bottom: 32px;
+}
+
+.form_group {
+  margin: 24px 0;
+}
+
+.form_group_grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.selection_container {
+  position: relative;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-foreground-primary);
+  margin-bottom: 8px;
+}
+
+.input {
+  appearance: none;
+  margin: 0;
+  width: 100%;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 11px 15px 9px;
+  color: var(--color-foreground-primary);
+  background-color: var(--color-background-input) !important;
+  border-radius: 6px;
+  outline: none;
+  border: none;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  background-color: var(--color-background-input) !important;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.16),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.input:focus:not(:disabled) {
+  background-color: var(--color-background-input) !important;
+  box-shadow: 0px 0px 0px 2px var(--color-primary);
+}
+
+.button_theme,
+.button_theme_selected {
+  width: 100%;
+  border-radius: 6px;
+  outline: none;
+  border: none;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.button_theme {
+  color: var(--color-foreground-primary);
+  background-color: var(--color-background-input);
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.button_theme_selected {
+  color: var(--color-primary);
+  background-color: var(--color-background-preview);
+  box-shadow: inset 0px 1px 3px rgba(0, 0, 0, 0.1),
+    inset 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.loading {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  background-color: var(--color-background);
+}
+
+.loading img {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}

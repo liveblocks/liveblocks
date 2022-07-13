@@ -1,0 +1,33 @@
+.avatar {
+  position: relative;
+  border-radius: 50% 50%;
+  margin: 0 6px;
+}
+
+.avatar:before {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: -32px;
+  opacity: 0;
+  padding: 4px 8px;
+  color: white;
+  font-size: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 4px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.96);
+  white-space: nowrap;
+}
+
+.avatar:hover:before {
+  opacity: 1;
+}
+
+.avatar:not([data-tooltip-persistent]):before {
+  pointer-events: none;
+}
+
+.avatar_image {
+  border-radius: 50% 50%;
+}
