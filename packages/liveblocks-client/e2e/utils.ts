@@ -7,11 +7,7 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import {
-  liveObjectToJson,
-  lsonToJson,
-  patchImmutableObject,
-} from "../src/immutable";
+import { liveObjectToJson, lsonToJson } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type {
   BaseUserMeta,
@@ -183,17 +179,15 @@ export function prepareTestsConflicts<
 
     room1.subscribe(
       root1,
-      (updates) => {
-        immutableStorage1 = patchImmutableObject(immutableStorage1, updates);
+      () => {
+        immutableStorage1 = liveObjectToJson(root1);
       },
-      {
-        isDeep: true,
-      }
+      { isDeep: true }
     );
     room2.subscribe(
       root2,
-      (updates) => {
-        immutableStorage2 = patchImmutableObject(immutableStorage2, updates);
+      () => {
+        immutableStorage2 = liveObjectToJson(root2);
       },
       { isDeep: true }
     );

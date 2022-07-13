@@ -31,8 +31,8 @@ export {
   throwUsageError,
 } from "./deprecation";
 export {
+  // XXX Also remove lsonToJson helper?
   lsonToJson,
-  patchImmutableObject,
   patchLiveObjectKey,
 } from "./immutable";
 export { comparePosition, makePosition } from "./position";
