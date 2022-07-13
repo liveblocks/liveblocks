@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.17.6",
+  "version": "0.17.6-dev",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./index.js",
   "module": "./index.mjs",
