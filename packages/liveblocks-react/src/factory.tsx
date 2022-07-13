@@ -14,7 +14,6 @@ import type {
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
 import * as React from "react";
 
-import { useClient as _useClient } from "./client";
 import { useRerender } from "./hooks";
 
 /**
@@ -244,13 +243,6 @@ export function createRoomContext<
 >(
   client: Client
 ): RoomContextBundle<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  let useClient: () => Client;
-  if ((client as unknown) !== "__legacy") {
-    useClient = () => client;
-  } else {
-    useClient = _useClient;
-  }
-
   const RoomContext = React.createContext<Room<
     TPresence,
     TStorage,
@@ -272,8 +264,6 @@ export function createRoomContext<
       }
     }
 
-    const _client = useClient();
-
     // Note: We'll hold on to the initial value given here, and ignore any
     // changes to this argument in subsequent renders
     const frozen = useInitial({
@@ -284,7 +274,7 @@ export function createRoomContext<
     const [room, setRoom] = React.useState<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
-      _client.enter(roomId, {
+      client.enter(roomId, {
         initialPresence,
         initialStorage,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -293,7 +283,7 @@ export function createRoomContext<
 
     React.useEffect(() => {
       setRoom(
-        _client.enter(roomId, {
+        client.enter(roomId, {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
@@ -301,9 +291,9 @@ export function createRoomContext<
       );
 
       return () => {
-        _client.leave(roomId);
+        client.leave(roomId);
       };
-    }, [_client, roomId, frozen]);
+    }, [client, roomId, frozen]);
 
     return (
       <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>

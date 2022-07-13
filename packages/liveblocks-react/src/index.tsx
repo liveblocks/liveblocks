@@ -1,5 +1,3 @@
-export { LiveblocksProvider, useClient } from "./client";
-
 export { createRoomContext } from "./factory";
 
 // Re-exports from @liveblocks/client, for convenience
