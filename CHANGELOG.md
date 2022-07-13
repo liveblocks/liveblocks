@@ -7,6 +7,7 @@
   these imports, see the
   [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
   instructions.
+- Remove `ClientProvider` and `useClient` hook
 - Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
   `initialPresence` and `initialStorage` arguments now.)
 - Remove second argument to `useMap()`, `useList()`, and `useObject()`.
