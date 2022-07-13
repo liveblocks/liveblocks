@@ -13,38 +13,25 @@ err () {
     echo "$@" >&2
 }
 
-check_jq_installed () {
-    if ! which -s jq; then
-        err ""
-        err "jq is not installed."
-        err ""
-        err "You can find it at:"
-        err "  https://stedolan.github.io/jq/"
-        err ""
-        err "Please run:"
-        err "  brew install jq"
-        err ""
-        exit 2
-    fi
-}
-
 main () {
-    check_jq_installed
-
     # Copy these files into the distribution
     cp "$ROOT/LICENSE" ./README.md "$DIST/"
 
     # Strip keys from package.json and place the result in lib/
-    cat package.json                     | \
-        jq 'del(.type)'                    \
-        jq 'del(.private)'               | \
-        jq 'del(.scripts)'               | \
-        jq 'del(.files)'                 | \
-        jq 'del(.devDependencies)'       | \
-        jq 'del(.optionalDependencies)'  | \
-        jq 'del(.jest)'                  | \
-        jq 'del(.prettier)'              | \
-            > "$DIST/package.json"
+    echo '
+    const data = require("./package.json");
+
+    data.type = undefined;
+    data.private = undefined;
+    data.scripts = undefined;
+    data.files = undefined;
+    data.devDependencies = undefined;
+    data.optionalDependencies = undefined;
+    data.jest = undefined;
+    data.prettier = undefined;
+
+    console.log(JSON.stringify(data));
+    ' | node - > "$DIST/package.json"
 
     prettier --write "$DIST/package.json"
 }
