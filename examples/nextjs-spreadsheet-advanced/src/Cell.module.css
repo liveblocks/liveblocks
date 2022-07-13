@@ -1,0 +1,13 @@
+.input {
+  padding: 7px 9px;
+  border: none;
+  outline-color: transparent;
+  outline-style: solid;
+  outline-offset: -2px;
+  outline-width: 2px;
+  box-sizing: border-box;
+}
+
+.input:focus {
+  outline-color: blue;
+}

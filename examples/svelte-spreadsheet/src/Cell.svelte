@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { onDestroy } from 'svelte';
-
 	import type { LiveSpreadsheet } from './common/spreadsheet';
 
 	export let spreadsheet: LiveSpreadsheet;
