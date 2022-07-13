@@ -13,7 +13,7 @@ import type {
   SerializedMap,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import type { Immutable, ImmutableMap, ToImmutable } from "./types/Immutable";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,

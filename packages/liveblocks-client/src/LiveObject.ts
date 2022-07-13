@@ -22,11 +22,7 @@ import type {
   UpdateObjectOp,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import type {
-  Immutable,
-  ImmutableObject,
-  ToImmutable,
-} from "./types/Immutable";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLson,
   deserializeToLson,
