@@ -48,6 +48,20 @@ function getEmptyOthers() {
   return EMPTY_OTHERS;
 }
 
+type MutationContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+  root: LiveObject<TStorage>;
+  setMyPresence: (
+    patch: Partial<TPresence>,
+    options?: { addToHistory: boolean }
+  ) => void;
+};
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -355,6 +369,21 @@ type RoomContextBundle<
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void;
+
+  useMutation<
+    F extends (
+      context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      ...args: any[]
+    ) => any
+  >(
+    callback: F,
+    deps?: unknown[]
+  ): F extends (
+    context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    ...args: infer Args
+  ) => infer R
+    ? (...args: Args) => R
+    : never;
 };
 
 export function createRoomContext<
@@ -758,6 +787,69 @@ export function createRoomContext<
     );
   }
 
+  /**
+   * Usage:
+   *
+   *     const fillLayers = useMutation1(({ root }, color: Color) => { ... });
+   *     //    ^? (color: Color) => void
+   *     const deleteLayers = useMutation1(({ root }) => { ... });
+   *     //    ^? () => void
+   */
+  function useMutation<
+    F extends (
+      context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      ...args: any[]
+    ) => any
+  >(
+    callback: F,
+    deps: unknown[] = []
+  ): F extends (
+    context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+    ...args: infer Args
+  ) => infer R
+    ? (...args: Args) => R
+    : never {
+    type TODO = any;
+
+    const room = useRoom();
+    const root = useStorage();
+    const setMyPresence = React.useCallback(
+      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) =>
+        room.updatePresence(patch, options),
+      [room]
+    );
+
+    return React.useMemo(
+      (): TODO => {
+        if (root !== null) {
+          const mutationCtx: MutationContext<
+            TPresence,
+            TStorage,
+            TUserMeta,
+            TRoomEvent
+          > = { root, room, setMyPresence };
+          return (...args: TODO): TODO =>
+            room.batch(() => callback(mutationCtx, ...args));
+        } else {
+          return () => {
+            console.warn(
+              "Liveblocks mutation was called before Storage has been initialized. This mutation was ignored."
+            );
+          };
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [
+        root,
+        room,
+        setMyPresence,
+        /* deliberately NOT callback in here  */
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        ...deps,
+      ]
+    );
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -777,6 +869,8 @@ export function createRoomContext<
     useStorage,
     useUndo,
     useUpdateMyPresence,
+
+    useMutation,
 
     // These are just aliases. The passed-in key will define their return values.
     useList: useLegacyKey,
