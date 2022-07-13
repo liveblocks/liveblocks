@@ -7,7 +7,7 @@ import type {
   StorageUpdate,
 } from "./types";
 import { OpCode } from "./types";
-import type { Immutable, ImmutableRef } from "./types/Immutable";
+import type { Immutable } from "./types/Immutable";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
