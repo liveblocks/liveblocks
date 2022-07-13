@@ -30,7 +30,7 @@
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "scripts": {
-    "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "build": "rollup -c && ../../scripts/build.sh",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
     "test": "jest --watch --silent --verbose --config=./jest.config.js",
