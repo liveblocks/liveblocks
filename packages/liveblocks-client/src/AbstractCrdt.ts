@@ -2,12 +2,14 @@ import { assertNever } from "./assert";
 import type {
   CreateChildOp,
   LiveNode,
+  LiveStructure,
   Op,
   SerializedCrdt,
   StorageUpdate,
 } from "./types";
 import { OpCode } from "./types";
-import type { Immutable } from "./types/Immutable";
+import type { Immutable, ImmutableRef } from "./types/Immutable";
+import { isScalar } from "./types/Immutable";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -99,6 +101,23 @@ type ParentInfo =
   // add. We should be able to get rid of this case by structuring the code
   // differently!
   | Orphaned;
+
+/**
+ * Reverse (weak) mapping of immutable value references that have been "given
+ * out" by `.toImmutable()` calls, correlating those immutable values back to
+ * the mutable instances that produced them. This reverse mapping allows us to
+ * easily look up the mutable equivalent of an immutable value, which powers
+ * the easy and convenient `useMutable()` API.
+ */
+const mutableInstanceReverseLUT: WeakMap<ImmutableRef, LiveStructure> =
+  new WeakMap();
+
+/**
+ * Closely related, this tracks all the immutable refs that have been issued,
+ * so we can recognize if users are using the API in the intended way, and we
+ * can throw better error messages.
+ */
+const immutableRefs: WeakSet<ImmutableRef> = new WeakSet();
 
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
@@ -310,9 +329,43 @@ export abstract class AbstractCrdt {
   toImmutable(): Immutable {
     if (this._cachedImmutable === undefined) {
       this._cachedImmutable = this._toImmutable();
+      if (!isScalar(this._cachedImmutable)) {
+        immutableRefs.add(this._cachedImmutable);
+        mutableInstanceReverseLUT.set(
+          this._cachedImmutable,
+          this as unknown as LiveStructure
+        );
+      }
     }
 
     // Return cached version
     return this._cachedImmutable;
+  }
+
+  // NOTE: Could be static, or exposed as a module level function, instead of
+  // as a normal method on AbstractCrdt.
+  unstable_getMutableInstance(immutableRef: ImmutableRef): LiveStructure {
+    const node = mutableInstanceReverseLUT.get(immutableRef);
+    if (node === undefined) {
+      if (immutableRefs.has(immutableRef)) {
+        //
+        // The theoretical situation when this happens is that someone obtains
+        // an immutable ref and holds on to it, then deletes the Live node that
+        // produced it, it gets garbage collected, and then useMutable(xxx) is
+        // called.
+        //
+        // XXX Under normal circumstances, this should not happen. But what do
+        // we do when it does? Throw an error?
+        throw new Error(
+          "Can no longer find the mutable object that once produced this immutable value. Has it since been deleted?"
+        );
+      } else {
+        throw new Error(
+          // XXX Point to documentation to educate users on how to use this API
+          "The value you passed is not an immutable value produced by Liveblocks APIs."
+        );
+      }
+    }
+    return node;
   }
 }

@@ -3,8 +3,12 @@ import type {
   BroadcastOptions,
   Client,
   History,
+  Immutable,
+  ImmutableRef,
   Json,
   JsonObject,
+  LiveList,
+  LiveMap,
   LiveObject,
   LsonObject,
   Others,
@@ -21,6 +25,20 @@ import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 import { useInitial, useRerender } from "./hooks";
+
+// prettier-ignore
+type ToLive<I> =
+  I extends readonly Immutable[] ? LiveList<ToLive<I[number]>> :
+  I extends { readonly [key: string]: Immutable | undefined } ? LiveObject<{ -readonly [K in keyof I]: ToLive<I[K]> }> :
+  I extends ReadonlyMap<string, Immutable> ? LiveMap<string, ToLive<ReturnType<I["get"]>>> :
+  I extends Json ? Mutable<I> :
+  never;
+
+type Mutable<T> = {
+  -readonly [P in keyof T]: T[P] extends ReadonlyArray<infer U>
+    ? Mutable<U>[]
+    : Mutable<T[P]>;
+};
 
 const noop = () => {};
 
@@ -165,6 +183,13 @@ type RoomContextBundle<
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null;
+
+  /**
+   * TODO: Document me
+   */
+  useMutable<TImmutableRef extends ImmutableRef>(
+    selector: (root: ToImmutable<TStorage>) => TImmutableRef
+  ): ToLive<TImmutableRef> | null;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -572,6 +597,33 @@ export function createRoomContext<
     );
   }
 
+  function useMutable<TImmutableRef extends ImmutableRef>(
+    selector: (root: ToImmutable<TStorage>) => TImmutableRef
+  ): ToLive<TImmutableRef> | null {
+    type TLiveRef = ToLive<TImmutableRef>;
+
+    const rootOrNull = useStorage();
+    const [rev, setRev] = React.useState<TLiveRef | null>(null);
+
+    React.useEffect(() => {
+      if (rootOrNull === null) {
+        return;
+      }
+
+      const root = rootOrNull;
+
+      setRev(
+        root.unstable_getMutableInstance(
+          selector(root.toImmutable() as any)
+        ) as any
+      );
+
+      return () => {};
+    }, [selector, rootOrNull]);
+
+    return rev;
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -579,6 +631,7 @@ export function createRoomContext<
     useErrorListener,
     useEventListener,
     useHistory,
+    useMutable,
     useMyPresence,
     useOthers,
     useRedo,
