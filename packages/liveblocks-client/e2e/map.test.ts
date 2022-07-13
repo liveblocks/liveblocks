@@ -10,19 +10,22 @@ describe("LiveMap single client", () => {
       {
         map: new LiveMap<string, string>(),
       },
-      async ({ root1, root2, wsUtils, assert }) => {
+      async ({ root1, root2, wsUtils, assertImmutable }) => {
         root1.get("map").set("key", "A");
         root2.get("map").set("key", "B");
 
-        assert({ map: { key: "A" } }, { map: { key: "B" } });
+        assertImmutable(
+          { map: new Map([["key", "A"]]) },
+          { map: new Map([["key", "B"]]) }
+        );
 
         await wsUtils.flushSocket1Messages();
 
-        assert({ map: { key: "A" } });
+        assertImmutable({ map: new Map([["key", "A"]]) });
 
         await wsUtils.flushSocket2Messages();
 
-        assert({ map: { key: "B" } });
+        assertImmutable({ map: new Map([["key", "B"]]) });
       }
     )
   );
@@ -35,19 +38,19 @@ describe("LiveMap single client", () => {
       {
         map: new LiveMap<string, string>([["key", "A"]]),
       },
-      async ({ root1, root2, wsUtils, assert }) => {
+      async ({ root1, root2, wsUtils, assertImmutable }) => {
         root1.get("map").delete("key");
         root2.get("map").set("key", "B");
 
-        assert({ map: {} }, { map: { key: "B" } });
+        assertImmutable({ map: new Map() }, { map: new Map([["key", "B"]]) });
 
         await wsUtils.flushSocket1Messages();
 
-        assert({ map: {} }, { map: { key: "B" } });
+        assertImmutable({ map: new Map() }, { map: new Map([["key", "B"]]) });
 
         await wsUtils.flushSocket2Messages();
 
-        assert({ map: { key: "B" } });
+        assertImmutable({ map: new Map([["key", "B"]]) });
       }
     )
   );
@@ -71,7 +74,10 @@ describe("LiveMap single client", () => {
 
         await flushSocketMessages();
 
-        expect(states).toEqual([{ map: { key: "A" } }, { map: { key: "B" } }]);
+        expect(states).toEqual([
+          { map: new Map([["key", "A"]]) },
+          { map: new Map([["key", "B"]]) },
+        ]);
       }
     )
   );

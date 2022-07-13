@@ -91,7 +91,7 @@ describe("LiveMap", () => {
   });
 
   it("create document with map in root", async () => {
-    const { storage, assert } = await prepareStorageTest<{
+    const { storage, assertImmutable } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
       createSerializedObject("0:0", {}),
@@ -101,11 +101,11 @@ describe("LiveMap", () => {
     const root = storage.root;
     const map = root.toObject().map;
     expect(Array.from(map.entries())).toEqual([]);
-    assert({ map: {} });
+    assertImmutable({ map: new Map() });
   });
 
   it("init map with items", async () => {
-    const { storage, assert } = await prepareStorageTest<{
+    const { storage, assertImmutable } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
     }>([
       createSerializedObject("0:0", {}),
@@ -126,119 +126,121 @@ describe("LiveMap", () => {
       ["third", { a: 2 }],
     ]);
 
-    assert({
-      map: {
-        first: { a: 0 },
-        second: { a: 1 },
-        third: { a: 2 },
-      },
+    assertImmutable({
+      map: new Map([
+        ["first", { a: 0 }],
+        ["second", { a: 1 }],
+        ["third", { a: 2 }],
+      ]),
     });
   });
 
   it("map.set object", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, number>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],
-      1
-    );
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map: LiveMap<string, number>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
     const root = storage.root;
     const map = root.toObject().map;
 
-    assert({ map: {} });
+    assertImmutable({ map: new Map() });
 
     map.set("first", 0);
-    assert({
-      map: {
-        first: 0,
-      },
+    assertImmutable({
+      map: new Map([["first", 0]]),
     });
 
     map.set("second", 1);
-    assert({
-      map: {
-        first: 0,
-        second: 1,
-      },
+    assertImmutable({
+      map: new Map([
+        ["first", 0],
+        ["second", 1],
+      ]),
     });
 
     map.set("third", 2);
-    assert({
-      map: {
-        first: 0,
-        second: 1,
-        third: 2,
-      },
+    assertImmutable({
+      map: new Map([
+        ["first", 0],
+        ["second", 1],
+        ["third", 2],
+      ]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   describe("delete", () => {
     it("should delete LiveObject", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        map: LiveMap<string, number>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-        createSerializedRegister("0:2", "0:1", "first", 0),
-        createSerializedRegister("0:3", "0:1", "second", 1),
-        createSerializedRegister("0:4", "0:1", "third", 2),
-      ]);
+      const { storage, assertImmutable, assertImmutableUndoRedo } =
+        await prepareStorageTest<{
+          map: LiveMap<string, number>;
+        }>([
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedRegister("0:2", "0:1", "first", 0),
+          createSerializedRegister("0:3", "0:1", "second", 1),
+          createSerializedRegister("0:4", "0:1", "third", 2),
+        ]);
 
       const root = storage.root;
       const map = root.toObject().map;
 
-      assert({
-        map: {
-          first: 0,
-          second: 1,
-          third: 2,
-        },
+      assertImmutable({
+        map: new Map([
+          ["first", 0],
+          ["second", 1],
+          ["third", 2],
+        ]),
       });
 
       map.delete("first");
-      assert({
-        map: {
-          second: 1,
-          third: 2,
-        },
+      assertImmutable({
+        map: new Map([
+          ["second", 1],
+          ["third", 2],
+        ]),
       });
 
       map.delete("second");
-      assert({
-        map: { third: 2 },
+      assertImmutable({
+        map: new Map([["third", 2]]),
       });
 
       map.delete("third");
-      assert({
-        map: {},
+      assertImmutable({
+        map: new Map(),
       });
 
-      assertUndoRedo();
+      assertImmutableUndoRedo();
     });
 
     it("should remove nested data structure from cache", async () => {
-      const { storage, assert, assertUndoRedo, getItemsCount } =
-        await prepareStorageTest<{
-          map: LiveMap<string, LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
-            createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-          ],
-          1
-        );
+      const {
+        storage,
+        assertImmutable,
+        assertImmutableUndoRedo,
+        getItemsCount,
+      } = await prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
+        ],
+        1
+      );
 
-      assert({
-        map: {
-          first: { a: 0 },
-        },
+      assertImmutable({
+        map: new Map([["first", { a: 0 }]]),
       });
 
       const root = storage.root;
@@ -248,27 +250,31 @@ describe("LiveMap", () => {
       expect(map.delete("first")).toBe(true);
       expect(getItemsCount()).toBe(2);
 
-      assert({
-        map: {},
+      assertImmutable({
+        map: new Map(),
       });
 
-      assertUndoRedo();
+      assertImmutableUndoRedo();
     });
 
     it("should delete live list", async () => {
-      const { storage, assert, assertUndoRedo, getItemsCount } =
-        await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedMap("0:1", "0:0", "map"),
-            createSerializedList("0:2", "0:1", "first"),
-            createSerializedRegister("0:3", "0:2", "!", 0),
-          ],
-          1
-        );
+      const {
+        storage,
+        assertImmutable,
+        assertImmutableUndoRedo,
+        getItemsCount,
+      } = await prepareStorageTest<{ map: LiveMap<string, LiveList<number>> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedList("0:2", "0:1", "first"),
+          createSerializedRegister("0:3", "0:2", "!", 0),
+        ],
+        1
+      );
 
-      assert({
-        map: { first: [0] },
+      assertImmutable({
+        map: new Map([["first", [0]]]),
       });
 
       const root = storage.root;
@@ -278,11 +284,11 @@ describe("LiveMap", () => {
       expect(map.delete("first")).toBe(true);
       expect(getItemsCount()).toBe(2);
 
-      assert({
-        map: {},
+      assertImmutable({
+        map: new Map(),
       });
 
-      assertUndoRedo();
+      assertImmutableUndoRedo();
     });
 
     // https://github.com/liveblocks/liveblocks/issues/95
@@ -361,29 +367,30 @@ describe("LiveMap", () => {
   });
 
   it("map.set live object", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],
-      1
-    );
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
     const root = storage.root;
     const map = root.toObject().map;
-    assert({
-      map: {},
+    assertImmutable({
+      map: new Map(),
     });
 
     map.set("first", new LiveObject({ a: 0 }));
 
-    assert({
-      map: { first: { a: 0 } },
+    assertImmutable({
+      map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("map.set already attached live object should throw", async () => {
@@ -417,19 +424,20 @@ describe("LiveMap", () => {
   });
 
   it("map.set live object on existing key", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveObject<{ a: number }>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-        createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
-      ],
-      1
-    );
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map: LiveMap<string, LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+          createSerializedObject("0:2", { a: 0 }, "0:1", "first"),
+        ],
+        1
+      );
 
-    assert({
-      map: { first: { a: 0 } },
+    assertImmutable({
+      map: new Map([["first", { a: 0 }]]),
     });
 
     const root = storage.root;
@@ -437,109 +445,110 @@ describe("LiveMap", () => {
 
     map.set("first", new LiveObject({ a: 1 }));
 
-    assert({
-      map: { first: { a: 1 } },
+    assertImmutable({
+      map: new Map([["first", { a: 1 }]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("attach map with items to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map?: LiveMap<string, { a: number }>;
-    }>([createSerializedObject("0:0", {})], 1);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map?: LiveMap<string, { a: number }>;
+      }>([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
-    assert({
-      map: { first: { a: 0 } },
+    assertImmutable({
+      map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("attach map with live objects to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map?: LiveMap<string, LiveObject<{ a: number }>>;
-    }>([createSerializedObject("0:0", {})], 1);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map?: LiveMap<string, LiveObject<{ a: number }>>;
+      }>([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.set("map", new LiveMap([["first", new LiveObject({ a: 0 })]]));
 
-    assert({
-      map: {
-        first: { a: 0 },
-      },
+    assertImmutable({
+      map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("attach map with objects to root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map?: LiveMap<string, { a: number }>;
-    }>([createSerializedObject("0:0", {})], 1);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map?: LiveMap<string, { a: number }>;
+      }>([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.set("map", new LiveMap([["first", { a: 0 }]]));
 
-    assert({
-      map: {
-        first: { a: 0 },
-      },
+    assertImmutable({
+      map: new Map([["first", { a: 0 }]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("add list in map", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveList<string>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],
-      1
-    );
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map: LiveMap<string, LiveList<string>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
-    assert({ map: {} });
+    assertImmutable({ map: new Map() });
 
     const map = storage.root.get("map");
     map.set("list", new LiveList(["itemA", "itemB", "itemC"]));
 
-    assert({
-      map: { list: ["itemA", "itemB", "itemC"] },
+    assertImmutable({
+      map: new Map([["list", ["itemA", "itemB", "itemC"]]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("add map in map", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      map: LiveMap<string, LiveMap<string, string>>;
-    }>(
-      [
-        createSerializedObject("0:0", {}),
-        createSerializedMap("0:1", "0:0", "map"),
-      ],
-      1
-    );
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        map: LiveMap<string, LiveMap<string, string>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1
+      );
 
-    assert({ map: {} });
+    assertImmutable({ map: new Map() });
 
     const map = storage.root.get("map");
     map.set("map", new LiveMap([["first", "itemA"]]));
 
-    assert({
-      map: { map: { first: "itemA" } },
+    assertImmutable({
+      map: new Map([["map", new Map([["first", "itemA"]])]]),
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   describe("subscriptions", () => {
@@ -608,16 +617,17 @@ describe("LiveMap", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to map", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<{
-        map: LiveMap<string, string>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedMap("0:1", "0:0", "map"),
-          createSerializedRegister("0:2", "0:1", "first", "a"),
-        ],
-        1
-      );
+      const { assertImmutable, machine, root } =
+        await prepareIsolatedStorageTest<{
+          map: LiveMap<string, string>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedMap("0:1", "0:0", "map"),
+            createSerializedRegister("0:2", "0:1", "first", "a"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const mapCallback = jest.fn();
@@ -627,7 +637,7 @@ describe("LiveMap", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(listItems, mapCallback);
 
-      assert({ map: { first: "a" } });
+      assertImmutable({ map: new Map([["first", "a"]]) });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -661,11 +671,11 @@ describe("LiveMap", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assert({
-        map: {
-          first: "a",
-          second: "b",
-        },
+      assertImmutable({
+        map: new Map([
+          ["first", "a"],
+          ["second", "b"],
+        ]),
       });
 
       expect(rootDeepCallback).toHaveBeenCalledTimes(1);
