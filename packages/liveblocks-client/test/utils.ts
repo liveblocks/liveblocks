@@ -20,6 +20,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
   ServerMsg,
+  // XXX Should we deprecate this type in favor of ToImmutable?
   ToJson,
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
