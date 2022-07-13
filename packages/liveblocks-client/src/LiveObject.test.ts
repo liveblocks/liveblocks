@@ -47,104 +47,104 @@ describe("LiveObject", () => {
   });
 
   it("update non existing property", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
-      createSerializedObject("0:0", {}),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest([createSerializedObject("0:0", {})]);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.update({ a: 1 });
-    assert({
+    assertImmutable({
       a: 1,
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update non existing property with null", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
-      createSerializedObject("0:0", {}),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest([createSerializedObject("0:0", {})]);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.update({ a: null });
-    assert({
+    assertImmutable({
       a: null,
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update existing property", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
-      createSerializedObject("0:0", { a: 0 }),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest([createSerializedObject("0:0", { a: 0 })]);
 
-    assert({ a: 0 });
+    assertImmutable({ a: 0 });
 
     storage.root.update({ a: 1 });
-    assert({
+    assertImmutable({
       a: 1,
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update existing property with null", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
-      createSerializedObject("0:0", { a: 0 }),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest([createSerializedObject("0:0", { a: 0 })]);
 
-    assert({ a: 0 });
+    assertImmutable({ a: 0 });
 
     storage.root.update({ a: null });
-    assert({
+    assertImmutable({
       a: null,
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update root", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest([
-      createSerializedObject("0:0", { a: 0 }),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest([createSerializedObject("0:0", { a: 0 })]);
 
-    assert({
+    assertImmutable({
       a: 0,
     });
 
     storage.root.update({ a: 1 });
-    assert({
+    assertImmutable({
       a: 1,
     });
 
     storage.root.update({ b: 1 });
-    assert({
+    assertImmutable({
       a: 1,
       b: 1,
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update with LiveObject", async () => {
-    const { storage, assert, operations, assertUndoRedo, getUndoStack } =
-      await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
-        [createSerializedObject("0:0", { child: null })],
-        1
-      );
+    const {
+      storage,
+      assertImmutable,
+      operations,
+      assertImmutableUndoRedo,
+      getUndoStack,
+    } = await prepareStorageTest<{ child: LiveObject<{ a: number }> | null }>(
+      [createSerializedObject("0:0", { child: null })],
+      1
+    );
 
     const root = storage.root;
 
-    assert({
+    assertImmutable({
       child: null,
     });
 
     root.set("child", new LiveObject({ a: 0 }));
 
-    assert({
+    assertImmutable({
       child: {
         a: 0,
       },
@@ -173,7 +173,7 @@ describe("LiveObject", () => {
 
     root.set("child", null);
 
-    assert({
+    assertImmutable({
       child: null,
     });
     expect(getUndoStack()[1]).toEqual([
@@ -186,11 +186,11 @@ describe("LiveObject", () => {
       },
     ]);
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("remove nested grand child record with update", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
+    const { storage, assertImmutable, assertImmutableUndoRedo, getItemsCount } =
       await prepareStorageTest<{
         a: number;
         child: LiveObject<{
@@ -203,7 +203,7 @@ describe("LiveObject", () => {
         createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
       ]);
 
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 0,
@@ -215,17 +215,17 @@ describe("LiveObject", () => {
 
     storage.root.update({ child: null });
 
-    assert({
+    assertImmutable({
       a: 0,
       child: null,
     });
     expect(getItemsCount()).toBe(1);
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("remove nested child record with update", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
+    const { storage, assertImmutable, assertImmutableUndoRedo, getItemsCount } =
       await prepareStorageTest<{
         a: number;
         child: LiveObject<{ b: number }> | null;
@@ -234,7 +234,7 @@ describe("LiveObject", () => {
         createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
       ]);
 
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 0,
@@ -243,26 +243,26 @@ describe("LiveObject", () => {
 
     storage.root.update({ child: null });
 
-    assert({
+    assertImmutable({
       a: 0,
       child: null,
     });
     expect(getItemsCount()).toBe(1);
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("add nested record with update", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
+    const { storage, assertImmutable, assertImmutableUndoRedo, getItemsCount } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.update({
       child: new LiveObject({ a: 0 }),
     });
 
-    assert({
+    assertImmutable({
       child: {
         a: 0,
       },
@@ -270,20 +270,20 @@ describe("LiveObject", () => {
 
     expect(getItemsCount()).toBe(2);
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("replace nested record with update", async () => {
-    const { storage, assert, assertUndoRedo, getItemsCount } =
+    const { storage, assertImmutable, assertImmutableUndoRedo, getItemsCount } =
       await prepareStorageTest([createSerializedObject("0:0", {})], 1);
 
-    assert({});
+    assertImmutable({});
 
     storage.root.update({
       child: new LiveObject({ a: 0 }),
     });
 
-    assert({
+    assertImmutable({
       child: {
         a: 0,
       },
@@ -293,7 +293,7 @@ describe("LiveObject", () => {
       child: new LiveObject({ a: 1 }),
     });
 
-    assert({
+    assertImmutable({
       child: {
         a: 1,
       },
@@ -301,22 +301,23 @@ describe("LiveObject", () => {
 
     expect(getItemsCount()).toBe(2);
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update nested record", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      a: number;
-      child: LiveObject<{ b: number }>;
-    }>([
-      createSerializedObject("0:0", { a: 0 }),
-      createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{ b: number }>;
+      }>([
+        createSerializedObject("0:0", { a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+      ]);
 
     const root = storage.root;
     const child = root.toObject().child;
 
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 0,
@@ -324,27 +325,28 @@ describe("LiveObject", () => {
     });
 
     child.update({ b: 1 });
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 1,
       },
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   it("update deeply nested record", async () => {
-    const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-      a: number;
-      child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
-    }>([
-      createSerializedObject("0:0", { a: 0 }),
-      createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
-      createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
-    ]);
+    const { storage, assertImmutable, assertImmutableUndoRedo } =
+      await prepareStorageTest<{
+        a: number;
+        child: LiveObject<{ b: number; grandChild: LiveObject<{ c: number }> }>;
+      }>([
+        createSerializedObject("0:0", { a: 0 }),
+        createSerializedObject("0:1", { b: 0 }, "0:0", "child"),
+        createSerializedObject("0:2", { c: 0 }, "0:1", "grandChild"),
+      ]);
 
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 0,
@@ -364,7 +366,7 @@ describe("LiveObject", () => {
     grandChild.update({ c: 1 });
     expect(grandChild.toObject()).toMatchObject({ c: 1 });
 
-    assert({
+    assertImmutable({
       a: 0,
       child: {
         b: 0,
@@ -374,23 +376,23 @@ describe("LiveObject", () => {
       },
     });
 
-    assertUndoRedo();
+    assertImmutableUndoRedo();
   });
 
   describe("acknowledge mechanism", () => {
     describe("should ignore incoming updates if current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
-        const { root, assert, applyRemoteOperations } =
+        const { root, assertImmutable, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ a: number }>(
             [createSerializedObject("0:0", { a: 0 })],
             1
           );
 
-        assert({ a: 0 });
+        assertImmutable({ a: 0 });
 
         root.set("a", 1);
 
-        assert({ a: 1 });
+        assertImmutable({ a: 1 });
 
         applyRemoteOperations([
           {
@@ -401,11 +403,11 @@ describe("LiveObject", () => {
           },
         ]);
 
-        assert({ a: 1 });
+        assertImmutable({ a: 1 });
       });
 
       it("when value is a LiveObject", async () => {
-        const { root, assert, applyRemoteOperations } =
+        const { root, assertImmutable, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ a: LiveObject<{ subA: number }> }>(
             [
               createSerializedObject("0:0", {}),
@@ -414,11 +416,11 @@ describe("LiveObject", () => {
             1
           );
 
-        assert({ a: { subA: 0 } });
+        assertImmutable({ a: { subA: 0 } });
 
         root.set("a", new LiveObject({ subA: 1 }));
 
-        assert({ a: { subA: 1 } });
+        assertImmutable({ a: { subA: 1 } });
 
         applyRemoteOperations([
           {
@@ -431,11 +433,11 @@ describe("LiveObject", () => {
           },
         ]);
 
-        assert({ a: { subA: 1 } });
+        assertImmutable({ a: { subA: 1 } });
       });
 
       it("when value is a LiveList with LiveObjects", async () => {
-        const { root, assert, applyRemoteOperations } =
+        const { root, assertImmutable, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{
             a: LiveList<LiveObject<{ b: number }>>;
           }>(
@@ -446,13 +448,13 @@ describe("LiveObject", () => {
             1
           );
 
-        assert({ a: [] });
+        assertImmutable({ a: [] });
 
         const newList = new LiveList<LiveObject<{ b: number }>>();
         newList.push(new LiveObject({ b: 1 }));
         root.set("a", newList);
 
-        assert({ a: [{ b: 1 }] });
+        assertImmutable({ a: [{ b: 1 }] });
 
         applyRemoteOperations([
           {
@@ -464,7 +466,7 @@ describe("LiveObject", () => {
           },
         ]);
 
-        assert({ a: [{ b: 1 }] });
+        assertImmutable({ a: [{ b: 1 }] });
       });
     });
   });
@@ -477,31 +479,33 @@ describe("LiveObject", () => {
     });
 
     it("should delete property from the object", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        a?: number;
-      }>([createSerializedObject("0:0", { a: 0 })]);
-      assert({ a: 0 });
+      const { storage, assertImmutable, assertImmutableUndoRedo } =
+        await prepareStorageTest<{
+          a?: number;
+        }>([createSerializedObject("0:0", { a: 0 })]);
+      assertImmutable({ a: 0 });
 
       storage.root.delete("a");
-      assert({});
+      assertImmutable({});
 
-      assertUndoRedo();
+      assertImmutableUndoRedo();
     });
 
     it("should delete nested crdt", async () => {
-      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        child?: LiveObject<{ a: number }>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
-      ]);
+      const { storage, assertImmutable, assertImmutableUndoRedo } =
+        await prepareStorageTest<{
+          child?: LiveObject<{ a: number }>;
+        }>([
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: 0 }, "0:0", "child"),
+        ]);
 
-      assert({ child: { a: 0 } });
+      assertImmutable({ child: { a: 0 } });
 
       storage.root.delete("child");
-      assert({});
+      assertImmutable({});
 
-      assertUndoRedo();
+      assertImmutableUndoRedo();
     });
 
     it("should not notify if property does not exist", async () => {
@@ -809,15 +813,16 @@ describe("LiveObject", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("LiveObject updated", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { assertImmutable, machine, root } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -825,7 +830,7 @@ describe("LiveObject", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(root.get("obj"), liveObjectCallback);
 
-      assert({ obj: { a: 1 } });
+      assertImmutable({ obj: { a: 1 } });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -849,7 +854,7 @@ describe("LiveObject", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assert({
+      assertImmutable({
         obj: { a: 2 },
       });
 
@@ -867,15 +872,16 @@ describe("LiveObject", () => {
     });
 
     test("LiveObject updated nested", async () => {
-      const { assert, machine, root } = await prepareIsolatedStorageTest<{
-        obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
-        ],
-        1
-      );
+      const { assertImmutable, machine, root } =
+        await prepareIsolatedStorageTest<{
+          obj: LiveObject<{ a: number; subObj?: LiveObject<{ b: number }> }>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedObject("0:1", { a: 1 }, "0:0", "obj"),
+          ],
+          1
+        );
 
       const rootDeepCallback = jest.fn();
       const liveObjectCallback = jest.fn();
@@ -883,7 +889,7 @@ describe("LiveObject", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(root.get("obj"), liveObjectCallback);
 
-      assert({ obj: { a: 1 } });
+      assertImmutable({ obj: { a: 1 } });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -916,7 +922,7 @@ describe("LiveObject", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assert({
+      assertImmutable({
         obj: { a: 1, subObj: { b: 1 } },
       });
 
@@ -938,21 +944,21 @@ describe("LiveObject", () => {
 
   describe("undo apply update", () => {
     test("subscription should gives the right update", async () => {
-      const { root, assert, subscribe, undo } =
+      const { root, assertImmutable, subscribe, undo } =
         await prepareIsolatedStorageTest<{ a: number }>(
           [createSerializedObject("0:0", { a: 0 })],
           1
         );
 
-      assert({ a: 0 });
+      assertImmutable({ a: 0 });
       root.set("a", 1);
-      assert({ a: 1 });
+      assertImmutable({ a: 1 });
 
       const callback = jest.fn();
       subscribe(root, callback, { isDeep: true });
 
       undo();
-      assert({ a: 0 });
+      assertImmutable({ a: 0 });
 
       expect(callback).toHaveBeenCalledWith([
         { type: "LiveObject", node: root, updates: { a: { type: "update" } } },

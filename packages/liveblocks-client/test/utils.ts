@@ -23,6 +23,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
   ServerMsg,
+  ToImmutable,
   // XXX Should we deprecate this type in favor of ToImmutable?
   ToJson,
 } from "../src/types";
@@ -233,8 +234,11 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToJson<TStorage>) =>
+    // XXX The goal is to get rid of this
+    assertJson: (data: ToJson<TStorage>) =>
       expect(lsonToJson(storage.root)).toEqual(data),
+    assertImmutable: (data: ToImmutable<TStorage>) =>
+      expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
@@ -302,34 +306,64 @@ export async function prepareStorageTest<
     }
   });
 
-  const states: ToJson<LsonObject>[] = [];
+  const jsonStates: ToJson<TStorage>[] = [];
+  const immutableStates: ToImmutable<TStorage>[] = [];
 
-  function assertState(data: ToJson<LsonObject>) {
+  function assertJsonState(data: ToJson<TStorage>) {
     const json = lsonToJson(storage.root);
     expect(json).toEqual(data);
     expect(lsonToJson(refStorage.root)).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assert(data: ToJson<LsonObject>) {
-    states.push(data);
-    assertState(data);
+  function assertImmutableState(data: ToImmutable<TStorage>) {
+    const imm = storage.root.toImmutable();
+    expect(imm).toEqual(data);
+    expect(refStorage.root.toImmutable()).toEqual(data);
+    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assertUndoRedo() {
-    for (let i = 0; i < states.length - 1; i++) {
+  function assertJson(data: ToJson<TStorage>) {
+    jsonStates.push(data);
+    assertJsonState(data);
+  }
+
+  function assertImmutable(data: ToImmutable<TStorage>) {
+    immutableStates.push(data);
+    assertImmutableState(data);
+  }
+
+  function assertJsonUndoRedo() {
+    for (let i = 0; i < jsonStates.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      assertJsonState(jsonStates[jsonStates.length - 2 - i]);
     }
 
-    for (let i = 0; i < states.length - 1; i++) {
+    for (let i = 0; i < jsonStates.length - 1; i++) {
       machine.redo();
-      assertState(states[i + 1]);
+      assertJsonState(jsonStates[i + 1]);
     }
 
-    for (let i = 0; i < states.length - 1; i++) {
+    for (let i = 0; i < jsonStates.length - 1; i++) {
       machine.undo();
-      assertState(states[states.length - 2 - i]);
+      assertJsonState(jsonStates[jsonStates.length - 2 - i]);
+    }
+  }
+
+  function assertImmutableUndoRedo() {
+    for (let i = 0; i < immutableStates.length - 1; i++) {
+      machine.undo();
+      assertImmutableState(immutableStates[immutableStates.length - 2 - i]);
+    }
+
+    for (let i = 0; i < immutableStates.length - 1; i++) {
+      machine.redo();
+      assertImmutableState(immutableStates[i + 1]);
+    }
+
+    for (let i = 0; i < immutableStates.length - 1; i++) {
+      machine.undo();
+      assertImmutableState(immutableStates[immutableStates.length - 2 - i]);
     }
   }
 
@@ -360,8 +394,10 @@ export async function prepareStorageTest<
     operations,
     storage,
     refStorage,
-    assert,
-    assertUndoRedo,
+    assertJson,
+    assertImmutable,
+    assertJsonUndoRedo,
+    assertImmutableUndoRedo,
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,

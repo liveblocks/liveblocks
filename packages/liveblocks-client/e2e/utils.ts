@@ -14,6 +14,7 @@ import type {
   Json,
   JsonObject,
   LsonObject,
+  ToImmutable,
   ToJson,
 } from "../src/types";
 
@@ -112,7 +113,14 @@ export function prepareTestsConflicts<
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
      * It also ensure that immutable states updated with the updates generated from conflicts are equals
      */
-    assert: (jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) => void;
+    assertJson: (
+      jsonRoot1: ToJson<TStorage>,
+      jsonRoot2?: ToJson<TStorage>
+    ) => void;
+    assertImmutable: (
+      jsonRoot1: ToImmutable<TStorage>,
+      jsonRoot2?: ToImmutable<TStorage>
+    ) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
       flushSocket2Messages: () => Promise<void>;
@@ -141,17 +149,6 @@ export function prepareTestsConflicts<
     const { root: root1 } = await room1.getStorage();
     const { root: root2 } = await room2.getStorage();
 
-    function assert(jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) {
-      if (jsonRoot2 == null) {
-        jsonRoot2 = jsonRoot1;
-      }
-
-      expect(lsonToJson(root1)).toEqual(jsonRoot1);
-      expect(immutableStorage1).toEqual(jsonRoot1);
-      expect(lsonToJson(root2)).toEqual(jsonRoot2);
-      expect(immutableStorage2).toEqual(jsonRoot2);
-    }
-
     const wsUtils = {
       flushSocket1Messages: async () => {
         ws1.resumeSend();
@@ -174,23 +171,56 @@ export function prepareTestsConflicts<
     ws1.pauseSend();
     ws2.pauseSend();
 
-    let immutableStorage1 = liveObjectToJson(root1);
-    let immutableStorage2 = liveObjectToJson(root2);
+    let jsonStorage1 = liveObjectToJson(root1);
+    let jsonStorage2 = liveObjectToJson(root2);
+
+    let immutableStorage1 = root1.toImmutable();
+    let immutableStorage2 = root2.toImmutable();
 
     room1.subscribe(
       root1,
       () => {
-        immutableStorage1 = liveObjectToJson(root1);
+        jsonStorage1 = liveObjectToJson(root1);
+        immutableStorage1 = root1.toImmutable();
       },
       { isDeep: true }
     );
     room2.subscribe(
       root2,
       () => {
-        immutableStorage2 = liveObjectToJson(root2);
+        jsonStorage2 = liveObjectToJson(root2);
+        immutableStorage2 = root2.toImmutable();
       },
       { isDeep: true }
     );
+
+    function assertJson(
+      jsonRoot1: ToJson<TStorage>,
+      jsonRoot2?: ToJson<TStorage>
+    ) {
+      if (jsonRoot2 == null) {
+        jsonRoot2 = jsonRoot1;
+      }
+
+      expect(lsonToJson(root1)).toEqual(jsonRoot1);
+      expect(jsonStorage1).toEqual(jsonRoot1);
+      expect(lsonToJson(root2)).toEqual(jsonRoot2);
+      expect(jsonStorage2).toEqual(jsonRoot2);
+    }
+
+    function assertImmutable(
+      immRoot1: ToImmutable<TStorage>,
+      immRoot2?: ToImmutable<TStorage>
+    ) {
+      if (immRoot2 == null) {
+        immRoot2 = immRoot1;
+      }
+
+      expect(root1.toImmutable()).toEqual(immRoot1);
+      expect(immutableStorage1).toEqual(immRoot1);
+      expect(root2.toImmutable()).toEqual(immRoot2);
+      expect(immutableStorage2).toEqual(immRoot2);
+    }
 
     try {
       await callback({
@@ -199,7 +229,8 @@ export function prepareTestsConflicts<
         root1,
         root2,
         wsUtils,
-        assert,
+        assertJson,
+        assertImmutable,
       });
       client1.leave(roomName);
       client2.leave(roomName);

@@ -719,7 +719,8 @@ export type {
   ImmutableList,
   ImmutableMap,
   ImmutableObject,
-  ImmutableRef, // ToImmutable,
+  ImmutableRef,
+  ToImmutable,
 } from "./Immutable";
 export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
