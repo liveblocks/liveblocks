@@ -17,6 +17,7 @@ import type {
   ToImmutable,
 } from "@liveblocks/client/internal";
 import * as React from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 import { useInitial, useRerender } from "./hooks";
@@ -453,27 +454,23 @@ export function createRoomContext<
   }
 
   function useStorage(): LiveObject<TStorage> | null {
+    type Snapshot = LiveObject<TStorage> | null;
+
     const room = useRoom();
-    const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
-    React.useEffect(() => {
-      let didCancel = false;
+    const subscribe = React.useCallback(
+      (onStorageChange) => room.onStorageLoaded(onStorageChange),
+      [room]
+    );
 
-      async function fetchStorage() {
-        const storage = await room.getStorage();
-        if (!didCancel) {
-          setState(storage.root);
-        }
-      }
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getStorageSnapshot(),
+      [room]
+    );
 
-      fetchStorage();
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
-      return () => {
-        didCancel = true;
-      };
-    }, [room]);
-
-    return root;
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   function useHistory(): History {

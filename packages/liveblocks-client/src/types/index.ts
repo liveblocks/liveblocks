@@ -666,6 +666,23 @@ export type Room<
   }>;
 
   /**
+   * Get the room's storage synchronously.
+   * The storage's root is a {@link LiveObject}.
+   *
+   * @example
+   * const root = room.getStorageSnapshot();
+   */
+  getStorageSnapshot(): LiveObject<TStorage> | null;
+
+  /**
+   * Subscribe a callback function to the storage loaded event. Will fire at
+   * most once during the lifetime of a Room.
+   *
+   * Returns an unsubscribe function.
+   */
+  onStorageLoaded(callback: () => void): () => void;
+
+  /**
    * Batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the subscribers are called only after the batch is over.

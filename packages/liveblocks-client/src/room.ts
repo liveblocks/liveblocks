@@ -3,6 +3,7 @@ import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
+import { makeEventPair } from "./EventQueue";
 import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
@@ -126,6 +127,8 @@ export type Machine<
   pauseHistory(): void;
   resumeHistory(): void;
 
+  getStorageSnapshot(): LiveObject<TStorage> | null;
+  onStorageLoaded(callback: () => void): () => void;
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
@@ -1067,6 +1070,7 @@ export function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
+          fireStorageHasLoadedEvent();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1379,17 +1383,7 @@ export function makeStateMachine<
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage(): Promise<{
-    root: LiveObject<TStorage>;
-  }> {
-    if (state.root) {
-      return new Promise((resolve) =>
-        resolve({
-          root: state.root as LiveObject<TStorage>,
-        })
-      );
-    }
-
+  function startLoadingStorage(): Promise<void> {
     if (_getInitialStatePromise == null) {
       state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
@@ -1397,8 +1391,42 @@ export function makeStateMachine<
         (resolve) => (_getInitialStateResolver = resolve)
       );
     }
+    return _getInitialStatePromise;
+  }
 
-    return _getInitialStatePromise.then(() => {
+  /**
+   * Closely related to .getStorage(), but synchronously. Will be `null`
+   * initially. When requested for the first time, will kick off the loading of
+   * Storage if it hasn't happened yet.
+   *
+   * Once Storage is loaded, will return a stable reference to the storage
+   * root.
+   */
+  function getStorageSnapshot(): LiveObject<TStorage> | null {
+    const root = state.root;
+    if (root !== undefined) {
+      // Done loading
+      return root;
+    } else {
+      // Not done loading, kick off the loading (will not do anything if already kicked off)
+      startLoadingStorage();
+      return null;
+    }
+  }
+
+  const [onStorageLoaded, fireStorageHasLoadedEvent] = makeEventPair();
+
+  function getStorage(): Promise<{
+    root: LiveObject<TStorage>;
+  }> {
+    if (state.root) {
+      // Store has already loaded, so we can resolve it directly
+      return Promise.resolve({
+        root: state.root as LiveObject<TStorage>,
+      });
+    }
+
+    return startLoadingStorage().then(() => {
       return {
         root: nn(state.root) as LiveObject<TStorage>,
       };
@@ -1562,6 +1590,8 @@ export function makeStateMachine<
     resumeHistory,
 
     getStorage,
+    getStorageSnapshot,
+    onStorageLoaded,
 
     selectors: {
       // Core
@@ -1700,6 +1730,8 @@ export function createRoom<
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
+    getStorageSnapshot: machine.getStorageSnapshot,
+    onStorageLoaded: machine.onStorageLoaded,
     batch: machine.batch,
     history: {
       undo: machine.undo,
