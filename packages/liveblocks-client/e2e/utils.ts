@@ -107,9 +107,10 @@ export function prepareTestsConflicts<
     room1: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
     /**
-     * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
-     * If second parameter is ommited, we're assuming that both rooms' storage are equals
-     * It also ensure that immutable states updated with the updates generated from conflicts are equals
+     * Assert that room1 and room2 storage are equal to the provided immutable
+     * value. If the second parameter is omitted, we're assuming that both
+     * rooms' storages are expected to be equal. It also ensures that immutable
+     * states updated with the updates generated from conflicts are equal.
      */
     assertImmutable: (
       jsonRoot1: ToImmutable<TStorage>,
@@ -229,10 +230,6 @@ export function prepareSingleClientTest<
   callback: (args: {
     root: LiveObject<TStorage>;
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    /**
-     * Assert that room storage is equal to the provided json
-     */
-    // assert: (jsonRoot: ToJson<TStorage>) => void;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {
