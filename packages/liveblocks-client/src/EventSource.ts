@@ -13,15 +13,19 @@ export type EventEmitter<T> = (event: T) => void;
  *
  * The events are anonymous, so you can use it to define events, like so:
  *
- *   const [subscribeToEvent1, fireEvent1] = makeEventSource();
- *   const [subscribeToEvent2, fireEvent2] = makeEventSource();
+ *   const [event1, emitEvent1] = makeEventSource();
+ *   const [event2, emitEvent2] = makeEventSource();
  *
- *   subscribeToEvent1(foo);
- *   subscribeToEvent1(bar);
- *   subscribeToEvent2(qux);
+ *   event1.subscribe(foo);
+ *   event1.subscribe(bar);
+ *   event2.subscribe(qux);
  *
- *   fireEvent1();  // Now foo and bar will get called
- *   fireEvent2();  // Now qux will get called
+ *   // Unsubscription is pretty standard
+ *   const unsub = event2.subscribe(foo);
+ *   unsub();
+ *
+ *   emitEvent1();  // Now foo and bar will get called
+ *   emitEvent2();  // Now qux will get called (but foo will not, since it's unsubscribed)
  *
  */
 export function makeEventSource<T>(): [EventSource<T>, EventEmitter<T>] {
