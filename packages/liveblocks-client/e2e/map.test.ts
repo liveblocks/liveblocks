@@ -1,6 +1,5 @@
-import type { Json } from "../src";
+import type { Immutable } from "../src";
 import { LiveMap } from "../src";
-import { lsonToJson } from "../src/immutable";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveMap single client", () => {
@@ -64,8 +63,8 @@ describe("LiveMap single client", () => {
         map: new LiveMap<string, string>(),
       },
       async ({ root, flushSocketMessages, room }) => {
-        const states: Json[] = [];
-        room.subscribe(root, () => states.push(lsonToJson(root)), {
+        const states: Immutable[] = [];
+        room.subscribe(root, () => states.push(root.toImmutable()), {
           isDeep: true,
         });
 
