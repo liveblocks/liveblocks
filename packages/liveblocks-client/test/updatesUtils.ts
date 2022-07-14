@@ -4,7 +4,6 @@ import { lsonToJson } from "../src/immutable";
 import type {
   LiveListUpdates,
   LiveObjectUpdateDelta,
-  // XXX Should we deprecate this type in favor of ToImmutable?
   ToJson,
   UpdateDelta,
 } from "../src/types";
