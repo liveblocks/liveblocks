@@ -154,7 +154,7 @@ const defaultContext = {
   },
 };
 
-export async function prepareRoomWithStorage<
+async function prepareRoomWithStorage<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -469,6 +469,95 @@ export async function reconnect<
       items: newItems,
     })
   );
+}
+
+export async function prepareStorageImmutableTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never,
+  TUserMeta extends BaseUserMeta = never,
+  TRoomEvent extends Json = never
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
+  let state = {} as ToJson<TStorage>;
+  let refState = {} as ToJson<TStorage>;
+
+  let totalStorageOps = 0;
+
+  const { machine: refMachine, storage: refStorage } =
+    await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
+      items,
+      -1
+    );
+
+  const { machine, storage } = await prepareRoomWithStorage<
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >(items, actor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
+    for (const message of messages) {
+      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+        totalStorageOps += message.ops.length;
+        refMachine.onMessage(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
+        machine.onMessage(
+          serverMessage({
+            type: ServerMsgCode.UPDATE_STORAGE,
+            ops: message.ops,
+          })
+        );
+      }
+    }
+  });
+
+  state = lsonToJson(storage.root) as ToJson<TStorage>;
+  refState = lsonToJson(refStorage.root) as ToJson<TStorage>;
+
+  const root = refStorage.root;
+  refMachine.subscribe(
+    root,
+    (updates) => {
+      refState = patchImmutableObject(refState, updates);
+    },
+    { isDeep: true }
+  );
+
+  function assert(
+    data: ToJson<TStorage>,
+    itemsCount?: number,
+    storageOpsCount?: number
+  ) {
+    assertStorage(data);
+
+    if (itemsCount) {
+      expect(machine.getItemsCount()).toBe(itemsCount);
+    }
+    expect(state).toEqual(refState);
+    expect(state).toEqual(data);
+
+    if (storageOpsCount) {
+      expect(totalStorageOps).toEqual(storageOpsCount);
+    }
+  }
+
+  function assertStorage(data: ToJson<TStorage>) {
+    const json = lsonToJson(storage.root);
+    expect(json).toEqual(data);
+    expect(lsonToJson(refStorage.root)).toEqual(data);
+  }
+
+  return {
+    storage,
+    refStorage,
+    assert,
+    assertStorage,
+    subscribe: machine.subscribe,
+    refSubscribe: refMachine.subscribe,
+    state,
+  };
 }
 
 export function createSerializedObject(
