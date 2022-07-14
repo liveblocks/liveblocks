@@ -1,7 +1,6 @@
 import type { ApplyResult, Doc } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
-import { errorIf } from "./deprecation";
 import type {
   CreateChildOp,
   CreateMapOp,
@@ -36,20 +35,8 @@ export class LiveMap<
   /** @internal */
   private unacknowledgedSet: Map<TKey, string>;
 
-  constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined);
-  /**
-   * @deprecated Please call as `new LiveMap()` or `new LiveMap([])` instead.
-   */
-  constructor(entries: null);
-  constructor(
-    entries?: readonly (readonly [TKey, TValue])[] | undefined | null
-  ) {
+  constructor(entries?: readonly (readonly [TKey, TValue])[] | undefined) {
     super();
-    errorIf(
-      entries === null,
-      "Support for calling `new LiveMap(null)` will be removed in @liveblocks/client 0.18. Please call as `new LiveMap()`, or `new LiveMap([])`."
-    );
-
     this.unacknowledgedSet = new Map<TKey, string>();
 
     if (entries) {

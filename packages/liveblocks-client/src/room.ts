@@ -1287,11 +1287,7 @@ export function makeStateMachine<
     if (state.buffer.presence) {
       messages.push({
         type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.buffer.presence as unknown as TPresence,
-        //                          ^^^^^^^^^^^^^^^^^^^^^^^
-        //                          TODO: In 0.18, state.buffer.presence will
-        //                          become a TPresence and this force-cast will
-        //                          no longer be necessary.
+        data: state.buffer.presence,
       });
     }
     for (const event of state.buffer.messages) {
@@ -1646,8 +1642,7 @@ export function createRoom<
   options: RoomInitializers<TPresence, TStorage>,
   context: Context
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const initialPresence = options.initialPresence ?? options.defaultPresence;
-  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
+  const { initialPresence, initialStorage } = options;
 
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"

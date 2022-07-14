@@ -197,16 +197,6 @@ export type RoomInitializers<
    * The initial Storage to use when entering a new Room.
    */
   initialStorage?: TStorage | ((roomId: string) => TStorage);
-  /**
-   * @deprecated Please use `initialPresence` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultPresence?: () => TPresence;
-  /**
-   * @deprecated Please use `initialStorage` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultStorageRoot?: TStorage;
 }>;
 
 export type Client = {
@@ -298,23 +288,6 @@ export type User<
   /** @internal */
   _hasReceivedInitialPresence?: boolean;
 };
-
-/**
- * @deprecated Whatever you want to store as presence is app-specific. Please
- * define your own Presence type instead of importing it from
- * `@liveblocks/client`, for example:
- *
- *    type Presence = {
- *      name: string,
- *      cursor: {
- *        x: number,
- *        y: number,
- *      } | null,
- *    }
- *
- * As long as it only contains JSON-serializable values, you're good!
- */
-export type Presence = JsonObject;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 

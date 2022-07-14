@@ -36,14 +36,6 @@ jobs:
       - name: Install dependencies (and link to local Liveblocks source)
         run: ../../scripts/link-liveblocks.sh
 
-      - name: Run code generation
-        run: npm run codegen
-        if: matrix.pkg == 'liveblocks-react'
-
-      - name: Ensure no files changed
-        run: git diff --exit-code . || ( echo && echo "Changes detected! Please run \"npm run codegen\" and check in the results." && exit 1 )
-        if: matrix.pkg == 'liveblocks-react'
-
       - name: Build
         run: npm run build
 
