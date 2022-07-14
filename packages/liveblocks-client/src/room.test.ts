@@ -745,39 +745,31 @@ describe("room", () => {
     });
 
     test("batch without operations should not add an item to the undo stack", async () => {
-      const { storage, assertImmutable, undo, batch } =
-        await prepareStorageTest<{
-          a: number;
-        }>([createSerializedObject("0:0", { a: 1 })], 1);
+      const { storage, assert, undo, batch } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 1 })], 1);
 
       storage.root.set("a", 2);
 
       // Batch without operations on storage or presence
       batch(() => {});
 
-      assertImmutable({ a: 2 });
+      assert({ a: 2 });
 
       undo();
 
-      assertImmutable({ a: 1 });
+      assert({ a: 1 });
     });
 
     test("batch storage with changes from server", async () => {
-      const {
-        storage,
-        assertImmutable,
-        undo,
-        redo,
-        batch,
-        subscribe,
-        refSubscribe,
-      } = await prepareStorageTest<{ items: LiveList<string> }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-        ],
-        1
-      );
+      const { storage, assert, undo, redo, batch, subscribe, refSubscribe } =
+        await prepareStorageTest<{ items: LiveList<string> }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+          ],
+          1
+        );
 
       const items = storage.root.get("items");
       const refItems = storage.root.get("items");
@@ -794,19 +786,19 @@ describe("room", () => {
         items.push("C");
       });
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
       undo();
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
       redo();
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
     });
@@ -819,7 +811,7 @@ describe("room", () => {
 
       const {
         storage,
-        assertImmutable,
+        assert,
         undo,
         redo,
         batch,
@@ -854,7 +846,7 @@ describe("room", () => {
         items.push("C");
       });
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
@@ -869,13 +861,13 @@ describe("room", () => {
 
       undo();
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
       redo();
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
     });
@@ -970,7 +962,7 @@ describe("room", () => {
 
   describe("offline", () => {
     test("disconnect and reconnect with offline changes", async () => {
-      const { storage, assertImmutable, machine, refStorage, reconnect, ws } =
+      const { storage, assert, machine, refStorage, reconnect, ws } =
         await prepareStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -981,11 +973,11 @@ describe("room", () => {
 
       const items = storage.root.get("items");
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       items.push("A");
       items.push("C"); // Will be removed by other client when offline
-      assertImmutable({
+      assert({
         items: ["A", "C"],
       });
 
@@ -1023,19 +1015,19 @@ describe("room", () => {
 
       reconnect(2, newInitStorage);
 
-      assertImmutable({
+      assert({
         items: ["A", "B"],
       });
 
       machine.undo();
 
-      assertImmutable({
+      assert({
         items: ["A"],
       });
     });
 
     test("disconnect and reconnect with remote changes", async () => {
-      const { assertImmutable, machine } = await prepareIsolatedStorageTest<{
+      const { assert, machine } = await prepareIsolatedStorageTest<{
         items?: LiveList<string>;
         items2?: LiveList<string>;
       }>(
@@ -1047,7 +1039,7 @@ describe("room", () => {
         1
       );
 
-      assertImmutable({ items: ["a"] });
+      assert({ items: ["a"] });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -1072,7 +1064,7 @@ describe("room", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assertImmutable({
+      assert({
         items2: ["B"],
       });
     });
@@ -1227,12 +1219,11 @@ describe("room", () => {
 
   describe("defaultStorage", () => {
     test("initialize room with defaultStorage should send operation only once", async () => {
-      const { assertImmutable, assertMessagesSent } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
+      const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
