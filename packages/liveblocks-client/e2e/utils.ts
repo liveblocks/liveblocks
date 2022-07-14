@@ -113,8 +113,8 @@ export function prepareTestsConflicts<
      * states updated with the updates generated from conflicts are equal.
      */
     assert: (
-      jsonRoot1: ToImmutable<TStorage>,
-      jsonRoot2?: ToImmutable<TStorage>
+      immRoot1: ToImmutable<TStorage>,
+      immRoot2?: ToImmutable<TStorage>
     ) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
