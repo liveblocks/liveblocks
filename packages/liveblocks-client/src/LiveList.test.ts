@@ -608,33 +608,27 @@ describe("LiveList", () => {
     });
 
     it("set nested object", async () => {
-      const {
-        storage,
-
-        // XXX The goal is to replace these calls with the assertImmutable* equivalents
-        // This should be trivial, but the test starts failing once I do
-        assertJson,
-        assertJsonUndoRedo,
-      } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
-      }>(
-        [
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-        ],
-        1
-      );
+      const { storage, assertImmutable, assertImmutableUndoRedo } =
+        await prepareStorageTest<{
+          items: LiveList<LiveObject<{ a: number }>>;
+        }>(
+          [
+            createSerializedObject("0:0", {}),
+            createSerializedList("0:1", "0:0", "items"),
+            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+          ],
+          1
+        );
 
       const root = storage.root;
       const items = root.toObject().items;
 
-      assertJson({ items: [{ a: 1 }] });
+      assertImmutable({ items: [{ a: 1 }] });
 
       items.set(0, new LiveObject({ a: 2 }));
-      assertJson({ items: [{ a: 2 }] });
+      assertImmutable({ items: [{ a: 2 }] });
 
-      assertJsonUndoRedo();
+      assertImmutableUndoRedo();
     });
   });
 

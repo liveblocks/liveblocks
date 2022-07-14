@@ -177,7 +177,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         // Replace the existing item with the newly created item without sorting the list
         this._items[indexOfItemWithSamePosition] = child;
-        this.invalidate();
 
         return {
           modified: makeUpdate(this, [
@@ -193,7 +192,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
         // Replace the existing item with the newly created item without sorting the list
         this._items[indexOfItemWithSamePosition] = child;
-        this.invalidate();
 
         const delta: LiveListUpdateDelta[] = [
           setDelta(indexOfItemWithSamePosition, child),
@@ -282,7 +280,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           this._items[indexOfItemWithSamePosition]
         );
         this._items.splice(indexOfItemWithSamePosition, 1);
-        this.invalidate();
         delta.push(deleteDelta(indexOfItemWithSamePosition));
       }
 
@@ -328,7 +325,6 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       } else {
         if (indexOfItemWithSamePosition !== -1) {
           this._items.splice(indexOfItemWithSamePosition, 1);
-          this.invalidate();
         }
 
         const { newItem, newIndex } = this._createAttachItemAndSort(
@@ -566,28 +562,31 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
+    let result: ApplyResult;
+
     if (op.intent === "set") {
       if (source === OpSource.REMOTE) {
-        return this._applySetRemote(op);
+        result = this._applySetRemote(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applySetAck(op);
+      } else {
+        result = this._applySetUndoRedo(op);
       }
-
-      if (source === OpSource.UNDOREDO_RECONNECT) {
-        return this._applySetUndoRedo(op);
-      }
-
-      if (source === OpSource.ACK) {
-        return this._applySetAck(op);
-      }
-    }
-
-    // Insert
-    if (source === OpSource.REMOTE) {
-      return this._applyRemoteInsert(op);
-    } else if (source === OpSource.ACK) {
-      return this._applyInsertAck(op);
     } else {
-      return this._applyInsertUndoRedo(op);
+      if (source === OpSource.REMOTE) {
+        result = this._applyRemoteInsert(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applyInsertAck(op);
+      } else {
+        result = this._applyInsertUndoRedo(op);
+      }
     }
+
+    if (result.modified !== false) {
+      this.invalidate();
+    }
+
+    return result;
   }
 
   /** @internal */
