@@ -447,6 +447,8 @@ export class LiveMap<
     for (const [key, value] of this._map) {
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
-    return Object.freeze(result);
+    return process.env.NODE_ENV === "production"
+      ? result
+      : Object.freeze(result);
   }
 }

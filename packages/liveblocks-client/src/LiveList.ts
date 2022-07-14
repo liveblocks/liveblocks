@@ -1250,7 +1250,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _toImmutable(): ImmutableList {
-    return Object.freeze(this._items.map((node) => node.toImmutable()));
+    const result = this._items.map((node) => node.toImmutable());
+    return process.env.NODE_ENV === "production"
+      ? result
+      : Object.freeze(result);
   }
 }
 

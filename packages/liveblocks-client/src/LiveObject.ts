@@ -620,6 +620,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     for (const [key, val] of this._map) {
       result[key] = isLiveStructure(val) ? val.toImmutable() : val;
     }
-    return Object.freeze(result) as unknown as ToImmutable<O>;
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as ToImmutable<O>;
   }
 }
