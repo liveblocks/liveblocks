@@ -66,20 +66,20 @@ describe("LiveList", () => {
 
   describe("deserialization", () => {
     it("create document with list in root", async () => {
-      const { assertImmutable } = await prepareIsolatedStorageTest<{
+      const { assert } = await prepareIsolatedStorageTest<{
         items: LiveList<never>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
       ]);
 
-      assertImmutable({
+      assert({
         items: [],
       });
     });
 
     it("init list with items", async () => {
-      const { assertImmutable } = await prepareIsolatedStorageTest<{
+      const { assert } = await prepareIsolatedStorageTest<{
         items: LiveList<LiveObject<{ a: number }>>;
       }>([
         createSerializedObject("0:0", {}),
@@ -89,7 +89,7 @@ describe("LiveList", () => {
         createSerializedObject("0:4", { a: 2 }, "0:1", THIRD_POSITION),
       ]);
 
-      assertImmutable({
+      assert({
         items: [{ a: 0 }, { a: 1 }, { a: 2 }],
       });
     });
@@ -120,78 +120,75 @@ describe("LiveList", () => {
     });
 
     it("push LiveObject on empty list", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.get("items");
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
       items.push(new LiveObject({ a: 0 }));
 
-      assertImmutable({
+      assert({
         items: [{ a: 0 }],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("push number on empty list", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<number>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<number>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.toObject().items;
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       items.push(0);
-      assertImmutable({ items: [0] });
+      assert({ items: [0] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("push LiveMap on empty list", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<LiveMap<string, number>>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveMap<string, number>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.get("items");
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       items.push(new LiveMap([["first", 0]]));
 
-      assertImmutable({ items: [new Map([["first", 0]])] });
+      assert({ items: [new Map([["first", 0]])] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("push already attached LiveObject should throw", async () => {
@@ -241,19 +238,18 @@ describe("LiveList", () => {
     });
 
     it("insert LiveObject at position 0", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+        ],
+        1
+      );
 
-      assertImmutable({
+      assert({
         items: [{ a: 1 }],
       });
 
@@ -262,9 +258,9 @@ describe("LiveList", () => {
 
       items.insert(new LiveObject({ a: 0 }), 0);
 
-      assertImmutable({ items: [{ a: 0 }, { a: 1 }] });
+      assert({ items: [{ a: 0 }, { a: 1 }] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
@@ -296,8 +292,8 @@ describe("LiveList", () => {
     it("delete first item", async () => {
       const {
         storage: doc,
-        assertImmutable,
-        assertImmutableUndoRedo,
+        assert,
+        assertUndoRedo,
       } = await prepareStorageTest<{ items: LiveList<string> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
@@ -308,48 +304,44 @@ describe("LiveList", () => {
       const root = doc.root;
       const items = root.toObject().items;
 
-      assertImmutable({
+      assert({
         items: ["A", "B"],
       });
 
       items.delete(0);
 
-      assertImmutable({
+      assert({
         items: ["B"],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("delete should remove descendants", async () => {
-      const {
-        storage,
-        assertImmutable,
-        assertImmutableUndoRedo,
-        getItemsCount,
-      } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
-      }>([
-        createSerializedObject("0:0", {}),
-        createSerializedList("0:1", "0:0", "items"),
-        createSerializedObject("0:2", {}, "0:1", "!"),
-        createSerializedObject("0:3", { a: 0 }, "0:2", "child"),
-      ]);
+      const { storage, assert, assertUndoRedo, getItemsCount } =
+        await prepareStorageTest<{
+          items: LiveList<LiveObject<{ child: LiveObject<{ a: number }> }>>;
+        }>([
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", {}, "0:1", "!"),
+          createSerializedObject("0:3", { a: 0 }, "0:2", "child"),
+        ]);
 
-      assertImmutable({
+      assert({
         items: [{ child: { a: 0 } }],
       });
 
       storage.root.toObject().items.delete(0);
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
       // Ensure that LiveStructure are deleted properly
       expect(getItemsCount()).toBe(2);
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
@@ -380,18 +372,17 @@ describe("LiveList", () => {
     });
 
     it("move after current position", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ]);
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+        createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+      ]);
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
@@ -399,53 +390,51 @@ describe("LiveList", () => {
       const items = root.toObject().items;
       items.move(0, 1);
 
-      assertImmutable({ items: ["B", "A", "C"] });
+      assert({ items: ["B", "A", "C"] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("move before current position", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
       const items = storage.root.get("items");
 
       items.move(0, 1);
-      assertImmutable({
+      assert({
         items: ["B", "A", "C"],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("move at the end of the list", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>([
-          createSerializedObject("0:0", {}),
-          createSerializedList("0:1", "0:0", "items"),
-          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-        ]);
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>([
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+        createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+        createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+      ]);
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
@@ -453,11 +442,11 @@ describe("LiveList", () => {
       const items = root.toObject().items;
       items.move(0, 2);
 
-      assertImmutable({
+      assert({
         items: ["B", "C", "A"],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
@@ -494,39 +483,38 @@ describe("LiveList", () => {
     });
 
     it("clear should delete all items", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.get("items");
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
       items.clear();
-      assertImmutable({
+      assert({
         items: [],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
   describe("batch", () => {
     it("batch multiple inserts", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo, batch } =
+      const { storage, assert, assertUndoRedo, batch } =
         await prepareStorageTest<{
           items: LiveList<string>;
         }>(
@@ -539,19 +527,19 @@ describe("LiveList", () => {
 
       const items = storage.root.get("items");
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       batch(() => {
         items.push("A");
         items.push("B");
       });
 
-      assertImmutable(
+      assert(
         { items: ["A", "B"] }
         // Updates are not tested here because undo/redo is not symetric
       );
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
@@ -573,62 +561,60 @@ describe("LiveList", () => {
     });
 
     it("set register", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
-            createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
+          createSerializedRegister("0:4", "0:1", THIRD_POSITION, "C"),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.toObject().items;
 
-      assertImmutable({ items: ["A", "B", "C"] });
+      assert({ items: ["A", "B", "C"] });
 
       items.set(0, "D");
-      assertImmutable({ items: ["D", "B", "C"] });
+      assert({ items: ["D", "B", "C"] });
 
       items.set(1, "E");
-      assertImmutable({ items: ["D", "E", "C"] });
+      assert({ items: ["D", "E", "C"] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("set nested object", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<LiveObject<{ a: number }>>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<LiveObject<{ a: number }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", { a: 1 }, "0:1", FIRST_POSITION),
+        ],
+        1
+      );
 
       const root = storage.root;
       const items = root.toObject().items;
 
-      assertImmutable({ items: [{ a: 1 }] });
+      assert({ items: [{ a: 1 }] });
 
       items.set(0, new LiveObject({ a: 2 }));
-      assertImmutable({ items: [{ a: 2 }] });
+      assert({ items: [{ a: 2 }] });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
   });
 
   describe("conflict", () => {
     it("list conflicts", async () => {
-      const { root, assertImmutable, applyRemoteOperations } =
+      const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -652,7 +638,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["1", "0"],
       });
 
@@ -665,13 +651,13 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["1", "0"],
       });
     });
 
     it("list conflicts 2", async () => {
-      const { root, applyRemoteOperations, assertImmutable } =
+      const { root, applyRemoteOperations, assert } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -696,7 +682,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["y0", "x0", "x1"],
       });
 
@@ -711,7 +697,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["y0", "x0", "y1", "x1"],
       });
 
@@ -723,7 +709,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["y0", "y1", "x0", "x1"],
       });
 
@@ -735,13 +721,13 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["y0", "y1", "x0", "x1"],
       });
     });
 
     it("list conflicts with offline", async () => {
-      const { root, assertImmutable, applyRemoteOperations, machine } =
+      const { root, assert, applyRemoteOperations, machine } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -762,7 +748,7 @@ describe("LiveList", () => {
       // Register id = 1:0
       items.push("0");
 
-      assertImmutable({
+      assert({
         items: ["0"],
       });
 
@@ -772,7 +758,7 @@ describe("LiveList", () => {
         createSerializedRegister("2:0", "0:1", FIRST_POSITION, "1"),
       ]);
 
-      assertImmutable({
+      assert({
         items: ["1", "0"],
       });
 
@@ -785,13 +771,13 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["1", "0"],
       });
     });
 
     it("list conflicts with undo redo and remote change", async () => {
-      const { root, assertImmutable, applyRemoteOperations, machine } =
+      const { root, assert, applyRemoteOperations, machine } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -811,13 +797,13 @@ describe("LiveList", () => {
 
       items.push("0");
 
-      assertImmutable({
+      assert({
         items: ["0"],
       });
 
       machine.undo();
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
@@ -833,13 +819,13 @@ describe("LiveList", () => {
 
       machine.redo();
 
-      assertImmutable({
+      assert({
         items: ["1", "0"],
       });
     });
 
     it("list conflicts - move", async () => {
-      const { root, assertImmutable, applyRemoteOperations } =
+      const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("0:0", {}),
@@ -857,13 +843,13 @@ describe("LiveList", () => {
       // Register id = 1:2
       items.push("C");
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
       items.move(0, 2);
 
-      assertImmutable({
+      assert({
         items: ["B", "C", "A"],
       });
 
@@ -875,7 +861,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["C", "B", "A"],
       });
 
@@ -887,13 +873,13 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["C", "B", "A"],
       });
     });
 
     it("list conflicts - ack has different position that local item", async () => {
-      const { root, assertImmutable, applyRemoteOperations } =
+      const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
@@ -906,7 +892,7 @@ describe("LiveList", () => {
 
       items.push("B");
 
-      assertImmutable({
+      assert({
         items: ["B"],
       });
 
@@ -932,7 +918,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["B"], // "B" is at SECOND_POSITION
       });
 
@@ -948,7 +934,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["B"], // "B" should at FIRST_POSITION
       });
 
@@ -964,13 +950,13 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["B", "C"],
       });
     });
 
     it("list conflicts - ack has different position that local and ack position is used", async () => {
-      const { root, assertImmutable, applyRemoteOperations } =
+      const { root, assert, applyRemoteOperations } =
         await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
           [
             createSerializedObject("root", {}),
@@ -983,7 +969,7 @@ describe("LiveList", () => {
 
       items.push("B");
 
-      assertImmutable({
+      assert({
         items: ["B"],
       });
 
@@ -1020,7 +1006,7 @@ describe("LiveList", () => {
         },
       ]);
 
-      assertImmutable({
+      assert({
         items: ["B", "C"], // C position is shifted
       });
     });
@@ -1028,17 +1014,16 @@ describe("LiveList", () => {
 
   describe("subscriptions", () => {
     test("batch multiple actions", async () => {
-      const { storage, subscribe, batch, assertImmutable } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       const callback = jest.fn();
 
@@ -1053,7 +1038,7 @@ describe("LiveList", () => {
         liveList.push("c");
       });
 
-      assertImmutable({ items: ["a", "b", "c"] });
+      assert({ items: ["a", "b", "c"] });
 
       expect(callback).toHaveBeenCalledTimes(1);
       expect(callback).toHaveBeenCalledWith([
@@ -1069,17 +1054,16 @@ describe("LiveList", () => {
     });
 
     test("batch multiple inserts", async () => {
-      const { storage, subscribe, batch, assertImmutable } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { storage, subscribe, batch, assert } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       const callback = jest.fn();
 
@@ -1094,7 +1078,7 @@ describe("LiveList", () => {
         liveList.insert("c", 2);
       });
 
-      assertImmutable({ items: ["a", "b", "c"] });
+      assert({ items: ["a", "b", "c"] });
 
       expect(callback).toHaveBeenCalledTimes(1);
     });
@@ -1102,17 +1086,16 @@ describe("LiveList", () => {
 
   describe("reconnect with remote changes and subscribe", () => {
     test("Register added to list", async () => {
-      const { assertImmutable, machine, root } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-          ],
-          1
-        );
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+        ],
+        1
+      );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1124,7 +1107,7 @@ describe("LiveList", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(listItems, listCallback);
 
-      assertImmutable({ items: ["a"] });
+      assert({ items: ["a"] });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -1158,13 +1141,13 @@ describe("LiveList", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assertImmutable({
+      assert({
         items: ["a", "b"],
       });
 
       listItems.push("c");
 
-      assertImmutable({
+      assert({
         items: ["a", "b", "c"],
       });
 
@@ -1190,18 +1173,17 @@ describe("LiveList", () => {
     });
 
     test("Register moved in list", async () => {
-      const { assertImmutable, machine, root } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          ],
-          1
-        );
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        ],
+        1
+      );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1213,7 +1195,7 @@ describe("LiveList", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(listItems, listCallback);
 
-      assertImmutable({ items: ["a", "b"] });
+      assert({ items: ["a", "b"] });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -1247,7 +1229,7 @@ describe("LiveList", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assertImmutable({
+      assert({
         items: ["b", "a"],
       });
 
@@ -1267,18 +1249,17 @@ describe("LiveList", () => {
     });
 
     test("Register deleted from list", async () => {
-      const { assertImmutable, machine, root } =
-        await prepareIsolatedStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-            createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
-            createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
-          ],
-          1
-        );
+      const { assert, machine, root } = await prepareIsolatedStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedRegister("0:2", "0:1", FIRST_POSITION, "a"),
+          createSerializedRegister("0:3", "0:1", SECOND_POSITION, "b"),
+        ],
+        1
+      );
 
       const rootCallback = jest.fn();
       const rootDeepCallback = jest.fn();
@@ -1290,7 +1271,7 @@ describe("LiveList", () => {
       machine.subscribe(root, rootDeepCallback, { isDeep: true });
       machine.subscribe(listItems, listCallback);
 
-      assertImmutable({ items: ["a", "b"] });
+      assert({ items: ["a", "b"] });
 
       machine.onClose(
         new CloseEvent("close", {
@@ -1315,7 +1296,7 @@ describe("LiveList", () => {
 
       reconnect(machine, 3, newInitStorage);
 
-      assertImmutable({
+      assert({
         items: ["a"],
       });
 
@@ -1375,7 +1356,7 @@ describe("LiveList", () => {
 
     describe("apply CreateRegister", () => {
       it('with intent "set" should replace existing item', async () => {
-        const { assertImmutable, applyRemoteOperations } =
+        const { assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedObject("root", {}),
@@ -1385,7 +1366,7 @@ describe("LiveList", () => {
             1
           );
 
-        assertImmutable({
+        assert({
           items: ["A"],
         });
 
@@ -1400,7 +1381,7 @@ describe("LiveList", () => {
           },
         ]);
 
-        assertImmutable({
+        assert({
           items: ["B"],
         });
       });
@@ -1443,7 +1424,7 @@ describe("LiveList", () => {
       });
 
       it('with intent "set" should insert item if conflict with a delete operation', async () => {
-        const { root, assertImmutable, applyRemoteOperations } =
+        const { root, assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedObject("root", {}),
@@ -1455,13 +1436,13 @@ describe("LiveList", () => {
 
         const items = root.get("items");
 
-        assertImmutable({
+        assert({
           items: ["A"],
         });
 
         items.delete(0);
 
-        assertImmutable({
+        assert({
           items: [],
         });
 
@@ -1476,7 +1457,7 @@ describe("LiveList", () => {
           },
         ]);
 
-        assertImmutable({
+        assert({
           items: ["B"],
         });
       });
@@ -1520,7 +1501,7 @@ describe("LiveList", () => {
       });
 
       it("on existing position should give the right update", async () => {
-        const { root, assertImmutable, applyRemoteOperations, subscribe } =
+        const { root, assert, applyRemoteOperations, subscribe } =
           await prepareIsolatedStorageTest<{ items: LiveList<string> }>(
             [
               createSerializedObject("0:0", {}),
@@ -1534,7 +1515,7 @@ describe("LiveList", () => {
         // Register id = 1:0
         items.push("0");
 
-        assertImmutable({
+        assert({
           items: ["0"],
         });
 
@@ -1552,7 +1533,7 @@ describe("LiveList", () => {
           },
         ]);
 
-        assertImmutable({
+        assert({
           items: ["1", "0"],
         });
 

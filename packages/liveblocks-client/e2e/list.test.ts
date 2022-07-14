@@ -12,17 +12,17 @@ describe.skip("LiveList conflicts", () => {
       prepareTestsConflicts(
         { list: new LiveList() },
 
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A"] }, { list: ["A", "B"] });
+          assert({ list: ["A"] }, { list: ["A", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["A", "B"] });
+          assert({ list: ["A", "B"] });
         }
       )
     );
@@ -33,19 +33,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("C");
           root2.get("list").move(0, 1);
 
-          assertImmutable({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+          assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
+          assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "C", "A"] });
+          assert({ list: ["B", "C", "A"] });
         }
       )
     );
@@ -58,21 +58,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").push("C");
           root2.get("list").move(0, 1);
           root2.get("list").move(1, 0);
           room2.history.undo();
 
-          assertImmutable({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
+          assert({ list: ["A", "B", "C"] }, { list: ["B", "A"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
+          assert({ list: ["A", "B", "C"] }, { list: ["B", "C", "A"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "C", "A"] });
+          assert({ list: ["B", "C", "A"] });
         }
       )
     );
@@ -85,20 +85,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
           root2.get("list").set(0, "C");
 
-          assertImmutable({ list: ["A"] }, { list: ["C"] });
+          assert({ list: ["A"] }, { list: ["C"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A"] }, { list: ["A", "C"] });
+          assert({ list: ["A"] }, { list: ["A", "C"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C"] });
+          assert({ list: ["C"] });
         }
       )
     );
@@ -111,19 +111,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").set(0, "C");
 
-          assertImmutable({ list: ["B"] }, { list: ["C"] });
+          assert({ list: ["B"] }, { list: ["C"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C"] });
+          assert({ list: ["C"] });
         }
       )
     );
@@ -134,21 +134,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").set(0, "C");
           root2.get("list").set(0, "D");
           room2.history.undo();
 
-          assertImmutable({ list: ["B"] }, { list: ["C"] });
+          assert({ list: ["B"] }, { list: ["C"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C"] });
+          assert({ list: ["C"] });
         }
       )
     );
@@ -159,20 +159,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").delete(0);
           root2.get("list").push("C");
 
-          assertImmutable({ list: ["B"] }, { list: ["C"] });
+          assert({ list: ["B"] }, { list: ["C"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "C"] });
+          assert({ list: ["B", "C"] });
         }
       )
     );
@@ -183,20 +183,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").delete(0);
           room2.history.undo();
 
-          assertImmutable({ list: ["B"] }, { list: ["A"] });
+          assert({ list: ["B"] }, { list: ["A"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "A"] });
+          assert({ list: ["B", "A"] });
         }
       )
     );
@@ -207,20 +207,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "D");
           root2.get("list").delete(0);
           root2.get("list").move(1, 0);
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
       )
     );
@@ -231,22 +231,22 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").set(0, "D");
           root2.get("list").delete(0);
           root2.get("list").move(1, 0);
           root2.get("list").move(0, 1);
           room2.history.undo();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["C", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["D", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
       )
     );
@@ -257,19 +257,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").delete(0);
 
-          assertImmutable({ list: ["B"] }, { list: [] });
+          assert({ list: ["B"] }, { list: [] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] });
+          assert({ list: ["B"] }, { list: ["B"] });
         }
       )
     );
@@ -280,20 +280,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
           root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
           root2.get("list").set(0, "D"); //  Client2 sets "A" to "D"
 
-          assertImmutable({ list: ["B", "C"] }, { list: ["D", "B"] });
+          assert({ list: ["B", "C"] }, { list: ["D", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "C"] }, { list: ["B", "C"] });
+          assert({ list: ["B", "C"] }, { list: ["B", "C"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
+          assert({ list: ["D", "B", "C"] }, { list: ["D", "B", "C"] });
         }
       )
     );
@@ -304,20 +304,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C");
           root2.get("list").set(0, "D");
           root2.get("list").move(0, 1);
 
-          assertImmutable({ list: ["C", "B"] }, { list: ["B", "D"] });
+          assert({ list: ["C", "B"] }, { list: ["B", "D"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["C", "B"] }, { list: ["C", "B", "D"] });
+          assert({ list: ["C", "B"] }, { list: ["C", "B", "D"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "D"] }, { list: ["B", "D"] });
+          assert({ list: ["B", "D"] }, { list: ["B", "D"] });
         }
       )
     );
@@ -332,19 +332,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 2);
           root2.get("list").move(1, 2);
 
-          assertImmutable({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
+          assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
+          assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C", "A", "B"] });
+          assert({ list: ["C", "A", "B"] });
         }
       )
     );
@@ -355,21 +355,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B", "C"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").move(0, 2);
           root2.get("list").move(1, 2);
           root2.get("list").move(2, 1);
           room2.history.undo();
 
-          assertImmutable({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
+          assert({ list: ["B", "C", "A"] }, { list: ["A", "C", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
+          assert({ list: ["B", "C", "A"] }, { list: ["C", "A", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C", "A", "B"] });
+          assert({ list: ["C", "A", "B"] });
         }
       )
     );
@@ -380,20 +380,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 1);
           root2.get("list").push("C");
           root2.get("list").set(2, "D");
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
+          assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
+          assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "D"] });
+          assert({ list: ["B", "D"] });
         }
       )
     );
@@ -404,22 +404,22 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").move(0, 1);
           root2.get("list").push("C");
           root2.get("list").set(2, "D");
           root2.get("list").set(2, "E");
           room2.history.undo();
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
+          assert({ list: ["B", "A"] }, { list: ["A", "B", "D"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
+          assert({ list: ["B", "A"] }, { list: ["B", "A", "D"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "D"] });
+          assert({ list: ["B", "D"] });
         }
       )
     );
@@ -430,19 +430,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 1);
           root2.get("list").delete(0);
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["B"] });
+          assert({ list: ["B", "A"] }, { list: ["B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["B"] });
+          assert({ list: ["B", "A"] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B"] });
+          assert({ list: ["B"] });
         }
       )
     );
@@ -453,19 +453,19 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 1);
           root2.get("list").push("C");
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["A", "B", "C"] });
+          assert({ list: ["B", "A"] }, { list: ["A", "B", "C"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "A"] }, { list: ["B", "A", "C"] });
+          assert({ list: ["B", "A"] }, { list: ["B", "A", "C"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B", "A", "C"] });
+          assert({ list: ["B", "A", "C"] });
         }
       )
     );
@@ -478,22 +478,22 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root1.get("list").set(0, "B");
 
           root2.get("list").push("C");
           root2.get("list").set(0, "D");
 
-          assertImmutable({ list: ["B"] }, { list: ["D"] });
+          assert({ list: ["B"] }, { list: ["D"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B", "D"] });
+          assert({ list: ["B"] }, { list: ["B", "D"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D"] });
+          assert({ list: ["D"] });
         }
       )
     );
@@ -506,20 +506,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "B");
           root2.get("list").insert("C", 0);
           root2.get("list").set(0, "D");
 
-          assertImmutable({ list: ["B"] }, { list: ["D", "A"] });
+          assert({ list: ["B"] }, { list: ["D", "A"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["D", "B"] });
+          assert({ list: ["B"] }, { list: ["D", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "B"] });
+          assert({ list: ["D", "B"] });
         }
       )
     );
@@ -530,20 +530,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").delete(1);
           root1.get("list").push("C");
           root2.get("list").set(1, "D");
 
-          assertImmutable({ list: ["A", "C"] }, { list: ["A", "D"] });
+          assert({ list: ["A", "C"] }, { list: ["A", "D"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A", "C"] }, { list: ["A", "C", "D"] });
+          assert({ list: ["A", "C"] }, { list: ["A", "C", "D"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["A", "D"] });
+          assert({ list: ["A", "D"] });
         }
       )
     );
@@ -556,21 +556,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C"); //  Client1 sets "A" to "C"
           root1.get("list").move(0, 1); //  Client1 moves "C" after "B"
           root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
           root2.get("list").move(0, 1); //  Client2 moves "B" after "A"
 
-          assertImmutable({ list: ["B", "C"] }, { list: ["A", "B"] });
+          assert({ list: ["B", "C"] }, { list: ["A", "B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "C"] }, { list: ["C", "B"] }); // A(0.3), B(0.4) => C(0.1),B(0.4) => C(0.3),B(0.4)
+          assert({ list: ["B", "C"] }, { list: ["C", "B"] }); // A(0.3), B(0.4) => C(0.1),B(0.4) => C(0.3),B(0.4)
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C", "B"] });
+          assert({ list: ["C", "B"] });
         }
       )
     );
@@ -581,18 +581,18 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").delete(0);
           root1.get("list").insert("B", 0);
           root2.get("list").set(0, "C");
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B", "C"] });
+          assert({ list: ["B"] }, { list: ["B", "C"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C"] });
+          assert({ list: ["C"] });
         }
       )
     );
@@ -603,7 +603,7 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C");
           root2.get("list").delete(0);
           root2.get("list").insert("B", 0);
@@ -612,7 +612,7 @@ describe.skip("LiveList conflicts", () => {
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C", "B"] });
+          assert({ list: ["C", "B"] });
         }
       )
     );
@@ -623,7 +623,7 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").move(0, 1); //  Client1 moves "A" after "B"
           root1.get("list").move(0, 1); //  Client1 moves "B" after "A"
           root2.get("list").move(0, 1); //  Client2 moves "A" after "B"
@@ -631,11 +631,11 @@ describe.skip("LiveList conflicts", () => {
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A", "B"] }, { list: ["C", "A"] });
+          assert({ list: ["A", "B"] }, { list: ["C", "A"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["C", "A"] });
+          assert({ list: ["C", "A"] });
         }
       )
     );
@@ -646,7 +646,7 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C");
           root1.get("list").move(0, 1);
           root2.get("list").move(0, 1);
@@ -654,11 +654,11 @@ describe.skip("LiveList conflicts", () => {
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B", "C"] }, { list: ["D", "C"] });
+          assert({ list: ["B", "C"] }, { list: ["D", "C"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "C"] });
+          assert({ list: ["D", "C"] });
         }
       )
     );
@@ -671,20 +671,20 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").insert("A", 0);
           root1.get("list").delete(0);
           root2.get("list").insert("B", 0);
 
-          assertImmutable({ list: [] }, { list: ["B"] });
+          assert({ list: [] }, { list: ["B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: [] }, { list: ["B"] });
+          assert({ list: [] }, { list: ["B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B"] });
+          assert({ list: ["B"] });
         }
       )
     );
@@ -695,21 +695,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>(["A", "B"]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").set(0, "C");
           root1.get("list").delete(0);
           root2.get("list").move(0, 1);
           root2.get("list").insert("D", 0);
 
-          assertImmutable({ list: ["B"] }, { list: ["D", "B", "A"] });
+          assert({ list: ["B"] }, { list: ["D", "B", "A"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["B"] }, { list: ["B"] }); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
+          assert({ list: ["B"] }, { list: ["B"] }); // D(0.1), B(0.2), A(0.3) => D,B =>  C(0.1), D(0.15), B(0.2) => D(0.15), B(0.2)
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["D", "B"] });
+          assert({ list: ["D", "B"] });
         }
       )
     );
@@ -720,21 +720,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList<string>([]),
         },
-        async ({ root1, root2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root1.get("list").delete(0);
 
           root2.get("list").push("B");
 
-          assertImmutable({ list: [] }, { list: ["B"] });
+          assert({ list: [] }, { list: ["B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: [] }, { list: ["B"] }); // B(0.2)
+          assert({ list: [] }, { list: ["B"] }); // B(0.2)
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["B"] });
+          assert({ list: ["B"] });
         }
       )
     );
@@ -745,21 +745,21 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(),
         },
-        async ({ root1, root2, room2, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
           root2.get("list").delete(0);
           room2.history.undo();
 
-          assertImmutable({ list: ["A"] }, { list: ["B"] });
+          assert({ list: ["A"] }, { list: ["B"] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A"] }, { list: ["A", "B"] });
+          assert({ list: ["A"] }, { list: ["A", "B"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: ["A", "B"] });
+          assert({ list: ["A", "B"] });
         }
       )
     );
@@ -770,27 +770,27 @@ describe.skip("LiveList conflicts", () => {
         {
           list: new LiveList(),
         },
-        async ({ root1, root2, room1, wsUtils, assertImmutable }) => {
+        async ({ root1, root2, room1, wsUtils, assert }) => {
           root1.get("list").push("A");
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A"] }, { list: ["A"] });
+          assert({ list: ["A"] }, { list: ["A"] });
 
           room1.history.undo();
           room1.history.redo();
 
           root2.get("list").delete(0);
 
-          assertImmutable({ list: ["A"] }, { list: [] });
+          assert({ list: ["A"] }, { list: [] });
 
           await wsUtils.flushSocket1Messages();
 
-          assertImmutable({ list: ["A"] }, { list: ["A"] });
+          assert({ list: ["A"] }, { list: ["A"] });
 
           await wsUtils.flushSocket2Messages();
 
-          assertImmutable({ list: [] });
+          assert({ list: [] });
         }
       )
     );

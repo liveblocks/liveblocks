@@ -101,7 +101,7 @@ describe("Storage", () => {
     });
 
     test("batch actions on a single LiveObject", async () => {
-      const { storage, assertImmutableUndoRedo, subscribe, batch } =
+      const { storage, assertUndoRedo, subscribe, batch } =
         await prepareStorageTest<{ a: number; b: number }>(
           [createSerializedObject("0:0", { a: 0, b: 0 })],
           1
@@ -134,7 +134,7 @@ describe("Storage", () => {
         },
       ]);
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     test("batch actions on multiple LiveObjects", async () => {
@@ -232,16 +232,15 @@ describe("Storage", () => {
 
   describe("batching", () => {
     it("batching and undo", async () => {
-      const { storage, assertImmutable, undo, redo, batch } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, undo, redo, batch } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
 
@@ -251,19 +250,19 @@ describe("Storage", () => {
         items.push("C");
       });
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
 
       undo();
 
-      assertImmutable({
+      assert({
         items: [],
       });
 
       redo();
 
-      assertImmutable({
+      assert({
         items: ["A", "B", "C"],
       });
     });
@@ -308,42 +307,41 @@ describe("Storage", () => {
 
   describe("undo / redo", () => {
     it("list.push", async () => {
-      const { storage, assertImmutable, assertImmutableUndoRedo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       items.push("A");
-      assertImmutable({
+      assert({
         items: ["A"],
       });
 
       items.push("B");
-      assertImmutable({
+      assert({
         items: ["A", "B"],
       });
 
-      assertImmutableUndoRedo();
+      assertUndoRedo();
     });
 
     it("max undo-redo stack", async () => {
-      const { storage, assertImmutable, undo } = await prepareStorageTest<{
+      const { storage, assert, undo } = await prepareStorageTest<{
         a: number;
       }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       for (let i = 0; i < 100; i++) {
         storage.root.set("a", i + 1);
-        assertImmutable({
+        assert({
           a: i + 1,
         });
       }
@@ -352,42 +350,41 @@ describe("Storage", () => {
         undo();
       }
 
-      assertImmutable({
+      assert({
         a: 50,
       });
     });
 
     it("storage operation should clear redo stack", async () => {
-      const { storage, assertImmutable, undo, redo } =
-        await prepareStorageTest<{
-          items: LiveList<string>;
-        }>(
-          [
-            createSerializedObject("0:0", {}),
-            createSerializedList("0:1", "0:0", "items"),
-          ],
-          1
-        );
+      const { storage, assert, undo, redo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
 
       const items = storage.root.get("items");
 
-      assertImmutable({ items: [] });
+      assert({ items: [] });
 
       items.insert("A", 0);
-      assertImmutable({
+      assert({
         items: ["A"],
       });
 
       undo();
 
       items.insert("B", 0);
-      assertImmutable({
+      assert({
         items: ["B"],
       });
 
       redo();
 
-      assertImmutable({
+      assert({
         items: ["B"],
       });
     });

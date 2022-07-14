@@ -112,7 +112,7 @@ export function prepareTestsConflicts<
      * rooms' storages are expected to be equal. It also ensures that immutable
      * states updated with the updates generated from conflicts are equal.
      */
-    assertImmutable: (
+    assert: (
       jsonRoot1: ToImmutable<TStorage>,
       jsonRoot2?: ToImmutable<TStorage>
     ) => void;
@@ -184,7 +184,7 @@ export function prepareTestsConflicts<
       { isDeep: true }
     );
 
-    function assertImmutable(
+    function assert(
       immRoot1: ToImmutable<TStorage>,
       immRoot2?: ToImmutable<TStorage>
     ) {
@@ -205,7 +205,7 @@ export function prepareTestsConflicts<
         root1,
         root2,
         wsUtils,
-        assertImmutable,
+        assert,
       });
       client1.leave(roomName);
       client2.leave(roomName);

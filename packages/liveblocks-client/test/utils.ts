@@ -234,7 +234,7 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assertImmutable: (data: ToImmutable<TStorage>) =>
+    assert: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
@@ -312,12 +312,12 @@ export async function prepareStorageTest<
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assertImmutable(data: ToImmutable<TStorage>) {
+  function assert(data: ToImmutable<TStorage>) {
     states.push(data);
     assertState(data);
   }
 
-  function assertImmutableUndoRedo() {
+  function assertUndoRedo() {
     for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
       assertState(states[states.length - 2 - i]);
@@ -361,8 +361,8 @@ export async function prepareStorageTest<
     operations,
     storage,
     refStorage,
-    assertImmutable,
-    assertImmutableUndoRedo,
+    assert,
+    assertUndoRedo,
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,
     getItemsCount: machine.getItemsCount,
