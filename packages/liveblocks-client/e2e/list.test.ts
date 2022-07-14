@@ -10,8 +10,9 @@ describe.skip("LiveList conflicts", () => {
     test(
       "remote insert conflicts with another insert",
       prepareTestsConflicts(
-        { list: new LiveList() },
-
+        {
+          list: new LiveList(),
+        },
         async ({ root1, root2, wsUtils, assert }) => {
           root1.get("list").push("A");
           root2.get("list").push("B");
