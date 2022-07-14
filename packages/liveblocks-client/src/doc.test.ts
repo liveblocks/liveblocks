@@ -335,10 +335,9 @@ describe("Storage", () => {
     });
 
     it("max undo-redo stack", async () => {
-      const { storage, assert, undo } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
-        1
-      );
+      const { storage, assert, undo } = await prepareStorageTest<{
+        a: number;
+      }>([createSerializedObject("0:0", { a: 0 })], 1);
 
       for (let i = 0; i < 100; i++) {
         storage.root.set("a", i + 1);

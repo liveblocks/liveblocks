@@ -13,6 +13,7 @@ import type {
   SerializedMap,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -100,6 +101,7 @@ export class LiveMap<
       const child = deserialize([id, crdt], parentToChildren, doc);
       child._setParentLink(map, crdt.parentKey);
       map._map.set(crdt.parentKey, child);
+      map.invalidate();
     }
 
     return map;
@@ -167,6 +169,7 @@ export class LiveMap<
     child._setParentLink(this, key);
     child._attach(id, this._doc);
     this._map.set(key, child);
+    this.invalidate();
 
     return {
       modified: {
@@ -200,6 +203,7 @@ export class LiveMap<
     for (const [key, value] of this._map) {
       if (value === child) {
         this._map.delete(key);
+        this.invalidate();
       }
     }
 
@@ -260,6 +264,7 @@ export class LiveMap<
     item._setParentLink(this, key);
 
     this._map.set(key, item);
+    this.invalidate();
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -315,6 +320,7 @@ export class LiveMap<
 
     item._detach();
     this._map.delete(key);
+    this.invalidate();
 
     if (this._doc && item._id) {
       const thisId = nn(this._id);
@@ -426,5 +432,23 @@ export class LiveMap<
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }
+  }
+
+  toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
+    // Don't implement actual toImmutable logic in here. Implement it in
+    // ._toImmutable() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toImmutable() as ReadonlyMap<TKey, ToImmutable<TValue>>;
+  }
+
+  /** @internal */
+  _toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
+    const result: Map<TKey, ToImmutable<TValue>> = new Map();
+    for (const [key, value] of this._map) {
+      result.set(key, value.toImmutable() as ToImmutable<TValue>);
+    }
+    return process.env.NODE_ENV === "production"
+      ? result
+      : Object.freeze(result);
   }
 }

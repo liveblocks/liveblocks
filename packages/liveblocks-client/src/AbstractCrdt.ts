@@ -7,6 +7,7 @@ import type {
   StorageUpdate,
 } from "./types";
 import { OpCode } from "./types";
+import type { Immutable } from "./types/Immutable";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
@@ -265,6 +266,7 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
+
   /** @internal */
   abstract _serialize(
     parentId: string,
@@ -274,4 +276,43 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   abstract _toSerializedCrdt(): SerializedCrdt;
+
+  /**
+   * @internal
+   *
+   * This caches the result of the last .toImmutable() call for any Live node.
+   */
+  private _cachedImmutable?: Immutable;
+
+  /**
+   * @internal
+   *
+   * Clear the Immutable cache, so that the next call to `.toImmutable()` will
+   * recompute the equivalent Immutable value again.  Call this after every
+   * mutation to the Live node.
+   */
+  invalidate(): void {
+    if (this._cachedImmutable !== undefined) {
+      this._cachedImmutable = undefined;
+
+      if (this.parent.type === "HasParent") {
+        this.parent.node.invalidate();
+      }
+    }
+  }
+
+  /** @internal */
+  abstract _toImmutable(): Immutable;
+
+  /**
+   * Return a JSON representation for this Live node and its children.
+   */
+  toImmutable(): Immutable {
+    if (this._cachedImmutable === undefined) {
+      this._cachedImmutable = this._toImmutable();
+    }
+
+    // Return cached version
+    return this._cachedImmutable;
+  }
 }

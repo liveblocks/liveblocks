@@ -7,18 +7,13 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import {
-  liveObjectToJson,
-  lsonToJson,
-  patchImmutableObject,
-} from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type {
   BaseUserMeta,
   Json,
   JsonObject,
   LsonObject,
-  ToJson,
+  ToImmutable,
 } from "../src/types";
 
 async function initializeRoomForTest<
@@ -112,11 +107,15 @@ export function prepareTestsConflicts<
     room1: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
     /**
-     * Assert that room1 and room2 storage are equals to the provided value (serialized to json)
-     * If second parameter is ommited, we're assuming that both rooms' storage are equals
-     * It also ensure that immutable states updated with the updates generated from conflicts are equals
+     * Assert that room1 and room2 storage are equal to the provided immutable
+     * value. If the second parameter is omitted, we're assuming that both
+     * rooms' storages are expected to be equal. It also ensures that immutable
+     * states updated with the updates generated from conflicts are equal.
      */
-    assert: (jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) => void;
+    assert: (
+      immRoot1: ToImmutable<TStorage>,
+      immRoot2?: ToImmutable<TStorage>
+    ) => void;
     wsUtils: {
       flushSocket1Messages: () => Promise<void>;
       flushSocket2Messages: () => Promise<void>;
@@ -145,17 +144,6 @@ export function prepareTestsConflicts<
     const { root: root1 } = await room1.getStorage();
     const { root: root2 } = await room2.getStorage();
 
-    function assert(jsonRoot1: ToJson<TStorage>, jsonRoot2?: ToJson<TStorage>) {
-      if (jsonRoot2 == null) {
-        jsonRoot2 = jsonRoot1;
-      }
-
-      expect(lsonToJson(root1)).toEqual(jsonRoot1);
-      expect(immutableStorage1).toEqual(jsonRoot1);
-      expect(lsonToJson(root2)).toEqual(jsonRoot2);
-      expect(immutableStorage2).toEqual(jsonRoot2);
-    }
-
     const wsUtils = {
       flushSocket1Messages: async () => {
         ws1.resumeSend();
@@ -178,25 +166,37 @@ export function prepareTestsConflicts<
     ws1.pauseSend();
     ws2.pauseSend();
 
-    let immutableStorage1 = liveObjectToJson(root1);
-    let immutableStorage2 = liveObjectToJson(root2);
+    let immutableStorage1 = root1.toImmutable();
+    let immutableStorage2 = root2.toImmutable();
 
     room1.subscribe(
       root1,
-      (updates) => {
-        immutableStorage1 = patchImmutableObject(immutableStorage1, updates);
-      },
-      {
-        isDeep: true,
-      }
-    );
-    room2.subscribe(
-      root2,
-      (updates) => {
-        immutableStorage2 = patchImmutableObject(immutableStorage2, updates);
+      () => {
+        immutableStorage1 = root1.toImmutable();
       },
       { isDeep: true }
     );
+    room2.subscribe(
+      root2,
+      () => {
+        immutableStorage2 = root2.toImmutable();
+      },
+      { isDeep: true }
+    );
+
+    function assert(
+      immRoot1: ToImmutable<TStorage>,
+      immRoot2?: ToImmutable<TStorage>
+    ) {
+      if (immRoot2 == null) {
+        immRoot2 = immRoot1;
+      }
+
+      expect(root1.toImmutable()).toEqual(immRoot1);
+      expect(immutableStorage1).toEqual(immRoot1);
+      expect(root2.toImmutable()).toEqual(immRoot2);
+      expect(immutableStorage2).toEqual(immRoot2);
+    }
 
     try {
       await callback({
@@ -230,10 +230,6 @@ export function prepareSingleClientTest<
   callback: (args: {
     root: LiveObject<TStorage>;
     room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-    /**
-     * Assert that room storage is equal to the provided json
-     */
-    // assert: (jsonRoot: ToJson<TStorage>) => void;
     flushSocketMessages: () => Promise<void>;
   }) => Promise<void>
 ): () => Promise<void> {

@@ -1,6 +1,5 @@
-import type { Json } from "../src";
+import type { Immutable } from "../src";
 import { LiveMap } from "../src";
-import { lsonToJson } from "../src/immutable";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe("LiveMap single client", () => {
@@ -14,15 +13,18 @@ describe("LiveMap single client", () => {
         root1.get("map").set("key", "A");
         root2.get("map").set("key", "B");
 
-        assert({ map: { key: "A" } }, { map: { key: "B" } });
+        assert(
+          { map: new Map([["key", "A"]]) },
+          { map: new Map([["key", "B"]]) }
+        );
 
         await wsUtils.flushSocket1Messages();
 
-        assert({ map: { key: "A" } });
+        assert({ map: new Map([["key", "A"]]) });
 
         await wsUtils.flushSocket2Messages();
 
-        assert({ map: { key: "B" } });
+        assert({ map: new Map([["key", "B"]]) });
       }
     )
   );
@@ -39,15 +41,15 @@ describe("LiveMap single client", () => {
         root1.get("map").delete("key");
         root2.get("map").set("key", "B");
 
-        assert({ map: {} }, { map: { key: "B" } });
+        assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
 
         await wsUtils.flushSocket1Messages();
 
-        assert({ map: {} }, { map: { key: "B" } });
+        assert({ map: new Map() }, { map: new Map([["key", "B"]]) });
 
         await wsUtils.flushSocket2Messages();
 
-        assert({ map: { key: "B" } });
+        assert({ map: new Map([["key", "B"]]) });
       }
     )
   );
@@ -61,8 +63,8 @@ describe("LiveMap single client", () => {
         map: new LiveMap<string, string>(),
       },
       async ({ root, flushSocketMessages, room }) => {
-        const states: Json[] = [];
-        room.subscribe(root, () => states.push(lsonToJson(root)), {
+        const states: Immutable[] = [];
+        room.subscribe(root, () => states.push(root.toImmutable()), {
           isDeep: true,
         });
 
@@ -71,7 +73,10 @@ describe("LiveMap single client", () => {
 
         await flushSocketMessages();
 
-        expect(states).toEqual([{ map: { key: "A" } }, { map: { key: "B" } }]);
+        expect(states).toEqual([
+          { map: new Map([["key", "A"]]) },
+          { map: new Map([["key", "B"]]) },
+        ]);
       }
     )
   );

@@ -22,6 +22,7 @@ import type {
   UpdateObjectOp,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLson,
   deserializeToLson,
@@ -131,6 +132,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         child._setParentLink(liveObj, crdt.parentKey);
       }
       liveObj._map.set(crdt.parentKey, child);
+      liveObj.invalidate();
     }
 
     return liveObj;
@@ -197,6 +199,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     this._map.set(key, child);
+    this.invalidate();
 
     if (isLiveStructure(child)) {
       child._setParentLink(this, key);
@@ -223,6 +226,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       for (const [key, value] of this._map) {
         if (value === child) {
           this._map.delete(key);
+          this.invalidate();
         }
       }
 
@@ -349,6 +353,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       isModified = true;
       updateDelta[key] = { type: "update" };
       this._map.set(key, value);
+      this.invalidate();
     }
 
     if (Object.keys(reverseUpdate.data).length !== 0) {
@@ -400,6 +405,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     this._map.delete(key);
+    this.invalidate();
     return {
       modified: {
         node: this,
@@ -452,6 +458,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         oldValue._detach();
       }
       this._map.delete(keyAsString);
+      this.invalidate();
       return;
     }
 
@@ -471,6 +478,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     }
 
     this._map.delete(keyAsString);
+    this.invalidate();
 
     const storageUpdates = new Map<string, LiveObjectUpdates<O>>();
     storageUpdates.set(this._id, {
@@ -517,6 +525,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
         }
 
         this._map.set(key, newValue);
+        this.invalidate();
       }
 
       return;
@@ -572,6 +581,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       }
 
       this._map.set(key, newValue);
+      this.invalidate();
       updateDelta[key] = { type: "update" };
     }
 
@@ -595,5 +605,23 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       updates: updateDelta,
     });
     this._doc.dispatch(ops, reverseOps, storageUpdates);
+  }
+
+  toImmutable(): ToImmutable<O> {
+    // Don't implement actual toImmutable logic in here. Implement it in
+    // ._toImmutable() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toImmutable() as ToImmutable<O>;
+  }
+
+  /** @internal */
+  _toImmutable(): ToImmutable<O> {
+    const result: { [key: string]: unknown } = {};
+    for (const [key, val] of this._map) {
+      result[key] = isLiveStructure(val) ? val.toImmutable() : val;
+    }
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as ToImmutable<O>;
   }
 }

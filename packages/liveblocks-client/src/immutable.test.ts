@@ -11,8 +11,8 @@ import {
 } from "../test/utils";
 import { LiveList, LiveMap } from ".";
 import {
+  legacy_patchImmutableObject,
   lsonToJson,
-  patchImmutableObject,
   patchLiveObject,
   patchLiveObjectKey,
 } from "./immutable";
@@ -30,7 +30,7 @@ import type {
 } from "./types";
 import { ClientMsgCode, ServerMsgCode } from "./types";
 
-async function prepareStorageImmutableTest<
+export async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
@@ -726,7 +726,7 @@ describe("2 ways tests with two clients", () => {
   });
 });
 
-describe("patchImmutableObject", () => {
+describe("legacy_patchImmutableObject", () => {
   test("update one sub object", () => {
     const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
 
@@ -742,7 +742,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.subB === state.subB).toBeFalsy();
     expect(newState.subA === state.subA).toBeTruthy();
@@ -779,7 +779,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.subB === state.subB).toBeTruthy();
     expect(newState.subA === state.subA).toBeFalsy();
@@ -830,7 +830,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.subB === state.subB).toBeFalsy();
     expect(newState.subA === state.subA).toBeFalsy();
@@ -861,7 +861,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.map.el1 === state.map.el1).toBeTruthy();
 
@@ -889,7 +889,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.map.el1 === state.map.el1).toBeTruthy();
 
@@ -921,7 +921,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[0]).toBeTruthy();
     expect(newState.list[1] === state.list[1]).toBeTruthy();
@@ -953,7 +953,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[0]).toBeFalsy();
     expect(newState.list[1] === state.list[1]).toBeFalsy();
@@ -990,7 +990,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[2] === state.list[0]).toBeTruthy();
 
@@ -1026,7 +1026,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[0]).toBeTruthy();
 
@@ -1056,7 +1056,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[0]).toBeTruthy();
     expect(newState.list[2] === state.list[1]).toBeTruthy();
@@ -1084,7 +1084,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[0]).toBeTruthy();
 
@@ -1113,7 +1113,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[1]).toBeTruthy();
 
@@ -1147,7 +1147,7 @@ describe("patchImmutableObject", () => {
       },
     ];
 
-    const newState = patchImmutableObject(state, updates);
+    const newState = legacy_patchImmutableObject(state, updates);
 
     expect(newState.list[0] === state.list[2]).toBeTruthy();
 
@@ -1182,7 +1182,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[1] === state.list[0]).toBeTruthy();
       expect(newState.list[2] === state.list[1]).toBeTruthy();
@@ -1218,7 +1218,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[0] === state.list[1]).toBeTruthy();
       expect(newState.list[1] === state.list[2]).toBeTruthy();
@@ -1254,7 +1254,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[0] === state.list[0]).toBeTruthy();
       expect(newState.list[1] === state.list[2]).toBeTruthy();
@@ -1290,7 +1290,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[0] === state.list[0]).toBeTruthy();
       expect(newState.list[1] === state.list[2]).toBeTruthy();
@@ -1331,7 +1331,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[0] === state.list[1]).toBeTruthy();
       expect(newState.list[2] === state.list[3]).toBeTruthy();
@@ -1371,7 +1371,7 @@ describe("patchImmutableObject", () => {
         },
       ];
 
-      const newState = patchImmutableObject(state, updates);
+      const newState = legacy_patchImmutableObject(state, updates);
 
       expect(newState.list[2] === state.list[0]).toBeTruthy();
       expect(newState.list[3] === state.list[3]).toBeTruthy();
