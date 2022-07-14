@@ -627,6 +627,22 @@ export type Room<
      * lifetime of a Room.
      */
     storageHasLoaded: EventSource<void>;
+
+    //
+    // TODO: Refactor the complex subscribe() API to use EventSources.
+    //
+    // Put other public event types here!
+    //
+    // For example:
+    //
+    //   room.subscribe('others', ...)
+    //   room.subscribe('my-presence', ...)
+    //
+    // Could eventually use:
+    //
+    //   room.events.others.subscribe(...)
+    //   room.events.me.subscribe(...)
+    //
   };
 
   /**
