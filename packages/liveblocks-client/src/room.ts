@@ -68,7 +68,6 @@ import {
   isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-  remove,
   tryParseJson,
 } from "./utils";
 
@@ -130,6 +129,19 @@ export type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
+    // TODO: Rename to roomEvents, or customEvents, or userEvents?
+    userEvents: EventSource<{
+      connectionId: number;
+      event: TRoomEvent;
+    }>;
+    others: EventSource<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    me: EventSource<TPresence>;
+    error: EventSource<Error>;
+    connection: EventSource<ConnectionState>;
+    storage: EventSource<StorageUpdate[]>;
     storageHasLoaded: EventSource<void>;
   };
 
@@ -222,14 +234,6 @@ export type State<
   intervalHandles: {
     heartbeat: number;
   };
-  listeners: {
-    event: EventCallback<TRoomEvent>[];
-    others: OthersEventCallback<TPresence, TUserMeta>[];
-    "my-presence": MyPresenceCallback<TPresence>[];
-    error: ErrorCallback[];
-    connection: ConnectionCallback[];
-    storage: StorageCallback[];
-  };
   me: TPresence;
   others: Others<TPresence, TUserMeta>;
   users: {
@@ -303,6 +307,49 @@ export function makeStateMachine<
   context: Context,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const [userEventEventSource, emitUserEvent] = makeEventSource<{
+    connectionId: number;
+    event: TRoomEvent;
+  }>();
+  const [othersEventSource, emitOthers] = makeEventSource<{
+    others: Others<TPresence, TUserMeta>;
+    event: OthersEvent<TPresence, TUserMeta>;
+  }>();
+  const [meEventSource, emitMe] = makeEventSource<TPresence>();
+  const [errorEventSource, emitError] = makeEventSource<Error>();
+  const [connectionEventSource, emitConnection] =
+    makeEventSource<ConnectionState>();
+  const [storageUpdateEventSource, emitStorageUpdate] =
+    makeEventSource<StorageUpdate[]>();
+  const [storageHasLoaded, emitStorageHasLoaded] = makeEventSource<void>();
+
+  const events = {
+    userEvents: userEventEventSource,
+    others: othersEventSource,
+    me: meEventSource,
+    error: errorEventSource,
+    connection: connectionEventSource,
+    storage: storageUpdateEventSource,
+    storageHasLoaded,
+  };
+
+  // TODO: Rename to roomEvents, or customEvents, or userEvents?
+  // userEvents: EventSource<{
+  //   connectionId: number;
+  //   event: TRoomEvent;
+  // }>;
+  // others: EventSource<{
+  //   others: Others<TPresence, TUserMeta>;
+  //   event: OthersEvent<TPresence, TUserMeta>;
+  // }>;
+  // me: EventSource<TPresence>;
+  // error: EventSource<Error>;
+  // connection: EventSource<ConnectionState>;
+  // storage: EventSource<StorageUpdate[]>;
+  // storageHasLoaded: EventSource<void>;
+  //   storageHasLoaded: machine.events,
+  //   storageHasLoaded: machine.events.storageHasLoaded,
+
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -355,16 +402,11 @@ export function makeStateMachine<
     },
   };
 
-  function genericSubscribe(callback: StorageCallback) {
-    state.listeners.storage.push(callback);
-    return () => remove(state.listeners.storage, callback);
-  }
-
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return genericSubscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -378,7 +420,7 @@ export function makeStateMachine<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return genericSubscribe((updates) => {
+    return events.storage.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -532,21 +574,17 @@ export function makeStateMachine<
       state.others = makeOthers(state.users);
 
       for (const event of otherEvents) {
-        for (const listener of state.listeners.others) {
-          listener(state.others, event);
-        }
+        emitOthers({ others: state.others, event });
       }
     }
 
     if (presence) {
-      for (const listener of state.listeners["my-presence"]) {
-        listener(state.me);
-      }
+      emitMe(state.me);
     }
 
     if (storageUpdates.size > 0) {
       const updates = Array.from(storageUpdates.values());
-      state.listeners.storage.forEach((subscriber) => subscriber(updates));
+      emitStorageUpdate(updates);
     }
   }
 
@@ -728,7 +766,7 @@ export function makeStateMachine<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return genericSubscribe(storageCallback);
+        return events.storage.subscribe(storageCallback);
       } else {
         throw new Error("Please specify a listener callback");
       }
@@ -953,9 +991,7 @@ export function makeStateMachine<
   }
 
   function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
-    for (const listener of state.listeners.event) {
-      listener({ connectionId: message.actor, event: message.event });
-    }
+    emitUserEvent({ connectionId: message.actor, event: message.event });
   }
 
   function onUserJoinedMessage(
@@ -1102,9 +1138,7 @@ export function makeStateMachine<
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
-      for (const listener of state.listeners.error) {
-        listener(error);
-      }
+      emitError(error);
 
       const delay = getRetryDelay(true);
       state.numberOfRetry++;
@@ -1135,9 +1169,7 @@ export function makeStateMachine<
 
   function updateConnection(connection: Connection) {
     state.connection = connection;
-    for (const listener of state.listeners.connection) {
-      listener(connection.state);
-    }
+    emitConnection(connection.state);
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1406,8 +1438,6 @@ export function makeStateMachine<
     }
   }
 
-  const [storageHasLoaded, emitStorageHasLoaded] = makeEventSource<void>();
-
   function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
@@ -1571,9 +1601,7 @@ export function makeStateMachine<
 
     getStorage,
     getStorageSnapshot,
-    events: {
-      storageHasLoaded,
-    },
+    events,
 
     selectors: {
       // Core
@@ -1601,14 +1629,6 @@ export function defaultState<
     token: null,
     lastConnectionId: null,
     socket: null,
-    listeners: {
-      event: [],
-      others: [],
-      "my-presence": [],
-      error: [],
-      connection: [],
-      storage: [],
-    },
     numberOfRetry: 0,
     lastFlushTime: 0,
     timeoutHandles: {
@@ -1712,9 +1732,7 @@ export function createRoom<
 
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
-    events: {
-      storageHasLoaded: machine.events.storageHasLoaded,
-    },
+    events: machine.events,
 
     batch: machine.batch,
     history: {

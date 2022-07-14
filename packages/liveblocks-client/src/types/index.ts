@@ -442,6 +442,52 @@ export type Room<
    */
   readonly id: string;
   getConnectionState(): ConnectionState;
+
+  events: {
+    /**
+     * Subscribe to the storage loaded event. Will fire at most once during the
+     * lifetime of a Room.
+     */
+    storageHasLoaded: EventSource<void>;
+
+    //
+    // TODO: Refactor the complex subscribe() API to use EventSources.
+    //
+    // Put other public event types here!
+    //
+    // For example:
+    //
+    //   room.subscribe('others', ...)
+    //   room.subscribe('my-presence', ...)
+    //
+    // Could eventually use:
+    //
+    //   room.events.others.subscribe(...)
+    //   room.events.me.subscribe(...)
+    //
+
+    // event: EventCallback<TRoomEvent>[];
+    // others: OthersEventCallback<TPresence, TUserMeta>[];
+    // "my-presence": MyPresenceCallback<TPresence>[];
+    // error: ErrorCallback[];
+    // connection: ConnectionCallback[];
+    // storage: StorageCallback[];
+
+    // TODO: Rename to roomEvents, or customEvents, or userEvents?
+    userEvents: EventSource<{
+      connectionId: number;
+      event: TRoomEvent;
+    }>;
+    others: EventSource<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    me: EventSource<TPresence>;
+    error: EventSource<Error>;
+    connection: EventSource<ConnectionState>;
+    storage: EventSource<StorageUpdate[]>;
+  };
+
   subscribe: {
     /**
      * Subscribe to the current user presence updates.
@@ -620,30 +666,6 @@ export type Room<
    * const root = room.getStorageSnapshot();
    */
   getStorageSnapshot(): LiveObject<TStorage> | null;
-
-  events: {
-    /**
-     * Subscribe to the storage loaded event. Will fire at most once during the
-     * lifetime of a Room.
-     */
-    storageHasLoaded: EventSource<void>;
-
-    //
-    // TODO: Refactor the complex subscribe() API to use EventSources.
-    //
-    // Put other public event types here!
-    //
-    // For example:
-    //
-    //   room.subscribe('others', ...)
-    //   room.subscribe('my-presence', ...)
-    //
-    // Could eventually use:
-    //
-    //   room.events.others.subscribe(...)
-    //   room.events.me.subscribe(...)
-    //
-  };
 
   /**
    * Batches modifications made during the given function.
