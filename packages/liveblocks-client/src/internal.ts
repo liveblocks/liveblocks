@@ -31,7 +31,7 @@ export {
   throwUsageError,
 } from "./deprecation";
 export {
-  // XXX Also remove lsonToJson helper?
+  legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";

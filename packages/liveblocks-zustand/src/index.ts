@@ -9,8 +9,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  legacy_patchImmutableObject,
   lsonToJson,
-  patchImmutableObject,
   patchLiveObjectKey,
 } from "@liveblocks/client/internal";
 import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
@@ -307,7 +307,7 @@ function patchState<T>(
     partialState[key] = state[key];
   }
 
-  const patched = patchImmutableObject(partialState, updates);
+  const patched = legacy_patchImmutableObject(partialState, updates);
 
   const result: Partial<T> = {};
 
