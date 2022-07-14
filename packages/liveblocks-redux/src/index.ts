@@ -8,8 +8,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  legacy_patchImmutableObject,
   lsonToJson,
-  patchImmutableObject,
   patchLiveObjectKey,
 } from "@liveblocks/client/internal";
 import type { StoreEnhancer } from "redux";
@@ -431,7 +431,7 @@ function patchState<T extends JsonObject>(
     partialState[key] = state[key];
   }
 
-  const patched = patchImmutableObject(partialState, updates);
+  const patched = legacy_patchImmutableObject(partialState, updates);
 
   const result: Partial<T> = {};
 
