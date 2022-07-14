@@ -303,7 +303,7 @@ export async function prepareStorageTest<
     }
   });
 
-  const immutableStates: ToImmutable<TStorage>[] = [];
+  const states: ToImmutable<TStorage>[] = [];
 
   function assertImmutableState(data: ToImmutable<TStorage>) {
     const imm = storage.root.toImmutable();
@@ -313,24 +313,24 @@ export async function prepareStorageTest<
   }
 
   function assertImmutable(data: ToImmutable<TStorage>) {
-    immutableStates.push(data);
+    states.push(data);
     assertImmutableState(data);
   }
 
   function assertImmutableUndoRedo() {
-    for (let i = 0; i < immutableStates.length - 1; i++) {
+    for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertImmutableState(immutableStates[immutableStates.length - 2 - i]);
+      assertImmutableState(states[states.length - 2 - i]);
     }
 
-    for (let i = 0; i < immutableStates.length - 1; i++) {
+    for (let i = 0; i < states.length - 1; i++) {
       machine.redo();
-      assertImmutableState(immutableStates[i + 1]);
+      assertImmutableState(states[i + 1]);
     }
 
-    for (let i = 0; i < immutableStates.length - 1; i++) {
+    for (let i = 0; i < states.length - 1; i++) {
       machine.undo();
-      assertImmutableState(immutableStates[immutableStates.length - 2 - i]);
+      assertImmutableState(states[states.length - 2 - i]);
     }
   }
 
