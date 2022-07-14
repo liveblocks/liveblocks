@@ -1414,7 +1414,7 @@ export function makeStateMachine<
     }
   }
 
-  const [onStorageLoaded, fireStorageHasLoadedEvent] = makeEventPair();
+  const [onStorageLoaded, fireStorageHasLoadedEvent] = makeEventPair<void>();
 
   function getStorage(): Promise<{
     root: LiveObject<TStorage>;

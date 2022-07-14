@@ -1,4 +1,4 @@
-type Callback = () => void;
+type Callback<T> = (event: T) => void;
 type UnsubscribeCallback = () => void;
 
 /**
@@ -18,19 +18,19 @@ type UnsubscribeCallback = () => void;
  *   fireEvent2();  // Now qux will get called
  *
  */
-export function makeEventPair(): [
-  (callback: Callback) => UnsubscribeCallback,
-  () => void
+export function makeEventPair<T>(): [
+  (callback: Callback<T>) => UnsubscribeCallback,
+  (event: T) => void
 ] {
-  const _observers = new Set<Callback>();
+  const _observers = new Set<Callback<T>>();
 
-  function subscribe(callback: Callback): UnsubscribeCallback {
+  function subscribe(callback: Callback<T>): UnsubscribeCallback {
     _observers.add(callback);
     return () => _observers.delete(callback);
   }
 
-  function notify() {
-    _observers.forEach((callback) => callback());
+  function notify(event: T) {
+    _observers.forEach((callback) => callback(event));
   }
 
   return [subscribe, notify];
