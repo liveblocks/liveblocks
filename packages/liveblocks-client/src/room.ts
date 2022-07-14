@@ -3,7 +3,8 @@ import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import { makeEventPair } from "./EventQueue";
+import type { EventSource } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import type {
   Authentication,
@@ -124,11 +125,13 @@ export type Machine<
   pauseHistory(): void;
   resumeHistory(): void;
 
-  getStorageSnapshot(): LiveObject<TStorage> | null;
-  onStorageLoaded(callback: () => void): () => void;
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
+  getStorageSnapshot(): LiveObject<TStorage> | null;
+  events: {
+    storageHasLoaded: EventSource<void>;
+  };
 
   selectors: {
     // Core
@@ -1059,7 +1062,7 @@ export function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
-          fireStorageHasLoadedEvent();
+          emitStorageHasLoaded();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1403,7 +1406,7 @@ export function makeStateMachine<
     }
   }
 
-  const [onStorageLoaded, fireStorageHasLoadedEvent] = makeEventPair<void>();
+  const [storageHasLoaded, emitStorageHasLoaded] = makeEventSource<void>();
 
   function getStorage(): Promise<{
     root: LiveObject<TStorage>;
@@ -1568,7 +1571,9 @@ export function makeStateMachine<
 
     getStorage,
     getStorageSnapshot,
-    onStorageLoaded,
+    events: {
+      storageHasLoaded,
+    },
 
     selectors: {
       // Core
@@ -1707,7 +1712,10 @@ export function createRoom<
 
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
-    onStorageLoaded: machine.onStorageLoaded,
+    events: {
+      storageHasLoaded: machine.events.storageHasLoaded,
+    },
+
     batch: machine.batch,
     history: {
       undo: machine.undo,
