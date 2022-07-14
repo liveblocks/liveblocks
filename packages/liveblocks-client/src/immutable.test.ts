@@ -8,10 +8,14 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../test/utils";
-import type { LiveList } from ".";
-import { patchLiveObject, patchLiveObjectKey } from "./immutable";
+import { LiveList, LiveMap } from ".";
+import {
+  legacy_patchImmutableObject,
+  patchLiveObject,
+  patchLiveObjectKey,
+} from "./immutable";
 import { LiveObject } from "./LiveObject";
-import type { JsonObject } from "./types";
+import type { JsonObject, StorageUpdate } from "./types";
 
 function applyStateChanges<T extends JsonObject>(
   state: T,
@@ -617,5 +621,662 @@ describe("2 ways tests with two clients", () => {
 
   describe("Map/LiveMap", () => {
     // TODO
+  });
+});
+
+describe("legacy_patchImmutableObject", () => {
+  test("update one sub object", () => {
+    const state = { subA: { subsubA: { a: 1 } }, subB: { b: 1 } };
+
+    const root = new LiveObject();
+    root.set("subA", new LiveObject({ subsubA: new LiveObject({ a: 1 }) }));
+    root.set("subB", new LiveObject({ b: 2 }));
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveObject",
+        node: root,
+        updates: { subB: { type: "update" } },
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.subB === state.subB).toBeFalsy();
+    expect(newState.subA === state.subA).toBeTruthy();
+    expect(newState).toEqual({ subA: { subsubA: { a: 1 } }, subB: { b: 2 } });
+  });
+
+  test("update one sub object of sub object", () => {
+    const state = {
+      subA: { subsubA: { a: 1 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    };
+
+    const root = new LiveObject<{
+      subA: LiveObject<{
+        subsubA: LiveObject<{ a: number }>;
+        subsubB: LiveObject<{ b: number }>;
+      }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
+    root.set(
+      "subA",
+      new LiveObject({
+        subsubA: new LiveObject({ a: 2 }),
+        subsubB: new LiveObject({ b: 1 }),
+      })
+    );
+    root.set("subB", new LiveObject({ b: 1 }));
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubA: { type: "update" } },
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.subB === state.subB).toBeTruthy();
+    expect(newState.subA === state.subA).toBeFalsy();
+    expect(newState.subA.subsubB === state.subA.subsubB).toBeTruthy();
+    expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
+    expect(newState).toEqual({
+      subA: { subsubA: { a: 2 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    });
+  });
+
+  test("multiple updates", () => {
+    const state = {
+      subA: { subsubA: { a: 1 }, subsubB: { b: 1 } },
+      subB: { b: 1 },
+    };
+
+    const root = new LiveObject<{
+      subA: LiveObject<{
+        subsubA: LiveObject<{ a: number }>;
+        subsubB?: LiveObject<{ b: number }>;
+      }>;
+      subB: LiveObject<{ b: number }>;
+    }>();
+    root.set(
+      "subA",
+      new LiveObject({
+        subsubA: new LiveObject({ a: 2 }),
+      })
+    );
+    root.set("subB", new LiveObject({ b: 2 }));
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubA: { type: "update" } },
+      },
+      {
+        type: "LiveObject",
+        node: root.get("subA"),
+        updates: { subsubB: { type: "delete" } },
+      },
+      {
+        type: "LiveObject",
+        node: root.get("subB"),
+        updates: { b: { type: "update" } },
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.subB === state.subB).toBeFalsy();
+    expect(newState.subA === state.subA).toBeFalsy();
+    expect(newState.subA.subsubA === state.subA.subsubA).toBeFalsy();
+    expect(newState).toEqual({
+      subA: { subsubA: { a: 2 } },
+      subB: { b: 2 },
+    });
+  });
+
+  test("add element to Map/LiveMap", () => {
+    const state = {
+      map: { el1: { a: 1 } },
+    };
+
+    const root = new LiveObject<{ map: typeof liveMap }>();
+    const liveMap = new LiveMap<string, LiveObject<{ a: number }>>();
+    liveMap.set("el1", new LiveObject({ a: 1 }));
+    liveMap.set("el2", new LiveObject({ a: 2 }));
+
+    root.set("map", liveMap);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveMap",
+        node: root.get("map"),
+        updates: { el2: { type: "update" } },
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+
+    expect(newState).toEqual({
+      map: { el1: { a: 1 }, el2: { a: 2 } },
+    });
+  });
+
+  test("remove element from Map/LiveMap", () => {
+    const state = {
+      map: { el1: { a: 1 }, el2: { a: 2 } },
+    };
+
+    const root = new LiveObject<{ map: typeof liveMap }>();
+    const liveMap = new LiveMap();
+    liveMap.set("el1", new LiveObject({ a: 1 }));
+
+    root.set("map", liveMap);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveMap",
+        node: root.get("map"),
+        updates: { el2: { type: "delete" } },
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.map.el1 === state.map.el1).toBeTruthy();
+
+    expect(newState).toEqual({
+      map: { el1: { a: 1 } },
+    });
+  });
+
+  test("insert element at the end of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject<{
+      list: typeof liveList;
+    }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    const obj1 = new LiveObject({ a: 3 });
+    liveList.push(obj1);
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 2, item: obj1, type: "insert" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[1] === state.list[1]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 2 }, { a: 3 }],
+    });
+  });
+
+  test("insert element at the beginning of and Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }],
+    };
+
+    const root = new LiveObject<{
+      list: typeof liveList;
+    }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const newObj = new LiveObject({ a: 0 });
+    liveList.push(newObj);
+    liveList.push(new LiveObject({ a: 1 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 0, item: newObj, type: "insert" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeFalsy();
+    expect(newState.list[1] === state.list[1]).toBeFalsy();
+
+    expect(newState).toEqual({
+      list: [{ a: 0 }, { a: 1 }],
+    });
+  });
+
+  test("insert 2 elements at the beginning of and Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const newObj1 = new LiveObject({ a: 2 });
+    const newObj2 = new LiveObject({ a: 3 });
+
+    liveList.push(newObj2);
+    liveList.push(newObj1);
+
+    liveList.push(new LiveObject({ a: 1 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [
+          { index: 0, item: newObj1, type: "insert" },
+          { index: 0, item: newObj2, type: "insert" },
+        ],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[2] === state.list[0]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 3 }, { a: 2 }, { a: 1 }],
+    });
+  });
+
+  test("insert 2 elements at the end of and Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    const newObj1 = new LiveObject({ a: 2 });
+    const newObj2 = new LiveObject({ a: 3 });
+
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(newObj1);
+    liveList.push(newObj2);
+
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [
+          { index: 1, item: newObj1, type: "insert" },
+          { index: 2, item: newObj2, type: "insert" },
+        ],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 2 }, { a: 3 }],
+    });
+  });
+
+  test("insert element in the middle of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    const newObj = new LiveObject({ a: 15 });
+    liveList.push(newObj);
+    liveList.push(new LiveObject({ a: 2 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 1, item: newObj, type: "insert" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+    expect(newState.list[2] === state.list[1]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }, { a: 15 }, { a: 2 }],
+    });
+  });
+
+  test("delete element from the end of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 1, type: "delete" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[0]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 1 }],
+    });
+  });
+
+  test("delete element from the beginning of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    liveList.delete(0);
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [{ index: 0, type: "delete" }],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[1]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 2 }],
+    });
+  });
+
+  test("delete 2 elements from the beginning of Array/LiveList", () => {
+    const state = {
+      list: [{ a: 1 }, { a: 2 }, { a: 3 }],
+    };
+
+    const root = new LiveObject<{ list: typeof liveList }>();
+    const liveList = new LiveList<LiveObject<{ a: number }>>();
+    liveList.push(new LiveObject({ a: 1 }));
+    liveList.push(new LiveObject({ a: 2 }));
+    liveList.push(new LiveObject({ a: 3 }));
+    liveList.delete(0);
+    liveList.delete(0);
+    root.set("list", liveList);
+
+    const updates: StorageUpdate[] = [
+      {
+        type: "LiveList",
+        node: root.get("list"),
+        updates: [
+          { index: 0, type: "delete" },
+          { index: 0, type: "delete" },
+        ],
+      },
+    ];
+
+    const newState = legacy_patchImmutableObject(state, updates);
+
+    expect(newState.list[0] === state.list[2]).toBeTruthy();
+
+    expect(newState).toEqual({
+      list: [{ a: 3 }],
+    });
+  });
+
+  describe("move items in array/LiveList", () => {
+    test("move index 2 to 0", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const movedObj = new LiveObject({ i: "c" });
+      liveList.push(movedObj);
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "b" }));
+      liveList.push(new LiveObject({ i: "d" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 0, previousIndex: 2, item: movedObj, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[1] === state.list[0]).toBeTruthy();
+      expect(newState.list[2] === state.list[1]).toBeTruthy();
+      expect(newState.list[3] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "c" }, { i: "a" }, { i: "b" }, { i: "d" }],
+      });
+    });
+
+    test("move index 0 to 3", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      liveList.push(new LiveObject({ i: "b" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "d" }));
+      const movedObj = new LiveObject({ i: "a" });
+      liveList.push(movedObj);
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 3, previousIndex: 0, item: movedObj, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[1]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[2] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "b" }, { i: "c" }, { i: "d" }, { i: "a" }],
+      });
+    });
+
+    test("move index 1 to 3", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      liveList.push(new LiveObject({ i: "d" }));
+      const movedObj = new LiveObject({ i: "b" });
+      liveList.push(movedObj);
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 3, previousIndex: 1, item: movedObj, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[0]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[2] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "a" }, { i: "c" }, { i: "d" }, { i: "b" }],
+      });
+    });
+
+    test("move index 1 to 2", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      liveList.push(new LiveObject({ i: "a" }));
+      liveList.push(new LiveObject({ i: "c" }));
+      const movedObj = new LiveObject({ i: "b" });
+      liveList.push(movedObj);
+      liveList.push(new LiveObject({ i: "d" }));
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 2, previousIndex: 1, item: movedObj, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[0]).toBeTruthy();
+      expect(newState.list[1] === state.list[2]).toBeTruthy();
+      expect(newState.list[3] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "a" }, { i: "c" }, { i: "b" }, { i: "d" }],
+      });
+    });
+
+    test("2 moves different places", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const objA = new LiveObject({ i: "a" });
+      const objB = new LiveObject({ i: "b" });
+      const objC = new LiveObject({ i: "c" });
+      const objD = new LiveObject({ i: "d" });
+
+      liveList.push(objB);
+      liveList.push(objA);
+      liveList.push(objD);
+      liveList.push(objC);
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 1, previousIndex: 0, item: objA, type: "move" },
+            { index: 3, previousIndex: 2, item: objC, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[0] === state.list[1]).toBeTruthy();
+      expect(newState.list[2] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "b" }, { i: "a" }, { i: "d" }, { i: "c" }],
+      });
+    });
+
+    test("2 moves same place ([a b c d] => [b a c d] => [c b a d])", () => {
+      const state = {
+        list: [{ i: "a" }, { i: "b" }, { i: "c" }, { i: "d" }],
+      };
+
+      const root = new LiveObject<{ list: typeof liveList }>();
+      const liveList = new LiveList<LiveObject<{ i: string }>>();
+      const objA = new LiveObject({ i: "a" });
+      const objB = new LiveObject({ i: "b" });
+      const objC = new LiveObject({ i: "c" });
+      const objD = new LiveObject({ i: "d" });
+
+      liveList.push(objC);
+      liveList.push(objB);
+      liveList.push(objA);
+      liveList.push(objD);
+
+      root.set("list", liveList);
+
+      const updates: StorageUpdate[] = [
+        {
+          type: "LiveList",
+          node: root.get("list"),
+          updates: [
+            { index: 0, previousIndex: 1, item: objB, type: "move" },
+            { index: 0, previousIndex: 2, item: objC, type: "move" },
+          ],
+        },
+      ];
+
+      const newState = legacy_patchImmutableObject(state, updates);
+
+      expect(newState.list[2] === state.list[0]).toBeTruthy();
+      expect(newState.list[3] === state.list[3]).toBeTruthy();
+
+      expect(newState).toEqual({
+        list: [{ i: "c" }, { i: "b" }, { i: "a" }, { i: "d" }],
+      });
+    });
   });
 });
