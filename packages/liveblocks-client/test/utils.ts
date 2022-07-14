@@ -234,9 +234,6 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    // XXX The goal is to get rid of this
-    assertJson: (data: ToJson<TStorage>) =>
-      expect(lsonToJson(storage.root)).toEqual(data),
     assertImmutable: (data: ToImmutable<TStorage>) =>
       expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
@@ -306,15 +303,7 @@ export async function prepareStorageTest<
     }
   });
 
-  const jsonStates: ToJson<TStorage>[] = [];
   const immutableStates: ToImmutable<TStorage>[] = [];
-
-  function assertJsonState(data: ToJson<TStorage>) {
-    const json = lsonToJson(storage.root);
-    expect(json).toEqual(data);
-    expect(lsonToJson(refStorage.root)).toEqual(data);
-    expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
-  }
 
   function assertImmutableState(data: ToImmutable<TStorage>) {
     const imm = storage.root.toImmutable();
@@ -323,31 +312,9 @@ export async function prepareStorageTest<
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assertJson(data: ToJson<TStorage>) {
-    jsonStates.push(data);
-    assertJsonState(data);
-  }
-
   function assertImmutable(data: ToImmutable<TStorage>) {
     immutableStates.push(data);
     assertImmutableState(data);
-  }
-
-  function assertJsonUndoRedo() {
-    for (let i = 0; i < jsonStates.length - 1; i++) {
-      machine.undo();
-      assertJsonState(jsonStates[jsonStates.length - 2 - i]);
-    }
-
-    for (let i = 0; i < jsonStates.length - 1; i++) {
-      machine.redo();
-      assertJsonState(jsonStates[i + 1]);
-    }
-
-    for (let i = 0; i < jsonStates.length - 1; i++) {
-      machine.undo();
-      assertJsonState(jsonStates[jsonStates.length - 2 - i]);
-    }
   }
 
   function assertImmutableUndoRedo() {
@@ -394,9 +361,7 @@ export async function prepareStorageTest<
     operations,
     storage,
     refStorage,
-    assertJson,
     assertImmutable,
-    assertJsonUndoRedo,
     assertImmutableUndoRedo,
     updatePresence: machine.updatePresence,
     getUndoStack: machine.getUndoStack,

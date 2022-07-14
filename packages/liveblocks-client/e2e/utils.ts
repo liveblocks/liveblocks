@@ -7,7 +7,6 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import { liveObjectToJson, lsonToJson } from "../src/immutable";
 import type { LiveObject } from "../src/LiveObject";
 import type {
   BaseUserMeta,
@@ -15,7 +14,6 @@ import type {
   JsonObject,
   LsonObject,
   ToImmutable,
-  ToJson,
 } from "../src/types";
 
 async function initializeRoomForTest<
@@ -113,10 +111,6 @@ export function prepareTestsConflicts<
      * If second parameter is ommited, we're assuming that both rooms' storage are equals
      * It also ensure that immutable states updated with the updates generated from conflicts are equals
      */
-    assertJson: (
-      jsonRoot1: ToJson<TStorage>,
-      jsonRoot2?: ToJson<TStorage>
-    ) => void;
     assertImmutable: (
       jsonRoot1: ToImmutable<TStorage>,
       jsonRoot2?: ToImmutable<TStorage>
@@ -171,16 +165,12 @@ export function prepareTestsConflicts<
     ws1.pauseSend();
     ws2.pauseSend();
 
-    let jsonStorage1 = liveObjectToJson(root1);
-    let jsonStorage2 = liveObjectToJson(root2);
-
     let immutableStorage1 = root1.toImmutable();
     let immutableStorage2 = root2.toImmutable();
 
     room1.subscribe(
       root1,
       () => {
-        jsonStorage1 = liveObjectToJson(root1);
         immutableStorage1 = root1.toImmutable();
       },
       { isDeep: true }
@@ -188,25 +178,10 @@ export function prepareTestsConflicts<
     room2.subscribe(
       root2,
       () => {
-        jsonStorage2 = liveObjectToJson(root2);
         immutableStorage2 = root2.toImmutable();
       },
       { isDeep: true }
     );
-
-    function assertJson(
-      jsonRoot1: ToJson<TStorage>,
-      jsonRoot2?: ToJson<TStorage>
-    ) {
-      if (jsonRoot2 == null) {
-        jsonRoot2 = jsonRoot1;
-      }
-
-      expect(lsonToJson(root1)).toEqual(jsonRoot1);
-      expect(jsonStorage1).toEqual(jsonRoot1);
-      expect(lsonToJson(root2)).toEqual(jsonRoot2);
-      expect(jsonStorage2).toEqual(jsonRoot2);
-    }
 
     function assertImmutable(
       immRoot1: ToImmutable<TStorage>,
@@ -229,7 +204,6 @@ export function prepareTestsConflicts<
         root1,
         root2,
         wsUtils,
-        assertJson,
         assertImmutable,
       });
       client1.leave(roomName);
