@@ -458,10 +458,7 @@ export function createRoomContext<
 
     const room = useRoom();
 
-    const subscribe = React.useCallback(
-      (onStorageChange) => room.onStorageLoaded(onStorageChange),
-      [room]
-    );
+    const subscribe = room.events.storageHasLoaded.subscribe;
 
     const getSnapshot = React.useCallback(
       (): Snapshot => room.getStorageSnapshot(),

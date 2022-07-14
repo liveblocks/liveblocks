@@ -1,3 +1,4 @@
+import type { EventSource } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -674,13 +675,13 @@ export type Room<
    */
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
-  /**
-   * Subscribe a callback function to the storage loaded event. Will fire at
-   * most once during the lifetime of a Room.
-   *
-   * Returns an unsubscribe function.
-   */
-  onStorageLoaded(callback: () => void): () => void;
+  events: {
+    /**
+     * Subscribe to the storage loaded event. Will fire at most once during the
+     * lifetime of a Room.
+     */
+    storageHasLoaded: EventSource<void>;
+  };
 
   /**
    * Batches modifications made during the given function.
