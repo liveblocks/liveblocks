@@ -5,7 +5,7 @@ import {
   type BaseUserMeta,
   type User,
 } from "@liveblocks/client";
-import type { Presence, Storage, Column, Row } from "./liveblocks.config";
+import type { Presence, Storage, Column, Row } from "../liveblocks.config";
 import interpreter from "./interpreter";
 import tokenizer, {
   SyntaxKind,

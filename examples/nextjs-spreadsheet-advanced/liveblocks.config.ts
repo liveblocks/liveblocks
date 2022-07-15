@@ -43,7 +43,7 @@ export type Storage = {
   }>;
 };
 
-const {
+export const {
   RoomProvider,
   useOthers,
   useUpdateMyPresence,
@@ -53,14 +53,3 @@ const {
   useMap,
   useRoom,
 } = createRoomContext<Presence, Storage /*, UserMeta, RoomEvent */>(client);
-
-export {
-  RoomProvider,
-  useOthers,
-  useUpdateMyPresence,
-  useObject,
-  useSelf,
-  useList,
-  useMap,
-  useRoom,
-};
