@@ -21,7 +21,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
 
       // Uncomment below and refresh to see with avatar graphics
-      // picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
+      // picture: `/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   });
   return res.status(response.status).end(response.body);
