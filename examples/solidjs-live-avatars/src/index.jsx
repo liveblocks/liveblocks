@@ -12,7 +12,7 @@ overrideApiKeyAndRoomId();
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
     `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`,
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/solidjs-live-avatars#getting-started.`
   );
 }
 
@@ -33,7 +33,7 @@ const NAMES = [
 
 const initialPresence = {
   name: NAMES[Math.floor(Math.random() * NAMES.length)],
-  picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
+  picture: `/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
 };
 
 const room = client.enter(roomId, { initialPresence });
@@ -57,4 +57,3 @@ function overrideApiKeyAndRoomId() {
     roomId = `${roomId}-${roomIdSuffix}`;
   }
 }
-

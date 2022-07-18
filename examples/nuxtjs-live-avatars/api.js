@@ -26,7 +26,7 @@ app.post("/auth", (req, res) => {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `/avatars/${Math.floor(Math.random() * 10)}.png`,
+      picture: `/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   })
     .then((response) => {
