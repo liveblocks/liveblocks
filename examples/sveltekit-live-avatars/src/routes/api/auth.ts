@@ -34,7 +34,7 @@ export async function post({ request }) {
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   });
 
