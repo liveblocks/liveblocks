@@ -22,5 +22,5 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.ts`](./liveblocks.config.ts) by your **public** key
-- For iOS run `ios\pod install` and `npx react-native run-ios`
-- For Android run `npx react-native run-android`
+- For iOS, run `cd ios && pod install` then `npm run ios`
+- For Android, run `npm run android`
