@@ -24,7 +24,3 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.ts`](./liveblocks.config.ts) by your **public** key
 - For iOS run `ios\pod install` and `npx react-native run-ios`
 - For Android run `npx react-native run-android`
-
-### Guides
-
-Follow our [guides](https://liveblocks.io/docs/guides/react-native) to discover Liveblocks specifications for React Native.
