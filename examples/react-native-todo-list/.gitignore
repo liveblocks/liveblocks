@@ -1,7 +1,8 @@
-# OSX
 .DS_Store
-
-# Xcode
+node_modules
+.env
+.env.*
+!.env.example
 build/
 *.pbxuser
 !default.pbxuser
@@ -18,8 +19,6 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
-
-# Android/IntelliJ
 build/
 .idea
 .gradle
@@ -29,23 +28,10 @@ android/keystore.properties
 android/app/*/*.aab
 android/vendor
 android/.bundle
-
-# node.js
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# BUCK
 buck-out/
 \.buckd/
 *.keystore
 !debug.keystore
-
-# fastlane
 */fastlane/
-
-# Bundle artifact
 *.jsbundle
-
-# CocoaPods
 /ios/Pods/
