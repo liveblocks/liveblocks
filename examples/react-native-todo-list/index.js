@@ -1,7 +1,3 @@
-/**
- * @format
- */
-
 import React from "react";
 import { AppRegistry } from "react-native";
 import { RoomProvider } from "./liveblocks.config";
