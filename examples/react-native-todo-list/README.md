@@ -7,14 +7,14 @@
 # To-do List
 
 <p>
-   <img src="https://img.shields.io/badge/-react--native-blue?style=flat&logo=react&color=0bd&logoColor=fff" alt="React Native">
+   <img src="https://img.shields.io/badge/-react%20native-blue?style=flat&logo=react&color=0bd&logoColor=fff" alt="React Native">
 </p>
 
 This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io) and [React Native](https://reactnative.dev/).
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across native apps. Users will also be able to see who else is currently online and when a user is typing.
 
-![liveblocks-react-native-todo](https://user-images.githubusercontent.com/8995991/173797740-26c2135a-e57c-454a-b04d-9618d9a5a1fb.png)
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list-native.png" width="500" alt="To-do List" />
 
 ## Getting started
 
