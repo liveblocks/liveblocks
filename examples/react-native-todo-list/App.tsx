@@ -9,9 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-
 import { useOthers, useList, useUpdateMyPresence } from "./liveblocks.config";
-
 import Header from "./src/components/Header";
 import Todo from "./src/components/Todo";
 import TextInputWithButton from "./src/components/TextInputWithButton";
