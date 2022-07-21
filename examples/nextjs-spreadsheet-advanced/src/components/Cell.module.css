@@ -1,13 +1,33 @@
-.input {
-  padding: 7px 9px;
-  border: none;
-  outline-color: transparent;
-  outline-style: solid;
-  outline-offset: -2px;
-  outline-width: 2px;
-  box-sizing: border-box;
+.container {
+  --selection-width: 2px;
+
+  position: relative;
+  background: #fff;
+  border-radius: 4px;
 }
 
-.input:focus {
-  outline-color: blue;
+.container:after {
+  content: "";
+  display: block;
+  position: absolute;
+  border-radius: 2px;
+  inset: 0px;
+  box-shadow: 0 0 0 var(--selection-width) var(--selection-color);
+  pointer-events: none;
+  z-index: 50;
+}
+
+.container:focus-within:after {
+  box-shadow: 0 0 0 var(--selection-width) #0af;
+  z-index: 100;
+}
+
+.input {
+  position: absolute;
+  inset: 0px;
+  appearance: none;
+  padding: 7px 9px;
+  border: none;
+  outline: none;
+  background: transparent;
 }

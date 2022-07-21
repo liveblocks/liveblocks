@@ -1,4 +1,6 @@
-import { useState } from "react";
+import cx from "classnames";
+import { CSSProperties, useState } from "react";
+import { appendUnit } from "../utils";
 import styles from "./Cell.module.css";
 
 type Props = {
@@ -18,50 +20,56 @@ export function Cell({
   onChange,
   getExpression,
 }: Props) {
-  const [editingStr, setEditingString] = useState<string | null>(null);
+  const [editingString, setEditingString] = useState<string | null>(null);
 
-  const value = editingStr == null ? displayValue : editingStr;
+  const value = editingString == null ? displayValue : editingString;
   const isNumber = isNumeric(value);
 
   return (
-    <input
-      style={{
-        textAlign: isNumber && editingStr === null ? "right" : "left",
-        width: width + "px",
-        height: height + "px",
-        border: selectionColor ? "solid 2px " + selectionColor : undefined,
-      }}
-      readOnly={editingStr === null}
-      className={styles.input}
-      onChange={(e) => setEditingString(e.target.value)}
-      onBlur={(e) => {
-        if (editingStr !== null) {
+    <div
+      className={cx(styles.container)}
+      style={
+        {
+          "--selection-color": selectionColor,
+          textAlign: isNumber && editingString === null ? "right" : "left",
+          width: appendUnit(width),
+          height: appendUnit(height),
+        } as CSSProperties
+      }
+    >
+      <input
+        readOnly={editingString === null}
+        className={styles.input}
+        onChange={(e) => setEditingString(e.target.value)}
+        onBlur={(e) => {
+          if (editingString !== null) {
+            const target = e.target;
+            onChange(target.value);
+            setEditingString(null);
+          }
+        }}
+        onKeyDown={(e) => {
           const target = e.target;
-          onChange(target.value);
-          setEditingString(null);
-        }
-      }}
-      onKeyDown={(e) => {
-        const target = e.target;
 
-        switch (e.key) {
-          case "Enter": {
-            if (editingStr === null) {
-              target.focus();
-              target.select();
-              setEditingString(getExpression());
-            } else {
-              onChange(target.value);
-              setEditingString(null);
+          switch (e.key) {
+            case "Enter": {
+              if (editingString === null) {
+                target.focus();
+                target.select();
+                setEditingString(getExpression());
+              } else {
+                onChange(target.value);
+                setEditingString(null);
+              }
             }
           }
-        }
-      }}
-      onDoubleClick={() => {
-        setEditingString(getExpression());
-      }}
-      value={value}
-    />
+        }}
+        onDoubleClick={() => {
+          setEditingString(getExpression());
+        }}
+        value={value}
+      />
+    </div>
   );
 }
 

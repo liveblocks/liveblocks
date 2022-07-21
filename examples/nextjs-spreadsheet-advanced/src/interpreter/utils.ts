@@ -1,15 +1,23 @@
-import type { ExpressionResult } from '.';
+import type { ExpressionResult } from ".";
+
+export function convertNumberToLetter(index: number) {
+  return String.fromCharCode(index + 65);
+}
+
+export function convertLetterToNumber(letter: string) {
+  return letter.charCodeAt(0) - 65;
+}
 
 export function formatExpressionResult(expressionResult: ExpressionResult) {
-	if (expressionResult.type === 'string') {
-		return expressionResult.value;
-	} else if (expressionResult.type === 'number') {
-		return roundTo2Decimals(expressionResult.value);
-	} else {
-		return 'ERROR';
-	}
+  if (expressionResult.type === "string") {
+    return expressionResult.value;
+  } else if (expressionResult.type === "number") {
+    return roundTo2Decimals(expressionResult.value);
+  } else {
+    return "ERROR";
+  }
 }
 
 function roundTo2Decimals(value: number): string {
-	return (Math.round(value * 100) / 100).toString();
+  return (Math.round(value * 100) / 100).toString();
 }
