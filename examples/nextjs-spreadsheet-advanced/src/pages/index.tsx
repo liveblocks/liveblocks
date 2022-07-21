@@ -2,7 +2,19 @@ import cx from "classnames";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
-import { ComponentProps, CSSProperties, useMemo } from "react";
+import { ComponentProps, CSSProperties, useCallback, useMemo } from "react";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import {
+  restrictToParentElement,
+  restrictToHorizontalAxis,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
 import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
 import { Cell } from "../components/Cell";
 import { useSpreadsheet } from "../hooks";
@@ -15,6 +27,30 @@ const GRID_INITIAL_COLUMNS = 4;
 const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const ROW_INITIAL_HEIGHT = 30;
+
+interface SortableColumnsProps extends ComponentProps<"thead"> {
+  columns: Column[];
+  deleteColumn: (index: number) => void;
+  moveColumn: (from: number, to: number) => void;
+}
+
+interface SortableRowsProps extends ComponentProps<"tbody"> {
+  rows: Row[];
+  deleteRow: (index: number) => void;
+  moveRow: (from: number, to: number) => void;
+}
+
+interface SortableColumnProps extends ComponentProps<"th"> {
+  column: Column;
+  index: number;
+  onDelete: () => void;
+}
+
+interface SortableRowProps extends ComponentProps<"tr"> {
+  row: Row;
+  index: number;
+  onDelete: () => void;
+}
 
 function PlusIcon(props: ComponentProps<"svg">) {
   return (
@@ -73,6 +109,198 @@ function CrossIcon(props: ComponentProps<"svg">) {
   );
 }
 
+function SortableColumn({
+  column,
+  index,
+  onDelete,
+  style,
+  ...props
+}: SortableColumnProps) {
+  const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useSortable({
+      id: column.id,
+    });
+
+  return (
+    <th
+      key={column.id}
+      ref={setNodeRef}
+      scope="col"
+      className={styles.sheet_header_cell}
+      style={{
+        width: appendUnit(column.width),
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+        zIndex: isDragging ? 100 : undefined,
+      }}
+      {...props}
+    >
+      <button
+        className={styles.sheet_header_control}
+        ref={setActivatorNodeRef}
+        {...listeners}
+      >
+        <HandlerIcon />
+      </button>
+      <span className={styles.sheet_header_label}>
+        {convertNumberToLetter(index)}
+      </span>
+      <button className={styles.sheet_header_control} onClick={onDelete}>
+        <CrossIcon />
+      </button>
+    </th>
+  );
+}
+
+function SortableColumns({
+  columns,
+  deleteColumn,
+  moveColumn,
+  className,
+  style,
+  ...props
+}: SortableColumnsProps) {
+  const items = useMemo(() => columns.map((column) => column.id), [columns]);
+
+  const handleDragEnd = useCallback(
+    ({ active, over }: DragEndEvent) => {
+      if (!over) {
+        return;
+      }
+
+      moveColumn(
+        columns.findIndex((column) => column.id === active.id),
+        columns.findIndex((column) => column.id === over.id)
+      );
+    },
+    [columns]
+  );
+
+  return (
+    <DndContext
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext strategy={rectSortingStrategy} items={items}>
+        <thead
+          className={cx(className, styles.sheet_header_row)}
+          style={{
+            ...style,
+            height: appendUnit(ROW_INITIAL_HEIGHT),
+          }}
+          {...props}
+        >
+          <tr>
+            {columns.map((column, x) => (
+              <SortableColumn
+                key={x}
+                index={x}
+                column={column}
+                onDelete={() => deleteColumn(x)}
+              />
+            ))}
+          </tr>
+        </thead>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
+function SortableRow({
+  row,
+  index,
+  onDelete,
+  style,
+  ...props
+}: SortableRowProps) {
+  const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+    useSortable({
+      id: row.id,
+    });
+
+  return (
+    <tr
+      ref={setNodeRef}
+      style={{
+        ...style,
+        transform: transform
+          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+          : undefined,
+        zIndex: isDragging ? 100 : undefined,
+      }}
+      {...props}
+    >
+      <th
+        scope="row"
+        className={styles.sheet_header_cell}
+        style={{
+          width: appendUnit(COLUMN_HEADER_WIDTH),
+          height: appendUnit(row.height),
+        }}
+      >
+        <button
+          className={styles.sheet_header_control}
+          ref={setActivatorNodeRef}
+          {...listeners}
+        >
+          <HandlerIcon />
+        </button>
+        <span className={styles.sheet_header_label}>{index}</span>
+        <button className={styles.sheet_header_control} onClick={onDelete}>
+          <CrossIcon />
+        </button>
+      </th>
+    </tr>
+  );
+}
+
+function SortableRows({
+  rows,
+  deleteRow,
+  moveRow,
+  className,
+  ...props
+}: SortableRowsProps) {
+  const items = useMemo(() => rows.map((row) => row.id), [rows]);
+
+  const handleDragEnd = useCallback(
+    ({ active, over }: DragEndEvent) => {
+      if (!over) {
+        return;
+      }
+
+      moveRow(
+        rows.findIndex((row) => row.id === active.id),
+        rows.findIndex((row) => row.id === over.id)
+      );
+    },
+    [rows]
+  );
+
+  return (
+    <DndContext
+      collisionDetection={closestCenter}
+      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext strategy={verticalListSortingStrategy} items={items}>
+        <tbody className={cx(className, styles.sheet_header_column)} {...props}>
+          {rows.map((row, y) => (
+            <SortableRow
+              key={y}
+              index={y}
+              row={row}
+              onDelete={() => deleteRow(y)}
+            />
+          ))}
+        </tbody>
+      </SortableContext>
+    </DndContext>
+  );
+}
+
 function Example() {
   const spreadsheet = useSpreadsheet();
 
@@ -95,6 +323,7 @@ function Example() {
     deleteColumn,
     deleteRow,
     moveColumn,
+    moveRow,
     insertColumn,
     insertRow,
     getExpression,
@@ -115,64 +344,12 @@ function Example() {
       >
         <div className={styles.sheet_container}>
           <table className={styles.sheet}>
-            <thead className={styles.sheet_header_row}>
-              <tr
-                style={{
-                  height: appendUnit(ROW_INITIAL_HEIGHT),
-                }}
-              >
-                {columns.map((column, x) => (
-                  <th
-                    key={column.id}
-                    scope="col"
-                    className={styles.sheet_header_cell}
-                    style={{
-                      width: appendUnit(column.width),
-                    }}
-                  >
-                    <div className={styles.sheet_header_control}>
-                      <HandlerIcon />
-                    </div>
-                    <div className={styles.sheet_header_label}>
-                      {convertNumberToLetter(x)}
-                    </div>
-                    <button
-                      className={styles.sheet_header_control}
-                      onClick={() => deleteColumn(x)}
-                    >
-                      <CrossIcon />
-                    </button>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className={styles.sheet_header_column}>
-              {rows.map((row, y) => {
-                return (
-                  <tr key={y}>
-                    <th
-                      scope="row"
-                      className={styles.sheet_header_cell}
-                      style={{
-                        width: appendUnit(COLUMN_HEADER_WIDTH),
-                        height: appendUnit(row.height),
-                      }}
-                    >
-                      <div className={styles.sheet_header_control}>
-                        <HandlerIcon />
-                      </div>
-                      <div className={styles.sheet_header_label}>{y}</div>
-                      <button
-                        className={styles.sheet_header_control}
-                        onClick={() => deleteRow(y)}
-                      >
-                        <CrossIcon />
-                      </button>
-                    </th>
-                  </tr>
-                );
-              })}
-            </tbody>
+            <SortableColumns
+              columns={columns}
+              deleteColumn={deleteColumn}
+              moveColumn={moveColumn}
+            />
+            <SortableRows rows={rows} deleteRow={deleteRow} moveRow={moveRow} />
             <tbody className={styles.sheet_body}>
               {rows.map((row, y) => {
                 return (

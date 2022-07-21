@@ -117,6 +117,8 @@
 
 .sheet_header_row {
   grid-area: rows;
+  display: flex;
+  gap: 1px;
 }
 
 .sheet_header_row tr {
