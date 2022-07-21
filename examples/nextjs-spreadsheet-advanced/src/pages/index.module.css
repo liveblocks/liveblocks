@@ -1,10 +1,54 @@
+.component {
+  position: relative;
+}
+
+.component_button {
+  --size: 32px;
+  --margin: 16px;
+
+  all: unset;
+  position: absolute;
+  display: flex;
+  width: var(--size);
+  height: var(--size);
+  place-content: center;
+  place-items: center;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #6b7280;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s 1s ease-in-out;
+}
+
+.component:hover .component_button,
+.component_button:hover {
+  opacity: 1;
+  transition-delay: 0s;
+}
+
+.component_button_row {
+  bottom: calc(-1 * var(--size) - var(--margin));
+  left: calc(50% - var(--size) / 2);
+}
+
+.component_button_column {
+  right: calc(-1 * var(--size) - var(--margin));
+  top: calc(50% - var(--size) / 2);
+}
+
 .container {
+  --margin: 16px;
+
   position: relative;
   background: #f3f4f6;
   width: fit-content;
   display: flex;
   flex-direction: column;
   border-radius: 10px;
+  max-width: calc(100vw - 2 * var(--margin));
+  max-height: calc(100vh - 2 * var(--margin));
+  overflow: auto;
 }
 
 .header {
@@ -22,8 +66,8 @@
   grid-template-rows: var(--row-initial-height) 1fr;
   gap: 8px;
   grid-template-areas:
-    ".      row"
-    "column body";
+    ".       rows"
+    "columns body";
 }
 
 .sheet_header_column,
@@ -51,11 +95,12 @@
   place-content: center;
   font-size: 14px;
   font-weight: 600;
-  color: #4b5563;
+  /* color: #4b5563; */
+  color: #6b7280;
 }
 
 .sheet_header_row {
-  grid-area: row;
+  grid-area: rows;
 }
 
 .sheet_header_row tr {
@@ -75,7 +120,7 @@
   display: flex;
   flex-direction: column;
   gap: 1px;
-  grid-area: column;
+  grid-area: columns;
 }
 
 .sheet_body {

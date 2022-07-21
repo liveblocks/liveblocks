@@ -2,7 +2,7 @@ import cx from "classnames";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
-import { CSSProperties, useMemo } from "react";
+import { ComponentProps, CSSProperties, useMemo } from "react";
 import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
 import { Cell } from "../components/Cell";
 import { useSpreadsheet } from "../hooks";
@@ -15,6 +15,25 @@ const GRID_INITIAL_COLUMNS = 4;
 const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const ROW_INITIAL_HEIGHT = 30;
+
+function PlusIcon(props: ComponentProps<"svg">) {
+  return (
+    <svg
+      width="20"
+      height="20"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        fill-rule="evenodd"
+        clip-rule="evenodd"
+        d="M11 4a1 1 0 1 0-2 0v5H4a1 1 0 0 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2h-5V4Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
 
 function Example() {
   const spreadsheet = useSpreadsheet();
@@ -45,95 +64,113 @@ function Example() {
   } = spreadsheet;
 
   return (
-    <div
-      className={styles.container}
-      style={
-        {
-          "--column-header-width": COLUMN_HEADER_WIDTH,
-          "--column-initial-width": COLUMN_INITIAL_WIDTH,
-          "--row-initial-height": ROW_INITIAL_HEIGHT,
-        } as CSSProperties
-      }
-    >
-      <div className={styles.sheet_container}>
-        <table className={styles.sheet}>
-          <thead className={styles.sheet_header_row}>
-            <tr
-              style={{
-                height: appendUnit(ROW_INITIAL_HEIGHT),
-              }}
-            >
-              {columns.map((column, x) => (
-                <th
-                  key={column.id}
-                  scope="col"
-                  className={styles.sheet_header_cell}
-                  style={{
-                    width: appendUnit(column.width),
-                  }}
-                >
-                  <div className={styles.sheet_header_label}>
-                    {convertNumberToLetter(x)}
-                  </div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className={styles.sheet_header_column}>
-            {rows.map((row, y) => {
-              return (
-                <tr key={y}>
+    <div className={styles.component}>
+      <div
+        className={styles.container}
+        style={
+          {
+            "--column-header-width": COLUMN_HEADER_WIDTH,
+            "--column-initial-width": COLUMN_INITIAL_WIDTH,
+            "--row-initial-height": ROW_INITIAL_HEIGHT,
+          } as CSSProperties
+        }
+      >
+        <div className={styles.sheet_container}>
+          <table className={styles.sheet}>
+            <thead className={styles.sheet_header_row}>
+              <tr
+                style={{
+                  height: appendUnit(ROW_INITIAL_HEIGHT),
+                }}
+              >
+                {columns.map((column, x) => (
                   <th
-                    scope="row"
+                    key={column.id}
+                    scope="col"
                     className={styles.sheet_header_cell}
                     style={{
-                      width: appendUnit(COLUMN_HEADER_WIDTH),
-                      height: appendUnit(row.height),
+                      width: appendUnit(column.width),
                     }}
                   >
-                    <div className={styles.sheet_header_label}>{y}</div>
+                    <div className={styles.sheet_header_label}>
+                      {convertNumberToLetter(x)}
+                    </div>
                   </th>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tbody className={styles.sheet_body}>
-            {rows.map((row, y) => {
-              return (
-                <tr key={y}>
-                  {columns.map((column, x) => {
-                    return (
-                      <td
-                        key={x}
-                        className={styles.cell}
-                        style={{
-                          width: appendUnit(column.width),
-                          height: appendUnit(row.height),
-                        }}
-                        onClick={() =>
-                          selectCell({ columnId: column.id, rowId: row.id })
-                        }
-                      >
-                        <Cell
-                          key={column.id + row.id}
-                          onChange={(newValue) =>
-                            setCellValue(column.id, row.id, newValue)
+                ))}
+              </tr>
+            </thead>
+            <tbody className={styles.sheet_header_column}>
+              {rows.map((row, y) => {
+                return (
+                  <tr key={y}>
+                    <th
+                      scope="row"
+                      className={styles.sheet_header_cell}
+                      style={{
+                        width: appendUnit(COLUMN_HEADER_WIDTH),
+                        height: appendUnit(row.height),
+                      }}
+                    >
+                      <div className={styles.sheet_header_label}>{y}</div>
+                    </th>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tbody className={styles.sheet_body}>
+              {rows.map((row, y) => {
+                return (
+                  <tr key={y}>
+                    {columns.map((column, x) => {
+                      return (
+                        <td
+                          key={x}
+                          className={styles.cell}
+                          style={{
+                            width: appendUnit(column.width),
+                            height: appendUnit(row.height),
+                          }}
+                          onClick={() =>
+                            selectCell({ columnId: column.id, rowId: row.id })
                           }
-                          getExpression={() => getExpression(column.id, row.id)}
-                          displayValue={cells[column.id + row.id]}
-                          width={column.width}
-                          height={row.height}
-                          selectionColor={selectionMap[column.id + row.id]}
-                        />
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                        >
+                          <Cell
+                            key={column.id + row.id}
+                            onChange={(newValue) =>
+                              setCellValue(column.id, row.id, newValue)
+                            }
+                            getExpression={() =>
+                              getExpression(column.id, row.id)
+                            }
+                            displayValue={cells[column.id + row.id]}
+                            width={column.width}
+                            height={row.height}
+                            selectionColor={selectionMap[column.id + row.id]}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
+      <button
+        className={cx(styles.component_button, styles.component_button_row)}
+        aria-label="Add row"
+        onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+      >
+        <PlusIcon />
+      </button>
+      <button
+        className={cx(styles.component_button, styles.component_button_column)}
+        aria-label="Add column"
+        onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
+      >
+        <PlusIcon />
+      </button>
     </div>
   );
 }
