@@ -29,10 +29,6 @@ is_valid_version () {
     echo "$1" | grep -qEe "^[0-9]+[.][0-9]+[.][0-9]+(-[[:alnum:].]+)?$"
 }
 
-is_valid_otp_token () {
-    echo "$1" | grep -qEe "^[0-9]{6}$"
-}
-
 usage () {
     err "usage: publish.sh [-V <version>] [-t <tag>] [-h]"
     err
@@ -208,13 +204,19 @@ while ! is_valid_version "$VERSION"; do
 done
 
 bump_version_in_pkg () {
+    SKIP_PEERS=0
+    if [ "$1" = "--no-peers" ]; then
+        SKIP_PEERS=1
+        shift 1
+    fi
+
     PKGDIR="$1"
     VERSION="$2"
 
     jq ".version=\"$VERSION\"" package.json | sponge package.json
 
     # If this is one of the client packages, also bump the peer dependency
-    if [ "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
+    if [ "$SKIP_PEERS" -eq 0 -a "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
         jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
     fi
 
@@ -245,6 +247,33 @@ npm_pkg_exists () {
     test "$(npm view "$PKGNAME@$VERSION" version)" = "$VERSION"
 }
 
+# This global variable will store the pasted OTP token
+OTP=""
+OTP_TMPFILE="$(mktemp)"
+
+is_valid_otp_token () {
+    echo "$OTP" | grep -qEe "^[0-9]{6}$"
+}
+
+#
+# Does all the interactive prompting to get a legal OTP token, and writes it
+# into the OTP variable, so you can reuse it for multiple commands in a row.
+#
+collect_otp_token () {
+    OTP="$(cat "$OTP_TMPFILE")"
+    while ! is_valid_otp_token; do
+        if [ -n "$OTP" ]; then
+            err "Invalid OTP token: $OTP"
+            err "Please try again."
+            err ""
+        else
+            err "To enable writes to the NPM registry, you'll need a One-Time Password (OTP) token."
+        fi
+        read -p "OTP token? " OTP
+        echo "$OTP" > "$OTP_TMPFILE"
+    done
+}
+
 publish_to_npm () {
     PKGNAME="$1"
 
@@ -258,32 +287,23 @@ publish_to_npm () {
         return
     fi
 
-    echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
-    echo "For this, I'll need the One-Time Password (OTP) token."
-
-    OTP=""
-    while ! is_valid_otp_token "$OTP"; do
-        if [ -n "$OTP" ]; then
-            err "Invalid OTP token: $OTP"
-            err "Please try again."
-            err ""
-        fi
-        read -p "OTP token? " OTP
-    done
-
     if [ -f "./lib/package.json" ]; then
         cd "./lib"
     fi
 
-    npm publish --tag "${TAG:-latest}" --otp "$OTP"
+    echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
+    collect_otp_token
+    npm publish --tag private --otp "$OTP"
 }
 
 commit_to_git () {
+    msg="$1"
+    shift 1
     ( cd "$ROOT" && (
         git reset --quiet HEAD
         git add "$@"
         if git is-dirty -i; then
-            git commit -m "Bump to $VERSION"
+            git commit -m "$msg"
         fi
     ) )
 }
@@ -292,10 +312,10 @@ commit_to_git () {
 ( cd "$PRIMARY_PKG" && (
     pkgname="$(npm_pkgname "$PRIMARY_PKG")"
     echo "==> Building and publishing $PRIMARY_PKG"
-     bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
-     build_pkg
-     publish_to_npm "$pkgname"
-     commit_to_git "$PRIMARY_PKG"
+    bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
+    build_pkg
+    publish_to_npm "$pkgname"
+    commit_to_git "Bump to $VERSION" "$PRIMARY_PKG"
 ) )
 
 # Then, build and publish all the other packages
@@ -308,7 +328,34 @@ for pkgdir in ${SECONDARY_PKGS[@]}; do
         publish_to_npm "$pkgname"
     ) )
 done
-commit_to_git ${SECONDARY_PKGS[@]}
+commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
+
+# By now, all packages should be published under a "private" tag.
+# We'll verify that now, and if indeed correct, we'll "assign" the intended tag
+# instead. Afterwards, we'll remove the "private" tags again.
+echo ""
+echo "Assigning definitive NPM tags"
+for pkgdir in ${PACKAGE_DIRS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    while true; do
+        if npm dist-tag ls "$pkgname" | grep -qx "private: $VERSION"; then
+            echo "==> $pkgname"
+            collect_otp_token
+            npm dist-tag add "$pkgname@$VERSION" "${TAG:-latest}" --otp "$OTP"
+            break
+        else
+            err "I can't find $pkgname @ $VERSION on NPM under the 'private' tag yet..."
+            read
+        fi
+    done
+done
+
+# Clean up those temporary "private" tags
+for pkgdir in ${PACKAGE_DIRS[@]}; do
+    pkgname="$(npm_pkgname "$pkgdir")"
+    collect_otp_token
+    npm dist-tag rm "$pkgname@$VERSION" private --otp "$OTP"
+done
 
 echo ""
 echo "All published!"
@@ -335,6 +382,14 @@ else
     open "$URL"
     read
 fi
+
+echo "==> Bumping to next dev versions"
+( cd "$PRIMARY_PKG" && bump_version_in_pkg --no-peers "$PRIMARY_PKG" "$VERSION-dev" )
+for pkgdir in ${SECONDARY_PKGS[@]}; do
+    ( cd "$pkgdir" && bump_version_in_pkg --no-peers "$pkgdir" "$VERSION-dev" )
+done
+commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
+git push-current
 
 echo "==> Upgrade local examples?"
 echo "Now that you're all finished, you may want to also upgrade all our examples"

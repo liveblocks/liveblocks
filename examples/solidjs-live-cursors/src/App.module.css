@@ -3,5 +3,11 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;;
+  justify-content: center;
+  text-align: center;
+  touch-action: none;
+}
+
+.Text {
+  margin: 0 16px;
 }

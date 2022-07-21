@@ -47,13 +47,6 @@ export type PathLayer = {
   points: number[][];
 };
 
-export type Presence = {
-  selection: string[];
-  cursor: Point | null;
-  pencilDraft: [x: number, y: number, pressure: number][] | null;
-  penColor: Color | null;
-};
-
 export type Point = {
   x: number;
   y: number;

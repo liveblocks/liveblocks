@@ -1,5 +1,5 @@
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { useRoom } from "@liveblocks/react";
+import { useRoom } from "../../liveblocks.config";
 import { useState, useEffect } from "react";
 import { Layer, XYWH } from "../types";
 import { boundingBox } from "../utils";

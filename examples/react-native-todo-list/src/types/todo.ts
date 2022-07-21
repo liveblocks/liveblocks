@@ -1,0 +1,3 @@
+type Todo = {
+  text: string;
+};

@@ -217,9 +217,9 @@ export type Client = {
    */
   getRoom<
     TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
   >(
     roomId: string
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
@@ -231,9 +231,9 @@ export type Client = {
    */
   enter<
     TPresence extends JsonObject,
-    TStorage extends LsonObject,
-    TUserMeta extends BaseUserMeta,
-    TRoomEvent extends Json
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
   >(
     roomId: string,
     options?: RoomInitializers<TPresence, TStorage>

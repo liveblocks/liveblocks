@@ -28,17 +28,17 @@ npm install @liveblocks/client @liveblocks/redux
 
 ## Documentation
 
-- Start with the [React and Redux guide](https://liveblocks.io/docs/get-started/react-redux).
-- Explore the [API Reference](https://liveblocks.io/docs/api-reference/liveblocks-redux).
+Read the [documentation](https://liveblocks.io/docs) for guides and API references.
 
 ## Examples
 
-- Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
-- Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you get started.
+
+> All examples are open-source and live in this repository, within [`/examples`](../../examples).
 
 ## Releases
 
-For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https://github.com/liveblocks/liveblocks/releases).
+See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or learn more about [upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
 
 ## Community
 

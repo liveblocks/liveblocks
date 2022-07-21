@@ -26,18 +26,19 @@ A server-side utility that lets you set up a [Liveblocks](https://liveblocks.io)
 npm install @liveblocks/node
 ```
 
-## Examples
-
-- Browse our gallery of collaborative UI patterns. [View examples gallery](https://liveblocks.io/examples)
-- Explore and clone any of our open-source examples. [View code examples](https://github.com/liveblocks/liveblocks/tree/main/examples)
-
 ## Documentation
 
-[Read the documentation](https://liveblocks.io/docs) to start using Liveblocks.
+Read the [documentation](https://liveblocks.io/docs) for guides and API references.
+
+## Examples
+
+Explore our [collaborative examples](https://liveblocks.io/examples) to help you get started.
+
+> All examples are open-source and live in this repository, within [`/examples`](../../examples).
 
 ## Releases
 
-For changelog, visit [https://github.com/liveblocks/liveblocks/releases](https://github.com/liveblocks/liveblocks/releases).
+See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or learn more about [upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
 
 ## Community
 

@@ -3,7 +3,7 @@ import {
   useUpdateMyPresence,
   useObject,
   useSelf,
-} from "@liveblocks/react";
+} from "../liveblocks.config";
 import React from "react";
 import Avatar from "../components/Avatar";
 import Selection from "../components/Selection";
@@ -22,31 +22,20 @@ import { COLORS } from "../constants";
  * See pages/api/auth.ts and https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
  */
 
-type Theme = "light" | "dark";
-
-type Presence = {
-  focusedId: string | null;
-};
-
-type Logo = {
-  name: string;
-  theme: Theme;
-};
-
 export default function Example() {
   /**
    * updateMyPresence is used to show the focused input to all the users in the room.
    * It's good way to show to everyone that a user is currently editing a field to avoid potential conflict.
    * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useUpdateMyPresence
    */
-  const updateMyPresence = useUpdateMyPresence<Presence>();
+  const updateMyPresence = useUpdateMyPresence();
 
   /**
    * useObject is used to share a simple state to all the users in the room.
    * It's using the storage block so the data is persisted even after all the users leave the room.
    * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useObject
    */
-  const data = useObject<Logo>("logo");
+  const data = useObject("logo");
 
   if (!data) {
     return (
@@ -176,7 +165,7 @@ export default function Example() {
 }
 
 function Selections({ id }: { id: string }) {
-  const users = useOthers<Presence>().toArray();
+  const users = useOthers().toArray();
 
   return (
     <>
@@ -185,7 +174,7 @@ function Selections({ id }: { id: string }) {
           return (
             <Selection
               key={connectionId}
-              name={info?.name}
+              name={info.name}
               color={COLORS[connectionId % COLORS.length]}
             />
           );
@@ -196,8 +185,8 @@ function Selections({ id }: { id: string }) {
 }
 
 function Avatars() {
-  const users = useOthers<Presence>().toArray();
-  const currentUser = useSelf<Presence>();
+  const users = useOthers().toArray();
+  const currentUser = useSelf();
 
   return (
     <div className={styles.avatars}>
@@ -205,14 +194,14 @@ function Avatars() {
         return (
           <Avatar
             key={connectionId}
-            picture={info?.picture}
-            name={info?.name}
+            picture={info.picture}
+            name={info.name}
             color={COLORS[connectionId % COLORS.length]}
           />
         );
       })}
 
-      {currentUser && <Avatar picture={currentUser.info?.picture} name="You" />}
+      {currentUser && <Avatar picture={currentUser.info.picture} name="You" />}
     </div>
   );
 }

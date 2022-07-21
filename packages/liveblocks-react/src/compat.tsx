@@ -267,7 +267,7 @@ export function useList<TValue extends Lson>(
   deprecate(
     "Please use `createRoomContext()` instead of importing `useList` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
-  return _hooks.deprecated_useList(key as any, items as any);
+  return _hooks.useList_deprecated(key as any, items as any);
 }
 
 /**
@@ -301,7 +301,7 @@ export function useMap<TKey extends string, TValue extends Lson>(
   deprecate(
     "Please use `createRoomContext()` instead of importing `useMap` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
-  return _hooks.deprecated_useMap(key as any, entries as any);
+  return _hooks.useMap_deprecated(key as any, entries as any);
 }
 
 /**
@@ -335,5 +335,5 @@ export function useObject<TData extends LsonObject>(
   deprecate(
     "Please use `createRoomContext()` instead of importing `useObject` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
   );
-  return _hooks.deprecated_useObject(key as any, initialData as any);
+  return _hooks.useObject_deprecated(key as any, initialData as any);
 }

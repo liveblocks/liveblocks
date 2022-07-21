@@ -10,6 +10,22 @@ import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
 const createBabelConfig = require("./babel.config");
 
+function makeExternalFn() {
+  // NOTE: Make sure this list always matches the names of all dependencies and
+  // peerDependencies from package.json
+  const pkgJson = require("./package.json");
+
+  const EXTERNAL_PKGS = [
+    ...Object.keys(pkgJson?.dependencies ?? {}),
+    ...Object.keys(pkgJson?.peerDependencies ?? {}),
+  ];
+
+  return (importPath) =>
+    EXTERNAL_PKGS.some(
+      (ext) => importPath === ext || importPath.startsWith(ext + "/")
+    );
+}
+
 function execute(cmd, wait = true) {
   return commandPlugin(cmd, { exitOnFail: true, wait });
 }
@@ -191,17 +207,7 @@ export default async () => {
 
   // Files relative to `src/`
   const srcFiles = ["index.tsx"];
-
-  // NOTE: Make sure this list always matches the names of all dependencies and
-  // peerDependencies from package.json
-  const pkgJson = require("./package.json");
-  const external = [
-    ...Object.keys(pkgJson?.dependencies ?? {}),
-    ...Object.keys(pkgJson?.peerDependencies ?? {}),
-  ].flatMap((dep) =>
-    // Also include `@liveblocks/.../internal` as an external reference, by convention
-    dep.startsWith("@liveblocks/") ? [dep, dep + "/internal"] : [dep]
-  );
+  const external = makeExternalFn();
 
   return [
     // Build modern ES modules (*.mjs)

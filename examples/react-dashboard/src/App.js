@@ -12,7 +12,7 @@ import {
   BarChart,
 } from "recharts";
 import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
-import { RoomProvider, useMyPresence, useOthers } from "@liveblocks/react";
+import { RoomProvider, useMyPresence, useOthers } from "./liveblocks.config";
 import styles from "./App.module.css";
 import Header from "./components/Header";
 import Card from "./components/Card";
@@ -25,7 +25,7 @@ function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
   const others = useOthers();
 
-  const handleLegendMouseEnter = (e, cardId) => {
+  const handleLegendPointerEnter = (e, cardId) => {
     const { dataKey } = e;
 
     updateMyPresence({
@@ -36,7 +36,7 @@ function Example() {
     });
   };
 
-  const handleLegendMouseLeave = (e) => {
+  const handleLegendPointerLeave = (e) => {
     updateMyPresence({
       selectedDataset: null,
     });
@@ -103,10 +103,10 @@ function Example() {
                 <Legend
                   align="left"
                   verticalAlign="top"
-                  onMouseEnter={(event) =>
-                    handleLegendMouseEnter(event, "revenue")
+                  onPointerEnter={(event) =>
+                    handleLegendPointerEnter(event, "revenue")
                   }
-                  onMouseLeave={handleLegendMouseLeave}
+                  onPointerLeave={handleLegendPointerLeave}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -175,10 +175,10 @@ function Example() {
                 <Legend
                   align="left"
                   verticalAlign="top"
-                  onMouseEnter={(event) =>
-                    handleLegendMouseEnter(event, "users")
+                  onPointerEnter={(event) =>
+                    handleLegendPointerEnter(event, "users")
                   }
-                  onMouseLeave={handleLegendMouseLeave}
+                  onPointerLeave={handleLegendPointerLeave}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -200,10 +200,10 @@ function Example() {
                 <Legend
                   align="left"
                   verticalAlign="top"
-                  onMouseEnter={(event) =>
-                    handleLegendMouseEnter(event, "activation")
+                  onPointerEnter={(event) =>
+                    handleLegendPointerEnter(event, "activation")
                   }
-                  onMouseLeave={handleLegendMouseLeave}
+                  onPointerLeave={handleLegendPointerLeave}
                 />
                 <Bar
                   dataKey="current"

@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.17.0-beta2",
+  "version": "0.17.6-dev",
   "description": "A store enhancer to integrate Liveblocks into Redux stores.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -17,7 +17,7 @@
     "collaborative"
   ],
   "scripts": {
-    "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "build": "rollup -c && ../../scripts/build.sh",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
     "test": "jest --watch --silent --verbose",
@@ -31,7 +31,7 @@
     "directory": "packages/liveblocks-redux"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.17.0-beta2",
+    "@liveblocks/client": "0.17.6",
     "redux": "^4"
   },
   "devDependencies": {

@@ -1,16 +1,14 @@
-import {
-  RoomProvider,
-  useList,
-  useRedo,
-  useSelf,
-  useUndo,
-  LiveblocksProvider,
-} from "@liveblocks/react";
+import { createRoomContext } from "@liveblocks/react";
 import { LiveList } from "@liveblocks/client";
 import React from "react";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
+
+const { RoomProvider, useList, useRedo, useSelf, useUndo } = createRoomContext<
+  never,
+  { items: LiveList<string> }
+>(client);
 
 export default function Home() {
   let roomId = "e2e-storage-list";
@@ -21,11 +19,9 @@ export default function Home() {
     }
   }
   return (
-    <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
-        <Sandbox />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
+      <Sandbox />
+    </RoomProvider>
   );
 }
 

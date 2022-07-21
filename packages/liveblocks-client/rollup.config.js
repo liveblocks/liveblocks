@@ -8,7 +8,24 @@ import resolve from "@rollup/plugin-node-resolve";
 import { terser as terserPlugin } from "rollup-plugin-terser";
 import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
+const packageJson = require("./package.json");
 const createBabelConfig = require("./babel.config");
+
+function makeExternalFn() {
+  // NOTE: Make sure this list always matches the names of all dependencies and
+  // peerDependencies from package.json
+  const pkgJson = require("./package.json");
+
+  const EXTERNAL_PKGS = [
+    ...Object.keys(pkgJson?.dependencies ?? {}),
+    ...Object.keys(pkgJson?.peerDependencies ?? {}),
+  ];
+
+  return (importPath) =>
+    EXTERNAL_PKGS.some(
+      (ext) => importPath === ext || importPath.startsWith(ext + "/")
+    );
+}
 
 function execute(cmd, wait = true) {
   return commandPlugin(cmd, { exitOnFail: true, wait });
@@ -66,7 +83,15 @@ function buildESM(srcFiles, external = []) {
       chunkFileNames: "shared.mjs",
     },
     external,
-    plugins: [typescriptCompile(), stripComments(), prettier()],
+    plugins: [
+      replaceText({
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
+      typescriptCompile(),
+      stripComments(),
+      prettier(),
+    ],
   };
 }
 
@@ -83,6 +108,10 @@ function buildCJS(srcFiles, external = []) {
     external,
     plugins: [
       resolve({ extensions }),
+      replaceText({
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
       stripComments(),
       prettier(),
@@ -192,17 +221,7 @@ export default async () => {
 
   // Files relative to `src/`
   const srcFiles = ["index.ts", "internal.ts"];
-
-  // NOTE: Make sure this list always matches the names of all dependencies and
-  // peerDependencies from package.json
-  const pkgJson = require("./package.json");
-  const external = [
-    ...Object.keys(pkgJson?.dependencies ?? {}),
-    ...Object.keys(pkgJson?.peerDependencies ?? {}),
-  ].flatMap((dep) =>
-    // Also include `@liveblocks/.../internal` as an external reference, by convention
-    dep.startsWith("@liveblocks/") ? [dep, dep + "/internal"] : [dep]
-  );
+  const external = makeExternalFn();
 
   return [
     // Build modern ES modules (*.mjs)

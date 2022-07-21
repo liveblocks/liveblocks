@@ -27,7 +27,7 @@ export default function SelectionTools({
     <div
       className={styles.selection_inspector}
       style={{
-        transition: isAnimated ? "all 0.1s ease" : "",
+        transition: isAnimated ? "transform 120ms linear" : "",
         transform: `translate(calc(${x}px - 50%), calc(${y - 16}px - 100%))`,
       }}
     >

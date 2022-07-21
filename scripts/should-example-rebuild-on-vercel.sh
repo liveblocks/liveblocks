@@ -1,6 +1,16 @@
 #!/bin/sh
 set -eu
 
+#
+# See https://vercel.com/docs/concepts/projects/overview#ignored-build-step
+#
+# The required exit codes are a little bit unintuitive. The script needs to
+# define whether the build should get _cancelled_ or not.
+#
+# Exit code 0 means "cancel the build".
+# Exit code 1 (non-zero) means "proceed with the build".
+#
+
 # Ensure this script can assume it's run from the repo's
 # root directory, even if the current working directory is
 # different.
@@ -16,11 +26,12 @@ err () {
 }
 
 usage () {
-    err "usage: should-example-rebuild-on-vercel.sh [-h] <example-name>"
+    err "usage: should-example-rebuild-on-vercel.sh [-hv] <example-name>"
     err
     err "Returns a 0 or 1 exit code, indicating whether the given example should be redeployed."
     err
     err "Options:"
+    err "-p    Also trigger on updates to packages dir (default is examples dir only)"
     err "-v    Be verbose"
     err "-h    Show this help"
 }
@@ -54,24 +65,6 @@ if [ ! -d "examples/$EXAMPLE" ]; then
     exit 2
 fi
 
-list_dependencies () {
-    # NOTE: This should really just be a simple JQ call, but JQ is unavailable
-    # on Vercel environments
-    echo '
-      const config = require("./package.json");
-      const deps = new Set([
-          ...(Object.keys(config?.dependencies ?? {})),
-      ]);
-      for (const dep of deps) {
-          console.log(dep);
-      }
-    ' | node -
-}
-
-starts_with () {
-    test "${1#$2}" != "$1"
-}
-
 get_all_changed_files () {
     if [ ! -f "changed-files.txt" ]; then
         if [ -z "$GITHUB_ACCESS_TOKEN" ]; then
@@ -79,11 +72,21 @@ get_all_changed_files () {
             exit 2
         fi
 
-        SHA="$(git rev-parse HEAD)"
+        # If this is a check on the main branch, then compare the latest commit
+        # against the last one. Otherwise this is a PR, and we'll get the file
+        # diff against main.
+        if [ "$VERCEL_GIT_COMMIT_REF" == "main" ]; then
+          PREV_SHA="main~"
+          CURR_SHA="main"
+        else
+          PREV_SHA="main"
+          CURR_SHA="$(git rev-parse HEAD)"
+        fi
+
         curl -s \
             -H "Accept: application/vnd.github.v3+json" \
             -H "Authorization: Bearer $GITHUB_ACCESS_TOKEN" \
-            "https://api.github.com/repos/liveblocks/liveblocks/compare/main...$SHA" \
+            "https://api.github.com/repos/liveblocks/liveblocks/compare/${PREV_SHA}...${CURR_SHA}" \
             > diff-since-main.json
 
         # NOTE: This should really just be a simple JQ call, but JQ is unavailable
@@ -116,28 +119,15 @@ get_all_changed_files () {
 #
 get_interesting_changed_files () {
     get_all_changed_files \
-      | grep -Ee '^(examples|packages)/' \
+      | grep -Ee '^examples/' \
       | grep -vEe "/[.]" \
       | grep -vEe "(\.md)\$" \
       | grep -vEe "\b(test|jest)\b"
 }
 
-make_filter_pattern () {
-    PAT="(examples/$EXAMPLE"
-
-    for dep in $( cd "examples/$EXAMPLE" && list_dependencies ); do
-        if starts_with "$dep" "@liveblocks/"; then
-            PAT="$PAT|packages/liveblocks-${dep#@liveblocks/}"
-        fi
-    done
-
-    PAT="$PAT)"
-    echo $PAT
-}
-
 files_that_should_trigger_rebuild () {
     get_interesting_changed_files \
-        | grep -Ee "$(make_filter_pattern)"
+        | grep -Ee "examples/$EXAMPLE"
 }
 
 if [ "$(files_that_should_trigger_rebuild | wc -l)" -eq 0 ]; then
