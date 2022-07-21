@@ -95,8 +95,24 @@
   place-content: center;
   font-size: 14px;
   font-weight: 600;
-  /* color: #4b5563; */
   color: #6b7280;
+  user-select: none;
+}
+
+.sheet_header_control {
+  all: unset;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  aspect-ratio: 1;
+  color: #9ca3af;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.sheet_header_cell:hover .sheet_header_control {
+  opacity: 1;
 }
 
 .sheet_header_row {
