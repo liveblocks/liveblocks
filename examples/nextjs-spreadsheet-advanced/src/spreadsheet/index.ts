@@ -5,7 +5,7 @@ import {
   type BaseUserMeta,
   type User,
 } from "@liveblocks/client";
-import type { Presence, Storage, Column, Row } from "../liveblocks.config";
+import type { Presence, Storage, Column, Row } from "../../liveblocks.config";
 import interpreter from "./interpreter";
 import tokenizer, {
   SyntaxKind,
@@ -13,7 +13,12 @@ import tokenizer, {
   type CellToken,
   type RefToken,
 } from "./interpreter/tokenizer";
-import { formatExpressionResult } from "./interpreter/utils";
+import {
+  convertLetterToNumber,
+  convertNumberToLetter,
+  formatExpressionResult,
+} from "./interpreter/utils";
+import { removeFromArray } from "./utils";
 
 export type LiveSpreadsheet = {
   insertColumn(index: number, width: number): void;
@@ -96,10 +101,9 @@ export async function createSpreadsheet(
   }
 
   function cellToRef(token: CellToken): RefToken {
-    const letter = token.cell[0];
-    const number = token.cell[1];
+    const [letter, number] = token.cell;
 
-    const columnIndex = letter.charCodeAt(0) - 65;
+    const columnIndex = convertLetterToNumber(letter);
     const rowIndex = Number.parseInt(number) - 1;
 
     const column = liveSpreadsheet.get("columns").get(columnIndex)?.get("id")!;
@@ -129,7 +133,7 @@ export async function createSpreadsheet(
 
     return {
       kind: SyntaxKind.CellToken,
-      cell: String.fromCharCode(columnIndex + 65) + (rowIndex + 1).toString(),
+      cell: `${convertNumberToLetter(columnIndex)}${rowIndex + 1}`,
     };
   }
 
@@ -210,7 +214,7 @@ export async function createSpreadsheet(
   ) {
     othersCallbacks.push(callback);
     callback(room.getOthers().toArray());
-    return () => remove(othersCallbacks, callback);
+    return () => removeFromArray(othersCallbacks, callback);
   }
   room.subscribe("others", (others) => {
     const users = others.toArray();
@@ -223,7 +227,7 @@ export async function createSpreadsheet(
   function onColumnsChange(callback: (columns: Column[]) => void) {
     columnsCallback.push(callback);
     callback(liveSpreadsheet.get("columns").map((col) => col.toObject()));
-    return () => remove(columnsCallback, callback);
+    return () => removeFromArray(columnsCallback, callback);
   }
   room.subscribe(
     liveSpreadsheet.get("columns"),
@@ -242,7 +246,7 @@ export async function createSpreadsheet(
   function onRowsChange(callback: (rows: Row[]) => void) {
     rowsCallback.push(callback);
     callback(liveSpreadsheet.get("rows").map((row) => row.toObject()));
-    return () => remove(rowsCallback, callback);
+    return () => removeFromArray(rowsCallback, callback);
   }
   room.subscribe(
     liveSpreadsheet.get("rows"),
@@ -268,7 +272,7 @@ export async function createSpreadsheet(
       ])
     );
     callback(cells);
-    return () => remove(cellCallbacks, callback);
+    return () => removeFromArray(cellCallbacks, callback);
   }
   room.subscribe(
     liveSpreadsheet.get("cells"),
@@ -310,13 +314,4 @@ export async function createSpreadsheet(
     onRowsChange,
     onCellsChange,
   };
-}
-
-function remove<T>(array: T[], item: T): void {
-  for (let i = 0; i < array.length; i++) {
-    if (array[i] === item) {
-      array.splice(i, 1);
-      break;
-    }
-  }
 }

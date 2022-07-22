@@ -9,12 +9,7 @@ import {
   useMemo,
   useRef,
 } from "react";
-import {
-  DndContext,
-  closestCenter,
-  DragEndEvent,
-  UniqueIdentifier,
-} from "@dnd-kit/core";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
   SortableContext,
   useSortable,
@@ -22,13 +17,14 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
+import { Resizable, ResizeCallback } from "re-resizable";
 import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
 import { Cell } from "../components/Cell";
-import { useSpreadsheet } from "../hooks";
-import { convertNumberToLetter } from "../interpreter/utils";
-import { appendUnit } from "../utils";
+import { useSpreadsheet } from "../spreadsheet/react";
+import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
+import { appendUnit, getIndexWithId } from "../utils";
+import { HandlerIcon, CrossIcon, PlusIcon } from "../icons";
 import styles from "./index.module.css";
-import { Resizable, ResizeCallback } from "re-resizable";
 
 const GRID_INITIAL_ROWS = 6;
 const GRID_INITIAL_COLUMNS = 4;
@@ -53,70 +49,6 @@ interface HeadersProps extends ComponentProps<"div"> {
   deleteHeader: (index: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
-}
-
-function PlusIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M11 4a1 1 0 1 0-2 0v5H4a1 1 0 0 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2h-5V4Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function HandlerIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M5 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM5 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM11 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM11 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM11 14a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function CrossIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M12.707 4.707a1 1 0 0 0-1.414-1.414L8 6.586 4.707 3.293a1 1 0 0 0-1.414 1.414L6.586 8l-3.293 3.293a1 1 0 1 0 1.414 1.414L8 9.414l3.293 3.293a1 1 0 0 0 1.414-1.414L9.414 8l3.293-3.293Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
-function getIndexWithId<T extends { id: UniqueIdentifier }>(
-  array: T[],
-  id: UniqueIdentifier
-) {
-  return array.findIndex((element) => element.id === id);
 }
 
 function isRowHeader(header: Row | Column): header is Row {

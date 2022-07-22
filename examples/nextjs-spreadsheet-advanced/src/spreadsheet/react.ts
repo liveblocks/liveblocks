@@ -1,6 +1,6 @@
-import { Column, Row, useRoom } from "../liveblocks.config";
+import { Column, Row, useRoom } from "../../liveblocks.config";
 import { useState, useEffect } from "react";
-import { createSpreadsheet, LiveSpreadsheet } from "./spreadsheet";
+import { createSpreadsheet, LiveSpreadsheet } from ".";
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
