@@ -1,6 +1,8 @@
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
+import { LiveList } from "@liveblocks/client";
+import { LiveObject } from "@liveblocks/client";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
@@ -10,8 +12,29 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
+type Todo = {
+  text: string;
+};
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+type Presence = {
+  isTyping: boolean;
+};
+
+type Storage = {
+  todos: LiveList<LiveObject<{ text: string }>>;
+};
+
 const useStore = create(
-  middleware(
+  middleware<State, Presence, Storage>(
     (set) => ({
       draft: "",
       isTyping: false,
