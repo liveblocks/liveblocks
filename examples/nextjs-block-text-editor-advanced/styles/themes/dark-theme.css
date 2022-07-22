@@ -1,0 +1,13 @@
+.theme-dark {
+  color-scheme: dark;
+  
+  --color-surface: 31, 30, 32;
+  --color-surface-over: 51, 50, 52;
+  --color-foreground: 230, 228, 234;
+  --color-primary: 82, 0, 255;
+  --opacity-surface-selection: 0.24;
+  --container-max-width: 720px;
+  --shadow-over: 0 0 0 0.5px rgba(0, 0, 0, 0.09),
+    0 4px 12px -2px rgba(0, 0, 0, 0.12),
+    0 24px 40px -12px rgba(0, 0, 0, 0.28);
+}

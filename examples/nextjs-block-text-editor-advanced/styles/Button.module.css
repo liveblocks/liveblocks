@@ -1,0 +1,44 @@
+.button {
+  border-radius: 6px;
+  border: none;
+  padding: 0.125rem 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  font-size: 0.875em;
+  margin: 0;
+}
+
+.button_ghost {
+  color: rgba(var(--color-foreground), 0.8);
+  background: none;
+}
+
+.button_ghost:hover,
+.button_ghost:focus {
+  color: rgba(var(--color-foreground), 1);
+  background: rgba(var(--color-foreground), 0.1);
+}
+
+.button_secondary {
+  color: rgba(var(--color-foreground), 0.9);
+  background: rgba(var(--color-foreground), 0.06);
+}
+
+.button_secondary:hover,
+.button_secondary:focus {
+  color: rgba(var(--color-foreground), 1);
+  background: rgba(var(--color-foreground), 0.1);
+}
+
+.button_primary {
+  color: rgb(var(--color-surface));
+  background: rgba(var(--color-primary), 0.96);
+}
+
+.button_primary:hover,
+.button_primary:focus {
+  background: rgba(var(--color-primary), 1);
+}

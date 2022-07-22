@@ -1,0 +1,30 @@
+.toggle {
+  border-radius: 6px;
+  border: none;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  margin: 0;
+  color: rgba(var(--color-foreground), 0.8);
+  background: transparent;
+  font-size: 0.875em;
+}
+
+.toggle:not(.toggle_pressed):hover,
+.toggle:not(.toggle_pressed):focus {
+  color: rgba(var(--color-foreground), 1);
+  background: rgba(var(--color-foreground), 0.1);
+}
+
+.toggle_pressed {
+  background: rgba(var(--color-primary), 0.1);
+  color: rgba(var(--color-primary), 1);
+}
+
+.toggle:disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}

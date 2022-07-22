@@ -1,0 +1,37 @@
+{
+  "name": "block-text-editor",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.0.5",
+    "@dnd-kit/sortable": "^7.0.1",
+    "@dnd-kit/utilities": "^3.2.0",
+    "@liveblocks/client": "^0.17.0-beta2",
+    "@liveblocks/node": "^0.3.0",
+    "@liveblocks/react": "^0.17.0-beta2",
+    "@radix-ui/react-select": "^0.1.2-rc.50",
+    "@radix-ui/react-toggle": "^0.1.5-rc.41",
+    "@radix-ui/react-tooltip": "^0.1.8-rc.46",
+    "classnames": "^2.3.1",
+    "nanoid": "^4.0.0",
+    "next": "12.1.6",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@svgr/webpack": "^6.2.1",
+    "@types/node": "18.0.0",
+    "@types/react": "18.0.14",
+    "@types/react-dom": "18.0.5",
+    "@types/showdown": "^2.0.0",
+    "eslint": "8.18.0",
+    "eslint-config-next": "12.1.6",
+    "typescript": "4.7.4"
+  }
+}
