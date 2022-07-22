@@ -3,18 +3,19 @@ import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
 import { ComponentProps, CSSProperties, useCallback, useMemo } from "react";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
 import {
   SortableContext,
-  rectSortingStrategy,
   useSortable,
   verticalListSortingStrategy,
+  horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import {
-  restrictToParentElement,
-  restrictToHorizontalAxis,
-  restrictToVerticalAxis,
-} from "@dnd-kit/modifiers";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
 import { Cell } from "../components/Cell";
 import { useSpreadsheet } from "../hooks";
@@ -28,28 +29,18 @@ const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const ROW_INITIAL_HEIGHT = 30;
 
-interface SortableColumnsProps extends ComponentProps<"thead"> {
-  columns: Column[];
-  deleteColumn: (index: number) => void;
-  moveColumn: (from: number, to: number) => void;
-}
-
-interface SortableRowsProps extends ComponentProps<"tbody"> {
-  rows: Row[];
-  deleteRow: (index: number) => void;
-  moveRow: (from: number, to: number) => void;
-}
-
-interface SortableColumnProps extends ComponentProps<"th"> {
-  column: Column;
+interface HeaderProps extends ComponentProps<"div"> {
+  type: "row" | "column";
+  header: Row | Column;
   index: number;
   onDelete: () => void;
 }
 
-interface SortableRowProps extends ComponentProps<"tr"> {
-  row: Row;
-  index: number;
-  onDelete: () => void;
+interface HeadersProps extends ComponentProps<"div"> {
+  type: "row" | "column";
+  headers: (Row | Column)[];
+  deleteHeader: (index: number) => void;
+  moveHeader: (from: number, to: number) => void;
 }
 
 function PlusIcon(props: ComponentProps<"svg">) {
@@ -109,31 +100,51 @@ function CrossIcon(props: ComponentProps<"svg">) {
   );
 }
 
-function SortableColumn({
-  column,
+function getIndexWithId<T extends { id: UniqueIdentifier }>(
+  array: T[],
+  id: UniqueIdentifier
+) {
+  return array.findIndex((element) => element.id === id);
+}
+
+function isRowHeader(header: Row | Column): header is Row {
+  return Boolean((header as Row).height);
+}
+
+function isColumnHeader(header: Row | Column): header is Column {
+  return Boolean((header as Column).width);
+}
+
+function Header({
+  type,
   index,
+  header,
   onDelete,
   style,
   ...props
-}: SortableColumnProps) {
+}: HeaderProps) {
   const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useSortable({
-      id: column.id,
+      id: header.id,
     });
+  const isColumn = isColumnHeader(header);
 
   return (
-    <th
-      key={column.id}
+    <div
+      key={header.id}
       ref={setNodeRef}
-      scope="col"
-      className={styles.sheet_header_cell}
-      style={{
-        width: appendUnit(column.width),
-        transform: transform
-          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-          : undefined,
-        zIndex: isDragging ? 100 : undefined,
-      }}
+      className={styles.sheet_header}
+      style={
+        {
+          "--header-width": isColumn ? appendUnit(header.width) : undefined,
+          "--header-height": !isColumn ? appendUnit(header.height) : undefined,
+          transform:
+            isDragging && transform
+              ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+              : undefined,
+          zIndex: isDragging ? 100 : undefined,
+        } as CSSProperties
+      }
       {...props}
     >
       <button
@@ -144,24 +155,25 @@ function SortableColumn({
         <HandlerIcon />
       </button>
       <span className={styles.sheet_header_label}>
-        {convertNumberToLetter(index)}
+        {isColumn ? convertNumberToLetter(index) : index + 1}
       </span>
       <button className={styles.sheet_header_control} onClick={onDelete}>
         <CrossIcon />
       </button>
-    </th>
+    </div>
   );
 }
 
-function SortableColumns({
-  columns,
-  deleteColumn,
-  moveColumn,
+function Headers({
+  type,
+  headers,
+  deleteHeader,
+  moveHeader,
   className,
-  style,
   ...props
-}: SortableColumnsProps) {
-  const items = useMemo(() => columns.map((column) => column.id), [columns]);
+}: HeadersProps) {
+  const items = useMemo(() => headers.map((header) => header.id), [headers]);
+  const isColumn = useMemo(() => type === "column", [type]);
 
   const handleDragEnd = useCallback(
     ({ active, over }: DragEndEvent) => {
@@ -169,133 +181,37 @@ function SortableColumns({
         return;
       }
 
-      moveColumn(
-        columns.findIndex((column) => column.id === active.id),
-        columns.findIndex((column) => column.id === over.id)
+      moveHeader(
+        getIndexWithId(headers, active.id),
+        getIndexWithId(headers, over.id)
       );
     },
-    [columns]
+    [headers, moveHeader]
   );
 
   return (
     <DndContext
       collisionDetection={closestCenter}
-      modifiers={[restrictToHorizontalAxis, restrictToParentElement]}
+      modifiers={[restrictToParentElement]}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext strategy={rectSortingStrategy} items={items}>
-        <thead
-          className={cx(className, styles.sheet_header_row)}
-          style={{
-            ...style,
-            height: appendUnit(ROW_INITIAL_HEIGHT),
-          }}
-          {...props}
-        >
-          <tr>
-            {columns.map((column, x) => (
-              <SortableColumn
-                key={x}
-                index={x}
-                column={column}
-                onDelete={() => deleteColumn(x)}
-              />
-            ))}
-          </tr>
-        </thead>
-      </SortableContext>
-    </DndContext>
-  );
-}
-
-function SortableRow({
-  row,
-  index,
-  onDelete,
-  style,
-  ...props
-}: SortableRowProps) {
-  const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
-    useSortable({
-      id: row.id,
-    });
-
-  return (
-    <tr
-      ref={setNodeRef}
-      style={{
-        ...style,
-        transform: transform
-          ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-          : undefined,
-        zIndex: isDragging ? 100 : undefined,
-      }}
-      {...props}
-    >
-      <th
-        scope="row"
-        className={styles.sheet_header_cell}
-        style={{
-          width: appendUnit(COLUMN_HEADER_WIDTH),
-          height: appendUnit(row.height),
-        }}
+      <SortableContext
+        strategy={
+          isColumn ? horizontalListSortingStrategy : verticalListSortingStrategy
+        }
+        items={items}
       >
-        <button
-          className={styles.sheet_header_control}
-          ref={setActivatorNodeRef}
-          {...listeners}
-        >
-          <HandlerIcon />
-        </button>
-        <span className={styles.sheet_header_label}>{index}</span>
-        <button className={styles.sheet_header_control} onClick={onDelete}>
-          <CrossIcon />
-        </button>
-      </th>
-    </tr>
-  );
-}
-
-function SortableRows({
-  rows,
-  deleteRow,
-  moveRow,
-  className,
-  ...props
-}: SortableRowsProps) {
-  const items = useMemo(() => rows.map((row) => row.id), [rows]);
-
-  const handleDragEnd = useCallback(
-    ({ active, over }: DragEndEvent) => {
-      if (!over) {
-        return;
-      }
-
-      moveRow(
-        rows.findIndex((row) => row.id === active.id),
-        rows.findIndex((row) => row.id === over.id)
-      );
-    },
-    [rows]
-  );
-
-  return (
-    <DndContext
-      collisionDetection={closestCenter}
-      modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext strategy={verticalListSortingStrategy} items={items}>
-        <tbody className={cx(className, styles.sheet_header_column)} {...props}>
-          {rows.map((row, y) => (
-            <SortableRow
-              key={y}
-              index={y}
-              row={row}
-              onDelete={() => deleteRow(y)}
+        <div className={cx(className, styles.sheet_headers)} {...props}>
+          {headers.map((header, index) => (
+            <Header
+              type={type}
+              key={index}
+              index={index}
+              header={header}
+              onDelete={() => deleteHeader(index)}
             />
           ))}
-        </tbody>
+        </div>
       </SortableContext>
     </DndContext>
   );
@@ -331,74 +247,77 @@ function Example() {
   } = spreadsheet;
 
   return (
-    <div className={styles.component}>
+    <div className={styles.container}>
       <div
-        className={styles.container}
+        className={styles.sheet}
         style={
           {
-            "--column-header-width": COLUMN_HEADER_WIDTH,
-            "--column-initial-width": COLUMN_INITIAL_WIDTH,
-            "--row-initial-height": ROW_INITIAL_HEIGHT,
+            "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
+            "--column-initial-width": appendUnit(COLUMN_INITIAL_WIDTH),
+            "--row-initial-height": appendUnit(ROW_INITIAL_HEIGHT),
           } as CSSProperties
         }
       >
-        <div className={styles.sheet_container}>
-          <table className={styles.sheet}>
-            <SortableColumns
-              columns={columns}
-              deleteColumn={deleteColumn}
-              moveColumn={moveColumn}
-            />
-            <SortableRows rows={rows} deleteRow={deleteRow} moveRow={moveRow} />
-            <tbody className={styles.sheet_body}>
-              {rows.map((row, y) => {
-                return (
-                  <tr key={y}>
-                    {columns.map((column, x) => {
-                      return (
-                        <td
-                          key={x}
-                          className={styles.cell}
-                          style={{
-                            width: appendUnit(column.width),
-                            height: appendUnit(row.height),
-                          }}
-                          onClick={() =>
-                            selectCell({ columnId: column.id, rowId: row.id })
-                          }
-                        >
-                          <Cell
-                            key={column.id + row.id}
-                            onChange={(newValue) =>
-                              setCellValue(column.id, row.id, newValue)
-                            }
-                            getExpression={() =>
-                              getExpression(column.id, row.id)
-                            }
-                            displayValue={cells[column.id + row.id]}
-                            width={column.width}
-                            height={row.height}
-                            selectionColor={selectionMap[column.id + row.id]}
-                          />
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Headers
+          type="column"
+          className={styles.sheet_headers_columns}
+          headers={columns}
+          moveHeader={moveColumn}
+          deleteHeader={deleteColumn}
+        />
+        <Headers
+          type="row"
+          className={styles.sheet_headers_rows}
+          headers={rows}
+          moveHeader={moveRow}
+          deleteHeader={deleteRow}
+        />
+        <table className={styles.sheet_table}>
+          <thead className={styles.sr}>
+            <th />
+            {columns.map((_, x) => (
+              <th key={x}>{convertNumberToLetter(x)}</th>
+            ))}
+          </thead>
+          <tbody>
+            {rows.map((row, y) => {
+              return (
+                <tr key={y}>
+                  <th className={styles.sr}>{y}</th>
+                  {columns.map((column, x) => {
+                    return (
+                      <Cell
+                        key={column.id + row.id}
+                        className={styles.sheet_cell}
+                        onClick={() =>
+                          selectCell({ columnId: column.id, rowId: row.id })
+                        }
+                        onValueChange={(value) =>
+                          setCellValue(column.id, row.id, value)
+                        }
+                        getExpression={() => getExpression(column.id, row.id)}
+                        displayValue={cells[column.id + row.id]}
+                        width={column.width}
+                        height={row.height}
+                        selectionColor={selectionMap[column.id + row.id]}
+                      />
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
       <button
-        className={cx(styles.component_button, styles.component_button_row)}
+        className={cx(styles.add_button, styles.add_button_row)}
         aria-label="Add row"
         onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
       >
         <PlusIcon />
       </button>
       <button
-        className={cx(styles.component_button, styles.component_button_column)}
+        className={cx(styles.add_button, styles.add_button_column)}
         aria-label="Add column"
         onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
       >

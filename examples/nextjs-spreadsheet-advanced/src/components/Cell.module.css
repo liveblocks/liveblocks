@@ -1,33 +1,30 @@
-.container {
-  --selection-width: 2px;
-
+.cell {
   position: relative;
   background: #fff;
-  border-radius: 4px;
+  cursor: cell;
 }
 
-.container:after {
+.cell:after {
   content: "";
   display: block;
   position: absolute;
-  border-radius: 2px;
+  border-radius: calc(var(--sheet-radius) / 2);
   inset: 0px;
-  box-shadow: 0 0 0 var(--selection-width) var(--selection-color);
+  box-shadow: 0 0 0 2px var(--selection-color);
   pointer-events: none;
   z-index: 50;
 }
 
-.container:focus-within:after {
-  box-shadow: 0 0 0 var(--selection-width) #0af;
+.cell:focus-within:after {
+  --selection-color: #0af;
+
   z-index: 100;
 }
 
 .input {
+  all: unset;
   position: absolute;
   inset: 0px;
-  appearance: none;
   padding: 7px 9px;
-  border: none;
-  outline: none;
   background: transparent;
 }

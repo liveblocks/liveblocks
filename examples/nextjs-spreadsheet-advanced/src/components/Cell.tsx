@@ -1,24 +1,27 @@
 import cx from "classnames";
-import { CSSProperties, useState } from "react";
+import { ComponentProps, CSSProperties, useState } from "react";
 import { appendUnit } from "../utils";
 import styles from "./Cell.module.css";
 
-type Props = {
+interface Props extends ComponentProps<"td"> {
   displayValue: string;
   width: number;
   height: number;
   selectionColor?: string;
-  onChange: (newValue: string) => void;
+  onValueChange: (value: string) => void;
   getExpression: () => string;
-};
+}
 
 export function Cell({
   displayValue,
   width,
   height,
   selectionColor,
-  onChange,
+  onValueChange,
   getExpression,
+  className,
+  style,
+  ...props
 }: Props) {
   const [editingString, setEditingString] = useState<string | null>(null);
 
@@ -26,16 +29,18 @@ export function Cell({
   const isNumber = isNumeric(value);
 
   return (
-    <div
-      className={cx(styles.container)}
+    <td
+      className={cx(className, styles.cell)}
       style={
         {
+          ...style,
           "--selection-color": selectionColor,
           textAlign: isNumber && editingString === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),
         } as CSSProperties
       }
+      {...props}
     >
       <input
         readOnly={editingString === null}
@@ -44,7 +49,7 @@ export function Cell({
         onBlur={(e) => {
           if (editingString !== null) {
             const target = e.target;
-            onChange(target.value);
+            onValueChange(target.value);
             setEditingString(null);
           }
         }}
@@ -58,7 +63,7 @@ export function Cell({
                 target.select();
                 setEditingString(getExpression());
               } else {
-                onChange(target.value);
+                onValueChange(target.value);
                 setEditingString(null);
               }
             }
@@ -69,10 +74,10 @@ export function Cell({
         }}
         value={value}
       />
-    </div>
+    </td>
   );
 }
 
-function isNumeric(str: any) {
-  return !isNaN(str) && !isNaN(parseFloat(str));
+function isNumeric(string: any) {
+  return !isNaN(string) && !isNaN(parseFloat(string));
 }
