@@ -48,15 +48,7 @@ export default function useReturnKeyTextBlock() {
         case element.innerText.length:
           newBlock = {
             type: BlockType.Text,
-            node: {
-              type: BlockNodeType.Paragraph,
-              children: [
-                {
-                  type: BlockNodeType.Text,
-                  text: "",
-                },
-              ],
-            },
+            node: convertHtmlToBlockTopLevelNode(BlockNodeType.Paragraph, ""),
           };
           break;
 
@@ -73,18 +65,13 @@ export default function useReturnKeyTextBlock() {
 
           newBlock = {
             type: BlockType.Text,
-            node: {
-              type: BlockNodeType.Paragraph,
-              children: [
-                {
-                  type: BlockNodeType.Text,
-                  text: element.innerHTML.substring(
-                    htmlCaretPosition,
-                    element.innerHTML.length
-                  ),
-                },
-              ],
-            },
+            node: convertHtmlToBlockTopLevelNode(
+              BlockNodeType.Paragraph,
+              element.innerHTML.substring(
+                htmlCaretPosition,
+                element.innerHTML.length
+              )
+            ),
           };
           break;
       }

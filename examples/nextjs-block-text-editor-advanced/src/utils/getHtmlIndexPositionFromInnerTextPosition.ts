@@ -4,9 +4,6 @@ const getHtmlIndexPositionFromInnerTextPosition = (
   position: number,
   html: string
 ): number => {
-  // Fix escaped characters bug
-  html = parseHtml(html);
-
   // Non-greedily matches anything between < and >
   const regex = /<(.*?)>/g;
 
