@@ -2,7 +2,8 @@ import parseHtml from "./parseHtml";
 
 const getInnerTextCaretPosition = (
   element: HTMLElement,
-  selection: Selection
+  selection: Selection,
+  shouldParseHtml?: boolean
 ): number | null => {
   if (selection.rangeCount === 0) {
     return null;
@@ -17,7 +18,10 @@ const getInnerTextCaretPosition = (
   const range = originalRange.cloneRange();
   const temporaryNode = document.createTextNode("\u0001");
   range.insertNode(temporaryNode);
-  const caretPosition = parseHtml(element.innerText).indexOf("\u0001");
+  const text = shouldParseHtml
+    ? parseHtml(element.innerText)
+    : element.innerText;
+  const caretPosition = text.indexOf("\u0001");
   temporaryNode.parentNode?.removeChild(temporaryNode);
   return caretPosition;
 };

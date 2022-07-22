@@ -67,7 +67,11 @@ export default function TextEditor({
 
       if (onTextSelectionChange) {
         onTextSelectionChange({
-          caretPosition: getInnerTextCaretPosition(ref.current, selection),
+          caretPosition: getInnerTextCaretPosition(
+            ref.current,
+            selection,
+            true
+          ),
         });
       }
 

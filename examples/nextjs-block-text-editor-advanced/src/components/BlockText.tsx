@@ -1,5 +1,5 @@
 import styles from "../../styles/BlockText.module.css";
-import { BlockType, TextBlock } from "../types";
+import { BlockTopLevelNode, TextBlock } from "../types";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
 import { LiveObject } from "@liveblocks/client";
@@ -11,7 +11,6 @@ import { useMyPresence } from "../liveblocks.config";
 import useOthersByBlockId from "../hooks/useOthersByBlockId";
 import Avatar from "./Avatar";
 import TextEditor from "./TextEditor";
-import { BlockNodeType } from "../types";
 import isCaretOnFirstLine from "../utils/isCaretOnFirstLine";
 import isCaretOnLastLine from "../utils/isCaretOnLastLine";
 import { useState } from "react";
@@ -19,12 +18,12 @@ import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
 import UserTextSelection from "./UserTextSelection";
 import { USER_COLORS } from "../constants";
 import getInnerTextCaretPosition from "../utils/getInnerTextCaretPosition";
-import useInsertBlockAbove from "../hooks/useInsertBlockAbove";
-import getHtmlIndexPositionFromInnerTextPosition from "../utils/getHtmlIndexPositionFromInnerTextPosition";
 import convertHtmlToBlockTopLevelNode from "../utils/convertHtmlToBlockTopLevelNode";
 import useBlockAbove from "../hooks/useBlockAbove";
 import convertBlockNodeToHtml from "../utils/convertBlockNodeToHtml";
 import getInnerTextFromHtml from "../utils/getInnerTextFromHtml";
+import useReturnKeyTextBlock from "../hooks/useReturnKeyTextBlock";
+import { b } from "@liveblocks/client/shared";
 
 type Props = {
   id: string;
@@ -42,8 +41,7 @@ export default function BlockText({
   placeholder,
 }: Props) {
   const deleteBlocksByIds = useDeleteBlocksByIds();
-  const insertBlockBelow = useInsertBlockBelow();
-  const insertBlockAbove = useInsertBlockAbove();
+  const handleReturnKeyTextBlock = useReturnKeyTextBlock();
   const selectBlockAbove = useSelectBlockAbove();
   const selectBlockBelow = useSelectBlockBelow();
   const othersByBlockId = useOthersByBlockId(blockId);
@@ -101,110 +99,40 @@ export default function BlockText({
             return;
           }
 
-          const htmlCaretPosition = getHtmlIndexPositionFromInnerTextPosition(
-            caretPosition,
-            element.innerHTML
-          );
-
           switch (e.key) {
             case "Backspace":
-              if (!blockId) {
+              if (!blockId || !blockAbove) {
                 break;
               }
 
-              if (isBlockTopLevelNodeEmpty(node)) {
-                e.preventDefault();
-                selectBlockAbove(blockId);
-                deleteBlocksByIds([blockId]);
+              if (!isBlockTopLevelNodeEmpty(node) && caretPosition !== 0) {
                 break;
               }
 
-              if (blockAbove && caretPosition === 0) {
-                const nodeAbove = blockAbove.get("node");
-                const nodeAboveHtml = convertBlockNodeToHtml(nodeAbove);
+              e.preventDefault();
+
+              const nodeAbove = blockAbove.get("node");
+
+              if (caretPosition === 0) {
                 blockAbove.set(
                   "node",
                   convertHtmlToBlockTopLevelNode(
                     nodeAbove.type,
-                    nodeAboveHtml + element.innerHTML
+                    convertBlockNodeToHtml(nodeAbove) + element.innerHTML
                   )
                 );
-                selectBlockAbove(
-                  blockId,
-                  getInnerTextFromHtml(nodeAboveHtml).length
-                );
-                deleteBlocksByIds([blockId]);
               }
+
+              selectBlockAbove(
+                blockId,
+                getInnerTextFromHtml(convertBlockNodeToHtml(nodeAbove)).length
+              );
+              deleteBlocksByIds([blockId]);
               break;
 
             case "Enter":
               e.preventDefault();
-
-              if (caretPosition === 0) {
-                insertBlockAbove(
-                  {
-                    type: BlockType.Text,
-                    node: {
-                      type: BlockNodeType.Paragraph,
-                      children: [
-                        {
-                          type: BlockNodeType.Text,
-                          text: "",
-                        },
-                      ],
-                    },
-                  },
-                  blockId,
-                  false
-                );
-                break;
-              }
-
-              if (caretPosition === element.innerText.length) {
-                insertBlockBelow(
-                  {
-                    type: BlockType.Text,
-                    node: {
-                      type: BlockNodeType.Paragraph,
-                      children: [
-                        {
-                          type: BlockNodeType.Text,
-                          text: "",
-                        },
-                      ],
-                    },
-                  },
-                  blockId
-                );
-                break;
-              }
-
-              block.set(
-                "node",
-                convertHtmlToBlockTopLevelNode(
-                  node.type,
-                  element.innerHTML.substring(0, htmlCaretPosition)
-                )
-              );
-
-              insertBlockBelow(
-                {
-                  type: BlockType.Text,
-                  node: {
-                    type: BlockNodeType.Paragraph,
-                    children: [
-                      {
-                        type: BlockNodeType.Text,
-                        text: element.innerHTML.substring(
-                          htmlCaretPosition,
-                          element.innerHTML.length
-                        ),
-                      },
-                    ],
-                  },
-                },
-                blockId
-              );
+              handleReturnKeyTextBlock(block, blockId, element, caretPosition);
               break;
 
             case "ArrowUp":

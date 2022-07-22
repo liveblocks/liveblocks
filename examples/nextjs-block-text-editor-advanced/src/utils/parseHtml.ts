@@ -1,4 +1,4 @@
-const htmlEscape = (str: string): string => {
+const parseHtml = (str: string): string => {
   return str
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -7,4 +7,4 @@ const htmlEscape = (str: string): string => {
     .replace(/"/g, "&#34;");
 };
 
-export default htmlEscape;
+export default parseHtml;

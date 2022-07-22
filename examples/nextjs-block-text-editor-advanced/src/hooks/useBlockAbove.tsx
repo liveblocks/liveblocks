@@ -21,7 +21,6 @@ export default function useBlockAbove(
   }
 
   const index = blockIds.findIndex((result) => result === blockId);
-
   const previousId = blockIds.get(index - 1);
 
   if (!previousId) {
