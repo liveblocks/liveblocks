@@ -2,7 +2,13 @@ import cx from "classnames";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
-import { ComponentProps, CSSProperties, useCallback, useMemo } from "react";
+import {
+  ComponentProps,
+  CSSProperties,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   DndContext,
   closestCenter,
@@ -22,18 +28,23 @@ import { useSpreadsheet } from "../hooks";
 import { convertNumberToLetter } from "../interpreter/utils";
 import { appendUnit } from "../utils";
 import styles from "./index.module.css";
+import { Resizable, ResizeCallback } from "re-resizable";
 
 const GRID_INITIAL_ROWS = 6;
 const GRID_INITIAL_COLUMNS = 4;
 const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
+const COLUMN_MIN_WIDTH = 80;
+const COLUMN_MAX_WIDTH = 300;
 const ROW_INITIAL_HEIGHT = 30;
+const ROW_MAX_HEIGHT = 100;
 
 interface HeaderProps extends ComponentProps<"div"> {
   type: "row" | "column";
   header: Row | Column;
   index: number;
   onDelete: () => void;
+  onResize: (width: number, height: number) => void;
 }
 
 interface HeadersProps extends ComponentProps<"div"> {
@@ -41,6 +52,7 @@ interface HeadersProps extends ComponentProps<"div"> {
   headers: (Row | Column)[];
   deleteHeader: (index: number) => void;
   moveHeader: (from: number, to: number) => void;
+  resizeHeader: (index: number, size: number) => void;
 }
 
 function PlusIcon(props: ComponentProps<"svg">) {
@@ -120,6 +132,7 @@ function Header({
   index,
   header,
   onDelete,
+  onResize,
   style,
   ...props
 }: HeaderProps) {
@@ -127,17 +140,30 @@ function Header({
     useSortable({
       id: header.id,
     });
+  const initialHeader = useRef(header);
   const isColumn = isColumnHeader(header);
+
+  const handleResizeStart = useCallback(() => {
+    initialHeader.current = header;
+  }, [header]);
+
+  const handleResize: ResizeCallback = useCallback(
+    (_, __, ___, size) => {
+      onResize(
+        isColumn ? (initialHeader.current as Column).width + size.width : 0,
+        !isColumn ? (initialHeader.current as Row).height + size.height : 0
+      );
+    },
+    [isColumn, onResize]
+  );
 
   return (
     <div
       key={header.id}
       ref={setNodeRef}
-      className={styles.sheet_header}
+      className={styles.sheet_header_container}
       style={
         {
-          "--header-width": isColumn ? appendUnit(header.width) : undefined,
-          "--header-height": !isColumn ? appendUnit(header.height) : undefined,
           transform:
             isDragging && transform
               ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
@@ -147,19 +173,36 @@ function Header({
       }
       {...props}
     >
-      <button
-        className={styles.sheet_header_control}
-        ref={setActivatorNodeRef}
-        {...listeners}
+      <Resizable
+        size={{
+          width: isColumn ? header.width : COLUMN_HEADER_WIDTH,
+          height: isColumn ? ROW_INITIAL_HEIGHT : header.height,
+        }}
+        minWidth={COLUMN_MIN_WIDTH}
+        maxWidth={COLUMN_MAX_WIDTH}
+        minHeight={ROW_INITIAL_HEIGHT}
+        maxHeight={ROW_MAX_HEIGHT}
+        enable={{ right: isColumn, bottom: !isColumn }}
+        handleWrapperClass={styles.sheet_header_handles}
+        onResizeStart={handleResizeStart}
+        onResize={handleResize}
       >
-        <HandlerIcon />
-      </button>
-      <span className={styles.sheet_header_label}>
-        {isColumn ? convertNumberToLetter(index) : index + 1}
-      </span>
-      <button className={styles.sheet_header_control} onClick={onDelete}>
-        <CrossIcon />
-      </button>
+        <div className={styles.sheet_header}>
+          <button
+            className={styles.sheet_header_control}
+            ref={setActivatorNodeRef}
+            {...listeners}
+          >
+            <HandlerIcon />
+          </button>
+          <span className={styles.sheet_header_label}>
+            {isColumn ? convertNumberToLetter(index) : index + 1}
+          </span>
+          <button className={styles.sheet_header_control} onClick={onDelete}>
+            <CrossIcon />
+          </button>
+        </div>
+      </Resizable>
     </div>
   );
 }
@@ -169,6 +212,7 @@ function Headers({
   headers,
   deleteHeader,
   moveHeader,
+  resizeHeader,
   className,
   ...props
 }: HeadersProps) {
@@ -209,6 +253,9 @@ function Headers({
               index={index}
               header={header}
               onDelete={() => deleteHeader(index)}
+              onResize={(width, height) =>
+                resizeHeader(index, isColumn ? width : height)
+              }
             />
           ))}
         </div>
@@ -242,6 +289,8 @@ function Example() {
     moveRow,
     insertColumn,
     insertRow,
+    resizeColumn,
+    resizeRow,
     getExpression,
     setCellValue,
   } = spreadsheet;
@@ -260,17 +309,19 @@ function Example() {
       >
         <Headers
           type="column"
-          className={styles.sheet_headers_columns}
+          className={styles.sheet_headers_column}
           headers={columns}
           moveHeader={moveColumn}
           deleteHeader={deleteColumn}
+          resizeHeader={resizeColumn}
         />
         <Headers
           type="row"
-          className={styles.sheet_headers_rows}
+          className={styles.sheet_headers_row}
           headers={rows}
           moveHeader={moveRow}
           deleteHeader={deleteRow}
+          resizeHeader={resizeRow}
         />
         <table className={styles.sheet_table}>
           <thead className={styles.sr}>
