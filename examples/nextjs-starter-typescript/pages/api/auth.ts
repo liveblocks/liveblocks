@@ -4,8 +4,6 @@ import { NextApiRequest, NextApiResponse } from "next";
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 const API_KEY_WARNING = noKeyWarning();
 
-// Authentication endpoint
-// This
 // Auth endpoint is called from within `/liveblocks.config.ts`
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
