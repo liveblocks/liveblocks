@@ -41,10 +41,10 @@ export type ZustandState =
 
 export type LiveblocksState<
   TState extends ZustandState,
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TPresence extends JsonObject = JsonObject,
+  TStorage extends LsonObject = LsonObject,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TRoomEvent extends Json = Json
 > = TState & {
   /**
    * Liveblocks extra state attached by the middleware
@@ -68,7 +68,7 @@ export type LiveblocksState<
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence, TStorage>>;
+    readonly others: Array<User<TPresence, TUserMeta>>;
     /**
      * Whether or not the room storage is currently loading
      */
@@ -385,10 +385,10 @@ function updatePresence<
 function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends ZustandState,
-  TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TPresence extends JsonObject = JsonObject,
+  TStorage extends LsonObject = LsonObject,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TRoomEvent extends Json = Json
 >(
   root: LiveObject<O>,
   oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
