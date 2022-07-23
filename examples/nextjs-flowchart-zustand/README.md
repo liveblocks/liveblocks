@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Live Avatar Stack
+# Live Flow Chart (TODO README)
 
 <p>
   <a href="https://liveblocks.io/examples/live-avatars/nextjs/preview">
