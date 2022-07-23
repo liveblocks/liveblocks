@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import useStore from "./store";
+import useStore, { Shape } from "./store";
 import "./App.css";
 
 let roomId = "zustand-whiteboard";
@@ -78,7 +78,19 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id, transition }) => {
+type RectangleProps = {
+  shape: Shape;
+  selectionColor?: string;
+  id: string;
+  transition: boolean;
+};
+
+const Rectangle = ({
+  shape,
+  selectionColor,
+  id,
+  transition,
+}: RectangleProps) => {
   const onShapePointerDown = useStore((state) => state.onShapePointerDown);
 
   return (
