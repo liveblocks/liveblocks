@@ -10,7 +10,9 @@ body {
   display: flex;
   place-items: center;
   place-content: center;
+  width: 100vw;
   height: 100vh;
+  overflow: hidden;
 }
 
 a {

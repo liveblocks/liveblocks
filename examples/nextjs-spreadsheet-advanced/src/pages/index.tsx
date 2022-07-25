@@ -32,7 +32,7 @@ const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const COLUMN_MIN_WIDTH = 80;
 const COLUMN_MAX_WIDTH = 300;
-const ROW_INITIAL_HEIGHT = 30;
+const ROW_INITIAL_HEIGHT = 32;
 const ROW_MAX_HEIGHT = 100;
 
 interface HeaderProps extends ComponentProps<"div"> {
@@ -96,10 +96,9 @@ function Header({
       className={styles.sheet_header_container}
       style={
         {
-          transform:
-            isDragging && transform
-              ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-              : undefined,
+          transform: transform
+            ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
+            : undefined,
           zIndex: isDragging ? 100 : undefined,
         } as CSSProperties
       }
@@ -229,68 +228,71 @@ function Example() {
 
   return (
     <div className={styles.container}>
-      <div
-        className={styles.sheet}
-        style={
-          {
-            "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
-            "--column-initial-width": appendUnit(COLUMN_INITIAL_WIDTH),
-            "--row-initial-height": appendUnit(ROW_INITIAL_HEIGHT),
-          } as CSSProperties
-        }
-      >
-        <Headers
-          type="column"
-          className={styles.sheet_headers_column}
-          headers={columns}
-          moveHeader={moveColumn}
-          deleteHeader={deleteColumn}
-          resizeHeader={resizeColumn}
-        />
-        <Headers
-          type="row"
-          className={styles.sheet_headers_row}
-          headers={rows}
-          moveHeader={moveRow}
-          deleteHeader={deleteRow}
-          resizeHeader={resizeRow}
-        />
-        <table className={styles.sheet_table}>
-          <thead className={styles.sr}>
-            <th />
-            {columns.map((_, x) => (
-              <th key={x}>{convertNumberToLetter(x)}</th>
-            ))}
-          </thead>
-          <tbody>
-            {rows.map((row, y) => {
-              return (
-                <tr key={y}>
-                  <th className={styles.sr}>{y}</th>
-                  {columns.map((column, x) => {
-                    return (
-                      <Cell
-                        key={column.id + row.id}
-                        className={styles.sheet_cell}
-                        onClick={() =>
-                          selectCell({ columnId: column.id, rowId: row.id })
-                        }
-                        onValueChange={(value) =>
-                          setCellValue(column.id, row.id, value)
-                        }
-                        getExpression={() => getExpression(column.id, row.id)}
-                        displayValue={cells[column.id + row.id]}
-                        width={column.width}
-                        height={row.height}
-                        selectionColor={selectionMap[column.id + row.id]}
-                      />
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className={styles.component}>
+        <div className={styles.header} />
+        <div
+          className={styles.sheet}
+          style={
+            {
+              "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
+              "--column-initial-width": appendUnit(COLUMN_INITIAL_WIDTH),
+              "--row-initial-height": appendUnit(ROW_INITIAL_HEIGHT),
+            } as CSSProperties
+          }
+        >
+          <Headers
+            type="column"
+            className={styles.sheet_headers_column}
+            headers={columns}
+            moveHeader={moveColumn}
+            deleteHeader={deleteColumn}
+            resizeHeader={resizeColumn}
+          />
+          <Headers
+            type="row"
+            className={styles.sheet_headers_row}
+            headers={rows}
+            moveHeader={moveRow}
+            deleteHeader={deleteRow}
+            resizeHeader={resizeRow}
+          />
+          <table className={styles.sheet_table}>
+            <thead className={styles.sr}>
+              <th />
+              {columns.map((_, x) => (
+                <th key={x}>{convertNumberToLetter(x)}</th>
+              ))}
+            </thead>
+            <tbody>
+              {rows.map((row, y) => {
+                return (
+                  <tr key={y}>
+                    <th className={styles.sr}>{y}</th>
+                    {columns.map((column, x) => {
+                      return (
+                        <Cell
+                          key={column.id + row.id}
+                          className={styles.sheet_cell}
+                          onClick={() =>
+                            selectCell({ columnId: column.id, rowId: row.id })
+                          }
+                          onValueChange={(value) =>
+                            setCellValue(column.id, row.id, value)
+                          }
+                          getExpression={() => getExpression(column.id, row.id)}
+                          displayValue={cells[column.id + row.id]}
+                          width={column.width}
+                          height={row.height}
+                          selectionColor={selectionMap[column.id + row.id]}
+                        />
+                      );
+                    })}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
       <button
         className={cx(styles.add_button, styles.add_button_row)}

@@ -8,7 +8,7 @@
   content: "";
   display: block;
   position: absolute;
-  border-radius: calc(var(--sheet-radius) / 2);
+  border-radius: calc(var(--radius) / 4);
   inset: 0px;
   box-shadow: 0 0 0 2px var(--selection-color);
   pointer-events: none;
