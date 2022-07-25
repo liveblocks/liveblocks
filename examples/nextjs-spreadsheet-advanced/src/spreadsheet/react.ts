@@ -1,8 +1,7 @@
-import { Column, Row, useRoom } from "../../liveblocks.config";
+import { useRoom } from "../liveblocks.config";
 import { useState, useEffect } from "react";
+import { Column, Row, UserInfo, UserMeta } from "../types";
 import { createSpreadsheet, LiveSpreadsheet } from ".";
-
-const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
 export function useSpreadsheet() {
   const room = useRoom();
@@ -10,7 +9,7 @@ export function useSpreadsheet() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
-  const [selectionMap, setSelectionMap] = useState<Record<string, string>>({});
+  const [selections, setSelections] = useState<Record<string, UserInfo>>({});
 
   useEffect(() => {
     createSpreadsheet(room).then((spreadsheet) => {
@@ -18,15 +17,13 @@ export function useSpreadsheet() {
       spreadsheet.onRowsChange(setRows);
       spreadsheet.onCellsChange(setCells);
       spreadsheet.onOthersChange((others) => {
-        setSelectionMap(
-          others.reduce<Record<string, string>>((prev, current) => {
+        setSelections(
+          others.reduce<Record<string, UserInfo>>((previous, current) => {
             if (current.presence?.selectedCell) {
-              prev[current.presence.selectedCell] =
-                COLORS[current.connectionId % COLORS.length];
-              return prev;
-            } else {
-              return prev;
+              previous[current.presence.selectedCell] = current.info;
             }
+
+            return previous;
           }, {})
         );
       });
@@ -54,7 +51,7 @@ export function useSpreadsheet() {
         rows,
         columns,
         cells,
-        selectionMap,
+        selections,
       }
     : null;
 }

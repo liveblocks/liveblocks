@@ -13,6 +13,7 @@
     "@dnd-kit/sortable": "^7.0.1",
     "@dnd-kit/utilities": "^3.2.0",
     "@liveblocks/client": "^0.17.6",
+    "@liveblocks/node": "^0.17.6",
     "@liveblocks/react": "^0.17.6",
     "@radix-ui/react-context-menu": "^1.0.0",
     "classnames": "^2.3.1",

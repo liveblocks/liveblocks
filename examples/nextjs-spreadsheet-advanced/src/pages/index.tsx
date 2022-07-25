@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Resizable, ResizeCallback } from "re-resizable";
-import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
+import { RoomProvider } from "../liveblocks.config";
 import { Cell } from "../components/Cell";
 import {
   ContextMenu,
@@ -30,6 +30,7 @@ import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
 import { HandlerIcon, CrossIcon, PlusIcon } from "../icons";
+import { Row, Column, CellData } from "../types";
 import styles from "./index.module.css";
 
 const GRID_INITIAL_ROWS = 6;
@@ -285,7 +286,7 @@ function Example() {
     columns,
     rows,
     cells,
-    selectionMap,
+    selections,
     selectCell,
     deleteColumn,
     deleteRow,
@@ -358,7 +359,7 @@ function Example() {
                           displayValue={cells[column.id + row.id]}
                           width={column.width}
                           height={row.height}
-                          selectionColor={selectionMap[column.id + row.id]}
+                          selection={selections[column.id + row.id]}
                         />
                       );
                     })}
@@ -421,11 +422,11 @@ export default function Page() {
 }
 
 export async function getStaticProps() {
-  const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
+  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
-    ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
+    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-spreadsheet-advanced#codesandbox.`
-    : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
+    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-spreadsheet-advanced#getting-started.`;
 
   if (!API_KEY) {

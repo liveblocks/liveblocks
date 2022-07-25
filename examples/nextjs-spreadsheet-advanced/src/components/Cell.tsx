@@ -1,5 +1,6 @@
 import cx from "classnames";
 import { ComponentProps, CSSProperties, useState } from "react";
+import { UserInfo } from "../types";
 import { appendUnit } from "../utils";
 import styles from "./Cell.module.css";
 
@@ -7,7 +8,7 @@ interface Props extends ComponentProps<"td"> {
   displayValue: string;
   width: number;
   height: number;
-  selectionColor?: string;
+  selection?: UserInfo;
   onValueChange: (value: string) => void;
   getExpression: () => string;
 }
@@ -16,7 +17,7 @@ export function Cell({
   displayValue,
   width,
   height,
-  selectionColor,
+  selection,
   onValueChange,
   getExpression,
   className,
@@ -34,7 +35,7 @@ export function Cell({
       style={
         {
           ...style,
-          "--cell-selection": selectionColor,
+          "--cell-selection": selection?.color,
           textAlign: isNumber && editingString === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),
@@ -42,6 +43,11 @@ export function Cell({
       }
       {...props}
     >
+      {selection && (
+        <div className={styles.name} aria-hidden>
+          {selection.name}
+        </div>
+      )}
       <input
         readOnly={editingString === null}
         className={styles.input}

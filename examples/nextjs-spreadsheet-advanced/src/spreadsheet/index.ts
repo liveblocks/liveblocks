@@ -1,11 +1,5 @@
 import { nanoid } from "nanoid";
-import {
-  LiveObject,
-  type Room,
-  type BaseUserMeta,
-  type User,
-} from "@liveblocks/client";
-import type { Presence, Storage, Column, Row } from "../../liveblocks.config";
+import { LiveObject, type Room, type User } from "@liveblocks/client";
 import interpreter from "./interpreter";
 import tokenizer, {
   SyntaxKind,
@@ -19,6 +13,7 @@ import {
   formatExpressionResult,
 } from "./interpreter/utils";
 import { removeFromArray } from "./utils";
+import type { Presence, Storage, UserMeta, Row, Column } from "../types";
 
 export type LiveSpreadsheet = {
   insertColumn(index: number, width: number): void;
@@ -36,7 +31,7 @@ export type LiveSpreadsheet = {
   getCellExpressionDisplay(columnId: string, rowId: string): string;
 
   onOthersChange(
-    callback: (others: User<Presence, BaseUserMeta>[]) => void
+    callback: (others: User<Presence, UserMeta>[]) => void
   ): () => void;
   onRowsChange(callback: (rows: Row[]) => void): () => void;
   onColumnsChange(callback: (columns: Column[]) => void): () => void;
@@ -44,7 +39,7 @@ export type LiveSpreadsheet = {
 };
 
 export async function createSpreadsheet(
-  room: Room<Presence, Storage, BaseUserMeta, never>
+  room: Room<Presence, Storage, UserMeta, never>
 ): Promise<LiveSpreadsheet> {
   const { root } = await room.getStorage();
 
@@ -206,11 +201,10 @@ export async function createSpreadsheet(
     return tokensWithRefs.map(tokenToString).join("");
   }
 
-  const othersCallbacks: Array<
-    (others: User<Presence, BaseUserMeta>[]) => void
-  > = [];
+  const othersCallbacks: Array<(others: User<Presence, UserMeta>[]) => void> =
+    [];
   function onOthersChange(
-    callback: (others: User<Presence, BaseUserMeta>[]) => void
+    callback: (others: User<Presence, UserMeta>[]) => void
   ) {
     othersCallbacks.push(callback);
     callback(room.getOthers().toArray());

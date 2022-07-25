@@ -1,14 +1,14 @@
 .cell {
+  --cell-selection-z-index: 50;
   --cell-top-left-radius: 0;
   --cell-top-right-radius: 0;
   --cell-bottom-left-radius: 0;
   --cell-bottom-right-radius: 0;
-  --cell-selection-z-index: 50;
 
   position: relative;
   padding: 0px;
   border: var(--border) solid #f3f4f6;
-  cursor: cell;
+  pointer-events: none;
 }
 
 .cell:before,
@@ -43,12 +43,48 @@
   z-index: calc(var(--cell-selection-z-index) + 1);
 }
 
+.name {
+  --name-height: 16px;
+  --name-padding: 4px;
+
+  position: absolute;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  top: calc((var(--border) + var(--name-height)) * -1);
+  left: calc(var(--border) * -1);
+  height: calc(var(--name-height) + var(--radius));
+  font-size: 10px;
+  font-weight: 500;
+  color: #fff;
+  user-select: none;
+  padding: 0px var(--name-padding) var(--radius) var(--name-padding);
+  background: var(--cell-selection);
+  border-top-left-radius: calc(
+    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 + 1px
+  );
+  border-top-right-radius: calc(var(--radius) / 2 + 1px);
+  z-index: 1;
+  transform: translateY(var(--name-height));
+  transition: transform 0.12s ease-in-out;
+}
+
+.cell:not(:focus-within):hover .name {
+  transform: translateY(0);
+}
+
+.cell:focus-within .name {
+  display: none;
+}
+
 .input {
   all: unset;
   position: absolute;
   inset: 0px;
   padding: 7px 9px;
   background: #fff;
+  pointer-events: all;
+  z-index: 1;
 }
 
 .input:focus {
