@@ -385,10 +385,10 @@ function updatePresence<
 function patchLiveblocksStorage<
   O extends LsonObject,
   TState extends ZustandState,
-  TPresence extends JsonObject = JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
 >(
   root: LiveObject<O>,
   oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
