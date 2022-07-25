@@ -31,7 +31,7 @@ export function Cell({
 
   return (
     <td
-      className={cx(className, styles.cell)}
+      className={cx(className, styles.cell, selection && "selected")}
       style={
         {
           ...style,
@@ -45,7 +45,7 @@ export function Cell({
     >
       {selection && (
         <div className={styles.name} aria-hidden>
-          {selection.name}
+          <span className={styles.name_label}>{selection.name}</span>
         </div>
       )}
       <input
