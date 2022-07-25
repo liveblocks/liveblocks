@@ -20,6 +20,12 @@ import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Resizable, ResizeCallback } from "re-resizable";
 import { CellData, Column, RoomProvider, Row } from "../../liveblocks.config";
 import { Cell } from "../components/Cell";
+import {
+  ContextMenu,
+  ContextMenuGroup,
+  ContextMenuItem,
+  ContextMenuSeparator,
+} from "../components/ContextMenu";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
@@ -40,6 +46,8 @@ interface HeaderProps extends ComponentProps<"div"> {
   header: Row | Column;
   index: number;
   onDelete: () => void;
+  onMove: (offset: number) => void;
+  onInsert: (offset: number) => void;
   onResize: (width: number, height: number) => void;
 }
 
@@ -49,6 +57,7 @@ interface HeadersProps extends ComponentProps<"div"> {
   deleteHeader: (index: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
+  insertHeader: (index: number, width: number) => void;
 }
 
 function isRowHeader(header: Row | Column): header is Row {
@@ -65,6 +74,8 @@ function Header({
   header,
   onDelete,
   onResize,
+  onMove,
+  onInsert,
   style,
   ...props
 }: HeaderProps) {
@@ -88,6 +99,10 @@ function Header({
     },
     [isColumn, onResize]
   );
+
+  const handleResizeDefault = useCallback(() => {
+    onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
+  }, []);
 
   return (
     <div
@@ -118,21 +133,63 @@ function Header({
         onResizeStart={handleResizeStart}
         onResize={handleResize}
       >
-        <div className={styles.sheet_header}>
-          <button
-            className={styles.sheet_header_control}
-            ref={setActivatorNodeRef}
-            {...listeners}
-          >
-            <HandlerIcon />
-          </button>
-          <span className={styles.sheet_header_label}>
-            {isColumn ? convertNumberToLetter(index) : index + 1}
-          </span>
-          <button className={styles.sheet_header_control} onClick={onDelete}>
-            <CrossIcon />
-          </button>
-        </div>
+        <ContextMenu
+          asChild
+          content={
+            <>
+              <ContextMenuGroup>
+                <ContextMenuItem
+                  label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
+                  onSelect={() => onInsert(-1)}
+                />
+                <ContextMenuItem
+                  label={`Add ${isColumn ? "Column After" : "Row Below"}`}
+                  onSelect={() => onInsert(1)}
+                />
+              </ContextMenuGroup>
+              <ContextMenuGroup>
+                <ContextMenuItem
+                  label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
+                  onSelect={() => onMove(-1)}
+                />
+                <ContextMenuItem
+                  label={`Move ${isColumn ? "Column After" : "Row Below"}`}
+                  onSelect={() => onMove(1)}
+                />
+              </ContextMenuGroup>
+              <ContextMenuSeparator />
+              <ContextMenuGroup>
+                <ContextMenuItem
+                  label="Resize to Default"
+                  onSelect={handleResizeDefault}
+                />
+                <ContextMenuItem
+                  label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
+                />
+                <ContextMenuItem
+                  label={`Delete ${isColumn ? "Column" : "Row"}`}
+                  onSelect={onDelete}
+                />
+              </ContextMenuGroup>
+            </>
+          }
+        >
+          <div className={styles.sheet_header}>
+            <button
+              className={styles.sheet_header_control}
+              ref={setActivatorNodeRef}
+              {...listeners}
+            >
+              <HandlerIcon />
+            </button>
+            <span className={styles.sheet_header_label}>
+              {isColumn ? convertNumberToLetter(index) : index + 1}
+            </span>
+            <button className={styles.sheet_header_control} onClick={onDelete}>
+              <CrossIcon />
+            </button>
+          </div>
+        </ContextMenu>
       </Resizable>
     </div>
   );
@@ -144,6 +201,7 @@ function Headers({
   deleteHeader,
   moveHeader,
   resizeHeader,
+  insertHeader,
   className,
   ...props
 }: HeadersProps) {
@@ -186,6 +244,13 @@ function Headers({
               onDelete={() => deleteHeader(index)}
               onResize={(width, height) =>
                 resizeHeader(index, isColumn ? width : height)
+              }
+              onMove={(offset: number) => moveHeader(index, index + offset)}
+              onInsert={(offset: number) =>
+                insertHeader(
+                  index + offset,
+                  isColumn ? COLUMN_INITIAL_WIDTH : ROW_INITIAL_HEIGHT
+                )
               }
             />
           ))}
@@ -247,6 +312,7 @@ function Example() {
             moveHeader={moveColumn}
             deleteHeader={deleteColumn}
             resizeHeader={resizeColumn}
+            insertHeader={insertColumn}
           />
           <Headers
             type="row"
@@ -255,6 +321,7 @@ function Example() {
             moveHeader={moveRow}
             deleteHeader={deleteRow}
             resizeHeader={resizeRow}
+            insertHeader={insertRow}
           />
           <table className={styles.sheet_table}>
             <thead className={styles.sr}>

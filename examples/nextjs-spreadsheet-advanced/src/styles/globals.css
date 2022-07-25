@@ -1,3 +1,11 @@
+:root {
+  --margin: 16px;
+  --padding: 8px;
+  --radius: 6px;
+  --border: 2px;
+  --accent: #0af;
+}
+
 html,
 body {
   padding: 0;
