@@ -45,6 +45,8 @@ interface HeaderProps extends ComponentProps<"div"> {
   type: "row" | "column";
   header: Row | Column;
   index: number;
+  isFirst: boolean;
+  isLast: boolean;
   onDelete: () => void;
   onMove: (offset: number) => void;
   onInsert: (offset: number) => void;
@@ -72,6 +74,8 @@ function Header({
   type,
   index,
   header,
+  isFirst,
+  isLast,
   onDelete,
   onResize,
   onMove,
@@ -140,7 +144,7 @@ function Header({
               <ContextMenuGroup>
                 <ContextMenuItem
                   label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
-                  onSelect={() => onInsert(-1)}
+                  onSelect={() => onInsert(0)}
                 />
                 <ContextMenuItem
                   label={`Add ${isColumn ? "Column After" : "Row Below"}`}
@@ -151,10 +155,12 @@ function Header({
                 <ContextMenuItem
                   label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
                   onSelect={() => onMove(-1)}
+                  disabled={isFirst}
                 />
                 <ContextMenuItem
                   label={`Move ${isColumn ? "Column After" : "Row Below"}`}
                   onSelect={() => onMove(1)}
+                  disabled={isLast}
                 />
               </ContextMenuGroup>
               <ContextMenuSeparator />
@@ -241,6 +247,8 @@ function Headers({
               key={index}
               index={index}
               header={header}
+              isFirst={index === 0}
+              isLast={index === headers.length - 1}
               onDelete={() => deleteHeader(index)}
               onResize={(width, height) =>
                 resizeHeader(index, isColumn ? width : height)

@@ -30,6 +30,10 @@
   color: #fff;
 }
 
+.item[data-disabled] {
+  color: #d1d5db;
+}
+
 .separator {
   height: var(--border);
   margin: var(--inset) calc(var(--inset) * -1);
