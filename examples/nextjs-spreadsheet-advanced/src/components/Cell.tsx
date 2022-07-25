@@ -34,7 +34,7 @@ export function Cell({
       style={
         {
           ...style,
-          "--selection-color": selectionColor,
+          "--cell-selection": selectionColor,
           textAlign: isNumber && editingString === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),

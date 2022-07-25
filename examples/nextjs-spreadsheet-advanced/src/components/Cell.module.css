@@ -1,24 +1,46 @@
 .cell {
+  --cell-top-left-radius: 0;
+  --cell-top-right-radius: 0;
+  --cell-bottom-left-radius: 0;
+  --cell-bottom-right-radius: 0;
+  --cell-selection-z-index: 50;
+
   position: relative;
-  background: #fff;
+  padding: 0px;
+  border: var(--border) solid #f3f4f6;
   cursor: cell;
 }
 
+.cell:before,
 .cell:after {
   content: "";
-  display: block;
   position: absolute;
-  border-radius: calc(var(--radius) / 4);
   inset: 0px;
-  box-shadow: 0 0 0 2px var(--selection-color);
   pointer-events: none;
-  z-index: 50;
+}
+
+.cell:before {
+  box-shadow: 0 2px 6px var(--cell-selection);
+  z-index: calc(var(--cell-selection-z-index) - 1);
+  opacity: 0.3;
+}
+
+.cell:after {
+  box-shadow: 0 0 0 2px var(--cell-selection);
+  z-index: var(--cell-selection-z-index);
+}
+
+.cell:focus-within:before,
+.cell:focus-within:after {
+  --cell-selection: var(--accent);
+}
+
+.cell:focus-within:before {
+  z-index: var(--cell-selection-z-index);
 }
 
 .cell:focus-within:after {
-  --selection-color: #0af;
-
-  z-index: 100;
+  z-index: calc(var(--cell-selection-z-index) + 1);
 }
 
 .input {
@@ -26,5 +48,27 @@
   position: absolute;
   inset: 0px;
   padding: 7px 9px;
-  background: transparent;
+  background: #fff;
+}
+
+.input:focus {
+  /* TODO: Same should apply to any cell that has a selection */
+  z-index: 100;
+}
+
+.input,
+.cell:before,
+.cell:after {
+  border-top-left-radius: calc(
+    var(--radius) / 4 + var(--cell-top-left-radius) * var(--radius) / 2
+  );
+  border-top-right-radius: calc(
+    var(--radius) / 4 + var(--cell-top-right-radius) * var(--radius) / 2
+  );
+  border-bottom-left-radius: calc(
+    var(--radius) / 4 + var(--cell-bottom-left-radius) * var(--radius) / 2
+  );
+  border-bottom-right-radius: calc(
+    var(--radius) / 4 + var(--cell-bottom-right-radius) * var(--radius) / 2
+  );
 }
