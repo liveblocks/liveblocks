@@ -55,8 +55,11 @@ export default function useReturnKeyTextBlock() {
         default:
           const htmlCaretPosition = getHtmlIndexPositionFromInnerTextPosition(
             caretPosition,
-            element.innerHTML
+            element.innerHTML,
+            true
           );
+
+          console.log(caretPosition, htmlCaretPosition, element.innerHTML);
 
           newCurrentBlockNode = convertHtmlToBlockTopLevelNode(
             currentBlock.get("node").type,
