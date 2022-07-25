@@ -1,8 +1,6 @@
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
-import { LiveList } from "@liveblocks/client";
-import { LiveObject } from "@liveblocks/client";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
@@ -29,12 +27,8 @@ type Presence = {
   isTyping: boolean;
 };
 
-type Storage = {
-  todos: LiveList<LiveObject<{ text: string }>>;
-};
-
 const useStore = create(
-  middleware<State, Presence, Storage>(
+  middleware<State, Presence>(
     (set) => ({
       draft: "",
       isTyping: false,

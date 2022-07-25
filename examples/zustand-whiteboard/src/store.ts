@@ -1,5 +1,5 @@
 import create from "zustand";
-import { createClient, LiveObject } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
 import React from "react";
 
@@ -45,12 +45,8 @@ type Presence = {
   selectedShape: string | null;
 };
 
-type Storage = {
-  shapes: LiveObject<{ [id: string]: LiveObject<Shape> }>;
-};
-
 const useStore = create(
-  middleware<Store, Presence, Storage>(
+  middleware<Store, Presence>(
     (set, get) => ({
       shapes: {},
       selectedShape: null,
