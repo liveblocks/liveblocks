@@ -1,5 +1,5 @@
 import { User } from "@liveblocks/client";
-import { useRoom } from "../liveblocks.config";
+import { useRoom, useHistory } from "../liveblocks.config";
 import { useState, useEffect } from "react";
 import { Column, Presence, Row, UserInfo, UserMeta } from "../types";
 import { createSpreadsheet, LiveSpreadsheet } from ".";

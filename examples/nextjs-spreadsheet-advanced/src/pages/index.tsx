@@ -1,5 +1,5 @@
 import cx from "classnames";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { History, LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import { Resizable, ResizeCallback } from "re-resizable";
-import { RoomProvider } from "../liveblocks.config";
+import { RoomProvider, useHistory } from "../liveblocks.config";
 import { Cell } from "../components/Cell";
 import {
   ContextMenu,
@@ -85,6 +85,7 @@ function Header({
   style,
   ...props
 }: HeaderProps) {
+  const history = useHistory();
   const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useSortable({
       id: header.id,
@@ -93,6 +94,7 @@ function Header({
   const isColumn = isColumnHeader(header);
 
   const handleResizeStart = useCallback(() => {
+    history.pause();
     initialHeader.current = header;
   }, [header]);
 
@@ -105,6 +107,10 @@ function Header({
     },
     [isColumn, onResize]
   );
+
+  const handleResizeStop = useCallback(() => {
+    history.resume();
+  }, []);
 
   const handleResizeDefault = useCallback(() => {
     onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
@@ -138,6 +144,7 @@ function Header({
         handleWrapperClass={styles.sheet_header_handles}
         onResizeStart={handleResizeStart}
         onResize={handleResize}
+        onResizeStop={handleResizeStop}
       >
         <ContextMenu
           asChild
@@ -272,6 +279,7 @@ function Headers({
 
 function Example() {
   const spreadsheet = useSpreadsheet();
+  const history = useHistory();
 
   if (spreadsheet == null) {
     return (
@@ -330,8 +338,12 @@ function Example() {
             </button>
           </div>
           <div className={styles.button_group} role="group">
-            <button className={styles.button}>Undo</button>
-            <button className={styles.button}>Redo</button>
+            <button className={styles.button} onClick={() => history.undo()}>
+              Undo
+            </button>
+            <button className={styles.button} onClick={() => history.redo()}>
+              Redo
+            </button>
           </div>
         </div>
         <div className={styles.avatars}>
