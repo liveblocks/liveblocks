@@ -59,7 +59,10 @@
     var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 +
       var(--border)
   );
-  border-top-right-radius: calc(var(--radius) / 2 + var(--border));
+  border-top-right-radius: calc(
+    var(--radius) / 2 + var(--cell-top-right-radius) * var(--radius) / 2 +
+      var(--border)
+  );
   max-width: calc(100% + 2 * var(--border));
   transform: translateY(var(--user-height));
   transition: transform 0.12s ease-in-out;
