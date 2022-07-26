@@ -178,6 +178,10 @@
   opacity: 1;
 }
 
+.sheet_header_handler {
+  cursor: grab;
+}
+
 .sheet_header_resize {
   position: absolute;
   height: 100%;

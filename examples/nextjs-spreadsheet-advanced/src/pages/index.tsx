@@ -191,7 +191,10 @@ function Header({
         >
           <div className={styles.sheet_header}>
             <button
-              className={styles.sheet_header_control}
+              className={cx(
+                styles.sheet_header_control,
+                styles.sheet_header_handler
+              )}
               ref={setActivatorNodeRef}
               {...listeners}
             >
