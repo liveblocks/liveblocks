@@ -1,6 +1,7 @@
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { middleware } from "@liveblocks/zustand";
+import React from "react";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
@@ -19,7 +20,7 @@ const client = createClient({
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function getRandomInt(max) {
+function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
@@ -27,8 +28,25 @@ function getRandomColor() {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
+export type Shape = { x: number; y: number; fill: string };
+
+type Store = {
+  shapes: { [id: string]: Shape };
+  selectedShape: string | null;
+  isDragging: boolean;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string) => void;
+  deleteShape: () => void;
+  onCanvasPointerUp: () => void;
+  onCanvasPointerMove: (e: React.PointerEvent) => void;
+};
+
+type Presence = {
+  selectedShape: string | null;
+};
+
 const useStore = create(
-  middleware(
+  middleware<Store, Presence>(
     (set, get) => ({
       shapes: {},
       selectedShape: null,
@@ -44,7 +62,7 @@ const useStore = create(
           fill: getRandomColor(),
         };
 
-        liveblocks.room.updatePresence(
+        liveblocks.room!.updatePresence(
           { selectedShape: shapeId },
           { addToHistory: true }
         );
@@ -53,15 +71,15 @@ const useStore = create(
         });
       },
       onShapePointerDown: (shapeId) => {
-        const room = get().liveblocks.room;
+        const room = get().liveblocks.room!;
         room.history.pause();
         room.updatePresence({ selectedShape: shapeId }, { addToHistory: true });
         set({ isDragging: true });
       },
       deleteShape: () => {
         const { shapes, selectedShape, liveblocks } = get();
-        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
-        liveblocks.room.updatePresence(
+        const { [selectedShape!]: shapeToDelete, ...newShapes } = shapes;
+        liveblocks.room!.updatePresence(
           { selectedShape: null },
           { addToHistory: true }
         );
@@ -71,20 +89,20 @@ const useStore = create(
       },
       onCanvasPointerUp: () => {
         set({ isDragging: false });
-        get().liveblocks.room.history.resume();
+        get().liveblocks.room!.history.resume();
       },
       onCanvasPointerMove: (e) => {
         e.preventDefault();
 
         const { isDragging, shapes, selectedShape } = get();
 
-        const shape = shapes[selectedShape];
+        const shape = shapes[selectedShape!];
 
         if (shape && isDragging) {
           set({
             shapes: {
               ...shapes,
-              [selectedShape]: {
+              [selectedShape!]: {
                 ...shape,
                 x: e.clientX - 50,
                 y: e.clientY - 50,

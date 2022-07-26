@@ -10,8 +10,25 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
+type Todo = {
+  text: string;
+};
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+type Presence = {
+  isTyping: boolean;
+};
+
 const useStore = create(
-  middleware(
+  middleware<State, Presence>(
     (set) => ({
       draft: "",
       isTyping: false,
