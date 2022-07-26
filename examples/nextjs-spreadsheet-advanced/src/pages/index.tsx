@@ -32,6 +32,7 @@ import { appendUnit, getIndexWithId } from "../utils";
 import { HandlerIcon, CrossIcon, PlusIcon } from "../icons";
 import { Row, Column, CellData } from "../types";
 import styles from "./index.module.css";
+import Avatar from "../components/Avatar";
 
 const GRID_INITIAL_ROWS = 6;
 const GRID_INITIAL_COLUMNS = 4;
@@ -283,10 +284,11 @@ function Example() {
   }
 
   const {
+    users,
+    selections,
     columns,
     rows,
     cells,
-    selections,
     selectCell,
     deleteColumn,
     deleteRow,
@@ -301,19 +303,33 @@ function Example() {
   } = spreadsheet;
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      style={
+        {
+          "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
+          "--column-width": appendUnit(COLUMN_INITIAL_WIDTH),
+          "--row-height": appendUnit(ROW_INITIAL_HEIGHT),
+        } as CSSProperties
+      }
+    >
       <div className={styles.component}>
-        <div className={styles.header} />
-        <div
-          className={styles.sheet}
-          style={
-            {
-              "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
-              "--column-initial-width": appendUnit(COLUMN_INITIAL_WIDTH),
-              "--row-initial-height": appendUnit(ROW_INITIAL_HEIGHT),
-            } as CSSProperties
-          }
-        >
+        <div className={styles.header}>
+          <div className={styles.avatars}>
+            {users.map(({ connectionId, info }) => {
+              return (
+                <Avatar
+                  key={connectionId}
+                  className={styles.avatar}
+                  src={info.url}
+                  name={info.name}
+                  color={info.color}
+                />
+              );
+            })}
+          </div>
+        </div>
+        <div className={styles.sheet}>
           <Headers
             type="column"
             className={styles.sheet_headers_column}

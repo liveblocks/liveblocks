@@ -1,0 +1,21 @@
+.container {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: var(--border) solid var(--avatar-color);
+}
+
+.avatar {
+  position: absolute;
+  inset: var(--border);
+  width: calc(100% - 2 * var(--border));
+  height: calc(100% - 2 * var(--border));
+  border-radius: 50%;
+  background: #d1d5db;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+}

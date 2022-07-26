@@ -56,9 +56,10 @@
   padding: 0px var(--name-padding) var(--radius) var(--name-padding);
   background: var(--cell-selection);
   border-top-left-radius: calc(
-    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 + 1px
+    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 +
+      var(--border)
   );
-  border-top-right-radius: calc(var(--radius) / 2 + 1px);
+  border-top-right-radius: calc(var(--radius) / 2 + var(--border));
   max-width: calc(100% + 2 * var(--border));
   transform: translateY(var(--name-height));
   transition: transform 0.12s ease-in-out;
@@ -105,15 +106,15 @@
 .cell:before,
 .cell:after {
   border-top-left-radius: calc(
-    var(--radius) / 4 + var(--cell-top-left-radius) * var(--radius) / 2
+    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2
   );
   border-top-right-radius: calc(
-    var(--radius) / 4 + var(--cell-top-right-radius) * var(--radius) / 2
+    var(--radius) / 2 + var(--cell-top-right-radius) * var(--radius) / 2
   );
   border-bottom-left-radius: calc(
-    var(--radius) / 4 + var(--cell-bottom-left-radius) * var(--radius) / 2
+    var(--radius) / 2 + var(--cell-bottom-left-radius) * var(--radius) / 2
   );
   border-bottom-right-radius: calc(
-    var(--radius) / 4 + var(--cell-bottom-right-radius) * var(--radius) / 2
+    var(--radius) / 2 + var(--cell-bottom-right-radius) * var(--radius) / 2
   );
 }

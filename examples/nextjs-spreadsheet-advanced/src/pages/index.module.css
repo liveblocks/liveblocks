@@ -9,14 +9,8 @@
   max-width: calc(100vw - 2 * var(--margin));
   max-height: calc(100vh - 2 * var(--margin));
   background: #f3f4f6;
-  border-radius: calc(var(--radius) + var(--padding) * 0.8);
+  border-radius: calc(var(--radius) + var(--padding));
   overflow: hidden;
-}
-
-.header {
-  flex: none;
-  height: 50px;
-  border-bottom: var(--border) solid #e9ebef;
 }
 
 .add_button {
@@ -54,6 +48,28 @@
   top: calc(50% - var(--button-size) / 2);
 }
 
+.header {
+  flex: none;
+  display: flex;
+  padding: var(--padding);
+  border-bottom: var(--border) solid #e9ebef;
+}
+
+.avatars {
+  display: flex;
+  height: var(--row-height);
+  margin-left: auto;
+}
+
+.avatar:not(:first-child) {
+  margin-left: calc(-0.25 * var(--row-height));
+}
+
+.avatar {
+  background: #f3f4f6;
+  box-shadow: 0 0 0 var(--border) #f3f4f6;
+}
+
 .sheet {
   position: relative;
   padding-bottom: var(--padding);
@@ -61,7 +77,7 @@
   overflow: auto;
   display: grid;
   grid-template-columns: var(--column-header-width) 1fr;
-  grid-template-rows: var(--row-initial-height) 1fr;
+  grid-template-rows: var(--row-height) 1fr;
   grid-template-areas:
     ".    columns"
     "rows table";

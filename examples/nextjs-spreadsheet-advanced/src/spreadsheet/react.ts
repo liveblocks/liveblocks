@@ -1,6 +1,7 @@
+import { User } from "@liveblocks/client";
 import { useRoom } from "../liveblocks.config";
 import { useState, useEffect } from "react";
-import { Column, Row, UserInfo, UserMeta } from "../types";
+import { Column, Presence, Row, UserInfo, UserMeta } from "../types";
 import { createSpreadsheet, LiveSpreadsheet } from ".";
 
 export function useSpreadsheet() {
@@ -9,6 +10,7 @@ export function useSpreadsheet() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
+  const [users, setUsers] = useState<User<Presence, UserMeta>[]>([]);
   const [selections, setSelections] = useState<Record<string, UserInfo>>({});
 
   useEffect(() => {
@@ -17,6 +19,7 @@ export function useSpreadsheet() {
       spreadsheet.onRowsChange(setRows);
       spreadsheet.onCellsChange(setCells);
       spreadsheet.onOthersChange((others) => {
+        setUsers(others);
         setSelections(
           others.reduce<Record<string, UserInfo>>((previous, current) => {
             if (current.presence?.selectedCell) {
@@ -51,6 +54,8 @@ export function useSpreadsheet() {
         rows,
         columns,
         cells,
+
+        users,
         selections,
       }
     : null;
