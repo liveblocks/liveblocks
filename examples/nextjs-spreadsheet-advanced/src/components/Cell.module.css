@@ -43,17 +43,17 @@
   z-index: calc(var(--cell-selection-z-index) + 10);
 }
 
-.name {
-  --name-height: 16px;
-  --name-padding: 4px;
+.user {
+  --user-height: 16px;
+  --user-padding: 4px;
 
   position: absolute;
   display: flex;
   place-items: center;
-  top: calc((var(--border) + var(--name-height)) * -1);
+  top: calc((var(--border) + var(--user-height)) * -1);
   left: calc(var(--border) * -1);
-  height: calc(var(--name-height) + var(--radius));
-  padding: 0px var(--name-padding) var(--radius) var(--name-padding);
+  height: calc(var(--user-height) + var(--radius));
+  padding: 1px var(--user-padding) var(--radius) var(--user-padding);
   background: var(--cell-selection);
   border-top-left-radius: calc(
     var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 +
@@ -61,12 +61,22 @@
   );
   border-top-right-radius: calc(var(--radius) / 2 + var(--border));
   max-width: calc(100% + 2 * var(--border));
-  transform: translateY(var(--name-height));
+  transform: translateY(var(--user-height));
   transition: transform 0.12s ease-in-out;
   z-index: 1;
 }
 
-.name_label {
+.user_avatar {
+  flex: none;
+  width: calc(var(--user-height) - 4px);
+  height: calc(var(--user-height) - 4px);
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: var(--user-padding);
+  margin-top: 1px;
+}
+
+.user_label {
   font-size: 10px;
   font-weight: 500;
   color: #fff;
@@ -74,13 +84,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
-.cell:not(:focus-within):hover .name {
+.cell:not(:focus-within):hover .user {
   transform: translateY(0);
 }
 
-.cell:focus-within .name {
+.cell:focus-within .user {
   display: none;
 }
 

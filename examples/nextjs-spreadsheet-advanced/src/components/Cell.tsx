@@ -44,8 +44,13 @@ export function Cell({
       {...props}
     >
       {selection && (
-        <div className={styles.name} aria-hidden>
-          <span className={styles.name_label}>{selection.name}</span>
+        <div className={styles.user} aria-hidden>
+          <img
+            src={selection.url}
+            alt={selection.url}
+            className={styles.user_avatar}
+          />
+          <span className={styles.user_label}>{selection.name}</span>
         </div>
       )}
       <input
