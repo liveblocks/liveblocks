@@ -29,7 +29,7 @@ import {
 import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
-import { HandlerIcon, CrossIcon, PlusIcon } from "../icons";
+import { HandlerIcon, CrossIcon } from "../icons";
 import { Row, Column, CellData } from "../types";
 import styles from "./index.module.css";
 import Avatar from "../components/Avatar";
@@ -313,93 +313,97 @@ function Example() {
         } as CSSProperties
       }
     >
-      <div className={styles.component}>
-        <div className={styles.header}>
-          <div className={styles.avatars}>
-            {users.map(({ connectionId, info }) => {
-              return (
-                <Avatar
-                  key={connectionId}
-                  className={styles.avatar}
-                  src={info.url}
-                  name={info.name}
-                  color={info.color}
-                />
-              );
-            })}
+      <div className={styles.header}>
+        <div className={styles.buttons}>
+          <div className={styles.button_group} role="group">
+            <button
+              className={styles.button}
+              onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
+            >
+              Add Column
+            </button>
+            <button
+              className={styles.button}
+              onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+            >
+              Add Row
+            </button>
+          </div>
+          <div className={styles.button_group} role="group">
+            <button className={styles.button}>Undo</button>
+            <button className={styles.button}>Redo</button>
           </div>
         </div>
-        <div className={styles.sheet}>
-          <Headers
-            type="column"
-            className={styles.sheet_headers_column}
-            headers={columns}
-            moveHeader={moveColumn}
-            deleteHeader={deleteColumn}
-            resizeHeader={resizeColumn}
-            insertHeader={insertColumn}
-          />
-          <Headers
-            type="row"
-            className={styles.sheet_headers_row}
-            headers={rows}
-            moveHeader={moveRow}
-            deleteHeader={deleteRow}
-            resizeHeader={resizeRow}
-            insertHeader={insertRow}
-          />
-          <table className={styles.sheet_table}>
-            <thead className={styles.sr}>
-              <th />
-              {columns.map((_, x) => (
-                <th key={x}>{convertNumberToLetter(x)}</th>
-              ))}
-            </thead>
-            <tbody>
-              {rows.map((row, y) => {
-                return (
-                  <tr key={y}>
-                    <th className={styles.sr}>{y}</th>
-                    {columns.map((column, x) => {
-                      return (
-                        <Cell
-                          key={column.id + row.id}
-                          className={styles.sheet_cell}
-                          onClick={() =>
-                            selectCell({ columnId: column.id, rowId: row.id })
-                          }
-                          onValueChange={(value) =>
-                            setCellValue(column.id, row.id, value)
-                          }
-                          getExpression={() => getExpression(column.id, row.id)}
-                          displayValue={cells[column.id + row.id]}
-                          width={column.width}
-                          height={row.height}
-                          selection={selections[column.id + row.id]}
-                        />
-                      );
-                    })}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div className={styles.avatars}>
+          {users.map(({ connectionId, info }) => {
+            return (
+              <Avatar
+                key={connectionId}
+                className={styles.avatar}
+                src={info.url}
+                name={info.name}
+                color={info.color}
+              />
+            );
+          })}
         </div>
       </div>
-      <button
-        className={cx(styles.add_button, styles.add_button_row)}
-        aria-label="Add row"
-        onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
-      >
-        <PlusIcon />
-      </button>
-      <button
-        className={cx(styles.add_button, styles.add_button_column)}
-        aria-label="Add column"
-        onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
-      >
-        <PlusIcon />
-      </button>
+      <div className={styles.sheet}>
+        <Headers
+          type="column"
+          className={styles.sheet_headers_column}
+          headers={columns}
+          moveHeader={moveColumn}
+          deleteHeader={deleteColumn}
+          resizeHeader={resizeColumn}
+          insertHeader={insertColumn}
+        />
+        <Headers
+          type="row"
+          className={styles.sheet_headers_row}
+          headers={rows}
+          moveHeader={moveRow}
+          deleteHeader={deleteRow}
+          resizeHeader={resizeRow}
+          insertHeader={insertRow}
+        />
+        <table className={styles.sheet_table}>
+          <thead className={styles.sr}>
+            <th />
+            {columns.map((_, x) => (
+              <th key={x}>{convertNumberToLetter(x)}</th>
+            ))}
+          </thead>
+          <tbody>
+            {rows.map((row, y) => {
+              return (
+                <tr key={y}>
+                  <th className={styles.sr}>{y}</th>
+                  {columns.map((column, x) => {
+                    return (
+                      <Cell
+                        key={column.id + row.id}
+                        className={styles.sheet_cell}
+                        onClick={() =>
+                          selectCell({ columnId: column.id, rowId: row.id })
+                        }
+                        onValueChange={(value) =>
+                          setCellValue(column.id, row.id, value)
+                        }
+                        getExpression={() => getExpression(column.id, row.id)}
+                        displayValue={cells[column.id + row.id]}
+                        width={column.width}
+                        height={row.height}
+                        selection={selections[column.id + row.id]}
+                      />
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

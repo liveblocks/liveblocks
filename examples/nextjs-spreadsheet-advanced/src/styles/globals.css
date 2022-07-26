@@ -1,7 +1,7 @@
 :root {
   --margin: 16px;
   --padding: 8px;
-  --radius: 4px;
+  --radius: 5px;
   --border: 2px;
   --accent: #0af;
 }
@@ -26,6 +26,10 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+img {
+  vertical-align: top;
 }
 
 * {

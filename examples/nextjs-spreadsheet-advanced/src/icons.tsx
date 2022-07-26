@@ -1,24 +1,5 @@
 import { ComponentProps } from "react";
 
-export function PlusIcon(props: ComponentProps<"svg">) {
-  return (
-    <svg
-      width="20"
-      height="20"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M11 4a1 1 0 1 0-2 0v5H4a1 1 0 0 0 0 2h5v5a1 1 0 1 0 2 0v-5h5a1 1 0 1 0 0-2h-5V4Z"
-        fill="currentColor"
-      />
-    </svg>
-  );
-}
-
 export function HandlerIcon(props: ComponentProps<"svg">) {
   return (
     <svg
