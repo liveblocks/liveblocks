@@ -381,10 +381,12 @@ function Example() {
         />
         <table className={styles.sheet_table}>
           <thead className={styles.sr}>
-            <th />
-            {columns.map((_, x) => (
-              <th key={x}>{convertNumberToLetter(x)}</th>
-            ))}
+            <tr>
+              <th />
+              {columns.map((_, x) => (
+                <th key={x}>{convertNumberToLetter(x)}</th>
+              ))}
+            </tr>
           </thead>
           <tbody>
             {rows.map((row, y) => {
