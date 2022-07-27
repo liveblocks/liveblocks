@@ -51,11 +51,13 @@ export default function BlockText({
     ? true
     : false;
   const [isFocused, setIsFocused] = useState(false);
+  const isElementFocused =
+    document.getElementById(id) === document.activeElement;
 
   return (
     <div
       className={classNames(styles.block_text, {
-        [styles.block_text_selected]: isSelected,
+        [styles.block_text_selected]: isFocused,
       })}
     >
       {placeholder && isFocused && isBlockTopLevelNodeEmpty(data.node) && (
@@ -81,7 +83,7 @@ export default function BlockText({
             return;
           }
 
-          setPresence({ selectedBlockIds: [blockId] }, { addToHistory: true });
+          setPresence({ selectedBlockIds: [blockId] });
         }}
         onBlur={() => {
           setIsFocused(false);
@@ -163,6 +165,7 @@ export default function BlockText({
             // Making sure this doesn't trigger global undo/redo
             case "z":
               if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
                 e.stopPropagation();
                 break;
               }
@@ -170,7 +173,7 @@ export default function BlockText({
         }}
       />
 
-      {othersByBlockId.length > 0 && !isSelected && (
+      {othersByBlockId.length > 0 && !isElementFocused && (
         <div>
           {othersByBlockId.map((user) => {
             return user.presence?.textSelection ? (

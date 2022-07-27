@@ -92,7 +92,7 @@ export default function useReturnKeyTextBlock() {
         blocks.set(newBlockId, new LiveObject(newBlock));
 
         focusTextBlockById(newBlockId);
-        setPresence({ selectedBlockIds: [blockId] }, { addToHistory: true });
+        setPresence({ selectedBlockIds: [blockId] });
       });
     },
     [batch, blockIds, blocks, setPresence]

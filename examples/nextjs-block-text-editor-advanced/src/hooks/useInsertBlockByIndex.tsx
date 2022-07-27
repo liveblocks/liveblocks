@@ -33,7 +33,7 @@ export default function useInsertBlockByIndex() {
 
         if (shouldSelect) {
           focusTextBlockById(blockId);
-          setPresence({ selectedBlockIds: [blockId] }, { addToHistory: true });
+          setPresence({ selectedBlockIds: [blockId] });
         }
       });
     },

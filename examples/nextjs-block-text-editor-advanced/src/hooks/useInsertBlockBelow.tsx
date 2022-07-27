@@ -35,7 +35,7 @@ export default function useInsertBlockBelow() {
 
         if (shouldSelect) {
           focusTextBlockById(blockId);
-          setPresence({ selectedBlockIds: [blockId] }, { addToHistory: true });
+          setPresence({ selectedBlockIds: [blockId] });
         }
       });
     },

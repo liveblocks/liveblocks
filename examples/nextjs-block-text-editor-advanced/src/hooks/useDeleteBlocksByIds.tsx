@@ -29,7 +29,7 @@ export default function useDeleteBlocksByIds() {
           }
         }
 
-        setPresence({ selectedBlockIds: [] }, { addToHistory: true });
+        setPresence({ selectedBlockIds: [] });
       });
     },
     [batch, blockIds, blocks, setPresence]

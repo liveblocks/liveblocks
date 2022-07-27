@@ -24,7 +24,7 @@ export default function useSelectBlockAbove() {
 
       if (index === 0) {
         focusTextBlockById(ID_TITLE_BLOCK, caretPosition);
-        setPresence({ selectedBlockIds: [] }, { addToHistory: true });
+        setPresence({ selectedBlockIds: [] });
         return;
       }
 
@@ -36,7 +36,7 @@ export default function useSelectBlockAbove() {
 
       batch(() => {
         focusTextBlockById(previousId, caretPosition);
-        setPresence({ selectedBlockIds: [previousId] }, { addToHistory: true });
+        setPresence({ selectedBlockIds: [previousId] });
       });
     },
     [batch, blockIds, blocks, setPresence]

@@ -33,7 +33,7 @@ export default function useSelectBlockBelow() {
 
       batch(() => {
         focusTextBlockById(nextId, caretPosition);
-        setPresence({ selectedBlockIds: [nextId] }, { addToHistory: true });
+        setPresence({ selectedBlockIds: [nextId] });
       });
     },
     [batch, blockIds, blocks, setPresence]
