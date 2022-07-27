@@ -2,11 +2,11 @@ import { User } from "@liveblocks/client";
 import { useRoom, useHistory } from "../liveblocks.config";
 import { useState, useEffect } from "react";
 import { Column, Presence, Row, UserInfo, UserMeta } from "../types";
-import { createSpreadsheet, LiveSpreadsheet } from ".";
+import { createSpreadsheet, Spreadsheet } from ".";
 
 export function useSpreadsheet() {
   const room = useRoom();
-  const [spreadsheet, setSpreadsheet] = useState<LiveSpreadsheet | null>(null);
+  const [spreadsheet, setSpreadsheet] = useState<Spreadsheet | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});

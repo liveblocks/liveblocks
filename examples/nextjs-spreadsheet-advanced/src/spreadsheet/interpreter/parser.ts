@@ -1,4 +1,4 @@
-import { Function, SyntaxKind } from "./tokenizer";
+import { SyntaxKind } from "./tokenizer";
 import type { Token, NumberToken, RefToken } from "./tokenizer";
 
 export type Node = Expression;
@@ -15,7 +15,6 @@ export enum NodeKind {
   Exponent,
   UnaryPlus,
   UnaryMinus,
-  CallExpression,
 }
 
 export type Expression =
@@ -29,7 +28,6 @@ export type Expression =
   | Division
   | Modulo
   | Exponent
-  | CallExpression
   | CellRange;
 
 export interface BinaryExpression {
@@ -83,12 +81,6 @@ export interface Exponent extends BinaryExpression {
 
 export interface CellRange extends BinaryExpression {
   kind: NodeKind.CellRange;
-}
-
-export interface CallExpression {
-  kind: NodeKind.CallExpression;
-  fn: Function;
-  params: Expression[];
 }
 
 export default function parser(tokens: Token[]): Node {
@@ -152,16 +144,6 @@ export default function parser(tokens: Token[]): Node {
         };
       }
       return ref;
-    } else if (token.kind === SyntaxKind.FunctionToken) {
-      consumeToken(SyntaxKind.FunctionToken);
-      consumeToken(SyntaxKind.OpenParenthesis);
-      const callExpression: CallExpression = {
-        kind: NodeKind.CallExpression,
-        fn: token.fn,
-        params: [expr()],
-      };
-      consumeToken(SyntaxKind.CloseParenthesis);
-      return callExpression;
     }
     throw Error(`Unexpected token : ${token.kind}`);
   }

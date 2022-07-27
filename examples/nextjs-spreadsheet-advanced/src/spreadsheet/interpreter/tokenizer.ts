@@ -21,17 +21,7 @@ export type Token =
   | CellToken
   | RefToken
   | SimpleCharToken
-  | EOFToken
-  | FunctionToken;
-
-export enum Function {
-  Sum,
-}
-
-export type FunctionToken = {
-  kind: SyntaxKind.FunctionToken;
-  fn: Function;
-};
+  | EOFToken;
 
 export type NumberToken = {
   kind: SyntaxKind.NumberLiteral;
@@ -84,12 +74,6 @@ const syntaxKindToChar = new Map(
     entry[1],
     entry[0],
   ])
-);
-
-const wordToFunction: Map<string, Function> = new Map([["SUM", Function.Sum]]);
-
-const functionToWord: Map<Function, string> = new Map(
-  Array.from(wordToFunction.entries()).map((entry) => [entry[1], entry[0]])
 );
 
 function isDigit(char: string) {
@@ -188,13 +172,6 @@ export default function tokenizer(input: string): Token[] {
           kind: SyntaxKind.RefToken,
           ref,
         });
-      } else if (wordToFunction.has(word)) {
-        const fn = wordToFunction.get(word)!;
-        current += word.length;
-        tokens.push({
-          kind: SyntaxKind.FunctionToken,
-          fn,
-        });
       } else {
         const cell = extractCell(input, current);
         current += cell.length;
@@ -233,7 +210,5 @@ export function tokenToString(token: Token): string {
       return token.value.toString();
     case SyntaxKind.RefToken:
       return "REF(" + token.ref + ")";
-    case SyntaxKind.FunctionToken:
-      return functionToWord.get(token.fn)!;
   }
 }

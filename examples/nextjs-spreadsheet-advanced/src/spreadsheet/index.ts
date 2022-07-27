@@ -15,7 +15,7 @@ import {
 import { removeFromArray } from "./utils";
 import type { Presence, Storage, UserMeta, Row, Column } from "../types";
 
-export type LiveSpreadsheet = {
+export type Spreadsheet = {
   insertColumn(index: number, width: number): void;
   insertRow(index: number, width: number): void;
   resizeColumn(index: number, width: number): void;
@@ -40,58 +40,58 @@ export type LiveSpreadsheet = {
 
 export async function createSpreadsheet(
   room: Room<Presence, Storage, UserMeta, never>
-): Promise<LiveSpreadsheet> {
+): Promise<Spreadsheet> {
   const { root } = await room.getStorage();
 
-  const liveSpreadsheet = root.get("spreadsheet");
+  const spreadsheet = root.get("spreadsheet");
 
   function insertColumn(index: number, width: number) {
-    liveSpreadsheet
+    spreadsheet
       .get("columns")
       .insert(new LiveObject({ id: nanoid(), width }), index);
   }
 
   function insertRow(index: number, height: number) {
-    liveSpreadsheet
+    spreadsheet
       .get("rows")
       .insert(new LiveObject({ id: nanoid(), height }), index);
   }
 
   function resizeColumn(index: number, width: number) {
-    liveSpreadsheet.get("columns").get(index)?.set("width", width);
+    spreadsheet.get("columns").get(index)?.set("width", width);
   }
 
   function resizeRow(index: number, height: number) {
-    liveSpreadsheet.get("rows").get(index)?.set("height", height);
+    spreadsheet.get("rows").get(index)?.set("height", height);
   }
 
   function moveRow(from: number, to: number) {
-    liveSpreadsheet.get("rows").move(from, to);
+    spreadsheet.get("rows").move(from, to);
   }
 
   function moveColumn(from: number, to: number) {
-    liveSpreadsheet.get("columns").move(from, to);
+    spreadsheet.get("columns").move(from, to);
   }
 
   function deleteColumn(index: number) {
-    const column = liveSpreadsheet.get("columns").get(index);
+    const column = spreadsheet.get("columns").get(index);
 
     // TODO: BATCHING
-    liveSpreadsheet.get("columns").delete(index);
+    spreadsheet.get("columns").delete(index);
 
-    for (const row of liveSpreadsheet.get("rows").toArray()) {
-      liveSpreadsheet.get("cells").delete(column!.get("id") + row.get("id"));
+    for (const row of spreadsheet.get("rows").toArray()) {
+      spreadsheet.get("cells").delete(column!.get("id") + row.get("id"));
     }
   }
 
   function deleteRow(index: number) {
-    const row = liveSpreadsheet.get("rows").get(index);
+    const row = spreadsheet.get("rows").get(index);
 
     // TODO: BATCHING
-    liveSpreadsheet.get("rows").delete(index);
+    spreadsheet.get("rows").delete(index);
 
-    for (const column of liveSpreadsheet.get("columns").toArray()) {
-      liveSpreadsheet.get("cells").delete(column.get("id") + row!.get("id"));
+    for (const column of spreadsheet.get("columns").toArray()) {
+      spreadsheet.get("cells").delete(column.get("id") + row!.get("id"));
     }
   }
 
@@ -101,8 +101,8 @@ export async function createSpreadsheet(
     const columnIndex = convertLetterToNumber(letter);
     const rowIndex = Number.parseInt(number) - 1;
 
-    const column = liveSpreadsheet.get("columns").get(columnIndex)?.get("id")!;
-    const row = liveSpreadsheet.get("rows").get(rowIndex)?.get("id")!;
+    const column = spreadsheet.get("columns").get(columnIndex)?.get("id")!;
+    const row = spreadsheet.get("rows").get(rowIndex)?.get("id")!;
 
     return { kind: SyntaxKind.RefToken, ref: column + row };
   }
@@ -111,10 +111,10 @@ export async function createSpreadsheet(
     const columnId = token.ref.substring(0, token.ref.length / 2);
     const rowId = token.ref.substring(token.ref.length / 2);
 
-    const columnIndex = liveSpreadsheet
+    const columnIndex = spreadsheet
       .get("columns")
       .findIndex((column) => column.get("id") === columnId);
-    const rowIndex = liveSpreadsheet
+    const rowIndex = spreadsheet
       .get("rows")
       .findIndex((row) => row.get("id") === rowId);
 
@@ -141,7 +141,7 @@ export async function createSpreadsheet(
     );
     const newExp = tokensWithRefs.map(tokenToString).join("");
 
-    const cells = liveSpreadsheet.get("cells");
+    const cells = spreadsheet.get("cells");
 
     const cell = cells.get(columnId + rowId);
 
@@ -178,7 +178,7 @@ export async function createSpreadsheet(
   }
 
   function evaluateCell(columnId: string, rowId: string) {
-    const cell = liveSpreadsheet.get("cells").get(columnId + rowId);
+    const cell = spreadsheet.get("cells").get(columnId + rowId);
     return interpreter(cell?.get("value") || "", evaluateCellRef);
   }
 
@@ -188,7 +188,7 @@ export async function createSpreadsheet(
   }
 
   function getCellExpressionDisplay(columnId: string, rowId: string) {
-    const cell = liveSpreadsheet.get("cells").get(columnId + rowId);
+    const cell = spreadsheet.get("cells").get(columnId + rowId);
     if (cell == null) {
       return "";
     }
@@ -220,15 +220,13 @@ export async function createSpreadsheet(
   const columnsCallback: Array<(columns: Column[]) => void> = [];
   function onColumnsChange(callback: (columns: Column[]) => void) {
     columnsCallback.push(callback);
-    callback(liveSpreadsheet.get("columns").map((col) => col.toObject()));
+    callback(spreadsheet.get("columns").map((col) => col.toObject()));
     return () => removeFromArray(columnsCallback, callback);
   }
   room.subscribe(
-    liveSpreadsheet.get("columns"),
+    spreadsheet.get("columns"),
     () => {
-      const columns = liveSpreadsheet
-        .get("columns")
-        .map((col) => col.toObject());
+      const columns = spreadsheet.get("columns").map((col) => col.toObject());
       for (const callback of columnsCallback) {
         callback(columns);
       }
@@ -239,13 +237,13 @@ export async function createSpreadsheet(
   const rowsCallback: Array<(rows: Row[]) => void> = [];
   function onRowsChange(callback: (rows: Row[]) => void) {
     rowsCallback.push(callback);
-    callback(liveSpreadsheet.get("rows").map((row) => row.toObject()));
+    callback(spreadsheet.get("rows").map((row) => row.toObject()));
     return () => removeFromArray(rowsCallback, callback);
   }
   room.subscribe(
-    liveSpreadsheet.get("rows"),
+    spreadsheet.get("rows"),
     () => {
-      const rows = liveSpreadsheet.get("rows").map((row) => row.toObject());
+      const rows = spreadsheet.get("rows").map((row) => row.toObject());
       for (const callback of rowsCallback) {
         callback(rows);
       }
@@ -257,7 +255,7 @@ export async function createSpreadsheet(
   function onCellsChange(callback: (cells: Record<string, string>) => void) {
     cellCallbacks.push(callback);
     const cells = Object.fromEntries(
-      Array.from(liveSpreadsheet.get("cells").entries()).map(([key, cell]) => [
+      Array.from(spreadsheet.get("cells").entries()).map(([key, cell]) => [
         key,
         getCellDisplay(
           key.substring(0, key.length / 2),
@@ -269,18 +267,16 @@ export async function createSpreadsheet(
     return () => removeFromArray(cellCallbacks, callback);
   }
   room.subscribe(
-    liveSpreadsheet.get("cells"),
+    spreadsheet.get("cells"),
     () => {
       const cells = Object.fromEntries(
-        Array.from(liveSpreadsheet.get("cells").entries()).map(
-          ([key, cell]) => [
-            key,
-            getCellDisplay(
-              key.substring(0, key.length / 2),
-              key.substring(key.length / 2)
-            ),
-          ]
-        )
+        Array.from(spreadsheet.get("cells").entries()).map(([key, cell]) => [
+          key,
+          getCellDisplay(
+            key.substring(0, key.length / 2),
+            key.substring(key.length / 2)
+          ),
+        ])
       );
       for (const callback of cellCallbacks) {
         callback(cells);

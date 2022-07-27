@@ -1,5 +1,5 @@
-import tokenizer, { Function } from "./tokenizer";
-import parser, { NodeKind, type CallExpression } from "./parser";
+import tokenizer from "./tokenizer";
+import parser, { NodeKind } from "./parser";
 import type {
   NumberLiteral,
   BinaryExpression,
@@ -42,8 +42,6 @@ function evaluateAst(
         return visitNumberLiteral(node);
       case NodeKind.Ref:
         return visitCellRef(node);
-      case NodeKind.CallExpression:
-        return visitCallExpression(node);
       default:
         throw new Error(`Unexpected node kind: ${node}`);
     }
@@ -83,20 +81,6 @@ function evaluateAst(
     return {
       value: getCellValue(node.ref),
     };
-  }
-
-  function visitCallExpression(node: CallExpression): NumberExpressionResult {
-    switch (node.fn) {
-      case Function.Sum: {
-        let result = 0;
-        for (const expression of node.params.map(visit)) {
-          result += expression.value;
-        }
-        return {
-          value: result,
-        };
-      }
-    }
   }
 
   return visit(ast);
