@@ -2,7 +2,7 @@ import styles from "../../styles/DocumentTitle.module.css";
 import { BlockType, DocumentMeta } from "../types";
 import classNames from "classnames";
 import { LiveObject } from "@liveblocks/client";
-import { useList } from "../liveblocks.config";
+import { useList, useUpdateMyPresence } from "../liveblocks.config";
 import { ID_TITLE_BLOCK, MAX_TITLE_LENGTH } from "../constants";
 import useInsertBlockByIndex from "../hooks/useInsertBlockByIndex";
 import focusTextBlockById from "../utils/focusTextBlockById";
@@ -19,6 +19,7 @@ export default function DocumentTitle({ meta }: Props) {
   const { title } = meta.toObject();
   const insertBlockByIndex = useInsertBlockByIndex();
   const blockIds = useList("blockIds");
+  const setPresence = useUpdateMyPresence();
 
   return (
     <div
@@ -44,6 +45,9 @@ export default function DocumentTitle({ meta }: Props) {
               return;
             }
             meta.set("title", element.value);
+          }}
+          onFocus={() => {
+            setPresence({ selectedBlockIds: [] });
           }}
           value={title ? title : ""}
           onKeyDown={(e) => {
