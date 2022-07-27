@@ -13,13 +13,13 @@ const getHtmlIndexPositionFromInnerTextPosition = (
       break;
     }
 
-    if (ignoreHtmlChars === true && isParsingHTMLEntity) {
+    if (ignoreHtmlChars && isParsingHTMLEntity) {
       if (char === ";") {
         isParsingHTMLEntity = false;
       } else {
         offset++;
       }
-    } else if (ignoreHtmlChars === true && char === "&") {
+    } else if (ignoreHtmlChars && char === "&") {
       isParsingHTMLEntity = true;
       offset++;
     } else if (isParsingHTMLTag) {

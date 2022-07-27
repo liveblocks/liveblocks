@@ -23,7 +23,6 @@ import useBlockAbove from "../hooks/useBlockAbove";
 import convertBlockNodeToHtml from "../utils/convertBlockNodeToHtml";
 import getInnerTextFromHtml from "../utils/getInnerTextFromHtml";
 import useReturnKeyTextBlock from "../hooks/useReturnKeyTextBlock";
-import { b } from "@liveblocks/client/shared";
 
 type Props = {
   id: string;
@@ -94,6 +93,8 @@ export default function BlockText({
           }
 
           const caretPosition = getInnerTextCaretPosition(element, selection);
+          const hasTextSelected =
+            Math.abs(selection.anchorOffset - selection.focusOffset) > 0;
 
           if (caretPosition == null) {
             return;
@@ -106,6 +107,10 @@ export default function BlockText({
               }
 
               if (!isBlockTopLevelNodeEmpty(node) && caretPosition !== 0) {
+                break;
+              }
+
+              if (hasTextSelected) {
                 break;
               }
 

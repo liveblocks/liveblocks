@@ -59,8 +59,6 @@ export default function useReturnKeyTextBlock() {
             true
           );
 
-          console.log(caretPosition, htmlCaretPosition, element.innerHTML);
-
           newCurrentBlockNode = convertHtmlToBlockTopLevelNode(
             currentBlock.get("node").type,
             element.innerHTML.substring(0, htmlCaretPosition)
