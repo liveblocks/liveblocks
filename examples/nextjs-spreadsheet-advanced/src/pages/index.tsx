@@ -30,12 +30,12 @@ import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
 import { HandlerIcon, CrossIcon } from "../icons";
-import { Row, Column, CellData } from "../types";
+import { Row, Column, CellData, FixedArray, Storage } from "../types";
 import styles from "./index.module.css";
 import Avatar from "../components/Avatar";
 
-const GRID_INITIAL_ROWS = 6;
-const GRID_INITIAL_COLUMNS = 4;
+const GRID_INITIAL_ROWS = 4 as const;
+const GRID_INITIAL_COLUMNS = 4 as const;
 const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const COLUMN_MIN_WIDTH = 80;
@@ -425,30 +425,57 @@ function Example() {
   );
 }
 
+type InitialGrid = FixedArray<
+  FixedArray<string, typeof GRID_INITIAL_COLUMNS>,
+  typeof GRID_INITIAL_ROWS
+>;
+
+const initialGrid: InitialGrid = [
+  ["3", "=A1*3", "=B1%2", "=B1/4"],
+  ["", "", "", ""],
+  ["", "", "", ""],
+  ["", "", "", ""],
+];
+
+const initialRows = Array.from(
+  { length: GRID_INITIAL_ROWS },
+  () => new LiveObject({ id: nanoid(), height: ROW_INITIAL_HEIGHT })
+);
+const initialColumns = Array.from(
+  { length: GRID_INITIAL_COLUMNS },
+  () => new LiveObject({ id: nanoid(), width: COLUMN_INITIAL_WIDTH })
+);
+const initialCells = initialGrid
+  .flatMap((row, y) => {
+    return row.map((cell, x) => {
+      if (cell) {
+        const columnId = initialColumns[x].get("id");
+        const rowId = initialRows[y].get("id");
+
+        return [
+          `${columnId}${rowId}`,
+          new LiveObject({ value: cell }),
+        ] as readonly [string, LiveObject<CellData>];
+      }
+    });
+  })
+  .filter((cell) => Boolean(cell)) as [string, LiveObject<CellData>][];
+
+export const initialStorage: Storage = {
+  spreadsheet: new LiveObject({
+    cells: new LiveMap<string, LiveObject<CellData>>(initialCells),
+    rows: new LiveList<LiveObject<Row>>(initialRows),
+    columns: new LiveList<LiveObject<Column>>(initialColumns),
+  }),
+};
+
 export default function Page() {
   const roomId = useOverrideRoomId("nextjs-spreadsheet-advanced");
 
   return (
     <RoomProvider
       id={roomId}
-      initialStorage={{
-        spreadsheet: new LiveObject({
-          cells: new LiveMap<string, LiveObject<CellData>>(),
-          rows: new LiveList<LiveObject<Row>>(
-            Array.from(
-              { length: GRID_INITIAL_ROWS },
-              () => new LiveObject({ id: nanoid(), height: ROW_INITIAL_HEIGHT })
-            )
-          ),
-          columns: new LiveList<LiveObject<Column>>(
-            Array.from(
-              { length: GRID_INITIAL_COLUMNS },
-              () =>
-                new LiveObject({ id: nanoid(), width: COLUMN_INITIAL_WIDTH })
-            )
-          ),
-        }),
-      }}
+      initialStorage={initialStorage}
       initialPresence={{
         selectedCell: null,
       }}

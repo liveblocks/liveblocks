@@ -36,3 +36,15 @@ export type UserMeta = {
   id: string;
   info: UserInfo;
 };
+
+export type FixedArray<T, N extends number> = N extends N
+  ? number extends N
+    ? T[]
+    : RecursiveFixedArray<T, N, []>
+  : never;
+
+type RecursiveFixedArray<
+  T,
+  N extends number,
+  R extends unknown[]
+> = R["length"] extends N ? R : RecursiveFixedArray<T, N, [T, ...R]>;
