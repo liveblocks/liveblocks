@@ -10,6 +10,11 @@ const convertBlockNodeToHtml = (blockNode: BlockNode): string => {
     return html;
   }
 
+  if (blockNode.type === BlockNodeType.Br) {
+    html = "<br>";
+    return html;
+  }
+
   for (let i = 0; i < blockNode.children.length; i++) {
     const childNode = blockNode.children[i];
 

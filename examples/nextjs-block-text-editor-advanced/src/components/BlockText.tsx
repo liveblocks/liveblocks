@@ -137,6 +137,10 @@ export default function BlockText({
               break;
 
             case "Enter":
+              if (e.shiftKey) {
+                return;
+              }
+
               e.preventDefault();
               handleReturnKeyTextBlock(block, blockId, element, caretPosition);
               break;

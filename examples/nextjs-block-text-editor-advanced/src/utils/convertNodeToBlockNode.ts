@@ -23,6 +23,17 @@ const convertNodeToBlockNode = (node: Node): BlockNode => {
         type: BlockNodeType.Underline,
         children: convertNodeChildrenToBlockNode(node),
       };
+    case "DIV":
+    case "SPAN":
+      return {
+        type: BlockNodeType.Misc,
+        children: convertNodeChildrenToBlockNode(node),
+      };
+    case "BR":
+      return {
+        type: BlockNodeType.Br,
+      };
+
     default:
     case "#text":
       return {

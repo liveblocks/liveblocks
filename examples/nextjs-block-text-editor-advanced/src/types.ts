@@ -47,6 +47,8 @@ export enum BlockNodeType {
   Italic,
   Underline,
   Strikethrough,
+  Misc,
+  Br,
   Text,
 }
 
@@ -59,6 +61,8 @@ export type BlockNode =
   | UnderlineBlockNode
   | ItalicBlockNode
   | StrikethroughBlockNode
+  | MiscBlockNode
+  | BrBlockNode
   | TextBlockNode;
 
 export type BlockTopLevelNodeType =
@@ -111,6 +115,15 @@ export type UnderlineBlockNode = {
 export type StrikethroughBlockNode = {
   type: BlockNodeType.Strikethrough;
   children: BlockNode[];
+};
+
+export type MiscBlockNode = {
+  type: BlockNodeType.Misc;
+  children: BlockNode[];
+};
+
+export type BrBlockNode = {
+  type: BlockNodeType.Br;
 };
 
 export type TextBlockNode = {
