@@ -16,7 +16,7 @@ import isCaretOnLastLine from "../utils/isCaretOnLastLine";
 import { useState } from "react";
 import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
 import UserTextSelection from "./UserTextSelection";
-import { USER_COLORS } from "../constants";
+import { MAX_TEXT_BLOCK_LENGTH, USER_COLORS } from "../constants";
 import getInnerTextCaretPosition from "../utils/getInnerTextCaretPosition";
 import convertHtmlToBlockTopLevelNode from "../utils/convertHtmlToBlockTopLevelNode";
 import useBlockAbove from "../hooks/useBlockAbove";
@@ -67,6 +67,7 @@ export default function BlockText({
       <TextEditor
         id={id}
         node={data.node}
+        maxLength={MAX_TEXT_BLOCK_LENGTH}
         onChange={(node) => {
           block.set("node", node);
         }}

@@ -18,6 +18,7 @@ import getInnerTextCaretPosition from "../utils/getInnerTextCaretPosition";
 type Props = {
   node: BlockTopLevelNode;
   id: string;
+  maxLength?: number;
   onTextSelectionChange?: (textSelection: TextSelection) => void;
   onChange?: (node: BlockTopLevelNode) => void;
   onBlur?: (e: FocusEvent, node: BlockTopLevelNode) => void;
@@ -29,6 +30,7 @@ type Props = {
 export default function TextEditor({
   node,
   id,
+  maxLength,
   onTextSelectionChange,
   onChange,
   onBlur,
@@ -143,6 +145,15 @@ export default function TextEditor({
         break;
     }
 
+    if (
+      maxLength &&
+      ref.current.innerText.length >= maxLength &&
+      e.key !== "Enter"
+    ) {
+      e.preventDefault();
+      return;
+    }
+
     if (onKeyDown) {
       onKeyDown(
         e,
@@ -197,6 +208,16 @@ export default function TextEditor({
   const handleOnPaste = (e: ClipboardEvent) => {
     e.preventDefault();
     const text = e.clipboardData?.getData("text/plain");
+
+    if (
+      maxLength &&
+      ref.current &&
+      text &&
+      ref.current.innerText.length + text.length >= maxLength
+    ) {
+      e.preventDefault();
+      return;
+    }
 
     if (text) {
       document.execCommand("insertText", false, text);

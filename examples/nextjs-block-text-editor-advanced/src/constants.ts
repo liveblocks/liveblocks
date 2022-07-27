@@ -1,5 +1,6 @@
 export const MAX_BLOCKS = 100;
 export const MAX_TITLE_LENGTH = 300;
+export const MAX_TEXT_BLOCK_LENGTH = 3000;
 export const ID_TITLE_BLOCK = "title-block";
 export const LOCAL_STORAGE_THEME = "theme";
 
