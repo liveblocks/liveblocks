@@ -1,6 +1,6 @@
 import styles from "../../styles/Document.module.css";
 import Header from "./Header";
-import { BlockProps, Storage } from "../types";
+import { BlockNodeType, BlockProps, BlockType, Storage } from "../types";
 import Container from "./Container";
 import Block from "./Block";
 import classNames from "classnames";
@@ -24,6 +24,8 @@ import {
 } from "@dnd-kit/sortable";
 import { LiveObject } from "@liveblocks/client";
 import { useHistory, useUpdateMyPresence } from "../liveblocks.config";
+import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
+import useInsertBlockByIndex from "../hooks/useInsertBlockByIndex";
 
 export default function Document({ meta, blocks, blockIds }: Storage) {
   const [draggingBlock, setDraggingBlock] = useState<{
@@ -33,6 +35,7 @@ export default function Document({ meta, blocks, blockIds }: Storage) {
 
   const history = useHistory();
   const updateMyPresence = useUpdateMyPresence();
+  const insertBlockByIndex = useInsertBlockByIndex();
 
   useEffect(() => {
     if (!blockIds.length) {
@@ -88,10 +91,49 @@ export default function Document({ meta, blocks, blockIds }: Storage) {
   });
 
   return (
-    <div className={styles.block_text_editor}>
+    <div
+      className={styles.block_text_editor}
+      onClick={() => {
+        // When clicking at the bottom of the document will
+        // either create a new text block at the bottom or focus
+        // on the last one if it's empty
+        const blockIdsLength = blockIds.toArray().length;
+        const lastBlockId = blockIds.get(blockIdsLength - 1);
+        const lastBlock =
+          lastBlockId !== undefined ? blocks.get(lastBlockId) : null;
+
+        if (
+          lastBlockId &&
+          lastBlock &&
+          isBlockTopLevelNodeEmpty(lastBlock.get("node"))
+        ) {
+          focusTextBlockById(lastBlockId);
+          return;
+        }
+
+        insertBlockByIndex(
+          {
+            type: BlockType.Text,
+            node: {
+              type: BlockNodeType.Paragraph,
+              children: [
+                {
+                  type: BlockNodeType.Text,
+                  text: "",
+                },
+              ],
+            },
+          },
+          blockIdsLength
+        );
+      }}
+    >
       <Header />
 
-      <div className={classNames(styles.prose, "prose")}>
+      <div
+        className={classNames(styles.prose, "prose")}
+        onClick={(e) => e.stopPropagation()}
+      >
         <Container>
           <DocumentTitle meta={meta} />
           <DndContext

@@ -17,7 +17,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-This example shows how to build a collaborative block-based text editor with
+This example shows how to build a collaborative block text editor with
 [Liveblocks](https://liveblocks.io), and [Next.js](https://nextjs.org/).
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor.png" width="500" alt="Collaborative Block Text Editor" />

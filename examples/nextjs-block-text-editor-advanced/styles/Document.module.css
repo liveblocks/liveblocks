@@ -1,8 +1,10 @@
 .block_text_editor {
   position: relative;
   min-height: 100vh;
+  padding-bottom: 6rem;
+  cursor: text;
 }
 
 .prose {
-  padding: 1rem 0 6rem;
+  padding: 1rem 0 0;
 }
