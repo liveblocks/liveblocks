@@ -18,6 +18,17 @@ export function removeFromArray<T>(array: T[], item: T): void {
   }
 }
 
+export function getCellId(columnId: string, rowId: string) {
+  return `${columnId}${rowId}`;
+}
+
+export function extractCellId(cellId: string) {
+  const columnId = cellId.substring(0, cellId.length / 2);
+  const rowId = cellId.substring(cellId.length / 2);
+
+  return [columnId, rowId] as [string, string];
+}
+
 function cellToRef(
   token: CellToken,
   columns: LiveObject<Column>[],
@@ -31,7 +42,7 @@ function cellToRef(
   const column = columns[columnIndex]?.get("id")!;
   const row = rows[rowIndex]?.get("id")!;
 
-  return { kind: SyntaxKind.RefToken, ref: column + row };
+  return { kind: SyntaxKind.RefToken, ref: getCellId(column, row) };
 }
 
 export function createInitialStorage<X extends number, Y extends number>(
@@ -51,8 +62,8 @@ export function createInitialStorage<X extends number, Y extends number>(
     .flatMap((row, y) => {
       return row.map((cell, x) => {
         if (cell) {
-          const columnId = initialColumns[x].get("id");
-          const rowId = initialRows[y].get("id");
+          const columnId = initialColumns[x].get("id") as string;
+          const rowId = initialRows[y].get("id") as string;
 
           const tokens = tokenizer(cell);
           const tokensWithRefs = tokens.map((token) =>
@@ -63,7 +74,7 @@ export function createInitialStorage<X extends number, Y extends number>(
           const newExp = tokensWithRefs.map(tokenToString).join("");
 
           return [
-            `${columnId}${rowId}`,
+            getCellId(columnId, rowId),
             new LiveObject({ value: newExp }),
           ] as readonly [string, LiveObject<CellData>];
         }

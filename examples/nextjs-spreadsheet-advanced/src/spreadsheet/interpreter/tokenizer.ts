@@ -181,7 +181,7 @@ export default function tokenizer(input: string): Token[] {
         });
       }
     } else {
-      throw new Error("Unkown character: " + char);
+      throw new Error("Unknown character: " + char);
     }
   }
 

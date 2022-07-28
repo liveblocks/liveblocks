@@ -12,7 +12,7 @@ import {
   convertNumberToLetter,
   formatExpressionResult,
 } from "./interpreter/utils";
-import { removeFromArray } from "./utils";
+import { extractCellId, getCellId, removeFromArray } from "./utils";
 import type { Presence, Storage, UserMeta, Row, Column } from "../types";
 
 export type Spreadsheet = {
@@ -80,7 +80,9 @@ export async function createSpreadsheet(
     spreadsheet.get("columns").delete(index);
 
     for (const row of spreadsheet.get("rows").toArray()) {
-      spreadsheet.get("cells").delete(column!.get("id") + row.get("id"));
+      spreadsheet
+        .get("cells")
+        .delete(getCellId(column!.get("id"), row.get("id")));
     }
   }
 
@@ -91,7 +93,9 @@ export async function createSpreadsheet(
     spreadsheet.get("rows").delete(index);
 
     for (const column of spreadsheet.get("columns").toArray()) {
-      spreadsheet.get("cells").delete(column.get("id") + row!.get("id"));
+      spreadsheet
+        .get("cells")
+        .delete(getCellId(column.get("id"), row!.get("id")));
     }
   }
 
@@ -104,12 +108,11 @@ export async function createSpreadsheet(
     const column = spreadsheet.get("columns").get(columnIndex)?.get("id")!;
     const row = spreadsheet.get("rows").get(rowIndex)?.get("id")!;
 
-    return { kind: SyntaxKind.RefToken, ref: column + row };
+    return { kind: SyntaxKind.RefToken, ref: getCellId(column, row) };
   }
 
   function refToCell(token: RefToken): CellToken {
-    const columnId = token.ref.substring(0, token.ref.length / 2);
-    const rowId = token.ref.substring(token.ref.length / 2);
+    const [columnId, rowId] = extractCellId(token.ref);
 
     const columnIndex = spreadsheet
       .get("columns")
@@ -143,10 +146,11 @@ export async function createSpreadsheet(
 
     const cells = spreadsheet.get("cells");
 
-    const cell = cells.get(columnId + rowId);
+    const cellId = getCellId(columnId, rowId);
+    const cell = cells.get(cellId);
 
     if (cell == null) {
-      cells.set(columnId + rowId, new LiveObject({ value: newExp }));
+      cells.set(cellId, new LiveObject({ value: newExp }));
     } else {
       cell.set("value", newExp);
     }
@@ -157,16 +161,14 @@ export async function createSpreadsheet(
   ) {
     room.updatePresence({
       selectedCell: coordinates
-        ? coordinates.columnId + coordinates.rowId
+        ? getCellId(coordinates.columnId, coordinates.rowId)
         : null,
     });
   }
 
   function evaluateCellRef(ref: string): number {
-    const result = evaluateCell(
-      ref.substring(0, ref.length / 2),
-      ref.substring(ref.length / 2)
-    );
+    const [columnId, rowId] = extractCellId(ref);
+    const result = evaluateCell(columnId, rowId);
     if (result.type !== "number") {
       throw new Error(
         `expected an expression result of type number but got ${JSON.stringify(
@@ -178,7 +180,7 @@ export async function createSpreadsheet(
   }
 
   function evaluateCell(columnId: string, rowId: string) {
-    const cell = spreadsheet.get("cells").get(columnId + rowId);
+    const cell = spreadsheet.get("cells").get(getCellId(columnId, rowId));
     return interpreter(cell?.get("value") || "", evaluateCellRef);
   }
 
@@ -188,7 +190,7 @@ export async function createSpreadsheet(
   }
 
   function getCellExpressionDisplay(columnId: string, rowId: string) {
-    const cell = spreadsheet.get("cells").get(columnId + rowId);
+    const cell = spreadsheet.get("cells").get(getCellId(columnId, rowId));
     if (cell == null) {
       return "";
     }
@@ -255,12 +257,9 @@ export async function createSpreadsheet(
   function onCellsChange(callback: (cells: Record<string, string>) => void) {
     cellCallbacks.push(callback);
     const cells = Object.fromEntries(
-      Array.from(spreadsheet.get("cells").entries()).map(([key, cell]) => [
+      Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
         key,
-        getCellDisplay(
-          key.substring(0, key.length / 2),
-          key.substring(key.length / 2)
-        ),
+        getCellDisplay(...extractCellId(key)),
       ])
     );
     callback(cells);
@@ -270,12 +269,9 @@ export async function createSpreadsheet(
     spreadsheet.get("cells"),
     () => {
       const cells = Object.fromEntries(
-        Array.from(spreadsheet.get("cells").entries()).map(([key, cell]) => [
+        Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
           key,
-          getCellDisplay(
-            key.substring(0, key.length / 2),
-            key.substring(key.length / 2)
-          ),
+          getCellDisplay(...extractCellId(key)),
         ])
       );
       for (const callback of cellCallbacks) {
