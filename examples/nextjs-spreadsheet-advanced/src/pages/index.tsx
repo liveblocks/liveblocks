@@ -1,6 +1,4 @@
 import cx from "classnames";
-import { History, LiveList, LiveMap, LiveObject } from "@liveblocks/client";
-import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
 import {
   ComponentProps,
@@ -27,25 +25,16 @@ import {
   ContextMenuSeparator,
 } from "../components/ContextMenu";
 import { useSpreadsheet } from "../spreadsheet/react";
-import {
-  convertLetterToNumber,
-  convertNumberToLetter,
-} from "../spreadsheet/interpreter/utils";
+import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
 import { HandlerIcon, CrossIcon } from "../icons";
-import { Row, Column, CellData, FixedArray, Storage } from "../types";
+import { Row, Column } from "../types";
 import styles from "./index.module.css";
 import Avatar from "../components/Avatar";
-import tokenizer, {
-  CellToken,
-  RefToken,
-  SyntaxKind,
-  tokenToString,
-} from "../spreadsheet/interpreter/tokenizer";
 import { createInitialStorage } from "../spreadsheet/utils";
 
 const GRID_INITIAL_ROWS = 4 as const;
-const GRID_INITIAL_COLUMNS = 4 as const;
+const GRID_INITIAL_COLUMNS = 3 as const;
 const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const COLUMN_MIN_WIDTH = 80;
@@ -439,10 +428,10 @@ const initialStorage = createInitialStorage(
   { length: GRID_INITIAL_COLUMNS, width: COLUMN_INITIAL_WIDTH },
   { length: GRID_INITIAL_ROWS, height: ROW_INITIAL_HEIGHT },
   [
-    ["3", "=A1*3", "=B1%2", "=B1/4"],
-    ["", "", "", ""],
-    ["", "", "", ""],
-    ["", "", "", ""],
+    ["3", "", ""],
+    ["=A1*3", "", ""],
+    ["=A2%2", "", ""],
+    ["=A2/4", "", ""],
   ]
 );
 
