@@ -56,7 +56,7 @@ export function createInitialStorage<X extends number, Y extends number>(
   );
   const initialRows = Array.from(
     { length: rows.length },
-    () => new LiveObject({ id: nanoid(), height: rows.length } as Row)
+    () => new LiveObject({ id: nanoid(), height: rows.height } as Row)
   );
   const initialCells = cells
     .flatMap((row, y) => {
