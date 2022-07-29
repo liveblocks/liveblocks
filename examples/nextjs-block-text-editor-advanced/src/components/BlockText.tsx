@@ -1,19 +1,17 @@
 import styles from "../../styles/BlockText.module.css";
-import { BlockTopLevelNode, TextBlock } from "../types";
+import { BlockNodeType, BlockType, TextBlock } from "../types";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
 import { LiveObject } from "@liveblocks/client";
 import useDeleteBlocksByIds from "../hooks/useDeleteBlocksByIds";
-import useInsertBlockBelow from "../hooks/useInsertBlockBelow";
 import useSelectBlockAbove from "../hooks/useSelectBlockAbove";
 import useSelectBlockBelow from "../hooks/useSelectBlockBelow";
-import { useMyPresence } from "../liveblocks.config";
+import { useList, useMyPresence } from "../liveblocks.config";
 import useOthersByBlockId from "../hooks/useOthersByBlockId";
 import Avatar from "./Avatar";
 import TextEditor from "./TextEditor";
 import isCaretOnFirstLine from "../utils/isCaretOnFirstLine";
 import isCaretOnLastLine from "../utils/isCaretOnLastLine";
-import { useState } from "react";
 import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
 import UserTextSelection from "./UserTextSelection";
 import { MAX_TEXT_BLOCK_LENGTH, USER_COLORS } from "../constants";
@@ -23,47 +21,44 @@ import useBlockAbove from "../hooks/useBlockAbove";
 import convertBlockNodeToHtml from "../utils/convertBlockNodeToHtml";
 import getInnerTextFromHtml from "../utils/getInnerTextFromHtml";
 import useReturnKeyTextBlock from "../hooks/useReturnKeyTextBlock";
+import BlockTypeSelector from "./BlockTypeSelector";
 
 type Props = {
   id: string;
   blockId: string;
   block: LiveObject<TextBlock>;
   data: TextBlock;
-  placeholder?: string;
 };
 
-export default function BlockText({
-  id,
-  blockId,
-  block,
-  data,
-  placeholder,
-}: Props) {
+export default function BlockText({ id, blockId, block, data }: Props) {
   const deleteBlocksByIds = useDeleteBlocksByIds();
   const handleReturnKeyTextBlock = useReturnKeyTextBlock();
   const selectBlockAbove = useSelectBlockAbove();
   const selectBlockBelow = useSelectBlockBelow();
   const othersByBlockId = useOthersByBlockId(blockId);
-  const blockAbove = useBlockAbove(blockId);
+  const blockAbove = useBlockAbove(blockId, BlockType.Text);
 
   const [{ selectedBlockIds }, setPresence] = useMyPresence();
   const isSelected = selectedBlockIds.find((id) => id === blockId)
     ? true
     : false;
-  const [isFocused, setIsFocused] = useState(false);
   const isElementFocused =
     document.getElementById(id) === document.activeElement;
+
+  const blocksIds = useList("blockIds");
+  const index = blocksIds?.findIndex((id) => blockId === id);
 
   return (
     <div
       className={classNames(styles.block_text, {
-        [styles.block_text_selected]: isFocused,
+        [styles.block_text_selected]: isElementFocused,
       })}
     >
-      {placeholder && isFocused && isBlockTopLevelNodeEmpty(data.node) && (
-        <div className={classNames(styles.placeholder, "placeholder")}>
-          {placeholder}
-        </div>
+      {isElementFocused && isBlockTopLevelNodeEmpty(data.node) && index && (
+        // <div className={classNames(styles.placeholder, "placeholder")}>
+        //   Type something here…
+        // </div>
+        <BlockTypeSelector index={index} placeholder="Type '/' to insert…" />
       )}
 
       <TextEditor
@@ -77,16 +72,11 @@ export default function BlockText({
           setPresence({ textSelection });
         }}
         onFocus={(e) => {
-          setIsFocused(true);
-
           if (isSelected) {
             return;
           }
 
           setPresence({ selectedBlockIds: [blockId] });
-        }}
-        onBlur={() => {
-          setIsFocused(false);
         }}
         onKeyDown={(e, node) => {
           const selection = window.getSelection();
@@ -117,12 +107,19 @@ export default function BlockText({
                 break;
               }
 
+              const blockAboveData = blockAbove.toObject();
+
+              if (blockAboveData.type !== BlockType.Text) {
+                break;
+              }
+
               e.preventDefault();
 
-              const nodeAbove = blockAbove.get("node");
+              const nodeAbove = blockAboveData.node;
 
               if (caretPosition === 0) {
                 blockAbove.set(
+                  // @ts-ignore
                   "node",
                   convertHtmlToBlockTopLevelNode(
                     nodeAbove.type,

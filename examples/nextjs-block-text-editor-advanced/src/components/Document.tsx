@@ -25,7 +25,7 @@ import {
 import { LiveObject } from "@liveblocks/client";
 import { useHistory, useUpdateMyPresence } from "../liveblocks.config";
 import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
-import useInsertBlockByIndex from "../hooks/useInsertBlockByIndex";
+import useInsertBlockAtIndex from "../hooks/useInsertBlockAtIndex";
 
 export default function Document({ meta, blocks, blockIds }: Storage) {
   const [draggingBlock, setDraggingBlock] = useState<{
@@ -35,7 +35,7 @@ export default function Document({ meta, blocks, blockIds }: Storage) {
 
   const history = useHistory();
   const updateMyPresence = useUpdateMyPresence();
-  const insertBlockByIndex = useInsertBlockByIndex();
+  const insertBlockAtIndex = useInsertBlockAtIndex();
 
   useEffect(() => {
     if (!blockIds.length) {
@@ -111,7 +111,7 @@ export default function Document({ meta, blocks, blockIds }: Storage) {
           return;
         }
 
-        insertBlockByIndex(
+        insertBlockAtIndex(
           {
             type: BlockType.Text,
             node: {

@@ -26,18 +26,19 @@ export default function BlockInlineActions({ blockId }: Props) {
     <div className={styles.inline_actions}>
       <Tooltip content="Delete">
         <Button
-          type="ghost"
+          appearance="ghost"
           onClick={() => {
             deleteBlocksByIds([blockId]);
           }}
           ariaLabel="Delete"
+          isSquare
         >
           <MinusIcon />
         </Button>
       </Tooltip>
       <Tooltip content="Insert block below">
         <Button
-          type="ghost"
+          appearance="ghost"
           onClick={() => {
             insertBlockBelow(
               {
@@ -56,16 +57,18 @@ export default function BlockInlineActions({ blockId }: Props) {
             );
           }}
           ariaLabel="Insert block below"
+          isSquare
         >
           <PlusIcon />
         </Button>
       </Tooltip>
       <Tooltip content="Drag to reorder">
         <Button
-          type="ghost"
+          appearance="ghost"
           ariaLabel="Drag to reorder"
           ref={setActivatorNodeRef}
           {...listeners}
+          isSquare
         >
           <DragIcon />
         </Button>
