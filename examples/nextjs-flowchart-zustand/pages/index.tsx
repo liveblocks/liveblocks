@@ -37,7 +37,7 @@ export default function Index() {
       onConnect={onConnect}
       fitView
     >
-      {/*<MiniMap />*/}
+      <MiniMap />
       <Controls />
     </ReactFlow>
   );

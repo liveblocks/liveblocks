@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Live Flow Chart (TODO README)
+# Live Flowchart (TODO README)
 
 <p>
   <a href="https://liveblocks.io/examples/live-avatars/nextjs/preview">
