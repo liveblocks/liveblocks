@@ -12,7 +12,8 @@ import styles from "../../styles/Button.module.css";
 
 type Props = {
   children: ReactNode;
-  type: "ghost" | "secondary" | "primary";
+  appearance: "ghost" | "secondary" | "primary";
+  isSquare?: boolean;
   onClick?: MouseEventHandler<HTMLButtonElement>;
   onKeyDown?: KeyboardEventHandler<HTMLButtonElement>;
   onPointerEnter?: PointerEventHandler<HTMLButtonElement>;
@@ -22,13 +23,15 @@ type Props = {
   onBlur?: FocusEventHandler<HTMLButtonElement>;
   onTouchStart?: TouchEventHandler<HTMLButtonElement>;
   ariaLabel?: string;
+  type?: "submit" | "reset" | "button";
 };
 
 const Button = forwardRef<HTMLButtonElement, Props>(
   (
     {
       children,
-      type,
+      appearance,
+      isSquare,
       onClick,
       onKeyDown,
       onPointerEnter,
@@ -38,6 +41,7 @@ const Button = forwardRef<HTMLButtonElement, Props>(
       onBlur,
       onTouchStart,
       ariaLabel,
+      type,
     },
     ref
   ) => {
@@ -45,9 +49,10 @@ const Button = forwardRef<HTMLButtonElement, Props>(
       <button
         ref={ref}
         className={classNames(styles.button, {
-          [styles.button_ghost]: type === "ghost",
-          [styles.button_secondary]: type === "secondary",
-          [styles.button_primary]: type === "primary",
+          [styles.button_ghost]: appearance === "ghost",
+          [styles.button_secondary]: appearance === "secondary",
+          [styles.button_primary]: appearance === "primary",
+          [styles.button_square]: isSquare,
         })}
         onClick={onClick}
         onKeyDown={onKeyDown}
@@ -58,6 +63,7 @@ const Button = forwardRef<HTMLButtonElement, Props>(
         onPointerDown={onPointerDown}
         onTouchStart={onTouchStart}
         aria-label={ariaLabel}
+        type={type}
       >
         {children}
       </button>

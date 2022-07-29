@@ -4,11 +4,10 @@ import classNames from "classnames";
 import { LiveObject } from "@liveblocks/client";
 import { useList, useUpdateMyPresence } from "../liveblocks.config";
 import { ID_TITLE_BLOCK, MAX_TITLE_LENGTH } from "../constants";
-import useInsertBlockByIndex from "../hooks/useInsertBlockByIndex";
+import useInsertBlockAtIndex from "../hooks/useInsertBlockAtIndex";
 import focusTextBlockById from "../utils/focusTextBlockById";
 import { BlockNodeType } from "../types";
 import { createRef } from "react";
-import { c } from "@liveblocks/client/shared";
 
 type Props = {
   meta: LiveObject<DocumentMeta>;
@@ -17,7 +16,7 @@ type Props = {
 export default function DocumentTitle({ meta }: Props) {
   const ref = createRef<HTMLTextAreaElement>();
   const { title } = meta.toObject();
-  const insertBlockByIndex = useInsertBlockByIndex();
+  const insertBlockAtIndex = useInsertBlockAtIndex();
   const blockIds = useList("blockIds");
   const setPresence = useUpdateMyPresence();
 
@@ -54,7 +53,7 @@ export default function DocumentTitle({ meta }: Props) {
             switch (e.key) {
               case "Enter":
                 e.preventDefault();
-                insertBlockByIndex(
+                insertBlockAtIndex(
                   {
                     type: BlockType.Text,
                     node: {

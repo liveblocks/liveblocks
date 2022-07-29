@@ -11,7 +11,7 @@ import {
 import { BlockProps } from "../types";
 import focusTextBlockById from "../utils/focusTextBlockById";
 
-export default function useInsertBlockByIndex() {
+export default function useInsertBlockAtIndex() {
   const blocks = useMap("blocks");
   const blockIds = useList("blockIds");
   const batch = useBatch();

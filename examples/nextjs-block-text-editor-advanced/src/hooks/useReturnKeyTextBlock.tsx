@@ -28,7 +28,7 @@ export default function useReturnKeyTextBlock() {
 
   return useCallback(
     (
-      currentBlock: LiveObject<BlockProps>,
+      currentBlock: LiveObject<TextBlock>,
       blockId: string,
       element: HTMLElement,
       caretPosition: number

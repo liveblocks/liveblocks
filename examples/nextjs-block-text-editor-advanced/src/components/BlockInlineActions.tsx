@@ -5,10 +5,9 @@ import PlusIcon from "../icons/plus.svg";
 import MinusIcon from "../icons/minus.svg";
 import DragIcon from "../icons/drag.svg";
 import useInsertBlockBelow from "../hooks/useInsertBlockBelow";
-import { BlockType } from "../types";
 import { useDraggable } from "@dnd-kit/core";
-import { BlockNodeType } from "../types";
 import Tooltip from "./Tooltip";
+import BlockTypeSelector from "./BlockTypeSelector";
 
 type Props = {
   blockId: string;
@@ -17,7 +16,6 @@ type Props = {
 export default function BlockInlineActions({ blockId }: Props) {
   const deleteBlocksByIds = useDeleteBlocksByIds();
   const insertBlockBelow = useInsertBlockBelow();
-
   const { listeners, setActivatorNodeRef } = useDraggable({
     id: blockId,
   });
@@ -26,46 +24,34 @@ export default function BlockInlineActions({ blockId }: Props) {
     <div className={styles.inline_actions}>
       <Tooltip content="Delete">
         <Button
-          type="ghost"
+          appearance="ghost"
           onClick={() => {
             deleteBlocksByIds([blockId]);
           }}
           ariaLabel="Delete"
+          isSquare
         >
           <MinusIcon />
         </Button>
       </Tooltip>
       <Tooltip content="Insert block below">
-        <Button
-          type="ghost"
-          onClick={() => {
-            insertBlockBelow(
-              {
-                type: BlockType.Text,
-                node: {
-                  type: BlockNodeType.Paragraph,
-                  children: [
-                    {
-                      type: BlockNodeType.Text,
-                      text: "",
-                    },
-                  ],
-                },
-              },
-              blockId
-            );
+        <BlockTypeSelector
+          setBlock={(block) => {
+            insertBlockBelow(block, blockId);
           }}
-          ariaLabel="Insert block below"
         >
-          <PlusIcon />
-        </Button>
+          <Button appearance="ghost" ariaLabel="Insert block below" isSquare>
+            <PlusIcon />
+          </Button>
+        </BlockTypeSelector>
       </Tooltip>
       <Tooltip content="Drag to reorder">
         <Button
-          type="ghost"
+          appearance="ghost"
           ariaLabel="Drag to reorder"
           ref={setActivatorNodeRef}
           {...listeners}
+          isSquare
         >
           <DragIcon />
         </Button>

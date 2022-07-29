@@ -50,12 +50,12 @@
 }
 
 .select_item {
-  height: 28px;
+  height: 1.75rem;
   border-radius: 6px;
   padding: 0 1rem 0 1.75rem;
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: default;
 }
 

@@ -115,48 +115,52 @@ export default function TextEditorToolbar({
       <div className={styles.group}>
         <Tooltip content="Toggle Bold">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Bold"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => {
               applyFormatToSelection(selection, "bold");
             }}
+            isSquare
           >
             <BoldIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Italic">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Italic"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => {
               applyFormatToSelection(selection, "italic");
             }}
+            isSquare
           >
             <ItalicIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Underline">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Underline"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => {
               applyFormatToSelection(selection, "underline");
             }}
+            isSquare
           >
             <UnderlineIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Strikethrough">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Strikethrough"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => {
               applyFormatToSelection(selection, "strikeThrough");
             }}
+            isSquare
           >
             <StrikethroughIcon />
           </Button>
