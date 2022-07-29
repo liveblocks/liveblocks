@@ -10,12 +10,16 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     return res.status(403).end();
   }
 
+  // For the cursor example, we're generating random users
+  // and set their info from the authentication endpoint
+  // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
     },
   });
   return res.status(response.status).end(response.body);
@@ -47,7 +51,7 @@ const COLORS = [
 function noKeyWarning() {
   return process.env.CODESANDBOX_SSE
     ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-advanced#codesandbox.\n`
+    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-advanced#codesandbox.\n`
     : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-advanced#getting-started.\n`;
+    `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-cursors-advanced#getting-started.\n`;
 }

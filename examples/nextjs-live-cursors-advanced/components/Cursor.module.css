@@ -6,7 +6,7 @@
   user-select: none;
 }
 
-.nameWrapper {
+.nameWrapper, .avatarWrapper {
   position: relative;
 }
 
@@ -44,4 +44,16 @@
 .namePillName {
   z-index: 10;
   position: relative;
+}
+
+.avatar {
+  display: block;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  overflow: hidden;
+  border-radius: 9999px;
+  outline-width: 2px;
+  outline-style: solid;
+  outline-offset: 2px;
 }
