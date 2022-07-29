@@ -1,0 +1,10 @@
+.tooltip {
+  max-width: 14rem;
+  color: rgba(var(--color-surface), 1);
+  background: rgba(var(--color-foreground), 0.92);
+  backdrop-filter: blur(8px);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  z-index: 30;
+}
