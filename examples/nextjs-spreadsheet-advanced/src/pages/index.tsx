@@ -48,6 +48,8 @@ import { Row, Column } from "../types";
 import styles from "./index.module.css";
 import Avatar from "../components/Avatar";
 import { createInitialStorage } from "../spreadsheet/utils";
+import Tooltip from "../components/Tooltip";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const GRID_INITIAL_ROWS = 4 as const;
 const GRID_INITIAL_COLUMNS = 3 as const;
@@ -55,7 +57,6 @@ const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const COLUMN_MIN_WIDTH = 80;
 const COLUMN_MAX_WIDTH = 300;
-const COLUMN_MIN_ICON = 2;
 const ROW_INITIAL_HEIGHT = 32;
 const ROW_MAX_HEIGHT = 100;
 
@@ -219,22 +220,29 @@ function Header({
           }
         >
           <div className={styles.sheet_header}>
-            <button
-              className={cx(
-                styles.sheet_header_control,
-                styles.sheet_header_handler
-              )}
-              ref={setActivatorNodeRef}
-              {...listeners}
-            >
-              <HandlerIcon />
-            </button>
+            <Tooltip content="Drag to Reorder">
+              <button
+                className={cx(
+                  styles.sheet_header_control,
+                  styles.sheet_header_handler
+                )}
+                ref={setActivatorNodeRef}
+                {...listeners}
+              >
+                <HandlerIcon />
+              </button>
+            </Tooltip>
             <span className={styles.sheet_header_label}>
               {isColumn ? convertNumberToLetter(index) : index + 1}
             </span>
-            <button className={styles.sheet_header_control} onClick={onDelete}>
-              <CrossIcon />
-            </button>
+            <Tooltip content={`Delete ${isColumn ? "Column" : "Row"}`}>
+              <button
+                className={styles.sheet_header_control}
+                onClick={onDelete}
+              >
+                <CrossIcon />
+              </button>
+            </Tooltip>
           </div>
         </ContextMenu>
       </Resizable>
@@ -356,36 +364,36 @@ function Example() {
       <div className={styles.header}>
         <div className={styles.buttons}>
           <div className={styles.button_group} role="group">
-            <button
-              className={styles.button}
-              onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
-            >
-              <AddColumnAfterIcon />
-              {columns.length > COLUMN_MIN_ICON && <span>Add Column</span>}
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
-            >
-              <AddRowAfterIcon />
-              {columns.length > COLUMN_MIN_ICON && <span>Add Row</span>}
-            </button>
+            <Tooltip content="Add Column">
+              <button
+                className={styles.button}
+                onClick={() =>
+                  insertColumn(columns.length, COLUMN_INITIAL_WIDTH)
+                }
+              >
+                <AddColumnAfterIcon />
+              </button>
+            </Tooltip>
+            <Tooltip content="Add Row">
+              <button
+                className={styles.button}
+                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+              >
+                <AddRowAfterIcon />
+              </button>
+            </Tooltip>
           </div>
           <div className={styles.button_group} role="group">
-            <button
-              className={styles.button}
-              onClick={() => history.undo()}
-              aria-label="Undo"
-            >
-              <UndoIcon />
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => history.redo()}
-              aria-label="Redo"
-            >
-              <RedoIcon />
-            </button>
+            <Tooltip content="Undo">
+              <button className={styles.button} onClick={() => history.undo()}>
+                <UndoIcon />
+              </button>
+            </Tooltip>
+            <Tooltip content="Redo">
+              <button className={styles.button} onClick={() => history.redo()}>
+                <RedoIcon />
+              </button>
+            </Tooltip>
           </div>
         </div>
         <div className={styles.avatars}>
@@ -486,7 +494,9 @@ export default function Page() {
         selectedCell: null,
       }}
     >
-      <Example />
+      <TooltipProvider>
+        <Example />
+      </TooltipProvider>
     </RoomProvider>
   );
 }

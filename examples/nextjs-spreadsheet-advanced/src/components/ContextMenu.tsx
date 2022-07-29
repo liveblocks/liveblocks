@@ -6,7 +6,6 @@ import {
   Content,
   Item,
   Separator,
-  ContextMenuTriggerProps,
   ContextMenuContentProps,
   ContextMenuItemProps,
   ContextMenuSeparatorProps,
@@ -14,7 +13,7 @@ import {
 import { ReactNode } from "react";
 import styles from "./ContextMenu.module.css";
 
-interface Props extends ContextMenuTriggerProps {
+interface Props extends ContextMenuContentProps {
   content: ContextMenuContentProps["children"];
 }
 
@@ -23,12 +22,14 @@ interface ItemProps extends ContextMenuItemProps {
   icon?: ReactNode;
 }
 
-export function ContextMenu({ children, content, ...props }: Props) {
+export function ContextMenu({ children, content, className, ...props }: Props) {
   return (
     <Root>
-      <Trigger {...props}>{children}</Trigger>
+      <Trigger asChild>{children}</Trigger>
       <Portal>
-        <Content className={styles.menu}>{content}</Content>
+        <Content className={cx(className, styles.menu)} {...props}>
+          {content}
+        </Content>
       </Portal>
     </Root>
   );
