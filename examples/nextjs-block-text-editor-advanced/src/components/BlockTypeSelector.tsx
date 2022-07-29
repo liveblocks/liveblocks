@@ -1,17 +1,18 @@
 import classNames from "classnames";
 import { createRef, useEffect, useRef, useState } from "react";
 import styles from "../../styles/BlockTypeSelector.module.css";
-import useInsertBlockAtIndex from "../hooks/useInsertBlockAtIndex";
 import { BlockNodeType, BlockType } from "../types";
 import { ScrollArea } from "./ScrollArea";
+import { useMap } from "../liveblocks.config";
+import { LiveObject } from "@liveblocks/client";
 
 type Props = {
-  index: number;
+  blockId: string;
   placeholder?: string;
 };
 
 export default function BlockTypeSelector({
-  index,
+  blockId,
   placeholder = "Type '/' to insert block",
 }: Props) {
   const inputRef = createRef<HTMLInputElement>();
@@ -20,11 +21,11 @@ export default function BlockTypeSelector({
     null
   );
 
-  const insertBlockAtIndex = useInsertBlockAtIndex();
+  const blocks = useMap("blocks");
 
   useEffect(() => {
     inputRef.current?.focus();
-  });
+  }, []);
 
   const groups = [
     {
@@ -34,8 +35,9 @@ export default function BlockTypeSelector({
           label: "Heading 1",
           description: "Large section heading",
           onSelect: () => {
-            insertBlockAtIndex(
-              {
+            blocks?.set(
+              blockId,
+              new LiveObject({
                 type: BlockType.Text,
                 node: {
                   type: BlockNodeType.HeadingOne,
@@ -46,8 +48,7 @@ export default function BlockTypeSelector({
                     },
                   ],
                 },
-              },
-              index
+              })
             );
           },
         },
@@ -55,8 +56,9 @@ export default function BlockTypeSelector({
           label: "Heading 2",
           description: "Medium section heading",
           onSelect: () => {
-            insertBlockAtIndex(
-              {
+            blocks?.set(
+              blockId,
+              new LiveObject({
                 type: BlockType.Text,
                 node: {
                   type: BlockNodeType.HeadingTwo,
@@ -67,8 +69,7 @@ export default function BlockTypeSelector({
                     },
                   ],
                 },
-              },
-              index
+              })
             );
           },
         },
@@ -76,8 +77,9 @@ export default function BlockTypeSelector({
           label: "Heading 3",
           description: "Small section heading",
           onSelect: () => {
-            insertBlockAtIndex(
-              {
+            blocks?.set(
+              blockId,
+              new LiveObject({
                 type: BlockType.Text,
                 node: {
                   type: BlockNodeType.HeadingThree,
@@ -88,8 +90,7 @@ export default function BlockTypeSelector({
                     },
                   ],
                 },
-              },
-              index
+              })
             );
           },
         },
@@ -97,8 +98,9 @@ export default function BlockTypeSelector({
           label: "Normal text",
           description: "Plain text",
           onSelect: () => {
-            insertBlockAtIndex(
-              {
+            blocks?.set(
+              blockId,
+              new LiveObject({
                 type: BlockType.Text,
                 node: {
                   type: BlockNodeType.Paragraph,
@@ -109,8 +111,7 @@ export default function BlockTypeSelector({
                     },
                   ],
                 },
-              },
-              index
+              })
             );
           },
         },
@@ -120,20 +121,15 @@ export default function BlockTypeSelector({
       label: "Media",
       items: [
         {
-          label: "Image",
-          description: "Embed from Unsplash",
-          onSelect: () => {},
-        },
-        {
           label: "Video",
           description: "Embed from YouTube",
           onSelect: () => {
-            insertBlockAtIndex(
-              {
+            blocks?.set(
+              blockId,
+              new LiveObject({
                 type: BlockType.Video,
                 url: null,
-              },
-              index
+              })
             );
           },
         },
@@ -217,8 +213,12 @@ export default function BlockTypeSelector({
               break;
 
             case "Enter":
-            case "Space":
-              // TODO: trigger onSelect on item
+              if (!selectedItem) {
+                break;
+              }
+
+              e.preventDefault();
+              groups[selectedItem[0]].items[selectedItem[1]].onSelect();
               break;
           }
         }}

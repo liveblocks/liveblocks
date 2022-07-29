@@ -1,12 +1,12 @@
 import styles from "../../styles/BlockText.module.css";
-import { BlockNodeType, BlockType, TextBlock } from "../types";
+import { BlockType, TextBlock } from "../types";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
 import { LiveObject } from "@liveblocks/client";
 import useDeleteBlocksByIds from "../hooks/useDeleteBlocksByIds";
 import useSelectBlockAbove from "../hooks/useSelectBlockAbove";
 import useSelectBlockBelow from "../hooks/useSelectBlockBelow";
-import { useList, useMyPresence } from "../liveblocks.config";
+import { useMyPresence } from "../liveblocks.config";
 import useOthersByBlockId from "../hooks/useOthersByBlockId";
 import Avatar from "./Avatar";
 import TextEditor from "./TextEditor";
@@ -21,7 +21,6 @@ import useBlockAbove from "../hooks/useBlockAbove";
 import convertBlockNodeToHtml from "../utils/convertBlockNodeToHtml";
 import getInnerTextFromHtml from "../utils/getInnerTextFromHtml";
 import useReturnKeyTextBlock from "../hooks/useReturnKeyTextBlock";
-import BlockTypeSelector from "./BlockTypeSelector";
 
 type Props = {
   id: string;
@@ -45,22 +44,12 @@ export default function BlockText({ id, blockId, block, data }: Props) {
   const isElementFocused =
     document.getElementById(id) === document.activeElement;
 
-  const blocksIds = useList("blockIds");
-  const index = blocksIds?.findIndex((id) => blockId === id);
-
   return (
     <div
       className={classNames(styles.block_text, {
         [styles.block_text_selected]: isElementFocused,
       })}
     >
-      {isElementFocused && isBlockTopLevelNodeEmpty(data.node) && index && (
-        // <div className={classNames(styles.placeholder, "placeholder")}>
-        //   Type something here…
-        // </div>
-        <BlockTypeSelector index={index} placeholder="Type '/' to insert…" />
-      )}
-
       <TextEditor
         id={id}
         node={data.node}
@@ -169,6 +158,11 @@ export default function BlockText({ id, blockId, block, data }: Props) {
           }
         }}
       />
+      {isElementFocused && isBlockTopLevelNodeEmpty(data.node) && (
+        <div className={classNames(styles.placeholder, "placeholder")}>
+          Type something here…
+        </div>
+      )}
 
       {othersByBlockId.length > 0 && !isElementFocused && (
         <div>

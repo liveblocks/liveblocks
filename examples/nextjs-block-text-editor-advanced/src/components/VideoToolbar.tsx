@@ -15,7 +15,7 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
 
   useEffect(() => {
     inputRef.current?.focus();
-  });
+  }, []);
 
   return (
     <div className={styles.toolbar_container}>

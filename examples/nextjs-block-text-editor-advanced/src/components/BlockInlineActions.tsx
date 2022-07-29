@@ -42,16 +42,7 @@ export default function BlockInlineActions({ blockId }: Props) {
           onClick={() => {
             insertBlockBelow(
               {
-                type: BlockType.Text,
-                node: {
-                  type: BlockNodeType.Paragraph,
-                  children: [
-                    {
-                      type: BlockNodeType.Text,
-                      text: "",
-                    },
-                  ],
-                },
+                type: BlockType.TBD,
               },
               blockId
             );

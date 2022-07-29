@@ -19,7 +19,7 @@
 }
 
 .scrollbar:hover {
-  background: rgba(var(--color-foreground), 0.16);
+  background: rgba(var(--color-foreground), 0.1);
 }
 
 .scrollbar[data-orientation="vertical"] {
@@ -34,7 +34,7 @@
 .thumb {
   position: relative;
   flex: 1;
-  background: rgba(var(--color-foreground), 0.16);
+  background: rgba(var(--color-foreground), 0.8);
   border-radius: 12px;
   opacity: 0.3;
 }

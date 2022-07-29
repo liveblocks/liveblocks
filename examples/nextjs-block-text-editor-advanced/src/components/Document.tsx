@@ -105,6 +105,7 @@ export default function Document({ meta, blocks, blockIds }: Storage) {
         if (
           lastBlockId &&
           lastBlock &&
+          lastBlock.get("type") === BlockType.Text &&
           isBlockTopLevelNodeEmpty(lastBlock.get("node"))
         ) {
           focusTextBlockById(lastBlockId);

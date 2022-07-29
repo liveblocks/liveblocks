@@ -32,7 +32,7 @@
 }
 
 .scroll_area {
-  max-height: 280px;
+  max-height: 340px;
   width: 280px;
 }
 
@@ -69,6 +69,7 @@
   width: calc(100% - 1rem);
   flex-direction: column;
   text-align: left;
+  outline: none;
 }
 
 .item_selected {
