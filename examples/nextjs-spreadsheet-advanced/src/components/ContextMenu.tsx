@@ -43,8 +43,8 @@ export function ContextMenuItem({
 }: ItemProps) {
   return (
     <Item className={cx(className, styles.item)} textValue={label} {...props}>
-      {icon && <span>{icon}</span>}
-      <span>{label}</span>
+      {icon && <span className={styles.icon}>{icon}</span>}
+      {label}
     </Item>
   );
 }

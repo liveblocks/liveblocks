@@ -28,7 +28,8 @@ a {
   text-decoration: none;
 }
 
-img {
+img,
+svg {
   vertical-align: top;
 }
 

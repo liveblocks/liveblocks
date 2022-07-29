@@ -27,7 +27,23 @@ import {
 import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
-import { HandlerIcon, CrossIcon } from "../icons";
+import {
+  HandlerIcon,
+  CrossIcon,
+  AddColumnAfterIcon,
+  AddRowAfterIcon,
+  UndoIcon,
+  RedoIcon,
+  AddColumnBeforeIcon,
+  AddRowBeforeIcon,
+  MoveColumnAfterIcon,
+  MoveColumnBeforeIcon,
+  MoveRowAfterIcon,
+  MoveRowBeforeIcon,
+  TrashIcon,
+  EraserIcon,
+  ResetIcon,
+} from "../icons";
 import { Row, Column } from "../types";
 import styles from "./index.module.css";
 import Avatar from "../components/Avatar";
@@ -39,6 +55,7 @@ const COLUMN_HEADER_WIDTH = 80;
 const COLUMN_INITIAL_WIDTH = 120;
 const COLUMN_MIN_WIDTH = 80;
 const COLUMN_MAX_WIDTH = 300;
+const COLUMN_MIN_ICON = 2;
 const ROW_INITIAL_HEIGHT = 32;
 const ROW_MAX_HEIGHT = 100;
 
@@ -151,21 +168,31 @@ function Header({
             <>
               <ContextMenuGroup>
                 <ContextMenuItem
+                  icon={
+                    isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
+                  }
                   label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
                   onSelect={() => onInsert(0)}
                 />
                 <ContextMenuItem
+                  icon={isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />}
                   label={`Add ${isColumn ? "Column After" : "Row Below"}`}
                   onSelect={() => onInsert(1)}
                 />
               </ContextMenuGroup>
               <ContextMenuGroup>
                 <ContextMenuItem
+                  icon={
+                    isColumn ? <MoveColumnBeforeIcon /> : <MoveRowBeforeIcon />
+                  }
                   label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
                   onSelect={() => onMove(-1)}
                   disabled={isFirst}
                 />
                 <ContextMenuItem
+                  icon={
+                    isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
+                  }
                   label={`Move ${isColumn ? "Column After" : "Row Below"}`}
                   onSelect={() => onMove(1)}
                   disabled={isLast}
@@ -174,13 +201,16 @@ function Header({
               <ContextMenuSeparator />
               <ContextMenuGroup>
                 <ContextMenuItem
+                  icon={<ResetIcon />}
                   label="Resize to Default"
                   onSelect={handleResizeDefault}
                 />
                 <ContextMenuItem
+                  icon={<EraserIcon />}
                   label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
                 />
                 <ContextMenuItem
+                  icon={<TrashIcon />}
                   label={`Delete ${isColumn ? "Column" : "Row"}`}
                   onSelect={onDelete}
                 />
@@ -330,21 +360,31 @@ function Example() {
               className={styles.button}
               onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
             >
-              Add Column
+              <AddColumnAfterIcon />
+              {columns.length > COLUMN_MIN_ICON && <span>Add Column</span>}
             </button>
             <button
               className={styles.button}
               onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
             >
-              Add Row
+              <AddRowAfterIcon />
+              {columns.length > COLUMN_MIN_ICON && <span>Add Row</span>}
             </button>
           </div>
           <div className={styles.button_group} role="group">
-            <button className={styles.button} onClick={() => history.undo()}>
-              Undo
+            <button
+              className={styles.button}
+              onClick={() => history.undo()}
+              aria-label="Undo"
+            >
+              <UndoIcon />
             </button>
-            <button className={styles.button} onClick={() => history.redo()}>
-              Redo
+            <button
+              className={styles.button}
+              onClick={() => history.redo()}
+              aria-label="Redo"
+            >
+              <RedoIcon />
             </button>
           </div>
         </div>

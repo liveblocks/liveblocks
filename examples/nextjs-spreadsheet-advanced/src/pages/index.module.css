@@ -42,11 +42,19 @@
 
 .button {
   all: unset;
+  display: flex;
+  place-content: center;
+  place-items: center;
   border-radius: var(--radius);
   color: #6b7280;
   cursor: pointer;
-  padding: 0 var(--padding);
-  font-size: 14px;
+  padding: 0px 6px;
+  font-size: 13px;
+}
+
+.button span {
+  margin-left: 4px;
+  margin-right: 2px;
 }
 
 .button:hover {

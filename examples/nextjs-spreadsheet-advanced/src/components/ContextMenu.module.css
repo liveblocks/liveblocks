@@ -1,10 +1,10 @@
 .menu {
-  --inset: 4px;
-  --padding: 8px;
-  --radius: 6px;
+  --menu-inset: 4px;
+  --menu-item-height: 30px;
+  --menu-item-radius: 6px;
 
-  border-radius: calc(var(--radius) + var(--inset));
-  padding: var(--inset);
+  border-radius: calc(var(--menu-item-radius) + var(--menu-inset));
+  padding: var(--menu-inset);
   user-select: none;
   background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(16px) saturate(2);
@@ -14,11 +14,11 @@
 }
 
 .item {
-  height: 28px;
-  border-radius: var(--radius);
-  padding: 0 var(--padding);
+  height: var(--menu-item-height);
+  border-radius: var(--menu-item-radius);
+  padding: 0 8px 0 calc(var(--menu-item-height) + 2px);
   display: flex;
-  align-items: center;
+  place-items: center;
   font-size: 14px;
   color: #374151;
   cursor: default;
@@ -34,8 +34,15 @@
   color: #d1d5db;
 }
 
+.icon {
+  display: block;
+  position: absolute;
+  left: calc(var(--menu-inset) + 6px);
+  align-self: center;
+}
+
 .separator {
   height: var(--border);
-  margin: var(--inset) calc(var(--inset) * -1);
+  margin: var(--menu-inset) calc(var(--menu-inset) * -1);
   background: #f3f4f6;
 }
