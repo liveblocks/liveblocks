@@ -18,7 +18,7 @@
 .prose h2 ~ .placeholder,
 .prose .h2,
 .prose h3,
-.prose h3 ~ .placeholder
+.prose h3 ~ .placeholder,
 .prose .h3 {
   font-weight: 600;
   line-height: 1.3em;

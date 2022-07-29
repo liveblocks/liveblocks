@@ -1,16 +1,11 @@
 import { LiveMap, LiveObject, LiveList } from "@liveblocks/client";
 
-export type BlockProps = TextBlock | VideoBlock | TBDBlock;
+export type BlockProps = TextBlock | VideoBlock;
 
 export enum BlockType {
   Text,
   Video,
-  TBD,
 }
-
-export type TBDBlock = {
-  type: BlockType.TBD;
-};
 
 export type VideoBlock = {
   type: BlockType.Video;

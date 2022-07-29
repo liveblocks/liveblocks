@@ -1,43 +1,14 @@
-.input {
-  border: none;
-  background: none;
-  outline: none;
-  font-size: inherit;
-  width: auto;
-  margin: 0;
-  padding: 0;
-  color: inherit;
-  pointer-events: none;
-}
-
-.input::placeholder {
-  color: rgba(var(--color-foreground), 0.3);
-}
-
-.container {
-  position: absolute;
-}
 
 .content {
-  position: absolute;
   background: rgba(var(--color-surface-over), 0.92);
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow-over);
-  border-radius: 8px;
+  border-radius: 10px;
   z-index: 20;
   user-select: none;
-  margin-left: -1.25rem;
-  margin-top: 0.5rem;
-  overflow: hidden;
-}
-
-.scroll_area {
-  max-height: 340px;
-  width: 280px;
 }
 
 .group {
-  position: relative;
   padding: 0 0 0.5rem 0;
 }
 
@@ -52,7 +23,7 @@
   top: 0;
   background: rgba(var(--color-surface), 0.92);
   backdrop-filter: blur(8px);
-  padding: 0.5rem 1.25rem 0;
+  padding: 0.75rem 1rem 0.25rem;
   font-weight: 500;
   z-index: 10;
 }
@@ -64,15 +35,15 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   cursor: default;
-  margin: 0 0.5rem;
+  margin: 0 0.25rem;
   display: flex;
-  width: calc(100% - 1rem);
+  width: calc(100% - 0.5rem);
   flex-direction: column;
   text-align: left;
   outline: none;
 }
 
-.item_selected {
+.item:focus {
   background: rgb(var(--color-primary));
   color: #FFF;
 }
@@ -84,5 +55,4 @@
 .item_description {
   font-size: 0.75rem;
   opacity: 0.6;
-  margin-top: 0.25em;
 }

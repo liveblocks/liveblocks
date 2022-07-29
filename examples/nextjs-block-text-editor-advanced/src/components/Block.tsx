@@ -6,7 +6,6 @@ import { useRoom } from "../liveblocks.config";
 import { BlockProps, BlockType } from "../types";
 import BlockText from "./BlockText";
 import BlockVideo from "./BlockVideo";
-import BlockTBD from "./BlockTBD";
 import styles from "../../styles/Block.module.css";
 
 type Props = {
@@ -58,15 +57,6 @@ const BlockComponent = memo(function BlockComponent({ blockId, block }: Props) {
 
       {blockData.type === BlockType.Video && (
         <BlockVideo
-          id={blockId}
-          blockId={blockId}
-          block={block}
-          data={blockData}
-        />
-      )}
-
-      {blockData.type === BlockType.TBD && (
-        <BlockTBD
           id={blockId}
           blockId={blockId}
           block={block}
