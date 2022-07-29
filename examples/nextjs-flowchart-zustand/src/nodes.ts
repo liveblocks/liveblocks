@@ -9,18 +9,20 @@ export default [
   },
   {
     id: "2",
-    data: { label: "React Flow" },
+    data: { label: "flowcharts" },
     position: { x: 100, y: 125 },
   },
   {
     id: "3",
-    data: { label: "with" },
+    data: { label: "React Flow" },
     position: { x: 250, y: 225 },
+    style: { borderColor: "#FF0072" },
   },
   {
     id: "4",
     type: "output",
     data: { label: "Liveblocks" },
     position: { x: 100, y: 325 },
+    style: { borderColor: "#FF493F" },
   },
 ] as Node[];
