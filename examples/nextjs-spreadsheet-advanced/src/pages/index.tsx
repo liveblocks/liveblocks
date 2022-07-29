@@ -46,9 +46,9 @@ import {
 } from "../icons";
 import { Row, Column } from "../types";
 import styles from "./index.module.css";
-import Avatar from "../components/Avatar";
+import { Avatar } from "../components/Avatar";
 import { createInitialStorage } from "../spreadsheet/utils";
-import Tooltip from "../components/Tooltip";
+import { Tooltip } from "../components/Tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 
 const GRID_INITIAL_ROWS = 4 as const;

@@ -15,7 +15,7 @@ interface Props extends TooltipProps, TooltipContentProps {
   content: ReactNode;
 }
 
-export default function Tooltip({
+export function Tooltip({
   children,
   content,
   open,
