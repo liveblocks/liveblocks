@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# 3D Builder
+# Multiplayer 3D Builder
 
 <p>
   <a href="https://liveblocks.io/examples/3d-builder/nextjs/preview">
@@ -20,7 +20,7 @@
 
 This example shows how to build a collaborative 3D builder with [Liveblocks](https://liveblocks.io), [Next.js](https://nextjs.org/) and [Three.js](https://threejs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-builder.png" width="500" alt="3D Builder" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-builder.png" width="500" alt="Multiplayer 3D Builder" />
 
 ## Getting started
 

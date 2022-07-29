@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Whiteboard
+# Collaborative Whiteboard
 
 <p>
   <a href="https://liveblocks.io/examples/whiteboard/redux/preview">
@@ -21,7 +21,7 @@ This example shows how to build a collaborative whiteboard with
 [Liveblocks](https://liveblocks.io), [React](https://reactjs.org/) and
 [Redux](https://redux-toolkit.js.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="500" alt="Whiteboard" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="500" alt="Collaborative Whiteboard" />
 
 ## Getting started
 

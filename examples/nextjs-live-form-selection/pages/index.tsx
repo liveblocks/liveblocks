@@ -120,7 +120,7 @@ function Example() {
 }
 
 export default function Page() {
-  const roomId = useOverrideRoomId("nextjs-live-selection");
+  const roomId = useOverrideRoomId("nextjs-live-form-selection");
 
   return (
     <RoomProvider
@@ -138,9 +138,9 @@ export async function getStaticProps() {
   const API_KEY = process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY;
   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
     ? `Add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` secret in CodeSandbox.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-selection#codesandbox.`
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-form-selection#codesandbox.`
     : `Create an \`.env.local\` file and add your public key from https://liveblocks.io/dashboard/apikeys as the \`NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY\` environment variable.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-selection#getting-started.`;
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-live-form-selection#getting-started.`;
 
   if (!API_KEY) {
     console.warn(API_KEY_WARNING);
