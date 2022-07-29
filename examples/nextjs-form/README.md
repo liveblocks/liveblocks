@@ -19,7 +19,7 @@
 
 This example shows how to build a collaborative form with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/multiplayer-form.png" width="500" alt="Multiplayer Form" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/form.png" width="500" alt="Multiplayer Form" />
 
 ## Getting started
 
