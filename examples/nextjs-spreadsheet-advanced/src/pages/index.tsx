@@ -164,7 +164,6 @@ function Header({
         onResizeStop={handleResizeStop}
       >
         <ContextMenu
-          asChild
           content={
             <>
               <ContextMenuGroup>
