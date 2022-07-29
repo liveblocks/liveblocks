@@ -7,7 +7,7 @@ import React, { useMemo } from "react";
 import { LiveObject } from "@liveblocks/client";
 
 function App({ Component, pageProps }: AppProps) {
-  const roomId = useOverrideRoomId("nextjs-logo-builder");
+  const roomId = useOverrideRoomId("nextjs-multiplayer-form");
 
   return (
     <RoomProvider
