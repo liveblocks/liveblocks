@@ -7,7 +7,7 @@
 # Collaborative To-do List
 
 <p>
-  <a href="https://liveblocks.io/examples/todo-list/redux/preview">
+  <a href="https://liveblocks.io/examples/collaborative-todo-list/redux/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/redux-todo-list">
