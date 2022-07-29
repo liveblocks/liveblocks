@@ -220,7 +220,10 @@ function Header({
           }
         >
           <div className={styles.sheet_header}>
-            <Tooltip content="Drag to Reorder">
+            <Tooltip
+              content="Drag to Reorder"
+              open={isDragging ? false : undefined}
+            >
               <button
                 className={cx(
                   styles.sheet_header_control,
@@ -235,7 +238,10 @@ function Header({
             <span className={styles.sheet_header_label}>
               {isColumn ? convertNumberToLetter(index) : index + 1}
             </span>
-            <Tooltip content={`Delete ${isColumn ? "Column" : "Row"}`}>
+            <Tooltip
+              content={`Delete ${isColumn ? "Column" : "Row"}`}
+              open={isDragging ? false : undefined}
+            >
               <button
                 className={styles.sheet_header_control}
                 onClick={onDelete}
