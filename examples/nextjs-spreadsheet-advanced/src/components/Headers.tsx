@@ -49,8 +49,9 @@ import {
 import { useHistory } from "../liveblocks.config";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { Row, Column } from "../types";
-import { setGlobalCursor, removeGlobalCursor, getIndexWithId } from "../utils";
+import { setGlobalCursor, removeGlobalCursor } from "../utils/globalCursor";
 import styles from "./Headers.module.css";
+import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 
 export interface Props extends ComponentProps<"div"> {
   type: "row" | "column";
@@ -275,8 +276,8 @@ export function Headers({
       }
 
       moveHeader(
-        getIndexWithId(headers, active.id),
-        getIndexWithId(headers, over.id)
+        getIndexWithProperty(headers, "id", String(active.id)),
+        getIndexWithProperty(headers, "id", String(over.id))
       );
     },
     [headers, moveHeader]

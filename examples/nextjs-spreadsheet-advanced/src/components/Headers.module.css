@@ -10,11 +10,11 @@
 }
 
 .headers:global(.row):before {
-  inset: calc(var(--border) / 2) 0px;
+  inset: var(--radius) 0px;
 }
 
 .headers:global(.column):before {
-  inset: 0px calc(var(--border) / 2);
+  inset: 0px var(--radius);
 }
 
 .header_draggable_container,

@@ -1,7 +1,14 @@
 import { User } from "@liveblocks/client";
 import { useRoom } from "../liveblocks.config";
 import { useState, useEffect, useCallback } from "react";
-import { Column, Presence, Row, UserInfo, UserMeta } from "../types";
+import {
+  CellAddress,
+  Column,
+  Presence,
+  Row,
+  UserInfo,
+  UserMeta,
+} from "../types";
 import { createSpreadsheet, Spreadsheet } from ".";
 
 export interface ReactSpreadsheet {
@@ -14,12 +21,13 @@ export interface ReactSpreadsheet {
   moveColumn: Spreadsheet["moveColumn"];
   deleteColumn: Spreadsheet["deleteColumn"];
   getExpression: Spreadsheet["getCellExpressionDisplay"];
-  selectCell: Spreadsheet["selectedCell"];
+  selectCell: Spreadsheet["selectCell"];
   setCellValue: Spreadsheet["updateCellValue"];
   rows: Row[];
   columns: Column[];
   cells: Record<string, string>;
   users: User<Presence, UserMeta>[];
+  selection: CellAddress | null;
   selections: Record<string, UserInfo>;
 }
 
@@ -30,6 +38,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<User<Presence, UserMeta>[]>([]);
+  const [selection, setSelection] = useState<CellAddress | null>(null);
   const [selections, setSelections] = useState<Record<string, UserInfo>>({});
 
   useEffect(() => {
@@ -54,6 +63,11 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
     });
   }, [room]);
 
+  const selectCell = useCallback((columnId: string, rowId: string) => {
+    setSelection({ columnId, rowId });
+    spreadsheet?.selectCell(columnId, rowId);
+  }, []);
+
   return spreadsheet != null
     ? {
         insertRow: spreadsheet.insertRow,
@@ -67,7 +81,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
         deleteColumn: spreadsheet.deleteColumn,
 
         getExpression: spreadsheet.getCellExpressionDisplay,
-        selectCell: spreadsheet.selectedCell,
+        selectCell: selectCell,
         setCellValue: spreadsheet.updateCellValue,
 
         rows,
@@ -75,6 +89,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
         cells,
 
         users,
+        selection,
         selections,
       }
     : null;

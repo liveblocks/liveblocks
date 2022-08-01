@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { CSSProperties, useMemo } from "react";
 import { RoomProvider, useHistory } from "../liveblocks.config";
 import { useSpreadsheet } from "../spreadsheet/react";
-import { appendUnit } from "../utils";
+import { appendUnit } from "../utils/appendUnit";
 import {
   AddColumnAfterIcon,
   AddRowAfterIcon,

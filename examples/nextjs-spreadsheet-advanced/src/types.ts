@@ -18,6 +18,11 @@ export type CellData = {
   value: string;
 };
 
+export type CellAddress = {
+  columnId: string;
+  rowId: string;
+};
+
 export type Storage = {
   spreadsheet: LiveObject<{
     cells: LiveMap<string, LiveObject<CellData>>;

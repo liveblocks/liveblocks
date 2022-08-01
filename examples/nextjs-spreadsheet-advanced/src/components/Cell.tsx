@@ -1,15 +1,27 @@
 import cx from "classnames";
-import { ComponentProps, CSSProperties, useState } from "react";
+import {
+  ChangeEvent,
+  ComponentProps,
+  CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import { UserInfo } from "../types";
-import { appendUnit } from "../utils";
+import { appendUnit } from "../utils/appendUnit";
+import { useEvent } from "../utils/useEvent";
 import styles from "./Cell.module.css";
 
 export interface Props extends ComponentProps<"td"> {
   displayValue: string;
   width: number;
   height: number;
-  selection?: UserInfo;
+  isSelected?: boolean;
+  user?: UserInfo;
+  onSelect: () => void;
   onValueChange: (value: string) => void;
   getExpression: () => string;
 }
@@ -18,75 +30,134 @@ export function Cell({
   displayValue,
   width,
   height,
-  selection,
+  isSelected,
+  user,
+  onSelect,
   onValueChange,
   getExpression,
   className,
   style,
   ...props
 }: Props) {
+  const input = useRef<HTMLInputElement>(null);
   const [editingString, setEditingString] = useState<string | null>(null);
 
-  const value = editingString == null ? displayValue : editingString;
-  const isNumber = isNumeric(value);
-  const isError = displayValue === EXPRESSION_ERROR;
+  const value = useMemo(
+    () => (editingString == null ? displayValue : editingString),
+    [editingString, displayValue]
+  );
+  const isError = useMemo(
+    () => displayValue === EXPRESSION_ERROR,
+    [displayValue]
+  );
+  const isEditing = useMemo(() => editingString !== null, [editingString]);
+
+  useEffect(() => {
+    if (!isSelected) {
+      setEditingString(null);
+    }
+  }, [isSelected]);
+
+  const startEditing = useCallback(() => {
+    input.current?.focus();
+    setEditingString(getExpression());
+  }, [getExpression]);
+
+  const stopEditing = useCallback(
+    (apply = false) => {
+      if (apply) {
+        onValueChange(editingString ?? "");
+      }
+
+      input.current?.blur();
+      setEditingString(null);
+    },
+    [editingString]
+  );
+
+  const handleClick = useCallback(() => {
+    if (isSelected) {
+      startEditing();
+    } else {
+      onSelect();
+    }
+  }, [onSelect]);
+
+  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+
+    setEditingString(value.replace(" ", "").toUpperCase());
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    stopEditing();
+  }, [stopEditing]);
+
+  const handleKeyDown = useCallback(
+    ({ key }: KeyboardEvent) => {
+      if (!isSelected) {
+        return;
+      }
+
+      if (key === "Enter") {
+        if (isEditing) {
+          stopEditing(true);
+        } else {
+          startEditing();
+        }
+      } else if (key === "Escape") {
+        stopEditing();
+      } else if (key === "Backspace" || key === "Delete") {
+        if (!isEditing) {
+          onValueChange("");
+        }
+      }
+    },
+    [
+      isSelected,
+      isEditing,
+      startEditing,
+      stopEditing,
+      editingString,
+      onValueChange,
+    ]
+  );
+
+  useEvent("keydown", handleKeyDown);
 
   return (
     <td
-      className={cx(className, styles.cell, selection && "selected")}
+      className={cx(className, styles.cell, {
+        selected: isSelected,
+        editing: isEditing,
+        user: user,
+      })}
       style={
         {
           ...style,
-          "--cell-selection": selection?.color,
-          textAlign: isNumber && editingString === null ? "right" : "left",
+          "--cell-selection": user?.color,
+          textAlign:
+            isNumeric(value) && editingString === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),
         } as CSSProperties
       }
+      onClick={handleClick}
       {...props}
     >
-      {selection && (
+      {user && (
         <div className={styles.user} aria-hidden>
-          <img
-            src={selection.url}
-            alt={selection.url}
-            className={styles.user_avatar}
-          />
-          <span className={styles.user_label}>{selection.name}</span>
+          <img src={user.url} alt={user.url} className={styles.user_avatar} />
+          <span className={styles.user_label}>{user.name}</span>
         </div>
       )}
       <input
-        readOnly={editingString === null}
+        tabIndex={-1}
+        ref={input}
+        readOnly={!isEditing}
         className={styles.input}
-        onChange={(e) =>
-          setEditingString(e.target.value.replace(" ", "").toUpperCase())
-        }
-        onBlur={(e) => {
-          if (editingString !== null) {
-            const target = e.target;
-            onValueChange(target.value);
-            setEditingString(null);
-          }
-        }}
-        onKeyDown={(e) => {
-          const target = e.target;
-
-          switch (e.key) {
-            case "Enter": {
-              if (editingString === null) {
-                target.focus();
-                target.select();
-                setEditingString(getExpression());
-              } else {
-                onValueChange(target.value);
-                setEditingString(null);
-              }
-            }
-          }
-        }}
-        onDoubleClick={() => {
-          setEditingString(getExpression());
-        }}
+        onChange={handleChange}
+        onBlur={handleBlur}
         value={value ?? ""}
       />
     </td>

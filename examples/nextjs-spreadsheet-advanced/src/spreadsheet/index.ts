@@ -25,7 +25,7 @@ export type Spreadsheet = {
   deleteColumn(index: number): void;
   deleteRow(index: number): void;
 
-  selectedCell(coordinates: { columnId: string; rowId: string } | null): void;
+  selectCell(columnId: string, rowId: string): void;
   updateCellValue(columnId: string, rowId: string, value: string): void;
   getCellDisplay(columnId: string, rowId: string): string;
   getCellExpressionDisplay(columnId: string, rowId: string): string;
@@ -156,13 +156,9 @@ export async function createSpreadsheet(
     }
   }
 
-  function selectedCell(
-    coordinates: { columnId: string; rowId: string } | null
-  ) {
+  function selectCell(columnId: string, rowId: string) {
     room.updatePresence({
-      selectedCell: coordinates
-        ? getCellId(coordinates.columnId, coordinates.rowId)
-        : null,
+      selectedCell: columnId && rowId ? getCellId(columnId, rowId) : null,
     });
   }
 
@@ -291,7 +287,7 @@ export async function createSpreadsheet(
     deleteRow,
     deleteColumn,
     updateCellValue,
-    selectedCell,
+    selectCell,
     getCellDisplay,
     getCellExpressionDisplay,
 
