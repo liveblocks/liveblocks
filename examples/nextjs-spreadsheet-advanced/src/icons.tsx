@@ -19,7 +19,7 @@ export function HandlerIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export function CrossIcon(props: ComponentProps<"svg">) {
+export function ChevronIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       width="16"
@@ -31,7 +31,7 @@ export function CrossIcon(props: ComponentProps<"svg">) {
       <path
         fillRule="evenodd"
         clipRule="evenodd"
-        d="M12.707 4.707a1 1 0 0 0-1.414-1.414L8 6.586 4.707 3.293a1 1 0 0 0-1.414 1.414L6.586 8l-3.293 3.293a1 1 0 1 0 1.414 1.414L8 9.414l3.293 3.293a1 1 0 0 0 1.414-1.414L9.414 8l3.293-3.293Z"
+        d="M3.293 6.293a1 1 0 0 1 1.414 0L8 9.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
         fill="currentColor"
       />
     </svg>

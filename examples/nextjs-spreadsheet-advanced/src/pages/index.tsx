@@ -6,6 +6,7 @@ import {
   useCallback,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
 import {
@@ -19,17 +20,17 @@ import { Resizable, ResizeCallback } from "re-resizable";
 import { RoomProvider, useHistory } from "../liveblocks.config";
 import { Cell } from "../components/Cell";
 import {
-  ContextMenu,
-  ContextMenuGroup,
-  ContextMenuItem,
-  ContextMenuSeparator,
-} from "../components/ContextMenu";
+  DropdownMenu,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "../components/DropdownMenu";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { appendUnit, getIndexWithId } from "../utils";
 import {
   HandlerIcon,
-  CrossIcon,
+  ChevronIcon,
   AddColumnAfterIcon,
   AddRowAfterIcon,
   UndoIcon,
@@ -102,6 +103,7 @@ function Header({
   style,
   ...props
 }: HeaderProps) {
+  const [isDropdownOpen, setDropdownOpen] = useState(false);
   const history = useHistory();
   const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
     useSortable({
@@ -109,6 +111,10 @@ function Header({
     });
   const initialHeader = useRef(header);
   const isColumn = isColumnHeader(header);
+
+  const handleDropdownOpenChange = useCallback((open: boolean) => {
+    setDropdownOpen(open);
+  }, []);
 
   const handleResizeStart = useCallback(() => {
     history.pause();
@@ -163,93 +169,88 @@ function Header({
         onResize={handleResize}
         onResizeStop={handleResizeStop}
       >
-        <ContextMenu
-          content={
-            <>
-              <ContextMenuGroup>
-                <ContextMenuItem
-                  icon={
-                    isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
-                  }
-                  label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
-                  onSelect={() => onInsert(0)}
-                />
-                <ContextMenuItem
-                  icon={isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />}
-                  label={`Add ${isColumn ? "Column After" : "Row Below"}`}
-                  onSelect={() => onInsert(1)}
-                />
-              </ContextMenuGroup>
-              <ContextMenuGroup>
-                <ContextMenuItem
-                  icon={
-                    isColumn ? <MoveColumnBeforeIcon /> : <MoveRowBeforeIcon />
-                  }
-                  label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
-                  onSelect={() => onMove(-1)}
-                  disabled={isFirst}
-                />
-                <ContextMenuItem
-                  icon={
-                    isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
-                  }
-                  label={`Move ${isColumn ? "Column After" : "Row Below"}`}
-                  onSelect={() => onMove(1)}
-                  disabled={isLast}
-                />
-              </ContextMenuGroup>
-              <ContextMenuSeparator />
-              <ContextMenuGroup>
-                <ContextMenuItem
-                  icon={<ResetIcon />}
-                  label="Resize to Default"
-                  onSelect={handleResizeDefault}
-                />
-                <ContextMenuItem
-                  icon={<EraserIcon />}
-                  label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
-                />
-                <ContextMenuItem
-                  icon={<TrashIcon />}
-                  label={`Delete ${isColumn ? "Column" : "Row"}`}
-                  onSelect={onDelete}
-                />
-              </ContextMenuGroup>
-            </>
-          }
-        >
-          <div className={styles.sheet_header}>
-            <Tooltip
-              content="Drag to Reorder"
-              open={isDragging ? false : undefined}
-            >
-              <button
-                className={cx(
-                  styles.sheet_header_control,
-                  styles.sheet_header_handler
-                )}
-                ref={setActivatorNodeRef}
-                {...listeners}
-              >
-                <HandlerIcon />
-              </button>
-            </Tooltip>
-            <span className={styles.sheet_header_label}>
-              {isColumn ? convertNumberToLetter(index) : index + 1}
-            </span>
-            <Tooltip
-              content={`Delete ${isColumn ? "Column" : "Row"}`}
-              open={isDragging ? false : undefined}
-            >
-              <button
-                className={styles.sheet_header_control}
-                onClick={onDelete}
-              >
-                <CrossIcon />
-              </button>
-            </Tooltip>
-          </div>
-        </ContextMenu>
+        <div className={styles.sheet_header}>
+          <button
+            className={cx(
+              styles.sheet_header_control,
+              styles.sheet_header_handler
+            )}
+            ref={setActivatorNodeRef}
+            {...listeners}
+          >
+            <HandlerIcon />
+          </button>
+          <span className={styles.sheet_header_label}>
+            {isColumn ? convertNumberToLetter(index) : index + 1}
+          </span>
+          <DropdownMenu
+            open={isDropdownOpen}
+            onOpenChange={handleDropdownOpenChange}
+            content={
+              <>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    icon={
+                      isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
+                    }
+                    label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
+                    onSelect={() => onInsert(0)}
+                  />
+                  <DropdownMenuItem
+                    icon={
+                      isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />
+                    }
+                    label={`Add ${isColumn ? "Column After" : "Row Below"}`}
+                    onSelect={() => onInsert(1)}
+                  />
+                </DropdownMenuGroup>
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    icon={
+                      isColumn ? (
+                        <MoveColumnBeforeIcon />
+                      ) : (
+                        <MoveRowBeforeIcon />
+                      )
+                    }
+                    label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
+                    onSelect={() => onMove(-1)}
+                    disabled={isFirst}
+                  />
+                  <DropdownMenuItem
+                    icon={
+                      isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
+                    }
+                    label={`Move ${isColumn ? "Column After" : "Row Below"}`}
+                    onSelect={() => onMove(1)}
+                    disabled={isLast}
+                  />
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    icon={<ResetIcon />}
+                    label="Resize to Default"
+                    onSelect={handleResizeDefault}
+                  />
+                  <DropdownMenuItem
+                    icon={<EraserIcon />}
+                    label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
+                  />
+                  <DropdownMenuItem
+                    icon={<TrashIcon />}
+                    label={`Delete ${isColumn ? "Column" : "Row"}`}
+                    onSelect={onDelete}
+                  />
+                </DropdownMenuGroup>
+              </>
+            }
+          >
+            <button className={styles.sheet_header_control}>
+              <ChevronIcon />
+            </button>
+          </DropdownMenu>
+        </div>
       </Resizable>
     </div>
   );

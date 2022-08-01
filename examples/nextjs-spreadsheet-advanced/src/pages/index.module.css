@@ -119,15 +119,15 @@
 }
 
 .sheet_header {
+  --header-control-padding: 5px;
+
   position: absolute;
   inset: 0px;
   display: flex;
+  place-items: center;
+  padding: var(--header-control-padding);
   transition: background 0.12s ease-in-out;
   background: #f3f4f6;
-}
-
-.sheet_header:hover {
-  background: #e9ebef;
 }
 
 .sheet_header,
@@ -172,14 +172,20 @@
 
 .sheet_header_control {
   all: unset;
+  width: calc(var(--row-height) - var(--header-control-padding) * 2);
+  height: calc(var(--row-height) - var(--header-control-padding) * 2);
   display: flex;
   place-content: center;
   place-items: center;
-  padding: 0 6px;
+  border-radius: var(--radius);
   color: #9ca3af;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
+}
+
+.sheet_header_control:hover {
+  background: #e9ebef;
 }
 
 .sheet_header:hover .sheet_header_control {

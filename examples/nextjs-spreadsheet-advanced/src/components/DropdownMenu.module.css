@@ -2,15 +2,23 @@
   --menu-inset: 4px;
   --menu-item-height: 30px;
   --menu-item-radius: 6px;
+  --menu-background: #fff;
 
   border-radius: calc(var(--menu-item-radius) + var(--menu-inset));
   padding: var(--menu-inset);
   user-select: none;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(16px) saturate(2);
+  background: var(--menu-background);
   box-shadow: 0px 0px 0px 1px rgb(31, 41, 55, 0.04),
     0px 2px 6px rgb(31, 41, 55, 0.08), 0px 8px 24px -2px rgb(31, 41, 55, 0.16);
   z-index: 1000;
+}
+
+.arrow {
+  fill: var(--menu-background);
+}
+
+.arrow_outline {
+  fill: rgb(31, 41, 55, 0.04);
 }
 
 .item {
@@ -21,7 +29,7 @@
   place-items: center;
   font-size: 14px;
   color: #374151;
-  cursor: default;
+  cursor: pointer;
   outline: none;
 }
 
@@ -32,6 +40,7 @@
 
 .item[data-disabled] {
   color: #d1d5db;
+  cursor: default;
 }
 
 .icon {
