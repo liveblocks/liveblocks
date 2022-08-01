@@ -115,6 +115,16 @@ export default function BlockTypeSelector({
             });
           },
         },
+        {
+          label: "CodeSandbox",
+          description: "Embed CodeSandbox project",
+          onSelect: () => {
+            setBlock({
+              type: BlockType.CodeSandbox,
+              url: null,
+            });
+          },
+        },
       ],
     },
   ];

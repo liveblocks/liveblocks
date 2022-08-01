@@ -8,8 +8,10 @@ type Props = {
   onClose: () => void;
 };
 
+const codeSandboxLinkPattern = "((?:https?:)?\/\/)?(?:www\\.)?(?:codesandbox\\.io)((\/s\/)|(\/embed\/))(.*)+$";
+const codeSandboxLinkRegex = new RegExp(codeSandboxLinkPattern);
 
-export default function ImageToolbar({ url, setUrl, onClose }: Props) {
+export default function CodeSandboxToolbar({ url, setUrl, onClose }: Props) {
   const [urlInputValue, setUrlInputValue] = useState<string>(url ? url : "");
   const inputRef = createRef<HTMLInputElement>();
 
@@ -25,26 +27,39 @@ export default function ImageToolbar({ url, setUrl, onClose }: Props) {
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
+            if (!codeSandboxLinkRegex.test(urlInputValue)) {
+              setUrlInputValue("");
+              return;
+            }
 
-            setUrl(urlInputValue);
+            let embedLink;
+            if (urlInputValue.includes("/embed/")) {
+              embedLink = urlInputValue
+            } else {
+              embedLink = urlInputValue.replace("/s/", "/embed/");
+            }
+
+            setUrl(embedLink);
             onClose();
           }}
         >
           <input
             type="url"
-            title="Please enter a valid image link"
+            title="Please enter a valid CodeSandbox project link"
+            pattern={codeSandboxLinkPattern}
             ref={inputRef}
             className={styles.url_input}
             value={urlInputValue}
             onChange={(e) => setUrlInputValue(e.currentTarget.value)}
-            placeholder="Paste image link…"
+            placeholder="Paste CodeSandbox link…"
           />
+
           <Button
             appearance="primary"
             ariaLabel="Toggle Strikethrough"
             type="submit"
           >
-            Embed image
+            Embed CodeSandbox
           </Button>
         </form>
       </div>

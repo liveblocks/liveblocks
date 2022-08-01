@@ -1,11 +1,12 @@
 import { LiveMap, LiveObject, LiveList } from "@liveblocks/client";
 
-export type BlockProps = TextBlock | VideoBlock | ImageBlock;
+export type BlockProps = TextBlock | VideoBlock | ImageBlock | CodeSandboxBlock;
 
 export enum BlockType {
   Text,
   Video,
-  Image
+  Image,
+  CodeSandbox
 }
 
 export type TextBlock = {
@@ -20,6 +21,11 @@ export type VideoBlock = {
 
 export type ImageBlock = {
   type: BlockType.Image;
+  url: string | null;
+};
+
+export type CodeSandboxBlock = {
+  type: BlockType.CodeSandbox;
   url: string | null;
 }
 
