@@ -11,7 +11,7 @@ import {
 import { forwardRef, ReactNode } from "react";
 import styles from "./Tooltip.module.css";
 
-interface Props extends TooltipProps, TooltipContentProps {
+export interface Props extends TooltipProps, TooltipContentProps {
   content: ReactNode;
 }
 

@@ -94,6 +94,7 @@ function Example() {
                 src={info.url}
                 name={info.name}
                 color={info.color}
+                tooltipOffset={6}
               />
             );
           })}

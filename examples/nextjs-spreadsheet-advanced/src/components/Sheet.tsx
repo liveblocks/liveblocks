@@ -5,7 +5,7 @@ import { Headers } from "./Headers";
 import { Cell } from "./Cell";
 import styles from "./Sheet.module.css";
 
-type Props = ComponentProps<"div"> & ReactSpreadsheet;
+export type Props = ComponentProps<"div"> & ReactSpreadsheet;
 
 export function Sheet({
   cells,

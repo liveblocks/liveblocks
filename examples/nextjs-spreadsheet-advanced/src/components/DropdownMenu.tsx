@@ -15,11 +15,11 @@ import {
 import { forwardRef, ReactNode } from "react";
 import styles from "./DropdownMenu.module.css";
 
-interface Props extends DropdownMenuProps, DropdownMenuContentProps {
+export interface Props extends DropdownMenuProps, DropdownMenuContentProps {
   content: DropdownMenuContentProps["children"];
 }
 
-interface ItemProps extends DropdownMenuItemProps {
+export interface ItemProps extends DropdownMenuItemProps {
   label: string;
   icon?: ReactNode;
 }

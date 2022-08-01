@@ -5,7 +5,7 @@ import { UserInfo } from "../types";
 import { appendUnit } from "../utils";
 import styles from "./Cell.module.css";
 
-interface Props extends ComponentProps<"td"> {
+export interface Props extends ComponentProps<"td"> {
   displayValue: string;
   width: number;
   height: number;

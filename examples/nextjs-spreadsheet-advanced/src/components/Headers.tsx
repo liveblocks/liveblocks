@@ -52,7 +52,16 @@ import { Row, Column } from "../types";
 import { setGlobalCursor, removeGlobalCursor, getIndexWithId } from "../utils";
 import styles from "./Headers.module.css";
 
-interface HeaderProps extends ComponentProps<"div"> {
+export interface Props extends ComponentProps<"div"> {
+  type: "row" | "column";
+  headers: (Row | Column)[];
+  deleteHeader: (index: number) => void;
+  moveHeader: (from: number, to: number) => void;
+  resizeHeader: (index: number, size: number) => void;
+  insertHeader: (index: number, width: number) => void;
+}
+
+export interface HeaderProps extends ComponentProps<"div"> {
   type: "row" | "column";
   header: Row | Column;
   index: number;
@@ -62,15 +71,6 @@ interface HeaderProps extends ComponentProps<"div"> {
   onMove: (offset: number) => void;
   onInsert: (offset: number) => void;
   onResize: (width: number, height: number) => void;
-}
-
-interface HeadersProps extends ComponentProps<"div"> {
-  type: "row" | "column";
-  headers: (Row | Column)[];
-  deleteHeader: (index: number) => void;
-  moveHeader: (from: number, to: number) => void;
-  resizeHeader: (index: number, size: number) => void;
-  insertHeader: (index: number, width: number) => void;
 }
 
 function isRowHeader(header: Row | Column): header is Row {
@@ -264,7 +264,7 @@ export function Headers({
   insertHeader,
   className,
   ...props
-}: HeadersProps) {
+}: Props) {
   const items = useMemo(() => headers.map((header) => header.id), [headers]);
   const isColumn = useMemo(() => type === "column", [type]);
 
