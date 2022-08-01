@@ -14,17 +14,7 @@ const NAMES = [
   "Quinn Elton",
 ];
 
-const COLORS = [
-  "#07f",
-  "#0bf",
-  "#0c8",
-  "#8c1",
-  "#fb0",
-  "#f81",
-  "#e14",
-  "#e4b",
-  "#85f",
-];
+const COLORS = ["#07f", "#0bf", "#0c8", "#8c1", "#fb0", "#f81", "#e14", "#e4b"];
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
