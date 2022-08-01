@@ -171,7 +171,7 @@ export async function createSpreadsheet(
     const result = evaluateCell(columnId, rowId);
     if (result.type !== "number") {
       throw new Error(
-        `expected an expression result of type number but got ${JSON.stringify(
+        `Expected an expression result of type number but got ${JSON.stringify(
           result
         )}`
       );

@@ -1,5 +1,7 @@
 import type { ExpressionResult } from ".";
 
+export const EXPRESSION_ERROR = "ERROR";
+
 export function convertNumberToLetter(index: number) {
   return String.fromCharCode(index + 65);
 }
@@ -14,7 +16,7 @@ export function formatExpressionResult(expressionResult: ExpressionResult) {
   } else if (expressionResult.type === "number") {
     return roundTo2Decimals(expressionResult.value);
   } else {
-    return "ERROR";
+    return EXPRESSION_ERROR;
   }
 }
 

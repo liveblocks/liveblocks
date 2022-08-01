@@ -9,8 +9,8 @@
   overflow: hidden;
 }
 
-.header {
-  --header-height: 32px;
+.banner {
+  --banner-height: 32px;
 
   flex: none;
   display: flex;
@@ -21,7 +21,7 @@
 .buttons {
   display: flex;
   flex: none;
-  height: var(--header-height);
+  height: var(--banner-height);
   margin-right: var(--padding);
 }
 
@@ -35,7 +35,7 @@
   align-self: center;
   width: var(--border);
   border-radius: var(--border);
-  height: calc(var(--header-height) - var(--padding) * 2);
+  height: calc(var(--banner-height) - var(--padding) * 2);
   background: #e9ebef;
   margin: 0 var(--padding);
 }
@@ -73,191 +73,10 @@
 }
 
 .avatar {
-  width: calc(var(--header-height) - var(--padding) / 2);
-  height: calc(var(--header-height) - var(--padding) / 2);
+  width: calc(var(--banner-height) - var(--padding) / 2);
+  height: calc(var(--banner-height) - var(--padding) / 2);
   background: #f3f4f6;
   box-shadow: 0 0 0 var(--border) #f3f4f6;
-}
-
-.sheet {
-  position: relative;
-  padding-bottom: var(--padding);
-  padding-right: var(--padding);
-  overflow: auto;
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  display: grid;
-  grid-template-columns: var(--column-header-width) 1fr;
-  grid-template-rows: var(--row-height) 1fr;
-  grid-template-areas:
-    ".    columns"
-    "rows table";
-}
-
-.sheet::-webkit-scrollbar {
-  display: none;
-}
-
-.sheet_headers {
-  display: flex;
-  background: #e9ebef;
-}
-
-.sheet_headers_row {
-  grid-area: rows;
-  flex-direction: column;
-}
-
-.sheet_headers_column {
-  grid-area: columns;
-  flex-direction: row;
-}
-
-.sheet_header_container {
-  position: relative;
-  pointer-events: none;
-}
-
-.sheet_header {
-  --header-control-padding: 5px;
-
-  position: absolute;
-  inset: 0px;
-  display: flex;
-  place-items: center;
-  padding: var(--header-control-padding);
-  transition: background 0.12s ease-in-out;
-  background: #f3f4f6;
-}
-
-.sheet_header,
-.sheet_header_handles {
-  pointer-events: all;
-}
-
-.sheet_headers_row .sheet_header {
-  inset: calc(var(--border) / 2) 0px;
-}
-
-.sheet_headers_row .sheet_header_container:first-child .sheet_header {
-  top: 0px;
-}
-
-.sheet_headers_row .sheet_header_container:last-child .sheet_header {
-  bottom: 0px;
-}
-
-.sheet_headers_column .sheet_header {
-  inset: 0px calc(var(--border) / 2);
-}
-
-.sheet_headers_column .sheet_header_container:first-child .sheet_header {
-  left: 0px;
-}
-
-.sheet_headers_column .sheet_header_container:last-child .sheet_header {
-  right: 0px;
-}
-
-.sheet_header_label {
-  display: flex;
-  flex: 1 1 auto;
-  place-items: center;
-  place-content: center;
-  font-size: 14px;
-  font-weight: 600;
-  color: #6b7280;
-  user-select: none;
-}
-
-.sheet_header_control {
-  all: unset;
-  width: calc(var(--row-height) - var(--header-control-padding) * 2);
-  height: calc(var(--row-height) - var(--header-control-padding) * 2);
-  display: flex;
-  place-content: center;
-  place-items: center;
-  border-radius: var(--radius);
-  color: #9ca3af;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
-}
-
-.sheet_header_control:hover {
-  background: #e9ebef;
-}
-
-.sheet_header:hover .sheet_header_control {
-  opacity: 1;
-}
-
-.sheet_header_handler {
-  cursor: grab;
-}
-
-.sheet_header_resize {
-  position: absolute;
-  height: 100%;
-  width: calc(2 * var(--border));
-  right: calc(-1 * var(--border));
-  cursor: col-resize;
-}
-
-.sheet_table {
-  grid-area: table;
-  display: table;
-  border-collapse: collapse;
-  border-spacing: 0px;
-  border-radius: var(--radius);
-  z-index: 100;
-  background: #fff;
-  box-shadow: 0px 0px 0px 1px rgb(31, 41, 55, 0.04),
-    0px 2px 4px rgb(31, 41, 55, 0.06), 0px 4px 16px -2px rgb(31, 41, 55, 0.12);
-}
-
-.sheet_table tr:first-of-type .sheet_cell {
-  border-top: none;
-}
-
-.sheet_table tr:last-of-type .sheet_cell {
-  border-bottom: none;
-}
-
-.sheet_table tr .sheet_cell:first-of-type {
-  border-left: none;
-}
-
-.sheet_table tr .sheet_cell:last-of-type {
-  border-right: none;
-}
-
-.sheet_table tr:first-of-type .sheet_cell:first-of-type {
-  --cell-top-left-radius: 1;
-}
-
-.sheet_table tr:first-of-type .sheet_cell:last-of-type {
-  --cell-top-right-radius: 1;
-}
-
-.sheet_table tr:last-of-type .sheet_cell:first-of-type {
-  --cell-bottom-left-radius: 1;
-}
-
-.sheet_table tr:last-of-type .sheet_cell:last-of-type {
-  --cell-bottom-right-radius: 1;
-}
-
-.sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }
 
 .loading {

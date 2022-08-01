@@ -1,347 +1,27 @@
-import cx from "classnames";
 import { useRouter } from "next/router";
-import {
-  ComponentProps,
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
-import { Resizable, ResizeCallback } from "re-resizable";
+import { CSSProperties, useMemo } from "react";
 import { RoomProvider, useHistory } from "../liveblocks.config";
-import { Cell } from "../components/Cell";
-import {
-  DropdownMenu,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from "../components/DropdownMenu";
 import { useSpreadsheet } from "../spreadsheet/react";
-import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
+import { appendUnit } from "../utils";
 import {
-  appendUnit,
-  getIndexWithId,
-  removeGlobalCursor,
-  setGlobalCursor,
-} from "../utils";
-import {
-  HandlerIcon,
-  ChevronIcon,
   AddColumnAfterIcon,
   AddRowAfterIcon,
   UndoIcon,
   RedoIcon,
-  AddColumnBeforeIcon,
-  AddRowBeforeIcon,
-  MoveColumnAfterIcon,
-  MoveColumnBeforeIcon,
-  MoveRowAfterIcon,
-  MoveRowBeforeIcon,
-  TrashIcon,
-  EraserIcon,
-  ResetIcon,
 } from "../icons";
-import { Row, Column } from "../types";
-import styles from "./index.module.css";
 import { Avatar } from "../components/Avatar";
 import { createInitialStorage } from "../spreadsheet/utils";
 import { Tooltip } from "../components/Tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-
-const GRID_INITIAL_ROWS = 4 as const;
-const GRID_INITIAL_COLUMNS = 3 as const;
-const COLUMN_HEADER_WIDTH = 80;
-const COLUMN_INITIAL_WIDTH = 120;
-const COLUMN_MIN_WIDTH = 80;
-const COLUMN_MAX_WIDTH = 300;
-const ROW_INITIAL_HEIGHT = 32;
-const ROW_MAX_HEIGHT = 100;
-
-interface HeaderProps extends ComponentProps<"div"> {
-  type: "row" | "column";
-  header: Row | Column;
-  index: number;
-  isFirst: boolean;
-  isLast: boolean;
-  onDelete: () => void;
-  onMove: (offset: number) => void;
-  onInsert: (offset: number) => void;
-  onResize: (width: number, height: number) => void;
-}
-
-interface HeadersProps extends ComponentProps<"div"> {
-  type: "row" | "column";
-  headers: (Row | Column)[];
-  deleteHeader: (index: number) => void;
-  moveHeader: (from: number, to: number) => void;
-  resizeHeader: (index: number, size: number) => void;
-  insertHeader: (index: number, width: number) => void;
-}
-
-function isRowHeader(header: Row | Column): header is Row {
-  return Boolean((header as Row).height);
-}
-
-function isColumnHeader(header: Row | Column): header is Column {
-  return Boolean((header as Column).width);
-}
-
-function Header({
-  type,
-  index,
-  header,
-  isFirst,
-  isLast,
-  onDelete,
-  onResize,
-  onMove,
-  onInsert,
-  style,
-  ...props
-}: HeaderProps) {
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const history = useHistory();
-  const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
-    useSortable({
-      id: header.id,
-    });
-  const initialHeader = useRef(header);
-  const isColumn = isColumnHeader(header);
-
-  const handleDropdownOpenChange = useCallback((open: boolean) => {
-    setDropdownOpen(open);
-  }, []);
-
-  const handleResizeStart = useCallback(() => {
-    initialHeader.current = header;
-    history.pause();
-    setGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, [header]);
-
-  const handleResize: ResizeCallback = useCallback(
-    (_, __, ___, size) => {
-      onResize(
-        isColumn ? (initialHeader.current as Column).width + size.width : 0,
-        !isColumn ? (initialHeader.current as Row).height + size.height : 0
-      );
-    },
-    [isColumn, onResize]
-  );
-
-  const handleResizeStop = useCallback(() => {
-    history.resume();
-    removeGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, []);
-
-  const handleResizeDefault = useCallback(() => {
-    onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
-  }, []);
-
-  useEffect(() => {
-    const changeGlobalCursor = isDragging
-      ? setGlobalCursor
-      : removeGlobalCursor;
-
-    changeGlobalCursor("grabbing");
-  }, [isDragging]);
-
-  return (
-    <div
-      key={header.id}
-      ref={setNodeRef}
-      className={styles.sheet_header_container}
-      style={
-        {
-          transform: transform
-            ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-            : undefined,
-          zIndex: isDragging ? 100 : undefined,
-        } as CSSProperties
-      }
-      {...props}
-    >
-      <Resizable
-        size={{
-          width: isColumn ? header.width : COLUMN_HEADER_WIDTH,
-          height: isColumn ? ROW_INITIAL_HEIGHT : header.height,
-        }}
-        minWidth={COLUMN_MIN_WIDTH}
-        maxWidth={COLUMN_MAX_WIDTH}
-        minHeight={ROW_INITIAL_HEIGHT}
-        maxHeight={ROW_MAX_HEIGHT}
-        enable={{ right: isColumn, bottom: !isColumn }}
-        handleWrapperClass={styles.sheet_header_handles}
-        onResizeStart={handleResizeStart}
-        onResize={handleResize}
-        onResizeStop={handleResizeStop}
-      >
-        <div className={styles.sheet_header}>
-          <button
-            className={cx(
-              styles.sheet_header_control,
-              styles.sheet_header_handler
-            )}
-            ref={setActivatorNodeRef}
-            {...listeners}
-          >
-            <HandlerIcon />
-          </button>
-          <span className={styles.sheet_header_label}>
-            {isColumn ? convertNumberToLetter(index) : index + 1}
-          </span>
-          <DropdownMenu
-            open={isDropdownOpen}
-            onOpenChange={handleDropdownOpenChange}
-            content={
-              <>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    icon={
-                      isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
-                    }
-                    label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
-                    onSelect={() => onInsert(0)}
-                  />
-                  <DropdownMenuItem
-                    icon={
-                      isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />
-                    }
-                    label={`Add ${isColumn ? "Column After" : "Row Below"}`}
-                    onSelect={() => onInsert(1)}
-                  />
-                </DropdownMenuGroup>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    icon={
-                      isColumn ? (
-                        <MoveColumnBeforeIcon />
-                      ) : (
-                        <MoveRowBeforeIcon />
-                      )
-                    }
-                    label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
-                    onSelect={() => onMove(-1)}
-                    disabled={isFirst}
-                  />
-                  <DropdownMenuItem
-                    icon={
-                      isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
-                    }
-                    label={`Move ${isColumn ? "Column After" : "Row Below"}`}
-                    onSelect={() => onMove(1)}
-                    disabled={isLast}
-                  />
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    icon={<ResetIcon />}
-                    label="Resize to Default"
-                    onSelect={handleResizeDefault}
-                  />
-                  <DropdownMenuItem
-                    icon={<EraserIcon />}
-                    label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
-                  />
-                  <DropdownMenuItem
-                    icon={<TrashIcon />}
-                    label={`Delete ${isColumn ? "Column" : "Row"}`}
-                    onSelect={onDelete}
-                  />
-                </DropdownMenuGroup>
-              </>
-            }
-          >
-            <button className={styles.sheet_header_control}>
-              <ChevronIcon />
-            </button>
-          </DropdownMenu>
-        </div>
-      </Resizable>
-    </div>
-  );
-}
-
-function Headers({
-  type,
-  headers,
-  deleteHeader,
-  moveHeader,
-  resizeHeader,
-  insertHeader,
-  className,
-  ...props
-}: HeadersProps) {
-  const items = useMemo(() => headers.map((header) => header.id), [headers]);
-  const isColumn = useMemo(() => type === "column", [type]);
-
-  const handleDragEnd = useCallback(
-    ({ active, over }: DragEndEvent) => {
-      if (!over) {
-        return;
-      }
-
-      moveHeader(
-        getIndexWithId(headers, active.id),
-        getIndexWithId(headers, over.id)
-      );
-    },
-    [headers, moveHeader]
-  );
-
-  return (
-    <DndContext
-      collisionDetection={closestCenter}
-      modifiers={[restrictToParentElement]}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        strategy={
-          isColumn ? horizontalListSortingStrategy : verticalListSortingStrategy
-        }
-        items={items}
-      >
-        <div
-          className={cx(className, styles.sheet_headers)}
-          aria-hidden
-          {...props}
-        >
-          {headers.map((header, index) => (
-            <Header
-              type={type}
-              key={index}
-              index={index}
-              header={header}
-              isFirst={index === 0}
-              isLast={index === headers.length - 1}
-              onDelete={() => deleteHeader(index)}
-              onResize={(width, height) =>
-                resizeHeader(index, isColumn ? width : height)
-              }
-              onMove={(offset: number) => moveHeader(index, index + offset)}
-              onInsert={(offset: number) =>
-                insertHeader(
-                  index + offset,
-                  isColumn ? COLUMN_INITIAL_WIDTH : ROW_INITIAL_HEIGHT
-                )
-              }
-            />
-          ))}
-        </div>
-      </SortableContext>
-    </DndContext>
-  );
-}
+import styles from "./index.module.css";
+import {
+  COLUMN_HEADER_WIDTH,
+  COLUMN_INITIAL_WIDTH,
+  GRID_INITIAL_COLUMNS,
+  GRID_INITIAL_ROWS,
+  ROW_INITIAL_HEIGHT,
+} from "../constants";
+import { Sheet } from "../components/Sheet";
 
 function Example() {
   const spreadsheet = useSpreadsheet();
@@ -357,24 +37,7 @@ function Example() {
     );
   }
 
-  const {
-    users,
-    selections,
-    columns,
-    rows,
-    cells,
-    selectCell,
-    deleteColumn,
-    deleteRow,
-    moveColumn,
-    moveRow,
-    insertColumn,
-    insertRow,
-    resizeColumn,
-    resizeRow,
-    getExpression,
-    setCellValue,
-  } = spreadsheet;
+  const { users, columns, rows, insertColumn, insertRow } = spreadsheet;
 
   return (
     <main
@@ -387,7 +50,7 @@ function Example() {
         } as CSSProperties
       }
     >
-      <div className={styles.header}>
+      <div className={styles.banner}>
         <div className={styles.buttons}>
           <div className={styles.button_group} role="group">
             <Tooltip content="Add Column">
@@ -436,64 +99,7 @@ function Example() {
           })}
         </div>
       </div>
-      <div className={styles.sheet}>
-        <Headers
-          type="column"
-          className={styles.sheet_headers_column}
-          headers={columns}
-          moveHeader={moveColumn}
-          deleteHeader={deleteColumn}
-          resizeHeader={resizeColumn}
-          insertHeader={insertColumn}
-        />
-        <Headers
-          type="row"
-          className={styles.sheet_headers_row}
-          headers={rows}
-          moveHeader={moveRow}
-          deleteHeader={deleteRow}
-          resizeHeader={resizeRow}
-          insertHeader={insertRow}
-        />
-        <table className={styles.sheet_table}>
-          <thead className={styles.sr}>
-            <tr>
-              <th />
-              {columns.map((_, x) => (
-                <th key={x}>{convertNumberToLetter(x)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row, y) => {
-              return (
-                <tr key={y}>
-                  <th className={styles.sr}>{y}</th>
-                  {columns.map((column, x) => {
-                    return (
-                      <Cell
-                        key={column.id + row.id}
-                        className={styles.sheet_cell}
-                        onClick={() =>
-                          selectCell({ columnId: column.id, rowId: row.id })
-                        }
-                        onValueChange={(value) =>
-                          setCellValue(column.id, row.id, value)
-                        }
-                        getExpression={() => getExpression(column.id, row.id)}
-                        displayValue={cells[column.id + row.id]}
-                        width={column.width}
-                        height={row.height}
-                        selection={selections[column.id + row.id]}
-                      />
-                    );
-                  })}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <Sheet {...spreadsheet} />
     </main>
   );
 }

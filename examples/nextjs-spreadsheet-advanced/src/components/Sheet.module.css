@@ -1,0 +1,72 @@
+.sheet {
+  position: relative;
+  padding-bottom: var(--padding);
+  padding-right: var(--padding);
+  overflow: auto;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  display: grid;
+  grid-template-columns: var(--column-header-width) 1fr;
+  grid-template-rows: var(--row-height) 1fr;
+  grid-template-areas:
+    ".    columns"
+    "rows table";
+}
+
+.sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.rows {
+  grid-area: rows;
+  flex-direction: column;
+}
+
+.columns {
+  grid-area: columns;
+  flex-direction: row;
+}
+
+.table {
+  grid-area: table;
+  display: table;
+  border-collapse: collapse;
+  border-spacing: 0px;
+  border-radius: var(--radius);
+  z-index: 100;
+  background: #fff;
+  box-shadow: 0px 0px 0px 1px rgb(31, 41, 55, 0.04),
+    0px 2px 4px rgb(31, 41, 55, 0.06), 0px 4px 16px -2px rgb(31, 41, 55, 0.12);
+}
+
+.table tr:first-of-type .cell {
+  border-top: none;
+}
+
+.table tr:last-of-type .cell {
+  border-bottom: none;
+}
+
+.table tr .cell:first-of-type {
+  border-left: none;
+}
+
+.table tr .cell:last-of-type {
+  border-right: none;
+}
+
+.table tr:first-of-type .cell:first-of-type {
+  --cell-top-left-radius: 1;
+}
+
+.table tr:first-of-type .cell:last-of-type {
+  --cell-top-right-radius: 1;
+}
+
+.table tr:last-of-type .cell:first-of-type {
+  --cell-bottom-left-radius: 1;
+}
+
+.table tr:last-of-type .cell:last-of-type {
+  --cell-bottom-right-radius: 1;
+}

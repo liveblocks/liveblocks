@@ -1,15 +1,17 @@
 .container {
+  --avatar-border: 2px;
+
   position: relative;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: var(--border) solid var(--avatar-color);
+  border: var(--avatar-border) solid var(--avatar-color);
 }
 
 .avatar {
   position: absolute;
-  inset: var(--border);
-  width: calc(100% - 2 * var(--border));
-  height: calc(100% - 2 * var(--border));
+  inset: var(--avatar-border);
+  width: calc(100% - 2 * var(--avatar-border));
+  height: calc(100% - 2 * var(--avatar-border));
   border-radius: 50%;
   background: #d1d5db;
   overflow: hidden;

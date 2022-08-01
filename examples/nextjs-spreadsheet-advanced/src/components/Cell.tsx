@@ -1,5 +1,6 @@
 import cx from "classnames";
 import { ComponentProps, CSSProperties, useState } from "react";
+import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import { UserInfo } from "../types";
 import { appendUnit } from "../utils";
 import styles from "./Cell.module.css";
@@ -28,6 +29,7 @@ export function Cell({
 
   const value = editingString == null ? displayValue : editingString;
   const isNumber = isNumeric(value);
+  const isError = displayValue === EXPRESSION_ERROR;
 
   return (
     <td

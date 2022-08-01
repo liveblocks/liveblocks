@@ -1,10 +1,29 @@
 import { User } from "@liveblocks/client";
 import { useRoom } from "../liveblocks.config";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Column, Presence, Row, UserInfo, UserMeta } from "../types";
 import { createSpreadsheet, Spreadsheet } from ".";
 
-export function useSpreadsheet() {
+export interface ReactSpreadsheet {
+  insertRow: Spreadsheet["insertRow"];
+  resizeRow: Spreadsheet["resizeRow"];
+  moveRow: Spreadsheet["moveRow"];
+  deleteRow: Spreadsheet["deleteRow"];
+  insertColumn: Spreadsheet["insertColumn"];
+  resizeColumn: Spreadsheet["resizeColumn"];
+  moveColumn: Spreadsheet["moveColumn"];
+  deleteColumn: Spreadsheet["deleteColumn"];
+  getExpression: Spreadsheet["getCellExpressionDisplay"];
+  selectCell: Spreadsheet["selectedCell"];
+  setCellValue: Spreadsheet["updateCellValue"];
+  rows: Row[];
+  columns: Column[];
+  cells: Record<string, string>;
+  users: User<Presence, UserMeta>[];
+  selections: Record<string, UserInfo>;
+}
+
+export function useSpreadsheet(): ReactSpreadsheet | null {
   const room = useRoom();
   const [spreadsheet, setSpreadsheet] = useState<Spreadsheet | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
