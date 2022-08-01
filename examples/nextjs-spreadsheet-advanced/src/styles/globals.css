@@ -36,3 +36,21 @@ svg {
 * {
   box-sizing: border-box;
 }
+
+.grabbing *,
+.resizing-column *,
+.resizing-row * {
+  pointer-events: none !important;
+}
+
+.grabbing {
+  cursor: grabbing;
+}
+
+.resizing-column {
+  cursor: col-resize;
+}
+
+.resizing-row {
+  cursor: row-resize;
+}

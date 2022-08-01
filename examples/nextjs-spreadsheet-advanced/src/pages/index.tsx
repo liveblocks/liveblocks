@@ -4,6 +4,7 @@ import {
   ComponentProps,
   CSSProperties,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -27,7 +28,12 @@ import {
 } from "../components/DropdownMenu";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
-import { appendUnit, getIndexWithId } from "../utils";
+import {
+  appendUnit,
+  getIndexWithId,
+  removeGlobalCursor,
+  setGlobalCursor,
+} from "../utils";
 import {
   HandlerIcon,
   ChevronIcon,
@@ -117,8 +123,9 @@ function Header({
   }, []);
 
   const handleResizeStart = useCallback(() => {
-    history.pause();
     initialHeader.current = header;
+    history.pause();
+    setGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
   }, [header]);
 
   const handleResize: ResizeCallback = useCallback(
@@ -133,11 +140,20 @@ function Header({
 
   const handleResizeStop = useCallback(() => {
     history.resume();
+    removeGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
   }, []);
 
   const handleResizeDefault = useCallback(() => {
     onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
   }, []);
+
+  useEffect(() => {
+    const changeGlobalCursor = isDragging
+      ? setGlobalCursor
+      : removeGlobalCursor;
+
+    changeGlobalCursor("grabbing");
+  }, [isDragging]);
 
   return (
     <div
