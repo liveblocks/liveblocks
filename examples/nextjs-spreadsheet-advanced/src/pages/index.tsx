@@ -311,7 +311,11 @@ function Headers({
         }
         items={items}
       >
-        <div className={cx(className, styles.sheet_headers)} {...props}>
+        <div
+          className={cx(className, styles.sheet_headers)}
+          aria-hidden
+          {...props}
+        >
           {headers.map((header, index) => (
             <Header
               type={type}
@@ -373,7 +377,7 @@ function Example() {
   } = spreadsheet;
 
   return (
-    <div
+    <main
       className={styles.container}
       style={
         {
@@ -490,7 +494,7 @@ function Example() {
           </tbody>
         </table>
       </div>
-    </div>
+    </main>
   );
 }
 
