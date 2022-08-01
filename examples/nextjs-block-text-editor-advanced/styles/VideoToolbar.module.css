@@ -6,9 +6,8 @@
 .toolbar {
   position: absolute;
   z-index: 10;
-  top: -5.5rem;
-  left: -0.75rem;
-  padding: 0.25rem;
+  top: calc(100% + 8px);
+  left: 0;
   background: rgba(var(--color-surface-over), 0.92);
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow-over);
@@ -17,19 +16,27 @@
 }
 
 .form {
+  padding: 1rem;
   display: flex;
-  align-items: center;
-  gap: 4px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.url_title {
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .url_input {
   border: 1px solid rgba(var(--color-foreground), 0.2);
-  border-radius: 6px;height: 1.75rem;
+  border-radius: 6px;
+  height: 1.75rem;
   min-width: 1.75rem;
   font-size: 0.875em;
   padding: 0.5rem;
   background: none;
-  width: 280px;
+  width: 240px;
 }
 
 .url_input:hover {

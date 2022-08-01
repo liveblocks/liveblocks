@@ -1,6 +1,5 @@
 import React, { createRef, useEffect, useState } from "react";
 import styles from "../../styles/VideoToolbar.module.css";
-import { BlockNodeType } from "../types";
 import Button from "./Button";
 
 type Props = {
@@ -8,6 +7,9 @@ type Props = {
   setUrl: (url: string) => void;
   onClose: () => void;
 };
+
+const youtubeLinkPattern = "^((?:https?:)?\/\/)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(\/(?:[\\w\\-]+\\?v=|embed\/|v\/)?)([\\w\\-]+)(\\S+)?$";
+const youtubeLinkRegex = new RegExp(youtubeLinkPattern);
 
 export default function VideoToolbar({ url, setUrl, onClose }: Props) {
   const [urlInputValue, setUrlInputValue] = useState<string>(url ? url : "");
@@ -25,23 +27,33 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            const regex =
-              /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$/;
-            if (!regex.test(urlInputValue)) {
+            if (!youtubeLinkRegex.test(urlInputValue)) {
+              console.log('no');
               setUrlInputValue("");
               return;
             }
-            setUrl(urlInputValue);
+
+            let embedLink;
+            if (urlInputValue.includes("/embed/")) {
+              embedLink = urlInputValue
+            } else {
+              const id = new URL(urlInputValue).searchParams.get("v");
+              embedLink = `https://youtube.com/embed/${id}`;
+            }
+
+            setUrl(embedLink);
             onClose();
           }}
         >
           <input
-            type="url"
+            type="text"
+            title="Please enter a valid YouTube link"
+            pattern={youtubeLinkPattern}
             ref={inputRef}
             className={styles.url_input}
             value={urlInputValue}
             onChange={(e) => setUrlInputValue(e.currentTarget.value)}
-            placeholder="Paste the YouTube video link…"
+            placeholder="Paste video link…"
           />
 
           <Button
@@ -56,16 +68,3 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
     </div>
   );
 }
-
-const getBlockNodeTypeFromTag = (tag: string) => {
-  switch (tag) {
-    case "h1":
-      return BlockNodeType.HeadingOne;
-    case "h2":
-      return BlockNodeType.HeadingTwo;
-    case "h3":
-      return BlockNodeType.HeadingThree;
-    default:
-      return BlockNodeType.Paragraph;
-  }
-};

@@ -38,9 +38,7 @@ export default function BlockText({ id, blockId, block, data }: Props) {
   const blockAbove = useBlockAbove(blockId, BlockType.Text);
 
   const [{ selectedBlockIds }, setPresence] = useMyPresence();
-  const isSelected = selectedBlockIds.find((id) => id === blockId)
-    ? true
-    : false;
+  const isSelected = !!selectedBlockIds.find((id) => id === blockId);
   const isElementFocused =
     document.getElementById(id) === document.activeElement;
 
@@ -60,7 +58,7 @@ export default function BlockText({ id, blockId, block, data }: Props) {
         onTextSelectionChange={(textSelection) => {
           setPresence({ textSelection });
         }}
-        onFocus={(e) => {
+        onFocus={() => {
           if (isSelected) {
             return;
           }
