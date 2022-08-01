@@ -1,8 +1,6 @@
-import classNames from "classnames";
-import { createRef, ReactNode, useEffect, useState } from "react";
+import { ReactNode } from "react";
 import styles from "../../styles/BlockTypeSelector.module.css";
 import { BlockNodeType, BlockProps, BlockType } from "../types";
-import { ScrollArea } from "./ScrollArea";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 
 type Props = {
@@ -103,6 +101,16 @@ export default function BlockTypeSelector({
           onSelect: () => {
             setBlock({
               type: BlockType.Video,
+              url: null,
+            });
+          },
+        },
+        {
+          label: "Image",
+          description: "Embed from URL",
+          onSelect: () => {
+            setBlock({
+              type: BlockType.Image,
               url: null,
             });
           },
