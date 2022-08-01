@@ -17,6 +17,7 @@ export const Avatar = forwardRef<HTMLButtonElement, Props>(
           className={cx(className, styles.container)}
           style={{ "--avatar-color": color, ...style } as CSSProperties}
           ref={ref}
+          disabled
           {...props}
         >
           <div className={styles.avatar}>
