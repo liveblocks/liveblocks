@@ -56,7 +56,9 @@ export function Cell({
       <input
         readOnly={editingString === null}
         className={styles.input}
-        onChange={(e) => setEditingString(e.target.value)}
+        onChange={(e) =>
+          setEditingString(e.target.value.replace(" ", "").toUpperCase())
+        }
         onBlur={(e) => {
           if (editingString !== null) {
             const target = e.target;
@@ -83,7 +85,7 @@ export function Cell({
         onDoubleClick={() => {
           setEditingString(getExpression());
         }}
-        value={value}
+        value={value ?? ""}
       />
     </td>
   );
