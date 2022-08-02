@@ -1,15 +1,33 @@
 import { LiveMap, LiveObject, LiveList } from "@liveblocks/client";
 
-export type BlockProps = TextBlock;
+export type BlockProps = TextBlock | VideoBlock | ImageBlock | CodeSandboxBlock;
 
 export enum BlockType {
   Text,
+  Video,
+  Image,
+  CodeSandbox
 }
 
 export type TextBlock = {
   type: BlockType.Text;
   node: BlockTopLevelNode;
 };
+
+export type VideoBlock = {
+  type: BlockType.Video;
+  url: string | null;
+};
+
+export type ImageBlock = {
+  type: BlockType.Image;
+  url: string | null;
+};
+
+export type CodeSandboxBlock = {
+  type: BlockType.CodeSandbox;
+  url: string | null;
+}
 
 export type TextSelection = {
   caretPosition: number | null;

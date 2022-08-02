@@ -1,0 +1,61 @@
+.toolbar_container {
+  position: relative;
+  z-index: 20;
+}
+
+.toolbar {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 8px);
+  left: 0;
+  background: rgba(var(--color-surface-over), 0.92);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-over);
+  border-radius: 10px;
+  pointer-events: auto;
+}
+
+.form {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+
+.url_title {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.url_input {
+  border: 1px solid rgba(var(--color-foreground), 0.2);
+  border-radius: 6px;
+  height: 1.75rem;
+  min-width: 1.75rem;
+  font-size: 0.875em;
+  padding: 0.5rem;
+  background: none;
+  width: 240px;
+}
+
+.url_input:hover {
+  border-color: rgba(var(--color-foreground), 0.3);
+}
+
+.url_input:focus {
+  border-color: rgba(var(--color-primary), 0.6);
+  outline: 2px solid rgba(var(--color-primary), 0.2);
+}
+
+.url_input::placeholder {
+  color: rgba(var(--color-foreground), 0.3);
+}
+
+.toolbar_outside {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}

@@ -1,10 +1,9 @@
 import styles from "../../styles/BlockText.module.css";
-import { BlockTopLevelNode, TextBlock } from "../types";
+import { BlockType, TextBlock } from "../types";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
 import { LiveObject } from "@liveblocks/client";
 import useDeleteBlocksByIds from "../hooks/useDeleteBlocksByIds";
-import useInsertBlockBelow from "../hooks/useInsertBlockBelow";
 import useSelectBlockAbove from "../hooks/useSelectBlockAbove";
 import useSelectBlockBelow from "../hooks/useSelectBlockBelow";
 import { useMyPresence } from "../liveblocks.config";
@@ -13,7 +12,6 @@ import Avatar from "./Avatar";
 import TextEditor from "./TextEditor";
 import isCaretOnFirstLine from "../utils/isCaretOnFirstLine";
 import isCaretOnLastLine from "../utils/isCaretOnLastLine";
-import { useState } from "react";
 import isBlockTopLevelNodeEmpty from "../utils/isBlockTopLevelNodeEmpty";
 import UserTextSelection from "./UserTextSelection";
 import { MAX_TEXT_BLOCK_LENGTH, USER_COLORS } from "../constants";
@@ -29,43 +27,27 @@ type Props = {
   blockId: string;
   block: LiveObject<TextBlock>;
   data: TextBlock;
-  placeholder?: string;
 };
 
-export default function BlockText({
-  id,
-  blockId,
-  block,
-  data,
-  placeholder,
-}: Props) {
+export default function BlockText({ id, blockId, block, data }: Props) {
   const deleteBlocksByIds = useDeleteBlocksByIds();
   const handleReturnKeyTextBlock = useReturnKeyTextBlock();
   const selectBlockAbove = useSelectBlockAbove();
   const selectBlockBelow = useSelectBlockBelow();
   const othersByBlockId = useOthersByBlockId(blockId);
-  const blockAbove = useBlockAbove(blockId);
+  const blockAbove = useBlockAbove(blockId, BlockType.Text);
 
   const [{ selectedBlockIds }, setPresence] = useMyPresence();
-  const isSelected = selectedBlockIds.find((id) => id === blockId)
-    ? true
-    : false;
-  const [isFocused, setIsFocused] = useState(false);
+  const isSelected = !!selectedBlockIds.find((id) => id === blockId);
   const isElementFocused =
     document.getElementById(id) === document.activeElement;
 
   return (
     <div
       className={classNames(styles.block_text, {
-        [styles.block_text_selected]: isFocused,
+        [styles.block_text_selected]: isElementFocused,
       })}
     >
-      {placeholder && isFocused && isBlockTopLevelNodeEmpty(data.node) && (
-        <div className={classNames(styles.placeholder, "placeholder")}>
-          {placeholder}
-        </div>
-      )}
-
       <TextEditor
         id={id}
         node={data.node}
@@ -76,17 +58,12 @@ export default function BlockText({
         onTextSelectionChange={(textSelection) => {
           setPresence({ textSelection });
         }}
-        onFocus={(e) => {
-          setIsFocused(true);
-
+        onFocus={() => {
           if (isSelected) {
             return;
           }
 
           setPresence({ selectedBlockIds: [blockId] });
-        }}
-        onBlur={() => {
-          setIsFocused(false);
         }}
         onKeyDown={(e, node) => {
           const selection = window.getSelection();
@@ -117,12 +94,19 @@ export default function BlockText({
                 break;
               }
 
+              const blockAboveData = blockAbove.toObject();
+
+              if (blockAboveData.type !== BlockType.Text) {
+                break;
+              }
+
               e.preventDefault();
 
-              const nodeAbove = blockAbove.get("node");
+              const nodeAbove = blockAboveData.node;
 
               if (caretPosition === 0) {
                 blockAbove.set(
+                  // @ts-ignore
                   "node",
                   convertHtmlToBlockTopLevelNode(
                     nodeAbove.type,
@@ -172,6 +156,11 @@ export default function BlockText({
           }
         }}
       />
+      {isElementFocused && isBlockTopLevelNodeEmpty(data.node) && (
+        <div className={classNames(styles.placeholder, "placeholder")}>
+          Type something here…
+        </div>
+      )}
 
       {othersByBlockId.length > 0 && !isElementFocused && (
         <div>
