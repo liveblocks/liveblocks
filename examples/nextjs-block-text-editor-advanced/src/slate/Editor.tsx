@@ -36,6 +36,7 @@ import { CustomElement, DocumentMeta } from "./types";
 import { toggleMark, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
+import Loading from "../components/Loading";
 
 const initialValue: CustomElement[] = [
   {
@@ -230,7 +231,7 @@ function App() {
   );
 
   if (blocks == null) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (

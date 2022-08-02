@@ -5,6 +5,7 @@ import MinusIcon from "../icons/minus.svg";
 import DragIcon from "../icons/drag.svg";
 import { useDraggable } from "@dnd-kit/core";
 import Tooltip from "../components/Tooltip";
+import BlockTypeSelector from "../components/BlockTypeSelector";
 
 type Props = {
   blockId: string;
@@ -24,25 +25,29 @@ export default function BlockInlineActions({
   return (
     <div className={styles.inline_actions}>
       <Tooltip content="Delete">
-        <Button type="ghost" onClick={onDelete} ariaLabel="Delete">
+        <Button
+          appearance="ghost"
+          onClick={onDelete}
+          ariaLabel="Delete"
+          isSquare
+        >
           <MinusIcon />
         </Button>
       </Tooltip>
       <Tooltip content="Insert block below">
-        <Button
-          type="ghost"
-          onClick={onInsertBelow}
-          ariaLabel="Insert block below"
-        >
-          <PlusIcon />
-        </Button>
+        <BlockTypeSelector setBlock={onInsertBelow}>
+          <Button appearance="ghost" ariaLabel="Insert block below" isSquare>
+            <PlusIcon />
+          </Button>
+        </BlockTypeSelector>
       </Tooltip>
       <Tooltip content="Drag to reorder">
         <Button
-          type="ghost"
+          appearance="ghost"
           ariaLabel="Drag to reorder"
           ref={setActivatorNodeRef}
           {...listeners}
+          isSquare
         >
           <DragIcon />
         </Button>

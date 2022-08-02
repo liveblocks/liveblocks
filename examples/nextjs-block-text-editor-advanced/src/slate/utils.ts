@@ -8,13 +8,12 @@ export function toPx(value: number | undefined): string | undefined {
 
 export const makeNodeId = () => nanoid(16);
 
-// TODO: Remove recursivity
+// TODO: Only generate ids for top level nodes
 export const withNodeId = (editor: Editor) => {
   const { apply } = editor;
 
   editor.apply = (operation: Operation) => {
     if (operation.type === "insert_node") {
-      assignIdRecursively(operation.node);
       return apply(operation);
     }
 
@@ -27,13 +26,6 @@ export const withNodeId = (editor: Editor) => {
   };
 
   return editor;
-};
-
-export const assignIdRecursively = (node: Node) => {
-  if (Element.isElement(node)) {
-    node.id = makeNodeId();
-    node.children.forEach(assignIdRecursively);
-  }
 };
 
 export function toggleMark(editor: Editor, format: Format) {

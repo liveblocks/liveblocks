@@ -73,6 +73,7 @@ export default function Toolbar() {
             { label: "Heading 3", value: "h3" },
           ]}
           onValueChange={(value) => {
+            applyTagToSelectedBlocks(value);
           }}
         />
       </div>
@@ -80,40 +81,44 @@ export default function Toolbar() {
       <div className={styles.group}>
         <Tooltip content="Toggle Bold">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Bold"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "bold")}
+            isSquare
           >
             <BoldIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Italic">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Italic"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "italic")}
+            isSquare
           >
             <ItalicIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Underline">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Underline"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "underline")}
+            isSquare
           >
             <UnderlineIcon />
           </Button>
         </Tooltip>
         <Tooltip content="Toggle Strikethrough">
           <Button
-            type="ghost"
+            appearance="ghost"
             ariaLabel="Toggle Strikethrough"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "strikeThrough")}
+            isSquare
           >
             <StrikethroughIcon />
           </Button>
