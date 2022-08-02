@@ -6,6 +6,7 @@ import { Cell } from "./Cell";
 import styles from "./Sheet.module.css";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { useEvent } from "../utils/useEvent";
+import { canUseKeyboard, TABLE_ID } from "../utils/canUseKeyboard";
 
 export type Props = ComponentProps<"div"> & ReactSpreadsheet;
 
@@ -29,13 +30,7 @@ export function Sheet({
 }: Props) {
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
-      if (
-        !selection ||
-        !(
-          document.activeElement === document.body ||
-          document.activeElement === document.getElementById("table")
-        )
-      ) {
+      if (!selection || !canUseKeyboard()) {
         return;
       }
 
@@ -82,7 +77,7 @@ export function Sheet({
         resizeHeader={resizeRow}
         insertHeader={insertRow}
       />
-      <table className={styles.table} id="table" tabIndex={0}>
+      <table className={styles.table} id={TABLE_ID} tabIndex={0}>
         <thead className="sr">
           <tr>
             <th />
