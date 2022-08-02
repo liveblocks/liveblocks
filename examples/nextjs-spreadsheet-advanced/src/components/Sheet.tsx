@@ -1,4 +1,4 @@
-import { ComponentProps, useCallback, useEffect, useMemo, useRef } from "react";
+import { ComponentProps, useCallback } from "react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import { ReactSpreadsheet } from "../spreadsheet/react";
 import { Headers } from "./Headers";
@@ -27,14 +27,13 @@ export function Sheet({
   selection,
   selections,
 }: Props) {
-  const table = useRef<HTMLTableElement>(null);
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
       if (
         !selection ||
         !(
           document.activeElement === document.body ||
-          document.activeElement === table.current
+          document.activeElement === document.getElementById("table")
         )
       ) {
         return;
@@ -83,7 +82,7 @@ export function Sheet({
         resizeHeader={resizeRow}
         insertHeader={insertRow}
       />
-      <table className={styles.table} ref={table} tabIndex={0}>
+      <table className={styles.table} id="table" tabIndex={0}>
         <thead className="sr">
           <tr>
             <th />

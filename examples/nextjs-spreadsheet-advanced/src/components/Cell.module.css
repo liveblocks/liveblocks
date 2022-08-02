@@ -29,6 +29,12 @@
   z-index: var(--cell-selection-z-index);
 }
 
+.cell:global(.editing):before {
+  box-shadow: 0 2px 12px var(--cell-selection),
+    0px 2px 12px rgb(31, 41, 55, 0.1), 0px 6px 32px -2px rgb(31, 41, 55, 0.1);
+  opacity: 0.5;
+}
+
 .cell:global(.selected):before,
 .cell:global(.selected):after {
   --cell-selection: var(--accent);

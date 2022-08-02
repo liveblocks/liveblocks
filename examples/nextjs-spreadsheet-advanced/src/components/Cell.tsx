@@ -60,12 +60,12 @@ export function Cell({
   }, [isSelected]);
 
   const startEditing = useCallback(() => {
-    console.log("start");
     input.current?.focus();
     setEditingString(getExpression());
   }, [getExpression]);
 
   const stopEditing = useCallback(() => {
+    setEditingString(null);
     input.current?.blur();
   }, [editingString]);
 
@@ -93,7 +93,10 @@ export function Cell({
         return;
       }
 
-      if (document.activeElement === document.body) {
+      if (
+        document.activeElement === document.body ||
+        document.activeElement === document.getElementById("table")
+      ) {
         if (key === "Enter") {
           startEditing();
         } else if (key === "Backspace" || key === "Delete") {
@@ -101,7 +104,9 @@ export function Cell({
         }
       } else if (document.activeElement === input.current) {
         if (key === "Enter") {
-          onValueChange(editingString ?? "");
+          if (editingString !== null) {
+            onValueChange(editingString);
+          }
           stopEditing();
         } else if (key === "Escape") {
           stopEditing();
