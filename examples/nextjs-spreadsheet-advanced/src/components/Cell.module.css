@@ -113,9 +113,16 @@
   all: unset;
   position: absolute;
   inset: 0px;
-  padding: 7px 9px;
+  padding: 0px 10px;
+  font-size: 12px;
   background: #fff;
+  color: #1f2937;
   z-index: 1;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   pointer-events: none;
 }
 
