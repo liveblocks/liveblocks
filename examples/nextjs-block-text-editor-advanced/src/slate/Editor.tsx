@@ -37,6 +37,7 @@ import { toggleMark, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
 import Loading from "../components/Loading";
+import Block from "./Block";
 
 const initialValue: CustomElement[] = [
   {
@@ -196,24 +197,16 @@ function App() {
     return isTopLevel ? (
       <SortableElement
         {...props}
-        renderElement={DefaultElement}
+        renderElement={Block}
         onDelete={() =>
           Transforms.removeNodes(editor, {
             at: ReactEditor.findPath(editor, props.element),
           })
         }
-        onInsertBelow={() => {
+        onInsertBelow={(nodes: Node | Node[]) => {
           Transforms.insertNodes(
             editor,
-            {
-              id: nanoid(),
-              type: "paragraph",
-              children: [
-                {
-                  text: "",
-                },
-              ],
-            },
+            nodes,
             {
               at: [ReactEditor.findPath(editor, props.element)[0] + 1],
             }
@@ -378,7 +371,7 @@ function SortableElement({
 }: RenderElementProps & {
   renderElement: any;
   onDelete: () => void;
-  onInsertBelow: () => void;
+  onInsertBelow: (nodes: Node | Node[]) => void;
 }) {
   const sortable = useSortable({ id: element.id });
 

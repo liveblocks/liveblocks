@@ -5,7 +5,7 @@ import MinusIcon from "../icons/minus.svg";
 import DragIcon from "../icons/drag.svg";
 import { useDraggable } from "@dnd-kit/core";
 import Tooltip from "../components/Tooltip";
-import BlockTypeSelector from "../components/BlockTypeSelector";
+import BlockTypeSelector from "./BlockTypeSelector";
 
 type Props = {
   blockId: string;

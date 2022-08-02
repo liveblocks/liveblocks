@@ -37,11 +37,20 @@ export type UserMeta = {
   };
 };
 
-export type CustomElement = {
+export type ParagraphElement = {
   type: "paragraph";
   id: string;
   children: CustomText[];
 };
+
+export type ImageElement = {
+  type: "image";
+  id: string;
+  url: string | null;
+  children: [{ text: "" }];
+};
+
+export type CustomElement = ParagraphElement | ImageElement;
 
 export type CustomText = {
   text: string;

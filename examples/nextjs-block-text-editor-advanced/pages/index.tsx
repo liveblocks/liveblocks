@@ -2,7 +2,7 @@ import Room from "../src/components/Room";
 import Editor from "../src/slate/Editor";
 
 export default function Home() {
-  return <Room />;
+  return <Editor />;
 }
 
 export async function getStaticProps() {
