@@ -57,6 +57,7 @@ export interface Props extends ComponentProps<"div"> {
   type: "row" | "column";
   headers: (Row | Column)[];
   deleteHeader: (index: number) => void;
+  clearHeader: (index: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
   insertHeader: (index: number, width: number) => void;
@@ -69,6 +70,7 @@ export interface HeaderProps extends ComponentProps<"div"> {
   isFirst: boolean;
   isLast: boolean;
   onDelete: () => void;
+  onClear: () => void;
   onMove: (offset: number) => void;
   onInsert: (offset: number) => void;
   onResize: (width: number, height: number) => void;
@@ -89,6 +91,7 @@ export function Header({
   isFirst,
   isLast,
   onDelete,
+  onClear,
   onResize,
   onMove,
   onInsert,
@@ -235,7 +238,8 @@ export function Header({
                   />
                   <DropdownMenuItem
                     icon={<EraserIcon />}
-                    label={`Clear ${isColumn ? "Column" : "Row"} (TODO)`}
+                    label={`Clear ${isColumn ? "Column" : "Row"}`}
+                    onSelect={onClear}
                   />
                   <DropdownMenuItem
                     icon={<TrashIcon />}
@@ -260,6 +264,7 @@ export function Headers({
   type,
   headers,
   deleteHeader,
+  clearHeader,
   moveHeader,
   resizeHeader,
   insertHeader,
@@ -309,6 +314,7 @@ export function Headers({
               isFirst={index === 0}
               isLast={index === headers.length - 1}
               onDelete={() => deleteHeader(index)}
+              onClear={() => clearHeader(index)}
               onResize={(width, height) =>
                 resizeHeader(index, isColumn ? width : height)
               }

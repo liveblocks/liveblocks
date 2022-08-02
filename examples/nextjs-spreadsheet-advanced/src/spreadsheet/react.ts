@@ -15,10 +15,12 @@ export interface ReactSpreadsheet {
   insertRow: Spreadsheet["insertRow"];
   resizeRow: Spreadsheet["resizeRow"];
   moveRow: Spreadsheet["moveRow"];
+  clearRow: Spreadsheet["clearRow"];
   deleteRow: Spreadsheet["deleteRow"];
   insertColumn: Spreadsheet["insertColumn"];
   resizeColumn: Spreadsheet["resizeColumn"];
   moveColumn: Spreadsheet["moveColumn"];
+  clearColumn: Spreadsheet["clearColumn"];
   deleteColumn: Spreadsheet["deleteColumn"];
   getExpression: Spreadsheet["getCellExpressionDisplay"];
   selectCell: Spreadsheet["selectCell"];
@@ -82,11 +84,13 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
         insertRow: spreadsheet.insertRow,
         resizeRow: spreadsheet.resizeRow,
         moveRow: spreadsheet.moveRow,
+        clearRow: spreadsheet.clearRow,
         deleteRow: spreadsheet.deleteRow,
 
         insertColumn: spreadsheet.insertColumn,
         resizeColumn: spreadsheet.resizeColumn,
         moveColumn: spreadsheet.moveColumn,
+        clearColumn: spreadsheet.clearColumn,
         deleteColumn: spreadsheet.deleteColumn,
 
         getExpression: spreadsheet.getCellExpressionDisplay,

@@ -22,6 +22,8 @@ export type Spreadsheet = {
   resizeRow(index: number, height: number): void;
   moveRow(from: number, to: number): void;
   moveColumn(from: number, to: number): void;
+  clearColumn(index: number): void;
+  clearRow(index: number): void;
   deleteColumn(index: number): void;
   deleteRow(index: number): void;
 
@@ -73,12 +75,10 @@ export async function createSpreadsheet(
     spreadsheet.get("columns").move(from, to);
   }
 
-  function deleteColumn(index: number) {
+  function clearColumn(index: number) {
     const column = spreadsheet.get("columns").get(index);
 
     // TODO: BATCHING
-    spreadsheet.get("columns").delete(index);
-
     for (const row of spreadsheet.get("rows").toArray()) {
       spreadsheet
         .get("cells")
@@ -86,17 +86,27 @@ export async function createSpreadsheet(
     }
   }
 
-  function deleteRow(index: number) {
+  function clearRow(index: number) {
     const row = spreadsheet.get("rows").get(index);
 
     // TODO: BATCHING
-    spreadsheet.get("rows").delete(index);
-
     for (const column of spreadsheet.get("columns").toArray()) {
       spreadsheet
         .get("cells")
         .delete(getCellId(column.get("id"), row!.get("id")));
     }
+  }
+
+  function deleteColumn(index: number) {
+    // TODO: BATCHING
+    spreadsheet.get("columns").delete(index);
+    clearColumn(index);
+  }
+
+  function deleteRow(index: number) {
+    // TODO: BATCHING
+    spreadsheet.get("rows").delete(index);
+    clearRow(index);
   }
 
   function cellToRef(token: CellToken): RefToken {
@@ -284,6 +294,8 @@ export async function createSpreadsheet(
     resizeRow,
     moveRow,
     moveColumn,
+    clearRow,
+    clearColumn,
     deleteRow,
     deleteColumn,
     updateCellValue,

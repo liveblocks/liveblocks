@@ -16,6 +16,8 @@ export function Sheet({
   rows,
   moveColumn,
   moveRow,
+  clearColumn,
+  clearRow,
   deleteColumn,
   deleteRow,
   resizeColumn,
@@ -64,6 +66,7 @@ export function Sheet({
         className={styles.columns}
         headers={columns}
         moveHeader={moveColumn}
+        clearHeader={clearColumn}
         deleteHeader={deleteColumn}
         resizeHeader={resizeColumn}
         insertHeader={insertColumn}
@@ -73,6 +76,7 @@ export function Sheet({
         className={styles.rows}
         headers={rows}
         moveHeader={moveRow}
+        clearHeader={clearRow}
         deleteHeader={deleteRow}
         resizeHeader={resizeRow}
         insertHeader={insertRow}
