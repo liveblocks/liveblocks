@@ -20,10 +20,13 @@
     "@radix-ui/react-tooltip": "^0.1.8-rc.46",
     "classnames": "^2.3.1",
     "dompurify": "^2.3.10",
+    "is-hotkey": "^0.2.0",
     "nanoid": "^4.0.0",
     "next": "12.1.6",
     "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "slate": "^0.81.1",
+    "slate-react": "^0.81.0"
   },
   "devDependencies": {
     "@svgr/webpack": "^6.2.1",
