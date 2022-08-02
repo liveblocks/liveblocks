@@ -19,7 +19,7 @@
 
 This example shows how to build live cursors within a responsive scrollable page with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors-scroll.png" width="500" alt="Live Cursors Scrollable Page" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors-scroll.png" width="536" alt="Live Cursors Scrollable Page" />
 
 ## Getting started
 

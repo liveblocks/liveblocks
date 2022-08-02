@@ -19,7 +19,7 @@
 
 This example shows how to build live cursors along chat and reactions with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors-chat.png" width="500" alt="Live Cursors Chat and Reactions" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors-chat.png" width="536" alt="Live Cursors Chat and Reactions" />
 
 ## Getting started
 
