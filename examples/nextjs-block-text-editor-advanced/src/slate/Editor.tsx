@@ -29,15 +29,23 @@ import Header from "./Header";
 import Container from "../components/Container";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
-import { RoomProvider, useList, useRoom } from "./liveblocks.config";
+import {
+  RoomProvider,
+  useList,
+  useOthers,
+  useRoom,
+  useUpdateMyPresence,
+} from "./liveblocks.config";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { Format } from "../types";
 import { CustomElement, DocumentMeta } from "./types";
-import { toggleMark, withNodeId } from "./utils";
+import { toggleMark, topLevelPath, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
 import Loading from "../components/Loading";
 import Block from "./Block";
+import { USER_COLORS } from "../constants";
+import Avatar from "../components/Avatar";
 
 const initialValue: CustomElement[] = [
   {
@@ -74,6 +82,9 @@ export default function Room() {
         }),
         blocks: new LiveList(initialValue),
       }}
+      initialPresence={{
+        selectedBlockId: null,
+      }}
     >
       <App />
     </RoomProvider>
@@ -91,6 +102,7 @@ function App() {
   const room = useRoom();
   const blocks = useList("blocks");
   const isEditingRef = useRef(false);
+  const updateMyPresence = useUpdateMyPresence();
 
   useEffect(() => {
     if (blocks == null) {
@@ -249,6 +261,23 @@ function App() {
                   }
 
                   switch (op.type) {
+                    case "set_selection": {
+                      if (editor.selection) {
+                        updateMyPresence({
+                          selectedBlockId: (
+                            editor.children[
+                              editor.selection.anchor.path[0]
+                            ] as CustomElement
+                          ).id,
+                        });
+                      } else {
+                        updateMyPresence({
+                          selectedBlockId: null,
+                        });
+                      }
+                      break;
+                    }
+
                     case "insert_node": {
                       blocks.insert(
                         value[op.path[0]] as CustomElement,
@@ -368,6 +397,9 @@ function SortableElement({
   onInsertBelow: (block: CustomElement) => void;
 }) {
   const sortable = useSortable({ id: element.id });
+  const othersByBlockId = useOthers()
+    .toArray()
+    .filter((user) => user.presence?.selectedBlockId === element.id);
 
   return (
     <div className={blockTextStyles.block_text} {...attributes}>
@@ -386,6 +418,21 @@ function SortableElement({
           } as React.CSSProperties /* casted becase of css variable */
         }
       >
+        {othersByBlockId.length > 0 && (
+          <div className={classNames(blockTextStyles.avatars, "avatars")}>
+            {othersByBlockId.map((user) => {
+              return (
+                <Avatar
+                  key={user.connectionId}
+                  imageUrl={user.info.imageUrl}
+                  name={user.info.name}
+                  size="sm"
+                  color={USER_COLORS[user.connectionId % USER_COLORS.length]}
+                />
+              );
+            })}
+          </div>
+        )}
         <div
           className={classNames(
             blockTextStyles.inline_actions,

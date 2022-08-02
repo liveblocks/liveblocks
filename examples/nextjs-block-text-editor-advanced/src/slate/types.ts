@@ -11,13 +11,8 @@ declare module "slate" {
   }
 }
 
-export type TextSelection = {
-  caretPosition: number | null;
-};
-
 export type Presence = {
-  selectedBlockIds: string[];
-  textSelection: TextSelection | null;
+  selectedBlockId: string | null;
 };
 
 export type Storage = {
