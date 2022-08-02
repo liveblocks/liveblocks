@@ -22,9 +22,11 @@ export interface ReactSpreadsheet {
   moveColumn: Spreadsheet["moveColumn"];
   clearColumn: Spreadsheet["clearColumn"];
   deleteColumn: Spreadsheet["deleteColumn"];
-  getExpression: Spreadsheet["getCellExpressionDisplay"];
   selectCell: Spreadsheet["selectCell"];
-  setCellValue: Spreadsheet["updateCellValue"];
+  deleteCell: Spreadsheet["deleteCell"];
+  getCellExpression: Spreadsheet["getCellExpression"];
+  setCellValue: Spreadsheet["setCellValue"];
+  getCellValue: Spreadsheet["getCellValue"];
   rows: Row[];
   columns: Column[];
   cells: Record<string, string>;
@@ -93,9 +95,11 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
         clearColumn: spreadsheet.clearColumn,
         deleteColumn: spreadsheet.deleteColumn,
 
-        getExpression: spreadsheet.getCellExpressionDisplay,
+        getCellExpression: spreadsheet.getCellExpression,
+        getCellValue: spreadsheet.getCellValue,
+        setCellValue: spreadsheet.setCellValue,
+        deleteCell: spreadsheet.deleteCell,
         selectCell: selectCell,
-        setCellValue: spreadsheet.updateCellValue,
 
         rows,
         columns,

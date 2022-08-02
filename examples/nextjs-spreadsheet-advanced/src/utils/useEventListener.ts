@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-export function useEvent<T extends keyof DocumentEventMap>(
+export function useEventListener<T extends keyof DocumentEventMap>(
   type: T,
   callback: (event: DocumentEventMap[T]) => any
 ) {

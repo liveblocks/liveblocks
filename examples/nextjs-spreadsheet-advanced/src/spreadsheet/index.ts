@@ -27,10 +27,11 @@ export type Spreadsheet = {
   deleteColumn(index: number): void;
   deleteRow(index: number): void;
 
+  deleteCell(columnId: string, rowId: string): void;
   selectCell(columnId: string, rowId: string): void;
-  updateCellValue(columnId: string, rowId: string, value: string): void;
-  getCellDisplay(columnId: string, rowId: string): string;
-  getCellExpressionDisplay(columnId: string, rowId: string): string;
+  setCellValue(columnId: string, rowId: string, value: string): void;
+  getCellValue(columnId: string, rowId: string): string;
+  getCellExpression(columnId: string, rowId: string): string;
 
   onOthersChange(
     callback: (others: User<Presence, UserMeta>[]) => void
@@ -145,7 +146,11 @@ export async function createSpreadsheet(
     };
   }
 
-  function updateCellValue(columnId: string, rowId: string, value: string) {
+  function deleteCell(columnId: string, rowId: string) {
+    spreadsheet.get("cells").delete(getCellId(columnId, rowId));
+  }
+
+  function setCellValue(columnId: string, rowId: string, value: string) {
     const tokens = tokenizer(value);
     const tokensWithRefs = tokens.map((token) =>
       token.kind === SyntaxKind.CellToken
@@ -190,12 +195,12 @@ export async function createSpreadsheet(
     return interpreter(cell?.get("value") || "", evaluateCellRef);
   }
 
-  function getCellDisplay(columnId: string, rowId: string) {
+  function getCellValue(columnId: string, rowId: string) {
     const result = evaluateCell(columnId, rowId);
     return formatExpressionResult(result);
   }
 
-  function getCellExpressionDisplay(columnId: string, rowId: string) {
+  function getCellExpression(columnId: string, rowId: string) {
     const cell = spreadsheet.get("cells").get(getCellId(columnId, rowId));
     if (cell == null) {
       return "";
@@ -265,7 +270,7 @@ export async function createSpreadsheet(
     const cells = Object.fromEntries(
       Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
         key,
-        getCellDisplay(...extractCellId(key)),
+        getCellValue(...extractCellId(key)),
       ])
     );
     callback(cells);
@@ -277,7 +282,7 @@ export async function createSpreadsheet(
       const cells = Object.fromEntries(
         Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
           key,
-          getCellDisplay(...extractCellId(key)),
+          getCellValue(...extractCellId(key)),
         ])
       );
       for (const callback of cellCallbacks) {
@@ -298,10 +303,11 @@ export async function createSpreadsheet(
     clearColumn,
     deleteRow,
     deleteColumn,
-    updateCellValue,
+    setCellValue,
+    deleteCell,
     selectCell,
-    getCellDisplay,
-    getCellExpressionDisplay,
+    getCellValue,
+    getCellExpression,
 
     onOthersChange,
     onColumnsChange,

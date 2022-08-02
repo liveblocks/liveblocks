@@ -3,6 +3,7 @@ import {
   ChangeEvent,
   ComponentProps,
   CSSProperties,
+  FocusEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -12,62 +13,71 @@ import {
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import {
+  canUseEditingShortcuts,
+  canUseShortcuts,
+} from "../utils/canUseShortcuts";
 import { isNumeric } from "../utils/isNumeric";
-import { useEvent } from "../utils/useEvent";
+import { useEventListener } from "../utils/useEventListener";
 import styles from "./Cell.module.css";
 
 export interface Props extends ComponentProps<"td"> {
-  displayValue: string;
+  expression: string;
   width: number;
   height: number;
   isSelected?: boolean;
   other?: UserInfo;
   onSelect: () => void;
   onValueChange: (value: string) => void;
+  onDelete: () => void;
   getExpression: () => string;
 }
 
 export function Cell({
-  displayValue,
+  expression,
   width,
   height,
   isSelected,
   other,
   onSelect,
   onValueChange,
+  onDelete,
   getExpression,
   className,
   style,
   ...props
 }: Props) {
   const input = useRef<HTMLInputElement>(null);
-  const [editingString, setEditingString] = useState<string | null>(null);
+  const [draft, setDraft] = useState<string | null>(null);
 
   const value = useMemo(
-    () => (editingString == null ? displayValue : editingString),
-    [editingString, displayValue]
+    () => (draft == null ? expression : draft),
+    [draft, expression]
   );
-  const isError = useMemo(
-    () => displayValue === EXPRESSION_ERROR,
-    [displayValue]
-  );
-  const isEditing = useMemo(() => editingString !== null, [editingString]);
+  const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
+  const isEditing = useMemo(() => draft !== null, [draft]);
 
   useEffect(() => {
     if (!isSelected) {
-      setEditingString(null);
+      setDraft(null);
     }
   }, [isSelected]);
 
   const startEditing = useCallback(() => {
     input.current?.focus();
-    setEditingString(getExpression());
+    setDraft(getExpression());
   }, [getExpression]);
 
   const stopEditing = useCallback(() => {
-    setEditingString(null);
+    setDraft(null);
     input.current?.blur();
-  }, [editingString]);
+  }, [draft]);
+
+  const commitDraft = useCallback(() => {
+    if (draft !== null) {
+      onValueChange(draft);
+    }
+  }, [draft]);
 
   const handleClick = useCallback(() => {
     if (isSelected) {
@@ -80,12 +90,12 @@ export function Cell({
   const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
 
-    setEditingString(value.replace(" ", "").toUpperCase());
+    setDraft(value.replace(" ", "").toUpperCase());
   }, []);
 
   const handleBlur = useCallback(() => {
-    setEditingString(null);
-  }, []);
+    stopEditing();
+  }, [stopEditing]);
 
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
@@ -93,30 +103,25 @@ export function Cell({
         return;
       }
 
-      if (
-        document.activeElement === document.body ||
-        document.activeElement === document.getElementById("table")
-      ) {
+      if (canUseShortcuts()) {
         if (key === "Enter") {
           startEditing();
         } else if (key === "Backspace" || key === "Delete") {
           onValueChange("");
         }
-      } else if (document.activeElement === input.current) {
+      } else if (canUseEditingShortcuts(input)) {
         if (key === "Enter") {
-          if (editingString !== null) {
-            onValueChange(editingString);
-          }
+          commitDraft();
           stopEditing();
         } else if (key === "Escape") {
           stopEditing();
         }
       }
     },
-    [isSelected, startEditing, stopEditing, editingString, onValueChange]
+    [isSelected, commitDraft, startEditing, stopEditing, onValueChange]
   );
 
-  useEvent("keydown", handleKeyDown);
+  useEventListener("keydown", handleKeyDown);
 
   return (
     <td
@@ -129,8 +134,7 @@ export function Cell({
         {
           ...style,
           "--cell-selection": other?.color,
-          textAlign:
-            isNumeric(value) && editingString === null ? "right" : "left",
+          textAlign: isNumeric(value) && draft === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),
         } as CSSProperties

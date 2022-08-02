@@ -5,8 +5,8 @@ import { Headers } from "./Headers";
 import { Cell } from "./Cell";
 import styles from "./Sheet.module.css";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
-import { useEvent } from "../utils/useEvent";
-import { canUseKeyboard, TABLE_ID } from "../utils/canUseKeyboard";
+import { useEventListener } from "../utils/useEventListener";
+import { canUseShortcuts, TABLE_ID } from "../utils/canUseShortcuts";
 
 export type Props = ComponentProps<"div"> & ReactSpreadsheet;
 
@@ -25,14 +25,15 @@ export function Sheet({
   insertColumn,
   insertRow,
   selectCell,
+  deleteCell,
   setCellValue,
-  getExpression,
+  getCellExpression,
   selection,
   others,
 }: Props) {
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
-      if (!selection || !canUseKeyboard()) {
+      if (!selection || !canUseShortcuts()) {
         return;
       }
 
@@ -57,7 +58,7 @@ export function Sheet({
     [selection, columns, rows]
   );
 
-  useEvent("keydown", handleKeyDown);
+  useEventListener("keydown", handleKeyDown);
 
   return (
     <div className={styles.sheet}>
@@ -108,8 +109,9 @@ export function Sheet({
                       onValueChange={(value) =>
                         setCellValue(column.id, row.id, value)
                       }
-                      getExpression={() => getExpression(column.id, row.id)}
-                      displayValue={cells[column.id + row.id]}
+                      onDelete={() => deleteCell(column.id, row.id)}
+                      getExpression={() => getCellExpression(column.id, row.id)}
+                      expression={cells[column.id + row.id]}
                       width={column.width}
                       height={row.height}
                       other={others[column.id + row.id]}
