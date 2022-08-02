@@ -3,7 +3,6 @@ import {
   ChangeEvent,
   ComponentProps,
   CSSProperties,
-  FocusEvent,
   useCallback,
   useEffect,
   useMemo,
@@ -32,6 +31,8 @@ export interface Props extends ComponentProps<"td"> {
   onDelete: () => void;
   getExpression: () => string;
 }
+
+const singleCharacterRegex = /^.$/u;
 
 export function Cell({
   expression,
@@ -63,10 +64,13 @@ export function Cell({
     }
   }, [isSelected]);
 
-  const startEditing = useCallback(() => {
-    input.current?.focus();
-    setDraft(getExpression());
-  }, [getExpression]);
+  const startEditing = useCallback(
+    (value = "") => {
+      input.current?.focus();
+      setDraft(getExpression() + value.toUpperCase());
+    },
+    [getExpression]
+  );
 
   const stopEditing = useCallback(() => {
     setDraft(null);
@@ -98,22 +102,32 @@ export function Cell({
   }, [stopEditing]);
 
   const handleKeyDown = useCallback(
-    ({ key }: KeyboardEvent) => {
+    (event: KeyboardEvent) => {
       if (!isSelected) {
         return;
       }
 
       if (canUseShortcuts()) {
-        if (key === "Enter") {
-          startEditing();
-        } else if (key === "Backspace" || key === "Delete") {
+        const isSingleCharacterKey =
+          singleCharacterRegex.test(event.key) &&
+          ![event.shiftKey, event.ctrlKey, event.altKey, event.metaKey].some(
+            (modifier) => Boolean(modifier)
+          );
+
+        if (event.key === "Enter" || isSingleCharacterKey) {
+          event.preventDefault();
+          startEditing(isSingleCharacterKey ? event.key : "");
+        } else if (event.key === "Backspace" || event.key === "Delete") {
+          event.preventDefault();
           onValueChange("");
         }
       } else if (canUseEditingShortcuts(input)) {
-        if (key === "Enter") {
+        if (event.key === "Enter") {
+          event.preventDefault();
           commitDraft();
           stopEditing();
-        } else if (key === "Escape") {
+        } else if (event.key === "Escape") {
+          event.preventDefault();
           stopEditing();
         }
       }

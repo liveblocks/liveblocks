@@ -32,25 +32,29 @@ export function Sheet({
   others,
 }: Props) {
   const handleKeyDown = useCallback(
-    ({ key }: KeyboardEvent) => {
+    (event: KeyboardEvent) => {
       if (!selection || !canUseShortcuts()) {
         return;
       }
 
-      if (key === "ArrowUp" || key === "ArrowDown") {
+      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
         const index = getIndexWithProperty(rows, "id", selection.rowId);
 
-        if (key === "ArrowUp" && index > 0) {
+        if (event.key === "ArrowUp" && index > 0) {
+          event.preventDefault();
           selectCell(selection.columnId, rows[index - 1].id);
-        } else if (key === "ArrowDown" && index < rows.length - 1) {
+        } else if (event.key === "ArrowDown" && index < rows.length - 1) {
+          event.preventDefault();
           selectCell(selection.columnId, rows[index + 1].id);
         }
-      } else if (key === "ArrowLeft" || key === "ArrowRight") {
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
         const index = getIndexWithProperty(columns, "id", selection.columnId);
 
-        if (key === "ArrowLeft" && index > 0) {
+        if (event.key === "ArrowLeft" && index > 0) {
+          event.preventDefault();
           selectCell(columns[index - 1].id, selection.rowId);
-        } else if (key === "ArrowRight" && index < columns.length - 1) {
+        } else if (event.key === "ArrowRight" && index < columns.length - 1) {
+          event.preventDefault();
           selectCell(columns[index + 1].id, selection.rowId);
         }
       }
