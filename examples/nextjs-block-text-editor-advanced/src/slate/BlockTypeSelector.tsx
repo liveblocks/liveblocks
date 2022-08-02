@@ -6,22 +6,65 @@ import { CustomElement } from "./types";
 
 type Props = {
   children: ReactNode;
-  setBlock: (block: CustomElement) => void;
+  onSelect: (block: CustomElement) => void;
 };
 
-export default function BlockTypeSelector({
-  children,
-  setBlock,
-}: Props) {
+export default function BlockTypeSelector({ children, onSelect }: Props) {
   const groups = [
     {
       label: "Text",
       items: [
         {
+          label: "Heading 1",
+          description: "Large section heading",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: "h1",
+              children: [
+                {
+                  text: "",
+                },
+              ],
+            });
+          },
+        },
+        {
+          label: "Heading 2",
+          description: "Large section heading",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: "h2",
+              children: [
+                {
+                  text: "",
+                },
+              ],
+            });
+          },
+        },
+
+        {
+          label: "Heading 3",
+          description: "Large section heading",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: "h3",
+              children: [
+                {
+                  text: "",
+                },
+              ],
+            });
+          },
+        },
+        {
           label: "Normal text",
           description: "Plain text",
           onSelect: () => {
-            setBlock({
+            onSelect({
               id: nanoid(),
               type: "paragraph",
               children: [
@@ -29,7 +72,7 @@ export default function BlockTypeSelector({
                   text: "",
                 },
               ],
-            })
+            });
           },
         },
       ],
@@ -41,11 +84,11 @@ export default function BlockTypeSelector({
           label: "Image",
           description: "Embed from URL",
           onSelect: () => {
-            setBlock({
+            onSelect({
               id: nanoid(),
               type: "image",
               url: null,
-              children: [{ text:"" }],
+              children: [{ text: "" }],
             });
           },
         },

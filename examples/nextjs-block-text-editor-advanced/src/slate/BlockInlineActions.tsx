@@ -6,11 +6,12 @@ import DragIcon from "../icons/drag.svg";
 import { useDraggable } from "@dnd-kit/core";
 import Tooltip from "../components/Tooltip";
 import BlockTypeSelector from "./BlockTypeSelector";
+import { CustomElement } from "./types";
 
 type Props = {
   blockId: string;
   onDelete: () => void;
-  onInsertBelow: () => void;
+  onInsertBelow: (block: CustomElement) => void;
 };
 
 export default function BlockInlineActions({
@@ -35,7 +36,7 @@ export default function BlockInlineActions({
         </Button>
       </Tooltip>
       <Tooltip content="Insert block below">
-        <BlockTypeSelector setBlock={onInsertBelow}>
+        <BlockTypeSelector onSelect={onInsertBelow}>
           <Button appearance="ghost" ariaLabel="Insert block below" isSquare>
             <PlusIcon />
           </Button>

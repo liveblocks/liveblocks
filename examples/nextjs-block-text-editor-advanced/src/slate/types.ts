@@ -38,19 +38,25 @@ export type UserMeta = {
 };
 
 export type ParagraphElement = {
-  type: "paragraph";
   id: string;
+  type: "paragraph";
+  children: CustomText[];
+};
+
+export type HeadingElement = {
+  id: string;
+  type: "h1" | "h2" | "h3";
   children: CustomText[];
 };
 
 export type ImageElement = {
-  type: "image";
   id: string;
+  type: "image";
   url: string | null;
   children: [{ text: "" }];
 };
 
-export type CustomElement = ParagraphElement | ImageElement;
+export type CustomElement = ParagraphElement | ImageElement | HeadingElement;
 
 export type CustomText = {
   text: string;

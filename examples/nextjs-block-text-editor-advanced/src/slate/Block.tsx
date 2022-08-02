@@ -22,6 +22,18 @@ export default function Block({
     return <p {...attributes}>{children}</p>;
   }
 
+  if (element.type === "h1") {
+    return <h1 {...attributes}>{children}</h1>;
+  }
+
+  if (element.type === "h2") {
+    return <h2 {...attributes}>{children}</h2>;
+  }
+
+  if (element.type === "h3") {
+    return <h3 {...attributes}>{children}</h3>;
+  }
+
   return (
     <DefaultElement element={element} attributes={attributes}>
       {children}

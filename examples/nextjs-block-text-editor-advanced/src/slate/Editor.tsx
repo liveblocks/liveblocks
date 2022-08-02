@@ -203,14 +203,10 @@ function App() {
             at: ReactEditor.findPath(editor, props.element),
           })
         }
-        onInsertBelow={(nodes: Node | Node[]) => {
-          Transforms.insertNodes(
-            editor,
-            nodes,
-            {
-              at: [ReactEditor.findPath(editor, props.element)[0] + 1],
-            }
-          );
+        onInsertBelow={(block: CustomElement) => {
+          Transforms.insertNodes(editor, block, {
+            at: [ReactEditor.findPath(editor, props.element)[0] + 1],
+          });
         }}
       />
     ) : (
@@ -371,7 +367,7 @@ function SortableElement({
 }: RenderElementProps & {
   renderElement: any;
   onDelete: () => void;
-  onInsertBelow: (nodes: Node | Node[]) => void;
+  onInsertBelow: (block: CustomElement) => void;
 }) {
   const sortable = useSortable({ id: element.id });
 
