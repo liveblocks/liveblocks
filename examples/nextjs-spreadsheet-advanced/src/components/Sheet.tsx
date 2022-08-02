@@ -25,7 +25,7 @@ export function Sheet({
   setCellValue,
   getExpression,
   selection,
-  selections,
+  others,
 }: Props) {
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
@@ -113,7 +113,7 @@ export function Sheet({
                       displayValue={cells[column.id + row.id]}
                       width={column.width}
                       height={row.height}
-                      user={selections[column.id + row.id]}
+                      other={others[column.id + row.id]}
                       isSelected={isSelected}
                     />
                   );

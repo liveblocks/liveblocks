@@ -118,7 +118,7 @@
   pointer-events: all;
 }
 
-.cell:global(.user) .input {
+.cell:global(.selected-other) .input {
   z-index: calc(var(--cell-selection-z-index) - 5);
 }
 

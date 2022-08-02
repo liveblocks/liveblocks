@@ -28,7 +28,7 @@ export interface ReactSpreadsheet {
   cells: Record<string, string>;
   users: User<Presence, UserMeta>[];
   selection: CellAddress | null;
-  selections: Record<string, UserInfo>;
+  others: Record<string, UserInfo>;
 }
 
 export function useSpreadsheet(): ReactSpreadsheet | null {
@@ -39,7 +39,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   const [cells, setCells] = useState<Record<string, string>>({});
   const [users, setUsers] = useState<User<Presence, UserMeta>[]>([]);
   const [selection, setSelection] = useState<CellAddress | null>(null);
-  const [selections, setSelections] = useState<Record<string, UserInfo>>({});
+  const [others, setOthers] = useState<Record<string, UserInfo>>({});
 
   const selectCell = useCallback(
     (columnId: string, rowId: string) => {
@@ -56,7 +56,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
       spreadsheet.onCellsChange(setCells);
       spreadsheet.onOthersChange((others) => {
         setUsers(others);
-        setSelections(
+        setOthers(
           others.reduce<Record<string, UserInfo>>((previous, current) => {
             if (current.presence?.selectedCell) {
               previous[current.presence.selectedCell] = current.info;
@@ -99,7 +99,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
 
         users,
         selection,
-        selections,
+        others,
       }
     : null;
 }

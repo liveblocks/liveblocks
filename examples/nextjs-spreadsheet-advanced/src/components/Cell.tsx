@@ -21,7 +21,7 @@ export interface Props extends ComponentProps<"td"> {
   width: number;
   height: number;
   isSelected?: boolean;
-  user?: UserInfo;
+  other?: UserInfo;
   onSelect: () => void;
   onValueChange: (value: string) => void;
   getExpression: () => string;
@@ -32,7 +32,7 @@ export function Cell({
   width,
   height,
   isSelected,
-  user,
+  other,
   onSelect,
   onValueChange,
   getExpression,
@@ -122,13 +122,13 @@ export function Cell({
     <td
       className={cx(className, styles.cell, {
         selected: isSelected,
+        "selected-other": other,
         editing: isEditing,
-        user: user,
       })}
       style={
         {
           ...style,
-          "--cell-selection": user?.color,
+          "--cell-selection": other?.color,
           textAlign:
             isNumeric(value) && editingString === null ? "right" : "left",
           width: appendUnit(width),
@@ -138,10 +138,10 @@ export function Cell({
       onClick={handleClick}
       {...props}
     >
-      {user && (
+      {other && (
         <div className={styles.user} aria-hidden>
-          <img src={user.url} alt={user.url} className={styles.user_avatar} />
-          <span className={styles.user_label}>{user.name}</span>
+          <img src={other.url} alt={other.url} className={styles.user_avatar} />
+          <span className={styles.user_label}>{other.name}</span>
         </div>
       )}
       <input
