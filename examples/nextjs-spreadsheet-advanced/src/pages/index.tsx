@@ -1,6 +1,6 @@
 import { useRouter } from "next/router";
 import { CSSProperties, useMemo } from "react";
-import { RoomProvider, useHistory } from "../liveblocks.config";
+import { RoomProvider, useHistory, useSelf } from "../liveblocks.config";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { appendUnit } from "../utils/appendUnit";
 import {
@@ -26,6 +26,7 @@ import { Sheet } from "../components/Sheet";
 function Example() {
   const spreadsheet = useSpreadsheet();
   const history = useHistory();
+  const self = useSelf();
 
   if (spreadsheet == null) {
     return (
@@ -47,6 +48,7 @@ function Example() {
           "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
           "--column-width": appendUnit(COLUMN_INITIAL_WIDTH),
           "--row-height": appendUnit(ROW_INITIAL_HEIGHT),
+          "--accent": self?.info.color,
         } as CSSProperties
       }
     >
@@ -98,6 +100,15 @@ function Example() {
               />
             );
           })}
+          {self && (
+            <Avatar
+              className={styles.avatar}
+              src={self.info.url}
+              color={self.info.color}
+              name="You"
+              tooltipOffset={6}
+            />
+          )}
         </div>
       </div>
       <Sheet {...spreadsheet} />

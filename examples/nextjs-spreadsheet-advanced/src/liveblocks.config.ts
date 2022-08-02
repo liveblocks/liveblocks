@@ -6,7 +6,7 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-export const { RoomProvider, useRoom, useHistory } = createRoomContext<
+export const { RoomProvider, useRoom, useHistory, useSelf } = createRoomContext<
   Presence,
   Storage,
   UserMeta
