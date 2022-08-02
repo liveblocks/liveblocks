@@ -41,6 +41,14 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   const [selection, setSelection] = useState<CellAddress | null>(null);
   const [selections, setSelections] = useState<Record<string, UserInfo>>({});
 
+  const selectCell = useCallback(
+    (columnId: string, rowId: string) => {
+      setSelection({ columnId, rowId });
+      spreadsheet?.selectCell(columnId, rowId);
+    },
+    [spreadsheet]
+  );
+
   useEffect(() => {
     createSpreadsheet(room).then((spreadsheet) => {
       spreadsheet.onColumnsChange(setColumns);
@@ -63,10 +71,11 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
     });
   }, [room]);
 
-  const selectCell = useCallback((columnId: string, rowId: string) => {
-    setSelection({ columnId, rowId });
-    spreadsheet?.selectCell(columnId, rowId);
-  }, []);
+  useEffect(() => {
+    if (!selection && columns.length && rows.length) {
+      selectCell(columns[0].id, rows[0].id);
+    }
+  }, [columns, rows, selection, selectCell]);
 
   return spreadsheet != null
     ? {

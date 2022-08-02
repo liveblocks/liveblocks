@@ -111,9 +111,9 @@
   z-index: calc(var(--cell-selection-z-index) - 5);
 }
 
-/* .input:focus {
+.cell:global(.selected) {
   z-index: calc(var(--cell-selection-z-index) + 15);
-} */
+}
 
 .input,
 .cell:before,
