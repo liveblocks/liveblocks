@@ -52,6 +52,11 @@
   font-size: 13px;
 }
 
+.button:disabled {
+  color: #d1d5db;
+  cursor: default;
+}
+
 .button span {
   margin-left: 4px;
   margin-right: 2px;

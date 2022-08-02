@@ -62,14 +62,17 @@ export interface Props extends ComponentProps<"div"> {
   resizeHeader: (index: number, size: number) => void;
   selectedHeader?: string;
   type: "column" | "row";
+  max: number;
 }
 
 export interface HeaderProps extends ComponentProps<"div"> {
   header: Column | Row;
   index: number;
-  isFirst: boolean;
-  isLast: boolean;
   isSelected: boolean;
+  canMoveBefore: () => boolean;
+  canMoveAfter: () => boolean;
+  canInsert: () => boolean;
+  canDelete: () => boolean;
   onClear: () => void;
   onDelete: () => void;
   onInsert: (offset: number) => void;
@@ -88,9 +91,11 @@ function isColumnHeader(header: Column | Row): header is Column {
 export function Header({
   index,
   header,
-  isFirst,
-  isLast,
   isSelected,
+  canMoveBefore,
+  canMoveAfter,
+  canInsert,
+  canDelete,
   onDelete,
   onClear,
   onResize,
@@ -192,6 +197,7 @@ export function Header({
               <>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
+                    disabled={!canInsert()}
                     icon={
                       isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
                     }
@@ -199,6 +205,7 @@ export function Header({
                     onSelect={() => onInsert(0)}
                   />
                   <DropdownMenuItem
+                    disabled={!canInsert()}
                     icon={
                       isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />
                     }
@@ -208,7 +215,7 @@ export function Header({
                 </DropdownMenuGroup>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    disabled={isFirst}
+                    disabled={!canMoveBefore()}
                     icon={
                       isColumn ? (
                         <MoveColumnBeforeIcon />
@@ -220,7 +227,7 @@ export function Header({
                     onSelect={() => onMove(-1)}
                   />
                   <DropdownMenuItem
-                    disabled={isLast}
+                    disabled={!canMoveAfter()}
                     icon={
                       isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
                     }
@@ -241,6 +248,7 @@ export function Header({
                     onSelect={onClear}
                   />
                   <DropdownMenuItem
+                    disabled={!canDelete()}
                     icon={<TrashIcon />}
                     label={`Delete ${isColumn ? "Column" : "Row"}`}
                     onSelect={onDelete}
@@ -264,6 +272,7 @@ export function Header({
 
 export function Headers({
   type,
+  max,
   headers,
   selectedHeader,
   deleteHeader,
@@ -312,8 +321,10 @@ export function Headers({
             <Header
               header={header}
               index={index}
-              isFirst={index === 0}
-              isLast={index === headers.length - 1}
+              canMoveBefore={() => index > 0}
+              canMoveAfter={() => index < headers.length - 1}
+              canInsert={() => headers.length < max}
+              canDelete={() => headers.length > 1}
               isSelected={selectedHeader === header.id}
               key={index}
               onClear={() => clearHeader(index)}

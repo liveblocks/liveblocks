@@ -9,6 +9,8 @@ import {
   COLUMN_INITIAL_WIDTH,
   GRID_INITIAL_COLUMNS,
   GRID_INITIAL_ROWS,
+  GRID_MAX_COLUMNS,
+  GRID_MAX_ROWS,
   ROW_INITIAL_HEIGHT,
 } from "../constants";
 import {
@@ -55,22 +57,24 @@ function Example() {
       <div className={styles.banner}>
         <div className={styles.buttons}>
           <div className={styles.button_group} role="group">
+            <Tooltip content="Add Row">
+              <button
+                className={styles.button}
+                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+                disabled={rows.length >= GRID_MAX_ROWS}
+              >
+                <AddRowAfterIcon />
+              </button>
+            </Tooltip>
             <Tooltip content="Add Column">
               <button
                 className={styles.button}
                 onClick={() =>
                   insertColumn(columns.length, COLUMN_INITIAL_WIDTH)
                 }
+                disabled={columns.length >= GRID_MAX_COLUMNS}
               >
                 <AddColumnAfterIcon />
-              </button>
-            </Tooltip>
-            <Tooltip content="Add Row">
-              <button
-                className={styles.button}
-                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
-              >
-                <AddRowAfterIcon />
               </button>
             </Tooltip>
           </div>

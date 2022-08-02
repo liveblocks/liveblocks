@@ -1,4 +1,5 @@
 import { type ComponentProps, useCallback } from "react";
+import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { TABLE_ID, canUseShortcuts } from "../utils/canUseShortcuts";
@@ -76,6 +77,7 @@ export function Sheet({
         resizeHeader={resizeColumn}
         selectedHeader={selection?.columnId}
         type="column"
+        max={GRID_MAX_COLUMNS}
       />
       <Headers
         className={styles.rows}
@@ -87,6 +89,7 @@ export function Sheet({
         resizeHeader={resizeRow}
         selectedHeader={selection?.rowId}
         type="row"
+        max={GRID_MAX_ROWS}
       />
       <table className={styles.table} id={TABLE_ID} tabIndex={0}>
         <thead className="sr">
