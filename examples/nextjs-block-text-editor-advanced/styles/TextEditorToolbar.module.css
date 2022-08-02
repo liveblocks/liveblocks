@@ -9,7 +9,7 @@
   background: rgba(var(--color-surface-over), 0.92);
   backdrop-filter: blur(8px);
   box-shadow: var(--shadow-over);
-  border-radius: 8px;
+  border-radius: 10px;
   pointer-events: auto;
 }
 

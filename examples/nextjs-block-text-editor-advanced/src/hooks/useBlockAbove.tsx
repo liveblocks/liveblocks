@@ -1,17 +1,10 @@
 import { LiveObject } from "@liveblocks/client";
-import { useCallback } from "react";
-import { ID_TITLE_BLOCK } from "../constants";
-import {
-  useList,
-  useBatch,
-  useUpdateMyPresence,
-  useMap,
-} from "../liveblocks.config";
-import { BlockProps } from "../types";
-import focusTextBlockById from "../utils/focusTextBlockById";
+import { useList, useMap } from "../liveblocks.config";
+import { BlockType, BlockProps } from "../types";
 
 export default function useBlockAbove(
-  blockId: string
+  blockId: string,
+  type?: BlockType
 ): LiveObject<BlockProps> | null {
   const blocks = useMap("blocks");
   const blockIds = useList("blockIds");
@@ -21,11 +14,24 @@ export default function useBlockAbove(
   }
 
   const index = blockIds.findIndex((result) => result === blockId);
-  const previousId = blockIds.get(index - 1);
 
-  if (!previousId) {
-    return null;
+  for (let i = index - 1; i >= 0; i--) {
+    const previousId = blockIds.get(i);
+
+    if (!previousId) {
+      break;
+    }
+
+    const block = blocks.get(previousId);
+
+    if (!block) {
+      break;
+    }
+
+    if (type && block.get("type") === type) {
+      return block;
+    }
   }
 
-  return blocks.get(previousId) || null;
+  return null;
 }

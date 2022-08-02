@@ -1,7 +1,7 @@
 .button {
   border-radius: 6px;
   border: none;
-  padding: 0.125rem 0.25rem;
+  padding: 0.125rem 0.625rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,6 +9,10 @@
   min-width: 1.75rem;
   font-size: 0.875em;
   margin: 0;
+}
+
+.button_square {
+  padding: 0;
 }
 
 .button_ghost {
@@ -36,6 +40,7 @@
 .button_primary {
   color: rgb(var(--color-surface));
   background: rgba(var(--color-primary), 0.96);
+  font-weight: 500;
 }
 
 .button_primary:hover,

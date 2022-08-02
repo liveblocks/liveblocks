@@ -36,18 +36,20 @@ export default function Header() {
           <div className={styles.group}>
             <Tooltip content="Undo">
               <Button
-                type="ghost"
+                appearance="ghost"
                 onClick={() => history.undo()}
                 ariaLabel="Undo"
+                isSquare
               >
                 <UndoIcon />
               </Button>
             </Tooltip>
             <Tooltip content="Redo">
               <Button
-                type="ghost"
+                appearance="ghost"
                 onClick={() => history.redo()}
                 ariaLabel="Redo"
+                isSquare
               >
                 <RedoIcon />
               </Button>
@@ -57,9 +59,10 @@ export default function Header() {
           <div className={styles.group}>
             <Tooltip content="Switch Theme">
               <Button
-                type="ghost"
+                appearance="ghost"
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 ariaLabel="Switch Theme"
+                isSquare
               >
                 {theme === "dark" ? <SunIcon /> : <MoonIcon />}
               </Button>
