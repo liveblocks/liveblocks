@@ -154,6 +154,7 @@ export function Cell({
         } as CSSProperties
       }
       onClick={handleClick}
+      aria-selected={isSelected}
       {...props}
     >
       {other && (

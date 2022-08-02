@@ -33,6 +33,10 @@
   background: #f3f4f6;
 }
 
+.header:global(.selected) {
+  background: #e9ebef;
+}
+
 .headers:global(.row) .header {
   inset: calc(var(--border) / 2) 0px;
 }

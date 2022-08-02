@@ -70,6 +70,7 @@ export function Sheet({
         type="column"
         className={styles.columns}
         headers={columns}
+        selectedHeader={selection?.columnId}
         moveHeader={moveColumn}
         clearHeader={clearColumn}
         deleteHeader={deleteColumn}
@@ -80,6 +81,7 @@ export function Sheet({
         type="row"
         className={styles.rows}
         headers={rows}
+        selectedHeader={selection?.rowId}
         moveHeader={moveRow}
         clearHeader={clearRow}
         deleteHeader={deleteRow}

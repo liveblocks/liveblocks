@@ -56,6 +56,7 @@ import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 export interface Props extends ComponentProps<"div"> {
   type: "row" | "column";
   headers: (Row | Column)[];
+  selectedHeader?: string;
   deleteHeader: (index: number) => void;
   clearHeader: (index: number) => void;
   moveHeader: (from: number, to: number) => void;
@@ -69,6 +70,7 @@ export interface HeaderProps extends ComponentProps<"div"> {
   index: number;
   isFirst: boolean;
   isLast: boolean;
+  isSelected: boolean;
   onDelete: () => void;
   onClear: () => void;
   onMove: (offset: number) => void;
@@ -90,6 +92,7 @@ export function Header({
   header,
   isFirst,
   isLast,
+  isSelected,
   onDelete,
   onClear,
   onResize,
@@ -175,7 +178,7 @@ export function Header({
         onResizeStop={handleResizeStop}
         className={styles.header_resizable_container}
       >
-        <div className={styles.header}>
+        <div className={cx(styles.header, isSelected && "selected")}>
           <button
             className={cx(styles.header_control, styles.header_handler)}
             ref={setActivatorNodeRef}
@@ -263,6 +266,7 @@ export function Header({
 export function Headers({
   type,
   headers,
+  selectedHeader,
   deleteHeader,
   clearHeader,
   moveHeader,
@@ -313,6 +317,7 @@ export function Headers({
               header={header}
               isFirst={index === 0}
               isLast={index === headers.length - 1}
+              isSelected={selectedHeader === header.id}
               onDelete={() => deleteHeader(index)}
               onClear={() => clearHeader(index)}
               onResize={(width, height) =>
