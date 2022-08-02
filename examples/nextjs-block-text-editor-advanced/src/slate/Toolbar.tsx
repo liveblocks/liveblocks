@@ -1,7 +1,7 @@
 import classNames from "classnames";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Editor, Range } from "slate";
+import { Editor, Path, Range, Transforms } from "slate";
 import { useFocused, useSlate } from "slate-react";
 import Button from "../components/Button";
 import Select from "../components/Select";
@@ -11,7 +11,8 @@ import BoldIcon from "../icons/bold.svg";
 import ItalicIcon from "../icons/italic.svg";
 import UnderlineIcon from "../icons/underline.svg";
 import StrikethroughIcon from "../icons/strikethrough.svg";
-import { toggleMark } from "./utils";
+import { toggleMark, topLevelPath } from "./utils";
+import { CustomElement } from "./types";
 
 export default function Toolbar() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -52,6 +53,8 @@ export default function Toolbar() {
     }px`;
   });
 
+  const type = getSelectedElementType(editor);
+
   return createPortal(
     <div
       ref={ref}
@@ -61,23 +64,41 @@ export default function Toolbar() {
         e.preventDefault();
       }}
     >
-      {/* <div className={styles.tag_selector}>
-        <Select
-          defaultValue="p"
-          value={selectedTagValue}
-          disabled={!selectedBlockIds.length}
-          items={[
-            { label: "Normal text", value: "p" },
-            { label: "Heading 1", value: "h1" },
-            { label: "Heading 2", value: "h2" },
-            { label: "Heading 3", value: "h3" },
-          ]}
-          onValueChange={(value) => {
-            applyTagToSelectedBlocks(value);
-          }}
-        />
-      </div>
-      <div className={styles.separator} /> */}
+      {type && (
+        <>
+          <div className={styles.tag_selector}>
+            <Select
+              defaultValue="paragraph"
+              value={type}
+              items={[
+                { label: "Normal text", value: "paragraph" },
+                { label: "Heading 1", value: "h1" },
+                { label: "Heading 2", value: "h2" },
+                { label: "Heading 3", value: "h3" },
+              ]}
+              onValueChange={(value: string) => {
+                if (editor.selection == null) {
+                  return;
+                }
+
+                // TODO: Update Select typings to infer value type from items
+                const type = value as "paragraph" | "h1" | "h2" | "h3";
+                Transforms.setNodes<CustomElement>(
+                  editor,
+                  {
+                    type,
+                  },
+                  {
+                    at: [editor.selection.anchor.path[0]],
+                  }
+                );
+              }}
+            />
+          </div>
+          <div className={styles.separator} />
+        </>
+      )}
+
       <div className={styles.group}>
         <Tooltip content="Toggle Bold">
           <Button
@@ -126,5 +147,40 @@ export default function Toolbar() {
       </div>
     </div>,
     document.body
+  );
+}
+
+function getSelectedElementType(
+  editor: Editor
+): "h1" | "h2" | "h3" | "paragraph" | null {
+  if (editor.selection == null) {
+    return null;
+  }
+
+  if (
+    Path.compare(
+      topLevelPath(editor.selection.anchor.path),
+      topLevelPath(editor.selection.focus.path)
+    ) !== 0
+  ) {
+    return null;
+  }
+
+  const element = editor.children[
+    editor.selection.anchor.path[0]
+  ] as CustomElement;
+
+  if (!isTextElementType(element.type)) {
+    return null;
+  }
+
+  return element.type;
+}
+
+function isTextElementType(
+  type: string
+): type is "h1" | "h2" | "h3" | "paragraph" {
+  return (
+    type === "h1" || type === "h2" || type === "h3" || type === "paragraph"
   );
 }

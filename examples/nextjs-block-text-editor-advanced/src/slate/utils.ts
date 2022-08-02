@@ -1,5 +1,5 @@
 import { nanoid } from "nanoid";
-import { Editor, Operation, Element, Node } from "slate";
+import { Editor, Operation, Element, Node, Path } from "slate";
 import { Format } from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
@@ -41,4 +41,8 @@ export function toggleMark(editor: Editor, format: Format) {
 export function isMarkActive(editor: Editor, format: Format) {
   const marks = Editor.marks(editor);
   return marks ? marks[format] === true : false;
+}
+
+export function topLevelPath(path: Path): Path {
+  return [path[0]];
 }

@@ -240,8 +240,6 @@ function App() {
                 return;
               }
 
-              console.log(editor.operations);
-
               isEditingRef.current = true;
 
               room.batch(() => {
