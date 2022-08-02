@@ -16,7 +16,6 @@ import {
   canUseEditingShortcuts,
   canUseShortcuts,
 } from "../utils/canUseShortcuts";
-import { isNumeric } from "../utils/isNumeric";
 import { useEventListener } from "../utils/useEventListener";
 import styles from "./Cell.module.css";
 
@@ -143,12 +142,12 @@ export function Cell({
         selected: isSelected,
         "selected-other": other,
         editing: isEditing,
+        error: isError,
       })}
       style={
         {
           ...style,
           "--cell-selection": other?.color,
-          textAlign: isNumeric(value) && draft === null ? "right" : "left",
           width: appendUnit(width),
           height: appendUnit(height),
         } as CSSProperties
@@ -161,6 +160,19 @@ export function Cell({
         <div className={styles.user} aria-hidden>
           <img src={other.url} alt={other.url} className={styles.user_avatar} />
           <span className={styles.user_label}>{other.name}</span>
+        </div>
+      )}
+      {isError && !isEditing && (
+        <div className={styles.error}>
+          <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" fill="#fee2e2" />
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M10 5a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM9 14a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1Z"
+              fill="#ef4444"
+            />
+          </svg>
         </div>
       )}
       <input
