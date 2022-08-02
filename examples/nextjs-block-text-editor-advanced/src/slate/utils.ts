@@ -1,6 +1,11 @@
 import { nanoid } from "nanoid";
-import { Editor, Operation, Element, Node, Path } from "slate";
-import { Format } from "./types";
+import { Editor, Operation, Element, Node, Path, Transforms } from "slate";
+import {
+  CustomElement,
+  Format,
+  HeadingElement,
+  ParagraphElement,
+} from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -45,4 +50,59 @@ export function isMarkActive(editor: Editor, format: Format) {
 
 export function topLevelPath(path: Path): Path {
   return [path[0]];
+}
+
+export function withLayout(editor: Editor) {
+  const { normalizeNode } = editor;
+
+  editor.normalizeNode = ([node, path]) => {
+    if (path.length === 0) {
+      if (editor.children.length < 1) {
+        const title: HeadingElement = {
+          id: nanoid(),
+          type: "h1",
+          children: [{ text: "Untitled" }],
+        };
+        Transforms.insertNodes(editor, title, { at: path.concat(0) });
+      }
+
+      if (editor.children.length < 2) {
+        const paragraph: ParagraphElement = {
+          id: nanoid(),
+          type: "paragraph",
+          children: [{ text: "" }],
+        };
+        Transforms.insertNodes(editor, paragraph, { at: path.concat(1) });
+      }
+
+      for (const [child, childPath] of Node.children(editor, path)) {
+        let type: "h1" | "paragraph";
+        const slateIndex = childPath[0];
+        const enforceType = (type: "h1" | "paragraph") => {
+          if (Element.isElement(child) && child.type !== type) {
+            const newProperties: Partial<CustomElement> = { type };
+            Transforms.setNodes(editor, newProperties, {
+              at: childPath,
+            });
+          }
+        };
+
+        switch (slateIndex) {
+          case 0:
+            type = "h1";
+            enforceType(type);
+            break;
+          case 1:
+            type = "paragraph";
+            enforceType(type);
+          default:
+            break;
+        }
+      }
+    }
+
+    return normalizeNode([node, path]);
+  };
+
+  return editor;
 }

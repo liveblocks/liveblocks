@@ -39,7 +39,7 @@ import {
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { Format } from "../types";
 import { CustomElement, DocumentMeta } from "./types";
-import { toggleMark, topLevelPath, withNodeId } from "./utils";
+import { toggleMark, topLevelPath, withLayout, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
 import Loading from "../components/Loading";
@@ -50,7 +50,7 @@ import Avatar from "../components/Avatar";
 const initialValue: CustomElement[] = [
   {
     id: nanoid(),
-    type: "paragraph",
+    type: "h1",
     children: [
       {
         text: "Hello",
@@ -60,7 +60,7 @@ const initialValue: CustomElement[] = [
 ];
 
 export const useEditor = () =>
-  useMemo(() => withNodeId(withReact(createEditor())), []);
+  useMemo(() => withNodeId(withLayout(withReact(createEditor()))), []);
 
 function isNodeWithId(editor: Editor, id: string) {
   return (node: Node) => Editor.isBlock(editor, node) && node.id === id;
