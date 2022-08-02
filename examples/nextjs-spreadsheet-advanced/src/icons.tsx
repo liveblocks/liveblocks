@@ -19,7 +19,7 @@ export function HandlerIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export function ChevronIcon(props: ComponentProps<"svg">) {
+export function EllipsisIcon(props: ComponentProps<"svg">) {
   return (
     <svg
       width="16"
@@ -29,9 +29,7 @@ export function ChevronIcon(props: ComponentProps<"svg">) {
       {...props}
     >
       <path
-        fillRule="evenodd"
-        clipRule="evenodd"
-        d="M3.293 6.293a1 1 0 0 1 1.414 0L8 9.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414Z"
+        d="M3 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3ZM13 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
         fill="currentColor"
       />
     </svg>

@@ -44,7 +44,7 @@ import {
   ResetIcon,
   EraserIcon,
   TrashIcon,
-  ChevronIcon,
+  EllipsisIcon,
 } from "../icons";
 import { useHistory } from "../liveblocks.config";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
@@ -256,7 +256,7 @@ export function Header({
             }
           >
             <button className={styles.header_control}>
-              <ChevronIcon />
+              <EllipsisIcon />
             </button>
           </DropdownMenu>
         </div>
