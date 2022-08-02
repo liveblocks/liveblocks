@@ -192,6 +192,8 @@ export function Header({
           <DropdownMenu
             open={isDropdownOpen}
             onOpenChange={handleDropdownOpenChange}
+            side="bottom"
+            align="start"
             content={
               <>
                 <DropdownMenuGroup>
