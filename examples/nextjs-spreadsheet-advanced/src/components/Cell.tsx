@@ -12,6 +12,7 @@ import {
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import { isNumeric } from "../utils/isNumeric";
 import { useEvent } from "../utils/useEvent";
 import styles from "./Cell.module.css";
 
@@ -59,21 +60,14 @@ export function Cell({
   }, [isSelected]);
 
   const startEditing = useCallback(() => {
+    console.log("start");
     input.current?.focus();
     setEditingString(getExpression());
   }, [getExpression]);
 
-  const stopEditing = useCallback(
-    (apply = false) => {
-      if (apply) {
-        onValueChange(editingString ?? "");
-      }
-
-      input.current?.blur();
-      setEditingString(null);
-    },
-    [editingString]
-  );
+  const stopEditing = useCallback(() => {
+    input.current?.blur();
+  }, [editingString]);
 
   const handleClick = useCallback(() => {
     if (isSelected) {
@@ -90,8 +84,8 @@ export function Cell({
   }, []);
 
   const handleBlur = useCallback(() => {
-    stopEditing();
-  }, [stopEditing]);
+    setEditingString(null);
+  }, []);
 
   const handleKeyDown = useCallback(
     ({ key }: KeyboardEvent) => {
@@ -99,28 +93,22 @@ export function Cell({
         return;
       }
 
-      if (key === "Enter") {
-        if (isEditing) {
-          stopEditing(true);
-        } else {
+      if (document.activeElement === document.body) {
+        if (key === "Enter") {
           startEditing();
-        }
-      } else if (key === "Escape") {
-        stopEditing();
-      } else if (key === "Backspace" || key === "Delete") {
-        if (!isEditing) {
+        } else if (key === "Backspace" || key === "Delete") {
           onValueChange("");
+        }
+      } else if (document.activeElement === input.current) {
+        if (key === "Enter") {
+          onValueChange(editingString ?? "");
+          stopEditing();
+        } else if (key === "Escape") {
+          stopEditing();
         }
       }
     },
-    [
-      isSelected,
-      isEditing,
-      startEditing,
-      stopEditing,
-      editingString,
-      onValueChange,
-    ]
+    [isSelected, startEditing, stopEditing, editingString, onValueChange]
   );
 
   useEvent("keydown", handleKeyDown);
@@ -162,8 +150,4 @@ export function Cell({
       />
     </td>
   );
-}
-
-function isNumeric(string: any) {
-  return !isNaN(string) && !isNaN(parseFloat(string));
 }

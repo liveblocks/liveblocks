@@ -105,6 +105,11 @@
   padding: 7px 9px;
   background: #fff;
   z-index: 1;
+  pointer-events: none;
+}
+
+.input:focus {
+  pointer-events: all;
 }
 
 .cell:global(.user) .input {
