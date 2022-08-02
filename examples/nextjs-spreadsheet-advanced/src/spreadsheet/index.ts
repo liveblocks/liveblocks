@@ -98,14 +98,14 @@ export async function createSpreadsheet(
 
   function deleteColumn(index: number) {
     // TODO: BATCHING
-    spreadsheet.get("columns").delete(index);
     clearColumn(index);
+    spreadsheet.get("columns").delete(index);
   }
 
   function deleteRow(index: number) {
     // TODO: BATCHING
-    spreadsheet.get("rows").delete(index);
     clearRow(index);
+    spreadsheet.get("rows").delete(index);
   }
 
   function cellToRef(token: CellToken): RefToken {
