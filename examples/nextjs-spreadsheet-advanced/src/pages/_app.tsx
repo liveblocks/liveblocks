@@ -7,8 +7,8 @@ function App({ Component, pageProps }: AppProps) {
     <>
       <Head>
         <title>Liveblocks</title>
-        <meta name="robots" content="noindex" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta content="noindex" name="robots" />
+        <meta content="width=device-width, initial-scale=1" name="viewport" />
         <link
           href="https://liveblocks.io/favicon-32x32.png"
           rel="icon"

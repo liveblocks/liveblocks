@@ -1,17 +1,17 @@
-import cx from "classnames";
 import {
-  Root,
-  Trigger,
-  Portal,
   Content,
+  type DropdownMenuContentProps,
+  type DropdownMenuItemProps,
+  type DropdownMenuProps,
+  type DropdownMenuSeparatorProps,
   Item,
+  Portal,
+  Root,
   Separator,
-  DropdownMenuProps,
-  DropdownMenuContentProps,
-  DropdownMenuItemProps,
-  DropdownMenuSeparatorProps,
+  Trigger,
 } from "@radix-ui/react-dropdown-menu";
-import { forwardRef, ReactNode } from "react";
+import cx from "classnames";
+import { type ReactNode, forwardRef } from "react";
 import styles from "./DropdownMenu.module.css";
 
 export interface Props extends DropdownMenuProps, DropdownMenuContentProps {
@@ -19,8 +19,8 @@ export interface Props extends DropdownMenuProps, DropdownMenuContentProps {
 }
 
 export interface ItemProps extends DropdownMenuItemProps {
-  label: string;
   icon?: ReactNode;
+  label: string;
 }
 
 export const DropdownMenu = forwardRef<HTMLDivElement, Props>(
@@ -40,17 +40,17 @@ export const DropdownMenu = forwardRef<HTMLDivElement, Props>(
   ) => {
     return (
       <Root
-        open={open}
         defaultOpen={defaultOpen}
-        onOpenChange={onOpenChange}
         modal={modal}
+        onOpenChange={onOpenChange}
+        open={open}
       >
         <Trigger asChild>{children}</Trigger>
         <Portal>
           <Content
             className={cx(className, styles.menu)}
-            ref={ref}
             collisionPadding={collisionPadding}
+            ref={ref}
             {...props}
           >
             {content}
@@ -66,12 +66,13 @@ export const DropdownMenuItem = forwardRef<HTMLDivElement, ItemProps>(
     return (
       <Item
         className={cx(className, styles.item)}
-        textValue={label}
         ref={ref}
+        textValue={label}
         {...props}
       >
         {icon && <span className={styles.icon}>{icon}</span>}
         {label}
+        {children}
       </Item>
     );
   }

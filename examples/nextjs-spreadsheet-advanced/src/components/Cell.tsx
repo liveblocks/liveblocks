@@ -1,8 +1,8 @@
 import cx from "classnames";
 import {
-  ChangeEvent,
-  ComponentProps,
-  CSSProperties,
+  type CSSProperties,
+  type ChangeEvent,
+  type ComponentProps,
   useCallback,
   useEffect,
   useMemo,
@@ -10,7 +10,7 @@ import {
   useState,
 } from "react";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
-import { UserInfo } from "../types";
+import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
 import {
   canUseEditingShortcuts,
@@ -21,14 +21,14 @@ import styles from "./Cell.module.css";
 
 export interface Props extends ComponentProps<"td"> {
   expression: string;
-  width: number;
+  getExpression: () => string;
   height: number;
   isSelected?: boolean;
-  other?: UserInfo;
+  onDelete: () => void;
   onSelect: () => void;
   onValueChange: (value: string) => void;
-  onDelete: () => void;
-  getExpression: () => string;
+  other?: UserInfo;
+  width: number;
 }
 
 const singleCharacterRegex = /^.$/u;
@@ -74,13 +74,13 @@ export function Cell({
   const stopEditing = useCallback(() => {
     setDraft(null);
     input.current?.blur();
-  }, [draft]);
+  }, []);
 
   const commitDraft = useCallback(() => {
     if (draft !== null) {
       onValueChange(draft);
     }
-  }, [draft]);
+  }, [draft, onValueChange]);
 
   const handleClick = useCallback(() => {
     if (isSelected) {
@@ -88,7 +88,7 @@ export function Cell({
     } else {
       onSelect();
     }
-  }, [onSelect]);
+  }, [onSelect, isSelected, startEditing]);
 
   const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -110,7 +110,7 @@ export function Cell({
         const isSingleCharacterKey =
           singleCharacterRegex.test(event.key) &&
           ![event.shiftKey, event.ctrlKey, event.altKey, event.metaKey].some(
-            (modifier) => Boolean(modifier)
+            Boolean
           );
 
         if (event.key === "Enter" || isSingleCharacterKey) {
@@ -118,7 +118,7 @@ export function Cell({
           startEditing(isSingleCharacterKey ? event.key : "");
         } else if (event.key === "Backspace" || event.key === "Delete") {
           event.preventDefault();
-          onValueChange("");
+          onDelete();
         }
       } else if (canUseEditingShortcuts(input)) {
         if (event.key === "Enter") {
@@ -131,19 +131,21 @@ export function Cell({
         }
       }
     },
-    [isSelected, commitDraft, startEditing, stopEditing, onValueChange]
+    [isSelected, commitDraft, startEditing, stopEditing, onDelete]
   );
 
   useEventListener("keydown", handleKeyDown);
 
   return (
     <td
+      aria-selected={isSelected}
       className={cx(className, styles.cell, {
         selected: isSelected,
         "selected-other": other,
         editing: isEditing,
         error: isError,
       })}
+      onClick={handleClick}
       style={
         {
           ...style,
@@ -152,36 +154,34 @@ export function Cell({
           height: appendUnit(height),
         } as CSSProperties
       }
-      onClick={handleClick}
-      aria-selected={isSelected}
       {...props}
     >
       {other && (
-        <div className={styles.user} aria-hidden>
-          <img src={other.url} alt={other.url} className={styles.user_avatar} />
+        <div aria-hidden className={styles.user}>
+          <img alt={other.url} className={styles.user_avatar} src={other.url} />
           <span className={styles.user_label}>{other.name}</span>
         </div>
       )}
       {isError && !isEditing && (
         <div className={styles.error}>
-          <svg width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+          <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
             <path d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" fill="#fee2e2" />
             <path
-              fillRule="evenodd"
               clipRule="evenodd"
               d="M10 5a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM9 14a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1Z"
               fill="#ef4444"
+              fillRule="evenodd"
             />
           </svg>
         </div>
       )}
       <input
-        tabIndex={-1}
-        ref={input}
-        readOnly={!isEditing}
         className={styles.input}
-        onChange={handleChange}
         onBlur={handleBlur}
+        onChange={handleChange}
+        readOnly={!isEditing}
+        ref={input}
+        tabIndex={-1}
         value={value ?? ""}
       />
     </td>

@@ -1,11 +1,12 @@
-import { nanoid } from "nanoid";
 import { LiveObject, type Room, type User } from "@liveblocks/client";
+import { nanoid } from "nanoid";
+import type { Column, Presence, Row, Storage, UserMeta } from "../types";
 import interpreter from "./interpreter";
 import tokenizer, {
-  SyntaxKind,
-  tokenToString,
   type CellToken,
   type RefToken,
+  SyntaxKind,
+  tokenToString,
 } from "./interpreter/tokenizer";
 import {
   convertLetterToNumber,
@@ -13,33 +14,30 @@ import {
   formatExpressionResult,
 } from "./interpreter/utils";
 import { extractCellId, getCellId, removeFromArray } from "./utils";
-import type { Presence, Storage, UserMeta, Row, Column } from "../types";
 
-export type Spreadsheet = {
-  insertColumn(index: number, width: number): void;
-  insertRow(index: number, width: number): void;
-  resizeColumn(index: number, width: number): void;
-  resizeRow(index: number, height: number): void;
-  moveRow(from: number, to: number): void;
-  moveColumn(from: number, to: number): void;
+export interface Spreadsheet {
   clearColumn(index: number): void;
   clearRow(index: number): void;
+  deleteCell(columnId: string, rowId: string): void;
   deleteColumn(index: number): void;
   deleteRow(index: number): void;
-
-  deleteCell(columnId: string, rowId: string): void;
-  selectCell(columnId: string, rowId: string): void;
-  setCellValue(columnId: string, rowId: string, value: string): void;
-  getCellValue(columnId: string, rowId: string): string;
   getCellExpression(columnId: string, rowId: string): string;
-
+  getCellValue(columnId: string, rowId: string): string;
+  insertColumn(index: number, width: number): void;
+  insertRow(index: number, width: number): void;
+  moveColumn(from: number, to: number): void;
+  moveRow(from: number, to: number): void;
+  onCellsChange(callback: (cells: Record<string, string>) => void): () => void;
+  onColumnsChange(callback: (columns: Column[]) => void): () => void;
   onOthersChange(
     callback: (others: User<Presence, UserMeta>[]) => void
   ): () => void;
   onRowsChange(callback: (rows: Row[]) => void): () => void;
-  onColumnsChange(callback: (columns: Column[]) => void): () => void;
-  onCellsChange(callback: (cells: Record<string, string>) => void): () => void;
-};
+  resizeColumn(index: number, width: number): void;
+  resizeRow(index: number, height: number): void;
+  selectCell(columnId: string, rowId: string): void;
+  setCellValue(columnId: string, rowId: string, value: string): void;
+}
 
 export async function createSpreadsheet(
   room: Room<Presence, Storage, UserMeta, never>
@@ -157,7 +155,7 @@ export async function createSpreadsheet(
         ? cellToRef(token as CellToken)
         : token
     );
-    const newExp = tokensWithRefs.map(tokenToString).join("");
+    const newExpression = tokensWithRefs.map(tokenToString).join("");
 
     const cells = spreadsheet.get("cells");
 
@@ -165,9 +163,9 @@ export async function createSpreadsheet(
     const cell = cells.get(cellId);
 
     if (cell == null) {
-      cells.set(cellId, new LiveObject({ value: newExp }));
+      cells.set(cellId, new LiveObject({ value: newExpression }));
     } else {
-      cell.set("value", newExp);
+      cell.set("value", newExpression);
     }
   }
 
@@ -192,7 +190,7 @@ export async function createSpreadsheet(
 
   function evaluateCell(columnId: string, rowId: string) {
     const cell = spreadsheet.get("cells").get(getCellId(columnId, rowId));
-    return interpreter(cell?.get("value") || "", evaluateCellRef);
+    return interpreter(cell?.get("value") ?? "", evaluateCellRef);
   }
 
   function getCellValue(columnId: string, rowId: string) {
@@ -268,7 +266,7 @@ export async function createSpreadsheet(
   function onCellsChange(callback: (cells: Record<string, string>) => void) {
     cellCallbacks.push(callback);
     const cells = Object.fromEntries(
-      Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
+      [...spreadsheet.get("cells").entries()].map(([key]) => [
         key,
         getCellValue(...extractCellId(key)),
       ])
@@ -280,7 +278,7 @@ export async function createSpreadsheet(
     spreadsheet.get("cells"),
     () => {
       const cells = Object.fromEntries(
-        Array.from(spreadsheet.get("cells").entries()).map(([key]) => [
+        [...spreadsheet.get("cells").entries()].map(([key]) => [
           key,
           getCellValue(...extractCellId(key)),
         ])
@@ -308,7 +306,6 @@ export async function createSpreadsheet(
     selectCell,
     getCellValue,
     getCellExpression,
-
     onOthersChange,
     onColumnsChange,
     onRowsChange,

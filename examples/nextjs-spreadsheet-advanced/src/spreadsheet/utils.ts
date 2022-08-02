@@ -1,6 +1,6 @@
-import { LiveObject, LiveMap, LiveList } from "@liveblocks/client";
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
-import { Storage, Column, Row, CellData, FixedArray } from "../types";
+import { CellData, Column, FixedArray, Row, Storage } from "../types";
 import tokenizer, {
   CellToken,
   RefToken,
@@ -23,8 +23,8 @@ export function getCellId(columnId: string, rowId: string) {
 }
 
 export function extractCellId(cellId: string) {
-  const columnId = cellId.substring(0, cellId.length / 2);
-  const rowId = cellId.substring(cellId.length / 2);
+  const columnId = cellId.slice(0, Math.max(0, cellId.length / 2));
+  const rowId = cellId.slice(Math.max(0, cellId.length / 2));
 
   return [columnId, rowId] as [string, string];
 }
@@ -47,7 +47,7 @@ function cellToRef(
 
 export function createInitialStorage<X extends number, Y extends number>(
   columns: { length: X; width: number },
-  rows: { length: Y; height: number },
+  rows: { height: number; length: Y },
   cells: FixedArray<FixedArray<string, X>, Y>
 ): Storage {
   const initialColumns = Array.from(
@@ -71,16 +71,16 @@ export function createInitialStorage<X extends number, Y extends number>(
               ? cellToRef(token as CellToken, initialColumns, initialRows)
               : token
           );
-          const newExp = tokensWithRefs.map(tokenToString).join("");
+          const newExpression = tokensWithRefs.map(tokenToString).join("");
 
           return [
             getCellId(columnId, rowId),
-            new LiveObject({ value: newExp }),
+            new LiveObject({ value: newExpression }),
           ] as readonly [string, LiveObject<CellData>];
         }
       });
     })
-    .filter((cell) => Boolean(cell)) as [string, LiveObject<CellData>][];
+    .filter(Boolean) as [string, LiveObject<CellData>][];
 
   return {
     spreadsheet: new LiveObject({

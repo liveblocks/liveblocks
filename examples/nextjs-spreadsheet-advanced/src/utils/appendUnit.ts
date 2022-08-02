@@ -1,3 +1,3 @@
-export function appendUnit(value: number | string, unit: string = "px") {
+export function appendUnit(value: number | string, unit = "px") {
   return `${value}${unit}`;
 }

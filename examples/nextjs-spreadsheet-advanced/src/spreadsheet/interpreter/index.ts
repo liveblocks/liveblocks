@@ -1,16 +1,16 @@
-import tokenizer from "./tokenizer";
 import parser, { NodeKind } from "./parser";
 import type {
-  NumberLiteral,
   BinaryExpression,
-  Node,
   Expression,
+  Node,
+  NumberLiteral,
   Ref,
 } from "./parser";
+import tokenizer from "./tokenizer";
 
-type NumberExpressionResult = {
+interface NumberExpressionResult {
   value: number;
-};
+}
 
 function evaluateAst(
   ast: Node,
@@ -88,15 +88,15 @@ function evaluateAst(
 
 export type ExpressionResult =
   | {
-      type: "string";
-      value: string;
+      type: "error";
     }
   | {
       type: "number";
       value: number;
     }
   | {
-      type: "error";
+      type: "string";
+      value: string;
     };
 
 export default function (
@@ -109,23 +109,21 @@ export default function (
 
   if (input[0] !== "=") {
     const number = Number.parseFloat(input);
-    if (Number.isNaN(number)) {
-      return { type: "string", value: input };
-    } else {
-      return { type: "number", value: number };
-    }
+    return Number.isNaN(number)
+      ? { type: "string", value: input }
+      : { type: "number", value: number };
   }
 
   try {
-    const tokens = tokenizer(input.substring(1));
+    const tokens = tokenizer(input.slice(1));
     const ast = parser(tokens);
     const result = evaluateAst(ast, getCellValue);
     return {
       type: "number",
       value: result.value,
     };
-  } catch (er) {
-    console.log(er);
+  } catch (error) {
+    console.log(error);
     return { type: "error" };
   }
 }

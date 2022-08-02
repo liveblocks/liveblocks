@@ -1,93 +1,91 @@
-import cx from "classnames";
-import { DragEndEvent, DndContext, closestCenter } from "@dnd-kit/core";
+import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import {
-  useSortable,
   SortableContext,
   horizontalListSortingStrategy,
+  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { ResizeCallback, Resizable } from "re-resizable";
+import cx from "classnames";
+import { Resizable, type ResizeCallback } from "re-resizable";
 import {
-  ComponentProps,
-  useState,
-  useRef,
+  type CSSProperties,
+  type ComponentProps,
   useCallback,
   useEffect,
-  CSSProperties,
   useMemo,
+  useRef,
+  useState,
 } from "react";
+import {
+  COLUMN_HEADER_WIDTH,
+  COLUMN_INITIAL_WIDTH,
+  COLUMN_MAX_WIDTH,
+  COLUMN_MIN_WIDTH,
+  ROW_INITIAL_HEIGHT,
+  ROW_MAX_HEIGHT,
+} from "../constants";
+import {
+  AddColumnAfterIcon,
+  AddColumnBeforeIcon,
+  AddRowAfterIcon,
+  AddRowBeforeIcon,
+  EllipsisIcon,
+  EraserIcon,
+  HandlerIcon,
+  MoveColumnAfterIcon,
+  MoveColumnBeforeIcon,
+  MoveRowAfterIcon,
+  MoveRowBeforeIcon,
+  ResetIcon,
+  TrashIcon,
+} from "../icons";
+import { useHistory } from "../liveblocks.config";
+import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
+import type { Column, Row } from "../types";
+import { getIndexWithProperty } from "../utils/getIndexWithProperty";
+import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import {
   DropdownMenu,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./DropdownMenu";
-import {
-  COLUMN_INITIAL_WIDTH,
-  ROW_INITIAL_HEIGHT,
-  COLUMN_HEADER_WIDTH,
-  COLUMN_MIN_WIDTH,
-  COLUMN_MAX_WIDTH,
-  ROW_MAX_HEIGHT,
-} from "../constants";
-import {
-  HandlerIcon,
-  AddColumnBeforeIcon,
-  AddRowBeforeIcon,
-  AddColumnAfterIcon,
-  AddRowAfterIcon,
-  MoveColumnBeforeIcon,
-  MoveRowBeforeIcon,
-  MoveColumnAfterIcon,
-  MoveRowAfterIcon,
-  ResetIcon,
-  EraserIcon,
-  TrashIcon,
-  EllipsisIcon,
-} from "../icons";
-import { useHistory } from "../liveblocks.config";
-import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
-import { Row, Column } from "../types";
-import { setGlobalCursor, removeGlobalCursor } from "../utils/globalCursor";
 import styles from "./Headers.module.css";
-import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 
 export interface Props extends ComponentProps<"div"> {
-  type: "row" | "column";
-  headers: (Row | Column)[];
-  selectedHeader?: string;
-  deleteHeader: (index: number) => void;
   clearHeader: (index: number) => void;
+  deleteHeader: (index: number) => void;
+  headers: (Column | Row)[];
+  insertHeader: (index: number, width: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
-  insertHeader: (index: number, width: number) => void;
+  selectedHeader?: string;
+  type: "column" | "row";
 }
 
 export interface HeaderProps extends ComponentProps<"div"> {
-  type: "row" | "column";
-  header: Row | Column;
+  header: Column | Row;
   index: number;
   isFirst: boolean;
   isLast: boolean;
   isSelected: boolean;
-  onDelete: () => void;
   onClear: () => void;
-  onMove: (offset: number) => void;
+  onDelete: () => void;
   onInsert: (offset: number) => void;
+  onMove: (offset: number) => void;
   onResize: (width: number, height: number) => void;
 }
 
-function isRowHeader(header: Row | Column): header is Row {
+function isRowHeader(header: Column | Row): header is Row {
   return Boolean((header as Row).height);
 }
 
-function isColumnHeader(header: Row | Column): header is Column {
+function isColumnHeader(header: Column | Row): header is Column {
   return Boolean((header as Column).width);
 }
 
 export function Header({
-  type,
   index,
   header,
   isFirst,
@@ -98,7 +96,6 @@ export function Header({
   onResize,
   onMove,
   onInsert,
-  style,
   ...props
 }: HeaderProps) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -118,7 +115,7 @@ export function Header({
     initialHeader.current = header;
     history.pause();
     setGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, [header]);
+  }, [header, history, isColumn]);
 
   const handleResize: ResizeCallback = useCallback(
     (_, __, ___, size) => {
@@ -133,11 +130,11 @@ export function Header({
   const handleResizeStop = useCallback(() => {
     history.resume();
     removeGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, []);
+  }, [history, isColumn]);
 
   const handleResizeDefault = useCallback(() => {
     onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
-  }, []);
+  }, [onResize]);
 
   useEffect(() => {
     const changeGlobalCursor = isDragging
@@ -149,9 +146,9 @@ export function Header({
 
   return (
     <div
+      className={styles.header_draggable_container}
       key={header.id}
       ref={setNodeRef}
-      className={styles.header_draggable_container}
       style={
         {
           transform: transform
@@ -163,20 +160,20 @@ export function Header({
       {...props}
     >
       <Resizable
+        className={styles.header_resizable_container}
+        enable={{ right: isColumn, bottom: !isColumn }}
+        handleWrapperClass={styles.header_handles}
+        maxHeight={ROW_MAX_HEIGHT}
+        maxWidth={COLUMN_MAX_WIDTH}
+        minHeight={ROW_INITIAL_HEIGHT}
+        minWidth={COLUMN_MIN_WIDTH}
+        onResize={handleResize}
+        onResizeStart={handleResizeStart}
+        onResizeStop={handleResizeStop}
         size={{
           width: isColumn ? header.width : COLUMN_HEADER_WIDTH,
           height: isColumn ? ROW_INITIAL_HEIGHT : header.height,
         }}
-        minWidth={COLUMN_MIN_WIDTH}
-        maxWidth={COLUMN_MAX_WIDTH}
-        minHeight={ROW_INITIAL_HEIGHT}
-        maxHeight={ROW_MAX_HEIGHT}
-        enable={{ right: isColumn, bottom: !isColumn }}
-        handleWrapperClass={styles.header_handles}
-        onResizeStart={handleResizeStart}
-        onResize={handleResize}
-        onResizeStop={handleResizeStop}
-        className={styles.header_resizable_container}
       >
         <div className={cx(styles.header, isSelected && "selected")}>
           <button
@@ -190,9 +187,6 @@ export function Header({
             {isColumn ? convertNumberToLetter(index) : index + 1}
           </span>
           <DropdownMenu
-            open={isDropdownOpen}
-            onOpenChange={handleDropdownOpenChange}
-            side="bottom"
             align="start"
             content={
               <>
@@ -214,6 +208,7 @@ export function Header({
                 </DropdownMenuGroup>
                 <DropdownMenuGroup>
                   <DropdownMenuItem
+                    disabled={isFirst}
                     icon={
                       isColumn ? (
                         <MoveColumnBeforeIcon />
@@ -223,15 +218,14 @@ export function Header({
                     }
                     label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
                     onSelect={() => onMove(-1)}
-                    disabled={isFirst}
                   />
                   <DropdownMenuItem
+                    disabled={isLast}
                     icon={
                       isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
                     }
                     label={`Move ${isColumn ? "Column After" : "Row Below"}`}
                     onSelect={() => onMove(1)}
-                    disabled={isLast}
                   />
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
@@ -254,6 +248,9 @@ export function Header({
                 </DropdownMenuGroup>
               </>
             }
+            onOpenChange={handleDropdownOpenChange}
+            open={isDropdownOpen}
+            side="bottom"
           >
             <button className={styles.header_control}>
               <EllipsisIcon />
@@ -301,36 +298,35 @@ export function Headers({
       onDragEnd={handleDragEnd}
     >
       <SortableContext
+        items={items}
         strategy={
           isColumn ? horizontalListSortingStrategy : verticalListSortingStrategy
         }
-        items={items}
       >
         <div
-          className={cx(className, styles.headers, type)}
           aria-hidden
+          className={cx(className, styles.headers, type)}
           {...props}
         >
           {headers.map((header, index) => (
             <Header
-              type={type}
-              key={index}
-              index={index}
               header={header}
+              index={index}
               isFirst={index === 0}
               isLast={index === headers.length - 1}
               isSelected={selectedHeader === header.id}
-              onDelete={() => deleteHeader(index)}
+              key={index}
               onClear={() => clearHeader(index)}
-              onResize={(width, height) =>
-                resizeHeader(index, isColumn ? width : height)
-              }
-              onMove={(offset: number) => moveHeader(index, index + offset)}
+              onDelete={() => deleteHeader(index)}
               onInsert={(offset: number) =>
                 insertHeader(
                   index + offset,
                   isColumn ? COLUMN_INITIAL_WIDTH : ROW_INITIAL_HEIGHT
                 )
+              }
+              onMove={(offset: number) => moveHeader(index, index + offset)}
+              onResize={(width, height) =>
+                resizeHeader(index, isColumn ? width : height)
               }
             />
           ))}

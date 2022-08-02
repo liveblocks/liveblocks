@@ -17,44 +17,44 @@ export enum SyntaxKind {
 }
 
 export type Token =
-  | NumberToken
   | CellToken
+  | EOFToken
+  | NumberToken
   | RefToken
-  | SimpleCharToken
-  | EOFToken;
+  | SimpleCharToken;
 
-export type NumberToken = {
+export interface NumberToken {
   kind: SyntaxKind.NumberLiteral;
   value: string;
-};
+}
 
-export type CellToken = {
-  kind: SyntaxKind.CellToken;
+export interface CellToken {
   cell: string;
-};
+  kind: SyntaxKind.CellToken;
+}
 
-export type RefToken = {
+export interface RefToken {
   kind: SyntaxKind.RefToken;
   ref: string;
-};
+}
 
-export type EOFToken = {
+export interface EOFToken {
   kind: SyntaxKind.EOF;
-};
+}
 
-type SimpleCharToken = {
+interface SimpleCharToken {
   kind:
-    | SyntaxKind.PlusToken
-    | SyntaxKind.MinusToken
     | SyntaxKind.AsteriskToken
-    | SyntaxKind.SlashToken
-    | SyntaxKind.EqualToken
-    | SyntaxKind.ModToken
     | SyntaxKind.CaretToken
     | SyntaxKind.CloseParenthesis
+    | SyntaxKind.ColonToken
+    | SyntaxKind.EqualToken
+    | SyntaxKind.MinusToken
+    | SyntaxKind.ModToken
     | SyntaxKind.OpenParenthesis
-    | SyntaxKind.ColonToken;
-};
+    | SyntaxKind.PlusToken
+    | SyntaxKind.SlashToken;
+}
 
 const simpleCharToSyntaxKindMap: Map<string, SyntaxKind> = new Map([
   ["+", SyntaxKind.PlusToken],
@@ -70,14 +70,11 @@ const simpleCharToSyntaxKindMap: Map<string, SyntaxKind> = new Map([
 ]);
 
 const syntaxKindToChar = new Map(
-  Array.from(simpleCharToSyntaxKindMap.entries()).map((entry) => [
-    entry[1],
-    entry[0],
-  ])
+  [...simpleCharToSyntaxKindMap.entries()].map((entry) => [entry[1], entry[0]])
 );
 
 function isDigit(char: string) {
-  const NUMBERS = /[0-9]/;
+  const NUMBERS = /\d/;
   return NUMBERS.test(char);
 }
 
@@ -147,16 +144,16 @@ export default function tokenizer(input: string): Token[] {
   const tokens: Token[] = [];
 
   while (current < input.length) {
-    let char = input[current];
+    const char = input[current];
 
-    let syntaxKind = simpleCharToSyntaxKindMap.get(char);
+    const syntaxKind = simpleCharToSyntaxKindMap.get(char);
     if (syntaxKind !== undefined) {
       tokens.push({
         kind: syntaxKind,
       } as SimpleCharToken);
       current++;
     } else if (isDigit(char)) {
-      var numberAsString = extractNumber(input, current);
+      const numberAsString = extractNumber(input, current);
       current += numberAsString.length;
       tokens.push({
         kind: SyntaxKind.NumberLiteral,

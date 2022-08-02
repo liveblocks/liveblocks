@@ -1,5 +1,5 @@
 import { SyntaxKind } from "./tokenizer";
-import type { Token, NumberToken, RefToken } from "./tokenizer";
+import type { NumberToken, RefToken, Token } from "./tokenizer";
 
 export type Node = Expression;
 
@@ -18,42 +18,42 @@ export enum NodeKind {
 }
 
 export type Expression =
-  | Ref
-  | NumberLiteral
-  | UnaryMinus
-  | UnaryPlus
   | Addition
-  | Substraction
-  | Multiplication
+  | CellRange
   | Division
-  | Modulo
   | Exponent
-  | CellRange;
+  | Modulo
+  | Multiplication
+  | NumberLiteral
+  | Ref
+  | Substraction
+  | UnaryMinus
+  | UnaryPlus;
 
 export interface BinaryExpression {
   left: Expression;
   right: Expression;
 }
 
-export type NumberLiteral = {
+export interface NumberLiteral {
   kind: NodeKind.NumberLiteral;
   value: number;
-};
+}
 
-export type Ref = {
+export interface Ref {
   kind: NodeKind.Ref;
   ref: string;
-};
+}
 
-export type UnaryPlus = {
+export interface UnaryPlus {
+  expression: Expression;
   kind: NodeKind.UnaryPlus;
-  expression: Expression;
-};
+}
 
-export type UnaryMinus = {
-  kind: NodeKind.UnaryMinus;
+export interface UnaryMinus {
   expression: Expression;
-};
+  kind: NodeKind.UnaryMinus;
+}
 
 export interface Addition extends BinaryExpression {
   kind: NodeKind.Addition;
@@ -111,7 +111,7 @@ export default function parser(tokens: Token[]): Node {
   function makeNumberLiteral(token: NumberToken): NumberLiteral {
     return {
       kind: NodeKind.NumberLiteral,
-      value: parseFloat(token.value),
+      value: Number.parseFloat(token.value),
     };
   }
 
@@ -123,7 +123,7 @@ export default function parser(tokens: Token[]): Node {
   }
 
   function factor(): Expression {
-    let token = currentToken();
+    const token = currentToken();
     if (testAndConsume(SyntaxKind.PlusToken)) {
       return { kind: NodeKind.UnaryPlus, expression: factor() };
     } else if (testAndConsume(SyntaxKind.MinusToken)) {
@@ -145,7 +145,7 @@ export default function parser(tokens: Token[]): Node {
       }
       return ref;
     }
-    throw Error(`Unexpected token : ${token.kind}`);
+    throw new Error(`Unexpected token : ${token.kind}`);
   }
 
   function exponent(): Expression {
@@ -169,7 +169,7 @@ export default function parser(tokens: Token[]): Node {
       } else if (testAndConsume(SyntaxKind.ModToken)) {
         node = { kind: NodeKind.Modulo, left: node, right: exponent() };
       } else if (testAndConsume(SyntaxKind.OpenParenthesis)) {
-        let ex = expr();
+        const ex = expr();
         consumeToken(SyntaxKind.CloseParenthesis);
         node = { kind: NodeKind.Multiplication, left: node, right: ex };
       } else {
@@ -197,7 +197,7 @@ export default function parser(tokens: Token[]): Node {
   }
 
   function expr(): Expression {
-    let node: Expression = additive();
+    const node: Expression = additive();
     return node;
   }
 

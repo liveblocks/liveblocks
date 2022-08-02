@@ -3,11 +3,11 @@ import type { ExpressionResult } from ".";
 export const EXPRESSION_ERROR = "ERROR";
 
 export function convertNumberToLetter(index: number) {
-  return String.fromCharCode(index + 65);
+  return String.fromCodePoint(index + 65);
 }
 
 export function convertLetterToNumber(letter: string) {
-  return letter.charCodeAt(0) - 65;
+  return (letter.codePointAt(0) ?? 0) - 65;
 }
 
 export function formatExpressionResult(expressionResult: ExpressionResult) {

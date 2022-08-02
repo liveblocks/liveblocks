@@ -1,19 +1,9 @@
-import { useRouter } from "next/router";
-import { CSSProperties, useMemo } from "react";
-import { RoomProvider, useHistory, useSelf } from "../liveblocks.config";
-import { useSpreadsheet } from "../spreadsheet/react";
-import { appendUnit } from "../utils/appendUnit";
-import {
-  AddColumnAfterIcon,
-  AddRowAfterIcon,
-  UndoIcon,
-  RedoIcon,
-} from "../icons";
-import { Avatar } from "../components/Avatar";
-import { createInitialStorage } from "../spreadsheet/utils";
-import { Tooltip } from "../components/Tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import styles from "./index.module.css";
+import { useRouter } from "next/router";
+import { type CSSProperties, useMemo } from "react";
+import { Avatar } from "../components/Avatar";
+import { Sheet } from "../components/Sheet";
+import { Tooltip } from "../components/Tooltip";
 import {
   COLUMN_HEADER_WIDTH,
   COLUMN_INITIAL_WIDTH,
@@ -21,7 +11,17 @@ import {
   GRID_INITIAL_ROWS,
   ROW_INITIAL_HEIGHT,
 } from "../constants";
-import { Sheet } from "../components/Sheet";
+import {
+  AddColumnAfterIcon,
+  AddRowAfterIcon,
+  RedoIcon,
+  UndoIcon,
+} from "../icons";
+import { RoomProvider, useHistory, useSelf } from "../liveblocks.config";
+import { useSpreadsheet } from "../spreadsheet/react";
+import { createInitialStorage } from "../spreadsheet/utils";
+import { appendUnit } from "../utils/appendUnit";
+import styles from "./index.module.css";
 
 function Example() {
   const spreadsheet = useSpreadsheet();
@@ -31,9 +31,9 @@ function Example() {
   if (spreadsheet == null) {
     return (
       <img
-        src="https://liveblocks.io/loading.svg"
         alt="Loading"
         className={styles.loading}
+        src="https://liveblocks.io/loading.svg"
       />
     );
   }
@@ -91,11 +91,11 @@ function Example() {
           {users.map(({ connectionId, info }) => {
             return (
               <Avatar
-                key={connectionId}
                 className={styles.avatar}
-                src={info.url}
-                name={info.name}
                 color={info.color}
+                key={connectionId}
+                name={info.name}
+                src={info.url}
                 tooltipOffset={6}
               />
             );
@@ -103,9 +103,9 @@ function Example() {
           {self && (
             <Avatar
               className={styles.avatar}
-              src={self.info.url}
               color={self.info.color}
               name="You"
+              src={self.info.url}
               tooltipOffset={6}
             />
           )}
@@ -133,10 +133,10 @@ export default function Page() {
   return (
     <RoomProvider
       id={roomId}
-      initialStorage={initialStorage}
       initialPresence={{
         selectedCell: null,
       }}
+      initialStorage={initialStorage}
     >
       <TooltipProvider>
         <Example />

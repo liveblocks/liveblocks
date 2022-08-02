@@ -1,7 +1,7 @@
-import { User } from "@liveblocks/client";
+import type { User } from "@liveblocks/client";
+import { useCallback, useEffect, useState } from "react";
 import { useRoom } from "../liveblocks.config";
-import { useState, useEffect, useCallback } from "react";
-import {
+import type {
   CellAddress,
   Column,
   Presence,
@@ -9,30 +9,30 @@ import {
   UserInfo,
   UserMeta,
 } from "../types";
-import { createSpreadsheet, Spreadsheet } from ".";
+import { type Spreadsheet, createSpreadsheet } from ".";
 
 export interface ReactSpreadsheet {
-  insertRow: Spreadsheet["insertRow"];
-  resizeRow: Spreadsheet["resizeRow"];
-  moveRow: Spreadsheet["moveRow"];
-  clearRow: Spreadsheet["clearRow"];
-  deleteRow: Spreadsheet["deleteRow"];
-  insertColumn: Spreadsheet["insertColumn"];
-  resizeColumn: Spreadsheet["resizeColumn"];
-  moveColumn: Spreadsheet["moveColumn"];
-  clearColumn: Spreadsheet["clearColumn"];
-  deleteColumn: Spreadsheet["deleteColumn"];
-  selectCell: Spreadsheet["selectCell"];
-  deleteCell: Spreadsheet["deleteCell"];
-  getCellExpression: Spreadsheet["getCellExpression"];
-  setCellValue: Spreadsheet["setCellValue"];
-  getCellValue: Spreadsheet["getCellValue"];
-  rows: Row[];
-  columns: Column[];
   cells: Record<string, string>;
-  users: User<Presence, UserMeta>[];
-  selection: CellAddress | null;
+  clearColumn: Spreadsheet["clearColumn"];
+  clearRow: Spreadsheet["clearRow"];
+  columns: Column[];
+  deleteCell: Spreadsheet["deleteCell"];
+  deleteColumn: Spreadsheet["deleteColumn"];
+  deleteRow: Spreadsheet["deleteRow"];
+  getCellExpression: Spreadsheet["getCellExpression"];
+  getCellValue: Spreadsheet["getCellValue"];
+  insertColumn: Spreadsheet["insertColumn"];
+  insertRow: Spreadsheet["insertRow"];
+  moveColumn: Spreadsheet["moveColumn"];
+  moveRow: Spreadsheet["moveRow"];
   others: Record<string, UserInfo>;
+  resizeColumn: Spreadsheet["resizeColumn"];
+  resizeRow: Spreadsheet["resizeRow"];
+  rows: Row[];
+  selectCell: Spreadsheet["selectCell"];
+  selection: CellAddress | null;
+  setCellValue: Spreadsheet["setCellValue"];
+  users: User<Presence, UserMeta>[];
 }
 
 export function useSpreadsheet(): ReactSpreadsheet | null {
@@ -76,7 +76,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   }, [room]);
 
   useEffect(() => {
-    if (!selection && columns.length && rows.length) {
+    if (!selection && columns.length > 0 && rows.length > 0) {
       selectCell(columns[0].id, rows[0].id);
     }
   }, [columns, rows, selection, selectCell]);
@@ -88,23 +88,19 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
         moveRow: spreadsheet.moveRow,
         clearRow: spreadsheet.clearRow,
         deleteRow: spreadsheet.deleteRow,
-
         insertColumn: spreadsheet.insertColumn,
         resizeColumn: spreadsheet.resizeColumn,
         moveColumn: spreadsheet.moveColumn,
         clearColumn: spreadsheet.clearColumn,
         deleteColumn: spreadsheet.deleteColumn,
-
         getCellExpression: spreadsheet.getCellExpression,
         getCellValue: spreadsheet.getCellValue,
         setCellValue: spreadsheet.setCellValue,
         deleteCell: spreadsheet.deleteCell,
         selectCell: selectCell,
-
         rows,
         columns,
         cells,
-
         users,
         selection,
         others,

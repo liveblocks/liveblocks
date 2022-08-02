@@ -1,3 +1,3 @@
 export function isNumeric(string: any) {
-  return !isNaN(string) && !isNaN(parseFloat(string));
+  return !Number.isNaN(string) && !Number.isNaN(Number.parseFloat(string));
 }

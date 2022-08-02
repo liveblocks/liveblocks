@@ -1,12 +1,12 @@
 import cx from "classnames";
-import { ComponentProps, CSSProperties, forwardRef } from "react";
-import { Tooltip } from "./Tooltip";
+import { type CSSProperties, type ComponentProps, forwardRef } from "react";
 import styles from "./Avatar.module.css";
+import { Tooltip } from "./Tooltip";
 
 export interface Props extends ComponentProps<"button"> {
-  src: string;
-  name: string;
   color: string;
+  name: string;
+  src: string;
   tooltipOffset?: number;
 }
 
@@ -16,13 +16,13 @@ export const Avatar = forwardRef<HTMLButtonElement, Props>(
       <Tooltip content={name} sideOffset={tooltipOffset}>
         <button
           className={cx(className, styles.container)}
-          style={{ "--avatar-color": color, ...style } as CSSProperties}
-          ref={ref}
           disabled
+          ref={ref}
+          style={{ "--avatar-color": color, ...style } as CSSProperties}
           {...props}
         >
           <div className={styles.avatar}>
-            <img src={src} alt={name} />
+            <img alt={name} src={src} />
           </div>
         </button>
       </Tooltip>

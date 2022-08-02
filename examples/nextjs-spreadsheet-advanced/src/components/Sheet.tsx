@@ -1,12 +1,12 @@
-import { ComponentProps, useCallback } from "react";
+import { type ComponentProps, useCallback } from "react";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
-import { ReactSpreadsheet } from "../spreadsheet/react";
-import { Headers } from "./Headers";
-import { Cell } from "./Cell";
-import styles from "./Sheet.module.css";
+import type { ReactSpreadsheet } from "../spreadsheet/react";
+import { TABLE_ID, canUseShortcuts } from "../utils/canUseShortcuts";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { useEventListener } from "../utils/useEventListener";
-import { canUseShortcuts, TABLE_ID } from "../utils/canUseShortcuts";
+import { Cell } from "./Cell";
+import { Headers } from "./Headers";
+import styles from "./Sheet.module.css";
 
 export type Props = ComponentProps<"div"> & ReactSpreadsheet;
 
@@ -59,7 +59,7 @@ export function Sheet({
         }
       }
     },
-    [selection, columns, rows]
+    [selection, rows, selectCell, columns]
   );
 
   useEventListener("keydown", handleKeyDown);
@@ -67,26 +67,26 @@ export function Sheet({
   return (
     <div className={styles.sheet}>
       <Headers
-        type="column"
         className={styles.columns}
-        headers={columns}
-        selectedHeader={selection?.columnId}
-        moveHeader={moveColumn}
         clearHeader={clearColumn}
         deleteHeader={deleteColumn}
-        resizeHeader={resizeColumn}
+        headers={columns}
         insertHeader={insertColumn}
+        moveHeader={moveColumn}
+        resizeHeader={resizeColumn}
+        selectedHeader={selection?.columnId}
+        type="column"
       />
       <Headers
-        type="row"
         className={styles.rows}
-        headers={rows}
-        selectedHeader={selection?.rowId}
-        moveHeader={moveRow}
         clearHeader={clearRow}
         deleteHeader={deleteRow}
-        resizeHeader={resizeRow}
+        headers={rows}
         insertHeader={insertRow}
+        moveHeader={moveRow}
+        resizeHeader={resizeRow}
+        selectedHeader={selection?.rowId}
+        type="row"
       />
       <table className={styles.table} id={TABLE_ID} tabIndex={0}>
         <thead className="sr">
@@ -102,26 +102,26 @@ export function Sheet({
             return (
               <tr key={y}>
                 <th className="sr">{y}</th>
-                {columns.map((column, x) => {
+                {columns.map((column) => {
                   const isSelected =
                     selection?.columnId === column.id &&
                     selection?.rowId === row.id;
 
                   return (
                     <Cell
-                      key={column.id + row.id}
                       className={styles.cell}
+                      expression={cells[column.id + row.id]}
+                      getExpression={() => getCellExpression(column.id, row.id)}
+                      height={row.height}
+                      isSelected={isSelected}
+                      key={column.id + row.id}
+                      onDelete={() => deleteCell(column.id, row.id)}
                       onSelect={() => selectCell(column.id, row.id)}
                       onValueChange={(value) =>
                         setCellValue(column.id, row.id, value)
                       }
-                      onDelete={() => deleteCell(column.id, row.id)}
-                      getExpression={() => getCellExpression(column.id, row.id)}
-                      expression={cells[column.id + row.id]}
-                      width={column.width}
-                      height={row.height}
                       other={others[column.id + row.id]}
-                      isSelected={isSelected}
+                      width={column.width}
                     />
                   );
                 })}

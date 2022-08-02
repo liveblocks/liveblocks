@@ -1,46 +1,46 @@
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 
-export type Presence = {
+export interface Presence {
   selectedCell: string | null;
-};
+}
 
-export type Column = {
+export interface Column {
   id: string;
   width: number;
-};
+}
 
-export type Row = {
-  id: string;
+export interface Row {
   height: number;
-};
+  id: string;
+}
 
-export type CellData = {
+export interface CellData {
   value: string;
-};
+}
 
-export type CellAddress = {
+export interface CellAddress {
   columnId: string;
   rowId: string;
-};
+}
 
-export type Storage = {
+export interface Storage {
   spreadsheet: LiveObject<{
     cells: LiveMap<string, LiveObject<CellData>>;
-    rows: LiveList<LiveObject<Row>>;
     columns: LiveList<LiveObject<Column>>;
+    rows: LiveList<LiveObject<Row>>;
   }>;
-};
+}
 
-export type UserInfo = {
-  name: string;
+export interface UserInfo {
   color: string;
+  name: string;
   url: string;
-};
+}
 
-export type UserMeta = {
+export interface UserMeta {
   id: string;
   info: UserInfo;
-};
+}
 
 export type FixedArray<T, N extends number> = N extends N
   ? number extends N
