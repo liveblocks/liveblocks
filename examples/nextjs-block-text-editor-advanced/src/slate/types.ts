@@ -59,6 +59,10 @@ export type CustomText = {
   italic?: boolean;
   underline?: boolean;
   strikeThrough?: boolean;
+} & LeafDecoration;
+
+type LeafDecoration = {
+  placeholder?: boolean;
 };
 
 export type Format = "bold" | "underline" | "strikeThrough" | "italic";

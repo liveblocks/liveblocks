@@ -3,7 +3,7 @@ import isHotkey from "is-hotkey";
 import blockTextStyles from "../../styles/BlockText.module.css";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createEditor, Editor, Node, Transforms, Location } from "slate";
+import { createEditor, Editor, Node, Transforms, Range } from "slate";
 import {
   Slate,
   withReact,
@@ -70,6 +70,7 @@ const HOTKEYS: Record<string, Format> = {
   "mod+b": "bold",
   "mod+i": "italic",
   "mod+u": "underline",
+  "mod+s": "strikeThrough",
 };
 
 export default function Room() {
@@ -216,9 +217,18 @@ function App() {
           })
         }
         onInsertBelow={(block: CustomElement) => {
+          const path = [ReactEditor.findPath(editor, props.element)[0] + 1];
           Transforms.insertNodes(editor, block, {
-            at: [ReactEditor.findPath(editor, props.element)[0] + 1],
+            at: path,
           });
+          // Defer selection to be able to focus the element we just inserted
+          setTimeout(() => {
+            ReactEditor.focus(editor);
+            Transforms.select(editor, {
+              anchor: { path: [path[0], 0], offset: 0 },
+              focus: { path: [path[0], 0], offset: 0 },
+            });
+          }, 0);
         }}
       />
     ) : (
@@ -357,6 +367,24 @@ function App() {
                 <Editable
                   renderElement={renderElement}
                   renderLeaf={Leaf}
+                  decorate={([node, path]) => {
+                    if (editor.selection != null) {
+                      if (
+                        !Editor.isEditor(node) &&
+                        Editor.string(editor, [path[0]]) === "" &&
+                        Range.includes(editor.selection, path) &&
+                        Range.isCollapsed(editor.selection)
+                      ) {
+                        return [
+                          {
+                            ...editor.selection,
+                            placeholder: true,
+                          },
+                        ];
+                      }
+                    }
+                    return [];
+                  }}
                   onKeyDown={(event) => {
                     for (const hotkey in HOTKEYS) {
                       if (isHotkey(hotkey, event as any)) {
@@ -433,6 +461,7 @@ function SortableElement({
             })}
           </div>
         )}
+        {renderElement({ element, children })}
         <div
           className={classNames(
             blockTextStyles.inline_actions,
@@ -445,7 +474,6 @@ function SortableElement({
             onInsertBelow={onInsertBelow}
           />
         </div>
-        <div>{renderElement({ element, children })}</div>
       </div>
     </div>
   );
