@@ -495,23 +495,3 @@ function DragOverlayContent({ element }: { element: CustomElement }) {
     </div>
   );
 }
-
-function getBlocksIndicesToUpdate(editor: Editor) {
-  const indices = new Set<number>();
-
-  for (const op of editor.operations) {
-    switch (op.type) {
-      case "remove_text":
-      case "insert_text":
-        indices.add(op.path[0]);
-        break;
-      case "split_node":
-        if (op.path.length > 1) {
-          indices.add(op.path[0]);
-        }
-        break;
-    }
-  }
-
-  return Array.from(indices);
-}
