@@ -30,6 +30,7 @@ export default function Toolbar() {
     if (
       !selection ||
       !inFocus ||
+      Range.includes(selection, [0]) || // If the selection overlap with the title, do not show the toolbar
       Range.isCollapsed(selection) ||
       Editor.string(editor, selection) === ""
     ) {
@@ -150,13 +151,12 @@ export default function Toolbar() {
   );
 }
 
-function getSelectedElementType(
-  editor: Editor
-): TextBlock | null {
+function getSelectedElementType(editor: Editor): TextBlock | null {
   if (editor.selection == null) {
     return null;
   }
 
+  // If selection overlap on multiple top element, return null
   if (
     Path.compare(
       topLevelPath(editor.selection.anchor.path),
@@ -177,10 +177,11 @@ function getSelectedElementType(
   return element.type;
 }
 
-function isTextElementType(
-  type: string
-): type is TextBlock {
+function isTextElementType(type: string): type is TextBlock {
   return (
-    type === BlockType.H1 || type === BlockType.H2 || type === BlockType.H3 || type === BlockType.Paragraph
+    type === BlockType.H1 ||
+    type === BlockType.H2 ||
+    type === BlockType.H3 ||
+    type === BlockType.Paragraph
   );
 }
