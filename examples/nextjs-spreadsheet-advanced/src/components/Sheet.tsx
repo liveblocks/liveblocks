@@ -2,6 +2,7 @@ import { type ComponentProps, useCallback } from "react";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
+import { getCellId } from "../spreadsheet/utils";
 import { TABLE_ID, canUseShortcuts } from "../utils/canUseShortcuts";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { useEventListener } from "../utils/useEventListener";
@@ -71,7 +72,9 @@ export function Sheet({
         className={styles.columns}
         clearHeader={clearColumn}
         deleteHeader={deleteColumn}
-        headers={columns}
+        columns={columns}
+        rows={rows}
+        cells={cells}
         insertHeader={insertColumn}
         moveHeader={moveColumn}
         resizeHeader={resizeColumn}
@@ -83,7 +86,9 @@ export function Sheet({
         className={styles.rows}
         clearHeader={clearRow}
         deleteHeader={deleteRow}
-        headers={rows}
+        columns={columns}
+        rows={rows}
+        cells={cells}
         insertHeader={insertRow}
         moveHeader={moveRow}
         resizeHeader={resizeRow}
@@ -106,6 +111,7 @@ export function Sheet({
               <tr key={y}>
                 <th className="sr">{y}</th>
                 {columns.map((column) => {
+                  const id = getCellId(column.id, row.id);
                   const isSelected =
                     selection?.columnId === column.id &&
                     selection?.rowId === row.id;
@@ -113,17 +119,17 @@ export function Sheet({
                   return (
                     <Cell
                       className={styles.cell}
-                      expression={cells[column.id + row.id]}
+                      expression={cells[id]}
                       getExpression={() => getCellExpression(column.id, row.id)}
                       height={row.height}
                       isSelected={isSelected}
-                      key={column.id + row.id}
+                      key={id}
                       onDelete={() => deleteCell(column.id, row.id)}
                       onSelect={() => selectCell(column.id, row.id)}
                       onValueChange={(value) =>
                         setCellValue(column.id, row.id, value)
                       }
-                      other={others[column.id + row.id]}
+                      other={others[id]}
                       width={column.width}
                     />
                   );

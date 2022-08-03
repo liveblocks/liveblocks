@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useSelf } from "../liveblocks.config";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
@@ -47,6 +48,7 @@ export function Cell({
   style,
   ...props
 }: Props) {
+  const self = useSelf();
   const input = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState<string | null>(null);
 
@@ -149,9 +151,10 @@ export function Cell({
       style={
         {
           ...style,
-          "--cell-selection": other?.color,
-          width: appendUnit(width),
-          height: appendUnit(height),
+          "--cell-selection":
+            isSelected && self ? self.info.color : other?.color,
+          "--cell-width": appendUnit(width),
+          "--cell-height": appendUnit(height),
         } as CSSProperties
       }
       {...props}

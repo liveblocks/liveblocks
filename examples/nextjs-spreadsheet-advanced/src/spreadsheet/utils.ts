@@ -1,6 +1,6 @@
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
-import { CellData, Column, FixedArray, Row, Storage } from "../types";
+import { Cell, Column, FixedArray, Row, Storage } from "../types";
 import tokenizer, {
   CellToken,
   RefToken,
@@ -76,15 +76,15 @@ export function createInitialStorage<X extends number, Y extends number>(
           return [
             getCellId(columnId, rowId),
             new LiveObject({ value: newExpression }),
-          ] as readonly [string, LiveObject<CellData>];
+          ] as readonly [string, LiveObject<Cell>];
         }
       });
     })
-    .filter(Boolean) as [string, LiveObject<CellData>][];
+    .filter(Boolean) as [string, LiveObject<Cell>][];
 
   return {
     spreadsheet: new LiveObject({
-      cells: new LiveMap<string, LiveObject<CellData>>(initialCells),
+      cells: new LiveMap<string, LiveObject<Cell>>(initialCells),
       rows: new LiveList<LiveObject<Row>>(initialRows),
       columns: new LiveList<LiveObject<Column>>(initialColumns),
     }),

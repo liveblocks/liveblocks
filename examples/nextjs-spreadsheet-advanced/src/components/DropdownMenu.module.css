@@ -13,14 +13,6 @@
   z-index: 1000;
 }
 
-.arrow {
-  fill: var(--menu-background);
-}
-
-.arrow_outline {
-  fill: rgb(31, 41, 55, 0.04);
-}
-
 .item {
   height: var(--menu-item-height);
   border-radius: var(--menu-item-radius);

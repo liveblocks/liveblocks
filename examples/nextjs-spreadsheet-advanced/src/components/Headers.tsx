@@ -1,4 +1,11 @@
-import { DndContext, type DragEndEvent, closestCenter } from "@dnd-kit/core";
+import {
+  DndContext,
+  type DragEndEvent,
+  type DragStartEvent,
+  closestCenter,
+  DragOverlay,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import {
   SortableContext,
@@ -42,7 +49,7 @@ import {
 } from "../icons";
 import { useHistory } from "../liveblocks.config";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
-import type { Column, Row } from "../types";
+import type { Cell, Column, Row } from "../types";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import {
@@ -51,12 +58,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./DropdownMenu";
+import { getCellId } from "../spreadsheet/utils";
+import { appendUnit } from "../utils/appendUnit";
 import styles from "./Headers.module.css";
+import cellStyles from "./Cell.module.css";
 
 export interface Props extends ComponentProps<"div"> {
   clearHeader: (index: number) => void;
   deleteHeader: (index: number) => void;
-  headers: (Column | Row)[];
+  cells: Record<string, string>;
+  columns: Column[];
+  rows: Row[];
   insertHeader: (index: number, width: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
@@ -80,12 +92,109 @@ export interface HeaderProps extends ComponentProps<"div"> {
   onResize: (width: number, height: number) => void;
 }
 
-function isRowHeader(header: Column | Row): header is Row {
-  return Boolean((header as Row).height);
+export interface HeaderDragOverlayProps extends ComponentProps<"div"> {
+  index: number;
+  header: Column | Row;
+  cells: Record<string, string>;
+  columns: Column[];
+  rows: Row[];
+}
+
+interface ColumnCell extends Cell {
+  height: number;
+}
+
+interface RowCell extends Cell {
+  width: number;
 }
 
 function isColumnHeader(header: Column | Row): header is Column {
   return Boolean((header as Column).width);
+}
+
+function HeaderDragOverlay({
+  index,
+  header,
+  cells: allCells,
+  columns,
+  rows,
+  className,
+  style,
+  ...props
+}: HeaderDragOverlayProps) {
+  const isColumn = isColumnHeader(header);
+
+  const cells = useMemo(() => {
+    if (isColumn) {
+      return rows.map((row) => {
+        const cell = allCells[getCellId(header.id, row.id)];
+
+        return {
+          height: row.height,
+          value: cell,
+        } as ColumnCell;
+      });
+    } else {
+      return columns.map((column) => {
+        const cell = allCells[getCellId(column.id, header.id)];
+
+        return {
+          width: column.width,
+          value: cell,
+        } as RowCell;
+      });
+    }
+  }, [header, allCells, columns, rows]);
+
+  return (
+    <div
+      className={cx(className, styles.overlay, isColumn ? "column" : "row")}
+      style={{
+        width: isColumn ? header.width : COLUMN_HEADER_WIDTH,
+        height: !isColumn ? header.height : ROW_INITIAL_HEIGHT,
+        ...style,
+      }}
+      {...props}
+    >
+      <div className={styles.overlay_header}>
+        <div
+          className={cx(
+            styles.header_control,
+            styles.header_control_active,
+            styles.header_handler
+          )}
+        >
+          <HandlerIcon />
+        </div>
+        <span className={styles.header_label}>
+          {isColumn ? convertNumberToLetter(index) : index + 1}
+        </span>
+        <div className={styles.header_control} />
+      </div>
+      <div className={styles.overlay_cells}>
+        {cells.map((cell, index) => (
+          <div
+            key={index}
+            className={styles.overlay_cell}
+            style={
+              {
+                "--cell-width": appendUnit(
+                  isColumn ? header.width : (cell as RowCell).width
+                ),
+                "--cell-height": appendUnit(
+                  !isColumn ? header.height : (cell as ColumnCell).height
+                ),
+              } as CSSProperties
+            }
+          >
+            <div className={cx(cellStyles.input, styles.overlay_cell_content)}>
+              {cell.value ?? null}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function Header({
@@ -273,7 +382,9 @@ export function Header({
 export function Headers({
   type,
   max,
-  headers,
+  cells,
+  columns,
+  rows,
   selectedHeader,
   deleteHeader,
   clearHeader,
@@ -283,8 +394,32 @@ export function Headers({
   className,
   ...props
 }: Props) {
-  const items = useMemo(() => headers.map((header) => header.id), [headers]);
   const isColumn = useMemo(() => type === "column", [type]);
+  const headers = useMemo(
+    () => (isColumn ? columns : rows),
+    [columns, rows, type]
+  );
+  const items = useMemo(() => headers.map((header) => header.id), [headers]);
+  const [activeItem, setActiveItem] = useState<UniqueIdentifier | null>(null);
+  const activeIndex = useMemo(
+    () =>
+      activeItem
+        ? getIndexWithProperty<Column | Row, "id">(
+            headers,
+            "id",
+            String(activeItem)
+          )
+        : null,
+    [activeItem]
+  );
+
+  const unsetActiveItem = useCallback(() => {
+    setActiveItem(null);
+  }, []);
+
+  const handleDragStart = useCallback(({ active }: DragStartEvent) => {
+    setActiveItem(active.id);
+  }, []);
 
   const handleDragEnd = useCallback(
     ({ active, over }: DragEndEvent) => {
@@ -292,19 +427,26 @@ export function Headers({
         return;
       }
 
+      unsetActiveItem();
       moveHeader(
-        getIndexWithProperty(headers, "id", String(active.id)),
-        getIndexWithProperty(headers, "id", String(over.id))
+        getIndexWithProperty<Column | Row, "id">(
+          headers,
+          "id",
+          String(active.id)
+        ),
+        getIndexWithProperty<Column | Row, "id">(headers, "id", String(over.id))
       );
     },
-    [headers, moveHeader]
+    [headers, moveHeader, unsetActiveItem]
   );
 
   return (
     <DndContext
       collisionDetection={closestCenter}
       modifiers={[restrictToParentElement]}
+      onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      onDragCancel={unsetActiveItem}
     >
       <SortableContext
         items={items}
@@ -343,6 +485,17 @@ export function Headers({
           ))}
         </div>
       </SortableContext>
+      <DragOverlay dropAnimation={null}>
+        {activeIndex != null ? (
+          <HeaderDragOverlay
+            columns={columns}
+            rows={rows}
+            cells={cells}
+            header={headers[activeIndex]}
+            index={activeIndex}
+          />
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
