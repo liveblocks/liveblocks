@@ -205,9 +205,10 @@ function App() {
   };
 
   const renderElement = useCallback((props: RenderElementProps) => {
-    const isTopLevel = ReactEditor.findPath(editor, props.element).length === 1;
+    const path = ReactEditor.findPath(editor, props.element);
+    const isTopLevel = path.length === 1;
 
-    return isTopLevel ? (
+    return isTopLevel && path[0] !== 0 ? (
       <SortableElement
         {...props}
         renderElement={Block}
@@ -232,7 +233,7 @@ function App() {
         }}
       />
     ) : (
-      <DefaultElement {...props} />
+      <Block {...props} />
     );
   }, []);
 
