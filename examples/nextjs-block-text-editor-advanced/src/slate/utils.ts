@@ -1,6 +1,12 @@
 import { nanoid } from "nanoid";
 import { Editor, Element, Node, Operation, Path, Transforms } from "slate";
-import { BlockType, CustomElement, Format, HeadingElement, ParagraphElement } from "./types";
+import {
+  BlockType,
+  CustomElement,
+  Format,
+  HeadingElement,
+  ParagraphElement,
+} from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -61,37 +67,23 @@ export function withLayout(editor: Editor) {
         Transforms.insertNodes(editor, title, { at: path.concat(0) });
       }
 
-      if (editor.children.length < 2) {
-        const paragraph: ParagraphElement = {
-          id: nanoid(),
-          type: BlockType.Paragraph,
-          children: [{ text: "" }],
-        };
-        Transforms.insertNodes(editor, paragraph, { at: path.concat(1) });
-      }
-
       for (const [child, childPath] of Node.children(editor, path)) {
-        let type: BlockType.H1 | BlockType.Paragraph;
         const slateIndex = childPath[0];
-        const enforceType = (type: BlockType.H1 | BlockType.Paragraph) => {
-          if (Element.isElement(child) && child.type !== type) {
-            const newProperties: Partial<CustomElement> = { type };
-            Transforms.setNodes(editor, newProperties, {
-              at: childPath,
-            });
-          }
-        };
 
-        switch (slateIndex) {
-          case 0:
-            type = BlockType.H1;
-            enforceType(type);
-            break;
-          case 1:
-            type = BlockType.Paragraph;
-            enforceType(type);
-          default:
-            break;
+        if (
+          slateIndex === 0 &&
+          Element.isElement(child) &&
+          child.type !== BlockType.H1
+        ) {
+          Transforms.setNodes(
+            editor,
+            {
+              type: BlockType.H1,
+            },
+            {
+              at: childPath,
+            }
+          );
         }
       }
     }
