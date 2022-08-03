@@ -14,16 +14,15 @@ export function toPx(value: number | undefined): string | undefined {
 
 export const makeNodeId = () => nanoid(16);
 
-// TODO: Only generate ids for top level nodes
 export const withNodeId = (editor: Editor) => {
   const { apply } = editor;
 
   editor.apply = (operation: Operation) => {
-    if (operation.type === "insert_node") {
+    if (operation.type === "insert_node" && operation.path.length === 1) {
       return apply(operation);
     }
 
-    if (operation.type === "split_node") {
+    if (operation.type === "split_node" && operation.path.length === 1) {
       (operation.properties as any).id = makeNodeId();
       return apply(operation);
     }
