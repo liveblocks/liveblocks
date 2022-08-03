@@ -25,6 +25,12 @@
   pointer-events: none;
 }
 
+:global(.dragging) .cell:before,
+:global(.dragging) .cell:after,
+:global(.dragging) .user {
+  display: none;
+}
+
 .cell:before {
   box-shadow: 0 2px 6px var(--cell-selection);
   z-index: calc(var(--cell-selection-z-index) - 10);

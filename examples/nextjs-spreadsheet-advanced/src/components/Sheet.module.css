@@ -27,13 +27,17 @@
   flex-direction: row;
 }
 
-.table {
+.table_container {
   grid-area: table;
+  background: #e9ebef;
+  z-index: 100;
+}
+
+.table {
   display: table;
   border-collapse: collapse;
   border-spacing: 0px;
   border-radius: var(--radius);
-  z-index: 100;
   background: #fff;
   outline: none;
   box-shadow: 0px 0px 0px 1px rgb(31, 41, 55, 0.04),

@@ -4,7 +4,13 @@ import {
   type DragStartEvent,
   closestCenter,
   DragOverlay,
-  UniqueIdentifier,
+  type UniqueIdentifier,
+  type MeasuringConfiguration,
+  MeasuringStrategy,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
 import { restrictToParentElement } from "@dnd-kit/modifiers";
 import {
@@ -12,6 +18,7 @@ import {
   horizontalListSortingStrategy,
   useSortable,
   verticalListSortingStrategy,
+  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import cx from "classnames";
 import { Resizable, type ResizeCallback } from "re-resizable";
@@ -63,6 +70,8 @@ import { appendUnit } from "../utils/appendUnit";
 import styles from "./Headers.module.css";
 import cellStyles from "./Cell.module.css";
 
+const DRAGGING_CLASS = "dragging";
+
 export interface Props extends ComponentProps<"div"> {
   clearHeader: (index: number) => void;
   deleteHeader: (index: number) => void;
@@ -80,6 +89,7 @@ export interface Props extends ComponentProps<"div"> {
 export interface HeaderProps extends ComponentProps<"div"> {
   header: Column | Row;
   index: number;
+  activeIndex: number | null;
   isSelected: boolean;
   canMoveBefore: () => boolean;
   canMoveAfter: () => boolean;
@@ -111,6 +121,12 @@ interface RowCell extends Cell {
 function isColumnHeader(header: Column | Row): header is Column {
   return Boolean((header as Column).width);
 }
+
+const measuring: MeasuringConfiguration = {
+  droppable: {
+    strategy: MeasuringStrategy.Always,
+  },
+};
 
 function HeaderDragOverlay({
   index,
@@ -169,7 +185,9 @@ function HeaderDragOverlay({
         <span className={styles.header_label}>
           {isColumn ? convertNumberToLetter(index) : index + 1}
         </span>
-        <div className={styles.header_control} />
+        <div className={styles.header_control}>
+          <EllipsisIcon />
+        </div>
       </div>
       <div className={styles.overlay_cells}>
         {cells.map((cell, index) => (
@@ -199,6 +217,7 @@ function HeaderDragOverlay({
 
 export function Header({
   index,
+  activeIndex,
   header,
   isSelected,
   canMoveBefore,
@@ -214,12 +233,16 @@ export function Header({
 }: HeaderProps) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const history = useHistory();
-  const { listeners, setNodeRef, setActivatorNodeRef, transform, isDragging } =
+  const { listeners, setNodeRef, setActivatorNodeRef, over, isDragging } =
     useSortable({
       id: header.id,
     });
   const initialHeader = useRef(header);
   const isColumn = isColumnHeader(header);
+  const dropPosition = useMemo(
+    () => (over?.id === header.id ? (index > (activeIndex ?? -1) ? 1 : -1) : 0),
+    [over, header, index, activeIndex]
+  );
 
   const handleDropdownOpenChange = useCallback((open: boolean) => {
     setDropdownOpen(open);
@@ -263,14 +286,6 @@ export function Header({
       className={styles.header_draggable_container}
       key={header.id}
       ref={setNodeRef}
-      style={
-        {
-          transform: transform
-            ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-            : undefined,
-          zIndex: isDragging ? 100 : undefined,
-        } as CSSProperties
-      }
       {...props}
     >
       <Resizable
@@ -289,7 +304,14 @@ export function Header({
           height: isColumn ? ROW_INITIAL_HEIGHT : header.height,
         }}
       >
-        <div className={cx(styles.header, isSelected && "selected")}>
+        <div
+          className={cx(styles.header, {
+            selected: isSelected,
+            drop: dropPosition !== 0,
+            "drop-before": dropPosition < 0,
+            "drop-after": dropPosition > 0,
+          })}
+        >
           <button
             className={cx(styles.header_control, styles.header_handler)}
             ref={setActivatorNodeRef}
@@ -399,26 +421,36 @@ export function Headers({
     () => (isColumn ? columns : rows),
     [columns, rows, type]
   );
-  const items = useMemo(() => headers.map((header) => header.id), [headers]);
-  const [activeItem, setActiveItem] = useState<UniqueIdentifier | null>(null);
+  const headersIds = useMemo(
+    () => headers.map((header) => header.id),
+    [headers]
+  );
+  const [activeHeadersId, setActiveHeadersId] =
+    useState<UniqueIdentifier | null>(null);
   const activeIndex = useMemo(
     () =>
-      activeItem
+      activeHeadersId
         ? getIndexWithProperty<Column | Row, "id">(
             headers,
             "id",
-            String(activeItem)
+            String(activeHeadersId)
           )
         : null,
-    [activeItem]
+    [activeHeadersId]
+  );
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const unsetActiveItem = useCallback(() => {
-    setActiveItem(null);
+  const handleDragStop = useCallback(() => {
+    document.body.classList.remove(DRAGGING_CLASS);
+    setActiveHeadersId(null);
   }, []);
 
   const handleDragStart = useCallback(({ active }: DragStartEvent) => {
-    setActiveItem(active.id);
+    document.body.classList.add(DRAGGING_CLASS);
+    setActiveHeadersId(active.id);
   }, []);
 
   const handleDragEnd = useCallback(
@@ -427,7 +459,7 @@ export function Headers({
         return;
       }
 
-      unsetActiveItem();
+      handleDragStop();
       moveHeader(
         getIndexWithProperty<Column | Row, "id">(
           headers,
@@ -437,19 +469,21 @@ export function Headers({
         getIndexWithProperty<Column | Row, "id">(headers, "id", String(over.id))
       );
     },
-    [headers, moveHeader, unsetActiveItem]
+    [headers, moveHeader, handleDragStop]
   );
 
   return (
     <DndContext
       collisionDetection={closestCenter}
       modifiers={[restrictToParentElement]}
+      sensors={sensors}
+      measuring={measuring}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDragCancel={unsetActiveItem}
+      onDragCancel={handleDragStop}
     >
       <SortableContext
-        items={items}
+        items={headersIds}
         strategy={
           isColumn ? horizontalListSortingStrategy : verticalListSortingStrategy
         }
@@ -463,6 +497,7 @@ export function Headers({
             <Header
               header={header}
               index={index}
+              activeIndex={activeIndex}
               canMoveBefore={() => index > 0}
               canMoveAfter={() => index < headers.length - 1}
               canInsert={() => headers.length < max}

@@ -96,49 +96,53 @@ export function Sheet({
         type="row"
         max={GRID_MAX_ROWS}
       />
-      <table className={styles.table} id={TABLE_ID} tabIndex={0}>
-        <thead className="sr">
-          <tr>
-            <th />
-            {columns.map((_, x) => (
-              <th key={x}>{convertNumberToLetter(x)}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, y) => {
-            return (
-              <tr key={y}>
-                <th className="sr">{y}</th>
-                {columns.map((column) => {
-                  const id = getCellId(column.id, row.id);
-                  const isSelected =
-                    selection?.columnId === column.id &&
-                    selection?.rowId === row.id;
+      <div className={styles.table_container}>
+        <table className={styles.table} id={TABLE_ID} tabIndex={0}>
+          <thead className="sr">
+            <tr>
+              <th />
+              {columns.map((_, x) => (
+                <th key={x}>{convertNumberToLetter(x)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, y) => {
+              return (
+                <tr key={y}>
+                  <th className="sr">{y}</th>
+                  {columns.map((column) => {
+                    const id = getCellId(column.id, row.id);
+                    const isSelected =
+                      selection?.columnId === column.id &&
+                      selection?.rowId === row.id;
 
-                  return (
-                    <Cell
-                      className={styles.cell}
-                      expression={cells[id]}
-                      getExpression={() => getCellExpression(column.id, row.id)}
-                      height={row.height}
-                      isSelected={isSelected}
-                      key={id}
-                      onDelete={() => deleteCell(column.id, row.id)}
-                      onSelect={() => selectCell(column.id, row.id)}
-                      onValueChange={(value) =>
-                        setCellValue(column.id, row.id, value)
-                      }
-                      other={others[id]}
-                      width={column.width}
-                    />
-                  );
-                })}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+                    return (
+                      <Cell
+                        className={styles.cell}
+                        expression={cells[id]}
+                        getExpression={() =>
+                          getCellExpression(column.id, row.id)
+                        }
+                        height={row.height}
+                        isSelected={isSelected}
+                        key={id}
+                        onDelete={() => deleteCell(column.id, row.id)}
+                        onSelect={() => selectCell(column.id, row.id)}
+                        onValueChange={(value) =>
+                          setCellValue(column.id, row.id, value)
+                        }
+                        other={others[id]}
+                        width={column.width}
+                      />
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
