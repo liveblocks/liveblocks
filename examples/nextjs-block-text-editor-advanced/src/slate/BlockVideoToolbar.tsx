@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useState } from "react";
 import styles from "../../styles/BlockToolbar.module.css";
-import Button from "./Button";
+import Button from "../components/Button";
 
 type Props = {
   url: string | null;
@@ -49,7 +49,7 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
             title="Please enter a valid YouTube link"
             pattern={youtubeLinkPattern}
             ref={inputRef}
-            className={styles.url_input}
+            className={styles.input}
             value={urlInputValue}
             onChange={(e) => setUrlInputValue(e.currentTarget.value)}
             placeholder="Paste YouTube link…"

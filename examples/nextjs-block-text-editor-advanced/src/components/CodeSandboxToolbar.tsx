@@ -1,5 +1,5 @@
 import React, { createRef, useEffect, useState } from "react";
-import styles from "../../styles/VideoToolbar.module.css";
+import styles from "../../styles/BlockToolbar.module.css";
 import Button from "./Button";
 
 type Props = {

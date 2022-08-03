@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useState } from "react";
 import styles from "../../styles/BlockToolbar.module.css";
-import Button from "./Button";
+import Button from "../components/Button";
 
 type Props = {
   url: string | null;
@@ -8,10 +8,10 @@ type Props = {
   onClose: () => void;
 };
 
-const youtubeLinkPattern = "^((?:https?:)?\/\/)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(\/(?:[\\w\\-]+\\?v=|embed\/|v\/)?)([\\w\\-]+)(\\S+)?$";
-const youtubeLinkRegex = new RegExp(youtubeLinkPattern);
+const codeSandboxLinkPattern = "((?:https?:)?\/\/)?(?:www\\.)?(?:codesandbox\\.io)((\/s\/)|(\/embed\/))(.*)+$";
+const codeSandboxLinkRegex = new RegExp(codeSandboxLinkPattern);
 
-export default function VideoToolbar({ url, setUrl, onClose }: Props) {
+export default function CodeSandboxToolbar({ url, setUrl, onClose }: Props) {
   const [urlInputValue, setUrlInputValue] = useState<string>(url ? url : "");
   const inputRef = createRef<HTMLInputElement>();
 
@@ -27,7 +27,7 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            if (!youtubeLinkRegex.test(urlInputValue)) {
+            if (!codeSandboxLinkRegex.test(urlInputValue)) {
               setUrlInputValue("");
               return;
             }
@@ -36,8 +36,7 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
             if (urlInputValue.includes("/embed/")) {
               embedLink = urlInputValue
             } else {
-              const id = new URL(urlInputValue).searchParams.get("v");
-              embedLink = `https://youtube.com/embed/${id}`;
+              embedLink = urlInputValue.replace("/s/", "/embed/");
             }
 
             setUrl(embedLink);
@@ -46,13 +45,13 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
         >
           <input
             type="url"
-            title="Please enter a valid YouTube link"
-            pattern={youtubeLinkPattern}
+            title="Please enter a valid CodeSandbox project link"
+            pattern={codeSandboxLinkPattern}
             ref={inputRef}
-            className={styles.url_input}
+            className={styles.input}
             value={urlInputValue}
             onChange={(e) => setUrlInputValue(e.currentTarget.value)}
-            placeholder="Paste YouTube link…"
+            placeholder="Paste CodeSandbox link…"
           />
 
           <Button
@@ -60,7 +59,7 @@ export default function VideoToolbar({ url, setUrl, onClose }: Props) {
             ariaLabel="Toggle Strikethrough"
             type="submit"
           >
-            Embed video
+            Embed CodeSandbox
           </Button>
         </form>
       </div>

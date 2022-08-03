@@ -47,11 +47,27 @@ export type HeadingElement = {
 export type ImageElement = {
   id: string;
   type: "image";
+  alt: string | null;
   url: string | null;
   children: [{ text: "" }];
 };
 
-export type CustomElement = ParagraphElement | ImageElement | HeadingElement;
+export type VideoElement = {
+  id: string;
+  type: "video";
+  url: string | null;
+  children: [{ text: "" }];
+};
+
+export type CodeSandboxElement = {
+  id: string;
+  type: "codesandbox";
+  url: string | null;
+  children: [{ text: "" }];
+};
+
+export type CustomElement =
+  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement;
 
 export type CustomText = {
   text: string;

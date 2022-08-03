@@ -16,19 +16,19 @@
 }
 
 .form {
-  padding: 1rem;
+  padding: 0.5rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   gap: 12px;
 }
 
-.url_title {
+.title {
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-.url_input {
+.input {
   border: 1px solid rgba(var(--color-foreground), 0.2);
   border-radius: 6px;
   height: 1.75rem;
@@ -39,16 +39,16 @@
   width: 240px;
 }
 
-.url_input:hover {
+.input:hover {
   border-color: rgba(var(--color-foreground), 0.3);
 }
 
-.url_input:focus {
+.input:focus {
   border-color: rgba(var(--color-primary), 0.6);
   outline: 2px solid rgba(var(--color-primary), 0.2);
 }
 
-.url_input::placeholder {
+.input::placeholder {
   color: rgba(var(--color-foreground), 0.3);
 }
 

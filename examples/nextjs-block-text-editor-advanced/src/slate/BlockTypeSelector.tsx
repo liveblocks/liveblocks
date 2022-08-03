@@ -88,6 +88,36 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
               id: nanoid(),
               type: "image",
               url: null,
+              alt: null,
+              children: [{ text: "" }],
+            });
+          },
+        },
+        {
+          label: "Video",
+          description: "Embed YouTube video",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: "video",
+              url: null,
+              children: [{ text: "" }],
+            });
+          },
+        },
+      ],
+    },
+    {
+      label: "Embeds",
+      items: [
+        {
+          label: "CodeSandbox",
+          description: "Embed CodeSandbox project",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: "codesandbox",
+              url: null,
               children: [{ text: "" }],
             });
           },

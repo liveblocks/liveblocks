@@ -1,24 +1,32 @@
-import styles from "../../styles/BlockImage.module.css";
+import styles from "../../styles/BlockCodeSandbox.module.css";
 import VideoIcon from "../icons/video.svg";
 import { useState } from "react";
-import BlockImageToolbar from "./BlockImageToolbar";
+import BlockCodeSandboxToolbar from "./BlockCodeSandboxToolbar";
 import { ReactEditor, useSlate } from "slate-react";
-import { CustomElement, ImageElement } from "./types";
+import { CustomElement, CodeSandboxElement } from "./types";
 import { Transforms } from "slate";
 
 type Props = {
-  element: ImageElement;
+  element: CodeSandboxElement;
 };
 
-export default function BlockImage({ element }: Props) {
+export default function BlockCodeSandbox({ element }: Props) {
   const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
-    <div className={styles.block_image}>
+    <div className={styles.block_codesandbox}>
       {element.url ? (
-        <div className={styles.image_embed}>
-          <img src={element.url} alt={element.alt || ""} />
+        <div className={styles.codesandbox_embed}>
+          <iframe
+            width="100%"
+            height="315"
+            src={element.url}
+            title="CodeSandbox embed"
+            frameBorder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          ></iframe>
         </div>
       ) : (
         <button
@@ -26,22 +34,12 @@ export default function BlockImage({ element }: Props) {
           onClick={() => setShowToolbar(true)}
         >
           <VideoIcon />
-          <span className={styles.placeholder_text}>Embed image here…</span>
+          <span className={styles.placeholder_text}>Embed CodeSandbox project here…</span>
         </button>
       )}
       {showToolbar && (
-        <BlockImageToolbar
-          alt={element.alt}
+        <BlockCodeSandboxToolbar
           url={element.url}
-          setAlt={(alt) => {
-            const path = ReactEditor.findPath(editor, element);
-            const newProperties: Partial<CustomElement> = {
-              alt,
-            };
-            Transforms.setNodes<CustomElement>(editor, newProperties, {
-              at: path,
-            });
-          }}
           setUrl={(url) => {
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
