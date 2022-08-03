@@ -1,5 +1,5 @@
 import styles from "../../styles/BlockCodeSandbox.module.css";
-import VideoIcon from "../icons/video.svg";
+import CodeSandboxIcon from "../icons/codesandbox.svg";
 import { useState } from "react";
 import BlockCodeSandboxToolbar from "./BlockCodeSandboxToolbar";
 import { ReactEditor, useSlate } from "slate-react";
@@ -33,7 +33,7 @@ export default function BlockCodeSandbox({ element }: Props) {
           className={styles.placeholder}
           onClick={() => setShowToolbar(true)}
         >
-          <VideoIcon />
+          <CodeSandboxIcon />
           <span className={styles.placeholder_text}>Embed CodeSandbox project here…</span>
         </button>
       )}

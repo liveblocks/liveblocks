@@ -1,5 +1,5 @@
 import styles from "../../styles/BlockImage.module.css";
-import VideoIcon from "../icons/video.svg";
+import ImageIcon from "../icons/image.svg";
 import { useState } from "react";
 import BlockImageToolbar from "./BlockImageToolbar";
 import { ReactEditor, useSlate } from "slate-react";
@@ -25,7 +25,7 @@ export default function BlockImage({ element }: Props) {
           className={styles.placeholder}
           onClick={() => setShowToolbar(true)}
         >
-          <VideoIcon />
+          <ImageIcon />
           <span className={styles.placeholder_text}>Embed image here…</span>
         </button>
       )}

@@ -43,7 +43,7 @@
 }
 
 .avatars > * {
-  margin-left: -0.rem;
+  margin-left: 0;
 }
 
 .block_text:hover .avatars,
