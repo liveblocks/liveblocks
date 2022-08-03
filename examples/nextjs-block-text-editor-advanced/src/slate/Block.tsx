@@ -2,6 +2,7 @@ import { DefaultElement, RenderElementProps } from "slate-react";
 import BlockImage from "./BlockImage";
 import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
+import { BlockType } from "./types";
 
 // TODO - Chris' ideas
 // code highlighting component
@@ -15,23 +16,23 @@ export default function Block({
   children,
   attributes,
 }: RenderElementProps) {
-  if (element.type === "paragraph") {
+  if (element.type === BlockType.Paragraph) {
     return <p {...attributes}>{children}</p>;
   }
 
-  if (element.type === "h1") {
+  if (element.type === BlockType.H1) {
     return <h1 {...attributes}>{children}</h1>;
   }
 
-  if (element.type === "h2") {
+  if (element.type === BlockType.H2) {
     return <h2 {...attributes}>{children}</h2>;
   }
 
-  if (element.type === "h3") {
+  if (element.type === BlockType.H3) {
     return <h3 {...attributes}>{children}</h3>;
   }
 
-  if (element.type === "image") {
+  if (element.type === BlockType.Image) {
     return (
       <div {...attributes} contentEditable={false}>
         <BlockImage element={element} />
@@ -40,7 +41,7 @@ export default function Block({
     );
   }
 
-  if (element.type === "video") {
+  if (element.type === BlockType.Video) {
     return (
       <div {...attributes} contentEditable={false}>
         <BlockVideo element={element} />
@@ -49,7 +50,7 @@ export default function Block({
     );
   }
 
-  if (element.type === "codesandbox") {
+  if (element.type === BlockType.CodeSandbox) {
     return (
       <div {...attributes} contentEditable={false}>
         <BlockCodeSandbox element={element} />

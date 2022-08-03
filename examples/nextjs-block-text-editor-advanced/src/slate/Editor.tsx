@@ -38,7 +38,7 @@ import {
 } from "./liveblocks.config";
 import { LiveList, LiveObject } from "@liveblocks/client";
 import { Format } from "../types";
-import { CustomElement, DocumentMeta } from "./types";
+import { BlockType, CustomElement, DocumentMeta } from "./types";
 import { toggleMark, topLevelPath, withLayout, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
@@ -50,7 +50,7 @@ import Avatar from "../components/Avatar";
 const initialValue: CustomElement[] = [
   {
     id: nanoid(),
-    type: "h1",
+    type: BlockType.H1,
     children: [
       {
         text: "Hello",

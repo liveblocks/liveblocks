@@ -32,21 +32,34 @@ export type UserMeta = {
   };
 };
 
+export enum BlockType {
+  H1 = "h1",
+  H2 = "h2",
+  H3 = "h3",
+  Paragraph = "paragraph",
+  Image = "image",
+  Video = "video",
+  CodeSandbox = "codesandbox",
+}
+
+export type TextBlock =
+  BlockType.H1 | BlockType.H2 | BlockType.H3 | BlockType.Paragraph;
+
 export type ParagraphElement = {
   id: string;
-  type: "paragraph";
+  type: BlockType.Paragraph;
   children: CustomText[];
 };
 
 export type HeadingElement = {
   id: string;
-  type: "h1" | "h2" | "h3";
+  type: BlockType.H1 | BlockType.H2 | BlockType.H3;
   children: CustomText[];
 };
 
 export type ImageElement = {
   id: string;
-  type: "image";
+  type: BlockType.Image;
   alt: string | null;
   url: string | null;
   children: [{ text: "" }];
@@ -54,14 +67,14 @@ export type ImageElement = {
 
 export type VideoElement = {
   id: string;
-  type: "video";
+  type: BlockType.Video;
   url: string | null;
   children: [{ text: "" }];
 };
 
 export type CodeSandboxElement = {
   id: string;
-  type: "codesandbox";
+  type: BlockType.CodeSandbox;
   url: string | null;
   children: [{ text: "" }];
 };

@@ -12,7 +12,7 @@ import ItalicIcon from "../icons/italic.svg";
 import UnderlineIcon from "../icons/underline.svg";
 import StrikethroughIcon from "../icons/strikethrough.svg";
 import { toggleMark, topLevelPath } from "./utils";
-import { CustomElement } from "./types";
+import { BlockType, CustomElement, TextBlock } from "./types";
 
 export default function Toolbar() {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -68,13 +68,13 @@ export default function Toolbar() {
         <>
           <div className={styles.tag_selector}>
             <Select
-              defaultValue="paragraph"
+              defaultValue={BlockType.Paragraph}
               value={type}
               items={[
-                { label: "Normal text", value: "paragraph" },
-                { label: "Heading 1", value: "h1" },
-                { label: "Heading 2", value: "h2" },
-                { label: "Heading 3", value: "h3" },
+                { label: "Normal text", value: BlockType.Paragraph },
+                { label: "Heading 1", value: BlockType.H1 },
+                { label: "Heading 2", value: BlockType.H2 },
+                { label: "Heading 3", value: BlockType.H3 },
               ]}
               onValueChange={(value: string) => {
                 if (editor.selection == null) {
@@ -82,7 +82,7 @@ export default function Toolbar() {
                 }
 
                 // TODO: Update Select typings to infer value type from items
-                const type = value as "paragraph" | "h1" | "h2" | "h3";
+                const type = value as TextBlock;
                 Transforms.setNodes<CustomElement>(
                   editor,
                   {
@@ -152,7 +152,7 @@ export default function Toolbar() {
 
 function getSelectedElementType(
   editor: Editor
-): "h1" | "h2" | "h3" | "paragraph" | null {
+): TextBlock | null {
   if (editor.selection == null) {
     return null;
   }
@@ -179,8 +179,8 @@ function getSelectedElementType(
 
 function isTextElementType(
   type: string
-): type is "h1" | "h2" | "h3" | "paragraph" {
+): type is TextBlock {
   return (
-    type === "h1" || type === "h2" || type === "h3" || type === "paragraph"
+    type === BlockType.H1 || type === BlockType.H2 || type === BlockType.H3 || type === BlockType.Paragraph
   );
 }

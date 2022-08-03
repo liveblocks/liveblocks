@@ -1,11 +1,6 @@
 import { nanoid } from "nanoid";
-import { Editor, Operation, Element, Node, Path, Transforms } from "slate";
-import {
-  CustomElement,
-  Format,
-  HeadingElement,
-  ParagraphElement,
-} from "./types";
+import { Editor, Element, Node, Operation, Path, Transforms } from "slate";
+import { BlockType, CustomElement, Format, HeadingElement, ParagraphElement } from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -60,7 +55,7 @@ export function withLayout(editor: Editor) {
       if (editor.children.length < 1) {
         const title: HeadingElement = {
           id: nanoid(),
-          type: "h1",
+          type: BlockType.H1,
           children: [{ text: "Untitled" }],
         };
         Transforms.insertNodes(editor, title, { at: path.concat(0) });
@@ -69,16 +64,16 @@ export function withLayout(editor: Editor) {
       if (editor.children.length < 2) {
         const paragraph: ParagraphElement = {
           id: nanoid(),
-          type: "paragraph",
+          type: BlockType.Paragraph,
           children: [{ text: "" }],
         };
         Transforms.insertNodes(editor, paragraph, { at: path.concat(1) });
       }
 
       for (const [child, childPath] of Node.children(editor, path)) {
-        let type: "h1" | "paragraph";
+        let type: BlockType.H1 | BlockType.Paragraph;
         const slateIndex = childPath[0];
-        const enforceType = (type: "h1" | "paragraph") => {
+        const enforceType = (type: BlockType.H1 | BlockType.Paragraph) => {
           if (Element.isElement(child) && child.type !== type) {
             const newProperties: Partial<CustomElement> = { type };
             Transforms.setNodes(editor, newProperties, {
@@ -89,11 +84,11 @@ export function withLayout(editor: Editor) {
 
         switch (slateIndex) {
           case 0:
-            type = "h1";
+            type = BlockType.H1;
             enforceType(type);
             break;
           case 1:
-            type = "paragraph";
+            type = BlockType.Paragraph;
             enforceType(type);
           default:
             break;

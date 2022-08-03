@@ -2,7 +2,7 @@ import { ReactNode } from "react";
 import styles from "../../styles/BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
-import { CustomElement } from "./types";
+import { BlockType, CustomElement } from "./types";
 
 type Props = {
   children: ReactNode;
@@ -20,7 +20,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "h1",
+              type: BlockType.H1,
               children: [
                 {
                   text: "",
@@ -35,7 +35,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "h2",
+              type: BlockType.H2,
               children: [
                 {
                   text: "",
@@ -51,7 +51,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "h3",
+              type: BlockType.H3,
               children: [
                 {
                   text: "",
@@ -66,7 +66,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "paragraph",
+              type: BlockType.Paragraph,
               children: [
                 {
                   text: "",
@@ -86,7 +86,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "image",
+              type: BlockType.Image,
               url: null,
               alt: null,
               children: [{ text: "" }],
@@ -99,7 +99,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "video",
+              type: BlockType.Video,
               url: null,
               children: [{ text: "" }],
             });
@@ -116,7 +116,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: "codesandbox",
+              type: BlockType.CodeSandbox,
               url: null,
               children: [{ text: "" }],
             });
