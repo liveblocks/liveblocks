@@ -1,4 +1,4 @@
-.block_codesandbox {
+.block_figma {
   position: relative;
   margin: 0.5rem 0;
 }
@@ -27,7 +27,7 @@
   margin-left: 0.5rem;
 }
 
-.codesandbox_embed {
+.figma_embed {
   position: relative;
   display: flex;
   justify-content: center;
@@ -37,10 +37,36 @@
   padding-bottom: 66%;
 }
 
-.codesandbox_embed iframe {
+.figma_embed iframe {
   position: absolute;
   left: 0;
   top: 0;
   width: 100%;
   height: 100%;
+}
+
+.inline_actions {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding-right: 0.75rem;
+  transform: translateX(-100%);
+}
+
+.block_figma:hover .inline_actions,
+.block_figma_selected .inline_actions {
+  opacity: 0.5;
+}
+
+.block_figma:hover .inline_actions:hover,
+.block_figma_selected .inline_actions:hover {
+  opacity: 1;
+}
+
+
+.block_figma:hover .avatars,
+.block_figma_selected .avatars {
+  opacity: 0;
+  pointer-events: none;
 }

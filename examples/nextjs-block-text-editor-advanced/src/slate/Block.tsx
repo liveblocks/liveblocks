@@ -2,11 +2,8 @@ import { DefaultElement, RenderElementProps } from "slate-react";
 import BlockImage from "./BlockImage";
 import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
+import BlockFigma from "./BlockFigma";
 import { BlockType } from "./types";
-
-// TODO - Chris' ideas
-// code highlighting component
-// multiplayer tldraw component
 
 // Note: {children} must be rendered in every element otherwise bugs occur
 // https://docs.slatejs.org/api/nodes/element#rendering-void-elements
@@ -54,6 +51,15 @@ export default function Block({
     return (
       <div {...attributes} contentEditable={false}>
         <BlockCodeSandbox element={element} />
+        <div style={{ display: "none" }}>{children}</div>
+      </div>
+    );
+  }
+
+  if (element.type === BlockType.Figma) {
+    return (
+      <div {...attributes} contentEditable={false}>
+        <BlockFigma element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
     );

@@ -40,6 +40,7 @@ export enum BlockType {
   Image = "image",
   Video = "video",
   CodeSandbox = "codesandbox",
+  Figma = "figma",
 }
 
 export type TextBlock =
@@ -79,8 +80,15 @@ export type CodeSandboxElement = {
   children: [{ text: "" }];
 };
 
+export type FigmaElement = {
+  id: string;
+  type: BlockType.Figma;
+  url: string | null;
+  children: [{ text: "" }];
+}
+
 export type CustomElement =
-  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement;
+  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement | FigmaElement;
 
 export type CustomText = {
   text: string;
