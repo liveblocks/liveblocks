@@ -1,18 +1,14 @@
-import classNames from "classnames";
 import { RenderLeafProps } from "slate-react";
-import styles from "../../styles/BlockText.module.css";
+import styles from "./Leaf.module.css";
 
 export default function Leaf({ leaf, children, attributes }: RenderLeafProps) {
   if (leaf.placeholder) {
     return (
       <>
-        <span {...attributes}>{children}</span>
-        <div
-          className={classNames(styles.placeholder, "placeholder")}
-          contentEditable={false}
-        >
+        <span className={styles.placeholder} contentEditable={false}>
           Type something here…
-        </div>
+        </span>
+        <span {...attributes}>{children}</span>
       </>
     );
   }
