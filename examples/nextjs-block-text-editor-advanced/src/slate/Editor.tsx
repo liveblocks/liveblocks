@@ -106,6 +106,24 @@ function App() {
   const updateMyPresence = useUpdateMyPresence();
 
   useEffect(() => {
+    const { insertBreak } = editor;
+
+    // Override editor to insert a paragraph after inserting a new line
+    editor.insertBreak = () => {
+      insertBreak();
+      if (editor.selection) {
+        Transforms.setNodes(
+          editor,
+          { type: BlockType.Paragraph },
+          {
+            at: editor.selection,
+          }
+        );
+      }
+    };
+  }, [editor]);
+
+  useEffect(() => {
     if (blocks == null) {
       return;
     }
