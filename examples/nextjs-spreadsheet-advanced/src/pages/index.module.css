@@ -58,7 +58,7 @@
 }
 
 .button span {
-  margin-left: 4px;
+  margin-left: 5px;
   margin-right: 2px;
 }
 
@@ -68,13 +68,14 @@
 
 .avatars {
   display: flex;
+  flex-direction: row-reverse;
   place-items: center;
   flex: none;
   margin-left: auto;
 }
 
-.avatar:not(:first-child) {
-  margin-left: calc(-0.25 * var(--row-height));
+.avatar:not(:last-child) {
+  margin-left: calc(-0.2 * var(--row-height));
 }
 
 .avatar {
@@ -82,6 +83,18 @@
   height: calc(var(--banner-height) - var(--padding) / 2);
   background: var(--gray-100);
   box-shadow: 0 0 0 var(--border) var(--gray-100);
+}
+
+.avatar_ellipsis {
+  display: flex;
+  place-content: center;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 500;
+  background: var(--gray-300);
+  color: var(--gray-600);
+  border-radius: 50%;
+  z-index: 1;
 }
 
 .loading {

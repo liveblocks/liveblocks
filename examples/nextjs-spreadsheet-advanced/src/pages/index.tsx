@@ -1,3 +1,4 @@
+import cx from "classnames";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { useRouter } from "next/router";
 import { type CSSProperties, useMemo } from "react";
@@ -24,6 +25,8 @@ import { useSpreadsheet } from "../spreadsheet/react";
 import { createInitialStorage } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";
 import styles from "./index.module.css";
+
+const AVATARS_MAX = 3;
 
 function Example() {
   const spreadsheet = useSpreadsheet();
@@ -56,26 +59,22 @@ function Example() {
       <div className={styles.banner}>
         <div className={styles.buttons}>
           <div className={styles.button_group} role="group">
-            <Tooltip content="Add Row">
-              <button
-                className={styles.button}
-                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
-                disabled={rows.length >= GRID_MAX_ROWS}
-              >
-                <AddRowAfterIcon />
-              </button>
-            </Tooltip>
-            <Tooltip content="Add Column">
-              <button
-                className={styles.button}
-                onClick={() =>
-                  insertColumn(columns.length, COLUMN_INITIAL_WIDTH)
-                }
-                disabled={columns.length >= GRID_MAX_COLUMNS}
-              >
-                <AddColumnAfterIcon />
-              </button>
-            </Tooltip>
+            <button
+              className={styles.button}
+              onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+              disabled={rows.length >= GRID_MAX_ROWS}
+            >
+              <AddRowAfterIcon />
+              <span>Add Row</span>
+            </button>
+            <button
+              className={styles.button}
+              onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
+              disabled={columns.length >= GRID_MAX_COLUMNS}
+            >
+              <AddColumnAfterIcon />
+              <span>Add Column</span>
+            </button>
           </div>
           <div className={styles.button_group} role="group">
             <Tooltip content="Undo">
@@ -91,7 +90,16 @@ function Example() {
           </div>
         </div>
         <div className={styles.avatars}>
-          {users.map(({ connectionId, info }) => {
+          {self && (
+            <Avatar
+              className={styles.avatar}
+              color={self.info.color}
+              name="You"
+              src={self.info.url}
+              tooltipOffset={6}
+            />
+          )}
+          {users.slice(0, AVATARS_MAX - 1).map(({ connectionId, info }) => {
             return (
               <Avatar
                 className={styles.avatar}
@@ -103,15 +111,11 @@ function Example() {
               />
             );
           })}
-          {self && (
-            <Avatar
-              className={styles.avatar}
-              color={self.info.color}
-              name="You"
-              src={self.info.url}
-              tooltipOffset={6}
-            />
-          )}
+          {users.length > AVATARS_MAX - 1 ? (
+            <div className={cx(styles.avatar, styles.avatar_ellipsis)}>
+              +{users.length - AVATARS_MAX + 1}
+            </div>
+          ) : null}
         </div>
       </div>
       <Sheet {...spreadsheet} />
