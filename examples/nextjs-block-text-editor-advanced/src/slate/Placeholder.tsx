@@ -1,5 +1,6 @@
-import React, { ComponentType, createRef, useEffect, useRef, useState } from "react";
+import React, { ComponentType, createRef, useEffect, useState } from "react";
 import Button from "../components/Button";
+import styles from "../../styles/Placeholder.module.css";
 
 type Input = {
   type: string;
@@ -26,7 +27,7 @@ export default function Placeholder({ inputs, onSet }: Props) {
   }, [firstInput]);
 
   return (
-    <form onSubmit={(e) => {
+    <form className={styles.placeholder} onSubmit={(e) => {
       e.preventDefault();
       onSet(values)
     }}>
@@ -38,9 +39,12 @@ export default function Placeholder({ inputs, onSet }: Props) {
         required = false,
         pattern = undefined,
       }], index) => (
-        <div key={name} >
-          <Icon />
+        <div key={name} className={styles.inputRow}>
+          <span className={styles.icon}>
+            <Icon />
+          </span>
           <input
+            className={styles.input}
             ref={index === 0 ? firstInput : null}
             type={type}
             placeholder={placeholder}
@@ -56,6 +60,7 @@ export default function Placeholder({ inputs, onSet }: Props) {
         </div>
       ))}
       <Button
+        className={styles.button}
         appearance="primary"
         ariaLabel="Toggle Strikethrough"
         type="submit"

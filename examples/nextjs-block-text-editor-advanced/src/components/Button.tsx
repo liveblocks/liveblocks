@@ -24,6 +24,7 @@ type Props = {
   onTouchStart?: TouchEventHandler<HTMLButtonElement>;
   ariaLabel?: string;
   type?: "submit" | "reset" | "button";
+  className?: string;
 };
 
 const Button = forwardRef<HTMLButtonElement, Props>(
@@ -42,6 +43,7 @@ const Button = forwardRef<HTMLButtonElement, Props>(
       onTouchStart,
       ariaLabel,
       type,
+      className,
     },
     ref
   ) => {
@@ -53,7 +55,7 @@ const Button = forwardRef<HTMLButtonElement, Props>(
           [styles.button_secondary]: appearance === "secondary",
           [styles.button_primary]: appearance === "primary",
           [styles.button_square]: isSquare,
-        })}
+        }, className)}
         onClick={onClick}
         onKeyDown={onKeyDown}
         onPointerEnter={onPointerEnter}

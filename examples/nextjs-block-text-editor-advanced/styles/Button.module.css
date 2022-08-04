@@ -1,13 +1,13 @@
 .button {
   border-radius: 6px;
   border: none;
-  padding: 0.125rem 0.625rem;
+  padding: 16px 12px;
   display: flex;
   align-items: center;
   justify-content: center;
   height: 1.75rem;
   min-width: 1.75rem;
-  font-size: 0.875em;
+  font-size: 1em;
   margin: 0;
 }
 
@@ -38,7 +38,7 @@
 }
 
 .button_primary {
-  color: rgb(var(--color-surface));
+  color: rgba(255, 255, 255, 1);
   background: rgba(var(--color-primary), 0.96);
   font-weight: 500;
 }
