@@ -3,30 +3,6 @@
   margin: 0.5rem 0;
 }
 
-.placeholder {
-  display: flex;
-  align-items: center;
-  color: rgba(var(--color-foreground), 0.9);
-  background: rgba(var(--color-foreground), 0.06);
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  width: 100%;
-  border: none;
-  font-size: inherit;
-  cursor: pointer;
-}
-
-.placeholder:hover,
-.placeholder:focus {
-  outline: none;
-  color: rgba(var(--color-foreground), 1);
-  background: rgba(var(--color-foreground), 0.1);
-}
-
-.placeholder_text {
-  margin-left: 0.5rem;
-}
-
 .video_embed {
   position: relative;
   display: flex;

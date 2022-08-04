@@ -5,6 +5,7 @@ import BlockFigmaToolbar from "./BlockFigmaToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, FigmaElement } from "./types";
 import { Transforms } from "slate";
+import Placeholder from "./Placeholder";
 
 type Props = {
   element: FigmaElement;
@@ -29,13 +30,12 @@ export default function BlockFigma({ element }: Props) {
           ></iframe>
         </div>
       ) : (
-        <button
-          className={styles.placeholder}
+        <Placeholder
           onClick={() => setShowToolbar(true)}
+          icon={VideoIcon}
         >
-          <VideoIcon />
-          <span className={styles.placeholder_text}>Embed Figma project here…</span>
-        </button>
+          Embed Figma project here…
+        </Placeholder>
       )}
       {showToolbar && (
         <BlockFigmaToolbar

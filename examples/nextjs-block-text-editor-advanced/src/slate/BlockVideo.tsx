@@ -5,6 +5,7 @@ import BlockVideoToolbar from "./BlockVideoToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, VideoElement } from "./types";
 import { Transforms } from "slate";
+import Placeholder from "./Placeholder";
 
 type Props = {
   element: VideoElement;
@@ -29,13 +30,12 @@ export default function BlockVideo({ element }: Props) {
           ></iframe>
         </div>
       ) : (
-        <button
-          className={styles.placeholder}
+        <Placeholder
           onClick={() => setShowToolbar(true)}
+          icon={VideoIcon}
         >
-          <VideoIcon />
-          <span className={styles.placeholder_text}>Embed video here…</span>
-        </button>
+          Embed YouTube video here…
+        </Placeholder>
       )}
       {showToolbar && (
         <BlockVideoToolbar

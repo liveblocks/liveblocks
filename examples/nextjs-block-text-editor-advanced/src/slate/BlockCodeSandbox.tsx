@@ -5,6 +5,7 @@ import BlockCodeSandboxToolbar from "./BlockCodeSandboxToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, CodeSandboxElement } from "./types";
 import { Transforms } from "slate";
+import Placeholder from "./Placeholder";
 
 type Props = {
   element: CodeSandboxElement;
@@ -29,13 +30,12 @@ export default function BlockCodeSandbox({ element }: Props) {
           ></iframe>
         </div>
       ) : (
-        <button
-          className={styles.placeholder}
+        <Placeholder
           onClick={() => setShowToolbar(true)}
+          icon={CodeSandboxIcon}
         >
-          <CodeSandboxIcon />
-          <span className={styles.placeholder_text}>Embed CodeSandbox project here…</span>
-        </button>
+          Embed CodeSandbox project here…
+        </Placeholder>
       )}
       {showToolbar && (
         <BlockCodeSandboxToolbar

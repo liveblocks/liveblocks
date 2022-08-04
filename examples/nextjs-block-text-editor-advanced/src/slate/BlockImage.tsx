@@ -5,6 +5,7 @@ import BlockImageToolbar from "./BlockImageToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, ImageElement } from "./types";
 import { Transforms } from "slate";
+import Placeholder from "./Placeholder";
 
 type Props = {
   element: ImageElement;
@@ -21,13 +22,12 @@ export default function BlockImage({ element }: Props) {
           <img src={element.url} alt={element.alt || ""} />
         </div>
       ) : (
-        <button
-          className={styles.placeholder}
+        <Placeholder
           onClick={() => setShowToolbar(true)}
+          icon={ImageIcon}
         >
-          <ImageIcon />
-          <span className={styles.placeholder_text}>Embed image here…</span>
-        </button>
+          Embed image here…
+        </Placeholder>
       )}
       {showToolbar && (
         <BlockImageToolbar
