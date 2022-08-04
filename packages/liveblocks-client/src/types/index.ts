@@ -429,6 +429,29 @@ export interface History {
   redo: () => void;
 
   /**
+   * Returns whether there are any operations to undo.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * // room.history.canUndo() is true
+   * room.history.undo();
+   * // room.history.canUndo() is false
+   */
+  canUndo: () => boolean;
+
+  /**
+   * Returns whether there are any operations to redo.
+   *
+   * @example
+   * room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+   * room.history.undo();
+   * // room.history.canRedo() is true
+   * room.history.redo();
+   * // room.history.canRedo() is false
+   */
+  canRedo: () => boolean;
+
+  /**
    * All future modifications made on the Room will be merged together to create a single history item until resume is called.
    *
    * @example

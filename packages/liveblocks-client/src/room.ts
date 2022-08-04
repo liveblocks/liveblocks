@@ -120,8 +120,8 @@ export type Machine<
   batch(callback: () => void): void;
   undo(): void;
   redo(): void;
-  canUndo(): void;
-  canRedo(): void;
+  canUndo(): boolean;
+  canRedo(): boolean;
   pauseHistory(): void;
   resumeHistory(): void;
 
@@ -1698,6 +1698,8 @@ export function createRoom<
     history: {
       undo: machine.undo,
       redo: machine.redo,
+      canUndo: machine.canUndo,
+      canRedo: machine.canRedo,
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
