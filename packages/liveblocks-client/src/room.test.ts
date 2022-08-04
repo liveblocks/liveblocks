@@ -688,6 +688,23 @@ describe("room", () => {
     expect(storage.root.toObject()).toEqual({ x: 1 });
   });
 
+  test("canUndo / canRedo", async () => {
+    const { storage, undo, canUndo, canRedo } = await prepareStorageTest<{
+      a: number;
+    }>([createSerializedObject("0:0", { a: 1 })], 1);
+
+    expect(canUndo()).toBeFalsy();
+    expect(canRedo()).toBeFalsy();
+
+    storage.root.set("a", 2);
+
+    expect(canUndo()).toBeTruthy();
+
+    undo();
+
+    expect(canRedo()).toBeTruthy();
+  });
+
   describe("subscription", () => {
     test("batch my-presence", () => {
       const { machine } = setupStateMachine({});
