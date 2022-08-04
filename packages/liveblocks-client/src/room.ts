@@ -120,6 +120,8 @@ export type Machine<
   batch(callback: () => void): void;
   undo(): void;
   redo(): void;
+  canUndo(): void;
+  canRedo(): void;
   pauseHistory(): void;
   resumeHistory(): void;
 
@@ -1423,6 +1425,10 @@ export function makeStateMachine<
     tryFlushing();
   }
 
+  function canUndo() {
+    return state.undoStack.length > 0;
+  }
+
   function redo() {
     if (state.isBatching) {
       throw new Error("redo is not allowed during a batch");
@@ -1445,6 +1451,10 @@ export function makeStateMachine<
       }
     }
     tryFlushing();
+  }
+
+  function canRedo() {
+    return state.redoStack.length > 0;
   }
 
   function batch(callback: () => void) {
@@ -1540,6 +1550,8 @@ export function makeStateMachine<
     batch,
     undo,
     redo,
+    canUndo,
+    canRedo,
     pauseHistory,
     resumeHistory,
 
