@@ -185,9 +185,7 @@ function HeaderDragOverlay({
         <span className={styles.header_label}>
           {isColumn ? convertNumberToLetter(index) : index + 1}
         </span>
-        <div className={styles.header_control}>
-          <EllipsisIcon />
-        </div>
+        <div className={styles.header_control} />
       </div>
       <div className={styles.overlay_cells}>
         {cells.map((cell, index) => (

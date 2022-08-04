@@ -97,12 +97,23 @@
   transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
 }
 
-.header_control:hover {
+.header_control:hover,
+.header_control:focus {
+  opacity: 1;
   background: var(--gray-200);
+}
+
+.header:global(.selected) .header_control:hover,
+.header:global(.selected) .header_control:focus {
+  background: var(--gray-300);
 }
 
 .header:hover .header_control {
   opacity: 1;
+}
+
+:global(.dragging) .header .header_control {
+  opacity: 0;
 }
 
 .header_handler {

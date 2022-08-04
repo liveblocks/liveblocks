@@ -62,7 +62,8 @@
   margin-right: 2px;
 }
 
-.button:hover {
+.button:not(:disabled):hover,
+.button:not(:disabled):focus {
   background: var(--gray-200);
 }
 
