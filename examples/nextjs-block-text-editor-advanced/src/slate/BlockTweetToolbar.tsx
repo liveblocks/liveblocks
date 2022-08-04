@@ -8,10 +8,10 @@ type Props = {
   onClose: () => void;
 };
 
-const figmaLinkPattern = "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$";
-const figmaLinkRegex = new RegExp(figmaLinkPattern);
+const tweetLinkPattern = "^https:\\/\\/(?:[\\w\\.-]+\\.)?twitter\\.com\\/.*\\/status(?:es)?\\/([^\\/\\?]+)?$";
+const tweetLinkRegex = new RegExp(tweetLinkPattern);
 
-export default function FigmaToolbar({ url, setUrl, onClose }: Props) {
+export default function TweetToolbar({ url, setUrl, onClose }: Props) {
   const [urlInputValue, setUrlInputValue] = useState<string>(url ? url : "");
   const inputRef = createRef<HTMLInputElement>();
 
@@ -27,24 +27,25 @@ export default function FigmaToolbar({ url, setUrl, onClose }: Props) {
           className={styles.form}
           onSubmit={(e) => {
             e.preventDefault();
-            if (!figmaLinkRegex.test(urlInputValue)) {
+            const match = urlInputValue.match(tweetLinkRegex);
+            if (!match?.[1]) {
               setUrlInputValue("");
               return;
             }
 
-            setUrl("https://www.figma.com/embed?embed_host=astra&url=" + urlInputValue);
+            setUrl(match[1]);
             onClose();
           }}
         >
           <input
             type="url"
-            title="Please enter a valid Figma project link"
-            pattern={figmaLinkPattern}
+            title="Please enter a valid Tweet link"
+            pattern={tweetLinkPattern}
             ref={inputRef}
             className={styles.input}
             value={urlInputValue}
             onChange={(e) => setUrlInputValue(e.currentTarget.value)}
-            placeholder="Paste Figma link…"
+            placeholder="Paste Tweet link…"
           />
 
           <Button
@@ -52,7 +53,7 @@ export default function FigmaToolbar({ url, setUrl, onClose }: Props) {
             ariaLabel="Toggle Strikethrough"
             type="submit"
           >
-            Embed Figma file
+            Embed Tweet
           </Button>
         </form>
       </div>

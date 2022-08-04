@@ -111,6 +111,18 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
       label: "Embeds",
       items: [
         {
+          label: "Twitter",
+          description: "Embed a Tweet",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: BlockType.Tweet,
+              url: null,
+              children: [{ text: "" }],
+            });
+          },
+        },
+        {
           label: "CodeSandbox",
           description: "Embed CodeSandbox project",
           onSelect: () => {

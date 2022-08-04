@@ -1,9 +1,9 @@
-.block_figma {
+.block_tweet {
   position: relative;
   margin: 0.5rem 0;
 }
 
-.figma_embed {
+.tweet_embed {
   position: relative;
   display: flex;
   justify-content: center;
@@ -13,10 +13,15 @@
   padding-bottom: 66%;
 }
 
-.figma_embed iframe {
-  position: absolute;
-  left: 0;
-  top: 0;
+.tweet_embed > div {
+  margin: 0 auto;
   width: 100%;
-  height: 100%;
+}
+
+.tweet_embed > div > div {
+  max-width: 100% !important;
+}
+
+.tweet_embed iframe {
+  width: 100% !important;
 }

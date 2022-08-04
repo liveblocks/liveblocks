@@ -4,6 +4,7 @@ import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
 import { BlockType } from "./types";
+import BlockTweet from "./BlockTweet";
 
 // Note: {children} must be rendered in every element otherwise bugs occur
 // https://docs.slatejs.org/api/nodes/element#rendering-void-elements
@@ -60,6 +61,15 @@ export default function Block({
     return (
       <div {...attributes} contentEditable={false}>
         <BlockFigma element={element} />
+        <div style={{ display: "none" }}>{children}</div>
+      </div>
+    );
+  }
+
+  if (element.type === BlockType.Tweet) {
+    return (
+      <div {...attributes} contentEditable={false}>
+        <BlockTweet element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
     );

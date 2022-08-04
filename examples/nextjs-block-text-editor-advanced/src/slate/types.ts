@@ -41,54 +41,58 @@ export enum BlockType {
   Video = "video",
   CodeSandbox = "codesandbox",
   Figma = "figma",
+  Tweet = "tweet",
 }
 
 export type TextBlock =
   BlockType.H1 | BlockType.H2 | BlockType.H3 | BlockType.Paragraph;
 
-export type ParagraphElement = {
+export type BlockElement = {
   id: string;
+  children: CustomText[];
+}
+
+export type ParagraphElement = BlockElement & {
   type: BlockType.Paragraph;
-  children: CustomText[];
 };
 
-export type HeadingElement = {
-  id: string;
+export type HeadingElement = BlockElement & {
   type: BlockType.H1 | BlockType.H2 | BlockType.H3;
-  children: CustomText[];
 };
 
-export type ImageElement = {
-  id: string;
+export type ImageElement = BlockElement & {
   type: BlockType.Image;
   alt: string | null;
   url: string | null;
   children: [{ text: "" }];
 };
 
-export type VideoElement = {
-  id: string;
+export type VideoElement = BlockElement & {
   type: BlockType.Video;
   url: string | null;
   children: [{ text: "" }];
 };
 
-export type CodeSandboxElement = {
-  id: string;
+export type CodeSandboxElement = BlockElement & {
   type: BlockType.CodeSandbox;
   url: string | null;
   children: [{ text: "" }];
 };
 
-export type FigmaElement = {
-  id: string;
+export type FigmaElement = BlockElement & {
   type: BlockType.Figma;
   url: string | null;
   children: [{ text: "" }];
 }
 
+export type TweetElement = BlockElement & {
+  type: BlockType.Tweet;
+  url: string | null;
+  children: [{ text: "" }];
+}
+
 export type CustomElement =
-  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement | FigmaElement;
+  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement | FigmaElement | TweetElement;
 
 export type CustomText = {
   text: string;
