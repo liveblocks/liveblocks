@@ -1,7 +1,5 @@
 import styles from "../../styles/BlockFigma.module.css";
 import VideoIcon from "../icons/video.svg";
-import { useState } from "react";
-import BlockFigmaToolbar from "./BlockFigmaToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, FigmaElement } from "./types";
 import { Transforms } from "slate";
@@ -12,7 +10,6 @@ type Props = {
 };
 
 export default function BlockFigma({ element }: Props) {
-  const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
@@ -31,16 +28,19 @@ export default function BlockFigma({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          onClick={() => setShowToolbar(true)}
-          icon={VideoIcon}
-        >
-          Embed Figma project here…
-        </Placeholder>
-      )}
-      {showToolbar && (
-        <BlockFigmaToolbar
-          url={element.url}
-          setUrl={(url) => {
+          inputs={{
+            url: {
+              type: "url",
+              icon: VideoIcon,
+              placeholder: "Paste Figma project link…",
+              title: "Please enter a valid Figma project link",
+              required: true,
+              pattern: "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$",
+            },
+          }}
+          onSet={({ url }) => {
+            url = "https://www.figma.com/embed?embed_host=astra&url=" + url;
+
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
               url,
@@ -49,7 +49,6 @@ export default function BlockFigma({ element }: Props) {
               at: path,
             });
           }}
-          onClose={() => setShowToolbar(false)}
         />
       )}
     </div>

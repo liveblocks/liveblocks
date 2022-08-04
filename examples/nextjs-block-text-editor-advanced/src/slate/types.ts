@@ -62,8 +62,8 @@ export type HeadingElement = BlockElement & {
 
 export type ImageElement = BlockElement & {
   type: BlockType.Image;
-  alt: string | null;
   url: string | null;
+  alt: string | null;
   children: [{ text: "" }];
 };
 
@@ -87,7 +87,7 @@ export type FigmaElement = BlockElement & {
 
 export type TweetElement = BlockElement & {
   type: BlockType.Tweet;
-  url: string | null;
+  tweetId: string | null;
   children: [{ text: "" }];
 }
 

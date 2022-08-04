@@ -1,22 +1,67 @@
-import { ComponentType, ReactNode } from "react";
-import styles from "../../styles/Placeholder.module.css";
+import React, { ComponentType, createRef, useEffect, useRef, useState } from "react";
+import Button from "../components/Button";
+
+type Input = {
+  type: string;
+  icon: ComponentType;
+  placeholder: string;
+  title?: string;
+  required?: boolean;
+  pattern?: string;
+};
+
+type Values = Record<string, string>;
 
 type Props = {
-  icon?: ComponentType;
-  onClick: () => void;
-  children: ReactNode;
-}
+  inputs: Record<string, Input>;
+  onSet: (values: Values) => void;
+};
 
-export default function Placeholder({ icon: Icon, onClick, children }: Props) {
+export default function Placeholder({ inputs, onSet }: Props) {
+  const [values, setValues] = useState<Values>({});
+  const firstInput = createRef<HTMLInputElement>();
+
+  useEffect(() => {
+    firstInput.current?.focus();
+  }, [firstInput]);
+
   return (
-    <button
-      className={styles.placeholder}
-      onClick={onClick}
-    >
-      {Icon ? (
-        <Icon />
-      ) : null}
-      <span className={styles.placeholder_text}>{children}</span>
-    </button>
+    <form onSubmit={(e) => {
+      e.preventDefault();
+      onSet(values)
+    }}>
+      {Object.entries(inputs).map(([name, {
+        type,
+        icon: Icon,
+        placeholder,
+        title = undefined,
+        required = false,
+        pattern = undefined,
+      }], index) => (
+        <div key={name} >
+          <Icon />
+          <input
+            ref={index === 0 ? firstInput : null}
+            type={type}
+            placeholder={placeholder}
+            title={title}
+            required={required}
+            pattern={pattern}
+            value={values[name]}
+            onChange={(e) => setValues(vals => ({
+              ...vals,
+              [name]: e.target.value,
+            }))}
+          />
+        </div>
+      ))}
+      <Button
+        appearance="primary"
+        ariaLabel="Toggle Strikethrough"
+        type="submit"
+      >
+        Embed
+      </Button>
+    </form>
   )
 }

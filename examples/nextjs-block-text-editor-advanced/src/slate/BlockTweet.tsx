@@ -1,50 +1,54 @@
 import styles from "../../styles/BlockTweet.module.css";
-import VideoIcon from "../icons/video.svg";
-import { useState } from "react";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, TweetElement } from "./types";
 import { Transforms } from "slate";
-import Placeholder from "./Placeholder";
-import BlockTweetToolbar from "./BlockTweetToolbar";
 import { TwitterTweetEmbed } from "react-twitter-embed";
+import ImageIcon from "../icons/image.svg";
+import Placeholder from "./Placeholder";
 
 type Props = {
   element: TweetElement;
 };
 
+const tweetLinkPattern = "^https:\\/\\/(?:[\\w\\.-]+\\.)?twitter\\.com\\/.*\\/status(?:es)?\\/([^\\/\\?]+)?$";
+
 export default function BlockTweet({ element }: Props) {
-  const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
     <div className={styles.block_tweet}>
-      {element.url ? (
+      {element.tweetId ? (
         <div className={styles.tweet_embed}>
           <TwitterTweetEmbed
-            tweetId={'933354946111705097'}
+            tweetId={element.tweetId}
           />
         </div>
       ) : (
         <Placeholder
-          onClick={() => setShowToolbar(true)}
-          icon={VideoIcon}
-        >
-          Embed Tweet here…
-        </Placeholder>
-      )}
-      {showToolbar && (
-        <BlockTweetToolbar
-          url={element.url}
-          setUrl={(url) => {
+          inputs={{
+            tweetId: {
+              type: "url",
+              icon: ImageIcon,
+              placeholder: "Paste Tweet link…",
+              title: "Please enter a valid Tweet link",
+              required: true,
+            },
+          }}
+          onSet={({ tweetId }) => {
+            const match = tweetId.match(new RegExp(tweetLinkPattern));
+            if (!match?.[1]) {
+              return;
+            }
+            tweetId = match[1];
+
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
-              url,
+              tweetId,
             };
             Transforms.setNodes<CustomElement>(editor, newProperties, {
               at: path,
             });
           }}
-          onClose={() => setShowToolbar(false)}
         />
       )}
     </div>

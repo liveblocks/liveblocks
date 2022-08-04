@@ -1,7 +1,6 @@
 import styles from "../../styles/BlockCodeSandbox.module.css";
 import CodeSandboxIcon from "../icons/codesandbox.svg";
 import { useState } from "react";
-import BlockCodeSandboxToolbar from "./BlockCodeSandboxToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, CodeSandboxElement } from "./types";
 import { Transforms } from "slate";
@@ -12,7 +11,6 @@ type Props = {
 };
 
 export default function BlockCodeSandbox({ element }: Props) {
-  const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
@@ -31,16 +29,21 @@ export default function BlockCodeSandbox({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          onClick={() => setShowToolbar(true)}
-          icon={CodeSandboxIcon}
-        >
-          Embed CodeSandbox project here…
-        </Placeholder>
-      )}
-      {showToolbar && (
-        <BlockCodeSandboxToolbar
-          url={element.url}
-          setUrl={(url) => {
+          inputs={{
+            url: {
+              type: "url",
+              icon: CodeSandboxIcon,
+              placeholder: "Paste CodeSandbox link…",
+              title: "Please enter a valid CodeSandbox project link",
+              required: true,
+              pattern: "((?:https?:)?//)?(?:www\.)?(?:codesandbox\.io)((/s/)|(/embed/))(.*)+$",
+            },
+          }}
+          onSet={({ url }) => {
+            if (!url.includes("/embed/")) {
+              url = url.replace("/s/", "/embed/")
+            }
+
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
               url,
@@ -49,7 +52,6 @@ export default function BlockCodeSandbox({ element }: Props) {
               at: path,
             });
           }}
-          onClose={() => setShowToolbar(false)}
         />
       )}
     </div>

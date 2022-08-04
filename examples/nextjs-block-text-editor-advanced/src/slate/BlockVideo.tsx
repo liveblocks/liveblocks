@@ -1,7 +1,6 @@
 import styles from "../../styles/BlockVideo.module.css";
 import VideoIcon from "../icons/video.svg";
 import { useState } from "react";
-import BlockVideoToolbar from "./BlockVideoToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, VideoElement } from "./types";
 import { Transforms } from "slate";
@@ -12,7 +11,6 @@ type Props = {
 };
 
 export default function BlockVideo({ element }: Props) {
-  const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
@@ -31,16 +29,22 @@ export default function BlockVideo({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          onClick={() => setShowToolbar(true)}
-          icon={VideoIcon}
-        >
-          Embed YouTube video here…
-        </Placeholder>
-      )}
-      {showToolbar && (
-        <BlockVideoToolbar
-          url={element.url}
-          setUrl={(url) => {
+          inputs={{
+            url: {
+              type: "url",
+              icon: VideoIcon,
+              placeholder: "Paste YouTube video link…",
+              title: "Please enter a valid YouTube video link",
+              required: true,
+              pattern: "^((?:https?:)?\/\/)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(\/(?:[\\w\\-]+\\?v=|embed\/|v\/)?)([\\w\\-]+)(\\S+)?$",
+            },
+          }}
+          onSet={({ url }) => {
+            if (!url.includes("/embed/")) {
+              const id = new URL(url).searchParams.get("v");
+              url = `https://youtube.com/embed/${id}`;
+            }
+
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
               url,
@@ -49,7 +53,6 @@ export default function BlockVideo({ element }: Props) {
               at: path,
             });
           }}
-          onClose={() => setShowToolbar(false)}
         />
       )}
     </div>

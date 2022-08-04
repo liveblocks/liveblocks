@@ -1,7 +1,5 @@
 import styles from "../../styles/BlockImage.module.css";
 import ImageIcon from "../icons/image.svg";
-import { useState } from "react";
-import BlockImageToolbar from "./BlockImageToolbar";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, ImageElement } from "./types";
 import { Transforms } from "slate";
@@ -12,7 +10,6 @@ type Props = {
 };
 
 export default function BlockImage({ element }: Props) {
-  const [showToolbar, setShowToolbar] = useState(false);
   const editor = useSlate();
 
   return (
@@ -23,35 +20,31 @@ export default function BlockImage({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          onClick={() => setShowToolbar(true)}
-          icon={ImageIcon}
-        >
-          Embed image here…
-        </Placeholder>
-      )}
-      {showToolbar && (
-        <BlockImageToolbar
-          alt={element.alt}
-          url={element.url}
-          setAlt={(alt) => {
+          inputs={{
+            url: {
+              type: "url",
+              icon: ImageIcon,
+              placeholder: "Paste image link",
+              title: "Please enter a valid image link",
+              required: true,
+            },
+            alt: {
+              type: "text",
+              icon: ImageIcon,
+              placeholder: "Enter alt text",
+              required: false,
+            }
+          }}
+          onSet={({ url, alt }) => {
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
+              url,
               alt,
             };
             Transforms.setNodes<CustomElement>(editor, newProperties, {
               at: path,
             });
           }}
-          setUrl={(url) => {
-            const path = ReactEditor.findPath(editor, element);
-            const newProperties: Partial<CustomElement> = {
-              url,
-            };
-            Transforms.setNodes<CustomElement>(editor, newProperties, {
-              at: path,
-            });
-          }}
-          onClose={() => setShowToolbar(false)}
         />
       )}
     </div>
