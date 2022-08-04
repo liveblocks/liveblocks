@@ -10,7 +10,7 @@
   text-align: right;
   width: var(--cell-width);
   height: var(--cell-height);
-  border: var(--border) solid #f3f4f6;
+  border: var(--border) solid var(--gray-100);
 }
 
 .cell:global(.editing) {
@@ -96,7 +96,7 @@
 .user_label {
   font-size: 10px;
   font-weight: 500;
-  color: #fff;
+  color: var(--white);
   user-select: none;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -118,8 +118,8 @@
   inset: 0px;
   padding: 0px 10px;
   font-size: 13px;
-  background: #fff;
-  color: #1f2937;
+  background: var(--gray-0);
+  color: var(--gray-800);
   z-index: 1;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
@@ -153,7 +153,7 @@
   place-content: center;
   place-items: center;
   pointer-events: none;
-  background: #fff;
+  background: var(--gray-0);
 }
 
 .input,

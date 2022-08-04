@@ -3,7 +3,23 @@
   --padding: 8px;
   --radius: 5px;
   --border: 2px;
+
   --accent: #07f;
+
+  --white: #fff;
+  --black: #000;
+
+  --gray-0: var(--white);
+  --gray-100: #f3f4f6;
+  --gray-200: #e8eaee;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-1000: var(--black);
 }
 
 html,

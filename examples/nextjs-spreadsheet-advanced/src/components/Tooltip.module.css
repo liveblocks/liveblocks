@@ -1,7 +1,7 @@
 .tooltip {
-  --tooltip-background: #1f2937;
+  --tooltip-background: var(--gray-800);
 
-  color: #fff;
+  color: var(--white);
   background: var(--tooltip-background);
   border-radius: 5px;
   padding: 4px 8px;

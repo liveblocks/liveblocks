@@ -2,7 +2,7 @@
   --menu-inset: 4px;
   --menu-item-height: 30px;
   --menu-item-radius: 6px;
-  --menu-background: #fff;
+  --menu-background: var(--gray-0);
 
   border-radius: calc(var(--menu-item-radius) + var(--menu-inset));
   padding: var(--menu-inset);
@@ -20,18 +20,18 @@
   display: flex;
   place-items: center;
   font-size: 14px;
-  color: #374151;
+  color: var(--gray-700);
   cursor: pointer;
   outline: none;
 }
 
 .item:focus {
   background: var(--accent);
-  color: #fff;
+  color: var(--white);
 }
 
 .item[data-disabled] {
-  color: #d1d5db;
+  color: var(--gray-300);
   cursor: default;
 }
 
@@ -40,10 +40,11 @@
   position: absolute;
   left: calc(var(--menu-inset) + 6px);
   align-self: center;
+  opacity: 0.6;
 }
 
 .separator {
   height: var(--border);
   margin: var(--menu-inset) calc(var(--menu-inset) * -1);
-  background: #f3f4f6;
+  background: var(--gray-100);
 }

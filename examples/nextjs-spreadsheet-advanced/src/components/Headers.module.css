@@ -7,7 +7,7 @@
   content: "";
   position: absolute;
   inset: 0px;
-  background: #e9ebef;
+  background: var(--gray-200);
 }
 
 .header_draggable_container,
@@ -26,16 +26,16 @@
 }
 
 .header:global(.selected) {
-  background: #e9ebef;
+  background: var(--gray-200);
 }
 
 .header,
 :global(.dragging) .header:global(.selected) {
-  background: #f3f4f6;
+  background: var(--gray-100);
 }
 
 .header:global(.drop) {
-  background: #e9ebef;
+  background: var(--gray-200);
 }
 
 .headers:global(.row) .header {
@@ -72,13 +72,13 @@
 }
 
 .header:global(.selected) .header_label {
-  color: #6b7280;
+  color: var(--gray-500);
   font-weight: 700;
 }
 
 .header_label,
 :global(.dragging) .header:global(.selected) .header_label {
-  color: #9ca3af;
+  color: var(--gray-400);
   font-weight: 500;
 }
 
@@ -91,14 +91,14 @@
   place-content: center;
   place-items: center;
   border-radius: var(--radius);
-  color: #9ca3af;
+  color: var(--gray-400);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
 }
 
 .header_control:hover {
-  background: #e9ebef;
+  background: var(--gray-200);
 }
 
 .header:hover .header_control {
@@ -137,7 +137,7 @@
 
 .overlay_header .header_control {
   opacity: 1;
-  color: #fff;
+  color: var(--white);
 }
 
 .overlay_header .header_control_active {
@@ -177,12 +177,12 @@
 }
 
 .overlay_header .header_label {
-  color: #fff;
+  color: var(--white);
 }
 
 .overlay_cells {
   position: absolute;
-  background: #fff;
+  background: var(--gray-0);
   display: flex;
 }
 
@@ -228,7 +228,7 @@
 
 .overlay_cell {
   position: relative;
-  border: calc(var(--border) / 2) solid #f3f4f6;
+  border: calc(var(--border) / 2) solid var(--gray-100);
   overflow: hidden;
   width: var(--cell-width);
   height: var(--cell-height);

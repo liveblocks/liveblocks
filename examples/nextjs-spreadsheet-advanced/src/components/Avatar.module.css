@@ -13,7 +13,7 @@
   width: calc(100% - 2 * var(--avatar-border));
   height: calc(100% - 2 * var(--avatar-border));
   border-radius: 50%;
-  background: #d1d5db;
+  background: var(--gray-100);
   overflow: hidden;
 }
 

@@ -4,7 +4,7 @@
   flex-direction: column;
   max-width: calc(100vw - 2 * var(--margin));
   max-height: calc(100vh - 2 * var(--margin));
-  background: #f3f4f6;
+  background: var(--gray-100);
   border-radius: calc(var(--radius) + var(--padding) * 0.8);
   overflow: hidden;
 }
@@ -15,7 +15,7 @@
   flex: none;
   display: flex;
   padding: var(--padding);
-  border-bottom: var(--border) solid #e9ebef;
+  border-bottom: var(--border) solid var(--gray-200);
 }
 
 .buttons {
@@ -36,7 +36,7 @@
   width: var(--border);
   border-radius: var(--border);
   height: calc(var(--banner-height) - var(--padding) * 2);
-  background: #e9ebef;
+  background: var(--gray-200);
   margin: 0 var(--padding);
 }
 
@@ -46,14 +46,14 @@
   place-content: center;
   place-items: center;
   border-radius: var(--radius);
-  color: #6b7280;
+  color: var(--gray-500);
   cursor: pointer;
   padding: 0px 6px;
   font-size: 13px;
 }
 
 .button:disabled {
-  color: #d1d5db;
+  color: var(--gray-300);
   cursor: default;
 }
 
@@ -63,7 +63,7 @@
 }
 
 .button:hover {
-  background: #e9ebef;
+  background: var(--gray-200);
 }
 
 .avatars {
@@ -80,8 +80,8 @@
 .avatar {
   width: calc(var(--banner-height) - var(--padding) / 2);
   height: calc(var(--banner-height) - var(--padding) / 2);
-  background: #f3f4f6;
-  box-shadow: 0 0 0 var(--border) #f3f4f6;
+  background: var(--gray-100);
+  box-shadow: 0 0 0 var(--border) var(--gray-100);
 }
 
 .loading {
