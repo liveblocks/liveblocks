@@ -129,6 +129,13 @@ export function Sheet({
                         key={id}
                         onDelete={() => deleteCell(column.id, row.id)}
                         onSelect={() => selectCell(column.id, row.id)}
+                        onSelectAfter={() => {
+                          const rowAfter = rows[y + 1];
+
+                          if (rowAfter) {
+                            selectCell(column.id, rowAfter.id);
+                          }
+                        }}
                         onValueChange={(value) =>
                           setCellValue(column.id, row.id, value)
                         }

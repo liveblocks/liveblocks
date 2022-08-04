@@ -27,6 +27,7 @@ export interface Props extends ComponentProps<"td"> {
   isSelected?: boolean;
   onDelete: () => void;
   onSelect: () => void;
+  onSelectAfter: () => void;
   onValueChange: (value: string) => void;
   other?: UserInfo;
   width: number;
@@ -41,6 +42,7 @@ export function Cell({
   isSelected,
   other,
   onSelect,
+  onSelectAfter,
   onValueChange,
   onDelete,
   getExpression,
@@ -127,13 +129,21 @@ export function Cell({
           event.preventDefault();
           commitDraft();
           stopEditing();
+          onSelectAfter();
         } else if (event.key === "Escape") {
           event.preventDefault();
           stopEditing();
         }
       }
     },
-    [isSelected, commitDraft, startEditing, stopEditing, onDelete]
+    [
+      isSelected,
+      commitDraft,
+      startEditing,
+      stopEditing,
+      onDelete,
+      onSelectAfter,
+    ]
   );
 
   useEventListener("keydown", handleKeyDown);
