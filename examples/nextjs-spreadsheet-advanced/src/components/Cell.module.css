@@ -114,8 +114,11 @@
 
 .input {
   all: unset;
+  box-sizing: border-box;
   position: absolute;
   inset: 0px;
+  width: 100%;
+  height: 100%;
   padding: 0px 10px;
   font-size: 13px;
   background: var(--gray-0);
