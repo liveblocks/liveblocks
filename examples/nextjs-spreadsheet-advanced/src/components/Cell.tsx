@@ -168,11 +168,14 @@ export function Cell({
       {isError && !isEditing && (
         <div className={styles.error}>
           <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-            <path d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" fill="#fee2e2" />
+            <path
+              d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
+              fill="var(--red-100)"
+            />
             <path
               clipRule="evenodd"
               d="M10 5a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM9 14a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1Z"
-              fill="#ef4444"
+              fill="var(--red-500)"
               fillRule="evenodd"
             />
           </svg>

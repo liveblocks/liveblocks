@@ -20,6 +20,9 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
   --gray-1000: var(--black);
+
+  --red-100: #fee2e2;
+  --red-500: #ef4444;
 }
 
 html,
