@@ -1,4 +1,3 @@
-import classNames from "classnames";
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Editor, Path, Range, Transforms } from "slate";
@@ -6,7 +5,7 @@ import { useFocused, useSlate } from "slate-react";
 import Button from "../components/Button";
 import Select from "../components/Select";
 import Tooltip from "../components/Tooltip";
-import styles from "../../styles/TextEditorToolbar.module.css";
+import styles from "./Toolbar.module.css";
 import BoldIcon from "../icons/bold.svg";
 import ItalicIcon from "../icons/italic.svg";
 import UnderlineIcon from "../icons/underline.svg";
@@ -39,7 +38,7 @@ export default function Toolbar() {
     }
 
     const domSelection = window.getSelection();
-    if (domSelection == null) {
+    if (domSelection == null || domSelection.rangeCount === 0) {
       return;
     }
 
@@ -48,10 +47,8 @@ export default function Toolbar() {
 
     el.style.position = "absolute";
     el.style.opacity = "1";
-    el.style.top = `${rect.top + window.pageYOffset - el.offsetHeight}px`;
-    el.style.left = `${
-      rect.left + window.pageXOffset - el.offsetWidth / 2 + rect.width / 2
-    }px`;
+    el.style.top = `${rect.top}px`;
+    el.style.left = `${rect.left}px`;
   });
 
   const type = getSelectedElementType(editor);
@@ -59,7 +56,7 @@ export default function Toolbar() {
   return createPortal(
     <div
       ref={ref}
-      className={classNames(styles.toolbar, "toolbar")}
+      className={styles.toolbar}
       onMouseDown={(e) => {
         // prevent toolbar from taking focus away from editor
         e.preventDefault();
