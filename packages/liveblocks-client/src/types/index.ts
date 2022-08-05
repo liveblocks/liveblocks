@@ -55,6 +55,8 @@ export type ErrorCallback = (error: Error) => void;
 
 export type ConnectionCallback = (state: ConnectionState) => void;
 
+export type HistoryCallback = (event: HistoryEvent) => void;
+
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
@@ -65,6 +67,7 @@ type RoomEventCallbackMap<
   event: EventCallback<TRoomEvent>;
   error: ErrorCallback;
   connection: ConnectionCallback;
+  history: HistoryCallback;
 };
 
 export type RoomEventName = Extract<
@@ -92,7 +95,8 @@ export function isRoomEventName(value: string): value is RoomEventName {
     value === "others" ||
     value === "event" ||
     value === "error" ||
-    value === "connection"
+    value === "connection" ||
+    value === "history"
   );
 }
 
@@ -480,6 +484,11 @@ export interface History {
   resume: () => void;
 }
 
+export interface HistoryEvent {
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
 export type Room<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -497,6 +506,8 @@ export type Room<
      *
      * @param listener the callback that is called every time the current user presence is updated with {@link Room.updatePresence}.
      *
+     * @returns Unsubscribe function.
+     *
      * @example
      * room.subscribe("my-presence", (presence) => {
      *   // Do something
@@ -508,6 +519,8 @@ export type Room<
      * Subscribe to the other users updates.
      *
      * @param listener the callback that is called when a user enters or leaves the room or when a user update its presence.
+     *
+     * @returns Unsubscribe function.
      *
      * @example
      * room.subscribe("others", (others) => {
@@ -524,6 +537,8 @@ export type Room<
      *
      * @param listener the callback that is called when a user calls {@link Room.broadcastEvent}
      *
+     * @returns Unsubscribe function.
+     *
      * @example
      * room.subscribe("event", ({ event, connectionId }) => {
      *   // Do something
@@ -533,11 +548,15 @@ export type Room<
 
     /**
      * Subscribe to errors thrown in the room.
+     *
+     * @returns Unsubscribe function.
      */
     (type: "error", listener: ErrorCallback): () => void;
 
     /**
      * Subscribe to connection state updates.
+     *
+     * @returns Unsubscribe function.
      */
     (type: "connection", listener: ConnectionCallback): () => void;
 
@@ -579,6 +598,18 @@ export type Room<
       callback: StorageCallback,
       options: { isDeep: true }
     ): () => void;
+
+    /**
+     * Subscribe to the current user's history changes.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * room.subscribe("history", ({canUndo, canRedo}) => {
+     *   // Do something
+     * });
+     */
+    (type: "history", listener: HistoryCallback): () => void;
   };
 
   /**

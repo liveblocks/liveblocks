@@ -889,6 +889,22 @@ describe("room", () => {
       });
     });
 
+    test("batch history", () => {
+      const { machine } = setupStateMachine({});
+
+      const callback = jest.fn();
+
+      machine.subscribe("history", callback);
+
+      machine.batch(() => {
+        machine.updatePresence({ x: 0 }, { addToHistory: true });
+        machine.updatePresence({ y: 1 }, { addToHistory: true });
+      });
+
+      expect(callback).toHaveBeenCalledTimes(1);
+      expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
+    });
+
     test("my-presence", () => {
       const { machine } = setupStateMachine({});
 
@@ -974,6 +990,34 @@ describe("room", () => {
           type: "MY_EVENT",
         },
       });
+    });
+
+    test("history", () => {
+      const { machine } = setupStateMachine({});
+
+      const callback = jest.fn();
+
+      const unsubscribe = machine.subscribe("history", callback);
+
+      machine.updatePresence({ x: 0 }, { addToHistory: true });
+
+      expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
+
+      machine.undo();
+
+      expect(callback).toHaveBeenCalledWith({ canUndo: false, canRedo: true });
+
+      machine.redo();
+
+      expect(callback).toHaveBeenCalledWith({ canUndo: true, canRedo: false });
+
+      machine.updatePresence({ x: 1 });
+
+      unsubscribe();
+
+      machine.updatePresence({ x: 2 }, { addToHistory: true });
+
+      expect(callback).toHaveBeenCalledTimes(3);
     });
   });
 

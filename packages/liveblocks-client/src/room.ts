@@ -16,6 +16,7 @@ import type {
   ConnectionState,
   ErrorCallback,
   EventCallback,
+  HistoryCallback,
   IdTuple,
   InitialDocumentStateServerMsg,
   Json,
@@ -225,6 +226,7 @@ export type State<
     error: ErrorCallback[];
     connection: ConnectionCallback[];
     storage: StorageCallback[];
+    history: HistoryCallback[];
   };
   me: TPresence;
   others: Others<TPresence, TUserMeta>;
@@ -487,6 +489,7 @@ export function makeStateMachine<
       state.pausedHistory.unshift(...historyItem);
     } else {
       state.undoStack.push(historyItem);
+      onHistoryChange();
     }
   }
 
@@ -955,6 +958,12 @@ export function makeStateMachine<
     }
   }
 
+  function onHistoryChange() {
+    for (const listener of state.listeners.history) {
+      listener({ canUndo: canUndo(), canRedo: canRedo() });
+    }
+  }
+
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
@@ -1416,6 +1425,7 @@ export function makeStateMachine<
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of historyItem) {
       if (op.type !== "presence") {
@@ -1444,6 +1454,7 @@ export function makeStateMachine<
     const result = apply(historyItem, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of historyItem) {
       if (op.type !== "presence") {
@@ -1590,6 +1601,7 @@ export function defaultState<
       error: [],
       connection: [],
       storage: [],
+      history: [],
     },
     numberOfRetry: 0,
     lastFlushTime: 0,
