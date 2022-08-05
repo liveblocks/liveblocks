@@ -262,34 +262,25 @@ export default function App() {
                   return;
                 }
 
-                let shouldPatchLiveblocksStorage = false;
-                for (const op of editor.operations) {
-                  // Remote operations should not patch Liveblocks state to avoid inifinite loops
-                  if (op.isRemote) {
-                    continue;
-                  }
-
-                  // Update presence based on the new selection
-                  if (op.type === "set_selection") {
-                    if (editor.selection) {
-                      updateMyPresence({
-                        selectedBlockId: (
-                          editor.children[
-                            editor.selection.anchor.path[0]
-                          ] as CustomElement
-                        ).id,
-                      });
-                    } else {
-                      updateMyPresence({
-                        selectedBlockId: null,
-                      });
-                    }
-                  } else {
-                    shouldPatchLiveblocksStorage = true;
-                  }
+                if (editor.selection) {
+                  updateMyPresence({
+                    selectedBlockId: (
+                      editor.children[
+                        editor.selection.anchor.path[0]
+                      ] as CustomElement
+                    ).id,
+                  });
+                } else {
+                  updateMyPresence({
+                    selectedBlockId: null,
+                  });
                 }
 
-                if (!shouldPatchLiveblocksStorage) {
+                if (
+                  editor.operations.every(
+                    (op) => op.isRemote || op.type === "set_selection"
+                  )
+                ) {
                   return;
                 }
 
