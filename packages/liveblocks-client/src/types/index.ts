@@ -605,7 +605,7 @@ export type Room<
      * @returns Unsubscribe function.
      *
      * @example
-     * room.subscribe("history", ({canUndo, canRedo}) => {
+     * room.subscribe("history", ({ canUndo, canRedo }) => {
      *   // Do something
      * });
      */
