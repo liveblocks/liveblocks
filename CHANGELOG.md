@@ -1,6 +1,99 @@
-# v0.17.1 (not yet released)
+# v0.17.7
 
-...
+In **@liveblocks/zustand**:
+
+Simplify zustand middleware integration with Typescript. `TPresence`, `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
+
+Note that `@liveblocks/zustand` does not work with zustand > v4 because v3 and v4 have completely different type definitions. As soon as zustand v4 is out of the RC phase, we will consider updating our middleware to work with the latest version.
+
+### Example
+
+Let's take a look at our [To-do list](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list) example. Without our middleware, the store would look like this:
+
+```ts
+import create from "zustand";
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+create<State>(/* ... */)
+```
+
+With our middleware, you simply need to move the `State` param at the middleware level:
+
+```ts
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({ /*...*/ });
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+create(
+  middleware<State>(/* ... */, {
+    client,
+    presenceMapping: { isTyping: true },
+    storageMapping: { todos: true }
+  })
+);
+```
+
+If you want to type `others` presence, you can use the `TPresence` generic argument on the middleware.
+
+```ts
+
+type Presence = {
+  isTyping: true;
+}
+
+const useStore = create(
+  middleware<State, Presence>(/* ... */, {
+    client,
+    presenceMapping: { isTyping: true },
+    storageMapping: { todos: true }
+  })
+);
+
+// In your component
+useStore(state => state.liveblocks.others[0].presence?.isTyping)
+```
+
+# v0.17.6
+
+In **@liveblocks/react**:
+
+- Expose `RoomContext` in the return value of `createRoomContext()`
+
+# v0.17.5
+
+In **@liveblocks/react**:
+
+- Fix bug where changing the `key` argument of `useMap()`, `useList()`,
+  `useObject()` did not resubscribe to updates correctly
+- Ignore changes to the `RoomProvider`'s initial presence/storage props on
+  subsequent renders. This makes it behave closer to `useState(initialState)`
+
+# v0.17.4
+
+Fix missing documentation for hooks created via `createRoomContext()`.
+
+# v0.17.1
+
+Fix `@liveblocks/nodes` packaging.
 
 # v0.17.0
 
@@ -78,8 +171,7 @@ It's surprisingly simple!
   - Importing the React hooks directly is deprecated, instead use the new
     `createRoomContext()` helper. For help, read the
     [Recommended Upgrade Steps section](https://liveblocks.io/docs/guides/upgrading/0.17#recommended-upgrade-steps)
-    within our
-    [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
+    within our [Upgrade Guide](https://liveblocks.io/docs/guides/upgrading/0.17)
   - The second argument to `useList()`, `useObject()`, and `useMap()` is
     deprecated
   - The RoomProvider's `defaultPresence` is renamed to `initialPresence`

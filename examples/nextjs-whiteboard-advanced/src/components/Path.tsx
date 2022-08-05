@@ -32,7 +32,7 @@ export default function Path({
         })
       )}
       style={{
-        transition: isAnimated ? "all 0.1s ease" : "",
+        transition: isAnimated ? "transform 120ms linear" : "",
         transform: `translate(${x}px, ${y}px)`,
       }}
       x={0}

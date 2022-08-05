@@ -74,6 +74,7 @@ export default Vue.extend({
   },
   methods: {
     pointerMove: function (e) {
+      e.preventDefault();
       this._room.updatePresence({
         cursor: {
           x: Math.round(e.clientX),

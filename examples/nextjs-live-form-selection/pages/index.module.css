@@ -1,0 +1,97 @@
+.container {
+  --color-background: #fff;
+  --color-background-input: #fff;
+  --color-primary: #0044ff;
+  --color-primary-faded: #dbe4fd;
+  --color-background-preview: #f3f3f3;
+  --color-foreground-primary: #222;
+  --color-foreground-secondary: #777;
+
+  --color-background-preview-dark: #111;
+  --color-foreground-primary-dark: #f3f3f3;
+  --color-foreground-secondary-dark: #666;
+  min-height: 100vh;
+
+  background: var(--color-background);
+}
+
+.container *::selection {
+  background-color: var(--color-primary-faded);
+  color: var(--color-primary);
+}
+
+.form_container {
+  display: flex;
+  align-items: center;
+  padding: 42px 16px 0px;
+}
+
+.form_content {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.form {
+  width: 100%;
+}
+
+.heading {
+  color: var(--color-foreground-primary);
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.description {
+  margin-top: 8px;
+  margin-bottom: 32px;
+  color: var(--color-foreground-secondary);
+  font-size: 16px;
+}
+
+.form_group {
+  margin: 24px 0;
+}
+
+.form_group_grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.selection_container {
+  position: relative;
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-foreground-primary);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.input {
+  appearance: none;
+  margin: 0;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background-color: var(--color-background-input) !important;
+  border-radius: 6px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+  color: var(--color-foreground-primary);
+  outline: none;
+}
+
+.input:hover:not(:focus):not(:disabled) {
+  background-color: var(--color-background-input) !important;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.16),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+}
+
+.input:focus:not(:disabled) {
+  background-color: var(--color-background-input) !important;
+  box-shadow: 0px 0px 0px 2px var(--color-primary);
+}

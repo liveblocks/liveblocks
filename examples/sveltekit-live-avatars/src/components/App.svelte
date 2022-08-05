@@ -75,6 +75,9 @@
 
   .current_user_container {
     position: relative;
+  }
+
+  .current_user_container:not(:first-child) {
     margin-left: 2rem;
   }
 

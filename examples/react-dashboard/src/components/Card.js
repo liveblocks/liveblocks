@@ -27,13 +27,15 @@ export default function Card({ id, children }) {
     <div
       ref={containerRef}
       className={styles.container}
-      onMouseEnter={() => {
+      onPointerEnter={() => {
         updateMyPresence({
           cardId: id,
         });
         setBoundingRect(containerRef.current.getBoundingClientRect());
       }}
-      onMouseMove={(e) => {
+      onPointerMove={(e) => {
+        e.preventDefault();
+
         if (!boundingRect) {
           return;
         }
@@ -44,7 +46,7 @@ export default function Card({ id, children }) {
           cursor,
         });
       }}
-      onMouseLeave={() => {
+      onPointerLeave={() => {
         updateMyPresence({
           cardId: null,
           cursor: null,

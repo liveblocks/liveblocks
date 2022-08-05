@@ -15,13 +15,17 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
 
-import {
-  LiveblocksProvider,
-  RoomProvider,
-  useMyPresence,
-  useObject,
-  useOthers,
-} from ".";
+import { createRoomContext } from "./factory";
+
+type TestID = "me-x" | "increment" | "othersJson" | "liveObject" | "unmount";
+
+function testId(testId: TestID) {
+  return testId;
+}
+
+function element(testId: TestID) {
+  return screen.getByTestId(testId);
+}
 
 /**
  * https://github.com/Luka967/websocket-close-codes
@@ -29,6 +33,23 @@ import {
 enum WebSocketErrorCodes {
   CLOSE_ABNORMAL = 1006,
 }
+
+type Presence = {
+  x: number;
+};
+
+type Storage = {
+  obj: LiveObject<{
+    a: number;
+  }>;
+};
+
+const client = createClient({ authEndpoint: "/api/auth" });
+
+const { RoomProvider, useObject, useOthers, useMyPresence } = createRoomContext<
+  Presence,
+  Storage
+>(client);
 
 function remove<T>(array: T[], item: T) {
   for (let i = 0; i < array.length; i++) {
@@ -125,30 +146,20 @@ beforeEach(() => {
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-const testIds = {
-  meX: "me-x",
-  incrementButton: "increment",
-  errorMessage: "error-message",
-  errorConstructorName: "error-constructor-name",
-  othersJson: "othersJson",
-  liveObject: "liveObject",
-  unmount: "unmount",
-};
-
 function PresenceComponent() {
-  const [me, setPresence] = useMyPresence<{ x: number }>();
+  const [me, setPresence] = useMyPresence();
   const others = useOthers();
 
   return (
     <div>
       <button
-        data-testid={testIds.incrementButton}
+        data-testid={testId("increment")}
         onClick={() => setPresence({ x: me.x + 1 })}
       >
         Increment
       </button>
-      <div data-testid={testIds.meX}>{me.x}</div>
-      <div data-testid={testIds.othersJson}>
+      <div data-testid={testId("me-x")}>{me.x}</div>
+      <div data-testid={testId("othersJson")}>
         {JSON.stringify(others.toArray())}
       </div>
     </div>
@@ -166,17 +177,13 @@ async function waitForSocketToBeConnected() {
 
 describe("presence", () => {
   test("initial presence should be set on state immediately", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
-    expect(screen.getByTestId(testIds.meX).textContent).toBe("1");
+    expect(element("me-x").textContent).toBe("1");
 
     await waitForSocketToBeConnected();
   });
@@ -190,7 +197,7 @@ describe("presence", () => {
   //     </LiveblocksProvider>
   //   );
 
-  //   expect(screen.getByTestId(testIds.meX).textContent).toBe("1");
+  //   expect(element("me-x").textContent).toBe("1");
 
   //   await waitForSocketToBeConnected();
 
@@ -202,20 +209,16 @@ describe("presence", () => {
   //     </LiveblocksProvider>
   //   );
 
-  //   expect(screen.getByTestId(testIds.meX).textContent).toBe("1");
+  //   expect(element("me-x").textContent).toBe("1");
 
   //   await waitForSocketToBeConnected();
   // });
 
   test("initial presence should be sent to other users when socket is connected", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -233,36 +236,28 @@ describe("presence", () => {
   });
 
   test("set presence should replace current presence", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     await waitForSocketToBeConnected();
 
-    expect(screen.getByTestId(testIds.meX).textContent).toBe("1");
+    expect(element("me-x").textContent).toBe("1");
 
     act(() => {
-      fireEvent.click(screen.getByTestId(testIds.incrementButton));
+      fireEvent.click(element("increment"));
     });
 
-    expect(screen.getByTestId(testIds.meX).textContent).toBe("2");
+    expect(element("me-x").textContent).toBe("2");
   });
 
   test("others presence should be set on update", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -279,7 +274,7 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
+    expect(element("othersJson").textContent).toEqual(
       JSON.stringify([
         {
           connectionId: 1,
@@ -292,14 +287,10 @@ describe("presence", () => {
   });
 
   test("others presence should be merged on update", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -316,7 +307,7 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
+    expect(element("othersJson").textContent).toEqual(
       JSON.stringify([
         {
           connectionId: 1,
@@ -337,7 +328,7 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
+    expect(element("othersJson").textContent).toEqual(
       JSON.stringify([
         {
           connectionId: 1,
@@ -386,14 +377,10 @@ describe("presence", () => {
   // });
 
   test("others presence should be cleared on close", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
-          <PresenceComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider id="room" initialPresence={() => ({ x: 1 })}>
+        <PresenceComponent />
+      </RoomProvider>
     );
 
     const socket = await waitForSocketToBeConnected();
@@ -410,7 +397,7 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
+    expect(element("othersJson").textContent).toEqual(
       JSON.stringify([
         {
           connectionId: 1,
@@ -429,16 +416,14 @@ describe("presence", () => {
       } as CloseEvent);
     });
 
-    expect(screen.getByTestId(testIds.othersJson).textContent).toEqual(
-      JSON.stringify([])
-    );
+    expect(element("othersJson").textContent).toEqual(JSON.stringify([]));
   });
 });
 
 function ObjectComponent() {
   const obj = useObject("obj");
   return (
-    <div data-testid={testIds.liveObject}>
+    <div data-testid={testId("liveObject")}>
       {obj == null ? "Loading" : JSON.stringify(obj.toObject())}
     </div>
   );
@@ -450,7 +435,7 @@ function UnmountContainer({ children }: { children: React.ReactElement }) {
   return (
     <div>
       <button
-        data-testid={testIds.unmount}
+        data-testid={testId("unmount")}
         onClick={() => {
           setIsVisible(!isVisible);
         }}
@@ -464,30 +449,22 @@ function UnmountContainer({ children }: { children: React.ReactElement }) {
 
 describe("Storage", () => {
   test("useObject initialization", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
-
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider
-          id="room"
-          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
-        >
-          <ObjectComponent />
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <ObjectComponent />
+      </RoomProvider>
     );
 
-    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
-      "Loading"
-    );
+    expect(element("liveObject").textContent).toEqual("Loading");
 
     const socket = await waitForSocketToBeConnected();
 
     socket.callbacks.open[0]();
 
-    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
-      "Loading"
-    );
+    expect(element("liveObject").textContent).toEqual("Loading");
 
     act(() => {
       socket.callbacks.message[0]({
@@ -499,41 +476,32 @@ describe("Storage", () => {
     });
 
     await waitFor(() =>
-      expect(screen.getByTestId(testIds.liveObject).textContent).toBe(
-        JSON.stringify({ a: 0 })
-      )
+      expect(element("liveObject").textContent).toBe(JSON.stringify({ a: 0 }))
     );
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
-    const client = createClient({ authEndpoint: "/api/auth" });
     render(
-      <LiveblocksProvider client={client}>
-        <RoomProvider
-          id="room"
-          initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
-        >
-          <UnmountContainer>
-            <ObjectComponent />
-          </UnmountContainer>
-        </RoomProvider>
-      </LiveblocksProvider>
+      <RoomProvider
+        id="room"
+        initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      >
+        <UnmountContainer>
+          <ObjectComponent />
+        </UnmountContainer>
+      </RoomProvider>
     );
 
-    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
-      "Loading"
-    );
+    expect(element("liveObject").textContent).toEqual("Loading");
 
     const socket = await waitForSocketToBeConnected();
 
     socket.callbacks.open[0]();
 
-    expect(screen.getByTestId(testIds.liveObject).textContent).toEqual(
-      "Loading"
-    );
+    expect(element("liveObject").textContent).toEqual("Loading");
 
     act(() => {
-      fireEvent.click(screen.getByTestId(testIds.unmount));
+      fireEvent.click(element("unmount"));
     });
 
     act(() => {

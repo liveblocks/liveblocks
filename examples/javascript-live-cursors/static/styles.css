@@ -1,10 +1,12 @@
 html {
   font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  touch-action: none;
 }
 
 body {
   position: relative;
+  overflow: hidden;
   display: flex;
   margin: 0;
   width: 100vw;
@@ -17,11 +19,12 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  transition: transform 0.5s cubic-bezier(0.17, 0.93, 0.38, 1);
+  transition: transform 120ms linear;
 }
 
 #text {
   max-width: 380px;
+  margin: 0 16px;
   text-align: center;
 }
 

@@ -13,6 +13,7 @@ body {
 }
 
 input {
+  appearance: none;
   box-sizing: border-box;
   padding: 0.5rem 0.875rem;
   margin: 0.5rem 0;

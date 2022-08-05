@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "0.17.1-dev",
+  "version": "0.17.7-dev",
   "description": "A middleware to integrate Liveblocks into Zustand stores.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -17,7 +17,7 @@
     "collaborative"
   ],
   "scripts": {
-    "build": "rollup -c && cp ./package.json ./README.md ./lib",
+    "build": "rollup -c && ../../scripts/build.sh",
     "format": "eslint --fix src/ test/ && prettier --write src/ test/",
     "lint": "eslint src/ test/",
     "test": "jest --watch --silent --verbose",
@@ -31,7 +31,7 @@
     "directory": "packages/liveblocks-zustand"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.17.1",
+    "@liveblocks/client": "0.17.7",
     "zustand": "^3"
   },
   "devDependencies": {

@@ -25,7 +25,7 @@ function Example() {
         {hasMoreUsers && <div className={styles.more}>+{users.length - 3}</div>}
 
         {currentUser && (
-          <div className="relative ml-8">
+          <div className="relative ml-8 first:ml-0">
             <Avatar picture={currentUser.info?.picture} name="You" />
           </div>
         )}

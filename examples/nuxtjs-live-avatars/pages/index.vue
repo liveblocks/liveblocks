@@ -10,7 +10,7 @@
 
       <div v-if="others.length > 3" class="more">+{{ others.length - 3 }}</div>
 
-      <div class="relative ml-8">
+      <div class="relative ml-8 first:ml-0">
         <Avatar
           v-if="currentUser"
           v-bind:picture="currentUser.info.picture"

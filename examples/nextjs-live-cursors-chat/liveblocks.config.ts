@@ -43,7 +43,7 @@ type RoomEvent = {
   value: string;
 };
 
-const {
+export const {
   RoomProvider,
   useOthers,
   useBroadcastEvent,
@@ -51,10 +51,3 @@ const {
   useMyPresence,
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
 
-export {
-  RoomProvider,
-  useOthers,
-  useBroadcastEvent,
-  useEventListener,
-  useMyPresence,
-};

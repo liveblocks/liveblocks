@@ -1,27 +1,20 @@
-import { LiveList, Room } from "@liveblocks/client";
-import {
-  RoomProvider,
-  useList,
-  useRedo,
-  useSelf,
-  useUndo,
-  useRoom,
-  LiveblocksProvider,
-} from "@liveblocks/react";
+import { LiveList } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
 import React, { useState } from "react";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
 
-type RoomWithDevTools = Room & {
-  __INTERNAL_DO_NOT_USE: {
-    simulateCloseWebsocket(): void;
-    simulateSendCloseEvent(event: {
-      code: number;
-      wasClean: boolean;
-      reason: string;
-    }): void;
-  };
+const { RoomProvider, useList, useRedo, useSelf, useUndo, useRoom } =
+  createRoomContext<never, { items: LiveList<string> }>(client);
+
+type Internal = {
+  simulateCloseWebsocket(): void;
+  simulateSendCloseEvent(event: {
+    code: number;
+    wasClean: boolean;
+    reason: string;
+  }): void;
 };
 
 export default function Home() {
@@ -33,11 +26,9 @@ export default function Home() {
     }
   }
   return (
-    <LiveblocksProvider client={client}>
-      <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
-        <Sandbox />
-      </RoomProvider>
-    </LiveblocksProvider>
+    <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
+      <Sandbox />
+    </RoomProvider>
   );
 }
 
@@ -55,7 +46,8 @@ function generateRandomNumber(max: number, ignore?: number) {
 
 function Sandbox() {
   const [status, setStatus] = useState("connected");
-  const room = useRoom() as RoomWithDevTools;
+  const room = useRoom();
+  const internals = (room as any).__INTERNAL_DO_NOT_USE as Internal;
   const list = useList("items");
   const me = useSelf();
   const undo = useUndo();
@@ -86,7 +78,7 @@ function Sandbox() {
       <button
         id="closeWebsocket"
         onClick={() => {
-          room.__INTERNAL_DO_NOT_USE.simulateCloseWebsocket();
+          internals.simulateCloseWebsocket();
           setStatus("offline");
         }}
       >
@@ -95,7 +87,7 @@ function Sandbox() {
       <button
         id="sendCloseEventConnectionError"
         onClick={() => {
-          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
+          internals.simulateSendCloseEvent({
             reason: "Fake connection error",
             code: 1005,
             wasClean: true,
@@ -107,7 +99,7 @@ function Sandbox() {
       <button
         id="sendCloseEventAppError"
         onClick={() => {
-          room.__INTERNAL_DO_NOT_USE.simulateSendCloseEvent({
+          internals.simulateSendCloseEvent({
             reason: "App error",
             code: 4002,
             wasClean: true,
