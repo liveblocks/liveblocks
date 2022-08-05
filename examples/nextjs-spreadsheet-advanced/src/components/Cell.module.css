@@ -112,6 +112,13 @@
   display: none;
 }
 
+.content {
+  position: absolute;
+  inset: 0px;
+  overflow: hidden;
+  background: var(--gray-0);
+}
+
 .input {
   all: unset;
   box-sizing: border-box;
@@ -119,28 +126,31 @@
   inset: 0px;
   width: 100%;
   height: 100%;
-  padding: 0px 10px;
-  font-size: 13px;
-  background: var(--gray-0);
-  color: var(--gray-800);
-  z-index: 1;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  background: transparent;
+}
+
+.input,
+.display {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  pointer-events: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  line-height: var(--cell-height);
+  z-index: 1;
+  color: var(--gray-800);
+  padding: 0px 10px;
+  font-size: 13px;
 }
 
-.input:focus {
-  pointer-events: all;
-}
-
-.cell:global(.error):not(:global(.editing)) .input {
-  opacity: 0;
+.display {
+  position: absolute;
+  inset: 0px;
+  text-align: right;
 }
 
 .cell:global(.selected-other) .input,
+.cell:global(.selected-other) .display,
 .cell:global(.selected-other) .error {
   z-index: calc(var(--cell-selection-z-index) - 5);
 }
@@ -155,12 +165,9 @@
   display: flex;
   place-content: center;
   place-items: center;
-  pointer-events: none;
-  background: var(--gray-0);
 }
 
-.input,
-.error,
+.content,
 .cell:before,
 .cell:after {
   border-top-left-radius: calc(

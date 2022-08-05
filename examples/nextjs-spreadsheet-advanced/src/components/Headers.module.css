@@ -272,7 +272,5 @@
 }
 
 .overlay_cell_content {
-  text-align: right;
   line-height: var(--cell-height);
-  background: transparent;
 }

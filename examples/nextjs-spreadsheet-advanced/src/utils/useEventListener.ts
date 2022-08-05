@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef } from "react";
 
 export function useEventListener<T extends keyof DocumentEventMap>(
   type: T,
-  callback: (event: DocumentEventMap[T]) => any
+  callback: (event: DocumentEventMap[T]) => any,
+  guard = true
 ) {
   const latestCallback = useRef(callback);
 
@@ -15,10 +16,14 @@ export function useEventListener<T extends keyof DocumentEventMap>(
   }, [callback]);
 
   useEffect(() => {
+    if (!guard) return;
+
+    console.log("subscribe");
+
     document.addEventListener(type, handleEvent);
 
     return () => {
       document.removeEventListener(type, handleEvent);
     };
-  }, [type, handleEvent]);
+  }, [type, handleEvent, guard]);
 }

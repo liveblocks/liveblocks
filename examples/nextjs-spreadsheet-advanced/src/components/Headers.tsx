@@ -203,7 +203,9 @@ function HeaderDragOverlay({
               } as CSSProperties
             }
           >
-            <div className={cx(cellStyles.input, styles.overlay_cell_content)}>
+            <div
+              className={cx(cellStyles.display, styles.overlay_cell_content)}
+            >
               {cell.value ?? null}
             </div>
           </div>
