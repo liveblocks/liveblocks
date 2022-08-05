@@ -11,10 +11,7 @@
   width: var(--cell-width);
   height: var(--cell-height);
   border: var(--border) solid var(--gray-100);
-}
-
-.cell:global(.editing) {
-  text-align: left;
+  cursor: cell;
 }
 
 .cell:before,
@@ -127,6 +124,8 @@
   width: 100%;
   height: 100%;
   background: transparent;
+  text-align: left;
+  cursor: text;
 }
 
 .input,
@@ -157,6 +156,7 @@
 }
 
 .cell:global(.selected) {
+  cursor: text;
   z-index: calc(var(--cell-selection-z-index) + 15);
 }
 
