@@ -1,4 +1,5 @@
 .toolbar {
+  opacity: 0;
   z-index: 10;
   margin-top: -3rem;
   padding: 0.25rem;

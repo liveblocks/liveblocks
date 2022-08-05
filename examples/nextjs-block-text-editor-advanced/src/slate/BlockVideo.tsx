@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockVideo.module.css";
+import styles from "./BlockVideo.module.css";
 import VideoIcon from "../icons/video.svg";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, VideoElement } from "./types";
@@ -37,7 +37,8 @@ export default function BlockVideo({ element }: Props) {
               placeholder: "Paste YouTube video link…",
               title: "Please enter a valid YouTube video link",
               required: true,
-              pattern: "^((?:https?:)?\/\/)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(\/(?:[\\w\\-]+\\?v=|embed\/|v\/)?)([\\w\\-]+)(\\S+)?$",
+              pattern:
+                "^((?:https?:)?//)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(/(?:[\\w\\-]+\\?v=|embed/|v/)?)([\\w\\-]+)(\\S+)?$",
             },
           }}
           onSubmit={({ url }) => {

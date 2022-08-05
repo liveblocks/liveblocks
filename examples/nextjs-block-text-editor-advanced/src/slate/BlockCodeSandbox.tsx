@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockCodeSandbox.module.css";
+import styles from "./BlockCodeSandbox.module.css";
 import CodeSandboxIcon from "../icons/codesandbox.svg";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, CodeSandboxElement } from "./types";
@@ -37,12 +37,13 @@ export default function BlockCodeSandbox({ element }: Props) {
               placeholder: "Paste CodeSandbox link…",
               title: "Please enter a valid CodeSandbox project link",
               required: true,
-              pattern: "((?:https?:)?//)?(?:www\.)?(?:codesandbox\.io)((/s/)|(/embed/))(.*)+$",
+              pattern:
+                "((?:https?:)?//)?(?:www.)?(?:codesandbox.io)((/s/)|(/embed/))(.*)+$",
             },
           }}
           onSubmit={({ url }) => {
             if (!url.includes("/embed/")) {
-              url = url.replace("/s/", "/embed/")
+              url = url.replace("/s/", "/embed/");
             }
 
             const path = ReactEditor.findPath(editor, element);

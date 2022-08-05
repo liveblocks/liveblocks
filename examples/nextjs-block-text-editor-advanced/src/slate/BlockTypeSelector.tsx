@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import styles from "../../styles/BlockTypeSelector.module.css";
+import styles from "./BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
 import { BlockType, CustomElement } from "./types";

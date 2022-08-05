@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockImage.module.css";
+import styles from "./BlockImage.module.css";
 import ImageIcon from "../icons/image.svg";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, ImageElement } from "./types";
@@ -35,7 +35,7 @@ export default function BlockImage({ element }: Props) {
               icon: ImageIcon,
               placeholder: "Enter alt text",
               required: false,
-            }
+            },
           }}
           onSubmit={({ url, alt }) => {
             const path = ReactEditor.findPath(editor, element);

@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockInlineActions.module.css";
+import styles from "./BlockInlineActions.module.css";
 import Button from "../components/Button";
 import PlusIcon from "../icons/plus.svg";
 import MinusIcon from "../icons/minus.svg";

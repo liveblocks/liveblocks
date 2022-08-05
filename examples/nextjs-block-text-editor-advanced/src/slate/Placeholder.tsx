@@ -1,6 +1,6 @@
 import React, { ComponentType, createRef, useEffect, useState } from "react";
 import Button from "../components/Button";
-import styles from "../../styles/Placeholder.module.css";
+import styles from "./Placeholder.module.css";
 
 type Input = {
   type: string;
@@ -20,7 +20,12 @@ type Props = {
   onSubmit: (values: Values) => void;
 };
 
-export default function Placeholder({ icon: Icon, text, inputs, onSubmit }: Props) {
+export default function Placeholder({
+  icon: Icon,
+  text,
+  inputs,
+  onSubmit,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Values>({});
   const firstInput = createRef<HTMLInputElement>();
@@ -32,7 +37,7 @@ export default function Placeholder({ icon: Icon, text, inputs, onSubmit }: Prop
   }, [open]);
 
   return (
-    <div className={styles.placeholder} >
+    <div className={styles.placeholder}>
       <div className={styles.outside} onClick={() => setOpen(!open)} />
       <span className={styles.icon}>
         <Icon />
@@ -41,38 +46,51 @@ export default function Placeholder({ icon: Icon, text, inputs, onSubmit }: Prop
       {open ? (
         <>
           <div className={styles.outside} onClick={() => setOpen(false)} />
-          <form className={styles.placeholderForm} onSubmit={(e) => {
-            e.preventDefault();
-            onSubmit(values)
-          }}>
-            {Object.entries(inputs).map(([name, {
-              type,
-              icon: InputIcon,
-              placeholder,
-              title = undefined,
-              required = false,
-              pattern = undefined,
-            }], index) => (
-              <div key={name} className={styles.inputRow}>
-                <span className={styles.icon}>
-                  <InputIcon />
-                </span>
-                <input
-                  className={styles.input}
-                  ref={index === 0 ? firstInput : null}
-                  type={type}
-                  placeholder={placeholder}
-                  title={title}
-                  required={required}
-                  pattern={pattern}
-                  value={values[name] || ""}
-                  onChange={(e) => setValues(vals => ({
-                    ...vals,
-                    [name]: e.target.value,
-                  }))}
-                />
-              </div>
-            ))}
+          <form
+            className={styles.placeholderForm}
+            onSubmit={(e) => {
+              e.preventDefault();
+              onSubmit(values);
+            }}
+          >
+            {Object.entries(inputs).map(
+              (
+                [
+                  name,
+                  {
+                    type,
+                    icon: InputIcon,
+                    placeholder,
+                    title = undefined,
+                    required = false,
+                    pattern = undefined,
+                  },
+                ],
+                index
+              ) => (
+                <div key={name} className={styles.inputRow}>
+                  <span className={styles.icon}>
+                    <InputIcon />
+                  </span>
+                  <input
+                    className={styles.input}
+                    ref={index === 0 ? firstInput : null}
+                    type={type}
+                    placeholder={placeholder}
+                    title={title}
+                    required={required}
+                    pattern={pattern}
+                    value={values[name] || ""}
+                    onChange={(e) =>
+                      setValues((vals) => ({
+                        ...vals,
+                        [name]: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+              )
+            )}
             <Button
               className={styles.button}
               appearance="primary"

@@ -1,4 +1,4 @@
-import styles from "../../styles/Select.module.css";
+import styles from "./Select.module.css";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import ChevronDownIcon from "../icons/chevron-down.svg";
 import CheckIcon from "../icons/check.svg";

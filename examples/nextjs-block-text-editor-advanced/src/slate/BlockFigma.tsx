@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockFigma.module.css";
+import styles from "./BlockFigma.module.css";
 import VideoIcon from "../icons/video.svg";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, FigmaElement } from "./types";
@@ -37,7 +37,8 @@ export default function BlockFigma({ element }: Props) {
               placeholder: "Paste Figma project link…",
               title: "Please enter a valid Figma project link",
               required: true,
-              pattern: "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$",
+              pattern:
+                "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$",
             },
           }}
           onSubmit={({ url }) => {

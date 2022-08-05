@@ -8,7 +8,7 @@ import {
   FocusEventHandler,
   MouseEventHandler,
 } from "react";
-import styles from "../../styles/Button.module.css";
+import styles from "./Button.module.css";
 
 type Props = {
   children: ReactNode;
@@ -50,12 +50,16 @@ const Button = forwardRef<HTMLButtonElement, Props>(
     return (
       <button
         ref={ref}
-        className={classNames(styles.button, {
-          [styles.button_ghost]: appearance === "ghost",
-          [styles.button_secondary]: appearance === "secondary",
-          [styles.button_primary]: appearance === "primary",
-          [styles.button_square]: isSquare,
-        }, className)}
+        className={classNames(
+          styles.button,
+          {
+            [styles.button_ghost]: appearance === "ghost",
+            [styles.button_secondary]: appearance === "secondary",
+            [styles.button_primary]: appearance === "primary",
+            [styles.button_square]: isSquare,
+          },
+          className
+        )}
         onClick={onClick}
         onKeyDown={onKeyDown}
         onPointerEnter={onPointerEnter}

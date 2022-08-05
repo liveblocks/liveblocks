@@ -1,4 +1,4 @@
-import styles from "../../styles/BlockTweet.module.css";
+import styles from "./BlockTweet.module.css";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, TweetElement } from "./types";
 import { Transforms } from "slate";
@@ -10,7 +10,8 @@ type Props = {
   element: TweetElement;
 };
 
-const tweetLinkPattern = "^https:\\/\\/(?:[\\w\\.-]+\\.)?twitter\\.com\\/.*\\/status(?:es)?\\/([^\\/\\?]+)?$";
+const tweetLinkPattern =
+  "^https:\\/\\/(?:[\\w\\.-]+\\.)?twitter\\.com\\/.*\\/status(?:es)?\\/([^\\/\\?]+)?$";
 
 export default function BlockTweet({ element }: Props) {
   const editor = useSlate();
@@ -19,9 +20,7 @@ export default function BlockTweet({ element }: Props) {
     <div className={styles.block_tweet}>
       {element.tweetId ? (
         <div className={styles.tweet_embed}>
-          <TwitterTweetEmbed
-            tweetId={element.tweetId}
-          />
+          <TwitterTweetEmbed tweetId={element.tweetId} />
         </div>
       ) : (
         <Placeholder

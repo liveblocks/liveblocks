@@ -1,3 +1,14 @@
+.editor {
+  position: relative;
+  min-height: 100vh;
+  padding-bottom: 6rem;
+  cursor: text;
+}
+
+.prose {
+  padding: 1rem 0 0;
+}
+
 .block_text {
   position: relative;
   display: flex;
@@ -50,4 +61,11 @@
 .block_text_selected .avatars {
   opacity: 0;
   pointer-events: none;
+}
+
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin: 0 auto;
+  padding: 0 1rem;
 }

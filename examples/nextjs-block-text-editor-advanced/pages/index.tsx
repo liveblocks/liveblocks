@@ -1,8 +1,39 @@
-import Room from "../src/components/Room";
+import { LiveList } from "@liveblocks/client";
+import { nanoid } from "nanoid";
+import { useRouter } from "next/router";
+import { useMemo } from "react";
 import Editor from "../src/slate/Editor";
+import { RoomProvider } from "../src/slate/liveblocks.config";
+import { BlockType, CustomElement } from "../src/slate/types";
 
-export default function Home() {
-  return <Editor />;
+const initialValue: CustomElement[] = [
+  {
+    id: nanoid(),
+    type: BlockType.Title,
+    children: [
+      {
+        text: "Hello",
+      },
+    ],
+  },
+];
+
+export default function Page() {
+  const roomId = useOverrideRoomId("nextjs-block-text-editor-advanced");
+
+  return (
+    <RoomProvider
+      id={roomId}
+      initialStorage={{
+        blocks: new LiveList(initialValue),
+      }}
+      initialPresence={{
+        selectedBlockId: null,
+      }}
+    >
+      <Editor />
+    </RoomProvider>
+  );
 }
 
 export async function getStaticProps() {
@@ -18,4 +49,17 @@ export async function getStaticProps() {
   }
 
   return { props: {} };
+}
+
+/**
+ * This function is used when deploying an example on liveblocks.io.
+ * You can ignore it completely if you run the example locally.
+ */
+function useOverrideRoomId(roomId: string) {
+  const { query } = useRouter();
+  const overrideRoomId = useMemo(() => {
+    return query?.roomId ? `${roomId}-${query.roomId}` : roomId;
+  }, [query, roomId]);
+
+  return overrideRoomId;
 }

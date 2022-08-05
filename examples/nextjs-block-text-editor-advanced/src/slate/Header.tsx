@@ -1,5 +1,5 @@
-import styles from "../../styles/Header.module.css";
-import { useHistory, useOthers } from "./liveblocks.config";
+import styles from "./Header.module.css";
+import { useOthers } from "./liveblocks.config";
 import Avatar from "../components/Avatar";
 import Button from "../components/Button";
 import SunIcon from "../icons/sun.svg";

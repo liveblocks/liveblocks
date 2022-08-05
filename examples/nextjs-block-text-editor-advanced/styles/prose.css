@@ -10,31 +10,24 @@
 }
 
 .prose .title,
-.prose .title ~ .placeholder,
 .prose h1,
-.prose h1 ~ .placeholder,
 .prose .h1,
 .prose h2,
-.prose h2 ~ .placeholder,
 .prose .h2,
 .prose h3,
-.prose h3 ~ .placeholder,
 .prose .h3 {
   font-weight: 600;
   line-height: 1.3em;
   letter-spacing: -0.0125em;
 }
 
-
-.prose .title,
-.prose .title ~ .placeholder {
+.prose .title {
   margin-top: 1.4em;
   margin-bottom: 0.25em;
   font-size: 2.5em;
 }
 
 .prose h1,
-.prose h1 ~ .placeholder,
 .prose .h1 {
   margin-top: 1.4em;
   margin-bottom: 0.25em;
@@ -48,7 +41,6 @@
 }
 
 .prose h2,
-.prose h2 ~ .placeholder,
 .prose .h2 {
   margin-top: 1.4em;
   margin-bottom: 0.25em;
@@ -62,7 +54,6 @@
 }
 
 .prose h3,
-.prose h3 ~ .placeholder,
 .prose .h3 {
   margin-top: 1em;
   margin-bottom: 0.25em;
@@ -76,6 +67,6 @@
 }
 
 .prose p .caret,
-.prose .p .caret  {
+.prose .p .caret {
   margin-top: 0.15em;
 }

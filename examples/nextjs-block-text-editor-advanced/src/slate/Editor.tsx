@@ -1,6 +1,5 @@
-import styles from "../../styles/Document.module.css";
+import styles from "./Editor.module.css";
 import isHotkey from "is-hotkey";
-import blockTextStyles from "../../styles/BlockText.module.css";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createEditor, Editor, Node, Transforms, Range } from "slate";
@@ -23,19 +22,15 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
-import { nanoid } from "nanoid";
 import Header from "./Header";
-import Container from "../components/Container";
 import classNames from "classnames";
 import BlockInlineActions from "./BlockInlineActions";
 import {
-  RoomProvider,
   useList,
   useOthers,
   useRoom,
   useUpdateMyPresence,
 } from "./liveblocks.config";
-import { LiveList } from "@liveblocks/client";
 import { Format } from "../types";
 import { BlockType, CustomElement } from "./types";
 import { toggleMark, withLayout, withNodeId } from "./utils";
@@ -46,19 +41,7 @@ import Block from "./Block";
 import { USER_COLORS } from "../constants";
 import Avatar from "../components/Avatar";
 
-const initialValue: CustomElement[] = [
-  {
-    id: nanoid(),
-    type: BlockType.Title,
-    children: [
-      {
-        text: "Hello",
-      },
-    ],
-  },
-];
-
-export const useEditor = () =>
+const useEditor = () =>
   useMemo(() => withNodeId(withLayout(withReact(createEditor()))), []);
 
 function isNodeWithId(editor: Editor, id: string) {
@@ -72,23 +55,7 @@ const HOTKEYS: Record<string, Format> = {
   "mod+s": "strikeThrough",
 };
 
-export default function Room() {
-  return (
-    <RoomProvider
-      id="slate-test"
-      initialStorage={{
-        blocks: new LiveList(initialValue),
-      }}
-      initialPresence={{
-        selectedBlockId: null,
-      }}
-    >
-      <App />
-    </RoomProvider>
-  );
-}
-
-function App() {
+export default function App() {
   const editor = useEditor();
 
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -267,14 +234,14 @@ function App() {
   }
 
   return (
-    <div className={styles.block_text_editor}>
+    <div className={styles.editor}>
       <Header />
 
       <div
         className={classNames(styles.prose, "prose")}
         onClick={(e) => e.stopPropagation()}
       >
-        <Container>
+        <div className={styles.container}>
           <Slate
             editor={editor}
             value={blocks?.toArray()}
@@ -435,7 +402,7 @@ function App() {
               )}
             </DndContext>
           </Slate>
-        </Container>
+        </div>
       </div>
     </div>
   );
@@ -459,7 +426,7 @@ function SortableElement({
     .filter((user) => user.presence?.selectedBlockId === element.id);
 
   return (
-    <div className={blockTextStyles.block_text} {...attributes}>
+    <div className={styles.block_text} {...attributes}>
       <div
         className="sortable"
         {...sortable.attributes}
@@ -475,8 +442,9 @@ function SortableElement({
           } as React.CSSProperties /* casted because of css variable */
         }
       >
+        {renderElement({ element, children })}
         {othersByBlockId.length > 0 && (
-          <div className={classNames(blockTextStyles.avatars, "avatars")}>
+          <div className={classNames(styles.avatars, "avatars")}>
             {othersByBlockId.map((user) => {
               return (
                 <Avatar
@@ -490,13 +458,7 @@ function SortableElement({
             })}
           </div>
         )}
-        {renderElement({ element, children })}
-        <div
-          className={classNames(
-            blockTextStyles.inline_actions,
-            "inline_actions"
-          )}
-        >
+        <div className={classNames(styles.inline_actions, "inline_actions")}>
           <BlockInlineActions
             blockId={element.id}
             onDelete={onDelete}
