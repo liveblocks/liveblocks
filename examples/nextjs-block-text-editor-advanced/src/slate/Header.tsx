@@ -33,41 +33,16 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.left}>
-          <div className={styles.group}>
-            <Tooltip content="Undo">
-              <Button
-                appearance="ghost"
-                onClick={() => history.undo()}
-                ariaLabel="Undo"
-                isSquare
-              >
-                <UndoIcon />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Redo">
-              <Button
-                appearance="ghost"
-                onClick={() => history.redo()}
-                ariaLabel="Redo"
-                isSquare
-              >
-                <RedoIcon />
-              </Button>
-            </Tooltip>
-          </div>
-          <div className={styles.separator} />
-          <div className={styles.group}>
-            <Tooltip content="Switch Theme">
-              <Button
-                appearance="ghost"
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                ariaLabel="Switch Theme"
-                isSquare
-              >
-                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
-              </Button>
-            </Tooltip>
-          </div>
+          <Tooltip content="Switch Theme">
+            <Button
+              appearance="ghost"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              ariaLabel="Switch Theme"
+              isSquare
+            >
+              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
+            </Button>
+          </Tooltip>
         </div>
         <div className={styles.right}>
           <div className={styles.avatars}>

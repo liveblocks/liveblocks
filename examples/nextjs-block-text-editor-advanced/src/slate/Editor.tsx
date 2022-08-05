@@ -35,10 +35,10 @@ import {
   useRoom,
   useUpdateMyPresence,
 } from "./liveblocks.config";
-import { LiveList, LiveObject } from "@liveblocks/client";
+import { LiveList } from "@liveblocks/client";
 import { Format } from "../types";
-import { BlockType, CustomElement, DocumentMeta } from "./types";
-import { toggleMark, topLevelPath, withLayout, withNodeId } from "./utils";
+import { BlockType, CustomElement } from "./types";
+import { toggleMark, withLayout, withNodeId } from "./utils";
 import Leaf from "./Leaf";
 import Toolbar from "./Toolbar";
 import Loading from "../components/Loading";
@@ -77,9 +77,6 @@ export default function Room() {
     <RoomProvider
       id="slate-test"
       initialStorage={{
-        meta: new LiveObject<DocumentMeta>({
-          title: null,
-        }),
         blocks: new LiveList(initialValue),
       }}
       initialPresence={{

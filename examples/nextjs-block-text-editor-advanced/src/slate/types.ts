@@ -16,12 +16,7 @@ export type Presence = {
 };
 
 export type Storage = {
-  meta: LiveObject<DocumentMeta>;
   blocks: LiveList<CustomElement>;
-};
-
-export type DocumentMeta = {
-  title: string | null;
 };
 
 export type UserMeta = {
@@ -45,12 +40,15 @@ export enum BlockType {
 }
 
 export type TextBlock =
-  BlockType.H1 | BlockType.H2 | BlockType.H3 | BlockType.Paragraph;
+  | BlockType.H1
+  | BlockType.H2
+  | BlockType.H3
+  | BlockType.Paragraph;
 
 export type BlockElement = {
   id: string;
   children: CustomText[];
-}
+};
 
 export type ParagraphElement = BlockElement & {
   type: BlockType.Paragraph;
@@ -83,16 +81,22 @@ export type FigmaElement = BlockElement & {
   type: BlockType.Figma;
   url: string | null;
   children: [{ text: "" }];
-}
+};
 
 export type TweetElement = BlockElement & {
   type: BlockType.Tweet;
   tweetId: string | null;
   children: [{ text: "" }];
-}
+};
 
 export type CustomElement =
-  ParagraphElement | HeadingElement | ImageElement | VideoElement | CodeSandboxElement | FigmaElement | TweetElement;
+  | ParagraphElement
+  | HeadingElement
+  | ImageElement
+  | VideoElement
+  | CodeSandboxElement
+  | FigmaElement
+  | TweetElement;
 
 export type CustomText = {
   text: string;
