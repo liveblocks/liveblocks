@@ -5,6 +5,7 @@ import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
 import { BlockType } from "./types";
 import BlockTweet from "./BlockTweet";
+import styles from "./Block.module.css";
 
 // Note: {children} must be rendered in every element otherwise bugs occur
 // https://docs.slatejs.org/api/nodes/element#rendering-void-elements
@@ -14,6 +15,14 @@ export default function Block({
   children,
   attributes,
 }: RenderElementProps) {
+  if (element.type === BlockType.Title) {
+    return (
+      <div className={styles.title} {...attributes}>
+        {children}
+      </div>
+    );
+  }
+
   if (element.type === BlockType.Paragraph) {
     return <p {...attributes}>{children}</p>;
   }

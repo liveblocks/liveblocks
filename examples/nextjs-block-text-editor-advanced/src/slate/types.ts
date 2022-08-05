@@ -28,6 +28,7 @@ export type UserMeta = {
 };
 
 export enum BlockType {
+  Title = "title",
   H1 = "h1",
   H2 = "h2",
   H3 = "h3",
@@ -40,6 +41,7 @@ export enum BlockType {
 }
 
 export type TextBlock =
+  | BlockType.Title
   | BlockType.H1
   | BlockType.H2
   | BlockType.H3
@@ -89,7 +91,12 @@ export type TweetElement = BlockElement & {
   children: [{ text: "" }];
 };
 
+export type TitleElement = BlockElement & {
+  type: BlockType.Title;
+};
+
 export type CustomElement =
+  | TitleElement
   | ParagraphElement
   | HeadingElement
   | ImageElement

@@ -49,7 +49,7 @@ import Avatar from "../components/Avatar";
 const initialValue: CustomElement[] = [
   {
     id: nanoid(),
-    type: BlockType.H1,
+    type: BlockType.Title,
     children: [
       {
         text: "Hello",
@@ -409,7 +409,11 @@ function App() {
                   }}
                   onKeyDown={(event) => {
                     for (const hotkey in HOTKEYS) {
-                      if (isHotkey(hotkey, event as any)) {
+                      if (
+                        isHotkey(hotkey, event as any) &&
+                        editor.selection &&
+                        !Range.includes(editor.selection, [0]) // Do not apply marks if selection include title
+                      ) {
                         event.preventDefault();
                         const mark = HOTKEYS[hotkey];
                         toggleMark(editor, mark);

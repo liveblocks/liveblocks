@@ -1,12 +1,6 @@
 import { nanoid } from "nanoid";
-import { Editor, Element, Node, Operation, Path, Transforms } from "slate";
-import {
-  BlockType,
-  CustomElement,
-  Format,
-  HeadingElement,
-  ParagraphElement,
-} from "./types";
+import { Editor, Element, Operation, Path, Transforms } from "slate";
+import { BlockType, Format, TitleElement } from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -56,39 +50,77 @@ export function withLayout(editor: Editor) {
   const { normalizeNode } = editor;
 
   editor.normalizeNode = ([node, path]) => {
+    // Make sure the document always contains a title
     if (path.length === 0) {
-      if (editor.children.length < 1) {
-        const title: HeadingElement = {
-          id: nanoid(),
-          type: BlockType.H1,
-          children: [{ text: "Untitled" }],
-        };
-        Transforms.insertNodes(editor, title, { at: path.concat(0) });
-      }
-
-      for (const [child, childPath] of Node.children(editor, path)) {
-        const slateIndex = childPath[0];
-
-        if (
-          slateIndex === 0 &&
-          Element.isElement(child) &&
-          child.type !== BlockType.H1
-        ) {
-          Transforms.setNodes(
-            editor,
-            {
-              type: BlockType.H1,
-            },
-            {
-              at: childPath,
-            }
-          );
-        }
-      }
+      insertTitleIfMissing(editor);
+      transformBlockToTitleIfNecessary(editor);
+      removeTitleStyling(editor);
     }
 
     return normalizeNode([node, path]);
   };
 
   return editor;
+}
+
+function insertTitleIfMissing(editor: Editor) {
+  if (editor.children.length < 1) {
+    const title: TitleElement = {
+      id: nanoid(),
+      type: BlockType.Title,
+      children: [{ text: "Untitled" }],
+    };
+    Transforms.insertNodes(editor, title, { at: [0] });
+  }
+}
+
+function transformBlockToTitleIfNecessary(editor: Editor) {
+  const firstChild = editor.children[0];
+
+  if (Element.isElement(firstChild) && firstChild.type !== BlockType.Title) {
+    Transforms.setNodes(
+      editor,
+      {
+        type: BlockType.Title,
+      },
+      {
+        at: [0],
+      }
+    );
+  }
+}
+
+function removeTitleStyling(editor: Editor) {
+  const title = editor.children[0];
+
+  if (Element.isElement(title) && title.type === BlockType.Title) {
+    if (title.children.length > 1) {
+      debugger;
+
+      const string = Editor.string(editor, [0]);
+
+      for (let i = title.children.length - 1; i >= 0; i--) {
+        editor.apply({
+          type: "remove_node",
+          node: title.children[i],
+          path: [0, i],
+        });
+      }
+
+      editor.apply({
+        type: "insert_node",
+        path: [0, 0],
+        node: { text: string },
+      });
+    }
+
+    const leaf = title.children[0];
+    const marksToRemove = (
+      ["underline", "italic", "bold", "strikeThrough"] as Format[]
+    ).filter((mark) => leaf[mark]);
+
+    if (marksToRemove.length > 0) {
+      Transforms.unsetNodes(editor, marksToRemove, { at: [0, 0] });
+    }
+  }
 }

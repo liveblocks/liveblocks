@@ -2,8 +2,6 @@ import styles from "../../styles/Header.module.css";
 import { useHistory, useOthers } from "./liveblocks.config";
 import Avatar from "../components/Avatar";
 import Button from "../components/Button";
-import UndoIcon from "../icons/undo.svg";
-import RedoIcon from "../icons/redo.svg";
 import SunIcon from "../icons/sun.svg";
 import MoonIcon from "../icons/moon.svg";
 import Tooltip from "../components/Tooltip";
@@ -14,7 +12,6 @@ import { LOCAL_STORAGE_THEME, USER_COLORS } from "../constants";
 
 export default function Header() {
   const others = useOthers();
-  const history = useHistory();
 
   const [theme, setTheme] = useState<Theme | null>(
     localStorage.getItem(LOCAL_STORAGE_THEME) as Theme | null
