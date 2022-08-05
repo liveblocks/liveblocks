@@ -4,7 +4,6 @@ import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, ImageElement } from "./types";
 import { Transforms } from "slate";
 import Placeholder from "./Placeholder";
-import { useSelf } from "./liveblocks.config";
 
 type Props = {
   element: ImageElement;
@@ -12,7 +11,6 @@ type Props = {
 
 export default function BlockImage({ element }: Props) {
   const editor = useSlate();
-  const self = useSelf();
 
   return (
     <div className={styles.block_image}>
@@ -22,7 +20,6 @@ export default function BlockImage({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          startOpen={self?.connectionId === element.createdBy}
           icon={ImageIcon}
           text="Embed an image from a URL"
           inputs={{
@@ -40,7 +37,7 @@ export default function BlockImage({ element }: Props) {
               required: false,
             }
           }}
-          onSet={({ url, alt }) => {
+          onSubmit={({ url, alt }) => {
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {
               url,

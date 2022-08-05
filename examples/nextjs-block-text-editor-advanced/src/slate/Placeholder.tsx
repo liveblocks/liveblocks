@@ -14,15 +14,14 @@ type Input = {
 type Values = Record<string, string>;
 
 type Props = {
-  startOpen: boolean;
   icon: ComponentType;
   text: string;
   inputs: Record<string, Input>;
-  onSet: (values: Values) => void;
+  onSubmit: (values: Values) => void;
 };
 
-export default function Placeholder({ startOpen, icon: Icon, text, inputs, onSet }: Props) {
-  const [open, setOpen] = useState(startOpen);
+export default function Placeholder({ icon: Icon, text, inputs, onSubmit }: Props) {
+  const [open, setOpen] = useState(false);
   const [values, setValues] = useState<Values>({});
   const firstInput = createRef<HTMLInputElement>();
 
@@ -32,58 +31,59 @@ export default function Placeholder({ startOpen, icon: Icon, text, inputs, onSet
     }
   }, [open]);
 
-  if (!open) {
-    return (
-      <div className={styles.placeholder} onClick={() => setOpen(true)}>
-        <span className={styles.icon}>
-          <Icon />
-        </span>
-        {text}
-      </div>
-    );
-  }
-
   return (
-    <form className={styles.placeholderForm} onSubmit={(e) => {
-      e.preventDefault();
-      onSet(values)
-    }}>
-      {Object.entries(inputs).map(([name, {
-        type,
-        icon: InputIcon,
-        placeholder,
-        title = undefined,
-        required = false,
-        pattern = undefined,
-      }], index) => (
-        <div key={name} className={styles.inputRow}>
-          <span className={styles.icon}>
-            <InputIcon />
-          </span>
-          <input
-            className={styles.input}
-            ref={index === 0 ? firstInput : null}
-            type={type}
-            placeholder={placeholder}
-            title={title}
-            required={required}
-            pattern={pattern}
-            value={values[name]}
-            onChange={(e) => setValues(vals => ({
-              ...vals,
-              [name]: e.target.value,
-            }))}
-          />
-        </div>
-      ))}
-      <Button
-        className={styles.button}
-        appearance="primary"
-        ariaLabel="Toggle Strikethrough"
-        type="submit"
-      >
-        Embed
-      </Button>
-    </form>
-  )
+    <div className={styles.placeholder} >
+      <div className={styles.outside} onClick={() => setOpen(!open)} />
+      <span className={styles.icon}>
+        <Icon />
+      </span>
+      {text}
+      {open ? (
+        <>
+          <div className={styles.outside} onClick={() => setOpen(false)} />
+          <form className={styles.placeholderForm} onSubmit={(e) => {
+            e.preventDefault();
+            onSubmit(values)
+          }}>
+            {Object.entries(inputs).map(([name, {
+              type,
+              icon: InputIcon,
+              placeholder,
+              title = undefined,
+              required = false,
+              pattern = undefined,
+            }], index) => (
+              <div key={name} className={styles.inputRow}>
+                <span className={styles.icon}>
+                  <InputIcon />
+                </span>
+                <input
+                  className={styles.input}
+                  ref={index === 0 ? firstInput : null}
+                  type={type}
+                  placeholder={placeholder}
+                  title={title}
+                  required={required}
+                  pattern={pattern}
+                  value={values[name] || ""}
+                  onChange={(e) => setValues(vals => ({
+                    ...vals,
+                    [name]: e.target.value,
+                  }))}
+                />
+              </div>
+            ))}
+            <Button
+              className={styles.button}
+              appearance="primary"
+              ariaLabel="Toggle Strikethrough"
+              type="submit"
+            >
+              Embed
+            </Button>
+          </form>
+        </>
+      ) : null}
+    </div>
+  );
 }

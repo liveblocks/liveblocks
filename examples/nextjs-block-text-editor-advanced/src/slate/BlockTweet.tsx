@@ -5,7 +5,6 @@ import { Transforms } from "slate";
 import { TwitterTweetEmbed } from "react-twitter-embed";
 import ImageIcon from "../icons/image.svg";
 import Placeholder from "./Placeholder";
-import { useSelf } from "./liveblocks.config";
 
 type Props = {
   element: TweetElement;
@@ -15,7 +14,6 @@ const tweetLinkPattern = "^https:\\/\\/(?:[\\w\\.-]+\\.)?twitter\\.com\\/.*\\/st
 
 export default function BlockTweet({ element }: Props) {
   const editor = useSlate();
-  const self = useSelf();
 
   return (
     <div className={styles.block_tweet}>
@@ -27,7 +25,6 @@ export default function BlockTweet({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          startOpen={self?.connectionId === element.createdBy}
           icon={ImageIcon}
           text="Embed a Tweet"
           inputs={{
@@ -39,7 +36,7 @@ export default function BlockTweet({ element }: Props) {
               required: true,
             },
           }}
-          onSet={({ tweetId }) => {
+          onSubmit={({ tweetId }) => {
             const match = tweetId.match(new RegExp(tweetLinkPattern));
             if (!match?.[1]) {
               return;

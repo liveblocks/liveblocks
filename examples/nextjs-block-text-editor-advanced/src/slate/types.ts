@@ -46,7 +46,6 @@ export type TextBlock =
   | BlockType.Paragraph;
 
 export type BlockElement = {
-  createdBy: number;
   id: string;
   children: CustomText[];
 };
