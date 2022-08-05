@@ -1,5 +1,5 @@
 import React, { ComponentType, createRef, useEffect, useState } from "react";
-import Button from "../components/Button";
+import Button from "./Button";
 import styles from "./Placeholder.module.css";
 
 type Input = {

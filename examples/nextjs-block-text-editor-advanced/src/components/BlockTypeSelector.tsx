@@ -2,8 +2,8 @@ import { ReactNode } from "react";
 import styles from "./BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
-import { BlockType, CustomElement } from "./types";
-import { useSelf } from "./liveblocks.config";
+import { BlockType, CustomElement } from "../types";
+import { useSelf } from "../liveblocks.config";
 
 type Props = {
   children: ReactNode;

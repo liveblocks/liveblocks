@@ -1,10 +1,10 @@
 import styles from "./BlockTweet.module.css";
 import { ReactEditor, useSlate } from "slate-react";
-import { CustomElement, TweetElement } from "./types";
+import { CustomElement, TweetElement } from "../types";
 import { Transforms } from "slate";
 import { TwitterTweetEmbed } from "react-twitter-embed";
 import ImageIcon from "../icons/image.svg";
-import Placeholder from "./Placeholder";
+import Placeholder from "../components/Placeholder";
 
 type Props = {
   element: TweetElement;

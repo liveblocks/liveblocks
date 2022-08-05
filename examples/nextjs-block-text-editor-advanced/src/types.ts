@@ -1,51 +1,22 @@
-import { LiveMap, LiveObject, LiveList } from "@liveblocks/client";
+import { LiveList } from "@liveblocks/client";
+import { BaseEditor, BaseOperation } from "slate";
+import { ReactEditor } from "slate-react";
 
-export type BlockProps = TextBlock | VideoBlock | ImageBlock | CodeSandboxBlock;
-
-export enum BlockType {
-  Text,
-  Video,
-  Image,
-  CodeSandbox
+declare module "slate" {
+  interface CustomTypes {
+    Editor: BaseEditor & ReactEditor;
+    Element: CustomElement;
+    Text: CustomText;
+    Operation: BaseOperation & { isRemote?: boolean };
+  }
 }
-
-export type TextBlock = {
-  type: BlockType.Text;
-  node: BlockTopLevelNode;
-};
-
-export type VideoBlock = {
-  type: BlockType.Video;
-  url: string | null;
-};
-
-export type ImageBlock = {
-  type: BlockType.Image;
-  url: string | null;
-};
-
-export type CodeSandboxBlock = {
-  type: BlockType.CodeSandbox;
-  url: string | null;
-}
-
-export type TextSelection = {
-  caretPosition: number | null;
-};
 
 export type Presence = {
-  selectedBlockIds: string[];
-  textSelection: TextSelection | null;
+  selectedBlockId: string | null;
 };
 
 export type Storage = {
-  meta: LiveObject<DocumentMeta>;
-  blocks: LiveMap<string, LiveObject<BlockProps>>;
-  blockIds: LiveList<string>;
-};
-
-export type DocumentMeta = {
-  title: string | null;
+  blocks: LiveList<CustomElement>;
 };
 
 export type UserMeta = {
@@ -56,97 +27,94 @@ export type UserMeta = {
   };
 };
 
-export enum BlockNodeType {
-  HeadingOne,
-  HeadingTwo,
-  HeadingThree,
-  Paragraph,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  Misc,
-  Br,
-  Text,
+export enum BlockType {
+  Title = "title",
+  H1 = "h1",
+  H2 = "h2",
+  H3 = "h3",
+  Paragraph = "paragraph",
+  Image = "image",
+  Video = "video",
+  CodeSandbox = "codesandbox",
+  Figma = "figma",
+  Tweet = "tweet",
 }
 
-export type BlockNode =
-  | ParagraphBlockNode
-  | HeadingOneBlockNode
-  | HeadingTwoBlockNode
-  | HeadingThreeBlockNode
-  | BoldBlockNode
-  | UnderlineBlockNode
-  | ItalicBlockNode
-  | StrikethroughBlockNode
-  | MiscBlockNode
-  | BrBlockNode
-  | TextBlockNode;
+export type TextBlock =
+  | BlockType.Title
+  | BlockType.H1
+  | BlockType.H2
+  | BlockType.H3
+  | BlockType.Paragraph;
 
-export type BlockTopLevelNodeType =
-  | BlockNodeType.HeadingOne
-  | BlockNodeType.HeadingTwo
-  | BlockNodeType.HeadingThree
-  | BlockNodeType.Paragraph;
-
-export type BlockTopLevelNode =
-  | HeadingOneBlockNode
-  | HeadingTwoBlockNode
-  | HeadingThreeBlockNode
-  | ParagraphBlockNode;
-
-export type HeadingOneBlockNode = {
-  type: BlockNodeType.HeadingOne;
-  children: BlockNode[];
+export type BlockElement = {
+  id: string;
+  children: CustomText[];
 };
 
-export type HeadingTwoBlockNode = {
-  type: BlockNodeType.HeadingTwo;
-  children: BlockNode[];
+export type ParagraphElement = BlockElement & {
+  type: BlockType.Paragraph;
 };
 
-export type HeadingThreeBlockNode = {
-  type: BlockNodeType.HeadingThree;
-  children: BlockNode[];
+export type HeadingElement = BlockElement & {
+  type: BlockType.H1 | BlockType.H2 | BlockType.H3;
 };
 
-export type ParagraphBlockNode = {
-  type: BlockNodeType.Paragraph;
-  children: BlockNode[];
+export type ImageElement = BlockElement & {
+  type: BlockType.Image;
+  url: string | null;
+  alt: string | null;
+  children: [{ text: "" }];
 };
 
-export type BoldBlockNode = {
-  type: BlockNodeType.Bold;
-  children: BlockNode[];
+export type VideoElement = BlockElement & {
+  type: BlockType.Video;
+  url: string | null;
+  children: [{ text: "" }];
 };
 
-export type ItalicBlockNode = {
-  type: BlockNodeType.Italic;
-  children: BlockNode[];
+export type CodeSandboxElement = BlockElement & {
+  type: BlockType.CodeSandbox;
+  url: string | null;
+  children: [{ text: "" }];
 };
 
-export type UnderlineBlockNode = {
-  type: BlockNodeType.Underline;
-  children: BlockNode[];
+export type FigmaElement = BlockElement & {
+  type: BlockType.Figma;
+  url: string | null;
+  children: [{ text: "" }];
 };
 
-export type StrikethroughBlockNode = {
-  type: BlockNodeType.Strikethrough;
-  children: BlockNode[];
+export type TweetElement = BlockElement & {
+  type: BlockType.Tweet;
+  tweetId: string | null;
+  children: [{ text: "" }];
 };
 
-export type MiscBlockNode = {
-  type: BlockNodeType.Misc;
-  children: BlockNode[];
+export type TitleElement = BlockElement & {
+  type: BlockType.Title;
 };
 
-export type BrBlockNode = {
-  type: BlockNodeType.Br;
-};
+export type CustomElement =
+  | TitleElement
+  | ParagraphElement
+  | HeadingElement
+  | ImageElement
+  | VideoElement
+  | CodeSandboxElement
+  | FigmaElement
+  | TweetElement;
 
-export type TextBlockNode = {
-  type: BlockNodeType.Text;
+export type CustomText = {
   text: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikeThrough?: boolean;
+} & LeafDecoration;
+
+type LeafDecoration = {
+  placeholder?: boolean;
 };
 
 export type Format = "bold" | "underline" | "strikeThrough" | "italic";

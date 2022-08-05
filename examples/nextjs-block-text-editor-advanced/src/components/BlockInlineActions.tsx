@@ -1,12 +1,12 @@
 import styles from "./BlockInlineActions.module.css";
-import Button from "../components/Button";
+import Button from "./Button";
 import PlusIcon from "../icons/plus.svg";
 import MinusIcon from "../icons/minus.svg";
 import DragIcon from "../icons/drag.svg";
 import { useDraggable } from "@dnd-kit/core";
-import Tooltip from "../components/Tooltip";
+import Tooltip from "./Tooltip";
 import BlockTypeSelector from "./BlockTypeSelector";
-import { CustomElement } from "./types";
+import { CustomElement } from "../types";
 
 type Props = {
   blockId: string;

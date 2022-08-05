@@ -1,3 +1,5 @@
+import { Format } from "./types";
+
 export const LOCAL_STORAGE_THEME = "theme";
 
 export const USER_COLORS = [
@@ -9,3 +11,10 @@ export const USER_COLORS = [
   "#F8B301",
   "#FF1F73",
 ];
+
+export const HOTKEYS: Record<string, Format> = {
+  "mod+b": "bold",
+  "mod+i": "italic",
+  "mod+u": "underline",
+  "mod+s": "strikeThrough",
+};

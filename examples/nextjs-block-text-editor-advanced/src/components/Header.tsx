@@ -1,13 +1,13 @@
 import styles from "./Header.module.css";
-import { useOthers } from "./liveblocks.config";
-import Avatar from "../components/Avatar";
-import Button from "../components/Button";
+import { useOthers } from "../liveblocks.config";
+import Avatar from "./Avatar";
+import Button from "./Button";
 import SunIcon from "../icons/sun.svg";
 import MoonIcon from "../icons/moon.svg";
-import Tooltip from "../components/Tooltip";
+import Tooltip from "./Tooltip";
 import { Theme } from "../types";
 import { useEffect, useState } from "react";
-import applyTheme from "../utils/applyTheme";
+import { applyTheme } from "../utils";
 import { LOCAL_STORAGE_THEME, USER_COLORS } from "../constants";
 
 export default function Header() {

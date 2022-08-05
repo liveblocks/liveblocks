@@ -2,16 +2,16 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Editor, Path, Range, Transforms } from "slate";
 import { useFocused, useSlate } from "slate-react";
-import Button from "../components/Button";
-import Select from "../components/Select";
-import Tooltip from "../components/Tooltip";
+import Button from "./Button";
+import Select from "./Select";
+import Tooltip from "./Tooltip";
 import styles from "./Toolbar.module.css";
 import BoldIcon from "../icons/bold.svg";
 import ItalicIcon from "../icons/italic.svg";
 import UnderlineIcon from "../icons/underline.svg";
 import StrikethroughIcon from "../icons/strikethrough.svg";
-import { toggleMark, topLevelPath } from "./utils";
-import { BlockType, CustomElement, TextBlock } from "./types";
+import { toggleMark, topLevelPath } from "../utils";
+import { BlockType, CustomElement, TextBlock } from "../types";
 
 export default function Toolbar() {
   const ref = useRef<HTMLDivElement | null>(null);

@@ -1,26 +1,26 @@
-import styles from "./BlockFigma.module.css";
-import VideoIcon from "../icons/video.svg";
+import styles from "./BlockCodeSandbox.module.css";
+import CodeSandboxIcon from "../icons/codesandbox.svg";
 import { ReactEditor, useSlate } from "slate-react";
-import { CustomElement, FigmaElement } from "./types";
+import { CustomElement, CodeSandboxElement } from "../types";
 import { Transforms } from "slate";
-import Placeholder from "./Placeholder";
+import Placeholder from "../components/Placeholder";
 
 type Props = {
-  element: FigmaElement;
+  element: CodeSandboxElement;
 };
 
-export default function BlockFigma({ element }: Props) {
+export default function BlockCodeSandbox({ element }: Props) {
   const editor = useSlate();
 
   return (
-    <div className={styles.block_figma}>
+    <div className={styles.block_codesandbox}>
       {element.url ? (
-        <div className={styles.figma_embed}>
+        <div className={styles.codesandbox_embed}>
           <iframe
             width="100%"
             height="315"
             src={element.url}
-            title="Figma file"
+            title="CodeSandbox embed"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -28,21 +28,23 @@ export default function BlockFigma({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          icon={VideoIcon}
-          text="Embed a Figma project"
+          icon={CodeSandboxIcon}
+          text="Embed a CodeSandbox project"
           inputs={{
             url: {
               type: "url",
-              icon: VideoIcon,
-              placeholder: "Paste Figma project link…",
-              title: "Please enter a valid Figma project link",
+              icon: CodeSandboxIcon,
+              placeholder: "Paste CodeSandbox link…",
+              title: "Please enter a valid CodeSandbox project link",
               required: true,
               pattern:
-                "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$",
+                "((?:https?:)?//)?(?:www.)?(?:codesandbox.io)((/s/)|(/embed/))(.*)+$",
             },
           }}
           onSubmit={({ url }) => {
-            url = "https://www.figma.com/embed?embed_host=astra&url=" + url;
+            if (!url.includes("/embed/")) {
+              url = url.replace("/s/", "/embed/");
+            }
 
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {

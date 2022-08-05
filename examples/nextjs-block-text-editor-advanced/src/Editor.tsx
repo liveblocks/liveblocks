@@ -1,7 +1,8 @@
 import styles from "./Editor.module.css";
-import isHotkey from "is-hotkey";
 
+import isHotkey from "is-hotkey";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { createEditor, Editor, Node, Transforms, Range } from "slate";
 import {
   Slate,
@@ -21,25 +22,26 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { createPortal } from "react-dom";
-import Header from "./Header";
 import classNames from "classnames";
-import BlockInlineActions from "./BlockInlineActions";
+
 import {
   useList,
   useOthers,
   useRoom,
   useUpdateMyPresence,
 } from "./liveblocks.config";
-import { Format } from "../types";
-import { BlockType, CustomElement } from "./types";
+import { Format, BlockType, CustomElement } from "./types";
 import { toggleMark, withLayout, withNodeId } from "./utils";
-import Leaf from "./Leaf";
-import Toolbar from "./Toolbar";
-import Loading from "../components/Loading";
-import Block from "./Block";
-import { USER_COLORS } from "../constants";
-import Avatar from "../components/Avatar";
+import Leaf from "./blocks/Leaf";
+import Block from "./blocks/Block";
+import { HOTKEYS, USER_COLORS } from "./constants";
+import {
+  Avatar,
+  Loading,
+  Toolbar,
+  BlockInlineActions,
+  Header,
+} from "./components";
 
 const useEditor = () =>
   useMemo(() => withNodeId(withLayout(withReact(createEditor()))), []);
@@ -47,13 +49,6 @@ const useEditor = () =>
 function isNodeWithId(editor: Editor, id: string) {
   return (node: Node) => Editor.isBlock(editor, node) && node.id === id;
 }
-
-const HOTKEYS: Record<string, Format> = {
-  "mod+b": "bold",
-  "mod+i": "italic",
-  "mod+u": "underline",
-  "mod+s": "strikeThrough",
-};
 
 export default function App() {
   const editor = useEditor();

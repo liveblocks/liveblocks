@@ -1,26 +1,26 @@
-import styles from "./BlockVideo.module.css";
+import styles from "./BlockFigma.module.css";
 import VideoIcon from "../icons/video.svg";
 import { ReactEditor, useSlate } from "slate-react";
-import { CustomElement, VideoElement } from "./types";
+import { CustomElement, FigmaElement } from "../types";
 import { Transforms } from "slate";
-import Placeholder from "./Placeholder";
+import Placeholder from "../components/Placeholder";
 
 type Props = {
-  element: VideoElement;
+  element: FigmaElement;
 };
 
-export default function BlockVideo({ element }: Props) {
+export default function BlockFigma({ element }: Props) {
   const editor = useSlate();
 
   return (
-    <div className={styles.block_video}>
+    <div className={styles.block_figma}>
       {element.url ? (
-        <div className={styles.video_embed}>
+        <div className={styles.figma_embed}>
           <iframe
             width="100%"
             height="315"
             src={element.url}
-            title="YouTube video player"
+            title="Figma file"
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -29,23 +29,20 @@ export default function BlockVideo({ element }: Props) {
       ) : (
         <Placeholder
           icon={VideoIcon}
-          text="Embed a YouTube video"
+          text="Embed a Figma project"
           inputs={{
             url: {
               type: "url",
               icon: VideoIcon,
-              placeholder: "Paste YouTube video link…",
-              title: "Please enter a valid YouTube video link",
+              placeholder: "Paste Figma project link…",
+              title: "Please enter a valid Figma project link",
               required: true,
               pattern:
-                "^((?:https?:)?//)?((?:www|m)\\.)?((?:youtube(-nocookie)?\\.com|youtu.be))(/(?:[\\w\\-]+\\?v=|embed/|v/)?)([\\w\\-]+)(\\S+)?$",
+                "^https:\\/\\/([\\w\\.-]+\\.)?figma.com\\/(file|proto)\\/([0-9a-zA-Z]{22,128})(?:\\/.*)?$",
             },
           }}
           onSubmit={({ url }) => {
-            if (!url.includes("/embed/")) {
-              const id = new URL(url).searchParams.get("v");
-              url = `https://youtube.com/embed/${id}`;
-            }
+            url = "https://www.figma.com/embed?embed_host=astra&url=" + url;
 
             const path = ReactEditor.findPath(editor, element);
             const newProperties: Partial<CustomElement> = {

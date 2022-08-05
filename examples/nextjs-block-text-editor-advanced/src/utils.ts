@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 import { Editor, Element, Operation, Path, Transforms } from "slate";
-import { BlockType, Format, TitleElement } from "./types";
+import { BlockType, Format, TitleElement, Theme } from "./types";
 
 export function toPx(value: number | undefined): string | undefined {
   return value ? `${Math.round(value)}px` : undefined;
@@ -123,4 +123,13 @@ function removeTitleStyling(editor: Editor) {
       Transforms.unsetNodes(editor, marksToRemove, { at: [0, 0] });
     }
   }
+}
+
+export function applyTheme(theme: Theme) {
+  const htmlElement = document.querySelector("html");
+  if (!htmlElement) {
+    return;
+  }
+
+  htmlElement.className = `theme-${theme}`;
 }

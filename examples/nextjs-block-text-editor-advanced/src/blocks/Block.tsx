@@ -3,7 +3,7 @@ import BlockImage from "./BlockImage";
 import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
-import { BlockType } from "./types";
+import { BlockType } from "../types";
 import BlockTweet from "./BlockTweet";
 import styles from "./Block.module.css";
 

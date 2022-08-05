@@ -2,9 +2,9 @@ import { LiveList } from "@liveblocks/client";
 import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
-import Editor from "../src/slate/Editor";
-import { RoomProvider } from "../src/slate/liveblocks.config";
-import { BlockType, CustomElement } from "../src/slate/types";
+import Editor from "../src/Editor";
+import { RoomProvider } from "../src/liveblocks.config";
+import { BlockType, CustomElement } from "../src/types";
 
 const initialValue: CustomElement[] = [
   {

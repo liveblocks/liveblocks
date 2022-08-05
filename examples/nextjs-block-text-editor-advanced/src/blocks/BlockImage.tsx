@@ -1,9 +1,9 @@
 import styles from "./BlockImage.module.css";
 import ImageIcon from "../icons/image.svg";
 import { ReactEditor, useSlate } from "slate-react";
-import { CustomElement, ImageElement } from "./types";
+import { CustomElement, ImageElement } from "../types";
 import { Transforms } from "slate";
-import Placeholder from "./Placeholder";
+import Placeholder from "../components/Placeholder";
 
 type Props = {
   element: ImageElement;
