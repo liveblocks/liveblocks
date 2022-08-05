@@ -3,6 +3,7 @@ import styles from "../../styles/BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
 import { BlockType, CustomElement } from "./types";
+import { useSelf } from "./liveblocks.config";
 
 type Props = {
   children: ReactNode;
@@ -10,6 +11,9 @@ type Props = {
 };
 
 export default function BlockTypeSelector({ children, onSelect }: Props) {
+  const self = useSelf();
+  const createdBy = self?.connectionId || 0;
+
   const groups = [
     {
       label: "Text",
@@ -19,6 +23,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H1,
               children: [
@@ -34,6 +39,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H2,
               children: [
@@ -50,6 +56,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H3,
               children: [
@@ -65,6 +72,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Plain text",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Paragraph,
               children: [
@@ -85,6 +93,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed from URL",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Image,
               url: null,
@@ -98,6 +107,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed YouTube video",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Video,
               url: null,
@@ -115,9 +125,10 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed a Tweet",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Tweet,
-              url: null,
+              tweetId: null,
               children: [{ text: "" }],
             });
           },
@@ -127,6 +138,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed CodeSandbox project",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.CodeSandbox,
               url: null,
@@ -139,6 +151,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed Figma project",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Figma,
               url: null,

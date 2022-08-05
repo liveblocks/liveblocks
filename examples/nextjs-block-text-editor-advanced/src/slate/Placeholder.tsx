@@ -14,26 +14,43 @@ type Input = {
 type Values = Record<string, string>;
 
 type Props = {
+  startOpen: boolean;
+  icon: ComponentType;
+  text: string;
   inputs: Record<string, Input>;
   onSet: (values: Values) => void;
 };
 
-export default function Placeholder({ inputs, onSet }: Props) {
+export default function Placeholder({ startOpen, icon: Icon, text, inputs, onSet }: Props) {
+  const [open, setOpen] = useState(startOpen);
   const [values, setValues] = useState<Values>({});
   const firstInput = createRef<HTMLInputElement>();
 
   useEffect(() => {
-    firstInput.current?.focus();
-  }, [firstInput]);
+    if (open) {
+      firstInput.current?.focus();
+    }
+  }, [open]);
+
+  if (!open) {
+    return (
+      <div className={styles.placeholder} onClick={() => setOpen(true)}>
+        <span className={styles.icon}>
+          <Icon />
+        </span>
+        {text}
+      </div>
+    );
+  }
 
   return (
-    <form className={styles.placeholder} onSubmit={(e) => {
+    <form className={styles.placeholderForm} onSubmit={(e) => {
       e.preventDefault();
       onSet(values)
     }}>
       {Object.entries(inputs).map(([name, {
         type,
-        icon: Icon,
+        icon: InputIcon,
         placeholder,
         title = undefined,
         required = false,
@@ -41,7 +58,7 @@ export default function Placeholder({ inputs, onSet }: Props) {
       }], index) => (
         <div key={name} className={styles.inputRow}>
           <span className={styles.icon}>
-            <Icon />
+            <InputIcon />
           </span>
           <input
             className={styles.input}

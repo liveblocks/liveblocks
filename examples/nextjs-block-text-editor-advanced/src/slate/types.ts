@@ -1,4 +1,4 @@
-import { LiveObject, LiveList } from "@liveblocks/client";
+import { LiveList } from "@liveblocks/client";
 import { BaseEditor, BaseOperation } from "slate";
 import { ReactEditor } from "slate-react";
 
@@ -46,6 +46,7 @@ export type TextBlock =
   | BlockType.Paragraph;
 
 export type BlockElement = {
+  createdBy: number;
   id: string;
   children: CustomText[];
 };

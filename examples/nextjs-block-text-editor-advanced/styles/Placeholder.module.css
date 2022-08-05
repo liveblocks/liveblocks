@@ -1,21 +1,36 @@
 .placeholder {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background: rgba(var(--color-foreground), 0.05);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.placeholderForm {
   display: flex;
   flex-direction: column;
-  align-items: start;
+  align-items: flex-start;
   gap: 2px;
   padding: 16px 20px 20px;
-  border: 1px solid rgba(var(--color-foreground), 0.11);
+  background: rgba(var(--color-surface), 1);
+  border: 1px solid rgba(var(--color-foreground), 0.3);
   border-radius: 6px;
   outline: none;
 }
 
 .inputRow {
   width: 100%;
-}
-
-.inputRow, .icon {
   display: flex;
   align-items: center;
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  margin-right: 12px;
 }
 
 .icon svg, .icon img {
@@ -28,19 +43,20 @@
   flex-grow: 1;
   border: 0;
   font-size: 1em;
-  margin-left: 12px;
   background: none;
-  border-bottom: 2px solid transparent;
+  border-bottom: 1px solid transparent;
   padding: 6px 0 4px;
   transition: border-bottom-color 150ms ease-in-out;
 }
 
+.input::placeholder {
+  color: rgba(var(--color-foreground), 0.4);
+}
+
 .input:focus {
   outline: none;
-  border-bottom: 2px solid rgba(var(--color-foreground), 0.2);
 }
 
 .button {
   margin-top: 12px;
 }
-

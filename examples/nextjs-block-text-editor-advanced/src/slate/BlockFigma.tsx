@@ -4,6 +4,7 @@ import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, FigmaElement } from "./types";
 import { Transforms } from "slate";
 import Placeholder from "./Placeholder";
+import { useSelf } from "./liveblocks.config";
 
 type Props = {
   element: FigmaElement;
@@ -11,6 +12,7 @@ type Props = {
 
 export default function BlockFigma({ element }: Props) {
   const editor = useSlate();
+  const self = useSelf();
 
   return (
     <div className={styles.block_figma}>
@@ -28,6 +30,9 @@ export default function BlockFigma({ element }: Props) {
         </div>
       ) : (
         <Placeholder
+          startOpen={self?.connectionId === element.createdBy}
+          icon={VideoIcon}
+          text="Embed a Figma project"
           inputs={{
             url: {
               type: "url",
