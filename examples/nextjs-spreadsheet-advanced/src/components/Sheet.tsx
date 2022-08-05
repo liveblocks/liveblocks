@@ -1,11 +1,13 @@
-import { type ComponentProps, useCallback } from "react";
+import { type ComponentProps, useCallback, useState, useMemo } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";
+import type { CellAddress } from "../types";
 import { TABLE_ID, canUseShortcuts } from "../utils/canUseShortcuts";
+import { clamp } from "../utils/clamp";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
-import { useEventListener } from "../utils/useEventListener";
 import { Cell } from "./Cell";
 import { Headers } from "./Headers";
 import styles from "./Sheet.module.css";
@@ -33,38 +35,74 @@ export function Sheet({
   selection,
   others,
 }: Props) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (!selection || !canUseShortcuts()) {
-        return;
-      }
+  const [edition, setEdition] = useState<CellAddress | null>(null);
 
-      if (event.key === "ArrowUp" || event.key === "ArrowDown") {
-        const index = getIndexWithProperty(rows, "id", selection.rowId);
+  const filterEvents = useCallback(() => {
+    return canUseShortcuts() && Boolean(selection);
+  }, [selection]);
 
-        if (event.key === "ArrowUp" && index > 0) {
-          event.preventDefault();
-          selectCell(selection.columnId, rows[index - 1].id);
-        } else if (event.key === "ArrowDown" && index < rows.length - 1) {
-          event.preventDefault();
-          selectCell(selection.columnId, rows[index + 1].id);
+  const moveSelection = useCallback(
+    (direction: "up" | "down" | "left" | "right") => {
+      return (event: KeyboardEvent) => {
+        event.preventDefault();
+
+        const x = getIndexWithProperty(columns, "id", selection!.columnId);
+        const y = getIndexWithProperty(rows, "id", selection!.rowId);
+
+        switch (direction) {
+          case "up":
+            selectCell(
+              selection!.columnId,
+              rows[clamp(y - 1, 0, rows.length - 1)].id
+            );
+            break;
+          case "down":
+            selectCell(
+              selection!.columnId,
+              rows[clamp(y + 1, 0, rows.length - 1)].id
+            );
+            break;
+          case "left":
+            selectCell(
+              columns[clamp(x - 1, 0, columns.length - 1)].id,
+              selection!.rowId
+            );
+            break;
+          case "right":
+            selectCell(
+              columns[clamp(x + 1, 0, columns.length - 1)].id,
+              selection!.rowId
+            );
+            break;
         }
-      } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-        const index = getIndexWithProperty(columns, "id", selection.columnId);
-
-        if (event.key === "ArrowLeft" && index > 0) {
-          event.preventDefault();
-          selectCell(columns[index - 1].id, selection.rowId);
-        } else if (event.key === "ArrowRight" && index < columns.length - 1) {
-          event.preventDefault();
-          selectCell(columns[index + 1].id, selection.rowId);
-        }
-      }
+      };
     },
-    [selection, rows, selectCell, columns]
+    [selection]
   );
 
-  useEventListener("keydown", handleKeyDown);
+  useHotkeys("up", moveSelection("up"), { filter: filterEvents });
+  useHotkeys("down", moveSelection("down"), { filter: filterEvents });
+  useHotkeys("left", moveSelection("left"), { filter: filterEvents });
+  useHotkeys("right", moveSelection("right"), { filter: filterEvents });
+
+  useHotkeys(
+    "enter",
+    (event) => {
+      event.preventDefault();
+      setEdition(selection);
+    },
+    { filter: filterEvents },
+    [selection]
+  );
+  useHotkeys(
+    "delete",
+    (event) => {
+      event.preventDefault();
+      deleteCell(selection!.columnId, selection!.rowId);
+    },
+    { filter: filterEvents },
+    [selection]
+  );
 
   return (
     <div className={styles.sheet}>
@@ -116,9 +154,13 @@ export function Sheet({
                     const isSelected =
                       selection?.columnId === column.id &&
                       selection?.rowId === row.id;
+                    const isEditing =
+                      edition?.columnId === column.id &&
+                      edition?.rowId === row.id;
 
                     return (
                       <Cell
+                        key={id}
                         className={styles.cell}
                         expression={cells[id]}
                         getExpression={() =>
@@ -126,19 +168,22 @@ export function Sheet({
                         }
                         height={row.height}
                         isSelected={isSelected}
-                        key={id}
+                        isEditing={isEditing}
+                        onStartEditing={() =>
+                          setEdition({ columnId: column.id, rowId: row.id })
+                        }
+                        onEndEditing={() => setEdition(null)}
                         onDelete={() => deleteCell(column.id, row.id)}
                         onSelect={() => selectCell(column.id, row.id)}
-                        onSelectAfter={() => {
-                          const rowAfter = rows[y + 1];
+                        onCommit={(value, direction) => {
+                          setCellValue(column.id, row.id, value);
 
-                          if (rowAfter) {
-                            selectCell(column.id, rowAfter.id);
+                          if (direction === "down" && rows[y + 1]) {
+                            selectCell(column.id, rows[y + 1].id);
                           }
+
+                          setEdition(null);
                         }}
-                        onValueChange={(value) =>
-                          setCellValue(column.id, row.id, value)
-                        }
                         other={others[id]}
                         width={column.width}
                       />

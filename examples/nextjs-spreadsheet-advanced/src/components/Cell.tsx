@@ -5,7 +5,6 @@ import {
   type ComponentProps,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -14,20 +13,20 @@ import { useSelf } from "../liveblocks.config";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
-import { canUseShortcuts } from "../utils/canUseShortcuts";
 import { useAutoFocus } from "../utils/useAutoFocus";
-import { useEventListener } from "../utils/useEventListener";
 import styles from "./Cell.module.css";
 
-export interface Props extends ComponentProps<"td"> {
+export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
   expression: string;
   getExpression: () => string;
   height: number;
   isSelected?: boolean;
+  isEditing?: boolean;
+  onStartEditing: () => void;
+  onEndEditing: () => void;
   onDelete: () => void;
   onSelect: () => void;
-  onSelectAfter: () => void;
-  onValueChange: (value: string) => void;
+  onCommit: (value: string, direction?: "down") => void;
   other?: UserInfo;
   width: number;
 }
@@ -38,9 +37,7 @@ export interface EditingCellProps extends ComponentProps<"input"> {
   onCommit: (value: string, direction?: "down") => void;
 }
 
-const singleCharacterRegex = /^.$/u;
-
-function formatValue(value: string) {
+export function formatValue(value: string) {
   return value.replace(" ", "").toUpperCase();
 }
 
@@ -66,7 +63,7 @@ function EditingCell({
 
   const handleBlur = useCallback(() => {
     onCommit(draft);
-  }, [draft, onEndEditing]);
+  }, [draft, onCommit]);
 
   const handleKeyDown = useCallback(
     (event: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -101,10 +98,12 @@ export function Cell({
   width,
   height,
   isSelected,
+  isEditing,
   other,
   onSelect,
-  onSelectAfter,
-  onValueChange,
+  onStartEditing,
+  onEndEditing,
+  onCommit,
   onDelete,
   getExpression,
   className,
@@ -112,67 +111,15 @@ export function Cell({
   ...props
 }: Props) {
   const self = useSelf();
-  const [isEditing, setEditing] = useState(false);
-  const [editingValue, setEditingValue] = useState("");
   const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
-
-  useEffect(() => {
-    if (!isSelected) {
-      setEditing(false);
-    }
-  }, [isSelected]);
-
-  const stopEditing = useCallback(() => {
-    setEditing(false);
-    setEditingValue("");
-  }, []);
-
-  const handleCommit: EditingCellProps["onCommit"] = useCallback(
-    (value, direction) => {
-      stopEditing();
-      onValueChange(value);
-
-      if (direction === "down") {
-        onSelectAfter();
-      }
-    },
-    [onValueChange, onSelectAfter, stopEditing]
-  );
 
   const handleClick = useCallback(() => {
     if (isSelected) {
-      setEditing(true);
+      onStartEditing();
     } else {
       onSelect();
     }
-  }, [onSelect, isSelected]);
-
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (canUseShortcuts()) {
-        const isSingleCharacterKey =
-          singleCharacterRegex.test(event.key) &&
-          ![event.shiftKey, event.ctrlKey, event.altKey, event.metaKey].some(
-            Boolean
-          );
-
-        if (event.key === "Enter" || isSingleCharacterKey) {
-          event.preventDefault();
-          setEditing(true);
-
-          if (isSingleCharacterKey) {
-            setEditingValue(formatValue(event.key));
-          }
-        } else if (event.key === "Backspace" || event.key === "Delete") {
-          event.preventDefault();
-          onDelete();
-        }
-      }
-    },
-    [onDelete, isSelected, isEditing]
-  );
-
-  useEventListener("keydown", handleKeyDown, isSelected && !isEditing);
+  }, [onSelect, onStartEditing, isSelected]);
 
   return (
     <td
@@ -204,9 +151,9 @@ export function Cell({
       <div className={styles.content}>
         {isEditing ? (
           <EditingCell
-            expression={getExpression() + editingValue}
-            onCommit={handleCommit}
-            onEndEditing={stopEditing}
+            expression={getExpression()}
+            onCommit={onCommit}
+            onEndEditing={onEndEditing}
           />
         ) : (
           <div className={styles.display}>{expression}</div>

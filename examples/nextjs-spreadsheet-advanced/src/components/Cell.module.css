@@ -147,6 +147,7 @@
   position: absolute;
   inset: 0px;
   text-align: right;
+  user-select: none;
 }
 
 .cell:global(.selected-other) .input,
