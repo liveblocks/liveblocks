@@ -74,10 +74,10 @@ export async function createSpreadsheet(
     spreadsheet.get("columns").move(from, to);
   }
 
-  function clearColumn(index: number) {
+  // Necessary because Liveblocks does not support nested batching yet
+  function innerClearColumn(index: number) {
     const column = spreadsheet.get("columns").get(index);
 
-    // TODO: BATCHING
     for (const row of spreadsheet.get("rows").toArray()) {
       spreadsheet
         .get("cells")
@@ -85,10 +85,10 @@ export async function createSpreadsheet(
     }
   }
 
-  function clearRow(index: number) {
+  // Necessary because Liveblocks does not support nested batching yet
+  function innerClearRow(index: number) {
     const row = spreadsheet.get("rows").get(index);
 
-    // TODO: BATCHING
     for (const column of spreadsheet.get("columns").toArray()) {
       spreadsheet
         .get("cells")
@@ -96,16 +96,30 @@ export async function createSpreadsheet(
     }
   }
 
+  function clearColumn(index: number) {
+    room.batch(() => {
+      innerClearColumn(index);
+    });
+  }
+
+  function clearRow(index: number) {
+    room.batch(() => {
+      innerClearRow(index);
+    });
+  }
+
   function deleteColumn(index: number) {
-    // TODO: BATCHING
-    clearColumn(index);
-    spreadsheet.get("columns").delete(index);
+    room.batch(() => {
+      innerClearColumn(index);
+      spreadsheet.get("columns").delete(index);
+    });
   }
 
   function deleteRow(index: number) {
-    // TODO: BATCHING
-    clearRow(index);
-    spreadsheet.get("rows").delete(index);
+    room.batch(() => {
+      innerClearRow(index);
+      spreadsheet.get("rows").delete(index);
+    });
   }
 
   function cellToRef(token: CellToken): RefToken {
