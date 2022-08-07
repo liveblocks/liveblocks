@@ -2,65 +2,59 @@
   position: relative;
   display: flex;
   align-items: center;
-  padding: 16px 20px;
-  background: rgba(var(--color-foreground), 0.05);
+  color: rgba(var(--color-foreground), 0.8);
+  padding: 1rem 1.25rem;
+  width: 100%;
+  background: rgba(var(--color-foreground), 0.06);
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
+  font-size: 0.875em;
 }
 
-.placeholderForm {
-  position: absolute;
-  z-index: 10;
-  left: 50%;
-  top: 60%;
-  transform: translateX(-50%);
+.placeholder_icon {
+  margin-right: 0.875rem;
+}
+
+.popover_content {
+  background: rgba(var(--color-surface-over), 0.92);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-over);
+  border-radius: 10px;
+}
+
+.popover_form {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 2px;
-  padding: 16px 20px 20px;
-  background: rgba(var(--color-surface), 1);
-  border: 1px solid rgba(var(--color-foreground), 0.3);
-  border-radius: 6px;
-  outline: none;
+  padding: 0.5rem;
+  gap: 0.25rem;
 }
 
-.outside {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
-.inputRow {
+.input_row {
   width: 100%;
   display: flex;
-  align-items: center;
+  flex-direction: column;
 }
 
-.icon {
-  display: flex;
-  align-items: center;
-  margin-right: 12px;
-}
-
-.icon svg, .icon img {
-  width: 20px;
-  height: 20px;
+.label {
+  font-size: 0.75em;
+  color: rgba(var(--color-foreground), 0.6);
 }
 
 .input {
   display: block;
   flex-grow: 1;
+  margin: 0;
   border: 0;
-  font-size: 1em;
+  font-size: 0.875em;
   background: none;
-  border-bottom: 1px solid transparent;
-  padding: 6px 0 4px;
+  height: 1.75rem;
   transition: border-bottom-color 150ms ease-in-out;
+  border: 1px solid rgba(var(--color-foreground), 0.12);
+  border-radius: 6px;
+  padding: 0 0.25rem;
 }
 
 .input::placeholder {
@@ -68,9 +62,13 @@
 }
 
 .input:focus {
+  border-color: rgba(var(--color-primary), 0.6);
   outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.12);
 }
 
 .button {
-  margin-top: 12px;
+  font-size: 0.875em;
+  margin-top: 0.875rem;
+  align-self: flex-end;
 }

@@ -6,6 +6,9 @@
   border-radius: 10px;
   z-index: 20;
   user-select: none;
+  outline: none;
+  max-height: 280px;
+  overflow: scroll;
 }
 
 .group {

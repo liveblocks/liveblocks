@@ -29,7 +29,7 @@ export default function BlockTweet({ element }: Props) {
           inputs={{
             tweetId: {
               type: "url",
-              icon: ImageIcon,
+              label: "URL",
               placeholder: "Paste Tweet link…",
               title: "Please enter a valid Tweet link",
               required: true,

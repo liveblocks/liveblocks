@@ -25,14 +25,14 @@ export default function BlockImage({ element }: Props) {
           inputs={{
             url: {
               type: "url",
-              icon: ImageIcon,
+              label: "URL",
               placeholder: "Paste image link",
               title: "Please enter a valid image link",
               required: true,
             },
             alt: {
               type: "text",
-              icon: ImageIcon,
+              label: "Alt text",
               placeholder: "Enter alt text",
               required: false,
             },

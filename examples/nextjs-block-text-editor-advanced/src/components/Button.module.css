@@ -1,7 +1,7 @@
 .button {
   border-radius: 6px;
   border: none;
-  padding: 16px 12px;
+  padding: 0 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,6 +9,8 @@
   min-width: 1.75rem;
   font-size: 1em;
   margin: 0;
+  outline: none;
+  font-weight: 500;
 }
 
 .button_square {

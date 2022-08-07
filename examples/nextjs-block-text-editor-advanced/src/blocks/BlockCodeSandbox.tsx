@@ -33,7 +33,7 @@ export default function BlockCodeSandbox({ element }: Props) {
           inputs={{
             url: {
               type: "url",
-              icon: CodeSandboxIcon,
+              label: "URL",
               placeholder: "Paste CodeSandbox link…",
               title: "Please enter a valid CodeSandbox project link",
               required: true,

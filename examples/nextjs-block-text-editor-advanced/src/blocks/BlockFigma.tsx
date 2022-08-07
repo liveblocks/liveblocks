@@ -33,7 +33,7 @@ export default function BlockFigma({ element }: Props) {
           inputs={{
             url: {
               type: "url",
-              icon: VideoIcon,
+              label: "URL",
               placeholder: "Paste Figma project link…",
               title: "Please enter a valid Figma project link",
               required: true,

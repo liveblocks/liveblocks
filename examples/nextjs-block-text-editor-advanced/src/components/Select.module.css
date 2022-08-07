@@ -1,6 +1,6 @@
 .select_trigger {
   position: relative;
-  height: 28px;
+  height: 1.75rem;
   color: rgba(var(--color-foreground), 1);
   border-radius: 6px;
   background: transparent;

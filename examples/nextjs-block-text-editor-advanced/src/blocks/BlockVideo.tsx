@@ -33,7 +33,7 @@ export default function BlockVideo({ element }: Props) {
           inputs={{
             url: {
               type: "url",
-              icon: VideoIcon,
+              label: "URL",
               placeholder: "Paste YouTube video link…",
               title: "Please enter a valid YouTube video link",
               required: true,
