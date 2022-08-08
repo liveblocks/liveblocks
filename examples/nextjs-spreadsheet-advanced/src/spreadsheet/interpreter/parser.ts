@@ -92,7 +92,7 @@ export default function parser(tokens: Token[]): Node {
 
   function testAndConsume(kind: SyntaxKind): boolean {
     const token = currentToken();
-    if (token.kind === kind) {
+    if (token !== undefined && token.kind === kind) {
       i++;
       return true;
     }
@@ -132,6 +132,10 @@ export default function parser(tokens: Token[]): Node {
       return makeNumberLiteral(
         consumeToken(SyntaxKind.NumberLiteral) as NumberToken
       );
+    } else if (testAndConsume(SyntaxKind.OpenParenthesis)) {
+      const node = expr();
+      consumeToken(SyntaxKind.CloseParenthesis);
+      return node;
     } else if (token.kind === SyntaxKind.RefToken) {
       const ref = makeRef(consumeToken(SyntaxKind.RefToken) as RefToken);
       if (currentToken().kind === SyntaxKind.ColonToken) {

@@ -1,6 +1,5 @@
 export enum SyntaxKind {
   NumberLiteral,
-  EOF,
   OpenParenthesis,
   CloseParenthesis,
   PlusToken,
@@ -16,12 +15,7 @@ export enum SyntaxKind {
   FunctionToken,
 }
 
-export type Token =
-  | CellToken
-  | EOFToken
-  | NumberToken
-  | RefToken
-  | SimpleCharToken;
+export type Token = CellToken | NumberToken | RefToken | SimpleCharToken;
 
 export interface NumberToken {
   kind: SyntaxKind.NumberLiteral;
@@ -36,10 +30,6 @@ export interface CellToken {
 export interface RefToken {
   kind: SyntaxKind.RefToken;
   ref: string;
-}
-
-export interface EOFToken {
-  kind: SyntaxKind.EOF;
 }
 
 interface SimpleCharToken {
@@ -182,7 +172,6 @@ export default function tokenizer(input: string): Token[] {
     }
   }
 
-  tokens.push({ kind: SyntaxKind.EOF });
   return tokens;
 }
 
@@ -201,8 +190,6 @@ export function tokenToString(token: Token): string {
       return syntaxKindToChar.get(token.kind)!;
     case SyntaxKind.CellToken:
       return token.cell;
-    case SyntaxKind.EOF:
-      return "";
     case SyntaxKind.NumberLiteral:
       return token.value.toString();
     case SyntaxKind.RefToken:

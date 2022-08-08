@@ -5,7 +5,9 @@ function t(
   expected: ExpressionResult,
   cells: Record<string, number> = {}
 ) {
-  test(`${expression} => ${expected}`, () => {
+  test(`${expression} => ${
+    expected.type === "number" ? expected.value : expected
+  }`, () => {
     const result = interpreter(expression, (key) => cells[key]);
     expect(result).toEqual(expected);
   });
@@ -14,6 +16,10 @@ function t(
 t("2", { type: "number", value: 2 });
 t("=1+1", { type: "number", value: 2 });
 t("=2(1+1)*3", { type: "number", value: 12 });
+t("=5(1+1)", { type: "number", value: 10 });
+t("=5*(1+1)", { type: "number", value: 10 });
+t("=5+(1+1)", { type: "number", value: 7 });
+t("=2+1*5", { type: "number", value: 7 });
 t("=5/2", { type: "number", value: 2.5 });
 t("=5%2", { type: "number", value: 1 });
 t("=2^3", { type: "number", value: 8 });
