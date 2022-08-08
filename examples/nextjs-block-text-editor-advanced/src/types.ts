@@ -32,6 +32,7 @@ export enum BlockType {
   H1 = "h1",
   H2 = "h2",
   H3 = "h3",
+  ToDo = "todo",
   Paragraph = "paragraph",
   Image = "image",
   Video = "video",
@@ -59,6 +60,11 @@ export type ParagraphElement = BlockElement & {
 export type HeadingElement = BlockElement & {
   type: BlockType.H1 | BlockType.H2 | BlockType.H3;
 };
+
+export type ToDoElement = BlockElement & {
+  type: BlockType.ToDo;
+  checked: boolean;
+}
 
 export type ImageElement = BlockElement & {
   type: BlockType.Image;
@@ -99,6 +105,7 @@ export type CustomElement =
   | TitleElement
   | ParagraphElement
   | HeadingElement
+  | ToDoElement
   | ImageElement
   | VideoElement
   | CodeSandboxElement

@@ -6,6 +6,11 @@ import BlockFigma from "./BlockFigma";
 import { BlockType } from "../types";
 import BlockTweet from "./BlockTweet";
 import styles from "./Block.module.css";
+import BlockToDo from "./BlockToDo";
+
+export const CreateNewBlockFromBlock = {
+  [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
+};
 
 // Note: {children} must be rendered in every element otherwise bugs occur
 // https://docs.slatejs.org/api/nodes/element#rendering-void-elements
@@ -37,6 +42,14 @@ export default function Block({
 
   if (element.type === BlockType.H3) {
     return <h3 {...attributes}>{children}</h3>;
+  }
+
+  if (element.type === BlockType.ToDo) {
+    return (
+      <div {...attributes}>
+        <BlockToDo element={element}>{children}</BlockToDo>
+      </div>
+    );
   }
 
   if (element.type === BlockType.Image) {

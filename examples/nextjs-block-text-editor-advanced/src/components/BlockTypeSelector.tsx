@@ -59,6 +59,18 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
             });
           },
         },
+        {
+          label: "To-do list",
+          description: "A list of to-do items",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: BlockType.ToDo,
+              checked: false,
+              children: [{ text: "" }],
+            });
+          },
+        },
       ],
     },
     {

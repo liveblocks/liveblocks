@@ -1,0 +1,17 @@
+.block_todo {
+  display: flex;
+  align-items: start;
+  gap: 6px;
+}
+
+.todo_checkbox {
+  display: block;
+  flex-shrink: 0;
+  height: 1.2em;
+  width: 1.2em;
+  margin-top: 0.4em;
+}
+
+.todo_text {
+  flex-grow: 1;
+}

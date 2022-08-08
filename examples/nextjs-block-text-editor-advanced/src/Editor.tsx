@@ -30,10 +30,10 @@ import {
   useRoom,
   useUpdateMyPresence,
 } from "./liveblocks.config";
-import { Format, BlockType, CustomElement } from "./types";
+import { BlockType, CustomElement } from "./types";
 import { toggleMark, withLayout, withNodeId } from "./utils";
 import Leaf from "./blocks/Leaf";
-import Block from "./blocks/Block";
+import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
 import { HOTKEYS, USER_COLORS } from "./constants";
 import {
   Avatar,
@@ -70,9 +70,19 @@ export default function App() {
     editor.insertBreak = () => {
       insertBreak();
       if (editor.selection) {
+        // Default new line
+        let newBlock = { type: BlockType.Paragraph };
+        console.log(editor);
+
+        // Duplicate current element to new line if set
+        const previousBlock = editor.children[editor.selection.anchor.path[0] - 1];
+        if (previousBlock?.type && Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)) {
+          newBlock = CreateNewBlockFromBlock[previousBlock.type](previousBlock)
+        }
+
         Transforms.setNodes(
           editor,
-          { type: BlockType.Paragraph },
+          newBlock,
           {
             at: editor.selection,
           }
