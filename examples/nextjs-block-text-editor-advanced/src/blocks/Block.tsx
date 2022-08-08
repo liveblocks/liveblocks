@@ -7,9 +7,13 @@ import { BlockType } from "../types";
 import BlockTweet from "./BlockTweet";
 import styles from "./Block.module.css";
 import BlockToDo from "./BlockToDo";
+import BlockList from "./BlockList";
 
-export const CreateNewBlockFromBlock = {
+// If new block created when old block selected, create the following block
+// Example: create checkbox block, press enter, new unchecked checkbox is created
+export const CreateNewBlockFromBlock: Record<string, () => { type: BlockType }> = {
   [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
+  [BlockType.List]: () => ({ type: BlockType.List }),
 };
 
 // Note: {children} must be rendered in every element otherwise bugs occur
@@ -42,6 +46,14 @@ export default function Block({
 
   if (element.type === BlockType.H3) {
     return <h3 {...attributes}>{children}</h3>;
+  }
+
+  if (element.type === BlockType.List) {
+    return (
+      <div {...attributes}>
+        <BlockList element={element}>{children}</BlockList>
+      </div>
+    );
   }
 
   if (element.type === BlockType.ToDo) {

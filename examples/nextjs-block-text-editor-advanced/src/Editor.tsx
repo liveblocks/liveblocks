@@ -72,12 +72,12 @@ export default function App() {
       if (editor.selection) {
         // Default new line
         let newBlock = { type: BlockType.Paragraph };
-        console.log(editor);
 
+        // TODO tidy or create central block config file
         // Duplicate current element to new line if set
-        const previousBlock = editor.children[editor.selection.anchor.path[0] - 1];
+        const previousBlock = editor.children[editor.selection.anchor.path[0] - 1] as CustomElement;
         if (previousBlock?.type && Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)) {
-          newBlock = CreateNewBlockFromBlock[previousBlock.type](previousBlock)
+          newBlock = CreateNewBlockFromBlock[previousBlock.type]()
         }
 
         Transforms.setNodes(

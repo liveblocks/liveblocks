@@ -1,0 +1,21 @@
+.block_list {
+  display: flex;
+  align-items: start;
+  gap: 0.2rem;
+}
+
+.list_bullet {
+  width: 1.5rem;
+  flex-grow: 0;
+  flex-shrink: 0;
+  text-align: center;
+  font-size: 1.25rem;
+}
+
+.list_bullet::before {
+  content: "•";
+}
+
+.list_text {
+  flex-grow: 1;
+}

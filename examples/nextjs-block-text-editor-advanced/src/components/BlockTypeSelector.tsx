@@ -60,6 +60,17 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           },
         },
         {
+          label: "List",
+          description: "A list of items",
+          onSelect: () => {
+            onSelect({
+              id: nanoid(),
+              type: BlockType.List,
+              children: [{ text: "" }],
+            });
+          },
+        },
+        {
           label: "To-do list",
           description: "A list of to-do items",
           onSelect: () => {
