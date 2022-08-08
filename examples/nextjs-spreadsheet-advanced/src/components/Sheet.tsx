@@ -5,7 +5,7 @@ import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";
 import type { CellAddress } from "../types";
-import { TABLE_ID, canUseShortcuts } from "../utils/canUseShortcuts";
+import { TABLE_ID, canUseHotkeys } from "../utils/canUseHotkeys";
 import { clamp } from "../utils/clamp";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { Cell } from "./Cell";
@@ -36,10 +36,14 @@ export function Sheet({
   others,
 }: Props) {
   const [edition, setEdition] = useState<CellAddress | null>(null);
-
-  const filterEvents = useCallback(() => {
-    return canUseShortcuts() && Boolean(selection);
-  }, [selection]);
+  const shouldUseHotkeys = useMemo(
+    () => Boolean(selection && !edition),
+    [selection, edition]
+  );
+  const hotkeysOptions = useMemo(
+    () => ({ enabled: shouldUseHotkeys, filter: canUseHotkeys }),
+    [shouldUseHotkeys]
+  );
 
   const moveSelection = useCallback(
     (direction: "up" | "down" | "left" | "right") => {
@@ -80,10 +84,10 @@ export function Sheet({
     [selection]
   );
 
-  useHotkeys("up", moveSelection("up"), { filter: filterEvents });
-  useHotkeys("down", moveSelection("down"), { filter: filterEvents });
-  useHotkeys("left", moveSelection("left"), { filter: filterEvents });
-  useHotkeys("right", moveSelection("right"), { filter: filterEvents });
+  useHotkeys("up", moveSelection("up"), hotkeysOptions, [selection]);
+  useHotkeys("down", moveSelection("down"), hotkeysOptions, [selection]);
+  useHotkeys("left", moveSelection("left"), hotkeysOptions, [selection]);
+  useHotkeys("right", moveSelection("right"), hotkeysOptions, [selection]);
 
   useHotkeys(
     "enter",
@@ -91,7 +95,7 @@ export function Sheet({
       event.preventDefault();
       setEdition(selection);
     },
-    { filter: filterEvents },
+    hotkeysOptions,
     [selection]
   );
   useHotkeys(
@@ -100,7 +104,7 @@ export function Sheet({
       event.preventDefault();
       deleteCell(selection!.columnId, selection!.rowId);
     },
-    { filter: filterEvents },
+    hotkeysOptions,
     [selection]
   );
 
