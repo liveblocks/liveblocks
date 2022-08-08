@@ -43,7 +43,10 @@ export default function Placeholder({
         <PopoverPrimitive.Anchor />
 
         <PopoverPrimitive.Portal>
-          <PopoverPrimitive.Content className={styles.popover_content}>
+          <PopoverPrimitive.Content
+            className={styles.popover_content}
+            sideOffset={-20}
+          >
             <form
               className={styles.popover_form}
               onSubmit={(e) => {
@@ -67,9 +70,12 @@ export default function Placeholder({
                   index
                 ) => (
                   <div key={name} className={styles.input_row}>
-                    <label className={styles.label}>{label}</label>
+                    <label className={styles.label} htmlFor={name}>
+                      {label}
+                    </label>
                     <input
                       className={styles.input}
+                      id={name}
                       type={type}
                       placeholder={placeholder}
                       title={title}
@@ -95,6 +101,7 @@ export default function Placeholder({
                 Embed
               </Button>
             </form>
+            <PopoverPrimitive.Arrow className={styles.popover_arrow} />
           </PopoverPrimitive.Content>
         </PopoverPrimitive.Portal>
       </PopoverPrimitive.Root>

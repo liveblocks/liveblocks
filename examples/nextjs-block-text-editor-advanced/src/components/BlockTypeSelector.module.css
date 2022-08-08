@@ -9,6 +9,7 @@
   outline: none;
   max-height: 280px;
   overflow: scroll;
+  width: 220px;
 }
 
 .group {
