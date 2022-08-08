@@ -168,3 +168,34 @@
     var(--radius) / 2 + var(--cell-bottom-right-radius) * var(--radius) / 2
   );
 }
+
+.cell :global(.token) {
+  caret-color: var(--gray-800);
+  margin: 0 0.1em;
+}
+
+.cell :global(.token):first-of-type {
+  margin-left: 0;
+}
+
+.cell :global(.token):last-of-type {
+  margin-right: 0;
+}
+
+.cell :global(.token):global(.equal),
+.cell :global(.token):global(.plus),
+.cell :global(.token):global(.minus),
+.cell :global(.token):global(.asterisk),
+.cell :global(.token):global(.slash),
+.cell :global(.token):global(.mod),
+.cell :global(.token):global(.colon),
+.cell :global(.token):global(.caret),
+.cell :global(.token):global(.open-parenthesis),
+.cell :global(.token):global(.close-parenthesis) {
+  display: inline-block;
+  color: var(--gray-400);
+}
+
+.cell :global(.token):global(.cell) {
+  font-weight: 600;
+}

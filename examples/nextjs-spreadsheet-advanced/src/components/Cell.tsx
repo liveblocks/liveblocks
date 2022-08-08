@@ -42,7 +42,7 @@ export interface EditingCellProps extends ComponentPropsWithoutRef<"div"> {
 }
 
 export function formatValue(value: string) {
-  return value.replace(" ", "").toUpperCase();
+  return value.replace(/(\s|&nbsp;)/g, "").toUpperCase();
 }
 
 function stringToTokenizedHtml(value: string) {
@@ -98,7 +98,7 @@ function EditingCell({
     try {
       setDraft(stringToTokenizedHtml(formatValue(value)));
     } catch {
-      setDraft(`<span>${formatValue(value)}</span>`);
+      setDraft(formatValue(value));
     }
   }, []);
 
