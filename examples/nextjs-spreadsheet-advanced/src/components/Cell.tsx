@@ -20,12 +20,14 @@ import tokenizer, {
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import { shuffle } from "../utils/shuffle";
 import { stripHtml } from "../utils/stripHtml";
 import { useAutoFocus } from "../utils/useAutoFocus";
 import styles from "./Cell.module.css";
 
 export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
   expression: string;
+  cellId: string;
   getExpression: () => string;
   height: number;
   isSelected?: boolean;
@@ -41,32 +43,13 @@ export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
 
 export interface EditingCellProps extends ComponentPropsWithoutRef<"div"> {
   expression: string;
+  cellId: string;
   onEndEditing: () => void;
   onCommit: (value: string, direction?: "down") => void;
 }
 
 export function formatValue(value: string) {
   return value.replace(/(\s|&nbsp;)/g, "").toUpperCase();
-}
-
-function stringToTokenizedHtml(value: string) {
-  const tokens = tokenizer(value);
-  let cellIndex = 0;
-
-  return tokens
-    .map((token) => {
-      const value = tokenToString(token);
-
-      if (token.kind === SyntaxKind.CellToken) {
-        const color = COLORS[cellIndex % COLORS.length];
-        cellIndex += 1;
-
-        return `<span class="token ${token.kind}" style="--token-color: ${color};">${value}</span>`;
-      } else {
-        return `<span class="token ${token.kind}">${value}</span>`;
-      }
-    })
-    .join("");
 }
 
 function placeCaretAtEnd(element: HTMLElement) {
@@ -95,25 +78,53 @@ function placeCaretAtEnd(element: HTMLElement) {
 
 function EditingCell({
   expression,
+  cellId,
   onCommit,
   onEndEditing,
   className,
   ...props
 }: EditingCellProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const stringToTokenizedHtml = useCallback(
+    (value: string) => {
+      const colors = shuffle(COLORS, cellId);
+      const tokens = tokenizer(value);
+      let cellIndex = 0;
+
+      return tokens
+        .map((token) => {
+          const value = tokenToString(token);
+
+          if (token.kind === SyntaxKind.CellToken) {
+            const color = colors[cellIndex % colors.length];
+            cellIndex += 1;
+
+            return `<span class="token ${token.kind}" style="--token-color: ${color};">${value}</span>`;
+          } else {
+            return `<span class="token ${token.kind}">${value}</span>`;
+          }
+        })
+        .join("");
+    },
+    [cellId]
+  );
+
   const [draft, setDraft] = useState<string>(() =>
     stringToTokenizedHtml(expression)
   );
 
-  const handleInput = useCallback((event: FormEvent<HTMLDivElement>) => {
-    const value = stripHtml(event.currentTarget.innerHTML);
+  const handleInput = useCallback(
+    (event: FormEvent<HTMLDivElement>) => {
+      const value = stripHtml(event.currentTarget.innerHTML);
 
-    try {
-      setDraft(stringToTokenizedHtml(formatValue(value)));
-    } catch {
-      setDraft(formatValue(value));
-    }
-  }, []);
+      try {
+        setDraft(stringToTokenizedHtml(formatValue(value)));
+      } catch {
+        setDraft(formatValue(value));
+      }
+    },
+    [stringToTokenizedHtml]
+  );
 
   const handleBlur = useCallback(() => {
     onCommit(stripHtml(draft));
@@ -157,6 +168,7 @@ function EditingCell({
 }
 
 export function Cell({
+  cellId,
   expression,
   width,
   height,
@@ -214,6 +226,7 @@ export function Cell({
       <div className={styles.content}>
         {isEditing ? (
           <EditingCell
+            cellId={cellId}
             expression={getExpression()}
             onCommit={onCommit}
             onEndEditing={onEndEditing}

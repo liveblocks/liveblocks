@@ -25,7 +25,8 @@
     "re-resizable": "^6.9.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hotkeys-hook": "^3.4.7"
+    "react-hotkeys-hook": "^3.4.7",
+    "seedrandom": "^3.0.5"
   },
   "devDependencies": {
     "@babel/core": "^7.18.10",
@@ -34,6 +35,7 @@
     "@types/jest": "^28.1.6",
     "@types/node": "^18.0.4",
     "@types/react": "^18.0.15",
+    "@types/seedrandom": "^3.0.2",
     "babel-jest": "^28.1.3",
     "jest": "^28.1.3",
     "prettier": "^2.7.1",

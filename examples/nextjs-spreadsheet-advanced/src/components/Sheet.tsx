@@ -165,6 +165,7 @@ export function Sheet({
                     return (
                       <Cell
                         key={id}
+                        cellId={id}
                         className={styles.cell}
                         expression={cells[id]}
                         getExpression={() =>
