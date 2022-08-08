@@ -17,6 +17,80 @@
 
 ---
 
+# v0.17.7
+
+In **@liveblocks/zustand**:
+
+Simplify zustand middleware integration with Typescript. `TPresence`, `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
+
+Note that `@liveblocks/zustand` does not work with zustand > v4 because v3 and v4 have completely different type definitions. As soon as zustand v4 is out of the RC phase, we will consider updating our middleware to work with the latest version.
+
+### Example
+
+Let's take a look at our [To-do list](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list) example. Without our middleware, the store would look like this:
+
+```ts
+import create from "zustand";
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+create<State>(/* ... */)
+```
+
+With our middleware, you simply need to move the `State` param at the middleware level:
+
+```ts
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({ /*...*/ });
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: Todo[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
+
+create(
+  middleware<State>(/* ... */, {
+    client,
+    presenceMapping: { isTyping: true },
+    storageMapping: { todos: true }
+  })
+);
+```
+
+If you want to type `others` presence, you can use the `TPresence` generic argument on the middleware.
+
+```ts
+
+type Presence = {
+  isTyping: true;
+}
+
+const useStore = create(
+  middleware<State, Presence>(/* ... */, {
+    client,
+    presenceMapping: { isTyping: true },
+    storageMapping: { todos: true }
+  })
+);
+
+// In your component
+useStore(state => state.liveblocks.others[0].presence?.isTyping)
+```
+
 # v0.17.6
 
 In **@liveblocks/react**:

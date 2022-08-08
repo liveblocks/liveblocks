@@ -1,5 +1,5 @@
-import React from 'react';
-import { SvgXml } from 'react-native-svg';
+import React from "react";
+import { SvgXml } from "react-native-svg";
 
 const todayText = `
 <svg width="133" height="46" viewBox="0 0 133 46" fill="none" xmlns="http://www.w3.org/2000/svg">

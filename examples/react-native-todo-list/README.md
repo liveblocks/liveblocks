@@ -4,17 +4,17 @@
   </a>
 </p>
 
-# To-do List
+# Collaborative To-do List
 
 <p>
-   <img src="https://img.shields.io/badge/-react--native-blue?style=flat&logo=react&color=0bd&logoColor=fff" alt="React Native">
+   <img src="https://img.shields.io/badge/-react%20native-blue?style=flat&logo=react&color=0bd&logoColor=fff" alt="React Native">
 </p>
 
 This example shows how to build a collaborative to-do list with [Liveblocks](https://liveblocks.io) and [React Native](https://reactnative.dev/).
 
 As users edit the list, changes will be automatically persisted and synced—allowing for a list that updates in real-time across native apps. Users will also be able to see who else is currently online and when a user is typing.
 
-![liveblocks-react-native-todo](https://user-images.githubusercontent.com/8995991/173797740-26c2135a-e57c-454a-b04d-9618d9a5a1fb.png)
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list-native.png" width="500" alt="Collaborative To-do List" />
 
 ## Getting started
 
@@ -22,9 +22,5 @@ As users edit the list, changes will be automatically persisted and synced—all
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.ts`](./liveblocks.config.ts) by your **public** key
-- For iOS run `ios\pod install` and `npx react-native run-ios`
-- For Android run `npx react-native run-android`
-
-### Guides
-
-Follow our [guides](https://liveblocks.io/docs/guides/react-native) to discover Liveblocks specifications for React Native.
+- For iOS, run `cd ios && pod install` then `npm run ios`
+- For Android, run `npm run android`
