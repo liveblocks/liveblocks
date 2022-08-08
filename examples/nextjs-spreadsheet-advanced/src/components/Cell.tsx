@@ -11,8 +11,12 @@ import {
   type FormEvent,
   useEffect,
 } from "react";
+import { COLORS } from "../constants";
 import { useSelf } from "../liveblocks.config";
-import tokenizer, { tokenToString } from "../spreadsheet/interpreter/tokenizer";
+import tokenizer, {
+  SyntaxKind,
+  tokenToString,
+} from "../spreadsheet/interpreter/tokenizer";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
@@ -47,12 +51,21 @@ export function formatValue(value: string) {
 
 function stringToTokenizedHtml(value: string) {
   const tokens = tokenizer(value);
+  let cellIndex = 0;
 
   return tokens
-    .map(
-      (token) =>
-        `<span class="token ${token.kind}">${tokenToString(token)}</span>`
-    )
+    .map((token) => {
+      const value = tokenToString(token);
+
+      if (token.kind === SyntaxKind.CellToken) {
+        const color = COLORS[cellIndex % COLORS.length];
+        cellIndex += 1;
+
+        return `<span class="token ${token.kind}" style="--token-color: ${color};">${value}</span>`;
+      } else {
+        return `<span class="token ${token.kind}">${value}</span>`;
+      }
+    })
     .join("");
 }
 

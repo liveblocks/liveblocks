@@ -8,3 +8,26 @@ export const COLUMN_MIN_WIDTH = 80;
 export const COLUMN_MAX_WIDTH = 300;
 export const ROW_INITIAL_HEIGHT = 32;
 export const ROW_MAX_HEIGHT = 100;
+
+export const NAMES = [
+  "Charlie Layne",
+  "Mislav Abha",
+  "Tatum Paolo",
+  "Anjali Wanda",
+  "Jody Hekla",
+  "Emil Joyce",
+  "Jory Quispe",
+  "Quinn Elton",
+];
+
+export const COLORS = [
+  "#07f",
+  "#0bf",
+  "#0c8",
+  "#8c1",
+  "#fb0",
+  "#f81",
+  "#e14",
+  "#e4b",
+  "#85f",
+];

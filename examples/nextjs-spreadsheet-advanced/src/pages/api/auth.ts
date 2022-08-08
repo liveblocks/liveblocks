@@ -1,30 +1,8 @@
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
+import { COLORS, NAMES } from "../../constants";
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-
-const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];
-
-const COLORS = [
-  "#07f",
-  "#0bf",
-  "#0c8",
-  "#8c1",
-  "#fb0",
-  "#f81",
-  "#e14",
-  "#e4b",
-  "#85f",
-];
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {

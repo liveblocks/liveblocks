@@ -114,6 +114,7 @@
   inset: 0px;
   overflow: hidden;
   background: var(--gray-0);
+  pointer-events: none;
 }
 
 .display {
@@ -132,6 +133,11 @@
   font-size: 13px;
   user-select: none;
   outline: none;
+}
+
+.cell:global(.editing) .display {
+  pointer-events: auto;
+  user-select: auto;
 }
 
 .cell:global(.selected-other) .display,
@@ -172,6 +178,7 @@
 .cell :global(.token) {
   caret-color: var(--gray-800);
   margin: 0 0.1em;
+  color: var(--token-color, currentColor);
 }
 
 .cell :global(.token):first-of-type {
