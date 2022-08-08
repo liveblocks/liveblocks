@@ -1,7 +1,8 @@
 import { RefObject, useEffect } from "react";
 
 export function useAutoFocus<T extends { focus: () => void }>(
-  ref: RefObject<T>
+  ref: RefObject<T>,
+  callback?: (element: T) => void
 ) {
   useEffect(() => {
     setTimeout(() => {
@@ -9,6 +10,7 @@ export function useAutoFocus<T extends { focus: () => void }>(
 
       if (current) {
         current.focus();
+        callback?.(current);
       }
     }, 0);
   }, []);

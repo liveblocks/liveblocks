@@ -1,18 +1,22 @@
 import cx from "classnames";
 import {
   type CSSProperties,
-  type ChangeEvent,
   type ComponentProps,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
   useMemo,
   useRef,
   useState,
+  type ComponentPropsWithoutRef,
+  type FormEvent,
+  useEffect,
 } from "react";
 import { useSelf } from "../liveblocks.config";
+import tokenizer, { tokenToString } from "../spreadsheet/interpreter/tokenizer";
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import { stripHtml } from "../utils/stripHtml";
 import { useAutoFocus } from "../utils/useAutoFocus";
 import styles from "./Cell.module.css";
 
@@ -31,7 +35,7 @@ export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
   width: number;
 }
 
-export interface EditingCellProps extends ComponentProps<"input"> {
+export interface EditingCellProps extends ComponentPropsWithoutRef<"div"> {
   expression: string;
   onEndEditing: () => void;
   onCommit: (value: string, direction?: "down") => void;
@@ -41,6 +45,41 @@ export function formatValue(value: string) {
   return value.replace(" ", "").toUpperCase();
 }
 
+function stringToTokenizedHtml(value: string) {
+  const tokens = tokenizer(value);
+
+  return tokens
+    .map(
+      (token) =>
+        `<span class="token ${token.kind}">${tokenToString(token)}</span>`
+    )
+    .join("");
+}
+
+function placeCaretAtEnd(element: HTMLElement) {
+  const target = document.createTextNode("");
+  element.appendChild(target);
+
+  if (
+    target !== null &&
+    target.nodeValue !== null &&
+    document.activeElement === element
+  ) {
+    const selection = window.getSelection();
+
+    if (selection !== null) {
+      const range = document.createRange();
+
+      range.setStart(target, target.nodeValue.length);
+      range.collapse(true);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    element.focus();
+  }
+}
+
 function EditingCell({
   expression,
   onCommit,
@@ -48,46 +87,57 @@ function EditingCell({
   className,
   ...props
 }: EditingCellProps) {
-  const input = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState<string>(expression);
-  const value = useMemo(
-    () => (draft == null ? expression : draft),
-    [draft, expression]
+  const ref = useRef<HTMLDivElement>(null);
+  const [draft, setDraft] = useState<string>(() =>
+    stringToTokenizedHtml(expression)
   );
 
-  const handleChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-    const value = event.currentTarget.value;
+  const handleInput = useCallback((event: FormEvent<HTMLDivElement>) => {
+    const value = stripHtml(event.currentTarget.innerHTML);
 
-    setDraft(formatValue(value));
+    try {
+      setDraft(stringToTokenizedHtml(formatValue(value)));
+    } catch {
+      setDraft(`<span>${formatValue(value)}</span>`);
+    }
   }, []);
 
   const handleBlur = useCallback(() => {
-    onCommit(draft);
+    onCommit(stripHtml(draft));
   }, [draft, onCommit]);
 
   const handleKeyDown = useCallback(
-    (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    (event: ReactKeyboardEvent<HTMLDivElement>) => {
       if (event.key === "Escape") {
         event.preventDefault();
+
         onEndEditing();
       } else if (event.key === "Enter") {
         event.preventDefault();
-        onCommit(draft, "down");
+
+        onCommit(stripHtml(draft), "down");
       }
     },
     [draft, onCommit, onEndEditing]
   );
 
-  useAutoFocus(input);
+  useAutoFocus(ref, placeCaretAtEnd);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    ref.current.innerHTML = draft;
+    placeCaretAtEnd(ref.current);
+  }, [draft]);
 
   return (
-    <input
-      className={cx(className, styles.input)}
+    <div
+      ref={ref}
+      contentEditable
+      className={cx(className, styles.display)}
       onBlur={handleBlur}
-      onChange={handleChange}
       onKeyDown={handleKeyDown}
-      ref={input}
-      value={value ?? ""}
+      onInput={handleInput}
       {...props}
     />
   );
@@ -156,7 +206,7 @@ export function Cell({
             onEndEditing={onEndEditing}
           />
         ) : (
-          <div className={styles.display}>{expression}</div>
+          !isError && <div className={styles.display}>{expression}</div>
         )}
         {isError && !isEditing && (
           <div className={styles.error}>

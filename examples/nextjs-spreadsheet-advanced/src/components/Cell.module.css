@@ -116,40 +116,24 @@
   background: var(--gray-0);
 }
 
-.input {
-  all: unset;
-  box-sizing: border-box;
+.display {
   position: absolute;
   inset: 0px;
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  text-align: left;
-  cursor: text;
-}
-
-.input,
-.display {
+  padding: 0px 10px;
+  display: flex;
+  place-items: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
-  line-height: var(--cell-height);
   z-index: 1;
   color: var(--gray-800);
-  padding: 0px 10px;
   font-size: 13px;
-}
-
-.display {
-  position: absolute;
-  inset: 0px;
-  text-align: right;
   user-select: none;
+  outline: none;
 }
 
-.cell:global(.selected-other) .input,
 .cell:global(.selected-other) .display,
 .cell:global(.selected-other) .error {
   z-index: calc(var(--cell-selection-z-index) - 5);
