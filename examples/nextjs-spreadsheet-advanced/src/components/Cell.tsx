@@ -20,6 +20,7 @@ import tokenizer, {
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import { isNumerical } from "../utils/isNumerical";
 import { shuffle } from "../utils/shuffle";
 import { stripHtml } from "../utils/stripHtml";
 import { useAutoFocus } from "../utils/useAutoFocus";
@@ -187,6 +188,11 @@ export function Cell({
 }: Props) {
   const self = useSelf();
   const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
+  const isNumericalValue = useMemo(() => isNumerical(expression), [expression]);
+  const isNumericalExpression = useMemo(
+    () => isNumerical(getExpression()),
+    [expression, getExpression]
+  );
 
   const handleClick = useCallback(() => {
     if (isSelected) {
@@ -204,6 +210,7 @@ export function Cell({
         "selected-other": other,
         editing: isEditing,
         error: isError,
+        numerical: isNumericalValue,
       })}
       onClick={handleClick}
       style={

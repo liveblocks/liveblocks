@@ -7,11 +7,19 @@
 
   position: relative;
   padding: 0px;
-  text-align: right;
+  text-align: left;
   width: var(--cell-width);
   height: var(--cell-height);
   border: var(--border) solid var(--gray-100);
   cursor: cell;
+}
+
+.cell:global(.numerical) {
+  text-align: right;
+}
+
+.cell:global(.editing) {
+  text-align: left;
 }
 
 .cell:before,
@@ -122,11 +130,10 @@
   position: absolute;
   inset: 0px;
   padding: 0px 10px;
-  display: flex;
-  place-items: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: var(--cell-height);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
   z-index: 1;

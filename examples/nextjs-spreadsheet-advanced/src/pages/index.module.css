@@ -5,7 +5,7 @@
   max-width: calc(100vw - 2 * var(--margin));
   max-height: calc(100vh - 2 * var(--margin));
   background: var(--gray-100);
-  border-radius: calc(var(--radius) + var(--padding) * 0.8);
+  border-radius: calc(var(--radius) + var(--padding));
   overflow: hidden;
 }
 
