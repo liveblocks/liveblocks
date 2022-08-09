@@ -12,7 +12,11 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { restrictToParentElement } from "@dnd-kit/modifiers";
+import {
+  restrictToHorizontalAxis,
+  restrictToParentElement,
+  restrictToVerticalAxis,
+} from "@dnd-kit/modifiers";
 import {
   SortableContext,
   horizontalListSortingStrategy,
@@ -243,6 +247,27 @@ export function Header({
     () => (over?.id === header.id ? (index > (activeIndex ?? -1) ? 1 : -1) : 0),
     [over, header, index, activeIndex]
   );
+  const resizeProps = useMemo(
+    () =>
+      isColumn
+        ? {
+            minWidth: COLUMN_MIN_WIDTH,
+            maxWidth: COLUMN_MAX_WIDTH,
+            size: {
+              width: header.width,
+              height: "100%",
+            },
+          }
+        : {
+            minHeight: ROW_INITIAL_HEIGHT,
+            maxHeight: ROW_MAX_HEIGHT,
+            size: {
+              width: "100%",
+              height: header.height,
+            },
+          },
+    [isColumn, header]
+  );
 
   const handleDropdownOpenChange = useCallback((open: boolean) => {
     setDropdownOpen(open);
@@ -292,20 +317,13 @@ export function Header({
         className={styles.header_resizable_container}
         enable={{ right: isColumn, bottom: !isColumn }}
         handleWrapperClass={styles.header_handles}
-        maxHeight={ROW_MAX_HEIGHT}
-        maxWidth={COLUMN_MAX_WIDTH}
-        minHeight={ROW_INITIAL_HEIGHT}
-        minWidth={COLUMN_MIN_WIDTH}
         onResize={handleResize}
         onResizeStart={handleResizeStart}
         onResizeStop={handleResizeStop}
-        size={{
-          width: isColumn ? header.width : COLUMN_HEADER_WIDTH,
-          height: isColumn ? ROW_INITIAL_HEIGHT : header.height,
-        }}
+        {...resizeProps}
       >
         <div
-          className={cx(styles.header, {
+          className={cx(styles.header_container, {
             selected: isSelected,
             "menu-opened": isDropdownOpen,
             drop: dropPosition !== 0,
@@ -313,89 +331,99 @@ export function Header({
             "drop-after": dropPosition > 0,
           })}
         >
-          <button
-            className={cx(styles.header_control, styles.header_handler)}
-            ref={setActivatorNodeRef}
-            {...listeners}
-          >
-            <HandlerIcon />
-          </button>
-          <span className={styles.header_label}>
-            {isColumn ? convertNumberToLetter(index) : index + 1}
-          </span>
-          <DropdownMenu
-            align="start"
-            content={
-              <>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    disabled={!canInsert()}
-                    icon={
-                      isColumn ? <AddColumnBeforeIcon /> : <AddRowBeforeIcon />
-                    }
-                    label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
-                    onSelect={() => onInsert(0)}
-                  />
-                  <DropdownMenuItem
-                    disabled={!canInsert()}
-                    icon={
-                      isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />
-                    }
-                    label={`Add ${isColumn ? "Column After" : "Row Below"}`}
-                    onSelect={() => onInsert(1)}
-                  />
-                </DropdownMenuGroup>
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    disabled={!canMoveBefore()}
-                    icon={
-                      isColumn ? (
-                        <MoveColumnBeforeIcon />
-                      ) : (
-                        <MoveRowBeforeIcon />
-                      )
-                    }
-                    label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
-                    onSelect={() => onMove(-1)}
-                  />
-                  <DropdownMenuItem
-                    disabled={!canMoveAfter()}
-                    icon={
-                      isColumn ? <MoveColumnAfterIcon /> : <MoveRowAfterIcon />
-                    }
-                    label={`Move ${isColumn ? "Column After" : "Row Below"}`}
-                    onSelect={() => onMove(1)}
-                  />
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem
-                    icon={<ResetIcon />}
-                    label="Resize to Default"
-                    onSelect={handleResizeDefault}
-                  />
-                  <DropdownMenuItem
-                    icon={<EraserIcon />}
-                    label={`Clear ${isColumn ? "Column" : "Row"}`}
-                    onSelect={onClear}
-                  />
-                  <DropdownMenuItem
-                    disabled={!canDelete()}
-                    icon={<TrashIcon />}
-                    label={`Delete ${isColumn ? "Column" : "Row"}`}
-                    onSelect={onDelete}
-                  />
-                </DropdownMenuGroup>
-              </>
-            }
-            onOpenChange={handleDropdownOpenChange}
-            open={isDropdownOpen}
-            side="bottom"
-          >
-            <button className={cx(styles.header_control, styles.header_menu)}>
-              <EllipsisIcon />
+          <div className={styles.header}>
+            <button
+              className={cx(styles.header_control, styles.header_handler)}
+              ref={setActivatorNodeRef}
+              {...listeners}
+            >
+              <HandlerIcon />
             </button>
-          </DropdownMenu>
+            <span className={styles.header_label}>
+              {isColumn ? convertNumberToLetter(index) : index + 1}
+            </span>
+            <DropdownMenu
+              align="start"
+              content={
+                <>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      disabled={!canInsert()}
+                      icon={
+                        isColumn ? (
+                          <AddColumnBeforeIcon />
+                        ) : (
+                          <AddRowBeforeIcon />
+                        )
+                      }
+                      label={`Add ${isColumn ? "Column Before" : "Row Above"}`}
+                      onSelect={() => onInsert(0)}
+                    />
+                    <DropdownMenuItem
+                      disabled={!canInsert()}
+                      icon={
+                        isColumn ? <AddColumnAfterIcon /> : <AddRowAfterIcon />
+                      }
+                      label={`Add ${isColumn ? "Column After" : "Row Below"}`}
+                      onSelect={() => onInsert(1)}
+                    />
+                  </DropdownMenuGroup>
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      disabled={!canMoveBefore()}
+                      icon={
+                        isColumn ? (
+                          <MoveColumnBeforeIcon />
+                        ) : (
+                          <MoveRowBeforeIcon />
+                        )
+                      }
+                      label={`Move ${isColumn ? "Column Before" : "Row Above"}`}
+                      onSelect={() => onMove(-1)}
+                    />
+                    <DropdownMenuItem
+                      disabled={!canMoveAfter()}
+                      icon={
+                        isColumn ? (
+                          <MoveColumnAfterIcon />
+                        ) : (
+                          <MoveRowAfterIcon />
+                        )
+                      }
+                      label={`Move ${isColumn ? "Column After" : "Row Below"}`}
+                      onSelect={() => onMove(1)}
+                    />
+                  </DropdownMenuGroup>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    <DropdownMenuItem
+                      icon={<ResetIcon />}
+                      label="Resize to Default"
+                      onSelect={handleResizeDefault}
+                    />
+                    <DropdownMenuItem
+                      icon={<EraserIcon />}
+                      label={`Clear ${isColumn ? "Column" : "Row"}`}
+                      onSelect={onClear}
+                    />
+                    <DropdownMenuItem
+                      disabled={!canDelete()}
+                      icon={<TrashIcon />}
+                      label={`Delete ${isColumn ? "Column" : "Row"}`}
+                      onSelect={onDelete}
+                    />
+                  </DropdownMenuGroup>
+                </>
+              }
+              onOpenChange={handleDropdownOpenChange}
+              open={isDropdownOpen}
+              side="bottom"
+            >
+              <button className={cx(styles.header_control, styles.header_menu)}>
+                <EllipsisIcon />
+              </button>
+            </DropdownMenu>
+          </div>
         </div>
       </Resizable>
     </div>
@@ -476,7 +504,10 @@ export function Headers({
   return (
     <DndContext
       collisionDetection={closestCenter}
-      modifiers={[restrictToParentElement]}
+      modifiers={[
+        restrictToParentElement,
+        isColumn ? restrictToHorizontalAxis : restrictToVerticalAxis,
+      ]}
       sensors={sensors}
       measuring={measuring}
       onDragStart={handleDragStart}

@@ -1,13 +1,11 @@
 .sheet {
   position: relative;
-  padding-bottom: var(--padding);
-  padding-right: var(--padding);
   overflow: auto;
   -ms-overflow-style: none;
   scrollbar-width: none;
   display: grid;
-  grid-template-columns: var(--column-header-width) 1fr;
-  grid-template-rows: var(--row-height) 1fr;
+  grid-template-columns: var(--column-header-width) 1fr var(--padding);
+  grid-template-rows: var(--row-height) 1fr var(--padding);
   grid-template-areas:
     ".    columns"
     "rows table";
@@ -18,17 +16,17 @@
 }
 
 .rows {
-  grid-area: rows;
+  grid-area: 2 / 1 / 3 / 4;
   flex-direction: column;
 }
 
 .columns {
-  grid-area: columns;
+  grid-area: 1 / 2 / 4 / 3;
   flex-direction: row;
 }
 
 .table_container {
-  grid-area: table;
+  grid-area: 2 / 2 / 3 / 3;
   background: var(--gray-200);
   z-index: 100;
 }
