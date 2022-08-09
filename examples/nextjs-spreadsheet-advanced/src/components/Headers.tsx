@@ -24,8 +24,8 @@ import {
   verticalListSortingStrategy,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { useGesture } from "@use-gesture/react";
 import cx from "classnames";
-import { Resizable, type ResizeCallback } from "re-resizable";
 import {
   type CSSProperties,
   type ComponentProps,
@@ -69,6 +69,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./DropdownMenu";
+import { clamp } from "../utils/clamp";
 import { getCellId } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";
 import styles from "./Headers.module.css";
@@ -247,56 +248,51 @@ export function Header({
     () => (over?.id === header.id ? (index > (activeIndex ?? -1) ? 1 : -1) : 0),
     [over, header, index, activeIndex]
   );
-  const resizeProps = useMemo(
-    () =>
-      isColumn
-        ? {
-            minWidth: COLUMN_MIN_WIDTH,
-            maxWidth: COLUMN_MAX_WIDTH,
-            size: {
-              width: header.width,
-              height: "100%",
-            },
-          }
-        : {
-            minHeight: ROW_INITIAL_HEIGHT,
-            maxHeight: ROW_MAX_HEIGHT,
-            size: {
-              width: "100%",
-              height: header.height,
-            },
-          },
-    [isColumn, header]
-  );
 
   const handleDropdownOpenChange = useCallback((open: boolean) => {
     setDropdownOpen(open);
   }, []);
 
-  const handleResizeStart = useCallback(() => {
-    initialHeader.current = header;
-    history.pause();
-    setGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, [header, history, isColumn]);
-
-  const handleResize: ResizeCallback = useCallback(
-    (_, __, ___, size) => {
-      onResize(
-        isColumn ? (initialHeader.current as Column).width + size.width : 0,
-        !isColumn ? (initialHeader.current as Row).height + size.height : 0
-      );
-    },
-    [isColumn, onResize]
-  );
-
-  const handleResizeStop = useCallback(() => {
-    history.resume();
-    removeGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
-  }, [history, isColumn]);
-
   const handleResizeDefault = useCallback(() => {
     onResize(COLUMN_INITIAL_WIDTH, ROW_INITIAL_HEIGHT);
   }, [onResize]);
+
+  const bindResizeEvents = useGesture(
+    {
+      onDragStart: () => {
+        initialHeader.current = header;
+        history.pause();
+        setGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
+      },
+      onDrag: ({ movement: [x, y] }) => {
+        onResize(
+          isColumn
+            ? clamp(
+                (initialHeader.current as Column).width + x,
+                COLUMN_MIN_WIDTH,
+                COLUMN_MAX_WIDTH
+              )
+            : 0,
+          !isColumn
+            ? clamp(
+                (initialHeader.current as Row).height + y,
+                ROW_INITIAL_HEIGHT,
+                ROW_MAX_HEIGHT
+              )
+            : 0
+        );
+      },
+      onDragEnd: () => {
+        history.resume();
+        removeGlobalCursor(isColumn ? "resizing-column" : "resizing-row");
+      },
+    },
+    {
+      drag: {
+        axis: isColumn ? "x" : "y",
+      },
+    }
+  );
 
   useEffect(() => {
     const changeGlobalCursor = isDragging
@@ -313,15 +309,21 @@ export function Header({
       ref={setNodeRef}
       {...props}
     >
-      <Resizable
+      <div
         className={styles.header_resizable_container}
-        enable={{ right: isColumn, bottom: !isColumn }}
-        handleWrapperClass={styles.header_handles}
-        onResize={handleResize}
-        onResizeStart={handleResizeStart}
-        onResizeStop={handleResizeStop}
-        {...resizeProps}
+        style={{
+          width: isColumn ? header.width : "100%",
+          minWidth: isColumn ? COLUMN_MIN_WIDTH : undefined,
+          maxWidth: isColumn ? COLUMN_MAX_WIDTH : undefined,
+          height: !isColumn ? header.height : "100%",
+          minHeight: !isColumn ? ROW_INITIAL_HEIGHT : undefined,
+          maxHeight: !isColumn ? ROW_MAX_HEIGHT : undefined,
+        }}
       >
+        <div
+          {...bindResizeEvents()}
+          className={styles.header_resizable_handle}
+        />
         <div
           className={cx(styles.header_container, {
             selected: isSelected,
@@ -425,7 +427,7 @@ export function Header({
             </DropdownMenu>
           </div>
         </div>
-      </Resizable>
+      </div>
     </div>
   );
 }

@@ -139,14 +139,37 @@
 
 .header_handler {
   cursor: grab;
+  touch-action: none;
 }
 
-.header_resize {
+.header_resizable_handle {
+  --header-resizable-handle-z-index: 50;
+
   position: absolute;
-  height: 100%;
-  width: calc(2 * var(--border));
-  right: calc(-1 * var(--border));
+  touch-action: none;
+  background: rgba(31, 41, 55, 0.05);
+  z-index: var(--header-resizable-handle-z-index);
+  opacity: 0;
+  transition: opacity 0.12s ease-in-out;
+}
+
+.header_resizable_handle:hover {
+  opacity: 1;
+}
+
+.headers:global(.column) .header_resizable_handle {
+  height: var(--row-height);
+  width: calc(4 * var(--border));
+  right: calc(-2 * var(--border));
   cursor: col-resize;
+  z-index: calc(var(--header-resizable-handle-z-index) + 1);
+}
+
+.headers:global(.row) .header_resizable_handle {
+  width: var(--column-header-width);
+  height: calc(4 * var(--border));
+  bottom: calc(-2 * var(--border));
+  cursor: row-resize;
 }
 
 .overlay {
