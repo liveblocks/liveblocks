@@ -1,3 +1,4 @@
+import { useGesture } from "@use-gesture/react";
 import cx from "classnames";
 import {
   type CSSProperties,
@@ -12,7 +13,7 @@ import {
   useEffect,
 } from "react";
 import { COLORS } from "../constants";
-import { useSelf } from "../liveblocks.config";
+import { useHistory, useSelf } from "../liveblocks.config";
 import tokenizer, {
   SyntaxKind,
   tokenToString,
@@ -20,6 +21,7 @@ import tokenizer, {
 import { EXPRESSION_ERROR } from "../spreadsheet/interpreter/utils";
 import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
+import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import { isNumerical } from "../utils/isNumerical";
 import { shuffle } from "../utils/shuffle";
 import { stripHtml } from "../utils/stripHtml";
@@ -187,11 +189,17 @@ export function Cell({
   ...props
 }: Props) {
   const self = useSelf();
+  const history = useHistory();
+  const initialValue = useRef<number>();
   const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
   const isNumericalValue = useMemo(() => isNumerical(expression), [expression]);
   const isNumericalExpression = useMemo(
     () => isNumerical(getExpression()),
     [expression, getExpression]
+  );
+  const isDraggable = useMemo(
+    () => isNumericalExpression && isSelected && !isEditing,
+    [isNumericalExpression, isSelected, isEditing]
   );
 
   const handleClick = useCallback(() => {
@@ -202,6 +210,34 @@ export function Cell({
     }
   }, [onSelect, onStartEditing, isSelected]);
 
+  const bindDragEvents = useGesture(
+    {
+      onDragStart: () => {
+        initialValue.current = Number.parseFloat(getExpression());
+        history.pause();
+        setGlobalCursor("dragging-horizontal");
+      },
+      onDrag: ({ movement: [x], tap }) => {
+        if (tap) {
+          handleClick();
+        } else {
+          // TODO: transform `x` to slow down incrementation
+          onCommit(String((initialValue.current ?? 0) + Math.round(x)));
+        }
+      },
+      onDragEnd: () => {
+        history.resume();
+        removeGlobalCursor("dragging-horizontal");
+      },
+    },
+    {
+      drag: {
+        axis: "x",
+        filterTaps: true,
+      },
+    }
+  );
+
   return (
     <td
       aria-selected={isSelected}
@@ -211,8 +247,9 @@ export function Cell({
         editing: isEditing,
         error: isError,
         numerical: isNumericalValue,
+        draggable: isDraggable,
       })}
-      onClick={handleClick}
+      onClick={isDraggable ? undefined : handleClick}
       style={
         {
           ...style,
@@ -222,6 +259,7 @@ export function Cell({
           "--cell-height": appendUnit(height),
         } as CSSProperties
       }
+      {...(isDraggable ? bindDragEvents() : {})}
       {...props}
     >
       {other && (

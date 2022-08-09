@@ -70,7 +70,9 @@ svg {
 
 .grabbing *,
 .resizing-column *,
-.resizing-row * {
+.resizing-row *,
+.dragging-vertical *,
+.dragging-horizontal * {
   pointer-events: none !important;
   user-select: none !important;
 }
@@ -85,4 +87,12 @@ svg {
 
 .resizing-row {
   cursor: row-resize;
+}
+
+.dragging-vertical {
+  cursor: ns-resize;
+}
+
+.dragging-horizontal {
+  cursor: ew-resize;
 }
