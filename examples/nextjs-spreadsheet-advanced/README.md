@@ -16,6 +16,8 @@
 
 This example shows how to build an advanced collaborative spreadsheet with [Liveblocks](https://liveblocks.io) and [Next.js](https://nextjs.org/).
 
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-spreadsheet-advanced.png" width="536" alt="Collaborative Spreadsheet (Advanced)" />
+
 ## Getting started
 
 - Install all dependencies with `npm install`
