@@ -40,7 +40,12 @@
   position: absolute;
   left: calc(var(--menu-inset) + 6px);
   align-self: center;
-  opacity: 0.6;
+  color: var(--accent);
+}
+
+.item:focus .icon,
+.item[data-disabled] .icon {
+  color: inherit;
 }
 
 .separator {
