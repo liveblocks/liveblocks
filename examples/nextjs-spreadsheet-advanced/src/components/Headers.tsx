@@ -307,6 +307,7 @@ export function Header({
         <div
           className={cx(styles.header, {
             selected: isSelected,
+            "menu-opened": isDropdownOpen,
             drop: dropPosition !== 0,
             "drop-before": dropPosition < 0,
             "drop-after": dropPosition > 0,
@@ -391,7 +392,7 @@ export function Header({
             open={isDropdownOpen}
             side="bottom"
           >
-            <button className={styles.header_control}>
+            <button className={cx(styles.header_control, styles.header_menu)}>
               <EllipsisIcon />
             </button>
           </DropdownMenu>

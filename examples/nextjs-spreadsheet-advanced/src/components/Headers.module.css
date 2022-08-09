@@ -98,13 +98,15 @@
 }
 
 .header_control:hover,
-.header_control:focus {
+.header_control:focus,
+.header:global(.menu-opened) .header_menu {
   opacity: 1;
   background: var(--gray-200);
 }
 
 .header:global(.selected) .header_control:hover,
-.header:global(.selected) .header_control:focus {
+.header:global(.selected) .header_control:focus,
+.header:global(.selected):global(.menu-opened) .header_menu {
   background: var(--gray-300);
 }
 
