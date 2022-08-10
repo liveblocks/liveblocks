@@ -63,7 +63,7 @@ export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
   onCommit: (value: string, direction?: "down") => void;
 }
 
-type ExpressionType = "functional" | "numerical" | "alphabetical";
+type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
 
 export function formatValue(value: string) {
   return value.replace(/(\s|&nbsp;)/g, "").toUpperCase();
@@ -239,7 +239,9 @@ export function DisplayCell({
   const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
   const isNumericalValue = useMemo(() => isNumerical(value), [value]);
   const type: ExpressionType = useMemo(() => {
-    if (expression?.startsWith("=")) {
+    if (!expression) {
+      return "empty";
+    } else if (expression?.startsWith("=")) {
       return "functional";
     } else if (isNumerical(expression)) {
       return "numerical";
@@ -268,7 +270,7 @@ export function DisplayCell({
       {...props}
     >
       {isSelected &&
-        (type === "functional" ? (
+        (type === "empty" ? null : type === "functional" ? (
           <div className={styles.value_type}>f(x)</div>
         ) : type === "alphabetical" ? (
           <div className={styles.value_type}>abc</div>
