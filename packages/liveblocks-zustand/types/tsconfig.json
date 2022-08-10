@@ -3,7 +3,7 @@
     "target": "es2015",
     "module": "es2020",
     "moduleResolution": "node",
-    "lib": ["es2015"],
+    "lib": ["es2015", "DOM"],
     "noImplicitAny": true,
     "noImplicitThis": true,
     "strictFunctionTypes": true,
@@ -12,6 +12,6 @@
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
 
-    "paths": { "@liveblocks/zustand": [".."] }
+    "paths": { "@liveblocks/zustand": ["../lib"] }
   }
 }
