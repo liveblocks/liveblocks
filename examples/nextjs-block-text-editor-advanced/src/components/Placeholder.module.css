@@ -3,18 +3,26 @@
   display: flex;
   align-items: center;
   color: rgba(var(--color-foreground), 0.8);
-  padding: 1rem 1.25rem;
+  padding: 1.5em 1.5em;
   width: 100%;
-  background: rgba(var(--color-foreground), 0.06);
+  background: rgba(var(--color-foreground), 0.08);
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
   user-select: none;
-  font-size: 0.875em;
+  font-size: 1em;
+}
+
+.placeholder:hover,
+.placeholder:focus {
+  outline: none;
+  background: rgba(var(--color-foreground), 0.1);
 }
 
 .placeholder_icon {
   margin-right: 0.875rem;
+  display: flex;
+  align-items: center;
 }
 
 .popover_content {

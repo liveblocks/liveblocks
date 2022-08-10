@@ -47,8 +47,8 @@ export default function Toolbar() {
 
     el.style.position = "absolute";
     el.style.opacity = "1";
-    el.style.top = `${rect.top}px`;
-    el.style.left = `${rect.left}px`;
+    el.style.top = `${rect.top + window.scrollY}px`;
+    el.style.left = `${rect.left + window.scrollX}px`;
   });
 
   const type = getSelectedElementType(editor);

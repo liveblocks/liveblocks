@@ -1,5 +1,5 @@
 import styles from "./BlockFigma.module.css";
-import VideoIcon from "../icons/video.svg";
+import FigmaIcon from "../icons/figma.svg";
 import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, FigmaElement } from "../types";
 import { Transforms } from "slate";
@@ -28,7 +28,7 @@ export default function BlockFigma({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          icon={VideoIcon}
+          icon={FigmaIcon}
           text="Embed a Figma project"
           inputs={{
             url: {

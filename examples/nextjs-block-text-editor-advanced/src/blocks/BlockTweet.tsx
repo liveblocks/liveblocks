@@ -3,7 +3,7 @@ import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, TweetElement } from "../types";
 import { Transforms } from "slate";
 import { TwitterTweetEmbed } from "react-twitter-embed";
-import ImageIcon from "../icons/image.svg";
+import TwitterIcon from "../icons/twitter.svg";
 import Placeholder from "../components/Placeholder";
 
 type Props = {
@@ -24,7 +24,7 @@ export default function BlockTweet({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          icon={ImageIcon}
+          icon={TwitterIcon}
           text="Embed a Tweet"
           inputs={{
             tweetId: {

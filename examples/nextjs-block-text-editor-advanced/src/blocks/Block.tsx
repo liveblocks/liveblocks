@@ -11,7 +11,10 @@ import BlockList from "./BlockList";
 
 // If new block created when old block selected, create the following block
 // Example: create checkbox block, press enter, new unchecked checkbox is created
-export const CreateNewBlockFromBlock: Record<string, () => { type: BlockType }> = {
+export const CreateNewBlockFromBlock: Record<
+  string,
+  () => { type: BlockType }
+> = {
   [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
   [BlockType.List]: () => ({ type: BlockType.List }),
 };
@@ -66,7 +69,7 @@ export default function Block({
 
   if (element.type === BlockType.Image) {
     return (
-      <div {...attributes} contentEditable={false}>
+      <div {...attributes} contentEditable={false} className="embed">
         <BlockImage element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
@@ -75,7 +78,7 @@ export default function Block({
 
   if (element.type === BlockType.Video) {
     return (
-      <div {...attributes} contentEditable={false}>
+      <div {...attributes} contentEditable={false} className="embed">
         <BlockVideo element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
@@ -84,7 +87,7 @@ export default function Block({
 
   if (element.type === BlockType.CodeSandbox) {
     return (
-      <div {...attributes} contentEditable={false}>
+      <div {...attributes} contentEditable={false} className="embed">
         <BlockCodeSandbox element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
@@ -93,7 +96,7 @@ export default function Block({
 
   if (element.type === BlockType.Figma) {
     return (
-      <div {...attributes} contentEditable={false}>
+      <div {...attributes} contentEditable={false} className="embed">
         <BlockFigma element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
@@ -102,7 +105,7 @@ export default function Block({
 
   if (element.type === BlockType.Tweet) {
     return (
-      <div {...attributes} contentEditable={false}>
+      <div {...attributes} contentEditable={false} className="embed">
         <BlockTweet element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>

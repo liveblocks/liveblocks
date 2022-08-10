@@ -70,3 +70,13 @@
 .prose .p .caret {
   margin-top: 0.15em;
 }
+
+.prose .embed {
+  margin: 0.5em 0;
+}
+
+.prose .embed ~ .inline_actions,
+.prose .embed ~ .toolbar,
+.prose .embed ~ .avatars {
+  margin-top: 0.5em;
+}

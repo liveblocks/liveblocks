@@ -423,7 +423,7 @@ function SortableElement({
     .filter((user) => user.presence?.selectedBlockId === element.id);
 
   return (
-    <div className={styles.block_text} {...attributes}>
+    <div className={styles.block} {...attributes}>
       <div
         className={styles.sortable}
         {...sortable.attributes}
