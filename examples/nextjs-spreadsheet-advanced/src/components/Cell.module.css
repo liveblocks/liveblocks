@@ -17,19 +17,10 @@
 
   position: relative;
   padding: 0px;
-  text-align: left;
   width: var(--cell-width);
   height: var(--cell-height);
   border: var(--border) solid var(--gray-100);
   cursor: cell;
-}
-
-.cell:global(.numerical) {
-  text-align: right;
-}
-
-.cell:global(.editing) {
-  text-align: left;
 }
 
 .cell:before,
@@ -135,7 +126,11 @@
   z-index: 1;
 }
 
-.display {
+.cell:global(.selected-other) .content {
+  z-index: calc(var(--cell-selection-z-index) - 5);
+}
+
+.value {
   position: absolute;
   inset: 0px;
   padding: 0px 10px;
@@ -149,25 +144,36 @@
   color: var(--gray-800);
   font-size: 13px;
   user-select: none;
+  text-align: left;
   outline: none;
+  cursor: text;
 }
 
-.cell:global(.editing) .display {
+.value:global(.numerical) {
+  text-align: right;
+}
+
+.value:global(.scrubbable) {
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.cell:global(.selected) .value,
+.cell:global(.editing) .value {
   pointer-events: auto;
-  user-select: auto;
 }
 
-.cell:global(.selected-other) .display,
-.cell:global(.selected-other) .error {
-  z-index: calc(var(--cell-selection-z-index) - 5);
+.cell:global(.editing) .value {
+  user-select: all;
+  text-align: left;
 }
 
-.display_content {
+.value_content {
   display: inline-block;
   position: relative;
 }
 
-.display_content:before {
+.value_content:before {
   --display-highlight-height: calc(1em + 6px);
 
   content: "";
@@ -183,13 +189,7 @@
 }
 
 .cell:global(.selected) {
-  cursor: text;
   z-index: calc(var(--cell-selection-z-index) + 15);
-}
-
-.cell:global(.scrubbable) {
-  cursor: ew-resize;
-  touch-action: none;
 }
 
 .error {

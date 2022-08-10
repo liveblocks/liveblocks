@@ -167,10 +167,8 @@ export function Sheet({
                         key={id}
                         cellId={id}
                         className={styles.cell}
-                        expression={cells[id]}
-                        getExpression={() =>
-                          getCellExpression(column.id, row.id)
-                        }
+                        value={cells[id]}
+                        expression={getCellExpression(column.id, row.id)}
                         height={row.height}
                         isSelected={isSelected}
                         isEditing={isEditing}

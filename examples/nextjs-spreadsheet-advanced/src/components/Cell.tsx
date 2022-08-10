@@ -29,9 +29,9 @@ import { useAutoFocus } from "../utils/useAutoFocus";
 import styles from "./Cell.module.css";
 
 export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
+  value: string;
   expression: string;
   cellId: string;
-  getExpression: () => string;
   height: number;
   isSelected?: boolean;
   isEditing?: boolean;
@@ -49,6 +49,14 @@ export interface EditingCellProps extends ComponentPropsWithoutRef<"div"> {
   cellId: string;
   onEndEditing: () => void;
   onCommit: (value: string, direction?: "down") => void;
+}
+
+export interface DisplayCellProps extends ComponentProps<"div"> {
+  value: string;
+  expression?: string;
+  isSelected?: boolean;
+  onCellClick?: () => void;
+  onCommit?: (value: string, direction?: "down") => void;
 }
 
 export function formatValue(value: string) {
@@ -79,7 +87,7 @@ function placeCaretAtEnd(element: HTMLElement) {
   }
 }
 
-function EditingCell({
+export function EditingCell({
   expression,
   cellId,
   onCommit,
@@ -161,7 +169,7 @@ function EditingCell({
     <div
       ref={ref}
       contentEditable
-      className={cx(className, styles.display)}
+      className={cx(className, styles.value, styles.editing_value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onInput={handleInput}
@@ -170,61 +178,41 @@ function EditingCell({
   );
 }
 
-export function Cell({
-  cellId,
+export function DisplayCell({
+  value,
   expression,
-  width,
-  height,
   isSelected,
-  isEditing,
-  other,
-  onSelect,
-  onStartEditing,
-  onEndEditing,
-  onCommit,
-  onDelete,
-  getExpression,
   className,
-  style,
+  onCellClick,
+  onCommit,
   ...props
-}: Props) {
-  const self = useSelf();
+}: DisplayCellProps) {
   const history = useHistory();
   const initialValue = useRef<number>();
-  const [isScrubbing, setScrubbing] = useState(false);
-  const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
-  const isNumericalValue = useMemo(() => isNumerical(expression), [expression]);
+  const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
+  const isNumericalValue = useMemo(() => isNumerical(value), [value]);
   const isScrubbable = useMemo(
-    () => isNumerical(getExpression()) && isSelected && !isEditing,
-    [getExpression, isSelected, isEditing]
+    () =>
+      Boolean(isNumerical(expression) && isSelected && onCellClick && onCommit),
+    [expression, isSelected]
   );
 
-  const handleClick = useCallback(() => {
-    if (isSelected) {
-      onStartEditing();
-    } else {
-      onSelect();
-    }
-  }, [onSelect, onStartEditing, isSelected]);
-
-  const bindDragEvents = useGesture(
+  const bindScrubEvents = useGesture(
     {
       onDragStart: () => {
-        initialValue.current = Number.parseFloat(getExpression());
+        initialValue.current = Number.parseFloat(expression ?? "");
         history.pause();
-        setScrubbing(true);
         setGlobalCursor("scrubbing");
       },
       onDrag: ({ movement: [x], tap }) => {
         if (tap) {
-          handleClick();
+          onCellClick?.();
         } else {
-          onCommit(String((initialValue.current ?? 0) + Math.round(x / 20)));
+          onCommit?.(String((initialValue.current ?? 0) + Math.round(x / 20)));
         }
       },
       onDragEnd: () => {
         history.resume();
-        setScrubbing(false);
         removeGlobalCursor("scrubbing");
       },
     },
@@ -236,6 +224,64 @@ export function Cell({
     }
   );
 
+  return isError ? (
+    <div className={cx(className, styles.error)} {...props}>
+      <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
+        <path d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z" fill="var(--red-100)" />
+        <path
+          clipRule="evenodd"
+          d="M10 5a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM9 14a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1Z"
+          fill="var(--red-500)"
+          fillRule="evenodd"
+        />
+      </svg>
+    </div>
+  ) : (
+    <div
+      className={cx(className, styles.value, {
+        numerical: isNumericalValue,
+        scrubbable: isScrubbable,
+      })}
+      {...(isScrubbable ? bindScrubEvents() : {})}
+      {...props}
+    >
+      {value && (
+        <span className={styles.value_content} key={value}>
+          {value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function Cell({
+  cellId,
+  value,
+  expression,
+  width,
+  height,
+  isSelected,
+  isEditing,
+  other,
+  onSelect,
+  onStartEditing,
+  onEndEditing,
+  onCommit,
+  onDelete,
+  className,
+  style,
+  ...props
+}: Props) {
+  const self = useSelf();
+
+  const handleClick = useCallback(() => {
+    if (isSelected) {
+      onStartEditing();
+    } else {
+      onSelect();
+    }
+  }, [onSelect, onStartEditing, isSelected]);
+
   return (
     <td
       aria-selected={isSelected}
@@ -243,12 +289,8 @@ export function Cell({
         selected: isSelected,
         "selected-other": other,
         editing: isEditing,
-        error: isError,
-        numerical: isNumericalValue,
-        scrubbable: isScrubbable,
-        scrubbing: isScrubbing,
       })}
-      onClick={isScrubbable ? undefined : handleClick}
+      onClick={handleClick}
       style={
         {
           ...style,
@@ -258,7 +300,6 @@ export function Cell({
           "--cell-height": appendUnit(height),
         } as CSSProperties
       }
-      {...(isScrubbable ? bindDragEvents() : {})}
       {...props}
     >
       {other && (
@@ -271,36 +312,18 @@ export function Cell({
         {isEditing ? (
           <EditingCell
             cellId={cellId}
-            expression={getExpression()}
+            expression={expression}
             onCommit={onCommit}
             onEndEditing={onEndEditing}
           />
         ) : (
-          !isError && (
-            <div className={styles.display}>
-              {expression && (
-                <span className={styles.display_content} key={expression}>
-                  {expression}
-                </span>
-              )}
-            </div>
-          )
-        )}
-        {isError && !isEditing && (
-          <div className={styles.error}>
-            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M10 19a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
-                fill="var(--red-100)"
-              />
-              <path
-                clipRule="evenodd"
-                d="M10 5a1 1 0 0 1 1 1v4a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1ZM9 14a1 1 0 0 1 1-1h.01a1 1 0 1 1 0 2H10a1 1 0 0 1-1-1Z"
-                fill="var(--red-500)"
-                fillRule="evenodd"
-              />
-            </svg>
-          </div>
+          <DisplayCell
+            value={value}
+            expression={expression}
+            isSelected={isSelected}
+            onCellClick={handleClick}
+            onCommit={onCommit}
+          />
         )}
       </div>
     </td>

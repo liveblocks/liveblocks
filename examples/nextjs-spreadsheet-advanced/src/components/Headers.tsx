@@ -74,6 +74,7 @@ import { getCellId } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";
 import styles from "./Headers.module.css";
 import cellStyles from "./Cell.module.css";
+import { DisplayCell } from "./Cell";
 
 const DRAGGING_CLASS = "dragging";
 
@@ -208,11 +209,7 @@ function HeaderDragOverlay({
               } as CSSProperties
             }
           >
-            <div
-              className={cx(cellStyles.display, styles.overlay_cell_content)}
-            >
-              {cell.value ?? null}
-            </div>
+            <DisplayCell value={cell.value} />
           </div>
         ))}
       </div>

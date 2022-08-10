@@ -314,7 +314,3 @@
 .overlay:global(.row) .overlay_cell:last-of-type {
   border-right: none;
 }
-
-.overlay_cell_content {
-  line-height: var(--cell-height);
-}
