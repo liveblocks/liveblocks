@@ -30,7 +30,7 @@ const animationProps = {
 const avatarProps = {
   style: { marginLeft: "-0.45rem" },
   size: 48,
-  outlineWidth: 4,
+  outlineWidth: 3,
   outlineColor: "white",
 };
 

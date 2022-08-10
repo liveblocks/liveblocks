@@ -18,7 +18,7 @@ type PictureProps = BothProps & {
   variant?: "avatar";
   name?: string;
   picture?: string;
-  color?: string;
+  color: [string, string];
   statusColor?: string;
   count?: never;
 };
@@ -42,11 +42,11 @@ export function Avatar({
   variant = "avatar",
   picture = "",
   name = "",
-  color = "",
+  color = ["", ""],
   size = 52,
   statusColor = "",
   outlineColor = "",
-  outlineWidth = 4,
+  outlineWidth = 3,
   borderRadius = 9999,
   className = "",
   style = {},
@@ -102,26 +102,17 @@ function LetterCircle({
   borderRadius,
 }: Pick<PictureProps, "name" | "color" | "borderRadius">) {
   const textColor = useMemo(
-    () => (color ? getContrastingColor(color) : undefined),
+    () => (color ? getContrastingColor(color[1]) : undefined),
     [color]
   );
   return (
     <div
       style={{
-        backgroundColor: color,
+        background: `linear-gradient(to bottom right, ${color[0]}, ${color[1]})`,
         borderRadius,
       }}
       className={styles.letter}
     >
-      <div
-        style={{
-          maskImage: "linear-gradient(to bottom right, transparent, #fff)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom right, transparent, #fff)",
-          backgroundColor: color,
-        }}
-        className={styles.letterBackground}
-      />
       <div className={styles.letterCharacter} style={{ color: textColor }}>
         {name ? name.charAt(0) : null}
       </div>

@@ -31,15 +31,6 @@
   border-radius: 9999px;
 }
 
-.letterBackground {
-  filter: hue-rotate(-60deg);
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-}
-
 .letterCharacter {
   z-index: 10;
   color: #ffffff;
