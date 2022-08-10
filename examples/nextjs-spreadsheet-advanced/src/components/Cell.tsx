@@ -66,7 +66,9 @@ export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
 type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
 
 export function formatValue(value: string) {
-  return value.replace(/(\s|&nbsp;)/g, " ").toUpperCase();
+  const normalized = value.replace(/(\s|&nbsp;)/g, " ");
+
+  return normalized.replace(/([A-Za-z]\d)/g, (cell) => cell.toUpperCase());
 }
 
 function placeCaretAtEnd(element: HTMLElement) {
