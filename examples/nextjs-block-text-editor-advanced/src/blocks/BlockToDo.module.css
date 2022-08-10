@@ -19,19 +19,22 @@
   opacity: 0;
   position: absolute;
   top: 0;
-  right: 0;
-  bottom: 0;
   left: 0;
+  width: 100%;
+  height: 100%;
   cursor: pointer;
 }
 
 
-.checkbox_element:hover + .checkbox {
+.checkbox_element:hover + .checkbox,
+.checkbox_element:focus + .checkbox {
   border-color: rgba(var(--color-foreground), 0.4);
 }
 
-.checkbox_element:hover + .checkbox_checked {
-  border-color: rgba(var(--color-primary), 0.9);
+.checkbox_element:hover + .checkbox_checked
+.checkbox_element:focus + .checkbox_checked  {
+  background-color: rgba(var(--color-primary), 0.8);
+  border-color: transparent;
 }
 
 .checkbox {
