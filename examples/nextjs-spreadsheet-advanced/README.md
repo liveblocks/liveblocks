@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Advanced Spreadsheet
+# Collaborative Spreadsheet (Advanced)
 
 <p>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-spreadsheet-advanced">
