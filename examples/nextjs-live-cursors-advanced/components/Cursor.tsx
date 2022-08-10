@@ -112,7 +112,7 @@ function NameCursor ({
       <div
         className={styles.namePill}
         style={{
-          background: `linear-gradient(to bottom right, ${color[0]}, ${color[1]})`,
+          backgroundImage: `linear-gradient(to bottom right, ${color[0]}, ${color[1]})`,
           color: textColor,
         }}
       >

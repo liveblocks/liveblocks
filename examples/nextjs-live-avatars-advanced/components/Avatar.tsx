@@ -108,7 +108,7 @@ function LetterCircle({
   return (
     <div
       style={{
-        background: `linear-gradient(to bottom right, ${color[0]}, ${color[1]})`,
+        backgroundImage: `linear-gradient(to bottom right, ${color[0]}, ${color[1]})`,
         borderRadius,
       }}
       className={styles.letter}
