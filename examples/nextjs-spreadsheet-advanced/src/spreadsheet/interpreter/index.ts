@@ -123,7 +123,6 @@ export default function (
       value: result.value,
     };
   } catch (error) {
-    console.log(error);
     return { type: "error" };
   }
 }
