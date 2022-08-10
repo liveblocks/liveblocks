@@ -68,7 +68,7 @@ function BasicCursor ({ color }: Pick<BasicCursorProps, "color">) {
   return (
     <svg width="32" height="44" viewBox="0 0 24 36" fill="none">
       <defs>
-        <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+        <linearGradient id="gradient" x1="0%" y1="0%" x2="500%" y2="0%">
           <stop offset="0%" stopColor={color[0]} />
           <stop offset="100%" stopColor={color[1]} />
         </linearGradient>
@@ -137,7 +137,7 @@ function AvatarCursor ({
         fill="none"
       >
         <defs>
-          <linearGradient id="gradient" x1="0" x2="0" y1="0" y2="1">
+          <linearGradient id="gradient" x1="0%" y1="0%" x2="500%" y2="0%">
             <stop offset="0%" stopColor={color[0]} />
             <stop offset="100%" stopColor={color[1]} />
           </linearGradient>
