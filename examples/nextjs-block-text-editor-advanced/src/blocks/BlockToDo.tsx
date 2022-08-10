@@ -3,6 +3,8 @@ import { CustomElement, ToDoElement } from "../types";
 import { ReactNode } from "react";
 import { ReactEditor, useSlate } from "slate-react";
 import { Transforms } from "slate";
+import classNames from "classnames";
+import CheckIcon from "../icons/check.svg";
 
 type Props = {
   element: ToDoElement;
@@ -14,9 +16,9 @@ export default function BlockToDo({ element, children }: Props) {
 
   return (
     <div className={styles.block_todo}>
-      <div className={styles.todo_checkbox_col} contentEditable={false}>
+      <div className={styles.checkbox_container} contentEditable={false}>
         <input
-          className={styles.todo_checkbox}
+          className={styles.checkbox_element}
           type="checkbox"
           checked={element.checked}
           onChange={(e) => {
@@ -29,10 +31,19 @@ export default function BlockToDo({ element, children }: Props) {
             });
           }}
         />
+        <div
+          className={classNames(styles.checkbox, {
+            [styles.checkbox_checked]: element.checked,
+          })}
+        >
+          <CheckIcon
+            className={classNames(styles.check_icon, {
+              [styles.check_icon_checked]: element.checked,
+            })}
+          />
+        </div>
       </div>
-      <div className={styles.todo_text}>
-        {children}
-      </div>
+      <div className={styles.todo_text}>{children}</div>
     </div>
   );
 }

@@ -5,6 +5,10 @@
   cursor: text;
 }
 
+.sortable {
+  outline: none;
+}
+
 .prose {
   padding: 1rem 0 0;
 }

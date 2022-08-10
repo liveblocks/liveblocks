@@ -1,20 +1,66 @@
 .block_todo {
   display: flex;
   align-items: start;
-  gap: 0.2rem;
 }
 
-.todo_checkbox_col {
-  width: 1.5rem;
+.checkbox_container {
+  width: 1rem;
+  height: 1.75rem;
+  margin-right: 0.5rem;
   flex-grow: 0;
   flex-shrink: 0;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.todo_checkbox {
-  display: block;
-  height: 1.1rem;
-  width: 1.1rem;
-  margin: 0.4em auto 0;
+.checkbox_element {
+  opacity: 0;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  cursor: pointer;
+}
+
+
+.checkbox_element:hover + .checkbox {
+  border-color: rgba(var(--color-foreground), 0.4);
+}
+
+.checkbox_element:hover + .checkbox_checked {
+  border-color: rgba(var(--color-primary), 0.9);
+}
+
+.checkbox {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 3px;
+  border: 2px solid rgba(var(--color-foreground), 0.3);
+  pointer-events: none;
+}
+
+.checkbox_checked {
+  border-color: transparent;
+  background: rgb(var(--color-primary));
+}
+
+.check_icon {
+  position: absolute;
+  opacity: 0;
+}
+
+.check_icon path {
+  fill: rgb(var(--color-surface));
+}
+
+.check_icon_checked {
+  opacity: 1;
 }
 
 .todo_text {

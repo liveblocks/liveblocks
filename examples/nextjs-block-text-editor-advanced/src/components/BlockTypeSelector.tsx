@@ -60,8 +60,8 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           },
         },
         {
-          label: "List",
-          description: "A list of items",
+          label: "Bulleted List",
+          description: "Create a simple bulleted list",
           onSelect: () => {
             onSelect({
               id: nanoid(),
@@ -72,7 +72,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
         },
         {
           label: "To-do list",
-          description: "A list of to-do items",
+          description: "Track tasks with a to-do list",
           onSelect: () => {
             onSelect({
               id: nanoid(),

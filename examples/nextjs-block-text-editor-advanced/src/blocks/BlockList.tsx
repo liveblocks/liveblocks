@@ -9,11 +9,8 @@ type Props = {
 
 export default function BlockList({ element, children }: Props) {
   return (
-    <div className={styles.block_list}>
-      <div className={styles.list_bullet} contentEditable={false} />
-      <div className={styles.list_text}>
-        {children}
-      </div>
-    </div>
+    <ul className={styles.block_list}>
+      <li className={styles.list_item}>{children}</li>
+    </ul>
   );
 }

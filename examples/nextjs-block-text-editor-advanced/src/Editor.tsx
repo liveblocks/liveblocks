@@ -75,18 +75,19 @@ export default function App() {
 
         // TODO tidy or create central block config file
         // Duplicate current element to new line if set
-        const previousBlock = editor.children[editor.selection.anchor.path[0] - 1] as CustomElement;
-        if (previousBlock?.type && Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)) {
-          newBlock = CreateNewBlockFromBlock[previousBlock.type]()
+        const previousBlock = editor.children[
+          editor.selection.anchor.path[0] - 1
+        ] as CustomElement;
+        if (
+          previousBlock?.type &&
+          Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)
+        ) {
+          newBlock = CreateNewBlockFromBlock[previousBlock.type]();
         }
 
-        Transforms.setNodes(
-          editor,
-          newBlock,
-          {
-            at: editor.selection,
-          }
-        );
+        Transforms.setNodes(editor, newBlock, {
+          at: editor.selection,
+        });
       }
     };
   }, [editor]);
@@ -424,7 +425,7 @@ function SortableElement({
   return (
     <div className={styles.block_text} {...attributes}>
       <div
-        className="sortable"
+        className={styles.sortable}
         {...sortable.attributes}
         ref={sortable.setNodeRef}
         style={
