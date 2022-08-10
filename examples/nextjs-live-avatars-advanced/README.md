@@ -4,10 +4,13 @@
   </a>
 </p>
 
-# Advanced Live Avatar Stack
+# Live Avatar Stack (Advanced)
 
 <p>
-  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-framer-motion-avatars-cursors">
+  <a href="https://liveblocks.io/examples/live-avatar-stack-advanced/nextjs/preview">
+    <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
+  </a>
+  <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced">
     <img src="https://img.shields.io/badge/open%20in%20codesandbox-message?style=flat&logo=codesandbox&color=333&logoColor=fff" alt="Open in CodeSandbox" />
   </a>
   <img src="https://img.shields.io/badge/react-message?style=flat&logo=react&color=0bd&logoColor=fff" alt="React" />
@@ -17,7 +20,7 @@
 
 This example shows how to build an advanced live avatar stack with [Liveblocks](https://liveblocks.io), [Framer Motion](https://www.framer.com/motion/), and [Next.js](https://nextjs.org/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars-advanced.png" width="500" alt="Advanced Live Avatar Stack" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars-advanced.png" width="536" alt="Live Avatar Stack (Advanced)" />
 
 ## Getting started
 
