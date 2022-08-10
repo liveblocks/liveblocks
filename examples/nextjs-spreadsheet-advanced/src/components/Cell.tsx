@@ -119,7 +119,6 @@ function ScrubbableValueType({
     },
     {
       drag: {
-        axis: "x",
         preventDefault: true,
         filterTaps: true,
       },
