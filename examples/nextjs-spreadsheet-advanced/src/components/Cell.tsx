@@ -191,15 +191,12 @@ export function Cell({
   const self = useSelf();
   const history = useHistory();
   const initialValue = useRef<number>();
+  const [isScrubbing, setScrubbing] = useState(false);
   const isError = useMemo(() => expression === EXPRESSION_ERROR, [expression]);
   const isNumericalValue = useMemo(() => isNumerical(expression), [expression]);
-  const isNumericalExpression = useMemo(
-    () => isNumerical(getExpression()),
-    [expression, getExpression]
-  );
-  const isDraggable = useMemo(
-    () => isNumericalExpression && isSelected && !isEditing,
-    [isNumericalExpression, isSelected, isEditing]
+  const isScrubbable = useMemo(
+    () => isNumerical(getExpression()) && isSelected && !isEditing,
+    [getExpression, isSelected, isEditing]
   );
 
   const handleClick = useCallback(() => {
@@ -215,19 +212,20 @@ export function Cell({
       onDragStart: () => {
         initialValue.current = Number.parseFloat(getExpression());
         history.pause();
-        setGlobalCursor("dragging-horizontal");
+        setScrubbing(true);
+        setGlobalCursor("scrubbing");
       },
       onDrag: ({ movement: [x], tap }) => {
         if (tap) {
           handleClick();
         } else {
-          // TODO: transform `x` to slow down incrementation
-          onCommit(String((initialValue.current ?? 0) + Math.round(x)));
+          onCommit(String((initialValue.current ?? 0) + Math.round(x / 20)));
         }
       },
       onDragEnd: () => {
         history.resume();
-        removeGlobalCursor("dragging-horizontal");
+        setScrubbing(false);
+        removeGlobalCursor("scrubbing");
       },
     },
     {
@@ -247,9 +245,10 @@ export function Cell({
         editing: isEditing,
         error: isError,
         numerical: isNumericalValue,
-        draggable: isDraggable,
+        scrubbable: isScrubbable,
+        scrubbing: isScrubbing,
       })}
-      onClick={isDraggable ? undefined : handleClick}
+      onClick={isScrubbable ? undefined : handleClick}
       style={
         {
           ...style,
@@ -259,7 +258,7 @@ export function Cell({
           "--cell-height": appendUnit(height),
         } as CSSProperties
       }
-      {...(isDraggable ? bindDragEvents() : {})}
+      {...(isScrubbable ? bindDragEvents() : {})}
       {...props}
     >
       {other && (
@@ -277,7 +276,15 @@ export function Cell({
             onEndEditing={onEndEditing}
           />
         ) : (
-          !isError && <div className={styles.display}>{expression}</div>
+          !isError && (
+            <div className={styles.display}>
+              {expression && (
+                <span className={styles.display_content} key={expression}>
+                  {expression}
+                </span>
+              )}
+            </div>
+          )
         )}
         {isError && !isEditing && (
           <div className={styles.error}>

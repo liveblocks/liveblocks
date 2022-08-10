@@ -1,3 +1,13 @@
+@keyframes disappear {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 .cell {
   --cell-selection-z-index: 50;
   --cell-top-left-radius: 0;
@@ -49,8 +59,7 @@
 
 .cell:global(.editing):before {
   box-shadow: 0 2px 12px var(--cell-selection),
-    0px 2px 12px rgb(31, 41, 55, 0.1), 0px 6px 32px -2px rgb(31, 41, 55, 0.1);
-  opacity: 0.5;
+    0px 2px 12px rgb(31, 41, 55, 0.3), 0px 6px 32px -2px rgb(31, 41, 55, 0.2);
 }
 
 .cell:global(.selected):before {
@@ -153,12 +162,32 @@
   z-index: calc(var(--cell-selection-z-index) - 5);
 }
 
+.display_content {
+  display: inline-block;
+  position: relative;
+}
+
+.display_content:before {
+  --display-highlight-height: calc(1em + 6px);
+
+  content: "";
+  position: absolute;
+  top: calc(50% - var(--display-highlight-height) / 2);
+  height: var(--display-highlight-height);
+  left: -4px;
+  right: -4px;
+  background: rgba(0, 0, 0, 0.1);
+  z-index: -1;
+  border-radius: 4px;
+  animation: disappear both 0.2s ease-out;
+}
+
 .cell:global(.selected) {
   cursor: text;
   z-index: calc(var(--cell-selection-z-index) + 15);
 }
 
-.cell:global(.draggable) {
+.cell:global(.scrubbable) {
   cursor: ew-resize;
   touch-action: none;
 }
