@@ -55,9 +55,15 @@ export interface DisplayCellProps extends ComponentProps<"div"> {
   value: string;
   expression?: string;
   isSelected?: boolean;
-  onCellClick?: () => void;
   onCommit?: (value: string, direction?: "down") => void;
 }
+
+export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
+  expression: string;
+  onCommit: (value: string, direction?: "down") => void;
+}
+
+type ExpressionType = "functional" | "numerical" | "alphabetical";
 
 export function formatValue(value: string) {
   return value.replace(/(\s|&nbsp;)/g, "").toUpperCase();
@@ -85,6 +91,50 @@ function placeCaretAtEnd(element: HTMLElement) {
 
     element.focus();
   }
+}
+
+function ScrubbableValueType({
+  expression,
+  onCommit,
+  className,
+  ...props
+}: ScrubbableValueTypeProps) {
+  const history = useHistory();
+  const initialValue = useRef<number>();
+
+  const bindScrubEvents = useGesture(
+    {
+      onDragStart: () => {
+        initialValue.current = Number.parseFloat(expression ?? "");
+        history.pause();
+        setGlobalCursor("scrubbing");
+      },
+      onDrag: ({ movement: [x] }) => {
+        onCommit(String((initialValue.current ?? 0) + Math.round(x / 20)));
+      },
+      onDragEnd: () => {
+        history.resume();
+        removeGlobalCursor("scrubbing");
+      },
+    },
+    {
+      drag: {
+        axis: "x",
+        preventDefault: true,
+        filterTaps: true,
+      },
+    }
+  );
+
+  return (
+    <div
+      className={cx(className, styles.value_type, "scrubbable")}
+      {...bindScrubEvents()}
+      {...props}
+    >
+      123
+    </div>
+  );
 }
 
 export function EditingCell({
@@ -169,7 +219,7 @@ export function EditingCell({
     <div
       ref={ref}
       contentEditable
-      className={cx(className, styles.value, styles.editing_value)}
+      className={cx(className, styles.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       onInput={handleInput}
@@ -183,46 +233,20 @@ export function DisplayCell({
   expression,
   isSelected,
   className,
-  onCellClick,
   onCommit,
   ...props
 }: DisplayCellProps) {
-  const history = useHistory();
-  const initialValue = useRef<number>();
   const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
   const isNumericalValue = useMemo(() => isNumerical(value), [value]);
-  const isScrubbable = useMemo(
-    () =>
-      Boolean(isNumerical(expression) && isSelected && onCellClick && onCommit),
-    [expression, isSelected]
-  );
-
-  const bindScrubEvents = useGesture(
-    {
-      onDragStart: () => {
-        initialValue.current = Number.parseFloat(expression ?? "");
-        history.pause();
-        setGlobalCursor("scrubbing");
-      },
-      onDrag: ({ movement: [x], tap }) => {
-        if (tap) {
-          onCellClick?.();
-        } else {
-          onCommit?.(String((initialValue.current ?? 0) + Math.round(x / 20)));
-        }
-      },
-      onDragEnd: () => {
-        history.resume();
-        removeGlobalCursor("scrubbing");
-      },
-    },
-    {
-      drag: {
-        axis: "x",
-        filterTaps: true,
-      },
+  const type: ExpressionType = useMemo(() => {
+    if (expression?.startsWith("=")) {
+      return "functional";
+    } else if (isNumerical(expression)) {
+      return "numerical";
+    } else {
+      return "alphabetical";
     }
-  );
+  }, [expression, isSelected]);
 
   return isError ? (
     <div className={cx(className, styles.error)} {...props}>
@@ -240,11 +264,19 @@ export function DisplayCell({
     <div
       className={cx(className, styles.value, {
         numerical: isNumericalValue,
-        scrubbable: isScrubbable,
       })}
-      {...(isScrubbable ? bindScrubEvents() : {})}
       {...props}
     >
+      {isSelected &&
+        (type === "functional" ? (
+          <div className={styles.value_type}>f(x)</div>
+        ) : type === "alphabetical" ? (
+          <div className={styles.value_type}>abc</div>
+        ) : expression && onCommit ? (
+          <ScrubbableValueType expression={expression} onCommit={onCommit} />
+        ) : (
+          <div className={styles.value_type}>123</div>
+        ))}
       {value && (
         <span className={styles.value_content} key={value}>
           {value}
@@ -321,7 +353,6 @@ export function Cell({
             value={value}
             expression={expression}
             isSelected={isSelected}
-            onCellClick={handleClick}
             onCommit={onCommit}
           />
         )}

@@ -131,11 +131,16 @@
 }
 
 .value {
+  --value-padding: 10px;
+  --value-type-padding: 4px;
+  --value-type-size: calc(
+    var(--row-height) - var(--border) - var(--value-type-padding) * 2
+  );
+
   position: absolute;
   inset: 0px;
-  padding: 0px 10px;
+  padding: 0px var(--value-padding);
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   line-height: var(--cell-height);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -153,19 +158,39 @@
   text-align: right;
 }
 
-.value:global(.scrubbable) {
-  cursor: ew-resize;
-  touch-action: none;
-}
-
 .cell:global(.selected) .value,
 .cell:global(.editing) .value {
   pointer-events: auto;
 }
 
+.cell:global(.selected):not(:global(.editing)) .value {
+  padding-left: calc(var(--value-type-size) + var(--value-type-padding) * 4);
+}
+
 .cell:global(.editing) .value {
   user-select: all;
   text-align: left;
+}
+
+.value_type {
+  position: absolute;
+  display: flex;
+  place-content: center;
+  place-items: center;
+  top: calc(50% - var(--value-type-size) / 2);
+  left: calc(var(--value-type-padding) * 2);
+  color: var(--cell-selection);
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-style: italic;
+  font-size: 11px;
+  width: var(--value-type-size);
+  aspect-ratio: 1;
+  line-height: normal;
+}
+
+.value_type:global(.scrubbable) {
+  cursor: ew-resize;
+  touch-action: none;
 }
 
 .value_content {
