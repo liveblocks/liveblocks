@@ -66,7 +66,7 @@ export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
 type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
 
 export function formatValue(value: string) {
-  return value.replace(/(\s|&nbsp;)/g, "").toUpperCase();
+  return value.replace(/(\s|&nbsp;)/g, " ").toUpperCase();
 }
 
 function placeCaretAtEnd(element: HTMLElement) {
@@ -148,23 +148,28 @@ export function EditingCell({
   const stringToTokenizedHtml = useCallback(
     (value: string) => {
       const colors = shuffle(COLORS, cellId);
-      const tokens = tokenizer(value);
       let cellIndex = 0;
 
-      return tokens
-        .map((token) => {
-          const value = tokenToString(token);
+      try {
+        const tokens = tokenizer(value);
 
-          if (token.kind === SyntaxKind.CellToken) {
-            const color = colors[cellIndex % colors.length];
-            cellIndex += 1;
+        return tokens
+          .map((token) => {
+            const value = tokenToString(token);
 
-            return `<span class="token ${token.kind}" style="--token-color: ${color};">${value}</span>`;
-          } else {
-            return `<span class="token ${token.kind}">${value}</span>`;
-          }
-        })
-        .join("");
+            if (token.kind === SyntaxKind.CellToken) {
+              const color = colors[cellIndex % colors.length];
+              cellIndex += 1;
+
+              return `<span class="token ${token.kind}" style="--token-color: ${color};">${value}</span>`;
+            } else {
+              return `<span class="token ${token.kind}">${value}</span>`;
+            }
+          })
+          .join("");
+      } catch {
+        return `<span>${value}</span>`;
+      }
     },
     [cellId]
   );
@@ -177,11 +182,7 @@ export function EditingCell({
     (event: FormEvent<HTMLDivElement>) => {
       const value = stripHtml(event.currentTarget.innerHTML);
 
-      try {
-        setDraft(stringToTokenizedHtml(formatValue(value)));
-      } catch {
-        setDraft(formatValue(value));
-      }
+      setDraft(stringToTokenizedHtml(formatValue(value)));
     },
     [stringToTokenizedHtml]
   );

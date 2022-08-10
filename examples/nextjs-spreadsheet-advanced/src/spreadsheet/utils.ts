@@ -65,17 +65,24 @@ export function createInitialStorage<X extends number, Y extends number>(
           const columnId = initialColumns[x].get("id") as string;
           const rowId = initialRows[y].get("id") as string;
 
-          const tokens = tokenizer(cell);
-          const tokensWithRefs = tokens.map((token) =>
-            token.kind === SyntaxKind.CellToken
-              ? cellToRef(token as CellToken, initialColumns, initialRows)
-              : token
-          );
-          const newExpression = tokensWithRefs.map(tokenToString).join("");
+          let expression;
+
+          try {
+            const tokens = tokenizer(cell);
+            const tokensWithRefs = tokens.map((token) =>
+              token.kind === SyntaxKind.CellToken
+                ? cellToRef(token as CellToken, initialColumns, initialRows)
+                : token
+            );
+
+            expression = tokensWithRefs.map(tokenToString).join("");
+          } catch {
+            expression = cell;
+          }
 
           return [
             getCellId(columnId, rowId),
-            new LiveObject({ value: newExpression }),
+            new LiveObject({ value: expression }),
           ] as readonly [string, LiveObject<Cell>];
         }
       });

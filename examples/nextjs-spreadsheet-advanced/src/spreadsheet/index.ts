@@ -11,6 +11,7 @@ import tokenizer, {
 import {
   convertLetterToNumber,
   convertNumberToLetter,
+  EXPRESSION_ERROR,
   formatExpressionResult,
 } from "./interpreter/utils";
 import { extractCellId, getCellId, removeFromArray } from "./utils";
@@ -163,13 +164,20 @@ export async function createSpreadsheet(
   }
 
   function setCellValue(columnId: string, rowId: string, value: string) {
-    const tokens = tokenizer(value);
-    const tokensWithRefs = tokens.map((token) =>
-      token.kind === SyntaxKind.CellToken
-        ? cellToRef(token as CellToken)
-        : token
-    );
-    const newExpression = tokensWithRefs.map(tokenToString).join("");
+    let expression: string;
+
+    try {
+      const tokens = tokenizer(value);
+      const tokensWithRefs = tokens.map((token) =>
+        token.kind === SyntaxKind.CellToken
+          ? cellToRef(token as CellToken)
+          : token
+      );
+
+      expression = tokensWithRefs.map(tokenToString).join("");
+    } catch {
+      expression = value;
+    }
 
     const cells = spreadsheet.get("cells");
 
@@ -177,9 +185,9 @@ export async function createSpreadsheet(
     const cell = cells.get(cellId);
 
     if (cell == null) {
-      cells.set(cellId, new LiveObject({ value: newExpression }));
+      cells.set(cellId, new LiveObject({ value: expression }));
     } else {
-      cell.set("value", newExpression);
+      cell.set("value", expression);
     }
   }
 
@@ -218,12 +226,18 @@ export async function createSpreadsheet(
       return "";
     }
 
-    const tokens = tokenizer(cell.get("value"));
-    const tokensWithRefs = tokens.map((token) =>
-      token.kind === SyntaxKind.RefToken ? refToCell(token as RefToken) : token
-    );
+    try {
+      const tokens = tokenizer(cell.get("value"));
+      const tokensWithRefs = tokens.map((token) =>
+        token.kind === SyntaxKind.RefToken
+          ? refToCell(token as RefToken)
+          : token
+      );
 
-    return tokensWithRefs.map(tokenToString).join("");
+      return tokensWithRefs.map(tokenToString).join("");
+    } catch {
+      return cell.get("value");
+    }
   }
 
   const othersCallbacks: Array<(others: User<Presence, UserMeta>[]) => void> =
