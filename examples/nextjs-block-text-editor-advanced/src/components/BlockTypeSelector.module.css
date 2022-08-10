@@ -1,4 +1,3 @@
-
 .content {
   background: rgba(var(--color-surface-over), 0.92);
   backdrop-filter: blur(8px);
@@ -49,7 +48,7 @@
 
 .item:focus {
   background: rgb(var(--color-primary));
-  color: #FFF;
+  color: #fff;
 }
 
 .item_label {

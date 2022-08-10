@@ -25,14 +25,13 @@
   cursor: pointer;
 }
 
-
 .checkbox_element:hover + .checkbox,
 .checkbox_element:focus + .checkbox {
   border-color: rgba(var(--color-foreground), 0.4);
 }
 
-.checkbox_element:hover + .checkbox_checked
-.checkbox_element:focus + .checkbox_checked  {
+.checkbox_element:hover + .checkbox_checked,
+.checkbox_element:focus + .checkbox_checked {
   background-color: rgba(var(--color-primary), 0.8);
   border-color: transparent;
 }
