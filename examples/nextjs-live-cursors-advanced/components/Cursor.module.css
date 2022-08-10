@@ -6,7 +6,8 @@
   user-select: none;
 }
 
-.nameWrapper, .avatarWrapper {
+.nameWrapper,
+.avatarWrapper {
   position: relative;
 }
 

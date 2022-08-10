@@ -2,8 +2,8 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ["liveblocks.io"]
-  }
+    domains: ["liveblocks.io"],
+  },
 };
 
 module.exports = nextConfig;

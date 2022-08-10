@@ -29,15 +29,12 @@ type UserMeta = {
     name: string;
     color: [string, string];
     picture: string;
-  }
+  };
 };
 
 // Optionally, the type of custom events broadcasted and listened for in this
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-export const { RoomProvider, useOthers, useUpdateMyPresence } = createRoomContext<
-  Presence,
-  Storage,
-  UserMeta /* RoomEvent */
->(client);
+export const { RoomProvider, useOthers, useUpdateMyPresence } =
+  createRoomContext<Presence, Storage, UserMeta /* RoomEvent */>(client);

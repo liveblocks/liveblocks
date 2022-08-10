@@ -30,7 +30,7 @@ type UserMeta = {
     name: string;
     color: [string, string];
     picture?: string;
-  }
+  };
 };
 
 // Optionally, the type of custom events broadcasted and listened for in this

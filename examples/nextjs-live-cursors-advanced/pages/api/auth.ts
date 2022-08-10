@@ -19,7 +19,9 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+        Math.random() * 30
+      )}.png`,
     },
   });
   return res.status(response.status).end(response.body);

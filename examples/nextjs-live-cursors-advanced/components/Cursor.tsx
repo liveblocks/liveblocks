@@ -34,7 +34,7 @@ type AvatarCursorProps = AllProps & {
 
 type CursorProps = BasicCursorProps | NameCursorProps | AvatarCursorProps;
 
-export default function Cursor ({
+export default function Cursor({
   variant = "basic",
   x,
   y,
@@ -59,12 +59,14 @@ export default function Cursor ({
     >
       {variant === "basic" ? <BasicCursor color={color} /> : null}
       {variant === "name" ? <NameCursor color={color} name={name} /> : null}
-      {variant === "avatar" ? <AvatarCursor color={color} picture={picture} size={size} /> : null}
+      {variant === "avatar" ? (
+        <AvatarCursor color={color} picture={picture} size={size} />
+      ) : null}
     </motion.div>
   );
 }
 
-function BasicCursor ({ color }: Pick<BasicCursorProps, "color">) {
+function BasicCursor({ color }: Pick<BasicCursorProps, "color">) {
   return (
     <svg width="32" height="44" viewBox="0 0 24 36" fill="none">
       <defs>
@@ -81,13 +83,10 @@ function BasicCursor ({ color }: Pick<BasicCursorProps, "color">) {
   );
 }
 
-function NameCursor ({
-  color,
-  name,
-}: Pick<NameCursorProps, "color" | "name">) {
+function NameCursor({ color, name }: Pick<NameCursorProps, "color" | "name">) {
   const textColor = useMemo(
     () => (color ? getContrastingColor(color[1]) : undefined),
-    [color],
+    [color]
   );
   return (
     <div className={styles.nameWrapper}>
@@ -122,7 +121,7 @@ function NameCursor ({
   );
 }
 
-function AvatarCursor ({
+function AvatarCursor({
   color,
   picture,
   size,
@@ -155,12 +154,7 @@ function AvatarCursor ({
           height: size + "px",
         }}
       >
-        <Image
-          src={picture}
-          height={size}
-          width={size}
-          alt=""
-        />
+        <Image src={picture} height={size} width={size} alt="" />
       </div>
     </div>
   );
