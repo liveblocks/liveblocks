@@ -164,8 +164,10 @@ function ScrubbableValueType({
         history.pause();
         setGlobalCursor("scrubbing");
       },
-      onDrag: ({ movement: [x] }) => {
-        onCommit(String((initialValue.current ?? 0) + Math.round(x / 20)));
+      onDrag: ({ movement: [x], tap }) => {
+        if (!tap) {
+          onCommit(String((initialValue.current ?? 0) + Math.round(x / 20)));
+        }
       },
       onDragEnd: () => {
         history.resume();
