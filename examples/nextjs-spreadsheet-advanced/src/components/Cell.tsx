@@ -73,11 +73,12 @@ type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
 
 export function formatValue(value: string) {
   return value
-    .replace(/(\s|\r|\n|&nbsp;)/g, value.startsWith("=") ? "" : " ")
+    .replace(/(\r|\n)/g, "")
+    .replace(/\s/g, value.startsWith("=") ? "" : " ")
     .replace(/([A-Za-z]\d)/g, (cell) => cell.toUpperCase());
 }
 
-export function unformatValue(value: string) {
+export function formatHtml(value: string) {
   return value.replaceAll(" ", "&nbsp;");
 }
 
@@ -200,6 +201,7 @@ export function EditingCell({
 }: EditingCellProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInitialRender = useInitialRender();
+  const [draft, setDraft] = useState<string>(() => expression);
   const stringToTokenizedHtml = useCallback(
     (value: string) => {
       const colors = shuffle(COLORS, cellId);
@@ -224,17 +226,16 @@ export function EditingCell({
 
         return sanitize(html);
       } catch {
-        return sanitize(`<span>${unformatValue(value)}</span>`);
+        return sanitize(`<span>${formatHtml(value)}</span>`);
       }
     },
     [cellId]
   );
 
-  const [draft, setDraft] = useState<string>(() => expression);
-
   const handleInput = useCallback((event: FormEvent<HTMLDivElement>) => {
     const value = event.currentTarget.innerText;
-    setDraft(value);
+
+    setDraft(formatValue(value));
   }, []);
 
   const handleBlur = useCallback(() => {
@@ -259,16 +260,15 @@ export function EditingCell({
   useEffect(() => {
     if (!ref.current) return;
 
-    const formattedValue = formatValue(draft);
     const position = getCaretPosition(ref.current);
 
-    ref.current.innerHTML = stringToTokenizedHtml(formattedValue);
+    ref.current.innerHTML = stringToTokenizedHtml(draft);
 
     if (isInitialRender) {
-      setCaretPosition(ref.current, formattedValue.length);
+      setCaretPosition(ref.current, draft.length);
       scrollCaretIntoView();
     } else {
-      setCaretPosition(ref.current, position ?? formattedValue.length);
+      setCaretPosition(ref.current, position ?? draft.length);
     }
 
     ref.current.focus();
