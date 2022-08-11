@@ -303,7 +303,10 @@ export function DisplayCell({
   const isInitialRender = useInitialRender();
   const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
   const isNumericalValue = useMemo(() => isNumerical(value), [value]);
-  const type: ExpressionType = useMemo(() => {
+  const isAlphabeticalValue = useMemo(() => {
+    return !isNumericalValue && !value?.startsWith("=");
+  }, [value, isNumericalValue]);
+  const expressionType: ExpressionType = useMemo(() => {
     if (!expression) {
       return "empty";
     } else if (expression?.startsWith("=")) {
@@ -345,14 +348,14 @@ export function DisplayCell({
     <div
       className={cx(className, styles.value, {
         numerical: isNumericalValue,
-        alphabetical: type === "alphabetical",
+        alphabetical: isAlphabeticalValue,
       })}
       {...props}
     >
       {isSelected &&
-        (type === "empty" ? null : type === "functional" ? (
+        (expressionType === "empty" ? null : expressionType === "functional" ? (
           <div className={styles.value_type}>f(x)</div>
-        ) : type === "alphabetical" ? (
+        ) : expressionType === "alphabetical" ? (
           <div className={styles.value_type}>abc</div>
         ) : expression && onCommit ? (
           <ScrubbableValueType expression={expression} onCommit={onCommit} />
