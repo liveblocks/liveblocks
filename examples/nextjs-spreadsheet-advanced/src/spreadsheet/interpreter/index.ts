@@ -7,6 +7,7 @@ import type {
   Ref,
 } from "./parser";
 import tokenizer from "./tokenizer";
+import { isNumerical } from "../../utils/isNumerical";
 
 interface NumberExpressionResult {
   value: number;
@@ -108,10 +109,9 @@ export default function (
   }
 
   if (input[0] !== "=") {
-    const number = Number.parseFloat(input);
-    return Number.isNaN(number)
-      ? { type: "string", value: input }
-      : { type: "number", value: number };
+    return isNumerical(input)
+      ? { type: "number", value: Number.parseFloat(input) }
+      : { type: "string", value: input };
   }
 
   try {
