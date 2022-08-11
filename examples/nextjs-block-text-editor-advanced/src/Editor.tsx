@@ -172,9 +172,6 @@ export default function App() {
     }
 
     const overIndex = editor.children.findIndex((x: any) => x.id === overId);
-
-    console.log(overId, activeId, overIndex);
-
     if (overId !== activeId && overIndex !== -1) {
       Transforms.moveNodes(editor, {
         at: [],

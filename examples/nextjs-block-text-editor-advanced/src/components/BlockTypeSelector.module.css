@@ -1,14 +1,25 @@
 .content {
-  background: rgba(var(--color-surface-over), 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(var(--color-surface-over), 1);
   box-shadow: var(--shadow-over);
   border-radius: 10px;
   z-index: 20;
   user-select: none;
   outline: none;
   max-height: 280px;
-  overflow: scroll;
   width: 220px;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+}
+
+.content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.content::-webkit-scrollbar-thumb {
+  background: rgba(var(--color-foreground), 0.24);
+}
+.content::-webkit-scrollbar-track {
+  background: rgba(var(--color-foreground), 0.12);
 }
 
 .group {
@@ -24,8 +35,7 @@
   font-size: 0.875rem;
   position: sticky;
   top: 0;
-  background: rgba(var(--color-surface), 0.92);
-  backdrop-filter: blur(8px);
+  background: rgba(var(--color-surface), 1);
   padding: 0.75rem 1rem 0.25rem;
   font-weight: 500;
   z-index: 10;
