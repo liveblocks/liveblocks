@@ -9,6 +9,10 @@
   z-index: 10000;
 }
 
+.tooltip:global {
+  animation: appear both 0.12s ease-in-out;
+}
+
 .arrow {
   fill: var(--tooltip-background);
 }

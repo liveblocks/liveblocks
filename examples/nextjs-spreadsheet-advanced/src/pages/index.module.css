@@ -65,6 +65,7 @@
   cursor: pointer;
   padding: 0px 6px;
   font-size: 13px;
+  transition: background 0.12s ease-in-out;
 }
 
 .button:disabled {

@@ -11,7 +11,9 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  type DropAnimation,
 } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import {
   restrictToHorizontalAxis,
   restrictToParentElement,
@@ -72,9 +74,8 @@ import {
 import { clamp } from "../utils/clamp";
 import { getCellId } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";
-import styles from "./Headers.module.css";
-import cellStyles from "./Cell.module.css";
 import { DisplayCell } from "./Cell";
+import styles from "./Headers.module.css";
 
 const DRAGGING_CLASS = "dragging";
 
@@ -131,6 +132,20 @@ function isColumnHeader(header: Column | Row): header is Column {
 const measuring: MeasuringConfiguration = {
   droppable: {
     strategy: MeasuringStrategy.Always,
+  },
+};
+
+const dropAnimation: DropAnimation = {
+  duration: 260,
+  easing: "ease-in-out",
+  keyframes({ transform }) {
+    return [
+      { transform: CSS.Transform.toString(transform.initial) },
+      {
+        transform: CSS.Transform.toString(transform.final),
+        opacity: 0,
+      },
+    ];
   },
 };
 
@@ -554,7 +569,7 @@ export function Headers({
           ))}
         </div>
       </SortableContext>
-      <DragOverlay dropAnimation={null}>
+      <DragOverlay dropAnimation={dropAnimation}>
         {activeIndex != null ? (
           <HeaderDragOverlay
             columns={columns}

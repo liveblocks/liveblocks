@@ -18,6 +18,7 @@
 .header_container {
   position: absolute;
   inset: 0px;
+  transition: background 0.12s ease-in-out;
 }
 
 .header {
@@ -113,7 +114,7 @@
   color: var(--gray-400);
   cursor: pointer;
   opacity: 0;
-  transition: opacity 0.2s ease-in-out, background 0.2s ease-in-out;
+  transition: opacity 0.12s ease-in-out, background 0.12s ease-in-out;
 }
 
 .header_control:hover,
@@ -178,6 +179,10 @@
     drop-shadow(0px 8px 24px rgb(31, 41, 55, 0.16));
 }
 
+.overlay:global {
+  animation: appear both 0.12s ease-in-out;
+}
+
 .overlay_header {
   --header-control-padding: 5px;
 
@@ -193,6 +198,7 @@
 .overlay_header .header_control {
   opacity: 1;
   color: var(--white);
+  transition: background 0.12s ease-in-out;
 }
 
 .overlay_header .header_control_active {

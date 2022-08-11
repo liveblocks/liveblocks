@@ -19,12 +19,13 @@
   position: absolute;
   inset: 0px;
   pointer-events: none;
+  transition: opacity 0.12s ease-in-out;
 }
 
 :global(.dragging) .cell:before,
 :global(.dragging) .cell:after,
 :global(.dragging) .user {
-  display: none;
+  opacity: 0;
 }
 
 .cell:before {
@@ -74,7 +75,7 @@
   max-width: calc(100% + 2 * var(--border));
   transform: translateY(var(--user-height));
   pointer-events: none;
-  transition: transform 0.12s ease-in-out;
+  transition: transform 0.12s ease-in-out, opacity 0.12s ease-in-out;
   z-index: 1;
 }
 
