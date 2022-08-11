@@ -57,7 +57,7 @@ export default function App () {
       insertBreak();
       if (editor.selection) {
         // Default new line
-        let newBlock = { type: BlockType.Paragraph };
+        let newBlock: { type: BlockType, children?: [{ text: string }] } = { type: BlockType.Paragraph, children: [{ text: "" }] };
 
         // TODO tidy or create central block config file
         // Duplicate current element to new line if set
