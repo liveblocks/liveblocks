@@ -3,60 +3,45 @@ import styles from "./Editor.module.css";
 import isHotkey from "is-hotkey";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { createEditor, Editor, Node, Transforms, Range } from "slate";
-import {
-  Slate,
-  withReact,
-  Editable,
-  ReactEditor,
-  RenderElementProps,
-} from "slate-react";
-import {
-  DndContext,
-  DragEndEvent,
-  DragOverlay,
-  DragStartEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { createEditor, Editor, Element, Node, Point, Range, Transforms } from "slate";
+import { Editable, ReactEditor, RenderElementProps, Slate, withReact } from "slate-react";
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import classNames from "classnames";
 
-import {
-  useList,
-  useOthers,
-  useRoom,
-  useUpdateMyPresence,
-} from "./liveblocks.config";
+import { useList, useOthers, useRoom, useUpdateMyPresence } from "./liveblocks.config";
 import { BlockType, CustomElement } from "./types";
 import { toggleMark, withLayout, withNodeId } from "./utils";
 import Leaf from "./blocks/Leaf";
 import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
 import { HOTKEYS, USER_COLORS } from "./constants";
-import {
-  Avatar,
-  Loading,
-  Toolbar,
-  BlockInlineActions,
-  Header,
-} from "./components";
+import { Avatar, BlockInlineActions, Header, Loading, Toolbar } from "./components";
+
+
+const SHORTCUTS: Record<string, BlockType> = {
+  "*": BlockType.List,
+  "-": BlockType.List,
+  "+": BlockType.List,
+  "#": BlockType.H1,
+  "##": BlockType.H2,
+  "###": BlockType.H3,
+  "[]": BlockType.ToDo,
+};
 
 const useEditor = () =>
-  useMemo(() => withNodeId(withLayout(withReact(createEditor()))), []);
+  useMemo(() => withShortcuts(withNodeId(withLayout(withReact(createEditor())))), []);
 
-function isNodeWithId(editor: Editor, id: string) {
+function isNodeWithId (editor: Editor, id: string) {
   return (node: Node) => Editor.isBlock(editor, node) && node.id === id;
 }
 
-export default function App() {
+export default function App () {
   const editor = useEditor();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeElement = editor.children.find(
-    (x) => "id" in x && x.id === activeId
+    (x) => "id" in x && x.id === activeId,
   ) as CustomElement | undefined;
 
   const room = useRoom();
@@ -77,8 +62,8 @@ export default function App() {
         // TODO tidy or create central block config file
         // Duplicate current element to new line if set
         const previousBlock = editor.children[
-          editor.selection.anchor.path[0] - 1
-        ] as CustomElement;
+        editor.selection.anchor.path[0] - 1
+          ] as CustomElement;
         if (
           previousBlock?.type &&
           Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)
@@ -154,7 +139,7 @@ export default function App() {
 
         isEditingRef.current = false;
       },
-      { isDeep: true }
+      { isDeep: true },
     );
   }, [blocks]);
 
@@ -230,7 +215,7 @@ export default function App() {
 
   const items = useMemo(
     () => editor.children.map((element: any) => element.id),
-    [editor.children]
+    [editor.children],
   );
 
   if (blocks == null) {
@@ -276,7 +261,7 @@ export default function App() {
                     selectedBlockId: (
                       editor.children[
                         editor.selection.anchor.path[0]
-                      ] as CustomElement
+                        ] as CustomElement
                     ).id,
                   });
                 } else {
@@ -287,7 +272,7 @@ export default function App() {
 
                 if (
                   editor.operations.every(
-                    (op) => op.isRemote || op.type === "set_selection"
+                    (op) => op.isRemote || op.type === "set_selection",
                   )
                 ) {
                   return;
@@ -300,7 +285,7 @@ export default function App() {
                 for (let i = 0; i < editor.children.length; i++) {
                   const child = editor.children[i] as CustomElement;
                   const liveblocksChildIndex = blocks.findIndex(
-                    (block) => block.id === child.id
+                    (block) => block.id === child.id,
                   );
 
                   if (liveblocksChildIndex === -1) {
@@ -393,7 +378,7 @@ export default function App() {
                     />
                   )}
                 </DragOverlay>,
-                document.body
+                document.body,
               )}
             </DndContext>
           </Slate>
@@ -403,7 +388,7 @@ export default function App() {
   );
 }
 
-function SortableElement({
+function SortableElement ({
   attributes,
   element,
   children,
@@ -463,7 +448,7 @@ function SortableElement({
   );
 }
 
-function DragOverlayContent({
+function DragOverlayContent ({
   element,
   renderElement,
 }: {
@@ -484,4 +469,77 @@ function DragOverlayContent({
       </Slate>
     </div>
   );
+}
+
+function withShortcuts (editor: Editor) {
+  const { deleteBackward, insertText } = editor;
+
+  editor.insertText = (text) => {
+    const { selection } = editor;
+
+    if (text.endsWith(" ") && selection && Range.isCollapsed(selection)) {
+      const { anchor } = selection;
+      const block = Editor.above(editor, {
+        match: n => Editor.isBlock(editor, n),
+      });
+      const path = block ? block[1] : [];
+      const start = Editor.start(editor, path);
+      const range = { anchor, focus: start };
+      const beforeText = Editor.string(editor, range) + text.slice(0, -1);
+      const type = SHORTCUTS[beforeText];
+
+      if (type) {
+        Transforms.select(editor, range);
+
+        if (!Range.isCollapsed(range)) {
+          Transforms.delete(editor);
+        }
+
+        const newProperties: Partial<CustomElement> = {
+          type,
+        };
+        Transforms.setNodes<CustomElement>(editor, newProperties, {
+          match: n => Editor.isBlock(editor, n),
+        });
+
+        return;
+      }
+    }
+
+    insertText(text);
+  };
+
+  editor.deleteBackward = (...args: unknown[]) => {
+    const { selection } = editor;
+
+    if (selection && Range.isCollapsed(selection)) {
+      const match = Editor.above(editor, {
+        match: n => Editor.isBlock(editor, n),
+      });
+
+      if (match) {
+        const [block, path] = match;
+        const start = Editor.start(editor, path);
+
+        if (
+          !Editor.isEditor(block) &&
+          Element.isElement(block) &&
+          block.type !== BlockType.Paragraph &&
+          Point.equals(selection.anchor, start)
+        ) {
+          const newProperties: Partial<CustomElement> = {
+            type: BlockType.Paragraph,
+          };
+          Transforms.setNodes(editor, newProperties);
+
+          return;
+        }
+      }
+
+      // @ts-ignore
+      deleteBackward(...args);
+    }
+  };
+
+  return editor;
 }
