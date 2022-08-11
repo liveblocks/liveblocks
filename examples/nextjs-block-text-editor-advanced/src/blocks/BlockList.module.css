@@ -17,6 +17,6 @@
 
 .list_item {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-grow: 1;
 }
