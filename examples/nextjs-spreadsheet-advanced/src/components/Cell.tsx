@@ -13,6 +13,12 @@ import {
   useEffect,
 } from "react";
 import { sanitize } from "dompurify";
+import {
+  motion,
+  animate,
+  useMotionValue,
+  AnimationPlaybackControls,
+} from "framer-motion";
 import { COLORS } from "../constants";
 import { useHistory, useSelf } from "../liveblocks.config";
 import tokenizer, {
@@ -24,9 +30,9 @@ import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import { isNumerical } from "../utils/isNumerical";
+import { useInitialRender } from "../utils/useInitialRender";
 import { shuffle } from "../utils/shuffle";
 import styles from "./Cell.module.css";
-import { useInitialRender } from "../utils/useInitialRender";
 
 export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
   value: string;
@@ -290,6 +296,9 @@ export function DisplayCell({
   onCommit,
   ...props
 }: DisplayCellProps) {
+  const highlightOpacity = useMotionValue(0);
+  const highlightAnimationControls = useRef<AnimationPlaybackControls>();
+  const isInitialRender = useInitialRender();
   const isError = useMemo(() => value === EXPRESSION_ERROR, [value]);
   const isNumericalValue = useMemo(() => isNumerical(value), [value]);
   const type: ExpressionType = useMemo(() => {
@@ -303,6 +312,20 @@ export function DisplayCell({
       return "alphabetical";
     }
   }, [expression, isSelected]);
+
+  useEffect(() => {
+    if (isInitialRender) return;
+
+    if (highlightAnimationControls.current) {
+      highlightAnimationControls.current.stop();
+    }
+
+    highlightOpacity.set(1);
+    highlightAnimationControls.current = animate(highlightOpacity, 0, {
+      ease: "easeOut",
+      duration: 0.6,
+    });
+  }, [value, highlightOpacity]);
 
   return isError ? (
     <div className={cx(className, styles.error)} {...props}>
@@ -334,9 +357,14 @@ export function DisplayCell({
           <div className={styles.value_type}>123</div>
         ))}
       {value && (
-        <span className={styles.value_content} key={value}>
+        <motion.span
+          className={styles.value_content}
+          style={
+            { "--display-highlight-opacity": highlightOpacity } as CSSProperties
+          }
+        >
           {value}
-        </span>
+        </motion.span>
       )}
     </div>
   );
