@@ -138,10 +138,11 @@ const initialStorage = createInitialStorage(
   { length: GRID_INITIAL_COLUMNS, width: COLUMN_INITIAL_WIDTH },
   { length: GRID_INITIAL_ROWS, height: ROW_INITIAL_HEIGHT },
   [
-    ["3", "", ""],
-    ["=A1*3", "", ""],
-    ["=A2%2", "", ""],
-    ["=A2/4", "", ""],
+    ["🔢 Entries", "👀 Results", ""],
+    ["3", "=A2*3", ""],
+    ["1234", "=(A2*A3+A4)/2", ""],
+    ["-8", "=B3%2", ""],
+    ["", "", ""],
   ]
 );
 
