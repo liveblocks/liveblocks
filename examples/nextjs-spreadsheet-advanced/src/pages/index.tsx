@@ -53,6 +53,7 @@ function Example() {
           "--column-header-width": appendUnit(COLUMN_HEADER_WIDTH),
           "--column-width": appendUnit(COLUMN_INITIAL_WIDTH),
           "--row-height": appendUnit(ROW_INITIAL_HEIGHT),
+          "--accent": self?.info.color,
         } as CSSProperties
       }
     >

@@ -446,6 +446,7 @@ export function Headers({
   className,
   ...props
 }: Props) {
+  const self = useSelf();
   const isColumn = useMemo(() => type === "column", [type]);
   const headers = useMemo(
     () => (isColumn ? columns : rows),
@@ -561,6 +562,7 @@ export function Headers({
             cells={cells}
             header={headers[activeIndex]}
             index={activeIndex}
+            style={{ "--accent": self?.info.color } as CSSProperties}
           />
         ) : null}
       </DragOverlay>

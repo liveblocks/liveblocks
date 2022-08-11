@@ -191,6 +191,7 @@
   color: var(--cell-selection);
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   font-style: italic;
+  font-weight: 500;
   font-size: 11px;
   width: var(--value-type-size);
   aspect-ratio: 1;
