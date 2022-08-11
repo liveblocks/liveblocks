@@ -110,6 +110,7 @@
   background: var(--gray-300);
   color: var(--gray-600);
   border-radius: 50%;
+  will-change: transform;
   z-index: 1;
 }
 

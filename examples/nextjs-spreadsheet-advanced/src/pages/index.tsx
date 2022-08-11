@@ -2,6 +2,12 @@ import cx from "classnames";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { useRouter } from "next/router";
 import { type CSSProperties, useMemo } from "react";
+import {
+  AnimatePresence,
+  motion,
+  type Transition,
+  type Variants,
+} from "framer-motion";
 import { Avatar } from "../components/Avatar";
 import { Sheet } from "../components/Sheet";
 import { Tooltip } from "../components/Tooltip";
@@ -27,6 +33,23 @@ import { appendUnit } from "../utils/appendUnit";
 import styles from "./index.module.css";
 
 const AVATARS_MAX = 3;
+
+const avatarVariants: Variants = {
+  hidden: {
+    scale: 0,
+    opacity: 0,
+  },
+  visible: {
+    scale: 1,
+    opacity: 1,
+  },
+};
+
+const avatarTransition: Transition = {
+  type: "spring",
+  stiffness: 300,
+  damping: 40,
+};
 
 function Example() {
   const spreadsheet = useSpreadsheet();
@@ -100,32 +123,56 @@ function Example() {
             </div>
           </div>
           <div className={styles.avatars}>
-            {self && (
-              <Avatar
-                className={styles.avatar}
-                color={self.info.color}
-                name="You"
-                src={self.info.url}
-                tooltipOffset={6}
-              />
-            )}
-            {users.slice(0, AVATARS_MAX - 1).map(({ connectionId, info }) => {
-              return (
+            <AnimatePresence>
+              {self && (
                 <Avatar
+                  key="you"
                   className={styles.avatar}
-                  color={info.color}
-                  key={connectionId}
-                  name={info.name}
-                  src={info.url}
+                  color={self.info.color}
+                  name="You"
+                  src={self.info.url}
                   tooltipOffset={6}
+                  layout="position"
+                  variants={avatarVariants}
+                  transition={avatarTransition}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
                 />
-              );
-            })}
-            {users.length > AVATARS_MAX - 1 ? (
-              <div className={cx(styles.avatar, styles.avatar_ellipsis)}>
-                +{users.length - AVATARS_MAX + 1}
-              </div>
-            ) : null}
+              )}
+              {users.slice(0, AVATARS_MAX - 1).map(({ connectionId, info }) => {
+                return (
+                  <Avatar
+                    className={styles.avatar}
+                    color={info.color}
+                    key={connectionId}
+                    name={info.name}
+                    src={info.url}
+                    tooltipOffset={6}
+                    layout="position"
+                    variants={avatarVariants}
+                    transition={avatarTransition}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  />
+                );
+              })}
+              {users.length > AVATARS_MAX - 1 ? (
+                <motion.div
+                  key="ellipsis"
+                  className={cx(styles.avatar, styles.avatar_ellipsis)}
+                  layout="position"
+                  variants={avatarVariants}
+                  transition={avatarTransition}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                >
+                  +{users.length - AVATARS_MAX + 1}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </div>

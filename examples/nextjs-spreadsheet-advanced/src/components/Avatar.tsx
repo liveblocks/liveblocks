@@ -1,9 +1,10 @@
 import cx from "classnames";
+import { motion } from "framer-motion";
 import { type CSSProperties, type ComponentProps, forwardRef } from "react";
 import styles from "./Avatar.module.css";
 import { Tooltip } from "./Tooltip";
 
-export interface Props extends ComponentProps<"button"> {
+export interface Props extends ComponentProps<typeof motion.button> {
   color: string;
   name: string;
   src: string;
@@ -14,7 +15,7 @@ export const Avatar = forwardRef<HTMLButtonElement, Props>(
   ({ src, name, color, style, className, tooltipOffset, ...props }, ref) => {
     return (
       <Tooltip content={name} sideOffset={tooltipOffset}>
-        <button
+        <motion.button
           className={cx(className, styles.container)}
           disabled
           ref={ref}
@@ -24,7 +25,7 @@ export const Avatar = forwardRef<HTMLButtonElement, Props>(
           <div className={styles.avatar}>
             <img alt={name} src={src} />
           </div>
-        </button>
+        </motion.button>
       </Tooltip>
     );
   }
