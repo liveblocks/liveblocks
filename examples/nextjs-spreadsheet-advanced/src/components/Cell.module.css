@@ -121,8 +121,8 @@
 }
 
 .value {
-  --value-padding: 10px;
-  --value-type-padding: 4px;
+  --value-padding: 8px;
+  --value-type-padding: 2px;
   --value-type-size: calc(
     var(--row-height) - var(--border) - var(--value-type-padding) * 2
   );
@@ -137,7 +137,7 @@
     "Liberation Mono", "Courier New", monospace;
   z-index: 1;
   color: var(--gray-800);
-  font-size: 13px;
+  font-size: 12px;
   user-select: none;
   text-align: left;
   outline: none;
@@ -146,6 +146,10 @@
 
 .value:global(.numerical) {
   text-align: right;
+}
+
+.value:global(.alphabetical) {
+  font-weight: 600;
 }
 
 .cell:global(.selected) .value,
@@ -192,7 +196,7 @@
   font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   font-style: italic;
   font-weight: 500;
-  font-size: 11px;
+  font-size: 10px;
   width: var(--value-type-size);
   aspect-ratio: 1;
   line-height: normal;

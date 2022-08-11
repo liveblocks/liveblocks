@@ -345,6 +345,7 @@ export function DisplayCell({
     <div
       className={cx(className, styles.value, {
         numerical: isNumericalValue,
+        alphabetical: type === "alphabetical",
       })}
       {...props}
     >
