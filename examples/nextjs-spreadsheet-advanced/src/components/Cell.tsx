@@ -118,6 +118,29 @@ function setCaretPosition(element: HTMLElement | Node, position: number) {
   return position;
 }
 
+function scrollCaretIntoView() {
+  const selection = window.getSelection();
+
+  if (!selection?.rangeCount) {
+    return;
+  }
+
+  const range = selection.getRangeAt(0);
+
+  if (range.commonAncestorContainer === document) {
+    return;
+  }
+
+  const element = document.createElement("br");
+  range.insertNode(element);
+
+  element.scrollIntoView({
+    block: "end",
+  });
+
+  element.remove();
+}
+
 function ScrubbableValueType({
   expression,
   onCommit,
@@ -231,13 +254,14 @@ export function EditingCell({
     if (!ref.current) return;
 
     const formattedValue = formatValue(draft);
+    const position = getCaretPosition(ref.current);
+
     ref.current.innerHTML = stringToTokenizedHtml(formattedValue);
 
     if (isInitialRender) {
       setCaretPosition(ref.current, formattedValue.length);
+      scrollCaretIntoView();
     } else {
-      const position = getCaretPosition(ref.current);
-
       setCaretPosition(ref.current, position ?? formattedValue.length);
     }
 
