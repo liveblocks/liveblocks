@@ -170,21 +170,18 @@ export function EditingCell({
           })
           .join("");
       } catch {
-        return `<span>${value}</span>`;
+        return `<span>${value.replaceAll(" ", "&nbsp;")}</span>`; //Need to sanitize to avoid XSS attacks
       }
     },
     [cellId]
   );
 
-  const [draft, setDraft] = useState<string>(() =>
-    stringToTokenizedHtml(expression)
-  );
+  const [draft, setDraft] = useState<string>(() => expression);
 
   const handleInput = useCallback(
     (event: FormEvent<HTMLDivElement>) => {
-      const value = stripHtml(event.currentTarget.innerHTML);
-
-      setDraft(stringToTokenizedHtml(formatValue(value)));
+      const value = event.currentTarget.innerText;
+      setDraft(value);
     },
     [stringToTokenizedHtml]
   );
@@ -202,7 +199,7 @@ export function EditingCell({
       } else if (event.key === "Enter") {
         event.preventDefault();
 
-        onCommit(stripHtml(draft), "down");
+        onCommit(draft, "down");
       }
     },
     [draft, onCommit, onEndEditing]
@@ -213,7 +210,7 @@ export function EditingCell({
   useEffect(() => {
     if (!ref.current) return;
 
-    ref.current.innerHTML = draft;
+    ref.current.innerHTML = stringToTokenizedHtml(formatValue(draft));
     placeCaretAtEnd(ref.current);
   }, [draft]);
 
