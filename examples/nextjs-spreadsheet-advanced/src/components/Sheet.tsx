@@ -1,6 +1,7 @@
 import { type ComponentProps, useCallback, useState, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
+import { useHistory } from "../liveblocks.config";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";
@@ -35,6 +36,7 @@ export function Sheet({
   selection,
   others,
 }: Props) {
+  const history = useHistory();
   const [edition, setEdition] = useState<CellAddress | null>(null);
   const shouldUseHotkeys = useMemo(
     () => Boolean(selection && !edition),
@@ -99,13 +101,32 @@ export function Sheet({
     [selection]
   );
   useHotkeys(
-    "delete",
+    "delete, backspace",
     (event) => {
       event.preventDefault();
       deleteCell(selection!.columnId, selection!.rowId);
     },
     hotkeysOptions,
     [selection]
+  );
+
+  useHotkeys(
+    "cmd+z, ctrl+z",
+    (event) => {
+      event.preventDefault();
+      history.undo();
+    },
+    hotkeysOptions,
+    [history]
+  );
+  useHotkeys(
+    "shift+cmd+z, shift+ctrl+z",
+    (event) => {
+      event.preventDefault();
+      history.redo();
+    },
+    hotkeysOptions,
+    [history]
   );
 
   return (
