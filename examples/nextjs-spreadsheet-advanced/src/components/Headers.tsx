@@ -58,7 +58,7 @@ import {
   ResetIcon,
   TrashIcon,
 } from "../icons";
-import { useHistory } from "../liveblocks.config";
+import { useHistory, useSelf } from "../liveblocks.config";
 import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
 import type { Cell, Column, Row } from "../types";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
@@ -234,6 +234,7 @@ export function Header({
   ...props
 }: HeaderProps) {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const self = useSelf();
   const history = useHistory();
   const { listeners, setNodeRef, setActivatorNodeRef, over, isDragging } =
     useSortable({
@@ -343,6 +344,7 @@ export function Header({
             </span>
             <DropdownMenu
               align="start"
+              style={{ "--accent": self?.info.color } as CSSProperties}
               content={
                 <>
                   <DropdownMenuGroup>
