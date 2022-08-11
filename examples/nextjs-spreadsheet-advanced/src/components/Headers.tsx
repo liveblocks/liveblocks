@@ -399,7 +399,7 @@ export function Header({
                   <DropdownMenuGroup>
                     <DropdownMenuItem
                       icon={<ResetIcon />}
-                      label="Resize to Default"
+                      label={`Reset ${isColumn ? "Width" : "Height"}`}
                       onSelect={handleResizeDefault}
                     />
                     <DropdownMenuItem
