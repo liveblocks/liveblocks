@@ -58,65 +58,75 @@ function Example() {
       }
     >
       <div className={styles.banner}>
-        <div className={styles.buttons}>
-          <div className={styles.button_group} role="group">
-            <button
-              className={styles.button}
-              onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
-              disabled={rows.length >= GRID_MAX_ROWS}
-            >
-              <AddRowAfterIcon />
-              <span>Add Row</span>
-            </button>
-            <button
-              className={styles.button}
-              onClick={() => insertColumn(columns.length, COLUMN_INITIAL_WIDTH)}
-              disabled={columns.length >= GRID_MAX_COLUMNS}
-            >
-              <AddColumnAfterIcon />
-              <span>Add Column</span>
-            </button>
-          </div>
-          <div className={styles.button_group} role="group">
-            <Tooltip content="Undo">
-              <button className={styles.button} onClick={() => history.undo()}>
-                <UndoIcon />
+        <div className={styles.banner_content}>
+          <div className={styles.buttons}>
+            <div className={styles.button_group} role="group">
+              <button
+                className={styles.button}
+                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
+                disabled={rows.length >= GRID_MAX_ROWS}
+              >
+                <AddRowAfterIcon />
+                <span>Add Row</span>
               </button>
-            </Tooltip>
-            <Tooltip content="Redo">
-              <button className={styles.button} onClick={() => history.redo()}>
-                <RedoIcon />
+              <button
+                className={styles.button}
+                onClick={() =>
+                  insertColumn(columns.length, COLUMN_INITIAL_WIDTH)
+                }
+                disabled={columns.length >= GRID_MAX_COLUMNS}
+              >
+                <AddColumnAfterIcon />
+                <span>Add Column</span>
               </button>
-            </Tooltip>
+            </div>
+            <div className={styles.button_group} role="group">
+              <Tooltip content="Undo">
+                <button
+                  className={styles.button}
+                  onClick={() => history.undo()}
+                >
+                  <UndoIcon />
+                </button>
+              </Tooltip>
+              <Tooltip content="Redo">
+                <button
+                  className={styles.button}
+                  onClick={() => history.redo()}
+                >
+                  <RedoIcon />
+                </button>
+              </Tooltip>
+            </div>
           </div>
-        </div>
-        <div className={styles.avatars}>
-          {self && (
-            <Avatar
-              className={styles.avatar}
-              color={self.info.color}
-              name="You"
-              src={self.info.url}
-              tooltipOffset={6}
-            />
-          )}
-          {users.slice(0, AVATARS_MAX - 1).map(({ connectionId, info }) => {
-            return (
+          <div className={styles.avatars}>
+            {self && (
               <Avatar
                 className={styles.avatar}
-                color={info.color}
-                key={connectionId}
-                name={info.name}
-                src={info.url}
+                color={self.info.color}
+                name="You"
+                src={self.info.url}
                 tooltipOffset={6}
               />
-            );
-          })}
-          {users.length > AVATARS_MAX - 1 ? (
-            <div className={cx(styles.avatar, styles.avatar_ellipsis)}>
-              +{users.length - AVATARS_MAX + 1}
-            </div>
-          ) : null}
+            )}
+            {users.slice(0, AVATARS_MAX - 1).map(({ connectionId, info }) => {
+              return (
+                <Avatar
+                  className={styles.avatar}
+                  color={info.color}
+                  key={connectionId}
+                  name={info.name}
+                  src={info.url}
+                  tooltipOffset={6}
+                />
+              );
+            })}
+            {users.length > AVATARS_MAX - 1 ? (
+              <div className={cx(styles.avatar, styles.avatar_ellipsis)}>
+                +{users.length - AVATARS_MAX + 1}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
       <Sheet {...spreadsheet} />

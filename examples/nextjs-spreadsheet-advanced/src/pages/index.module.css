@@ -13,9 +13,24 @@
   --banner-height: 32px;
 
   flex: none;
-  display: flex;
-  padding: var(--padding);
+  position: relative;
   border-bottom: var(--border) solid var(--gray-200);
+  height: calc(var(--banner-height) + 2 * var(--padding));
+}
+
+.banner_content {
+  position: absolute;
+  display: flex;
+  inset: 0px;
+  padding: var(--padding);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.banner_content::-webkit-scrollbar {
+  display: none;
 }
 
 .buttons {
