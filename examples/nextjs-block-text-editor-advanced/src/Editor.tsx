@@ -22,6 +22,7 @@ import {
   useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import classNames from "classnames";
 
 import {
@@ -431,12 +432,10 @@ function SortableElement({
         style={
           {
             transition: sortable.transition,
-            "--translate-y": sortable.transform
-              ? `${sortable.transform.y}px`
-              : undefined,
+            transform: CSS.Transform.toString(sortable.transform),
             pointerEvents: sortable.isSorting ? "none" : undefined,
             opacity: sortable.isDragging ? 0 : 1,
-          } as React.CSSProperties /* casted because of css variable */
+          } as React.CSSProperties /* cast because of css variable */
         }
       >
         {renderElement({ element, children })}
