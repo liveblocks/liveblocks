@@ -12,6 +12,7 @@ import {
   useSensor,
   useSensors,
   type DropAnimation,
+  type DndContextProps,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -488,6 +489,96 @@ export function Headers({
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+  const accessibility: DndContextProps["accessibility"] = useMemo(
+    () => ({
+      screenReaderInstructions: {
+        draggable: `To pick up a ${
+          isColumn ? "column" : "row"
+        }, press space or enter. 
+While dragging, use the arrow keys to move the ${isColumn ? "column" : "row"} ${
+          isColumn ? "before" : "above"
+        } or ${isColumn ? "after" : "below"}.
+Press space or enter again to drop the ${
+          isColumn ? "column" : "row"
+        } in its new position, or press escape to cancel.`,
+      },
+      announcements: {
+        onDragStart: ({ active }) => {
+          const index = getIndexWithProperty<Column | Row, "id">(
+            headers,
+            "id",
+            String(active.id)
+          );
+
+          return `Picked up ${isColumn ? "column" : "row"} ${
+            isColumn ? convertNumberToLetter(index) : index + 1
+          }.`;
+        },
+        onDragOver: ({ active, over }) => {
+          const index = getIndexWithProperty<Column | Row, "id">(
+            headers,
+            "id",
+            String(active.id)
+          );
+
+          if (over) {
+            const overIndex = getIndexWithProperty<Column | Row, "id">(
+              headers,
+              "id",
+              String(over.id)
+            );
+
+            return `${isColumn ? "Column" : "Row"} ${
+              isColumn ? convertNumberToLetter(index) : index + 1
+            } was moved over ${isColumn ? "column" : "row"} ${
+              isColumn ? convertNumberToLetter(overIndex) : overIndex + 1
+            }.`;
+          } else {
+            return `${isColumn ? "Column" : "Row"} ${
+              isColumn ? convertNumberToLetter(index) : index + 1
+            } is no longer over a ${isColumn ? "column" : "row"}.`;
+          }
+        },
+        onDragEnd: ({ active, over }) => {
+          const index = getIndexWithProperty<Column | Row, "id">(
+            headers,
+            "id",
+            String(active.id)
+          );
+
+          if (over) {
+            const overIndex = getIndexWithProperty<Column | Row, "id">(
+              headers,
+              "id",
+              String(over.id)
+            );
+
+            return `${isColumn ? "Column" : "Row"} ${
+              isColumn ? convertNumberToLetter(index) : index + 1
+            } was dropped over ${isColumn ? "column" : "row"} ${
+              isColumn ? convertNumberToLetter(overIndex) : overIndex + 1
+            }`;
+          } else {
+            return `${isColumn ? "Column" : "Row"} ${
+              isColumn ? convertNumberToLetter(index) : index + 1
+            } was dropped.`;
+          }
+        },
+        onDragCancel: ({ active }) => {
+          const index = getIndexWithProperty<Column | Row, "id">(
+            headers,
+            "id",
+            String(active.id)
+          );
+
+          return `Dragging was cancelled. ${isColumn ? "Column" : "Row"} ${
+            isColumn ? convertNumberToLetter(index) : index + 1
+          } was dropped.`;
+        },
+      },
+    }),
+    [isColumn]
+  );
 
   const handleDragStop = useCallback(() => {
     document.body.classList.remove(DRAGGING_CLASS);
@@ -530,6 +621,7 @@ export function Headers({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragStop}
+      accessibility={accessibility}
     >
       <SortableContext
         items={headersIds}
