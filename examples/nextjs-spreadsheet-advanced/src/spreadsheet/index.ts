@@ -10,8 +10,7 @@ import tokenizer, {
 } from "./interpreter/tokenizer";
 import {
   convertLetterToNumber,
-  convertNumberToLetter,
-  EXPRESSION_ERROR,
+  getHeaderLabel,
   formatExpressionResult,
 } from "./interpreter/utils";
 import { extractCellId, getCellId, removeFromArray } from "./utils";
@@ -153,9 +152,12 @@ export async function createSpreadsheet(
       throw new Error(`Unknown row id: ${rowId}`);
     }
 
+    const column = getHeaderLabel(columnIndex, "column");
+    const row = getHeaderLabel(rowIndex, "row");
+
     return {
       kind: SyntaxKind.CellToken,
-      cell: `${convertNumberToLetter(columnIndex)}${rowIndex + 1}`,
+      cell: `${column}${row}`,
     };
   }
 

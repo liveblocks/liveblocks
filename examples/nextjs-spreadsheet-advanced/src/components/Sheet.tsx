@@ -2,7 +2,7 @@ import { type ComponentProps, useCallback, useState, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
 import { useHistory } from "../liveblocks.config";
-import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
+import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";
 import type { CellAddress } from "../types";
@@ -165,7 +165,7 @@ export function Sheet({
             <tr>
               <th />
               {columns.map((_, x) => (
-                <th key={x}>{convertNumberToLetter(x)}</th>
+                <th key={x}>{getHeaderLabel(x, "column")}</th>
               ))}
             </tr>
           </thead>
@@ -173,7 +173,7 @@ export function Sheet({
             {rows.map((row, y) => {
               return (
                 <tr key={y}>
-                  <th className="sr">{y}</th>
+                  <th className="sr">{getHeaderLabel(y, "row")}</th>
                   {columns.map((column) => {
                     const id = getCellId(column.id, row.id);
                     const isSelected =

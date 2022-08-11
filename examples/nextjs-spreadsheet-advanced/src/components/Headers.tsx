@@ -62,7 +62,7 @@ import {
   TrashIcon,
 } from "../icons";
 import { useHistory, useSelf } from "../liveblocks.config";
-import { convertNumberToLetter } from "../spreadsheet/interpreter/utils";
+import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import type { Cell, Column, Row } from "../types";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
@@ -205,7 +205,7 @@ function HeaderDragOverlay({
           <HandlerIcon />
         </div>
         <span className={styles.header_label}>
-          {isColumn ? convertNumberToLetter(index) : index + 1}
+          {getHeaderLabel(index, isColumn ? "column" : "row")}
         </span>
         <div className={styles.header_control} />
       </div>
@@ -356,7 +356,7 @@ export function Header({
               <HandlerIcon />
             </button>
             <span className={styles.header_label}>
-              {isColumn ? convertNumberToLetter(index) : index + 1}
+              {getHeaderLabel(index, isColumn ? "column" : "row")}
             </span>
             <DropdownMenu
               align="start"
@@ -510,9 +510,10 @@ Press space or enter again to drop the ${
             String(active.id)
           );
 
-          return `Picked up ${isColumn ? "column" : "row"} ${
-            isColumn ? convertNumberToLetter(index) : index + 1
-          }.`;
+          return `Picked up ${isColumn ? "column" : "row"} ${getHeaderLabel(
+            index,
+            isColumn ? "column" : "row"
+          )}.`;
         },
         onDragOver: ({ active, over }) => {
           const index = getIndexWithProperty<Column | Row, "id">(
@@ -528,15 +529,18 @@ Press space or enter again to drop the ${
               String(over.id)
             );
 
-            return `${isColumn ? "Column" : "Row"} ${
-              isColumn ? convertNumberToLetter(index) : index + 1
-            } was moved over ${isColumn ? "column" : "row"} ${
-              isColumn ? convertNumberToLetter(overIndex) : overIndex + 1
-            }.`;
+            return `${isColumn ? "Column" : "Row"} ${getHeaderLabel(
+              index,
+              isColumn ? "column" : "row"
+            )} was moved over ${isColumn ? "column" : "row"} ${getHeaderLabel(
+              overIndex,
+              isColumn ? "column" : "row"
+            )}.`;
           } else {
-            return `${isColumn ? "Column" : "Row"} ${
-              isColumn ? convertNumberToLetter(index) : index + 1
-            } is no longer over a ${isColumn ? "column" : "row"}.`;
+            return `${isColumn ? "Column" : "Row"} ${getHeaderLabel(
+              index,
+              isColumn ? "column" : "row"
+            )} is no longer over a ${isColumn ? "column" : "row"}.`;
           }
         },
         onDragEnd: ({ active, over }) => {
@@ -553,15 +557,18 @@ Press space or enter again to drop the ${
               String(over.id)
             );
 
-            return `${isColumn ? "Column" : "Row"} ${
-              isColumn ? convertNumberToLetter(index) : index + 1
-            } was dropped over ${isColumn ? "column" : "row"} ${
-              isColumn ? convertNumberToLetter(overIndex) : overIndex + 1
-            }`;
+            return `${isColumn ? "Column" : "Row"} ${getHeaderLabel(
+              index,
+              isColumn ? "column" : "row"
+            )} was dropped over ${isColumn ? "column" : "row"} ${getHeaderLabel(
+              overIndex,
+              isColumn ? "column" : "row"
+            )}`;
           } else {
-            return `${isColumn ? "Column" : "Row"} ${
-              isColumn ? convertNumberToLetter(index) : index + 1
-            } was dropped.`;
+            return `${isColumn ? "Column" : "Row"} ${getHeaderLabel(
+              index,
+              isColumn ? "column" : "row"
+            )} was dropped.`;
           }
         },
         onDragCancel: ({ active }) => {
@@ -571,9 +578,9 @@ Press space or enter again to drop the ${
             String(active.id)
           );
 
-          return `Dragging was cancelled. ${isColumn ? "Column" : "Row"} ${
-            isColumn ? convertNumberToLetter(index) : index + 1
-          } was dropped.`;
+          return `Dragging was cancelled. ${
+            isColumn ? "Column" : "Row"
+          } ${getHeaderLabel(index, isColumn ? "column" : "row")} was dropped.`;
         },
       },
     }),

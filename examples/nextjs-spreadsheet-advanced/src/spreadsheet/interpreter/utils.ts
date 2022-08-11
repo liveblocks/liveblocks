@@ -10,6 +10,10 @@ export function convertLetterToNumber(letter: string) {
   return (letter.codePointAt(0) ?? 0) - 65;
 }
 
+export function getHeaderLabel(index: number, type: "column" | "row") {
+  return type === "column" ? convertNumberToLetter(index) : index + 1;
+}
+
 export function formatExpressionResult(expressionResult: ExpressionResult) {
   if (expressionResult.type === "string") {
     return expressionResult.value;
