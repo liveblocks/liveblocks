@@ -12,6 +12,7 @@ import {
   type FormEvent,
   useEffect,
 } from "react";
+import { sanitize } from "dompurify";
 import { COLORS } from "../constants";
 import { useHistory, useSelf } from "../liveblocks.config";
 import tokenizer, {
@@ -24,9 +25,8 @@ import { appendUnit } from "../utils/appendUnit";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import { isNumerical } from "../utils/isNumerical";
 import { shuffle } from "../utils/shuffle";
-import { stripHtml } from "../utils/stripHtml";
-import { useAutoFocus } from "../utils/useAutoFocus";
 import styles from "./Cell.module.css";
+import { useInitialRender } from "../utils/useInitialRender";
 
 export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
   value: string;
@@ -66,33 +66,56 @@ export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
 type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
 
 export function formatValue(value: string) {
-  const normalized = value.replace(/(\s|&nbsp;)/g, " ");
-
-  return normalized.replace(/([A-Za-z]\d)/g, (cell) => cell.toUpperCase());
+  return value
+    .replace(/(\s|\r|\n|&nbsp;)/g, value.startsWith("=") ? "" : " ")
+    .replace(/([A-Za-z]\d)/g, (cell) => cell.toUpperCase());
 }
 
-function placeCaretAtEnd(element: HTMLElement) {
-  const target = document.createTextNode("");
-  element.appendChild(target);
+export function unformatValue(value: string) {
+  return value.replaceAll(" ", "&nbsp;");
+}
 
-  if (
-    target !== null &&
-    target.nodeValue !== null &&
-    document.activeElement === element
-  ) {
-    const selection = window.getSelection();
+function getCaretPosition(element: HTMLElement | Node) {
+  const selection = window.getSelection();
 
-    if (selection !== null) {
-      const range = document.createRange();
+  if (selection !== null && selection.rangeCount > 0) {
+    const range = selection.getRangeAt(0);
+    const prefix = range.cloneRange();
+    prefix.selectNodeContents(element);
+    prefix.setEnd(range.endContainer, range.endOffset);
 
-      range.setStart(target, target.nodeValue.length);
-      range.collapse(true);
-      selection.removeAllRanges();
-      selection.addRange(range);
-    }
-
-    element.focus();
+    return prefix.toString().length;
   }
+}
+
+function setCaretPosition(element: HTMLElement | Node, position: number) {
+  for (const node of element.childNodes) {
+    if (node.nodeType == Node.TEXT_NODE) {
+      const length = node.nodeValue?.length ?? 0;
+
+      if (length >= position) {
+        const range = document.createRange();
+        const selection = window.getSelection();
+
+        range.setStart(node, position);
+        range.collapse(true);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+
+        return -1;
+      } else {
+        position = position - length;
+      }
+    } else {
+      position = setCaretPosition(node, position);
+
+      if (position < 0) {
+        return position;
+      }
+    }
+  }
+
+  return position;
 }
 
 function ScrubbableValueType({
@@ -147,6 +170,7 @@ export function EditingCell({
   ...props
 }: EditingCellProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const isInitialRender = useInitialRender();
   const stringToTokenizedHtml = useCallback(
     (value: string) => {
       const colors = shuffle(COLORS, cellId);
@@ -154,8 +178,7 @@ export function EditingCell({
 
       try {
         const tokens = tokenizer(value);
-
-        return tokens
+        const html = tokens
           .map((token) => {
             const value = tokenToString(token);
 
@@ -169,8 +192,10 @@ export function EditingCell({
             }
           })
           .join("");
+
+        return sanitize(html);
       } catch {
-        return `<span>${value.replaceAll(" ", "&nbsp;")}</span>`; //Need to sanitize to avoid XSS attacks
+        return sanitize(`<span>${unformatValue(value)}</span>`);
       }
     },
     [cellId]
@@ -178,16 +203,13 @@ export function EditingCell({
 
   const [draft, setDraft] = useState<string>(() => expression);
 
-  const handleInput = useCallback(
-    (event: FormEvent<HTMLDivElement>) => {
-      const value = event.currentTarget.innerText;
-      setDraft(value);
-    },
-    [stringToTokenizedHtml]
-  );
+  const handleInput = useCallback((event: FormEvent<HTMLDivElement>) => {
+    const value = event.currentTarget.innerText;
+    setDraft(value);
+  }, []);
 
   const handleBlur = useCallback(() => {
-    onCommit(stripHtml(draft));
+    onCommit(draft);
   }, [draft, onCommit]);
 
   const handleKeyDown = useCallback(
@@ -205,19 +227,28 @@ export function EditingCell({
     [draft, onCommit, onEndEditing]
   );
 
-  useAutoFocus(ref, placeCaretAtEnd);
-
   useEffect(() => {
     if (!ref.current) return;
 
-    ref.current.innerHTML = stringToTokenizedHtml(formatValue(draft));
-    placeCaretAtEnd(ref.current);
+    const formattedValue = formatValue(draft);
+    ref.current.innerHTML = stringToTokenizedHtml(formattedValue);
+
+    if (isInitialRender) {
+      setCaretPosition(ref.current, formattedValue.length);
+    } else {
+      const position = getCaretPosition(ref.current);
+
+      setCaretPosition(ref.current, position ?? formattedValue.length);
+    }
+
+    ref.current.focus();
   }, [draft]);
 
   return (
     <div
       ref={ref}
       contentEditable
+      spellCheck={false}
       className={cx(className, styles.value)}
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
