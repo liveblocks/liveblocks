@@ -162,6 +162,25 @@
   text-align: left;
 }
 
+.cell:global(.editing) .value:before,
+.cell:global(.editing) .value:after {
+  content: "";
+  position: absolute;
+  width: 100%;
+  left: 0px;
+  height: calc((100% - 1.5em) / 2);
+  background: var(--gray-0);
+  pointer-events: none;
+}
+
+.cell:global(.editing) .value:before {
+  top: 0px;
+}
+
+.cell:global(.editing) .value:after {
+  bottom: 0px;
+}
+
 .value_type {
   position: absolute;
   display: flex;
