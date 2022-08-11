@@ -86,7 +86,7 @@ export interface CellRange extends BinaryExpression {
 export default function parser(tokens: Token[]): Node {
   let i = 0;
 
-  function currentToken(): Token {
+  function currentToken(): Token | undefined {
     return tokens[i];
   }
 
@@ -128,7 +128,7 @@ export default function parser(tokens: Token[]): Node {
       return { kind: NodeKind.UnaryPlus, expression: factor() };
     } else if (testAndConsume(SyntaxKind.MinusToken)) {
       return { kind: NodeKind.UnaryMinus, expression: factor() };
-    } else if (token.kind === SyntaxKind.NumberLiteral) {
+    } else if (token && token.kind === SyntaxKind.NumberLiteral) {
       return makeNumberLiteral(
         consumeToken(SyntaxKind.NumberLiteral) as NumberToken
       );
@@ -136,9 +136,10 @@ export default function parser(tokens: Token[]): Node {
       const node = expr();
       consumeToken(SyntaxKind.CloseParenthesis);
       return node;
-    } else if (token.kind === SyntaxKind.RefToken) {
+    } else if (token && token.kind === SyntaxKind.RefToken) {
       const ref = makeRef(consumeToken(SyntaxKind.RefToken) as RefToken);
-      if (currentToken().kind === SyntaxKind.ColonToken) {
+      const nextToken = currentToken();
+      if (nextToken && nextToken.kind === SyntaxKind.ColonToken) {
         consumeToken(SyntaxKind.ColonToken);
         const rightRef = makeRef(consumeToken(SyntaxKind.RefToken) as RefToken);
         return {
@@ -149,7 +150,7 @@ export default function parser(tokens: Token[]): Node {
       }
       return ref;
     }
-    throw new Error(`Unexpected token : ${token.kind}`);
+    throw new Error(`Unexpected token : ${token?.kind}`);
   }
 
   function exponent(): Expression {

@@ -24,3 +24,4 @@ t("=5/2", { type: "number", value: 2.5 });
 t("=5%2", { type: "number", value: 1 });
 t("=2^3", { type: "number", value: 8 });
 t("=REF(A1)+1", { type: "number", value: 2 }, { A1: 1 });
+t("=REF(A1)+REF(A2)", { type: "number", value: 2 }, { A1: 1, A2: 1 });
