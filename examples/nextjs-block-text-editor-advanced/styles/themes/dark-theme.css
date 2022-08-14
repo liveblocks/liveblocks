@@ -8,6 +8,5 @@
   --opacity-surface-selection: 0.24;
   --container-max-width: 720px;
   --shadow-over: 0 0 0 0.5px rgba(0, 0, 0, 0.09),
-    0 4px 12px -2px rgba(0, 0, 0, 0.12),
-    0 24px 40px -12px rgba(0, 0, 0, 0.28);
+    0 4px 12px -2px rgba(0, 0, 0, 0.12), 0 24px 40px -12px rgba(0, 0, 0, 0.28);
 }

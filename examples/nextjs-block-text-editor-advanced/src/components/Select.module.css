@@ -35,7 +35,7 @@
 }
 
 .select_trigger:hover .select_trigger_chevron,
-.select_trigger:focus .select_trigger_chevron  {
+.select_trigger:focus .select_trigger_chevron {
   opacity: 0.6;
 }
 
@@ -62,7 +62,7 @@
 .select_item:focus {
   outline: none;
   background: rgb(var(--color-primary));
-  color: #FFF;
+  color: #fff;
 }
 
 .select_item_indicator {
