@@ -34,7 +34,7 @@ type Storage = {
 };
 
 const useStore = create(
-  middleware<FlowState, {}, EnsureJson<Storage>, {}, {}>(
+  middleware<FlowState, {}, EnsureJson<Storage>>(
     (set, get) => ({
       nodes: [],
       edges: [],
