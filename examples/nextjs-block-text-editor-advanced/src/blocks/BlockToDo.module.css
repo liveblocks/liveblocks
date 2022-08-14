@@ -25,47 +25,57 @@
   cursor: pointer;
 }
 
-
-.checkbox_element:hover + .checkbox,
-.checkbox_element:focus + .checkbox {
-  border-color: rgba(var(--color-foreground), 0.4);
+.checkbox_element:hover + .checkbox .border,
+.checkbox_element:focus + .checkbox .border {
+  stroke: rgba(var(--color-foreground), 0.4);
 }
 
-.checkbox_element:hover + .checkbox_checked
-.checkbox_element:focus + .checkbox_checked  {
-  background-color: rgba(var(--color-primary), 0.8);
-  border-color: transparent;
+.checkbox_element:hover + .checkbox_checked .background,
+.checkbox_element:focus + .checkbox_checked .background {
+  fill: rgba(var(--color-primary), 0.9);
 }
 
-.checkbox {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 3px;
-  border: 2px solid rgba(var(--color-foreground), 0.3);
-  pointer-events: none;
+.checkbox .background {
+  opacity: 0;
+  fill: rgba(var(--color-primary), 1);
+  transform: scale(0.5);
+  transform-origin: 50% 50%;
+  transition: 0.2s all cubic-bezier(0.16, 1.2, 0.58, 1);
 }
 
-.checkbox_checked {
-  border-color: transparent;
-  background: rgb(var(--color-primary));
+.checkbox_checked .background {
+  opacity: 1;
+  transform: none;
 }
 
-.check_icon {
-  position: absolute;
+.checkbox .border {
+  opacity: 1;
+  stroke: rgba(var(--color-foreground), 0.3);
+  transition: 0.4s opacity cubic-bezier(0.16, 1.2, 0.58, 1);
+}
+
+.checkbox_checked .border {
   opacity: 0;
 }
 
-.check_icon path {
-  fill: rgb(var(--color-surface));
+.checkbox .check {
+  opacity: 0;
+  fill: rgba(var(--color-surface), 1);
+  transform: scale(0.2);
+  transform-origin: 50% 50%;
+  transition: 0.1s all cubic-bezier(0.16, 2, 0.58, 1);
+  transition-delay: 0.05s;
 }
 
-.check_icon_checked {
+.checkbox_checked .check {
   opacity: 1;
+  transform: none;
 }
 
 .todo_text {
   flex-grow: 1;
+}
+
+.todo_text_checked {
+  opacity: 0.4;
 }

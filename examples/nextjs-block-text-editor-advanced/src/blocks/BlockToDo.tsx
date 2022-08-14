@@ -31,19 +31,45 @@ export default function BlockToDo({ element, children }: Props) {
             });
           }}
         />
-        <div
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
           className={classNames(styles.checkbox, {
             [styles.checkbox_checked]: element.checked,
           })}
         >
-          <CheckIcon
-            className={classNames(styles.check_icon, {
-              [styles.check_icon_checked]: element.checked,
-            })}
+          <rect width="16" height="16" rx="4" className={styles.background} />
+
+          <rect
+            x="0.75"
+            y="0.75"
+            width="14.5"
+            height="14.5"
+            rx="3.25"
+            stroke="black"
+            strokeWidth="1.5"
+            className={styles.border}
           />
-        </div>
+
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M12.6103 4.43593L7.09571 12.1564L3.46967 8.53033L4.53033 7.46967L6.9043 9.84364L11.3897 3.56407L12.6103 4.43593Z"
+            className={styles.check}
+          />
+        </svg>
       </div>
-      <div className={styles.todo_text}>{children}</div>
+
+      <div
+        className={classNames(styles.todo_text, {
+          [styles.todo_text_checked]: element.checked,
+        })}
+      >
+        {children}
+      </div>
     </div>
   );
 }
