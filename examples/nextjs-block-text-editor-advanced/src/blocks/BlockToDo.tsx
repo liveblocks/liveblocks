@@ -5,6 +5,8 @@ import { ReactEditor, useSlate } from "slate-react";
 import { Transforms } from "slate";
 import classNames from "classnames";
 import CheckIcon from "../icons/check.svg";
+import { useState } from "react";
+import { useEffect } from "react";
 
 type Props = {
   element: ToDoElement;
@@ -13,6 +15,12 @@ type Props = {
 
 export default function BlockToDo({ element, children }: Props) {
   const editor = useSlate();
+  const [animating, setAnimating] = useState(false);
+  let timer: NodeJS.Timeout;
+
+  useEffect(() => {
+    clearTimeout(timer);
+  })
 
   return (
     <div className={styles.block_todo}>
@@ -29,6 +37,13 @@ export default function BlockToDo({ element, children }: Props) {
             Transforms.setNodes<CustomElement>(editor, newProperties, {
               at: path,
             });
+  
+            setAnimating(e.target.checked);
+
+            timer = setTimeout(() => {
+              setAnimating(false);
+              clearTimeout(timer);
+            }, 400);
           }}
         />
         <svg
@@ -54,7 +69,7 @@ export default function BlockToDo({ element, children }: Props) {
             className={styles.border}
           />
 
-          <path d="M4 8L7 11L12 4" strokeWidth="1.5" className={styles.check}/>
+          <path d="M4 8L7 11L12 4" strokeWidth="1.5" className={classNames(styles.check, { [styles.check_animating]: animating, [styles.check_not_animating]: !animating })}/>
 
         </svg>
       </div>

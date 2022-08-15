@@ -64,7 +64,12 @@
   stroke-dashoffset: 20;
 }
 
-.checkbox_checked .check {
+.checkbox_checked .check_not_animating {
+  stroke-dashoffset: 0;
+  animation: none;
+}
+
+.checkbox_checked .check_animating {
   animation: animate_check_stroke 0.2s 0.1s linear forwards;
 }
 

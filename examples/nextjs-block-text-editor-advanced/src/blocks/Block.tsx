@@ -16,7 +16,7 @@ export const CreateNewBlockFromBlock: Record<
   () => { type: BlockType, children?: [{ text: string }] }
 > = {
   [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
-  [BlockType.List]: () => ({ type: BlockType.List }),
+  [BlockType.BulletedList]: () => ({ type: BlockType.BulletedList }),
 };
 
 // Note: {children} must be rendered in every element otherwise bugs occur
@@ -51,7 +51,7 @@ export default function Block({
     return <h3 {...attributes}>{children}</h3>;
   }
 
-  if (element.type === BlockType.List) {
+  if (element.type === BlockType.BulletedList) {
     return (
       <div {...attributes}>
         <BlockList element={element}>{children}</BlockList>

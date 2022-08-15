@@ -73,6 +73,8 @@ export default function Toolbar() {
                 { label: "Heading 1", value: BlockType.H1 },
                 { label: "Heading 2", value: BlockType.H2 },
                 { label: "Heading 3", value: BlockType.H3 },
+                { label: "Bulleted list", value: BlockType.BulletedList },
+                { label: "To-do list", value: BlockType.ToDo },
               ]}
               onValueChange={(value: string) => {
                 if (editor.selection == null) {
@@ -179,6 +181,8 @@ function isTextElementType(type: string): type is TextBlock {
     type === BlockType.H1 ||
     type === BlockType.H2 ||
     type === BlockType.H3 ||
-    type === BlockType.Paragraph
+    type === BlockType.Paragraph ||
+    type === BlockType.BulletedList ||
+    type === BlockType.ToDo
   );
 }

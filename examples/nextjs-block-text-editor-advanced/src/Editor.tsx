@@ -15,14 +15,14 @@ import { BlockType, CustomElement } from "./types";
 import { removeGlobalCursor, setGlobalCursor, toggleMark, withLayout, withNodeId } from "./utils";
 import Leaf from "./blocks/Leaf";
 import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
-import { HOTKEYS, USER_COLORS } from "./constants";
+import { HOTKEYS, PROSE_CONTAINER_ID, USER_COLORS } from "./constants";
 import { Avatar, BlockInlineActions, Header, Loading, Toolbar } from "./components";
 
 
 const SHORTCUTS: Record<string, BlockType> = {
-  "*": BlockType.List,
-  "-": BlockType.List,
-  "+": BlockType.List,
+  "*": BlockType.BulletedList,
+  "-": BlockType.BulletedList,
+  "+": BlockType.BulletedList,
   "#": BlockType.H1,
   "##": BlockType.H2,
   "###": BlockType.H3,
@@ -232,6 +232,7 @@ export default function App () {
 
       <div
         className={classNames(styles.prose, "prose")}
+        id={PROSE_CONTAINER_ID}
         onClick={(e) => e.stopPropagation()}
       >
         <div className={styles.container}>
@@ -382,7 +383,7 @@ export default function App () {
                     />
                   )}
                 </DragOverlay>,
-                document.body,
+                document.getElementById(PROSE_CONTAINER_ID) || document.body,
               )}
             </DndContext>
           </Slate>
@@ -463,15 +464,13 @@ function DragOverlayContent ({
   const [value] = useState([JSON.parse(JSON.stringify(element))]); // clone
 
   return (
-    <div className="drag-overlay">
-      <Slate editor={editor} value={value}>
-        <Editable
-          readOnly={true}
-          renderElement={renderElement}
-          renderLeaf={Leaf}
-        />
-      </Slate>
-    </div>
+    <Slate editor={editor} value={value}>
+      <Editable
+        readOnly={true}
+        renderElement={renderElement}
+        renderLeaf={Leaf}
+      />
+    </Slate>
   );
 }
 

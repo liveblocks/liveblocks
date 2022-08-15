@@ -65,7 +65,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           onSelect: () => {
             onSelect({
               id: nanoid(),
-              type: BlockType.List,
+              type: BlockType.BulletedList,
               children: [{ text: "" }],
             });
           },

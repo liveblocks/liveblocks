@@ -32,7 +32,7 @@ export enum BlockType {
   H1 = "h1",
   H2 = "h2",
   H3 = "h3",
-  List = "list",
+  BulletedList = "bulleted-list",
   ToDo = "todo",
   Paragraph = "paragraph",
   Image = "image",
@@ -47,7 +47,9 @@ export type TextBlock =
   | BlockType.H1
   | BlockType.H2
   | BlockType.H3
-  | BlockType.Paragraph;
+  | BlockType.Paragraph
+  | BlockType.BulletedList
+  | BlockType.ToDo;
 
 export type BlockElement = {
   id: string;
@@ -63,7 +65,7 @@ export type HeadingElement = BlockElement & {
 };
 
 export type ListElement = BlockElement & {
-  type: BlockType.List;
+  type: BlockType.BulletedList;
 };
 
 export type ToDoElement = BlockElement & {
