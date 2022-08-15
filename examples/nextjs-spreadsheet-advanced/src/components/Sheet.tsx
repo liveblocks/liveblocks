@@ -1,3 +1,4 @@
+import cx from "classnames";
 import { type ComponentProps, useCallback, useState, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
@@ -5,15 +6,21 @@ import { useHistory } from "../liveblocks.config";
 import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
 import type { ReactSpreadsheet } from "../spreadsheet/react";
 import { getCellId } from "../spreadsheet/utils";
-import type { CellAddress } from "../types";
+import type { CellAddress, Column, Row } from "../types";
 import { TABLE_ID, canUseHotkeys } from "../utils/canUseHotkeys";
 import { clamp } from "../utils/clamp";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { Cell } from "./Cell";
-import { Headers } from "./Headers";
+import { Headers, type Props as HeadersProps } from "./Headers";
 import styles from "./Sheet.module.css";
 
 export type Props = ComponentProps<"div"> & ReactSpreadsheet;
+
+interface SortIndicator {
+  type: "column" | "row";
+  index: number;
+  position?: "before" | "after";
+}
 
 export function Sheet({
   cells,
@@ -38,6 +45,7 @@ export function Sheet({
 }: Props) {
   const history = useHistory();
   const [edition, setEdition] = useState<CellAddress | null>(null);
+  const [sortIndicator, setSortIndicator] = useState<SortIndicator>();
   const shouldUseHotkeys = useMemo(
     () => Boolean(selection && !edition),
     [selection, edition]
@@ -129,6 +137,28 @@ export function Sheet({
     [history]
   );
 
+  const handleColumnSortOver: HeadersProps["onSortOver"] = useCallback(
+    (index, position) => {
+      if (typeof index === "number") {
+        setSortIndicator({ type: "column", index, position });
+      } else {
+        setSortIndicator(undefined);
+      }
+    },
+    []
+  );
+
+  const handleRowSortOver: HeadersProps["onSortOver"] = useCallback(
+    (index, position) => {
+      if (typeof index === "number") {
+        setSortIndicator({ type: "row", index, position });
+      } else {
+        setSortIndicator(undefined);
+      }
+    },
+    []
+  );
+
   return (
     <div className={styles.sheet}>
       <Headers
@@ -142,6 +172,7 @@ export function Sheet({
         moveHeader={moveColumn}
         resizeHeader={resizeColumn}
         selectedHeader={selection?.columnId}
+        onSortOver={handleColumnSortOver}
         type="column"
         max={GRID_MAX_COLUMNS}
       />
@@ -156,9 +187,38 @@ export function Sheet({
         moveHeader={moveRow}
         resizeHeader={resizeRow}
         selectedHeader={selection?.rowId}
+        onSortOver={handleRowSortOver}
         type="row"
         max={GRID_MAX_ROWS}
       />
+      {sortIndicator && (
+        <div
+          className={cx(styles.sort_indicators, sortIndicator.type)}
+          aria-hidden
+        >
+          {(sortIndicator.type === "column" ? columns : rows).map(
+            (header, index) => (
+              <div
+                key={index}
+                className={styles.sort_indicator_container}
+                style={{
+                  width: (header as Column).width ?? "100%",
+                  height: (header as Row).height ?? "100%",
+                }}
+              >
+                {sortIndicator.index === index && (
+                  <div
+                    className={cx(
+                      styles.sort_indicator,
+                      sortIndicator.position ?? "before"
+                    )}
+                  />
+                )}
+              </div>
+            )
+          )}
+        </div>
+      )}
       <div className={styles.table_container}>
         <table className={styles.table} id={TABLE_ID} tabIndex={0}>
           <thead className="sr">

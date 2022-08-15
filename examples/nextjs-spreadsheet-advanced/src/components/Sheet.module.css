@@ -73,3 +73,92 @@
 .table tr:last-of-type .cell:last-of-type {
   --cell-bottom-right-radius: 1;
 }
+
+.sort_indicators {
+  grid-area: 2 / 2 / 3 / 3;
+  display: flex;
+  pointer-events: none;
+  z-index: 200;
+}
+
+.sort_indicators:global(.column) {
+  flex-direction: row;
+}
+
+.sort_indicators:global(.row) {
+  flex-direction: column;
+}
+
+.sort_indicator_container {
+  position: relative;
+  flex: none;
+}
+
+.sort_indicator {
+  --sort-indicator-size: 2px;
+
+  position: absolute;
+  background: var(--accent);
+}
+
+.sort_indicator:before,
+.sort_indicator:after {
+  content: "";
+  position: absolute;
+  width: calc(var(--border) * 4);
+  height: calc(var(--border) * 4);
+  background: var(--accent);
+  border-radius: 50%;
+}
+
+.sort_indicators:global(.column) .sort_indicator {
+  height: 100%;
+  width: var(--sort-indicator-size);
+}
+
+.sort_indicators:global(.column) .sort_indicator:global(.before) {
+  left: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator:global(.after) {
+  right: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator:before,
+.sort_indicators:global(.column) .sort_indicator:after {
+  left: calc(-2 * var(--border) + var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator:before {
+  top: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.column) .sort_indicator:after {
+  bottom: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.row) .sort_indicator {
+  height: var(--sort-indicator-size);
+  width: 100%;
+}
+
+.sort_indicators:global(.row) .sort_indicator:global(.before) {
+  top: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator:global(.after) {
+  bottom: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator:before,
+.sort_indicators:global(.row) .sort_indicator:after {
+  top: calc(-2 * var(--border) + var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator:before {
+  left: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.row) .sort_indicator:after {
+  right: calc(-2 * var(--border));
+}

@@ -2,7 +2,7 @@ import {
   DndContext,
   type DragEndEvent,
   type DragStartEvent,
-  closestCenter,
+  rectIntersection,
   DragOverlay,
   type UniqueIdentifier,
   type MeasuringConfiguration,
@@ -13,6 +13,7 @@ import {
   useSensors,
   type DropAnimation,
   type DndContextProps,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
@@ -89,6 +90,7 @@ export interface Props extends ComponentProps<"div"> {
   insertHeader: (index: number, width: number) => void;
   moveHeader: (from: number, to: number) => void;
   resizeHeader: (index: number, size: number) => void;
+  onSortOver: (index?: number, position?: "before" | "after") => void;
   selectedHeader?: string;
   type: "column" | "row";
   max: number;
@@ -252,16 +254,12 @@ export function Header({
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const self = useSelf();
   const history = useHistory();
-  const { listeners, setNodeRef, setActivatorNodeRef, over, isDragging } =
+  const { listeners, setNodeRef, setActivatorNodeRef, isDragging, isOver } =
     useSortable({
       id: header.id,
     });
   const initialHeader = useRef(header);
   const isColumn = isColumnHeader(header);
-  const dropPosition = useMemo(
-    () => (over?.id === header.id ? (index > (activeIndex ?? -1) ? 1 : -1) : 0),
-    [over, header, index, activeIndex]
-  );
 
   const handleDropdownOpenChange = useCallback((open: boolean) => {
     setDropdownOpen(open);
@@ -342,9 +340,7 @@ export function Header({
           className={cx(styles.header_container, {
             selected: isSelected,
             "menu-opened": isDropdownOpen,
-            drop: dropPosition !== 0,
-            "drop-before": dropPosition < 0,
-            "drop-after": dropPosition > 0,
+            over: isOver,
           })}
         >
           <div className={styles.header}>
@@ -459,6 +455,7 @@ export function Headers({
   moveHeader,
   resizeHeader,
   insertHeader,
+  onSortOver,
   className,
   ...props
 }: Props) {
@@ -590,6 +587,7 @@ Press space or enter again to drop the ${
   const handleDragStop = useCallback(() => {
     document.body.classList.remove(DRAGGING_CLASS);
     setActiveHeadersId(null);
+    onSortOver();
   }, []);
 
   const handleDragStart = useCallback(({ active }: DragStartEvent) => {
@@ -616,9 +614,31 @@ Press space or enter again to drop the ${
     [headers, moveHeader, handleDragStop]
   );
 
+  const handleDragOver = useCallback(
+    ({ active, over }: DragOverEvent) => {
+      if (!over) return;
+
+      const overIndex = getIndexWithProperty<Column | Row, "id">(
+        headers,
+        "id",
+        String(over.id)
+      );
+
+      onSortOver(
+        overIndex,
+        over.id !== active.id
+          ? overIndex > (activeIndex ?? -1)
+            ? "after"
+            : "before"
+          : undefined
+      );
+    },
+    [headers, activeIndex]
+  );
+
   return (
     <DndContext
-      collisionDetection={closestCenter}
+      collisionDetection={rectIntersection}
       modifiers={[
         restrictToParentElement,
         isColumn ? restrictToHorizontalAxis : restrictToVerticalAxis,
@@ -629,6 +649,7 @@ Press space or enter again to drop the ${
       onDragEnd={handleDragEnd}
       onDragCancel={handleDragStop}
       accessibility={accessibility}
+      onDragOver={handleDragOver}
     >
       <SortableContext
         items={headersIds}

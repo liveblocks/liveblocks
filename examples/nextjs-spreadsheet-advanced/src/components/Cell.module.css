@@ -162,6 +162,10 @@
   padding-left: calc(var(--value-type-size) + var(--value-type-padding) * 4);
 }
 
+:global(.dragging) .value {
+  padding-left: var(--value-padding) !important;
+}
+
 .cell:global(.editing) .value {
   user-select: all;
   text-align: left;
@@ -206,6 +210,10 @@
 .value_type:global(.scrubbable) {
   cursor: ew-resize;
   touch-action: none;
+}
+
+:global(.dragging) .value_type {
+  display: none;
 }
 
 .value_content {
