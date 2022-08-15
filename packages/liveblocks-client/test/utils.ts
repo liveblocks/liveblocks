@@ -366,6 +366,8 @@ export async function prepareStorageTest<
     batch: machine.batch,
     undo: machine.undo,
     redo: machine.redo,
+    canUndo: machine.canUndo,
+    canRedo: machine.canRedo,
     applyRemoteOperations: (ops: Op[]) =>
       machine.onMessage(
         serverMessage({

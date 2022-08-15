@@ -4,10 +4,10 @@
   </a>
 </p>
 
-# To-do List
+# Collaborative To-do List
 
 <p>
-  <a href="https://liveblocks.io/examples/todo-list/javascript/preview">
+  <a href="https://liveblocks.io/examples/collaborative-todo-list/javascript/preview">
     <img src="https://img.shields.io/badge/live%20preview-message?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMjQgMjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBhdGggZD0iTTE2Ljg0OSA0Ljc1SDBsNC44NDggNS4wNzV2Ny4wMDhsMTItMTIuMDgzWk03LjE1IDE5LjI1SDI0bC00Ljg0OS01LjA3NVY3LjE2N2wtMTIgMTIuMDgzWiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==&color=333" alt="Live Preview" />
   </a>
   <a href="https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/javascript-todo-list">
@@ -23,7 +23,7 @@ As users edit the list, changes will be automatically persisted and
 synced—allowing for a list that updates in real-time across clients. Users will
 also be able to see who else is currently online and when a user is typing.
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="500" alt="To-do List" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="500" alt="Collaborative To-do List" />
 
 ## Getting started
 
