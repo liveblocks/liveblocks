@@ -1,12 +1,12 @@
 .tooltip {
   --tooltip-background: var(--gray-800);
 
-  color: var(--white);
+  z-index: 10000;
+  padding: 4px 8px;
   background: var(--tooltip-background);
   border-radius: 5px;
-  padding: 4px 8px;
+  color: var(--white);
   font-size: 12px;
-  z-index: 10000;
 }
 
 .tooltip:global {

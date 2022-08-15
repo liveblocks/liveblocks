@@ -1,21 +1,20 @@
 import {
   DndContext,
+  type DndContextProps,
   type DragEndEvent,
-  type DragStartEvent,
-  rectIntersection,
+  type DragOverEvent,
   DragOverlay,
-  type UniqueIdentifier,
+  type DragStartEvent,
+  type DropAnimation,
+  KeyboardSensor,
   type MeasuringConfiguration,
   MeasuringStrategy,
-  KeyboardSensor,
   PointerSensor,
+  type UniqueIdentifier,
+  rectIntersection,
   useSensor,
   useSensors,
-  type DropAnimation,
-  type DndContextProps,
-  type DragOverEvent,
 } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 import {
   restrictToHorizontalAxis,
   restrictToParentElement,
@@ -24,10 +23,11 @@ import {
 import {
   SortableContext,
   horizontalListSortingStrategy,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
-  sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useGesture } from "@use-gesture/react";
 import cx from "classnames";
 import {
@@ -64,47 +64,46 @@ import {
 } from "../icons";
 import { useHistory, useSelf } from "../liveblocks.config";
 import { getHeaderLabel } from "../spreadsheet/interpreter/utils";
+import { getCellId } from "../spreadsheet/utils";
 import type { Cell, Column, Row } from "../types";
+import { appendUnit } from "../utils/appendUnit";
+import { clamp } from "../utils/clamp";
 import { getIndexWithProperty } from "../utils/getIndexWithProperty";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
+import { DisplayCell } from "./Cell";
 import {
   DropdownMenu,
   DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "./DropdownMenu";
-import { clamp } from "../utils/clamp";
-import { getCellId } from "../spreadsheet/utils";
-import { appendUnit } from "../utils/appendUnit";
-import { DisplayCell } from "./Cell";
 import styles from "./Headers.module.css";
 
 const DRAGGING_CLASS = "dragging";
 
 export interface Props extends ComponentProps<"div"> {
-  clearHeader: (index: number) => void;
-  deleteHeader: (index: number) => void;
   cells: Record<string, string>;
+  clearHeader: (index: number) => void;
   columns: Column[];
-  rows: Row[];
+  deleteHeader: (index: number) => void;
   insertHeader: (index: number, width: number) => void;
+  max: number;
   moveHeader: (from: number, to: number) => void;
+  onSortOver: (index?: number, position?: "after" | "before") => void;
   resizeHeader: (index: number, size: number) => void;
-  onSortOver: (index?: number, position?: "before" | "after") => void;
+  rows: Row[];
   selectedHeader?: string;
   type: "column" | "row";
-  max: number;
 }
 
 export interface HeaderProps extends ComponentProps<"div"> {
+  canDelete: () => boolean;
+  canInsert: () => boolean;
+  canMoveAfter: () => boolean;
+  canMoveBefore: () => boolean;
   header: Column | Row;
   index: number;
-  activeIndex: number | null;
   isSelected: boolean;
-  canMoveBefore: () => boolean;
-  canMoveAfter: () => boolean;
-  canInsert: () => boolean;
-  canDelete: () => boolean;
   onClear: () => void;
   onDelete: () => void;
   onInsert: (offset: number) => void;
@@ -113,10 +112,10 @@ export interface HeaderProps extends ComponentProps<"div"> {
 }
 
 export interface HeaderDragOverlayProps extends ComponentProps<"div"> {
-  index: number;
-  header: Column | Row;
   cells: Record<string, string>;
   columns: Column[];
+  header: Column | Row;
+  index: number;
   rows: Row[];
 }
 
@@ -165,26 +164,24 @@ function HeaderDragOverlay({
   const isColumn = isColumnHeader(header);
 
   const cells = useMemo(() => {
-    if (isColumn) {
-      return rows.map((row) => {
-        const cell = allCells[getCellId(header.id, row.id)];
+    return isColumn
+      ? rows.map((row) => {
+          const cell = allCells[getCellId(header.id, row.id)];
 
-        return {
-          height: row.height,
-          value: cell,
-        } as ColumnCell;
-      });
-    } else {
-      return columns.map((column) => {
-        const cell = allCells[getCellId(column.id, header.id)];
+          return {
+            height: row.height,
+            value: cell,
+          } as ColumnCell;
+        })
+      : columns.map((column) => {
+          const cell = allCells[getCellId(column.id, header.id)];
 
-        return {
-          width: column.width,
-          value: cell,
-        } as RowCell;
-      });
-    }
-  }, [header, allCells, columns, rows]);
+          return {
+            width: column.width,
+            value: cell,
+          } as RowCell;
+        });
+  }, [isColumn, rows, columns, allCells, header.id]);
 
   return (
     <div
@@ -214,8 +211,8 @@ function HeaderDragOverlay({
       <div className={styles.overlay_cells}>
         {cells.map((cell, index) => (
           <div
-            key={index}
             className={styles.overlay_cell}
+            key={index}
             style={
               {
                 "--cell-width": appendUnit(
@@ -237,7 +234,6 @@ function HeaderDragOverlay({
 
 export function Header({
   index,
-  activeIndex,
   header,
   isSelected,
   canMoveBefore,
@@ -356,7 +352,6 @@ export function Header({
             </span>
             <DropdownMenu
               align="start"
-              style={{ "--accent": self?.info.color } as CSSProperties}
               content={
                 <>
                   <DropdownMenuGroup>
@@ -431,6 +426,7 @@ export function Header({
               onOpenChange={handleDropdownOpenChange}
               open={isDropdownOpen}
               side="bottom"
+              style={{ "--accent": self?.info.color } as CSSProperties}
             >
               <button className={cx(styles.header_control, styles.header_menu)}>
                 <EllipsisIcon />
@@ -463,7 +459,7 @@ export function Headers({
   const isColumn = useMemo(() => type === "column", [type]);
   const headers = useMemo(
     () => (isColumn ? columns : rows),
-    [columns, rows, type]
+    [columns, isColumn, rows]
   );
   const headersIds = useMemo(
     () => headers.map((header) => header.id),
@@ -480,7 +476,7 @@ export function Headers({
             String(activeHeadersId)
           )
         : null,
-    [activeHeadersId]
+    [activeHeadersId, headers]
   );
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -581,14 +577,14 @@ Press space or enter again to drop the ${
         },
       },
     }),
-    [isColumn]
+    [headers, isColumn]
   );
 
   const handleDragStop = useCallback(() => {
     document.body.classList.remove(DRAGGING_CLASS);
     setActiveHeadersId(null);
     onSortOver();
-  }, []);
+  }, [onSortOver]);
 
   const handleDragStart = useCallback(({ active }: DragStartEvent) => {
     document.body.classList.add(DRAGGING_CLASS);
@@ -633,23 +629,23 @@ Press space or enter again to drop the ${
           : undefined
       );
     },
-    [headers, activeIndex]
+    [headers, onSortOver, activeIndex]
   );
 
   return (
     <DndContext
+      accessibility={accessibility}
       collisionDetection={rectIntersection}
+      measuring={measuring}
       modifiers={[
         restrictToParentElement,
         isColumn ? restrictToHorizontalAxis : restrictToVerticalAxis,
       ]}
-      sensors={sensors}
-      measuring={measuring}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
       onDragCancel={handleDragStop}
-      accessibility={accessibility}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
+      onDragStart={handleDragStart}
+      sensors={sensors}
     >
       <SortableContext
         items={headersIds}
@@ -664,13 +660,12 @@ Press space or enter again to drop the ${
         >
           {headers.map((header, index) => (
             <Header
+              canDelete={() => headers.length > 1}
+              canInsert={() => headers.length < max}
+              canMoveAfter={() => index < headers.length - 1}
+              canMoveBefore={() => index > 0}
               header={header}
               index={index}
-              activeIndex={activeIndex}
-              canMoveBefore={() => index > 0}
-              canMoveAfter={() => index < headers.length - 1}
-              canInsert={() => headers.length < max}
-              canDelete={() => headers.length > 1}
               isSelected={selectedHeader === header.id}
               key={index}
               onClear={() => clearHeader(index)}
@@ -692,11 +687,11 @@ Press space or enter again to drop the ${
       <DragOverlay dropAnimation={dropAnimation}>
         {activeIndex != null ? (
           <HeaderDragOverlay
-            columns={columns}
-            rows={rows}
             cells={cells}
+            columns={columns}
             header={headers[activeIndex]}
             index={activeIndex}
+            rows={rows}
             style={{ "--accent": self?.info.color } as CSSProperties}
           />
         ) : null}

@@ -1,31 +1,31 @@
 .container {
   position: relative;
   display: flex;
-  flex-direction: column;
+  overflow: hidden;
   max-width: calc(100vw - 2 * var(--margin));
   max-height: calc(100vh - 2 * var(--margin));
+  flex-direction: column;
   background: var(--gray-100);
   border-radius: calc(var(--radius) + var(--padding));
-  overflow: hidden;
 }
 
 .banner {
   --banner-height: 32px;
 
-  flex: none;
   position: relative;
-  border-bottom: var(--border) solid var(--gray-200);
   height: calc(var(--banner-height) + 2 * var(--padding));
+  flex: none;
+  border-bottom: var(--border) solid var(--gray-200);
 }
 
 .banner_content {
   position: absolute;
   display: flex;
-  inset: 0px;
   padding: var(--padding);
+  inset: 0;
+  -ms-overflow-style: none;
   overflow-x: auto;
   overflow-y: hidden;
-  -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
@@ -35,8 +35,8 @@
 
 .buttons {
   display: flex;
-  flex: none;
   height: var(--banner-height);
+  flex: none;
   margin-right: var(--padding);
 }
 
@@ -44,27 +44,27 @@
   display: flex;
 }
 
-.button_group:not(:last-child):after {
-  content: "";
+.button_group:not(:last-child)::after {
   display: block;
-  align-self: center;
   width: var(--border);
-  border-radius: var(--border);
   height: calc(var(--banner-height) - var(--padding) * 2);
-  background: var(--gray-200);
+  align-self: center;
   margin: 0 var(--padding);
+  background: var(--gray-200);
+  border-radius: var(--border);
+  content: "";
 }
 
 .button {
   all: unset;
   display: flex;
-  place-content: center;
-  place-items: center;
+  padding: 0 6px;
   border-radius: var(--radius);
   color: var(--gray-500);
   cursor: pointer;
-  padding: 0px 6px;
   font-size: 13px;
+  place-content: center;
+  place-items: center;
   transition: background 0.12s ease-in-out;
 }
 
@@ -74,8 +74,8 @@
 }
 
 .button span {
-  margin-left: 5px;
   margin-right: 2px;
+  margin-left: 5px;
 }
 
 .button:not(:disabled):hover,
@@ -85,10 +85,10 @@
 
 .avatars {
   display: flex;
-  flex-direction: row-reverse;
-  place-items: center;
   flex: none;
+  flex-direction: row-reverse;
   margin-left: auto;
+  place-items: center;
 }
 
 .avatar:not(:last-child) {
@@ -103,16 +103,16 @@
 }
 
 .avatar_ellipsis {
+  z-index: 1;
   display: flex;
-  place-content: center;
-  place-items: center;
+  background: var(--gray-300);
+  border-radius: 50%;
+  color: var(--gray-600);
   font-size: 11px;
   font-weight: 500;
-  background: var(--gray-300);
-  color: var(--gray-600);
-  border-radius: 50%;
+  place-content: center;
+  place-items: center;
   will-change: transform;
-  z-index: 1;
 }
 
 .loading {

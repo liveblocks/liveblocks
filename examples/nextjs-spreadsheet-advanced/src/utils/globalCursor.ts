@@ -1,9 +1,9 @@
 type CursorType =
   | "grabbing"
-  | "scrubbing"
   | "grabbing"
   | "resizing-column"
-  | "resizing-row";
+  | "resizing-row"
+  | "scrubbing";
 
 export function setGlobalCursor(type: CursorType) {
   document.body.classList.add(type);

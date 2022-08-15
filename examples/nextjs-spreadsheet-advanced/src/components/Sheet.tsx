@@ -1,5 +1,5 @@
 import cx from "classnames";
-import { type ComponentProps, useCallback, useState, useMemo } from "react";
+import { type ComponentProps, useCallback, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { GRID_MAX_COLUMNS, GRID_MAX_ROWS } from "../constants";
 import { useHistory } from "../liveblocks.config";
@@ -17,9 +17,9 @@ import styles from "./Sheet.module.css";
 export type Props = ComponentProps<"div"> & ReactSpreadsheet;
 
 interface SortIndicator {
-  type: "column" | "row";
   index: number;
-  position?: "before" | "after";
+  position?: "after" | "before";
+  type: "column" | "row";
 }
 
 export function Sheet({
@@ -56,7 +56,7 @@ export function Sheet({
   );
 
   const moveSelection = useCallback(
-    (direction: "up" | "down" | "left" | "right") => {
+    (direction: "down" | "left" | "right" | "up") => {
       return (event: KeyboardEvent) => {
         event.preventDefault();
 
@@ -91,7 +91,7 @@ export function Sheet({
         }
       };
     },
-    [selection]
+    [columns, rows, selectCell, selection]
   );
 
   useHotkeys("up", moveSelection("up"), hotkeysOptions, [selection]);
@@ -162,45 +162,45 @@ export function Sheet({
   return (
     <div className={styles.sheet}>
       <Headers
+        cells={cells}
         className={styles.columns}
         clearHeader={clearColumn}
-        deleteHeader={deleteColumn}
         columns={columns}
-        rows={rows}
-        cells={cells}
+        deleteHeader={deleteColumn}
         insertHeader={insertColumn}
-        moveHeader={moveColumn}
-        resizeHeader={resizeColumn}
-        selectedHeader={selection?.columnId}
-        onSortOver={handleColumnSortOver}
-        type="column"
         max={GRID_MAX_COLUMNS}
+        moveHeader={moveColumn}
+        onSortOver={handleColumnSortOver}
+        resizeHeader={resizeColumn}
+        rows={rows}
+        selectedHeader={selection?.columnId}
+        type="column"
       />
       <Headers
+        cells={cells}
         className={styles.rows}
         clearHeader={clearRow}
-        deleteHeader={deleteRow}
         columns={columns}
-        rows={rows}
-        cells={cells}
+        deleteHeader={deleteRow}
         insertHeader={insertRow}
-        moveHeader={moveRow}
-        resizeHeader={resizeRow}
-        selectedHeader={selection?.rowId}
-        onSortOver={handleRowSortOver}
-        type="row"
         max={GRID_MAX_ROWS}
+        moveHeader={moveRow}
+        onSortOver={handleRowSortOver}
+        resizeHeader={resizeRow}
+        rows={rows}
+        selectedHeader={selection?.rowId}
+        type="row"
       />
       {sortIndicator && (
         <div
-          className={cx(styles.sort_indicators, sortIndicator.type)}
           aria-hidden
+          className={cx(styles.sort_indicators, sortIndicator.type)}
         >
           {(sortIndicator.type === "column" ? columns : rows).map(
             (header, index) => (
               <div
-                key={index}
                 className={styles.sort_indicator_container}
+                key={index}
                 style={{
                   width: (header as Column).width ?? "100%",
                   height: (header as Row).height ?? "100%",
@@ -245,20 +245,13 @@ export function Sheet({
 
                     return (
                       <Cell
-                        key={id}
                         cellId={id}
                         className={styles.cell}
-                        value={cells[id]}
                         expression={getCellExpression(column.id, row.id)}
                         height={row.height}
-                        isSelected={isSelected}
                         isEditing={isEditing}
-                        onStartEditing={() =>
-                          setEdition({ columnId: column.id, rowId: row.id })
-                        }
-                        onEndEditing={() => setEdition(null)}
-                        onDelete={() => deleteCell(column.id, row.id)}
-                        onSelect={() => selectCell(column.id, row.id)}
+                        isSelected={isSelected}
+                        key={id}
                         onCommit={(value, direction) => {
                           setCellValue(column.id, row.id, value);
 
@@ -268,7 +261,13 @@ export function Sheet({
 
                           setEdition(null);
                         }}
+                        onEndEditing={() => setEdition(null)}
+                        onSelect={() => selectCell(column.id, row.id)}
+                        onStartEditing={() =>
+                          setEdition({ columnId: column.id, rowId: row.id })
+                        }
                         other={others[id]}
+                        value={cells[id]}
                         width={column.width}
                       />
                     );

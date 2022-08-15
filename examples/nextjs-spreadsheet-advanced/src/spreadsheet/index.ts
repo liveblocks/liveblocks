@@ -10,8 +10,8 @@ import tokenizer, {
 } from "./interpreter/tokenizer";
 import {
   convertLetterToNumber,
-  getHeaderLabel,
   formatExpressionResult,
+  getHeaderLabel,
 } from "./interpreter/utils";
 import { extractCellId, getCellId, removeFromArray } from "./utils";
 

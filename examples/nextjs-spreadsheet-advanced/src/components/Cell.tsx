@@ -1,24 +1,24 @@
 import { useGesture } from "@use-gesture/react";
 import cx from "classnames";
+import { sanitize } from "dompurify";
+import {
+  AnimationPlaybackControls,
+  animate,
+  motion,
+  useMotionValue,
+} from "framer-motion";
 import {
   type CSSProperties,
   type ComponentProps,
+  type ComponentPropsWithoutRef,
+  type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
-  type ComponentPropsWithoutRef,
-  type FormEvent,
-  useEffect,
 } from "react";
-import { sanitize } from "dompurify";
-import {
-  motion,
-  animate,
-  useMotionValue,
-  AnimationPlaybackControls,
-} from "framer-motion";
 import { COLORS } from "../constants";
 import { useHistory, useSelf } from "../liveblocks.config";
 import tokenizer, {
@@ -30,38 +30,37 @@ import type { UserInfo } from "../types";
 import { appendUnit } from "../utils/appendUnit";
 import { removeGlobalCursor, setGlobalCursor } from "../utils/globalCursor";
 import { isNumerical } from "../utils/isNumerical";
-import { useInitialRender } from "../utils/useInitialRender";
 import { shuffle } from "../utils/shuffle";
+import { useInitialRender } from "../utils/useInitialRender";
 import styles from "./Cell.module.css";
 
 export interface Props extends Omit<ComponentProps<"td">, "onSelect"> {
-  value: string;
-  expression: string;
   cellId: string;
+  expression: string;
   height: number;
-  isSelected?: boolean;
   isEditing?: boolean;
-  onStartEditing: () => void;
-  onEndEditing: () => void;
-  onDelete: () => void;
-  onSelect: () => void;
+  isSelected?: boolean;
   onCommit: (value: string, direction?: "down") => void;
+  onEndEditing: () => void;
+  onSelect: () => void;
+  onStartEditing: () => void;
   other?: UserInfo;
+  value: string;
   width: number;
 }
 
 export interface EditingCellProps extends ComponentPropsWithoutRef<"div"> {
-  expression: string;
   cellId: string;
-  onEndEditing: () => void;
+  expression: string;
   onCommit: (value: string, direction?: "down") => void;
+  onEndEditing: () => void;
 }
 
 export interface DisplayCellProps extends ComponentProps<"div"> {
-  value: string;
   expression?: string;
   isSelected?: boolean;
   onCommit?: (value: string, direction?: "down") => void;
+  value: string;
 }
 
 export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
@@ -69,7 +68,7 @@ export interface ScrubbableValueTypeProps extends ComponentProps<"div"> {
   onCommit: (value: string, direction?: "down") => void;
 }
 
-type ExpressionType = "functional" | "numerical" | "alphabetical" | "empty";
+type ExpressionType = "alphabetical" | "empty" | "functional" | "numerical";
 
 export function formatValue(value: string) {
   return value
@@ -274,17 +273,17 @@ export function EditingCell({
     }
 
     ref.current.focus();
-  }, [draft]);
+  }, [draft, stringToTokenizedHtml]);
 
   return (
     <div
-      ref={ref}
-      contentEditable
-      spellCheck={false}
       className={cx(className, styles.value)}
+      contentEditable
       onBlur={handleBlur}
-      onKeyDown={handleKeyDown}
       onInput={handleInput}
+      onKeyDown={handleKeyDown}
+      ref={ref}
+      spellCheck={false}
       {...props}
     />
   );
@@ -316,7 +315,7 @@ export function DisplayCell({
     } else {
       return "alphabetical";
     }
-  }, [expression, isSelected]);
+  }, [expression]);
 
   useEffect(() => {
     if (isInitialRender) return;
@@ -389,7 +388,6 @@ export function Cell({
   onStartEditing,
   onEndEditing,
   onCommit,
-  onDelete,
   className,
   style,
   ...props
@@ -440,10 +438,10 @@ export function Cell({
           />
         ) : (
           <DisplayCell
-            value={value}
             expression={expression}
             isSelected={isSelected}
             onCommit={onCommit}
+            value={value}
           />
         )}
       </div>

@@ -1,18 +1,18 @@
 export enum SyntaxKind {
-  NumberLiteral = "number",
-  OpenParenthesis = "open-parenthesis",
-  CloseParenthesis = "close-parenthesis",
-  PlusToken = "plus",
-  MinusToken = "minus",
   AsteriskToken = "asterisk",
-  SlashToken = "slash",
   CaretToken = "caret",
-  ModToken = "mod",
+  CellToken = "cell",
+  CloseParenthesis = "close-parenthesis",
   ColonToken = "colon",
   EqualToken = "equal",
-  CellToken = "cell",
-  RefToken = "ref",
   FunctionToken = "function",
+  MinusToken = "minus",
+  ModToken = "mod",
+  NumberLiteral = "number",
+  OpenParenthesis = "open-parenthesis",
+  PlusToken = "plus",
+  RefToken = "ref",
+  SlashToken = "slash",
 }
 
 export type Token = CellToken | NumberToken | RefToken | SimpleCharToken;

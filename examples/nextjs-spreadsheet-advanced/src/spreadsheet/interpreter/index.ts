@@ -1,3 +1,4 @@
+import { isNumerical } from "../../utils/isNumerical";
 import parser, { NodeKind } from "./parser";
 import type {
   BinaryExpression,
@@ -7,7 +8,6 @@ import type {
   Ref,
 } from "./parser";
 import tokenizer from "./tokenizer";
-import { isNumerical } from "../../utils/isNumerical";
 
 interface NumberExpressionResult {
   value: number;
@@ -122,7 +122,7 @@ export default function (
       type: "number",
       value: result.value,
     };
-  } catch (error) {
+  } catch {
     return { type: "error" };
   }
 }

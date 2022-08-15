@@ -3,12 +3,9 @@
   --padding: 8px;
   --radius: 5px;
   --border: 2px;
-
   --accent: #07f;
-
   --white: #fff;
   --black: #000;
-
   --gray-0: var(--white);
   --gray-100: #f3f4f6;
   --gray-200: #e8eaee;
@@ -20,7 +17,6 @@
   --gray-800: #1f2937;
   --gray-900: #111827;
   --gray-1000: var(--black);
-
   --red-100: #fee2e2;
   --red-500: #ef4444;
 }
@@ -29,17 +25,17 @@ html,
 body {
   padding: 0;
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen,
-    Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 }
 
 body {
   display: flex;
-  place-items: center;
-  place-content: center;
+  overflow: hidden;
   width: 100vw;
   height: 100vh;
-  overflow: hidden;
+  place-content: center;
+  place-items: center;
 }
 
 a {
@@ -58,14 +54,14 @@ svg {
 
 .sr {
   position: absolute;
+  overflow: hidden;
   width: 1px;
   height: 1px;
   padding: 0;
+  border-width: 0;
   margin: -1px;
-  overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
-  border-width: 0;
 }
 
 .grabbing *,

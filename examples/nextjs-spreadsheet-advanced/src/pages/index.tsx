@@ -1,5 +1,5 @@
-import cx from "classnames";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
+import cx from "classnames";
 import { useRouter } from "next/router";
 import { type CSSProperties, useMemo } from "react";
 import { Avatar } from "../components/Avatar";
@@ -63,18 +63,18 @@ function Example() {
             <div className={styles.button_group} role="group">
               <button
                 className={styles.button}
-                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
                 disabled={rows.length >= GRID_MAX_ROWS}
+                onClick={() => insertRow(rows.length, ROW_INITIAL_HEIGHT)}
               >
                 <AddRowAfterIcon />
                 <span>Add Row</span>
               </button>
               <button
                 className={styles.button}
+                disabled={columns.length >= GRID_MAX_COLUMNS}
                 onClick={() =>
                   insertColumn(columns.length, COLUMN_INITIAL_WIDTH)
                 }
-                disabled={columns.length >= GRID_MAX_COLUMNS}
               >
                 <AddColumnAfterIcon />
                 <span>Add Column</span>
@@ -102,9 +102,9 @@ function Example() {
           <div className={styles.avatars}>
             {self && (
               <Avatar
-                key="you"
                 className={styles.avatar}
                 color={self.info.color}
+                key="you"
                 name="You"
                 src={self.info.url}
                 tooltipOffset={6}
