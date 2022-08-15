@@ -58,6 +58,7 @@ main () {
     data.optionalDependencies = undefined;
     data.jest = undefined;
     data.prettier = undefined;
+    data.tsup = undefined;
 
     console.log(JSON.stringify(data));
     ' | node - > "$DIST/package.json"

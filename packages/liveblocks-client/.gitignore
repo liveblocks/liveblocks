@@ -3,6 +3,7 @@
 
 # production
 /lib
+/dist
 
 .env
 
