@@ -54,12 +54,8 @@ export default function BlockToDo({ element, children }: Props) {
             className={styles.border}
           />
 
-          <path
-            fillRule="evenodd"
-            clipRule="evenodd"
-            d="M12.6103 4.43593L7.09571 12.1564L3.46967 8.53033L4.53033 7.46967L6.9043 9.84364L11.3897 3.56407L12.6103 4.43593Z"
-            className={styles.check}
-          />
+          <path d="M4 8L7 11L12 4" strokeWidth="1.5" className={styles.check}/>
+
         </svg>
       </div>
 

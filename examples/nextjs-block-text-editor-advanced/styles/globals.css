@@ -102,3 +102,17 @@ select {
     scroll-behavior: auto !important;
   }
 }
+
+.grab *,
+.grabbing * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.grab {
+  cursor: grab;
+}
+
+.grabbing {
+  cursor: grabbing;
+}

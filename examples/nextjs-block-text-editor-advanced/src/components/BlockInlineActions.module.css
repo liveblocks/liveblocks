@@ -4,6 +4,6 @@
   justify-content: space-between;
 }
 
-.drag_handle {
+.button_drag {
   cursor: grab;
 }

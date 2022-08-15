@@ -49,6 +49,7 @@ export default function BlockInlineActions({
           ref={setActivatorNodeRef}
           {...listeners}
           isSquare
+          className={styles.button_drag}
         >
           <DragIcon />
         </Button>

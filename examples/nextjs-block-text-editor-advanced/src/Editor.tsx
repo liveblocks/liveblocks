@@ -12,7 +12,7 @@ import classNames from "classnames";
 
 import { useList, useOthers, useRoom, useUpdateMyPresence } from "./liveblocks.config";
 import { BlockType, CustomElement } from "./types";
-import { toggleMark, withLayout, withNodeId } from "./utils";
+import { removeGlobalCursor, setGlobalCursor, toggleMark, withLayout, withNodeId } from "./utils";
 import Leaf from "./blocks/Leaf";
 import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
 import { HOTKEYS, USER_COLORS } from "./constants";
@@ -148,9 +148,13 @@ export default function App () {
       clearSelection();
       setActiveId(event.active.id as string);
     }
+
+    setGlobalCursor("grabbing");
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
+    removeGlobalCursor("grabbing");
+
     const overId = event.over?.id;
     if (overId == null) {
       setActiveId(null);

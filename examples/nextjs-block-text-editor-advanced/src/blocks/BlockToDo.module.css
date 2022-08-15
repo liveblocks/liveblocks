@@ -59,17 +59,13 @@
 }
 
 .checkbox .check {
-  opacity: 0;
-  fill: rgba(var(--color-surface), 1);
-  transform: scale(0.2);
-  transform-origin: 50% 50%;
-  transition: 0.1s all cubic-bezier(0.16, 2, 0.58, 1);
-  transition-delay: 0.05s;
+  stroke: rgba(var(--color-surface), 1);
+  stroke-dasharray: 20;
+  stroke-dashoffset: 20;
 }
 
 .checkbox_checked .check {
-  opacity: 1;
-  transform: none;
+  animation: animate_check_stroke 0.2s 0.1s linear forwards;
 }
 
 .todo_text {
@@ -78,4 +74,19 @@
 
 .todo_text_checked {
   opacity: 0.4;
+}
+
+@keyframes animate_check_stroke {
+  0% {
+    stroke-dashoffset: 20;
+    animation-timing-function: ease-out;
+  }
+  30% {
+    stroke-dashoffset: 15;
+    animation-timing-function: ease-out;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    animation-timing-function: ease-out;
+  }
 }
