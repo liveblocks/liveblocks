@@ -1,6 +1,6 @@
 .block_todo {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
 }
 
 .checkbox_container {
@@ -38,7 +38,7 @@
 .checkbox .background {
   opacity: 0;
   fill: rgba(var(--color-primary), 1);
-  transform: scale(0.5);
+  transform: scale(0.1);
   transform-origin: 50% 50%;
   transition: 0.2s all cubic-bezier(0.16, 1.2, 0.58, 1);
 }
@@ -50,16 +50,19 @@
 
 .checkbox .border {
   opacity: 1;
+  transform: none;
+  transform-origin: 50% 50%;
   stroke: rgba(var(--color-foreground), 0.3);
-  transition: 0.4s opacity cubic-bezier(0.16, 1.2, 0.58, 1);
+  transition: 0.4s all cubic-bezier(0.16, 1.2, 0.58, 1);
 }
 
 .checkbox_checked .border {
   opacity: 0;
+  transform: scale(0.9);
 }
 
 .checkbox .check {
-  stroke: rgba(var(--color-surface), 1);
+  stroke: #fff;
   stroke-dasharray: 20;
   stroke-dashoffset: 20;
 }
@@ -78,7 +81,7 @@
 }
 
 .todo_text_checked {
-  opacity: 0.4;
+  color: rgba(var(--color-foreground), 0.4);
 }
 
 @keyframes animate_check_stroke {

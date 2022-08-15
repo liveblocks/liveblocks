@@ -13,7 +13,7 @@ import BlockList from "./BlockList";
 // Example: create checkbox block, press enter, new unchecked checkbox is created
 export const CreateNewBlockFromBlock: Record<
   string,
-  () => { type: BlockType, children?: [{ text: string }] }
+  () => { type: BlockType; children?: [{ text: string }] }
 > = {
   [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
   [BlockType.BulletedList]: () => ({ type: BlockType.BulletedList }),

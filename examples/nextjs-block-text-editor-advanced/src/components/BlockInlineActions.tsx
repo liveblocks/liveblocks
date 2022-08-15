@@ -35,13 +35,11 @@ export default function BlockInlineActions({
           <MinusIcon />
         </Button>
       </Tooltip>
-      <Tooltip content="Insert block below">
-        <BlockTypeSelector onSelect={onInsertBelow}>
-          <Button appearance="ghost" ariaLabel="Insert block below" isSquare>
-            <PlusIcon />
-          </Button>
-        </BlockTypeSelector>
-      </Tooltip>
+      <BlockTypeSelector onSelect={onInsertBelow}>
+        <Button appearance="ghost" ariaLabel="Insert block below" isSquare>
+          <PlusIcon />
+        </Button>
+      </BlockTypeSelector>
       <Tooltip content="Drag to reorder">
         <Button
           appearance="ghost"

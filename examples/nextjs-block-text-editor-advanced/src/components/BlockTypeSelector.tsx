@@ -3,6 +3,8 @@ import styles from "./BlockTypeSelector.module.css";
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { nanoid } from "nanoid";
 import { BlockType, CustomElement } from "../types";
+import { ScrollArea } from "./ScrollArea";
+import Tooltip from "./Tooltip";
 
 type Props = {
   children: ReactNode;
@@ -60,7 +62,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           },
         },
         {
-          label: "Bulleted List",
+          label: "Bulleted list",
           description: "Create a simple bulleted list",
           onSelect: () => {
             onSelect({
@@ -159,40 +161,46 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
 
   return (
     <DropdownMenuPrimitive.Root>
-      <DropdownMenuPrimitive.Trigger asChild>
-        {children}
-      </DropdownMenuPrimitive.Trigger>
+      
+      <Tooltip content="Insert block below">
+        <DropdownMenuPrimitive.Trigger asChild>
+          {children}
+        </DropdownMenuPrimitive.Trigger>
+      </Tooltip>
 
       <DropdownMenuPrimitive.Portal>
         <DropdownMenuPrimitive.Content className={styles.content}>
-          {groups.map((group, indexGroup) => {
-            return (
-              <DropdownMenuPrimitive.Group
-                key={indexGroup}
-                className={styles.group}
-              >
-                <DropdownMenuPrimitive.Label className={styles.group_label}>
-                  {group.label}
-                </DropdownMenuPrimitive.Label>
+          <ScrollArea className={styles.scroll_area}>
+            {groups.map((group, indexGroup) => {
+              return (
+                <DropdownMenuPrimitive.Group
+                  key={indexGroup}
+                  className={styles.group}
+                >
+                  <DropdownMenuPrimitive.Label className={styles.group_label}>
+                    {group.label}
+                  </DropdownMenuPrimitive.Label>
 
-                {groups[indexGroup].items.map((item, indexItem) => {
-                  return (
-                    <DropdownMenuPrimitive.DropdownMenuItem
-                      className={styles.item}
-                      key={indexItem}
-                      onSelect={item.onSelect}
-                    >
-                      <span className={styles.item_label}>{item.label}</span>
-                      <span className={styles.item_description}>
-                        {item.description}
-                      </span>
-                    </DropdownMenuPrimitive.DropdownMenuItem>
-                  );
-                })}
-              </DropdownMenuPrimitive.Group>
-            );
-          })}
-        </DropdownMenuPrimitive.Content>
+                  {groups[indexGroup].items.map((item, indexItem) => {
+                    return (
+                      <DropdownMenuPrimitive.DropdownMenuItem
+                        className={styles.item}
+                        key={indexItem}
+                        onSelect={item.onSelect}
+                      >
+                        <span className={styles.item_label}>{item.label}</span>
+                        <span className={styles.item_description}>
+                          {item.description}
+                        </span>
+                      </DropdownMenuPrimitive.DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuPrimitive.Group>
+              );
+            })}
+
+            </ScrollArea>
+          </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
   );

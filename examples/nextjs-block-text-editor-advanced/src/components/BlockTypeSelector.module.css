@@ -5,21 +5,13 @@
   z-index: 20;
   user-select: none;
   outline: none;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.scroll_area {
   max-height: 280px;
   width: 220px;
-  overflow-y: scroll;
-  scrollbar-width: thin;
-}
-
-.content::-webkit-scrollbar {
-  width: 8px;
-}
-
-.content::-webkit-scrollbar-thumb {
-  background: rgba(var(--color-foreground), 0.24);
-}
-.content::-webkit-scrollbar-track {
-  background: rgba(var(--color-foreground), 0.12);
 }
 
 .group {
@@ -32,10 +24,10 @@
 
 .group_label {
   color: rgba(var(--color-foreground), 0.6);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   position: sticky;
   top: 0;
-  background: rgba(var(--color-surface), 1);
+  background: rgba(var(--color-surface-over), 1);
   padding: 0.75rem 1rem 0.25rem;
   font-weight: 500;
   z-index: 10;
