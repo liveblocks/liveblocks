@@ -791,7 +791,7 @@ Please see https://bit.ly/3Niy5aP for details.`
 
   function useCanUndo(): boolean {
     const room = useRoom();
-    const [canUndo, setCanUndo] = React.useState(false);
+    const [canUndo, setCanUndo] = React.useState(room.history.canUndo);
 
     React.useEffect(() => {
       const unsubscribe = room.subscribe("history", ({ canUndo }) =>
@@ -807,7 +807,7 @@ Please see https://bit.ly/3Niy5aP for details.`
 
   function useCanRedo(): boolean {
     const room = useRoom();
-    const [canRedo, setCanRedo] = React.useState(false);
+    const [canRedo, setCanRedo] = React.useState(room.history.canRedo);
 
     React.useEffect(() => {
       const unsubscribe = room.subscribe("history", ({ canRedo }) =>
