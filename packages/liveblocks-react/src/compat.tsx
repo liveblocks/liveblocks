@@ -74,30 +74,6 @@ export function useBroadcastEvent<TRoomEvent extends Json>(): (
 
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
- * `useCanRedo` from `@liveblocks/react` directly. See
- * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
- */
-export function useCanRedo(): boolean {
-  deprecate(
-    "Please use `createRoomContext()` instead of importing `useCanRedo` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
-  );
-  return _hooks.useCanRedo();
-}
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
- * `useCanUndo` from `@liveblocks/react` directly. See
- * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
- */
-export function useCanUndo(): boolean {
-  deprecate(
-    "Please use `createRoomContext()` instead of importing `useCanUndo` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
-  );
-  return _hooks.useCanUndo();
-}
-
-/**
- * @deprecated Please use `createRoomContext()` instead of importing
  * `useErrorListener` from `@liveblocks/react` directly. See
  * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
