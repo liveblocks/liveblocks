@@ -166,8 +166,8 @@ sha_stamp () {
 }
 
 rebuild_if_needed () {
-    if [ -e "lib/.built-by-link-script" ]; then
-        if [ "$(sha_stamp)" = "$(cat lib/.built-by-link-script)" ]; then
+    if [ -e "dist/.built-by-link-script" ]; then
+        if [ "$(sha_stamp)" = "$(cat dist/.built-by-link-script)" ]; then
             # This was already rebuilt by an earlier invocation of this build
             # script. We don't have to throw away those results!
             err "Skipping build of $(basename $(pwd)) (still fresh)"
@@ -177,9 +177,9 @@ rebuild_if_needed () {
 
     # Build is potentially outdated, rebuild it
     echo "==> Rebuilding (in $(pwd))"
-    rm -rf lib
+    rm -rf dist
     npm run build
-    sha_stamp > "lib/.built-by-link-script"
+    sha_stamp > "dist/.built-by-link-script"
 }
 
 prep_liveblocks_deps () {
@@ -198,8 +198,8 @@ prep_liveblocks_deps () {
 
             # If a `package.json` exists in the dist folder, consider it the
             # root of the package.
-            if [ -f "./lib/package.json" ]; then
-                cd "./lib"
+            if [ -f "./dist/package.json" ]; then
+                cd "./dist"
             fi
 
             # Register this link
