@@ -17,7 +17,7 @@ import {
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
 /**
- * https://github.com/Luka967/websocket-close-codes
+ * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
  */
 enum WebSocketErrorCodes {
   CLOSE_ABNORMAL = 1006,
