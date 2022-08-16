@@ -1,4 +1,4 @@
-import { LiveObject } from "@liveblocks/client";
+import { LiveList, LiveObject } from "@liveblocks/client";
 import type { RenderHookResult, RenderOptions } from "@testing-library/react";
 import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
@@ -15,7 +15,12 @@ export function AllTheProviders(props: { children: React.ReactNode }) {
     <RoomProvider
       id="room"
       initialPresence={() => ({ x: 1 })}
-      initialStorage={() => ({ obj: new LiveObject({ a: 0 }) })}
+      initialStorage={() => ({
+        obj: new LiveObject({
+          a: 0,
+          nested: new LiveList(["foo", "bar"]),
+        }),
+      })}
     >
       {props.children}
     </RoomProvider>
