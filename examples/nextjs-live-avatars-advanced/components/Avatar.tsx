@@ -60,8 +60,7 @@ export function Avatar({
       style={{
         height: realSize,
         width: realSize,
-        outlineColor,
-        outlineWidth,
+        boxShadow: `${outlineColor} 0 0 0 ${outlineWidth}px`,
         margin: outlineWidth,
         borderRadius,
         ...style,

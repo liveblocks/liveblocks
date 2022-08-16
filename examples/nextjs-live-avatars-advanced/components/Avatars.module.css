@@ -2,7 +2,7 @@
   display: flex;
   position: relative;
   place-content: center;
-  outline: 2px solid white;
+  box-shadow: 0 0 0 2px white;
 }
 
 .status {
