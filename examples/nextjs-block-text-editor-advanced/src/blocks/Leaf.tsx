@@ -6,7 +6,7 @@ export default function Leaf({ leaf, children, attributes }: RenderLeafProps) {
     return (
       <>
         <span className={styles.placeholder} contentEditable={false}>
-          Type something here…
+          {leaf.placeholder}
         </span>
         <span {...attributes}>{children}</span>
       </>
