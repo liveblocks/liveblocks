@@ -4,7 +4,6 @@ import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
 import { BlockType } from "../types";
-import styles from "./Block.module.css";
 import BlockToDo from "./BlockToDo";
 import BlockList from "./BlockList";
 
@@ -28,7 +27,7 @@ export default function Block({
 }: RenderElementProps) {
   if (element.type === BlockType.Title) {
     return (
-      <div className={styles.title} {...attributes}>
+      <div className="title" {...attributes}>
         {children}
       </div>
     );

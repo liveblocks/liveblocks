@@ -77,7 +77,7 @@ const initialValue: CustomElement[] = [
     type: BlockType.ToDo,
     children: [
       {
-        text: "Watch video below",
+        text: "Try dark mode",
       },
     ],
     checked: false,
@@ -94,6 +94,26 @@ const initialValue: CustomElement[] = [
   },
   {
     id: nanoid(),
+    type: BlockType.ToDo,
+    children: [
+      {
+        text: "Reorder blocks",
+      },
+    ],
+    checked: false,
+  },
+  {
+    id: nanoid(),
+    type: BlockType.ToDo,
+    children: [
+      {
+        text: "Watch video below",
+      },
+    ],
+    checked: false,
+  },
+  {
+    id: nanoid(),
     type: BlockType.Paragraph,
     children: [
       {
@@ -105,6 +125,17 @@ const initialValue: CustomElement[] = [
     id: nanoid(),
     type: BlockType.Video,
     url: "https://youtube.com/embed/ejJT4XhmFPU",
+    children: [
+      {
+        text: "",
+      },
+    ],
+  },
+  {
+    id: nanoid(),
+    type: BlockType.Image,
+    url: "https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-wordmark-light.svg",
+    alt: "Liveblocks",
     children: [
       {
         text: "",

@@ -2,6 +2,7 @@ import { RenderLeafProps } from "slate-react";
 import styles from "./Leaf.module.css";
 
 export default function Leaf({ leaf, children, attributes }: RenderLeafProps) {
+  console.log("leaf", leaf);
   if (leaf.placeholder) {
     return (
       <>
