@@ -5,6 +5,7 @@ import { nanoid } from "nanoid";
 import { BlockType, CustomElement } from "../types";
 import { ScrollArea } from "./ScrollArea";
 import Tooltip from "./Tooltip";
+import { useSelf } from "../liveblocks.config";
 
 type Props = {
   children: ReactNode;
@@ -12,6 +13,9 @@ type Props = {
 };
 
 export default function BlockTypeSelector({ children, onSelect }: Props) {
+  const self = useSelf();
+  const createdBy = self?.connectionId || 0;
+
   const groups = [
     {
       label: "Text",
@@ -21,6 +25,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H1,
               children: [{ text: "" }],
@@ -32,6 +37,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H2,
               children: [{ text: "" }],
@@ -44,6 +50,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Large section heading",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.H3,
               children: [{ text: "" }],
@@ -55,6 +62,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Plain text",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Paragraph,
               children: [{ text: "" }],
@@ -66,6 +74,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Create a simple bulleted list",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.BulletedList,
               children: [{ text: "" }],
@@ -77,6 +86,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Track tasks with a to-do list",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.ToDo,
               checked: false,
@@ -94,6 +104,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed from URL",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Image,
               url: null,
@@ -107,6 +118,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed YouTube video",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Video,
               url: null,
@@ -124,6 +136,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed CodeSandbox project",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.CodeSandbox,
               url: null,
@@ -136,6 +149,7 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
           description: "Embed Figma project",
           onSelect: () => {
             onSelect({
+              createdBy,
               id: nanoid(),
               type: BlockType.Figma,
               url: null,

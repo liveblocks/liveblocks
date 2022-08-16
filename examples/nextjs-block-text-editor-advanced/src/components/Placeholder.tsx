@@ -19,6 +19,7 @@ type Props = {
   text: string;
   inputs: Record<string, Input>;
   onSubmit: (values: Values) => void;
+  defaultOpen: boolean;
 };
 
 export default function Placeholder({
@@ -26,12 +27,20 @@ export default function Placeholder({
   text,
   inputs,
   onSubmit,
+  defaultOpen,
 }: Props) {
   const [values, setValues] = useState<Values>({});
+  const [open, setOpen] = useState(defaultOpen);
+  const [ready, setReady] = useState(false);
+
+  // Focus has to be changed in Editor.tsx which closes the menu, workaround
+  useEffect(() => {
+    setTimeout(() => setReady(true), 100);
+  }, []);
 
   return (
     <>
-      <PopoverPrimitive.Root>
+      <PopoverPrimitive.Root open={open} onOpenChange={ready ? setOpen : () => {}}>
         <PopoverPrimitive.Trigger asChild>
           <button className={styles.placeholder}>
             <span className={styles.placeholder_icon}>

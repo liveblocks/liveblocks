@@ -11,5 +11,6 @@ export const {
   useOthers,
   useRoom,
   useList,
+  useSelf,
   useUpdateMyPresence,
 } = createRoomContext<Presence, Storage, UserMeta>(client);

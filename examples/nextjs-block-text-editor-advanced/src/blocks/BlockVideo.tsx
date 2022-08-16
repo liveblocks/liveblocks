@@ -4,6 +4,7 @@ import { ReactEditor, useSlate } from "slate-react";
 import { CustomElement, VideoElement } from "../types";
 import { Transforms } from "slate";
 import Placeholder from "../components/Placeholder";
+import { useSelf } from "../liveblocks.config";
 
 type Props = {
   element: VideoElement;
@@ -11,6 +12,7 @@ type Props = {
 
 export default function BlockVideo({ element }: Props) {
   const editor = useSlate();
+  const self = useSelf();
 
   return (
     <div className={styles.block_video}>
@@ -28,6 +30,7 @@ export default function BlockVideo({ element }: Props) {
         </div>
       ) : (
         <Placeholder
+          defaultOpen={self?.connectionId === element.createdBy}
           icon={VideoIcon}
           text="Embed a YouTube video"
           inputs={{
