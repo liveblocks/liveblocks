@@ -18,7 +18,6 @@ import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
 import { HOTKEYS, PROSE_CONTAINER_ID, USER_COLORS } from "./constants";
 import { Avatar, BlockInlineActions, Header, Loading, Toolbar } from "./components";
 
-
 const SHORTCUTS: Record<string, BlockType> = {
   "*": BlockType.BulletedList,
   "-": BlockType.BulletedList,
@@ -51,19 +50,26 @@ export default function App () {
 
   useEffect(() => {
     const { insertBreak } = editor;
-
-    // Override editor to insert a paragraph after inserting a new line
+    // Override editor to insert paragraph or element after inserting new line
     editor.insertBreak = () => {
-      insertBreak();
       if (editor.selection) {
-        // Default new line
-        let newBlock: { type: BlockType, children?: [{ text: string }] } = { type: BlockType.Paragraph, children: [{ text: "" }] };
-
-        // TODO tidy or create central block config file
-        // Duplicate current element to new line if set
         const previousBlock = editor.children[
-        editor.selection.anchor.path[0] - 1
-          ] as CustomElement;
+          editor.selection.anchor.path[0]
+        ] as CustomElement;
+
+        // Default paragraph new line
+        let newBlock: { type: BlockType, children?: [{ text: string }] } = {
+          type: BlockType.Paragraph, children: [{ text: "" }]
+        };
+
+        // If caret at position 0, convert previous block to empty paragraph
+        if (editor.selection.anchor.offset === 0) {
+          Transforms.setNodes(editor, newBlock, {
+            at: editor.selection,
+          });
+        }
+
+        // Create different current element on new line if set in Block.tsx
         if (
           previousBlock?.type &&
           Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)
@@ -71,9 +77,12 @@ export default function App () {
           newBlock = CreateNewBlockFromBlock[previousBlock.type]();
         }
 
+        insertBreak();
         Transforms.setNodes(editor, newBlock, {
           at: editor.selection,
         });
+      } else {
+        insertBreak();
       }
     };
   }, [editor]);
