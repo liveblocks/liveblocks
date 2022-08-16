@@ -5,7 +5,6 @@ import {
 } from "@liveblocks/client/internal";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
-import * as React from "react";
 
 import {
   useMyPresence,
@@ -13,17 +12,7 @@ import {
   useOthers,
   useRoom,
 } from "./_liveblocks.config";
-import { act, fireEvent, render, renderHook, screen, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
-
-type TestID = "me-x" | "increment" | "othersJson" | "liveObject" | "unmount";
-
-function testId(testId: TestID) {
-  return testId;
-}
-
-function element(testId: TestID) {
-  return screen.getByTestId(testId);
-}
+import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
 /**
  * https://github.com/Luka967/websocket-close-codes
