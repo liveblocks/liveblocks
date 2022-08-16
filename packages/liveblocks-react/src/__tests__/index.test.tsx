@@ -1,3 +1,5 @@
+import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
+import type { ServerMsg } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
   CrdtType,
@@ -125,6 +127,40 @@ async function waitForSocketToBeConnected() {
   return socket;
 }
 
+/**
+ * Testing tool to simulate fake incoming server events.
+ */
+async function websocketSimulator() {
+  const socket = await waitForSocketToBeConnected();
+  socket.callbacks.open[0]();
+
+  // Simulator API
+  return {
+    // Field for introspection of simulator state
+    sentMessages: socket.sentMessages,
+    callbacks: socket.callbacks,
+
+    //
+    // Simulating actions
+    //
+    simulateIncomingMessage(msg: ServerMsg<JsonObject, BaseUserMeta, Json>) {
+      socket.callbacks.message.forEach((cb) =>
+        cb({
+          data: JSON.stringify(msg),
+        } as MessageEvent)
+      );
+    },
+
+    simulateAbnormalClose() {
+      socket.callbacks.close[0]({
+        reason: "",
+        wasClean: false,
+        code: WebSocketErrorCodes.CLOSE_ABNORMAL,
+      } as CloseEvent);
+    },
+  };
+}
+
 describe("presence", () => {
   test("initial presence should be set on state immediately", () => {
     const { result } = renderHook(() => useMyPresence());
@@ -135,10 +171,8 @@ describe("presence", () => {
   test("initial presence should be sent to other users when socket is connected", async () => {
     renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
-    const socket = await waitForSocketToBeConnected();
-    socket.callbacks.open[0]();
-
-    expect(socket.sentMessages[0]).toStrictEqual(
+    const sim = await websocketSimulator();
+    expect(sim.sentMessages[0]).toStrictEqual(
       JSON.stringify([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -148,17 +182,13 @@ describe("presence", () => {
     );
   });
 
-  test("set presence should replace current presence", async () => {
+  test("set presence should replace current presence", () => {
     const { result } = renderHook(() => useMyPresence());
     let [me, setPresence] = result.current;
 
-    await waitForSocketToBeConnected();
-
     expect(me).toEqual({ x: 1 });
 
-    act(() => {
-      setPresence({ x: me.x + 1 });
-    });
+    act(() => setPresence({ x: me.x + 1 }));
 
     me = result.current[0];
     expect(me).toEqual({ x: 2 });
@@ -167,107 +197,67 @@ describe("presence", () => {
   test("others presence should be set on update", async () => {
     const { result } = renderHook(() => useOthers());
 
-    const socket = await waitForSocketToBeConnected();
-    socket.callbacks.open[0]();
-
-    act(() => {
-      // Simulate a fake incoming presence update for actor 1
-      socket.callbacks.message[0]({
-        data: JSON.stringify({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          data: { x: 2 },
-          actor: 1,
-        }),
-      } as MessageEvent);
-    });
+    const sim = await websocketSimulator();
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+      })
+    );
 
     expect(result.current.toArray()).toEqual([
-      {
-        connectionId: 1,
-        presence: {
-          x: 2,
-        },
-      },
+      { connectionId: 1, presence: { x: 2 } },
     ]);
   });
 
   test("others presence should be merged on update", async () => {
     const { result } = renderHook(() => useOthers());
 
-    const socket = await waitForSocketToBeConnected();
-    socket.callbacks.open[0]();
+    const sim = await websocketSimulator();
 
-    act(() => {
-      // Simulate a fake incoming presence update for actor 1
-      socket.callbacks.message[0]({
-        data: JSON.stringify({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          data: { x: 0 },
-          actor: 1,
-        }),
-      } as MessageEvent);
-    });
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 0 },
+        actor: 1,
+      })
+    );
 
     expect(result.current.toArray()).toEqual([
-      {
-        connectionId: 1,
-        presence: { x: 0 },
-      },
+      { connectionId: 1, presence: { x: 0 } },
     ]);
 
-    act(() => {
-      // Simulate another fake incoming presence update for actor 1
-      socket.callbacks.message[0]({
-        data: JSON.stringify({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          data: { y: 0 },
-          actor: 1,
-        }),
-      } as MessageEvent);
-    });
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { y: 0 },
+        actor: 1,
+      })
+    );
 
     expect(result.current.toArray()).toEqual([
-      {
-        connectionId: 1,
-        presence: {
-          x: 0,
-          y: 0,
-        },
-      },
+      { connectionId: 1, presence: { x: 0, y: 0 } },
     ]);
   });
 
   test("others presence should be cleared on close", async () => {
     const { result } = renderHook(() => useOthers());
 
-    const socket = await waitForSocketToBeConnected();
-    socket.callbacks.open[0]();
-
-    act(() => {
-      // Simulate a fake incoming presence update for actor 1
-      socket.callbacks.message[0]({
-        data: JSON.stringify({
-          type: ServerMsgCode.UPDATE_PRESENCE,
-          data: { x: 2 },
-          actor: 1,
-        }),
-      } as MessageEvent);
-    });
+    const sim = await websocketSimulator();
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+      })
+    );
 
     expect(result.current.toArray()).toEqual([
-      {
-        connectionId: 1,
-        presence: { x: 2 },
-      },
+      { connectionId: 1, presence: { x: 2 } },
     ]);
 
-    act(() => {
-      socket.callbacks.close[0]({
-        reason: "",
-        wasClean: false,
-        code: WebSocketErrorCodes.CLOSE_ABNORMAL,
-      } as CloseEvent);
-    });
+    act(() => sim.simulateAbnormalClose());
 
     expect(result.current.toArray()).toEqual([]);
   });
@@ -280,20 +270,17 @@ describe("Storage", () => {
     // On the initial render, this hook will return `null`
     expect(result.current).toBeNull();
 
-    const socket = await waitForSocketToBeConnected();
-    socket.callbacks.open[0]();
+    const sim = await websocketSimulator();
 
     rerender();
     expect(result.current).toBeNull();
 
-    act(() => {
-      socket.callbacks.message[0]({
-        data: JSON.stringify({
-          type: ServerMsgCode.INITIAL_STORAGE_STATE,
-          items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-        }),
-      } as MessageEvent);
-    });
+    act(() =>
+      sim.simulateIncomingMessage({
+        type: ServerMsgCode.INITIAL_STORAGE_STATE,
+        items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+      })
+    );
 
     await waitFor(() => expect(result.current?.toObject()).toEqual({ a: 0 }));
   });
@@ -304,24 +291,24 @@ describe("Storage", () => {
     // On the initial render, this hook will return `null`
     expect(result.current).toBeNull();
 
-    const socket = await waitForSocketToBeConnected();
-
-    socket.callbacks.open[0]();
+    const sim = await websocketSimulator();
 
     rerender();
     expect(result.current).toBeNull();
 
-    const callback = socket.callbacks.message[0];
+    // Grab a handle to the callback before unmounting the component
+    const callback = sim.callbacks.message[0];
     unmount();
 
-    act(() => {
+    act(() =>
+      // Manually simulate an incoming server message
       callback({
         data: JSON.stringify({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: {} }]],
         }),
-      } as MessageEvent);
-    });
+      } as MessageEvent)
+    );
 
     expect(result.current).toBeNull();
   });
