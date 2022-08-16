@@ -184,8 +184,9 @@ describe("presence", () => {
 
   test("set presence should replace current presence", () => {
     const { result } = renderHook(() => useMyPresence());
-    let [me, setPresence] = result.current;
+    const [, setPresence] = result.current;
 
+    let me = result.current[0];
     expect(me).toEqual({ x: 1 });
 
     act(() => setPresence({ x: me.x + 1 }));
