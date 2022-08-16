@@ -435,27 +435,29 @@ function SortableElement ({
         }
       >
         {renderElement({ element, children })}
-        {othersByBlockId.length > 0 && (
-          <div className={classNames(styles.avatars, "avatars")}>
-            {othersByBlockId.map((user) => {
-              return (
-                <Avatar
-                  key={user.connectionId}
-                  imageUrl={user.info.imageUrl}
-                  name={user.info.name}
-                  size="sm"
-                  color={USER_COLORS[user.connectionId % USER_COLORS.length]}
-                />
-              );
-            })}
+        <div contentEditable={false} style={{ userSelect: "none" }}>
+          {othersByBlockId.length > 0 && (
+            <div className={classNames(styles.avatars, "avatars")}>
+              {othersByBlockId.map((user) => {
+                return (
+                  <Avatar
+                    key={user.connectionId}
+                    imageUrl={user.info.imageUrl}
+                    name={user.info.name}
+                    size="sm"
+                    color={USER_COLORS[user.connectionId % USER_COLORS.length]}
+                  />
+                );
+              })}
+            </div>
+          )}
+          <div className={classNames(styles.inline_actions, "inline_actions")}>
+            <BlockInlineActions
+              blockId={element.id}
+              onDelete={onDelete}
+              onInsertBelow={onInsertBelow}
+            />
           </div>
-        )}
-        <div className={classNames(styles.inline_actions, "inline_actions")}>
-          <BlockInlineActions
-            blockId={element.id}
-            onDelete={onDelete}
-            onInsertBelow={onInsertBelow}
-          />
         </div>
       </div>
     </div>
