@@ -7,8 +7,13 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
 
-import { useMyPresence, useObject, useOthers } from "./_liveblocks.config";
-import { act, fireEvent, render, screen, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
+import {
+  useMyPresence,
+  useObject,
+  useOthers,
+  useRoom,
+} from "./_liveblocks.config";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
 type TestID = "me-x" | "increment" | "othersJson" | "liveObject" | "unmount";
 
@@ -122,26 +127,6 @@ beforeEach(() => {
 afterEach(() => server.resetHandlers());
 afterAll(() => server.close());
 
-function PresenceComponent() {
-  const [me, setPresence] = useMyPresence();
-  const others = useOthers();
-
-  return (
-    <div>
-      <button
-        data-testid={testId("increment")}
-        onClick={() => setPresence({ x: me.x + 1 })}
-      >
-        Increment
-      </button>
-      <div data-testid={testId("me-x")}>{me.x}</div>
-      <div data-testid={testId("othersJson")}>
-        {JSON.stringify(others.toArray())}
-      </div>
-    </div>
-  );
-}
-
 async function waitForSocketToBeConnected() {
   await waitFor(() => expect(MockWebSocket.instances.length).toBe(1));
 
@@ -152,12 +137,10 @@ async function waitForSocketToBeConnected() {
 }
 
 describe("presence", () => {
-  test("initial presence should be set on state immediately", async () => {
-    render(<PresenceComponent />);
-
-    expect(element("me-x").textContent).toBe("1");
-
-    await waitForSocketToBeConnected();
+  test("initial presence should be set on state immediately", () => {
+    const { result } = renderHook(() => useMyPresence());
+    const [me] = result.current;
+    expect(me.x).toBe(1);
   });
 
   // test("updating room should disconnect and reconnect and replace initial presence", async () => {
@@ -187,10 +170,9 @@ describe("presence", () => {
   // });
 
   test("initial presence should be sent to other users when socket is connected", async () => {
-    render(<PresenceComponent />);
+    renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
     const socket = await waitForSocketToBeConnected();
-
     socket.callbacks.open[0]();
 
     expect(socket.sentMessages[0]).toStrictEqual(
@@ -204,27 +186,29 @@ describe("presence", () => {
   });
 
   test("set presence should replace current presence", async () => {
-    render(<PresenceComponent />);
+    const { result } = renderHook(() => useMyPresence());
+    let [me, setPresence] = result.current;
 
     await waitForSocketToBeConnected();
 
-    expect(element("me-x").textContent).toBe("1");
+    expect(me).toEqual({ x: 1 });
 
     act(() => {
-      fireEvent.click(element("increment"));
+      setPresence({ x: me.x + 1 });
     });
 
-    expect(element("me-x").textContent).toBe("2");
+    me = result.current[0];
+    expect(me).toEqual({ x: 2 });
   });
 
   test("others presence should be set on update", async () => {
-    render(<PresenceComponent />);
+    const { result } = renderHook(() => useOthers());
 
     const socket = await waitForSocketToBeConnected();
-
     socket.callbacks.open[0]();
 
     act(() => {
+      // Simulate a fake incoming presence update for actor 1
       socket.callbacks.message[0]({
         data: JSON.stringify({
           type: ServerMsgCode.UPDATE_PRESENCE,
@@ -234,26 +218,24 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(element("othersJson").textContent).toEqual(
-      JSON.stringify([
-        {
-          connectionId: 1,
-          presence: {
-            x: 2,
-          },
+    expect(result.current.toArray()).toEqual([
+      {
+        connectionId: 1,
+        presence: {
+          x: 2,
         },
-      ])
-    );
+      },
+    ]);
   });
 
   test("others presence should be merged on update", async () => {
-    render(<PresenceComponent />);
+    const { result } = renderHook(() => useOthers());
 
     const socket = await waitForSocketToBeConnected();
-
     socket.callbacks.open[0]();
 
     act(() => {
+      // Simulate a fake incoming presence update for actor 1
       socket.callbacks.message[0]({
         data: JSON.stringify({
           type: ServerMsgCode.UPDATE_PRESENCE,
@@ -263,18 +245,15 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(element("othersJson").textContent).toEqual(
-      JSON.stringify([
-        {
-          connectionId: 1,
-          presence: {
-            x: 0,
-          },
-        },
-      ])
-    );
+    expect(result.current.toArray()).toEqual([
+      {
+        connectionId: 1,
+        presence: { x: 0 },
+      },
+    ]);
 
     act(() => {
+      // Simulate another fake incoming presence update for actor 1
       socket.callbacks.message[0]({
         data: JSON.stringify({
           type: ServerMsgCode.UPDATE_PRESENCE,
@@ -284,62 +263,25 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(element("othersJson").textContent).toEqual(
-      JSON.stringify([
-        {
-          connectionId: 1,
-          presence: {
-            x: 0,
-            y: 0,
-          },
+    expect(result.current.toArray()).toEqual([
+      {
+        connectionId: 1,
+        presence: {
+          x: 0,
+          y: 0,
         },
-      ])
-    );
+      },
+    ]);
   });
 
-  // test.only("reconnect websocket if server close connection unexpectedly", async () => {
-  //   const client = createClient({ authEndpoint: "/api/auth" });
-
-  //   render(
-  //     <LiveblocksProvider client={client}>
-  //       <PresenceComponent room="room" initialPresence={{ x: 1 }} />
-  //     </LiveblocksProvider>
-  //   );
-
-  //   let socket = await waitForSocketToBeConnected();
-
-  //   socket.callbacks.open[0]();
-
-  //   act(() => {
-  //     socket.callbacks.close[0]({
-  //       reason: "",
-  //       wasClean: false,
-  //       code: WebSocketErrorCodes.CLOSE_ABNORMAL,
-  //     } as CloseEvent);
-  //   });
-
-  //   MockWebSocket.instances = [];
-
-  //   socket = await waitForSocketToBeConnected();
-
-  //   socket.callbacks.open[0]();
-
-  //   expect(socket.sentMessages[0]).toStrictEqual(
-  //     JSON.stringify({
-  //       type: ClientMsgCode.UPDATE_PRESENCE,
-  //       data: { x: 1 },
-  //     })
-  //   );
-  // });
-
   test("others presence should be cleared on close", async () => {
-    render(<PresenceComponent />);
+    const { result } = renderHook(() => useOthers());
 
     const socket = await waitForSocketToBeConnected();
-
     socket.callbacks.open[0]();
 
     act(() => {
+      // Simulate a fake incoming presence update for actor 1
       socket.callbacks.message[0]({
         data: JSON.stringify({
           type: ServerMsgCode.UPDATE_PRESENCE,
@@ -349,16 +291,12 @@ describe("presence", () => {
       } as MessageEvent);
     });
 
-    expect(element("othersJson").textContent).toEqual(
-      JSON.stringify([
-        {
-          connectionId: 1,
-          presence: {
-            x: 2,
-          },
-        },
-      ])
-    );
+    expect(result.current.toArray()).toEqual([
+      {
+        connectionId: 1,
+        presence: { x: 2 },
+      },
+    ]);
 
     act(() => {
       socket.callbacks.close[0]({
@@ -368,48 +306,22 @@ describe("presence", () => {
       } as CloseEvent);
     });
 
-    expect(element("othersJson").textContent).toEqual(JSON.stringify([]));
+    expect(result.current.toArray()).toEqual([]);
   });
 });
 
-function ObjectComponent() {
-  const obj = useObject("obj");
-  return (
-    <div data-testid={testId("liveObject")}>
-      {obj == null ? "Loading" : JSON.stringify(obj.toObject())}
-    </div>
-  );
-}
-
-function UnmountContainer({ children }: { children: React.ReactElement }) {
-  const [isVisible, setIsVisible] = React.useState(true);
-
-  return (
-    <div>
-      <button
-        data-testid={testId("unmount")}
-        onClick={() => {
-          setIsVisible(!isVisible);
-        }}
-      >
-        {isVisible ? "Unmount" : "Mount"}
-      </button>
-      {isVisible && children}
-    </div>
-  );
-}
-
 describe("Storage", () => {
   test("useObject initialization", async () => {
-    render(<ObjectComponent />);
+    const { result, rerender } = renderHook(() => useObject("obj"));
 
-    expect(element("liveObject").textContent).toEqual("Loading");
+    // On the initial render, this hook will return `null`
+    expect(result.current).toBeNull();
 
     const socket = await waitForSocketToBeConnected();
-
     socket.callbacks.open[0]();
 
-    expect(element("liveObject").textContent).toEqual("Loading");
+    rerender();
+    expect(result.current).toBeNull();
 
     act(() => {
       socket.callbacks.message[0]({
@@ -420,37 +332,34 @@ describe("Storage", () => {
       } as MessageEvent);
     });
 
-    await waitFor(() =>
-      expect(element("liveObject").textContent).toBe(JSON.stringify({ a: 0 }))
-    );
+    await waitFor(() => expect(result.current?.toObject()).toEqual({ a: 0 }));
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
-    render(
-      <UnmountContainer>
-        <ObjectComponent />
-      </UnmountContainer>
-    );
+    const { result, rerender, unmount } = renderHook(() => useObject("obj"));
 
-    expect(element("liveObject").textContent).toEqual("Loading");
+    // On the initial render, this hook will return `null`
+    expect(result.current).toBeNull();
 
     const socket = await waitForSocketToBeConnected();
 
     socket.callbacks.open[0]();
 
-    expect(element("liveObject").textContent).toEqual("Loading");
+    rerender();
+    expect(result.current).toBeNull();
+
+    const callback = socket.callbacks.message[0];
+    unmount();
 
     act(() => {
-      fireEvent.click(element("unmount"));
-    });
-
-    act(() => {
-      socket.callbacks.message[0]({
+      callback({
         data: JSON.stringify({
           type: ServerMsgCode.INITIAL_STORAGE_STATE,
           items: [["root", { type: CrdtType.OBJECT, data: {} }]],
         }),
       } as MessageEvent);
     });
+
+    expect(result.current).toBeNull();
   });
 });

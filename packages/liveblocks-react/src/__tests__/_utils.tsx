@@ -1,6 +1,6 @@
 import { LiveObject } from "@liveblocks/client";
-import type { RenderOptions } from "@testing-library/react";
-import { render } from "@testing-library/react";
+import type { RenderHookResult, RenderOptions } from "@testing-library/react";
+import { render, renderHook } from "@testing-library/react";
 import type { ReactElement } from "react";
 import * as React from "react";
 
@@ -30,5 +30,19 @@ function customRender(ui: ReactElement, options?: RenderOptions) {
   return render(ui, { wrapper: AllTheProviders, ...options });
 }
 
+/**
+ * Wrapper for rendering hooks that are wrapped in a pre set up
+ * <RoomProvider> context.
+ */
+function customRenderHook<Result, Props>(
+  render: (initialProps: Props) => Result,
+  options?: {
+    initialProps?: Props;
+    wrapper?: React.JSXElementConstructor<{ children: React.ReactElement }>;
+  }
+): RenderHookResult<Result, Props> {
+  return renderHook(render, { wrapper: AllTheProviders, ...options });
+}
+
 export * from "@testing-library/react";
-export { customRender as render };
+export { customRender as render, customRenderHook as renderHook };

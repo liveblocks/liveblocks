@@ -15,5 +15,5 @@ type Storage = {
 
 const client = createClient({ authEndpoint: "/api/auth" });
 
-export const { RoomProvider, useMyPresence, useObject, useOthers } =
+export const { RoomProvider, useMyPresence, useObject, useOthers, useRoom } =
   createRoomContext<Presence, Storage>(client);
