@@ -31,6 +31,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import classNames from "classnames";
 
 import {
@@ -392,6 +394,7 @@ export default function App() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               onDragCancel={handleDragCancel}
+              modifiers={[restrictToVerticalAxis]}
             >
               <SortableContext
                 items={items}

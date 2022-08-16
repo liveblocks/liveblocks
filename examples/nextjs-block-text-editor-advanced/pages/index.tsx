@@ -39,7 +39,7 @@ const initialValue: CustomElement[] = [
     type: BlockType.Paragraph,
     children: [
       {
-        text: "You can add tasks, embed videos, and more. And because it's open-source, you can was easily extend this to support pretty much anything you want.",
+        text: "You can add tasks, embed videos, and more. And because it's open-source, you can easily extend this to support pretty much anything you want.",
       },
     ],
   },
