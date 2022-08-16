@@ -270,16 +270,12 @@ describe("useOthers", () => {
 
 describe("useObject", () => {
   test("initialization happens asynchronously", async () => {
-    const { result, rerender } = renderHook(() => useObject("obj"));
+    const { result } = renderHook(() => useObject("obj"));
 
     // On the initial render, this hook will return `null`
     expect(result.current).toBeNull();
 
     const sim = await websocketSimulator();
-
-    rerender();
-    expect(result.current).toBeNull();
-
     act(() =>
       sim.simulateIncomingMessage({
         type: ServerMsgCode.INITIAL_STORAGE_STATE,
