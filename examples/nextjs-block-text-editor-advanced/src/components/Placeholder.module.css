@@ -64,10 +64,9 @@
   margin: 0;
   border: 0;
   font-size: 0.875em;
-  background: none;
+  background: transparent;
   height: 1.75rem;
-  transition: border-bottom-color 150ms ease-in-out;
-  border: 1px solid rgba(var(--color-foreground), 0.12);
+  border: 1px solid rgba(var(--color-foreground), 0.16);
   border-radius: 6px;
   padding: 0 0.375rem;
 }
@@ -77,9 +76,10 @@
 }
 
 .input:focus {
+  background: rgb(var(--color-surface));
   border-color: rgba(var(--color-primary), 0.6);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.12);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary), var(--opacity-surface-selection));
 }
 
 .button {

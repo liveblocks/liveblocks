@@ -4,7 +4,6 @@ import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
 import { BlockType } from "../types";
-import BlockTweet from "./BlockTweet";
 import styles from "./Block.module.css";
 import BlockToDo from "./BlockToDo";
 import BlockList from "./BlockList";
@@ -98,15 +97,6 @@ export default function Block({
     return (
       <div {...attributes} contentEditable={false} className="embed">
         <BlockFigma element={element} />
-        <div style={{ display: "none" }}>{children}</div>
-      </div>
-    );
-  }
-
-  if (element.type === BlockType.Tweet) {
-    return (
-      <div {...attributes} contentEditable={false} className="embed">
-        <BlockTweet element={element} />
         <div style={{ display: "none" }}>{children}</div>
       </div>
     );

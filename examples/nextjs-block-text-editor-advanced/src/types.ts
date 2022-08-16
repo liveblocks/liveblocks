@@ -39,7 +39,6 @@ export enum BlockType {
   Video = "video",
   CodeSandbox = "codesandbox",
   Figma = "figma",
-  Tweet = "tweet",
 }
 
 export type TextBlock =
@@ -98,12 +97,6 @@ export type FigmaElement = BlockElement & {
   children: [{ text: "" }];
 };
 
-export type TweetElement = BlockElement & {
-  type: BlockType.Tweet;
-  tweetId: string | null;
-  children: [{ text: "" }];
-};
-
 export type TitleElement = BlockElement & {
   type: BlockType.Title;
 };
@@ -117,8 +110,7 @@ export type CustomElement =
   | ImageElement
   | VideoElement
   | CodeSandboxElement
-  | FigmaElement
-  | TweetElement;
+  | FigmaElement;
 
 export type CustomText = {
   text: string;

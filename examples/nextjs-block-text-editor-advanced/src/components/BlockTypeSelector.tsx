@@ -120,18 +120,6 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
       label: "Embeds",
       items: [
         {
-          label: "Twitter",
-          description: "Embed a Tweet",
-          onSelect: () => {
-            onSelect({
-              id: nanoid(),
-              type: BlockType.Tweet,
-              tweetId: null,
-              children: [{ text: "" }],
-            });
-          },
-        },
-        {
           label: "CodeSandbox",
           description: "Embed CodeSandbox project",
           onSelect: () => {
@@ -161,7 +149,6 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
 
   return (
     <DropdownMenuPrimitive.Root>
-      
       <Tooltip content="Insert block below">
         <DropdownMenuPrimitive.Trigger asChild>
           {children}
@@ -198,9 +185,8 @@ export default function BlockTypeSelector({ children, onSelect }: Props) {
                 </DropdownMenuPrimitive.Group>
               );
             })}
-
-            </ScrollArea>
-          </DropdownMenuPrimitive.Content>
+          </ScrollArea>
+        </DropdownMenuPrimitive.Content>
       </DropdownMenuPrimitive.Portal>
     </DropdownMenuPrimitive.Root>
   );
