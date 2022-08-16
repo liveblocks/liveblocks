@@ -19,7 +19,7 @@
 
 This example shows how to build a live avatar stack with [Liveblocks](https://liveblocks.io) and [SvelteKit](https://kit.svelte.dev/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="500" alt="Live Avatar Stack" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="536" alt="Live Avatar Stack" />
 
 ## Getting started
 

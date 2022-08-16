@@ -18,7 +18,7 @@
 
 This example shows how to build live cursors with [Liveblocks](https://liveblocks.io) and [esbuild](https://esbuild.github.io/).
 
-<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="500" alt="Live Cursors" />
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="536" alt="Live Cursors" />
 
 ## Getting started
 
