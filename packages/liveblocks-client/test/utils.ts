@@ -1,6 +1,6 @@
 import type { LiveObject } from "../src";
 import type { RoomAuthToken } from "../src/AuthToken";
-import { lsonToJson, patchImmutableObject } from "../src/immutable";
+import { lsonToJson } from "../src/immutable";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";

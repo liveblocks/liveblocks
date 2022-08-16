@@ -14,6 +14,29 @@ import {
   isTypeNode,
 } from "typescript";
 
+const GENERATE_FOR_HOOKS = [
+  "RoomProvider",
+  "useBatch",
+  "useBroadcastEvent",
+  "useErrorListener",
+  "useEventListener",
+  "useHistory",
+  "useList",
+  "useList_deprecated",
+  "useMap",
+  "useMap_deprecated",
+  "useMyPresence",
+  "useObject",
+  "useObject_deprecated",
+  "useOthers",
+  "useRedo",
+  "useRoom",
+  "useSelf",
+  "useStorage",
+  "useUndo",
+  "useUpdateMyPresence",
+];
+
 const migrationGuideLink =
   "https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17";
 
@@ -107,7 +130,7 @@ function getLiveblocksHookDefintions() {
   for (const name of exportedNames) {
     const found = decls.filter(
       (d): d is FunctionDeclaration & { name: Identifier } =>
-        d.name?.text === name
+        d.name?.text === name && GENERATE_FOR_HOOKS.includes(d.name?.text)
     );
     if (found.length === 0) {
       continue;
