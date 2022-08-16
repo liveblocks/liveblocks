@@ -5,7 +5,7 @@ import { LiveList } from "../src/LiveList";
 import type { Json } from "../src/types";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
-describe("LiveList conflicts", () => {
+describe.skip("LiveList conflicts", () => {
   describe("insert conflicts", () => {
     test(
       "remote insert conflicts with another insert",

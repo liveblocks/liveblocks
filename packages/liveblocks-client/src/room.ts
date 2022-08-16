@@ -16,6 +16,7 @@ import type {
   ConnectionState,
   ErrorCallback,
   EventCallback,
+  HistoryCallback,
   IdTuple,
   InitialDocumentStateServerMsg,
   Json,
@@ -120,6 +121,8 @@ export type Machine<
   batch(callback: () => void): void;
   undo(): void;
   redo(): void;
+  canUndo(): boolean;
+  canRedo(): boolean;
   pauseHistory(): void;
   resumeHistory(): void;
 
@@ -223,6 +226,7 @@ export type State<
     error: ErrorCallback[];
     connection: ConnectionCallback[];
     storage: StorageCallback[];
+    history: HistoryCallback[];
   };
   me: TPresence;
   others: Others<TPresence, TUserMeta>;
@@ -485,6 +489,7 @@ export function makeStateMachine<
       state.pausedHistory.unshift(...historyItem);
     } else {
       state.undoStack.push(historyItem);
+      onHistoryChange();
     }
   }
 
@@ -953,6 +958,12 @@ export function makeStateMachine<
     }
   }
 
+  function onHistoryChange() {
+    for (const listener of state.listeners.history) {
+      listener({ canUndo: canUndo(), canRedo: canRedo() });
+    }
+  }
+
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
@@ -1410,6 +1421,7 @@ export function makeStateMachine<
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of historyItem) {
       if (op.type !== "presence") {
@@ -1417,6 +1429,10 @@ export function makeStateMachine<
       }
     }
     tryFlushing();
+  }
+
+  function canUndo() {
+    return state.undoStack.length > 0;
   }
 
   function redo() {
@@ -1434,6 +1450,7 @@ export function makeStateMachine<
     const result = apply(historyItem, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
+    onHistoryChange();
 
     for (const op of historyItem) {
       if (op.type !== "presence") {
@@ -1441,6 +1458,10 @@ export function makeStateMachine<
       }
     }
     tryFlushing();
+  }
+
+  function canRedo() {
+    return state.redoStack.length > 0;
   }
 
   function batch(callback: () => void) {
@@ -1536,6 +1557,8 @@ export function makeStateMachine<
     batch,
     undo,
     redo,
+    canUndo,
+    canRedo,
     pauseHistory,
     resumeHistory,
 
@@ -1574,6 +1597,7 @@ export function defaultState<
       error: [],
       connection: [],
       storage: [],
+      history: [],
     },
     numberOfRetry: 0,
     lastFlushTime: 0,
@@ -1681,6 +1705,8 @@ export function createRoom<
     history: {
       undo: machine.undo,
       redo: machine.redo,
+      canUndo: machine.canUndo,
+      canRedo: machine.canRedo,
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },

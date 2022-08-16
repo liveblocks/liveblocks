@@ -119,6 +119,16 @@ type RoomContextBundle<
   useRedo(): () => void;
 
   /**
+   * Returns whether there are any operations to undo.
+   */
+  useCanUndo(): boolean;
+
+  /**
+   * Returns whether there are any operations to redo.
+   */
+  useCanRedo(): boolean;
+
+  /**
    * Returns the LiveList associated with the provided key.
    * The hook triggers a re-render if the LiveList is updated, however it does not triggers a re-render if a nested CRDT is updated.
    *
@@ -473,6 +483,38 @@ export function createRoomContext<
     return useHistory().redo;
   }
 
+  function useCanUndo(): boolean {
+    const room = useRoom();
+    const [canUndo, setCanUndo] = React.useState(room.history.canUndo);
+
+    React.useEffect(() => {
+      const unsubscribe = room.subscribe("history", ({ canUndo }) =>
+        setCanUndo(canUndo)
+      );
+      return () => {
+        unsubscribe();
+      };
+    }, [room]);
+
+    return canUndo;
+  }
+
+  function useCanRedo(): boolean {
+    const room = useRoom();
+    const [canRedo, setCanRedo] = React.useState(room.history.canRedo);
+
+    React.useEffect(() => {
+      const unsubscribe = room.subscribe("history", ({ canRedo }) =>
+        setCanRedo(canRedo)
+      );
+      return () => {
+        unsubscribe();
+      };
+    }, [room]);
+
+    return canRedo;
+  }
+
   function useBatch(): (callback: () => void) => void {
     return useRoom().batch;
   }
@@ -532,6 +574,8 @@ export function createRoomContext<
     RoomProvider,
     useBatch,
     useBroadcastEvent,
+    useCanRedo,
+    useCanUndo,
     useErrorListener,
     useEventListener,
     useHistory,
