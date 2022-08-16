@@ -134,6 +134,31 @@ async function websocketSimulator() {
   const socket = await waitForSocketToBeConnected();
   socket.callbacks.open[0]();
 
+  function simulateIncomingMessage(
+    msg: ServerMsg<JsonObject, BaseUserMeta, Json>
+  ) {
+    socket.callbacks.message.forEach((cb) =>
+      cb({
+        data: JSON.stringify(msg),
+      } as MessageEvent)
+    );
+  }
+
+  function simulateStorageLoaded() {
+    simulateIncomingMessage({
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      items: [["root", { type: CrdtType.OBJECT, data: {} }]],
+    });
+  }
+
+  function simulateAbnormalClose() {
+    socket.callbacks.close[0]({
+      reason: "",
+      wasClean: false,
+      code: WebSocketErrorCodes.CLOSE_ABNORMAL,
+    } as CloseEvent);
+  }
+
   // Simulator API
   return {
     // Field for introspection of simulator state
@@ -143,21 +168,9 @@ async function websocketSimulator() {
     //
     // Simulating actions
     //
-    simulateIncomingMessage(msg: ServerMsg<JsonObject, BaseUserMeta, Json>) {
-      socket.callbacks.message.forEach((cb) =>
-        cb({
-          data: JSON.stringify(msg),
-        } as MessageEvent)
-      );
-    },
-
-    simulateAbnormalClose() {
-      socket.callbacks.close[0]({
-        reason: "",
-        wasClean: false,
-        code: WebSocketErrorCodes.CLOSE_ABNORMAL,
-      } as CloseEvent);
-    },
+    simulateStorageLoaded,
+    simulateIncomingMessage,
+    simulateAbnormalClose,
   };
 }
 
@@ -276,12 +289,7 @@ describe("useObject", () => {
     expect(result.current).toBeNull();
 
     const sim = await websocketSimulator();
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.INITIAL_STORAGE_STATE,
-        items: [["root", { type: CrdtType.OBJECT, data: {} }]],
-      })
-    );
+    act(() => sim.simulateStorageLoaded());
 
     await waitFor(() => expect(result.current?.toObject()).toEqual({ a: 0 }));
   });
