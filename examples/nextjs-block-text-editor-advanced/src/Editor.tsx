@@ -57,6 +57,7 @@ import {
   Loading,
   Toolbar,
 } from "./components";
+import { nanoid } from "nanoid";
 
 const SHORTCUTS: Record<string, BlockType> = {
   "*": BlockType.BulletedList,
@@ -100,28 +101,38 @@ export default function App() {
           editor.selection.anchor.path[0]
         ] as CustomElement;
 
+        let newBlock
+
         // Default paragraph new line
-        let newBlock: { type: BlockType, children?: [{ text: string }] } = {
-          type: BlockType.Paragraph, children: [{ text: "" }]
+        const paragraphBlock: CustomElement = {
+          type: BlockType.Paragraph, children: [{ text: "" }], id: nanoid()
         };
 
         // If caret at position 0, convert previous block to empty paragraph
         if (editor.selection.anchor.offset === 0) {
-          Transforms.setNodes(editor, newBlock, {
+          Transforms.setNodes(editor, paragraphBlock, {
             at: editor.selection,
           });
+
+          // Pass state of old block to new block
+          newBlock = previousBlock;
         }
 
-        // Create different current element on new line if set in Block.tsx
+         // Create different current element on new line if set in Block.tsx
         if (
+          !newBlock &&
           previousBlock?.type &&
           Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)
         ) {
           newBlock = CreateNewBlockFromBlock[previousBlock.type]();
         }
 
+        if (!newBlock) {
+          newBlock = paragraphBlock;
+        }
+
         insertBreak();
-        Transforms.setNodes(editor, newBlock, {
+        Transforms.setNodes(editor, newBlock as any, {
           at: editor.selection,
         });
       } else {

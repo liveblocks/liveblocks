@@ -30,7 +30,7 @@ export default function BlockVideo({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          defaultOpen={self?.connectionId === element.createdBy}
+          defaultOpen={self?.connectionId === element?.createdBy}
           icon={VideoIcon}
           text="Embed a YouTube video"
           inputs={{

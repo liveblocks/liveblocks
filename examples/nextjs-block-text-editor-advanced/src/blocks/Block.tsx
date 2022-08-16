@@ -3,18 +3,19 @@ import BlockImage from "./BlockImage";
 import BlockVideo from "./BlockVideo";
 import BlockCodeSandbox from "./BlockCodeSandbox";
 import BlockFigma from "./BlockFigma";
-import { BlockType } from "../types";
+import { BlockType, CustomElement } from "../types";
 import BlockToDo from "./BlockToDo";
 import BlockList from "./BlockList";
+import { nanoid } from "nanoid";
 
 // If new block created when old block selected, create the following block
 // Example: create checkbox block, press enter, new unchecked checkbox is created
 export const CreateNewBlockFromBlock: Record<
   string,
-  () => { type: BlockType; children?: [{ text: string }] }
+  () => CustomElement
 > = {
-  [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false }),
-  [BlockType.BulletedList]: () => ({ type: BlockType.BulletedList }),
+  [BlockType.ToDo]: () => ({ type: BlockType.ToDo, checked: false, id: nanoid(), children: [] }),
+  [BlockType.BulletedList]: () => ({ type: BlockType.BulletedList, id: nanoid(), children: [] }),
 };
 
 // Note: {children} must be rendered in every element otherwise bugs occur

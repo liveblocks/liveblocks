@@ -53,7 +53,7 @@ export type TextBlock =
 export type BlockElement = {
   id: string;
   children: CustomText[];
-  createdBy: number;
+  createdBy?: number;
 };
 
 export type ParagraphElement = BlockElement & {

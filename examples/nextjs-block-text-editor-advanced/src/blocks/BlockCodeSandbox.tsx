@@ -30,7 +30,7 @@ export default function BlockCodeSandbox({ element }: Props) {
         </div>
       ) : (
         <Placeholder
-          defaultOpen={self?.connectionId === element.createdBy}
+          defaultOpen={self?.connectionId === element?.createdBy}
           icon={CodeSandboxIcon}
           text="Embed a CodeSandbox project"
           inputs={{
