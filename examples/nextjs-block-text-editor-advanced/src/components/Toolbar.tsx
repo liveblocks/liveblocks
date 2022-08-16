@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Editor, Path, Range, Transforms } from "slate";
 import { useFocused, useSlate } from "slate-react";
-import Button from "./Button";
+import ToggleButton from "./ToggleButton";
 import Select from "./Select";
 import Tooltip from "./Tooltip";
 import styles from "./Toolbar.module.css";
@@ -28,7 +28,6 @@ export default function Toolbar() {
 
     if (
       !selection ||
-      !inFocus ||
       Range.includes(selection, [0]) || // If the selection overlap with the title, do not show the toolbar
       Range.isCollapsed(selection) ||
       Editor.string(editor, selection) === ""
@@ -52,6 +51,8 @@ export default function Toolbar() {
   });
 
   const type = getSelectedElementType(editor);
+
+  const marks = Editor.marks(editor);
 
   return createPortal(
     <div
@@ -101,48 +102,48 @@ export default function Toolbar() {
 
       <div className={styles.group}>
         <Tooltip content="Toggle Bold">
-          <Button
-            appearance="ghost"
+          <ToggleButton
             ariaLabel="Toggle Bold"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "bold")}
             isSquare
+            isActive={marks ? marks["bold"] === true : false}
           >
             <BoldIcon />
-          </Button>
+          </ToggleButton>
         </Tooltip>
         <Tooltip content="Toggle Italic">
-          <Button
-            appearance="ghost"
+          <ToggleButton
             ariaLabel="Toggle Italic"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "italic")}
             isSquare
+            isActive={marks ? marks["italic"] === true : false}
           >
             <ItalicIcon />
-          </Button>
+          </ToggleButton>
         </Tooltip>
         <Tooltip content="Toggle Underline">
-          <Button
-            appearance="ghost"
+          <ToggleButton
             ariaLabel="Toggle Underline"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "underline")}
             isSquare
+            isActive={marks ? marks["underline"] === true : false}
           >
             <UnderlineIcon />
-          </Button>
+          </ToggleButton>
         </Tooltip>
         <Tooltip content="Toggle Strikethrough">
-          <Button
-            appearance="ghost"
+          <ToggleButton
             ariaLabel="Toggle Strikethrough"
             onPointerDown={(e) => e.preventDefault()}
             onClick={() => toggleMark(editor, "strikeThrough")}
             isSquare
+            isActive={marks ? marks["strikeThrough"] === true : false}
           >
             <StrikethroughIcon />
-          </Button>
+          </ToggleButton>
         </Tooltip>
       </div>
     </div>,
