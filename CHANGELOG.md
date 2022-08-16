@@ -1,8 +1,23 @@
+# v0.17.8
+
+### New history APIs ↩️ ↪️
+
+- In **@liveblocks/client**:
+
+  - Add `canUndo()` and `canRedo()` utilities to `room.history`
+  - Add `"history"` event type to `room.subscribe()` to subscribe to the current user's history changes
+
+- In **@liveblocks/react**:
+
+  - Add `useCanUndo()` and `useCanRedo()` hooks
+
+---
+
 # v0.17.7
 
-In **@liveblocks/zustand**:
+- In **@liveblocks/zustand**:
 
-Simplify zustand middleware integration with Typescript. `TPresence`, `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
+  - Simplify zustand middleware integration with Typescript. `TPresence`, `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
 
 Note that `@liveblocks/zustand` does not work with zustand > v4 because v3 and v4 have completely different type definitions. As soon as zustand v4 is out of the RC phase, we will consider updating our middleware to work with the latest version.
 
@@ -72,28 +87,38 @@ const useStore = create(
 useStore(state => state.liveblocks.others[0].presence?.isTyping)
 ```
 
+---
+
 # v0.17.6
 
-In **@liveblocks/react**:
+- In **@liveblocks/react**:
 
-- Expose `RoomContext` in the return value of `createRoomContext()`
+  - Expose `RoomContext` in the return value of `createRoomContext()`
+
+---
 
 # v0.17.5
 
-In **@liveblocks/react**:
+- In **@liveblocks/react**:
 
-- Fix bug where changing the `key` argument of `useMap()`, `useList()`,
+  - Fix bug where changing the `key` argument of `useMap()`, `useList()`,
   `useObject()` did not resubscribe to updates correctly
-- Ignore changes to the `RoomProvider`'s initial presence/storage props on
+  - Ignore changes to the `RoomProvider`'s initial presence/storage props on
   subsequent renders. This makes it behave closer to `useState(initialState)`
+  
+---
 
 # v0.17.4
 
 Fix missing documentation for hooks created via `createRoomContext()`.
 
+---
+
 # v0.17.1
 
 Fix `@liveblocks/nodes` packaging.
+
+---
 
 # v0.17.0
 
