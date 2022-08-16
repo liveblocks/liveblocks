@@ -161,13 +161,7 @@ async function websocketSimulator() {
   };
 }
 
-describe("presence", () => {
-  test("initial presence should be set on state immediately", () => {
-    const { result } = renderHook(() => useMyPresence());
-    const [me] = result.current;
-    expect(me.x).toBe(1);
-  });
-
+describe("useRoom", () => {
   test("initial presence should be sent to other users when socket is connected", async () => {
     renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
@@ -180,6 +174,14 @@ describe("presence", () => {
         },
       ])
     );
+  });
+});
+
+describe("useMyPresence", () => {
+  test("initial presence should be readable immediately", () => {
+    const { result } = renderHook(() => useMyPresence());
+    const [me] = result.current;
+    expect(me.x).toBe(1);
   });
 
   test("set presence should replace current presence", () => {
@@ -194,7 +196,9 @@ describe("presence", () => {
     me = result.current[0];
     expect(me).toEqual({ x: 2 });
   });
+});
 
+describe("useOthers", () => {
   test("others presence should be set on update", async () => {
     const { result } = renderHook(() => useOthers());
 
@@ -264,8 +268,8 @@ describe("presence", () => {
   });
 });
 
-describe("Storage", () => {
-  test("useObject initialization", async () => {
+describe("useObject", () => {
+  test("initialization happens asynchronously", async () => {
     const { result, rerender } = renderHook(() => useObject("obj"));
 
     // On the initial render, this hook will return `null`
