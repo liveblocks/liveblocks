@@ -143,32 +143,6 @@ describe("presence", () => {
     expect(me.x).toBe(1);
   });
 
-  // test("updating room should disconnect and reconnect and replace initial presence", async () => {
-  //   const client = createClient({ authEndpoint: "/api/auth" });
-
-  //   const { rerender } = render(
-  //     <LiveblocksProvider client={client}>
-  //       <PresenceComponent room="room" initialPresence={{ x: 1 }} />
-  //     </LiveblocksProvider>
-  //   );
-
-  //   expect(element("me-x").textContent).toBe("1");
-
-  //   await waitForSocketToBeConnected();
-
-  //   MockWebSocket.instances = [];
-
-  //   rerender(
-  //     <LiveblocksProvider client={client}>
-  //       <PresenceComponent room="room-b" initialPresence={{ x: 2 }} />
-  //     </LiveblocksProvider>
-  //   );
-
-  //   expect(element("me-x").textContent).toBe("1");
-
-  //   await waitForSocketToBeConnected();
-  // });
-
   test("initial presence should be sent to other users when socket is connected", async () => {
     renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
