@@ -121,7 +121,7 @@ export type CustomText = {
 } & LeafDecoration;
 
 type LeafDecoration = {
-  placeholder?: boolean;
+  placeholder?: string;
 };
 
 export type Format = "bold" | "underline" | "strikeThrough" | "italic";

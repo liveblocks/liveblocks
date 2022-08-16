@@ -81,7 +81,7 @@
 }
 
 .todo_text_checked {
-  color: rgba(var(--color-foreground), 0.4);
+  color: rgba(var(--color-foreground), 0.6);
 }
 
 @keyframes animate_check_stroke {

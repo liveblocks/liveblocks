@@ -2,12 +2,11 @@ import { RenderLeafProps } from "slate-react";
 import styles from "./Leaf.module.css";
 
 export default function Leaf({ leaf, children, attributes }: RenderLeafProps) {
-  console.log("leaf", leaf);
   if (leaf.placeholder) {
     return (
       <>
         <span className={styles.placeholder} contentEditable={false}>
-          Type something here…
+          {leaf.placeholder}
         </span>
         <span {...attributes}>{children}</span>
       </>

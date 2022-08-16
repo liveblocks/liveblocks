@@ -3,21 +3,60 @@ import styles from "./Editor.module.css";
 import isHotkey from "is-hotkey";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { createEditor, Editor, Element, Node, Point, Range, Transforms } from "slate";
-import { Editable, ReactEditor, RenderElementProps, Slate, withReact } from "slate-react";
-import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  createEditor,
+  Editor,
+  Element,
+  Node,
+  Point,
+  Range,
+  Transforms,
+} from "slate";
+import {
+  Editable,
+  ReactEditor,
+  RenderElementProps,
+  Slate,
+  withReact,
+} from "slate-react";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import classNames from "classnames";
 
-import { useList, useOthers, useRoom, useUpdateMyPresence } from "./liveblocks.config";
+import {
+  useList,
+  useOthers,
+  useRoom,
+  useUpdateMyPresence,
+} from "./liveblocks.config";
 import { BlockType, CustomElement } from "./types";
-import { removeGlobalCursor, setGlobalCursor, toggleMark, withLayout, withNodeId } from "./utils";
+import {
+  removeGlobalCursor,
+  setGlobalCursor,
+  toggleMark,
+  withLayout,
+  withNodeId,
+} from "./utils";
 import Leaf from "./blocks/Leaf";
 import Block, { CreateNewBlockFromBlock } from "./blocks/Block";
 import { HOTKEYS, PROSE_CONTAINER_ID, USER_COLORS } from "./constants";
-import { Avatar, BlockInlineActions, Header, Loading, Toolbar } from "./components";
-
+import {
+  Avatar,
+  BlockInlineActions,
+  Header,
+  Loading,
+  Toolbar,
+} from "./components";
 
 const SHORTCUTS: Record<string, BlockType> = {
   "*": BlockType.BulletedList,
@@ -30,18 +69,21 @@ const SHORTCUTS: Record<string, BlockType> = {
 };
 
 const useEditor = () =>
-  useMemo(() => withShortcuts(withNodeId(withLayout(withReact(createEditor())))), []);
+  useMemo(
+    () => withShortcuts(withNodeId(withLayout(withReact(createEditor())))),
+    []
+  );
 
-function isNodeWithId (editor: Editor, id: string) {
+function isNodeWithId(editor: Editor, id: string) {
   return (node: Node) => Editor.isBlock(editor, node) && node.id === id;
 }
 
-export default function App () {
+export default function App() {
   const editor = useEditor();
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const activeElement = editor.children.find(
-    (x) => "id" in x && x.id === activeId,
+    (x) => "id" in x && x.id === activeId
   ) as CustomElement | undefined;
 
   const room = useRoom();
@@ -57,13 +99,16 @@ export default function App () {
       insertBreak();
       if (editor.selection) {
         // Default new line
-        let newBlock: { type: BlockType, children?: [{ text: string }] } = { type: BlockType.Paragraph, children: [{ text: "" }] };
+        let newBlock: { type: BlockType; children?: [{ text: string }] } = {
+          type: BlockType.Paragraph,
+          children: [{ text: "" }],
+        };
 
         // TODO tidy or create central block config file
         // Duplicate current element to new line if set
         const previousBlock = editor.children[
-        editor.selection.anchor.path[0] - 1
-          ] as CustomElement;
+          editor.selection.anchor.path[0] - 1
+        ] as CustomElement;
         if (
           previousBlock?.type &&
           Object.keys(CreateNewBlockFromBlock).includes(previousBlock?.type)
@@ -139,7 +184,7 @@ export default function App () {
 
         isEditingRef.current = false;
       },
-      { isDeep: true },
+      { isDeep: true }
     );
   }, [blocks]);
 
@@ -219,7 +264,7 @@ export default function App () {
 
   const items = useMemo(
     () => editor.children.map((element: any) => element.id),
-    [editor.children],
+    [editor.children]
   );
 
   if (blocks == null) {
@@ -266,7 +311,7 @@ export default function App () {
                     selectedBlockId: (
                       editor.children[
                         editor.selection.anchor.path[0]
-                        ] as CustomElement
+                      ] as CustomElement
                     ).id,
                   });
                 } else {
@@ -277,7 +322,7 @@ export default function App () {
 
                 if (
                   editor.operations.every(
-                    (op) => op.isRemote || op.type === "set_selection",
+                    (op) => op.isRemote || op.type === "set_selection"
                   )
                 ) {
                   return;
@@ -290,7 +335,7 @@ export default function App () {
                 for (let i = 0; i < editor.children.length; i++) {
                   const child = editor.children[i] as CustomElement;
                   const liveblocksChildIndex = blocks.findIndex(
-                    (block) => block.id === child.id,
+                    (block) => block.id === child.id
                   );
 
                   if (liveblocksChildIndex === -1) {
@@ -352,11 +397,12 @@ export default function App () {
                         return [
                           {
                             ...editor.selection,
-                            placeholder: true,
+                            placeholder: "Type something here…",
                           },
                         ];
                       }
                     }
+
                     return [];
                   }}
                   onKeyDown={(event) => {
@@ -383,7 +429,7 @@ export default function App () {
                     />
                   )}
                 </DragOverlay>,
-                document.getElementById(PROSE_CONTAINER_ID) || document.body,
+                document.getElementById(PROSE_CONTAINER_ID) || document.body
               )}
             </DndContext>
           </Slate>
@@ -393,7 +439,7 @@ export default function App () {
   );
 }
 
-function SortableElement ({
+function SortableElement({
   attributes,
   element,
   children,
@@ -453,7 +499,7 @@ function SortableElement ({
   );
 }
 
-function DragOverlayContent ({
+function DragOverlayContent({
   element,
   renderElement,
 }: {
@@ -474,7 +520,7 @@ function DragOverlayContent ({
   );
 }
 
-function withShortcuts (editor: Editor) {
+function withShortcuts(editor: Editor) {
   const { deleteBackward, insertText } = editor;
 
   editor.insertText = (text) => {
@@ -483,7 +529,7 @@ function withShortcuts (editor: Editor) {
     if (text.endsWith(" ") && selection && Range.isCollapsed(selection)) {
       const { anchor } = selection;
       const block = Editor.above(editor, {
-        match: n => Editor.isBlock(editor, n),
+        match: (n) => Editor.isBlock(editor, n),
       });
       const path = block ? block[1] : [];
       const start = Editor.start(editor, path);
@@ -502,7 +548,7 @@ function withShortcuts (editor: Editor) {
           type,
         };
         Transforms.setNodes<CustomElement>(editor, newProperties, {
-          match: n => Editor.isBlock(editor, n),
+          match: (n) => Editor.isBlock(editor, n),
         });
 
         return;
@@ -517,7 +563,7 @@ function withShortcuts (editor: Editor) {
 
     if (selection && Range.isCollapsed(selection)) {
       const match = Editor.above(editor, {
-        match: n => Editor.isBlock(editor, n),
+        match: (n) => Editor.isBlock(editor, n),
       });
 
       if (match) {
