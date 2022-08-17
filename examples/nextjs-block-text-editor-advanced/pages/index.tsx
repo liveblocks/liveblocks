@@ -12,7 +12,7 @@ const initialValue: CustomElement[] = [
     type: BlockType.Title,
     children: [
       {
-        text: "Block Text Editor",
+        text: "Collaborative Block Text Editor",
       },
     ],
   },
