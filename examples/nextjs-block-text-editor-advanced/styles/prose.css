@@ -22,14 +22,14 @@
 }
 
 .prose .title {
-  margin-top: 1.4em;
+  padding-top: 1.4em;
   margin-bottom: 0.5em;
   font-size: 2.5em;
 }
 
 .prose h1,
 .prose .h1 {
-  margin-top: 1.4em;
+  padding-top: 1.4em;
   margin-bottom: 0.25em;
   font-size: 1.875em;
 }
@@ -37,12 +37,12 @@
 .prose h1 ~ .inline_actions,
 .prose h1 ~ .toolbar,
 .prose h1 ~ .avatars {
-  margin-top: 2.95em;
+  padding-top: 2.95em;
 }
 
 .prose h2,
 .prose .h2 {
-  margin-top: 1.4em;
+  padding-top: 1.4em;
   margin-bottom: 0.25em;
   font-size: 1.5em;
 }
@@ -50,12 +50,12 @@
 .prose h2 ~ .inline_actions,
 .prose h2 ~ .toolbar,
 .prose h2 ~ .avatars {
-  margin-top: 2.15em;
+  padding-top: 2.15em;
 }
 
 .prose h3,
 .prose .h3 {
-  margin-top: 1em;
+  padding-top: 1em;
   margin-bottom: 0.25em;
   font-size: 1.25em;
 }
@@ -63,20 +63,20 @@
 .prose h3 ~ .inline_actions,
 .prose h3 ~ .toolbar,
 .prose h3 ~ .avatars {
-  margin-top: 1.15em;
+  padding-top: 1.15em;
 }
 
 .prose p .caret,
 .prose .p .caret {
-  margin-top: 0.15em;
+  padding-top: 0.15em;
 }
 
 .prose .embed {
-  margin: 0.5em 0;
+  padding: 0.5em 0;
 }
 
 .prose .embed ~ .inline_actions,
 .prose .embed ~ .toolbar,
 .prose .embed ~ .avatars {
-  margin-top: 0.5em;
+  padding-top: 0.5em;
 }
