@@ -103,11 +103,13 @@ export default function App() {
           editor.selection.anchor.path[0]
         ] as CustomElement;
 
-        let newBlock
+        let newBlock;
 
         // Default paragraph new line
         const paragraphBlock: CustomElement = {
-          type: BlockType.Paragraph, children: [{ text: "" }], id: nanoid()
+          type: BlockType.Paragraph,
+          children: [{ text: "" }],
+          id: nanoid(),
         };
 
         // If caret at position 0, convert previous block to empty paragraph
@@ -120,7 +122,7 @@ export default function App() {
           newBlock = previousBlock;
         }
 
-         // Create different current element on new line if set in Block.tsx
+        // Create different current element on new line if set in Block.tsx
         if (
           !newBlock &&
           previousBlock?.type &&
@@ -493,29 +495,35 @@ function SortableElement({
         }
       >
         {renderElement({ element, children })}
-        <div contentEditable={false} style={{ userSelect: "none" }}>
-          {othersByBlockId.length > 0 && (
-            <div className={classNames(styles.avatars, "avatars")}>
-              {othersByBlockId.map((user) => {
-                return (
-                  <Avatar
-                    key={user.connectionId}
-                    imageUrl={user.info.imageUrl}
-                    name={user.info.name}
-                    size="sm"
-                    color={USER_COLORS[user.connectionId % USER_COLORS.length]}
-                  />
-                );
-              })}
-            </div>
-          )}
-          <div className={classNames(styles.inline_actions, "inline_actions")}>
-            <BlockInlineActions
-              blockId={element.id}
-              onDelete={onDelete}
-              onInsertBelow={onInsertBelow}
-            />
+        {othersByBlockId.length > 0 && (
+          <div
+            className={classNames(styles.avatars, "avatars")}
+            contentEditable={false}
+            style={{ userSelect: "none" }}
+          >
+            {othersByBlockId.map((user) => {
+              return (
+                <Avatar
+                  key={user.connectionId}
+                  imageUrl={user.info.imageUrl}
+                  name={user.info.name}
+                  size="sm"
+                  color={USER_COLORS[user.connectionId % USER_COLORS.length]}
+                />
+              );
+            })}
           </div>
+        )}
+        <div
+          className={classNames(styles.inline_actions, "inline_actions")}
+          contentEditable={false}
+          style={{ userSelect: "none" }}
+        >
+          <BlockInlineActions
+            blockId={element.id}
+            onDelete={onDelete}
+            onInsertBelow={onInsertBelow}
+          />
         </div>
       </div>
     </div>
