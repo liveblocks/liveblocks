@@ -138,6 +138,7 @@ function scrollCaretIntoView() {
   }
 
   const element = document.createElement("br");
+  element.style.scrollMarginRight = "100px";
   range.insertNode(element);
 
   element.scrollIntoView({
