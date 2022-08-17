@@ -85,6 +85,7 @@ function buildESM(srcFiles, external = []) {
     external,
     plugins: [
       replaceText({
+        __PACKAGE_FORMAT__: "ESM",
         __PACKAGE_VERSION__: packageJson.version,
         preventAssignment: true,
       }),
@@ -109,6 +110,7 @@ function buildCJS(srcFiles, external = []) {
     plugins: [
       resolve({ extensions }),
       replaceText({
+        __PACKAGE_FORMAT__: "CJS",
         __PACKAGE_VERSION__: packageJson.version,
         preventAssignment: true,
       }),

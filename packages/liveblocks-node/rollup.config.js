@@ -9,6 +9,7 @@ import { terser as terserPlugin } from "rollup-plugin-terser";
 import typescriptPlugin from "@rollup/plugin-typescript";
 import { promises } from "fs";
 const babelConfig = require("./babel.config");
+const packageJson = require("./package.json");
 
 function makeExternalFn() {
   // NOTE: Make sure this list always matches the names of all dependencies and
@@ -82,7 +83,16 @@ function buildESM(srcFiles, external = []) {
       chunkFileNames: "shared.mjs",
     },
     external,
-    plugins: [typescriptCompile(), stripComments(), prettier()],
+    plugins: [
+      replaceText({
+        __PACKAGE_FORMAT__: "ESM",
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
+      typescriptCompile(),
+      stripComments(),
+      prettier(),
+    ],
   };
 }
 
@@ -99,6 +109,11 @@ function buildCJS(srcFiles, external = []) {
     external,
     plugins: [
       resolve({ extensions }),
+      replaceText({
+        __PACKAGE_FORMAT__: "CJS",
+        __PACKAGE_VERSION__: packageJson.version,
+        preventAssignment: true,
+      }),
       babelPlugin(getBabelOptions(extensions, { ie: 11 })),
       stripComments(),
       prettier(),
