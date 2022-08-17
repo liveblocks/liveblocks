@@ -20,7 +20,13 @@ import {
   RedoIcon,
   UndoIcon,
 } from "../icons";
-import { RoomProvider, useHistory, useSelf } from "../liveblocks.config";
+import {
+  RoomProvider,
+  useCanRedo,
+  useCanUndo,
+  useHistory,
+  useSelf,
+} from "../liveblocks.config";
 import { useSpreadsheet } from "../spreadsheet/react";
 import { createInitialStorage } from "../spreadsheet/utils";
 import { appendUnit } from "../utils/appendUnit";
@@ -31,6 +37,8 @@ const AVATARS_MAX = 3;
 function Example() {
   const spreadsheet = useSpreadsheet();
   const history = useHistory();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const self = useSelf();
 
   if (spreadsheet == null) {
@@ -85,6 +93,7 @@ function Example() {
                 <button
                   className={styles.button}
                   onClick={() => history.undo()}
+                  disabled={!canUndo}
                 >
                   <UndoIcon />
                 </button>
@@ -93,6 +102,7 @@ function Example() {
                 <button
                   className={styles.button}
                   onClick={() => history.redo()}
+                  disabled={!canRedo}
                 >
                   <RedoIcon />
                 </button>
