@@ -1,0 +1,56 @@
+.avatar {
+  display: flex;
+  position: relative;
+  place-content: center;
+  box-shadow: 0 0 0 2px white;
+}
+
+.status {
+  display: block;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px white;
+  --ring-color: #ffffff;
+}
+
+.letter {
+  display: flex;
+  isolation: isolate;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  justify-content: center;
+  align-items: center;
+  border-radius: 9999px;
+}
+
+.letterCharacter {
+  z-index: 10;
+  color: #ffffff;
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.more {
+  display: flex;
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding-right: 0.25rem;
+  background-color: #6b7280;
+  color: #ffffff;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
+  justify-content: center;
+  align-items: center;
+}
