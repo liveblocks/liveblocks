@@ -1,12 +1,11 @@
-import { RoomProvider } from "../liveblocks.config";
+import { RoomProvider, useMyPresence } from "../liveblocks.config";
 import { useRouter } from "next/router";
 import LiveCursors from "../components/LiveCursors";
 import { useMemo, useRef } from "react";
 import styles from "../styles/Index.module.css";
 
-export default function Example() {
+export default function Index() {
   const roomId = useOverrideRoomId("nextjs-live-cursors-advanced");
-  const cursorPanel = useRef(null);
 
   return (
     <RoomProvider
@@ -18,10 +17,24 @@ export default function Example() {
         cursor: null,
       }}
     >
-      <main ref={cursorPanel} className={styles.main}>
-        <LiveCursors cursorPanel={cursorPanel} />
-      </main>
+      <Example />
     </RoomProvider>
+  )
+}
+
+function Example() {
+  const cursorPanel = useRef(null);
+  const [{ cursor }] = useMyPresence();
+
+  return (
+    <main ref={cursorPanel} className={styles.main}>
+      <LiveCursors cursorPanel={cursorPanel} />
+      <div className={styles.text}>
+        {cursor
+          ? `${cursor.x} × ${cursor.y}`
+          : "Move your cursor to broadcast its position to other people in the room."}
+      </div>
+    </main>
   );
 }
 
