@@ -1,5 +1,23 @@
 import fetch from "node-fetch";
 
+if (process.env.NODE_ENV !== "production") {
+  const pkg = "@liveblocks/node";
+  const format =
+    "__PACKAGE_FORMAT__" === "__PACKAGE" + /* don't join */ "_FORMAT__"
+      ? "ESM"
+      : "__PACKAGE_FORMAT__";
+  const g = globalThis as typeof globalThis & { [key: string]: string };
+  if (g && g[pkg] !== format) {
+    if (g[pkg] === undefined) {
+      g[pkg] = format;
+    } else {
+      console.warn(
+        `${pkg} appears twice in your bundle (as ${g[pkg]} and ${format}). This can lead to hard-to-debug problems. Please see XXX for details.`
+      );
+    }
+  }
+}
+
 type AuthorizeOptions = {
   /**
    * The secret api provided at https://liveblocks.io/dashboard/apikeys
