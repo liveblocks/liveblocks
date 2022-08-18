@@ -1,9 +1,9 @@
-import type { LiveObject } from "../src";
-import type { RoomAuthToken } from "../src/AuthToken";
-import { lsonToJson } from "../src/immutable";
-import { makePosition } from "../src/position";
-import type { Effects, Machine } from "../src/room";
-import { defaultState, makeStateMachine } from "../src/room";
+import type { LiveObject } from "..";
+import type { RoomAuthToken } from "../AuthToken";
+import { lsonToJson } from "../immutable";
+import { makePosition } from "../position";
+import type { Effects, Machine } from "../room";
+import { defaultState, makeStateMachine } from "../room";
 import type {
   Authentication,
   BaseUserMeta,
@@ -21,11 +21,11 @@ import type {
   SerializedRootObject,
   ServerMsg,
   ToJson,
-} from "../src/types";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
-import { remove } from "../src/utils";
-import type { JsonStorageUpdate } from "./updatesUtils";
-import { serializeUpdateToJson } from "./updatesUtils";
+} from "../types";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
+import { remove } from "../utils";
+import type { JsonStorageUpdate } from "./_updatesUtils";
+import { serializeUpdateToJson } from "./_updatesUtils";
 
 function makeRoomToken(actor: number): RoomAuthToken {
   return {

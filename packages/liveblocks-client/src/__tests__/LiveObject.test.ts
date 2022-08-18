@@ -1,14 +1,14 @@
+import { LiveList } from "..";
+import { LiveObject } from "../LiveObject";
+import type { IdTuple, SerializedCrdt } from "../types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "../types";
 import {
   createSerializedList,
   createSerializedObject,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   reconnect,
-} from "../test/utils";
-import { LiveList } from ".";
-import { LiveObject } from "./LiveObject";
-import type { IdTuple, SerializedCrdt } from "./types";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
+} from "./_utils";
 
 describe("LiveObject", () => {
   describe("roomId", () => {
