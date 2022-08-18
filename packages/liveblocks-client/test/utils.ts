@@ -1,6 +1,5 @@
 import type { LiveObject } from "../src";
 import type { RoomAuthToken } from "../src/AuthToken";
-import { lsonToJson } from "../src/immutable";
 import { makePosition } from "../src/position";
 import type { Effects, Machine } from "../src/room";
 import { defaultState, makeStateMachine } from "../src/room";
@@ -20,7 +19,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
   ServerMsg,
-  ToJson,
+  ToImmutable,
 } from "../src/types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../src/types";
 import { remove } from "../src/utils";
@@ -229,8 +228,8 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToJson<TStorage>) =>
-      expect(lsonToJson(storage.root)).toEqual(data),
+    assert: (data: ToImmutable<TStorage>) =>
+      expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
@@ -298,16 +297,16 @@ export async function prepareStorageTest<
     }
   });
 
-  const states: ToJson<LsonObject>[] = [];
+  const states: ToImmutable<TStorage>[] = [];
 
-  function assertState(data: ToJson<LsonObject>) {
-    const json = lsonToJson(storage.root);
-    expect(json).toEqual(data);
-    expect(lsonToJson(refStorage.root)).toEqual(data);
+  function assertState(data: ToImmutable<TStorage>) {
+    const imm = storage.root.toImmutable();
+    expect(imm).toEqual(data);
+    expect(refStorage.root.toImmutable()).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assert(data: ToJson<LsonObject>) {
+  function assert(data: ToImmutable<TStorage>) {
     states.push(data);
     assertState(data);
   }

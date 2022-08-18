@@ -11,20 +11,18 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
-import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
+import type {
+  Resolve,
+  RoomInitializers,
+  ToImmutable,
+} from "@liveblocks/client/internal";
 import * as React from "react";
+import { useSyncExternalStore } from "use-sync-external-store/shim";
+import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
-import { useRerender } from "./hooks";
+import { useInitial, useRerender } from "./hooks";
 
-/**
- * "Freezes" a given value, so that it will return the same value/instance on
- * each subsequent render. This can be used to freeze "initial" values for
- * custom hooks, much like how `useState(initialState)` or
- * `useRef(initialValue)` works.
- */
-function useInitial<T>(value: T): T {
-  return React.useRef(value).current;
-}
+const noop = () => {};
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -169,6 +167,14 @@ type RoomContextBundle<
   useObject<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null;
+
+  /**
+   * TODO: Document me
+   */
+  useSelector<T>(
+    selector: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -448,27 +454,20 @@ export function createRoomContext<
   }
 
   function useStorage(): LiveObject<TStorage> | null {
+    type Snapshot = LiveObject<TStorage> | null;
+
     const room = useRoom();
-    const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
-    React.useEffect(() => {
-      let didCancel = false;
+    const subscribe = room.events.storageHasLoaded.subscribe;
 
-      async function fetchStorage() {
-        const storage = await room.getStorage();
-        if (!didCancel) {
-          setState(storage.root);
-        }
-      }
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getStorageSnapshot(),
+      [room]
+    );
 
-      fetchStorage();
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
-      return () => {
-        didCancel = true;
-      };
-    }, [room]);
-
-    return root;
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   function useHistory(): History {
@@ -570,6 +569,51 @@ export function createRoomContext<
     }
   }
 
+  function useSelector<T>(
+    selector: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null {
+    type Snapshot = ToImmutable<TStorage> | null;
+    type Selection = T | null;
+
+    const room = useRoom();
+    const rootOrNull = useStorage();
+
+    const wrappedSelector = React.useCallback(
+      (rootOrNull: Snapshot): Selection =>
+        rootOrNull !== null ? selector(rootOrNull) : null,
+      [selector]
+    );
+
+    const subscribe = React.useCallback(
+      (onStoreChange: () => void) =>
+        rootOrNull !== null
+          ? room.subscribe(rootOrNull, onStoreChange, { isDeep: true })
+          : noop,
+      [room, rootOrNull]
+    );
+
+    const getSnapshot = React.useCallback((): Snapshot => {
+      if (rootOrNull === null) {
+        return null;
+      } else {
+        const root = rootOrNull;
+        const imm = root.toImmutable();
+        return imm as ToImmutable<TStorage>;
+      }
+    }, [rootOrNull]);
+
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      wrappedSelector,
+      isEqual
+    );
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -583,6 +627,7 @@ export function createRoomContext<
     useOthers,
     useRedo,
     useRoom,
+    useSelector,
     useSelf,
     useStorage,
     useUndo,

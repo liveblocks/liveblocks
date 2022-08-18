@@ -1,3 +1,4 @@
+import type { EventSource } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -666,6 +667,23 @@ export type Room<
   }>;
 
   /**
+   * Get the room's storage synchronously.
+   * The storage's root is a {@link LiveObject}.
+   *
+   * @example
+   * const root = room.getStorageSnapshot();
+   */
+  getStorageSnapshot(): LiveObject<TStorage> | null;
+
+  events: {
+    /**
+     * Subscribe to the storage loaded event. Will fire at most once during the
+     * lifetime of a Room.
+     */
+    storageHasLoaded: EventSource<void>;
+  };
+
+  /**
    * Batches modifications made during the given function.
    * All the modifications are sent to other clients in a single message.
    * All the subscribers are called only after the batch is over.
@@ -714,6 +732,14 @@ export type {
   UpdateStorageClientMsg,
 } from "./ClientMsg";
 export { ClientMsgCode } from "./ClientMsg";
+export type {
+  Immutable,
+  ImmutableList,
+  ImmutableMap,
+  ImmutableObject,
+  ImmutableRef,
+  ToImmutable,
+} from "./Immutable";
 export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";

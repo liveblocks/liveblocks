@@ -1,4 +1,5 @@
 import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
+import { shallow } from "@liveblocks/client";
 import type { ServerMsg } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
@@ -13,6 +14,7 @@ import {
   useObject,
   useOthers,
   useRoom,
+  useSelector,
 } from "./_liveblocks.config";
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
@@ -179,7 +181,7 @@ describe("useRoom", () => {
     renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
     const sim = await websocketSimulator();
-    expect(sim.sentMessages[0]).toStrictEqual(
+    expect(sim.sentMessages[0]).toBe(
       JSON.stringify([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -291,7 +293,10 @@ describe("useObject", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateStorageLoaded());
 
-    await waitFor(() => expect(result.current?.toObject()).toEqual({ a: 0 }));
+    expect(result.current?.toImmutable()).toEqual({
+      a: 0,
+      nested: ["foo", "bar"],
+    });
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
@@ -320,5 +325,89 @@ describe("useObject", () => {
     );
 
     expect(result.current).toBeNull();
+  });
+});
+
+describe("useSelector", () => {
+  test("return null before storage has loaded", async () => {
+    const { result } = renderHook(() => useSelector((root) => root.obj));
+    expect(result.current).toBeNull();
+  });
+
+  test("nested data remains referentially equal between renders", async () => {
+    const { result, rerender } = renderHook(() =>
+      useSelector((root) => root.obj)
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current;
+    rerender();
+    const render2 = result.current;
+
+    expect(render1).toEqual({ a: 0, nested: ["foo", "bar"] });
+    expect(render2).toEqual({ a: 0, nested: ["foo", "bar"] });
+    expect(render1).toBe(render2); // Referentially equal!
+  });
+
+  test("unchanged nested data remains referentially equal between mutations", async () => {
+    const { result } = renderHook(() => useSelector((root) => root.obj));
+    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current!;
+    act(() =>
+      // Now, only change `a`, let `nested` remain untouched
+      liveObj.current!.set("a", 1)
+    );
+    const render2 = result.current!;
+
+    // Property `a` changed between renders...
+    expect(render1.a).toEqual(0);
+    expect(render2.a).toEqual(1);
+
+    // ...but `nested` remained referentially equal
+    expect(render1.nested).toEqual(["foo", "bar"]);
+    expect(render2.nested).toEqual(["foo", "bar"]);
+    expect(render1.nested).toBe(render2.nested); // Referentially equal!
+  });
+
+  test("arbitrary expressions", async () => {
+    const { result } = renderHook(() =>
+      useSelector((root) => JSON.stringify(root.obj).toUpperCase())
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    expect(result.current).toEqual('{"A":0,"NESTED":["FOO","BAR"]}');
+  });
+
+  test("dynamically computed results remain referentially equal only when using shallow comparison", async () => {
+    const { result } = renderHook(() =>
+      useSelector(
+        (root) => root.obj.nested.map((item) => item.toUpperCase()),
+        shallow // <-- Important! Key line of the test!
+      )
+    );
+    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current!;
+    act(() =>
+      // Now, only change `a`, let `nested` remain untouched
+      liveObj.current!.set("a", 1)
+    );
+
+    const render2 = result.current!;
+
+    expect(render1).toEqual(["FOO", "BAR"]);
+    expect(render2).toEqual(["FOO", "BAR"]);
+    expect(render1).toBe(render2); // Referentially equal!
   });
 });

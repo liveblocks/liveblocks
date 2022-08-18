@@ -257,7 +257,7 @@ export function getTreesDiffOperations(
 function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   first: LiveObjectUpdates<A>,
   second: LiveObjectUpdates<B>
-): LiveObjectUpdates<A | B> {
+): LiveObjectUpdates<B> {
   const updates = first.updates as typeof second["updates"];
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;

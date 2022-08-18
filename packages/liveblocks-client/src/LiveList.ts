@@ -17,6 +17,7 @@ import type {
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { ImmutableList } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -123,6 +124,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   _sortItems(): void {
     this._items.sort(compareNodePosition);
+    this.invalidate();
   }
 
   /** @internal */
@@ -560,28 +562,31 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       throw new Error("Can't attach child if doc is not present");
     }
 
+    let result: ApplyResult;
+
     if (op.intent === "set") {
       if (source === OpSource.REMOTE) {
-        return this._applySetRemote(op);
+        result = this._applySetRemote(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applySetAck(op);
+      } else {
+        result = this._applySetUndoRedo(op);
       }
-
-      if (source === OpSource.UNDOREDO_RECONNECT) {
-        return this._applySetUndoRedo(op);
-      }
-
-      if (source === OpSource.ACK) {
-        return this._applySetAck(op);
-      }
-    }
-
-    // Insert
-    if (source === OpSource.REMOTE) {
-      return this._applyRemoteInsert(op);
-    } else if (source === OpSource.ACK) {
-      return this._applyInsertAck(op);
     } else {
-      return this._applyInsertUndoRedo(op);
+      if (source === OpSource.REMOTE) {
+        result = this._applyRemoteInsert(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applyInsertAck(op);
+      } else {
+        result = this._applyInsertUndoRedo(op);
+      }
     }
+
+    if (result.modified !== false) {
+      this.invalidate();
+    }
+
+    return result;
   }
 
   /** @internal */
@@ -601,6 +606,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items.splice(indexToDelete, 1);
+      this.invalidate();
 
       child._detach();
 
@@ -979,6 +985,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const item = this._items[index];
     item._detach();
     this._items.splice(index, 1);
+    this.invalidate();
 
     if (this._doc) {
       const childRecordId = item._id;
@@ -1031,6 +1038,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items = [];
+      this.invalidate();
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
@@ -1041,6 +1049,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         item._detach();
       }
       this._items = [];
+      this.invalidate();
     }
   }
 
@@ -1062,6 +1071,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const value = lsonToLiveNode(item);
     value._setParentLink(this, position);
     this._items[index] = value;
+    this.invalidate();
 
     if (this._doc && this._id) {
       const id = this._doc.generateId();
@@ -1229,6 +1239,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
 
     this._items[index]._setParentLink(this, shiftedPosition);
+  }
+
+  toImmutable(): ImmutableList {
+    // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
+    // instead. This helper merely exists to help TypeScript infer better
+    // return types.
+    return super.toImmutable() as ImmutableList;
+  }
+
+  /** @internal */
+  _toImmutable(): ImmutableList {
+    const result = this._items.map((node) => node.toImmutable());
+    return process.env.NODE_ENV === "production"
+      ? result
+      : Object.freeze(result);
   }
 }
 

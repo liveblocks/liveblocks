@@ -186,7 +186,7 @@ describe("LiveList", () => {
 
       items.push(new LiveMap([["first", 0]]));
 
-      assert({ items: [{ first: 0 }] });
+      assert({ items: [new Map([["first", 0]])] });
 
       assertUndoRedo();
     });
@@ -294,7 +294,7 @@ describe("LiveList", () => {
         storage: doc,
         assert,
         assertUndoRedo,
-      } = await prepareStorageTest<{ items: LiveList<number> }>([
+      } = await prepareStorageTest<{ items: LiveList<string> }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
@@ -425,7 +425,7 @@ describe("LiveList", () => {
 
     it("move at the end of the list", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
+        items: LiveList<string>;
       }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
@@ -484,7 +484,7 @@ describe("LiveList", () => {
 
     it("clear should delete all items", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
-        items: LiveList<LiveObject<{ a: number }>>;
+        items: LiveList<string>;
       }>(
         [
           createSerializedObject("0:0", {}),
