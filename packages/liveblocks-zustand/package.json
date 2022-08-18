@@ -18,8 +18,8 @@
   ],
   "scripts": {
     "build": "rollup -c && ../../scripts/build.sh",
-    "format": "eslint --fix src/ test/ && prettier --write src/ test/",
-    "lint": "eslint src/ test/",
+    "format": "eslint --fix src/ && prettier --write src/",
+    "lint": "eslint src/",
     "test": "jest --watch --silent --verbose",
     "test-ci": "jest --silent --verbose",
     "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"

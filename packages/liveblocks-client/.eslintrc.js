@@ -100,7 +100,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["*.test.ts", "*.test.tsx", "test/**"],
+      files: ["src/__tests__/**"],
 
       // Special config for test files
       rules: {
