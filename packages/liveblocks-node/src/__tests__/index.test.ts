@@ -1,4 +1,4 @@
-import { authorize } from ".";
+import { authorize } from "..";
 
 describe("authorize", () => {
   test.each([null, "", undefined, {}])(
