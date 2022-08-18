@@ -1,0 +1,13 @@
+html,
+.theme-light {
+  color-scheme: light;
+
+  --color-surface: 255, 255, 255;
+  --color-surface-over: 255, 255, 255;
+  --color-foreground: 60, 59, 63;
+  --color-primary: 81, 22, 245;
+  --opacity-surface-selection: 0.12;
+  --container-max-width: 720px;
+  --shadow-over: 0 0 0 0.5px rgba(6, 0, 19, 0.09),
+    0 4px 12px -2px rgba(6, 0, 19, 0.12), 0 24px 40px -12px rgba(6, 0, 19, 0.28);
+}
