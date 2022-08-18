@@ -1,13 +1,13 @@
-import type { LiveList } from "../LiveList";
-import type { LiveMap } from "../LiveMap";
-import type { LiveObject } from "../LiveObject";
-import { OpCode } from "../types";
 import {
   createSerializedList,
   createSerializedMap,
   createSerializedObject,
   prepareStorageTest,
-} from "./_utils";
+} from "../test/utils";
+import type { LiveList } from "./LiveList";
+import type { LiveMap } from "./LiveMap";
+import type { LiveObject } from "./LiveObject";
+import { OpCode } from "./types";
 
 describe("Storage", () => {
   describe("subscribe generic", () => {

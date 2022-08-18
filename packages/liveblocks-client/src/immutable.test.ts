@@ -1,23 +1,3 @@
-import { LiveList, LiveMap } from "..";
-import {
-  lsonToJson,
-  patchImmutableObject,
-  patchLiveObject,
-  patchLiveObjectKey,
-} from "../immutable";
-import { LiveObject } from "../LiveObject";
-import type {
-  BaseUserMeta,
-  ClientMsg,
-  IdTuple,
-  Json,
-  JsonObject,
-  LsonObject,
-  SerializedCrdt,
-  StorageUpdate,
-  ToJson,
-} from "../types";
-import { ClientMsgCode, ServerMsgCode } from "../types";
 import {
   createSerializedList,
   createSerializedObject,
@@ -28,7 +8,27 @@ import {
   SECOND_POSITION,
   serverMessage,
   THIRD_POSITION,
-} from "./_utils";
+} from "../test/utils";
+import { LiveList, LiveMap } from ".";
+import {
+  lsonToJson,
+  patchImmutableObject,
+  patchLiveObject,
+  patchLiveObjectKey,
+} from "./immutable";
+import { LiveObject } from "./LiveObject";
+import type {
+  BaseUserMeta,
+  ClientMsg,
+  IdTuple,
+  Json,
+  JsonObject,
+  LsonObject,
+  SerializedCrdt,
+  StorageUpdate,
+  ToJson,
+} from "./types";
+import { ClientMsgCode, ServerMsgCode } from "./types";
 
 async function prepareStorageImmutableTest<
   TStorage extends LsonObject,
