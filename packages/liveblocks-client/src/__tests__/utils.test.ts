@@ -1,15 +1,15 @@
 import each from "jest-each";
 
-import { FIRST_POSITION, SECOND_POSITION } from "../test/utils";
-import type { NodeMap } from "./types";
-import { CrdtType, OpCode } from "./types";
+import type { NodeMap } from "../types";
+import { CrdtType, OpCode } from "../types";
 import {
   b64decode,
   compact,
   findNonSerializableValue,
   getTreesDiffOperations,
   tryParseJson,
-} from "./utils";
+} from "../utils";
+import { FIRST_POSITION, SECOND_POSITION } from "./_utils";
 
 describe("compact", () => {
   it("compact w/ empty list", () => {
