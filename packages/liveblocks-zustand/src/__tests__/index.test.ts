@@ -21,16 +21,16 @@ import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";
 import create from "zustand";
 
-import { list, MockWebSocket, obj, waitFor } from "../test/utils";
-import type { Mapping, ZustandState } from ".";
-import { middleware } from ".";
+import type { Mapping, ZustandState } from "..";
+import { middleware } from "..";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
   mappingToFunctionIsNotAllowed,
   mappingValueShouldBeABoolean,
   missingClient,
-} from "./errors";
+} from "../errors";
+import { list, MockWebSocket, obj, waitFor } from "./_utils";
 
 window.WebSocket = MockWebSocket as any;
 

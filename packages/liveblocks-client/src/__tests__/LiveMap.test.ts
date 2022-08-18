@@ -1,3 +1,8 @@
+import { LiveList } from "../LiveList";
+import { LiveMap } from "../LiveMap";
+import { LiveObject } from "../LiveObject";
+import type { IdTuple, SerializedCrdt } from "../types";
+import { CrdtType, OpCode, WebsocketCloseCodes } from "../types";
 import {
   createSerializedList,
   createSerializedMap,
@@ -6,12 +11,7 @@ import {
   prepareIsolatedStorageTest,
   prepareStorageTest,
   reconnect,
-} from "../test/utils";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import type { IdTuple, SerializedCrdt } from "./types";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "./types";
+} from "./_utils";
 
 describe("LiveMap", () => {
   describe("not attached", () => {

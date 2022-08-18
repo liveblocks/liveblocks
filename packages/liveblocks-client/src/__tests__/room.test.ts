@@ -1,6 +1,20 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
+import type { RoomAuthToken } from "../AuthToken";
+import { lsonToJson } from "../immutable";
+import { LiveList } from "../LiveList";
+import { createRoom, defaultState, makeStateMachine } from "../room";
+import type { Authentication, IdTuple, Others, SerializedCrdt } from "../types";
+import {
+  ClientMsgCode,
+  CrdtType,
+  ServerMsgCode,
+  WebsocketCloseCodes,
+} from "../types";
+import type { BaseUserMeta } from "../types/BaseUserMeta";
+import type { Json, JsonObject } from "../types/Json";
+import type { LsonObject } from "../types/Lson";
 import {
   createSerializedList,
   createSerializedObject,
@@ -14,21 +28,7 @@ import {
   serverMessage,
   waitFor,
   withDateNow,
-} from "../test/utils";
-import type { RoomAuthToken } from "./AuthToken";
-import { lsonToJson } from "./immutable";
-import { LiveList } from "./LiveList";
-import { createRoom, defaultState, makeStateMachine } from "./room";
-import type { Authentication, IdTuple, Others, SerializedCrdt } from "./types";
-import {
-  ClientMsgCode,
-  CrdtType,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./types";
-import type { BaseUserMeta } from "./types/BaseUserMeta";
-import type { Json, JsonObject } from "./types/Json";
-import type { LsonObject } from "./types/Lson";
+} from "./_utils";
 
 const defaultContext = {
   roomId: "room-id",

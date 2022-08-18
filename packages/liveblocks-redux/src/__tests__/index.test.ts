@@ -16,15 +16,15 @@ import { configureStore } from "@reduxjs/toolkit";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import { list, MockWebSocket, obj, waitFor } from "../test/utils";
-import type { LiveblocksState, Mapping } from ".";
-import { actions, enhancer } from ".";
+import type { LiveblocksState, Mapping } from "..";
+import { actions, enhancer } from "..";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
   mappingValueShouldBeABoolean,
   missingClient,
-} from "./errors";
+} from "../errors";
+import { list, MockWebSocket, obj, waitFor } from "./_utils";
 window.WebSocket = MockWebSocket as any;
 
 const { enterRoom, leaveRoom } = actions;
