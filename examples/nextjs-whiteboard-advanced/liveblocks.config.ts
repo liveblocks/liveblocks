@@ -46,5 +46,7 @@ export const {
   useMap,
   useHistory,
   useBatch,
+  useCanUndo,
+  useCanRedo,
   useRoom,
 } = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);

@@ -47,13 +47,17 @@ body {
   font-size: 12px;
 }
 
-.toolbar button:hover,
-.toolbar button:focus {
+.toolbar button:not(:disabled):hover,
+.toolbar button:not(:disabled):focus {
   background-color: #ffffff;
 }
 
-.toolbar button:active {
+.toolbar button:not(:disabled):active {
   background-color: #eeeeee;
+}
+
+.toolbar button:disabled {
+  opacity: 0.5;
 }
 
 .loading {

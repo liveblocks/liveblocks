@@ -8,13 +8,18 @@
   justify-content: center;
 }
 
-.button:hover,
-.button:focus {
+.button:not(:disabled):hover,
+.button:not(:disabled):focus {
   color: var(--color-foreground-400);
 }
 
-.button:active {
+.button:not(:disabled):active {
   color: var(--color-foreground-600);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .button_active {
@@ -22,8 +27,8 @@
   background-color: var(--color-surface-subtle);
 }
 
-.button_active:hover,
-.button_active:focus,
-.button_active:active {
+.button_active:not(:disabled):hover,
+.button_active:not(:disabled):focus,
+.button_active:not(:disabled):active {
   color: var(--color-primary);
 }

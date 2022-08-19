@@ -3,11 +3,12 @@ import IconButton from "../IconButton";
 
 type Props = {
   onClick: () => void;
+  disabled?: boolean;
 };
 
-export default function UndoButton({ onClick }: Props) {
+export default function UndoButton({ onClick, disabled }: Props) {
   return (
-    <IconButton onClick={onClick}>
+    <IconButton onClick={onClick} disabled={disabled}>
       <svg
         width="36"
         height="36"

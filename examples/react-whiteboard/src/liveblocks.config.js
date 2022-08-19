@@ -20,6 +20,8 @@ export const {
   useMyPresence,
   useMap,
   useHistory,
+  useCanUndo,
+  useCanRedo,
   useBatch,
   useRoom,
   useOthers,
