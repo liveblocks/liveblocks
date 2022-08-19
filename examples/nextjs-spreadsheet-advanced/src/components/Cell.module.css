@@ -141,7 +141,6 @@
   line-height: var(--cell-height);
   outline: none;
   text-align: left;
-  user-select: none;
   white-space: nowrap;
 }
 
@@ -168,6 +167,10 @@
 
 .cell:global(.editing) .value {
   text-align: left;
+}
+
+.cell:global(.editing) .value,
+.cell:global(.editing) .value * {
   user-select: all;
 }
 
