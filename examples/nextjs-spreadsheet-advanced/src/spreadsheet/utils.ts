@@ -1,5 +1,6 @@
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import { nanoid } from "nanoid";
+import { ID_LENGTH } from "../constants";
 import { Cell, Column, FixedArray, Row, Storage } from "../types";
 import tokenizer, {
   CellToken,
@@ -52,11 +53,12 @@ export function createInitialStorage<X extends number, Y extends number>(
 ): Storage {
   const initialColumns = Array.from(
     { length: columns.length },
-    () => new LiveObject({ id: nanoid(), width: columns.width } as Column)
+    () =>
+      new LiveObject({ id: nanoid(ID_LENGTH), width: columns.width } as Column)
   );
   const initialRows = Array.from(
     { length: rows.length },
-    () => new LiveObject({ id: nanoid(), height: rows.height } as Row)
+    () => new LiveObject({ id: nanoid(ID_LENGTH), height: rows.height } as Row)
   );
   const initialCells = cells
     .flatMap((row, y) => {

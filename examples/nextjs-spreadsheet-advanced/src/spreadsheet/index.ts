@@ -1,5 +1,6 @@
 import { LiveObject, type Room, type User } from "@liveblocks/client";
 import { nanoid } from "nanoid";
+import { ID_LENGTH } from "../constants";
 import type { Column, Presence, Row, Storage, UserMeta } from "../types";
 import interpreter from "./interpreter";
 import tokenizer, {
@@ -49,13 +50,13 @@ export async function createSpreadsheet(
   function insertColumn(index: number, width: number) {
     spreadsheet
       .get("columns")
-      .insert(new LiveObject({ id: nanoid(), width }), index);
+      .insert(new LiveObject({ id: nanoid(ID_LENGTH), width }), index);
   }
 
   function insertRow(index: number, height: number) {
     spreadsheet
       .get("rows")
-      .insert(new LiveObject({ id: nanoid(), height }), index);
+      .insert(new LiveObject({ id: nanoid(ID_LENGTH), height }), index);
   }
 
   function resizeColumn(index: number, width: number) {

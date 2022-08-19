@@ -8,6 +8,7 @@ export const COLUMN_MIN_WIDTH = 80;
 export const COLUMN_MAX_WIDTH = 300;
 export const ROW_INITIAL_HEIGHT = 32;
 export const ROW_MAX_HEIGHT = 100;
+export const ID_LENGTH = 6;
 
 export const NAMES = [
   "Charlie Layne",
