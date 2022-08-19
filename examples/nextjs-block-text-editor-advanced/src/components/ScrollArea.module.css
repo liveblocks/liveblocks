@@ -1,0 +1,56 @@
+.viewport {
+  max-width: inherit;
+  max-height: inherit;
+  width: inherit;
+  height: inherit;
+}
+
+/* Override Radix' own `display: table` hack */
+.viewport > div[style] {
+  display: block !important;
+}
+
+.scrollbar {
+  display: flex;
+  padding: 6px;
+  touch-action: none;
+  user-select: none;
+  z-index: 10;
+}
+
+.scrollbar:hover {
+  background: rgba(var(--color-foreground), 0.06);
+}
+
+.scrollbar[data-orientation="vertical"] {
+  width: 16px;
+}
+
+.scrollbar[data-orientation="horizontal"] {
+  height: 16px;
+  flex-direction: column;
+}
+
+.thumb {
+  position: relative;
+  flex: 1;
+  background: rgba(var(--color-foreground), 0.8);
+  border-radius: 12px;
+  opacity: 0.3;
+}
+
+.thumb:hover {
+  opacity: 1;
+}
+
+.thumb:before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  min-width: 44px;
+  height: 100%;
+  min-height: 44px;
+  content: "";
+  transform: translate(-50%, -50%);
+}

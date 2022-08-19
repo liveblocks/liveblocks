@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.17.7-dev",
+  "version": "0.17.8-dev",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -31,8 +31,8 @@
   },
   "scripts": {
     "build": "rollup -c && ../../scripts/build.sh",
-    "format": "eslint --fix src/ test/ && prettier --write src/ test/",
-    "lint": "eslint src/ test/",
+    "format": "eslint --fix src/ && prettier --write src/",
+    "lint": "eslint src/",
     "test": "jest --watch --silent --verbose --config=./jest.config.js",
     "test-ci": "jest --silent --verbose",
     "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
