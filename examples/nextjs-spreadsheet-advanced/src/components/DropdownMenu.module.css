@@ -1,0 +1,59 @@
+.menu {
+  --menu-inset: 4px;
+  --menu-item-height: 30px;
+  --menu-item-radius: 6px;
+  --menu-background: var(--gray-0);
+
+  z-index: 1000;
+  padding: var(--menu-inset);
+  background: var(--menu-background);
+  border-radius: calc(var(--menu-item-radius) + var(--menu-inset));
+  box-shadow: 0 0 0 1px rgb(31 41 55 / 4%), 0 2px 6px rgb(31 41 55 / 8%),
+    0 8px 24px -2px rgb(31 41 55 / 16%);
+  user-select: none;
+}
+
+.menu:global {
+  animation: appear both 0.12s ease-in-out;
+}
+
+.item {
+  display: flex;
+  height: var(--menu-item-height);
+  padding: 0 8px 0 calc(var(--menu-item-height) + 2px);
+  border-radius: var(--menu-item-radius);
+  color: var(--gray-700);
+  cursor: pointer;
+  font-size: 14px;
+  outline: none;
+  place-items: center;
+}
+
+.item:focus {
+  background: var(--accent);
+  color: var(--white);
+}
+
+.item[data-disabled] {
+  color: var(--gray-300);
+  cursor: default;
+}
+
+.icon {
+  position: absolute;
+  left: calc(var(--menu-inset) + 6px);
+  display: block;
+  align-self: center;
+  color: var(--accent);
+}
+
+.item:focus .icon,
+.item[data-disabled] .icon {
+  color: inherit;
+}
+
+.separator {
+  height: var(--border);
+  margin: var(--menu-inset) calc(var(--menu-inset) * -1);
+  background: var(--gray-100);
+}

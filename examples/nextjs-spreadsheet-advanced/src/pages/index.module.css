@@ -1,0 +1,122 @@
+.container {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  max-width: calc(100vw - 2 * var(--margin));
+  max-height: calc(100vh - 2 * var(--margin));
+  flex-direction: column;
+  background: var(--gray-100);
+  border-radius: calc(var(--radius) + var(--padding));
+}
+
+.banner {
+  --banner-height: 32px;
+
+  position: relative;
+  height: calc(var(--banner-height) + 2 * var(--padding));
+  flex: none;
+  border-bottom: var(--border) solid var(--gray-200);
+}
+
+.banner_content {
+  position: absolute;
+  display: flex;
+  padding: var(--padding);
+  inset: 0;
+  -ms-overflow-style: none;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.banner_content::-webkit-scrollbar {
+  display: none;
+}
+
+.buttons {
+  display: flex;
+  height: var(--banner-height);
+  flex: none;
+  margin-right: var(--padding);
+}
+
+.button_group {
+  display: flex;
+}
+
+.button_group:not(:last-child)::after {
+  display: block;
+  width: var(--border);
+  height: calc(var(--banner-height) - var(--padding) * 2);
+  align-self: center;
+  margin: 0 var(--padding);
+  background: var(--gray-200);
+  border-radius: var(--border);
+  content: "";
+}
+
+.button {
+  all: unset;
+  display: flex;
+  padding: 0 6px;
+  border-radius: var(--radius);
+  color: var(--gray-500);
+  cursor: pointer;
+  font-size: 13px;
+  place-content: center;
+  place-items: center;
+  transition: background 0.12s ease-in-out;
+}
+
+.button:disabled {
+  color: var(--gray-300);
+  cursor: default;
+}
+
+.button span {
+  margin-right: 2px;
+  margin-left: 5px;
+}
+
+.button:not(:disabled):hover,
+.button:not(:disabled):focus {
+  background: var(--gray-200);
+}
+
+.avatars {
+  display: flex;
+  flex: none;
+  flex-direction: row-reverse;
+  margin-left: auto;
+  place-items: center;
+}
+
+.avatar:not(:last-child) {
+  margin-left: calc(-0.2 * var(--row-height));
+}
+
+.avatar {
+  width: calc(var(--banner-height) - var(--padding) / 2);
+  height: calc(var(--banner-height) - var(--padding) / 2);
+  background: var(--gray-100);
+  box-shadow: 0 0 0 var(--border) var(--gray-100);
+}
+
+.avatar_ellipsis {
+  z-index: 1;
+  display: flex;
+  background: var(--gray-300);
+  border-radius: 50%;
+  color: var(--gray-600);
+  font-size: 11px;
+  font-weight: 500;
+  place-content: center;
+  place-items: center;
+  will-change: transform;
+}
+
+.loading {
+  width: 64px;
+  height: 64px;
+  opacity: 0.2;
+}

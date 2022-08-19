@@ -1,0 +1,303 @@
+.cell {
+  --cell-selection-z-index: 50;
+  --cell-top-left-radius: 0;
+  --cell-top-right-radius: 0;
+  --cell-bottom-left-radius: 0;
+  --cell-bottom-right-radius: 0;
+
+  position: relative;
+  width: var(--cell-width);
+  height: var(--cell-height);
+  padding: 0;
+  border: var(--border) solid var(--gray-100);
+  cursor: cell;
+}
+
+.cell::before,
+.cell::after {
+  position: absolute;
+  content: "";
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease-in-out;
+}
+
+:global(.dragging) .cell::before,
+:global(.dragging) .cell::after,
+:global(.dragging) .user {
+  opacity: 0;
+}
+
+.cell::before {
+  z-index: calc(var(--cell-selection-z-index) - 10);
+  box-shadow: 0 2px 6px var(--cell-selection);
+  opacity: 0.3;
+}
+
+.cell::after {
+  z-index: var(--cell-selection-z-index);
+  box-shadow: 0 0 0 2px var(--cell-selection);
+}
+
+.cell:global(.editing)::before {
+  box-shadow: 0 2px 12px var(--cell-selection), 0 2px 12px rgb(31 41 55 / 30%),
+    0 6px 32px -2px rgb(31 41 55 / 20%);
+}
+
+.cell:global(.selected)::before {
+  z-index: var(--cell-selection-z-index);
+}
+
+.cell:global(.selected)::after {
+  z-index: calc(var(--cell-selection-z-index) + 10);
+}
+
+.user {
+  --user-height: 16px;
+  --user-padding: 4px;
+
+  position: absolute;
+  z-index: 1;
+  top: calc((var(--border) + var(--user-height)) * -1);
+  left: calc(var(--border) * -1);
+  display: flex;
+  max-width: calc(100% + 2 * var(--border));
+  height: calc(var(--user-height) + var(--radius));
+  padding: 1px var(--user-padding) var(--radius) var(--user-padding);
+  background: var(--cell-selection);
+  border-top-left-radius: calc(
+    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2 +
+      var(--border)
+  );
+  border-top-right-radius: calc(
+    var(--radius) / 2 + var(--cell-top-right-radius) * var(--radius) / 2 +
+      var(--border)
+  );
+  place-items: center;
+  pointer-events: none;
+  transform: translateY(var(--user-height));
+  transition: transform 0.12s ease-in-out, opacity 0.12s ease-in-out;
+}
+
+.user_avatar {
+  overflow: hidden;
+  width: calc(var(--user-height) - 4px);
+  height: calc(var(--user-height) - 4px);
+  flex: none;
+  margin-top: 1px;
+  margin-right: var(--user-padding);
+  border-radius: 50%;
+}
+
+.user_label {
+  overflow: hidden;
+  min-width: 0;
+  color: var(--white);
+  font-size: 10px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.cell:not(:global(.selected)):hover .user {
+  transform: translateY(0);
+}
+
+.cell:global(.selected) .user {
+  display: none;
+}
+
+.content {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  background: var(--gray-0);
+  inset: 0;
+  pointer-events: none;
+}
+
+.cell:global(.selected-other) .content {
+  z-index: calc(var(--cell-selection-z-index) - 5);
+}
+
+.value {
+  --value-padding: 8px;
+  --value-type-padding: 2px;
+  --value-type-size: calc(
+    var(--row-height) - var(--border) - var(--value-type-padding) * 2
+  );
+
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  padding: 0 var(--value-padding);
+  color: var(--gray-800);
+  cursor: text;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  inset: 0;
+  line-height: var(--cell-height);
+  outline: none;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.value:global(.numerical) {
+  text-align: right;
+}
+
+.value:global(.alphabetical) {
+  font-weight: 600;
+}
+
+.cell:global(.selected) .value,
+.cell:global(.editing) .value {
+  pointer-events: auto;
+}
+
+.cell:global(.selected):not(:global(.editing)) .value {
+  padding-left: calc(var(--value-type-size) + var(--value-type-padding) * 4);
+}
+
+:global(.dragging) .value {
+  padding-left: var(--value-padding) !important;
+}
+
+.cell:global(.editing) .value {
+  text-align: left;
+}
+
+.cell:global(.editing) .value,
+.cell:global(.editing) .value * {
+  user-select: text;
+}
+
+.cell:global(.editing) .value::before,
+.cell:global(.editing) .value::after {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: calc((100% - 1.5em) / 2);
+  background: var(--gray-0);
+  content: "";
+  pointer-events: none;
+}
+
+.cell:global(.editing) .value::before {
+  top: 0;
+}
+
+.cell:global(.editing) .value::after {
+  bottom: 0;
+}
+
+.value_type {
+  position: absolute;
+  top: calc(50% - var(--value-type-size) / 2);
+  left: calc(var(--value-type-padding) * 2);
+  display: flex;
+  width: var(--value-type-size);
+  aspect-ratio: 1;
+  color: var(--cell-selection);
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 500;
+  line-height: normal;
+  place-content: center;
+  place-items: center;
+}
+
+.value_type:global(.scrubbable) {
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+:global(.dragging) .value_type {
+  display: none;
+}
+
+.value_content {
+  position: relative;
+  display: inline-block;
+}
+
+.value_content::before {
+  --display-highlight-height: calc(1em + 6px);
+
+  position: absolute;
+  z-index: -1;
+  top: calc(50% - var(--display-highlight-height) / 2);
+  right: -4px;
+  left: -4px;
+  height: var(--display-highlight-height);
+  background: rgb(31 41 55 / 8%);
+  border-radius: 4px;
+  content: "";
+  opacity: var(--display-highlight-opacity, 0);
+  pointer-events: none;
+  will-change: opacity;
+}
+
+.cell:global(.selected) {
+  z-index: calc(var(--cell-selection-z-index) + 15);
+}
+
+.error {
+  position: absolute;
+  display: flex;
+  inset: 0;
+  place-content: center;
+  place-items: center;
+}
+
+.content,
+.cell::before,
+.cell::after {
+  border-bottom-left-radius: calc(
+    var(--radius) / 2 + var(--cell-bottom-left-radius) * var(--radius) / 2
+  );
+  border-bottom-right-radius: calc(
+    var(--radius) / 2 + var(--cell-bottom-right-radius) * var(--radius) / 2
+  );
+  border-top-left-radius: calc(
+    var(--radius) / 2 + var(--cell-top-left-radius) * var(--radius) / 2
+  );
+  border-top-right-radius: calc(
+    var(--radius) / 2 + var(--cell-top-right-radius) * var(--radius) / 2
+  );
+}
+
+.cell :global(.token) {
+  margin: 0 0.1em;
+  caret-color: var(--gray-800);
+  color: var(--token-color, currentColor);
+}
+
+.cell :global(.token):first-of-type {
+  margin-left: 0;
+}
+
+.cell :global(.token):last-of-type {
+  margin-right: 0;
+}
+
+.cell :global(.token):global(.equal),
+.cell :global(.token):global(.plus),
+.cell :global(.token):global(.minus),
+.cell :global(.token):global(.asterisk),
+.cell :global(.token):global(.slash),
+.cell :global(.token):global(.mod),
+.cell :global(.token):global(.colon),
+.cell :global(.token):global(.caret),
+.cell :global(.token):global(.open-parenthesis),
+.cell :global(.token):global(.close-parenthesis) {
+  display: inline-block;
+  color: var(--gray-400);
+}
+
+.cell :global(.token):global(.cell) {
+  font-weight: 600;
+}

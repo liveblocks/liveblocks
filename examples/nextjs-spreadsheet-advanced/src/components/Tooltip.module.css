@@ -1,0 +1,18 @@
+.tooltip {
+  --tooltip-background: var(--gray-800);
+
+  z-index: 10000;
+  padding: 4px 8px;
+  background: var(--tooltip-background);
+  border-radius: 5px;
+  color: var(--white);
+  font-size: 12px;
+}
+
+.tooltip:global {
+  animation: appear both 0.12s ease-in-out;
+}
+
+.arrow {
+  fill: var(--tooltip-background);
+}
