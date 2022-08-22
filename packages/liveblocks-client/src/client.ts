@@ -128,8 +128,9 @@ export function createClient(options: ClientOptions): Client {
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (clientOptions as any)?.liveblocksServer || "wss://liveblocks.net/v6",
-        authentication: prepareAuthentication(clientOptions),
+          (clientOptions as any)?.liveblocksServer ||
+          "wss://api.liveblocks.io/v6",
+        authentication: prepareAuthentication(clientOptions, roomId),
       }
     );
     rooms.set(
@@ -209,7 +210,10 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
   return options.throttle;
 }
 
-function prepareAuthentication(clientOptions: ClientOptions): Authentication {
+function prepareAuthentication(
+  clientOptions: ClientOptions,
+  roomId: string
+): Authentication {
   const { publicApiKey, authEndpoint } = clientOptions;
 
   if (authEndpoint !== undefined && publicApiKey !== undefined) {
@@ -231,11 +235,7 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
     return {
       type: "public",
       publicApiKey,
-      url:
-        // TODO Patch this using public but marked internal fields?
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (clientOptions as any).publicAuthorizeEndpoint ||
-        "https://liveblocks.io/api/public/authorize",
+      url: buildLiveblocksPublicAuthorizeEndpoint(clientOptions, roomId),
     };
   }
 
@@ -258,4 +258,16 @@ function prepareAuthentication(clientOptions: ClientOptions): Authentication {
   throw new Error(
     "Invalid Liveblocks client options. For more information: https://liveblocks.io/docs/api-reference/liveblocks-client#createClient"
   );
+}
+
+function buildLiveblocksPublicAuthorizeEndpoint(
+  options: ClientOptions & { publicAuthorizeEndpoint?: string | undefined },
+  roomId: string
+): string {
+  // INTERNAL override for testing purpose.
+  if (options.publicAuthorizeEndpoint) {
+    return options.publicAuthorizeEndpoint.replace("{roomId}", roomId);
+  }
+
+  return `https://api.liveblocks.io/v2/rooms/${roomId}/public/authorize`;
 }
