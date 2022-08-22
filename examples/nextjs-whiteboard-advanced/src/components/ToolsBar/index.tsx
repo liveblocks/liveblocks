@@ -13,6 +13,8 @@ type Props = {
   setCanvasState: (newState: CanvasState) => void;
   undo: () => void;
   redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 };
 
 export default function ToolsBar({
@@ -20,6 +22,8 @@ export default function ToolsBar({
   setCanvasState,
   undo,
   redo,
+  canUndo,
+  canRedo,
 }: Props) {
   return (
     <div className={styles.tools_panel_container}>
@@ -66,8 +70,8 @@ export default function ToolsBar({
         </div>
         <div className={styles.seperator}></div>
         <div className={styles.tools_panel_section}>
-          <UndoButton onClick={undo} />
-          <RedoButton onClick={redo} />
+          <UndoButton onClick={undo} disabled={!canUndo} />
+          <RedoButton onClick={redo} disabled={!canRedo} />
         </div>
       </div>
     </div>

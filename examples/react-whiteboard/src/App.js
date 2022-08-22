@@ -3,6 +3,8 @@ import {
   useMyPresence,
   useMap,
   useHistory,
+  useCanUndo,
+  useCanRedo,
   useBatch,
   useRoom,
   useOthers,
@@ -41,6 +43,8 @@ function Canvas({ shapes }) {
   const [{ selectedShape }, setPresence] = useMyPresence();
   const batch = useBatch();
   const history = useHistory();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
   const others = useOthers();
 
   const insertRectangle = () => {
@@ -127,8 +131,12 @@ function Canvas({ shapes }) {
         <button onClick={deleteRectangle} disabled={selectedShape == null}>
           Delete
         </button>
-        <button onClick={history.undo}>Undo</button>
-        <button onClick={history.redo}>Redo</button>
+        <button onClick={history.undo} disabled={!canUndo}>
+          Undo
+        </button>
+        <button onClick={history.redo} disabled={!canRedo}>
+          Redo
+        </button>
       </div>
     </>
   );

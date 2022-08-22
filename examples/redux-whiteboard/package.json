@@ -9,12 +9,12 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.17.7",
-    "@liveblocks/redux": "^0.17.7",
-    "@reduxjs/toolkit": "^1.7.2",
+    "@liveblocks/client": "^0.17.8",
+    "@liveblocks/redux": "^0.17.8",
+    "@reduxjs/toolkit": "^1.8.4",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-redux": "^7.2.6",
+    "react-redux": "^8.0.2",
     "react-scripts": "^5.0.1",
     "redux": "^4.1.2"
   },

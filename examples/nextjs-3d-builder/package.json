@@ -8,16 +8,16 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.17.7",
-    "@liveblocks/react": "^0.17.7",
+    "@liveblocks/client": "^0.17.8",
+    "@liveblocks/react": "^0.17.8",
     "@react-three/drei": "^9.16.0",
     "@react-three/fiber": "^8.0.27",
     "next": "^12.1.6",
     "next-transpile-modules": "^9.0.0",
-    "react": "18.2.0",
+    "react": "^18.2.0",
     "react-colorful": "^5.5.1",
-    "react-dom": "18.2.0",
-    "three": "0.142.0"
+    "react-dom": "^18.2.0",
+    "three": "^0.143.0"
   },
   "devDependencies": {
     "prettier": "^2.6.2"
