@@ -57,6 +57,7 @@
     "jest-environment-jsdom": "^28.1.0",
     "msw": "^0.39.1",
     "node-fetch": "2.6.7",
+    "prettier": "^2.7.1",
     "regenerator-runtime": "^0.13.9",
     "tsup": "^6.2.2",
     "typescript": "^4.7.2",

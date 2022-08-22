@@ -49,6 +49,7 @@
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "jest": "^26.6.3",
     "msw": "^0.27.1",
+    "prettier": "^2.7.1",
     "react-error-boundary": "^3.1.1",
     "ts-node": "^10.8.1",
     "tsup": "^6.2.2",
