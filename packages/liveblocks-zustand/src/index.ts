@@ -24,23 +24,6 @@ import {
   missingMapping,
 } from "./errors";
 
-const pkg = "@liveblocks/zustand";
-const format =
-  "__PACKAGE_FORMAT__" === "__PACKAGE" + /* don't join */ "_FORMAT__"
-    ? "ESM"
-    : "__PACKAGE_FORMAT__";
-const g = globalThis as typeof globalThis & { [key: string]: string };
-if (g && g[pkg] !== format) {
-  if (g[pkg] === undefined) {
-    g[pkg] = format;
-  } else {
-    // XXX Link to documentation with more details/debugging instructions
-    console.warn(
-      `${pkg} appears twice in your bundle (as ${g[pkg]} and ${format}). This can lead to hard-to-debug problems. Please see XXX for details.`
-    );
-  }
-}
-
 function isJson(value: unknown): value is Json {
   return (
     value === null ||
