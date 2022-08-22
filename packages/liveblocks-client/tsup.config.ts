@@ -6,7 +6,12 @@ export default defineConfig({
   splitting: true,
   clean: true,
   target: "es5",
-  format: ["esm", "cjs"],
+  format: [
+    "cjs",
+
+    // NOTE: We'll generate ESM wrappers around the generated CJS output
+    // "esm",
+  ],
 
   // Perhaps enable later?
   // "minify": true,

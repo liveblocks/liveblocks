@@ -7,8 +7,10 @@ export default defineConfig({
   clean: true,
   target: "es2015",
   format: [
-    // "esm",
     "cjs",
+
+    // NOTE: We'll generate ESM wrappers around the generated CJS output
+    // "esm",
   ],
 
   // Perhaps enable later?
