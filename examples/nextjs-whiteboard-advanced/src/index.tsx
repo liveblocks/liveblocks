@@ -6,6 +6,8 @@ import {
   useMap,
   useHistory,
   useBatch,
+  useCanUndo,
+  useCanRedo,
 } from "../liveblocks.config";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -105,6 +107,8 @@ function Canvas({
   });
   const batch = useBatch();
   const history = useHistory();
+  const canUndo = useCanUndo();
+  const canRedo = useCanRedo();
 
   const selectionBounds = useSelectionBounds(layers, selection);
 
@@ -612,6 +616,8 @@ function Canvas({
         setCanvasState={setState}
         undo={history.undo}
         redo={history.redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
     </>
   );

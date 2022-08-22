@@ -1,0 +1,164 @@
+.sheet {
+  position: relative;
+  display: grid;
+  overflow: auto;
+  grid-template-areas:
+    ".    columns"
+    "rows table";
+  grid-template-columns: var(--column-header-width) 1fr var(--padding);
+  grid-template-rows: var(--row-height) 1fr var(--padding);
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sheet::-webkit-scrollbar {
+  display: none;
+}
+
+.rows {
+  flex-direction: column;
+  grid-area: 2 / 1 / 3 / 4;
+}
+
+.columns {
+  flex-direction: row;
+  grid-area: 1 / 2 / 4 / 3;
+}
+
+.table_container {
+  z-index: 100;
+  background: var(--gray-200);
+  grid-area: 2 / 2 / 3 / 3;
+}
+
+.table {
+  display: table;
+  background: var(--gray-0);
+  border-collapse: collapse;
+  border-radius: var(--radius);
+  border-spacing: 0;
+  box-shadow: 0 0 0 1px rgb(31 41 55 / 4%), 0 2px 4px rgb(31 41 55 / 6%),
+    0 4px 16px -2px rgb(31 41 55 / 12%);
+  outline: none;
+}
+
+.table tr:first-of-type .cell {
+  border-top: none;
+}
+
+.table tr:last-of-type .cell {
+  border-bottom: none;
+}
+
+.table tr .cell:first-of-type {
+  border-left: none;
+}
+
+.table tr .cell:last-of-type {
+  border-right: none;
+}
+
+.table tr:first-of-type .cell:first-of-type {
+  --cell-top-left-radius: 1;
+}
+
+.table tr:first-of-type .cell:last-of-type {
+  --cell-top-right-radius: 1;
+}
+
+.table tr:last-of-type .cell:first-of-type {
+  --cell-bottom-left-radius: 1;
+}
+
+.table tr:last-of-type .cell:last-of-type {
+  --cell-bottom-right-radius: 1;
+}
+
+.sort_indicators {
+  z-index: 200;
+  display: flex;
+  grid-area: 2 / 2 / 3 / 3;
+  pointer-events: none;
+}
+
+.sort_indicators:global(.column) {
+  flex-direction: row;
+}
+
+.sort_indicators:global(.row) {
+  flex-direction: column;
+}
+
+.sort_indicator_container {
+  position: relative;
+  flex: none;
+}
+
+.sort_indicator {
+  --sort-indicator-size: 2px;
+
+  position: absolute;
+  background: var(--accent);
+}
+
+.sort_indicator::before,
+.sort_indicator::after {
+  position: absolute;
+  width: calc(var(--border) * 4);
+  height: calc(var(--border) * 4);
+  background: var(--accent);
+  border-radius: 50%;
+  content: "";
+}
+
+.sort_indicators:global(.column) .sort_indicator {
+  width: var(--sort-indicator-size);
+  height: 100%;
+}
+
+.sort_indicators:global(.column) .sort_indicator:global(.before) {
+  left: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator:global(.after) {
+  right: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator::before,
+.sort_indicators:global(.column) .sort_indicator::after {
+  left: calc(-2 * var(--border) + var(--border) / 2);
+}
+
+.sort_indicators:global(.column) .sort_indicator::before {
+  top: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.column) .sort_indicator::after {
+  bottom: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.row) .sort_indicator {
+  width: 100%;
+  height: var(--sort-indicator-size);
+}
+
+.sort_indicators:global(.row) .sort_indicator:global(.before) {
+  top: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator:global(.after) {
+  bottom: calc(-1 * var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator::before,
+.sort_indicators:global(.row) .sort_indicator::after {
+  top: calc(-2 * var(--border) + var(--border) / 2);
+}
+
+.sort_indicators:global(.row) .sort_indicator::before {
+  left: calc(-2 * var(--border));
+}
+
+.sort_indicators:global(.row) .sort_indicator::after {
+  right: calc(-2 * var(--border));
+}

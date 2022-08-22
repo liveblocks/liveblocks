@@ -9,11 +9,11 @@
     "test": "jest"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.17.7",
-    "@liveblocks/react": "^0.17.7",
+    "@liveblocks/client": "^0.17.8",
+    "@liveblocks/react": "^0.17.8",
     "base-64": "^1.0.0",
-    "react": "17.0.2",
-    "react-native": "0.68.2",
+    "react": "^17.0.2",
+    "react-native": "^0.68.2",
     "react-native-svg": "^12.3.0",
     "react-native-svg-transformer": "^1.0.0"
   },

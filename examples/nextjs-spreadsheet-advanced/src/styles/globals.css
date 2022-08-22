@@ -1,0 +1,110 @@
+:root {
+  --margin: 16px;
+  --padding: 8px;
+  --radius: 5px;
+  --border: 2px;
+  --accent: #07f;
+  --white: #fff;
+  --black: #000;
+  --gray-0: var(--white);
+  --gray-100: #f3f4f6;
+  --gray-200: #e8eaee;
+  --gray-300: #d6dae1;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-1000: var(--black);
+  --red-100: #fee2e2;
+  --red-500: #ef4444;
+}
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+}
+
+body {
+  display: flex;
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  place-content: center;
+  place-items: center;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  vertical-align: top;
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.sr {
+  position: absolute;
+  overflow: hidden;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border-width: 0;
+  margin: -1px;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.grabbing *,
+.scrubbing *,
+.resizing-column *,
+.resizing-row * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.grabbing {
+  cursor: grabbing;
+}
+
+.scrubbing {
+  cursor: ew-resize;
+}
+
+.resizing-column {
+  cursor: col-resize;
+}
+
+.resizing-row {
+  cursor: row-resize;
+}
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes disappear {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
