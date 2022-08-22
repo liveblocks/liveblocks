@@ -19,7 +19,9 @@ use_explicit_cjs_extensions () {
     # either CJS or ESM files, depending on the project's own configuration.
     # Let's rename these to *.cjs extensions explicitly, so they're not
     # dependent on the parent project's configuration.
+    set +e
     shopt -s nullglob
+    set -e
 
     # Replace any require('./foo.js') by require('./foo.cjs'), and rename the
     # file extensions at the same time
