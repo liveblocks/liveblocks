@@ -1,3 +1,8 @@
+# v0.17.9
+
+- Fix bug that could cause duplicate copies of @liveblocks/client to end up in
+  final bundle, for certain bundler configurations.
+
 # v0.17.8
 
 ### New history APIs ↩️ ↪️
