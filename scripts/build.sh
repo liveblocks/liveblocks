@@ -65,7 +65,7 @@ main () {
     console.log(JSON.stringify(data));
     ' | node - > "$DIST/package.json"
 
-    prettier --write "$DIST/package.json"
+    node_modules/.bin/prettier --write "$DIST/package.json"
 }
 
 if [ ! -f "./package.json" ]; then
