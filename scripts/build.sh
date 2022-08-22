@@ -13,7 +13,36 @@ err () {
     echo "$@" >&2
 }
 
+use_explicit_cjs_extensions () {
+    # Small correction: our Rollup plugins generare Common JS files with the
+    # *.js extension, but module resolvers are allowed to interpret those as
+    # either CJS or ESM files, depending on the project's own configuration.
+    # Let's rename these to *.cjs extensions explicitly, so they're not
+    # dependent on the parent project's configuration.
+    shopt -s nullglob
+
+    # Replace any require('./foo.js') by require('./foo.cjs'), and rename the
+    # file extensions at the same time
+    for f in "$DIST/"*.js; do
+        sed -Ee 's/[.]js"/.cjs"/' "$f" > "${f%.js}.cjs"
+    done
+    rm "$DIST/"*.js
+}
+
+generate_esm_wrappers () {
+    if [ -f "$DIST/internal.cjs" ]; then
+        npx gen-esm-wrapper "$DIST/internal.cjs" "$DIST/internal.mjs"
+    fi
+
+    if [ -f "$DIST/index.cjs" ]; then
+        npx gen-esm-wrapper "$DIST/index.cjs" "$DIST/index.mjs"
+    fi
+}
+
 main () {
+    use_explicit_cjs_extensions
+    generate_esm_wrappers
+
     # Copy these files into the distribution
     cp "$ROOT/LICENSE" ./README.md "$DIST/"
 

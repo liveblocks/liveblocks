@@ -104,7 +104,7 @@ function buildCJS(srcFiles, external = []) {
       dir: "lib",
       format: "cjs",
       exports: "named",
-      chunkFileNames: "shared.js",
+      chunkFileNames: "shared.cjs",
     },
     external,
     plugins: [
@@ -229,7 +229,7 @@ export default async () => {
     // Build modern ES modules (*.mjs)
     buildESM(srcFiles, external),
 
-    // Build Common JS modules (*.js)
+    // Build Common JS modules (*.cjs)
     buildCJS(srcFiles, external),
 
     // Build TypeScript declaration files (*.d.ts)

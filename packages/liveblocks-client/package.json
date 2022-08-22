@@ -2,18 +2,18 @@
   "name": "@liveblocks/client",
   "version": "0.17.8-dev",
   "description": "A client that lets you interact with Liveblocks servers.",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "module": "./index.mjs",
   "types": "./index.d.ts",
   "exports": {
     "./internal": {
       "types": "./internal.d.ts",
-      "require": "./internal.js",
+      "require": "./internal.cjs",
       "import": "./internal.mjs"
     },
     ".": {
       "types": "./index.d.ts",
-      "require": "./index.js",
+      "require": "./index.cjs",
       "import": "./index.mjs"
     }
   },

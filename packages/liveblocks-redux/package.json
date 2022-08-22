@@ -2,7 +2,7 @@
   "name": "@liveblocks/redux",
   "version": "0.17.8-dev",
   "description": "A store enhancer to integrate Liveblocks into Redux stores.",
-  "main": "./index.js",
+  "main": "./index.cjs",
   "module": "./index.mjs",
   "types": "./index.d.ts",
   "files": [
