@@ -17,6 +17,13 @@
 
 ---
 
+# v0.17.9
+
+- Fix bug that could cause duplicate copies of @liveblocks/client to end up in
+  final bundle, for certain bundler configurations.
+
+---
+
 # v0.17.8
 
 ### New history APIs ↩️ ↪️
@@ -24,7 +31,8 @@
 - In **@liveblocks/client**:
 
   - Add `canUndo()` and `canRedo()` utilities to `room.history`
-  - Add `"history"` event type to `room.subscribe()` to subscribe to the current user's history changes
+  - Add `"history"` event type to `room.subscribe()` to subscribe to the current
+    user's history changes
 
 - In **@liveblocks/react**:
 
@@ -36,13 +44,19 @@
 
 - In **@liveblocks/zustand**:
 
-  - Simplify zustand middleware integration with Typescript. `TPresence`, `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
+  - Simplify zustand middleware integration with Typescript. `TPresence`,
+    `TStorage`, `TUserMeta`, and `TRoomEvent` are now optional.
 
-Note that `@liveblocks/zustand` does not work with zustand > v4 because v3 and v4 have completely different type definitions. As soon as zustand v4 is out of the RC phase, we will consider updating our middleware to work with the latest version.
+Note that `@liveblocks/zustand` does not work with zustand > v4 because v3 and
+v4 have completely different type definitions. As soon as zustand v4 is out of
+the RC phase, we will consider updating our middleware to work with the latest
+version.
 
 ### Example
 
-Let's take a look at our [To-do list](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list) example. Without our middleware, the store would look like this:
+Let's take a look at our
+[To-do list](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list)
+example. Without our middleware, the store would look like this:
 
 ```ts
 import create from "zustand";
@@ -59,7 +73,8 @@ type State = {
 create<State>(/* ... */);
 ```
 
-With our middleware, you simply need to move the `State` param at the middleware level:
+With our middleware, you simply need to move the `State` param at the middleware
+level:
 
 ```ts
 import create from "zustand";
@@ -86,7 +101,8 @@ create(
 );
 ```
 
-If you want to type `others` presence, you can use the `TPresence` generic argument on the middleware.
+If you want to type `others` presence, you can use the `TPresence` generic
+argument on the middleware.
 
 ```ts
 

@@ -287,8 +287,8 @@ publish_to_npm () {
         return
     fi
 
-    if [ -f "./lib/package.json" ]; then
-        cd "./lib"
+    if [ -f "./dist/package.json" ]; then
+        cd "./dist"
     fi
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"

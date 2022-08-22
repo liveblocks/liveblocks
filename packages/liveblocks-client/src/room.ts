@@ -1785,7 +1785,11 @@ function prepareCreateWebSocket(
 
   return (token: string): WebSocket => {
     return new ws(
-      `${liveblocksServer}/?token=${token}&version=__PACKAGE_VERSION__`
+      `${liveblocksServer}/?token=${token}&version=${
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
+        typeof __PACKAGE_VERSION__ === "string" ? __PACKAGE_VERSION__ : "dev"
+      }`
     );
   };
 }
