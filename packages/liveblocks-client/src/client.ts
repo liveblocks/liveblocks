@@ -269,5 +269,7 @@ function buildLiveblocksPublicAuthorizeEndpoint(
     return options.publicAuthorizeEndpoint.replace("{roomId}", roomId);
   }
 
-  return `https://api.liveblocks.io/v2/rooms/${roomId}/public/authorize`;
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/public/authorize`;
 }

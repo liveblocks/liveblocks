@@ -11,7 +11,7 @@ type AuthorizeOptions = {
   room: string;
   /**
    * The id of the user that try to connect. It should be used to get information about the connected users in the room (name, avatar, etc).
-   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accessesl
+   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accesses
    */
   userId?: string;
   /**
@@ -95,7 +95,7 @@ export async function authorize(
   } catch (er) {
     return {
       status: 403,
-      body: 'Call to "https://api.liveblocks.io/v2/rooms/{roomId}/authorize" failed. See "error" for more information.',
+      body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
       error: er,
     };
   }
@@ -103,12 +103,14 @@ export async function authorize(
 
 function buildLiveblocksAuthorizeEndpoint(
   options: AllAuthorizeOptions,
-  room: string
+  roomId: string
 ): string {
   // INTERNAL override for testing purpose.
   if (options.liveblocksAuthorizeEndpoint) {
-    return options.liveblocksAuthorizeEndpoint.replace("{roomId}", room);
+    return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
   }
 
-  return `https://api.liveblocks.io/v2/rooms/${room}/authorize`;
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/authorize`;
 }
