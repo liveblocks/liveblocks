@@ -11,12 +11,17 @@ type AuthorizeOptions = {
   room: string;
   /**
    * The id of the user that try to connect. It should be used to get information about the connected users in the room (name, avatar, etc).
+   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accesses
    */
   userId?: string;
   /**
    * The info associated to the user. Can be used to store the name or the profile picture to implement avatar for example. Can't exceed 1KB when serialized as JSON
    */
   userInfo?: unknown; // must be Json
+  /**
+   * The ids of the groups to which the user belongs. It should be used to generate a token that gives access to a private room and at least one of the group is configured in the room accesses.
+   */
+  groupIds?: string[];
 };
 
 type AllAuthorizeOptions = AuthorizeOptions & {
@@ -42,7 +47,8 @@ type AuthorizeResponse = {
  *   userId: "123", // Optional
  *   userInfo: {    // Optional
  *     name: "Ada Lovelace"
- *   }
+ *   },
+ *   groupIds: ["group1"] // Optional
  * });
  * return res.status(response.status).end(response.body);
  * }
@@ -51,7 +57,7 @@ export async function authorize(
   options: AuthorizeOptions
 ): Promise<AuthorizeResponse> {
   try {
-    const { room, secret, userId, userInfo } = options;
+    const { room, secret, userId, userInfo, groupIds } = options;
 
     if (!(typeof room === "string" && room.length > 0)) {
       throw new Error(
@@ -60,18 +66,17 @@ export async function authorize(
     }
 
     const result = await fetch(
-      (options as AllAuthorizeOptions).liveblocksAuthorizeEndpoint ||
-        "https://liveblocks.io/api/authorize",
+      buildLiveblocksAuthorizeEndpoint(options as AllAuthorizeOptions, room),
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer: ${secret}`,
+          Authorization: `Bearer ${secret}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          room,
           userId,
           userInfo,
+          groupIds,
         }),
       }
     );
@@ -90,8 +95,22 @@ export async function authorize(
   } catch (er) {
     return {
       status: 403,
-      body: 'Call to "https://liveblocks.io/api/authorize" failed. See "error" for more information.',
+      body: 'Call to "https://api.liveblocks.io/v2/rooms/:roomId/authorize" failed. See "error" for more information.',
       error: er,
     };
   }
+}
+
+function buildLiveblocksAuthorizeEndpoint(
+  options: AllAuthorizeOptions,
+  roomId: string
+): string {
+  // INTERNAL override for testing purpose.
+  if (options.liveblocksAuthorizeEndpoint) {
+    return options.liveblocksAuthorizeEndpoint.replace("{roomId}", roomId);
+  }
+
+  return `https://api.liveblocks.io/v2/rooms/${encodeURIComponent(
+    roomId
+  )}/authorize`;
 }
