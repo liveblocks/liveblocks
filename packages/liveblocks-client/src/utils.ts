@@ -40,6 +40,21 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   return items.filter((item: T): item is NonNullable<T> => item != null);
 }
 
+/**
+ * Returns a new object instance where all explictly-undefined values are
+ * removed.
+ */
+export function compactObject<O>(obj: O): O {
+  const newObj = { ...obj };
+  Object.keys(obj).forEach((k) => {
+    const key = k as keyof O;
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  });
+  return newObj;
+}
+
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));
 }

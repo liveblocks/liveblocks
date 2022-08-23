@@ -6,6 +6,7 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { EventSource } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
+import { makeOthers } from "./Presence";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -157,33 +158,6 @@ const PONG_TIMEOUT = 2000;
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
-}
-
-function makeOthers<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
->(userMap: {
-  [key: number]: User<TPresence, TUserMeta>;
-}): Others<TPresence, TUserMeta> {
-  const users = Object.values(userMap).map((user) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = user;
-    return publicKeys;
-  });
-
-  return {
-    get count() {
-      return users.length;
-    },
-    [Symbol.iterator]() {
-      return users[Symbol.iterator]();
-    },
-    map(callback) {
-      return users.map(callback);
-    },
-    toArray() {
-      return users;
-    },
-  };
 }
 
 function log(..._params: unknown[]) {
