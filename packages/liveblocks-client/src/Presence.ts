@@ -37,7 +37,8 @@ function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
-export function makeOthers<
+// XXX Refactor this helper away!
+function makeOthers<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
 >(userMap: {

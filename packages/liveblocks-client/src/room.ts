@@ -6,7 +6,7 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { EventSource } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
-import { makeOthers } from "./Presence";
+import { Presence } from "./Presence";
 import type {
   Authentication,
   AuthorizeResponse,
