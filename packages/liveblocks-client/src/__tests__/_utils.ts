@@ -297,6 +297,7 @@ export async function prepareStorageTest<
             type: ServerMsgCode.UPDATE_PRESENCE,
             data: message.data,
             actor: currentActor,
+            targetActor: message.targetActor,
           })
         );
       }
