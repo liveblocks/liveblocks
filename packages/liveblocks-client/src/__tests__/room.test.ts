@@ -294,8 +294,8 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.me).toEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.presence.me).toStrictEqual({ x: 0 });
+    expect(state.buffer.presence?.data).toStrictEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -303,12 +303,12 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.me).toEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.presence.me).toStrictEqual({ x: 0 });
+    expect(state.buffer.presence?.data).toStrictEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
-    expect(state.me).toEqual({ x: 0, y: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0, y: 0 });
+    expect(state.presence.me).toStrictEqual({ x: 0, y: 0 });
+    expect(state.buffer.presence?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
   test("others should be iterable", () => {
