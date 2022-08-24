@@ -80,6 +80,8 @@ export class Presence<
 
   // Derived/cached data. Never set these directly.
   /** @internal */
+  _users: { [connectionId: number]: User<TPresence, TUserMeta> };
+  /** @internal */
   _others: Others<TPresence, TUserMeta> | undefined;
   /** @internal */
   _snapshot: { me: TPresence; others: TPresence[] } | undefined;
@@ -91,6 +93,7 @@ export class Presence<
     // Others
     this._connections = {};
     this._presences = {};
+    this._users = {};
   }
 
   clearOthers() {
@@ -104,12 +107,27 @@ export class Presence<
     return this._me;
   }
 
-  getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
+  _getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
     const conn = this._connections[connectionId];
     const presence = this._presences[connectionId];
     if (conn !== undefined && presence !== undefined) {
       const user: User<TPresence, TUserMeta> = { ...conn, presence };
       return user;
+    }
+
+    return undefined;
+  }
+
+  getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
+    const cachedUser = this._users[connectionId];
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    const computedUser = this._getUser(connectionId);
+    if (computedUser) {
+      this._users[connectionId] = computedUser;
+      return computedUser;
     }
 
     return undefined;
@@ -125,6 +143,14 @@ export class Presence<
 
   get others(): Others<TPresence, TUserMeta> {
     return this._others ?? (this._others = makeOthers(this._getUsers()));
+  }
+
+  /** @internal */
+  _invalidateUser(connectionId: number): void {
+    if (this._users[connectionId] !== undefined) {
+      delete this._users[connectionId];
+    }
+    this._invalidateOthers();
   }
 
   /** @internal */
@@ -180,7 +206,7 @@ export class Presence<
       info: metaUserInfo,
     };
     if (this._presences[connectionId] !== undefined) {
-      this._invalidateOthers();
+      this._invalidateUser(connectionId);
     }
   }
 
@@ -191,7 +217,7 @@ export class Presence<
   removeConnection(connectionId: number): void {
     delete this._connections[connectionId];
     delete this._presences[connectionId];
-    this._invalidateOthers();
+    this._invalidateUser(connectionId);
   }
 
   /**
@@ -201,7 +227,7 @@ export class Presence<
   setOther(connectionId: number, presence: TPresence): void {
     this._presences[connectionId] = compactObject(presence);
     if (this._connections[connectionId] !== undefined) {
-      this._invalidateOthers();
+      this._invalidateUser(connectionId);
     }
   }
 
@@ -219,7 +245,7 @@ export class Presence<
     const newPresence = merge(oldPresence, patch);
     if (oldPresence !== newPresence) {
       this._presences[connectionId] = newPresence;
-      this._invalidateOthers();
+      this._invalidateUser(connectionId);
     }
   }
 }

@@ -146,36 +146,47 @@ describe("Presence", () => {
     });
   });
 
-  it("caches immutable results", () => {
-    const p = new Presence<P, M>({ x: 0, y: 0 });
-    p.setConnection(2, "user-123", undefined);
-    p.setOther(2, { x: 2, y: 2 });
+  describe("caching", () => {
+    it("caches immutable results", () => {
+      const p = new Presence<P, M>({ x: 0, y: 0 });
+      p.setConnection(2, "user-123", undefined);
+      p.setOther(2, { x: 2, y: 2 });
 
-    const imm1 = p.toImmutable();
-    const imm2 = p.toImmutable();
-    expect(imm1).toBe(imm2);
+      const imm1 = p.toImmutable();
+      const imm2 = p.toImmutable();
+      expect(imm1).toBe(imm2);
 
-    // These are effectively no-ops
-    p.patchMe({ x: 0 });
-    p.patchMe({ y: 0, z: undefined });
-    p.patchOther(2, { x: 2 });
-    p.patchOther(2, { y: 2, z: undefined });
+      // These are effectively no-ops
+      p.patchMe({ x: 0 });
+      p.patchMe({ y: 0, z: undefined });
+      p.patchOther(2, { x: 2 });
+      p.patchOther(2, { y: 2, z: undefined });
 
-    const imm3 = p.toImmutable();
-    expect(imm2).toBe(imm3); // No observable change!
+      const imm3 = p.toImmutable();
+      expect(imm2).toBe(imm3); // No observable change!
 
-    p.patchMe({ y: -1 });
+      p.patchMe({ y: -1 });
 
-    const imm4 = p.toImmutable();
-    const imm5 = p.toImmutable();
-    expect(imm3).not.toBe(imm4);
-    expect(imm4).toBe(imm5);
+      const imm4 = p.toImmutable();
+      const imm5 = p.toImmutable();
+      expect(imm3).not.toBe(imm4);
+      expect(imm4).toBe(imm5);
 
-    p.patchOther(2, { y: -2 });
+      p.patchOther(2, { y: -2 });
 
-    const imm6 = p.toImmutable();
-    const imm7 = p.toImmutable();
-    expect(imm5).not.toBe(imm6);
-    expect(imm6).toBe(imm7);
+      const imm6 = p.toImmutable();
+      const imm7 = p.toImmutable();
+      expect(imm5).not.toBe(imm6);
+      expect(imm6).toBe(imm7);
+    });
+
+    it("getUser() returns stable cache results", () => {
+      const p = new Presence<P, M>({ x: 0, y: 0 });
+      p.setConnection(2, "user-123", undefined);
+      p.setOther(2, { x: 2, y: 2 });
+
+      expect(p.me).toBe(p.me);
+      expect(p.getUser(2)).toBe(p.getUser(2));
+    });
   });
 });
