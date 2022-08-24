@@ -46,24 +46,46 @@ export type ServerMsg<
  * those cases, the `targetActor` field indicates the newly connected client,
  * so all other existing clients can ignore this broadcasted message.
  */
-export type UpdatePresenceServerMsg<TPresence extends JsonObject> = {
+export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
+  | FullUpdatePresenceServerMsg<TPresence>
+  | PartialUpdatePresenceServerMsg<TPresence>;
+
+export type FullUpdatePresenceServerMsg<TPresence extends JsonObject> = {
   type: ServerMsgCode.UPDATE_PRESENCE;
   /**
    * The User whose Presence has changed.
    */
   actor: number;
   /**
+   * If this message was sent in response to a newly joined user, this field
+   * indicates which client this message is for. Other existing clients may
+   * ignore this message if this message isn't targeted for them, but they
+   * don't have to.
+   */
+  targetActor: number;
+  /**
    * The partial or full Presence of a User. If the `targetActor` field is set,
    * this will be the full Presence, otherwise it only contain the fields that
    * have changed since the last broadcast.
    */
   data: TPresence;
+};
+
+export type PartialUpdatePresenceServerMsg<TPresence extends JsonObject> = {
+  type: ServerMsgCode.UPDATE_PRESENCE;
   /**
-   * If this message was sent in response to a newly joined user, this field
-   * indicates which client this message is for. Other existing clients may
-   * ignore this message if this message isn't targeted for them.
+   * The User whose Presence has changed.
    */
-  targetActor?: number;
+  actor: number;
+  /**
+   * Not set for partial presence updates.
+   */
+  targetActor?: undefined;
+  /**
+   * A partial Presence patch to apply to the User. It will only contain the
+   * fields that have changed since the last broadcast.
+   */
+  data: Partial<TPresence>;
 };
 
 /**
