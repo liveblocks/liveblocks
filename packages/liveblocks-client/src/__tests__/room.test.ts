@@ -321,9 +321,19 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": {},
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
         actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
       })
     );
 
@@ -345,9 +355,19 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": {},
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
         actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
       })
     );
 
@@ -942,9 +962,17 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          users: { 1: {} },
+        })
+      );
+
+      machine.onMessage(
+        serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
+          targetActor: 0, // Setting targetActor means this is a full presence update
         })
       );
 
@@ -1256,7 +1284,7 @@ describe("room", () => {
       );
 
       expect(others?.toArray()).toEqual([
-        { connectionId: 1, id: undefined, info: undefined },
+        // User not yet publicly visible
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
