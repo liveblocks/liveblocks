@@ -28,11 +28,19 @@ export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-export type UpdatePresenceClientMsg<TPresence extends JsonObject> = {
-  type: ClientMsgCode.UPDATE_PRESENCE;
-  data: TPresence;
-  targetActor?: number;
-};
+export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
+  // Full Presence™ message
+  | {
+      type: ClientMsgCode.UPDATE_PRESENCE;
+      data: TPresence;
+      targetActor: number;
+    }
+  // Partial Presence™ message
+  | {
+      type: ClientMsgCode.UPDATE_PRESENCE;
+      data: Partial<TPresence>;
+      targetActor?: undefined;
+    };
 
 export type UpdateStorageClientMsg = {
   type: ClientMsgCode.UPDATE_STORAGE;
