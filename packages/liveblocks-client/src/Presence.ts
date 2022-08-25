@@ -37,34 +37,6 @@ function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
-// XXX Refactor this helper away!
-function makeOthers<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
->(userMap: {
-  [key: number]: User<TPresence, TUserMeta>;
-}): Others<TPresence, TUserMeta> {
-  const users = Object.values(userMap).map((user) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = user;
-    return publicKeys;
-  });
-
-  return {
-    get count() {
-      return users.length;
-    },
-    [Symbol.iterator]() {
-      return users[Symbol.iterator]();
-    },
-    map(callback) {
-      return users.map(callback);
-    },
-    toArray() {
-      return users;
-    },
-  };
-}
-
 export class Presence<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
@@ -83,7 +55,9 @@ export class Presence<
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
   /** @internal */
-  _others: Others<TPresence, TUserMeta> | undefined;
+  _others: User<TPresence, TUserMeta>[] | undefined;
+  /** @internal */
+  _othersProxy: Others<TPresence, TUserMeta> | undefined;
   /** @internal */
   _snapshot: { me: TPresence; others: TPresence[] } | undefined;
 
@@ -134,16 +108,42 @@ export class Presence<
     return undefined;
   }
 
-  _getUsers(): User<TPresence, TUserMeta>[] {
-    return compact(
-      Object.keys(this._presences).map((connectionId) =>
-        this.getUser(Number(connectionId))
-      )
+  get others(): User<TPresence, TUserMeta>[] {
+    return (
+      this._others ??
+      (this._others = compact(
+        Object.keys(this._presences).map((connectionId) =>
+          this.getUser(Number(connectionId))
+        )
+      ))
     );
   }
 
-  get others(): Others<TPresence, TUserMeta> {
-    return this._others ?? (this._others = makeOthers(this._getUsers()));
+  // TODO: Deprecate this others proxy! It shouldn't be necessary anymore now
+  // that the others property is stable/immutable.
+  getOthersProxy(): Others<TPresence, TUserMeta> {
+    if (this._othersProxy !== undefined) {
+      return this._othersProxy;
+    }
+
+    const users = this.others;
+    const proxy: Others<TPresence, TUserMeta> = {
+      get count() {
+        return users.length;
+      },
+      [Symbol.iterator]() {
+        return users[Symbol.iterator]();
+      },
+      map(callback) {
+        return users.map(callback);
+      },
+      toArray() {
+        return users;
+      },
+    };
+
+    this._othersProxy = proxy;
+    return proxy;
   }
 
   /** @internal */
@@ -157,6 +157,7 @@ export class Presence<
   /** @internal */
   _invalidateOthers(): void {
     this._others = undefined;
+    this._othersProxy = undefined;
     this._invalidateSnapshot();
   }
 
@@ -175,7 +176,7 @@ export class Presence<
       this._snapshot ??
       (this._snapshot = {
         me: this.me,
-        others: compact(this.others.map((other) => other.presence)),
+        others: this.others.map((other) => other.presence),
       })
     );
   }

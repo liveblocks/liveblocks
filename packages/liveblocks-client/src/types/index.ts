@@ -289,9 +289,7 @@ export type User<
   /**
    * The user presence.
    */
-  readonly presence?: TPresence;
-  /** @internal */
-  _hasReceivedInitialPresence?: boolean;
+  readonly presence: TPresence;
 };
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;

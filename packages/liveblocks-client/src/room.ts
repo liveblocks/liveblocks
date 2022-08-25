@@ -512,7 +512,7 @@ function makeStateMachine<
     if (otherEvents.length > 0) {
       for (const event of otherEvents) {
         for (const listener of state.listeners.others) {
-          listener(state.presence.others, event);
+          listener(state.presence.getOthersProxy(), event);
         }
       }
     }
@@ -1334,7 +1334,7 @@ function makeStateMachine<
   }
 
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.presence.others;
+    return state.presence.getOthersProxy();
   }
 
   function broadcastEvent(
