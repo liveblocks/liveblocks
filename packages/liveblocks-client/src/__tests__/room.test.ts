@@ -232,7 +232,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 }, targetActor: -1 },
+      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
   });
 
@@ -246,7 +246,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 }, targetActor: -1 },
+      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
   });
 
@@ -259,7 +259,7 @@ describe("room", () => {
     ws.open();
 
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, data: {}, targetActor: -1 },
+      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
     ]);
   });
 
@@ -280,7 +280,7 @@ describe("room", () => {
       defaultContext.throttleDelay - 30
     );
     expect(effects.send).toHaveBeenCalledWith([
-      { type: ClientMsgCode.UPDATE_PRESENCE, data: { x: 0 }, targetActor: -1 },
+      { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
     expect(state.buffer.presence?.data).toEqual({ x: 1 });
   });
@@ -374,7 +374,7 @@ describe("room", () => {
       withDateNow(now, () => ws.open());
 
       expect(effects.send).nthCalledWith(1, [
-        { type: ClientMsgCode.UPDATE_PRESENCE, data: {}, targetActor: -1 },
+        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
       ]);
 
       // Event payload can be any JSON value
@@ -411,7 +411,7 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMsgCode.UPDATE_PRESENCE, data: {}, targetActor: -1 },
+        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
       ]);
     });
 
@@ -432,7 +432,7 @@ describe("room", () => {
 
       expect(effects.send).toBeCalledTimes(1);
       expect(effects.send).toHaveBeenCalledWith([
-        { type: ClientMsgCode.UPDATE_PRESENCE, data: {}, targetActor: -1 },
+        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
         { type: ClientMsgCode.BROADCAST_EVENT, event: { type: "EVENT" } },
       ]);
     });
@@ -1289,7 +1289,7 @@ describe("room", () => {
       });
 
       assertMessagesSent([
-        { type: ClientMsgCode.UPDATE_PRESENCE, data: {}, targetActor: -1 },
+        { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: {} },
         { type: ClientMsgCode.FETCH_STORAGE },
         {
           type: ClientMsgCode.UPDATE_STORAGE,
