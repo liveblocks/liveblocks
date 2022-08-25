@@ -1312,11 +1312,11 @@ export function makeStateMachine<
         state.buffer.presence.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: state.buffer.presence.data,
-
-              // HACK to express that this message is a Full Presence™ message,
-              // which will get interpreted by other clients as such
+              // Populating the `targetActor` field turns this message into
+              // a Full Presence™ update message (not a patch), which will get
+              // interpreted by other clients as such.
               targetActor: -1,
+              data: state.buffer.presence.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
