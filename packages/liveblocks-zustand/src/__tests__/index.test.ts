@@ -10,6 +10,7 @@ import type {
   RoomStateServerMsg,
   SerializedCrdt,
   ServerMsg,
+  UpdatePresenceServerMsg,
 } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
@@ -356,6 +357,15 @@ describe("middleware", () => {
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
+      socket.callbacks.message[0]!({
+        data: JSON.stringify({
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
+          actor: 1,
+          data: { x: 1 },
+        } as UpdatePresenceServerMsg<JsonObject>),
+      } as MessageEvent);
+
       expect(store.getState().liveblocks.others).toEqual([
         {
           connectionId: 1,
@@ -363,6 +373,7 @@ describe("middleware", () => {
           info: {
             name: "Testy McTester",
           },
+          presence: { x: 1 },
         },
       ]);
     });
