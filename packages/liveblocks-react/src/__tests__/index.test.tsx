@@ -183,6 +183,7 @@ describe("useRoom", () => {
       JSON.stringify([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
           data: { x: 1 },
         },
       ])
