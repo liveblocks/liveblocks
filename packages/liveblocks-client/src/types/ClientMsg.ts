@@ -28,11 +28,36 @@ export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
   event: TRoomEvent;
 };
 
-export type UpdatePresenceClientMsg<TPresence extends JsonObject> = {
-  type: ClientMsgCode.UPDATE_PRESENCE;
-  data: TPresence;
-  targetActor?: number;
-};
+export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
+  // Full Presence™ message
+  | {
+      type: ClientMsgCode.UPDATE_PRESENCE;
+      /**
+       * Set this to any number to signify that this is a Full Presence™
+       * update, not a patch.
+       *
+       * The numeric value itself no longer has specific meaning. Historically,
+       * this field was intended so that clients could ignore these broadcasted
+       * full presence messages, but it turned out that getting a full presence
+       * "keyframe" from time to time was useful.
+       *
+       * So nowadays, the presence (pun intended) of this `targetActor` field
+       * is a backward-compatible way of expressing that the `data` contains
+       * all presence fields, and isn't a partial "patch".
+       */
+      targetActor: number;
+      data: TPresence;
+    }
+  // Partial Presence™ message
+  | {
+      type: ClientMsgCode.UPDATE_PRESENCE;
+      /**
+       * Absence of the `targetActor` field signifies that this is a Partial
+       * Presence™ "patch".
+       */
+      targetActor?: undefined;
+      data: Partial<TPresence>;
+    };
 
 export type UpdateStorageClientMsg = {
   type: ClientMsgCode.UPDATE_STORAGE;

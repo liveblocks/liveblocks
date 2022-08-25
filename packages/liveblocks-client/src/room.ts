@@ -213,7 +213,11 @@ export type State<
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
-    presence: TPresence | null;
+    // Queued-up Presence updates to be flushed at the earliest convenience
+    presence:
+      | { type: "partial"; data: Partial<TPresence> }
+      | { type: "full"; data: TPresence }
+      | null;
     messages: ClientMsg<TPresence, TRoomEvent>[];
     storageOperations: Op[];
   };
@@ -612,10 +616,12 @@ export function makeStateMachine<
         state.me = { ...state.me, ...op.data };
 
         if (state.buffer.presence == null) {
-          state.buffer.presence = op.data;
+          state.buffer.presence = { type: "partial", data: op.data };
         } else {
+          // Merge the new fields with whatever is already queued up (doesn't
+          // matter whether its a partial or full update)
           for (const key in op.data) {
-            state.buffer.presence[key] = op.data[key];
+            state.buffer.presence.data[key] = op.data[key];
           }
         }
 
@@ -817,7 +823,10 @@ export function makeStateMachine<
     const oldValues = {} as TPresence;
 
     if (state.buffer.presence == null) {
-      state.buffer.presence = {} as TPresence;
+      state.buffer.presence = {
+        type: "partial",
+        data: {},
+      };
     }
 
     for (const key in overrides) {
@@ -826,7 +835,7 @@ export function makeStateMachine<
       if (overrideValue === undefined) {
         continue;
       }
-      state.buffer.presence[key] = overrideValue;
+      state.buffer.presence.data[key] = overrideValue;
       oldValues[key] = state.me[key];
     }
 
@@ -1179,7 +1188,10 @@ export function makeStateMachine<
 
       // Re-broadcast the user presence during a reconnect.
       if (state.lastConnectionId !== undefined) {
-        state.buffer.presence = state.me;
+        state.buffer.presence = {
+          type: "full",
+          data: state.me,
+        };
         tryFlushing();
       }
 
@@ -1302,10 +1314,21 @@ export function makeStateMachine<
   ) {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
     if (state.buffer.presence) {
-      messages.push({
-        type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.buffer.presence,
-      });
+      messages.push(
+        state.buffer.presence.type === "full"
+          ? {
+              type: ClientMsgCode.UPDATE_PRESENCE,
+              // Populating the `targetActor` field turns this message into
+              // a Full Presence™ update message (not a patch), which will get
+              // interpreted by other clients as such.
+              targetActor: -1,
+              data: state.buffer.presence.data,
+            }
+          : {
+              type: ClientMsgCode.UPDATE_PRESENCE,
+              data: state.buffer.presence.data,
+            }
+      );
     }
     for (const event of state.buffer.messages) {
       messages.push(event);
@@ -1641,7 +1664,12 @@ export function defaultState<
       pongTimeout: 0,
     },
     buffer: {
-      presence: initialPresence == null ? ({} as TPresence) : initialPresence,
+      presence:
+        // Queue up the initial presence message as a Full Presence™ update
+        {
+          type: "full",
+          data: initialPresence == null ? ({} as TPresence) : initialPresence,
+        },
       messages: [],
       storageOperations: [],
     },

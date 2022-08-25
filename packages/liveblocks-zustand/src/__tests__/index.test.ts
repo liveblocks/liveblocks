@@ -259,6 +259,7 @@ describe("middleware", () => {
       expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
         {
@@ -290,6 +291,7 @@ describe("middleware", () => {
       expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
         {
@@ -312,6 +314,7 @@ describe("middleware", () => {
       expect(JSON.parse(socket.sentMessages[0]!)).toEqual([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
           data: { cursor: { x: 0, y: 0 } },
         },
         {
