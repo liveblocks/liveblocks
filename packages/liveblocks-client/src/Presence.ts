@@ -79,7 +79,7 @@ export class Presence<
     this._users = {};
   }
 
-  clearOthers() {
+  clearOthers(): void {
     this._connections = {};
     this._presences = {};
     this._users = {};
