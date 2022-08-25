@@ -51,7 +51,12 @@ export class Presence<
   /** @internal */
   _presences: { [connectionId: number]: TPresence };
 
-  // Derived/cached data. Never set these directly.
+  //
+  // --------------------------------------------------------------
+  //
+  // CACHES
+  // All of these are derived/cached data. Never set these directly.
+  //
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
   /** @internal */
@@ -60,6 +65,9 @@ export class Presence<
   _othersProxy: Others<TPresence, TUserMeta> | undefined;
   /** @internal */
   _snapshot: { me: TPresence; others: TPresence[] } | undefined;
+  //
+  // --------------------------------------------------------------
+  //
 
   constructor(initialPresence: TPresence) {
     // Me
@@ -82,6 +90,7 @@ export class Presence<
     return this._me;
   }
 
+  /** @internal */
   _getUser(connectionId: number): User<TPresence, TUserMeta> | undefined {
     const conn = this._connections[connectionId];
     const presence = this._presences[connectionId];
