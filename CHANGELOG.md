@@ -2,6 +2,9 @@
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in
   final bundle, for certain bundler configurations.
+- Fix bug where in some conditions the initial presence for a new connection
+  would not come through to all existing clients in the room
+- Various internal changes
 
 # v0.17.8
 
