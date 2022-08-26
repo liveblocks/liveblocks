@@ -1,5 +1,10 @@
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
-import { compact, compactObject } from "./utils";
+import { compact, compactObject, freeze } from "./utils";
+
+export type PresenceSnapshot<TPresence> = {
+  readonly me: TPresence;
+  readonly others: TPresence[];
+};
 
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
@@ -60,7 +65,7 @@ export class Presence<
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
   /** @internal */
-  _others: User<TPresence, TUserMeta>[] | undefined;
+  _others: readonly User<TPresence, TUserMeta>[] | undefined;
   /** @internal */
   _othersProxy: Others<TPresence, TUserMeta> | undefined;
   /** @internal */
@@ -96,7 +101,7 @@ export class Presence<
     const presence = this._presences[connectionId];
     if (conn !== undefined && presence !== undefined) {
       const user: User<TPresence, TUserMeta> = { ...conn, presence };
-      return user;
+      return freeze(user);
     }
 
     return undefined;
@@ -117,12 +122,14 @@ export class Presence<
     return undefined;
   }
 
-  get others(): User<TPresence, TUserMeta>[] {
+  get others(): readonly User<TPresence, TUserMeta>[] {
     return (
       this._others ??
-      (this._others = compact(
-        Object.keys(this._presences).map((connectionId) =>
-          this.getUser(Number(connectionId))
+      (this._others = freeze(
+        compact(
+          Object.keys(this._presences).map((connectionId) =>
+            this.getUser(Number(connectionId))
+          )
         )
       ))
     );
@@ -180,13 +187,13 @@ export class Presence<
     this._snapshot = undefined;
   }
 
-  toImmutable(): { me: TPresence; others: TPresence[] } {
+  toImmutable(): PresenceSnapshot<TPresence> {
     return (
       this._snapshot ??
-      (this._snapshot = {
+      (this._snapshot = freeze({
         me: this.me,
         others: this.others.map((other) => other.presence),
-      })
+      }))
     );
   }
 
@@ -197,7 +204,7 @@ export class Presence<
     const oldMe = this.me;
     const newMe = merge(oldMe, patch);
     if (oldMe !== newMe) {
-      this._me = newMe;
+      this._me = freeze(newMe);
       this._invalidateMe();
     }
   }
@@ -211,11 +218,11 @@ export class Presence<
     metaUserId: TUserMeta["id"],
     metaUserInfo: TUserMeta["info"]
   ): void {
-    this._connections[connectionId] = {
+    this._connections[connectionId] = freeze({
       connectionId,
       id: metaUserId,
       info: metaUserInfo,
-    };
+    });
     if (this._presences[connectionId] !== undefined) {
       this._invalidateUser(connectionId);
     }
@@ -236,7 +243,7 @@ export class Presence<
    * its known presence data is overwritten.
    */
   setOther(connectionId: number, presence: TPresence): void {
-    this._presences[connectionId] = compactObject(presence);
+    this._presences[connectionId] = freeze(compactObject(presence));
     if (this._connections[connectionId] !== undefined) {
       this._invalidateUser(connectionId);
     }
@@ -255,7 +262,7 @@ export class Presence<
 
     const newPresence = merge(oldPresence, patch);
     if (oldPresence !== newPresence) {
-      this._presences[connectionId] = newPresence;
+      this._presences[connectionId] = freeze(newPresence);
       this._invalidateUser(connectionId);
     }
   }

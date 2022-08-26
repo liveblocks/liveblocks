@@ -17,6 +17,7 @@ import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
+  freeze,
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
@@ -447,8 +448,6 @@ export class LiveMap<
     for (const [key, value] of this._map) {
       result.set(key, value.toImmutable() as ToImmutable<TValue>);
     }
-    return process.env.NODE_ENV === "production"
-      ? result
-      : Object.freeze(result);
+    return freeze(result);
   }
 }
