@@ -8,6 +8,7 @@ import type {
   LiveObject,
   LsonObject,
   Others,
+  PresenceSnapshot,
   Room,
   User,
 } from "@liveblocks/client";
@@ -191,6 +192,27 @@ type RoomContextBundle<
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null;
+
+  /**
+   * Extract arbitrary data from the Liveblocks Presence state, using an
+   * arbitrary selector function.
+   *
+   * The selector function will get re-evaluated any time something changes in
+   * Presence. The value returned by your selector function will also be the
+   * value returned by the hook.
+   *
+   * The component that uses this hook will automatically re-render if the
+   * returned value changes.
+   *
+   * By default `usePresence()` uses strict `===` to check for equality. Take
+   * extra care when returning a computed object or list, for example when you
+   * return the result of a .map() or .filter() call from the selector. In
+   * those cases, you'll probably want to use a `shallow` comparison check.
+   */
+  usePresence<T>(
+    selector: (presence: PresenceSnapshot<TPresence, TUserMeta>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -575,7 +597,7 @@ export function createRoomContext<
     }
   }
 
-  function useSelector<T>(
+  function useStorageSelector<T>(
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null {
@@ -620,6 +642,42 @@ export function createRoomContext<
     );
   }
 
+  function usePresence<T>(
+    selector: (presence: PresenceSnapshot<TPresence, TUserMeta>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T {
+    type Snapshot = PresenceSnapshot<TPresence, TUserMeta>;
+
+    const room = useRoom();
+
+    const subscribe = React.useCallback(
+      (onPresenceChange: () => void) => {
+        const unsub1 = room.subscribe("my-presence", onPresenceChange);
+        const unsub2 = room.subscribe("others", onPresenceChange);
+        return () => {
+          unsub1();
+          unsub2();
+        };
+      },
+      [room]
+    );
+
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getPresenceSnapshot(),
+      [room]
+    );
+
+    const getServerSnapshot = getSnapshot;
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector,
+      isEqual
+    );
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -633,7 +691,8 @@ export function createRoomContext<
     useOthers,
     useRedo,
     useRoom,
-    useSelector,
+    useSelector: useStorageSelector,
+    usePresence,
     useSelf,
     useStorageRoot,
     useStorage,
