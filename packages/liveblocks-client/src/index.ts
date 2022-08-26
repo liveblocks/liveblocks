@@ -2,6 +2,7 @@ export { createClient } from "./client";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
+export type { PresenceSnapshot } from "./Presence";
 export { shallow } from "./shallow";
 export type {
   BaseUserMeta,
