@@ -43,12 +43,20 @@ export async function assertContainText(
   }
 }
 
+export async function getTextContentOrEmpty(
+  page: Page,
+  id: string
+): Promise<string> {
+  const selector = id.startsWith(".") || id.startsWith("#") ? id : `#${id}`;
+  return page.locator(selector).innerText();
+}
+
 export async function getTextContent(page: Page, id: string): Promise<string> {
-  const element = await page.locator(`#${id}`).innerText();
-  if (!element) {
+  const text = await getTextContentOrEmpty(page, id);
+  if (!text) {
     throw new Error(`Could not find HTML element #${id}`);
   }
-  return element;
+  return text;
 }
 
 export async function getJsonContent(page: Page, id: string): Promise<Json> {
@@ -64,7 +72,7 @@ export async function assertJsonContentAreEquals(
 
   for (const page of pages.slice(1)) {
     const otherPageContent = await getJsonContent(page, id);
-    await expect(firstPageContent).toEqual(otherPageContent);
+    expect(firstPageContent).toEqual(otherPageContent);
   }
 
   pages.forEach(async (page) => {
@@ -74,6 +82,51 @@ export async function assertJsonContentAreEquals(
 
 export function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+type TimeoutOptions = {
+  timeout?: number;
+  step?: number;
+};
+
+const DEFAULT_TIMEOUT = 1500;
+const DEFAULT_STEP = 60;
+
+export async function waitForTextContent(
+  page: Page,
+  id: string,
+  expectedText: string,
+  options?: TimeoutOptions
+) {
+  const start = Date.now();
+  const timeoutAt = start + (options?.timeout ?? DEFAULT_TIMEOUT);
+  const attempts = [];
+
+  do {
+    const foundText = await getTextContentOrEmpty(page, id);
+    const ms = Date.now() - start;
+    if (!foundText) {
+      attempts.push(`(after ${ms}ms) Element with id ${id} not found yet`);
+    } else if (foundText !== expectedText) {
+      attempts.push(
+        `(after ${ms}ms) Element did not contain expected text yet: ${JSON.stringify(
+          foundText
+        )}`
+      );
+    } else {
+      // Done!
+      return;
+    }
+    await delay(options?.step ?? DEFAULT_STEP);
+  } while (Date.now() < timeoutAt);
+
+  const ms = Date.now() - start;
+  attempts.push(`(after ${ms}ms) Timed out`);
+  throw new Error(
+    `Expected text content was never found\n\nid: ${id}\nI tried looking for: ${JSON.stringify(
+      expectedText
+    )}\n\nHere were my attempts:\n${attempts.join("\n")}`
+  );
 }
 
 export async function waitForContentToBeEquals(
