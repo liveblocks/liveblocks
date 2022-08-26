@@ -4,6 +4,7 @@ import {
   preparePage,
   delay,
   getJsonContent,
+  waitForTextContent,
   // getTextContent,
   // preparePages,
   assertContainText,
@@ -167,8 +168,8 @@ test.describe("Broadcast", () => {
       secondPage.waitForSelector("#events"),
     ]);
 
-    // Give other clients some time to properly connect to the room
-    await delay(500);
+    // Wait until the other client is connected
+    await waitForTextContent(firstPage, "#othersCount", "1");
 
     await firstPage.click("#broadcast-emoji");
     await delay(500);
