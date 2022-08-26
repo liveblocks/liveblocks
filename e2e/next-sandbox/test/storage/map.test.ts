@@ -44,7 +44,9 @@ test.describe("Storage - LiveMap", () => {
     await waitForContentToBeEquals(pages);
   });
 
-  test("fuzzy with full undo/redo", async () => {
+  // TODO: This test is flaky and occasionally fails in CI--make it more robust
+  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:46
+  test.skip("fuzzy with full undo/redo", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
