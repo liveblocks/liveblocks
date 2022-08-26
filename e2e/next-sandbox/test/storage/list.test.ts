@@ -101,7 +101,9 @@ test.describe("Storage - LiveList", () => {
     await waitForContentToBeEquals(pages);
   });
 
-  test("fuzzy with undo/redo push delete and move", async () => {
+  // TODO: This test is flaky and occasionally fails in CI--make it more robust
+  // See https://github.com/liveblocks/liveblocks/runs/8032018966?check_suite_focus=true#step:6:45
+  test.skip("fuzzy with undo/redo push delete and move", async () => {
     await pages[0].click("#clear");
     await assertContainText(pages, "0");
 
