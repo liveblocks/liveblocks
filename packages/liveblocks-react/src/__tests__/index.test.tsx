@@ -161,6 +161,22 @@ async function websocketSimulator() {
     } as CloseEvent);
   }
 
+  function simulateUserJoins(actor: number, presence: JsonObject) {
+    simulateIncomingMessage({
+      type: ServerMsgCode.USER_JOINED,
+      actor,
+      id: undefined,
+      info: undefined,
+    });
+
+    simulateIncomingMessage({
+      type: ServerMsgCode.UPDATE_PRESENCE,
+      targetActor: -1,
+      data: presence,
+      actor,
+    });
+  }
+
   // Simulator API
   return {
     // Field for introspection of simulator state
@@ -168,11 +184,16 @@ async function websocketSimulator() {
     callbacks: socket.callbacks,
 
     //
-    // Simulating actions
+    // Simulating actions (low level)
     //
-    simulateStorageLoaded,
     simulateIncomingMessage,
+    simulateStorageLoaded,
     simulateAbnormalClose,
+
+    //
+    // Composed simulations
+    //
+    simulateUserJoins,
   };
 }
 
@@ -219,13 +240,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
@@ -236,14 +251,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 0 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 0 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 0 } },
@@ -266,13 +274,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
