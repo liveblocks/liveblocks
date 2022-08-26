@@ -64,7 +64,7 @@ describe("Presence", () => {
       p.setConnection(2, "user-123", undefined);
       expect(p.toImmutable()).toStrictEqual({
         me: { x: 0, y: 0 },
-        others: [{ x: 1, y: 1 }],
+        others: [{ connectionId: 2, id: "user-123", presence: { x: 1, y: 1 } }],
       });
     });
 
@@ -80,8 +80,8 @@ describe("Presence", () => {
       expect(p.toImmutable()).toStrictEqual({
         me: { x: 0, y: 0 },
         others: [
-          { x: -2, y: -2 },
-          { x: 3, y: 3 },
+          { connectionId: 2, id: "user-123", presence: { x: -2, y: -2 } },
+          { connectionId: 3, id: "user-567", presence: { x: 3, y: 3 } },
         ],
       });
     });
@@ -94,8 +94,8 @@ describe("Presence", () => {
 
       expect(p.toImmutable()).toStrictEqual({
         me: { x: 0, y: 0 },
-        others: [{ x: 2, y: 2 }],
-        //                   ^ 🔑 (no explicit undefined here)
+        others: [{ connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } }],
+        //                                                      ^ 🔑 (no explicit undefined here)
       });
     });
 
@@ -114,13 +114,19 @@ describe("Presence", () => {
       const p = new Presence<P, M>({ x: 1, y: 2 });
       p.setConnection(2, "user-123", undefined);
       p.setOther(2, { x: 2, y: 2 });
-      expect(p.toImmutable().others).toStrictEqual([{ x: 2, y: 2 }]);
+      expect(p.toImmutable().others).toStrictEqual([
+        { connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } },
+      ]);
 
       p.patchOther(2, { y: -2, z: -2 });
-      expect(p.toImmutable().others).toStrictEqual([{ x: 2, y: -2, z: -2 }]);
+      expect(p.toImmutable().others).toStrictEqual([
+        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2, z: -2 } },
+      ]);
 
       p.patchOther(2, { z: undefined });
-      expect(p.toImmutable().others).toStrictEqual([{ x: 2, y: -2 }]);
+      expect(p.toImmutable().others).toStrictEqual([
+        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2 } },
+      ]);
     });
 
     it("removing connections", () => {
@@ -131,7 +137,6 @@ describe("Presence", () => {
       expect(p.getUser(2)).toStrictEqual({
         connectionId: 2,
         id: "user-123",
-        info: undefined,
         presence: { x: 2, y: 2 },
       });
       p.removeConnection(2);

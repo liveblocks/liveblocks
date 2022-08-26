@@ -45,6 +45,13 @@ function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
+function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
+  conn: Connection<TUserMeta>,
+  presence: TPresence
+): User<TPresence, TUserMeta> {
+  return freeze(compactObject({ ...conn, presence }));
+}
+
 export class Presence<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
@@ -103,8 +110,7 @@ export class Presence<
     const conn = this._connections[connectionId];
     const presence = this._presences[connectionId];
     if (conn !== undefined && presence !== undefined) {
-      const user: User<TPresence, TUserMeta> = { ...conn, presence };
-      return freeze(user);
+      return makeUser(conn, presence);
     }
 
     return undefined;
