@@ -32,14 +32,6 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type OthersEventCallback<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> = (
-  others: Others<TPresence, TUserMeta>,
-  event: OthersEvent<TPresence, TUserMeta>
-) => void;
-
 export type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
@@ -56,7 +48,10 @@ type RoomEventCallbackMap<
   // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
   // since this API historically has taken _two_ callback arguments instead of
   // just one.
-  others: OthersEventCallback<TPresence, TUserMeta>;
+  others: (
+    others: Others<TPresence, TUserMeta>,
+    event: OthersEvent<TPresence, TUserMeta>
+  ) => void;
   error: Callback<Error>;
   connection: Callback<ConnectionState>;
   history: Callback<HistoryEvent>;
@@ -502,7 +497,10 @@ export type Room<
      */
     (
       type: "others",
-      listener: OthersEventCallback<TPresence, TUserMeta>
+      listener: (
+        others: Others<TPresence, TUserMeta>,
+        event: OthersEvent<TPresence, TUserMeta>
+      ) => void
     ): () => void;
 
     /**
