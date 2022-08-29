@@ -1,8 +1,20 @@
 type Callback<T> = (event: T) => void;
 type UnsubscribeCallback = () => void;
 
-export type EventSource<T> = {
+export type Observable<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
+};
+
+export type EventSource<T> = {
+  /**
+   * Private/controlled notification of events.
+   */
+  notify(event: T): void;
+  /**
+   * Observable instance, which can be used to subscribe to this event source
+   * in a readonly fashion. Safe to publicly expose.
+   */
+  observable: Observable<T>;
 };
 
 export type EventEmitter<T> = (event: T) => void;
@@ -28,7 +40,7 @@ export type EventEmitter<T> = (event: T) => void;
  *   emitEvent2();  // Now qux will get called (but foo will not, since it's unsubscribed)
  *
  */
-export function makeEventSource<T>(): [EventSource<T>, EventEmitter<T>] {
+export function makeEventSource<T>(): EventSource<T> {
   const _observers = new Set<Callback<T>>();
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
@@ -40,5 +52,13 @@ export function makeEventSource<T>(): [EventSource<T>, EventEmitter<T>] {
     _observers.forEach((callback) => callback(event));
   }
 
-  return [{ subscribe }, notify];
+  return {
+    // Private/internal control over event emission
+    notify,
+
+    // Publicly exposable subscription API
+    observable: {
+      subscribe,
+    },
+  };
 }

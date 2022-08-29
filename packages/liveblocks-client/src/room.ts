@@ -3,7 +3,7 @@ import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import type { EventSource } from "./EventSource";
+import type { Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { Presence } from "./Presence";
@@ -134,7 +134,7 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
-    storageHasLoaded: EventSource<void>;
+    storageHasLoaded: Observable<void>;
   };
 
   // Core
@@ -281,6 +281,10 @@ function makeStateMachine<
   context: Context,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const eventHub = {
+    storageHasLoaded: makeEventSource<void>(),
+  };
+
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -1030,7 +1034,7 @@ function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
-          emitStorageHasLoaded();
+          eventHub.storageHasLoaded.notify();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1391,8 +1395,6 @@ function makeStateMachine<
     }
   }
 
-  const [storageHasLoaded, emitStorageHasLoaded] = makeEventSource<void>();
-
   function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
@@ -1569,7 +1571,7 @@ function makeStateMachine<
     getStorage,
     getStorageSnapshot,
     events: {
-      storageHasLoaded,
+      storageHasLoaded: eventHub.storageHasLoaded.observable,
     },
 
     // Core

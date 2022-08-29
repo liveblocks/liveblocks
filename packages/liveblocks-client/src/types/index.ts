@@ -1,4 +1,4 @@
-import type { EventSource } from "../EventSource";
+import type { Observable } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -678,7 +678,7 @@ export type Room<
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageHasLoaded: EventSource<void>;
+    storageHasLoaded: Observable<void>;
   };
 
   /**
