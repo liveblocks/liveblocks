@@ -169,7 +169,23 @@ type RoomContextBundle<
   ): TStorage[TKey] | null;
 
   /**
-   * TODO: Document me
+   * Extract arbitrary data from the Liveblocks Storage state, using an
+   * arbitrary selector function.
+   *
+   * The selector function will get re-evaluated any time something changes in
+   * Storage. The value returned by your selector function will also be the
+   * value returned by the hook.
+   *
+   * The `root` value that gets passed to your selector function is
+   * a immutable/readonly version of your Liveblocks storage root.
+   *
+   * The component that uses this hook will automatically re-render if the
+   * returned value changes.
+   *
+   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * extra care when returning a computed object or list, for example when you
+   * return the result of a .map() or .filter() call from the selector. In
+   * those cases, you'll probably want to use a `shallow` comparison check.
    */
   useSelector<T>(
     selector: (root: ToImmutable<TStorage>) => T,

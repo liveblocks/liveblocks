@@ -305,7 +305,7 @@ export abstract class AbstractCrdt {
   abstract _toImmutable(): Immutable;
 
   /**
-   * Return a JSON representation for this Live node and its children.
+   * Return an immutable snapshot of this Live node and its children.
    */
   toImmutable(): Immutable {
     if (this._cachedImmutable === undefined) {
