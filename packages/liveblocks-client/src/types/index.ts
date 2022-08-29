@@ -470,8 +470,6 @@ export type Room<
      * room.subscribe("my-presence", (presence) => {
      *   // Do something
      * });
-     *
-     * @deprecated Please use `room.events.me.subscribe()` instead.
      */
     (type: "my-presence", listener: Callback<TPresence>): () => void;
 
@@ -486,13 +484,6 @@ export type Room<
      * room.subscribe("others", (others) => {
      *   // Do something
      * });
-     *
-     * @deprecated Please use `room.events.others.subscribe()` instead. Please
-     * note that this new API will only take a single callback argument:
-     *
-     *     room.subscribe('others', (others, event) => ...);
-     *       vs
-     *     room.events.others.subscribe(({ others, event }) => ...);
      *
      */
     (
@@ -515,8 +506,6 @@ export type Room<
      *   // Do something
      * });
      *
-     * @deprecated Please use `room.events.custom.subscribe()` instead.
-     *
      */
     (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
 
@@ -525,8 +514,6 @@ export type Room<
      *
      * @returns Unsubscribe function.
      *
-     * @deprecated Please use `room.events.error.subscribe()` instead.
-     *
      */
     (type: "error", listener: ErrorCallback): () => void;
 
@@ -534,8 +521,6 @@ export type Room<
      * Subscribe to connection state updates.
      *
      * @returns Unsubscribe function.
-     *
-     * @deprecated Please use `room.events.connection.subscribe()` instead.
      *
      */
     (type: "connection", listener: Callback<ConnectionState>): () => void;
@@ -588,8 +573,6 @@ export type Room<
      * room.subscribe("history", ({ canUndo, canRedo }) => {
      *   // Do something
      * });
-     *
-     * @deprecated Please use `room.events.history.subscribe()` instead.
      *
      */
     (type: "history", listener: Callback<HistoryEvent>): () => void;
