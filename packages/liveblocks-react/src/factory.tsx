@@ -443,8 +443,7 @@ export function createRoomContext<
     const rerender = useRerender();
 
     React.useEffect(() => {
-      const unsubscribePresence =
-        room.events["my-presence"].subscribe(rerender);
+      const unsubscribePresence = room.events.me.subscribe(rerender);
       const unsubscribeConnection = room.events.connection.subscribe(rerender);
 
       return () => {
