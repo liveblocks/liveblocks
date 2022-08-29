@@ -4,7 +4,11 @@ import { setupServer } from "msw/node";
 import type { RoomAuthToken } from "../AuthToken";
 import { lsonToJson } from "../immutable";
 import { LiveList } from "../LiveList";
-import { createRoom, defaultState, makeStateMachine } from "../room";
+import {
+  _private_defaultState as defaultState,
+  _private_makeStateMachine as makeStateMachine,
+  createRoom,
+} from "../room";
 import type { Authentication, IdTuple, Others, SerializedCrdt } from "../types";
 import {
   ClientMsgCode,

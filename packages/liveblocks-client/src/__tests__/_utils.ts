@@ -1,8 +1,14 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
 import { makePosition } from "../position";
-import type { Effects, Machine } from "../room";
-import { defaultState, makeStateMachine } from "../room";
+import type {
+  _private_Effects as Effects,
+  _private_Machine as Machine,
+} from "../room";
+import {
+  _private_defaultState as defaultState,
+  _private_makeStateMachine as makeStateMachine,
+} from "../room";
 import type {
   Authentication,
   BaseUserMeta,
