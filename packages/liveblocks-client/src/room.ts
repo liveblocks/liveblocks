@@ -1,6 +1,6 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, EventSource, Observable } from "./EventSource";
@@ -713,6 +713,55 @@ function makeStateMachine<
     second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
+    if (typeof first === "string" && isRoomEventName(first)) {
+      if (typeof second !== "function") {
+        throw new Error("Second argument must be a callback function");
+      }
+      const callback = second;
+      switch (first) {
+        case "event":
+          return eventHub.event.subscribe(
+            callback as Callback<{ connectionId: number; event: TRoomEvent }>
+          );
+
+        case "my-presence":
+          return eventHub["my-presence"].subscribe(
+            callback as Callback<TPresence>
+          );
+
+        case "others": {
+          // NOTE: Others have a different callback structure, where the API
+          // exposed on the outside takes _two_ callback arguments!
+          const cb = callback as (
+            others: Others<TPresence, TUserMeta>,
+            event: OthersEvent<TPresence, TUserMeta>
+          ) => void;
+          return eventHub.others.subscribe(({ others, event }) =>
+            cb(others, event)
+          );
+        }
+
+        case "error":
+          return eventHub.error.subscribe(callback as Callback<Error>);
+
+        case "connection":
+          return eventHub.connection.subscribe(
+            callback as Callback<ConnectionState>
+          );
+
+        case "storage":
+          return eventHub.storage.subscribe(
+            callback as Callback<StorageUpdate[]>
+          );
+
+        case "history":
+          return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
+
+        default:
+          return assertNever(first, "Unknown event");
+      }
+    }
+
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
@@ -733,33 +782,7 @@ function makeStateMachine<
       }
     }
 
-    if (!isRoomEventName(first)) {
-      throw new Error(`"${first}" is not a valid event name`);
-    }
-
-    type Payload = PayloadFor<E, TPresence, TUserMeta, TRoomEvent>;
-
-    const eventName = first;
-
-    if (eventName === "others") {
-      // NOTE: Others have a different callback structure, where the API
-      // exposed on the outside takes _two_ callback arguments!
-      const eventListener = second as (
-        others: Others<TPresence, TUserMeta>,
-        event: OthersEvent<TPresence, TUserMeta>
-      ) => void;
-      return eventHub.others.subscribe(
-        // Wrap it here... ¯\_(ツ)_/¯
-        ({ others, event }) => eventListener(others, event)
-      );
-    }
-
-    const eventListener = second as Callback<Payload>;
-
-    // TODO: Solve this in a less dynamic way!
-    return (eventHub[eventName] as EventSource<Payload>).subscribe(
-      eventListener
-    );
+    throw new Error(`"${first}" is not a valid event name`);
   }
 
   function getConnectionState() {
