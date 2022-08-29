@@ -71,7 +71,7 @@ import {
   tryParseJson,
 } from "./utils";
 
-export type Machine<
+type Machine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -195,7 +195,7 @@ type HistoryItem<TPresence extends JsonObject> = Array<
 
 type IdFactory = () => string;
 
-export type State<
+type State<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -264,7 +264,7 @@ export type State<
   offlineOperations: Map<string, Op>;
 };
 
-export type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
+type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
     auth: (room: string) => Promise<AuthorizeResponse>,
     createWebSocket: (token: string) => WebSocket
@@ -295,7 +295,7 @@ type Context = {
   WebSocketPolyfill?: Polyfills["WebSocket"];
 };
 
-export function makeStateMachine<
+function makeStateMachine<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -1599,7 +1599,7 @@ export function makeStateMachine<
   };
 }
 
-export function defaultState<
+function defaultState<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -1672,6 +1672,7 @@ export function defaultState<
   };
 }
 
+/** @internal */
 export type InternalRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,
@@ -1880,3 +1881,13 @@ class AuthenticationError extends Error {
     super(message);
   }
 }
+
+//
+// These exports are considered private implementation details and only
+// exported here to be accessed used in our test suite.
+//
+export {
+  defaultState as _private_defaultState,
+  makeStateMachine as _private_makeStateMachine,
+};
+export type { Effects as _private_Effects, Machine as _private_Machine };
