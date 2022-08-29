@@ -36,6 +36,7 @@ export type MyPresenceCallback<TPresence extends JsonObject> = (
   me: TPresence
 ) => void;
 
+// TODO: Deprecate?
 export type OthersEventCallback<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
@@ -44,6 +45,7 @@ export type OthersEventCallback<
   event: OthersEvent<TPresence, TUserMeta>
 ) => void;
 
+// TODO: Deprecate?
 export type EventCallback<TRoomEvent extends Json> = ({
   connectionId,
   event,
@@ -82,6 +84,29 @@ export type RoomEventCallbackFor<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
+
+type EventPayloadMapping<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  "my-presence": TPresence;
+  others: {
+    others: Others<TPresence, TUserMeta>;
+    event: OthersEvent<TPresence, TUserMeta>;
+  };
+  event: { connectionId: number; event: TRoomEvent };
+  error: Error;
+  connection: ConnectionState;
+  history: HistoryEvent;
+};
+
+export type PayloadFor<
+  E extends RoomEventName,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = EventPayloadMapping<TPresence, TUserMeta, TRoomEvent>[E];
 
 export type RoomEventCallback = RoomEventCallbackFor<
   RoomEventName,

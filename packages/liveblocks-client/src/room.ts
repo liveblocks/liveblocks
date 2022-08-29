@@ -3,7 +3,7 @@ import { OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import type { Observable } from "./EventSource";
+import type { Callback, EventSource, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { Presence } from "./Presence";
@@ -20,6 +20,7 @@ import type {
   ErrorCallback,
   EventCallback,
   HistoryCallback,
+  HistoryEvent,
   IdTuple,
   InitialDocumentStateServerMsg,
   Json,
@@ -34,6 +35,7 @@ import type {
   OthersEvent,
   OthersEventCallback,
   ParentToChildNodeMap,
+  PayloadFor,
   Polyfills,
   Room,
   RoomEventCallback,
@@ -70,7 +72,6 @@ import {
   isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-  remove,
   tryParseJson,
 } from "./utils";
 
@@ -201,15 +202,6 @@ type State<
   intervalHandles: {
     heartbeat: number;
   };
-  listeners: {
-    event: EventCallback<TRoomEvent>[];
-    others: OthersEventCallback<TPresence, TUserMeta>[];
-    "my-presence": MyPresenceCallback<TPresence>[];
-    error: ErrorCallback[];
-    connection: ConnectionCallback[];
-    storage: StorageCallback[];
-    history: HistoryCallback[];
-  };
 
   presence: Presence<TPresence, TUserMeta>;
 
@@ -282,6 +274,17 @@ function makeStateMachine<
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const eventHub = {
+    event: makeEventSource<{ connectionId: number; event: TRoomEvent }>(),
+    others: makeEventSource<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>(),
+    "my-presence": makeEventSource<TPresence>(),
+    error: makeEventSource<Error>(),
+    connection: makeEventSource<ConnectionState>(),
+    storage: makeEventSource<StorageUpdate[]>(),
+    history: makeEventSource<HistoryEvent>(),
+
     storageHasLoaded: makeEventSource<void>(),
   };
 
@@ -338,8 +341,7 @@ function makeStateMachine<
   };
 
   function genericSubscribe(callback: StorageCallback) {
-    state.listeners.storage.push(callback);
-    return () => remove(state.listeners.storage, callback);
+    return eventHub.storage.subscribe(callback);
   }
 
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
@@ -512,22 +514,19 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
+      const others = state.presence.getOthersProxy();
       for (const event of otherEvents) {
-        for (const listener of state.listeners.others) {
-          listener(state.presence.getOthersProxy(), event);
-        }
+        eventHub.others.notify({ others, event });
       }
     }
 
     if (presence) {
-      for (const listener of state.listeners["my-presence"]) {
-        listener(state.presence.me);
-      }
+      eventHub["my-presence"].notify(state.presence.me);
     }
 
     if (storageUpdates.size > 0) {
       const updates = Array.from(storageUpdates.values());
-      state.listeners.storage.forEach((subscriber) => subscriber(updates));
+      eventHub.storage.notify(updates);
     }
   }
 
@@ -732,23 +731,15 @@ function makeStateMachine<
       throw new Error(`"${first}" is not a valid event name`);
     }
 
-    type EventListener = RoomEventCallbackFor<
-      E,
-      TPresence,
-      TUserMeta,
-      TRoomEvent
-    >;
-    type EventQueue = EventListener[];
+    type Payload = PayloadFor<E, TPresence, TUserMeta, TRoomEvent>;
 
     const eventName = first;
-    const eventListener = second as EventListener;
+    const eventListener = second as Callback<Payload>;
 
-    (state.listeners[eventName] as EventQueue).push(eventListener);
-
-    return () => {
-      const callbacks = state.listeners[eventName] as EventQueue;
-      remove(callbacks, eventListener);
-    };
+    // TODO: Solve this in a less dynamic way!
+    return (eventHub[eventName] as EventSource<Payload>).subscribe(
+      eventListener
+    );
   }
 
   function getConnectionState() {
@@ -923,16 +914,8 @@ function makeStateMachine<
     }
   }
 
-  function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
-    for (const listener of state.listeners.event) {
-      listener({ connectionId: message.actor, event: message.event });
-    }
-  }
-
   function onHistoryChange() {
-    for (const listener of state.listeners.history) {
-      listener({ canUndo: canUndo(), canRedo: canRedo() });
-    }
+    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function onUserJoinedMessage(
@@ -1013,7 +996,10 @@ function makeStateMachine<
           break;
         }
         case ServerMsgCode.BROADCASTED_EVENT: {
-          onEvent(message);
+          eventHub.event.notify({
+            connectionId: message.actor,
+            event: message.event,
+          });
           break;
         }
         case ServerMsgCode.USER_LEFT: {
@@ -1074,9 +1060,7 @@ function makeStateMachine<
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
-      for (const listener of state.listeners.error) {
-        listener(error);
-      }
+      eventHub.error.notify(error);
 
       const delay = getRetryDelay(true);
       state.numberOfRetry++;
@@ -1107,9 +1091,7 @@ function makeStateMachine<
 
   function updateConnection(connection: Connection) {
     state.connection = connection;
-    for (const listener of state.listeners.connection) {
-      listener(connection.state);
-    }
+    eventHub.connection.notify(connection.state);
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1315,20 +1297,9 @@ function makeStateMachine<
 
     state.presence.clearOthers();
     notify({ others: [{ type: "reset" }] });
-    clearListeners();
-  }
 
-  function clearListeners() {
-    for (const key in state.listeners) {
-      state.listeners[
-        key as keyof State<
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent
-        >["listeners"]
-      ] = [];
-    }
+    // Clear all event listeners
+    Object.values(eventHub).forEach((eventSource) => eventSource.clear());
   }
 
   function getPresence(): TPresence {
@@ -1598,15 +1569,6 @@ function defaultState<
     token: null,
     lastConnectionId: null,
     socket: null,
-    listeners: {
-      event: [],
-      others: [],
-      "my-presence": [],
-      error: [],
-      connection: [],
-      storage: [],
-      history: [],
-    },
     numberOfRetry: 0,
     lastFlushTime: 0,
     timeoutHandles: {
