@@ -137,15 +137,13 @@ type Machine<
     storageHasLoaded: EventSource<void>;
   };
 
-  selectors: {
-    // Core
-    getConnectionState(): ConnectionState;
-    getSelf(): User<TPresence, TUserMeta> | null;
+  // Core
+  getConnectionState(): ConnectionState;
+  getSelf(): User<TPresence, TUserMeta> | null;
 
-    // Presence
-    getPresence(): TPresence;
-    getOthers(): Others<TPresence, TUserMeta>;
-  };
+  // Presence
+  getPresence(): TPresence;
+  getOthers(): Others<TPresence, TUserMeta>;
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -1574,15 +1572,13 @@ function makeStateMachine<
       storageHasLoaded,
     },
 
-    selectors: {
-      // Core
-      getConnectionState,
-      getSelf,
+    // Core
+    getConnectionState,
+    getSelf,
 
-      // Presence
-      getPresence,
-      getOthers,
-    },
+    // Presence
+    getPresence,
+    getOthers,
   };
 }
 
@@ -1704,17 +1700,17 @@ export function createRoom<
     /////////////
     // Core    //
     /////////////
-    getConnectionState: machine.selectors.getConnectionState,
-    getSelf: machine.selectors.getSelf,
+    getConnectionState: machine.getConnectionState,
+    getSelf: machine.getSelf,
 
     subscribe: machine.subscribe,
 
     //////////////
     // Presence //
     //////////////
-    getPresence: machine.selectors.getPresence,
+    getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
-    getOthers: machine.selectors.getOthers,
+    getOthers: machine.getOthers,
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,

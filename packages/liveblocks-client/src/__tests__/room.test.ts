@@ -338,7 +338,7 @@ describe("room", () => {
     );
 
     const users = [];
-    for (const user of machine.selectors.getOthers()) {
+    for (const user of machine.getOthers()) {
       users.push(user);
     }
 
@@ -371,7 +371,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.selectors.getOthers().toArray()).toEqual([
+    expect(machine.getOthers().toArray()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
     ]);
 
@@ -382,7 +382,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.selectors.getOthers().toArray()).toEqual([]);
+    expect(machine.getOthers().toArray()).toEqual([]);
   });
 
   describe("broadcast", () => {
@@ -501,12 +501,12 @@ describe("room", () => {
     room.undo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 1 });
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
@@ -537,7 +537,7 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
@@ -561,7 +561,7 @@ describe("room", () => {
     room.undo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
   });
 
   test("undo redo with presence that do not impact presence", async () => {
@@ -577,7 +577,7 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("pause / resume history", async () => {
@@ -598,7 +598,7 @@ describe("room", () => {
       expect(state.buffer.presence?.data).toEqual({ x: i });
     }
 
-    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+    expect(room.getPresence()).toEqual({ x: 10 });
     expect(state.buffer.presence?.data).toEqual({ x: 10 });
 
     room.resumeHistory();
@@ -606,12 +606,12 @@ describe("room", () => {
     room.undo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 10 });
-    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+    expect(room.getPresence()).toEqual({ x: 10 });
   });
 
   test("undo while history is paused", async () => {
@@ -634,7 +634,7 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
     expect(state.buffer.presence?.data).toEqual({ x: 0 });
   });
@@ -670,14 +670,14 @@ describe("room", () => {
     room.undo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
 
     expect(state.buffer.presence?.data).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("batch without changes should not erase redo stack", async () => {
@@ -1179,7 +1179,7 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refMachine.selectors.getOthers().toArray();
+      const refMachineOthers = refMachine.getOthers().toArray();
 
       expect(refMachineOthers).toEqual([
         { connectionId: 1, id: undefined, info: undefined, presence: { x: 1 } }, // old user is not cleaned directly
