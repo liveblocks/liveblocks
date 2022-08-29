@@ -47,46 +47,55 @@ export type ServerMsg<
  * so all other existing clients can ignore this broadcasted message.
  */
 export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
-  | FullUpdatePresenceServerMsg<TPresence>
-  | PartialUpdatePresenceServerMsg<TPresence>;
+  //
+  // Full Presence™ message
+  //
+  | {
+      type: ServerMsgCode.UPDATE_PRESENCE;
+      /**
+       * The User whose Presence has changed.
+       */
+      actor: number;
+      /**
+       * When set, signifies that this is a Full Presence™ update, not a patch.
+       *
+       * The numeric value itself no longer has specific meaning. Historically,
+       * this field was intended so that clients could ignore these broadcasted
+       * full presence messages, but it turned out that getting a full presence
+       * "keyframe" from time to time was useful.
+       *
+       * So nowadays, the presence (pun intended) of this `targetActor` field
+       * is a backward-compatible way of expressing that the `data` contains
+       * all presence fields, and isn't a partial "patch".
+       */
+      targetActor: number;
+      /**
+       * The partial or full Presence of a User. If the `targetActor` field is set,
+       * this will be the full Presence, otherwise it only contain the fields that
+       * have changed since the last broadcast.
+       */
+      data: TPresence;
+    }
 
-export type FullUpdatePresenceServerMsg<TPresence extends JsonObject> = {
-  type: ServerMsgCode.UPDATE_PRESENCE;
-  /**
-   * The User whose Presence has changed.
-   */
-  actor: number;
-  /**
-   * If this message was sent in response to a newly joined user, this field
-   * indicates which client this message is for. Other existing clients may
-   * ignore this message if this message isn't targeted for them, but they
-   * don't have to.
-   */
-  targetActor: number;
-  /**
-   * The partial or full Presence of a User. If the `targetActor` field is set,
-   * this will be the full Presence, otherwise it only contain the fields that
-   * have changed since the last broadcast.
-   */
-  data: TPresence;
-};
-
-export type PartialUpdatePresenceServerMsg<TPresence extends JsonObject> = {
-  type: ServerMsgCode.UPDATE_PRESENCE;
-  /**
-   * The User whose Presence has changed.
-   */
-  actor: number;
-  /**
-   * Not set for partial presence updates.
-   */
-  targetActor?: undefined;
-  /**
-   * A partial Presence patch to apply to the User. It will only contain the
-   * fields that have changed since the last broadcast.
-   */
-  data: Partial<TPresence>;
-};
+  //
+  // Partial Presence™ message
+  //
+  | {
+      type: ServerMsgCode.UPDATE_PRESENCE;
+      /**
+       * The User whose Presence has changed.
+       */
+      actor: number;
+      /**
+       * Not set for partial presence updates.
+       */
+      targetActor?: undefined;
+      /**
+       * A partial Presence patch to apply to the User. It will only contain the
+       * fields that have changed since the last broadcast.
+       */
+      data: Partial<TPresence>;
+    };
 
 /**
  * Sent by the WebSocket server and broadcasted to all clients to announce that
