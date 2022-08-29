@@ -6,6 +6,7 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { EventSource } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
+import { Presence } from "./Presence";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -136,15 +137,13 @@ type Machine<
     storageHasLoaded: EventSource<void>;
   };
 
-  selectors: {
-    // Core
-    getConnectionState(): ConnectionState;
-    getSelf(): User<TPresence, TUserMeta> | null;
+  // Core
+  getConnectionState(): ConnectionState;
+  getSelf(): User<TPresence, TUserMeta> | null;
 
-    // Presence
-    getPresence(): TPresence;
-    getOthers(): Others<TPresence, TUserMeta>;
-  };
+  // Presence
+  getPresence(): TPresence;
+  getOthers(): Others<TPresence, TUserMeta>;
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -157,33 +156,6 @@ const PONG_TIMEOUT = 2000;
 function makeIdFactory(connectionId: number): IdFactory {
   let count = 0;
   return () => `${connectionId}:${count++}`;
-}
-
-function makeOthers<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
->(userMap: {
-  [key: number]: User<TPresence, TUserMeta>;
-}): Others<TPresence, TUserMeta> {
-  const users = Object.values(userMap).map((user) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = user;
-    return publicKeys;
-  });
-
-  return {
-    get count() {
-      return users.length;
-    },
-    [Symbol.iterator]() {
-      return users[Symbol.iterator]();
-    },
-    map(callback) {
-      return users.map(callback);
-    },
-    toArray() {
-      return users;
-    },
-  };
 }
 
 function log(..._params: unknown[]) {
@@ -238,11 +210,9 @@ type State<
     storage: StorageCallback[];
     history: HistoryCallback[];
   };
-  me: TPresence;
-  others: Others<TPresence, TUserMeta>;
-  users: {
-    [connectionId: number]: User<TPresence, TUserMeta>;
-  };
+
+  presence: Presence<TPresence, TUserMeta>;
+
   idFactory: IdFactory | null;
   numberOfRetry: number;
   defaultStorageRoot?: TStorage;
@@ -538,18 +508,16 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
-      state.others = makeOthers(state.users);
-
       for (const event of otherEvents) {
         for (const listener of state.listeners.others) {
-          listener(state.others, event);
+          listener(state.presence.getOthersProxy(), event);
         }
       }
     }
 
     if (presence) {
       for (const listener of state.listeners["my-presence"]) {
-        listener(state.me);
+        listener(state.presence.me);
       }
     }
 
@@ -610,10 +578,10 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.me[key];
+          reverse.data[key] = state.presence.me[key];
         }
 
-        state.me = { ...state.me, ...op.data };
+        state.presence.patchMe(op.data);
 
         if (state.buffer.presence == null) {
           state.buffer.presence = { type: "partial", data: op.data };
@@ -836,10 +804,10 @@ function makeStateMachine<
         continue;
       }
       state.buffer.presence.data[key] = overrideValue;
-      oldValues[key] = state.me[key];
+      oldValues[key] = state.presence.me[key];
     }
 
-    state.me = { ...state.me, ...overrides };
+    state.presence.patchMe(overrides);
 
     if (state.isBatching) {
       if (options?.addToHistory) {
@@ -891,52 +859,43 @@ function makeStateMachine<
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    const user = state.users[message.actor];
-    // If the other user initial presence hasn't been received yet, we discard the presence update.
-    // The initial presence update message contains the property "targetActor".
-    if (
-      message.targetActor === undefined &&
-      user != null &&
-      !user._hasReceivedInitialPresence
-    ) {
-      return undefined;
+    if (message.targetActor !== undefined) {
+      // The incoming message is a full presence update. We are obliged to
+      // handle it if `targetActor` matches our own connection ID, but we can
+      // use the opportunity to effectively reset the known presence as
+      // a "keyframe" update, while we have free access to it.
+      const oldUser = state.presence.getUser(message.actor);
+      state.presence.setOther(message.actor, message.data);
+
+      const newUser = state.presence.getUser(message.actor);
+      if (oldUser === undefined && newUser !== undefined) {
+        // The user just became "visible" due to this update, so fire the
+        // "enter" event
+        return { type: "enter", user: newUser };
+      }
+    } else {
+      // The incoming message is a partial presence update
+      state.presence.patchOther(message.actor, message.data), message;
     }
 
-    if (user == null) {
-      state.users[message.actor] = {
-        connectionId: message.actor,
-        presence: message.data,
-        id: undefined,
-        info: undefined,
-        _hasReceivedInitialPresence: true,
+    const user = state.presence.getUser(message.actor);
+    if (user) {
+      return {
+        type: "update",
+        updates: message.data,
+        user,
       };
     } else {
-      state.users[message.actor] = {
-        id: user.id,
-        info: user.info,
-        connectionId: message.actor,
-        presence: {
-          ...user.presence,
-          ...message.data,
-        },
-        _hasReceivedInitialPresence: true,
-      };
+      return undefined;
     }
-
-    return {
-      type: "update",
-      updates: message.data,
-      user: state.users[message.actor],
-    };
   }
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
   ): OthersEvent<TPresence, TUserMeta> | null {
-    const userLeftMessage: UserLeftServerMsg = message;
-    const user = state.users[userLeftMessage.actor];
+    const user = state.presence.getUser(message.actor);
     if (user) {
-      delete state.users[userLeftMessage.actor];
+      state.presence.removeConnection(message.actor);
       return { type: "leave", user };
     }
     return null;
@@ -945,17 +904,11 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
-    const newUsers: { [connectionId: number]: User<TPresence, TUserMeta> } = {};
     for (const key in message.users) {
-      const connectionId = Number.parseInt(key);
       const user = message.users[key];
-      newUsers[connectionId] = {
-        connectionId,
-        info: user.info,
-        id: user.id,
-      };
+      const connectionId = Number(key);
+      state.presence.setConnection(connectionId, user.id, user.info);
     }
-    state.users = newUsers;
     return { type: "reset" };
   }
 
@@ -980,30 +933,22 @@ function makeStateMachine<
 
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
-  ): OthersEvent<TPresence, TUserMeta> {
-    state.users[message.actor] = {
-      connectionId: message.actor,
-      info: message.info,
-      id: message.id,
-      _hasReceivedInitialPresence: true,
-    };
+  ): OthersEvent<TPresence, TUserMeta> | undefined {
+    state.presence.setConnection(message.actor, message.id, message.info);
 
-    if (state.me) {
-      // Send current presence to new user
-      // TODO: Consider storing it on the backend
-      state.buffer.messages.push({
-        type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.me as TPresence,
-        //             ^^^^^^^^^^^^
-        //             TODO: Soon, state.buffer.presence will become
-        //             a TPresence and this force-cast will no longer be
-        //             necessary.
-        targetActor: message.actor,
-      });
-      tryFlushing();
-    }
+    // Send current presence to new user
+    // TODO: Consider storing it on the backend
+    state.buffer.messages.push({
+      type: ClientMsgCode.UPDATE_PRESENCE,
+      data: state.presence.me,
+      targetActor: message.actor,
+    });
+    tryFlushing();
 
-    return { type: "enter", user: state.users[message.actor] };
+    // We recorded the connection, but we won't make the new user visible
+    // unless we also know their initial presence data at this point.
+    const user = state.presence.getUser(message.actor);
+    return user ? { type: "enter", user } : undefined;
   }
 
   function parseServerMessage(
@@ -1050,7 +995,10 @@ function makeStateMachine<
     for (const message of messages) {
       switch (message.type) {
         case ServerMsgCode.USER_JOINED: {
-          updates.others.push(onUserJoinedMessage(message));
+          const userJoinedUpdate = onUserJoinedMessage(message);
+          if (userJoinedUpdate) {
+            updates.others.push(userJoinedUpdate);
+          }
           break;
         }
         case ServerMsgCode.UPDATE_PRESENCE: {
@@ -1115,7 +1063,7 @@ function makeStateMachine<
     }
     clearTimeout(state.timeoutHandles.reconnect);
 
-    state.users = {};
+    state.presence.clearOthers();
     notify({ others: [{ type: "reset" }] });
 
     if (event.code >= 4000 && event.code <= 4100) {
@@ -1190,7 +1138,7 @@ function makeStateMachine<
       if (state.lastConnectionId !== undefined) {
         state.buffer.presence = {
           type: "full",
-          data: state.me,
+          data: state.presence.me,
         };
         tryFlushing();
       }
@@ -1351,14 +1299,17 @@ function makeStateMachine<
       state.socket.close();
       state.socket = null;
     }
+
     updateConnection({ state: "closed" });
+
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
     }
     clearTimeout(state.timeoutHandles.reconnect);
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
-    state.users = {};
+
+    state.presence.clearOthers();
     notify({ others: [{ type: "reset" }] });
     clearListeners();
   }
@@ -1377,11 +1328,11 @@ function makeStateMachine<
   }
 
   function getPresence(): TPresence {
-    return state.me as TPresence;
+    return state.presence.me;
   }
 
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.others as Others<TPresence, TUserMeta>;
+    return state.presence.getOthersProxy();
   }
 
   function broadcastEvent(
@@ -1621,15 +1572,13 @@ function makeStateMachine<
       storageHasLoaded,
     },
 
-    selectors: {
-      // Core
-      getConnectionState,
-      getSelf,
+    // Core
+    getConnectionState,
+    getSelf,
 
-      // Presence
-      getPresence,
-      getOthers,
-    },
+    // Presence
+    getPresence,
+    getOthers,
   };
 }
 
@@ -1676,9 +1625,10 @@ function defaultState<
     intervalHandles: {
       heartbeat: 0,
     },
-    me: initialPresence == null ? ({} as TPresence) : initialPresence,
-    users: {},
-    others: makeOthers({}),
+
+    presence: new Presence(
+      initialPresence == null ? ({} as TPresence) : initialPresence
+    ),
     defaultStorageRoot: initialStorage,
     idFactory: null,
 
@@ -1750,17 +1700,17 @@ export function createRoom<
     /////////////
     // Core    //
     /////////////
-    getConnectionState: machine.selectors.getConnectionState,
-    getSelf: machine.selectors.getSelf,
+    getConnectionState: machine.getConnectionState,
+    getSelf: machine.getSelf,
 
     subscribe: machine.subscribe,
 
     //////////////
     // Presence //
     //////////////
-    getPresence: machine.selectors.getPresence,
+    getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
-    getOthers: machine.selectors.getOthers,
+    getOthers: machine.getOthers,
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,

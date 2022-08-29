@@ -68,7 +68,7 @@ export type LiveblocksState<
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence, TUserMeta>>;
+    readonly others: readonly User<TPresence, TUserMeta>[];
     /**
      * Whether or not the room storage is currently loading
      */

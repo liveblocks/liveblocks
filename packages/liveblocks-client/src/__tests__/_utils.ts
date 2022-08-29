@@ -297,11 +297,34 @@ export async function prepareStorageTest<
             type: ServerMsgCode.UPDATE_PRESENCE,
             data: message.data,
             actor: currentActor,
+            targetActor: message.targetActor,
           })
         );
       }
     }
   });
+
+  // Mock Server messages for Presence
+
+  // Machine is the first user connected to the room, it then receives a server message
+  // saying that the refMachine user joined the room.
+  machine.onMessage(
+    serverMessage({
+      type: ServerMsgCode.USER_JOINED,
+      actor: -1,
+      id: undefined,
+      info: undefined,
+    })
+  );
+
+  // RefMachine is the second user connected to the room, it receives a server message
+  // ROOM_STATE with the list of users in the room.
+  refMachine.onMessage(
+    serverMessage({
+      type: ServerMsgCode.ROOM_STATE,
+      users: { [currentActor]: {} },
+    })
+  );
 
   const states: ToImmutable<TStorage>[] = [];
 
@@ -343,6 +366,17 @@ export async function prepareStorageTest<
     machine.connect();
     machine.authenticationSuccess(makeRoomToken(actor), ws as any);
     ws.open();
+
+    // Mock server messages for Presence.
+    // Other user in the room (refMachine) recieves a "USER_JOINED" message.
+    refMachine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.USER_JOINED,
+        actor,
+        id: undefined,
+        info: undefined,
+      })
+    );
 
     if (newItems) {
       machine.onMessage(

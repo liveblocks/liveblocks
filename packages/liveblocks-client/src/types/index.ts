@@ -259,7 +259,7 @@ export interface Others<
   /**
    * Returns the array of connected users in room.
    */
-  toArray(): User<TPresence, TUserMeta>[];
+  toArray(): readonly User<TPresence, TUserMeta>[];
   /**
    * This function let you map over the connected users in the room.
    */
@@ -289,9 +289,7 @@ export type User<
   /**
    * The user presence.
    */
-  readonly presence?: TPresence;
-  /** @internal */
-  _hasReceivedInitialPresence?: boolean;
+  readonly presence: TPresence;
 };
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;

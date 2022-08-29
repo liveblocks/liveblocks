@@ -33,11 +33,35 @@ export function remove<T>(array: T[], item: T): void {
 }
 
 /**
+ * Freezes the given argument, but only in development builds. In production
+ * builds, this is a no-op for performance reasons.
+ */
+export const freeze: typeof Object.freeze =
+  process.env.NODE_ENV === "production"
+    ? (((x: unknown) => x) as typeof Object.freeze)
+    : Object.freeze;
+
+/**
  * Removes null and undefined values from the array, and reflects this in the
  * output type.
  */
 export function compact<T>(items: readonly T[]): NonNullable<T>[] {
   return items.filter((item: T): item is NonNullable<T> => item != null);
+}
+
+/**
+ * Returns a new object instance where all explictly-undefined values are
+ * removed.
+ */
+export function compactObject<O>(obj: O): O {
+  const newObj = { ...obj };
+  Object.keys(obj).forEach((k) => {
+    const key = k as keyof O;
+    if (newObj[key] === undefined) {
+      delete newObj[key];
+    }
+  });
+  return newObj;
 }
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
