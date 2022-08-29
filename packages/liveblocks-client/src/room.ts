@@ -3,7 +3,7 @@ import { OpSource } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import type { Callback, EventSource, Observable } from "./EventSource";
+import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { Presence } from "./Presence";
@@ -28,7 +28,6 @@ import type {
   Others,
   OthersEvent,
   ParentToChildNodeMap,
-  PayloadFor,
   Polyfills,
   Room,
   RoomEventCallback,
@@ -129,8 +128,7 @@ type Machine<
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
     customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
-    "my-presence": // TODO: Rename to `me`?
-    Observable<TPresence>;
+    me: Observable<TPresence>;
     others: Observable<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -279,11 +277,11 @@ function makeStateMachine<
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const eventHub = {
     customEvent: makeEventSource<{ connectionId: number; event: TRoomEvent }>(),
+    me: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
     }>(),
-    "my-presence": makeEventSource<TPresence>(),
     error: makeEventSource<Error>(),
     connection: makeEventSource<ConnectionState>(),
     storage: makeEventSource<StorageUpdate[]>(),
@@ -343,15 +341,11 @@ function makeStateMachine<
     },
   };
 
-  function genericSubscribe(callback: StorageCallback) {
-    return eventHub.storage.subscribe(callback);
-  }
-
   function subscribeToLiveStructureDeeply<L extends LiveStructure>(
     node: L,
     callback: (updates: StorageUpdate[]) => void
   ): () => void {
-    return genericSubscribe((updates) => {
+    return eventHub.storage.subscribe((updates) => {
       const relatedUpdates = updates.filter((update) =>
         isSameNodeOrChildOf(update.node, node)
       );
@@ -365,7 +359,7 @@ function makeStateMachine<
     node: L,
     callback: (node: L) => void
   ): () => void {
-    return genericSubscribe((updates) => {
+    return eventHub.storage.subscribe((updates) => {
       for (const update of updates) {
         if (update.node._id === node._id) {
           callback(update.node as L);
@@ -524,7 +518,7 @@ function makeStateMachine<
     }
 
     if (presence) {
-      eventHub["my-presence"].notify(state.presence.me);
+      eventHub.me.notify(state.presence.me);
     }
 
     if (storageUpdates.size > 0) {
@@ -722,9 +716,7 @@ function makeStateMachine<
           );
 
         case "my-presence":
-          return eventHub["my-presence"].subscribe(
-            callback as Callback<TPresence>
-          );
+          return eventHub.me.subscribe(callback as Callback<TPresence>);
 
         case "others": {
           // NOTE: Others have a different callback structure, where the API
@@ -762,7 +754,7 @@ function makeStateMachine<
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return genericSubscribe(storageCallback);
+        return eventHub.storage.subscribe(storageCallback);
       } else {
         throw new Error("Please specify a listener callback");
       }
@@ -1584,7 +1576,7 @@ function makeStateMachine<
     events: {
       customEvent: eventHub.customEvent.observable,
       others: eventHub.others.observable,
-      "my-presence": eventHub["my-presence"].observable,
+      me: eventHub.me.observable,
       error: eventHub.error.observable,
       connection: eventHub.connection.observable,
       storage: eventHub.storage.observable,

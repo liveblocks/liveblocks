@@ -75,29 +75,6 @@ export type RoomEventCallbackFor<
   TRoomEvent extends Json
 > = RoomEventCallbackMap<TPresence, TUserMeta, TRoomEvent>[E];
 
-type EventPayloadMapping<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = {
-  "my-presence": TPresence;
-  others: {
-    others: Others<TPresence, TUserMeta>;
-    event: OthersEvent<TPresence, TUserMeta>;
-  };
-  event: { connectionId: number; event: TRoomEvent };
-  error: Error;
-  connection: ConnectionState;
-  history: HistoryEvent;
-};
-
-export type PayloadFor<
-  E extends RoomEventName,
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
-> = EventPayloadMapping<TPresence, TUserMeta, TRoomEvent>[E];
-
 export type RoomEventCallback = RoomEventCallbackFor<
   RoomEventName,
   JsonObject,
@@ -690,8 +667,7 @@ export type Room<
 
   events: {
     customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
-    "my-presence": // TODO: Rename to `me`?
-    Observable<TPresence>;
+    me: Observable<TPresence>;
     others: Observable<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
