@@ -32,16 +32,6 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<TPresence extends JsonObject> =
-  Callback<TPresence>;
-export type ErrorCallback = Callback<Error>;
-export type ConnectionCallback = Callback<ConnectionState>;
-export type HistoryCallback = Callback<HistoryEvent>;
-export type EventCallback<TRoomEvent extends Json> = Callback<{
-  connectionId: number;
-  event: TRoomEvent;
-}>;
-
 export type OthersEventCallback<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
@@ -60,12 +50,16 @@ type RoomEventCallbackMap<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  "my-presence": MyPresenceCallback<TPresence>;
+  event: Callback<CustomEvent<TRoomEvent>>;
+  "my-presence": Callback<TPresence>;
+  //
+  // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
+  // since this API historically has taken _two_ callback arguments instead of
+  // just one.
   others: OthersEventCallback<TPresence, TUserMeta>;
-  event: EventCallback<TRoomEvent>;
-  error: ErrorCallback;
-  connection: ConnectionCallback;
-  history: HistoryCallback;
+  error: Callback<Error>;
+  connection: Callback<ConnectionState>;
+  history: Callback<HistoryEvent>;
 };
 
 export type RoomEventName = Extract<
@@ -484,7 +478,7 @@ export type Room<
      *
      * @deprecated Please use `room.events.me.subscribe()` instead.
      */
-    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+    (type: "my-presence", listener: Callback<TPresence>): () => void;
 
     /**
      * Subscribe to the other users updates.
@@ -526,7 +520,7 @@ export type Room<
      * @deprecated Please use `room.events.custom.subscribe()` instead.
      *
      */
-    (type: "event", listener: EventCallback<TRoomEvent>): () => void;
+    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
 
     /**
      * Subscribe to errors thrown in the room.
@@ -546,7 +540,7 @@ export type Room<
      * @deprecated Please use `room.events.connection.subscribe()` instead.
      *
      */
-    (type: "connection", listener: ConnectionCallback): () => void;
+    (type: "connection", listener: Callback<ConnectionState>): () => void;
 
     /**
      * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -600,7 +594,7 @@ export type Room<
      * @deprecated Please use `room.events.history.subscribe()` instead.
      *
      */
-    (type: "history", listener: HistoryCallback): () => void;
+    (type: "history", listener: Callback<HistoryEvent>): () => void;
   };
 
   /**
