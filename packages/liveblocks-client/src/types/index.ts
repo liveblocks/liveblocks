@@ -706,8 +706,7 @@ export type Room<
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageHasLoaded: // TODO: Rename to `storageDidLoad`?
-    Observable<void>;
+    storageDidLoad: Observable<void>;
   };
 
   /**

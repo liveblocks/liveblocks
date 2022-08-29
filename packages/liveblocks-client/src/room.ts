@@ -141,8 +141,7 @@ type Machine<
     connection: Observable<ConnectionState>;
     storage: Observable<StorageUpdate[]>;
     history: Observable<HistoryEvent>;
-    storageHasLoaded: // TODO: Rename to `storageDidLoad`?
-    Observable<void>;
+    storageDidLoad: Observable<void>;
   };
 
   // Core
@@ -291,7 +290,7 @@ function makeStateMachine<
     connection: makeEventSource<ConnectionState>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
-    storageHasLoaded: makeEventSource<void>(),
+    storageDidLoad: makeEventSource<void>(),
   };
 
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
@@ -1063,7 +1062,7 @@ function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
-          eventHub.storageHasLoaded.notify();
+          eventHub.storageDidLoad.notify();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1592,7 +1591,7 @@ function makeStateMachine<
       connection: eventHub.connection.observable,
       storage: eventHub.storage.observable,
       history: eventHub.history.observable,
-      storageHasLoaded: eventHub.storageHasLoaded.observable,
+      storageDidLoad: eventHub.storageDidLoad.observable,
     },
 
     // Core
