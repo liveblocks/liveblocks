@@ -15,6 +15,7 @@ import type {
   ClientMsg,
   Connection,
   ConnectionState,
+  CustomEvent,
   HistoryEvent,
   IdTuple,
   InitialDocumentStateServerMsg,
@@ -127,7 +128,7 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
-    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
+    customEvent: Observable<CustomEvent<TRoomEvent>>;
     me: Observable<TPresence>;
     others: Observable<{
       others: Others<TPresence, TUserMeta>;
@@ -276,7 +277,7 @@ function makeStateMachine<
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const eventHub = {
-    customEvent: makeEventSource<{ connectionId: number; event: TRoomEvent }>(),
+    customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
@@ -712,7 +713,7 @@ function makeStateMachine<
       switch (first) {
         case "event":
           return eventHub.customEvent.subscribe(
-            callback as Callback<{ connectionId: number; event: TRoomEvent }>
+            callback as Callback<CustomEvent<TRoomEvent>>
           );
 
         case "my-presence":

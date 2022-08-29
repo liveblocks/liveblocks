@@ -50,6 +50,11 @@ export type OthersEventCallback<
   event: OthersEvent<TPresence, TUserMeta>
 ) => void;
 
+export type CustomEvent<TRoomEvent extends Json> = {
+  connectionId: number;
+  event: TRoomEvent;
+};
+
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
