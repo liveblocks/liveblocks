@@ -11,15 +11,10 @@ import type {
   Authentication,
   AuthorizeResponse,
   BaseUserMeta,
-  BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
   Connection,
-  ConnectionCallback,
   ConnectionState,
-  ErrorCallback,
-  EventCallback,
-  HistoryCallback,
   HistoryEvent,
   IdTuple,
   InitialDocumentStateServerMsg,
@@ -28,12 +23,10 @@ import type {
   LiveNode,
   LiveStructure,
   LsonObject,
-  MyPresenceCallback,
   NodeMap,
   Op,
   Others,
   OthersEvent,
-  OthersEventCallback,
   ParentToChildNodeMap,
   PayloadFor,
   Polyfills,
@@ -135,7 +128,21 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
-    storageHasLoaded: Observable<void>;
+    event: // TODO: Rename to `custom`?
+    Observable<{ connectionId: number; event: TRoomEvent }>;
+
+    "my-presence": // TODO: Rename to `me`?
+    Observable<TPresence>;
+    others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    error: Observable<Error>;
+    connection: Observable<ConnectionState>;
+    storage: Observable<StorageUpdate[]>;
+    history: Observable<HistoryEvent>;
+    storageHasLoaded: // TODO: Rename to `storageDidLoad`?
+    Observable<void>;
   };
 
   // Core
@@ -284,7 +291,6 @@ function makeStateMachine<
     connection: makeEventSource<ConnectionState>(),
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
-
     storageHasLoaded: makeEventSource<void>(),
   };
 
@@ -734,6 +740,20 @@ function makeStateMachine<
     type Payload = PayloadFor<E, TPresence, TUserMeta, TRoomEvent>;
 
     const eventName = first;
+
+    if (eventName === "others") {
+      // NOTE: Others have a different callback structure, where the API
+      // exposed on the outside takes _two_ callback arguments!
+      const eventListener = second as (
+        others: Others<TPresence, TUserMeta>,
+        event: OthersEvent<TPresence, TUserMeta>
+      ) => void;
+      return eventHub.others.subscribe(
+        // Wrap it here... ¯\_(ツ)_/¯
+        ({ others, event }) => eventListener(others, event)
+      );
+    }
+
     const eventListener = second as Callback<Payload>;
 
     // TODO: Solve this in a less dynamic way!
@@ -1542,6 +1562,13 @@ function makeStateMachine<
     getStorage,
     getStorageSnapshot,
     events: {
+      event: eventHub.event.observable,
+      others: eventHub.others.observable,
+      "my-presence": eventHub["my-presence"].observable,
+      error: eventHub.error.observable,
+      connection: eventHub.connection.observable,
+      storage: eventHub.storage.observable,
+      history: eventHub.history.observable,
       storageHasLoaded: eventHub.storageHasLoaded.observable,
     },
 
@@ -1679,9 +1706,7 @@ export function createRoom<
 
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
-    events: {
-      storageHasLoaded: machine.events.storageHasLoaded,
-    },
+    events: machine.events,
 
     batch: machine.batch,
     history: {

@@ -1,4 +1,4 @@
-import type { Observable } from "../EventSource";
+import type { Callback, Observable } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -32,11 +32,16 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<TPresence extends JsonObject> = (
-  me: TPresence
-) => void;
+export type MyPresenceCallback<TPresence extends JsonObject> =
+  Callback<TPresence>;
+export type ErrorCallback = Callback<Error>;
+export type ConnectionCallback = Callback<ConnectionState>;
+export type HistoryCallback = Callback<HistoryEvent>;
+export type EventCallback<TRoomEvent extends Json> = Callback<{
+  connectionId: number;
+  event: TRoomEvent;
+}>;
 
-// TODO: Deprecate?
 export type OthersEventCallback<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
@@ -44,21 +49,6 @@ export type OthersEventCallback<
   others: Others<TPresence, TUserMeta>,
   event: OthersEvent<TPresence, TUserMeta>
 ) => void;
-
-// TODO: Deprecate?
-export type EventCallback<TRoomEvent extends Json> = ({
-  connectionId,
-  event,
-}: {
-  connectionId: number;
-  event: TRoomEvent;
-}) => void;
-
-export type ErrorCallback = (error: Error) => void;
-
-export type ConnectionCallback = (state: ConnectionState) => void;
-
-export type HistoryCallback = (event: HistoryEvent) => void;
 
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
@@ -699,11 +689,25 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   events: {
+    event: // TODO: Rename to `custom`?
+    Observable<{ connectionId: number; event: TRoomEvent }>;
+
+    "my-presence": // TODO: Rename to `me`?
+    Observable<TPresence>;
+    others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    error: Observable<Error>;
+    connection: Observable<ConnectionState>;
+    storage: Observable<StorageUpdate[]>;
+    history: Observable<HistoryEvent>;
     /**
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageHasLoaded: Observable<void>;
+    storageHasLoaded: // TODO: Rename to `storageDidLoad`?
+    Observable<void>;
   };
 
   /**

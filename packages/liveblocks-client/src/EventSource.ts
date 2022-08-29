@@ -1,5 +1,5 @@
 export type Callback<T> = (event: T) => void;
-type UnsubscribeCallback = () => void;
+export type UnsubscribeCallback = () => void;
 
 export type Observable<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
