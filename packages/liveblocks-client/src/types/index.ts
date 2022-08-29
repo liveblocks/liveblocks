@@ -689,9 +689,7 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   events: {
-    event: // TODO: Rename to `custom`?
-    Observable<{ connectionId: number; event: TRoomEvent }>;
-
+    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
     "my-presence": // TODO: Rename to `me`?
     Observable<TPresence>;
     others: Observable<{

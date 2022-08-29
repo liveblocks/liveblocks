@@ -437,7 +437,7 @@ export function createRoomContext<
         savedCallback.current(eventData);
       };
 
-      return room.events.event.subscribe(listener);
+      return room.events.customEvent.subscribe(listener);
     }, [room]);
   }
 

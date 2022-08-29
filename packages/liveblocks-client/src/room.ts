@@ -128,9 +128,7 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
-    event: // TODO: Rename to `custom`?
-    Observable<{ connectionId: number; event: TRoomEvent }>;
-
+    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
     "my-presence": // TODO: Rename to `me`?
     Observable<TPresence>;
     others: Observable<{
@@ -280,7 +278,7 @@ function makeStateMachine<
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const eventHub = {
-    event: makeEventSource<{ connectionId: number; event: TRoomEvent }>(),
+    customEvent: makeEventSource<{ connectionId: number; event: TRoomEvent }>(),
     others: makeEventSource<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
@@ -719,7 +717,7 @@ function makeStateMachine<
       const callback = second;
       switch (first) {
         case "event":
-          return eventHub.event.subscribe(
+          return eventHub.customEvent.subscribe(
             callback as Callback<{ connectionId: number; event: TRoomEvent }>
           );
 
@@ -1038,7 +1036,7 @@ function makeStateMachine<
           break;
         }
         case ServerMsgCode.BROADCASTED_EVENT: {
-          eventHub.event.notify({
+          eventHub.customEvent.notify({
             connectionId: message.actor,
             event: message.event,
           });
@@ -1584,7 +1582,7 @@ function makeStateMachine<
     getStorage,
     getStorageSnapshot,
     events: {
-      event: eventHub.event.observable,
+      customEvent: eventHub.customEvent.observable,
       others: eventHub.others.observable,
       "my-presence": eventHub["my-presence"].observable,
       error: eventHub.error.observable,
