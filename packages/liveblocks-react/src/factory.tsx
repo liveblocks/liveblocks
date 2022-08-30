@@ -62,6 +62,17 @@ type MutationContext<
   ) => void;
 };
 
+/**
+ * For any function type, returns a similar function type without the first
+ * argument.
+ */
+type RemoveFirstArg<F> = F extends (
+  first: any,
+  ...rest: infer Args
+) => infer ReturnType
+  ? (...args: Args) => ReturnType
+  : never;
+
 export type RoomProviderProps<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -378,12 +389,7 @@ type RoomContextBundle<
   >(
     callback: F,
     deps?: unknown[]
-  ): F extends (
-    context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
-    ...args: infer Args
-  ) => infer R
-    ? (...args: Args) => R
-    : never;
+  ): RemoveFirstArg<F>;
 };
 
 export function createRoomContext<
@@ -800,15 +806,7 @@ export function createRoomContext<
       context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
       ...args: any[]
     ) => any
-  >(
-    callback: F,
-    deps?: unknown[]
-  ): F extends (
-    context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
-    ...args: infer Args
-  ) => infer R
-    ? (...args: Args) => R
-    : never {
+  >(callback: F, deps?: unknown[]): RemoveFirstArg<F> {
     type TODO = any;
 
     const room = useRoom();
