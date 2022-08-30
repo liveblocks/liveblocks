@@ -279,6 +279,29 @@ export type User<
   readonly presence: TPresence;
 };
 
+/**
+ * Represents a user in a room. Treated as immutable.
+ */
+// export type Actor<
+//   TPresence extends JsonObject,
+//   TUserMeta extends BaseUserMeta
+// > = {
+//   /**
+//    * The actor ID of the user. It is unique and increment at every new
+//    * connection. You can also come across this ID as the "connection ID".
+//    */
+//   readonly actorId: number;
+//   /**
+//    * The id of the user that has been set in the authentication endpoint.
+//    * Useful to get additional information about the connected user.
+//    */
+//   readonly meta: TUserMeta;
+//   /**
+//    * The user's presence data.
+//    */
+//   readonly data: TPresence;
+// };
+
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
 export type AuthEndpoint = string | AuthEndpointCallback;

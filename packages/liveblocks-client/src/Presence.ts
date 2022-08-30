@@ -1,4 +1,10 @@
-import type { BaseUserMeta, JsonObject, Others, User } from "./types";
+import type {
+  // Actor,
+  BaseUserMeta,
+  JsonObject,
+  Others,
+  User,
+} from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
 export type PresenceSnapshot<
@@ -7,6 +13,8 @@ export type PresenceSnapshot<
 > = {
   readonly me: TPresence;
   readonly others: readonly User<TPresence, TUserMeta>[];
+  // readonly me: Actor<TPresence, TUserMeta>;
+  // readonly others: readonly Actor<TPresence, TUserMeta>[];
 };
 
 type Connection<TUserMeta extends BaseUserMeta> = {
