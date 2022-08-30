@@ -13,9 +13,7 @@ export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
 
-export interface Doc {
-  //             ^^^ FIXME: Find a better name for "Doc". This is more or less
-  //                        the "RoomContext".
+export interface ManagedPool {
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
@@ -103,7 +101,7 @@ type ParentInfo =
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
   /** @internal */
-  private __doc?: Doc;
+  private __pool?: ManagedPool;
   /** @internal */
   private __id?: string;
 
@@ -128,12 +126,12 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  protected get _doc(): Doc | undefined {
-    return this.__doc;
+  protected get _pool(): ManagedPool | undefined {
+    return this.__pool;
   }
 
   get roomId(): string | null {
-    return this.__doc ? this.__doc.roomId : null;
+    return this.__pool ? this.__pool.roomId : null;
   }
 
   /** @internal */
@@ -219,15 +217,15 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  _attach(id: string, doc: Doc): void {
-    if (this.__id || this.__doc) {
+  _attach(id: string, pool: ManagedPool): void {
+    if (this.__id || this.__pool) {
       throw new Error("Cannot attach if CRDT is already attached");
     }
 
-    doc.addItem(id, crdtAsLiveNode(this));
+    pool.addItem(id, crdtAsLiveNode(this));
 
     this.__id = id;
-    this.__doc = doc;
+    this.__pool = pool;
   }
 
   /** @internal */
@@ -235,8 +233,8 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   _detach(): void {
-    if (this.__doc && this.__id) {
-      this.__doc.deleteItem(this.__id);
+    if (this.__pool && this.__id) {
+      this.__pool.deleteItem(this.__id);
     }
 
     switch (this.parent.type) {
@@ -261,7 +259,7 @@ export abstract class AbstractCrdt {
         assertNever(this.parent, "Unknown state");
     }
 
-    this.__doc = undefined;
+    this.__pool = undefined;
   }
 
   /** @internal */
@@ -271,7 +269,7 @@ export abstract class AbstractCrdt {
   abstract _serialize(
     parentId: string,
     parentKey: string,
-    doc?: Doc
+    pool?: ManagedPool
   ): CreateChildOp[];
 
   /** @internal */

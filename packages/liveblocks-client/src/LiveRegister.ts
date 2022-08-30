@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
@@ -34,10 +34,10 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   static _deserialize(
     [id, item]: IdTuple<SerializedRegister>,
     _parentToChildren: ParentToChildNodeMap,
-    doc: Doc
+    pool: ManagedPool
   ): LiveRegister<Json> {
     const register = new LiveRegister(item.data);
-    register._attach(id, doc);
+    register._attach(id, pool);
     return register;
   }
 
@@ -45,7 +45,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _serialize(
     parentId: string,
     parentKey: string,
-    doc?: Doc
+    pool?: ManagedPool
   ): CreateRegisterOp[] {
     if (this._id == null || parentId == null || parentKey == null) {
       throw new Error(
@@ -56,7 +56,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return [
       {
         type: OpCode.CREATE_REGISTER,
-        opId: doc?.generateOpId(),
+        opId: pool?.generateOpId(),
         id: this._id,
         parentId,
         parentKey,
