@@ -824,10 +824,13 @@ export function createRoomContext<
             TUserMeta,
             TRoomEvent
           > = { root, room, setMyPresence };
-          return ((...args) =>
-            room.batch(() =>
-              callback(mutationCtx, ...args)
-            )) as RemoveFirstArg<F>;
+          return ((...args) => {
+            let rv;
+            room.batch(() => {
+              rv = callback(mutationCtx, ...args);
+            });
+            return rv;
+          }) as RemoveFirstArg<F>;
         } else {
           return (() => {
             console.warn(
