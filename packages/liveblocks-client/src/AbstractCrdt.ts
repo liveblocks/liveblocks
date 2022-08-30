@@ -13,6 +13,11 @@ export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
 
+/**
+ * The managed pool is a namespace registry (i.e. a context) that "owns" all
+ * the individual live nodes, ensuring each one has a unique ID, and holding on
+ * to live nodes before and after they are inter-connected.
+ */
 export interface ManagedPool {
   roomId: string;
   generateId: () => string;
