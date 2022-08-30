@@ -247,7 +247,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   scheduleReconnect(delay: number): number;
 };
 
-type Context = {
+type Config = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -273,7 +273,7 @@ function makeStateMachine<
   TRoomEvent extends Json
 >(
   state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  context: Context,
+  config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const eventHub = {
@@ -301,7 +301,7 @@ function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return auth(context.roomId)
+        return auth(config.roomId)
           .then(({ token }) => {
             if (state.connection.state !== "authenticating") {
               return;
@@ -420,7 +420,7 @@ function makeStateMachine<
       generateId,
       generateOpId,
       dispatch: storageDispatch,
-      roomId: context.roomId,
+      roomId: config.roomId,
     });
   }
 
@@ -800,12 +800,12 @@ function makeStateMachine<
     }
 
     const auth = prepareAuthEndpoint(
-      context.authentication,
-      context.polyfills?.fetch ?? context.fetchPolyfill
+      config.authentication,
+      config.polyfills?.fetch ?? config.fetchPolyfill
     );
     const createWebSocket = prepareCreateWebSocket(
-      context.liveblocksServer,
-      context.polyfills?.WebSocket ?? context.WebSocketPolyfill
+      config.liveblocksServer,
+      config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
     updateConnection({ state: "authenticating" });
@@ -1252,7 +1252,7 @@ function makeStateMachine<
 
     const elapsedTime = now - state.lastFlushTime;
 
-    if (elapsedTime > context.throttleDelay) {
+    if (elapsedTime > config.throttleDelay) {
       const messages = flushDataToMessages(state);
 
       if (messages.length === 0) {
@@ -1271,7 +1271,7 @@ function makeStateMachine<
       }
 
       state.timeoutHandles.flush = effects.delayFlush(
-        context.throttleDelay - (now - state.lastFlushTime)
+        config.throttleDelay - (now - state.lastFlushTime)
       );
     }
   }
@@ -1681,26 +1681,26 @@ export function createRoom<
   TRoomEvent extends Json
 >(
   options: RoomInitializers<TPresence, TStorage>,
-  context: Context
+  config: Config
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"
-      ? initialPresence(context.roomId)
+      ? initialPresence(config.roomId)
       : initialPresence,
     typeof initialStorage === "function"
-      ? initialStorage(context.roomId)
+      ? initialStorage(config.roomId)
       : initialStorage
   );
 
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    context
+    config
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    id: context.roomId,
+    id: config.roomId,
     /////////////
     // Core    //
     /////////////
