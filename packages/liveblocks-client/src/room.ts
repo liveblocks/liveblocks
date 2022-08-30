@@ -1,4 +1,4 @@
-import type { ApplyResult } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
@@ -276,6 +276,42 @@ function makeStateMachine<
   config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const pool: ManagedPool = {
+    roomId: config.roomId,
+
+    getItem: (id: string) => state.items.get(id),
+    addItem: (id: string, liveItem: LiveNode) =>
+      void state.items.set(id, liveItem),
+    deleteItem: (id: string) => void state.items.delete(id),
+    generateId: () => `${getConnectionId()}:${state.clock++}`,
+    generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
+
+    dispatch(
+      ops: Op[],
+      reverse: Op[],
+      storageUpdates: Map<string, StorageUpdate>
+    ) {
+      if (state.isBatching) {
+        state.batch.ops.push(...ops);
+        storageUpdates.forEach((value, key) => {
+          state.batch.updates.storageUpdates.set(
+            key,
+            mergeStorageUpdates(
+              state.batch.updates.storageUpdates.get(key) as any, // FIXME
+              value
+            )
+          );
+        });
+        state.batch.reverseOps.push(...reverse);
+      } else {
+        addToUndoStack(reverse);
+        state.redoStack = [];
+        dispatchOps(ops);
+        notify({ storageUpdates });
+      }
+    },
+  };
+
   const eventHub = {
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
@@ -411,29 +447,9 @@ function makeStateMachine<
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
+    // XXX Abstract these details into a LiveObject._fromItems() helper
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
-
-    return LiveObject._deserialize(root, parentToChildren, {
-      getItem,
-      addItem,
-      deleteItem,
-      generateId,
-      generateOpId,
-      dispatch: storageDispatch,
-      roomId: config.roomId,
-    });
-  }
-
-  function addItem(id: string, liveItem: LiveNode) {
-    state.items.set(id, liveItem);
-  }
-
-  function deleteItem(id: string) {
-    state.items.delete(id);
-  }
-
-  function getItem(id: string) {
-    return state.items.get(id);
+    return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
   function addToUndoStack(historyItem: HistoryItem<TPresence>) {
@@ -447,31 +463,6 @@ function makeStateMachine<
     } else {
       state.undoStack.push(historyItem);
       onHistoryChange();
-    }
-  }
-
-  function storageDispatch(
-    ops: Op[],
-    reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
-  ) {
-    if (state.isBatching) {
-      state.batch.ops.push(...ops);
-      storageUpdates.forEach((value, key) => {
-        state.batch.updates.storageUpdates.set(
-          key,
-          mergeStorageUpdates(
-            state.batch.updates.storageUpdates.get(key) as any, // FIXME
-            value
-          )
-        );
-      });
-      state.batch.reverseOps.push(...reverse);
-    } else {
-      addToUndoStack(reverse);
-      state.redoStack = [];
-      dispatch(ops);
-      notify({ storageUpdates });
     }
   }
 
@@ -514,14 +505,6 @@ function makeStateMachine<
     throw new Error(
       "Internal. Tried to get connection id but connection was never open"
     );
-  }
-
-  function generateId() {
-    return `${getConnectionId()}:${state.clock++}`;
-  }
-
-  function generateOpId() {
-    return `${getConnectionId()}:${state.opClock++}`;
   }
 
   function apply(
@@ -574,7 +557,7 @@ function makeStateMachine<
 
         // Ops applied after undo/redo don't have an opId.
         if (!op.opId) {
-          op.opId = generateOpId();
+          op.opId = pool.generateOpId();
         }
 
         if (isLocal) {
@@ -1360,7 +1343,7 @@ function makeStateMachine<
     tryFlushing();
   }
 
-  function dispatch(ops: Op[]) {
+  function dispatchOps(ops: Op[]) {
     state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
@@ -1497,7 +1480,7 @@ function makeStateMachine<
       }
 
       if (state.batch.ops.length > 0) {
-        dispatch(state.batch.ops);
+        dispatchOps(state.batch.ops);
       }
 
       notify(state.batch.updates);
