@@ -50,11 +50,8 @@ function getEmptyOthers() {
 
 type MutationContext<
   TPresence extends JsonObject,
-  TStorage extends LsonObject,
-  TUserMeta extends BaseUserMeta,
-  TRoomEvent extends Json
+  TStorage extends LsonObject
 > = {
-  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
   root: LiveObject<TStorage>;
   setMyPresence: (
     patch: Partial<TPresence>,
@@ -383,7 +380,7 @@ type RoomContextBundle<
 
   useMutation<
     F extends (
-      context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      context: MutationContext<TPresence, TStorage>,
       ...args: any[]
     ) => any
   >(
@@ -803,7 +800,7 @@ export function createRoomContext<
    */
   function useMutation<
     F extends (
-      context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
+      context: MutationContext<TPresence, TStorage>,
       ...args: any[]
     ) => any
   >(callback: F, deps?: unknown[]): RemoveFirstArg<F> {
@@ -818,12 +815,10 @@ export function createRoomContext<
     return React.useMemo(
       () => {
         if (root !== null) {
-          const mutationCtx: MutationContext<
-            TPresence,
-            TStorage,
-            TUserMeta,
-            TRoomEvent
-          > = { root, room, setMyPresence };
+          const mutationCtx: MutationContext<TPresence, TStorage> = {
+            root,
+            setMyPresence,
+          };
           return ((...args) => {
             let rv;
             room.batch(() => {
