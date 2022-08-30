@@ -447,7 +447,7 @@ function makeStateMachine<
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
-    // XXX Abstract these details into a LiveObject._fromItems() helper
+    // TODO Abstract these details into a LiveObject._fromItems() helper?
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
