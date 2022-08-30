@@ -348,12 +348,7 @@ export function createRoomContext<
     const presence = room.getPresence();
     const rerender = useRerender();
 
-    React.useEffect(() => {
-      const unsubscribe = room.subscribe("my-presence", rerender);
-      return () => {
-        unsubscribe();
-      };
-    }, [room, rerender]);
+    React.useEffect(() => room.events.me.subscribe(rerender), [room, rerender]);
 
     const setPresence = React.useCallback(
       (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
@@ -382,12 +377,10 @@ export function createRoomContext<
     const room = useRoom();
     const rerender = useRerender();
 
-    React.useEffect(() => {
-      const unsubscribe = room.subscribe("others", rerender);
-      return () => {
-        unsubscribe();
-      };
-    }, [room, rerender]);
+    React.useEffect(
+      () => room.events.others.subscribe(rerender),
+      [room, rerender]
+    );
 
     return room.getOthers();
   }
@@ -417,14 +410,10 @@ export function createRoomContext<
       savedCallback.current = callback;
     });
 
-    React.useEffect(() => {
-      const listener = (e: Error) => savedCallback.current(e);
-
-      const unsubscribe = room.subscribe("error", listener);
-      return () => {
-        unsubscribe();
-      };
-    }, [room]);
+    React.useEffect(
+      () => room.events.error.subscribe((e: Error) => savedCallback.current(e)),
+      [room]
+    );
   }
 
   function useEventListener(
@@ -445,10 +434,7 @@ export function createRoomContext<
         savedCallback.current(eventData);
       };
 
-      const unsubscribe = room.subscribe("event", listener);
-      return () => {
-        unsubscribe();
-      };
+      return room.events.customEvent.subscribe(listener);
     }, [room]);
   }
 
@@ -457,8 +443,8 @@ export function createRoomContext<
     const rerender = useRerender();
 
     React.useEffect(() => {
-      const unsubscribePresence = room.subscribe("my-presence", rerender);
-      const unsubscribeConnection = room.subscribe("connection", rerender);
+      const unsubscribePresence = room.events.me.subscribe(rerender);
+      const unsubscribeConnection = room.events.connection.subscribe(rerender);
 
       return () => {
         unsubscribePresence();
@@ -474,7 +460,7 @@ export function createRoomContext<
 
     const room = useRoom();
 
-    const subscribe = room.events.storageHasLoaded.subscribe;
+    const subscribe = room.events.storageDidLoad.subscribe;
 
     const getSnapshot = React.useCallback(
       (): Snapshot => room.getStorageSnapshot(),
@@ -502,14 +488,10 @@ export function createRoomContext<
     const room = useRoom();
     const [canUndo, setCanUndo] = React.useState(room.history.canUndo);
 
-    React.useEffect(() => {
-      const unsubscribe = room.subscribe("history", ({ canUndo }) =>
-        setCanUndo(canUndo)
-      );
-      return () => {
-        unsubscribe();
-      };
-    }, [room]);
+    React.useEffect(
+      () => room.events.history.subscribe(({ canUndo }) => setCanUndo(canUndo)),
+      [room]
+    );
 
     return canUndo;
   }
@@ -518,14 +500,10 @@ export function createRoomContext<
     const room = useRoom();
     const [canRedo, setCanRedo] = React.useState(room.history.canRedo);
 
-    React.useEffect(() => {
-      const unsubscribe = room.subscribe("history", ({ canRedo }) =>
-        setCanRedo(canRedo)
-      );
-      return () => {
-        unsubscribe();
-      };
-    }, [room]);
+    React.useEffect(
+      () => room.events.history.subscribe(({ canRedo }) => setCanRedo(canRedo)),
+      [room]
+    );
 
     return canRedo;
   }

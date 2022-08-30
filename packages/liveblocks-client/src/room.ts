@@ -1,9 +1,9 @@
 import type { ApplyResult } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
-import type { EventSource } from "./EventSource";
+import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { Presence } from "./Presence";
@@ -11,15 +11,12 @@ import type {
   Authentication,
   AuthorizeResponse,
   BaseUserMeta,
-  BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
   Connection,
-  ConnectionCallback,
   ConnectionState,
-  ErrorCallback,
-  EventCallback,
-  HistoryCallback,
+  CustomEvent,
+  HistoryEvent,
   IdTuple,
   InitialDocumentStateServerMsg,
   Json,
@@ -27,12 +24,10 @@ import type {
   LiveNode,
   LiveStructure,
   LsonObject,
-  MyPresenceCallback,
   NodeMap,
   Op,
   Others,
   OthersEvent,
-  OthersEventCallback,
   ParentToChildNodeMap,
   Polyfills,
   Room,
@@ -70,7 +65,6 @@ import {
   isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-  remove,
   tryParseJson,
 } from "./utils";
 
@@ -134,7 +128,17 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
   events: {
-    storageHasLoaded: EventSource<void>;
+    customEvent: Observable<CustomEvent<TRoomEvent>>;
+    me: Observable<TPresence>;
+    others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    error: Observable<Error>;
+    connection: Observable<ConnectionState>;
+    storage: Observable<StorageUpdate[]>;
+    history: Observable<HistoryEvent>;
+    storageDidLoad: Observable<void>;
   };
 
   // Core
@@ -200,15 +204,6 @@ type State<
   };
   intervalHandles: {
     heartbeat: number;
-  };
-  listeners: {
-    event: EventCallback<TRoomEvent>[];
-    others: OthersEventCallback<TPresence, TUserMeta>[];
-    "my-presence": MyPresenceCallback<TPresence>[];
-    error: ErrorCallback[];
-    connection: ConnectionCallback[];
-    storage: StorageCallback[];
-    history: HistoryCallback[];
   };
 
   presence: Presence<TPresence, TUserMeta>;
@@ -281,6 +276,20 @@ function makeStateMachine<
   context: Context,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const eventHub = {
+    customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
+    me: makeEventSource<TPresence>(),
+    others: makeEventSource<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>(),
+    error: makeEventSource<Error>(),
+    connection: makeEventSource<ConnectionState>(),
+    storage: makeEventSource<StorageUpdate[]>(),
+    history: makeEventSource<HistoryEvent>(),
+    storageDidLoad: makeEventSource<void>(),
+  };
+
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -332,38 +341,6 @@ function makeStateMachine<
       return setTimeout(connect, delay) as any;
     },
   };
-
-  function genericSubscribe(callback: StorageCallback) {
-    state.listeners.storage.push(callback);
-    return () => remove(state.listeners.storage, callback);
-  }
-
-  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
-    node: L,
-    callback: (updates: StorageUpdate[]) => void
-  ): () => void {
-    return genericSubscribe((updates) => {
-      const relatedUpdates = updates.filter((update) =>
-        isSameNodeOrChildOf(update.node, node)
-      );
-      if (relatedUpdates.length > 0) {
-        callback(relatedUpdates);
-      }
-    });
-  }
-
-  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
-    node: L,
-    callback: (node: L) => void
-  ): () => void {
-    return genericSubscribe((updates) => {
-      for (const update of updates) {
-        if (update.node._id === node._id) {
-          callback(update.node as L);
-        }
-      }
-    });
-  }
 
   function createOrUpdateRootFromMessage(
     message: InitialDocumentStateServerMsg
@@ -508,22 +485,19 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
+      const others = state.presence.getOthersProxy();
       for (const event of otherEvents) {
-        for (const listener of state.listeners.others) {
-          listener(state.presence.getOthersProxy(), event);
-        }
+        eventHub.others.notify({ others, event });
       }
     }
 
     if (presence) {
-      for (const listener of state.listeners["my-presence"]) {
-        listener(state.presence.me);
-      }
+      eventHub.me.notify(state.presence.me);
     }
 
     if (storageUpdates.size > 0) {
       const updates = Array.from(storageUpdates.values());
-      state.listeners.storage.forEach((subscriber) => subscriber(updates));
+      eventHub.storage.notify(updates);
     }
   }
 
@@ -691,6 +665,33 @@ function makeStateMachine<
     }
   }
 
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return eventHub.storage.subscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
+
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return eventHub.storage.subscribe((updates) => {
+      for (const update of updates) {
+        if (update.node._id === node._id) {
+          callback(update.node as L);
+        }
+      }
+    });
+  }
+
   // Generic storage callbacks
   function subscribe(callback: StorageCallback): () => void; // prettier-ignore
   // Storage callbacks filtered by Live structure
@@ -704,10 +705,57 @@ function makeStateMachine<
     second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
+    if (typeof first === "string" && isRoomEventName(first)) {
+      if (typeof second !== "function") {
+        throw new Error("Second argument must be a callback function");
+      }
+      const callback = second;
+      switch (first) {
+        case "event":
+          return eventHub.customEvent.subscribe(
+            callback as Callback<CustomEvent<TRoomEvent>>
+          );
+
+        case "my-presence":
+          return eventHub.me.subscribe(callback as Callback<TPresence>);
+
+        case "others": {
+          // NOTE: Others have a different callback structure, where the API
+          // exposed on the outside takes _two_ callback arguments!
+          const cb = callback as (
+            others: Others<TPresence, TUserMeta>,
+            event: OthersEvent<TPresence, TUserMeta>
+          ) => void;
+          return eventHub.others.subscribe(({ others, event }) =>
+            cb(others, event)
+          );
+        }
+
+        case "error":
+          return eventHub.error.subscribe(callback as Callback<Error>);
+
+        case "connection":
+          return eventHub.connection.subscribe(
+            callback as Callback<ConnectionState>
+          );
+
+        case "storage":
+          return eventHub.storage.subscribe(
+            callback as Callback<StorageUpdate[]>
+          );
+
+        case "history":
+          return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
+
+        default:
+          return assertNever(first, "Unknown event");
+      }
+    }
+
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return genericSubscribe(storageCallback);
+        return eventHub.storage.subscribe(storageCallback);
       } else {
         throw new Error("Please specify a listener callback");
       }
@@ -724,27 +772,7 @@ function makeStateMachine<
       }
     }
 
-    if (!isRoomEventName(first)) {
-      throw new Error(`"${first}" is not a valid event name`);
-    }
-
-    type EventListener = RoomEventCallbackFor<
-      E,
-      TPresence,
-      TUserMeta,
-      TRoomEvent
-    >;
-    type EventQueue = EventListener[];
-
-    const eventName = first;
-    const eventListener = second as EventListener;
-
-    (state.listeners[eventName] as EventQueue).push(eventListener);
-
-    return () => {
-      const callbacks = state.listeners[eventName] as EventQueue;
-      remove(callbacks, eventListener);
-    };
+    throw new Error(`"${first}" is not a valid event name`);
   }
 
   function getConnectionState() {
@@ -919,16 +947,8 @@ function makeStateMachine<
     }
   }
 
-  function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
-    for (const listener of state.listeners.event) {
-      listener({ connectionId: message.actor, event: message.event });
-    }
-  }
-
   function onHistoryChange() {
-    for (const listener of state.listeners.history) {
-      listener({ canUndo: canUndo(), canRedo: canRedo() });
-    }
+    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function onUserJoinedMessage(
@@ -1009,7 +1029,10 @@ function makeStateMachine<
           break;
         }
         case ServerMsgCode.BROADCASTED_EVENT: {
-          onEvent(message);
+          eventHub.customEvent.notify({
+            connectionId: message.actor,
+            event: message.event,
+          });
           break;
         }
         case ServerMsgCode.USER_LEFT: {
@@ -1030,7 +1053,7 @@ function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
-          emitStorageHasLoaded();
+          eventHub.storageDidLoad.notify();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1070,9 +1093,7 @@ function makeStateMachine<
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
-      for (const listener of state.listeners.error) {
-        listener(error);
-      }
+      eventHub.error.notify(error);
 
       const delay = getRetryDelay(true);
       state.numberOfRetry++;
@@ -1103,9 +1124,7 @@ function makeStateMachine<
 
   function updateConnection(connection: Connection) {
     state.connection = connection;
-    for (const listener of state.listeners.connection) {
-      listener(connection.state);
-    }
+    eventHub.connection.notify(connection.state);
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1311,20 +1330,9 @@ function makeStateMachine<
 
     state.presence.clearOthers();
     notify({ others: [{ type: "reset" }] });
-    clearListeners();
-  }
 
-  function clearListeners() {
-    for (const key in state.listeners) {
-      state.listeners[
-        key as keyof State<
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent
-        >["listeners"]
-      ] = [];
-    }
+    // Clear all event listeners
+    Object.values(eventHub).forEach((eventSource) => eventSource.clear());
   }
 
   function getPresence(): TPresence {
@@ -1390,8 +1398,6 @@ function makeStateMachine<
       return null;
     }
   }
-
-  const [storageHasLoaded, emitStorageHasLoaded] = makeEventSource<void>();
 
   function getStorage(): Promise<{
     root: LiveObject<TStorage>;
@@ -1569,7 +1575,14 @@ function makeStateMachine<
     getStorage,
     getStorageSnapshot,
     events: {
-      storageHasLoaded,
+      customEvent: eventHub.customEvent.observable,
+      others: eventHub.others.observable,
+      me: eventHub.me.observable,
+      error: eventHub.error.observable,
+      connection: eventHub.connection.observable,
+      storage: eventHub.storage.observable,
+      history: eventHub.history.observable,
+      storageDidLoad: eventHub.storageDidLoad.observable,
     },
 
     // Core
@@ -1596,15 +1609,6 @@ function defaultState<
     token: null,
     lastConnectionId: null,
     socket: null,
-    listeners: {
-      event: [],
-      others: [],
-      "my-presence": [],
-      error: [],
-      connection: [],
-      storage: [],
-      history: [],
-    },
     numberOfRetry: 0,
     lastFlushTime: 0,
     timeoutHandles: {
@@ -1715,9 +1719,7 @@ export function createRoom<
 
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
-    events: {
-      storageHasLoaded: machine.events.storageHasLoaded,
-    },
+    events: machine.events,
 
     batch: machine.batch,
     history: {

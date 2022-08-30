@@ -187,7 +187,7 @@ const internalEnhancer = <T>(options: {
         broadcastInitialPresence(room, reduxState, presenceMapping as any);
 
         unsubscribeCallbacks.push(
-          room.subscribe("connection", () => {
+          room.events.connection.subscribe(() => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               connection: room!.getConnectionState(),
@@ -196,7 +196,7 @@ const internalEnhancer = <T>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.subscribe("others", (others) => {
+          room.events.others.subscribe(({ others }) => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_OTHERS,
               others: others.toArray(),
@@ -205,7 +205,7 @@ const internalEnhancer = <T>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.subscribe("my-presence", () => {
+          room.events.me.subscribe(() => {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,

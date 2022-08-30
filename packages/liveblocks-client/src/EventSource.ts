@@ -1,8 +1,23 @@
-type Callback<T> = (event: T) => void;
-type UnsubscribeCallback = () => void;
+export type Callback<T> = (event: T) => void;
+export type UnsubscribeCallback = () => void;
+
+export type Observable<T> = {
+  subscribe(callback: Callback<T>): UnsubscribeCallback;
+};
 
 export type EventSource<T> = {
+  /**
+   * Private/controlled notification of events.
+   */
+  notify(event: T): void;
   subscribe(callback: Callback<T>): UnsubscribeCallback;
+  clear(): void;
+
+  /**
+   * Observable instance, which can be used to subscribe to this event source
+   * in a readonly fashion. Safe to publicly expose.
+   */
+  observable: Observable<T>;
 };
 
 export type EventEmitter<T> = (event: T) => void;
@@ -13,8 +28,8 @@ export type EventEmitter<T> = (event: T) => void;
  *
  * The events are anonymous, so you can use it to define events, like so:
  *
- *   const [event1, emitEvent1] = makeEventSource();
- *   const [event2, emitEvent2] = makeEventSource();
+ *   const event1 = makeEventSource();
+ *   const event2 = makeEventSource();
  *
  *   event1.subscribe(foo);
  *   event1.subscribe(bar);
@@ -24,11 +39,11 @@ export type EventEmitter<T> = (event: T) => void;
  *   const unsub = event2.subscribe(foo);
  *   unsub();
  *
- *   emitEvent1();  // Now foo and bar will get called
- *   emitEvent2();  // Now qux will get called (but foo will not, since it's unsubscribed)
+ *   event1.notify();  // Now foo and bar will get called
+ *   event2.notify();  // Now qux will get called (but foo will not, since it's unsubscribed)
  *
  */
-export function makeEventSource<T>(): [EventSource<T>, EventEmitter<T>] {
+export function makeEventSource<T>(): EventSource<T> {
   const _observers = new Set<Callback<T>>();
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
@@ -40,5 +55,19 @@ export function makeEventSource<T>(): [EventSource<T>, EventEmitter<T>] {
     _observers.forEach((callback) => callback(event));
   }
 
-  return [{ subscribe }, notify];
+  function clear() {
+    _observers.clear();
+  }
+
+  return {
+    // Private/internal control over event emission
+    notify,
+    subscribe,
+    clear,
+
+    // Publicly exposable subscription API
+    observable: {
+      subscribe,
+    },
+  };
 }

@@ -1,4 +1,4 @@
-import type { EventSource } from "../EventSource";
+import type { Callback, Observable } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -32,43 +32,29 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<TPresence extends JsonObject> = (
-  me: TPresence
-) => void;
-
-export type OthersEventCallback<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> = (
-  others: Others<TPresence, TUserMeta>,
-  event: OthersEvent<TPresence, TUserMeta>
-) => void;
-
-export type EventCallback<TRoomEvent extends Json> = ({
-  connectionId,
-  event,
-}: {
+export type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
-}) => void;
-
-export type ErrorCallback = (error: Error) => void;
-
-export type ConnectionCallback = (state: ConnectionState) => void;
-
-export type HistoryCallback = (event: HistoryEvent) => void;
+};
 
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  "my-presence": MyPresenceCallback<TPresence>;
-  others: OthersEventCallback<TPresence, TUserMeta>;
-  event: EventCallback<TRoomEvent>;
-  error: ErrorCallback;
-  connection: ConnectionCallback;
-  history: HistoryCallback;
+  event: Callback<CustomEvent<TRoomEvent>>;
+  "my-presence": Callback<TPresence>;
+  //
+  // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
+  // since this API historically has taken _two_ callback arguments instead of
+  // just one.
+  others: (
+    others: Others<TPresence, TUserMeta>,
+    event: OthersEvent<TPresence, TUserMeta>
+  ) => void;
+  error: Callback<Error>;
+  connection: Callback<ConnectionState>;
+  history: Callback<HistoryEvent>;
 };
 
 export type RoomEventName = Extract<
@@ -485,7 +471,7 @@ export type Room<
      *   // Do something
      * });
      */
-    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+    (type: "my-presence", listener: Callback<TPresence>): () => void;
 
     /**
      * Subscribe to the other users updates.
@@ -498,10 +484,14 @@ export type Room<
      * room.subscribe("others", (others) => {
      *   // Do something
      * });
+     *
      */
     (
       type: "others",
-      listener: OthersEventCallback<TPresence, TUserMeta>
+      listener: (
+        others: Others<TPresence, TUserMeta>,
+        event: OthersEvent<TPresence, TUserMeta>
+      ) => void
     ): () => void;
 
     /**
@@ -515,13 +505,15 @@ export type Room<
      * room.subscribe("event", ({ event, connectionId }) => {
      *   // Do something
      * });
+     *
      */
-    (type: "event", listener: EventCallback<TRoomEvent>): () => void;
+    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
 
     /**
      * Subscribe to errors thrown in the room.
      *
      * @returns Unsubscribe function.
+     *
      */
     (type: "error", listener: ErrorCallback): () => void;
 
@@ -529,8 +521,9 @@ export type Room<
      * Subscribe to connection state updates.
      *
      * @returns Unsubscribe function.
+     *
      */
-    (type: "connection", listener: ConnectionCallback): () => void;
+    (type: "connection", listener: Callback<ConnectionState>): () => void;
 
     /**
      * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -580,8 +573,9 @@ export type Room<
      * room.subscribe("history", ({ canUndo, canRedo }) => {
      *   // Do something
      * });
+     *
      */
-    (type: "history", listener: HistoryCallback): () => void;
+    (type: "history", listener: Callback<HistoryEvent>): () => void;
   };
 
   /**
@@ -674,11 +668,21 @@ export type Room<
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
   events: {
+    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
+    me: Observable<TPresence>;
+    others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    error: Observable<Error>;
+    connection: Observable<ConnectionState>;
+    storage: Observable<StorageUpdate[]>;
+    history: Observable<HistoryEvent>;
     /**
      * Subscribe to the storage loaded event. Will fire at most once during the
      * lifetime of a Room.
      */
-    storageHasLoaded: EventSource<void>;
+    storageDidLoad: Observable<void>;
   };
 
   /**

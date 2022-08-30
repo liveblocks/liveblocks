@@ -206,13 +206,13 @@ export function middleware<
       broadcastInitialPresence(room, state, presenceMapping as any);
 
       unsubscribeCallbacks.push(
-        room.subscribe("others", (others) => {
+        room.events.others.subscribe(({ others }) => {
           updateZustandLiveblocksState(set, { others: others.toArray() });
         })
       );
 
       unsubscribeCallbacks.push(
-        room.subscribe("connection", () => {
+        room.events.connection.subscribe(() => {
           updateZustandLiveblocksState(set, {
             connection: room!.getConnectionState(),
           });
@@ -220,7 +220,7 @@ export function middleware<
       );
 
       unsubscribeCallbacks.push(
-        room.subscribe("my-presence", () => {
+        room.events.me.subscribe(() => {
           if (isPatching === false) {
             set(
               patchPresenceState(room!.getPresence(), presenceMapping as any)
