@@ -807,8 +807,6 @@ export function createRoomContext<
       ...args: any[]
     ) => any
   >(callback: F, deps?: unknown[]): RemoveFirstArg<F> {
-    type TODO = any;
-
     const room = useRoom();
     const root = useStorage();
     const setMyPresence = React.useCallback(
@@ -818,7 +816,7 @@ export function createRoomContext<
     );
 
     return React.useMemo(
-      (): TODO => {
+      () => {
         if (root !== null) {
           const mutationCtx: MutationContext<
             TPresence,
@@ -826,14 +824,16 @@ export function createRoomContext<
             TUserMeta,
             TRoomEvent
           > = { root, room, setMyPresence };
-          return (...args: TODO): TODO =>
-            room.batch(() => callback(mutationCtx, ...args));
+          return ((...args) =>
+            room.batch(() =>
+              callback(mutationCtx, ...args)
+            )) as RemoveFirstArg<F>;
         } else {
-          return () => {
+          return (() => {
             console.warn(
               "Liveblocks mutation was called before Storage has been initialized. This mutation was ignored."
             );
-          };
+          }) as RemoveFirstArg<F>;
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
