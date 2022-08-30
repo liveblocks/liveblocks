@@ -802,7 +802,7 @@ export function createRoomContext<
     ) => any
   >(
     callback: F,
-    deps: unknown[] = []
+    deps?: unknown[]
   ): F extends (
     context: MutationContext<TPresence, TStorage, TUserMeta, TRoomEvent>,
     ...args: infer Args
@@ -839,14 +839,9 @@ export function createRoomContext<
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      [
-        root,
-        room,
-        setMyPresence,
-        /* deliberately NOT callback in here  */
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        ...deps,
-      ]
+      deps !== undefined
+        ? [root, room, setMyPresence, ...deps]
+        : [root, room, setMyPresence, callback]
     );
   }
 
