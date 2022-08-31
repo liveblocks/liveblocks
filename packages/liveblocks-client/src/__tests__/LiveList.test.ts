@@ -290,18 +290,16 @@ describe("LiveList", () => {
     });
 
     it("delete first item", async () => {
-      const {
-        storage: doc,
-        assert,
-        assertUndoRedo,
-      } = await prepareStorageTest<{ items: LiveList<string> }>([
+      const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>([
         createSerializedObject("0:0", {}),
         createSerializedList("0:1", "0:0", "items"),
         createSerializedRegister("0:2", "0:1", FIRST_POSITION, "A"),
         createSerializedRegister("0:3", "0:1", SECOND_POSITION, "B"),
       ]);
 
-      const root = doc.root;
+      const root = storage.root;
       const items = root.toObject().items;
 
       assert({
