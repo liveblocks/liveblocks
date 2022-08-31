@@ -204,7 +204,7 @@ export abstract class AbstractCrdt {
     switch (this.parent.type) {
       case "HasParent":
         if (this.parent.node !== newParentNode) {
-          throw new Error("Cannot attach parent if it already exist");
+          throw new Error("Cannot set parent: node already has a parent");
         } else {
           // Ignore
           this._parent = HasParent(newParentNode, newParentKey);
@@ -225,7 +225,7 @@ export abstract class AbstractCrdt {
   /** @internal */
   _attach(id: string, pool: ManagedPool): void {
     if (this.__id || this.__pool) {
-      throw new Error("Cannot attach if CRDT is already attached");
+      throw new Error("Cannot attach node: already attached");
     }
 
     pool.addNode(id, crdtAsLiveNode(this));
