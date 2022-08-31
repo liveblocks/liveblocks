@@ -22,6 +22,14 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { useInitial, useRerender } from "./hooks";
 
+/**
+ * For any function type, returns a similar function type, but without the
+ * first argument.
+ */
+type OmitFirstArg<F> = F extends (first: any, ...rest: infer A) => infer R
+  ? (...args: A) => R
+  : never;
+
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -58,17 +66,6 @@ type MutationContext<
     options?: { addToHistory: boolean }
   ) => void;
 };
-
-/**
- * For any function type, returns a similar function type without the first
- * argument.
- */
-type RemoveFirstArg<F> = F extends (
-  first: any,
-  ...rest: infer Args
-) => infer ReturnType
-  ? (...args: Args) => ReturnType
-  : never;
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -386,7 +383,7 @@ type RoomContextBundle<
   >(
     callback: F,
     deps?: unknown[]
-  ): RemoveFirstArg<F>;
+  ): OmitFirstArg<F>;
 };
 
 export function createRoomContext<
@@ -803,7 +800,7 @@ export function createRoomContext<
       context: MutationContext<TPresence, TStorage>,
       ...args: any[]
     ) => any
-  >(callback: F, deps?: unknown[]): RemoveFirstArg<F> {
+  >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
     const room = useRoom();
     const root = useStorage();
     const setMyPresence = React.useCallback(
@@ -825,13 +822,13 @@ export function createRoomContext<
               rv = callback(mutationCtx, ...args);
             });
             return rv;
-          }) as RemoveFirstArg<F>;
+          }) as OmitFirstArg<F>;
         } else {
           return (() => {
             console.warn(
               "Liveblocks mutation was called before Storage has been initialized. This mutation was ignored."
             );
-          }) as RemoveFirstArg<F>;
+          }) as OmitFirstArg<F>;
         }
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
