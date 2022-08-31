@@ -610,8 +610,8 @@ export type Room<
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param overrides A partial object that contains the properties you want to update.
-   * @param overrides Optional object to configure the behavior of updatePresence.
+   * @param patch A partial object that contains the properties you want to update.
+   * @param options Optional object to configure the behavior of updatePresence.
    *
    * @example
    * room.updatePresence({ x: 0 });
@@ -621,7 +621,7 @@ export type Room<
    * // presence is equivalent to { x: 0, y: 0 }
    */
   updatePresence: (
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: {
       /**
        * Whether or not the presence should have an impact on the undo/redo history.

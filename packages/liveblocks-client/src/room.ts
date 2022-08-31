@@ -110,7 +110,7 @@ type Machine<
 
   // Presence
   updatePresence(
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
   broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
@@ -813,7 +813,7 @@ function makeStateMachine<
   }
 
   function updatePresence(
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) {
     const oldValues = {} as TPresence;
@@ -825,9 +825,9 @@ function makeStateMachine<
       };
     }
 
-    for (const key in overrides) {
+    for (const key in patch) {
       type K = typeof key;
-      const overrideValue: TPresence[K] | undefined = overrides[key];
+      const overrideValue: TPresence[K] | undefined = patch[key];
       if (overrideValue === undefined) {
         continue;
       }
@@ -835,7 +835,7 @@ function makeStateMachine<
       oldValues[key] = state.presence.me[key];
     }
 
-    state.presence.patchMe(overrides);
+    state.presence.patchMe(patch);
 
     if (state.isBatching) {
       if (options?.addToHistory) {

@@ -206,7 +206,7 @@ type RoomContextBundle<
    */
   useMyPresence(): [
     TPresence,
-    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ];
 
   /**
@@ -262,7 +262,7 @@ type RoomContextBundle<
    * // At the next render, the presence of the current user will be equal to "{ x: 0, y: 0 }"
    */
   useUpdateMyPresence(): (
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void;
 };
@@ -342,7 +342,7 @@ export function createRoomContext<
 
   function useMyPresence(): [
     TPresence,
-    (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => void
+    (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
     const room = useRoom();
     const presence = room.getPresence();
@@ -351,8 +351,8 @@ export function createRoomContext<
     React.useEffect(() => room.events.me.subscribe(rerender), [room, rerender]);
 
     const setPresence = React.useCallback(
-      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) =>
-        room.updatePresence(overrides, options),
+      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) =>
+        room.updatePresence(patch, options),
       [room]
     );
 
@@ -360,14 +360,14 @@ export function createRoomContext<
   }
 
   function useUpdateMyPresence(): (
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
     const room = useRoom();
 
     return React.useCallback(
-      (overrides: Partial<TPresence>, options?: { addToHistory: boolean }) => {
-        room.updatePresence(overrides, options);
+      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => {
+        room.updatePresence(patch, options);
       },
       [room]
     );

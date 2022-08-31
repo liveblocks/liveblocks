@@ -505,12 +505,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /**
    * Adds or updates multiple properties at once with an object.
-   * @param overrides The object used to overrides properties
+   * @param patch The object used to overrides properties
    */
-  update(overrides: Partial<O>): void {
+  update(patch: Partial<O>): void {
     if (this._doc == null || this._id == null) {
-      for (const key in overrides) {
-        const newValue = overrides[key];
+      for (const key in patch) {
+        const newValue = patch[key];
         if (newValue === undefined) {
           continue;
         }
@@ -545,8 +545,8 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
     const updateDelta: LiveObjectUpdateDelta<O> = {};
 
-    for (const key in overrides) {
-      const newValue: Lson | undefined = overrides[key];
+    for (const key in patch) {
+      const newValue: Lson | undefined = patch[key];
       if (newValue === undefined) {
         continue;
       }
