@@ -226,7 +226,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedMap {
+  _serialize(): SerializedMap {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveMap if parent is missing");
     }

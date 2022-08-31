@@ -66,7 +66,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toSerializedCrdt(): SerializedRegister {
+  _serialize(): SerializedRegister {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveRegister if parent is missing");
     }

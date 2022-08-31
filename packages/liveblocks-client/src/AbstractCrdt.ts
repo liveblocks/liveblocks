@@ -279,7 +279,7 @@ export abstract class AbstractCrdt {
   ): CreateChildOp[];
 
   /** @internal */
-  abstract _toSerializedCrdt(): SerializedCrdt;
+  abstract _serialize(): SerializedCrdt;
 
   /**
    * @internal

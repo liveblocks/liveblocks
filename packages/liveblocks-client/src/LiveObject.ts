@@ -281,7 +281,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedObject | SerializedRootObject {
+  _serialize(): SerializedObject | SerializedRootObject {
     const data: JsonObject = {};
 
     // Add only the static Json data fields into the objects

@@ -435,7 +435,7 @@ function makeStateMachine<
 
     const currentItems: NodeMap = new Map();
     state.nodes.forEach((node, id) => {
-      currentItems.set(id, node._toSerializedCrdt());
+      currentItems.set(id, node._serialize());
     });
 
     // Get operations that represent the diff between 2 states.

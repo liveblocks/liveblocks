@@ -828,7 +828,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toSerializedCrdt(): SerializedList {
+  _serialize(): SerializedList {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveList if parent is missing");
     }
