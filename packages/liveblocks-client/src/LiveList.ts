@@ -41,7 +41,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _items: LiveNode[];
 
   /** @internal */
-  private _implicitlyDeletedItems: Set<LiveNode>;
+  private _implicitlyDeletedItems: WeakSet<LiveNode>;
 
   /** @internal */
   private _unacknowledgedSets: Map<string, string>;
@@ -49,7 +49,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
-    this._implicitlyDeletedItems = new Set();
+    this._implicitlyDeletedItems = new WeakSet();
     this._unacknowledgedSets = new Map();
 
     let position = undefined;
