@@ -56,7 +56,7 @@ function getEmptyOthers() {
   return EMPTY_OTHERS;
 }
 
-type MutationContext<
+export type MutationContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject
 > = {
