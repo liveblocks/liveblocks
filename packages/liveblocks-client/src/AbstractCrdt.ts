@@ -13,15 +13,19 @@ export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }
   | { modified: false };
 
-export interface Doc {
-  //             ^^^ FIXME: Find a better name for "Doc". This is more or less
-  //                        the "RoomContext".
+/**
+ * The managed pool is a namespace registry (i.e. a context) that "owns" all
+ * the individual live nodes, ensuring each one has a unique ID, and holding on
+ * to live nodes before and after they are inter-connected.
+ */
+export interface ManagedPool {
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
-  getItem: (id: string) => LiveNode | undefined;
-  addItem: (id: string, liveItem: LiveNode) => void;
-  deleteItem: (id: string) => void;
+
+  getNode: (id: string) => LiveNode | undefined;
+  addNode: (id: string, node: LiveNode) => void;
+  deleteNode: (id: string) => void;
 
   /**
    * Dispatching has three responsibilities:
@@ -103,7 +107,7 @@ type ParentInfo =
 export abstract class AbstractCrdt {
   //                  ^^^^^^^^^^^^ TODO: Make this an interface
   /** @internal */
-  private __doc?: Doc;
+  private __pool?: ManagedPool;
   /** @internal */
   private __id?: string;
 
@@ -128,12 +132,12 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  protected get _doc(): Doc | undefined {
-    return this.__doc;
+  protected get _pool(): ManagedPool | undefined {
+    return this.__pool;
   }
 
   get roomId(): string | null {
-    return this.__doc ? this.__doc.roomId : null;
+    return this.__pool ? this.__pool.roomId : null;
   }
 
   /** @internal */
@@ -200,7 +204,7 @@ export abstract class AbstractCrdt {
     switch (this.parent.type) {
       case "HasParent":
         if (this.parent.node !== newParentNode) {
-          throw new Error("Cannot attach parent if it already exist");
+          throw new Error("Cannot set parent: node already has a parent");
         } else {
           // Ignore
           this._parent = HasParent(newParentNode, newParentKey);
@@ -219,15 +223,15 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  _attach(id: string, doc: Doc): void {
-    if (this.__id || this.__doc) {
-      throw new Error("Cannot attach if CRDT is already attached");
+  _attach(id: string, pool: ManagedPool): void {
+    if (this.__id || this.__pool) {
+      throw new Error("Cannot attach node: already attached");
     }
 
-    doc.addItem(id, crdtAsLiveNode(this));
+    pool.addNode(id, crdtAsLiveNode(this));
 
     this.__id = id;
-    this.__doc = doc;
+    this.__pool = pool;
   }
 
   /** @internal */
@@ -235,8 +239,8 @@ export abstract class AbstractCrdt {
 
   /** @internal */
   _detach(): void {
-    if (this.__doc && this.__id) {
-      this.__doc.deleteItem(this.__id);
+    if (this.__pool && this.__id) {
+      this.__pool.deleteNode(this.__id);
     }
 
     switch (this.parent.type) {
@@ -261,21 +265,21 @@ export abstract class AbstractCrdt {
         assertNever(this.parent, "Unknown state");
     }
 
-    this.__doc = undefined;
+    this.__pool = undefined;
   }
 
   /** @internal */
   abstract _detachChild(crdt: LiveNode): ApplyResult;
 
   /** @internal */
-  abstract _serialize(
+  abstract _toOps(
     parentId: string,
     parentKey: string,
-    doc?: Doc
+    pool?: ManagedPool
   ): CreateChildOp[];
 
   /** @internal */
-  abstract _toSerializedCrdt(): SerializedCrdt;
+  abstract _serialize(): SerializedCrdt;
 
   /**
    * @internal

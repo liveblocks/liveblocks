@@ -1,4 +1,4 @@
-import type { ApplyResult } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
@@ -214,7 +214,7 @@ type State<
 
   clock: number;
   opClock: number;
-  items: Map<string, LiveNode>;
+  nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
   undoStack: HistoryItem<TPresence>[];
   redoStack: HistoryItem<TPresence>[];
@@ -247,7 +247,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   scheduleReconnect(delay: number): number;
 };
 
-type Context = {
+type Config = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -273,9 +273,45 @@ function makeStateMachine<
   TRoomEvent extends Json
 >(
   state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  context: Context,
+  config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const pool: ManagedPool = {
+    roomId: config.roomId,
+
+    getNode: (id: string) => state.nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void state.nodes.set(id, node),
+    deleteNode: (id: string) => void state.nodes.delete(id),
+
+    generateId: () => `${getConnectionId()}:${state.clock++}`,
+    generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
+
+    dispatch(
+      ops: Op[],
+      reverse: Op[],
+      storageUpdates: Map<string, StorageUpdate>
+    ) {
+      if (state.isBatching) {
+        state.batch.ops.push(...ops);
+        storageUpdates.forEach((value, key) => {
+          state.batch.updates.storageUpdates.set(
+            key,
+            mergeStorageUpdates(
+              state.batch.updates.storageUpdates.get(key) as any, // FIXME
+              value
+            )
+          );
+        });
+        state.batch.reverseOps.push(...reverse);
+      } else {
+        addToUndoStack(reverse);
+        state.redoStack = [];
+        dispatchOps(ops);
+        notify({ storageUpdates });
+      }
+    },
+  };
+
   const eventHub = {
     customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
     me: makeEventSource<TPresence>(),
@@ -301,7 +337,7 @@ function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return auth(context.roomId)
+        return auth(config.roomId)
           .then(({ token }) => {
             if (state.connection.state !== "authenticating") {
               return;
@@ -398,8 +434,8 @@ function makeStateMachine<
     }
 
     const currentItems: NodeMap = new Map();
-    state.items.forEach((liveCrdt, id) => {
-      currentItems.set(id, liveCrdt._toSerializedCrdt());
+    state.nodes.forEach((node, id) => {
+      currentItems.set(id, node._serialize());
     });
 
     // Get operations that represent the diff between 2 states.
@@ -411,29 +447,9 @@ function makeStateMachine<
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
+    // TODO Abstract these details into a LiveObject._fromItems() helper?
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
-
-    return LiveObject._deserialize(root, parentToChildren, {
-      getItem,
-      addItem,
-      deleteItem,
-      generateId,
-      generateOpId,
-      dispatch: storageDispatch,
-      roomId: context.roomId,
-    });
-  }
-
-  function addItem(id: string, liveItem: LiveNode) {
-    state.items.set(id, liveItem);
-  }
-
-  function deleteItem(id: string) {
-    state.items.delete(id);
-  }
-
-  function getItem(id: string) {
-    return state.items.get(id);
+    return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
   function addToUndoStack(historyItem: HistoryItem<TPresence>) {
@@ -447,31 +463,6 @@ function makeStateMachine<
     } else {
       state.undoStack.push(historyItem);
       onHistoryChange();
-    }
-  }
-
-  function storageDispatch(
-    ops: Op[],
-    reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
-  ) {
-    if (state.isBatching) {
-      state.batch.ops.push(...ops);
-      storageUpdates.forEach((value, key) => {
-        state.batch.updates.storageUpdates.set(
-          key,
-          mergeStorageUpdates(
-            state.batch.updates.storageUpdates.get(key) as any, // FIXME
-            value
-          )
-        );
-      });
-      state.batch.reverseOps.push(...reverse);
-    } else {
-      addToUndoStack(reverse);
-      state.redoStack = [];
-      dispatch(ops);
-      notify({ storageUpdates });
     }
   }
 
@@ -514,14 +505,6 @@ function makeStateMachine<
     throw new Error(
       "Internal. Tried to get connection id but connection was never open"
     );
-  }
-
-  function generateId() {
-    return `${getConnectionId()}:${state.clock++}`;
-  }
-
-  function generateOpId() {
-    return `${getConnectionId()}:${state.opClock++}`;
   }
 
   function apply(
@@ -574,7 +557,7 @@ function makeStateMachine<
 
         // Ops applied after undo/redo don't have an opId.
         if (!op.opId) {
-          op.opId = generateOpId();
+          op.opId = pool.generateOpId();
         }
 
         if (isLocal) {
@@ -627,23 +610,21 @@ function makeStateMachine<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node == null) {
           return { modified: false };
         }
 
-        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node == null) {
           return { modified: false };
         }
 
-        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
-          return item.parent.node._setChildKey(op.parentKey, item, source);
+        if (node.parent.type === "HasParent" && isLiveList(node.parent.node)) {
+          return node.parent.node._setChildKey(op.parentKey, node, source);
         }
         return { modified: false };
       }
@@ -655,12 +636,12 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        const parent = state.items.get(op.parentId);
-        if (parent == null) {
+        const parentNode = state.nodes.get(op.parentId);
+        if (parentNode == null) {
           return { modified: false };
         }
 
-        return parent._attachChild(op, source);
+        return parentNode._attachChild(op, source);
       }
     }
   }
@@ -800,12 +781,12 @@ function makeStateMachine<
     }
 
     const auth = prepareAuthEndpoint(
-      context.authentication,
-      context.polyfills?.fetch ?? context.fetchPolyfill
+      config.authentication,
+      config.polyfills?.fetch ?? config.fetchPolyfill
     );
     const createWebSocket = prepareCreateWebSocket(
-      context.liveblocksServer,
-      context.polyfills?.WebSocket ?? context.WebSocketPolyfill
+      config.liveblocksServer,
+      config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
     updateConnection({ state: "authenticating" });
@@ -1252,7 +1233,7 @@ function makeStateMachine<
 
     const elapsedTime = now - state.lastFlushTime;
 
-    if (elapsedTime > context.throttleDelay) {
+    if (elapsedTime > config.throttleDelay) {
       const messages = flushDataToMessages(state);
 
       if (messages.length === 0) {
@@ -1271,7 +1252,7 @@ function makeStateMachine<
       }
 
       state.timeoutHandles.flush = effects.delayFlush(
-        context.throttleDelay - (now - state.lastFlushTime)
+        config.throttleDelay - (now - state.lastFlushTime)
       );
     }
   }
@@ -1360,7 +1341,7 @@ function makeStateMachine<
     tryFlushing();
   }
 
-  function dispatch(ops: Op[]) {
+  function dispatchOps(ops: Op[]) {
     state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
@@ -1497,7 +1478,7 @@ function makeStateMachine<
       }
 
       if (state.batch.ops.length > 0) {
-        dispatch(state.batch.ops);
+        dispatchOps(state.batch.ops);
       }
 
       notify(state.batch.updates);
@@ -1553,7 +1534,7 @@ function makeStateMachine<
     simulateSendCloseEvent,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
-    getItemsCount: () => state.items.size,
+    getItemsCount: () => state.nodes.size,
 
     // Core
     connect,
@@ -1639,7 +1620,7 @@ function defaultState<
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, LiveNode>(),
+    nodes: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],
@@ -1681,26 +1662,26 @@ export function createRoom<
   TRoomEvent extends Json
 >(
   options: RoomInitializers<TPresence, TStorage>,
-  context: Context
+  config: Config
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const { initialPresence, initialStorage } = options;
 
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"
-      ? initialPresence(context.roomId)
+      ? initialPresence(config.roomId)
       : initialPresence,
     typeof initialStorage === "function"
-      ? initialStorage(context.roomId)
+      ? initialStorage(config.roomId)
       : initialStorage
   );
 
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    context
+    config
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    id: context.roomId,
+    id: config.roomId,
     /////////////
     // Core    //
     /////////////

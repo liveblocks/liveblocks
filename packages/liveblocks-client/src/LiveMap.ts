@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
@@ -58,7 +58,11 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
+  _toOps(
+    parentId: string,
+    parentKey: string,
+    pool?: ManagedPool
+  ): CreateChildOp[] {
     if (this._id == null) {
       throw new Error("Cannot serialize item is not attached");
     }
@@ -66,7 +70,7 @@ export class LiveMap<
     const ops: CreateChildOp[] = [];
     const op: CreateMapOp = {
       id: this._id,
-      opId: doc?.generateOpId(),
+      opId: pool?.generateOpId(),
       type: OpCode.CREATE_MAP,
       parentId,
       parentKey,
@@ -75,7 +79,7 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this._map) {
-      ops.push(...value._serialize(this._id, key, doc));
+      ops.push(...value._toOps(this._id, key, pool));
     }
 
     return ops;
@@ -87,10 +91,10 @@ export class LiveMap<
   static _deserialize(
     [id, _item]: IdTuple<SerializedMap>,
     parentToChildren: ParentToChildNodeMap,
-    doc: Doc
+    pool: ManagedPool
   ): LiveMap<string, Lson> {
     const map = new LiveMap();
-    map._attach(id, doc);
+    map._attach(id, pool);
 
     const children = parentToChildren.get(id);
 
@@ -99,7 +103,7 @@ export class LiveMap<
     }
 
     for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, doc);
+      const child = deserialize([id, crdt], parentToChildren, pool);
       child._setParentLink(map, crdt.parentKey);
       map._map.set(crdt.parentKey, child);
       map.invalidate();
@@ -111,12 +115,12 @@ export class LiveMap<
   /**
    * @internal
    */
-  _attach(id: string, doc: Doc): void {
-    super._attach(id, doc);
+  _attach(id: string, pool: ManagedPool): void {
+    super._attach(id, pool);
 
     for (const [_key, value] of this._map) {
       if (isLiveNode(value)) {
-        value._attach(doc.generateId(), doc);
+        value._attach(pool.generateId(), pool);
       }
     }
   }
@@ -125,8 +129,8 @@ export class LiveMap<
    * @internal
    */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
-    if (this._doc == null) {
-      throw new Error("Can't attach child if doc is not present");
+    if (this._pool == null) {
+      throw new Error("Can't attach child if managed pool is not present");
     }
 
     const { id, parentKey, opId } = op;
@@ -136,7 +140,7 @@ export class LiveMap<
 
     const child = creationOpToLiveNode(op);
 
-    if (this._doc.getItem(id) !== undefined) {
+    if (this._pool.getNode(id) !== undefined) {
       return { modified: false };
     }
 
@@ -161,14 +165,14 @@ export class LiveMap<
     let reverse: Op[];
     if (previousValue) {
       const thisId = nn(this._id);
-      reverse = previousValue._serialize(thisId, key);
+      reverse = previousValue._toOps(thisId, key);
       previousValue._detach();
     } else {
       reverse = [{ type: OpCode.DELETE_CRDT, id }];
     }
 
     child._setParentLink(this, key);
-    child._attach(id, this._doc);
+    child._attach(id, this._pool);
     this._map.set(key, child);
     this.invalidate();
 
@@ -199,7 +203,7 @@ export class LiveMap<
   _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
-    const reverse = child._serialize(id, parentKey, this._doc);
+    const reverse = child._toOps(id, parentKey, this._pool);
 
     for (const [key, value] of this._map) {
       if (value === child) {
@@ -222,7 +226,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _toSerializedCrdt(): SerializedMap {
+  _serialize(): SerializedMap {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveMap if parent is missing");
     }
@@ -267,9 +271,9 @@ export class LiveMap<
     this._map.set(key, item);
     this.invalidate();
 
-    if (this._doc && this._id) {
-      const id = this._doc.generateId();
-      item._attach(id, this._doc);
+    if (this._pool && this._id) {
+      const id = this._pool.generateId();
+      item._attach(id, this._pool);
 
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(this._id, {
@@ -278,14 +282,14 @@ export class LiveMap<
         updates: { [key]: { type: "update" } },
       });
 
-      const ops = item._serialize(this._id, key, this._doc);
+      const ops = item._toOps(this._id, key, this._pool);
 
       this.unacknowledgedSet.set(key, nn(ops[0].opId));
 
-      this._doc.dispatch(
-        item._serialize(this._id, key, this._doc),
+      this._pool.dispatch(
+        item._toOps(this._id, key, this._pool),
         oldValue
-          ? oldValue._serialize(this._id, key)
+          ? oldValue._toOps(this._id, key)
           : [{ type: OpCode.DELETE_CRDT, id }],
         storageUpdates
       );
@@ -323,7 +327,7 @@ export class LiveMap<
     this._map.delete(key);
     this.invalidate();
 
-    if (this._doc && item._id) {
+    if (this._pool && item._id) {
       const thisId = nn(this._id);
       const storageUpdates = new Map<string, LiveMapUpdates<TKey, TValue>>();
       storageUpdates.set(thisId, {
@@ -331,15 +335,15 @@ export class LiveMap<
         type: "LiveMap",
         updates: { [key]: { type: "delete" } },
       });
-      this._doc.dispatch(
+      this._pool.dispatch(
         [
           {
             type: OpCode.DELETE_CRDT,
             id: item._id,
-            opId: this._doc.generateOpId(),
+            opId: this._pool.generateOpId(),
           },
         ],
-        item._serialize(thisId, key),
+        item._toOps(thisId, key),
         storageUpdates
       );
     }

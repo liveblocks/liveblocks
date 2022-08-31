@@ -1,4 +1,4 @@
-import type { Doc } from "./AbstractCrdt";
+import type { ManagedPool } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
@@ -96,20 +96,20 @@ export function isSameNodeOrChildOf(node: LiveNode, parent: LiveNode): boolean {
 export function deserialize(
   [id, crdt]: IdTuple<SerializedCrdt>,
   parentToChildren: ParentToChildNodeMap,
-  doc: Doc
+  pool: ManagedPool
 ): LiveNode {
   switch (crdt.type) {
     case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
+      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, doc);
+      return LiveList._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
+      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.REGISTER: {
-      return LiveRegister._deserialize([id, crdt], parentToChildren, doc);
+      return LiveRegister._deserialize([id, crdt], parentToChildren, pool);
     }
     default: {
       throw new Error("Unexpected CRDT type");
@@ -120,17 +120,17 @@ export function deserialize(
 export function deserializeToLson(
   [id, crdt]: IdTuple<SerializedCrdt>,
   parentToChildren: ParentToChildNodeMap,
-  doc: Doc
+  pool: ManagedPool
 ): Lson {
   switch (crdt.type) {
     case CrdtType.OBJECT: {
-      return LiveObject._deserialize([id, crdt], parentToChildren, doc);
+      return LiveObject._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.LIST: {
-      return LiveList._deserialize([id, crdt], parentToChildren, doc);
+      return LiveList._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.MAP: {
-      return LiveMap._deserialize([id, crdt], parentToChildren, doc);
+      return LiveMap._deserialize([id, crdt], parentToChildren, pool);
     }
     case CrdtType.REGISTER: {
       return crdt.data;
