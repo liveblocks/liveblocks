@@ -140,7 +140,7 @@ export class LiveMap<
 
     const child = creationOpToLiveNode(op);
 
-    if (this._pool.getItem(id) !== undefined) {
+    if (this._pool.getNode(id) !== undefined) {
       return { modified: false };
     }
 

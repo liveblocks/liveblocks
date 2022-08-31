@@ -22,9 +22,10 @@ export interface ManagedPool {
   roomId: string;
   generateId: () => string;
   generateOpId: () => string;
-  getItem: (id: string) => LiveNode | undefined;
-  addItem: (id: string, liveItem: LiveNode) => void;
-  deleteItem: (id: string) => void;
+
+  getNode: (id: string) => LiveNode | undefined;
+  addNode: (id: string, node: LiveNode) => void;
+  deleteNode: (id: string) => void;
 
   /**
    * Dispatching has three responsibilities:
@@ -227,7 +228,7 @@ export abstract class AbstractCrdt {
       throw new Error("Cannot attach if CRDT is already attached");
     }
 
-    pool.addItem(id, crdtAsLiveNode(this));
+    pool.addNode(id, crdtAsLiveNode(this));
 
     this.__id = id;
     this.__pool = pool;
@@ -239,7 +240,7 @@ export abstract class AbstractCrdt {
   /** @internal */
   _detach(): void {
     if (this.__pool && this.__id) {
-      this.__pool.deleteItem(this.__id);
+      this.__pool.deleteNode(this.__id);
     }
 
     switch (this.parent.type) {

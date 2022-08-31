@@ -166,7 +166,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     const { id, opId, parentKey: key } = op;
     const child = creationOpToLson(op);
 
-    if (this._pool.getItem(id) !== undefined) {
+    if (this._pool.getNode(id) !== undefined) {
       if (this._propToLastUpdate.get(key) === opId) {
         // Acknowlegment from local operation
         this._propToLastUpdate.delete(key);

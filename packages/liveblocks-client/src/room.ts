@@ -214,7 +214,7 @@ type State<
 
   clock: number;
   opClock: number;
-  items: Map<string, LiveNode>;
+  nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
   undoStack: HistoryItem<TPresence>[];
   redoStack: HistoryItem<TPresence>[];
@@ -279,10 +279,10 @@ function makeStateMachine<
   const pool: ManagedPool = {
     roomId: config.roomId,
 
-    getItem: (id: string) => state.items.get(id),
-    addItem: (id: string, liveItem: LiveNode) =>
-      void state.items.set(id, liveItem),
-    deleteItem: (id: string) => void state.items.delete(id),
+    getNode: (id: string) => state.nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void state.nodes.set(id, node),
+    deleteNode: (id: string) => void state.nodes.delete(id),
+
     generateId: () => `${getConnectionId()}:${state.clock++}`,
     generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
 
@@ -434,8 +434,8 @@ function makeStateMachine<
     }
 
     const currentItems: NodeMap = new Map();
-    state.items.forEach((liveCrdt, id) => {
-      currentItems.set(id, liveCrdt._toSerializedCrdt());
+    state.nodes.forEach((node, id) => {
+      currentItems.set(id, node._toSerializedCrdt());
     });
 
     // Get operations that represent the diff between 2 states.
@@ -610,23 +610,21 @@ function makeStateMachine<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node == null) {
           return { modified: false };
         }
 
-        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node == null) {
           return { modified: false };
         }
 
-        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
-          return item.parent.node._setChildKey(op.parentKey, item, source);
+        if (node.parent.type === "HasParent" && isLiveList(node.parent.node)) {
+          return node.parent.node._setChildKey(op.parentKey, node, source);
         }
         return { modified: false };
       }
@@ -638,12 +636,12 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        const parent = state.items.get(op.parentId);
-        if (parent == null) {
+        const parentNode = state.nodes.get(op.parentId);
+        if (parentNode == null) {
           return { modified: false };
         }
 
-        return parent._attachChild(op, source);
+        return parentNode._attachChild(op, source);
       }
     }
   }
@@ -1536,7 +1534,7 @@ function makeStateMachine<
     simulateSendCloseEvent,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
-    getItemsCount: () => state.items.size,
+    getItemsCount: () => state.nodes.size,
 
     // Core
     connect,
@@ -1622,7 +1620,7 @@ function defaultState<
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, LiveNode>(),
+    nodes: new Map<string, LiveNode>(),
     root: undefined,
     undoStack: [],
     redoStack: [],

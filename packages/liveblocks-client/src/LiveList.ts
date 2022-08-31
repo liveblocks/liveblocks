@@ -304,8 +304,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       };
     } else {
       // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
-      const orphan = this._pool.getItem(op.id);
-
+      const orphan = this._pool.getNode(op.id);
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         // Reattach orphan at the new position
         orphan._setParentLink(this, op.parentKey);
@@ -361,14 +360,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       return null;
     }
 
-    const deletedItem = this._pool.getItem(deletedId);
-
+    const deletedItem = this._pool.getNode(deletedId);
     if (deletedItem == null) {
       return null;
     }
 
     const result = this._detachChild(deletedItem);
-
     if (result.modified === false) {
       return null;
     }
@@ -436,8 +433,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
     } else {
-      const orphan = nn(this._pool).getItem(op.id);
-
+      const orphan = nn(this._pool).getNode(op.id);
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         // Implicit delete after set
         orphan._setParentLink(this, key);
@@ -471,7 +467,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
-    if (this._pool?.getItem(id) !== undefined) {
+    if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
 
@@ -509,7 +505,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
-    if (this._pool?.getItem(id) !== undefined) {
+    if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
 
