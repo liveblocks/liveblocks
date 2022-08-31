@@ -58,7 +58,7 @@ export class LiveMap<
   /**
    * @internal
    */
-  _serialize(
+  _toOps(
     parentId: string,
     parentKey: string,
     pool?: ManagedPool
@@ -79,7 +79,7 @@ export class LiveMap<
     ops.push(op);
 
     for (const [key, value] of this._map) {
-      ops.push(...value._serialize(this._id, key, pool));
+      ops.push(...value._toOps(this._id, key, pool));
     }
 
     return ops;
@@ -165,7 +165,7 @@ export class LiveMap<
     let reverse: Op[];
     if (previousValue) {
       const thisId = nn(this._id);
-      reverse = previousValue._serialize(thisId, key);
+      reverse = previousValue._toOps(thisId, key);
       previousValue._detach();
     } else {
       reverse = [{ type: OpCode.DELETE_CRDT, id }];
@@ -203,7 +203,7 @@ export class LiveMap<
   _detachChild(child: LiveNode): ApplyResult {
     const id = nn(this._id);
     const parentKey = nn(child._parentKey);
-    const reverse = child._serialize(id, parentKey, this._pool);
+    const reverse = child._toOps(id, parentKey, this._pool);
 
     for (const [key, value] of this._map) {
       if (value === child) {
@@ -282,14 +282,14 @@ export class LiveMap<
         updates: { [key]: { type: "update" } },
       });
 
-      const ops = item._serialize(this._id, key, this._pool);
+      const ops = item._toOps(this._id, key, this._pool);
 
       this.unacknowledgedSet.set(key, nn(ops[0].opId));
 
       this._pool.dispatch(
-        item._serialize(this._id, key, this._pool),
+        item._toOps(this._id, key, this._pool),
         oldValue
-          ? oldValue._serialize(this._id, key)
+          ? oldValue._toOps(this._id, key)
           : [{ type: OpCode.DELETE_CRDT, id }],
         storageUpdates
       );
@@ -343,7 +343,7 @@ export class LiveMap<
             opId: this._pool.generateOpId(),
           },
         ],
-        item._serialize(thisId, key),
+        item._toOps(thisId, key),
         storageUpdates
       );
     }

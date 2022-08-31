@@ -42,7 +42,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _serialize(
+  _toOps(
     parentId: string,
     parentKey: string,
     pool?: ManagedPool

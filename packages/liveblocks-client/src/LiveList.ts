@@ -88,7 +88,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _serialize(
+  _toOps(
     parentId: string,
     parentKey: string,
     pool?: ManagedPool
@@ -109,7 +109,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     ops.push(op);
 
     for (const item of this._items) {
-      ops.push(...item._serialize(this._id, item._getParentKeyOrThrow(), pool));
+      ops.push(...item._toOps(this._id, item._getParentKeyOrThrow(), pool));
     }
 
     return ops;
@@ -526,7 +526,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       this._items[indexOfItemWithSameKey] = child;
 
-      const reverse = existingItem._serialize(nn(this._id), key, this._pool);
+      const reverse = existingItem._toOps(nn(this._id), key, this._pool);
       addIntentAndDeletedIdToOperation(reverse, op.id);
 
       const delta = [setDelta(indexOfItemWithSameKey, child)];
@@ -595,7 +595,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
       const parentKey = nn(child._parentKey);
-      const reverse = child._serialize(nn(this._id), parentKey, this._pool);
+      const reverse = child._toOps(nn(this._id), parentKey, this._pool);
 
       const indexToDelete = this._items.indexOf(child);
 
@@ -886,7 +886,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       value._attach(id, this._pool);
 
       this._pool.dispatch(
-        value._serialize(this._id, position, this._pool),
+        value._toOps(this._id, position, this._pool),
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -1004,7 +1004,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
               type: OpCode.DELETE_CRDT,
             },
           ],
-          item._serialize(nn(this._id), item._getParentKeyOrThrow()),
+          item._toOps(nn(this._id), item._getParentKeyOrThrow()),
           storageUpdates
         );
       }
@@ -1028,7 +1028,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
             opId: this._pool.generateOpId(),
           });
           reverseOps.push(
-            ...item._serialize(nn(this._id), item._getParentKeyOrThrow())
+            ...item._toOps(nn(this._id), item._getParentKeyOrThrow())
           );
 
           // Index is always 0 because updates are applied one after another
@@ -1080,10 +1080,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = value._serialize(this._id, position, this._pool);
+      const ops = value._toOps(this._id, position, this._pool);
       addIntentAndDeletedIdToOperation(ops, existingId);
       this._unacknowledgedSets.set(position, nn(ops[0].opId));
-      const reverseOps = existingItem._serialize(this._id, position, undefined);
+      const reverseOps = existingItem._toOps(this._id, position, undefined);
       addIntentAndDeletedIdToOperation(reverseOps, id);
 
       this._pool.dispatch(ops, reverseOps, storageUpdates);

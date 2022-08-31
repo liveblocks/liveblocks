@@ -272,7 +272,7 @@ export abstract class AbstractCrdt {
   abstract _detachChild(crdt: LiveNode): ApplyResult;
 
   /** @internal */
-  abstract _serialize(
+  abstract _toOps(
     parentId: string,
     parentKey: string,
     pool?: ManagedPool
