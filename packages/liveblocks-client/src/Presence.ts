@@ -44,6 +44,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   return freeze(compactObject({ ...conn, presence }));
 }
 
+// XXX Split this class into one cache for "me" and one for "others"
 export class Presence<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta

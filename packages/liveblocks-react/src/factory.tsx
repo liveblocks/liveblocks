@@ -225,6 +225,7 @@ type RoomContextBundle<
    *   })
    * }
    */
+  // XXX Deprecate this overload? Or at least change the return type to `readonly User<TPresence, TUserMeta>[]`?!
   useOthers(): Others<TPresence, TUserMeta>;
 
   /**
@@ -271,6 +272,7 @@ type RoomContextBundle<
    * @example
    * const user = useSelf();
    */
+  // XXX Deprecate this overload?
   useSelf(): User<TPresence, TUserMeta> | null;
 
   // XXX Document me
