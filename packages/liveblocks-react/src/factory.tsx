@@ -193,28 +193,6 @@ type RoomContextBundle<
   ): T | null;
 
   /**
-   * Extract arbitrary data from the Liveblocks Presence state, using an
-   * arbitrary selector function.
-   *
-   * The selector function will get re-evaluated any time something changes in
-   * Presence. The value returned by your selector function will also be the
-   * value returned by the hook.
-   *
-   * The component that uses this hook will automatically re-render if the
-   * returned value changes.
-   *
-   * By default `usePresence()` uses strict `===` to check for equality. Take
-   * extra care when returning a computed object or list, for example when you
-   * return the result of a .map() or .filter() call from the selector. In
-   * those cases, you'll probably want to use a `shallow` comparison check.
-   */
-  // XXX Refactor away
-  usePresenceMe<T>(
-    selector: (me: TPresence) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T;
-
-  /**
    * Returns the presence of the current user of the current room, and a function to update it.
    * It is different from the setState function returned by the useState hook from React.
    * You don't need to pass the full presence object to update it.
@@ -294,6 +272,12 @@ type RoomContextBundle<
    * const user = useSelf();
    */
   useSelf(): User<TPresence, TUserMeta> | null;
+
+  // XXX Document me
+  useSelf<T>(
+    selector: (me: Readonly<TPresence>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
 
   /**
    * This hook exists for backward-compatible reasons.
@@ -546,7 +530,7 @@ export function createRoomContext<
     }, [room]);
   }
 
-  function useSelf(): User<TPresence, TUserMeta> | null {
+  function useSelf_legacy(): User<TPresence, TUserMeta> | null {
     const room = useRoom();
     const rerender = useRerender();
 
@@ -561,6 +545,52 @@ export function createRoomContext<
     }, [room, rerender]);
 
     return room.getSelf();
+  }
+
+  function useSelf_modern<T>(
+    selector: (me: Readonly<TPresence>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T {
+    type Snapshot = TPresence;
+
+    const room = useRoom();
+
+    const subscribe = React.useCallback(
+      (onPresenceChange: () => void) =>
+        room.subscribe("my-presence", onPresenceChange),
+      [room]
+    );
+
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getPresence(),
+      [room]
+    );
+
+    const getServerSnapshot = getSnapshot;
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector,
+      isEqual
+    );
+  }
+
+  function useSelf(): User<TPresence, TUserMeta> | null;
+  function useSelf<T>(
+    selector: (me: Readonly<TPresence>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
+  function useSelf<T>(
+    selector?: (me: Readonly<TPresence>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | User<TPresence, TUserMeta> | null {
+    if (selector === undefined) {
+      return useSelf_legacy();
+    } else {
+      return useSelf_modern(selector, isEqual);
+    }
   }
 
   // NOTE: This API exists for backward compatible reasons
@@ -720,37 +750,6 @@ export function createRoomContext<
     );
   }
 
-  // XXX Combine into useSelf() ?
-  function usePresenceMe<T>(
-    selector: (me: Readonly<TPresence>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T {
-    type Snapshot = TPresence;
-
-    const room = useRoom();
-
-    const subscribe = React.useCallback(
-      (onPresenceChange: () => void) =>
-        room.subscribe("my-presence", onPresenceChange),
-      [room]
-    );
-
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getPresence(),
-      [room]
-    );
-
-    const getServerSnapshot = getSnapshot;
-
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector,
-      isEqual
-    );
-  }
-
   return {
     RoomProvider,
     useBatch,
@@ -765,8 +764,6 @@ export function createRoomContext<
     useRedo,
     useRoom,
     useSelector: useStorageSelector,
-
-    usePresenceMe, // XXX Rename this hook
 
     useSelf,
     useStorageRoot,
