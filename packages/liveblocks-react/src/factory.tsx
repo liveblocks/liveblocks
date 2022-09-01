@@ -13,7 +13,7 @@ import type {
 } from "@liveblocks/client";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import type { Resolve, RoomInitializers } from "@liveblocks/client/internal";
-import { errorIf } from "@liveblocks/client/internal";
+import { deprecate, errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 
 import { useClient as _useClient } from "./client";
@@ -227,7 +227,13 @@ type RoomContextBundle<
    * Storage.
    *
    * @example
-   * const [root] = useStorage();
+   * const [root] = useStorageRoot();
+   */
+  useStorageRoot(): [root: LiveObject<TStorage> | null];
+
+  /**
+   * @deprecated In the next major version, we're changing the meaning of `useStorage()`.
+   * Please use `useStorageRoot()` instead for the current behavior.
    */
   useStorage(): [root: LiveObject<TStorage> | null];
 
@@ -554,7 +560,7 @@ export function createRoomContext<
     return room.getSelf();
   }
 
-  function useStorage(): [root: LiveObject<TStorage> | null] {
+  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
     const room = useRoom();
     const [root, setState] = React.useState<LiveObject<TStorage> | null>(null);
 
@@ -576,6 +582,13 @@ export function createRoomContext<
     }, [room]);
 
     return [root];
+  }
+
+  function useStorage(): [root: LiveObject<TStorage> | null] {
+    deprecate(
+      "In the upcoming 0.18 version, the name `useStorage()` is going to be repurposed for a new hook. Please use `useStorageRoot()` instead to keep the current behavior."
+    );
+    return useStorageRoot();
   }
 
   function useMap_deprecated<TKey extends string, TValue extends Lson>(
@@ -832,7 +845,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     initialValue: T
   ): LookupResult<T> {
     const room = useRoom();
-    const [root] = useStorage();
+    const [root] = useStorageRoot();
     const rerender = useRerender();
 
     // Note: We'll hold on to the initial value given here, and ignore any
@@ -911,6 +924,7 @@ Please see https://bit.ly/3Niy5aP for details.`
     useRedo,
     useRoom,
     useSelf,
+    useStorageRoot,
     useStorage,
     useUndo,
     useUpdateMyPresence,

@@ -194,6 +194,22 @@ export function useSelf<
 
 /**
  * @deprecated Please use `createRoomContext()` instead of importing
+ * `useStorageRoot` from `@liveblocks/react` directly. See
+ * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
+ */
+export function useStorageRoot<TStorage extends LsonObject>(): [
+  root: LiveObject<TStorage> | null
+] {
+  deprecate(
+    "Please use `createRoomContext()` instead of importing `useStorageRoot` from `@liveblocks/react` directly. See https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details."
+  );
+  return _hooks.useStorageRoot() as unknown as [
+    root: LiveObject<TStorage> | null
+  ];
+}
+
+/**
+ * @deprecated Please use `createRoomContext()` instead of importing
  * `useStorage` from `@liveblocks/react` directly. See
  * https://liveblocks.io/docs/guides/upgrading#upgrading-from-0-16-to-0-17 for details.
  */
