@@ -6,7 +6,6 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
-import type { PresenceSnapshot } from "./Presence";
 import { Presence } from "./Presence";
 import type {
   Authentication,
@@ -150,7 +149,6 @@ type Machine<
   // Presence
   getPresence(): TPresence;
   getOthers(): Others<TPresence, TUserMeta>;
-  getPresenceSnapshot(): PresenceSnapshot<TPresence, TUserMeta>;
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -1319,10 +1317,6 @@ function makeStateMachine<
     Object.values(eventHub).forEach((eventSource) => eventSource.clear());
   }
 
-  function getPresenceSnapshot(): PresenceSnapshot<TPresence, TUserMeta> {
-    return state.presence.toImmutable();
-  }
-
   function getPresence(): TPresence {
     return state.presence.me;
   }
@@ -1581,7 +1575,6 @@ function makeStateMachine<
     // Presence
     getPresence,
     getOthers,
-    getPresenceSnapshot,
   };
 }
 
@@ -1703,7 +1696,6 @@ export function createRoom<
     // Presence //
     //////////////
     getPresence: machine.getPresence,
-    getPresenceSnapshot: machine.getPresenceSnapshot,
     updatePresence: machine.updatePresence,
     getOthers: machine.getOthers,
     broadcastEvent: machine.broadcastEvent,

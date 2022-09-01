@@ -1,14 +1,6 @@
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
-export type PresenceSnapshot<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> = {
-  readonly me: TPresence;
-  readonly others: readonly User<TPresence, TUserMeta>[];
-};
-
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
   readonly id: TUserMeta["id"];
@@ -78,8 +70,6 @@ export class Presence<
   _others: readonly User<TPresence, TUserMeta>[] | undefined;
   /** @internal */
   _othersProxy: Others<TPresence, TUserMeta> | undefined;
-  /** @internal */
-  _snapshot: PresenceSnapshot<TPresence, TUserMeta> | undefined;
   //
   // --------------------------------------------------------------
   //
@@ -183,27 +173,11 @@ export class Presence<
   _invalidateOthers(): void {
     this._others = undefined;
     this._othersProxy = undefined;
-    this._invalidateSnapshot();
   }
 
   /** @internal */
   _invalidateMe(): void {
-    this._invalidateSnapshot();
-  }
-
-  /** @internal */
-  _invalidateSnapshot(): void {
-    this._snapshot = undefined;
-  }
-
-  toImmutable(): PresenceSnapshot<TPresence, TUserMeta> {
-    return (
-      this._snapshot ??
-      (this._snapshot = freeze({
-        me: this._me,
-        others: this.others,
-      }))
-    );
+    // noop
   }
 
   /**

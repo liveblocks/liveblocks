@@ -2,7 +2,6 @@ import type { Callback, Observable } from "../EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
-import type { PresenceSnapshot } from "../Presence";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { Json, JsonObject } from "./Json";
 import type { LiveStructure, Lson, LsonObject } from "./Lson";
@@ -600,14 +599,6 @@ export type Room<
    * const presence = room.getPresence();
    */
   getPresence: () => TPresence;
-
-  /**
-   * Gets the full presence snapshot (includes both "me" and "others").
-   *
-   * @example
-   * const { me, others } = room.getPresenceSnapshot();
-   */
-  getPresenceSnapshot: () => PresenceSnapshot<TPresence, TUserMeta>;
 
   /**
    * Gets all the other users in the room.
