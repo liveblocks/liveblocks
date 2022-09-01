@@ -1,6 +1,7 @@
 # v0.17.10
 
 - Fix a packaging bug
+- Deprecate an undocumented API
 
 # v0.17.9
 
