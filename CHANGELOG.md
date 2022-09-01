@@ -1,3 +1,7 @@
+# v0.17.10
+
+- Fix a packaging bug
+
 # v0.17.9
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in
