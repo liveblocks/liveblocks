@@ -8,7 +8,6 @@ import type {
   LiveObject,
   LsonObject,
   Others,
-  PresenceSnapshot,
   Room,
   User,
 } from "@liveblocks/client";
@@ -209,8 +208,14 @@ type RoomContextBundle<
    * return the result of a .map() or .filter() call from the selector. In
    * those cases, you'll probably want to use a `shallow` comparison check.
    */
-  usePresence<T>(
-    selector: (presence: PresenceSnapshot<TPresence, TUserMeta>) => T,
+  // XXX Refactor away
+  usePresenceMe<T>(
+    selector: (me: TPresence) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
+  // XXX Refactor away
+  usePresenceOthers<T>(
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T;
 
@@ -642,32 +647,58 @@ export function createRoomContext<
     );
   }
 
-  function usePresence<T>(
-    selector: (presence: PresenceSnapshot<TPresence, TUserMeta>) => T,
+  // XXX Combine into useSelf() ?
+  function usePresenceMe<T>(
+    selector: (me: Readonly<TPresence>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T {
-    type Snapshot = PresenceSnapshot<TPresence, TUserMeta>;
+    type Snapshot = TPresence;
 
     const room = useRoom();
 
     const subscribe = React.useCallback(
-      (onPresenceChange: () => void) => {
-        const unsub1 = room.subscribe("my-presence", onPresenceChange);
-        const unsub2 = room.subscribe("others", onPresenceChange);
-        return () => {
-          unsub1();
-          unsub2();
-        };
-      },
+      (onPresenceChange: () => void) =>
+        room.subscribe("my-presence", onPresenceChange),
       [room]
     );
 
     const getSnapshot = React.useCallback(
-      (): Snapshot => room.getPresenceSnapshot(),
+      (): Snapshot => room.getPresence(),
       [room]
     );
 
     const getServerSnapshot = getSnapshot;
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector,
+      isEqual
+    );
+  }
+
+  // XXX Combine into useOthers() ?
+  function usePresenceOthers<T>(
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T {
+    type Snapshot = readonly User<TPresence, TUserMeta>[];
+
+    const room = useRoom();
+
+    const subscribe = React.useCallback(
+      (onPresenceChange: () => void) =>
+        room.subscribe("others", onPresenceChange),
+      [room]
+    );
+
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getOthers2(),
+      [room]
+    );
+
+    const getServerSnapshot = React.useCallback((): Snapshot => [], []);
 
     return useSyncExternalStoreWithSelector(
       subscribe,
@@ -692,7 +723,10 @@ export function createRoomContext<
     useRedo,
     useRoom,
     useSelector: useStorageSelector,
-    usePresence,
+
+    usePresenceMe, // XXX Rename this hook
+    usePresenceOthers, // XXX Rename this hook
+
     useSelf,
     useStorageRoot,
     useStorage,

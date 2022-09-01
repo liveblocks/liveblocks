@@ -609,6 +609,11 @@ export type Room<
   getOthers: () => Others<TPresence, TUserMeta>;
 
   /**
+   * XXX Document me
+   */
+  getOthers2: () => readonly User<TPresence, TUserMeta>[];
+
+  /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
    * @param patch A partial object that contains the properties you want to update.
    * @param options Optional object to configure the behavior of updatePresence.

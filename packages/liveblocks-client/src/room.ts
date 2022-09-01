@@ -147,8 +147,9 @@ type Machine<
   getSelf(): User<TPresence, TUserMeta> | null;
 
   // Presence
-  getPresence(): TPresence;
+  getPresence(): TPresence; // XXX Make Readonly<TPresence>
   getOthers(): Others<TPresence, TUserMeta>;
+  getOthers2(): readonly User<TPresence, TUserMeta>[]; // XXX Change name
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -1321,8 +1322,14 @@ function makeStateMachine<
     return state.presence.me;
   }
 
+  // XXX Deprecate this in favor of getOthers2(), which returns a readonly User[] ?
   function getOthers(): Others<TPresence, TUserMeta> {
     return state.presence.getOthersProxy();
+  }
+
+  // XXX Change name
+  function getOthers2(): readonly User<TPresence, TUserMeta>[] {
+    return state.presence.others;
   }
 
   function broadcastEvent(
@@ -1575,6 +1582,7 @@ function makeStateMachine<
     // Presence
     getPresence,
     getOthers,
+    getOthers2, // XXX Change name
   };
 }
 
@@ -1698,6 +1706,7 @@ export function createRoom<
     getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
     getOthers: machine.getOthers,
+    getOthers2: machine.getOthers2, // XXX Change name
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
