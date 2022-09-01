@@ -6,7 +6,7 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
-import { Presence } from "./Presence";
+import { MyPresence, OthersPresence } from "./Presence";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -208,7 +208,10 @@ type State<
     heartbeat: number;
   };
 
-  presence: Presence<TPresence, TUserMeta>;
+  presence: {
+    readonly __me: MyPresence<TPresence>;
+    readonly __others: OthersPresence<TPresence, TUserMeta>;
+  };
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
@@ -478,14 +481,14 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
-      const others = state.presence.getOthersProxy();
+      const others = state.presence.__others.getOthersProxy();
       for (const event of otherEvents) {
         eventHub.others.notify({ others, event });
       }
     }
 
     if (presence) {
-      eventHub.me.notify(state.presence.me);
+      eventHub.me.notify(state.presence.__me.me);
     }
 
     if (storageUpdates.size > 0) {
@@ -537,10 +540,10 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.presence.me[key];
+          reverse.data[key] = state.presence.__me.me[key];
         }
 
-        state.presence.patchMe(op.data);
+        state.presence.__me.patchMe(op.data);
 
         if (state.buffer.me == null) {
           state.buffer.me = { type: "partial", data: op.data };
@@ -815,10 +818,10 @@ function makeStateMachine<
         continue;
       }
       state.buffer.me.data[key] = overrideValue;
-      oldValues[key] = state.presence.me[key];
+      oldValues[key] = state.presence.__me.me[key];
     }
 
-    state.presence.patchMe(patch);
+    state.presence.__me.patchMe(patch);
 
     if (state.isBatching) {
       if (options?.addToHistory) {
@@ -875,10 +878,10 @@ function makeStateMachine<
       // handle it if `targetActor` matches our own connection ID, but we can
       // use the opportunity to effectively reset the known presence as
       // a "keyframe" update, while we have free access to it.
-      const oldUser = state.presence.getUser(message.actor);
-      state.presence.setOther(message.actor, message.data);
+      const oldUser = state.presence.__others.getUser(message.actor);
+      state.presence.__others.setOther(message.actor, message.data);
 
-      const newUser = state.presence.getUser(message.actor);
+      const newUser = state.presence.__others.getUser(message.actor);
       if (oldUser === undefined && newUser !== undefined) {
         // The user just became "visible" due to this update, so fire the
         // "enter" event
@@ -886,10 +889,10 @@ function makeStateMachine<
       }
     } else {
       // The incoming message is a partial presence update
-      state.presence.patchOther(message.actor, message.data), message;
+      state.presence.__others.patchOther(message.actor, message.data), message;
     }
 
-    const user = state.presence.getUser(message.actor);
+    const user = state.presence.__others.getUser(message.actor);
     if (user) {
       return {
         type: "update",
@@ -904,9 +907,9 @@ function makeStateMachine<
   function onUserLeftMessage(
     message: UserLeftServerMsg
   ): OthersEvent<TPresence, TUserMeta> | null {
-    const user = state.presence.getUser(message.actor);
+    const user = state.presence.__others.getUser(message.actor);
     if (user) {
-      state.presence.removeConnection(message.actor);
+      state.presence.__others.removeConnection(message.actor);
       return { type: "leave", user };
     }
     return null;
@@ -918,7 +921,7 @@ function makeStateMachine<
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      state.presence.setConnection(connectionId, user.id, user.info);
+      state.presence.__others.setConnection(connectionId, user.id, user.info);
     }
     return { type: "reset" };
   }
@@ -937,20 +940,24 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.presence.setConnection(message.actor, message.id, message.info);
+    state.presence.__others.setConnection(
+      message.actor,
+      message.id,
+      message.info
+    );
 
     // Send current presence to new user
     // TODO: Consider storing it on the backend
     state.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: state.presence.me,
+      data: state.presence.__me.me,
       targetActor: message.actor,
     });
     tryFlushing();
 
     // We recorded the connection, but we won't make the new user visible
     // unless we also know their initial presence data at this point.
-    const user = state.presence.getUser(message.actor);
+    const user = state.presence.__others.getUser(message.actor);
     return user ? { type: "enter", user } : undefined;
   }
 
@@ -1069,7 +1076,7 @@ function makeStateMachine<
     }
     clearTimeout(state.timeoutHandles.reconnect);
 
-    state.presence.clearOthers();
+    state.presence.__others.clearOthers();
     notify({ others: [{ type: "reset" }] });
 
     if (event.code >= 4000 && event.code <= 4100) {
@@ -1140,7 +1147,7 @@ function makeStateMachine<
       if (state.lastConnectionId !== undefined) {
         state.buffer.me = {
           type: "full",
-          data: state.presence.me,
+          data: state.presence.__me.me,
         };
         tryFlushing();
       }
@@ -1311,7 +1318,7 @@ function makeStateMachine<
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
 
-    state.presence.clearOthers();
+    state.presence.__others.clearOthers();
     notify({ others: [{ type: "reset" }] });
 
     // Clear all event listeners
@@ -1319,17 +1326,17 @@ function makeStateMachine<
   }
 
   function getPresence(): TPresence {
-    return state.presence.me;
+    return state.presence.__me.me;
   }
 
   // XXX Deprecate this in favor of getOthers2(), which returns a readonly User[] ?
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.presence.getOthersProxy();
+    return state.presence.__others.getOthersProxy();
   }
 
   // XXX Change name
   function getOthers2(): readonly User<TPresence, TUserMeta>[] {
-    return state.presence.others;
+    return state.presence.__others.others;
   }
 
   function broadcastEvent(
@@ -1621,9 +1628,13 @@ function defaultState<
       heartbeat: 0,
     },
 
-    presence: new Presence(
-      initialPresence == null ? ({} as TPresence) : initialPresence
-    ),
+    presence: {
+      __me: new MyPresence(
+        initialPresence == null ? ({} as TPresence) : initialPresence
+      ),
+      __others: new OthersPresence(),
+    },
+
     defaultStorageRoot: initialStorage,
     idFactory: null,
 
