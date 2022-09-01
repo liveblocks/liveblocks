@@ -1,3 +1,4 @@
+import { ImmRef } from "./ImmRef";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
@@ -37,37 +38,32 @@ function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
-export class MyPresence<TPresence extends JsonObject> {
-  // To track "me"
+/**
+ * Managed immutable cache for accessing "me" presence data as read-only.
+ */
+export class MeRef<TPresence extends JsonObject> extends ImmRef<TPresence> {
   /** @internal */
-  _me: Readonly<TPresence>;
+  private _me: Readonly<TPresence>;
 
   constructor(initialPresence: TPresence) {
+    super();
     this._me = freeze(compactObject(initialPresence));
   }
 
-  get me(): Readonly<TPresence> {
-    return this._me;
-  }
-
-  toImmutable(): Readonly<TPresence> {
-    return this._me;
-  }
-
   /** @internal */
-  _invalidateMe(): void {
-    // noop
+  _toImmutable(): Readonly<TPresence> {
+    return this._me;
   }
 
   /**
    * Patches the current "me" instance.
    */
-  patchMe(patch: Partial<TPresence>): void {
+  patch(patch: Partial<TPresence>): void {
     const oldMe = this._me;
     const newMe = merge(oldMe, patch);
     if (oldMe !== newMe) {
       this._me = freeze(newMe);
-      this._invalidateMe();
+      this.invalidate();
     }
   }
 }

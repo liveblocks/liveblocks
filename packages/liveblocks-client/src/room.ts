@@ -6,7 +6,7 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
-import { MyPresence, OthersPresence } from "./Presence";
+import { MeRef, OthersPresence } from "./Presence";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -208,8 +208,8 @@ type State<
     heartbeat: number;
   };
 
+  readonly me: MeRef<TPresence>;
   presence: {
-    readonly __me: MyPresence<TPresence>;
     readonly __others: OthersPresence<TPresence, TUserMeta>;
   };
 
@@ -488,7 +488,7 @@ function makeStateMachine<
     }
 
     if (presence) {
-      eventHub.me.notify(state.presence.__me.me);
+      eventHub.me.notify(state.me.current);
     }
 
     if (storageUpdates.size > 0) {
@@ -540,10 +540,10 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.presence.__me.me[key];
+          reverse.data[key] = state.me.current[key];
         }
 
-        state.presence.__me.patchMe(op.data);
+        state.me.patch(op.data);
 
         if (state.buffer.me == null) {
           state.buffer.me = { type: "partial", data: op.data };
@@ -818,10 +818,10 @@ function makeStateMachine<
         continue;
       }
       state.buffer.me.data[key] = overrideValue;
-      oldValues[key] = state.presence.__me.me[key];
+      oldValues[key] = state.me.current[key];
     }
 
-    state.presence.__me.patchMe(patch);
+    state.me.patch(patch);
 
     if (state.isBatching) {
       if (options?.addToHistory) {
@@ -950,7 +950,7 @@ function makeStateMachine<
     // TODO: Consider storing it on the backend
     state.buffer.messages.push({
       type: ClientMsgCode.UPDATE_PRESENCE,
-      data: state.presence.__me.me,
+      data: state.me.current,
       targetActor: message.actor,
     });
     tryFlushing();
@@ -1147,7 +1147,7 @@ function makeStateMachine<
       if (state.lastConnectionId !== undefined) {
         state.buffer.me = {
           type: "full",
-          data: state.presence.__me.me,
+          data: state.me.current,
         };
         tryFlushing();
       }
@@ -1326,7 +1326,7 @@ function makeStateMachine<
   }
 
   function getPresence(): TPresence {
-    return state.presence.__me.me;
+    return state.me.current;
   }
 
   // XXX Deprecate this in favor of getOthers2(), which returns a readonly User[] ?
@@ -1628,10 +1628,10 @@ function defaultState<
       heartbeat: 0,
     },
 
+    me: new MeRef(
+      initialPresence == null ? ({} as TPresence) : initialPresence
+    ),
     presence: {
-      __me: new MyPresence(
-        initialPresence == null ? ({} as TPresence) : initialPresence
-      ),
       __others: new OthersPresence(),
     },
 

@@ -1,4 +1,4 @@
-import { MyPresence, OthersPresence } from "../Presence";
+import { MeRef, OthersPresence } from "../Presence";
 
 type P = {
   x: number;
@@ -15,29 +15,29 @@ type M = {
 
 describe("Presence", () => {
   it("empty", () => {
-    const p = new MyPresence({ x: 0, y: 0, z: undefined });
-    expect(p.me).toStrictEqual({ x: 0, y: 0 });
+    const me = new MeRef({ x: 0, y: 0, z: undefined });
+    expect(me.current).toStrictEqual({ x: 0, y: 0 });
   });
 
   describe('Tracking "me"', () => {
     it("patching me", () => {
-      const p = new MyPresence<P>({ x: 0, y: 0 });
-      p.patchMe({ y: 1, z: 2 });
+      const me = new MeRef<P>({ x: 0, y: 0 });
+      me.patch({ y: 1, z: 2 });
 
-      expect(p.me).toStrictEqual({ x: 0, y: 1, z: 2 });
+      expect(me.current).toStrictEqual({ x: 0, y: 1, z: 2 });
     });
 
     it("patching me with undefineds deletes keys", () => {
-      const p = new MyPresence<P>({ x: 1, y: 2 });
+      const me = new MeRef<P>({ x: 1, y: 2 });
 
-      p.patchMe({ x: undefined });
-      expect(p.me).toStrictEqual({ y: 2 });
+      me.patch({ x: undefined });
+      expect(me.current).toStrictEqual({ y: 2 });
 
-      p.patchMe({ y: undefined });
-      expect(p.me).toStrictEqual({});
+      me.patch({ y: undefined });
+      expect(me.current).toStrictEqual({});
 
-      p.patchMe({ z: undefined });
-      expect(p.me).toStrictEqual({});
+      me.patch({ z: undefined });
+      expect(me.current).toStrictEqual({});
     });
   });
 
@@ -138,28 +138,28 @@ describe("Presence", () => {
 
   describe("caching", () => {
     it("caches immutable results (me)", () => {
-      const p = new MyPresence<P>({ x: 0, y: 0 });
+      const me = new MeRef<P>({ x: 0, y: 0 });
 
-      const me1 = p.me;
-      const me2 = p.me;
+      const me1 = me.current;
+      const me2 = me.current;
       expect(me1).toBe(me2);
 
       // These are effectively no-ops
-      p.patchMe({ x: 0 });
-      p.patchMe({ y: 0, z: undefined });
+      me.patch({ x: 0 });
+      me.patch({ y: 0, z: undefined });
 
-      const me3 = p.me;
+      const me3 = me.current;
       expect(me2).toBe(me3); // No observable change!
 
-      p.patchMe({ y: -1 });
+      me.patch({ y: -1 });
 
-      const me4 = p.me;
-      const me5 = p.me;
+      const me4 = me.current;
+      const me5 = me.current;
       expect(me3).not.toBe(me4); // Me changed...
       expect(me4).toBe(me5);
 
-      const me6 = p.me;
-      const me7 = p.me;
+      const me6 = me.current;
+      const me7 = me.current;
       expect(me5).toBe(me6); // Me did not change
       expect(me6).toBe(me7);
     });

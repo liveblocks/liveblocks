@@ -294,7 +294,7 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.presence.__me.me).toStrictEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
     expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
   });
 
@@ -303,11 +303,11 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.presence.__me.me).toStrictEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
     expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
-    expect(state.presence.__me.me).toStrictEqual({ x: 0, y: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0, y: 0 });
     expect(state.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
