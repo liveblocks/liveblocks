@@ -37,6 +37,41 @@ function merge<T>(target: T, patch: Partial<T>): T {
   return updated ? newValue : target;
 }
 
+export class MyPresence<TPresence extends JsonObject> {
+  // To track "me"
+  /** @internal */
+  _me: Readonly<TPresence>;
+
+  constructor(initialPresence: TPresence) {
+    this._me = freeze(compactObject(initialPresence));
+  }
+
+  get me(): Readonly<TPresence> {
+    return this._me;
+  }
+
+  toImmutable(): Readonly<TPresence> {
+    return this._me;
+  }
+
+  /** @internal */
+  _invalidateMe(): void {
+    // noop
+  }
+
+  /**
+   * Patches the current "me" instance.
+   */
+  patchMe(patch: Partial<TPresence>): void {
+    const oldMe = this._me;
+    const newMe = merge(oldMe, patch);
+    if (oldMe !== newMe) {
+      this._me = freeze(newMe);
+      this._invalidateMe();
+    }
+  }
+}
+
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   conn: Connection<TUserMeta>,
   presence: TPresence
@@ -44,15 +79,10 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   return freeze(compactObject({ ...conn, presence }));
 }
 
-// XXX Split this class into one cache for "me" and one for "others"
-export class Presence<
+export class OthersPresence<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
 > {
-  // To track "me"
-  /** @internal */
-  _me: TPresence;
-
   // To track "others"
   /** @internal */
   _connections: { [connectionId: number]: Connection<TUserMeta> };
@@ -75,10 +105,7 @@ export class Presence<
   // --------------------------------------------------------------
   //
 
-  constructor(initialPresence: TPresence) {
-    // Me
-    this._me = freeze(compactObject(initialPresence));
-
+  constructor() {
     // Others
     this._connections = {};
     this._presences = {};
@@ -90,10 +117,6 @@ export class Presence<
     this._presences = {};
     this._users = {};
     this._invalidateOthers();
-  }
-
-  get me(): TPresence {
-    return this._me;
   }
 
   /** @internal */
@@ -174,23 +197,6 @@ export class Presence<
   _invalidateOthers(): void {
     this._others = undefined;
     this._othersProxy = undefined;
-  }
-
-  /** @internal */
-  _invalidateMe(): void {
-    // noop
-  }
-
-  /**
-   * Patches the current "me" instance.
-   */
-  patchMe(patch: Partial<TPresence>): void {
-    const oldMe = this.me;
-    const newMe = merge(oldMe, patch);
-    if (oldMe !== newMe) {
-      this._me = freeze(newMe);
-      this._invalidateMe();
-    }
   }
 
   /**
