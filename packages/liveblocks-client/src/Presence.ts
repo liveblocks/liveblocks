@@ -86,7 +86,7 @@ export class Presence<
 
   constructor(initialPresence: TPresence) {
     // Me
-    this._me = compactObject(initialPresence);
+    this._me = freeze(compactObject(initialPresence));
 
     // Others
     this._connections = {};
@@ -200,7 +200,7 @@ export class Presence<
     return (
       this._snapshot ??
       (this._snapshot = freeze({
-        me: this.me,
+        me: this._me,
         others: this.others,
       }))
     );
