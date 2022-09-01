@@ -482,14 +482,7 @@ export function createRoomContext<
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
-    const room = useRoom();
-
-    return React.useCallback(
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => {
-        room.updatePresence(patch, options);
-      },
-      [room]
-    );
+    return useRoom().updatePresence;
   }
 
   function useOthers(): Others<TPresence, TUserMeta>;
@@ -803,12 +796,7 @@ export function createRoomContext<
   >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
     const room = useRoom();
     const root = useStorage();
-    const setMyPresence = React.useCallback(
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) =>
-        room.updatePresence(patch, options),
-      [room]
-    );
-
+    const setMyPresence = room.updatePresence;
     return React.useMemo(
       () => {
         if (root !== null) {
