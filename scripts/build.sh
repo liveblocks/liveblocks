@@ -13,13 +13,31 @@ err () {
     echo "$@" >&2
 }
 
+gen_esm_wrapper () {
+    infile="$1"
+    outfile="$2"
+
+    ( cd "$DIST" && (
+      (
+        echo "export {"
+        grep -oEe 'exports[.]([^=]+)\=' "$infile" | cut -d. -f2 | cut -d' ' -f1 | sed -Ee 's/$/&,/'
+        echo "} from \"./$infile\""
+      ) > "$outfile"
+
+      prettier --write "$outfile"
+
+      # Test if output "runs" in Node
+      node "$outfile"
+    ) )
+}
+
 generate_esm_wrappers () {
     if [ -f "$DIST/internal.js" ]; then
-        npx gen-esm-wrapper "$DIST/internal.js" "$DIST/internal.mjs"
+        gen_esm_wrapper "internal.js" "internal.mjs"
     fi
 
     if [ -f "$DIST/index.js" ]; then
-        npx gen-esm-wrapper "$DIST/index.js" "$DIST/index.mjs"
+        gen_esm_wrapper "index.js" "index.mjs"
     fi
 }
 
