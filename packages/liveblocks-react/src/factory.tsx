@@ -213,11 +213,6 @@ type RoomContextBundle<
     selector: (me: TPresence) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T;
-  // XXX Refactor away
-  usePresenceOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T;
 
   /**
    * Returns the presence of the current user of the current room, and a function to update it.
@@ -253,6 +248,38 @@ type RoomContextBundle<
    * }
    */
   useOthers(): Others<TPresence, TUserMeta>;
+
+  /**
+   * Extract arbitrary data based from all the users currently connected in the
+   * room (except yourself).
+   *
+   * The selector function will get re-evaluated any time a user enters or
+   * leaves the room, as well as whenever their presence data changes.
+   *
+   * The component that uses this hook will automatically re-render if your
+   * selector function returns a different value from its previous run.
+   *
+   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * extra care when returning a computed object or list, for example when you
+   * return the result of a .map() or .filter() call from the selector. In
+   * those cases, you'll probably want to use a `shallow` comparison check.
+   *
+   * @example
+   * const others = useOthers(users => users);
+   * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+   * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+   *
+   * // Example to map all cursors in JSX
+   * return (
+   *   others.map((user) => {
+   *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+   *   })
+   * )
+   */
+  useOthers<T>(
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
 
   /**
    * Returns the Room of the nearest RoomProvider above in the React component
@@ -408,7 +435,7 @@ export function createRoomContext<
     );
   }
 
-  function useOthers(): Others<TPresence, TUserMeta> {
+  function useOthers_legacy(): Others<TPresence, TUserMeta> {
     const room = useRoom();
     const rerender = useRerender();
 
@@ -418,6 +445,52 @@ export function createRoomContext<
     );
 
     return room.getOthers();
+  }
+
+  function useOthers_modern<T>(
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T {
+    type Snapshot = readonly User<TPresence, TUserMeta>[];
+
+    const room = useRoom();
+
+    const subscribe = React.useCallback(
+      (onPresenceChange: () => void) =>
+        room.subscribe("others", onPresenceChange),
+      [room]
+    );
+
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getOthers2(),
+      [room]
+    );
+
+    const getServerSnapshot = React.useCallback((): Snapshot => [], []);
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector,
+      isEqual
+    );
+  }
+
+  function useOthers(): Others<TPresence, TUserMeta>;
+  function useOthers<T>(
+    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T;
+  function useOthers<T>(
+    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | Others<TPresence, TUserMeta> {
+    if (selector === undefined) {
+      return useOthers_legacy();
+    } else {
+      return useOthers_modern(selector, isEqual);
+    }
   }
 
   function useBroadcastEvent(): (
@@ -678,37 +751,6 @@ export function createRoomContext<
     );
   }
 
-  // XXX Combine into useOthers() ?
-  function usePresenceOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T {
-    type Snapshot = readonly User<TPresence, TUserMeta>[];
-
-    const room = useRoom();
-
-    const subscribe = React.useCallback(
-      (onPresenceChange: () => void) =>
-        room.subscribe("others", onPresenceChange),
-      [room]
-    );
-
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getOthers2(),
-      [room]
-    );
-
-    const getServerSnapshot = React.useCallback((): Snapshot => [], []);
-
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector,
-      isEqual
-    );
-  }
-
   return {
     RoomProvider,
     useBatch,
@@ -725,7 +767,6 @@ export function createRoomContext<
     useSelector: useStorageSelector,
 
     usePresenceMe, // XXX Rename this hook
-    usePresenceOthers, // XXX Rename this hook
 
     useSelf,
     useStorageRoot,
