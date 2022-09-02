@@ -24,6 +24,7 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { useInitial, useRerender } from "./hooks";
 
 const noop = () => {};
+const identity: <T>(x: T) => T = (x) => x;
 
 const EMPTY_OTHERS: Others<never, never> = [] as unknown as Others<
   never,
@@ -280,7 +281,7 @@ type RoomContextBundle<
    * )
    */
   useOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    selector: (others: Others<TPresence, TUserMeta>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T;
 
@@ -445,22 +446,15 @@ export function createRoomContext<
     );
   }
 
-  function useOthers_legacy(): Others<TPresence, TUserMeta> {
-    const room = useRoom();
-    const rerender = useRerender();
-
-    React.useEffect(
-      () => room.events.others.subscribe(rerender),
-      [room, rerender]
-    );
-
-    return room.getOthers();
-  }
-
-  function useOthers_modern<T>(
+  function useOthers(): Others<TPresence, TUserMeta>;
+  function useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
-  ): T {
+  ): T;
+  function useOthers<T>(
+    selector?: (others: Others<TPresence, TUserMeta>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | Others<TPresence, TUserMeta> {
     type Snapshot = Others<TPresence, TUserMeta>;
 
     const room = useRoom();
@@ -482,25 +476,9 @@ export function createRoomContext<
       subscribe,
       getSnapshot,
       getServerSnapshot,
-      selector,
+      selector ?? (identity as (others: Others<TPresence, TUserMeta>) => T),
       isEqual
     );
-  }
-
-  function useOthers(): Others<TPresence, TUserMeta>;
-  function useOthers<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T;
-  function useOthers<T>(
-    selector?: (others: readonly User<TPresence, TUserMeta>[]) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T | Others<TPresence, TUserMeta> {
-    if (selector === undefined) {
-      return useOthers_legacy();
-    } else {
-      return useOthers_modern(selector, isEqual);
-    }
   }
 
   function useBroadcastEvent(): (
