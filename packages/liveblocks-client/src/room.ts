@@ -1337,7 +1337,7 @@ function makeStateMachine<
 
   // XXX Change name
   function getOthers2(): readonly User<TPresence, TUserMeta>[] {
-    return state.presence.__others.others;
+    return state.presence.__others.current;
   }
 
   function broadcastEvent(

@@ -81,7 +81,7 @@ export class OthersRef<
     return undefined;
   }
 
-  get others(): readonly User<TPresence, TUserMeta>[] {
+  get current(): readonly User<TPresence, TUserMeta>[] {
     return (
       this._others ??
       (this._others = freeze(
@@ -101,7 +101,7 @@ export class OthersRef<
       return this._othersProxy;
     }
 
-    const users = this.others;
+    const users = this.current;
     const proxy: Others<TPresence, TUserMeta> = {
       get count() {
         return users.length;
