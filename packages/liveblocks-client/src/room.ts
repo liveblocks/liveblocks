@@ -766,7 +766,11 @@ function makeStateMachine<
   function getSelf(): User<TPresence, TUserMeta> | null {
     return state.connection.state === "open" ||
       state.connection.state === "connecting"
-      ? {
+      ? // XXX Need to always return a stable reference here, because this gets
+        // used as a useSyncExternalStore snapshot, which is expected to be
+        // stable. This currently returns a new instance on every call.
+        // XXX Use an "Imm" cache here too, just like with the other snapshots.
+        {
           connectionId: state.connection.id,
           id: state.connection.userId,
           info: state.connection.userInfo,
