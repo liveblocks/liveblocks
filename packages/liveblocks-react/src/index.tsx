@@ -13,6 +13,7 @@ export {
   useEventListener,
   useSelf,
   useStorage,
+  useStorageRoot,
   useMap,
   useList,
   useObject,

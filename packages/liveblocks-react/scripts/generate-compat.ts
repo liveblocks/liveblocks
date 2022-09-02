@@ -33,6 +33,7 @@ const GENERATE_FOR_HOOKS = [
   "useRoom",
   "useSelf",
   "useStorage",
+  "useStorageRoot",
   "useUndo",
   "useUpdateMyPresence",
 ];
