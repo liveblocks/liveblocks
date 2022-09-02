@@ -33,8 +33,6 @@ export class OthersRef<
   //
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
-  /** @internal */
-  _othersProxy: Others<TPresence, TUserMeta> | undefined;
   //
   // --------------------------------------------------------------
   //
@@ -63,7 +61,7 @@ export class OthersRef<
     this._connections = {};
     this._presences = {};
     this._users = {};
-    this._invalidateOthers();
+    this.invalidate();
   }
 
   /** @internal */
@@ -92,44 +90,11 @@ export class OthersRef<
     return undefined;
   }
 
-  // TODO: Deprecate this others proxy! It shouldn't be necessary anymore now
-  // that the others property is stable/immutable.
-  getOthersProxy(): Others<TPresence, TUserMeta> {
-    if (this._othersProxy !== undefined) {
-      return this._othersProxy;
-    }
-
-    const users = this.current;
-    const proxy: Others<TPresence, TUserMeta> = {
-      get count() {
-        return users.length;
-      },
-      [Symbol.iterator]() {
-        return users[Symbol.iterator]();
-      },
-      map(callback) {
-        return users.map(callback);
-      },
-      toArray() {
-        return users;
-      },
-    };
-
-    this._othersProxy = proxy;
-    return proxy;
-  }
-
   /** @internal */
   _invalidateUser(connectionId: number): void {
     if (this._users[connectionId] !== undefined) {
       delete this._users[connectionId];
     }
-    this._invalidateOthers();
-  }
-
-  /** @internal */
-  _invalidateOthers(): void {
-    this._othersProxy = undefined;
     this.invalidate();
   }
 
@@ -189,5 +154,41 @@ export class OthersRef<
       this._presences[connectionId] = freeze(newPresence);
       this._invalidateUser(connectionId);
     }
+  }
+}
+
+/**
+ * TODO Deprecate this "others proxy" abstraction.
+ */
+export class OthersProxyRef<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> extends ImmRef<Others<TPresence, TUserMeta>> {
+  /** @internal */
+  private _ref: OthersRef<TPresence, TUserMeta>;
+
+  constructor(ref: OthersRef<TPresence, TUserMeta>) {
+    super();
+    this._ref = ref;
+    this._ref.didInvalidate.subscribe(() => this.invalidate());
+  }
+
+  /** @internal */
+  _toImmutable(): Readonly<Others<TPresence, TUserMeta>> {
+    const users = this._ref.current;
+    return {
+      get count() {
+        return users.length;
+      },
+      [Symbol.iterator]() {
+        return users[Symbol.iterator]();
+      },
+      map(callback) {
+        return users.map(callback);
+      },
+      toArray() {
+        return users;
+      },
+    };
   }
 }

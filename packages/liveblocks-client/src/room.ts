@@ -7,7 +7,7 @@ import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
-import { OthersRef } from "./OthersRef";
+import { OthersProxyRef, OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -212,6 +212,7 @@ type State<
   readonly me: MeRef<TPresence>;
   presence: {
     readonly __others: OthersRef<TPresence, TUserMeta>;
+    readonly __othersProxy: OthersProxyRef<TPresence, TUserMeta>; // TODO: Deprecate this proxy helper
   };
 
   idFactory: IdFactory | null;
@@ -482,7 +483,7 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
-      const others = state.presence.__others.getOthersProxy();
+      const others = state.presence.__othersProxy.current;
       for (const event of otherEvents) {
         eventHub.others.notify({ others, event });
       }
@@ -1332,7 +1333,7 @@ function makeStateMachine<
 
   // XXX Deprecate this in favor of getOthers2(), which returns a readonly User[] ?
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.presence.__others.getOthersProxy();
+    return state.presence.__othersProxy.current;
   }
 
   // XXX Change name
@@ -1603,6 +1604,7 @@ function defaultState<
   initialPresence?: TPresence,
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const others = new OthersRef<TPresence, TUserMeta>();
   return {
     connection: { state: "closed" },
     token: null,
@@ -1633,7 +1635,8 @@ function defaultState<
       initialPresence == null ? ({} as TPresence) : initialPresence
     ),
     presence: {
-      __others: new OthersRef(),
+      __others: others,
+      __othersProxy: new OthersProxyRef(others),
     },
 
     defaultStorageRoot: initialStorage,
