@@ -1,4 +1,4 @@
-import { merge } from "./ImmRef";
+import { ImmRef, merge } from "./ImmRef";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
@@ -18,7 +18,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> {
+> extends ImmRef<User<TPresence, TUserMeta>[]> {
   // To track "others"
   /** @internal */
   _connections: { [connectionId: number]: Connection<TUserMeta> };
@@ -34,18 +34,29 @@ export class OthersRef<
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
   /** @internal */
-  _others: readonly User<TPresence, TUserMeta>[] | undefined;
-  /** @internal */
   _othersProxy: Others<TPresence, TUserMeta> | undefined;
   //
   // --------------------------------------------------------------
   //
 
   constructor() {
+    super();
+
     // Others
     this._connections = {};
     this._presences = {};
     this._users = {};
+  }
+
+  /** @internal */
+  _toImmutable() {
+    return freeze(
+      compact(
+        Object.keys(this._presences).map((connectionId) =>
+          this.getUser(Number(connectionId))
+        )
+      )
+    );
   }
 
   clearOthers(): void {
@@ -79,19 +90,6 @@ export class OthersRef<
     }
 
     return undefined;
-  }
-
-  get current(): readonly User<TPresence, TUserMeta>[] {
-    return (
-      this._others ??
-      (this._others = freeze(
-        compact(
-          Object.keys(this._presences).map((connectionId) =>
-            this.getUser(Number(connectionId))
-          )
-        )
-      ))
-    );
   }
 
   // TODO: Deprecate this others proxy! It shouldn't be necessary anymore now
@@ -131,8 +129,8 @@ export class OthersRef<
 
   /** @internal */
   _invalidateOthers(): void {
-    this._others = undefined;
     this._othersProxy = undefined;
+    this.invalidate();
   }
 
   /**
