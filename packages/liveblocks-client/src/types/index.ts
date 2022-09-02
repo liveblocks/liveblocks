@@ -227,30 +227,31 @@ export type Client = {
   leave(roomId: string): void;
 };
 
+// prettier-ignore
+export type ReadonlyArrayWithLegacyMethods<T> =
+  // Base type
+  readonly T[]
+  &
+  // Legacy methods
+  // (These will be removed in a future release.)
+  {
+    /**
+     * @deprecated Prefer the normal .length property on arrays.
+     */
+    readonly count: number;
+    /**
+     * @deprecated Calling .toArray() is no longer needed
+     */
+    readonly toArray: () => readonly T[];
+  };
+
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<
+export type Others<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> {
-  /**
-   * Number of other users in the room.
-   */
-  readonly count: number;
-  /**
-   * Returns a new Iterator object that contains the users.
-   */
-  [Symbol.iterator](): IterableIterator<User<TPresence, TUserMeta>>;
-  /**
-   * Returns the array of connected users in room.
-   */
-  toArray(): readonly User<TPresence, TUserMeta>[];
-  /**
-   * This function let you map over the connected users in the room.
-   */
-  map<U>(callback: (user: User<TPresence, TUserMeta>) => U): U[];
-}
+> = ReadonlyArrayWithLegacyMethods<User<TPresence, TUserMeta>>;
 
 /**
  * Represents a user connected in a room. Treated as immutable.
@@ -607,11 +608,6 @@ export type Room<
    * const others = room.getOthers();
    */
   getOthers: () => Others<TPresence, TUserMeta>;
-
-  /**
-   * XXX Document me
-   */
-  getOthers2: () => readonly User<TPresence, TUserMeta>[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.

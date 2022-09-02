@@ -7,7 +7,7 @@ import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
-import { OthersProxyRef, OthersRef } from "./OthersRef";
+import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -150,7 +150,6 @@ type Machine<
   // Presence
   getPresence(): TPresence; // XXX Make Readonly<TPresence>
   getOthers(): Others<TPresence, TUserMeta>;
-  getOthers2(): readonly User<TPresence, TUserMeta>[]; // XXX Change name
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -211,7 +210,6 @@ type State<
 
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
-  readonly othersProxy: OthersProxyRef<TPresence, TUserMeta>; // TODO: Deprecate this proxy helper
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
@@ -481,7 +479,7 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
-      const others = state.othersProxy.current;
+      const others = state.others.current;
       for (const event of otherEvents) {
         eventHub.others.notify({ others, event });
       }
@@ -940,11 +938,7 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.others.setConnection(
-      message.actor,
-      message.id,
-      message.info
-    );
+    state.others.setConnection(message.actor, message.id, message.info);
 
     // Send current presence to new user
     // TODO: Consider storing it on the backend
@@ -1329,13 +1323,7 @@ function makeStateMachine<
     return state.me.current;
   }
 
-  // XXX Deprecate this in favor of getOthers2(), which returns a readonly User[] ?
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.othersProxy.current;
-  }
-
-  // XXX Change name
-  function getOthers2(): readonly User<TPresence, TUserMeta>[] {
     return state.others.current;
   }
 
@@ -1589,7 +1577,6 @@ function makeStateMachine<
     // Presence
     getPresence,
     getOthers,
-    getOthers2, // XXX Change name
   };
 }
 
@@ -1633,7 +1620,6 @@ function defaultState<
       initialPresence == null ? ({} as TPresence) : initialPresence
     ),
     others,
-    othersProxy: new OthersProxyRef(others),
 
     defaultStorageRoot: initialStorage,
     idFactory: null,
@@ -1717,7 +1703,6 @@ export function createRoom<
     getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
     getOthers: machine.getOthers,
-    getOthers2: machine.getOthers2, // XXX Change name
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,

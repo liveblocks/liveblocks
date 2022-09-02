@@ -434,10 +434,10 @@ export function createRoomContext<
   }
 
   function useOthers_modern<T>(
-    selector: (others: readonly User<TPresence, TUserMeta>[]) => T,
+    selector: (others: Others<TPresence, TUserMeta>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T {
-    type Snapshot = readonly User<TPresence, TUserMeta>[];
+    type Snapshot = Others<TPresence, TUserMeta>;
 
     const room = useRoom();
 
@@ -448,7 +448,7 @@ export function createRoomContext<
     );
 
     const getSnapshot = React.useCallback(
-      (): Snapshot => room.getOthers2(),
+      (): Snapshot => room.getOthers(),
       [room]
     );
 

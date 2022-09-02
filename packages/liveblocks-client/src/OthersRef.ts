@@ -18,7 +18,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> extends ImmRef<User<TPresence, TUserMeta>[]> {
+> extends ImmRef<Others<TPresence, TUserMeta>> {
   // To track "others"
   /** @internal */
   _connections: { [connectionId: number]: Connection<TUserMeta> };
@@ -51,14 +51,29 @@ export class OthersRef<
   }
 
   /** @internal */
-  _toImmutable() {
-    return freeze(
-      compact(
-        Object.keys(this._presences).map((connectionId) =>
-          this.getUser(Number(connectionId))
-        )
+  _toImmutable(): Readonly<Others<TPresence, TUserMeta>> {
+    const users = compact(
+      Object.keys(this._presences).map((connectionId) =>
+        this.getUser(Number(connectionId))
       )
     );
+
+    // NOTE: We extend the array instance with custom `count` and `toArray()`
+    // methods here. This is done for backward-compatible reasons. These APIs
+    // will be deprecated in a future version.
+    Object.defineProperty(users, "count", {
+      value: users.length,
+      enumerable: false,
+    });
+    Object.defineProperty(users, "toArray", {
+      value: () => users,
+      enumerable: false,
+    });
+
+    return freeze(users) as Others<TPresence, TUserMeta>;
+    //                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                   Necessary only while the backward-compatible APIs
+    //                   are getting attached in the lines above.
   }
 
   clearOthers(): void {
@@ -158,41 +173,5 @@ export class OthersRef<
       this._presences[connectionId] = freeze(newPresence);
       this._invalidateUser(connectionId);
     }
-  }
-}
-
-/**
- * TODO Deprecate this "others proxy" abstraction.
- */
-export class OthersProxyRef<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> extends ImmRef<Others<TPresence, TUserMeta>> {
-  /** @internal */
-  private _ref: OthersRef<TPresence, TUserMeta>;
-
-  constructor(ref: OthersRef<TPresence, TUserMeta>) {
-    super();
-    this._ref = ref;
-    this._ref.didInvalidate.subscribe(() => this.invalidate());
-  }
-
-  /** @internal */
-  _toImmutable(): Readonly<Others<TPresence, TUserMeta>> {
-    const users = this._ref.current;
-    return {
-      get count() {
-        return users.length;
-      },
-      [Symbol.iterator]() {
-        return users[Symbol.iterator]();
-      },
-      map(callback) {
-        return users.map(callback);
-      },
-      toArray() {
-        return users;
-      },
-    };
   }
 }

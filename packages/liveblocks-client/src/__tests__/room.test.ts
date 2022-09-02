@@ -371,7 +371,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.getOthers().toArray()).toEqual([
+    expect(machine.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
     ]);
 
@@ -1283,7 +1283,7 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         // User not yet publicly visible
       ]);
 
@@ -1297,7 +1297,7 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         {
           connectionId: 1,
           id: undefined,
