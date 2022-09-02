@@ -812,9 +812,9 @@ export function createRoomContext<
             return rv;
           }) as OmitFirstArg<F>;
         } else {
-          return (() => {
-            console.warn(
-              "Liveblocks mutation was called before Storage has been initialized. This mutation was ignored."
+          return ((): void => {
+            throw new Error(
+              "Mutation cannot be called while Liveblocks Storage has not loaded yet"
             );
           }) as OmitFirstArg<F>;
         }
