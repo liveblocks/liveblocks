@@ -18,7 +18,7 @@ import type {
 } from "@liveblocks/client/internal";
 import { freeze } from "@liveblocks/client/internal";
 import * as React from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
+import { useSyncExternalStore } from "use-sync-external-store/shim"; // XXX Stop using this, only use selector one
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 import { useInitial, useRerender } from "./hooks";
@@ -212,6 +212,7 @@ type RoomContextBundle<
    * return the result of a .map() or .filter() call from the selector. In
    * those cases, you'll probably want to use a `shallow` comparison check.
    */
+  // XXX Rename to useStorage()
   useSelector<T>(
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
@@ -337,7 +338,7 @@ type RoomContextBundle<
    * @example
    * const root = useStorage();
    */
-  useStorage(): LiveObject<TStorage> | null;
+  useStorage(): LiveObject<TStorage> | null; // XXX Change return type to ToImmutable<TStorage> | null
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -595,6 +596,7 @@ export function createRoomContext<
 
   // NOTE: This API exists for backward compatible reasons
   function useStorageRoot(): [root: LiveObject<TStorage> | null] {
+    // XXX Reimplement this. Soon, we can no longer use useStorage() here as a building block, because it will be immutable
     return [useStorage()];
   }
 
@@ -698,6 +700,7 @@ export function createRoomContext<
     }
   }
 
+  // XXX Rename to useStorage()
   function useStorageSelector<T>(
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
