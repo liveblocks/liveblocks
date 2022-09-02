@@ -593,13 +593,7 @@ export function createRoomContext<
     );
   }
 
-  // NOTE: This API exists for backward compatible reasons
-  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
-    // XXX Reimplement this. Soon, we can no longer use useStorage() here as a building block, because it will be immutable
-    return [useStorage()];
-  }
-
-  function useStorage(): LiveObject<TStorage> | null {
+  function useMutableStorageRoot(): LiveObject<TStorage> | null {
     type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
     const subscribe = room.events.storageDidLoad.subscribe;
@@ -612,6 +606,16 @@ export function createRoomContext<
       getServerSnapshot,
       selector
     );
+  }
+
+  // NOTE: This API exists for backward compatible reasons
+  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
+    return [useMutableStorageRoot()];
+  }
+
+  // XXX Reimplement this to have an immutable return type
+  function useStorage(): LiveObject<TStorage> | null {
+    return useMutableStorageRoot();
   }
 
   function useHistory(): History {
