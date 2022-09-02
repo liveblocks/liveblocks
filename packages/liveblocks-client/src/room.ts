@@ -6,7 +6,8 @@ import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
-import { MeRef, OthersPresence } from "./Presence";
+import { MeRef } from "./MeRef";
+import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
@@ -210,7 +211,7 @@ type State<
 
   readonly me: MeRef<TPresence>;
   presence: {
-    readonly __others: OthersPresence<TPresence, TUserMeta>;
+    readonly __others: OthersRef<TPresence, TUserMeta>;
   };
 
   idFactory: IdFactory | null;
@@ -1632,7 +1633,7 @@ function defaultState<
       initialPresence == null ? ({} as TPresence) : initialPresence
     ),
     presence: {
-      __others: new OthersPresence(),
+      __others: new OthersRef(),
     },
 
     defaultStorageRoot: initialStorage,

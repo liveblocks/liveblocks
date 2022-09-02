@@ -1,4 +1,4 @@
-import { ImmRef } from "./ImmRef";
+import { merge } from "./ImmRef";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
@@ -8,66 +8,6 @@ type Connection<TUserMeta extends BaseUserMeta> = {
   readonly info: TUserMeta["info"];
 };
 
-/**
- * Patches a target object by "merging in" the provided fields. Patch
- * fields that are explicitly-undefined will delete keys from the target
- * object. Will return a new object.
- *
- * Important guarantee:
- * If the patch effectively did not mutate the target object because the
- * patch fields have the same value as the original, then the original
- * object reference will be returned.
- */
-function merge<T>(target: T, patch: Partial<T>): T {
-  let updated = false;
-  const newValue = { ...target };
-
-  Object.keys(patch).forEach((k) => {
-    const key = k as keyof T;
-    const val = patch[key];
-    if (newValue[key] !== val) {
-      if (val === undefined) {
-        delete newValue[key];
-      } else {
-        newValue[key] = val as T[keyof T];
-      }
-      updated = true;
-    }
-  });
-
-  return updated ? newValue : target;
-}
-
-/**
- * Managed immutable cache for accessing "me" presence data as read-only.
- */
-export class MeRef<TPresence extends JsonObject> extends ImmRef<TPresence> {
-  /** @internal */
-  private _me: Readonly<TPresence>;
-
-  constructor(initialPresence: TPresence) {
-    super();
-    this._me = freeze(compactObject(initialPresence));
-  }
-
-  /** @internal */
-  _toImmutable(): Readonly<TPresence> {
-    return this._me;
-  }
-
-  /**
-   * Patches the current "me" instance.
-   */
-  patch(patch: Partial<TPresence>): void {
-    const oldMe = this._me;
-    const newMe = merge(oldMe, patch);
-    if (oldMe !== newMe) {
-      this._me = freeze(newMe);
-      this.invalidate();
-    }
-  }
-}
-
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   conn: Connection<TUserMeta>,
   presence: TPresence
@@ -75,7 +15,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   return freeze(compactObject({ ...conn, presence }));
 }
 
-export class OthersPresence<
+export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
 > {
