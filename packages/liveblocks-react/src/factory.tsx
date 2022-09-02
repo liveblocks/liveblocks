@@ -795,7 +795,7 @@ export function createRoomContext<
     ) => any
   >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
     const room = useRoom();
-    const root = useStorage();
+    const root = useMutableStorageRoot();
     const setMyPresence = room.updatePresence;
     return React.useMemo(
       () => {
