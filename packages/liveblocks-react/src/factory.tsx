@@ -289,16 +289,38 @@ type RoomContextBundle<
    * Gets the current user once it is connected to the room.
    *
    * @example
-   * const user = useSelf();
+   * const me = useSelf();
+   * const { x, y } = me.presence.cursor;
    */
-  // XXX Deprecate this overload?
   useSelf(): User<TPresence, TUserMeta> | null;
 
-  // XXX Document me
+  /**
+   * Extract arbitrary data based from the current user.
+   *
+   * The selector function will get re-evaluated any time your presence data
+   * changes.
+   *
+   * The component that uses this hook will automatically re-render if your
+   * selector function returns a different value from its previous run.
+   *
+   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * extra care when returning a computed object or list, for example when you
+   * return the result of a .map() or .filter() call from the selector. In
+   * those cases, you'll probably want to use a `shallow` comparison check.
+   *
+   * Will return `null` while Liveblocks isn't connected to a room yet.
+   *
+   * @example
+   * const cursor = useSelf(me => me.presence.cursor);
+   * if (cursor !== null) {
+   *   const { x, y } = cursor;
+   * }
+   *
+   */
   useSelf<T>(
-    selector: (me: Readonly<TPresence>) => T,
+    selector: (me: User<TPresence, TUserMeta>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
-  ): T;
+  ): T | null;
 
   /**
    * This hook exists for backward-compatible reasons.
@@ -453,11 +475,7 @@ export function createRoomContext<
 
     const room = useRoom();
 
-    const subscribe = React.useCallback(
-      (onPresenceChange: () => void) =>
-        room.subscribe("others", onPresenceChange),
-      [room]
-    );
+    const subscribe = room.events.others.subscribe;
 
     const getSnapshot = React.useCallback(
       (): Snapshot => room.getOthers(),
@@ -528,67 +546,51 @@ export function createRoomContext<
     }, [room]);
   }
 
-  function useSelf_legacy(): User<TPresence, TUserMeta> | null {
-    const room = useRoom();
-    const rerender = useRerender();
-
-    React.useEffect(() => {
-      const unsubscribePresence = room.events.me.subscribe(rerender);
-      const unsubscribeConnection = room.events.connection.subscribe(rerender);
-
-      return () => {
-        unsubscribePresence();
-        unsubscribeConnection();
-      };
-    }, [room, rerender]);
-
-    return room.getSelf();
-  }
-
-  function useSelf_modern<T>(
-    selector: (me: Readonly<TPresence>) => T,
+  function useSelf(): User<TPresence, TUserMeta> | null;
+  function useSelf<T>(
+    selector: (me: User<TPresence, TUserMeta>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
-  ): T {
-    type Snapshot = TPresence;
+  ): T | null;
+  function useSelf<T>(
+    maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null {
+    type Snapshot = User<TPresence, TUserMeta> | null;
+    type Selection = T | null;
 
     const room = useRoom();
 
     const subscribe = React.useCallback(
-      (onPresenceChange: () => void) =>
-        room.subscribe("my-presence", onPresenceChange),
+      (onChange: () => void) => {
+        const unsub1 = room.events.me.subscribe(onChange);
+        const unsub2 = room.events.connection.subscribe(onChange);
+        return () => {
+          unsub1();
+          unsub2();
+        };
+      },
       [room]
     );
 
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getPresence(),
-      [room]
+    const getSnapshot: () => Snapshot = room.getSelf;
+
+    const selector =
+      maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
+
+    const wrappedSelector = React.useCallback(
+      (me: Snapshot): Selection => (me !== null ? selector(me) : null),
+      [selector]
     );
 
-    const getServerSnapshot = getSnapshot;
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,
       getServerSnapshot,
-      selector,
+      wrappedSelector,
       isEqual
     );
-  }
-
-  function useSelf(): User<TPresence, TUserMeta> | null;
-  function useSelf<T>(
-    selector: (me: Readonly<TPresence>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T;
-  function useSelf<T>(
-    selector?: (me: Readonly<TPresence>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
-  ): T | User<TPresence, TUserMeta> | null {
-    if (selector === undefined) {
-      return useSelf_legacy();
-    } else {
-      return useSelf_modern(selector, isEqual);
-    }
   }
 
   // NOTE: This API exists for backward compatible reasons
@@ -599,16 +601,9 @@ export function createRoomContext<
   function useStorage(): LiveObject<TStorage> | null {
     type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
-
     const subscribe = room.events.storageDidLoad.subscribe;
-
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getStorageSnapshot(),
-      [room]
-    );
-
+    const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
-
     return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
