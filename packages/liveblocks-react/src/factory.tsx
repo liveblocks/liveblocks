@@ -16,6 +16,7 @@ import type {
   RoomInitializers,
   ToImmutable,
 } from "@liveblocks/client/internal";
+import { freeze } from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
@@ -23,6 +24,29 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 import { useInitial, useRerender } from "./hooks";
 
 const noop = () => {};
+
+const EMPTY_OTHERS: Others<never, never> = [] as unknown as Others<
+  never,
+  never
+>;
+
+// NOTE: We extend the array instance with custom `count` and `toArray()`
+// methods here. This is done for backward-compatible reasons. These APIs
+// will be deprecated in a future version.
+Object.defineProperty(EMPTY_OTHERS, "count", {
+  value: 0,
+  enumerable: false,
+});
+Object.defineProperty(EMPTY_OTHERS, "toArray", {
+  value: () => EMPTY_OTHERS,
+  enumerable: false,
+});
+
+freeze(EMPTY_OTHERS);
+
+function getEmptyOthers() {
+  return EMPTY_OTHERS;
+}
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -452,7 +476,7 @@ export function createRoomContext<
       [room]
     );
 
-    const getServerSnapshot = React.useCallback((): Snapshot => [], []);
+    const getServerSnapshot = getEmptyOthers;
 
     return useSyncExternalStoreWithSelector(
       subscribe,
