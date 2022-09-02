@@ -17,6 +17,18 @@
 
 ---
 
+# v0.17.11
+
+General:
+
+- Fix a packaging bug
+
+In **@liveblocks/react**:
+
+- Deprecate an undocumented API
+
+---
+
 # v0.17.9
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in

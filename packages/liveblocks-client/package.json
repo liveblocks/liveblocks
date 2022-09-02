@@ -1,20 +1,20 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.17.9-dev",
+  "version": "0.17.11-dev",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
   "exports": {
     "./internal": {
-      "types": "./internal.d.ts",
       "require": "./internal.js",
-      "import": "./internal.mjs"
+      "import": "./internal.mjs",
+      "types": "./internal.d.ts"
     },
     ".": {
-      "types": "./index.d.ts",
       "require": "./index.js",
-      "import": "./index.mjs"
+      "import": "./index.mjs",
+      "types": "./index.d.ts"
     }
   },
   "files": [

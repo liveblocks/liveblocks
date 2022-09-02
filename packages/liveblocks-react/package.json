@@ -1,10 +1,17 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.17.9-dev",
+  "version": "0.17.11-dev",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./index.js",
+      "import": "./index.mjs",
+      "types": "./index.d.ts"
+    }
+  },
   "files": [
     "**"
   ],
@@ -31,7 +38,7 @@
     "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.17.9",
+    "@liveblocks/client": "0.17.11",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {

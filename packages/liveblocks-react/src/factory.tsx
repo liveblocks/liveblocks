@@ -242,6 +242,14 @@ type RoomContextBundle<
   useSelf(): User<TPresence, TUserMeta> | null;
 
   /**
+   * This hook exists for backward-compatible reasons.
+   *
+   * @example
+   * const [root] = useStorageRoot();
+   */
+  useStorageRoot(): [root: LiveObject<TStorage> | null];
+
+  /**
    * Returns the LiveObject instance that is the root of your entire Liveblocks
    * Storage.
    *
@@ -455,9 +463,13 @@ export function createRoomContext<
     return room.getSelf();
   }
 
+  // NOTE: This API exists for backward compatible reasons
+  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
+    return [useStorage()];
+  }
+
   function useStorage(): LiveObject<TStorage> | null {
     type Snapshot = LiveObject<TStorage> | null;
-
     const room = useRoom();
 
     const subscribe = room.events.storageDidLoad.subscribe;
@@ -623,6 +635,7 @@ export function createRoomContext<
     useRoom,
     useSelector,
     useSelf,
+    useStorageRoot,
     useStorage,
     useUndo,
     useUpdateMyPresence,

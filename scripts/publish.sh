@@ -244,7 +244,7 @@ build_pkg () {
 
 npm_pkg_exists () {
     PKGNAME="$1"
-    test "$(npm view "$PKGNAME@$VERSION" version)" = "$VERSION"
+    test "$(npm view "$PKGNAME@$VERSION" version 2>/dev/null)" = "$VERSION"
 }
 
 # This global variable will store the pasted OTP token
