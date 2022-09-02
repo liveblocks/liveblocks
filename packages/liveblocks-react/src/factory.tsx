@@ -18,7 +18,6 @@ import type {
 } from "@liveblocks/client/internal";
 import { freeze } from "@liveblocks/client/internal";
 import * as React from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim"; // XXX Stop using this, only use selector one
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 import { useInitial, useRerender } from "./hooks";
@@ -606,7 +605,13 @@ export function createRoomContext<
     const subscribe = room.events.storageDidLoad.subscribe;
     const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    const selector = identity;
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector
+    );
   }
 
   function useHistory(): History {
