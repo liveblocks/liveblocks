@@ -263,7 +263,7 @@ type RoomContextBundle<
    * The component that uses this hook will automatically re-render if your
    * selector function returns a different value from its previous run.
    *
-   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * By default `useOthers()` uses strict `===` to check for equality. Take
    * extra care when returning a computed object or list, for example when you
    * return the result of a .map() or .filter() call from the selector. In
    * those cases, you'll probably want to use a `shallow` comparison check.
@@ -303,10 +303,10 @@ type RoomContextBundle<
    * The component that uses this hook will automatically re-render if your
    * selector function returns a different value from its previous run.
    *
-   * By default `useSelector()` uses strict `===` to check for equality. Take
-   * extra care when returning a computed object or list, for example when you
-   * return the result of a .map() or .filter() call from the selector. In
-   * those cases, you'll probably want to use a `shallow` comparison check.
+   * By default `useSelf()` uses strict `===` to check for equality. Take extra
+   * care when returning a computed object or list, for example when you return
+   * the result of a .map() or .filter() call from the selector. In those
+   * cases, you'll probably want to use a `shallow` comparison check.
    *
    * Will return `null` while Liveblocks isn't connected to a room yet.
    *
@@ -323,7 +323,8 @@ type RoomContextBundle<
   ): T | null;
 
   /**
-   * This hook exists for backward-compatible reasons.
+   * Returns the mutable (!) Storage root. This hook exists for
+   * backward-compatible reasons.
    *
    * @example
    * const [root] = useStorageRoot();
@@ -331,8 +332,7 @@ type RoomContextBundle<
   useStorageRoot(): [root: LiveObject<TStorage> | null];
 
   /**
-   * Returns the LiveObject instance that is the root of your entire Liveblocks
-   * Storage.
+   * Returns your entire Liveblocks Storage as an immutable data structure.
    *
    * @example
    * const root = useStorage();
