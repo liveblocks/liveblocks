@@ -193,6 +193,14 @@ type RoomContextBundle<
   ): TStorage[TKey] | null;
 
   /**
+   * Returns your entire Liveblocks Storage as an immutable data structure.
+   *
+   * @example
+   * const root = useStorage();
+   */
+  useStorage(): ToImmutable<TStorage> | null;
+
+  /**
    * Extract arbitrary data from the Liveblocks Storage state, using an
    * arbitrary selector function.
    *
@@ -206,13 +214,12 @@ type RoomContextBundle<
    * The component that uses this hook will automatically re-render if the
    * returned value changes.
    *
-   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * By default `useStorage()` uses strict `===` to check for equality. Take
    * extra care when returning a computed object or list, for example when you
    * return the result of a .map() or .filter() call from the selector. In
    * those cases, you'll probably want to use a `shallow` comparison check.
    */
-  // XXX Rename to useStorage()
-  useSelector<T>(
+  useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null;
@@ -330,14 +337,6 @@ type RoomContextBundle<
    * const [root] = useStorageRoot();
    */
   useStorageRoot(): [root: LiveObject<TStorage> | null];
-
-  /**
-   * Returns your entire Liveblocks Storage as an immutable data structure.
-   *
-   * @example
-   * const root = useStorage();
-   */
-  useStorage(): LiveObject<TStorage> | null; // XXX Change return type to ToImmutable<TStorage> | null
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -613,11 +612,6 @@ export function createRoomContext<
     return [useMutableStorageRoot()];
   }
 
-  // XXX Reimplement this to have an immutable return type
-  function useStorage(): LiveObject<TStorage> | null {
-    return useMutableStorageRoot();
-  }
-
   function useHistory(): History {
     return useRoom().history;
   }
@@ -662,7 +656,7 @@ export function createRoomContext<
     key: TKey
   ): TStorage[TKey] | null {
     const room = useRoom();
-    const root = useStorage();
+    const root = useMutableStorageRoot();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -709,16 +703,23 @@ export function createRoomContext<
     }
   }
 
-  // XXX Rename to useStorage()
-  function useStorageSelector<T>(
+  function useStorage(): ToImmutable<TStorage> | null;
+  function useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: unknown, b: unknown) => boolean
+  ): T | null;
+  function useStorage<T>(
+    maybeSelector?: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: unknown, b: unknown) => boolean
   ): T | null {
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
 
     const room = useRoom();
-    const rootOrNull = useStorage();
+    const rootOrNull = useMutableStorageRoot();
+
+    const selector =
+      maybeSelector ?? (identity as (root: ToImmutable<TStorage>) => T);
 
     const wrappedSelector = React.useCallback(
       (rootOrNull: Snapshot): Selection =>
@@ -768,7 +769,6 @@ export function createRoomContext<
     useOthers,
     useRedo,
     useRoom,
-    useSelector: useStorageSelector,
 
     useSelf,
     useStorageRoot,

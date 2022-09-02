@@ -22,5 +22,5 @@ export const {
   useObject,
   useOthers,
   useRoom,
-  useSelector,
+  useStorage,
 } = createRoomContext<Presence, Storage>(client);

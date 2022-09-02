@@ -14,7 +14,7 @@ import {
   useObject,
   useOthers,
   useRoom,
-  useSelector,
+  useStorage,
 } from "./_liveblocks.config";
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
@@ -331,15 +331,15 @@ describe("useObject", () => {
   });
 });
 
-describe("useSelector", () => {
+describe("useStorage", () => {
   test("return null before storage has loaded", async () => {
-    const { result } = renderHook(() => useSelector((root) => root.obj));
+    const { result } = renderHook(() => useStorage((root) => root.obj));
     expect(result.current).toBeNull();
   });
 
   test("nested data remains referentially equal between renders", async () => {
     const { result, rerender } = renderHook(() =>
-      useSelector((root) => root.obj)
+      useStorage((root) => root.obj)
     );
 
     const sim = await websocketSimulator();
@@ -355,7 +355,7 @@ describe("useSelector", () => {
   });
 
   test("unchanged nested data remains referentially equal between mutations", async () => {
-    const { result } = renderHook(() => useSelector((root) => root.obj));
+    const { result } = renderHook(() => useStorage((root) => root.obj));
     const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
 
     const sim = await websocketSimulator();
@@ -380,7 +380,7 @@ describe("useSelector", () => {
 
   test("arbitrary expressions", async () => {
     const { result } = renderHook(() =>
-      useSelector((root) => JSON.stringify(root.obj).toUpperCase())
+      useStorage((root) => JSON.stringify(root.obj).toUpperCase())
     );
 
     const sim = await websocketSimulator();
@@ -391,7 +391,7 @@ describe("useSelector", () => {
 
   test("dynamically computed results remain referentially equal only when using shallow comparison", async () => {
     const { result } = renderHook(() =>
-      useSelector(
+      useStorage(
         (root) => root.obj.nested.map((item) => item.toUpperCase()),
         shallow // <-- Important! Key line of the test!
       )
