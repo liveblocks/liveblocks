@@ -649,7 +649,7 @@ export function createRoomContext<
     return useRoom().batch;
   }
 
-  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
+  function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
     const room = useRoom();
@@ -768,9 +768,9 @@ export function createRoomContext<
     useUpdateMyPresence,
 
     // These are just aliases. The passed-in key will define their return values.
-    useList: useStorageValue,
-    useMap: useStorageValue,
-    useObject: useStorageValue,
+    useList: useLegacyKey,
+    useMap: useLegacyKey,
+    useObject: useLegacyKey,
 
     // You normally don't need to directly interact with the RoomContext, but
     // it can be necessary if you're building an advanced app where you need to
