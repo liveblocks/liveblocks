@@ -148,7 +148,7 @@ type Machine<
   getSelf(): User<TPresence, TUserMeta> | null;
 
   // Presence
-  getPresence(): TPresence; // XXX Make Readonly<TPresence>
+  getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
 };
 
@@ -770,7 +770,7 @@ function makeStateMachine<
           connectionId: state.connection.id,
           id: state.connection.userId,
           info: state.connection.userInfo,
-          presence: getPresence() as TPresence,
+          presence: getPresence(),
         }
       : null;
   }
@@ -1319,7 +1319,7 @@ function makeStateMachine<
     Object.values(eventHub).forEach((eventSource) => eventSource.clear());
   }
 
-  function getPresence(): TPresence {
+  function getPresence(): Readonly<TPresence> {
     return state.me.current;
   }
 
