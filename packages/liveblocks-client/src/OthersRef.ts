@@ -31,6 +31,10 @@ export class OthersRef<
   // CACHES
   // All of these are derived/cached data. Never set these directly.
   //
+  // TODO Refactor this internal cache away using the ImmRef
+  // abstraction/helper. Manually maintaining these caches should no longer be
+  // necessary.
+  //
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
   //
