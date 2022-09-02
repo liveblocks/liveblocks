@@ -235,22 +235,22 @@ type RoomContextBundle<
   ];
 
   /**
-   * Returns an object that lets you get information about all the the users currently connected in the room.
+   * Returns an object that lets you get information about all the the users
+   * currently connected in the room.
    *
    * @example
    * const others = useOthers();
    *
    * // Example to map all cursors in JSX
-   * {
+   * return (
    *   others.map((user) => {
-   *     if (user.presence?.cursor == null) {
+   *     if (user.presence.cursor == null) {
    *       return null;
    *     }
    *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
    *   })
-   * }
+   * )
    */
-  // XXX Deprecate this overload? Or at least change the return type to `readonly User<TPresence, TUserMeta>[]`?!
   useOthers(): Others<TPresence, TUserMeta>;
 
   /**
@@ -269,16 +269,10 @@ type RoomContextBundle<
    * those cases, you'll probably want to use a `shallow` comparison check.
    *
    * @example
-   * const others = useOthers(users => users);
    * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
    * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+   * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
    *
-   * // Example to map all cursors in JSX
-   * return (
-   *   others.map((user) => {
-   *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
-   *   })
-   * )
    */
   useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
