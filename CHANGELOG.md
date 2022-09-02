@@ -1,6 +1,11 @@
-# v0.17.10
+# v0.17.11
+
+General:
 
 - Fix a packaging bug
+
+In **@liveblocks/react**:
+
 - Deprecate an undocumented API
 
 # v0.17.9
