@@ -242,7 +242,7 @@ type RoomContextBundle<
   ];
 
   /**
-   * Returns an object that lets you get information about all the the users
+   * Returns an object that lets you get information about all the users
    * currently connected in the room.
    *
    * @example
