@@ -550,11 +550,11 @@ export function createRoomContext<
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (a: T | null, b: T | null) => boolean
   ): T | null;
   function useSelf<T>(
     maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (a: T | null, b: T | null) => boolean
   ): T | null {
     type Snapshot = User<TPresence, TUserMeta> | null;
     type Selection = T | null;
@@ -708,11 +708,11 @@ export function createRoomContext<
   function useStorage(): ToImmutable<TStorage> | null;
   function useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (a: T | null, b: T | null) => boolean
   ): T | null;
   function useStorage<T>(
     maybeSelector?: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (a: T | null, b: T | null) => boolean
   ): T | null {
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
