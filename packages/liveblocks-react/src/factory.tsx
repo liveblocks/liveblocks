@@ -250,12 +250,14 @@ type RoomContextBundle<
    *
    * // Example to map all cursors in JSX
    * return (
-   *   others.map((user) => {
-   *     if (user.presence.cursor == null) {
-   *       return null;
-   *     }
-   *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
-   *   })
+   *   <>
+   *     {others.map((user) => {
+   *        if (user.presence.cursor == null) {
+   *          return null;
+   *        }
+   *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+   *      })}
+   *   </>
    * )
    */
   useOthers(): Others<TPresence, TUserMeta>;
