@@ -1,3 +1,4 @@
+import { deprecateIf } from "./deprecation";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
@@ -100,9 +101,14 @@ export function createClient(options: ClientOptions): Client {
       >;
     }
 
+    deprecateIf(
+      options.initialPresence == null,
+      "Please provide an initial presence value for the current user when entering the room."
+    );
+
     internalRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
-        initialPresence: options.initialPresence,
+        initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
       },
       {
