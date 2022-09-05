@@ -1,11 +1,13 @@
-import { ImmRef, merge } from "./ImmRef";
+import { ImmutableRef, merge } from "./ImmutableRef";
 import type { JsonObject } from "./types";
 import { compactObject, freeze } from "./utils";
 
 /**
  * Managed immutable cache for accessing "me" presence data as read-only.
  */
-export class MeRef<TPresence extends JsonObject> extends ImmRef<TPresence> {
+export class MeRef<
+  TPresence extends JsonObject
+> extends ImmutableRef<TPresence> {
   /** @internal */
   private _me: Readonly<TPresence>;
 

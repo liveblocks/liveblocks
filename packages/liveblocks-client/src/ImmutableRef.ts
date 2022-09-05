@@ -36,7 +36,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
  *
  * TODO: Document usage.
  */
-export abstract class ImmRef<T> {
+export abstract class ImmutableRef<T> {
   /** @internal */
   private _value: Readonly<T> | undefined;
 

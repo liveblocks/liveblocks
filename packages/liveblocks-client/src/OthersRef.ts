@@ -1,4 +1,4 @@
-import { ImmRef, merge } from "./ImmRef";
+import { ImmutableRef, merge } from "./ImmutableRef";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
@@ -18,7 +18,7 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
 export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> extends ImmRef<Others<TPresence, TUserMeta>> {
+> extends ImmutableRef<Others<TPresence, TUserMeta>> {
   // To track "others"
   /** @internal */
   _connections: { [connectionId: number]: Connection<TUserMeta> };
@@ -31,7 +31,7 @@ export class OthersRef<
   // CACHES
   // All of these are derived/cached data. Never set these directly.
   //
-  // TODO Refactor this internal cache away using the ImmRef
+  // TODO Refactor this internal cache away using the ImmutableRef
   // abstraction/helper. Manually maintaining these caches should no longer be
   // necessary.
   //
