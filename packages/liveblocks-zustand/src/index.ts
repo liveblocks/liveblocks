@@ -194,7 +194,7 @@ export function middleware<
         return;
       }
 
-      room = client.enter(roomId);
+      room = client.enter(roomId, { initialPresence: {} as TPresence });
 
       updateZustandLiveblocksState(set, {
         isStorageLoading: true,

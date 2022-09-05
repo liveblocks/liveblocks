@@ -182,7 +182,7 @@ const internalEnhancer = <T>(options: {
           return;
         }
 
-        room = client.enter(roomId);
+        room = client.enter(roomId, { initialPresence: {} as any });
 
         broadcastInitialPresence(room, reduxState, presenceMapping as any);
 
