@@ -221,7 +221,7 @@ type RoomContextBundle<
    */
   useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null;
 
   /**
@@ -285,7 +285,7 @@ type RoomContextBundle<
    */
   useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T;
 
   /**
@@ -328,7 +328,7 @@ type RoomContextBundle<
    */
   useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null;
 
   /**
@@ -466,11 +466,11 @@ export function createRoomContext<
   function useOthers(): Others<TPresence, TUserMeta>;
   function useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T;
   function useOthers<T>(
     selector?: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
     type Snapshot = Others<TPresence, TUserMeta>;
 
@@ -550,11 +550,11 @@ export function createRoomContext<
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null;
   function useSelf<T>(
     maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null {
     type Snapshot = User<TPresence, TUserMeta> | null;
     type Selection = T | null;
@@ -708,11 +708,11 @@ export function createRoomContext<
   function useStorage(): ToImmutable<TStorage> | null;
   function useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null;
   function useStorage<T>(
     maybeSelector?: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null {
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
