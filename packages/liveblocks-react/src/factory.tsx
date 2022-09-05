@@ -384,6 +384,14 @@ type RoomContextBundle<
     callback: F,
     deps?: unknown[]
   ): OmitFirstArg<F>;
+
+  suspense: {
+    useStorage(): ToImmutable<TStorage>;
+    useStorage<T>(
+      selector: (root: ToImmutable<TStorage>) => T,
+      isEqual?: (a: T | null, b: T | null) => boolean
+    ): T;
+  };
 };
 
 export function createRoomContext<
@@ -780,6 +788,29 @@ export function createRoomContext<
     );
   }
 
+  function useSuspendUntilStorageLoaded(): void {
+    const room = useRoom();
+    const root = useStorage();
+    if (root !== null) {
+      return;
+    }
+
+    // Error early if suspense is used in a server-side context
+    if (typeof window === "undefined") {
+      throw new Error(
+        // XXX Fill in documentation URL
+        "You cannot use hooks in Suspense mode on the server side. Make sure to only call Suspense APIs on the client side. For tips for structuring your app, see XXX"
+      );
+    }
+
+    // Throw a _promise_. Suspense will suspend the component tree until this
+    // promise resolves (aka until storage has loaded). After that, it will
+    // render this component tree again.
+    throw new Promise<void>((res) => {
+      room.events.storageDidLoad.subscribeOnce(() => res());
+    });
+  }
+
   /**
    * Usage:
    *
@@ -826,6 +857,21 @@ export function createRoomContext<
     );
   }
 
+  function useStorageSuspense<T>(
+    selector: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T {
+    useSuspendUntilStorageLoaded();
+    return useStorage(
+      selector,
+      isEqual as (a: T | null, b: T | null) => boolean
+      //               ^^^^^^       ^^^^^^
+    ) as T;
+    //^^^^
+    // If we get here, we know that storage is available and that the returned
+    // value will definitely be T (and not T | null).
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -857,5 +903,9 @@ export function createRoomContext<
     // it can be necessary if you're building an advanced app where you need to
     // set up a context bridge between two React renderers.
     RoomContext,
+
+    suspense: {
+      useStorage: useStorageSuspense,
+    },
   };
 }
