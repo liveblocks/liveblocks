@@ -263,7 +263,7 @@ type RoomContextBundle<
   useOthers(): Others<TPresence, TUserMeta>;
 
   /**
-   * Extract arbitrary data based from all the users currently connected in the
+   * Extract arbitrary data based on all the users currently connected in the
    * room (except yourself).
    *
    * The selector function will get re-evaluated any time a user enters or
@@ -304,7 +304,7 @@ type RoomContextBundle<
   useSelf(): User<TPresence, TUserMeta> | null;
 
   /**
-   * Extract arbitrary data based from the current user.
+   * Extract arbitrary data based on the current user.
    *
    * The selector function will get re-evaluated any time your presence data
    * changes.
