@@ -22,6 +22,14 @@ import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/w
 
 import { useInitial, useRerender } from "./hooks";
 
+/**
+ * For any function type, returns a similar function type, but without the
+ * first argument.
+ */
+type OmitFirstArg<F> = F extends (first: any, ...rest: infer A) => infer R
+  ? (...args: A) => R
+  : never;
+
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
@@ -47,6 +55,17 @@ freeze(EMPTY_OTHERS);
 function getEmptyOthers() {
   return EMPTY_OTHERS;
 }
+
+export type MutationContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = {
+  root: LiveObject<TStorage>;
+  setMyPresence: (
+    patch: Partial<TPresence>,
+    options?: { addToHistory: boolean }
+  ) => void;
+};
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -355,6 +374,16 @@ type RoomContextBundle<
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void;
+
+  useMutation<
+    F extends (
+      context: MutationContext<TPresence, TStorage>,
+      ...args: any[]
+    ) => any
+  >(
+    callback: F,
+    deps?: unknown[]
+  ): OmitFirstArg<F>;
 };
 
 export function createRoomContext<
@@ -453,14 +482,7 @@ export function createRoomContext<
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) => void {
-    const room = useRoom();
-
-    return React.useCallback(
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => {
-        room.updatePresence(patch, options);
-      },
-      [room]
-    );
+    return useRoom().updatePresence;
   }
 
   function useOthers(): Others<TPresence, TUserMeta>;
@@ -758,6 +780,52 @@ export function createRoomContext<
     );
   }
 
+  /**
+   * Usage:
+   *
+   *     const fillLayers = useMutation1(({ root }, color: Color) => { ... });
+   *     //    ^? (color: Color) => void
+   *     const deleteLayers = useMutation1(({ root }) => { ... });
+   *     //    ^? () => void
+   */
+  function useMutation<
+    F extends (
+      context: MutationContext<TPresence, TStorage>,
+      ...args: any[]
+    ) => any
+  >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
+    const room = useRoom();
+    const root = useMutableStorageRoot();
+    const setMyPresence = room.updatePresence;
+    return React.useMemo(
+      () => {
+        if (root !== null) {
+          const mutationCtx: MutationContext<TPresence, TStorage> = {
+            root,
+            setMyPresence,
+          };
+          return ((...args) => {
+            let rv;
+            room.batch(() => {
+              rv = callback(mutationCtx, ...args);
+            });
+            return rv;
+          }) as OmitFirstArg<F>;
+        } else {
+          return ((): void => {
+            throw new Error(
+              "Mutation cannot be called while Liveblocks Storage has not loaded yet"
+            );
+          }) as OmitFirstArg<F>;
+        }
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      deps !== undefined
+        ? [root, room, setMyPresence, ...deps]
+        : [root, room, setMyPresence, callback]
+    );
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -777,6 +845,8 @@ export function createRoomContext<
     useStorage,
     useUndo,
     useUpdateMyPresence,
+
+    useMutation,
 
     // These are just aliases. The passed-in key will define their return values.
     useList: useLegacyKey,
