@@ -87,4 +87,4 @@ export {
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, isPlainObject, tryParseJson } from "./utils";
+export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";

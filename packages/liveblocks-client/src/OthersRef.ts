@@ -1,49 +1,12 @@
+import { ImmutableRef, merge } from "./ImmutableRef";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
-
-export type PresenceSnapshot<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> = {
-  readonly me: TPresence;
-  readonly others: readonly User<TPresence, TUserMeta>[];
-};
 
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
   readonly id: TUserMeta["id"];
   readonly info: TUserMeta["info"];
 };
-
-/**
- * Patches a target object by "merging in" the provided fields. Patch
- * fields that are explicitly-undefined will delete keys from the target
- * object. Will return a new object.
- *
- * Important guarantee:
- * If the patch effectively did not mutate the target object because the
- * patch fields have the same value as the original, then the original
- * object reference will be returned.
- */
-function merge<T>(target: T, patch: Partial<T>): T {
-  let updated = false;
-  const newValue = { ...target };
-
-  Object.keys(patch).forEach((k) => {
-    const key = k as keyof T;
-    const val = patch[key];
-    if (newValue[key] !== val) {
-      if (val === undefined) {
-        delete newValue[key];
-      } else {
-        newValue[key] = val as T[keyof T];
-      }
-      updated = true;
-    }
-  });
-
-  return updated ? newValue : target;
-}
 
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   conn: Connection<TUserMeta>,
@@ -52,14 +15,10 @@ function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
   return freeze(compactObject({ ...conn, presence }));
 }
 
-export class Presence<
+export class OthersRef<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> {
-  // To track "me"
-  /** @internal */
-  _me: TPresence;
-
+> extends ImmutableRef<Others<TPresence, TUserMeta>> {
   // To track "others"
   /** @internal */
   _connections: { [connectionId: number]: Connection<TUserMeta> };
@@ -72,21 +31,18 @@ export class Presence<
   // CACHES
   // All of these are derived/cached data. Never set these directly.
   //
+  // TODO Refactor this internal cache away using the ImmutableRef
+  // abstraction/helper. Manually maintaining these caches should no longer be
+  // necessary.
+  //
   /** @internal */
   _users: { [connectionId: number]: User<TPresence, TUserMeta> };
-  /** @internal */
-  _others: readonly User<TPresence, TUserMeta>[] | undefined;
-  /** @internal */
-  _othersProxy: Others<TPresence, TUserMeta> | undefined;
-  /** @internal */
-  _snapshot: PresenceSnapshot<TPresence, TUserMeta> | undefined;
   //
   // --------------------------------------------------------------
   //
 
-  constructor(initialPresence: TPresence) {
-    // Me
-    this._me = compactObject(initialPresence);
+  constructor() {
+    super();
 
     // Others
     this._connections = {};
@@ -94,15 +50,37 @@ export class Presence<
     this._users = {};
   }
 
+  /** @internal */
+  _toImmutable(): Readonly<Others<TPresence, TUserMeta>> {
+    const users = compact(
+      Object.keys(this._presences).map((connectionId) =>
+        this.getUser(Number(connectionId))
+      )
+    );
+
+    // NOTE: We extend the array instance with custom `count` and `toArray()`
+    // methods here. This is done for backward-compatible reasons. These APIs
+    // will be deprecated in a future version.
+    Object.defineProperty(users, "count", {
+      value: users.length,
+      enumerable: false,
+    });
+    Object.defineProperty(users, "toArray", {
+      value: () => users,
+      enumerable: false,
+    });
+
+    return freeze(users) as Others<TPresence, TUserMeta>;
+    //                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    //                   Necessary only while the backward-compatible APIs
+    //                   are getting attached in the lines above.
+  }
+
   clearOthers(): void {
     this._connections = {};
     this._presences = {};
     this._users = {};
-    this._invalidateOthers();
-  }
-
-  get me(): TPresence {
-    return this._me;
+    this.invalidate();
   }
 
   /** @internal */
@@ -131,91 +109,12 @@ export class Presence<
     return undefined;
   }
 
-  get others(): readonly User<TPresence, TUserMeta>[] {
-    return (
-      this._others ??
-      (this._others = freeze(
-        compact(
-          Object.keys(this._presences).map((connectionId) =>
-            this.getUser(Number(connectionId))
-          )
-        )
-      ))
-    );
-  }
-
-  // TODO: Deprecate this others proxy! It shouldn't be necessary anymore now
-  // that the others property is stable/immutable.
-  getOthersProxy(): Others<TPresence, TUserMeta> {
-    if (this._othersProxy !== undefined) {
-      return this._othersProxy;
-    }
-
-    const users = this.others;
-    const proxy: Others<TPresence, TUserMeta> = {
-      get count() {
-        return users.length;
-      },
-      [Symbol.iterator]() {
-        return users[Symbol.iterator]();
-      },
-      map(callback) {
-        return users.map(callback);
-      },
-      toArray() {
-        return users;
-      },
-    };
-
-    this._othersProxy = proxy;
-    return proxy;
-  }
-
   /** @internal */
   _invalidateUser(connectionId: number): void {
     if (this._users[connectionId] !== undefined) {
       delete this._users[connectionId];
     }
-    this._invalidateOthers();
-  }
-
-  /** @internal */
-  _invalidateOthers(): void {
-    this._others = undefined;
-    this._othersProxy = undefined;
-    this._invalidateSnapshot();
-  }
-
-  /** @internal */
-  _invalidateMe(): void {
-    this._invalidateSnapshot();
-  }
-
-  /** @internal */
-  _invalidateSnapshot(): void {
-    this._snapshot = undefined;
-  }
-
-  toImmutable(): PresenceSnapshot<TPresence, TUserMeta> {
-    return (
-      this._snapshot ??
-      (this._snapshot = freeze({
-        me: this.me,
-        others: this.others,
-      }))
-    );
-  }
-
-  /**
-   * Patches the current "me" instance.
-   */
-  patchMe(patch: Partial<TPresence>): void {
-    const oldMe = this.me;
-    const newMe = merge(oldMe, patch);
-    if (oldMe !== newMe) {
-      this._me = freeze(newMe);
-      this._invalidateMe();
-    }
+    this.invalidate();
   }
 
   /**

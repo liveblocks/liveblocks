@@ -208,23 +208,23 @@ describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {
     const { machine, state } = setupStateMachine({});
     machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
-    expect(state.connection.state).toBe("connecting");
+    expect(state.connection.current.state).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {
@@ -286,7 +286,7 @@ describe("room", () => {
     expect(effects.send).toHaveBeenCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
@@ -294,8 +294,8 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.presence.me).toStrictEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toStrictEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -303,12 +303,12 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.presence.me).toStrictEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toStrictEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
-    expect(state.presence.me).toStrictEqual({ x: 0, y: 0 });
-    expect(state.buffer.presence?.data).toStrictEqual({ x: 0, y: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0, y: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
   test("others should be iterable", () => {
@@ -371,7 +371,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.getOthers().toArray()).toEqual([
+    expect(machine.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
     ]);
 
@@ -492,20 +492,20 @@ describe("room", () => {
     room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    expect(state.buffer.presence).toEqual(null);
+    expect(state.buffer.me).toEqual(null);
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
@@ -553,14 +553,14 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.pauseHistory();
     room.resumeHistory();
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
   });
 
@@ -589,28 +589,28 @@ describe("room", () => {
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
 
     room.pauseHistory();
 
     for (let i = 1; i <= 10; i++) {
       room.updatePresence({ x: i }, { addToHistory: true });
-      expect(state.buffer.presence?.data).toEqual({ x: i });
+      expect(state.buffer.me?.data).toEqual({ x: i });
     }
 
     expect(room.getPresence()).toEqual({ x: 10 });
-    expect(state.buffer.presence?.data).toEqual({ x: 10 });
+    expect(state.buffer.me?.data).toEqual({ x: 10 });
 
     room.resumeHistory();
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 10 });
+    expect(state.buffer.me?.data).toEqual({ x: 10 });
     expect(room.getPresence()).toEqual({ x: 10 });
   });
 
@@ -636,7 +636,7 @@ describe("room", () => {
 
     expect(room.getPresence()).toEqual({ x: 0 });
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {
@@ -665,17 +665,17 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     expect(room.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
@@ -1283,7 +1283,7 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         // User not yet publicly visible
       ]);
 
@@ -1297,7 +1297,7 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         {
           connectionId: 1,
           id: undefined,

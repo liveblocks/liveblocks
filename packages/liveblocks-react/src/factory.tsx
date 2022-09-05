@@ -16,13 +16,37 @@ import type {
   RoomInitializers,
   ToImmutable,
 } from "@liveblocks/client/internal";
+import { freeze } from "@liveblocks/client/internal";
 import * as React from "react";
-import { useSyncExternalStore } from "use-sync-external-store/shim";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
 import { useInitial, useRerender } from "./hooks";
 
 const noop = () => {};
+const identity: <T>(x: T) => T = (x) => x;
+
+const EMPTY_OTHERS: Others<never, never> = [] as unknown as Others<
+  never,
+  never
+>;
+
+// NOTE: We extend the array instance with custom `count` and `toArray()`
+// methods here. This is done for backward-compatible reasons. These APIs
+// will be deprecated in a future version.
+Object.defineProperty(EMPTY_OTHERS, "count", {
+  value: 0,
+  enumerable: false,
+});
+Object.defineProperty(EMPTY_OTHERS, "toArray", {
+  value: () => EMPTY_OTHERS,
+  enumerable: false,
+});
+
+freeze(EMPTY_OTHERS);
+
+function getEmptyOthers() {
+  return EMPTY_OTHERS;
+}
 
 export type RoomProviderProps<
   TPresence extends JsonObject,
@@ -169,6 +193,14 @@ type RoomContextBundle<
   ): TStorage[TKey] | null;
 
   /**
+   * Returns your entire Liveblocks Storage as an immutable data structure.
+   *
+   * @example
+   * const root = useStorage();
+   */
+  useStorage(): ToImmutable<TStorage> | null;
+
+  /**
    * Extract arbitrary data from the Liveblocks Storage state, using an
    * arbitrary selector function.
    *
@@ -182,14 +214,14 @@ type RoomContextBundle<
    * The component that uses this hook will automatically re-render if the
    * returned value changes.
    *
-   * By default `useSelector()` uses strict `===` to check for equality. Take
+   * By default `useStorage()` uses strict `===` to check for equality. Take
    * extra care when returning a computed object or list, for example when you
    * return the result of a .map() or .filter() call from the selector. In
    * those cases, you'll probably want to use a `shallow` comparison check.
    */
-  useSelector<T>(
+  useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T, b: T) => boolean
   ): T | null;
 
   /**
@@ -210,22 +242,51 @@ type RoomContextBundle<
   ];
 
   /**
-   * Returns an object that lets you get information about all the the users currently connected in the room.
+   * Returns an object that lets you get information about all the users
+   * currently connected in the room.
    *
    * @example
    * const others = useOthers();
    *
    * // Example to map all cursors in JSX
-   * {
-   *   others.map((user) => {
-   *     if (user.presence?.cursor == null) {
-   *       return null;
-   *     }
-   *     return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
-   *   })
-   * }
+   * return (
+   *   <>
+   *     {others.map((user) => {
+   *        if (user.presence.cursor == null) {
+   *          return null;
+   *        }
+   *        return <Cursor key={user.connectionId} cursor={user.presence.cursor} />
+   *      })}
+   *   </>
+   * )
    */
   useOthers(): Others<TPresence, TUserMeta>;
+
+  /**
+   * Extract arbitrary data based on all the users currently connected in the
+   * room (except yourself).
+   *
+   * The selector function will get re-evaluated any time a user enters or
+   * leaves the room, as well as whenever their presence data changes.
+   *
+   * The component that uses this hook will automatically re-render if your
+   * selector function returns a different value from its previous run.
+   *
+   * By default `useOthers()` uses strict `===` to check for equality. Take
+   * extra care when returning a computed object or list, for example when you
+   * return the result of a .map() or .filter() call from the selector. In
+   * those cases, you'll probably want to use a `shallow` comparison check.
+   *
+   * @example
+   * const avatars = useOthers(users => users.map(u => u.info.avatar), shallow);
+   * const cursors = useOthers(users => users.map(u => u.presence.cursor), shallow);
+   * const someoneIsTyping = useOthers(users => users.some(u => u.presence.isTyping));
+   *
+   */
+  useOthers<T>(
+    selector: (others: Others<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
 
   /**
    * Returns the Room of the nearest RoomProvider above in the React component
@@ -237,26 +298,47 @@ type RoomContextBundle<
    * Gets the current user once it is connected to the room.
    *
    * @example
-   * const user = useSelf();
+   * const me = useSelf();
+   * const { x, y } = me.presence.cursor;
    */
   useSelf(): User<TPresence, TUserMeta> | null;
 
   /**
-   * This hook exists for backward-compatible reasons.
+   * Extract arbitrary data based on the current user.
+   *
+   * The selector function will get re-evaluated any time your presence data
+   * changes.
+   *
+   * The component that uses this hook will automatically re-render if your
+   * selector function returns a different value from its previous run.
+   *
+   * By default `useSelf()` uses strict `===` to check for equality. Take extra
+   * care when returning a computed object or list, for example when you return
+   * the result of a .map() or .filter() call from the selector. In those
+   * cases, you'll probably want to use a `shallow` comparison check.
+   *
+   * Will return `null` while Liveblocks isn't connected to a room yet.
+   *
+   * @example
+   * const cursor = useSelf(me => me.presence.cursor);
+   * if (cursor !== null) {
+   *   const { x, y } = cursor;
+   * }
+   *
+   */
+  useSelf<T>(
+    selector: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | null;
+
+  /**
+   * Returns the mutable (!) Storage root. This hook exists for
+   * backward-compatible reasons.
    *
    * @example
    * const [root] = useStorageRoot();
    */
   useStorageRoot(): [root: LiveObject<TStorage> | null];
-
-  /**
-   * Returns the LiveObject instance that is the root of your entire Liveblocks
-   * Storage.
-   *
-   * @example
-   * const root = useStorage();
-   */
-  useStorage(): LiveObject<TStorage> | null;
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -381,16 +463,35 @@ export function createRoomContext<
     );
   }
 
-  function useOthers(): Others<TPresence, TUserMeta> {
-    const room = useRoom();
-    const rerender = useRerender();
+  function useOthers(): Others<TPresence, TUserMeta>;
+  function useOthers<T>(
+    selector: (others: Others<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+  function useOthers<T>(
+    selector?: (others: Others<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | Others<TPresence, TUserMeta> {
+    type Snapshot = Others<TPresence, TUserMeta>;
 
-    React.useEffect(
-      () => room.events.others.subscribe(rerender),
-      [room, rerender]
+    const room = useRoom();
+
+    const subscribe = room.events.others.subscribe;
+
+    const getSnapshot = React.useCallback(
+      (): Snapshot => room.getOthers(),
+      [room]
     );
 
-    return room.getOthers();
+    const getServerSnapshot = getEmptyOthers;
+
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector ?? (identity as (others: Others<TPresence, TUserMeta>) => T),
+      isEqual
+    );
   }
 
   function useBroadcastEvent(): (
@@ -446,42 +547,71 @@ export function createRoomContext<
     }, [room]);
   }
 
-  function useSelf(): User<TPresence, TUserMeta> | null {
-    const room = useRoom();
-    const rerender = useRerender();
+  function useSelf(): User<TPresence, TUserMeta> | null;
+  function useSelf<T>(
+    selector: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T | null, b: T | null) => boolean
+  ): T | null;
+  function useSelf<T>(
+    maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T | null, b: T | null) => boolean
+  ): T | null {
+    type Snapshot = User<TPresence, TUserMeta> | null;
+    type Selection = T | null;
 
-    React.useEffect(() => {
-      const unsubscribePresence = room.events.me.subscribe(rerender);
-      const unsubscribeConnection = room.events.connection.subscribe(rerender);
-
-      return () => {
-        unsubscribePresence();
-        unsubscribeConnection();
-      };
-    }, [room, rerender]);
-
-    return room.getSelf();
-  }
-
-  // NOTE: This API exists for backward compatible reasons
-  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
-    return [useStorage()];
-  }
-
-  function useStorage(): LiveObject<TStorage> | null {
-    type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
 
-    const subscribe = room.events.storageDidLoad.subscribe;
-
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getStorageSnapshot(),
+    const subscribe = React.useCallback(
+      (onChange: () => void) => {
+        const unsub1 = room.events.me.subscribe(onChange);
+        const unsub2 = room.events.connection.subscribe(onChange);
+        return () => {
+          unsub1();
+          unsub2();
+        };
+      },
       [room]
+    );
+
+    const getSnapshot: () => Snapshot = room.getSelf;
+
+    const selector =
+      maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
+
+    const wrappedSelector = React.useCallback(
+      (me: Snapshot): Selection => (me !== null ? selector(me) : null),
+      [selector]
     );
 
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
 
-    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      wrappedSelector,
+      isEqual
+    );
+  }
+
+  function useMutableStorageRoot(): LiveObject<TStorage> | null {
+    type Snapshot = LiveObject<TStorage> | null;
+    const room = useRoom();
+    const subscribe = room.events.storageDidLoad.subscribe;
+    const getSnapshot = room.getStorageSnapshot;
+    const getServerSnapshot = React.useCallback((): Snapshot => null, []);
+    const selector = identity;
+    return useSyncExternalStoreWithSelector(
+      subscribe,
+      getSnapshot,
+      getServerSnapshot,
+      selector
+    );
+  }
+
+  // NOTE: This API exists for backward compatible reasons
+  function useStorageRoot(): [root: LiveObject<TStorage> | null] {
+    return [useMutableStorageRoot()];
   }
 
   function useHistory(): History {
@@ -524,11 +654,11 @@ export function createRoomContext<
     return useRoom().batch;
   }
 
-  function useStorageValue<TKey extends Extract<keyof TStorage, string>>(
+  function useLegacyKey<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] | null {
     const room = useRoom();
-    const root = useStorage();
+    const root = useMutableStorageRoot();
     const rerender = useRerender();
 
     React.useEffect(() => {
@@ -575,15 +705,23 @@ export function createRoomContext<
     }
   }
 
-  function useSelector<T>(
+  function useStorage(): ToImmutable<TStorage> | null;
+  function useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: unknown, b: unknown) => boolean
+    isEqual?: (a: T | null, b: T | null) => boolean
+  ): T | null;
+  function useStorage<T>(
+    maybeSelector?: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: T | null, b: T | null) => boolean
   ): T | null {
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
 
     const room = useRoom();
-    const rootOrNull = useStorage();
+    const rootOrNull = useMutableStorageRoot();
+
+    const selector =
+      maybeSelector ?? (identity as (root: ToImmutable<TStorage>) => T);
 
     const wrappedSelector = React.useCallback(
       (rootOrNull: Snapshot): Selection =>
@@ -633,7 +771,7 @@ export function createRoomContext<
     useOthers,
     useRedo,
     useRoom,
-    useSelector,
+
     useSelf,
     useStorageRoot,
     useStorage,
@@ -641,9 +779,9 @@ export function createRoomContext<
     useUpdateMyPresence,
 
     // These are just aliases. The passed-in key will define their return values.
-    useList: useStorageValue,
-    useMap: useStorageValue,
-    useObject: useStorageValue,
+    useList: useLegacyKey,
+    useMap: useLegacyKey,
+    useObject: useLegacyKey,
 
     // You normally don't need to directly interact with the RoomContext, but
     // it can be necessary if you're building an advanced app where you need to
