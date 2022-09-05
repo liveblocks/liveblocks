@@ -389,7 +389,19 @@ type RoomContextBundle<
     useStorage(): ToImmutable<TStorage>;
     useStorage<T>(
       selector: (root: ToImmutable<TStorage>) => T,
-      isEqual?: (a: T | null, b: T | null) => boolean
+      isEqual?: (a: T, b: T) => boolean
+    ): T;
+
+    useSelf(): User<TPresence, TUserMeta>;
+    useSelf<T>(
+      selector: (me: User<TPresence, TUserMeta>) => T,
+      isEqual?: (a: T, b: T) => boolean
+    ): T;
+
+    useOthers(): Others<TPresence, TUserMeta>;
+    useOthers<T>(
+      selector: (others: Others<TPresence, TUserMeta>) => T,
+      isEqual?: (a: T, b: T) => boolean
     ): T;
   };
 };
@@ -585,7 +597,7 @@ export function createRoomContext<
   function useSelf<T>(
     maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
     isEqual?: (a: T | null, b: T | null) => boolean
-  ): T | null {
+  ): T | User<TPresence, TUserMeta> | null {
     type Snapshot = User<TPresence, TUserMeta> | null;
     type Selection = T | null;
 
@@ -788,13 +800,7 @@ export function createRoomContext<
     );
   }
 
-  function useSuspendUntilStorageLoaded(): void {
-    const room = useRoom();
-    const root = useStorage();
-    if (root !== null) {
-      return;
-    }
-
+  function ensureNotServerSide(): void {
     // Error early if suspense is used in a server-side context
     if (typeof window === "undefined") {
       throw new Error(
@@ -802,12 +808,39 @@ export function createRoomContext<
         "You cannot use hooks in Suspense mode on the server side. Make sure to only call Suspense APIs on the client side. For tips for structuring your app, see XXX"
       );
     }
+  }
+
+  function useSuspendUntilStorageLoaded(): void {
+    const room = useRoom();
+    const root = useMutableStorageRoot();
+    if (root !== null) {
+      return;
+    }
+
+    ensureNotServerSide();
 
     // Throw a _promise_. Suspense will suspend the component tree until this
     // promise resolves (aka until storage has loaded). After that, it will
     // render this component tree again.
     throw new Promise<void>((res) => {
       room.events.storageDidLoad.subscribeOnce(() => res());
+    });
+  }
+
+  function useSuspendUntilPresenceLoaded(): void {
+    const room = useRoom();
+    const self = room.getSelf();
+    if (self !== null) {
+      return;
+    }
+
+    ensureNotServerSide();
+
+    // Throw a _promise_. Suspense will suspend the component tree until this
+    // promise resolves (aka until storage has loaded). After that, it will
+    // render this component tree again.
+    throw new Promise<void>((res) => {
+      room.events.connection.subscribeOnce(() => res());
     });
   }
 
@@ -857,19 +890,38 @@ export function createRoomContext<
     );
   }
 
+  function useStorageSuspense(): ToImmutable<TStorage>;
   function useStorageSuspense<T>(
     selector: (root: ToImmutable<TStorage>) => T,
     isEqual?: (a: T, b: T) => boolean
-  ): T {
+  ): T;
+  function useStorageSuspense<T>(
+    selector?: (root: ToImmutable<TStorage>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | ToImmutable<TStorage> {
     useSuspendUntilStorageLoaded();
-    return useStorage(
-      selector,
-      isEqual as (a: T | null, b: T | null) => boolean
-      //               ^^^^^^       ^^^^^^
-    ) as T;
-    //^^^^
-    // If we get here, we know that storage is available and that the returned
-    // value will definitely be T (and not T | null).
+    return useStorage(selector as any, isEqual as any) as any;
+  }
+
+  function useSelfSuspense(): User<TPresence, TUserMeta>;
+  function useSelfSuspense<T>(
+    selector: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+  function useSelfSuspense<T>(
+    selector?: (me: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | User<TPresence, TUserMeta> {
+    useSuspendUntilPresenceLoaded();
+    return useSelf(selector as any, isEqual as any) as any;
+  }
+
+  function useOthersSuspense<T>(
+    selector?: (others: Others<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | Others<TPresence, TUserMeta> {
+    useSuspendUntilPresenceLoaded();
+    return useOthers(selector as any, isEqual as any) as any;
   }
 
   return {
@@ -906,6 +958,8 @@ export function createRoomContext<
 
     suspense: {
       useStorage: useStorageSuspense,
+      useSelf: useSelfSuspense,
+      useOthers: useOthersSuspense,
     },
   };
 }
