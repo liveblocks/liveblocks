@@ -27,7 +27,7 @@ function atobPolyfillMock(data: string): string {
 
 function createClientAndEnter(options: ClientOptions) {
   const client = createClient(options);
-  client.enter("room");
+  client.enter("room", { initialPresence: {} });
 }
 
 describe("createClient", () => {

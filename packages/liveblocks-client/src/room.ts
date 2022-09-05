@@ -1595,7 +1595,7 @@ function defaultState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  initialPresence?: TPresence,
+  initialPresence: TPresence,
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
@@ -1618,7 +1618,7 @@ function defaultState<
         // Queue up the initial presence message as a Full Presence™ update
         {
           type: "full",
-          data: initialPresence == null ? ({} as TPresence) : initialPresence,
+          data: initialPresence,
         },
       messages: [],
       storageOperations: [],
@@ -1628,9 +1628,7 @@ function defaultState<
     },
 
     connection,
-    me: new MeRef(
-      initialPresence == null ? ({} as TPresence) : initialPresence
-    ),
+    me: new MeRef(initialPresence),
     others,
 
     defaultStorageRoot: initialStorage,

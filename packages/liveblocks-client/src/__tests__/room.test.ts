@@ -56,7 +56,7 @@ function setupStateMachine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
->(initialPresence?: TPresence) {
+>(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     initialPresence
@@ -108,7 +108,7 @@ describe("room / auth", () => {
     "custom authentication with missing token in callback response should throw",
     async (response) => {
       const room = createRoom(
-        {},
+        { initialPresence: {} as never },
         {
           ...defaultContext,
           authentication: {
@@ -136,7 +136,7 @@ describe("room / auth", () => {
 
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -159,7 +159,7 @@ describe("room / auth", () => {
 
   test("private authentication that does not returns json should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -182,7 +182,7 @@ describe("room / auth", () => {
 
   test("private authentication that does not returns json should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -255,7 +255,7 @@ describe("room", () => {
   });
 
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const { machine, effects } = setupStateMachine();
+    const { machine, effects } = setupStateMachine({} as never);
 
     const ws = new MockWebSocket("");
     machine.connect();

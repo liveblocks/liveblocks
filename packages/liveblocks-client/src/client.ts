@@ -86,7 +86,7 @@ export function createClient(options: ClientOptions): Client {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage> = {}
+    options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     let internalRoom = rooms.get(roomId) as
       | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
