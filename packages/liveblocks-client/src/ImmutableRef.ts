@@ -38,7 +38,7 @@ export function merge<T>(target: T, patch: Partial<T>): T {
  */
 export abstract class ImmutableRef<T> {
   /** @internal */
-  private _value: Readonly<T> | undefined;
+  private _cache: Readonly<T> | undefined;
 
   /** @internal */
   private _ev: EventSource<void>;
@@ -55,13 +55,13 @@ export abstract class ImmutableRef<T> {
   protected abstract _toImmutable(): Readonly<T>;
 
   protected invalidate(): void {
-    if (this._value !== undefined) {
-      this._value = undefined;
+    if (this._cache !== undefined) {
+      this._cache = undefined;
       this._ev.notify();
     }
   }
 
   get current(): Readonly<T> {
-    return this._value ?? (this._value = this._toImmutable());
+    return this._cache ?? (this._cache = this._toImmutable());
   }
 }
