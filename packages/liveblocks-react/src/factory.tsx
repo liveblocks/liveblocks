@@ -619,7 +619,7 @@ export function createRoomContext<
   function useMutableStorageRoot(): LiveObject<TStorage> | null {
     type Snapshot = LiveObject<TStorage> | null;
     const room = useRoom();
-    const subscribe = room.events.storageDidLoad.subscribe;
+    const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
     const selector = identity;

@@ -3,6 +3,7 @@ export type UnsubscribeCallback = () => void;
 
 export type Observable<T> = {
   subscribe(callback: Callback<T>): UnsubscribeCallback;
+  subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
 };
 
 export type EventSource<T> = {
@@ -11,6 +12,7 @@ export type EventSource<T> = {
    */
   notify(event: T): void;
   subscribe(callback: Callback<T>): UnsubscribeCallback;
+  subscribeOnce(callback: Callback<T>): UnsubscribeCallback;
   clear(): void;
 
   /**
@@ -44,6 +46,7 @@ export type EventEmitter<T> = (event: T) => void;
  *
  */
 export function makeEventSource<T>(): EventSource<T> {
+  const _onetimeObservers = new Set<Callback<T>>();
   const _observers = new Set<Callback<T>>();
 
   function subscribe(callback: Callback<T>): UnsubscribeCallback {
@@ -51,11 +54,20 @@ export function makeEventSource<T>(): EventSource<T> {
     return () => _observers.delete(callback);
   }
 
+  function subscribeOnce(callback: Callback<T>): UnsubscribeCallback {
+    _onetimeObservers.add(callback);
+    return () => _onetimeObservers.delete(callback);
+  }
+
   function notify(event: T) {
+    _onetimeObservers.forEach((callback) => callback(event));
+    _onetimeObservers.clear();
+
     _observers.forEach((callback) => callback(event));
   }
 
   function clear() {
+    _onetimeObservers.clear();
     _observers.clear();
   }
 
@@ -63,11 +75,13 @@ export function makeEventSource<T>(): EventSource<T> {
     // Private/internal control over event emission
     notify,
     subscribe,
+    subscribeOnce,
     clear,
 
     // Publicly exposable subscription API
     observable: {
       subscribe,
+      subscribeOnce,
     },
   };
 }
