@@ -208,23 +208,23 @@ describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {
     const { machine, state } = setupStateMachine({});
     machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
-    expect(state.connection.state).toBe("connecting");
+    expect(state.connection.current.state).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {

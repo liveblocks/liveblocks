@@ -68,6 +68,7 @@ import {
   mergeStorageUpdates,
   tryParseJson,
 } from "./utils";
+import { DerivedRef, ValueRef } from "./ValueRef";
 
 type Machine<
   TPresence extends JsonObject,
@@ -185,7 +186,6 @@ type State<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  connection: Connection;
   token: string | null;
   lastConnectionId: number | null;
   socket: WebSocket | null;
@@ -208,6 +208,7 @@ type State<
     heartbeat: number;
   };
 
+  readonly connection: ValueRef<Connection>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
@@ -342,7 +343,7 @@ function makeStateMachine<
       } else {
         return auth(config.roomId)
           .then(({ token }) => {
-            if (state.connection.state !== "authenticating") {
+            if (state.connection.current.state !== "authenticating") {
               return;
             }
             const parsedToken = parseRoomAuthToken(token);
@@ -380,6 +381,19 @@ function makeStateMachine<
       return setTimeout(connect, delay) as any;
     },
   };
+
+  const self = new DerivedRef(
+    [state.connection, state.me],
+    (connValue, meValue): User<TPresence, TUserMeta> | null =>
+      connValue.state === "open" || connValue.state === "connecting"
+        ? {
+            connectionId: connValue.id,
+            id: connValue.userId,
+            info: connValue.userInfo,
+            presence: meValue,
+          }
+        : null
+  );
 
   function createOrUpdateRootFromMessage(
     message: InitialDocumentStateServerMsg
@@ -497,10 +511,10 @@ function makeStateMachine<
 
   function getConnectionId() {
     if (
-      state.connection.state === "open" ||
-      state.connection.state === "connecting"
+      state.connection.current.state === "open" ||
+      state.connection.current.state === "connecting"
     ) {
-      return state.connection.id;
+      return state.connection.current.id;
     } else if (state.lastConnectionId !== null) {
       return state.lastConnectionId;
     }
@@ -760,29 +774,17 @@ function makeStateMachine<
   }
 
   function getConnectionState() {
-    return state.connection.state;
+    return state.connection.current.state;
   }
 
   function getSelf(): User<TPresence, TUserMeta> | null {
-    return state.connection.state === "open" ||
-      state.connection.state === "connecting"
-      ? // XXX Need to always return a stable reference here, because this gets
-        // used as a useSyncExternalStore snapshot, which is expected to be
-        // stable. This currently returns a new instance on every call.
-        // XXX Use an "Imm" cache here too, just like with the other snapshots.
-        {
-          connectionId: state.connection.id,
-          id: state.connection.userId,
-          info: state.connection.userInfo,
-          presence: getPresence(),
-        }
-      : null;
+    return self.current;
   }
 
   function connect() {
     if (
-      state.connection.state !== "closed" &&
-      state.connection.state !== "unavailable"
+      state.connection.current.state !== "closed" &&
+      state.connection.current.state !== "unavailable"
     ) {
       return null;
     }
@@ -866,7 +868,10 @@ function makeStateMachine<
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
-    if (visibilityState === "visible" && state.connection.state === "open") {
+    if (
+      visibilityState === "visible" &&
+      state.connection.current.state === "open"
+    ) {
       log("Heartbeat after visibility change");
       heartbeat();
     }
@@ -929,7 +934,7 @@ function makeStateMachine<
   }
 
   function onNavigatorOnline() {
-    if (state.connection.state === "unavailable") {
+    if (state.connection.current.state === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
     }
@@ -1111,7 +1116,7 @@ function makeStateMachine<
   }
 
   function updateConnection(connection: Connection) {
-    state.connection = connection;
+    state.connection.set(connection);
     eventHub.connection.notify(connection.state);
   }
 
@@ -1137,8 +1142,8 @@ function makeStateMachine<
 
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
-    if (state.connection.state === "connecting") {
-      updateConnection({ ...state.connection, state: "open" });
+    if (state.connection.current.state === "connecting") {
+      updateConnection({ ...state.connection.current, state: "open" });
       state.numberOfRetry = 0;
 
       // Re-broadcast the user presence during a reconnect.
@@ -1150,7 +1155,7 @@ function makeStateMachine<
         tryFlushing();
       }
 
-      state.lastConnectionId = state.connection.id;
+      state.lastConnectionId = state.connection.current.id;
 
       if (state.root) {
         state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
@@ -1594,8 +1599,10 @@ function defaultState<
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
+
+  const connection = new ValueRef<Connection>({ state: "closed" });
+
   return {
-    connection: { state: "closed" },
     token: null,
     lastConnectionId: null,
     socket: null,
@@ -1620,6 +1627,7 @@ function defaultState<
       heartbeat: 0,
     },
 
+    connection,
     me: new MeRef(
       initialPresence == null ? ({} as TPresence) : initialPresence
     ),
