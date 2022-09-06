@@ -331,15 +331,28 @@ export type Authentication =
     };
 
 export type Connection =
+  /* The initial state, before connecting */
+  | { state: "closed" }
+  /* Authentication has started, but not finished yet */
+  | { state: "authenticating" }
+  /* Authentication succeeded, now attempting to connect to a room */
   | {
-      state: "closed" | "authenticating" | "unavailable" | "failed";
-    }
-  | {
-      state: "open" | "connecting";
+      state: "connecting";
       id: number;
       userId?: string;
       userInfo?: Json;
-    };
+    }
+  /* Successful room connection, on the happy path */
+  | {
+      state: "open";
+      id: number;
+      userId?: string;
+      userInfo?: Json;
+    }
+  /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
+  | { state: "unavailable" }
+  /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
+  | { state: "failed" };
 
 export type ConnectionState = Connection["state"];
 
@@ -458,6 +471,11 @@ export type Room<
    * The id of the room.
    */
   readonly id: string;
+  /**
+   * A client is considered "self aware" if it knows its own
+   * metadata and connection ID (from the auth server).
+   */
+  isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
   subscribe: {
     /**

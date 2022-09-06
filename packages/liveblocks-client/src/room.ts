@@ -145,6 +145,7 @@ type Machine<
   };
 
   // Core
+  isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
   getSelf(): User<TPresence, TUserMeta> | null;
 
@@ -170,6 +171,12 @@ function log(..._params: unknown[]) {
   return;
 }
 
+function isConnectionSelfAware(
+  connection: Connection
+): connection is typeof connection & { state: "open" | "connecting" } {
+  return connection.state === "open" || connection.state === "connecting";
+}
+
 type HistoryItem<TPresence extends JsonObject> = Array<
   | Op
   | {
@@ -187,7 +194,7 @@ type State<
   TRoomEvent extends Json
 > = {
   token: string | null;
-  lastConnectionId: number | null;
+  lastConnectionId: number | null; // TODO: Move into Connection type members?
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
@@ -384,13 +391,13 @@ function makeStateMachine<
 
   const self = new DerivedRef(
     [state.connection, state.me],
-    (connValue, meValue): User<TPresence, TUserMeta> | null =>
-      connValue.state === "open" || connValue.state === "connecting"
+    (conn, me): User<TPresence, TUserMeta> | null =>
+      isConnectionSelfAware(conn)
         ? {
-            connectionId: connValue.id,
-            id: connValue.userId,
-            info: connValue.userInfo,
-            presence: meValue,
+            connectionId: conn.id,
+            id: conn.userId,
+            info: conn.userInfo,
+            presence: me,
           }
         : null
   );
@@ -510,11 +517,9 @@ function makeStateMachine<
   }
 
   function getConnectionId() {
-    if (
-      state.connection.current.state === "open" ||
-      state.connection.current.state === "connecting"
-    ) {
-      return state.connection.current.id;
+    const conn = state.connection.current;
+    if (isConnectionSelfAware(conn)) {
+      return conn.id;
     } else if (state.lastConnectionId !== null) {
       return state.lastConnectionId;
     }
@@ -775,10 +780,6 @@ function makeStateMachine<
 
   function getConnectionState() {
     return state.connection.current.state;
-  }
-
-  function getSelf(): User<TPresence, TUserMeta> | null {
-    return self.current;
   }
 
   function connect() {
@@ -1581,7 +1582,8 @@ function makeStateMachine<
 
     // Core
     getConnectionState,
-    getSelf,
+    isSelfAware: () => isConnectionSelfAware(state.connection.current),
+    getSelf: () => self.current,
 
     // Presence
     getPresence,
@@ -1703,6 +1705,7 @@ export function createRoom<
     // Core    //
     /////////////
     getConnectionState: machine.getConnectionState,
+    isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
 
     subscribe: machine.subscribe,
