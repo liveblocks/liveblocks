@@ -27,7 +27,7 @@ function atobPolyfillMock(data: string): string {
 
 function createClientAndEnter(options: ClientOptions) {
   const client = createClient(options);
-  client.enter("room");
+  client.enter("room", { initialPresence: {} });
 }
 
 describe("createClient", () => {
@@ -216,7 +216,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
           fetch: fetchMock,
           atob: undefined,
         },
-      } as ClientOptions);
+      });
     }).toThrowError(
       "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
     );
@@ -231,7 +231,7 @@ describe("when env atob does not exist (atob polyfill handling)", () => {
           fetch: fetchMock,
           atob: atobPolyfillMock,
         },
-      } as ClientOptions);
+      });
     }).not.toThrow();
   });
 });

@@ -183,7 +183,7 @@ export type RoomInitializers<
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
    */
-  initialPresence?: TPresence | ((roomId: string) => TPresence);
+  initialPresence: TPresence | ((roomId: string) => TPresence);
   /**
    * The initial Storage to use when entering a new Room.
    */
@@ -217,7 +217,7 @@ export type Client = {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options?: RoomInitializers<TPresence, TStorage>
+    options: RoomInitializers<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**

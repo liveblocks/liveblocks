@@ -1,3 +1,4 @@
+import { deprecateIf } from "./deprecation";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
@@ -86,7 +87,7 @@ export function createClient(options: ClientOptions): Client {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage> = {}
+    options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     let internalRoom = rooms.get(roomId) as
       | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
@@ -100,9 +101,14 @@ export function createClient(options: ClientOptions): Client {
       >;
     }
 
+    deprecateIf(
+      options.initialPresence == null,
+      "Please provide an initial presence value for the current user when entering the room."
+    );
+
     internalRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
-        initialPresence: options.initialPresence,
+        initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
       },
       {
