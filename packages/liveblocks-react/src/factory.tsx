@@ -900,7 +900,13 @@ export function createRoomContext<
     isEqual?: (a: T, b: T) => boolean
   ): T | ToImmutable<TStorage> {
     useSuspendUntilStorageLoaded();
-    return useStorage(selector as any, isEqual as any) as any;
+
+    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
+    // conditionally
+    return useStorage(
+      selector as (root: ToImmutable<TStorage>) => T,
+      isEqual as (a: T | null, b: T | null) => boolean
+    ) as T | ToImmutable<TStorage>;
   }
 
   function useSelfSuspense(): User<TPresence, TUserMeta>;
@@ -913,7 +919,13 @@ export function createRoomContext<
     isEqual?: (a: T, b: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
-    return useSelf(selector as any, isEqual as any) as any;
+
+    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
+    // conditionally
+    return useSelf(
+      selector as (me: User<TPresence, TUserMeta>) => T,
+      isEqual as (a: T | null, b: T | null) => boolean
+    ) as T | User<TPresence, TUserMeta>;
   }
 
   function useOthersSuspense<T>(
@@ -921,7 +933,13 @@ export function createRoomContext<
     isEqual?: (a: T, b: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
-    return useOthers(selector as any, isEqual as any) as any;
+
+    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
+    // conditionally
+    return useOthers(
+      selector as (others: Others<TPresence, TUserMeta>) => T,
+      isEqual as (a: T, b: T) => boolean
+    ) as T | Others<TPresence, TUserMeta>;
   }
 
   return {
