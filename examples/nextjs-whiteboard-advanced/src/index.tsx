@@ -83,10 +83,10 @@ function Loading() {
 }
 
 function Canvas() {
-  // layers is a LiveMap that contains all the shapes drawn on the canvas
-  const layers = useMap("layers");
-  // layerIds is LiveList of all the layer ids ordered by their z-index
-  const layerIds = useList("layerIds");
+  // layers is a map that contains all the shapes drawn on the canvas
+  const liveLayers = useMap("layers");
+  // layerIds is list of all the layer ids ordered by their z-index
+  const liveLayerIds = useList("layerIds");
 
   const [{ selection, pencilDraft }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
@@ -103,7 +103,7 @@ function Canvas() {
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  const selectionBounds = useSelectionBounds(layers, selection);
+  const selectionBounds = useSelectionBounds(liveLayers, selection);
 
   useDisableScrollBounce();
 
@@ -114,15 +114,15 @@ function Canvas() {
     batch(() => {
       for (const id of selection) {
         // Delete the layer from the layers LiveMap
-        layers.delete(id);
+        liveLayers.delete(id);
         // Find the layer index in the z-index list and remove it
-        const index = layerIds.indexOf(id);
+        const index = liveLayerIds.indexOf(id);
         if (index !== -1) {
-          layerIds.delete(index);
+          liveLayerIds.delete(index);
         }
       }
     });
-  }, [layerIds, layers, selection]);
+  }, [liveLayerIds, liveLayers, selection]);
 
   /**
    * Hook used to listen to Undo / Redo and delete selected layers
@@ -160,14 +160,14 @@ function Canvas() {
   const setFill = useCallback(
     (fill: Color) => {
       setLastUsedColor(fill);
-      const selectedLayers = getSelectedLayers(layers, selection);
+      const selectedLayers = getSelectedLayers(liveLayers, selection);
       batch(() => {
         for (const layer of selectedLayers) {
           layer.set("fill", fill);
         }
       });
     },
-    [layers, selection, setLastUsedColor]
+    [liveLayers, selection, setLastUsedColor]
   );
 
   /**
@@ -200,7 +200,7 @@ function Canvas() {
     batch(() => {
       const indices: number[] = [];
 
-      const arr = layerIds.toArray();
+      const arr = liveLayerIds.toArray();
 
       for (let i = 0; i < arr.length; i++) {
         if (selection.includes(arr[i])) {
@@ -209,10 +209,13 @@ function Canvas() {
       }
 
       for (let i = indices.length - 1; i >= 0; i--) {
-        layerIds.move(indices[i], arr.length - 1 - (indices.length - 1 - i));
+        liveLayerIds.move(
+          indices[i],
+          arr.length - 1 - (indices.length - 1 - i)
+        );
       }
     });
-  }, [layerIds, selection]);
+  }, [liveLayerIds, selection]);
 
   /**
    * Move all the selected layers to the back
@@ -221,7 +224,7 @@ function Canvas() {
     batch(() => {
       const indices: number[] = [];
 
-      const arr = layerIds.toArray();
+      const arr = liveLayerIds.toArray();
 
       for (let i = 0; i < arr.length; i++) {
         if (selection.includes(arr[i])) {
@@ -230,10 +233,10 @@ function Canvas() {
       }
 
       for (let i = 0; i < indices.length; i++) {
-        layerIds.move(indices[i], i);
+        liveLayerIds.move(indices[i], i);
       }
     });
-  }, [layerIds, selection]);
+  }, [liveLayerIds, selection]);
 
   /**
    * Start resizing the layer
@@ -255,7 +258,7 @@ function Canvas() {
    */
   const insertLayer = useCallback(
     (layerType: LayerType.Ellipse | LayerType.Rectangle, position: Point) => {
-      if (layers.size >= MAX_LAYERS) {
+      if (liveLayers.size >= MAX_LAYERS) {
         return;
       }
 
@@ -269,13 +272,13 @@ function Canvas() {
           width: 100,
           fill: lastUsedColor,
         });
-        layerIds.push(layerId);
-        layers.set(layerId, layer);
+        liveLayerIds.push(layerId);
+        liveLayers.set(layerId, layer);
         setPresence({ selection: [layerId] }, { addToHistory: true });
         setState({ mode: CanvasMode.None });
       });
     },
-    [batch, layerIds, layers, setPresence, lastUsedColor]
+    [batch, liveLayerIds, liveLayers, setPresence, lastUsedColor]
   );
 
   /**
@@ -285,7 +288,7 @@ function Canvas() {
     if (
       pencilDraft == null ||
       pencilDraft.length < 2 ||
-      layers.size >= MAX_LAYERS
+      liveLayers.size >= MAX_LAYERS
     ) {
       setPresence({ pencilDraft: null });
       return;
@@ -293,15 +296,22 @@ function Canvas() {
 
     batch(() => {
       const id = nanoid();
-      layers.set(
+      liveLayers.set(
         id,
         new LiveObject(penPointsToPathLayer(pencilDraft, lastUsedColor))
       );
-      layerIds.push(id);
+      liveLayerIds.push(id);
       setPresence({ pencilDraft: null });
       setState({ mode: CanvasMode.Pencil });
     });
-  }, [layers, setPresence, batch, layerIds, lastUsedColor, pencilDraft]);
+  }, [
+    liveLayers,
+    setPresence,
+    batch,
+    liveLayerIds,
+    lastUsedColor,
+    pencilDraft,
+  ]);
 
   /**
    * Move selected layers on the canvas
@@ -319,7 +329,7 @@ function Canvas() {
         };
 
         for (const id of selection) {
-          const layer = layers.get(id);
+          const layer = liveLayers.get(id);
           if (layer) {
             layer.update({
               x: layer.get("x") + offset.x,
@@ -331,7 +341,7 @@ function Canvas() {
         setState({ mode: CanvasMode.Translating, current: point });
       });
     },
-    [layers, canvasState, selection, batch]
+    [liveLayers, canvasState, selection, batch]
   );
 
   /**
@@ -349,12 +359,12 @@ function Canvas() {
         point
       );
 
-      const layer = layers.get(selection[0]);
+      const layer = liveLayers.get(selection[0]);
       if (layer) {
         layer.update(bounds);
       }
     },
-    [canvasState, layers]
+    [canvasState, liveLayers]
   );
 
   const unselectLayers = useCallback(() => {
@@ -426,14 +436,14 @@ function Canvas() {
         current,
       });
       const ids = findIntersectingLayersWithRectangle(
-        layerIds,
-        layers,
+        liveLayerIds,
+        liveLayers,
         origin,
         current
       );
       setPresence({ selection: ids });
     },
-    [layers, layerIds, setPresence]
+    [liveLayers, liveLayerIds, setPresence]
   );
 
   // TODO: Expose a hook to observe only one key of the others presence to improve performance
@@ -548,8 +558,8 @@ function Canvas() {
               transform: `translate(${camera.x}px, ${camera.y}px)`,
             }}
           >
-            {layerIds.map((layerId) => {
-              const layer = layers.get(layerId);
+            {liveLayerIds.map((layerId) => {
+              const layer = liveLayers.get(layerId);
               if (layer == null) {
                 return null;
               }
@@ -570,7 +580,7 @@ function Canvas() {
               <SelectionBox
                 selection={selection}
                 bounds={selectionBounds}
-                layers={layers}
+                layers={liveLayers}
                 onResizeHandlePointerDown={onResizeHandlePointerDown}
                 isAnimated={
                   canvasState.mode !== CanvasMode.Translating &&
