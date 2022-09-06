@@ -517,8 +517,9 @@ function makeStateMachine<
   }
 
   function getConnectionId() {
-    if (isConnectionSelfAware(state.connection.current)) {
-      return state.connection.current.id;
+    const conn = state.connection.current;
+    if (isConnectionSelfAware(conn)) {
+      return conn.id;
     } else if (state.lastConnectionId !== null) {
       return state.lastConnectionId;
     }
