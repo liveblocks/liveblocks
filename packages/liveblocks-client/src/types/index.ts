@@ -471,6 +471,11 @@ export type Room<
    * The id of the room.
    */
   readonly id: string;
+  /**
+   * A client is considered "self aware" if it knows its own
+   * metadata and connection ID (from the auth server).
+   */
+  isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
   subscribe: {
     /**
