@@ -187,7 +187,7 @@ type State<
   TRoomEvent extends Json
 > = {
   token: string | null;
-  lastConnectionId: number | null;
+  lastConnectionId: number | null; // TODO: Move into Connection type members?
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
