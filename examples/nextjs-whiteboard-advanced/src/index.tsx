@@ -459,9 +459,8 @@ function Canvas() {
   const layerIdsToColorSelection = useMemo(() => {
     const layerIdsToColorSelection: Record<string, string> = {};
 
-    const users = others.toArray();
-    for (const user of users) {
-      const selection = user.presence?.selection;
+    for (const user of others) {
+      const selection = user.presence.selection;
       if (selection == null || selection.length === 0) {
         continue;
       }

@@ -9,7 +9,7 @@ const MultiplayerGuides = React.memo(() => {
   return (
     <>
       {others.map((user) => {
-        if (user.presence?.cursor) {
+        if (user.presence.cursor) {
           return (
             <Cursor
               key={`cursor-${user.connectionId}`}
@@ -23,7 +23,7 @@ const MultiplayerGuides = React.memo(() => {
       })}
       {/* All the drawing of other users in the room that are currently in progress */}
       {others.map((user) => {
-        if (user.presence?.pencilDraft) {
+        if (user.presence.pencilDraft) {
           return (
             <Path
               x={0}
