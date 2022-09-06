@@ -9,6 +9,7 @@ import {
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -63,38 +64,30 @@ export default function Room() {
       }}
     >
       <div className={styles.container}>
-        <WhiteboardTool />
+        <ClientSideSuspense fallback={<Loading />}>
+          {() => <Canvas />}
+        </ClientSideSuspense>
       </div>
     </RoomProvider>
   );
 }
 
-function WhiteboardTool() {
+function Loading() {
+  return (
+    <div className={styles.container}>
+      <div className={styles.loading}>
+        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+      </div>
+    </div>
+  );
+}
+
+function Canvas() {
   // layers is a LiveMap that contains all the shapes drawn on the canvas
   const layers = useMap("layers");
   // layerIds is LiveList of all the layer ids ordered by their z-index
   const layerIds = useList("layerIds");
 
-  if (layerIds == null || layers == null) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.loading}>
-          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
-        </div>
-      </div>
-    );
-  }
-
-  return <Canvas layers={layers} layerIds={layerIds} />;
-}
-
-function Canvas({
-  layerIds,
-  layers,
-}: {
-  layerIds: LiveList<string>;
-  layers: LiveMap<string, LiveObject<Layer>>;
-}) {
   const [{ selection, pencilDraft }, setPresence] = useMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
