@@ -103,7 +103,7 @@ function Canvas() {
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  const selectionBounds = useSelectionBounds(liveLayers, selection);
+  const selectionBounds = useSelectionBounds();
 
   useDisableScrollBounce();
 

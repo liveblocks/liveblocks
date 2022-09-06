@@ -1,13 +1,12 @@
-import { LiveMap, LiveObject } from "@liveblocks/client";
-import { useRoom } from "../../liveblocks.config";
+import { useRoom, useMap, useMyPresence } from "../../liveblocks.config";
 import { useState, useEffect } from "react";
-import { Layer, XYWH } from "../types";
+import { XYWH } from "../types";
 import { boundingBox } from "../utils";
 
-export default function useSelectionBounds(
-  layers: LiveMap<string, LiveObject<Layer>>,
-  selection: string[]
-): XYWH | null {
+export default function useSelectionBounds(): XYWH | null {
+  const layers = useMap("layers");
+  const [{ selection }] = useMyPresence();
+
   const [bounds, setBounds] = useState(boundingBox(layers, selection));
   const room = useRoom();
 
