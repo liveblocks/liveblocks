@@ -804,8 +804,7 @@ export function createRoomContext<
     // Error early if suspense is used in a server-side context
     if (typeof window === "undefined") {
       throw new Error(
-        // XXX Fill in documentation URL
-        "You cannot use hooks in Suspense mode on the server side. Make sure to only call Suspense APIs on the client side. For tips for structuring your app, see XXX"
+        "You cannot call the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips for structuring your app, see XXX"
       );
     }
   }
