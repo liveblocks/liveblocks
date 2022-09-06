@@ -9,7 +9,7 @@ import {
   PathLayer,
   Camera,
 } from "./types";
-import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import type { LiveObject, LiveMap } from "@liveblocks/client";
 
 export function colorToCss(color: Color) {
   return `#${color.r.toString(16).padStart(2, "0")}${color.g
@@ -56,13 +56,13 @@ export function resizeBounds(bounds: XYWH, corner: Side, point: Point): XYWH {
 
 export function findIntersectingLayerWithPoint(
   layerIds: string[],
-  layers: LiveMap<string, LiveObject<Layer>>,
+  layers: Map<string, Layer>,
   point: Point
 ) {
   for (let i = layerIds.length - 1; i >= 0; i--) {
     const layerId = layerIds[i];
     const layer = layers.get(layerId);
-    if (layer && isHittingLayer(layer.toObject(), point)) {
+    if (layer && isHittingLayer(layer, point)) {
       return layerId;
     }
   }
@@ -109,8 +109,8 @@ export function isHittingEllipse(layer: EllipseLayer, point: Point) {
  * TODO: Implement ellipse and path / selection net collision
  */
 export function findIntersectingLayersWithRectangle(
-  layerIds: LiveList<string>,
-  layers: LiveMap<string, LiveObject<Layer>>,
+  layerIds: readonly string[],
+  layers: ReadonlyMap<string, Layer>,
   a: Point,
   b: Point
 ) {
@@ -129,7 +129,7 @@ export function findIntersectingLayersWithRectangle(
       continue;
     }
 
-    const { x, y, height, width } = layer.toObject();
+    const { x, y, height, width } = layer;
     if (
       rect.x + rect.width > x &&
       rect.x < x + width &&
@@ -143,7 +143,7 @@ export function findIntersectingLayersWithRectangle(
   return ids;
 }
 
-export function getSelectedLayers(
+export function getMutableSelectedLayers(
   layers: LiveMap<string, LiveObject<Layer>>,
   selection: string[]
 ): LiveObject<Layer>[] {
@@ -157,17 +157,29 @@ export function getSelectedLayers(
   return result;
 }
 
+function getSelectedLayers(
+  layers: ReadonlyMap<string, Layer>,
+  selection: string[]
+): Layer[] {
+  const result = [];
+  for (const id of selection) {
+    const layer = layers.get(id);
+    if (layer) {
+      result.push(layer);
+    }
+  }
+  return result;
+}
+
 export function boundingBox(
-  allLayers: LiveMap<string, LiveObject<Layer>>,
+  allLayers: ReadonlyMap<string, Layer>,
   selection: string[]
 ): XYWH | null {
   if (selection.length === 0) {
     return null;
   }
 
-  const layers = getSelectedLayers(allLayers, selection).map((l) =>
-    l.toObject()
-  );
+  const layers = getSelectedLayers(allLayers, selection);
 
   if (layers.length === 0) {
     return null;

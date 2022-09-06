@@ -5,6 +5,7 @@ import {
   RoomProvider,
   useMap,
   useHistory,
+  useStorage,
   useBatch,
   useCanUndo,
   useCanRedo,
@@ -28,7 +29,7 @@ import {
   colorToCss,
   connectionIdToColor,
   findIntersectingLayersWithRectangle,
-  getSelectedLayers,
+  getMutableSelectedLayers,
   penPointsToPathLayer,
   pointerEventToCanvasPoint,
   resizeBounds,
@@ -84,8 +85,10 @@ function Loading() {
 
 function Canvas() {
   // layers is a map that contains all the shapes drawn on the canvas
+  const layers = useStorage((root) => root.layers);
   const liveLayers = useMap("layers");
   // layerIds is list of all the layer ids ordered by their z-index
+  const layerIds = useStorage((root) => root.layerIds);
   const liveLayerIds = useList("layerIds");
 
   const [{ selection, pencilDraft }, setPresence] = useMyPresence();
@@ -160,7 +163,7 @@ function Canvas() {
   const setFill = useCallback(
     (fill: Color) => {
       setLastUsedColor(fill);
-      const selectedLayers = getSelectedLayers(liveLayers, selection);
+      const selectedLayers = getMutableSelectedLayers(liveLayers, selection);
       batch(() => {
         for (const layer of selectedLayers) {
           layer.set("fill", fill);
@@ -436,8 +439,8 @@ function Canvas() {
         current,
       });
       const ids = findIntersectingLayersWithRectangle(
-        liveLayerIds,
-        liveLayers,
+        layerIds,
+        layers,
         origin,
         current
       );
