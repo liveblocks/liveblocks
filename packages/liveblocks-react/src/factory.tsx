@@ -812,8 +812,7 @@ export function createRoomContext<
 
   function useSuspendUntilStorageLoaded(): void {
     const room = useRoom();
-    const root = useMutableStorageRoot();
-    if (root !== null) {
+    if (room.getStorageSnapshot() !== null) {
       return;
     }
 
@@ -829,8 +828,7 @@ export function createRoomContext<
 
   function useSuspendUntilPresenceLoaded(): void {
     const room = useRoom();
-    const self = room.getSelf();
-    if (self !== null) {
+    if (room.isSelfAware()) {
       return;
     }
 
