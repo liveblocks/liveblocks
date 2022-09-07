@@ -448,8 +448,8 @@ function Canvas() {
   /**
    * Update the position of the selection net and select the layers accordingly
    */
-  const updateSelectionNet = useCallback(
-    (current: Point, origin: Point) => {
+  const updateSelectionNet = useMutation(
+    ({ setMyPresence }, current: Point, origin: Point) => {
       setState({
         mode: CanvasMode.SelectionNet,
         origin: origin,
@@ -461,9 +461,9 @@ function Canvas() {
         origin,
         current
       );
-      setPresence({ selection: ids });
+      setMyPresence({ selection: ids });
     },
-    [liveLayers, liveLayerIds, setPresence]
+    [layerIds, layers]
   );
 
   const selections = useOtherIds((other) => other.presence.selection);
