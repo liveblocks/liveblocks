@@ -385,24 +385,21 @@ type RoomContextBundle<
     deps?: unknown[]
   ): OmitFirstArg<F>;
 
+  // prettier-ignore
   suspense: {
     useStorage(): ToImmutable<TStorage>;
-    useStorage<T>(
-      selector: (root: ToImmutable<TStorage>) => T,
-      isEqual?: (a: T, b: T) => boolean
-    ): T;
+    useStorage<T>(selector: (root: ToImmutable<TStorage>) => T, isEqual?: (a: T, b: T) => boolean): T;
 
     useSelf(): User<TPresence, TUserMeta>;
-    useSelf<T>(
-      selector: (me: User<TPresence, TUserMeta>) => T,
-      isEqual?: (a: T, b: T) => boolean
-    ): T;
+    useSelf<T>(selector: (me: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
 
     useOthers(): Others<TPresence, TUserMeta>;
-    useOthers<T>(
-      selector: (others: Others<TPresence, TUserMeta>) => T,
-      isEqual?: (a: T, b: T) => boolean
-    ): T;
+    useOthers<T>(selector: (others: Others<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
+
+    // Legacy hooks
+    useList<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
+    useMap<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
+    useObject<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
   };
 };
 
@@ -934,6 +931,13 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
+  function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(
+    key: TKey
+  ): TStorage[TKey] {
+    useSuspendUntilStorageLoaded();
+    return useLegacyKey(key) as TStorage[TKey];
+  }
+
   return {
     RoomProvider,
     useBatch,
@@ -970,6 +974,11 @@ export function createRoomContext<
       useStorage: useStorageSuspense,
       useSelf: useSelfSuspense,
       useOthers: useOthersSuspense,
+
+      // Legacy hooks
+      useList: useLegacyKeySuspense,
+      useMap: useLegacyKeySuspense,
+      useObject: useLegacyKeySuspense,
     },
   };
 }
