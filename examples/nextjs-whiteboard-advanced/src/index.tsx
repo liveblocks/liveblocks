@@ -187,8 +187,8 @@ function Canvas() {
   /**
    * Select the layer if not already selected and start translating the selection
    */
-  const onLayerPointerDown = useCallback(
-    (e: React.PointerEvent, layerId: string) => {
+  const onLayerPointerDown = useMutation(
+    ({ setMyPresence }, e: React.PointerEvent, layerId: string) => {
       if (
         canvasState.mode === CanvasMode.Pencil ||
         canvasState.mode === CanvasMode.Inserting
@@ -200,11 +200,11 @@ function Canvas() {
       e.stopPropagation();
       const point = pointerEventToCanvasPoint(e, camera);
       if (!selection.includes(layerId)) {
-        setPresence({ selection: [layerId] }, { addToHistory: true });
+        setMyPresence({ selection: [layerId] }, { addToHistory: true });
       }
       setState({ mode: CanvasMode.Translating, current: point });
     },
-    [setPresence, setState, selection, camera, history, canvasState.mode]
+    [setState, selection, camera, history, canvasState.mode]
   );
 
   /**
