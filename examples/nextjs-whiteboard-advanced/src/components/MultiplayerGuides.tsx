@@ -5,7 +5,7 @@ import { colorToCss } from "../utils";
 import Cursor from "./Cursor";
 import Path from "./Path";
 
-const Cursors = React.memo(() => {
+function Cursors() {
   const ids = useOtherIds();
   return (
     <>
@@ -14,9 +14,9 @@ const Cursors = React.memo(() => {
       ))}
     </>
   );
-});
+}
 
-const Drafts = React.memo(() => {
+function Drafts() {
   const others = useOtherIds(
     (other) => ({
       pencilDraft: other.presence.pencilDraft,
@@ -43,9 +43,9 @@ const Drafts = React.memo(() => {
       })}
     </>
   );
-});
+}
 
-const MultiplayerGuides = React.memo(() => {
+export default React.memo(function MultiplayerGuides() {
   return (
     <>
       <Cursors />
@@ -53,5 +53,3 @@ const MultiplayerGuides = React.memo(() => {
     </>
   );
 });
-
-export default MultiplayerGuides;
