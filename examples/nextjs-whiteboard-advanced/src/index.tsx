@@ -584,8 +584,8 @@ function Canvas() {
               transform: `translate(${camera.x}px, ${camera.y}px)`,
             }}
           >
-            {liveLayerIds.map((layerId) => {
-              const layer = liveLayers.get(layerId);
+            {layerIds.map((layerId) => {
+              const layer = layers.get(layerId);
               if (layer == null) {
                 return null;
               }

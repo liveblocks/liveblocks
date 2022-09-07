@@ -9,7 +9,7 @@ import { colorToCss } from "../utils";
 
 type Props = {
   id: string;
-  layer: LiveObject<Layer>;
+  layer: Layer;
   mode: CanvasMode;
   onLayerPointerDown: (e: React.PointerEvent, layerId: string) => void;
   selectionColor?: string;
@@ -18,28 +18,15 @@ type Props = {
 // We can use react memo because "layer" is a LiveObject and it's mutable. This component will only be re-rendered if the layer is updated.
 const LayerComponent = memo(
   ({ layer, mode, onLayerPointerDown, id, selectionColor }: Props) => {
-    const [layerData, setLayerData] = useState(layer.toObject());
-
-    const room = useRoom();
-
-    // Layer is a nested LiveObject inside a LiveMap, so we need to subscribe to changes made to a specific layer
-    useEffect(() => {
-      function onChange() {
-        setLayerData(layer.toObject());
-      }
-
-      return room.subscribe(layer, onChange);
-    }, [room, layer]);
-
     const isAnimated =
       mode !== CanvasMode.Translating && mode !== CanvasMode.Resizing;
 
-    switch (layerData.type) {
+    switch (layer.type) {
       case LayerType.Ellipse:
         return (
           <Ellipse
             id={id}
-            layer={layerData}
+            layer={layer}
             onPointerDown={onLayerPointerDown}
             isAnimated={isAnimated}
             selectionColor={selectionColor}
@@ -49,12 +36,12 @@ const LayerComponent = memo(
         return (
           <Path
             key={id}
-            points={layerData.points}
+            points={layer.points}
             isAnimated={isAnimated}
             onPointerDown={(e) => onLayerPointerDown(e, id)}
-            x={layerData.x}
-            y={layerData.y}
-            fill={layerData.fill ? colorToCss(layerData.fill) : "#CCC"}
+            x={layer.x}
+            y={layer.y}
+            fill={layer.fill ? colorToCss(layer.fill) : "#CCC"}
             stroke={selectionColor}
           />
         );
@@ -62,7 +49,7 @@ const LayerComponent = memo(
         return (
           <Rectangle
             id={id}
-            layer={layerData}
+            layer={layer}
             onPointerDown={onLayerPointerDown}
             isAnimated={isAnimated}
             selectionColor={selectionColor}
