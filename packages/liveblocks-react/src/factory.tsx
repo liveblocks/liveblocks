@@ -16,7 +16,7 @@ import type {
   RoomInitializers,
   ToImmutable,
 } from "@liveblocks/client/internal";
-import { freeze } from "@liveblocks/client/internal";
+import { asArrayWithLegacyMethods } from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
@@ -33,24 +33,9 @@ type OmitFirstArg<F> = F extends (first: any, ...rest: infer A) => infer R
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
-const EMPTY_OTHERS: Others<never, never> = [] as unknown as Others<
-  never,
-  never
->;
-
-// NOTE: We extend the array instance with custom `count` and `toArray()`
-// methods here. This is done for backward-compatible reasons. These APIs
-// will be deprecated in a future version.
-Object.defineProperty(EMPTY_OTHERS, "count", {
-  value: 0,
-  enumerable: false,
-});
-Object.defineProperty(EMPTY_OTHERS, "toArray", {
-  value: () => EMPTY_OTHERS,
-  enumerable: false,
-});
-
-freeze(EMPTY_OTHERS);
+const EMPTY_OTHERS =
+  // NOTE: asArrayWithLegacyMethods() wrapping should no longer be necessary in 0.19
+  asArrayWithLegacyMethods([]);
 
 function getEmptyOthers() {
   return EMPTY_OTHERS;
@@ -506,19 +491,10 @@ export function createRoomContext<
     selector?: (others: Others<TPresence, TUserMeta>) => T,
     isEqual?: (a: T, b: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
-    type Snapshot = Others<TPresence, TUserMeta>;
-
     const room = useRoom();
-
     const subscribe = room.events.others.subscribe;
-
-    const getSnapshot = React.useCallback(
-      (): Snapshot => room.getOthers(),
-      [room]
-    );
-
+    const getSnapshot = room.getOthers;
     const getServerSnapshot = getEmptyOthers;
-
     return useSyncExternalStoreWithSelector(
       subscribe,
       getSnapshot,

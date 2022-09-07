@@ -1,4 +1,6 @@
 import { ImmutableRef, merge } from "./ImmutableRef";
+import type { ReadonlyArrayWithLegacyMethods } from "./LegacyArray";
+import { asArrayWithLegacyMethods } from "./LegacyArray";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
 
@@ -58,22 +60,7 @@ export class OthersRef<
       )
     );
 
-    // NOTE: We extend the array instance with custom `count` and `toArray()`
-    // methods here. This is done for backward-compatible reasons. These APIs
-    // will be deprecated in a future version.
-    Object.defineProperty(users, "count", {
-      value: users.length,
-      enumerable: false,
-    });
-    Object.defineProperty(users, "toArray", {
-      value: () => users,
-      enumerable: false,
-    });
-
-    return freeze(users) as Others<TPresence, TUserMeta>;
-    //                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    //                   Necessary only while the backward-compatible APIs
-    //                   are getting attached in the lines above.
+    return asArrayWithLegacyMethods(users);
   }
 
   clearOthers(): void {

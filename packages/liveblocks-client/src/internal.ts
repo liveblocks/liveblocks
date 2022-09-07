@@ -35,6 +35,7 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
+export { asArrayWithLegacyMethods } from "./LegacyArray";
 export { comparePosition, makePosition } from "./position";
 export type {
   BroadcastedEventServerMsg,
