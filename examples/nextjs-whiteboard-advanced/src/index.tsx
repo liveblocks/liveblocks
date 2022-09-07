@@ -122,8 +122,10 @@ function Canvas() {
   /**
    * Delete all the selected layers.
    */
-  const deleteLayers = useCallback(() => {
-    batch(() => {
+  const deleteLayers = useMutation(
+    ({ root }) => {
+      const liveLayers = root.get("layers");
+      const liveLayerIds = root.get("layerIds");
       for (const id of selection) {
         // Delete the layer from the layers LiveMap
         liveLayers.delete(id);
@@ -133,8 +135,9 @@ function Canvas() {
           liveLayerIds.delete(index);
         }
       }
-    });
-  }, [liveLayerIds, liveLayers, selection]);
+    },
+    [selection]
+  );
 
   /**
    * Hook used to listen to Undo / Redo and delete selected layers
