@@ -378,7 +378,7 @@ function Canvas() {
         layer.update(bounds);
       }
     },
-    [canvasState]
+    [canvasState, selection]
   );
 
   const unselectLayers = useMutation(({ setMyPresence }) => {
@@ -395,7 +395,7 @@ function Canvas() {
         penColor: lastUsedColor,
       });
     },
-    []
+    [lastUsedColor]
   );
 
   /**
