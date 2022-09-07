@@ -11,6 +11,7 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
+import { shallow } from "@liveblocks/client";
 import type {
   Resolve,
   RoomInitializers,
@@ -293,6 +294,78 @@ type RoomContextBundle<
   ): T;
 
   /**
+   * Related to useOthers(), but optimized for selecting only "subsets" of
+   * others. This is useful for performance reasons in particular, because
+   * selecting only a subset of users also means limiting the number of
+   * re-renders that will be triggered.
+   *
+   * Note that there are two ways to use this hook, and depending on how you
+   * call it, the return value will be slightly different.
+   *
+   * @example
+   * const ids = useOtherIds();
+   * //    ^^^ number[]
+   */
+  useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+
+  /**
+   * Related to useOthers(), but optimized for selecting only "subsets" of
+   * others. This is useful for performance reasons in particular, because
+   * selecting only a subset of users also means limiting the number of
+   * re-renders that will be triggered.
+   *
+   * Note that there are two ways to use this hook, and depending on how you
+   * call it, the return value will be slightly different.
+   *
+   * @example
+   * const avatars = useOtherIds(user => user.info.avatar);
+   * //    ^^^^^^^
+   * //    { connectionId: number; data: string }[]
+   *
+   * The selector function you pass to useOtherIds() is called an "item
+   * selector", and operates on a single user at a time. If you provide an
+   * (optional) comparison function, it will also work on the _item_ level.
+   *
+   * For example, to select multiple properties:
+   *
+   * @example
+   * const avatarsAndCursors = useOtherIds(
+   *   user => [u.info.avatar, u.presence.cursor],
+   *   shallow,  // ❗️
+   * );
+   */
+  useOtherIds<T>(
+    itemSelector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): readonly { readonly connectionId: number; readonly data: T }[];
+
+  /**
+   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
+   * this selector deep down in your component stack to only have the component
+   * re-render if properties for this particular connection change.
+   *
+   * @example
+   * // Returns full user and re-renders whenever anything on the user changes
+   * const secondUser = useOther(2);
+   */
+  useOther(connectionId: number): User<TPresence, TUserMeta>;
+
+  /**
+   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
+   * this selector deep down in your component stack to only have the component
+   * re-render if properties for this particular connection change.
+   *
+   * @example
+   * // Returns only the selected values re-renders whenever that selection changes)
+   * const { x, y } = useOther(2, user => user.presence.cursor);
+   */
+  useOther<T>(
+    connectionId: number,
+    selector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+
+  /**
    * Returns the Room of the nearest RoomProvider above in the React component
    * tree.
    */
@@ -381,6 +454,12 @@ type RoomContextBundle<
     useOthers(): Others<TPresence, TUserMeta>;
     useOthers<T>(selector: (others: Others<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
 
+    useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+    useOtherIds<T>(itemSelector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): readonly { readonly connectionId: number; readonly data: T }[];
+
+    useOther(connectionId: number): User<TPresence, TUserMeta>;
+    useOther<T>(connectionId: number, selector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
+
     // Legacy hooks
     useList<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
     useMap<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
@@ -453,6 +532,12 @@ export function createRoomContext<
     );
   }
 
+  function connectionIdSelector(
+    others: Others<TPresence, TUserMeta>
+  ): number[] {
+    return others.map((user) => user.connectionId);
+  }
+
   function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     const room = React.useContext(RoomContext);
     if (room == null) {
@@ -502,6 +587,120 @@ export function createRoomContext<
       selector ?? (identity as (others: Others<TPresence, TUserMeta>) => T),
       isEqual
     );
+  }
+
+  function useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+  function useOtherIds<T>(
+    itemSelector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): readonly { readonly connectionId: number; readonly data: T }[];
+  function useOtherIds<T>(
+    itemSelector?: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ):
+    | readonly number[]
+    | readonly { readonly connectionId: number; readonly data: T }[] {
+    // Deliberately bypass React warnings about conditionally calling hooks
+    const _useCallback = React.useCallback;
+    const _useOthers = useOthers;
+    if (itemSelector === undefined) {
+      return _useOthers(/* not inlined! */ connectionIdSelector, shallow);
+    } else {
+      const wrappedSelector = _useCallback(
+        (others: Others<TPresence, TUserMeta>) =>
+          others.map((other) => ({
+            connectionId: other.connectionId,
+            data: itemSelector(other),
+          })),
+        [itemSelector]
+      );
+
+      const wrappedIsEqual = _useCallback(
+        (
+          a: { readonly connectionId: number; readonly data: T }[],
+          b: { readonly connectionId: number; readonly data: T }[]
+        ): boolean => {
+          const eq = isEqual ?? Object.is;
+          return (
+            a.length === b.length &&
+            a.every((atuple, index) => {
+              const btuple = b[index];
+              return (
+                atuple.connectionId === btuple.connectionId &&
+                eq(atuple.data, btuple.data)
+              );
+            })
+          );
+        },
+        [isEqual]
+      );
+
+      return _useOthers(wrappedSelector, wrappedIsEqual);
+    }
+  }
+
+  const sentinel = Symbol();
+
+  function useOther(connectionId: number): User<TPresence, TUserMeta>;
+  function useOther<T>(
+    connectionId: number,
+    selector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+  function useOther<T>(
+    connectionId: number,
+    selector?: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | User<TPresence, TUserMeta> {
+    // Deliberately bypass React warnings about conditionally calling hooks
+    const _useCallback = React.useCallback;
+    const _useOthers = useOthers;
+    if (selector === undefined) {
+      const selector = _useCallback(
+        (others: Others<TPresence, TUserMeta>) =>
+          // TODO: Make this O(1) instead of O(n)?
+          others.find((other) => other.connectionId === connectionId),
+        [connectionId]
+      );
+      const other = _useOthers(selector, shallow);
+      if (other === undefined) {
+        throw new Error(
+          `No such other user with connection id ${connectionId} exists`
+        );
+      }
+      return other;
+    } else {
+      const wrappedSelector = _useCallback(
+        (others: Others<TPresence, TUserMeta>) => {
+          // TODO: Make this O(1) instead of O(n)?
+          const other = others.find(
+            (other) => other.connectionId === connectionId
+          );
+          return other !== undefined ? selector(other) : sentinel;
+        },
+        [connectionId, selector]
+      );
+
+      const wrappedIsEqual = _useCallback(
+        (a: T | typeof sentinel, b: T | typeof sentinel): boolean => {
+          if (a === sentinel || b === sentinel) {
+            return a === b;
+          }
+
+          const eq = isEqual ?? Object.is;
+          return eq(a, b);
+        },
+        [isEqual]
+      );
+
+      const other = _useOthers(wrappedSelector, wrappedIsEqual);
+      if (other === sentinel) {
+        throw new Error(
+          `No such other user with connection id ${connectionId} exists`
+        );
+      }
+      return other;
+    }
   }
 
   function useBroadcastEvent(): (
@@ -907,6 +1106,51 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
+  function useOtherIdsSuspense(): readonly number[];
+  function useOtherIdsSuspense<T>(
+    itemSelector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): readonly { readonly connectionId: number; readonly data: T }[];
+  function useOtherIdsSuspense<T>(
+    itemSelector?: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ):
+    | readonly number[]
+    | readonly { readonly connectionId: number; readonly data: T }[] {
+    useSuspendUntilPresenceLoaded();
+
+    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
+    // conditionally
+    return useOtherIds(
+      itemSelector as (other: User<TPresence, TUserMeta>) => T,
+      isEqual as (a: T, b: T) => boolean
+    ) as
+      | readonly number[]
+      | readonly { readonly connectionId: number; readonly data: T }[];
+  }
+
+  function useOtherSuspense(connectionId: number): User<TPresence, TUserMeta>;
+  function useOtherSuspense<T>(
+    connectionId: number,
+    selector: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T;
+  function useOtherSuspense<T>(
+    connectionId: number,
+    selector?: (other: User<TPresence, TUserMeta>) => T,
+    isEqual?: (a: T, b: T) => boolean
+  ): T | User<TPresence, TUserMeta> {
+    useSuspendUntilPresenceLoaded();
+
+    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
+    // conditionally
+    return useOther(
+      connectionId,
+      selector as (other: User<TPresence, TUserMeta>) => T,
+      isEqual as (a: T, b: T) => boolean
+    ) as T | User<TPresence, TUserMeta>;
+  }
+
   function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(
     key: TKey
   ): TStorage[TKey] {
@@ -925,6 +1169,8 @@ export function createRoomContext<
     useHistory,
     useMyPresence,
     useOthers,
+    useOtherIds,
+    useOther,
     useRedo,
     useRoom,
 
@@ -950,6 +1196,8 @@ export function createRoomContext<
       useStorage: useStorageSuspense,
       useSelf: useSelfSuspense,
       useOthers: useOthersSuspense,
+      useOtherIds: useOtherIdsSuspense,
+      useOther: useOtherSuspense,
 
       // Legacy hooks
       useList: useLegacyKeySuspense,
