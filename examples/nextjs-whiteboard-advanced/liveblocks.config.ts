@@ -40,7 +40,6 @@ type Storage = {
 
 export const {
   useMyPresence,
-  useOthers,
   RoomProvider,
   useHistory,
   useBatch,
@@ -48,5 +47,5 @@ export const {
   useCanRedo,
   useRoom,
 
-  suspense: { useList, useMap, useStorage },
+  suspense: { useList, useMap, useOther, useOtherIds, useOthers, useStorage },
 } = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
