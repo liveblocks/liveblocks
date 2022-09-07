@@ -46,6 +46,7 @@ export const {
   useBatch,
   useCanUndo,
   useCanRedo,
+  useMutation,
   useRoom,
 
   suspense: {
