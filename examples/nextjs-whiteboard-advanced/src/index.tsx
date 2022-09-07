@@ -210,8 +210,9 @@ function Canvas() {
   /**
    * Move all the selected layers to the front
    */
-  const moveToFront = useCallback(() => {
-    batch(() => {
+  const moveToFront = useMutation(
+    ({ root }) => {
+      const liveLayerIds = root.get("layerIds");
       const indices: number[] = [];
 
       const arr = liveLayerIds.toArray();
@@ -228,8 +229,9 @@ function Canvas() {
           arr.length - 1 - (indices.length - 1 - i)
         );
       }
-    });
-  }, [liveLayerIds, selection]);
+    },
+    [selection]
+  );
 
   /**
    * Move all the selected layers to the back
