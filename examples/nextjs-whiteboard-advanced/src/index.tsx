@@ -1,16 +1,17 @@
 import {
-  useMyPresence,
-  useOthers,
+  useOtherIds,
+  useUpdateMyPresence,
   useList,
   RoomProvider,
   useMap,
   useHistory,
   useStorage,
+  useSelf,
   useBatch,
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
-import { ClientSideSuspense } from "@liveblocks/react";
+import { ClientSideSuspense, shallow } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -91,7 +92,14 @@ function Canvas() {
   const layerIds = useStorage((root) => root.layerIds);
   const liveLayerIds = useList("layerIds");
 
-  const [{ selection, pencilDraft }, setPresence] = useMyPresence();
+  const { selection, pencilDraft } = useSelf(
+    (me) => ({
+      selection: me.presence.selection,
+      pencilDraft: me.presence.pencilDraft,
+    }),
+    shallow
+  );
+  const setPresence = useUpdateMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
   });
@@ -449,9 +457,7 @@ function Canvas() {
     [liveLayers, liveLayerIds, setPresence]
   );
 
-  // TODO: Expose a hook to observe only one key of the others presence to improve performance
-  // For example, multiplayer selection should not be re-render if only a cursor move
-  const others = useOthers();
+  const selections = useOtherIds((other) => other.presence.selection);
 
   /**
    * Create a map layerId to color based on the selection of all the users in the room
@@ -459,19 +465,15 @@ function Canvas() {
   const layerIdsToColorSelection = useMemo(() => {
     const layerIdsToColorSelection: Record<string, string> = {};
 
-    for (const user of others) {
-      const selection = user.presence.selection;
-      if (selection == null || selection.length === 0) {
-        continue;
-      }
-
+    for (const user of selections) {
+      const { connectionId, data: selection } = user;
       for (const id of selection) {
-        layerIdsToColorSelection[id] = connectionIdToColor(user.connectionId);
+        layerIdsToColorSelection[id] = connectionIdToColor(connectionId);
       }
     }
 
     return layerIdsToColorSelection;
-  }, [others]);
+  }, [selections]);
 
   return (
     <>

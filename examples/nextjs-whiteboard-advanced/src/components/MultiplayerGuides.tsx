@@ -1,4 +1,4 @@
-import { useOthers, useOtherIds } from "../../liveblocks.config";
+import { useOtherIds } from "../../liveblocks.config";
 import { shallow } from "@liveblocks/client";
 import React from "react";
 import { colorToCss } from "../utils";
