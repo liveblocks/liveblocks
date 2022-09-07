@@ -394,14 +394,14 @@ function Canvas() {
   /**
    * Insert the first path point and start drawing with the pencil
    */
-  const startDrawing = useCallback(
-    (point: Point, pressure: number) => {
-      setPresence({
+  const startDrawing = useMutation(
+    ({ setMyPresence }, point: Point, pressure: number) => {
+      setMyPresence({
         pencilDraft: [[point.x, point.y, pressure]],
         penColor: lastUsedColor,
       });
     },
-    [setPresence]
+    []
   );
 
   /**
