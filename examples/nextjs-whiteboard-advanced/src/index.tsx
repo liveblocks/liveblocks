@@ -307,34 +307,31 @@ function Canvas() {
   /**
    * Transform the drawing of the current user in a layer and reset the presence to delete the draft.
    */
-  const insertPath = useCallback(() => {
-    if (
-      pencilDraft == null ||
-      pencilDraft.length < 2 ||
-      liveLayers.size >= MAX_LAYERS
-    ) {
-      setPresence({ pencilDraft: null });
-      return;
-    }
+  const insertPath = useMutation(
+    ({ root, setMyPresence }) => {
+      const liveLayers = root.get("layers");
+      if (
+        pencilDraft == null ||
+        pencilDraft.length < 2 ||
+        liveLayers.size >= MAX_LAYERS
+      ) {
+        setMyPresence({ pencilDraft: null });
+        return;
+      }
 
-    batch(() => {
       const id = nanoid();
       liveLayers.set(
         id,
         new LiveObject(penPointsToPathLayer(pencilDraft, lastUsedColor))
       );
+
+      const liveLayerIds = root.get("layerIds");
       liveLayerIds.push(id);
-      setPresence({ pencilDraft: null });
+      setMyPresence({ pencilDraft: null });
       setState({ mode: CanvasMode.Pencil });
-    });
-  }, [
-    liveLayers,
-    setPresence,
-    batch,
-    liveLayerIds,
-    lastUsedColor,
-    pencilDraft,
-  ]);
+    },
+    [lastUsedColor, pencilDraft]
+  );
 
   /**
    * Move selected layers on the canvas
