@@ -686,7 +686,7 @@ export function createRoomContext<
           const eq = isEqual ?? Object.is;
           return eq(a, b);
         },
-        [sentinel, isEqual]
+        [isEqual]
       );
 
       const other = _useOthers(wrappedSelector, wrappedIsEqual);
