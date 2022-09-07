@@ -949,6 +949,8 @@ export function createRoomContext<
     useHistory,
     useMyPresence,
     useOthers,
+    // useOtherIds, // TODO: Implement
+    // useOther, // TODO: Implement
     useRedo,
     useRoom,
 
@@ -974,6 +976,8 @@ export function createRoomContext<
       useStorage: useStorageSuspense,
       useSelf: useSelfSuspense,
       useOthers: useOthersSuspense,
+      // useOtherIds: useOtherIdsSuspense, // TODO: Implement
+      // useOther: useOtherSuspense, // TODO: Implement
 
       // Legacy hooks
       useList: useLegacyKeySuspense,
