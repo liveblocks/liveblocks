@@ -308,13 +308,72 @@ type RoomContextBundle<
     isEqual?: (a: T, b: T) => boolean
   ): T;
 
+  /**
+   * Related to useOthers(), but optimized for selecting only "subsets" of
+   * others. This is useful for performance reasons in particular, because
+   * selecting only a subset of users also means limiting the number of
+   * re-renders that will be triggered.
+   *
+   * Note that there are two ways to use this hook, and depending on how you
+   * call it, the return value will be slightly different.
+   *
+   * @example
+   * const ids = useOtherIds();
+   * //    ^^^ number[]
+   */
   useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+
+  /**
+   * Related to useOthers(), but optimized for selecting only "subsets" of
+   * others. This is useful for performance reasons in particular, because
+   * selecting only a subset of users also means limiting the number of
+   * re-renders that will be triggered.
+   *
+   * Note that there are two ways to use this hook, and depending on how you
+   * call it, the return value will be slightly different.
+   *
+   * @example
+   * const avatars = useOtherIds(user => user.info.avatar);
+   * //    ^^^^^^^
+   * //    { connectionId: number; data: string }[]
+   *
+   * The selector function you pass to useOtherIds() is called an "item
+   * selector", and operates on a single user at a time. If you provide an
+   * (optional) comparison function, it will also work on the _item_ level.
+   *
+   * For example, to select multiple properties:
+   *
+   * @example
+   * const avatarsAndCursors = useOtherIds(
+   *   user => [u.info.avatar, u.presence.cursor],
+   *   shallow,  // ❗️
+   * );
+   */
   useOtherIds<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (a: T, b: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
 
+  /**
+   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
+   * this selector deep down in your component stack to only have the component
+   * re-render if properties for this particular connection change.
+   *
+   * @example
+   * // Returns full user and re-renders whenever anything on the user changes
+   * const secondUser = useOther(2);
+   */
   useOther(connectionId: number): User<TPresence, TUserMeta>;
+
+  /**
+   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
+   * this selector deep down in your component stack to only have the component
+   * re-render if properties for this particular connection change.
+   *
+   * @example
+   * // Returns only the selected values re-renders whenever that selection changes)
+   * const { x, y } = useOther(2, user => user.presence.cursor);
+   */
   useOther<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
