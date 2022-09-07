@@ -274,29 +274,34 @@ function Canvas() {
   /**
    * Insert an ellipse or a rectangle at the given position and select it
    */
-  const insertLayer = useCallback(
-    (layerType: LayerType.Ellipse | LayerType.Rectangle, position: Point) => {
+  const insertLayer = useMutation(
+    (
+      { root, setMyPresence },
+      layerType: LayerType.Ellipse | LayerType.Rectangle,
+      position: Point
+    ) => {
+      const liveLayers = root.get("layers");
       if (liveLayers.size >= MAX_LAYERS) {
         return;
       }
 
-      batch(() => {
-        const layerId = nanoid();
-        const layer = new LiveObject({
-          type: layerType,
-          x: position.x,
-          y: position.y,
-          height: 100,
-          width: 100,
-          fill: lastUsedColor,
-        });
-        liveLayerIds.push(layerId);
-        liveLayers.set(layerId, layer);
-        setPresence({ selection: [layerId] }, { addToHistory: true });
-        setState({ mode: CanvasMode.None });
+      const liveLayerIds = root.get("layerIds");
+      const layerId = nanoid();
+      const layer = new LiveObject({
+        type: layerType,
+        x: position.x,
+        y: position.y,
+        height: 100,
+        width: 100,
+        fill: lastUsedColor,
       });
+      liveLayerIds.push(layerId);
+      liveLayers.set(layerId, layer);
+
+      setMyPresence({ selection: [layerId] }, { addToHistory: true });
+      setState({ mode: CanvasMode.None });
     },
-    [batch, liveLayerIds, liveLayers, setPresence, lastUsedColor]
+    [lastUsedColor]
   );
 
   /**
