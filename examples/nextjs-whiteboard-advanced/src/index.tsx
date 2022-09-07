@@ -172,17 +172,16 @@ function Canvas() {
   /**
    * Change the color of all the selected layers
    */
-  const setFill = useCallback(
-    (fill: Color) => {
+  const setFill = useMutation(
+    ({ root }, fill: Color) => {
+      const liveLayers = root.get("layers");
       setLastUsedColor(fill);
       const selectedLayers = getMutableSelectedLayers(liveLayers, selection);
-      batch(() => {
-        for (const layer of selectedLayers) {
-          layer.set("fill", fill);
-        }
-      });
+      for (const layer of selectedLayers) {
+        layer.set("fill", fill);
+      }
     },
-    [liveLayers, selection, setLastUsedColor]
+    [selection, setLastUsedColor]
   );
 
   /**
