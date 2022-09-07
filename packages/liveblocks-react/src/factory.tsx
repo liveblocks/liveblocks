@@ -600,11 +600,13 @@ export function createRoomContext<
   ):
     | readonly number[]
     | readonly { readonly connectionId: number; readonly data: T }[] {
-    const _useOthers = useOthers; // Deliberately bypass React warnings about conditionally calling hooks
+    // Deliberately bypass React warnings about conditionally calling hooks
+    const _useCallback = React.useCallback;
+    const _useOthers = useOthers;
     if (itemSelector === undefined) {
       return _useOthers(/* not inlined! */ connectionIdSelector, shallow);
     } else {
-      const wrappedSelector = React.useCallback(
+      const wrappedSelector = _useCallback(
         (others: Others<TPresence, TUserMeta>) =>
           others.map((other) => ({
             connectionId: other.connectionId,
@@ -613,7 +615,7 @@ export function createRoomContext<
         [itemSelector]
       );
 
-      const wrappedIsEqual = React.useCallback(
+      const wrappedIsEqual = _useCallback(
         (
           a: { readonly connectionId: number; readonly data: T }[],
           b: { readonly connectionId: number; readonly data: T }[]
@@ -650,9 +652,11 @@ export function createRoomContext<
     selector?: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (a: T, b: T) => boolean
   ): T | User<TPresence, TUserMeta> {
-    const _useOthers = useOthers; // Deliberately bypass React warnings about conditionally calling hooks
+    // Deliberately bypass React warnings about conditionally calling hooks
+    const _useCallback = React.useCallback;
+    const _useOthers = useOthers;
     if (selector === undefined) {
-      const selector = React.useCallback(
+      const selector = _useCallback(
         (others: Others<TPresence, TUserMeta>) =>
           // TODO: Make this O(1) instead of O(n)?
           others.find((other) => other.connectionId === connectionId),
@@ -666,7 +670,7 @@ export function createRoomContext<
       }
       return other;
     } else {
-      const wrappedSelector = React.useCallback(
+      const wrappedSelector = _useCallback(
         (others: Others<TPresence, TUserMeta>) => {
           // TODO: Make this O(1) instead of O(n)?
           const other = others.find(
@@ -677,7 +681,7 @@ export function createRoomContext<
         [connectionId, selector]
       );
 
-      const wrappedIsEqual = React.useCallback(
+      const wrappedIsEqual = _useCallback(
         (a: T | typeof sentinel, b: T | typeof sentinel): boolean => {
           if (a === sentinel || b === sentinel) {
             return a === b;
