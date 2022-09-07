@@ -1,4 +1,5 @@
 import type { Callback, Observable } from "../EventSource";
+import type { ReadonlyArrayWithLegacyMethods } from "../LegacyArray";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -226,24 +227,6 @@ export type Client = {
    */
   leave(roomId: string): void;
 };
-
-// prettier-ignore
-export type ReadonlyArrayWithLegacyMethods<T> =
-  // Base type
-  readonly T[]
-  &
-  // Legacy methods
-  // (These will be removed in a future release.)
-  {
-    /**
-     * @deprecated Prefer the normal .length property on arrays.
-     */
-    readonly count: number;
-    /**
-     * @deprecated Calling .toArray() is no longer needed
-     */
-    readonly toArray: () => readonly T[];
-  };
 
 /**
  * Represents all the other users connected in the room. Treated as immutable.
