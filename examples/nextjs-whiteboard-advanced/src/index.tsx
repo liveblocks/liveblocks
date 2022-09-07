@@ -236,8 +236,9 @@ function Canvas() {
   /**
    * Move all the selected layers to the back
    */
-  const moveToBack = useCallback(() => {
-    batch(() => {
+  const moveToBack = useMutation(
+    ({ root }) => {
+      const liveLayerIds = root.get("layerIds");
       const indices: number[] = [];
 
       const arr = liveLayerIds.toArray();
@@ -251,8 +252,9 @@ function Canvas() {
       for (let i = 0; i < indices.length; i++) {
         liveLayerIds.move(indices[i], i);
       }
-    });
-  }, [liveLayerIds, selection]);
+    },
+    [selection]
+  );
 
   /**
    * Start resizing the layer
