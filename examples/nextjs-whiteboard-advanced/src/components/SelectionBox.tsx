@@ -1,11 +1,10 @@
-import { LiveMap, LiveObject } from "@liveblocks/client";
 import { memo } from "react";
 import styles from "./SelectionBox.module.css";
 import { Layer, LayerType, Side, XYWH } from "../types";
 
 type SelectionBoxProps = {
   selection: string[];
-  layers: LiveMap<string, LiveObject<Layer>>;
+  layers: ReadonlyMap<string, Layer>;
   bounds: XYWH;
   onResizeHandlePointerDown: (corner: Side, initialBounds: XYWH) => void;
   isAnimated: boolean;
@@ -24,7 +23,7 @@ const SelectionBox = memo(
     const isShowingHandles =
       selection.length === 1 &&
       // Resize path is not supported
-      layers.get(selection[0])?.get("type") !== LayerType.Path;
+      layers.get(selection[0])?.type !== LayerType.Path;
 
     return (
       <>

@@ -606,7 +606,7 @@ function Canvas() {
               <SelectionBox
                 selection={selection}
                 bounds={selectionBounds}
-                layers={liveLayers}
+                layers={layers}
                 onResizeHandlePointerDown={onResizeHandlePointerDown}
                 isAnimated={
                   canvasState.mode !== CanvasMode.Translating &&
