@@ -484,6 +484,34 @@ function Canvas() {
     return layerIdsToColorSelection;
   }, [selections]);
 
+  const pointerMove = useMutation(
+    ({ setMyPresence }, e: React.PointerEvent) => {
+      e.preventDefault();
+      const current = pointerEventToCanvasPoint(e, camera);
+      if (canvasState.mode === CanvasMode.Pressing) {
+        startMultiSelection(current, canvasState.origin);
+      } else if (canvasState.mode === CanvasMode.SelectionNet) {
+        updateSelectionNet(current, canvasState.origin);
+      } else if (canvasState.mode === CanvasMode.Translating) {
+        translateSelectedLayers(current);
+      } else if (canvasState.mode === CanvasMode.Resizing) {
+        resizeSelectedLayer(current);
+      } else if (canvasState.mode === CanvasMode.Pencil) {
+        continueDrawing(current, e);
+      }
+      setMyPresence({ cursor: current });
+    },
+    [
+      camera,
+      canvasState,
+      continueDrawing,
+      resizeSelectedLayer,
+      startMultiSelection,
+      translateSelectedLayers,
+      updateSelectionNet,
+    ]
+  );
+
   return (
     <>
       <div className={styles.canvas}>
@@ -527,22 +555,7 @@ function Canvas() {
           onPointerLeave={() => {
             setPresence({ cursor: null });
           }}
-          onPointerMove={(e) => {
-            e.preventDefault();
-            const current = pointerEventToCanvasPoint(e, camera);
-            if (canvasState.mode === CanvasMode.Pressing) {
-              startMultiSelection(current, canvasState.origin);
-            } else if (canvasState.mode === CanvasMode.SelectionNet) {
-              updateSelectionNet(current, canvasState.origin);
-            } else if (canvasState.mode === CanvasMode.Translating) {
-              translateSelectedLayers(current);
-            } else if (canvasState.mode === CanvasMode.Resizing) {
-              resizeSelectedLayer(current);
-            } else if (canvasState.mode === CanvasMode.Pencil) {
-              continueDrawing(current, e);
-            }
-            setPresence({ cursor: current });
-          }}
+          onPointerMove={pointerMove}
           onPointerUp={(e) => {
             const point = pointerEventToCanvasPoint(e, camera);
 
