@@ -486,14 +486,9 @@ export function createRoomContext<
     const room = useRoom();
     const presence = room.getPresence();
     const rerender = useRerender();
+    const setPresence = room.updatePresence;
 
     React.useEffect(() => room.events.me.subscribe(rerender), [room, rerender]);
-
-    const setPresence = React.useCallback(
-      (patch: Partial<TPresence>, options?: { addToHistory: boolean }) =>
-        room.updatePresence(patch, options),
-      [room]
-    );
 
     return [presence, setPresence];
   }
