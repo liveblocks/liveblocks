@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactElement, ReactNode } from "react";
 import * as React from "react";
 
 type Props = {
@@ -23,7 +23,7 @@ type Props = {
  *   </ClientSideSuspense>
  *
  */
-export function ClientSideSuspense(props: Props): ReactNode {
+export function ClientSideSuspense(props: Props): ReactElement {
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
