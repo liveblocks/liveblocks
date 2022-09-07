@@ -366,8 +366,8 @@ function Canvas() {
   /**
    * Resize selected layer. Only resizing a single layer is allowed.
    */
-  const resizeSelectedLayer = useCallback(
-    (point: Point) => {
+  const resizeSelectedLayer = useMutation(
+    ({ root }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Resizing) {
         return;
       }
@@ -378,12 +378,13 @@ function Canvas() {
         point
       );
 
+      const liveLayers = root.get("layers");
       const layer = liveLayers.get(selection[0]);
       if (layer) {
         layer.update(bounds);
       }
     },
-    [canvasState, liveLayers]
+    [canvasState]
   );
 
   const unselectLayers = useCallback(() => {
