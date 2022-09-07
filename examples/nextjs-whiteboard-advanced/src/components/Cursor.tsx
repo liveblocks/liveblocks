@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { useOther } from "../../liveblocks.config";
 import { connectionIdToColor } from "../utils";
 
@@ -5,7 +6,7 @@ type Props = {
   connectionId: number;
 };
 
-export default function Cursor({ connectionId }: Props) {
+function Cursor({ connectionId }: Props) {
   const cursor = useOther(connectionId, (user) => user.presence.cursor);
   if (!cursor) {
     return null;
@@ -23,3 +24,5 @@ export default function Cursor({ connectionId }: Props) {
     />
   );
 }
+
+export default memo(Cursor);
