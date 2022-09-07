@@ -19,7 +19,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId} initialStorage={{ items: new LiveList() }}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{} as never}
+      initialStorage={{ items: new LiveList() }}
+    >
       <Sandbox />
     </RoomProvider>
   );

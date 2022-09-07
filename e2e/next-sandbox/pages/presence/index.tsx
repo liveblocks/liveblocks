@@ -42,7 +42,7 @@ export default function Home() {
         Enter
       </button>
       {isVisible && (
-        <RoomProvider id={roomId}>
+        <RoomProvider id={roomId} initialPresence={{}}>
           <PresenceSandbox />
           <EventSandbox />
         </RoomProvider>
