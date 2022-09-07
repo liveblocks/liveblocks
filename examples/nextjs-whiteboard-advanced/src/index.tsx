@@ -407,8 +407,8 @@ function Canvas() {
   /**
    * Continue the drawing and send the current draft to other users in the room
    */
-  const continueDrawing = useCallback(
-    (point: Point, e: React.PointerEvent) => {
+  const continueDrawing = useMutation(
+    ({ setMyPresence }, point: Point, e: React.PointerEvent) => {
       if (
         canvasState.mode !== CanvasMode.Pencil ||
         e.buttons !== 1 ||
@@ -417,7 +417,7 @@ function Canvas() {
         return;
       }
 
-      setPresence({
+      setMyPresence({
         cursor: point,
         pencilDraft:
           pencilDraft.length === 1 &&
@@ -427,7 +427,7 @@ function Canvas() {
             : [...pencilDraft, [point.x, point.y, e.pressure]],
       });
     },
-    [canvasState.mode, setPresence, pencilDraft]
+    [canvasState.mode, pencilDraft]
   );
 
   /**
