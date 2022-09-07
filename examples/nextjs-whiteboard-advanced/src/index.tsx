@@ -2,13 +2,10 @@ import {
   useOtherIds,
   useMutation,
   useUpdateMyPresence,
-  useList,
   RoomProvider,
-  useMap,
   useHistory,
   useStorage,
   useSelf,
-  useBatch,
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
@@ -88,10 +85,8 @@ function Loading() {
 function Canvas() {
   // layers is a map that contains all the shapes drawn on the canvas
   const layers = useStorage((root) => root.layers);
-  const liveLayers = useMap("layers");
   // layerIds is list of all the layer ids ordered by their z-index
   const layerIds = useStorage((root) => root.layerIds);
-  const liveLayerIds = useList("layerIds");
 
   const { selection, pencilDraft } = useSelf(
     (me) => ({
@@ -110,7 +105,6 @@ function Canvas() {
     g: 142,
     b: 42,
   });
-  const batch = useBatch();
   const history = useHistory();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
