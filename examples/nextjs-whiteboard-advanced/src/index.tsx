@@ -336,32 +336,31 @@ function Canvas() {
   /**
    * Move selected layers on the canvas
    */
-  const translateSelectedLayers = useCallback(
-    (point: Point) => {
+  const translateSelectedLayers = useMutation(
+    ({ root }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Translating) {
         return;
       }
 
-      batch(() => {
-        const offset = {
-          x: point.x - canvasState.current.x,
-          y: point.y - canvasState.current.y,
-        };
+      const offset = {
+        x: point.x - canvasState.current.x,
+        y: point.y - canvasState.current.y,
+      };
 
-        for (const id of selection) {
-          const layer = liveLayers.get(id);
-          if (layer) {
-            layer.update({
-              x: layer.get("x") + offset.x,
-              y: layer.get("y") + offset.y,
-            });
-          }
+      const liveLayers = root.get("layers");
+      for (const id of selection) {
+        const layer = liveLayers.get(id);
+        if (layer) {
+          layer.update({
+            x: layer.get("x") + offset.x,
+            y: layer.get("y") + offset.y,
+          });
         }
+      }
 
-        setState({ mode: CanvasMode.Translating, current: point });
-      });
+      setState({ mode: CanvasMode.Translating, current: point });
     },
-    [liveLayers, canvasState, selection, batch]
+    [canvasState, selection]
   );
 
   /**
