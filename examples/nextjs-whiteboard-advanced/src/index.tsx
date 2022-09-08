@@ -28,7 +28,6 @@ import {
   colorToCss,
   connectionIdToColor,
   findIntersectingLayersWithRectangle,
-  getMutableSelectedLayers,
   penPointsToPathLayer,
   pointerEventToCanvasPoint,
   resizeBounds,
@@ -170,10 +169,9 @@ function Canvas() {
     ({ root }, fill: Color) => {
       const liveLayers = root.get("layers");
       setLastUsedColor(fill);
-      const selectedLayers = getMutableSelectedLayers(liveLayers, selection);
-      for (const layer of selectedLayers) {
-        layer.set("fill", fill);
-      }
+      selection.forEach((id) => {
+        liveLayers.get(id)?.set("fill", fill);
+      });
     },
     [selection, setLastUsedColor]
   );

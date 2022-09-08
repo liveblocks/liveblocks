@@ -143,20 +143,6 @@ export function findIntersectingLayersWithRectangle(
   return ids;
 }
 
-export function getMutableSelectedLayers(
-  layers: LiveMap<string, LiveObject<Layer>>,
-  selection: string[]
-): LiveObject<Layer>[] {
-  const result = [];
-  for (const id of selection) {
-    const layer = layers.get(id);
-    if (layer) {
-      result.push(layer);
-    }
-  }
-  return result;
-}
-
 function getSelectedLayers(
   layers: ReadonlyMap<string, Layer>,
   selection: string[]
