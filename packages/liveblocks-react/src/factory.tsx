@@ -17,7 +17,7 @@ import type {
   RoomInitializers,
   ToImmutable,
 } from "@liveblocks/client/internal";
-import { asArrayWithLegacyMethods } from "@liveblocks/client/internal";
+import { asArrayWithLegacyMethods, errorIf } from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
@@ -784,8 +784,32 @@ export function createRoomContext<
 
     const getSnapshot: () => Snapshot = room.getSelf;
 
-    const selector =
+    const selector1 =
       maybeSelector ?? (identity as (me: User<TPresence, TUserMeta>) => T);
+
+    const selector = React.useCallback(
+      (me: User<TPresence, TUserMeta>): T => {
+        const result1 = selector1(me);
+        const result2 = selector1(me);
+        const eq = isEqual ?? Object.is;
+        if (eq(result1, result2)) {
+          return result1;
+        }
+
+        // Not equal! Something is likely not correctly set up!
+        errorIf(
+          shallow(result1, result2),
+          "The result of calling this selector did not return the same _instance_. Did you forget a shallow?"
+        );
+        errorIf(
+          JSON.stringify(result1) === JSON.stringify(result2),
+          "The result of calling this selector did not return the same _instance_, but we noticed it serialized to the same JSON value. Did you forget a custom comparison function?"
+        );
+
+        return result2;
+      },
+      [selector1, isEqual]
+    );
 
     const wrappedSelector = React.useCallback(
       (me: Snapshot): Selection => (me !== null ? selector(me) : null),
