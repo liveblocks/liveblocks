@@ -226,7 +226,7 @@ type RoomContextBundle<
    */
   useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | null;
 
   /**
@@ -290,7 +290,7 @@ type RoomContextBundle<
    */
   useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
   /**
@@ -336,7 +336,7 @@ type RoomContextBundle<
    */
   useOtherIds<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
 
   /**
@@ -362,7 +362,7 @@ type RoomContextBundle<
   useOther<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
 
   /**
@@ -405,7 +405,7 @@ type RoomContextBundle<
    */
   useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | null;
 
   /**
@@ -446,19 +446,19 @@ type RoomContextBundle<
   // prettier-ignore
   suspense: {
     useStorage(): ToImmutable<TStorage>;
-    useStorage<T>(selector: (root: ToImmutable<TStorage>) => T, isEqual?: (a: T, b: T) => boolean): T;
+    useStorage<T>(selector: (root: ToImmutable<TStorage>) => T, isEqual?: (prev: T, curr: T) => boolean): T;
 
     useSelf(): User<TPresence, TUserMeta>;
-    useSelf<T>(selector: (me: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
+    useSelf<T>(selector: (me: User<TPresence, TUserMeta>) => T, isEqual?: (prev: T, curr: T) => boolean): T;
 
     useOthers(): Others<TPresence, TUserMeta>;
-    useOthers<T>(selector: (others: Others<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
+    useOthers<T>(selector: (others: Others<TPresence, TUserMeta>) => T, isEqual?: (prev: T, curr: T) => boolean): T;
 
     useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
-    useOtherIds<T>(itemSelector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): readonly { readonly connectionId: number; readonly data: T }[];
+    useOtherIds<T>(itemSelector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (prev: T, curr: T) => boolean): readonly { readonly connectionId: number; readonly data: T }[];
 
     useOther(connectionId: number): User<TPresence, TUserMeta>;
-    useOther<T>(connectionId: number, selector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (a: T, b: T) => boolean): T;
+    useOther<T>(connectionId: number, selector: (other: User<TPresence, TUserMeta>) => T, isEqual?: (prev: T, curr: T) => boolean): T;
 
     // Legacy hooks
     useList<TKey extends Extract<keyof TStorage, string>>(key: TKey): TStorage[TKey];
@@ -570,11 +570,11 @@ export function createRoomContext<
   function useOthers(): Others<TPresence, TUserMeta>;
   function useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useOthers<T>(
     selector?: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
     const room = useRoom();
     const subscribe = room.events.others.subscribe;
@@ -592,11 +592,11 @@ export function createRoomContext<
   function useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
   function useOtherIds<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
   function useOtherIds<T>(
     itemSelector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ):
     | readonly number[]
     | readonly { readonly connectionId: number; readonly data: T }[] {
@@ -645,12 +645,12 @@ export function createRoomContext<
   function useOther<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useOther<T>(
     connectionId: number,
     selector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     // Deliberately bypass React warnings about conditionally calling hooks
     const _useCallback = React.useCallback;
@@ -682,13 +682,13 @@ export function createRoomContext<
       );
 
       const wrappedIsEqual = _useCallback(
-        (a: T | typeof sentinel, b: T | typeof sentinel): boolean => {
-          if (a === sentinel || b === sentinel) {
-            return a === b;
+        (prev: T | typeof sentinel, curr: T | typeof sentinel): boolean => {
+          if (prev === sentinel || curr === sentinel) {
+            return prev === curr;
           }
 
           const eq = isEqual ?? Object.is;
-          return eq(a, b);
+          return eq(prev, curr);
         },
         [isEqual]
       );
@@ -759,11 +759,11 @@ export function createRoomContext<
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T | null, b: T | null) => boolean
+    isEqual?: (prev: T | null, curr: T | null) => boolean
   ): T | null;
   function useSelf<T>(
     maybeSelector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T | null, b: T | null) => boolean
+    isEqual?: (prev: T | null, curr: T | null) => boolean
   ): T | User<TPresence, TUserMeta> | null {
     type Snapshot = User<TPresence, TUserMeta> | null;
     type Selection = T | null;
@@ -917,11 +917,11 @@ export function createRoomContext<
   function useStorage(): ToImmutable<TStorage> | null;
   function useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T | null, b: T | null) => boolean
+    isEqual?: (prev: T | null, curr: T | null) => boolean
   ): T | null;
   function useStorage<T>(
     maybeSelector?: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T | null, b: T | null) => boolean
+    isEqual?: (prev: T | null, curr: T | null) => boolean
   ): T | null {
     type Snapshot = ToImmutable<TStorage> | null;
     type Selection = T | null;
@@ -1057,11 +1057,11 @@ export function createRoomContext<
   function useStorageSuspense(): ToImmutable<TStorage>;
   function useStorageSuspense<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useStorageSuspense<T>(
     selector?: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | ToImmutable<TStorage> {
     useSuspendUntilStorageLoaded();
 
@@ -1069,18 +1069,18 @@ export function createRoomContext<
     // conditionally
     return useStorage(
       selector as (root: ToImmutable<TStorage>) => T,
-      isEqual as (a: T | null, b: T | null) => boolean
+      isEqual as (prev: T | null, curr: T | null) => boolean
     ) as T | ToImmutable<TStorage>;
   }
 
   function useSelfSuspense(): User<TPresence, TUserMeta>;
   function useSelfSuspense<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useSelfSuspense<T>(
     selector?: (me: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
 
@@ -1088,13 +1088,13 @@ export function createRoomContext<
     // conditionally
     return useSelf(
       selector as (me: User<TPresence, TUserMeta>) => T,
-      isEqual as (a: T | null, b: T | null) => boolean
+      isEqual as (prev: T | null, curr: T | null) => boolean
     ) as T | User<TPresence, TUserMeta>;
   }
 
   function useOthersSuspense<T>(
     selector?: (others: Others<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
 
@@ -1102,18 +1102,18 @@ export function createRoomContext<
     // conditionally
     return useOthers(
       selector as (others: Others<TPresence, TUserMeta>) => T,
-      isEqual as (a: T, b: T) => boolean
+      isEqual as (prev: T, curr: T) => boolean
     ) as T | Others<TPresence, TUserMeta>;
   }
 
   function useOtherIdsSuspense(): readonly number[];
   function useOtherIdsSuspense<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
   function useOtherIdsSuspense<T>(
     itemSelector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ):
     | readonly number[]
     | readonly { readonly connectionId: number; readonly data: T }[] {
@@ -1123,7 +1123,7 @@ export function createRoomContext<
     // conditionally
     return useOtherIds(
       itemSelector as (other: User<TPresence, TUserMeta>) => T,
-      isEqual as (a: T, b: T) => boolean
+      isEqual as (prev: T, curr: T) => boolean
     ) as
       | readonly number[]
       | readonly { readonly connectionId: number; readonly data: T }[];
@@ -1133,12 +1133,12 @@ export function createRoomContext<
   function useOtherSuspense<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T;
   function useOtherSuspense<T>(
     connectionId: number,
     selector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (a: T, b: T) => boolean
+    isEqual?: (prev: T, curr: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
 
@@ -1147,7 +1147,7 @@ export function createRoomContext<
     return useOther(
       connectionId,
       selector as (other: User<TPresence, TUserMeta>) => T,
-      isEqual as (a: T, b: T) => boolean
+      isEqual as (prev: T, curr: T) => boolean
     ) as T | User<TPresence, TUserMeta>;
   }
 
