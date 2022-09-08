@@ -1,5 +1,4 @@
 import { ImmutableRef, merge } from "./ImmutableRef";
-import type { ReadonlyArrayWithLegacyMethods } from "./LegacyArray";
 import { asArrayWithLegacyMethods } from "./LegacyArray";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
 import { compact, compactObject, freeze } from "./utils";
