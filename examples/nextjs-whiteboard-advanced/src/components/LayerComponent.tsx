@@ -3,7 +3,7 @@ import React, { memo } from "react";
 import Ellipse from "./Ellipse";
 import Path from "./Path";
 import Rectangle from "./Rectangle";
-import { CanvasMode, Layer, LayerType } from "../types";
+import { CanvasMode, LayerType } from "../types";
 import { colorToCss } from "../utils";
 
 type Props = {
@@ -15,7 +15,10 @@ type Props = {
 
 const LayerComponent = memo(
   ({ mode, onLayerPointerDown, id, selectionColor }: Props) => {
-    const layer = useStorage((root) => root.layers.get(id))!;
+    const layer = useStorage((root) => root.layers.get(id));
+    if (!layer) {
+      return null;
+    }
 
     const isAnimated =
       mode !== CanvasMode.Translating && mode !== CanvasMode.Resizing;

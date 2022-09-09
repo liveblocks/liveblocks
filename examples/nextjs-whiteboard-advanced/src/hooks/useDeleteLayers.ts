@@ -6,7 +6,7 @@ import { useSelf, useMutation } from "../../liveblocks.config";
 export default function useDeleteLayers() {
   const selection = useSelf((me) => me.presence.selection);
   return useMutation(
-    ({ root }) => {
+    ({ root, setMyPresence }) => {
       const liveLayers = root.get("layers");
       const liveLayerIds = root.get("layerIds");
       for (const id of selection) {
@@ -18,6 +18,7 @@ export default function useDeleteLayers() {
           liveLayerIds.delete(index);
         }
       }
+      setMyPresence({ selection: [] }, { addToHistory: true });
     },
     [selection]
   );
