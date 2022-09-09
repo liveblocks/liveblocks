@@ -1478,7 +1478,10 @@ function makeStateMachine<
 
   function batch<T>(callback: () => T): T {
     if (state.activeBatch) {
-      throw new Error("batch should not be called during a batch");
+      // If there already is an active batch, we don't have to handle this in
+      // any special way. That outer active batch will handle the batch. This
+      // nested call can be a no-op.
+      return callback();
     }
 
     state.activeBatch = {
