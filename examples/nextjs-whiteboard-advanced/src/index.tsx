@@ -1,7 +1,6 @@
 import {
   useOtherIds,
   useMutation,
-  useUpdateMyPresence,
   RoomProvider,
   useHistory,
   useStorage,
@@ -94,7 +93,6 @@ function Canvas() {
     }),
     shallow
   );
-  const setPresence = useUpdateMyPresence();
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
   });
@@ -476,7 +474,33 @@ function Canvas() {
     return layerIdsToColorSelection;
   }, [selections]);
 
-  const pointerMove = useMutation(
+  const onWheel = useCallback((e: React.WheelEvent) => {
+    // Pan the camera based on the wheel delta
+    setCamera((camera) => ({
+      x: camera.x - e.deltaX,
+      y: camera.y - e.deltaY,
+    }));
+  }, []);
+
+  const onPointerDown = React.useCallback(
+    (e: React.PointerEvent) => {
+      const point = pointerEventToCanvasPoint(e, camera);
+
+      if (canvasState.mode === CanvasMode.Inserting) {
+        return;
+      }
+
+      if (canvasState.mode === CanvasMode.Pencil) {
+        startDrawing(point, e.pressure);
+        return;
+      }
+
+      setState({ origin: point, mode: CanvasMode.Pressing });
+    },
+    [camera, canvasState.mode, setState, startDrawing]
+  );
+
+  const onPointerMove = useMutation(
     ({ setMyPresence }, e: React.PointerEvent) => {
       e.preventDefault();
       const current = pointerEventToCanvasPoint(e, camera);
@@ -504,6 +528,45 @@ function Canvas() {
     ]
   );
 
+  const onPointerLeave = useMutation(
+    ({ setMyPresence }) => setMyPresence({ cursor: null }),
+    []
+  );
+
+  const onPointerUp = useMutation(
+    ({}, e) => {
+      const point = pointerEventToCanvasPoint(e, camera);
+
+      if (
+        canvasState.mode === CanvasMode.None ||
+        canvasState.mode === CanvasMode.Pressing
+      ) {
+        unselectLayers();
+        setState({
+          mode: CanvasMode.None,
+        });
+      } else if (canvasState.mode === CanvasMode.Pencil) {
+        insertPath();
+      } else if (canvasState.mode === CanvasMode.Inserting) {
+        insertLayer(canvasState.layerType, point);
+      } else {
+        setState({
+          mode: CanvasMode.None,
+        });
+      }
+      history.resume();
+    },
+    [
+      camera,
+      canvasState,
+      history,
+      insertLayer,
+      insertPath,
+      setState,
+      unselectLayers,
+    ]
+  );
+
   return (
     <>
       <div className={styles.canvas}>
@@ -523,53 +586,11 @@ function Canvas() {
         )}
         <svg
           className={styles.renderer_svg}
-          onWheel={(e) => {
-            // Pan the camera based on the wheel delta
-            setCamera((camera) => ({
-              x: camera.x - e.deltaX,
-              y: camera.y - e.deltaY,
-            }));
-          }}
-          onPointerDown={(e) => {
-            const point = pointerEventToCanvasPoint(e, camera);
-
-            if (canvasState.mode === CanvasMode.Inserting) {
-              return;
-            }
-
-            if (canvasState.mode === CanvasMode.Pencil) {
-              startDrawing(point, e.pressure);
-              return;
-            }
-
-            setState({ origin: point, mode: CanvasMode.Pressing });
-          }}
-          onPointerLeave={() => {
-            setPresence({ cursor: null });
-          }}
-          onPointerMove={pointerMove}
-          onPointerUp={(e) => {
-            const point = pointerEventToCanvasPoint(e, camera);
-
-            if (
-              canvasState.mode === CanvasMode.None ||
-              canvasState.mode === CanvasMode.Pressing
-            ) {
-              unselectLayers();
-              setState({
-                mode: CanvasMode.None,
-              });
-            } else if (canvasState.mode === CanvasMode.Pencil) {
-              insertPath();
-            } else if (canvasState.mode === CanvasMode.Inserting) {
-              insertLayer(canvasState.layerType, point);
-            } else {
-              setState({
-                mode: CanvasMode.None,
-              });
-            }
-            history.resume();
-          }}
+          onWheel={onWheel}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerLeave={onPointerLeave}
+          onPointerUp={onPointerUp}
         >
           <g
             style={{
