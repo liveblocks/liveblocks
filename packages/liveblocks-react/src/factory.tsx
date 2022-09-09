@@ -1032,13 +1032,10 @@ export function createRoomContext<
             root,
             setMyPresence,
           };
-          return ((...args) => {
-            let rv;
-            room.batch(() => {
-              rv = callback(mutationCtx, ...args);
-            });
-            return rv;
-          }) as OmitFirstArg<F>;
+          return ((...args) =>
+            room.batch(() =>
+              callback(mutationCtx, ...args)
+            )) as OmitFirstArg<F>;
         } else {
           return ((): void => {
             throw new Error(
