@@ -700,7 +700,7 @@ export type Room<
    *   room.updatePresence({ cursor: { x: 100, y: 100 }});
    * });
    */
-  batch: (fn: () => void) => void;
+  batch<T>(fn: () => T): T;
 
   /**
    * @internal Utilities only used for unit testing.
