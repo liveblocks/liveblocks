@@ -161,20 +161,6 @@ function Canvas() {
   }, [selection, deleteLayers, history]);
 
   /**
-   * Change the color of all the selected layers
-   */
-  const setFill = useMutation(
-    ({ root }, fill: Color) => {
-      const liveLayers = root.get("layers");
-      setLastUsedColor(fill);
-      selection.forEach((id) => {
-        liveLayers.get(id)?.set("fill", fill);
-      });
-    },
-    [selection, setLastUsedColor]
-  );
-
-  /**
    * Select the layer if not already selected and start translating the selection
    */
   const onLayerPointerDown = useMutation(
@@ -578,7 +564,7 @@ function Canvas() {
             }
             x={selectionBounds.width / 2 + selectionBounds.x + camera.x}
             y={selectionBounds.y + camera.y}
-            setFill={setFill}
+            setLastUsedColor={setLastUsedColor}
             moveToFront={moveToFront}
             moveToBack={moveToBack}
             deleteItems={deleteLayers}

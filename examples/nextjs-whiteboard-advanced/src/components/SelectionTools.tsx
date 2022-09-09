@@ -3,12 +3,13 @@ import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
 import { Color } from "../types";
 import styles from "./SelectionTools.module.css";
+import { useSelf, useMutation } from "../../liveblocks.config";
 
 type SelectionToolsProps = {
   isAnimated: boolean;
   x: number;
   y: number;
-  setFill: (color: Color) => void;
+  setLastUsedColor: (color: Color) => void;
   moveToFront: () => void;
   moveToBack: () => void;
   deleteItems: () => void;
@@ -18,11 +19,24 @@ export default function SelectionTools({
   isAnimated,
   x,
   y,
-  setFill,
+  setLastUsedColor,
   moveToFront,
   moveToBack,
   deleteItems,
 }: SelectionToolsProps) {
+  const selection = useSelf((me) => me.presence.selection);
+
+  const setFill = useMutation(
+    ({ root }, fill: Color) => {
+      const liveLayers = root.get("layers");
+      setLastUsedColor(fill);
+      selection.forEach((id) => {
+        liveLayers.get(id)?.set("fill", fill);
+      });
+    },
+    [selection, setLastUsedColor]
+  );
+
   return (
     <div
       className={styles.selection_inspector}
