@@ -1393,7 +1393,7 @@ function makeStateMachine<
     }
   }
 
-  function getStorage(): Promise<{
+  async function getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }> {
     if (state.root) {
@@ -1403,11 +1403,10 @@ function makeStateMachine<
       });
     }
 
-    return startLoadingStorage().then(() => {
-      return {
-        root: nn(state.root) as LiveObject<TStorage>,
-      };
-    });
+    await startLoadingStorage();
+    return {
+      root: nn(state.root) as LiveObject<TStorage>,
+    };
   }
 
   function undo() {
@@ -1808,24 +1807,21 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "custom") {
-    const authWithResponseValidation = (room: string) => {
-      return authentication.callback(room).then((response) => {
-        if (!response || !response.token) {
-          throw new Error(
-            'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-          );
-        }
-        return response;
-      });
+    return async (room: string) => {
+      const response = await authentication.callback(room);
+      if (!response || !response.token) {
+        throw new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
+      return response;
     };
-
-    return authWithResponseValidation;
   }
 
   throw new Error("Internal error. Unexpected authentication type");
 }
 
-function fetchAuthEndpoint(
+async function fetchAuthEndpoint(
   fetch: typeof window.fetch,
   endpoint: string,
   body: {
@@ -1833,38 +1829,35 @@ function fetchAuthEndpoint(
     publicApiKey?: string;
   }
 ): Promise<{ token: string }> {
-  return fetch(endpoint, {
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new AuthenticationError(
-          `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
-        );
-      }
-
-      return (res.json() as Promise<Json>).catch((er) => {
-        throw new AuthenticationError(
-          `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
-        );
-      });
-    })
-    .then((data) => {
-      if (!isPlainObject(data) || typeof data.token !== "string") {
-        throw new AuthenticationError(
-          `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-            data
-          )}`
-        );
-      }
-
-      const { token } = data;
-      return { token };
-    });
+  });
+  if (!res.ok) {
+    throw new AuthenticationError(
+      `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
+    );
+  }
+  let data: Json;
+  try {
+    data = await (res.json() as Promise<Json>);
+  } catch (er) {
+    throw new AuthenticationError(
+      `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
+    );
+  }
+  if (!isPlainObject(data) || typeof data.token !== "string") {
+    throw new AuthenticationError(
+      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+        data
+      )}`
+    );
+  }
+  const { token } = data;
+  return { token };
 }
 
 class AuthenticationError extends Error {
