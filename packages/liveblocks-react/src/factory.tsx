@@ -92,7 +92,7 @@ type RoomContextBundle<
    * All the modifications are merged in a single history item (undo/redo).
    * All the subscribers are called only after the batch is over.
    */
-  useBatch(): (callback: () => void) => void;
+  useBatch<T>(): (callback: () => T) => T;
 
   /**
    * Returns a callback that lets you broadcast custom events to other users in the room
@@ -859,7 +859,7 @@ export function createRoomContext<
     return canRedo;
   }
 
-  function useBatch(): (callback: () => void) => void {
+  function useBatch<T>(): (callback: () => T) => T {
     return useRoom().batch;
   }
 

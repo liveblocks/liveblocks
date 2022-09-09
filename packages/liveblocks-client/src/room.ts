@@ -117,7 +117,7 @@ type Machine<
   ): void;
   broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
-  batch(callback: () => void): void;
+  batch<T>(callback: () => T): T;
   undo(): void;
   redo(): void;
   canUndo(): boolean;
@@ -1476,7 +1476,7 @@ function makeStateMachine<
     return state.redoStack.length > 0;
   }
 
-  function batch(callback: () => void) {
+  function batch<T>(callback: () => T): T {
     if (state.activeBatch) {
       throw new Error("batch should not be called during a batch");
     }
@@ -1492,7 +1492,7 @@ function makeStateMachine<
     };
 
     try {
-      callback();
+      return callback();
     } finally {
       // "Pop" the current batch of the state, closing the active batch, but
       // handling it separately here
