@@ -67,16 +67,6 @@ module.exports = {
           "Using `JSON.parse()` is type-unsafe. Prefer using the `tryParseJson()` utility method (from `src/utils`).",
       },
       {
-        selector: "FunctionDeclaration[async=true]",
-        message:
-          "Using `async` functions will emit extra support code in our CommonJS bundle, increasing its size. Using the Promise API instead will lead to a smaller bundle.",
-      },
-      {
-        selector: "ArrowFunctionExpression[async=true]",
-        message:
-          "Using `async` functions will emit extra support code in our CommonJS bundle, increasing its size. Using the Promise API instead will lead to a smaller bundle.",
-      },
-      {
         selector: "TSNonNullExpression",
         message:
           "Non-null assertions mask real problems. Please use `nn(...)` (from src/assert.ts) instead.",

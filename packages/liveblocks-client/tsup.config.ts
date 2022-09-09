@@ -5,7 +5,7 @@ export default defineConfig({
   dts: true,
   splitting: true,
   clean: true,
-  target: "es5",
+  target: "es2015",
   format: [
     "cjs",
 
