@@ -317,6 +317,30 @@ describe("Storage", () => {
       });
     });
 
+    it("batch callbacks can return a value", async () => {
+      const { storage, batch } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1
+      );
+
+      const items = storage.root.get("items");
+
+      const numInserted = batch(() => {
+        const before = items.length;
+        items.push("A");
+        items.push("B");
+        items.push("C");
+        return items.length - before;
+      });
+
+      expect(numInserted).toEqual(3);
+    });
+
     it("calling undo during a batch should throw", async () => {
       const { undo, batch } = await prepareStorageTest<{ a: number }>(
         [createSerializedObject("0:0", { a: 0 })],
