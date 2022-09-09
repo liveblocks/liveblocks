@@ -9,7 +9,6 @@ import {
   PathLayer,
   Camera,
 } from "./types";
-import type { LiveObject, LiveMap } from "@liveblocks/client";
 
 export function colorToCss(color: Color) {
   return `#${color.r.toString(16).padStart(2, "0")}${color.g
@@ -141,63 +140,6 @@ export function findIntersectingLayersWithRectangle(
   }
 
   return ids;
-}
-
-function getSelectedLayers(
-  layers: ReadonlyMap<string, Layer>,
-  selection: string[]
-): Layer[] {
-  const result = [];
-  for (const id of selection) {
-    const layer = layers.get(id);
-    if (layer) {
-      result.push(layer);
-    }
-  }
-  return result;
-}
-
-export function boundingBox(
-  allLayers: ReadonlyMap<string, Layer>,
-  selection: string[]
-): XYWH | null {
-  if (selection.length === 0) {
-    return null;
-  }
-
-  const layers = getSelectedLayers(allLayers, selection);
-
-  if (layers.length === 0) {
-    return null;
-  }
-
-  let left = layers[0].x;
-  let right = layers[0].x + layers[0].width;
-  let top = layers[0].y;
-  let bottom = layers[0].y + layers[0].height;
-
-  for (let i = 1; i < layers.length; i++) {
-    const { x, y, width, height } = layers[i];
-    if (left > x) {
-      left = x;
-    }
-    if (right < x + width) {
-      right = x + width;
-    }
-    if (top > y) {
-      top = y;
-    }
-    if (bottom < y + height) {
-      bottom = y + height;
-    }
-  }
-
-  return {
-    x: left,
-    y: top,
-    width: right - left,
-    height: bottom - top,
-  };
 }
 
 export function getSvgPathFromStroke(stroke: number[][]) {
