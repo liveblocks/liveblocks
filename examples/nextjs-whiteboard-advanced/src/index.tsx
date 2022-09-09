@@ -81,9 +81,6 @@ function Loading() {
 }
 
 function Canvas() {
-  // layers is a map that contains all the shapes drawn on the canvas
-  const layers = useStorage((root) => root.layers);
-  // layerIds is list of all the layer ids ordered by their z-index
   const layerIds = useStorage((root) => root.layerIds);
 
   const { selection, pencilDraft } = useSelf(
@@ -356,7 +353,8 @@ function Canvas() {
    * Update the position of the selection net and select the layers accordingly
    */
   const updateSelectionNet = useMutation(
-    ({ setMyPresence }, current: Point, origin: Point) => {
+    ({ root, setMyPresence }, current: Point, origin: Point) => {
+      const layers = root.get("layers").toImmutable();
       setState({
         mode: CanvasMode.SelectionNet,
         origin: origin,
@@ -370,7 +368,7 @@ function Canvas() {
       );
       setMyPresence({ selection: ids });
     },
-    [layerIds, layers]
+    [layerIds]
   );
 
   const selections = useOtherIds((other) => other.presence.selection);
