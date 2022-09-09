@@ -36,7 +36,6 @@ import { nanoid } from "nanoid";
 import { useRouter } from "next/router";
 import LayerComponent from "./components/LayerComponent";
 import SelectionTools from "./components/SelectionTools";
-import useSelectionBounds from "./hooks/useSelectionBounds";
 import useDisableScrollBounce from "./hooks/useDisableScrollBounce";
 import MultiplayerGuides from "./components/MultiplayerGuides";
 import Path from "./components/Path";
@@ -105,8 +104,6 @@ function Canvas() {
   const history = useHistory();
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
-
-  const selectionBounds = useSelectionBounds();
 
   useDisableScrollBounce();
 
@@ -556,20 +553,17 @@ function Canvas() {
   return (
     <>
       <div className={styles.canvas}>
-        {selectionBounds && (
-          <SelectionTools
-            isAnimated={
-              canvasState.mode !== CanvasMode.Translating &&
-              canvasState.mode !== CanvasMode.Resizing
-            }
-            x={selectionBounds.width / 2 + selectionBounds.x + camera.x}
-            y={selectionBounds.y + camera.y}
-            setLastUsedColor={setLastUsedColor}
-            moveToFront={moveToFront}
-            moveToBack={moveToBack}
-            deleteItems={deleteLayers}
-          />
-        )}
+        <SelectionTools
+          isAnimated={
+            canvasState.mode !== CanvasMode.Translating &&
+            canvasState.mode !== CanvasMode.Resizing
+          }
+          camera={camera}
+          setLastUsedColor={setLastUsedColor}
+          moveToFront={moveToFront}
+          moveToBack={moveToBack}
+          deleteItems={deleteLayers}
+        />
         <svg
           className={styles.renderer_svg}
           onWheel={onWheel}

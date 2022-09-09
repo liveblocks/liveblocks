@@ -1,24 +1,23 @@
-import React from "react";
+import { memo } from "react";
 import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
-import { Color } from "../types";
+import { Camera, Color } from "../types";
 import styles from "./SelectionTools.module.css";
+import useSelectionBounds from "../hooks/useSelectionBounds";
 import { useSelf, useMutation } from "../../liveblocks.config";
 
 type SelectionToolsProps = {
   isAnimated: boolean;
-  x: number;
-  y: number;
+  camera: Camera;
   setLastUsedColor: (color: Color) => void;
   moveToFront: () => void;
   moveToBack: () => void;
   deleteItems: () => void;
 };
 
-export default function SelectionTools({
+function SelectionTools({
   isAnimated,
-  x,
-  y,
+  camera,
   setLastUsedColor,
   moveToFront,
   moveToBack,
@@ -37,6 +36,13 @@ export default function SelectionTools({
     [selection, setLastUsedColor]
   );
 
+  const selectionBounds = useSelectionBounds();
+  if (!selectionBounds) {
+    return null;
+  }
+
+  const x = selectionBounds.width / 2 + selectionBounds.x + camera.x;
+  const y = selectionBounds.y + camera.y;
   return (
     <div
       className={styles.selection_inspector}
@@ -86,3 +92,5 @@ export default function SelectionTools({
     </div>
   );
 }
+
+export default memo(SelectionTools);
