@@ -233,8 +233,11 @@ type State<
   isHistoryPaused: boolean;
   pausedHistory: HistoryItem<TPresence>;
 
-  isBatching: boolean;
-  batch: {
+  /**
+   * Place to collect all mutations during a batch. Ops will be sent over the
+   * wire after the batch is ended.
+   */
+  activeBatch: null | {
     ops: Op[];
     reverseOps: HistoryItem<TPresence>;
     updates: {
@@ -243,6 +246,7 @@ type State<
       storageUpdates: Map<string, StorageUpdate>;
     };
   };
+
   offlineOperations: Map<string, Op>;
 };
 
@@ -302,18 +306,19 @@ function makeStateMachine<
       reverse: Op[],
       storageUpdates: Map<string, StorageUpdate>
     ) {
-      if (state.isBatching) {
-        state.batch.ops.push(...ops);
+      const activeBatch = state.activeBatch;
+      if (activeBatch) {
+        activeBatch.ops.push(...ops);
         storageUpdates.forEach((value, key) => {
-          state.batch.updates.storageUpdates.set(
+          activeBatch.updates.storageUpdates.set(
             key,
             mergeStorageUpdates(
-              state.batch.updates.storageUpdates.get(key) as any, // FIXME
+              activeBatch.updates.storageUpdates.get(key) as any, // FIXME
               value
             )
           );
         });
-        state.batch.reverseOps.push(...reverse);
+        activeBatch.reverseOps.push(...reverse);
       } else {
         addToUndoStack(reverse);
         state.redoStack = [];
@@ -828,11 +833,14 @@ function makeStateMachine<
 
     state.me.patch(patch);
 
-    if (state.isBatching) {
+    if (state.activeBatch) {
       if (options?.addToHistory) {
-        state.batch.reverseOps.push({ type: "presence", data: oldValues });
+        state.activeBatch.reverseOps.push({
+          type: "presence",
+          data: oldValues,
+        });
       }
-      state.batch.updates.presence = true;
+      state.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
       if (options?.addToHistory) {
@@ -1411,7 +1419,7 @@ function makeStateMachine<
   }
 
   function undo() {
-    if (state.isBatching) {
+    if (state.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
     const historyItem = state.undoStack.pop();
@@ -1440,7 +1448,7 @@ function makeStateMachine<
   }
 
   function redo() {
-    if (state.isBatching) {
+    if (state.activeBatch) {
       throw new Error("redo is not allowed during a batch");
     }
 
@@ -1469,41 +1477,43 @@ function makeStateMachine<
   }
 
   function batch(callback: () => void) {
-    if (state.isBatching) {
+    if (state.activeBatch) {
       throw new Error("batch should not be called during a batch");
     }
 
-    state.isBatching = true;
+    state.activeBatch = {
+      ops: [],
+      updates: {
+        storageUpdates: new Map(),
+        presence: false,
+        others: [],
+      },
+      reverseOps: [],
+    };
 
     try {
       callback();
     } finally {
-      state.isBatching = false;
+      // "Pop" the current batch of the state, closing the active batch, but
+      // handling it separately here
+      const currentBatch = state.activeBatch;
+      state.activeBatch = null;
 
-      if (state.batch.reverseOps.length > 0) {
-        addToUndoStack(state.batch.reverseOps);
+      if (currentBatch.reverseOps.length > 0) {
+        addToUndoStack(currentBatch.reverseOps);
       }
 
-      if (state.batch.ops.length > 0) {
+      if (currentBatch.ops.length > 0) {
         // Only clear the redo stack if something has changed during a batch
         // Clear the redo stack because batch is always called from a local operation
         state.redoStack = [];
       }
 
-      if (state.batch.ops.length > 0) {
-        dispatchOps(state.batch.ops);
+      if (currentBatch.ops.length > 0) {
+        dispatchOps(currentBatch.ops);
       }
 
-      notify(state.batch.updates);
-      state.batch = {
-        ops: [],
-        reverseOps: [],
-        updates: {
-          others: [],
-          storageUpdates: new Map(),
-          presence: false,
-        },
-      };
+      notify(currentBatch.updates);
       tryFlushing();
     }
   }
@@ -1646,16 +1656,7 @@ function defaultState<
 
     isHistoryPaused: false,
     pausedHistory: [],
-    isBatching: false,
-    batch: {
-      ops: [] as Op[],
-      updates: {
-        storageUpdates: new Map<string, StorageUpdate>(),
-        presence: false,
-        others: [],
-      },
-      reverseOps: [] as Op[],
-    },
+    activeBatch: null,
     offlineOperations: new Map<string, Op>(),
   };
 }
