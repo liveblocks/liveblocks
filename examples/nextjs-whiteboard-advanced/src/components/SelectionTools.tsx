@@ -3,6 +3,7 @@ import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
 import { Camera, Color } from "../types";
 import styles from "./SelectionTools.module.css";
+import useDeleteLayers from "../hooks/useDeleteLayers";
 import useSelectionBounds from "../hooks/useSelectionBounds";
 import { useSelf, useMutation } from "../../liveblocks.config";
 
@@ -10,21 +11,67 @@ type SelectionToolsProps = {
   isAnimated: boolean;
   camera: Camera;
   setLastUsedColor: (color: Color) => void;
-  moveToFront: () => void;
-  moveToBack: () => void;
-  deleteItems: () => void;
 };
 
 function SelectionTools({
   isAnimated,
   camera,
   setLastUsedColor,
-  moveToFront,
-  moveToBack,
-  deleteItems,
 }: SelectionToolsProps) {
   const selection = useSelf((me) => me.presence.selection);
 
+  /**
+   * Move all the selected layers to the front
+   */
+  const moveToFront = useMutation(
+    ({ root }) => {
+      const liveLayerIds = root.get("layerIds");
+      const indices: number[] = [];
+
+      const arr = liveLayerIds.toArray();
+
+      for (let i = 0; i < arr.length; i++) {
+        if (selection.includes(arr[i])) {
+          indices.push(i);
+        }
+      }
+
+      for (let i = indices.length - 1; i >= 0; i--) {
+        liveLayerIds.move(
+          indices[i],
+          arr.length - 1 - (indices.length - 1 - i)
+        );
+      }
+    },
+    [selection]
+  );
+
+  /**
+   * Move all the selected layers to the back
+   */
+  const moveToBack = useMutation(
+    ({ root }) => {
+      const liveLayerIds = root.get("layerIds");
+      const indices: number[] = [];
+
+      const arr = liveLayerIds.toArray();
+
+      for (let i = 0; i < arr.length; i++) {
+        if (selection.includes(arr[i])) {
+          indices.push(i);
+        }
+      }
+
+      for (let i = 0; i < indices.length; i++) {
+        liveLayerIds.move(indices[i], i);
+      }
+    },
+    [selection]
+  );
+
+  /**
+   * Change the color of all the selected layers
+   */
   const setFill = useMutation(
     ({ root }, fill: Color) => {
       const liveLayers = root.get("layers");
@@ -35,6 +82,8 @@ function SelectionTools({
     },
     [selection, setLastUsedColor]
   );
+
+  const deleteLayers = useDeleteLayers();
 
   const selectionBounds = useSelectionBounds();
   if (!selectionBounds) {
@@ -76,7 +125,7 @@ function SelectionTools({
         </IconButton>
       </div>
       <div className={styles.selection_inspector_delete}>
-        <IconButton onClick={deleteItems}>
+        <IconButton onClick={deleteLayers}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M7.5 9H16.5V18C16.5 18.8284 15.8284 19.5 15 19.5H9C8.17157 19.5 7.5 18.8284 7.5 18V9Z"

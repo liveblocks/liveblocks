@@ -37,6 +37,7 @@ import { useRouter } from "next/router";
 import LayerComponent from "./components/LayerComponent";
 import SelectionTools from "./components/SelectionTools";
 import useDisableScrollBounce from "./hooks/useDisableScrollBounce";
+import useDeleteLayers from "./hooks/useDeleteLayers";
 import MultiplayerGuides from "./components/MultiplayerGuides";
 import Path from "./components/Path";
 import ToolsBar from "./components/ToolsBar";
@@ -107,25 +108,7 @@ function Canvas() {
 
   useDisableScrollBounce();
 
-  /**
-   * Delete all the selected layers.
-   */
-  const deleteLayers = useMutation(
-    ({ root }) => {
-      const liveLayers = root.get("layers");
-      const liveLayerIds = root.get("layerIds");
-      for (const id of selection) {
-        // Delete the layer from the layers LiveMap
-        liveLayers.delete(id);
-        // Find the layer index in the z-index list and remove it
-        const index = liveLayerIds.indexOf(id);
-        if (index !== -1) {
-          liveLayerIds.delete(index);
-        }
-      }
-    },
-    [selection]
-  );
+  const deleteLayers = useDeleteLayers();
 
   /**
    * Hook used to listen to Undo / Redo and delete selected layers
@@ -178,55 +161,6 @@ function Canvas() {
       setState({ mode: CanvasMode.Translating, current: point });
     },
     [setState, selection, camera, history, canvasState.mode]
-  );
-
-  /**
-   * Move all the selected layers to the front
-   */
-  const moveToFront = useMutation(
-    ({ root }) => {
-      const liveLayerIds = root.get("layerIds");
-      const indices: number[] = [];
-
-      const arr = liveLayerIds.toArray();
-
-      for (let i = 0; i < arr.length; i++) {
-        if (selection.includes(arr[i])) {
-          indices.push(i);
-        }
-      }
-
-      for (let i = indices.length - 1; i >= 0; i--) {
-        liveLayerIds.move(
-          indices[i],
-          arr.length - 1 - (indices.length - 1 - i)
-        );
-      }
-    },
-    [selection]
-  );
-
-  /**
-   * Move all the selected layers to the back
-   */
-  const moveToBack = useMutation(
-    ({ root }) => {
-      const liveLayerIds = root.get("layerIds");
-      const indices: number[] = [];
-
-      const arr = liveLayerIds.toArray();
-
-      for (let i = 0; i < arr.length; i++) {
-        if (selection.includes(arr[i])) {
-          indices.push(i);
-        }
-      }
-
-      for (let i = 0; i < indices.length; i++) {
-        liveLayerIds.move(indices[i], i);
-      }
-    },
-    [selection]
   );
 
   /**
@@ -560,9 +494,6 @@ function Canvas() {
           }
           camera={camera}
           setLastUsedColor={setLastUsedColor}
-          moveToFront={moveToFront}
-          moveToBack={moveToBack}
-          deleteItems={deleteLayers}
         />
         <svg
           className={styles.renderer_svg}
