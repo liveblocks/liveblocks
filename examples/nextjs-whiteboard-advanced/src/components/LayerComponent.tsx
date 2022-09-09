@@ -1,6 +1,5 @@
-import { LiveObject } from "@liveblocks/client";
-import { useRoom } from "../../liveblocks.config";
-import React, { memo, useEffect, useState } from "react";
+import { useStorage } from "../../liveblocks.config";
+import React, { memo } from "react";
 import Ellipse from "./Ellipse";
 import Path from "./Path";
 import Rectangle from "./Rectangle";
@@ -9,14 +8,15 @@ import { colorToCss } from "../utils";
 
 type Props = {
   id: string;
-  layer: Layer;
   mode: CanvasMode;
   onLayerPointerDown: (e: React.PointerEvent, layerId: string) => void;
   selectionColor?: string;
 };
 
 const LayerComponent = memo(
-  ({ layer, mode, onLayerPointerDown, id, selectionColor }: Props) => {
+  ({ mode, onLayerPointerDown, id, selectionColor }: Props) => {
+    const layer = useStorage((root) => root.layers.get(id))!;
+
     const isAnimated =
       mode !== CanvasMode.Translating && mode !== CanvasMode.Resizing;
 

@@ -583,23 +583,15 @@ function Canvas() {
               transform: `translate(${camera.x}px, ${camera.y}px)`,
             }}
           >
-            {layerIds.map((layerId) => {
-              const layer = layers.get(layerId);
-              if (layer == null) {
-                return null;
-              }
-
-              return (
-                <LayerComponent
-                  key={layerId}
-                  id={layerId}
-                  mode={canvasState.mode}
-                  onLayerPointerDown={onLayerPointerDown}
-                  layer={layer}
-                  selectionColor={layerIdsToColorSelection[layerId]}
-                />
-              );
-            })}
+            {layerIds.map((layerId) => (
+              <LayerComponent
+                key={layerId}
+                id={layerId}
+                mode={canvasState.mode}
+                onLayerPointerDown={onLayerPointerDown}
+                selectionColor={layerIdsToColorSelection[layerId]}
+              />
+            ))}
             {/* Blue square that show the selection of the current users. Also contains the resize handles. */}
             {selectionBounds && (
               <SelectionBox
