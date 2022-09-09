@@ -267,18 +267,53 @@ describe("Storage", () => {
       });
     });
 
-    it("calling batch during a batch should throw", async () => {
-      const { storage, batch } = await prepareStorageTest<{ a: number }>(
-        [createSerializedObject("0:0", { a: 0 })],
+    it("nesting batches makes inner batches a no-op", async () => {
+      const { storage, assert, undo, redo, batch } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
         1
       );
 
+      const items = storage.root.get("items");
+
       batch(() => {
-        expect(() =>
+        batch(() => {
           batch(() => {
-            storage.root.set("a", 0);
-          })
-        ).toThrow();
+            items.push("A");
+            batch(() => {
+              batch(() => {
+                items.push("B");
+                batch(() => {
+                  batch(() => {
+                    batch(() => {
+                      items.push("C");
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+
+      assert({
+        items: ["A", "B", "C"],
+      });
+
+      undo();
+
+      assert({
+        items: [],
+      });
+
+      redo();
+
+      assert({
+        items: ["A", "B", "C"],
       });
     });
 
