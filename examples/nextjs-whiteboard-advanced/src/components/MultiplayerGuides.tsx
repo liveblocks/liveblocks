@@ -1,40 +1,41 @@
-import { useOthers } from "../../liveblocks.config";
+import { useOtherIds } from "../../liveblocks.config";
+import { shallow } from "@liveblocks/client";
 import React from "react";
-import { colorToCss, connectionIdToColor } from "../utils";
+import { colorToCss } from "../utils";
 import Cursor from "./Cursor";
 import Path from "./Path";
 
-const MultiplayerGuides = React.memo(() => {
-  const others = useOthers();
+function Cursors() {
+  const ids = useOtherIds();
   return (
     <>
-      {others.map((user) => {
-        if (user.presence?.cursor) {
-          return (
-            <Cursor
-              key={`cursor-${user.connectionId}`}
-              x={user.presence.cursor.x}
-              y={user.presence.cursor.y}
-              color={connectionIdToColor(user.connectionId)}
-            />
-          );
-        }
-        return null;
-      })}
+      {ids.map((connectionId) => (
+        <Cursor key={connectionId} connectionId={connectionId} />
+      ))}
+    </>
+  );
+}
+
+function Drafts() {
+  const others = useOtherIds(
+    (other) => ({
+      pencilDraft: other.presence.pencilDraft,
+      penColor: other.presence.penColor,
+    }),
+    shallow
+  );
+  return (
+    <>
       {/* All the drawing of other users in the room that are currently in progress */}
-      {others.map((user) => {
-        if (user.presence?.pencilDraft) {
+      {others.map(({ connectionId, data }) => {
+        if (data.pencilDraft) {
           return (
             <Path
+              key={connectionId}
               x={0}
               y={0}
-              key={`pencil-${user.connectionId}`}
-              points={user.presence.pencilDraft}
-              fill={
-                user.presence.penColor
-                  ? colorToCss(user.presence.penColor)
-                  : "#CCC"
-              }
+              points={data.pencilDraft}
+              fill={data.penColor ? colorToCss(data.penColor) : "#CCC"}
             />
           );
         }
@@ -42,6 +43,13 @@ const MultiplayerGuides = React.memo(() => {
       })}
     </>
   );
-});
+}
 
-export default MultiplayerGuides;
+export default React.memo(function MultiplayerGuides() {
+  return (
+    <>
+      <Cursors />
+      <Drafts />
+    </>
+  );
+});

@@ -1,12 +1,10 @@
-import { LiveMap, LiveObject } from "@liveblocks/client";
 import { memo } from "react";
 import styles from "./SelectionBox.module.css";
-import { Layer, LayerType, Side, XYWH } from "../types";
+import useSelectionBounds from "../hooks/useSelectionBounds";
+import { useSelf, useStorage } from "../../liveblocks.config";
+import { LayerType, Side, XYWH } from "../types";
 
 type SelectionBoxProps = {
-  selection: string[];
-  layers: LiveMap<string, LiveObject<Layer>>;
-  bounds: XYWH;
   onResizeHandlePointerDown: (corner: Side, initialBounds: XYWH) => void;
   isAnimated: boolean;
 };
@@ -14,17 +12,22 @@ type SelectionBoxProps = {
 const HANDLE_WIDTH = 8;
 
 const SelectionBox = memo(
-  ({
-    layers,
-    bounds,
-    onResizeHandlePointerDown,
-    selection,
-    isAnimated,
-  }: SelectionBoxProps) => {
-    const isShowingHandles =
-      selection.length === 1 &&
-      // Resize path is not supported
-      layers.get(selection[0])?.get("type") !== LayerType.Path;
+  ({ onResizeHandlePointerDown, isAnimated }: SelectionBoxProps) => {
+    // We should show resize handles if exactly one shape is selected and it's
+    // not a path layer
+    const soleLayerId = useSelf((me) =>
+      me.presence.selection.length === 1 ? me.presence.selection[0] : null
+    );
+
+    const isShowingHandles = useStorage(
+      (root) =>
+        soleLayerId && root.layers.get(soleLayerId)?.type !== LayerType.Path
+    );
+
+    const bounds = useSelectionBounds();
+    if (!bounds) {
+      return null;
+    }
 
     return (
       <>

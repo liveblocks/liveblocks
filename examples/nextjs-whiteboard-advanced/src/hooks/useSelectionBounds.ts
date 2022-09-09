@@ -1,27 +1,48 @@
-import { LiveMap, LiveObject } from "@liveblocks/client";
-import { useRoom } from "../../liveblocks.config";
-import { useState, useEffect } from "react";
+import { useStorage, useSelf } from "../../liveblocks.config";
 import { Layer, XYWH } from "../types";
-import { boundingBox } from "../utils";
+import { shallow } from "@liveblocks/react";
 
-export default function useSelectionBounds(
-  layers: LiveMap<string, LiveObject<Layer>>,
-  selection: string[]
-): XYWH | null {
-  const [bounds, setBounds] = useState(boundingBox(layers, selection));
-  const room = useRoom();
+function boundingBox(layers: Layer[]): XYWH | null {
+  const first = layers[0];
+  if (!first) {
+    return null;
+  }
 
-  useEffect(() => {
-    function onChange() {
-      setBounds(boundingBox(layers, selection));
+  let left = first.x;
+  let right = first.x + first.width;
+  let top = first.y;
+  let bottom = first.y + first.height;
+
+  for (let i = 1; i < layers.length; i++) {
+    const { x, y, width, height } = layers[i];
+    if (left > x) {
+      left = x;
     }
+    if (right < x + width) {
+      right = x + width;
+    }
+    if (top > y) {
+      top = y;
+    }
+    if (bottom < y + height) {
+      bottom = y + height;
+    }
+  }
 
-    onChange();
+  return {
+    x: left,
+    y: top,
+    width: right - left,
+    height: bottom - top,
+  };
+}
 
-    // We need to subscribe to the layers map updates and to the updates on the layers themselves.
-    // If User A deletes or modified a layer that is currently selected by UserB, the selection bounds needs to be refreshed.
-    return room.subscribe(layers, onChange, { isDeep: true });
-  }, [room, layers, selection]);
-
-  return bounds;
+export default function useSelectionBounds() {
+  const selection = useSelf((me) => me.presence.selection);
+  return useStorage((root) => {
+    const selectedLayers = selection
+      .map((layerId) => root.layers.get(layerId)!)
+      .filter(Boolean);
+    return boundingBox(selectedLayers);
+  }, shallow);
 }
