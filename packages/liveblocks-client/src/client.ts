@@ -102,7 +102,7 @@ export function createClient(options: ClientOptions): Client {
     }
 
     deprecateIf(
-      options.initialPresence == null,
+      options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
     );
 
@@ -138,8 +138,8 @@ export function createClient(options: ClientOptions): Client {
     );
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
-      if (typeof atob == "undefined") {
-        if (clientOptions.polyfills?.atob == undefined) {
+      if (typeof atob === "undefined") {
+        if (clientOptions.polyfills?.atob === undefined) {
           throw new Error(
             "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );

@@ -486,7 +486,7 @@ export function createRoomContext<
     const { id: roomId, initialPresence, initialStorage } = props;
 
     if (process.env.NODE_ENV !== "production") {
-      if (roomId == null) {
+      if (!roomId) {
         throw new Error(
           "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
         );
@@ -540,7 +540,7 @@ export function createRoomContext<
 
   function useRoom(): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     const room = React.useContext(RoomContext);
-    if (room == null) {
+    if (room === null) {
       throw new Error("RoomProvider is missing from the react tree");
     }
     return room;
@@ -871,7 +871,7 @@ export function createRoomContext<
     const rerender = useRerender();
 
     React.useEffect(() => {
-      if (root == null) {
+      if (root === null) {
         return;
       }
 
@@ -907,7 +907,7 @@ export function createRoomContext<
       };
     }, [root, room, key, rerender]);
 
-    if (root == null) {
+    if (root === null) {
       return null;
     } else {
       return root.get(key);

@@ -53,6 +53,6 @@ export function nn<T>(
   value: T,
   errmsg: string = "Expected value to be non-nullable"
 ): NonNullable<T> {
-  assert(value != null, errmsg);
+  assert(value !== null && value !== undefined, errmsg);
   return value as NonNullable<T>;
 }

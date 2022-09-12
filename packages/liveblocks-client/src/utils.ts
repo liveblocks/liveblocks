@@ -46,7 +46,9 @@ export const freeze: typeof Object.freeze =
  * output type.
  */
 export function compact<T>(items: readonly T[]): NonNullable<T>[] {
-  return items.filter((item: T): item is NonNullable<T> => item != null);
+  return items.filter(
+    (item: T): item is NonNullable<T> => item !== null && item !== undefined
+  );
 }
 
 /**

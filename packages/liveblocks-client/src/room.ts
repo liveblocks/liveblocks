@@ -93,7 +93,7 @@ type Machine<
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryItem<TPresence>[];
+  getUndoStack(): HistoryOp<TPresence>[][];
   getItemsCount(): number;
 
   // Core
@@ -130,18 +130,18 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
-  events: {
-    customEvent: Observable<CustomEvent<TRoomEvent>>;
-    me: Observable<TPresence>;
-    others: Observable<{
+  readonly events: {
+    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
     }>;
-    error: Observable<Error>;
-    connection: Observable<ConnectionState>;
-    storage: Observable<StorageUpdate[]>;
-    history: Observable<HistoryEvent>;
-    storageDidLoad: Observable<void>;
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionState>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+    readonly storageDidLoad: Observable<void>;
   };
 
   // Core
@@ -177,13 +177,12 @@ function isConnectionSelfAware(
   return connection.state === "open" || connection.state === "connecting";
 }
 
-type HistoryItem<TPresence extends JsonObject> = Array<
+type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
       type: "presence";
       data: TPresence;
-    }
->;
+    };
 
 type IdFactory = () => string;
 
@@ -221,17 +220,21 @@ type State<
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorage;
+  initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
   nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
-  undoStack: HistoryItem<TPresence>[];
-  redoStack: HistoryItem<TPresence>[];
 
-  isHistoryPaused: boolean;
-  pausedHistory: HistoryItem<TPresence>;
+  undoStack: HistoryOp<TPresence>[][];
+  redoStack: HistoryOp<TPresence>[][];
+
+  /**
+   * When history is paused, all operations will get queued up here. When
+   * history is resumed, these operations get "committed" to the undo stack.
+   */
+  pausedHistory: null | HistoryOp<TPresence>[];
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -239,7 +242,7 @@ type State<
    */
   activeBatch: null | {
     ops: Op[];
-    reverseOps: HistoryItem<TPresence>;
+    reverseOps: HistoryOp<TPresence>[];
     updates: {
       others: [];
       presence: boolean;
@@ -375,7 +378,7 @@ function makeStateMachine<
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (state.socket == null) {
+      if (state.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
       state.socket.send(JSON.stringify(messageOrMessages));
@@ -423,9 +426,9 @@ function makeStateMachine<
       state.root = load(message.items) as LiveObject<TStorage>;
     }
 
-    for (const key in state.defaultStorageRoot) {
-      if (state.root.get(key) == null) {
-        state.root.set(key, state.defaultStorageRoot[key]);
+    for (const key in state.initialStorage) {
+      if (state.root.get(key) === undefined) {
+        state.root.set(key, state.initialStorage[key]);
       }
     }
   }
@@ -442,7 +445,7 @@ function makeStateMachine<
       } else {
         const tuple: IdTuple<SerializedChild> = [id, crdt];
         const children = parentToChildren.get(crdt.parentId);
-        if (children != null) {
+        if (children !== undefined) {
           children.push(tuple);
         } else {
           parentToChildren.set(crdt.parentId, [tuple]);
@@ -450,7 +453,7 @@ function makeStateMachine<
       }
     }
 
-    if (root == null) {
+    if (root === null) {
       throw new Error("Root can't be null");
     }
 
@@ -481,17 +484,21 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
+  function _addToRealUndoStack(historyOps: HistoryOp<TPresence>[]) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
-    if (state.isHistoryPaused) {
-      state.pausedHistory.unshift(...historyItem);
+    state.undoStack.push(historyOps);
+    onHistoryChange();
+  }
+
+  function addToUndoStack(historyOps: HistoryOp<TPresence>[]) {
+    if (state.pausedHistory !== null) {
+      state.pausedHistory.unshift(...historyOps);
     } else {
-      state.undoStack.push(historyItem);
-      onHistoryChange();
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -535,17 +542,17 @@ function makeStateMachine<
   }
 
   function apply(
-    item: HistoryItem<TPresence>,
+    ops: HistoryOp<TPresence>[],
     isLocal: boolean
   ): {
-    reverse: HistoryItem<TPresence>;
+    reverse: HistoryOp<TPresence>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem<TPresence>,
+      reverse: [] as HistoryOp<TPresence>[],
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -554,7 +561,7 @@ function makeStateMachine<
 
     const createdNodeIds = new Set<string>();
 
-    for (const op of item) {
+    for (const op of ops) {
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
@@ -567,7 +574,7 @@ function makeStateMachine<
 
         state.me.patch(op.data);
 
-        if (state.buffer.me == null) {
+        if (state.buffer.me === null) {
           state.buffer.me = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
@@ -638,7 +645,7 @@ function makeStateMachine<
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
         const node = state.nodes.get(op.id);
-        if (node == null) {
+        if (node === undefined) {
           return { modified: false };
         }
 
@@ -646,7 +653,7 @@ function makeStateMachine<
       }
       case OpCode.SET_PARENT_KEY: {
         const node = state.nodes.get(op.id);
-        if (node == null) {
+        if (node === undefined) {
           return { modified: false };
         }
 
@@ -664,7 +671,7 @@ function makeStateMachine<
         }
 
         const parentNode = state.nodes.get(op.parentId);
-        if (parentNode == null) {
+        if (parentNode === undefined) {
           return { modified: false };
         }
 
@@ -814,7 +821,7 @@ function makeStateMachine<
   ) {
     const oldValues = {} as TPresence;
 
-    if (state.buffer.me == null) {
+    if (state.buffer.me === null) {
       state.buffer.me = {
         type: "partial",
         data: {},
@@ -1176,7 +1183,7 @@ function makeStateMachine<
   }
 
   function heartbeat() {
-    if (state.socket == null) {
+    if (state.socket === null) {
       // Should never happen, because we clear the pong timeout when the connection is dropped explictly
       return;
     }
@@ -1245,7 +1252,10 @@ function makeStateMachine<
       });
     }
 
-    if (state.socket == null || state.socket.readyState !== state.socket.OPEN) {
+    if (
+      state.socket === null ||
+      state.socket.readyState !== state.socket.OPEN
+    ) {
       state.buffer.storageOperations = [];
       return;
     }
@@ -1268,7 +1278,7 @@ function makeStateMachine<
       };
       state.lastFlushTime = now;
     } else {
-      if (state.timeoutHandles.flush != null) {
+      if (state.timeoutHandles.flush !== null) {
         clearTimeout(state.timeoutHandles.flush);
       }
 
@@ -1351,7 +1361,7 @@ function makeStateMachine<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (state.socket == null && options.shouldQueueEventIfNotReady == false) {
+    if (state.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
 
@@ -1371,7 +1381,7 @@ function makeStateMachine<
   let _getInitialStateResolver: (() => void) | null = null;
 
   function startLoadingStorage(): Promise<void> {
-    if (_getInitialStatePromise == null) {
+    if (_getInitialStatePromise === null) {
       state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
@@ -1421,20 +1431,19 @@ function makeStateMachine<
     if (state.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyItem = state.undoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.undoStack.pop();
+    if (historyOps === undefined) {
       return;
     }
 
-    state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    state.pausedHistory = null;
+    const result = apply(historyOps, true);
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1451,19 +1460,18 @@ function makeStateMachine<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyItem = state.redoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.redoStack.pop();
+    if (historyOps === undefined) {
       return;
     }
 
-    state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    state.pausedHistory = null;
+    const result = apply(historyOps, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1522,15 +1530,14 @@ function makeStateMachine<
 
   function pauseHistory() {
     state.pausedHistory = [];
-    state.isHistoryPaused = true;
   }
 
   function resumeHistory() {
-    state.isHistoryPaused = false;
-    if (state.pausedHistory.length > 0) {
-      addToUndoStack(state.pausedHistory);
+    const historyOps = state.pausedHistory;
+    state.pausedHistory = null;
+    if (historyOps !== null && historyOps.length > 0) {
+      _addToRealUndoStack(historyOps);
     }
-    state.pausedHistory = [];
   }
 
   function simulateSocketClose() {
@@ -1645,7 +1652,7 @@ function defaultState<
     me: new MeRef(initialPresence),
     others,
 
-    defaultStorageRoot: initialStorage,
+    initialStorage,
     idFactory: null,
 
     // Storage
@@ -1653,11 +1660,11 @@ function defaultState<
     opClock: 0,
     nodes: new Map<string, LiveNode>(),
     root: undefined,
+
     undoStack: [],
     redoStack: [],
+    pausedHistory: null,
 
-    isHistoryPaused: false,
-    pausedHistory: [],
     activeBatch: null,
     offlineOperations: new Map<string, Op>(),
   };
@@ -1760,7 +1767,7 @@ function prepareCreateWebSocket(
   liveblocksServer: string,
   WebSocketPolyfill?: typeof WebSocket
 ) {
-  if (typeof window === "undefined" && WebSocketPolyfill == null) {
+  if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
     );
@@ -1784,7 +1791,7 @@ function prepareAuthEndpoint(
   fetchPolyfill?: typeof window.fetch
 ): (room: string) => Promise<AuthorizeResponse> {
   if (authentication.type === "public") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
       );
@@ -1798,7 +1805,7 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "private") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
       );

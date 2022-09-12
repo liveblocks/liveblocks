@@ -78,7 +78,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     parentKey?: string,
     pool?: ManagedPool
   ): CreateOp[] {
-    if (this._id == null) {
+    if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
@@ -129,8 +129,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     pool: ManagedPool
   ): LiveObject<LsonObject> {
     const children = parentToChildren.get(nn(liveObj._id));
-
-    if (children == null) {
+    if (children === undefined) {
       return liveObj;
     }
 
@@ -159,7 +158,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
@@ -340,7 +339,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
       if (isLocal) {
         this._propToLastUpdate.set(key, nn(op.opId));
-      } else if (this._propToLastUpdate.get(key) == null) {
+      } else if (this._propToLastUpdate.get(key) === undefined) {
         // Not modified localy so we apply update
         isModified = true;
       } else if (this._propToLastUpdate.get(key) === op.opId) {
@@ -461,7 +460,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
       return;
     }
 
-    if (this._pool == null || this._id == null) {
+    if (this._pool === undefined || this._id === undefined) {
       if (isLiveNode(oldValue)) {
         oldValue._detach();
       }
@@ -516,7 +515,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param patch The object used to overrides properties
    */
   update(patch: Partial<O>): void {
-    if (this._pool == null || this._id == null) {
+    if (this._pool === undefined || this._id === undefined) {
       for (const key in patch) {
         const newValue = patch[key];
         if (newValue === undefined) {

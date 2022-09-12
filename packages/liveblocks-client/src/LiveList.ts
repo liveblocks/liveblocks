@@ -72,8 +72,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     list._attach(id, pool);
 
     const children = parentToChildren.get(id);
-
-    if (children == null) {
+    if (children === undefined) {
       return list;
     }
 
@@ -93,7 +92,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     parentKey: string,
     pool?: ManagedPool
   ): CreateChildOp[] {
-    if (this._id == null) {
+    if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
@@ -158,7 +157,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applySetRemote(op: CreateChildOp): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
@@ -239,7 +238,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applySetAck(op: CreateChildOp): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
@@ -253,7 +252,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
 
-    if (unacknowledgedOpId != null) {
+    if (unacknowledgedOpId !== undefined) {
       if (unacknowledgedOpId !== op.opId) {
         return delta.length === 0
           ? { modified: false }
@@ -268,7 +267,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingItem = this._items.find((item) => item._id === op.id);
 
     // If item already exists...
-    if (existingItem != null) {
+    if (existingItem !== undefined) {
       // ...and if it's at the right position
       if (existingItem._parentKey === op.parentKey) {
         // ... do nothing
@@ -356,12 +355,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _detachItemAssociatedToSetOperation(
     deletedId?: string
   ): LiveListUpdateDelta | null {
-    if (deletedId == null || this._pool == null) {
+    if (deletedId === undefined || this._pool === undefined) {
       return null;
     }
 
     const deletedItem = this._pool.getNode(deletedId);
-    if (deletedItem == null) {
+    if (deletedItem === undefined) {
       return null;
     }
 
@@ -375,7 +374,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applyRemoteInsert(op: CreateChildOp): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
@@ -558,7 +557,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 

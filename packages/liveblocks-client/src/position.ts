@@ -3,17 +3,17 @@ export const max = 126;
 
 export function makePosition(before?: string, after?: string): string {
   // Between
-  if (before != null && after != null) {
+  if (before !== undefined && after !== undefined) {
     return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
   }
 
   // Insert at the end
-  else if (before != null) {
+  else if (before !== undefined) {
     return getNextPosition(before);
   }
 
   // Insert at the start
-  else if (after != null) {
+  else if (after !== undefined) {
     return getPreviousPosition(after);
   }
 
@@ -116,8 +116,8 @@ export function comparePosition(posA: string, posB: string): number {
   const maxLength = Math.max(aCodes.length, bCodes.length);
 
   for (let i = 0; i < maxLength; i++) {
-    const a = aCodes[i] == null ? min : aCodes[i];
-    const b = bCodes[i] == null ? min : bCodes[i];
+    const a = aCodes[i] === undefined ? min : aCodes[i];
+    const b = bCodes[i] === undefined ? min : bCodes[i];
 
     if (a === b) {
       continue;

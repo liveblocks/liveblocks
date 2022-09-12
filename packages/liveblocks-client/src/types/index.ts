@@ -460,7 +460,7 @@ export type Room<
    */
   isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
-  subscribe: {
+  readonly subscribe: {
     /**
      * Subscribe to the current user presence updates.
      *
@@ -583,7 +583,7 @@ export type Room<
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
-  history: History;
+  readonly history: History;
 
   /**
    * Gets the current user.
@@ -600,7 +600,7 @@ export type Room<
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: () => TPresence;
+  getPresence(): TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -608,7 +608,7 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers: () => Others<TPresence, TUserMeta>;
+  getOthers(): Others<TPresence, TUserMeta>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -622,7 +622,7 @@ export type Room<
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: (
+  updatePresence(
     patch: Partial<TPresence>,
     options?: {
       /**
@@ -630,7 +630,7 @@ export type Room<
        */
       addToHistory: boolean;
     }
-  ) => void;
+  ): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -647,7 +647,7 @@ export type Room<
    *   }
    * });
    */
-  broadcastEvent: (event: TRoomEvent, options?: BroadcastOptions) => void;
+  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
   /**
    * Get the room's storage asynchronously.
@@ -656,7 +656,7 @@ export type Room<
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: () => Promise<{
+  getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
 
@@ -669,7 +669,7 @@ export type Room<
    */
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
-  events: {
+  readonly events: {
     customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
     me: Observable<TPresence>;
     others: Observable<{

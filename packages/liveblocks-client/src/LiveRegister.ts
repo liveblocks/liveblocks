@@ -47,7 +47,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     parentKey: string,
     pool?: ManagedPool
   ): CreateRegisterOp[] {
-    if (this._id == null || parentId == null || parentKey == null) {
+    if (this._id === undefined) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
       );
