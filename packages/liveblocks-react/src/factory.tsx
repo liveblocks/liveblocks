@@ -718,50 +718,72 @@ export function createRoomContext<
   }
 
   return {
+    RoomContext,
     RoomProvider,
-    useBatch,
-    useBroadcastEvent,
-    useCanRedo,
-    useCanUndo,
-    useErrorListener,
-    useEventListener,
-    useHistory,
-    useMyPresence,
-    useOthers,
-    useOtherIds,
-    useOther,
-    useRedo,
+
     useRoom,
 
-    useSelf,
-    useStorageRoot,
-    useStorage,
-    useUndo,
-    useUpdateMyPresence,
+    useBatch,
+    useBroadcastEvent,
+    useErrorListener,
+    useEventListener,
 
-    useMutation,
+    useHistory,
+    useUndo,
+    useRedo,
+    useCanRedo,
+    useCanUndo,
 
     // These are just aliases. The passed-in key will define their return values.
     useList: useLegacyKey,
     useMap: useLegacyKey,
     useObject: useLegacyKey,
 
-    // You normally don't need to directly interact with the RoomContext, but
-    // it can be necessary if you're building an advanced app where you need to
-    // set up a context bridge between two React renderers.
-    RoomContext,
+    useStorageRoot,
+    useStorage,
+
+    useSelf,
+    useMyPresence,
+    useUpdateMyPresence,
+    useOthers,
+    useOtherIds,
+    useOther,
+
+    useMutation,
 
     suspense: {
-      useStorage: useStorageSuspense,
-      useSelf: useSelfSuspense,
-      useOthers: useOthersSuspense,
-      useOtherIds: useOtherIdsSuspense,
-      useOther: useOtherSuspense,
+      RoomContext,
+      RoomProvider,
+
+      useRoom,
+
+      useBatch,
+      useBroadcastEvent,
+      useErrorListener,
+      useEventListener,
+
+      useHistory,
+      useUndo,
+      useRedo,
+      useCanRedo,
+      useCanUndo,
 
       // Legacy hooks
       useList: useLegacyKeySuspense,
       useMap: useLegacyKeySuspense,
       useObject: useLegacyKeySuspense,
+
+      useStorageRoot,
+      useStorage: useStorageSuspense,
+
+      useSelf: useSelfSuspense,
+      useMyPresence,
+      useUpdateMyPresence,
+      useOthers: useOthersSuspense,
+      useOtherIds: useOtherIdsSuspense,
+      useOther: useOtherSuspense,
+
+      useMutation,
     },
   };
 }
