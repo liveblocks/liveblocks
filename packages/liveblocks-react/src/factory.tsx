@@ -210,54 +210,44 @@ export function createRoomContext<
     );
   }
 
-  function useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
-  function useOtherIds<T>(
+  function useConnectionIds(): readonly number[] {
+    return useOthers(connectionIdSelector, shallow);
+  }
+
+  function useOthersWithData<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): readonly { readonly connectionId: number; readonly data: T }[];
-  function useOtherIds<T>(
-    itemSelector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ):
-    | readonly number[]
-    | readonly { readonly connectionId: number; readonly data: T }[] {
-    // Deliberately bypass React warnings about conditionally calling hooks
-    const _useCallback = React.useCallback;
-    const _useOthers = useOthers;
-    if (itemSelector === undefined) {
-      return _useOthers(/* not inlined! */ connectionIdSelector, shallow);
-    } else {
-      const wrappedSelector = _useCallback(
-        (others: Others<TPresence, TUserMeta>) =>
-          others.map((other) => ({
-            connectionId: other.connectionId,
-            data: itemSelector(other),
-          })),
-        [itemSelector]
-      );
+    itemIsEqual?: (prev: T, curr: T) => boolean
+  ): readonly { readonly connectionId: number; readonly data: T }[] {
+    const wrappedSelector = React.useCallback(
+      (others: Others<TPresence, TUserMeta>) =>
+        others.map((other) => ({
+          connectionId: other.connectionId,
+          data: itemSelector(other),
+        })),
+      [itemSelector]
+    );
 
-      const wrappedIsEqual = _useCallback(
-        (
-          a: { readonly connectionId: number; readonly data: T }[],
-          b: { readonly connectionId: number; readonly data: T }[]
-        ): boolean => {
-          const eq = isEqual ?? Object.is;
-          return (
-            a.length === b.length &&
-            a.every((atuple, index) => {
-              const btuple = b[index];
-              return (
-                atuple.connectionId === btuple.connectionId &&
-                eq(atuple.data, btuple.data)
-              );
-            })
-          );
-        },
-        [isEqual]
-      );
+    const wrappedIsEqual = React.useCallback(
+      (
+        a: { readonly connectionId: number; readonly data: T }[],
+        b: { readonly connectionId: number; readonly data: T }[]
+      ): boolean => {
+        const eq = itemIsEqual ?? Object.is;
+        return (
+          a.length === b.length &&
+          a.every((atuple, index) => {
+            const btuple = b[index];
+            return (
+              atuple.connectionId === btuple.connectionId &&
+              eq(atuple.data, btuple.data)
+            );
+          })
+        );
+      },
+      [itemIsEqual]
+    );
 
-      return _useOthers(wrappedSelector, wrappedIsEqual);
-    }
+    return useOthers(wrappedSelector, wrappedIsEqual);
   }
 
   const sentinel = Symbol();
@@ -684,27 +674,12 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
-  function useOtherIdsSuspense(): readonly number[];
-  function useOtherIdsSuspense<T>(
+  function useOthersWithDataSuspense<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): readonly { readonly connectionId: number; readonly data: T }[];
-  function useOtherIdsSuspense<T>(
-    itemSelector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ):
-    | readonly number[]
-    | readonly { readonly connectionId: number; readonly data: T }[] {
+    itemIsEqual?: (prev: T, curr: T) => boolean
+  ): readonly { readonly connectionId: number; readonly data: T }[] {
     useSuspendUntilPresenceLoaded();
-
-    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
-    // conditionally
-    return useOtherIds(
-      itemSelector as (other: User<TPresence, TUserMeta>) => T,
-      isEqual as (prev: T, curr: T) => boolean
-    ) as
-      | readonly number[]
-      | readonly { readonly connectionId: number; readonly data: T }[];
+    return useOthersWithData(itemSelector, itemIsEqual);
   }
 
   function useOtherSuspense(connectionId: number): User<TPresence, TUserMeta>;
@@ -765,7 +740,8 @@ export function createRoomContext<
     useMyPresence,
     useUpdateMyPresence,
     useOthers,
-    useOtherIds,
+    useOthersWithData,
+    useConnectionIds,
     useOther,
 
     useMutation,
@@ -799,7 +775,8 @@ export function createRoomContext<
       useMyPresence,
       useUpdateMyPresence,
       useOthers: useOthersSuspense,
-      useOtherIds: useOtherIdsSuspense,
+      useOthersWithData: useOthersWithDataSuspense,
+      useConnectionIds,
       useOther: useOtherSuspense,
 
       useMutation,
