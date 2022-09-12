@@ -476,7 +476,7 @@ export type RoomContextBundle<
     ) => any
   >(
     callback: F,
-    deps?: unknown[]
+    deps: readonly unknown[]
   ): OmitFirstArg<F>;
 
   suspense: {
@@ -817,7 +817,7 @@ export type RoomContextBundle<
       ) => any
     >(
       callback: F,
-      deps?: unknown[]
+      deps: readonly unknown[]
     ): OmitFirstArg<F>;
 
     //

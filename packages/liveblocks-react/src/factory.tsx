@@ -618,7 +618,7 @@ export function createRoomContext<
       context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
     ) => any
-  >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
+  >(callback: F, deps: readonly unknown[]): OmitFirstArg<F> {
     const room = useRoom();
     return React.useMemo(
       () => {
