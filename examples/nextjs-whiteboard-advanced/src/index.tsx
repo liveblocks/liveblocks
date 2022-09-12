@@ -291,9 +291,14 @@ function Canvas() {
     [canvasState, selection]
   );
 
-  const unselectLayers = useMutation(({ setMyPresence }) => {
-    setMyPresence({ selection: [] }, { addToHistory: true });
-  }, []);
+  const unselectLayers = useMutation(
+    ({ setMyPresence }) => {
+      if (selection.length > 0) {
+        setMyPresence({ selection: [] }, { addToHistory: true });
+      }
+    },
+    [selection]
+  );
 
   /**
    * Insert the first path point and start drawing with the pencil
