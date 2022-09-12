@@ -42,9 +42,12 @@ export type OmitFirstArg<F> = F extends (
 
 export type MutationContext<
   TPresence extends JsonObject,
-  TStorage extends LsonObject
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta
 > = {
   root: LiveObject<TStorage>;
+  self: User<TPresence, TUserMeta>;
+  others: Others<TPresence, TUserMeta>;
   setMyPresence: (
     patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
@@ -424,16 +427,56 @@ export type RoomContextBundle<
   ) => void;
 
   /**
-   * TODO: Document me.
+   * Create a callback function that can be called to mutate Liveblocks state.
+   *
+   * The first argument that gets passed into your callback will be a "mutation
+   * context", which exposes the following:
+   *
+   *   - `root` - The mutable Storage root.
+   *              You can normal mutation on Live structures with this, for
+   *              example: root.get('layers').get('layer1').set('fill', 'red')
+   *
+   *   - `setMyPresence` - Call this with a new (partial) Presence value.
+   *
+   *   - `self` - A read-only version of the latest self, if you need it to
+   *              compute the next state.
+   *
+   *   - `others` - A read-only version of the latest others list, if you need
+   *                it to compute the next state.
+   *
+   * useMutation is like React's useCallback, except that the first argument
+   * that gets passed into your callback will be a "mutation context".
+   *
+   * If you want get access to the immutable root somewhere in your mutation,
+   * you can use `root.ToImmutable()`.
+   *
+   * @example
+   * const fillLayers = useMutation(
+   *   ({ root }, color: Color) => {
+   *     ...
+   *   },
+   *   [],
+   * );
+   *
+   * fillLayers('red');
+   *
+   * const deleteLayers = useMutation(
+   *   ({ root }) => {
+   *     ...
+   *   },
+   *   [],
+   * );
+   *
+   * deleteLayers();
    */
   useMutation<
     F extends (
-      context: MutationContext<TPresence, TStorage>,
+      context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
     ) => any
   >(
     callback: F,
-    deps?: unknown[]
+    deps: readonly unknown[]
   ): OmitFirstArg<F>;
 
   suspense: {
@@ -765,16 +808,58 @@ export type RoomContextBundle<
     ) => void;
 
     /**
-     * TODO: Document me.
+     * Create a callback function that can be called to mutate Liveblocks
+     * state.
+     *
+     * The first argument that gets passed into your callback will be
+     * a "mutation context", which exposes the following:
+     *
+     *   - `root` - The mutable Storage root.
+     *              You can normal mutation on Live structures with this, for
+     *              example: root.get('layers').get('layer1').set('fill',
+     *              'red')
+     *
+     *   - `setMyPresence` - Call this with a new (partial) Presence value.
+     *
+     *   - `self` - A read-only version of the latest self, if you need it to
+     *              compute the next state.
+     *
+     *   - `others` - A read-only version of the latest others list, if you
+     *                need it to compute the next state.
+     *
+     * useMutation is like React's useCallback, except that the first argument
+     * that gets passed into your callback will be a "mutation context".
+     *
+     * If you want get access to the immutable root somewhere in your mutation,
+     * you can use `root.ToImmutable()`.
+     *
+     * @example
+     * const fillLayers = useMutation(
+     *   ({ root }, color: Color) => {
+     *     ...
+     *   },
+     *   [],
+     * );
+     *
+     * fillLayers('red');
+     *
+     * const deleteLayers = useMutation(
+     *   ({ root }) => {
+     *     ...
+     *   },
+     *   [],
+     * );
+     *
+     * deleteLayers();
      */
     useMutation<
       F extends (
-        context: MutationContext<TPresence, TStorage>,
+        context: MutationContext<TPresence, TStorage, TUserMeta>,
         ...args: any[]
       ) => any
     >(
       callback: F,
-      deps?: unknown[]
+      deps: readonly unknown[]
     ): OmitFirstArg<F>;
 
     //
