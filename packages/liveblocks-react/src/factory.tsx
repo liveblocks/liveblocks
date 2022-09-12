@@ -628,7 +628,7 @@ export function createRoomContext<
           )) as OmitFirstArg<F>;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      deps !== undefined ? [room, ...deps] : [room, callback]
+      [room, ...deps]
     );
   }
 
