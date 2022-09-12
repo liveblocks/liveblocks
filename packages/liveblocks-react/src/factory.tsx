@@ -34,6 +34,14 @@ type OmitFirstArg<F> = F extends (first: any, ...rest: infer A) => infer R
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
+function useSyncExternalStore<Snapshot>(
+  s: (onStoreChange: () => void) => () => void,
+  g: () => Snapshot,
+  gg: undefined | null | (() => Snapshot)
+): Snapshot {
+  return useSyncExternalStoreWithSelector(s, g, gg, identity);
+}
+
 const EMPTY_OTHERS =
   // NOTE: asArrayWithLegacyMethods() wrapping should no longer be necessary in 0.19
   asArrayWithLegacyMethods([]);
@@ -809,13 +817,7 @@ export function createRoomContext<
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
-    const selector = identity;
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector
-    );
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   // NOTE: This API exists for backward compatible reasons
