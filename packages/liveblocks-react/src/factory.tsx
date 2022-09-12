@@ -839,26 +839,16 @@ export function createRoomContext<
 
   function useCanUndo(): boolean {
     const room = useRoom();
-    const [canUndo, setCanUndo] = React.useState(room.history.canUndo);
-
-    React.useEffect(
-      () => room.events.history.subscribe(({ canUndo }) => setCanUndo(canUndo)),
-      [room]
-    );
-
-    return canUndo;
+    const subscribe = room.events.history.subscribe;
+    const canUndo = room.history.canUndo;
+    return useSyncExternalStore(subscribe, canUndo, canUndo);
   }
 
   function useCanRedo(): boolean {
     const room = useRoom();
-    const [canRedo, setCanRedo] = React.useState(room.history.canRedo);
-
-    React.useEffect(
-      () => room.events.history.subscribe(({ canRedo }) => setCanRedo(canRedo)),
-      [room]
-    );
-
-    return canRedo;
+    const subscribe = room.events.history.subscribe;
+    const canRedo = room.history.canRedo;
+    return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
 
   function useBatch<T>(): (callback: () => T) => T {
