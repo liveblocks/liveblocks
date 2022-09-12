@@ -93,7 +93,7 @@ type Machine<
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryOps<TPresence>[];
+  getUndoStack(): HistoryOp<TPresence>[][];
   getItemsCount(): number;
 
   // Core
@@ -184,8 +184,6 @@ type HistoryOp<TPresence extends JsonObject> =
       data: TPresence;
     };
 
-type HistoryOps<TPresence extends JsonObject> = HistoryOp<TPresence>[];
-
 type IdFactory = () => string;
 
 type State<
@@ -229,9 +227,9 @@ type State<
   nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
 
-  undoStack: HistoryOps<TPresence>[];
-  redoStack: HistoryOps<TPresence>[];
-  pausedHistory: null | HistoryOps<TPresence>;
+  undoStack: HistoryOp<TPresence>[][];
+  redoStack: HistoryOp<TPresence>[][];
+  pausedHistory: null | HistoryOp<TPresence>[];
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -239,7 +237,7 @@ type State<
    */
   activeBatch: null | {
     ops: Op[];
-    reverseOps: HistoryOps<TPresence>;
+    reverseOps: HistoryOp<TPresence>[];
     updates: {
       others: [];
       presence: boolean;
@@ -481,7 +479,7 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOps<TPresence>) {
+  function _addToRealUndoStack(historyOps: HistoryOp<TPresence>[]) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
@@ -491,7 +489,7 @@ function makeStateMachine<
     onHistoryChange();
   }
 
-  function addToUndoStack(historyOps: HistoryOps<TPresence>) {
+  function addToUndoStack(historyOps: HistoryOp<TPresence>[]) {
     if (state.pausedHistory !== null) {
       state.pausedHistory.unshift(...historyOps);
     } else {
@@ -539,17 +537,17 @@ function makeStateMachine<
   }
 
   function apply(
-    item: HistoryOps<TPresence>,
+    ops: HistoryOp<TPresence>[],
     isLocal: boolean
   ): {
-    reverse: HistoryOps<TPresence>;
+    reverse: HistoryOp<TPresence>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryOps<TPresence>,
+      reverse: [] as HistoryOp<TPresence>[],
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -558,7 +556,7 @@ function makeStateMachine<
 
     const createdNodeIds = new Set<string>();
 
-    for (const op of item) {
+    for (const op of ops) {
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
