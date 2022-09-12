@@ -220,7 +220,7 @@ type State<
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorage;
+  initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
@@ -426,9 +426,9 @@ function makeStateMachine<
       state.root = load(message.items) as LiveObject<TStorage>;
     }
 
-    for (const key in state.defaultStorageRoot) {
+    for (const key in state.initialStorage) {
       if (state.root.get(key) === undefined) {
-        state.root.set(key, state.defaultStorageRoot[key]);
+        state.root.set(key, state.initialStorage[key]);
       }
     }
   }
@@ -1652,7 +1652,7 @@ function defaultState<
     me: new MeRef(initialPresence),
     others,
 
-    defaultStorageRoot: initialStorage,
+    initialStorage,
     idFactory: null,
 
     // Storage
