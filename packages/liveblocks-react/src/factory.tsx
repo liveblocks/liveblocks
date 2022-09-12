@@ -47,6 +47,49 @@ function getEmptyOthers() {
   return EMPTY_OTHERS;
 }
 
+function makeMutationContext<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+>(
+  room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>
+): MutationContext<TPresence, TStorage, TUserMeta> {
+  const errmsg =
+    "This mutation cannot be used until connected to the Liveblocks room";
+
+  return {
+    get root() {
+      const root = room.getStorageSnapshot();
+      if (root === null) {
+        throw new Error(errmsg);
+      }
+      return root;
+    },
+
+    get self() {
+      const self = room.getSelf();
+      // NOTE: We could use room.isSelfAware() here to keep the check
+      // consistent with `others`, but we also want to refine the `null` case
+      // away here.
+      if (self === null) {
+        throw new Error(errmsg);
+      }
+      return self;
+    },
+
+    get others() {
+      const others = room.getOthers();
+      if (!room.isSelfAware()) {
+        throw new Error(errmsg);
+      }
+      return others;
+    },
+
+    setMyPresence: room.updatePresence,
+  };
+}
+
 export function createRoomContext<
   TPresence extends JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -570,46 +613,22 @@ export function createRoomContext<
     });
   }
 
-  /**
-   * Usage:
-   *
-   *     const fillLayers = useMutation1(({ root }, color: Color) => { ... });
-   *     //    ^? (color: Color) => void
-   *     const deleteLayers = useMutation1(({ root }) => { ... });
-   *     //    ^? () => void
-   */
   function useMutation<
     F extends (
-      context: MutationContext<TPresence, TStorage>,
+      context: MutationContext<TPresence, TStorage, TUserMeta>,
       ...args: any[]
     ) => any
   >(callback: F, deps?: unknown[]): OmitFirstArg<F> {
     const room = useRoom();
-    const root = useMutableStorageRoot();
-    const setMyPresence = room.updatePresence;
     return React.useMemo(
       () => {
-        if (root !== null) {
-          const mutationCtx: MutationContext<TPresence, TStorage> = {
-            root,
-            setMyPresence,
-          };
-          return ((...args) =>
-            room.batch(() =>
-              callback(mutationCtx, ...args)
-            )) as OmitFirstArg<F>;
-        } else {
-          return ((): void => {
-            throw new Error(
-              "Mutation cannot be called while Liveblocks Storage has not loaded yet"
-            );
-          }) as OmitFirstArg<F>;
-        }
+        return ((...args) =>
+          room.batch(() =>
+            callback(makeMutationContext(room), ...args)
+          )) as OmitFirstArg<F>;
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
-      deps !== undefined
-        ? [root, room, setMyPresence, ...deps]
-        : [root, room, setMyPresence, callback]
+      deps !== undefined ? [room, ...deps] : [room, callback]
     );
   }
 
