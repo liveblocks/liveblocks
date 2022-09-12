@@ -18,9 +18,13 @@ const client = createClient({ authEndpoint: "/api/auth" });
 
 export const {
   RoomProvider,
+  useCanRedo,
+  useCanUndo,
+  useMutation,
   useMyPresence,
   useObject,
   useOthers,
   useRoom,
   useStorage,
+  useUndo,
 } = createRoomContext<Presence, Storage>(client);

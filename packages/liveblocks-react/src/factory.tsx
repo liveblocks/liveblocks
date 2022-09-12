@@ -34,6 +34,14 @@ type OmitFirstArg<F> = F extends (first: any, ...rest: infer A) => infer R
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
+function useSyncExternalStore<Snapshot>(
+  s: (onStoreChange: () => void) => () => void,
+  g: () => Snapshot,
+  gg: undefined | null | (() => Snapshot)
+): Snapshot {
+  return useSyncExternalStoreWithSelector(s, g, gg, identity);
+}
+
 const EMPTY_OTHERS =
   // NOTE: asArrayWithLegacyMethods() wrapping should no longer be necessary in 0.19
   asArrayWithLegacyMethods([]);
@@ -551,12 +559,10 @@ export function createRoomContext<
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
     const room = useRoom();
-    const presence = room.getPresence();
-    const rerender = useRerender();
+    const subscribe = room.events.me.subscribe;
+    const getSnapshot = room.getPresence;
+    const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
     const setPresence = room.updatePresence;
-
-    React.useEffect(() => room.events.me.subscribe(rerender), [room, rerender]);
-
     return [presence, setPresence];
   }
 
@@ -809,13 +815,7 @@ export function createRoomContext<
     const subscribe = room.events.storageDidLoad.subscribeOnce;
     const getSnapshot = room.getStorageSnapshot;
     const getServerSnapshot = React.useCallback((): Snapshot => null, []);
-    const selector = identity;
-    return useSyncExternalStoreWithSelector(
-      subscribe,
-      getSnapshot,
-      getServerSnapshot,
-      selector
-    );
+    return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   }
 
   // NOTE: This API exists for backward compatible reasons
@@ -837,26 +837,16 @@ export function createRoomContext<
 
   function useCanUndo(): boolean {
     const room = useRoom();
-    const [canUndo, setCanUndo] = React.useState(room.history.canUndo);
-
-    React.useEffect(
-      () => room.events.history.subscribe(({ canUndo }) => setCanUndo(canUndo)),
-      [room]
-    );
-
-    return canUndo;
+    const subscribe = room.events.history.subscribe;
+    const canUndo = room.history.canUndo;
+    return useSyncExternalStore(subscribe, canUndo, canUndo);
   }
 
   function useCanRedo(): boolean {
     const room = useRoom();
-    const [canRedo, setCanRedo] = React.useState(room.history.canRedo);
-
-    React.useEffect(
-      () => room.events.history.subscribe(({ canRedo }) => setCanRedo(canRedo)),
-      [room]
-    );
-
-    return canRedo;
+    const subscribe = room.events.history.subscribe;
+    const canRedo = room.history.canRedo;
+    return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
 
   function useBatch<T>(): (callback: () => T) => T {
