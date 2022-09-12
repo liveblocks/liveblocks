@@ -16,7 +16,7 @@ function subtract<T>(x: T[], y: T[]): T[] {
   return x.filter((xi) => !y.includes(xi));
 }
 
-const SRC_FILE = "src/factory.tsx";
+const SRC_FILE = "src/types.ts";
 
 const srcFile = createSourceFile(
   SRC_FILE,
