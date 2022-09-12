@@ -1,4 +1,4 @@
-import { useOtherIds } from "../../liveblocks.config";
+import { useOthersWithData, useConnectionIds } from "../../liveblocks.config";
 import { shallow } from "@liveblocks/client";
 import React from "react";
 import { colorToCss } from "../utils";
@@ -6,7 +6,16 @@ import Cursor from "./Cursor";
 import Path from "./Path";
 
 function Cursors() {
-  const ids = useOtherIds();
+  //
+  // RATIONALE:
+  // We're using useConnectionIds() here instead of useOthers(), because this
+  // will only re-render this component if users enter or leave.
+  //
+  // Each <Cursor /> component we loop over here will subscribe to necessary
+  // changes happening for _that_ user alone, which is most rendering
+  // efficient.
+  //
+  const ids = useConnectionIds();
   return (
     <>
       {ids.map((connectionId) => (
@@ -17,7 +26,7 @@ function Cursors() {
 }
 
 function Drafts() {
-  const others = useOtherIds(
+  const others = useOthersWithData(
     (other) => ({
       pencilDraft: other.presence.pencilDraft,
       penColor: other.presence.penColor,

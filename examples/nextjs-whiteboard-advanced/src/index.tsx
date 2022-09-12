@@ -1,10 +1,10 @@
 import {
-  useOtherIds,
   useMutation,
   RoomProvider,
   useHistory,
   useStorage,
   useSelf,
+  useOthersWithData,
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
@@ -369,7 +369,7 @@ function Canvas() {
     [layerIds]
   );
 
-  const selections = useOtherIds((other) => other.presence.selection);
+  const selections = useOthersWithData((other) => other.presence.selection);
 
   /**
    * Create a map layerId to color based on the selection of all the users in the room
