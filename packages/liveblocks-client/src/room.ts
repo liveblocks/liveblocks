@@ -228,11 +228,10 @@ type State<
   opClock: number;
   nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
+
   undoStack: HistoryOps<TPresence>[];
   redoStack: HistoryOps<TPresence>[];
-
-  isHistoryPaused: boolean;
-  pausedHistory: HistoryOps<TPresence>;
+  pausedHistory: null | HistoryOps<TPresence>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -482,17 +481,21 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function addToUndoStack(historyOps: HistoryOps<TPresence>) {
+  function _addToRealUndoStack(historyOps: HistoryOps<TPresence>) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
-    if (state.isHistoryPaused) {
+    state.undoStack.push(historyOps);
+    onHistoryChange();
+  }
+
+  function addToUndoStack(historyOps: HistoryOps<TPresence>) {
+    if (state.pausedHistory !== null) {
       state.pausedHistory.unshift(...historyOps);
     } else {
-      state.undoStack.push(historyOps);
-      onHistoryChange();
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -1427,7 +1430,7 @@ function makeStateMachine<
       return;
     }
 
-    state.isHistoryPaused = false;
+    state.pausedHistory = null;
     const result = apply(historyOps, true);
 
     notify(result.updates);
@@ -1456,7 +1459,7 @@ function makeStateMachine<
       return;
     }
 
-    state.isHistoryPaused = false;
+    state.pausedHistory = null;
     const result = apply(historyOps, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
@@ -1521,15 +1524,14 @@ function makeStateMachine<
 
   function pauseHistory() {
     state.pausedHistory = [];
-    state.isHistoryPaused = true;
   }
 
   function resumeHistory() {
-    state.isHistoryPaused = false;
-    if (state.pausedHistory.length > 0) {
-      addToUndoStack(state.pausedHistory);
+    const historyOps = state.pausedHistory;
+    state.pausedHistory = null;
+    if (historyOps !== null && historyOps.length > 0) {
+      _addToRealUndoStack(historyOps);
     }
-    state.pausedHistory = [];
   }
 
   function simulateSocketClose() {
@@ -1652,11 +1654,11 @@ function defaultState<
     opClock: 0,
     nodes: new Map<string, LiveNode>(),
     root: undefined,
+
     undoStack: [],
     redoStack: [],
+    pausedHistory: null,
 
-    isHistoryPaused: false,
-    pausedHistory: [],
     activeBatch: null,
     offlineOperations: new Map<string, Op>(),
   };
