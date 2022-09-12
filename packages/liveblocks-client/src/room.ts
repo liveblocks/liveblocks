@@ -93,7 +93,7 @@ type Machine<
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryItem<TPresence>[];
+  getUndoStack(): HistoryOps<TPresence>[];
   getItemsCount(): number;
 
   // Core
@@ -177,13 +177,14 @@ function isConnectionSelfAware(
   return connection.state === "open" || connection.state === "connecting";
 }
 
-type HistoryItem<TPresence extends JsonObject> = Array<
+type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
       type: "presence";
       data: TPresence;
-    }
->;
+    };
+
+type HistoryOps<TPresence extends JsonObject> = HistoryOp<TPresence>[];
 
 type IdFactory = () => string;
 
@@ -227,11 +228,11 @@ type State<
   opClock: number;
   nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
-  undoStack: HistoryItem<TPresence>[];
-  redoStack: HistoryItem<TPresence>[];
+  undoStack: HistoryOps<TPresence>[];
+  redoStack: HistoryOps<TPresence>[];
 
   isHistoryPaused: boolean;
-  pausedHistory: HistoryItem<TPresence>;
+  pausedHistory: HistoryOps<TPresence>;
 
   /**
    * Place to collect all mutations during a batch. Ops will be sent over the
@@ -239,7 +240,7 @@ type State<
    */
   activeBatch: null | {
     ops: Op[];
-    reverseOps: HistoryItem<TPresence>;
+    reverseOps: HistoryOps<TPresence>;
     updates: {
       others: [];
       presence: boolean;
@@ -481,16 +482,16 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
+  function addToUndoStack(historyOps: HistoryOps<TPresence>) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
     if (state.isHistoryPaused) {
-      state.pausedHistory.unshift(...historyItem);
+      state.pausedHistory.unshift(...historyOps);
     } else {
-      state.undoStack.push(historyItem);
+      state.undoStack.push(historyOps);
       onHistoryChange();
     }
   }
@@ -535,17 +536,17 @@ function makeStateMachine<
   }
 
   function apply(
-    item: HistoryItem<TPresence>,
+    item: HistoryOps<TPresence>,
     isLocal: boolean
   ): {
-    reverse: HistoryItem<TPresence>;
+    reverse: HistoryOps<TPresence>;
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem<TPresence>,
+      reverse: [] as HistoryOps<TPresence>,
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -1421,20 +1422,19 @@ function makeStateMachine<
     if (state.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyItem = state.undoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.undoStack.pop();
+    if (historyOps == null) {
       return;
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    const result = apply(historyOps, true);
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1451,19 +1451,18 @@ function makeStateMachine<
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyItem = state.redoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.redoStack.pop();
+    if (historyOps == null) {
       return;
     }
 
     state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    const result = apply(historyOps, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
