@@ -486,7 +486,7 @@ export function createRoomContext<
     const { id: roomId, initialPresence, initialStorage } = props;
 
     if (process.env.NODE_ENV !== "production") {
-      if (roomId === null || roomId === undefined) {
+      if (!roomId) {
         throw new Error(
           "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
         );
