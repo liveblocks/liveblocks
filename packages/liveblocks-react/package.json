@@ -29,7 +29,8 @@
     "build": "tsup && ../../scripts/build.sh",
     "start": "tsup --watch",
     "format": "eslint --fix src/ && prettier --write src/",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && npm run check:exports",
+    "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --watch --silent --verbose",
     "test-ci": "jest --silent --verbose"
   },

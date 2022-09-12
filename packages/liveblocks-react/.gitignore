@@ -17,3 +17,5 @@ npm-debug.log*
 
 # TypeScript build output for local scripts
 /scripts/*.js
+/scripts/*.cjs
+/scripts/*.mjs
