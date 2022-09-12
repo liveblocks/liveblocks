@@ -10,11 +10,15 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import {
+  useCanRedo,
+  useCanUndo,
+  useMutation,
   useMyPresence,
   useObject,
   useOthers,
   useRoom,
   useStorage,
+  useUndo,
 } from "./_liveblocks.config";
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
@@ -153,6 +157,24 @@ async function websocketSimulator() {
     });
   }
 
+  function simulateExistingStorageLoaded() {
+    simulateIncomingMessage({
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      items: [
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        [
+          "0:0",
+          {
+            type: CrdtType.OBJECT,
+            data: {},
+            parentId: "root",
+            parentKey: "obj",
+          },
+        ],
+      ],
+    });
+  }
+
   function simulateAbnormalClose() {
     socket.callbacks.close[0]({
       reason: "",
@@ -188,6 +210,7 @@ async function websocketSimulator() {
     //
     simulateIncomingMessage,
     simulateStorageLoaded,
+    simulateExistingStorageLoaded,
     simulateAbnormalClose,
 
     //
@@ -412,5 +435,58 @@ describe("useStorage", () => {
     expect(render1).toEqual(["FOO", "BAR"]);
     expect(render2).toEqual(["FOO", "BAR"]);
     expect(render1).toBe(render2); // Referentially equal!
+  });
+});
+
+describe("useCanUndo / useCanRedo", () => {
+  test("can undo and redo", async () => {
+    const canUndo = renderHook(() => useCanUndo());
+    const canRedo = renderHook(() => useCanRedo());
+    const undo = renderHook(() => useUndo());
+    const mutation = renderHook(() =>
+      useMutation(({ root }) => root.get("obj").set("a", Math.random()))
+    );
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(false);
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateExistingStorageLoaded());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Run a mutation
+    act(() => mutation.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Undo that!
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(true);
+
+    // Run 3 mutations
+    act(() => mutation.result.current());
+    act(() => mutation.result.current());
+    act(() => mutation.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Undo 2 of them
+    act(() => undo.result.current());
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(true);
+
+    // Undo the last one
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(true);
   });
 });
