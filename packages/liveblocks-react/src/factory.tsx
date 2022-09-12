@@ -559,12 +559,10 @@ export function createRoomContext<
     (patch: Partial<TPresence>, options?: { addToHistory: boolean }) => void
   ] {
     const room = useRoom();
-    const presence = room.getPresence();
-    const rerender = useRerender();
+    const subscribe = room.events.me.subscribe;
+    const getSnapshot = room.getPresence;
+    const presence = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
     const setPresence = room.updatePresence;
-
-    React.useEffect(() => room.events.me.subscribe(rerender), [room, rerender]);
-
     return [presence, setPresence];
   }
 
