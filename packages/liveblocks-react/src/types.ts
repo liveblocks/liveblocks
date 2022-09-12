@@ -339,19 +339,20 @@ export type RoomContextBundle<
   ): T;
 
   /**
-   * Related to useOthers(), but optimized for selecting only "subsets" of
-   * others. This is useful for performance reasons in particular, because
-   * selecting only a subset of users also means limiting the number of
-   * re-renders that will be triggered.
+   * Returns an array of connection IDs. This matches the values you'll get by
+   * using the `useOthers()` hook.
    *
-   * Note that there are two ways to use this hook, and depending on how you
-   * call it, the return value will be slightly different.
+   * Roughly equivalent to:
+   *   useOthers((others) => others.map(other => other.connectionId), shallow)
+   *
+   * This is useful in particular to implement efficiently rendering components
+   * for each user in the room, e.g. cursors.
    *
    * @example
-   * const ids = useOtherIds();
-   * //    ^^^ number[]
+   * const ids = useConnectionIds();
+   * // [2, 4, 7]
    */
-  useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+  useConnectionIds(): readonly number[];
 
   /**
    * Related to useOthers(), but optimized for selecting only "subsets" of
@@ -359,35 +360,33 @@ export type RoomContextBundle<
    * selecting only a subset of users also means limiting the number of
    * re-renders that will be triggered.
    *
-   * Note that there are two ways to use this hook, and depending on how you
-   * call it, the return value will be slightly different.
-   *
    * @example
-   * const avatars = useOtherIds(user => user.info.avatar);
+   * const avatars = useOthersWithData(user => user.info.avatar);
    * //    ^^^^^^^
    * //    { connectionId: number; data: string }[]
    *
-   * The selector function you pass to useOtherIds() is called an "item
+   * The selector function you pass to useOthersWithData() is called an "item
    * selector", and operates on a single user at a time. If you provide an
-   * (optional) comparison function, it will also work on the _item_ level.
+   * (optional) "item comparison" function, it will be used to compare each
+   * item pairwise.
    *
    * For example, to select multiple properties:
    *
    * @example
-   * const avatarsAndCursors = useOtherIds(
+   * const avatarsAndCursors = useOthersWithData(
    *   user => [u.info.avatar, u.presence.cursor],
-   *   shallow,  // ❗️
+   *   shallow,  // 👈
    * );
    */
-  useOtherIds<T>(
+  useOthersWithData<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
+    itemIsEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
 
   /**
-   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
-   * this selector deep down in your component stack to only have the component
-   * re-render if properties for this particular connection change.
+   * Given a connection ID (as obtained by using `useConnectionIds()`), you can
+   * call this selector deep down in your component stack to only have the
+   * component re-render if properties for this particular user change.
    *
    * @example
    * // Returns full user and re-renders whenever anything on the user changes
@@ -396,9 +395,9 @@ export type RoomContextBundle<
   useOther(connectionId: number): User<TPresence, TUserMeta>;
 
   /**
-   * Given a connection ID (as obtained by using `useOtherIds()`), you can call
-   * this selector deep down in your component stack to only have the component
-   * re-render if properties for this particular connection change.
+   * Given a connection ID (as obtained by using `useConnectionIds()`), you can
+   * call this selector deep down in your component stack to only have the
+   * component re-render if properties for this particular user change.
    *
    * @example
    * // Returns only the selected values re-renders whenever that selection changes)
@@ -720,19 +719,20 @@ export type RoomContextBundle<
     ): T;
 
     /**
-     * Related to useOthers(), but optimized for selecting only "subsets" of
-     * others. This is useful for performance reasons in particular, because
-     * selecting only a subset of users also means limiting the number of
-     * re-renders that will be triggered.
+     * Returns an array of connection IDs. This matches the values you'll get by
+     * using the `useOthers()` hook.
      *
-     * Note that there are two ways to use this hook, and depending on how you
-     * call it, the return value will be slightly different.
+     * Roughly equivalent to:
+     *   useOthers((others) => others.map(other => other.connectionId), shallow)
+     *
+     * This is useful in particular to implement efficiently rendering components
+     * for each user in the room, e.g. cursors.
      *
      * @example
-     * const ids = useOtherIds();
-     * //    ^^^ number[]
+     * const ids = useConnectionIds();
+     * // [2, 4, 7]
      */
-    useOtherIds(): readonly number[]; // TODO: Change to ConnectionID for clarity?
+    useConnectionIds(): readonly number[];
 
     /**
      * Related to useOthers(), but optimized for selecting only "subsets" of
@@ -740,35 +740,33 @@ export type RoomContextBundle<
      * selecting only a subset of users also means limiting the number of
      * re-renders that will be triggered.
      *
-     * Note that there are two ways to use this hook, and depending on how you
-     * call it, the return value will be slightly different.
-     *
      * @example
-     * const avatars = useOtherIds(user => user.info.avatar);
+     * const avatars = useOthersWithData(user => user.info.avatar);
      * //    ^^^^^^^
      * //    { connectionId: number; data: string }[]
      *
-     * The selector function you pass to useOtherIds() is called an "item
+     * The selector function you pass to useOthersWithData() is called an "item
      * selector", and operates on a single user at a time. If you provide an
-     * (optional) comparison function, it will also work on the _item_ level.
+     * (optional) "item comparison" function, it will be used to compare each
+     * item pairwise.
      *
      * For example, to select multiple properties:
      *
      * @example
-     * const avatarsAndCursors = useOtherIds(
+     * const avatarsAndCursors = useOthersWithData(
      *   user => [u.info.avatar, u.presence.cursor],
-     *   shallow,  // ❗️
+     *   shallow,  // 👈
      * );
      */
-    useOtherIds<T>(
+    useOthersWithData<T>(
       itemSelector: (other: User<TPresence, TUserMeta>) => T,
-      isEqual?: (prev: T, curr: T) => boolean
+      itemIsEqual?: (prev: T, curr: T) => boolean
     ): readonly { readonly connectionId: number; readonly data: T }[];
 
     /**
-     * Given a connection ID (as obtained by using `useOtherIds()`), you can call
-     * this selector deep down in your component stack to only have the component
-     * re-render if properties for this particular connection change.
+     * Given a connection ID (as obtained by using `useConnectionIds()`), you
+     * can call this selector deep down in your component stack to only have
+     * the component re-render if properties for this particular user change.
      *
      * @example
      * // Returns full user and re-renders whenever anything on the user changes
@@ -777,9 +775,9 @@ export type RoomContextBundle<
     useOther(connectionId: number): User<TPresence, TUserMeta>;
 
     /**
-     * Given a connection ID (as obtained by using `useOtherIds()`), you can call
-     * this selector deep down in your component stack to only have the component
-     * re-render if properties for this particular connection change.
+     * Given a connection ID (as obtained by using `useConnectionIds()`), you
+     * can call this selector deep down in your component stack to only have
+     * the component re-render if properties for this particular user change.
      *
      * @example
      * // Returns only the selected values re-renders whenever that selection changes)
