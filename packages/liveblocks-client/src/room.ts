@@ -229,6 +229,11 @@ type State<
 
   undoStack: HistoryOp<TPresence>[][];
   redoStack: HistoryOp<TPresence>[][];
+
+  /**
+   * When history is paused, all operations will get queued up here. When
+   * history is resumed, these operations get "committed" to the undo stack.
+   */
   pausedHistory: null | HistoryOp<TPresence>[];
 
   /**
