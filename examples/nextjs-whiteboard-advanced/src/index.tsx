@@ -206,8 +206,9 @@ function Canvas() {
    * Transform the drawing of the current user in a layer and reset the presence to delete the draft.
    */
   const insertPath = useMutation(
-    ({ root, setMyPresence }) => {
+    ({ root, self, setMyPresence }) => {
       const liveLayers = root.get("layers");
+      const { pencilDraft } = self.presence;
       if (
         pencilDraft == null ||
         pencilDraft.length < 2 ||
@@ -228,7 +229,7 @@ function Canvas() {
       setMyPresence({ pencilDraft: null });
       setState({ mode: CanvasMode.Pencil });
     },
-    [lastUsedColor, pencilDraft]
+    [lastUsedColor]
   );
 
   /**
@@ -308,7 +309,8 @@ function Canvas() {
    * Continue the drawing and send the current draft to other users in the room
    */
   const continueDrawing = useMutation(
-    ({ setMyPresence }, point: Point, e: React.PointerEvent) => {
+    ({ self, setMyPresence }, point: Point, e: React.PointerEvent) => {
+      const { pencilDraft } = self.presence;
       if (
         canvasState.mode !== CanvasMode.Pencil ||
         e.buttons !== 1 ||
@@ -327,7 +329,7 @@ function Canvas() {
             : [...pencilDraft, [point.x, point.y, e.pressure]],
       });
     },
-    [canvasState.mode, pencilDraft]
+    [canvasState.mode]
   );
 
   /**
