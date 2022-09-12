@@ -130,18 +130,18 @@ type Machine<
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
 
-  events: {
-    customEvent: Observable<CustomEvent<TRoomEvent>>;
-    me: Observable<TPresence>;
-    others: Observable<{
+  readonly events: {
+    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{
       others: Others<TPresence, TUserMeta>;
       event: OthersEvent<TPresence, TUserMeta>;
     }>;
-    error: Observable<Error>;
-    connection: Observable<ConnectionState>;
-    storage: Observable<StorageUpdate[]>;
-    history: Observable<HistoryEvent>;
-    storageDidLoad: Observable<void>;
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionState>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+    readonly storageDidLoad: Observable<void>;
   };
 
   // Core
