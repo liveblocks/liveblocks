@@ -386,7 +386,7 @@ export type RoomContextBundle<
   /**
    * Given a connection ID (as obtained by using `useConnectionIds()`), you can
    * call this selector deep down in your component stack to only have the
-   * component re-render if properties for this particular connection change.
+   * component re-render if properties for this particular user change.
    *
    * @example
    * // Returns full user and re-renders whenever anything on the user changes
@@ -395,9 +395,9 @@ export type RoomContextBundle<
   useOther(connectionId: number): User<TPresence, TUserMeta>;
 
   /**
-   * Given a connection ID (as obtained by using `useOthersWithData()`), you can call
-   * this selector deep down in your component stack to only have the component
-   * re-render if properties for this particular connection change.
+   * Given a connection ID (as obtained by using `useConnectionIds()`), you can
+   * call this selector deep down in your component stack to only have the
+   * component re-render if properties for this particular user change.
    *
    * @example
    * // Returns only the selected values re-renders whenever that selection changes)
@@ -766,8 +766,7 @@ export type RoomContextBundle<
     /**
      * Given a connection ID (as obtained by using `useConnectionIds()`), you
      * can call this selector deep down in your component stack to only have
-     * the component re-render if properties for this particular connection
-     * change.
+     * the component re-render if properties for this particular user change.
      *
      * @example
      * // Returns full user and re-renders whenever anything on the user changes
@@ -776,9 +775,9 @@ export type RoomContextBundle<
     useOther(connectionId: number): User<TPresence, TUserMeta>;
 
     /**
-     * Given a connection ID (as obtained by using `useOthersWithData()`), you can call
-     * this selector deep down in your component stack to only have the component
-     * re-render if properties for this particular connection change.
+     * Given a connection ID (as obtained by using `useConnectionIds()`), you
+     * can call this selector deep down in your component stack to only have
+     * the component re-render if properties for this particular user change.
      *
      * @example
      * // Returns only the selected values re-renders whenever that selection changes)
