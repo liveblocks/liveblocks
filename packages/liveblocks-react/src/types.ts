@@ -808,7 +808,49 @@ export type RoomContextBundle<
     ) => void;
 
     /**
-     * TODO: Document me.
+     * Create a callback function that can be called to mutate Liveblocks
+     * state.
+     *
+     * The first argument that gets passed into your callback will be
+     * a "mutation context", which exposes the following:
+     *
+     *   - `root` - The mutable Storage root.
+     *              You can normal mutation on Live structures with this, for
+     *              example: root.get('layers').get('layer1').set('fill',
+     *              'red')
+     *
+     *   - `setMyPresence` - Call this with a new (partial) Presence value.
+     *
+     *   - `self` - A read-only version of the latest self, if you need it to
+     *              compute the next state.
+     *
+     *   - `others` - A read-only version of the latest others list, if you
+     *                need it to compute the next state.
+     *
+     * useMutation is like React's useCallback, except that the first argument
+     * that gets passed into your callback will be a "mutation context".
+     *
+     * If you want get access to the immutable root somewhere in your mutation,
+     * you can use `root.ToImmutable()`.
+     *
+     * @example
+     * const fillLayers = useMutation(
+     *   ({ root }, color: Color) => {
+     *     ...
+     *   },
+     *   [],
+     * );
+     *
+     * fillLayers('red');
+     *
+     * const deleteLayers = useMutation(
+     *   ({ root }) => {
+     *     ...
+     *   },
+     *   [],
+     * );
+     *
+     * deleteLayers();
      */
     useMutation<
       F extends (
