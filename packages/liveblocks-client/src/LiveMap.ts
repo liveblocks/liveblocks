@@ -63,7 +63,7 @@ export class LiveMap<
     parentKey: string,
     pool?: ManagedPool
   ): CreateChildOp[] {
-    if (this._id == null) {
+    if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
@@ -97,8 +97,7 @@ export class LiveMap<
     map._attach(id, pool);
 
     const children = parentToChildren.get(id);
-
-    if (children == null) {
+    if (children === undefined) {
       return map;
     }
 
@@ -129,7 +128,7 @@ export class LiveMap<
    * @internal
    */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
-    if (this._pool == null) {
+    if (this._pool === undefined) {
       throw new Error("Can't attach child if managed pool is not present");
     }
 
@@ -150,7 +149,7 @@ export class LiveMap<
         // Acknowlegment from local operation
         this.unacknowledgedSet.delete(key);
         return { modified: false };
-      } else if (lastUpdateOpId != null) {
+      } else if (lastUpdateOpId !== undefined) {
         // Another local set has overriden the value, so we do nothing
         return { modified: false };
       }
@@ -245,7 +244,7 @@ export class LiveMap<
    */
   get(key: TKey): TValue | undefined {
     const value = this._map.get(key);
-    if (value == undefined) {
+    if (value === undefined) {
       return undefined;
     }
     return liveNodeToLson(value) as TValue | undefined;
@@ -319,7 +318,7 @@ export class LiveMap<
   delete(key: TKey): boolean {
     const item = this._map.get(key);
 
-    if (item == null) {
+    if (item === undefined) {
       return false;
     }
 

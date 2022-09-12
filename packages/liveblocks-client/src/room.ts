@@ -373,7 +373,7 @@ function makeStateMachine<
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (state.socket == null) {
+      if (state.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
       state.socket.send(JSON.stringify(messageOrMessages));
@@ -422,7 +422,7 @@ function makeStateMachine<
     }
 
     for (const key in state.defaultStorageRoot) {
-      if (state.root.get(key) == null) {
+      if (state.root.get(key) === undefined) {
         state.root.set(key, state.defaultStorageRoot[key]);
       }
     }
@@ -440,7 +440,7 @@ function makeStateMachine<
       } else {
         const tuple: IdTuple<SerializedChild> = [id, crdt];
         const children = parentToChildren.get(crdt.parentId);
-        if (children != null) {
+        if (children !== undefined) {
           children.push(tuple);
         } else {
           parentToChildren.set(crdt.parentId, [tuple]);
@@ -448,7 +448,7 @@ function makeStateMachine<
       }
     }
 
-    if (root == null) {
+    if (root === null) {
       throw new Error("Root can't be null");
     }
 
@@ -569,7 +569,7 @@ function makeStateMachine<
 
         state.me.patch(op.data);
 
-        if (state.buffer.me == null) {
+        if (state.buffer.me === null) {
           state.buffer.me = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
@@ -640,7 +640,7 @@ function makeStateMachine<
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
         const node = state.nodes.get(op.id);
-        if (node == null) {
+        if (node === undefined) {
           return { modified: false };
         }
 
@@ -648,7 +648,7 @@ function makeStateMachine<
       }
       case OpCode.SET_PARENT_KEY: {
         const node = state.nodes.get(op.id);
-        if (node == null) {
+        if (node === undefined) {
           return { modified: false };
         }
 
@@ -666,7 +666,7 @@ function makeStateMachine<
         }
 
         const parentNode = state.nodes.get(op.parentId);
-        if (parentNode == null) {
+        if (parentNode === undefined) {
           return { modified: false };
         }
 
@@ -816,7 +816,7 @@ function makeStateMachine<
   ) {
     const oldValues = {} as TPresence;
 
-    if (state.buffer.me == null) {
+    if (state.buffer.me === null) {
       state.buffer.me = {
         type: "partial",
         data: {},
@@ -1178,7 +1178,7 @@ function makeStateMachine<
   }
 
   function heartbeat() {
-    if (state.socket == null) {
+    if (state.socket === null) {
       // Should never happen, because we clear the pong timeout when the connection is dropped explictly
       return;
     }
@@ -1247,7 +1247,10 @@ function makeStateMachine<
       });
     }
 
-    if (state.socket == null || state.socket.readyState !== state.socket.OPEN) {
+    if (
+      state.socket === null ||
+      state.socket.readyState !== state.socket.OPEN
+    ) {
       state.buffer.storageOperations = [];
       return;
     }
@@ -1270,7 +1273,7 @@ function makeStateMachine<
       };
       state.lastFlushTime = now;
     } else {
-      if (state.timeoutHandles.flush != null) {
+      if (state.timeoutHandles.flush !== null) {
         clearTimeout(state.timeoutHandles.flush);
       }
 
@@ -1353,7 +1356,7 @@ function makeStateMachine<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (state.socket == null && options.shouldQueueEventIfNotReady == false) {
+    if (state.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
 
@@ -1373,7 +1376,7 @@ function makeStateMachine<
   let _getInitialStateResolver: (() => void) | null = null;
 
   function startLoadingStorage(): Promise<void> {
-    if (_getInitialStatePromise == null) {
+    if (_getInitialStatePromise === null) {
       state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
@@ -1424,7 +1427,7 @@ function makeStateMachine<
       throw new Error("undo is not allowed during a batch");
     }
     const historyOps = state.undoStack.pop();
-    if (historyOps == null) {
+    if (historyOps === undefined) {
       return;
     }
 
@@ -1453,7 +1456,7 @@ function makeStateMachine<
     }
 
     const historyOps = state.redoStack.pop();
-    if (historyOps == null) {
+    if (historyOps === undefined) {
       return;
     }
 
@@ -1759,7 +1762,7 @@ function prepareCreateWebSocket(
   liveblocksServer: string,
   WebSocketPolyfill?: typeof WebSocket
 ) {
-  if (typeof window === "undefined" && WebSocketPolyfill == null) {
+  if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
     );
@@ -1783,7 +1786,7 @@ function prepareAuthEndpoint(
   fetchPolyfill?: typeof window.fetch
 ): (room: string) => Promise<AuthorizeResponse> {
   if (authentication.type === "public") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
       );
@@ -1797,7 +1800,7 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "private") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
       );
