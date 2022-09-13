@@ -86,11 +86,19 @@ export default function App() {
       initialPresence={{ isTyping: false }}
       initialStorage={{ todos: new LiveList() }}
     >
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
+      <ClientSideSuspense fallback={<Loading />}>
         {() => <Room />}
       </ClientSideSuspense>
     </RoomProvider>
   )
+}
+
+function Loading() {
+  return (
+    <div className="loading">
+      <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+    </div>
+  );
 }
 
 /**
