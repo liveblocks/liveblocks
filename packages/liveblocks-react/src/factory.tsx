@@ -674,6 +674,11 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
+  function useConnectionIdsSuspense(): readonly number[] {
+    useSuspendUntilPresenceLoaded();
+    return useConnectionIds();
+  }
+
   function useOthersWithDataSuspense<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
@@ -776,7 +781,7 @@ export function createRoomContext<
       useUpdateMyPresence,
       useOthers: useOthersSuspense,
       useOthersWithData: useOthersWithDataSuspense,
-      useConnectionIds,
+      useConnectionIds: useConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
       useMutation,
