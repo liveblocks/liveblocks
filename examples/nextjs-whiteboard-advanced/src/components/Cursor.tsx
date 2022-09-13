@@ -7,6 +7,12 @@ type Props = {
 };
 
 function Cursor({ connectionId }: Props) {
+  //
+  // RATIONALE:
+  // Each cursor itself subscribes to _just_ the change for the user. This
+  // means that if only one user's cursor is moving, only one <Cursor />
+  // component has to re-render. All the others can remain idle.
+  //
   const cursor = useOther(connectionId, (user) => user.presence.cursor);
   if (!cursor) {
     return null;

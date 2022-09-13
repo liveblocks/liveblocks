@@ -1,14 +1,14 @@
 import {
-  useOtherIds,
   useMutation,
   RoomProvider,
   useHistory,
   useStorage,
   useSelf,
+  useOthersWithData,
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
-import { ClientSideSuspense, shallow } from "@liveblocks/react";
+import { ClientSideSuspense } from "@liveblocks/react";
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -83,13 +83,7 @@ function Loading() {
 function Canvas() {
   const layerIds = useStorage((root) => root.layerIds);
 
-  const { selection, pencilDraft } = useSelf(
-    (me) => ({
-      selection: me.presence.selection,
-      pencilDraft: me.presence.pencilDraft,
-    }),
-    shallow
-  );
+  const pencilDraft = useSelf((me) => me.presence.pencilDraft);
   const [canvasState, setState] = useState<CanvasState>({
     mode: CanvasMode.None,
   });
@@ -135,13 +129,13 @@ function Canvas() {
     return () => {
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [selection, deleteLayers, history]);
+  }, [deleteLayers, history]);
 
   /**
    * Select the layer if not already selected and start translating the selection
    */
   const onLayerPointerDown = useMutation(
-    ({ setMyPresence }, e: React.PointerEvent, layerId: string) => {
+    ({ self, setMyPresence }, e: React.PointerEvent, layerId: string) => {
       if (
         canvasState.mode === CanvasMode.Pencil ||
         canvasState.mode === CanvasMode.Inserting
@@ -152,12 +146,12 @@ function Canvas() {
       history.pause();
       e.stopPropagation();
       const point = pointerEventToCanvasPoint(e, camera);
-      if (!selection.includes(layerId)) {
+      if (!self.presence.selection.includes(layerId)) {
         setMyPresence({ selection: [layerId] }, { addToHistory: true });
       }
       setState({ mode: CanvasMode.Translating, current: point });
     },
-    [setState, selection, camera, history, canvasState.mode]
+    [setState, camera, history, canvasState.mode]
   );
 
   /**
@@ -212,8 +206,9 @@ function Canvas() {
    * Transform the drawing of the current user in a layer and reset the presence to delete the draft.
    */
   const insertPath = useMutation(
-    ({ root, setMyPresence }) => {
+    ({ root, self, setMyPresence }) => {
       const liveLayers = root.get("layers");
+      const { pencilDraft } = self.presence;
       if (
         pencilDraft == null ||
         pencilDraft.length < 2 ||
@@ -234,14 +229,14 @@ function Canvas() {
       setMyPresence({ pencilDraft: null });
       setState({ mode: CanvasMode.Pencil });
     },
-    [lastUsedColor, pencilDraft]
+    [lastUsedColor]
   );
 
   /**
    * Move selected layers on the canvas
    */
   const translateSelectedLayers = useMutation(
-    ({ root }, point: Point) => {
+    ({ root, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Translating) {
         return;
       }
@@ -252,7 +247,7 @@ function Canvas() {
       };
 
       const liveLayers = root.get("layers");
-      for (const id of selection) {
+      for (const id of self.presence.selection) {
         const layer = liveLayers.get(id);
         if (layer) {
           layer.update({
@@ -264,14 +259,14 @@ function Canvas() {
 
       setState({ mode: CanvasMode.Translating, current: point });
     },
-    [canvasState, selection]
+    [canvasState]
   );
 
   /**
    * Resize selected layer. Only resizing a single layer is allowed.
    */
   const resizeSelectedLayer = useMutation(
-    ({ root }, point: Point) => {
+    ({ root, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Resizing) {
         return;
       }
@@ -283,22 +278,19 @@ function Canvas() {
       );
 
       const liveLayers = root.get("layers");
-      const layer = liveLayers.get(selection[0]);
+      const layer = liveLayers.get(self.presence.selection[0]);
       if (layer) {
         layer.update(bounds);
       }
     },
-    [canvasState, selection]
+    [canvasState]
   );
 
-  const unselectLayers = useMutation(
-    ({ setMyPresence }) => {
-      if (selection.length > 0) {
-        setMyPresence({ selection: [] }, { addToHistory: true });
-      }
-    },
-    [selection]
-  );
+  const unselectLayers = useMutation(({ self, setMyPresence }) => {
+    if (self.presence.selection.length > 0) {
+      setMyPresence({ selection: [] }, { addToHistory: true });
+    }
+  }, []);
 
   /**
    * Insert the first path point and start drawing with the pencil
@@ -317,7 +309,8 @@ function Canvas() {
    * Continue the drawing and send the current draft to other users in the room
    */
   const continueDrawing = useMutation(
-    ({ setMyPresence }, point: Point, e: React.PointerEvent) => {
+    ({ self, setMyPresence }, point: Point, e: React.PointerEvent) => {
+      const { pencilDraft } = self.presence;
       if (
         canvasState.mode !== CanvasMode.Pencil ||
         e.buttons !== 1 ||
@@ -336,7 +329,7 @@ function Canvas() {
             : [...pencilDraft, [point.x, point.y, e.pressure]],
       });
     },
-    [canvasState.mode, pencilDraft]
+    [canvasState.mode]
   );
 
   /**
@@ -376,7 +369,7 @@ function Canvas() {
     [layerIds]
   );
 
-  const selections = useOtherIds((other) => other.presence.selection);
+  const selections = useOthersWithData((other) => other.presence.selection);
 
   /**
    * Create a map layerId to color based on the selection of all the users in the room
