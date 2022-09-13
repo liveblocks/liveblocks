@@ -39,6 +39,7 @@ export type RoomProviderProps<
      */
     id: string;
     children: React.ReactNode;
+    withoutConnecting?: boolean;
   } & RoomInitializers<TPresence, TStorage>
 >;
 
@@ -355,6 +356,7 @@ export function createRoomContext<
       id: roomId,
       initialPresence,
       initialStorage,
+      withoutConnecting = false,
       defaultPresence, // Will get removed in 0.18
       defaultStorageRoot, // Will get removed in 0.18
     } = props;
@@ -398,7 +400,8 @@ export function createRoomContext<
         initialStorage,
         defaultPresence, // Will get removed in 0.18
         defaultStorageRoot, // Will get removed in 0.18
-        DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+        DO_NOT_USE_withoutConnecting:
+          typeof window === "undefined" || withoutConnecting,
       } as RoomInitializers<TPresence, TStorage>)
     );
 
@@ -409,14 +412,15 @@ export function createRoomContext<
           initialStorage: frozen.initialStorage,
           defaultPresence: frozen.defaultPresence, // Will get removed in 0.18
           defaultStorageRoot: frozen.defaultStorageRoot, // Will get removed in 0.18
-          DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+          DO_NOT_USE_withoutConnecting:
+            typeof window === "undefined" || withoutConnecting,
         } as RoomInitializers<TPresence, TStorage>)
       );
 
       return () => {
         _client.leave(roomId);
       };
-    }, [_client, roomId, frozen]);
+    }, [_client, roomId, frozen, withoutConnecting]);
 
     return (
       <RoomContext.Provider value={room}>{props.children}</RoomContext.Provider>
