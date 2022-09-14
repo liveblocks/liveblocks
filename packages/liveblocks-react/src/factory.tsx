@@ -59,12 +59,12 @@ function makeMutationContext<
     "This mutation cannot be used until connected to the Liveblocks room";
 
   return {
-    get root() {
-      const root = room.getStorageSnapshot();
-      if (root === null) {
+    get storage() {
+      const mutableRoot = room.getStorageSnapshot();
+      if (mutableRoot === null) {
         throw new Error(errmsg);
       }
-      return root;
+      return mutableRoot;
     },
 
     get self() {

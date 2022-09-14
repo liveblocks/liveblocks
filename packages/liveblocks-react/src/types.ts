@@ -45,7 +45,7 @@ export type MutationContext<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta
 > = {
-  root: LiveObject<TStorage>;
+  storage: LiveObject<TStorage>;
   self: User<TPresence, TUserMeta>;
   others: Others<TPresence, TUserMeta>;
   setMyPresence: (

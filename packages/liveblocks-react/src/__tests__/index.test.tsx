@@ -444,7 +444,10 @@ describe("useCanUndo / useCanRedo", () => {
     const canRedo = renderHook(() => useCanRedo());
     const undo = renderHook(() => useUndo());
     const mutation = renderHook(() =>
-      useMutation(({ root }) => root.get("obj").set("a", Math.random()), [])
+      useMutation(
+        ({ storage }) => storage.get("obj").set("a", Math.random()),
+        []
+      )
     );
 
     expect(canUndo.result.current).toEqual(false);
