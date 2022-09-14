@@ -9,14 +9,10 @@ import type { Json } from "./Json";
 import type { Lson, LsonObject } from "./Lson";
 
 export type Immutable = Scalar | ImmutableList | ImmutableObject | ImmutableMap;
-export type Scalar = string | number | boolean | null;
-export type ImmutableList = readonly Immutable[];
-export type ImmutableObject = { readonly [key: string]: Immutable | undefined };
-export type ImmutableMap = ReadonlyMap<string, Immutable>;
-
-// An "ImmutableRef" is an immutable value that isn't a scalar value, meaning
-// the value is an object type in JavaScript.
-export type ImmutableRef = Exclude<Immutable, Scalar>;
+type Scalar = string | number | boolean | null;
+type ImmutableList = readonly Immutable[];
+type ImmutableObject = { readonly [key: string]: Immutable | undefined };
+type ImmutableMap = ReadonlyMap<string, Immutable>;
 
 export function isScalar(data: Immutable): data is Scalar {
   return (

@@ -17,7 +17,7 @@ import type {
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import type { ImmutableList } from "./types/Immutable";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -1240,19 +1240,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._items[index]._setParentLink(this, shiftedPosition);
   }
 
-  toImmutable(): ImmutableList {
+  toImmutable(): readonly ToImmutable<TItem>[] {
     // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
     // instead. This helper merely exists to help TypeScript infer better
     // return types.
-    return super.toImmutable() as ImmutableList;
+    return super.toImmutable() as readonly ToImmutable<TItem>[];
   }
 
   /** @internal */
-  _toImmutable(): ImmutableList {
+  _toImmutable(): readonly ToImmutable<TItem>[] {
     const result = this._items.map((node) => node.toImmutable());
-    return process.env.NODE_ENV === "production"
-      ? result
-      : Object.freeze(result);
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as readonly ToImmutable<TItem>[];
   }
 }
 
