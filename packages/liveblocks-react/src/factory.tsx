@@ -210,37 +210,33 @@ export function createRoomContext<
     );
   }
 
-  function useConnectionIds(): readonly number[] {
+  function useOthersConnectionIds(): readonly number[] {
     return useOthers(connectionIdSelector, shallow);
   }
 
-  function useOthersWithData<T>(
+  function useOthersMapped<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
-  ): readonly { readonly connectionId: number; readonly data: T }[] {
+  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
     const wrappedSelector = React.useCallback(
       (others: Others<TPresence, TUserMeta>) =>
-        others.map((other) => ({
-          connectionId: other.connectionId,
-          data: itemSelector(other),
-        })),
+        others.map(
+          (other) => [other.connectionId, itemSelector(other)] as const
+        ),
       [itemSelector]
     );
 
     const wrappedIsEqual = React.useCallback(
       (
-        a: { readonly connectionId: number; readonly data: T }[],
-        b: { readonly connectionId: number; readonly data: T }[]
+        a: ReadonlyArray<readonly [connectionId: number, data: T]>,
+        b: ReadonlyArray<readonly [connectionId: number, data: T]>
       ): boolean => {
         const eq = itemIsEqual ?? Object.is;
         return (
           a.length === b.length &&
           a.every((atuple, index) => {
             const btuple = b[index];
-            return (
-              atuple.connectionId === btuple.connectionId &&
-              eq(atuple.data, btuple.data)
-            );
+            return atuple[0] === btuple[0] && eq(atuple[1], btuple[1]);
           })
         );
       },
@@ -674,17 +670,17 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
-  function useConnectionIdsSuspense(): readonly number[] {
+  function useOthersConnectionIdsSuspense(): readonly number[] {
     useSuspendUntilPresenceLoaded();
-    return useConnectionIds();
+    return useOthersConnectionIds();
   }
 
-  function useOthersWithDataSuspense<T>(
+  function useOthersMappedSuspense<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
-  ): readonly { readonly connectionId: number; readonly data: T }[] {
+  ): ReadonlyArray<readonly [connectionId: number, data: T]> {
     useSuspendUntilPresenceLoaded();
-    return useOthersWithData(itemSelector, itemIsEqual);
+    return useOthersMapped(itemSelector, itemIsEqual);
   }
 
   function useOtherSuspense(connectionId: number): User<TPresence, TUserMeta>;
@@ -745,8 +741,8 @@ export function createRoomContext<
     useMyPresence,
     useUpdateMyPresence,
     useOthers,
-    useOthersWithData,
-    useConnectionIds,
+    useOthersMapped,
+    useOthersConnectionIds,
     useOther,
 
     useMutation,
@@ -780,8 +776,8 @@ export function createRoomContext<
       useMyPresence,
       useUpdateMyPresence,
       useOthers: useOthersSuspense,
-      useOthersWithData: useOthersWithDataSuspense,
-      useConnectionIds: useConnectionIdsSuspense,
+      useOthersMapped: useOthersMappedSuspense,
+      useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
       useMutation,
