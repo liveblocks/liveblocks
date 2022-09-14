@@ -17,7 +17,7 @@ import type {
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
-import type { ImmutableList, ToImmutable } from "./types/Immutable";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
