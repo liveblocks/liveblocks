@@ -381,7 +381,7 @@ export type RoomContextBundle<
   useOthersMapped<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
-  ): readonly { readonly connectionId: number; readonly data: T }[];
+  ): ReadonlyArray<readonly [connectionId: number, data: T]>;
 
   /**
    * Given a connection ID (as obtained by using `useOthersConnectionIds`), you can
@@ -761,7 +761,7 @@ export type RoomContextBundle<
     useOthersMapped<T>(
       itemSelector: (other: User<TPresence, TUserMeta>) => T,
       itemIsEqual?: (prev: T, curr: T) => boolean
-    ): readonly { readonly connectionId: number; readonly data: T }[];
+    ): ReadonlyArray<readonly [connectionId: number, data: T]>;
 
     /**
      * Given a connection ID (as obtained by using `useOthersConnectionIds`),
