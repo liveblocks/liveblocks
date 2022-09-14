@@ -361,11 +361,11 @@ export type RoomContextBundle<
    * re-renders that will be triggered.
    *
    * @example
-   * const avatars = useOthersWithData(user => user.info.avatar);
+   * const avatars = useOthersMapped(user => user.info.avatar);
    * //    ^^^^^^^
    * //    { connectionId: number; data: string }[]
    *
-   * The selector function you pass to useOthersWithData() is called an "item
+   * The selector function you pass to useOthersMapped() is called an "item
    * selector", and operates on a single user at a time. If you provide an
    * (optional) "item comparison" function, it will be used to compare each
    * item pairwise.
@@ -373,12 +373,12 @@ export type RoomContextBundle<
    * For example, to select multiple properties:
    *
    * @example
-   * const avatarsAndCursors = useOthersWithData(
+   * const avatarsAndCursors = useOthersMapped(
    *   user => [u.info.avatar, u.presence.cursor],
    *   shallow,  // 👈
    * );
    */
-  useOthersWithData<T>(
+  useOthersMapped<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[];
@@ -741,11 +741,11 @@ export type RoomContextBundle<
      * re-renders that will be triggered.
      *
      * @example
-     * const avatars = useOthersWithData(user => user.info.avatar);
+     * const avatars = useOthersMapped(user => user.info.avatar);
      * //    ^^^^^^^
      * //    { connectionId: number; data: string }[]
      *
-     * The selector function you pass to useOthersWithData() is called an "item
+     * The selector function you pass to useOthersMapped() is called an "item
      * selector", and operates on a single user at a time. If you provide an
      * (optional) "item comparison" function, it will be used to compare each
      * item pairwise.
@@ -753,12 +753,12 @@ export type RoomContextBundle<
      * For example, to select multiple properties:
      *
      * @example
-     * const avatarsAndCursors = useOthersWithData(
+     * const avatarsAndCursors = useOthersMapped(
      *   user => [u.info.avatar, u.presence.cursor],
      *   shallow,  // 👈
      * );
      */
-    useOthersWithData<T>(
+    useOthersMapped<T>(
       itemSelector: (other: User<TPresence, TUserMeta>) => T,
       itemIsEqual?: (prev: T, curr: T) => boolean
     ): readonly { readonly connectionId: number; readonly data: T }[];

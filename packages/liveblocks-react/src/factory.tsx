@@ -214,7 +214,7 @@ export function createRoomContext<
     return useOthers(connectionIdSelector, shallow);
   }
 
-  function useOthersWithData<T>(
+  function useOthersMapped<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[] {
@@ -679,12 +679,12 @@ export function createRoomContext<
     return useOthersConnectionIds();
   }
 
-  function useOthersWithDataSuspense<T>(
+  function useOthersMappedSuspense<T>(
     itemSelector: (other: User<TPresence, TUserMeta>) => T,
     itemIsEqual?: (prev: T, curr: T) => boolean
   ): readonly { readonly connectionId: number; readonly data: T }[] {
     useSuspendUntilPresenceLoaded();
-    return useOthersWithData(itemSelector, itemIsEqual);
+    return useOthersMapped(itemSelector, itemIsEqual);
   }
 
   function useOtherSuspense(connectionId: number): User<TPresence, TUserMeta>;
@@ -745,7 +745,7 @@ export function createRoomContext<
     useMyPresence,
     useUpdateMyPresence,
     useOthers,
-    useOthersWithData,
+    useOthersMapped,
     useOthersConnectionIds,
     useOther,
 
@@ -780,7 +780,7 @@ export function createRoomContext<
       useMyPresence,
       useUpdateMyPresence,
       useOthers: useOthersSuspense,
-      useOthersWithData: useOthersWithDataSuspense,
+      useOthersMapped: useOthersMappedSuspense,
       useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
