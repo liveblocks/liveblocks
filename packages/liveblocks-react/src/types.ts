@@ -426,7 +426,7 @@ export type RoomContextBundle<
   ) => void;
 
   /**
-   * Create a callback function that can be called to mutate Liveblocks state.
+   * Create a callback function that lets you mutate Liveblocks state.
    *
    * The first argument that gets passed into your callback will be a "mutation
    * context", which exposes the following:
@@ -806,8 +806,7 @@ export type RoomContextBundle<
     ) => void;
 
     /**
-     * Create a callback function that can be called to mutate Liveblocks
-     * state.
+     * Create a callback function that lets you mutate Liveblocks state.
      *
      * The first argument that gets passed into your callback will be
      * a "mutation context", which exposes the following:
