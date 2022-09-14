@@ -210,7 +210,7 @@ export function createRoomContext<
     );
   }
 
-  function useConnectionIds(): readonly number[] {
+  function useOthersConnectionIds(): readonly number[] {
     return useOthers(connectionIdSelector, shallow);
   }
 
@@ -674,9 +674,9 @@ export function createRoomContext<
     ) as T | Others<TPresence, TUserMeta>;
   }
 
-  function useConnectionIdsSuspense(): readonly number[] {
+  function useOthersConnectionIdsSuspense(): readonly number[] {
     useSuspendUntilPresenceLoaded();
-    return useConnectionIds();
+    return useOthersConnectionIds();
   }
 
   function useOthersWithDataSuspense<T>(
@@ -746,7 +746,7 @@ export function createRoomContext<
     useUpdateMyPresence,
     useOthers,
     useOthersWithData,
-    useConnectionIds,
+    useOthersConnectionIds,
     useOther,
 
     useMutation,
@@ -781,7 +781,7 @@ export function createRoomContext<
       useUpdateMyPresence,
       useOthers: useOthersSuspense,
       useOthersWithData: useOthersWithDataSuspense,
-      useConnectionIds: useConnectionIdsSuspense,
+      useOthersConnectionIds: useOthersConnectionIdsSuspense,
       useOther: useOtherSuspense,
 
       useMutation,

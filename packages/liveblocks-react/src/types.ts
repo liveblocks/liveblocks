@@ -349,10 +349,10 @@ export type RoomContextBundle<
    * for each user in the room, e.g. cursors.
    *
    * @example
-   * const ids = useConnectionIds();
+   * const ids = useOthersConnectionIds();
    * // [2, 4, 7]
    */
-  useConnectionIds(): readonly number[];
+  useOthersConnectionIds(): readonly number[];
 
   /**
    * Related to useOthers(), but optimized for selecting only "subsets" of
@@ -384,7 +384,7 @@ export type RoomContextBundle<
   ): readonly { readonly connectionId: number; readonly data: T }[];
 
   /**
-   * Given a connection ID (as obtained by using `useConnectionIds()`), you can
+   * Given a connection ID (as obtained by using `useOthersConnectionIds`), you can
    * call this selector deep down in your component stack to only have the
    * component re-render if properties for this particular user change.
    *
@@ -395,8 +395,8 @@ export type RoomContextBundle<
   useOther(connectionId: number): User<TPresence, TUserMeta>;
 
   /**
-   * Given a connection ID (as obtained by using `useConnectionIds()`), you can
-   * call this selector deep down in your component stack to only have the
+   * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
+   * can call this selector deep down in your component stack to only have the
    * component re-render if properties for this particular user change.
    *
    * @example
@@ -729,10 +729,10 @@ export type RoomContextBundle<
      * for each user in the room, e.g. cursors.
      *
      * @example
-     * const ids = useConnectionIds();
+     * const ids = useOthersConnectionIds();
      * // [2, 4, 7]
      */
-    useConnectionIds(): readonly number[];
+    useOthersConnectionIds(): readonly number[];
 
     /**
      * Related to useOthers(), but optimized for selecting only "subsets" of
@@ -764,9 +764,10 @@ export type RoomContextBundle<
     ): readonly { readonly connectionId: number; readonly data: T }[];
 
     /**
-     * Given a connection ID (as obtained by using `useConnectionIds()`), you
-     * can call this selector deep down in your component stack to only have
-     * the component re-render if properties for this particular user change.
+     * Given a connection ID (as obtained by using `useOthersConnectionIds`),
+     * you can call this selector deep down in your component stack to only
+     * have the component re-render if properties for this particular user
+     * change.
      *
      * @example
      * // Returns full user and re-renders whenever anything on the user changes
@@ -775,9 +776,10 @@ export type RoomContextBundle<
     useOther(connectionId: number): User<TPresence, TUserMeta>;
 
     /**
-     * Given a connection ID (as obtained by using `useConnectionIds()`), you
-     * can call this selector deep down in your component stack to only have
-     * the component re-render if properties for this particular user change.
+     * Given a connection ID (as obtained by using `useOthersConnectionIds`),
+     * you can call this selector deep down in your component stack to only
+     * have the component re-render if properties for this particular user
+     * change.
      *
      * @example
      * // Returns only the selected values re-renders whenever that selection changes)
