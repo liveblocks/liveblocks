@@ -5,7 +5,7 @@ import { useRouter } from "next/router";
 import styles from "./index.module.css";
 
 function Example() {
-  const users = useOthers().toArray();
+  const users = useOthers();
   const currentUser = useSelf();
   const hasMoreUsers = users.length > 3;
 
@@ -38,7 +38,7 @@ export default function Page() {
   const roomId = useOverrideRoomId("nextjs-live-avatars");
 
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={roomId} initialPresence={{}}>
       <Example />
     </RoomProvider>
   );
