@@ -566,7 +566,7 @@ export function createRoomContext<
     // Error early if suspense is used in a server-side context
     if (typeof window === "undefined") {
       throw new Error(
-        "You cannot call the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips for structuring your app, see XXX"
+        "You cannot use the Suspense version of this hook on the server side. Make sure to only call them on the client side.\nFor tips, see https://liveblocks.io/docs/api-reference/liveblocks-react#suspense-avoid-ssr"
       );
     }
   }
