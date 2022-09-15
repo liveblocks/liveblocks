@@ -26,7 +26,7 @@ function Example() {
 
         {currentUser && (
           <div className="relative ml-8 first:ml-0">
-            <Avatar picture={currentUser.info?.picture} name="You" />
+            <Avatar picture={currentUser.info.picture} name="You" />
           </div>
         )}
       </div>
