@@ -1,7 +1,7 @@
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
-let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY-X";
 
 if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
   console.warn(
@@ -16,8 +16,14 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-export const { RoomProvider, useMyPresence, useOthers, useUpdateMyPresence } =
-  createRoomContext(client);
+export const {
+  RoomProvider,
+  useMyPresence,
+  useOthers,
+  useUpdateMyPresence,
+  useOthersMapped,
+  useOthersConnectionIds,
+} = createRoomContext(client);
 
 /**
  * This function is used when deploying an example on liveblocks.io.
