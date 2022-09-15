@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.18.0-beta3-dev",
+  "version": "0.18.0-beta4",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -39,7 +39,7 @@
     "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
-    "@liveblocks/client": "0.18.0-beta3",
+    "@liveblocks/client": "0.18.0-beta4",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
