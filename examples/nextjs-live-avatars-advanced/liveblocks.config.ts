@@ -37,7 +37,7 @@ type UserMeta = {
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-export const { RoomProvider, useOthers, useSelf } = createRoomContext<
+export const { RoomProvider, useOthersMapped, useSelf } = createRoomContext<
   Presence,
   Storage,
   UserMeta /* RoomEvent */

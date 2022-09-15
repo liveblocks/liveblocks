@@ -8,7 +8,7 @@ export default function Example() {
   const roomId = useOverrideRoomId("nextjs-live-avatars-advanced");
 
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={roomId} initialPresence={{}}>
       <main className={styles.main}>
         <LiveAvatars />
       </main>
