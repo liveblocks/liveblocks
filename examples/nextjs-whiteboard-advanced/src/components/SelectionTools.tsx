@@ -24,8 +24,8 @@ function SelectionTools({
    * Move all the selected layers to the front
    */
   const moveToFront = useMutation(
-    ({ root }) => {
-      const liveLayerIds = root.get("layerIds");
+    ({ storage }) => {
+      const liveLayerIds = storage.get("layerIds");
       const indices: number[] = [];
 
       const arr = liveLayerIds.toArray();
@@ -50,8 +50,8 @@ function SelectionTools({
    * Move all the selected layers to the back
    */
   const moveToBack = useMutation(
-    ({ root }) => {
-      const liveLayerIds = root.get("layerIds");
+    ({ storage }) => {
+      const liveLayerIds = storage.get("layerIds");
       const indices: number[] = [];
 
       const arr = liveLayerIds.toArray();
@@ -73,8 +73,8 @@ function SelectionTools({
    * Change the color of all the selected layers
    */
   const setFill = useMutation(
-    ({ root }, fill: Color) => {
-      const liveLayers = root.get("layers");
+    ({ storage }, fill: Color) => {
+      const liveLayers = storage.get("layers");
       setLastUsedColor(fill);
       selection.forEach((id) => {
         liveLayers.get(id)?.set("fill", fill);

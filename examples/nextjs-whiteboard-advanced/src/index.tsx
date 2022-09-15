@@ -4,7 +4,7 @@ import {
   useHistory,
   useStorage,
   useSelf,
-  useOthersWithData,
+  useOthersMapped,
   useCanUndo,
   useCanRedo,
 } from "../liveblocks.config";
@@ -174,16 +174,16 @@ function Canvas() {
    */
   const insertLayer = useMutation(
     (
-      { root, setMyPresence },
+      { storage, setMyPresence },
       layerType: LayerType.Ellipse | LayerType.Rectangle,
       position: Point
     ) => {
-      const liveLayers = root.get("layers");
+      const liveLayers = storage.get("layers");
       if (liveLayers.size >= MAX_LAYERS) {
         return;
       }
 
-      const liveLayerIds = root.get("layerIds");
+      const liveLayerIds = storage.get("layerIds");
       const layerId = nanoid();
       const layer = new LiveObject({
         type: layerType,
@@ -206,8 +206,8 @@ function Canvas() {
    * Transform the drawing of the current user in a layer and reset the presence to delete the draft.
    */
   const insertPath = useMutation(
-    ({ root, self, setMyPresence }) => {
-      const liveLayers = root.get("layers");
+    ({ storage, self, setMyPresence }) => {
+      const liveLayers = storage.get("layers");
       const { pencilDraft } = self.presence;
       if (
         pencilDraft == null ||
@@ -224,7 +224,7 @@ function Canvas() {
         new LiveObject(penPointsToPathLayer(pencilDraft, lastUsedColor))
       );
 
-      const liveLayerIds = root.get("layerIds");
+      const liveLayerIds = storage.get("layerIds");
       liveLayerIds.push(id);
       setMyPresence({ pencilDraft: null });
       setState({ mode: CanvasMode.Pencil });
@@ -236,7 +236,7 @@ function Canvas() {
    * Move selected layers on the canvas
    */
   const translateSelectedLayers = useMutation(
-    ({ root, self }, point: Point) => {
+    ({ storage, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Translating) {
         return;
       }
@@ -246,7 +246,7 @@ function Canvas() {
         y: point.y - canvasState.current.y,
       };
 
-      const liveLayers = root.get("layers");
+      const liveLayers = storage.get("layers");
       for (const id of self.presence.selection) {
         const layer = liveLayers.get(id);
         if (layer) {
@@ -266,7 +266,7 @@ function Canvas() {
    * Resize selected layer. Only resizing a single layer is allowed.
    */
   const resizeSelectedLayer = useMutation(
-    ({ root, self }, point: Point) => {
+    ({ storage, self }, point: Point) => {
       if (canvasState.mode !== CanvasMode.Resizing) {
         return;
       }
@@ -277,7 +277,7 @@ function Canvas() {
         point
       );
 
-      const liveLayers = root.get("layers");
+      const liveLayers = storage.get("layers");
       const layer = liveLayers.get(self.presence.selection[0]);
       if (layer) {
         layer.update(bounds);
@@ -351,8 +351,8 @@ function Canvas() {
    * Update the position of the selection net and select the layers accordingly
    */
   const updateSelectionNet = useMutation(
-    ({ root, setMyPresence }, current: Point, origin: Point) => {
-      const layers = root.get("layers").toImmutable();
+    ({ storage, setMyPresence }, current: Point, origin: Point) => {
+      const layers = storage.get("layers").toImmutable();
       setState({
         mode: CanvasMode.SelectionNet,
         origin: origin,
@@ -369,7 +369,7 @@ function Canvas() {
     [layerIds]
   );
 
-  const selections = useOthersWithData((other) => other.presence.selection);
+  const selections = useOthersMapped((other) => other.presence.selection);
 
   /**
    * Create a map layerId to color based on the selection of all the users in the room
@@ -378,9 +378,9 @@ function Canvas() {
     const layerIdsToColorSelection: Record<string, string> = {};
 
     for (const user of selections) {
-      const { connectionId, data: selection } = user;
-      for (const id of selection) {
-        layerIdsToColorSelection[id] = connectionIdToColor(connectionId);
+      const [connectionId, selection] = user;
+      for (const layerId of selection) {
+        layerIdsToColorSelection[layerId] = connectionIdToColor(connectionId);
       }
     }
 

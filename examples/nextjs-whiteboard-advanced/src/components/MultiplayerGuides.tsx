@@ -1,4 +1,7 @@
-import { useOthersWithData, useConnectionIds } from "../../liveblocks.config";
+import {
+  useOthersMapped,
+  useOthersConnectionIds,
+} from "../../liveblocks.config";
 import { shallow } from "@liveblocks/client";
 import React from "react";
 import { colorToCss } from "../utils";
@@ -15,7 +18,7 @@ function Cursors() {
   // changes happening for _that_ user alone, which is most rendering
   // efficient.
   //
-  const ids = useConnectionIds();
+  const ids = useOthersConnectionIds();
   return (
     <>
       {ids.map((connectionId) => (
@@ -26,7 +29,7 @@ function Cursors() {
 }
 
 function Drafts() {
-  const others = useOthersWithData(
+  const others = useOthersMapped(
     (other) => ({
       pencilDraft: other.presence.pencilDraft,
       penColor: other.presence.penColor,
@@ -36,15 +39,15 @@ function Drafts() {
   return (
     <>
       {/* All the drawing of other users in the room that are currently in progress */}
-      {others.map(({ connectionId, data }) => {
-        if (data.pencilDraft) {
+      {others.map(([key, other]) => {
+        if (other.pencilDraft) {
           return (
             <Path
-              key={connectionId}
+              key={key}
               x={0}
               y={0}
-              points={data.pencilDraft}
-              fill={data.penColor ? colorToCss(data.penColor) : "#CCC"}
+              points={other.pencilDraft}
+              fill={other.penColor ? colorToCss(other.penColor) : "#CCC"}
             />
           );
         }

@@ -6,9 +6,9 @@ import { useSelf, useMutation } from "../../liveblocks.config";
 export default function useDeleteLayers() {
   const selection = useSelf((me) => me.presence.selection);
   return useMutation(
-    ({ root, setMyPresence }) => {
-      const liveLayers = root.get("layers");
-      const liveLayerIds = root.get("layerIds");
+    ({ storage, setMyPresence }) => {
+      const liveLayers = storage.get("layers");
+      const liveLayerIds = storage.get("layerIds");
       for (const id of selection) {
         // Delete the layer from the layers LiveMap
         liveLayers.delete(id);
