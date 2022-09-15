@@ -206,14 +206,6 @@ export type RoomContextBundle<
   useStorageRoot(): [root: LiveObject<TStorage> | null];
 
   /**
-   * Returns your entire Liveblocks Storage as an immutable data structure.
-   *
-   * @example
-   * const root = useStorage();
-   */
-  useStorage(): ToImmutable<TStorage> | null;
-
-  /**
    * Extract arbitrary data from the Liveblocks Storage state, using an
    * arbitrary selector function.
    *
@@ -234,7 +226,7 @@ export type RoomContextBundle<
    */
   useStorage<T>(
     selector: (root: ToImmutable<TStorage>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
+    isEqual?: (prev: T | null, curr: T | null) => boolean
   ): T | null;
 
   /**
@@ -584,14 +576,6 @@ export type RoomContextBundle<
      * const [root] = useStorageRoot();
      */
     useStorageRoot(): [root: LiveObject<TStorage> | null];
-
-    /**
-     * Returns your entire Liveblocks Storage as an immutable data structure.
-     *
-     * @example
-     * const root = useStorage();
-     */
-    useStorage(): ToImmutable<TStorage>;
 
     /**
      * Extract arbitrary data from the Liveblocks Storage state, using an
