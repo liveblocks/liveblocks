@@ -631,9 +631,6 @@ export function createRoomContext<
     isEqual?: (prev: T, curr: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
-
-    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
-    // conditionally
     return useSelf(
       selector as (me: User<TPresence, TUserMeta>) => T,
       isEqual as (prev: T | null, curr: T | null) => boolean
@@ -645,9 +642,6 @@ export function createRoomContext<
     isEqual?: (prev: T, curr: T) => boolean
   ): T | Others<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
-
-    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
-    // conditionally
     return useOthers(
       selector as (others: Others<TPresence, TUserMeta>) => T,
       isEqual as (prev: T, curr: T) => boolean
@@ -679,9 +673,6 @@ export function createRoomContext<
     isEqual?: (prev: T, curr: T) => boolean
   ): T | User<TPresence, TUserMeta> {
     useSuspendUntilPresenceLoaded();
-
-    // NOTE: Lots of type forcing here, but only to avoid calling the hooks
-    // conditionally
     return useOther(
       connectionId,
       selector as (other: User<TPresence, TUserMeta>) => T,
