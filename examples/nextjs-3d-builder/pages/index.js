@@ -16,9 +16,9 @@ export default function Example() {
   const colors = useStorage((root) => root.colors);
 
   const onChangeColor = useMutation(
-    ({ root }, color) => {
+    ({ storage }, color) => {
       if (material) {
-        root.get("colors").set(material, color);
+        storage.get("colors").set(material, color);
       }
     },
     [material]
