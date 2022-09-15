@@ -1,6 +1,6 @@
 import React from "react";
 import { Avatar } from "./Avatar";
-import { useOthers, useSelf } from "../liveblocks.config";
+import { useOthersMapped, useSelf } from "../liveblocks.config";
 import { AnimatePresence, motion } from "framer-motion";
 
 /**
@@ -35,9 +35,18 @@ const avatarProps = {
 };
 
 export default function LiveAvatars() {
-  const users = useOthers().toArray();
+  //
+  // RATIONALE:
+  // Using useOthersMapped here and only selecting/subscribing to the "info"
+  // part of each user, which is static data that won't change (unlike
+  // presence). In this example we don't use presence, but in a real app this
+  // makes a difference: if we did not use a selector function here, these
+  // avatars would get needlessly re-rendered any time any of the others moved
+  // their cursors :)
+  //
+  const others = useOthersMapped((other) => other.info);
   const currentUser = useSelf();
-  const hasMoreUsers = users.length > MAX_OTHERS;
+  const hasMoreUsers = others.length > MAX_OTHERS;
 
   return (
     <div
@@ -50,32 +59,32 @@ export default function LiveAvatars() {
     >
       <AnimatePresence>
         {hasMoreUsers ? (
-          <motion.div {...animationProps} key="count">
-            <Avatar {...avatarProps} variant="more" count={users.length - 3} />
+          <motion.div key="count" {...animationProps}>
+            <Avatar {...avatarProps} variant="more" count={others.length - 3} />
           </motion.div>
         ) : null}
 
-        {users
+        {others
           .slice(0, MAX_OTHERS)
           .reverse()
-          .map(({ connectionId, info }) => (
-            <motion.div {...animationProps} key={connectionId}>
+          .map(([key, info]) => (
+            <motion.div key={key} {...animationProps}>
               <Avatar
                 {...avatarProps}
-                picture={info?.picture}
-                name={info?.name}
-                color={info?.color}
+                picture={info.picture}
+                name={info.name}
+                color={info.color}
               />
             </motion.div>
           ))}
 
         {currentUser ? (
-          <motion.div {...animationProps} key="you">
+          <motion.div key="you" {...animationProps}>
             <Avatar
               {...avatarProps}
-              picture={currentUser.info?.picture}
-              name={currentUser.info?.name + " (you)"}
-              color={currentUser.info?.color}
+              picture={currentUser.info.picture}
+              name={currentUser.info.name + " (you)"}
+              color={currentUser.info.color}
             />
           </motion.div>
         ) : null}
