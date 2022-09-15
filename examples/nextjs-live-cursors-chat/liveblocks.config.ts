@@ -50,4 +50,3 @@ export const {
   useEventListener,
   useMyPresence,
 } = createRoomContext<Presence, Storage, UserMeta, RoomEvent>(client);
-
