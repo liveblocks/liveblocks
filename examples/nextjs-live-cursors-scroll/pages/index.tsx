@@ -84,7 +84,7 @@ function useLiveCursors() {
   const cursors = [];
 
   for (const { connectionId, presence } of others) {
-    if (presence?.cursor) {
+    if (presence.cursor) {
       cursors.push({
         x: presence.cursor.x * window.innerWidth,
         y: presence.cursor.y,
