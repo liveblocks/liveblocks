@@ -1,4 +1,4 @@
-import { useState, memo } from "react";
+import { useState, memo, Suspense } from "react";
 import {
   useHistory,
   useCanUndo,
@@ -10,7 +10,7 @@ import {
   useSelf,
 } from './liveblocks.config'
 import { LiveMap, LiveObject } from "@liveblocks/client";
-import { ClientSideSuspense, shallow } from "@liveblocks/react";
+import { shallow } from "@liveblocks/react";
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
@@ -31,9 +31,9 @@ export default function App({ roomId }) {
         shapes: new LiveMap(),
       }}
     >
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => <Canvas />}
-      </ClientSideSuspense>
+      <Suspense fallback={<Loading />}>
+        <Canvas />
+      </Suspense>
     </RoomProvider>
   )
 }
@@ -47,19 +47,19 @@ function Canvas() {
   const canUndo = useCanUndo();
   const canRedo = useCanRedo();
 
-  const insertRectangle = useMutation(({ root, setMyPresence }) => {
+  const insertRectangle = useMutation(({ storage, setMyPresence }) => {
     const shapeId = Date.now().toString();
     const shape = new LiveObject({
       x: getRandomInt(300),
       y: getRandomInt(300),
       fill: getRandomColor(),
     });
-    root.get("shapes").set(shapeId, shape);
+    storage.get("shapes").set(shapeId, shape);
     setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
   }, []);
 
-  const deleteRectangle = useMutation(({ root }, shapeId) => {
-    root.get("shapes").delete(shapeId);
+  const deleteRectangle = useMutation(({ storage }, shapeId) => {
+    storage.get("shapes").delete(shapeId);
   }, []);
 
   const onShapePointerDown = useMutation(({ setMyPresence }, e, shapeId) => {
@@ -79,7 +79,7 @@ function Canvas() {
     history.resume();
   }, [isDragging, history]);
 
-  const onCanvasPointerMove = useMutation(({ root, self }, e) => {
+  const onCanvasPointerMove = useMutation(({ storage, self }, e) => {
     e.preventDefault();
     if (!isDragging) {
       return;
@@ -90,7 +90,7 @@ function Canvas() {
       return;
     }
 
-    const shape = root.get("shapes").get(shapeId);
+    const shape = storage.get("shapes").get(shapeId);
     if (!shape) {
       return
     }
