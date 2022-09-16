@@ -188,6 +188,7 @@ export function createRoomContext<
     return useRoom().updatePresence;
   }
 
+  // Returns permissions
   function useOthers(): Others<TPresence, TUserMeta>;
   function useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
@@ -248,6 +249,7 @@ export function createRoomContext<
 
   const sentinel = Symbol();
 
+  // Returns permissions
   function useOther(connectionId: number): User<TPresence, TUserMeta>;
   function useOther<T>(
     connectionId: number,
@@ -363,6 +365,7 @@ export function createRoomContext<
     }, [room]);
   }
 
+  // Returns permissions
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
@@ -424,32 +427,38 @@ export function createRoomContext<
     return [useMutableStorageRoot()];
   }
 
+  // Returns errors / warnings on read only
   function useHistory(): History {
     return useRoom().history;
   }
-
+  
+  // Returns errors / warnings on read only
   function useUndo(): () => void {
     return useHistory().undo;
   }
-
+  
+  // Returns errors / warnings on read only
   function useRedo(): () => void {
     return useHistory().redo;
   }
-
+  
+  // Returns errors / warnings on read only
   function useCanUndo(): boolean {
     const room = useRoom();
     const subscribe = room.events.history.subscribe;
     const canUndo = room.history.canUndo;
     return useSyncExternalStore(subscribe, canUndo, canUndo);
   }
-
+  
+  // Returns errors / warnings on read only
   function useCanRedo(): boolean {
     const room = useRoom();
     const subscribe = room.events.history.subscribe;
     const canRedo = room.history.canRedo;
     return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
-
+  
+  // Returns errors / warnings on read only
   function useBatch<T>(): (callback: () => T) => T {
     return useRoom().batch;
   }
@@ -591,6 +600,7 @@ export function createRoomContext<
     });
   }
 
+  // Returns errors / warnings on read only
   function useMutation<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
