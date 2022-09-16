@@ -12,6 +12,7 @@ function App({ Component, pageProps }: AppProps) {
   return (
     <RoomProvider
       id={roomId}
+      initialPresence={{ focusedId: null }}
       initialStorage={{
         logo: new LiveObject({
           name: "Acme Inc.",
