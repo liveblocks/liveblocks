@@ -28,12 +28,12 @@ const App = () => {
     others.some((user) => user.presence?.isTyping)
   );
 
-  const addTodo = useMutation(({ root }, text) => {
-    root.get("todos").push({ text });
+  const addTodo = useMutation(({ storage }, text) => {
+    storage.get("todos").push({ text });
   }, []);
 
-  const deleteTodo = useMutation(({ root }, index) => {
-    root.get("todos").delete(index);
+  const deleteTodo = useMutation(({ storage }, index) => {
+    storage.get("todos").delete(index);
   }, []);
 
   if (todos === null) {
