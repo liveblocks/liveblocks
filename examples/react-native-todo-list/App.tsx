@@ -25,7 +25,7 @@ const App = () => {
   const userCount = useOthers((others) => others.length);
   const updateMyPresence = useUpdateMyPresence();
   const isSomeoneTyping = useOthers((others) =>
-    others.some((user) => user.presence?.isTyping)
+    others.some((user) => user.presence.isTyping)
   );
 
   const addTodo = useMutation(({ storage }, text) => {
