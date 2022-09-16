@@ -1,7 +1,6 @@
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { RoomProvider, useOthers, useUpdateMyPresence, useStorage, useMutation } from "./liveblocks.config";
 import { LiveList } from "@liveblocks/client";
-import { ClientSideSuspense } from "@liveblocks/react";
 
 function WhoIsHere() {
   const userCount = useOthers((others) => others.length);
@@ -30,12 +29,12 @@ function Room() {
   const updateMyPresence = useUpdateMyPresence();
   const todos = useStorage((root) => root.todos);
 
-  const addTodo = useMutation(({ root }, text) => {
-    root.get("todos").push({ text })
+  const addTodo = useMutation(({ storage }, text) => {
+    storage.get("todos").push({ text })
   }, []);
 
-  const deleteTodo = useMutation(({ root }, index) => {
-    root.get("todos").delete(index);
+  const deleteTodo = useMutation(({ storage }, index) => {
+    storage.get("todos").delete(index);
   }, []);
 
   return (
@@ -83,9 +82,9 @@ export default function App({ roomId }) {
       initialPresence={{ isTyping: false }}
       initialStorage={{ todos: new LiveList() }}
     >
-      <ClientSideSuspense fallback={<Loading />}>
-        {() => <Room />}
-      </ClientSideSuspense>
+      <Suspense fallback={<Loading />}>
+        <Room />
+      </Suspense>
     </RoomProvider>
   )
 }
