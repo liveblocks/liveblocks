@@ -1,21 +1,21 @@
-import { useState } from "react";
-import { useOthers, useUpdateMyPresence, useList } from "./liveblocks.config";
-import "./App.css";
+import { useState, Suspense } from "react";
+import { RoomProvider, useOthers, useUpdateMyPresence, useStorage, useMutation } from "./liveblocks.config";
+import { LiveList } from "@liveblocks/client";
 
 function WhoIsHere() {
-  const others = useOthers();
+  const userCount = useOthers((others) => others.length);
 
   return (
     <div className="who_is_here">
-      There are {others.count} other users online
+      There are {userCount} other users online
     </div>
   );
 }
 
 function SomeoneIsTyping() {
-  const someoneIsTyping = useOthers()
-    .toArray()
-    .some((user) => user.presence?.isTyping);
+  const someoneIsTyping = useOthers((others) =>
+    others.some((other) => other.presence.isTyping)
+  );
 
   return (
     <div className="someone_is_typing">
@@ -24,18 +24,18 @@ function SomeoneIsTyping() {
   );
 }
 
-export default function App() {
+function Room() {
   const [draft, setDraft] = useState("");
   const updateMyPresence = useUpdateMyPresence();
-  const todos = useList("todos");
+  const todos = useStorage((root) => root.todos);
 
-  if (todos == null) {
-    return (
-      <div className="loading">
-        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
-      </div>
-    );
-  }
+  const addTodo = useMutation(({ storage }, text) => {
+    storage.get("todos").push({ text })
+  }, []);
+
+  const deleteTodo = useMutation(({ storage }, index) => {
+    storage.get("todos").delete(index);
+  }, []);
 
   return (
     <div className="container">
@@ -51,7 +51,7 @@ export default function App() {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             updateMyPresence({ isTyping: false });
-            todos.push({ text: draft });
+            addTodo(draft);
             setDraft("");
           }
         }}
@@ -64,13 +64,35 @@ export default function App() {
             <div className="todo">{todo.text}</div>
             <button
               className="delete_button"
-              onClick={() => todos.delete(index)}
+              onClick={() => deleteTodo(index)}
             >
               ✕
             </button>
           </div>
         );
       })}
+    </div>
+  );
+}
+
+export default function App({ roomId }) {
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ isTyping: false }}
+      initialStorage={{ todos: new LiveList() }}
+    >
+      <Suspense fallback={<Loading />}>
+        <Room />
+      </Suspense>
+    </RoomProvider>
+  )
+}
+
+function Loading() {
+  return (
+    <div className="loading">
+      <img src="https://liveblocks.io/loading.svg" alt="Loading" />
     </div>
   );
 }

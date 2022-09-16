@@ -16,8 +16,9 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-export const { RoomProvider, useMyPresence, useOthers, useUpdateMyPresence, useList } =
-  createRoomContext(client);
+export const {
+  suspense: { RoomProvider, useStorage, useOthers, useUpdateMyPresence, useMutation },
+} = createRoomContext(client);
 
 /**
  * This function is used when deploying an example on liveblocks.io.
