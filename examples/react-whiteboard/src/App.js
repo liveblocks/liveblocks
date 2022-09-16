@@ -12,32 +12,6 @@ import {
 import { LiveMap, LiveObject } from "@liveblocks/client";
 import { shallow } from "@liveblocks/react";
 
-const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
-
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function getRandomColor() {
-  return COLORS[getRandomInt(COLORS.length)];
-}
-
-export default function App({ roomId }) {
-  return (
-    <RoomProvider
-      id={roomId}
-      initialPresence={{ selectedShape: null }}
-      initialStorage={{
-        shapes: new LiveMap(),
-      }}
-    >
-      <Suspense fallback={<Loading />}>
-        <Canvas />
-      </Suspense>
-    </RoomProvider>
-  )
-}
-
 function Canvas() {
   const [isDragging, setIsDragging] = useState(false);
   const shapeIds = useStorage((root) => Array.from(root.shapes.keys()), shallow);
@@ -156,6 +130,32 @@ const Rectangle = memo(
     );
   }
 );
+
+export default function App({ roomId }) {
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ selectedShape: null }}
+      initialStorage={{
+        shapes: new LiveMap(),
+      }}
+    >
+      <Suspense fallback={<Loading />}>
+        <Canvas />
+      </Suspense>
+    </RoomProvider>
+  )
+}
+
+const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function getRandomColor() {
+  return COLORS[getRandomInt(COLORS.length)];
+}
 
 function Loading() {
   return (
