@@ -63,7 +63,7 @@ function Example() {
          * Iterate over other users and display a cursor based on their presence
          */
         others.map(({ connectionId, presence }) => {
-          if (presence == null || presence.cursor == null) {
+          if (presence.cursor === null) {
             return null;
           }
 
