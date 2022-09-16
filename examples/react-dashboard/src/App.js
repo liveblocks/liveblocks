@@ -54,8 +54,11 @@ function Example() {
       return true;
     }
 
-    for (const other of others) {
-      if (other[1]?.cardId === cardId && other[1]?.dataKey === dataKey) {
+    for (const [, selectedDataset] of others) {
+      if (
+        selectedDataset?.cardId === cardId &&
+        selectedDataset?.dataKey === dataKey
+      ) {
         return true;
       }
     }
