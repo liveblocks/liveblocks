@@ -16,12 +16,12 @@ const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 const NAMES = ["User A", "User B", "User C", "User D", "User E"];
 
 function Selections({ id }: { id: string }) {
-  const users = useOthers().toArray();
+  const users = useOthers();
 
   return (
     <>
       {users.map(({ connectionId, presence }) => {
-        if (presence?.selectedId === id) {
+        if (presence.selectedId === id) {
           return (
             <Selection
               key={connectionId}
