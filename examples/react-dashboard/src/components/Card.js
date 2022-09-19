@@ -58,7 +58,6 @@ export default function Card({ id, children }) {
       {others.map(({ connectionId, presence }) => {
         if (
           boundingRect == null ||
-          presence == null ||
           presence.cursor == null ||
           presence.cardId == null ||
           presence.cardId !== id

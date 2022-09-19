@@ -1,27 +1,12 @@
-import React from "react";
-import ReactDOM from "react-dom";
-import { LiveList } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
+import { createRoot } from "react-dom/client";
 import App from "./App";
-import "./index.css";
+import "./App.css";
 
 let roomId = "react-todo-list";
-
 overrideRoomId();
 
-ReactDOM.render(
-  <React.StrictMode>
-    <RoomProvider
-      id={roomId}
-      initialStorage={{
-        todos: new LiveList(),
-      }}
-    >
-      <App />
-    </RoomProvider>
-  </React.StrictMode>,
-  document.getElementById("root")
-);
+const root = createRoot(document.getElementById("root"));
+root.render(<App roomId={roomId} />);
 
 /**
  * This function is used when deploying an example on liveblocks.io.

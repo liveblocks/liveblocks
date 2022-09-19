@@ -9,19 +9,32 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { useOthers, useList, useUpdateMyPresence } from "./liveblocks.config";
+import {
+  useOthers,
+  useUpdateMyPresence,
+  useStorage,
+  useMutation,
+} from "./liveblocks.config";
 import Header from "./src/components/Header";
 import Todo from "./src/components/Todo";
 import TextInputWithButton from "./src/components/TextInputWithButton";
 import NoMoreTodos from "./src/components/NoMoreTodos";
 
 const App = () => {
-  const todos = useList("todos");
-  const others = useOthers();
+  const todos = useStorage((root) => root.todos);
+  const userCount = useOthers((others) => others.length);
   const updateMyPresence = useUpdateMyPresence();
-  const isSomeoneTyping = others
-    .toArray()
-    .some((user) => user.presence?.isTyping);
+  const isSomeoneTyping = useOthers((others) =>
+    others.some((user) => user.presence.isTyping)
+  );
+
+  const addTodo = useMutation(({ storage }, text) => {
+    storage.get("todos").push({ text });
+  }, []);
+
+  const deleteTodo = useMutation(({ storage }, index) => {
+    storage.get("todos").delete(index);
+  }, []);
 
   if (todos === null) {
     return (
@@ -39,12 +52,12 @@ const App = () => {
         style={styles.container}
       >
         <>
-          <Header whoIsHereCount={others?.count} />
+          <Header whoIsHereCount={userCount} />
           {todos.length > 0 ? (
             <FlatList
-              data={todos.toArray()}
+              data={todos}
               renderItem={({ item, index }) => (
-                <Todo text={item.text} onDelete={() => todos.delete(index)} />
+                <Todo text={item.text} onDelete={() => deleteTodo(index)} />
               )}
               keyExtractor={(_, index) => index.toString()}
             />
@@ -57,9 +70,7 @@ const App = () => {
               updateTypingStatus={(isTyping: boolean) =>
                 updateMyPresence({ isTyping: isTyping })
               }
-              handleOnSubmitEditing={(todo: string) =>
-                todos.push({ text: todo })
-              }
+              handleOnSubmitEditing={(todo: string) => addTodo(todo)}
             ></TextInputWithButton>
           </View>
         </>

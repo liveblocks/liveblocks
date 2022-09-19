@@ -9,8 +9,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  legacy_patchImmutableObject,
   lsonToJson,
-  patchImmutableObject,
   patchLiveObjectKey,
 } from "@liveblocks/client/internal";
 import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
@@ -68,7 +68,7 @@ export type LiveblocksState<
     /**
      * Other users in the room. Empty no room is currently synced
      */
-    readonly others: Array<User<TPresence, TUserMeta>>;
+    readonly others: readonly User<TPresence, TUserMeta>[];
     /**
      * Whether or not the room storage is currently loading
      */
@@ -194,7 +194,7 @@ export function middleware<
         return;
       }
 
-      room = client.enter(roomId);
+      room = client.enter(roomId, { initialPresence: {} as TPresence });
 
       updateZustandLiveblocksState(set, {
         isStorageLoading: true,
@@ -206,13 +206,13 @@ export function middleware<
       broadcastInitialPresence(room, state, presenceMapping as any);
 
       unsubscribeCallbacks.push(
-        room.subscribe("others", (others) => {
+        room.events.others.subscribe(({ others }) => {
           updateZustandLiveblocksState(set, { others: others.toArray() });
         })
       );
 
       unsubscribeCallbacks.push(
-        room.subscribe("connection", () => {
+        room.events.connection.subscribe(() => {
           updateZustandLiveblocksState(set, {
             connection: room!.getConnectionState(),
           });
@@ -220,7 +220,7 @@ export function middleware<
       );
 
       unsubscribeCallbacks.push(
-        room.subscribe("my-presence", () => {
+        room.events.me.subscribe(() => {
           if (isPatching === false) {
             set(
               patchPresenceState(room!.getPresence(), presenceMapping as any)
@@ -307,7 +307,7 @@ function patchState<T>(
     partialState[key] = state[key];
   }
 
-  const patched = patchImmutableObject(partialState, updates);
+  const patched = legacy_patchImmutableObject(partialState, updates);
 
   const result: Partial<T> = {};
 

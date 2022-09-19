@@ -2,18 +2,19 @@ export { createClient } from "./client";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
+export { shallow } from "./shallow";
 export type {
   BaseUserMeta,
   BroadcastOptions,
   Client,
   History,
+  Immutable,
   Json,
   JsonObject,
   LiveStructure,
   Lson,
   LsonObject,
   Others,
-  Presence, // Deprecated! Will get removed in 0.18
   Room,
   StorageUpdate,
   User,

@@ -29,7 +29,9 @@ export type BroadcastEventClientMsg<TRoomEvent extends Json> = {
 };
 
 export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
+  //
   // Full Presence™ message
+  //
   | {
       type: ClientMsgCode.UPDATE_PRESENCE;
       /**
@@ -48,7 +50,10 @@ export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
       targetActor: number;
       data: TPresence;
     }
+
+  //
   // Partial Presence™ message
+  //
   | {
       type: ClientMsgCode.UPDATE_PRESENCE;
       /**

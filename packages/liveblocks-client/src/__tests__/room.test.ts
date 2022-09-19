@@ -56,7 +56,7 @@ function setupStateMachine<
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
->(initialPresence?: TPresence) {
+>(initialPresence: TPresence) {
   const effects = mockEffects<TPresence, TRoomEvent>();
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     initialPresence
@@ -108,7 +108,7 @@ describe("room / auth", () => {
     "custom authentication with missing token in callback response should throw",
     async (response) => {
       const room = createRoom(
-        {},
+        { initialPresence: {} as never },
         {
           ...defaultContext,
           authentication: {
@@ -136,7 +136,7 @@ describe("room / auth", () => {
 
   test("private authentication with 403 status should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -159,7 +159,7 @@ describe("room / auth", () => {
 
   test("private authentication that does not returns json should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -182,7 +182,7 @@ describe("room / auth", () => {
 
   test("private authentication that does not returns json should throw", async () => {
     const room = createRoom(
-      {},
+      { initialPresence: {} as never },
       {
         ...defaultContext,
         authentication: {
@@ -208,23 +208,23 @@ describe("room", () => {
   test("connect should transition to authenticating if closed and execute authenticate", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalled();
   });
 
   test("connect should stay authenticating if connect is called multiple times and call authenticate only once", () => {
     const { machine, state, effects } = setupStateMachine({});
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     machine.connect();
-    expect(state.connection.state).toEqual("authenticating");
+    expect(state.connection.current.state).toEqual("authenticating");
     expect(effects.authenticate).toHaveBeenCalledTimes(1);
   });
 
   test("authentication success should transition to connecting", () => {
     const { machine, state } = setupStateMachine({});
     machine.authenticationSuccess(defaultRoomToken, new MockWebSocket(""));
-    expect(state.connection.state).toBe("connecting");
+    expect(state.connection.current.state).toBe("connecting");
   });
 
   test("initial presence should be sent once the connection is open", () => {
@@ -255,7 +255,7 @@ describe("room", () => {
   });
 
   test("if no presence has been set before the connection is open, an empty presence should be sent", () => {
-    const { machine, effects } = setupStateMachine();
+    const { machine, effects } = setupStateMachine({} as never);
 
     const ws = new MockWebSocket("");
     machine.connect();
@@ -286,7 +286,7 @@ describe("room", () => {
     expect(effects.send).toHaveBeenCalledWith([
       { type: ClientMsgCode.UPDATE_PRESENCE, targetActor: -1, data: { x: 0 } },
     ]);
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
   });
 
   test("should replace current presence and set flushData presence when connection is closed", () => {
@@ -294,8 +294,8 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.me).toEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
   });
 
   test("should merge current presence and set flushData presence when connection is closed", () => {
@@ -303,12 +303,12 @@ describe("room", () => {
 
     machine.updatePresence({ x: 0 });
 
-    expect(state.me).toEqual({ x: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0 });
 
     machine.updatePresence({ y: 0 });
-    expect(state.me).toEqual({ x: 0, y: 0 });
-    expect(state.buffer.presence?.data).toEqual({ x: 0, y: 0 });
+    expect(state.me.current).toStrictEqual({ x: 0, y: 0 });
+    expect(state.buffer.me?.data).toStrictEqual({ x: 0, y: 0 });
   });
 
   test("others should be iterable", () => {
@@ -321,14 +321,24 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": {},
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
         type: ServerMsgCode.UPDATE_PRESENCE,
         data: { x: 2 },
         actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
       })
     );
 
     const users = [];
-    for (const user of machine.selectors.getOthers()) {
+    for (const user of machine.getOthers()) {
       users.push(user);
     }
 
@@ -345,13 +355,23 @@ describe("room", () => {
 
     machine.onMessage(
       serverMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": {},
+        },
       })
     );
 
-    expect(machine.selectors.getOthers().toArray()).toEqual([
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
+      })
+    );
+
+    expect(machine.getOthers()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
     ]);
 
@@ -362,7 +382,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.selectors.getOthers().toArray()).toEqual([]);
+    expect(machine.getOthers().toArray()).toEqual([]);
   });
 
   describe("broadcast", () => {
@@ -472,21 +492,21 @@ describe("room", () => {
     room.authenticationSuccess(defaultRoomToken, ws);
     ws.open();
 
-    expect(state.buffer.presence).toEqual(null);
+    expect(state.buffer.me).toEqual(null);
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
@@ -517,7 +537,7 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
@@ -533,15 +553,15 @@ describe("room", () => {
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
     room.updatePresence({ x: 1 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.pauseHistory();
     room.resumeHistory();
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
   });
 
   test("undo redo with presence that do not impact presence", async () => {
@@ -557,7 +577,7 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("pause / resume history", async () => {
@@ -569,29 +589,29 @@ describe("room", () => {
     ws.open();
 
     room.updatePresence({ x: 0 }, { addToHistory: true });
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
 
     room.pauseHistory();
 
     for (let i = 1; i <= 10; i++) {
       room.updatePresence({ x: i }, { addToHistory: true });
-      expect(state.buffer.presence?.data).toEqual({ x: i });
+      expect(state.buffer.me?.data).toEqual({ x: i });
     }
 
-    expect(room.selectors.getPresence()).toEqual({ x: 10 });
-    expect(state.buffer.presence?.data).toEqual({ x: 10 });
+    expect(room.getPresence()).toEqual({ x: 10 });
+    expect(state.buffer.me?.data).toEqual({ x: 10 });
 
     room.resumeHistory();
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 10 });
-    expect(room.selectors.getPresence()).toEqual({ x: 10 });
+    expect(state.buffer.me?.data).toEqual({ x: 10 });
+    expect(room.getPresence()).toEqual({ x: 10 });
   });
 
   test("undo while history is paused", async () => {
@@ -614,9 +634,9 @@ describe("room", () => {
 
     room.undo();
 
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
   });
 
   test("undo redo with presence + storage", async () => {
@@ -645,19 +665,19 @@ describe("room", () => {
       storage.root.set("x", 1);
     });
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
 
     room.undo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 0 });
-    expect(room.selectors.getPresence()).toEqual({ x: 0 });
+    expect(state.buffer.me?.data).toEqual({ x: 0 });
+    expect(room.getPresence()).toEqual({ x: 0 });
     expect(storage.root.toObject()).toEqual({ x: 0 });
 
     room.redo();
 
-    expect(state.buffer.presence?.data).toEqual({ x: 1 });
+    expect(state.buffer.me?.data).toEqual({ x: 1 });
     expect(storage.root.toObject()).toEqual({ x: 1 });
-    expect(room.selectors.getPresence()).toEqual({ x: 1 });
+    expect(room.getPresence()).toEqual({ x: 1 });
   });
 
   test("batch without changes should not erase redo stack", async () => {
@@ -942,9 +962,17 @@ describe("room", () => {
 
       machine.onMessage(
         serverMessage({
+          type: ServerMsgCode.ROOM_STATE,
+          users: { 1: {} },
+        })
+      );
+
+      machine.onMessage(
+        serverMessage({
           type: ServerMsgCode.UPDATE_PRESENCE,
           data: { x: 2 },
           actor: 1,
+          targetActor: 0, // Setting targetActor means this is a full presence update
         })
       );
 
@@ -1151,7 +1179,7 @@ describe("room", () => {
 
       reconnect(2);
 
-      const refMachineOthers = refMachine.selectors.getOthers().toArray();
+      const refMachineOthers = refMachine.getOthers().toArray();
 
       expect(refMachineOthers).toEqual([
         { connectionId: 1, id: undefined, info: undefined, presence: { x: 1 } }, // old user is not cleaned directly
@@ -1255,8 +1283,8 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
-        { connectionId: 1, id: undefined, info: undefined },
+      expect(others).toEqual([
+        // User not yet publicly visible
       ]);
 
       // Full UpdatePresence sent as an answer to "UserJoined" message
@@ -1269,7 +1297,7 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         {
           connectionId: 1,
           id: undefined,
@@ -1282,8 +1310,8 @@ describe("room", () => {
     });
   });
 
-  describe("defaultStorage", () => {
-    test("initialize room with defaultStorage should send operation only once", async () => {
+  describe("initial storage", () => {
+    test("initialize room with initial storage should send operation only once", async () => {
       const { assert, assertMessagesSent } = await prepareIsolatedStorageTest<{
         items: LiveList<string>;
       }>([createSerializedObject("0:0", {})], 1, { items: new LiveList() });

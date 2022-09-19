@@ -8,8 +8,8 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  legacy_patchImmutableObject,
   lsonToJson,
-  patchImmutableObject,
   patchLiveObjectKey,
 } from "@liveblocks/client/internal";
 import type { StoreEnhancer } from "redux";
@@ -182,12 +182,12 @@ const internalEnhancer = <T>(options: {
           return;
         }
 
-        room = client.enter(roomId);
+        room = client.enter(roomId, { initialPresence: {} as any });
 
         broadcastInitialPresence(room, reduxState, presenceMapping as any);
 
         unsubscribeCallbacks.push(
-          room.subscribe("connection", () => {
+          room.events.connection.subscribe(() => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_CONNECTION,
               connection: room!.getConnectionState(),
@@ -196,7 +196,7 @@ const internalEnhancer = <T>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.subscribe("others", (others) => {
+          room.events.others.subscribe(({ others }) => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_OTHERS,
               others: others.toArray(),
@@ -205,7 +205,7 @@ const internalEnhancer = <T>(options: {
         );
 
         unsubscribeCallbacks.push(
-          room.subscribe("my-presence", () => {
+          room.events.me.subscribe(() => {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
@@ -431,7 +431,7 @@ function patchState<T extends JsonObject>(
     partialState[key] = state[key];
   }
 
-  const patched = patchImmutableObject(partialState, updates);
+  const patched = legacy_patchImmutableObject(partialState, updates);
 
   const result: Partial<T> = {};
 

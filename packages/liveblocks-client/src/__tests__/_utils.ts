@@ -1,6 +1,5 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
-import { lsonToJson } from "../immutable";
 import { makePosition } from "../position";
 import type {
   _private_Effects as Effects,
@@ -26,7 +25,7 @@ import type {
   SerializedRegister,
   SerializedRootObject,
   ServerMsg,
-  ToJson,
+  ToImmutable,
 } from "../types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
 import { remove } from "../utils";
@@ -235,8 +234,8 @@ export async function prepareIsolatedStorageTest<TStorage extends LsonObject>(
     undo: machine.undo,
     redo: machine.redo,
     ws,
-    assert: (data: ToJson<TStorage>) =>
-      expect(lsonToJson(storage.root)).toEqual(data),
+    assert: (data: ToImmutable<TStorage>) =>
+      expect(storage.root.toImmutable()).toEqual(data),
     assertMessagesSent: (messages: ClientMsg<JsonObject, Json>[]) => {
       expect(messagesSent).toEqual(messages);
     },
@@ -298,22 +297,45 @@ export async function prepareStorageTest<
             type: ServerMsgCode.UPDATE_PRESENCE,
             data: message.data,
             actor: currentActor,
+            targetActor: message.targetActor,
           })
         );
       }
     }
   });
 
-  const states: ToJson<LsonObject>[] = [];
+  // Mock Server messages for Presence
 
-  function assertState(data: ToJson<LsonObject>) {
-    const json = lsonToJson(storage.root);
-    expect(json).toEqual(data);
-    expect(lsonToJson(refStorage.root)).toEqual(data);
+  // Machine is the first user connected to the room, it then receives a server message
+  // saying that the refMachine user joined the room.
+  machine.onMessage(
+    serverMessage({
+      type: ServerMsgCode.USER_JOINED,
+      actor: -1,
+      id: undefined,
+      info: undefined,
+    })
+  );
+
+  // RefMachine is the second user connected to the room, it receives a server message
+  // ROOM_STATE with the list of users in the room.
+  refMachine.onMessage(
+    serverMessage({
+      type: ServerMsgCode.ROOM_STATE,
+      users: { [currentActor]: {} },
+    })
+  );
+
+  const states: ToImmutable<TStorage>[] = [];
+
+  function assertState(data: ToImmutable<TStorage>) {
+    const imm = storage.root.toImmutable();
+    expect(imm).toEqual(data);
+    expect(refStorage.root.toImmutable()).toEqual(data);
     expect(machine.getItemsCount()).toBe(refMachine.getItemsCount());
   }
 
-  function assert(data: ToJson<LsonObject>) {
+  function assert(data: ToImmutable<TStorage>) {
     states.push(data);
     assertState(data);
   }
@@ -344,6 +366,17 @@ export async function prepareStorageTest<
     machine.connect();
     machine.authenticationSuccess(makeRoomToken(actor), ws as any);
     ws.open();
+
+    // Mock server messages for Presence.
+    // Other user in the room (refMachine) recieves a "USER_JOINED" message.
+    refMachine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.USER_JOINED,
+        actor,
+        id: undefined,
+        info: undefined,
+      })
+    );
 
     if (newItems) {
       machine.onMessage(

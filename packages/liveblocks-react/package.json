@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.17.11-dev",
+  "version": "0.18.0-beta4-dev",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./index.js",
   "module": "./index.mjs",
@@ -29,14 +29,17 @@
     "build": "tsup && ../../scripts/build.sh",
     "start": "tsup --watch",
     "format": "eslint --fix src/ && prettier --write src/",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && npm run check:exports",
+    "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --watch --silent --verbose",
-    "test-ci": "jest --silent --verbose",
-    "codegen": "tsc scripts/generate-compat.ts && node scripts/generate-compat.js && eslint --fix src/compat.tsx && prettier --write src/compat.tsx"
+    "test-ci": "jest --silent --verbose"
   },
   "license": "Apache-2.0",
+  "dependencies": {
+    "use-sync-external-store": "^1.2.0"
+  },
   "peerDependencies": {
-    "@liveblocks/client": "0.17.11",
+    "@liveblocks/client": "0.18.0-beta4",
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
@@ -48,6 +51,7 @@
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^13.1.1",
     "@types/jest": "^26.0.24",
+    "@types/use-sync-external-store": "^0.0.3",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/parser": "^5.26.0",
     "eslint": "^8.12.0",

@@ -10,6 +10,7 @@ import type {
   RoomStateServerMsg,
   SerializedCrdt,
   ServerMsg,
+  UpdatePresenceServerMsg,
 } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
@@ -356,6 +357,15 @@ describe("middleware", () => {
         } as RoomStateServerMsg<BaseUserMeta>),
       } as MessageEvent);
 
+      socket.callbacks.message[0]!({
+        data: JSON.stringify({
+          type: ServerMsgCode.UPDATE_PRESENCE,
+          targetActor: -1,
+          actor: 1,
+          data: { x: 1 },
+        } as UpdatePresenceServerMsg<JsonObject>),
+      } as MessageEvent);
+
       expect(store.getState().liveblocks.others).toEqual([
         {
           connectionId: 1,
@@ -363,6 +373,7 @@ describe("middleware", () => {
           info: {
             name: "Testy McTester",
           },
+          presence: { x: 1 },
         },
       ]);
     });
@@ -580,6 +591,35 @@ describe("middleware", () => {
             ],
           },
         ]);
+      });
+
+      test("assigning new object identity overrides previous identity", async () => {
+        const { store } = await prepareWithStorage<{
+          obj: { a: number };
+          setObj: (newObj: { a: number }) => void;
+        }>(
+          (set) => ({
+            obj: { a: 0 },
+
+            setObj: (newObj) => {
+              set({ obj: newObj });
+            },
+          }),
+          {
+            storageMapping: { obj: true },
+            presenceMapping: {},
+            items: [obj("root", {})],
+          }
+        );
+
+        const oldVal = store.getState().obj;
+        const newVal = { a: 0 };
+
+        // Explicitly check concern surfaced by Guillaume in this comment:
+        // https://github.com/liveblocks/liveblocks/pull/404/files#r940605025
+        expect(store.getState().obj).toBe(oldVal);
+        store.getState().setObj(newVal);
+        expect(store.getState().obj).toBe(newVal);
       });
     });
   });

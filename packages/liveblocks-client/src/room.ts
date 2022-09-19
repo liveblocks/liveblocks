@@ -1,22 +1,23 @@
-import type { ApplyResult } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
+import type { Callback, Observable } from "./EventSource";
+import { makeEventSource } from "./EventSource";
 import { LiveObject } from "./LiveObject";
+import { MeRef } from "./MeRef";
+import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
   BaseUserMeta,
-  BroadcastedEventServerMsg,
   BroadcastOptions,
   ClientMsg,
   Connection,
-  ConnectionCallback,
   ConnectionState,
-  ErrorCallback,
-  EventCallback,
-  HistoryCallback,
+  CustomEvent,
+  HistoryEvent,
   IdTuple,
   InitialDocumentStateServerMsg,
   Json,
@@ -24,12 +25,10 @@ import type {
   LiveNode,
   LiveStructure,
   LsonObject,
-  MyPresenceCallback,
   NodeMap,
   Op,
   Others,
   OthersEvent,
-  OthersEventCallback,
   ParentToChildNodeMap,
   Polyfills,
   Room,
@@ -67,9 +66,9 @@ import {
   isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-  remove,
   tryParseJson,
 } from "./utils";
+import { DerivedRef, ValueRef } from "./ValueRef";
 
 type Machine<
   TPresence extends JsonObject,
@@ -94,7 +93,7 @@ type Machine<
 
   // onWakeUp,
   onVisibilityChange(visibilityState: DocumentVisibilityState): void;
-  getUndoStack(): HistoryItem<TPresence>[];
+  getUndoStack(): HistoryOp<TPresence>[][];
   getItemsCount(): number;
 
   // Core
@@ -113,12 +112,12 @@ type Machine<
 
   // Presence
   updatePresence(
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ): void;
   broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
-  batch(callback: () => void): void;
+  batch<T>(callback: () => T): T;
   undo(): void;
   redo(): void;
   canUndo(): boolean;
@@ -129,16 +128,30 @@ type Machine<
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
+  getStorageSnapshot(): LiveObject<TStorage> | null;
 
-  selectors: {
-    // Core
-    getConnectionState(): ConnectionState;
-    getSelf(): User<TPresence, TUserMeta> | null;
-
-    // Presence
-    getPresence(): TPresence;
-    getOthers(): Others<TPresence, TUserMeta>;
+  readonly events: {
+    readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
+    readonly me: Observable<TPresence>;
+    readonly others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    readonly error: Observable<Error>;
+    readonly connection: Observable<ConnectionState>;
+    readonly storage: Observable<StorageUpdate[]>;
+    readonly history: Observable<HistoryEvent>;
+    readonly storageDidLoad: Observable<void>;
   };
+
+  // Core
+  isSelfAware(): boolean;
+  getConnectionState(): ConnectionState;
+  getSelf(): User<TPresence, TUserMeta> | null;
+
+  // Presence
+  getPresence(): Readonly<TPresence>;
+  getOthers(): Others<TPresence, TUserMeta>;
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -153,45 +166,23 @@ function makeIdFactory(connectionId: number): IdFactory {
   return () => `${connectionId}:${count++}`;
 }
 
-function makeOthers<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
->(userMap: {
-  [key: number]: User<TPresence, TUserMeta>;
-}): Others<TPresence, TUserMeta> {
-  const users = Object.values(userMap).map((user) => {
-    const { _hasReceivedInitialPresence, ...publicKeys } = user;
-    return publicKeys;
-  });
-
-  return {
-    get count() {
-      return users.length;
-    },
-    [Symbol.iterator]() {
-      return users[Symbol.iterator]();
-    },
-    map(callback) {
-      return users.map(callback);
-    },
-    toArray() {
-      return users;
-    },
-  };
-}
-
 function log(..._params: unknown[]) {
   // console.log(...params, new Date().toString());
   return;
 }
 
-type HistoryItem<TPresence extends JsonObject> = Array<
+function isConnectionSelfAware(
+  connection: Connection
+): connection is typeof connection & { state: "open" | "connecting" } {
+  return connection.state === "open" || connection.state === "connecting";
+}
+
+type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
       type: "presence";
       data: TPresence;
-    }
->;
+    };
 
 type IdFactory = () => string;
 
@@ -201,14 +192,13 @@ type State<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  connection: Connection;
   token: string | null;
-  lastConnectionId: number | null;
+  lastConnectionId: number | null; // TODO: Move into Connection type members?
   socket: WebSocket | null;
   lastFlushTime: number;
   buffer: {
-    // Queued-up Presence updates to be flushed at the earliest convenience
-    presence:
+    // Queued-up "my presence" updates to be flushed at the earliest convenience
+    me:
       | { type: "partial"; data: Partial<TPresence> }
       | { type: "full"; data: TPresence }
       | null;
@@ -223,44 +213,43 @@ type State<
   intervalHandles: {
     heartbeat: number;
   };
-  listeners: {
-    event: EventCallback<TRoomEvent>[];
-    others: OthersEventCallback<TPresence, TUserMeta>[];
-    "my-presence": MyPresenceCallback<TPresence>[];
-    error: ErrorCallback[];
-    connection: ConnectionCallback[];
-    storage: StorageCallback[];
-    history: HistoryCallback[];
-  };
-  me: TPresence;
-  others: Others<TPresence, TUserMeta>;
-  users: {
-    [connectionId: number]: User<TPresence, TUserMeta>;
-  };
+
+  readonly connection: ValueRef<Connection>;
+  readonly me: MeRef<TPresence>;
+  readonly others: OthersRef<TPresence, TUserMeta>;
+
   idFactory: IdFactory | null;
   numberOfRetry: number;
-  defaultStorageRoot?: TStorage;
+  initialStorage?: TStorage;
 
   clock: number;
   opClock: number;
-  items: Map<string, LiveNode>;
+  nodes: Map<string, LiveNode>;
   root: LiveObject<TStorage> | undefined;
-  undoStack: HistoryItem<TPresence>[];
-  redoStack: HistoryItem<TPresence>[];
 
-  isHistoryPaused: boolean;
-  pausedHistory: HistoryItem<TPresence>;
+  undoStack: HistoryOp<TPresence>[][];
+  redoStack: HistoryOp<TPresence>[][];
 
-  isBatching: boolean;
-  batch: {
+  /**
+   * When history is paused, all operations will get queued up here. When
+   * history is resumed, these operations get "committed" to the undo stack.
+   */
+  pausedHistory: null | HistoryOp<TPresence>[];
+
+  /**
+   * Place to collect all mutations during a batch. Ops will be sent over the
+   * wire after the batch is ended.
+   */
+  activeBatch: null | {
     ops: Op[];
-    reverseOps: HistoryItem<TPresence>;
+    reverseOps: HistoryOp<TPresence>[];
     updates: {
       others: [];
       presence: boolean;
       storageUpdates: Map<string, StorageUpdate>;
     };
   };
+
   offlineOperations: Map<string, Op>;
 };
 
@@ -276,7 +265,7 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   scheduleReconnect(delay: number): number;
 };
 
-type Context = {
+type Config = {
   roomId: string;
   throttleDelay: number;
   authentication: Authentication;
@@ -302,9 +291,60 @@ function makeStateMachine<
   TRoomEvent extends Json
 >(
   state: State<TPresence, TStorage, TUserMeta, TRoomEvent>,
-  context: Context,
+  config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const pool: ManagedPool = {
+    roomId: config.roomId,
+
+    getNode: (id: string) => state.nodes.get(id),
+    addNode: (id: string, node: LiveNode) => void state.nodes.set(id, node),
+    deleteNode: (id: string) => void state.nodes.delete(id),
+
+    generateId: () => `${getConnectionId()}:${state.clock++}`,
+    generateOpId: () => `${getConnectionId()}:${state.opClock++}`,
+
+    dispatch(
+      ops: Op[],
+      reverse: Op[],
+      storageUpdates: Map<string, StorageUpdate>
+    ) {
+      const activeBatch = state.activeBatch;
+      if (activeBatch) {
+        activeBatch.ops.push(...ops);
+        storageUpdates.forEach((value, key) => {
+          activeBatch.updates.storageUpdates.set(
+            key,
+            mergeStorageUpdates(
+              activeBatch.updates.storageUpdates.get(key) as any, // FIXME
+              value
+            )
+          );
+        });
+        activeBatch.reverseOps.push(...reverse);
+      } else {
+        addToUndoStack(reverse);
+        state.redoStack = [];
+        dispatchOps(ops);
+        notify({ storageUpdates });
+      }
+    },
+  };
+
+  const eventHub = {
+    customEvent: makeEventSource<CustomEvent<TRoomEvent>>(),
+    me: makeEventSource<TPresence>(),
+    others: makeEventSource<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>(),
+    error: makeEventSource<Error>(),
+    connection: makeEventSource<ConnectionState>(),
+    storage: makeEventSource<StorageUpdate[]>(),
+    history: makeEventSource<HistoryEvent>(),
+    storageDidLoad: makeEventSource<void>(),
+  };
+
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
       auth: (room: string) => Promise<AuthorizeResponse>,
@@ -316,9 +356,9 @@ function makeStateMachine<
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
       } else {
-        return auth(context.roomId)
+        return auth(config.roomId)
           .then(({ token }) => {
-            if (state.connection.state !== "authenticating") {
+            if (state.connection.current.state !== "authenticating") {
               return;
             }
             const parsedToken = parseRoomAuthToken(token);
@@ -338,7 +378,7 @@ function makeStateMachine<
         | ClientMsg<TPresence, TRoomEvent>
         | ClientMsg<TPresence, TRoomEvent>[]
     ) {
-      if (state.socket == null) {
+      if (state.socket === null) {
         throw new Error("Can't send message if socket is null");
       }
       state.socket.send(JSON.stringify(messageOrMessages));
@@ -357,37 +397,18 @@ function makeStateMachine<
     },
   };
 
-  function genericSubscribe(callback: StorageCallback) {
-    state.listeners.storage.push(callback);
-    return () => remove(state.listeners.storage, callback);
-  }
-
-  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
-    node: L,
-    callback: (updates: StorageUpdate[]) => void
-  ): () => void {
-    return genericSubscribe((updates) => {
-      const relatedUpdates = updates.filter((update) =>
-        isSameNodeOrChildOf(update.node, node)
-      );
-      if (relatedUpdates.length > 0) {
-        callback(relatedUpdates);
-      }
-    });
-  }
-
-  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
-    node: L,
-    callback: (node: L) => void
-  ): () => void {
-    return genericSubscribe((updates) => {
-      for (const update of updates) {
-        if (update.node._id === node._id) {
-          callback(update.node as L);
-        }
-      }
-    });
-  }
+  const self = new DerivedRef(
+    [state.connection, state.me],
+    (conn, me): User<TPresence, TUserMeta> | null =>
+      isConnectionSelfAware(conn)
+        ? {
+            connectionId: conn.id,
+            id: conn.userId,
+            info: conn.userInfo,
+            presence: me,
+          }
+        : null
+  );
 
   function createOrUpdateRootFromMessage(
     message: InitialDocumentStateServerMsg
@@ -405,9 +426,9 @@ function makeStateMachine<
       state.root = load(message.items) as LiveObject<TStorage>;
     }
 
-    for (const key in state.defaultStorageRoot) {
-      if (state.root.get(key) == null) {
-        state.root.set(key, state.defaultStorageRoot[key]);
+    for (const key in state.initialStorage) {
+      if (state.root.get(key) === undefined) {
+        state.root.set(key, state.initialStorage[key]);
       }
     }
   }
@@ -424,7 +445,7 @@ function makeStateMachine<
       } else {
         const tuple: IdTuple<SerializedChild> = [id, crdt];
         const children = parentToChildren.get(crdt.parentId);
-        if (children != null) {
+        if (children !== undefined) {
           children.push(tuple);
         } else {
           parentToChildren.set(crdt.parentId, [tuple]);
@@ -432,7 +453,7 @@ function makeStateMachine<
       }
     }
 
-    if (root == null) {
+    if (root === null) {
       throw new Error("Root can't be null");
     }
 
@@ -445,8 +466,8 @@ function makeStateMachine<
     }
 
     const currentItems: NodeMap = new Map();
-    state.items.forEach((liveCrdt, id) => {
-      currentItems.set(id, liveCrdt._toSerializedCrdt());
+    state.nodes.forEach((node, id) => {
+      currentItems.set(id, node._serialize());
     });
 
     // Get operations that represent the diff between 2 states.
@@ -458,67 +479,26 @@ function makeStateMachine<
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
+    // TODO Abstract these details into a LiveObject._fromItems() helper?
     const [root, parentToChildren] = buildRootAndParentToChildren(items);
-
-    return LiveObject._deserialize(root, parentToChildren, {
-      getItem,
-      addItem,
-      deleteItem,
-      generateId,
-      generateOpId,
-      dispatch: storageDispatch,
-      roomId: context.roomId,
-    });
+    return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function addItem(id: string, liveItem: LiveNode) {
-    state.items.set(id, liveItem);
-  }
-
-  function deleteItem(id: string) {
-    state.items.delete(id);
-  }
-
-  function getItem(id: string) {
-    return state.items.get(id);
-  }
-
-  function addToUndoStack(historyItem: HistoryItem<TPresence>) {
+  function _addToRealUndoStack(historyOps: HistoryOp<TPresence>[]) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
-    if (state.isHistoryPaused) {
-      state.pausedHistory.unshift(...historyItem);
-    } else {
-      state.undoStack.push(historyItem);
-      onHistoryChange();
-    }
+    state.undoStack.push(historyOps);
+    onHistoryChange();
   }
 
-  function storageDispatch(
-    ops: Op[],
-    reverse: Op[],
-    storageUpdates: Map<string, StorageUpdate>
-  ) {
-    if (state.isBatching) {
-      state.batch.ops.push(...ops);
-      storageUpdates.forEach((value, key) => {
-        state.batch.updates.storageUpdates.set(
-          key,
-          mergeStorageUpdates(
-            state.batch.updates.storageUpdates.get(key) as any, // FIXME
-            value
-          )
-        );
-      });
-      state.batch.reverseOps.push(...reverse);
+  function addToUndoStack(historyOps: HistoryOp<TPresence>[]) {
+    if (state.pausedHistory !== null) {
+      state.pausedHistory.unshift(...historyOps);
     } else {
-      addToUndoStack(reverse);
-      state.redoStack = [];
-      dispatch(ops);
-      notify({ storageUpdates });
+      _addToRealUndoStack(historyOps);
     }
   }
 
@@ -532,34 +512,26 @@ function makeStateMachine<
     others?: OthersEvent<TPresence, TUserMeta>[];
   }) {
     if (otherEvents.length > 0) {
-      state.others = makeOthers(state.users);
-
+      const others = state.others.current;
       for (const event of otherEvents) {
-        for (const listener of state.listeners.others) {
-          listener(state.others, event);
-        }
+        eventHub.others.notify({ others, event });
       }
     }
 
     if (presence) {
-      for (const listener of state.listeners["my-presence"]) {
-        listener(state.me);
-      }
+      eventHub.me.notify(state.me.current);
     }
 
     if (storageUpdates.size > 0) {
-      for (const subscriber of state.listeners.storage) {
-        subscriber(Array.from(storageUpdates.values()));
-      }
+      const updates = Array.from(storageUpdates.values());
+      eventHub.storage.notify(updates);
     }
   }
 
   function getConnectionId() {
-    if (
-      state.connection.state === "open" ||
-      state.connection.state === "connecting"
-    ) {
-      return state.connection.id;
+    const conn = state.connection.current;
+    if (isConnectionSelfAware(conn)) {
+      return conn.id;
     } else if (state.lastConnectionId !== null) {
       return state.lastConnectionId;
     }
@@ -569,26 +541,18 @@ function makeStateMachine<
     );
   }
 
-  function generateId() {
-    return `${getConnectionId()}:${state.clock++}`;
-  }
-
-  function generateOpId() {
-    return `${getConnectionId()}:${state.opClock++}`;
-  }
-
   function apply(
-    item: HistoryItem<TPresence>,
+    ops: HistoryOp<TPresence>[],
     isLocal: boolean
   ): {
-    reverse: HistoryItem<TPresence>;
+    reverse: HistoryOp<TPresence>[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
     const result = {
-      reverse: [] as HistoryItem<TPresence>,
+      reverse: [] as HistoryOp<TPresence>[],
       updates: {
         storageUpdates: new Map<string, StorageUpdate>(),
         presence: false,
@@ -597,7 +561,7 @@ function makeStateMachine<
 
     const createdNodeIds = new Set<string>();
 
-    for (const op of item) {
+    for (const op of ops) {
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
@@ -605,18 +569,18 @@ function makeStateMachine<
         };
 
         for (const key in op.data) {
-          reverse.data[key] = state.me[key];
+          reverse.data[key] = state.me.current[key];
         }
 
-        state.me = { ...state.me, ...op.data };
+        state.me.patch(op.data);
 
-        if (state.buffer.presence == null) {
-          state.buffer.presence = { type: "partial", data: op.data };
+        if (state.buffer.me === null) {
+          state.buffer.me = { type: "partial", data: op.data };
         } else {
           // Merge the new fields with whatever is already queued up (doesn't
           // matter whether its a partial or full update)
           for (const key in op.data) {
-            state.buffer.presence.data[key] = op.data[key];
+            state.buffer.me.data[key] = op.data[key];
           }
         }
 
@@ -627,7 +591,7 @@ function makeStateMachine<
 
         // Ops applied after undo/redo don't have an opId.
         if (!op.opId) {
-          op.opId = generateOpId();
+          op.opId = pool.generateOpId();
         }
 
         if (isLocal) {
@@ -680,23 +644,21 @@ function makeStateMachine<
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
       case OpCode.DELETE_CRDT: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node === undefined) {
           return { modified: false };
         }
 
-        return item._apply(op, source === OpSource.UNDOREDO_RECONNECT);
+        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
-        const item = state.items.get(op.id);
-
-        if (item == null) {
+        const node = state.nodes.get(op.id);
+        if (node === undefined) {
           return { modified: false };
         }
 
-        if (item.parent.type === "HasParent" && isLiveList(item.parent.node)) {
-          return item.parent.node._setChildKey(op.parentKey, item, source);
+        if (node.parent.type === "HasParent" && isLiveList(node.parent.node)) {
+          return node.parent.node._setChildKey(op.parentKey, node, source);
         }
         return { modified: false };
       }
@@ -708,14 +670,41 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        const parent = state.items.get(op.parentId);
-        if (parent == null) {
+        const parentNode = state.nodes.get(op.parentId);
+        if (parentNode === undefined) {
           return { modified: false };
         }
 
-        return parent._attachChild(op, source);
+        return parentNode._attachChild(op, source);
       }
     }
+  }
+
+  function subscribeToLiveStructureDeeply<L extends LiveStructure>(
+    node: L,
+    callback: (updates: StorageUpdate[]) => void
+  ): () => void {
+    return eventHub.storage.subscribe((updates) => {
+      const relatedUpdates = updates.filter((update) =>
+        isSameNodeOrChildOf(update.node, node)
+      );
+      if (relatedUpdates.length > 0) {
+        callback(relatedUpdates);
+      }
+    });
+  }
+
+  function subscribeToLiveStructureShallowly<L extends LiveStructure>(
+    node: L,
+    callback: (node: L) => void
+  ): () => void {
+    return eventHub.storage.subscribe((updates) => {
+      for (const update of updates) {
+        if (update.node._id === node._id) {
+          callback(update.node as L);
+        }
+      }
+    });
   }
 
   // Generic storage callbacks
@@ -731,10 +720,57 @@ function makeStateMachine<
     second?: ((node: L) => void) | StorageCallback | RoomEventCallback,
     options?: { isDeep: boolean }
   ): () => void {
+    if (typeof first === "string" && isRoomEventName(first)) {
+      if (typeof second !== "function") {
+        throw new Error("Second argument must be a callback function");
+      }
+      const callback = second;
+      switch (first) {
+        case "event":
+          return eventHub.customEvent.subscribe(
+            callback as Callback<CustomEvent<TRoomEvent>>
+          );
+
+        case "my-presence":
+          return eventHub.me.subscribe(callback as Callback<TPresence>);
+
+        case "others": {
+          // NOTE: Others have a different callback structure, where the API
+          // exposed on the outside takes _two_ callback arguments!
+          const cb = callback as (
+            others: Others<TPresence, TUserMeta>,
+            event: OthersEvent<TPresence, TUserMeta>
+          ) => void;
+          return eventHub.others.subscribe(({ others, event }) =>
+            cb(others, event)
+          );
+        }
+
+        case "error":
+          return eventHub.error.subscribe(callback as Callback<Error>);
+
+        case "connection":
+          return eventHub.connection.subscribe(
+            callback as Callback<ConnectionState>
+          );
+
+        case "storage":
+          return eventHub.storage.subscribe(
+            callback as Callback<StorageUpdate[]>
+          );
+
+        case "history":
+          return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
+
+        default:
+          return assertNever(first, "Unknown event");
+      }
+    }
+
     if (second === undefined || typeof first === "function") {
       if (typeof first === "function") {
         const storageCallback = first;
-        return genericSubscribe(storageCallback);
+        return eventHub.storage.subscribe(storageCallback);
       } else {
         throw new Error("Please specify a listener callback");
       }
@@ -751,60 +787,28 @@ function makeStateMachine<
       }
     }
 
-    if (!isRoomEventName(first)) {
-      throw new Error(`"${first}" is not a valid event name`);
-    }
-
-    type EventListener = RoomEventCallbackFor<
-      E,
-      TPresence,
-      TUserMeta,
-      TRoomEvent
-    >;
-    type EventQueue = EventListener[];
-
-    const eventName = first;
-    const eventListener = second as EventListener;
-
-    (state.listeners[eventName] as EventQueue).push(eventListener);
-
-    return () => {
-      const callbacks = state.listeners[eventName] as EventQueue;
-      remove(callbacks, eventListener);
-    };
+    throw new Error(`"${first}" is not a valid event name`);
   }
 
   function getConnectionState() {
-    return state.connection.state;
-  }
-
-  function getSelf(): User<TPresence, TUserMeta> | null {
-    return state.connection.state === "open" ||
-      state.connection.state === "connecting"
-      ? {
-          connectionId: state.connection.id,
-          id: state.connection.userId,
-          info: state.connection.userInfo,
-          presence: getPresence() as TPresence,
-        }
-      : null;
+    return state.connection.current.state;
   }
 
   function connect() {
     if (
-      state.connection.state !== "closed" &&
-      state.connection.state !== "unavailable"
+      state.connection.current.state !== "closed" &&
+      state.connection.current.state !== "unavailable"
     ) {
       return null;
     }
 
     const auth = prepareAuthEndpoint(
-      context.authentication,
-      context.polyfills?.fetch ?? context.fetchPolyfill
+      config.authentication,
+      config.polyfills?.fetch ?? config.fetchPolyfill
     );
     const createWebSocket = prepareCreateWebSocket(
-      context.liveblocksServer,
-      context.polyfills?.WebSocket ?? context.WebSocketPolyfill
+      config.liveblocksServer,
+      config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
     updateConnection({ state: "authenticating" });
@@ -812,35 +816,38 @@ function makeStateMachine<
   }
 
   function updatePresence(
-    overrides: Partial<TPresence>,
+    patch: Partial<TPresence>,
     options?: { addToHistory: boolean }
   ) {
     const oldValues = {} as TPresence;
 
-    if (state.buffer.presence == null) {
-      state.buffer.presence = {
+    if (state.buffer.me === null) {
+      state.buffer.me = {
         type: "partial",
         data: {},
       };
     }
 
-    for (const key in overrides) {
+    for (const key in patch) {
       type K = typeof key;
-      const overrideValue: TPresence[K] | undefined = overrides[key];
+      const overrideValue: TPresence[K] | undefined = patch[key];
       if (overrideValue === undefined) {
         continue;
       }
-      state.buffer.presence.data[key] = overrideValue;
-      oldValues[key] = state.me[key];
+      state.buffer.me.data[key] = overrideValue;
+      oldValues[key] = state.me.current[key];
     }
 
-    state.me = { ...state.me, ...overrides };
+    state.me.patch(patch);
 
-    if (state.isBatching) {
+    if (state.activeBatch) {
       if (options?.addToHistory) {
-        state.batch.reverseOps.push({ type: "presence", data: oldValues });
+        state.activeBatch.reverseOps.push({
+          type: "presence",
+          data: oldValues,
+        });
       }
-      state.batch.updates.presence = true;
+      state.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
       if (options?.addToHistory) {
@@ -877,7 +884,10 @@ function makeStateMachine<
   }
 
   function onVisibilityChange(visibilityState: DocumentVisibilityState) {
-    if (visibilityState === "visible" && state.connection.state === "open") {
+    if (
+      visibilityState === "visible" &&
+      state.connection.current.state === "open"
+    ) {
       log("Heartbeat after visibility change");
       heartbeat();
     }
@@ -886,52 +896,43 @@ function makeStateMachine<
   function onUpdatePresenceMessage(
     message: UpdatePresenceServerMsg<TPresence>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    const user = state.users[message.actor];
-    // If the other user initial presence hasn't been received yet, we discard the presence update.
-    // The initial presence update message contains the property "targetActor".
-    if (
-      message.targetActor === undefined &&
-      user != null &&
-      !user._hasReceivedInitialPresence
-    ) {
-      return undefined;
+    if (message.targetActor !== undefined) {
+      // The incoming message is a full presence update. We are obliged to
+      // handle it if `targetActor` matches our own connection ID, but we can
+      // use the opportunity to effectively reset the known presence as
+      // a "keyframe" update, while we have free access to it.
+      const oldUser = state.others.getUser(message.actor);
+      state.others.setOther(message.actor, message.data);
+
+      const newUser = state.others.getUser(message.actor);
+      if (oldUser === undefined && newUser !== undefined) {
+        // The user just became "visible" due to this update, so fire the
+        // "enter" event
+        return { type: "enter", user: newUser };
+      }
+    } else {
+      // The incoming message is a partial presence update
+      state.others.patchOther(message.actor, message.data), message;
     }
 
-    if (user == null) {
-      state.users[message.actor] = {
-        connectionId: message.actor,
-        presence: message.data,
-        id: undefined,
-        info: undefined,
-        _hasReceivedInitialPresence: true,
+    const user = state.others.getUser(message.actor);
+    if (user) {
+      return {
+        type: "update",
+        updates: message.data,
+        user,
       };
     } else {
-      state.users[message.actor] = {
-        id: user.id,
-        info: user.info,
-        connectionId: message.actor,
-        presence: {
-          ...user.presence,
-          ...message.data,
-        },
-        _hasReceivedInitialPresence: true,
-      };
+      return undefined;
     }
-
-    return {
-      type: "update",
-      updates: message.data,
-      user: state.users[message.actor],
-    };
   }
 
   function onUserLeftMessage(
     message: UserLeftServerMsg
   ): OthersEvent<TPresence, TUserMeta> | null {
-    const userLeftMessage: UserLeftServerMsg = message;
-    const user = state.users[userLeftMessage.actor];
+    const user = state.others.getUser(message.actor);
     if (user) {
-      delete state.users[userLeftMessage.actor];
+      state.others.removeConnection(message.actor);
       return { type: "leave", user };
     }
     return null;
@@ -940,65 +941,43 @@ function makeStateMachine<
   function onRoomStateMessage(
     message: RoomStateServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> {
-    const newUsers: { [connectionId: number]: User<TPresence, TUserMeta> } = {};
     for (const key in message.users) {
-      const connectionId = Number.parseInt(key);
       const user = message.users[key];
-      newUsers[connectionId] = {
-        connectionId,
-        info: user.info,
-        id: user.id,
-      };
+      const connectionId = Number(key);
+      state.others.setConnection(connectionId, user.id, user.info);
     }
-    state.users = newUsers;
     return { type: "reset" };
   }
 
   function onNavigatorOnline() {
-    if (state.connection.state === "unavailable") {
+    if (state.connection.current.state === "unavailable") {
       log("Try to reconnect after connectivity change");
       reconnect();
     }
   }
 
-  function onEvent(message: BroadcastedEventServerMsg<TRoomEvent>) {
-    for (const listener of state.listeners.event) {
-      listener({ connectionId: message.actor, event: message.event });
-    }
-  }
-
   function onHistoryChange() {
-    for (const listener of state.listeners.history) {
-      listener({ canUndo: canUndo(), canRedo: canRedo() });
-    }
+    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
   }
 
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
-  ): OthersEvent<TPresence, TUserMeta> {
-    state.users[message.actor] = {
-      connectionId: message.actor,
-      info: message.info,
-      id: message.id,
-      _hasReceivedInitialPresence: true,
-    };
+  ): OthersEvent<TPresence, TUserMeta> | undefined {
+    state.others.setConnection(message.actor, message.id, message.info);
 
-    if (state.me) {
-      // Send current presence to new user
-      // TODO: Consider storing it on the backend
-      state.buffer.messages.push({
-        type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.me as TPresence,
-        //             ^^^^^^^^^^^^
-        //             TODO: Soon, state.buffer.presence will become
-        //             a TPresence and this force-cast will no longer be
-        //             necessary.
-        targetActor: message.actor,
-      });
-      tryFlushing();
-    }
+    // Send current presence to new user
+    // TODO: Consider storing it on the backend
+    state.buffer.messages.push({
+      type: ClientMsgCode.UPDATE_PRESENCE,
+      data: state.me.current,
+      targetActor: message.actor,
+    });
+    tryFlushing();
 
-    return { type: "enter", user: state.users[message.actor] };
+    // We recorded the connection, but we won't make the new user visible
+    // unless we also know their initial presence data at this point.
+    const user = state.others.getUser(message.actor);
+    return user ? { type: "enter", user } : undefined;
   }
 
   function parseServerMessage(
@@ -1045,7 +1024,10 @@ function makeStateMachine<
     for (const message of messages) {
       switch (message.type) {
         case ServerMsgCode.USER_JOINED: {
-          updates.others.push(onUserJoinedMessage(message));
+          const userJoinedUpdate = onUserJoinedMessage(message);
+          if (userJoinedUpdate) {
+            updates.others.push(userJoinedUpdate);
+          }
           break;
         }
         case ServerMsgCode.UPDATE_PRESENCE: {
@@ -1056,7 +1038,10 @@ function makeStateMachine<
           break;
         }
         case ServerMsgCode.BROADCASTED_EVENT: {
-          onEvent(message);
+          eventHub.customEvent.notify({
+            connectionId: message.actor,
+            event: message.event,
+          });
           break;
         }
         case ServerMsgCode.USER_LEFT: {
@@ -1077,6 +1062,7 @@ function makeStateMachine<
           createOrUpdateRootFromMessage(message);
           applyAndSendOfflineOps(offlineOps);
           _getInitialStateResolver?.();
+          eventHub.storageDidLoad.notify();
           break;
         }
         case ServerMsgCode.UPDATE_STORAGE: {
@@ -1109,16 +1095,14 @@ function makeStateMachine<
     }
     clearTimeout(state.timeoutHandles.reconnect);
 
-    state.users = {};
+    state.others.clearOthers();
     notify({ others: [{ type: "reset" }] });
 
     if (event.code >= 4000 && event.code <= 4100) {
       updateConnection({ state: "failed" });
 
       const error = new LiveblocksError(event.reason, event.code);
-      for (const listener of state.listeners.error) {
-        listener(error);
-      }
+      eventHub.error.notify(error);
 
       const delay = getRetryDelay(true);
       state.numberOfRetry++;
@@ -1148,10 +1132,8 @@ function makeStateMachine<
   }
 
   function updateConnection(connection: Connection) {
-    state.connection = connection;
-    for (const listener of state.listeners.connection) {
-      listener(connection.state);
-    }
+    state.connection.set(connection);
+    eventHub.connection.notify(connection.state);
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1176,20 +1158,20 @@ function makeStateMachine<
 
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
-    if (state.connection.state === "connecting") {
-      updateConnection({ ...state.connection, state: "open" });
+    if (state.connection.current.state === "connecting") {
+      updateConnection({ ...state.connection.current, state: "open" });
       state.numberOfRetry = 0;
 
       // Re-broadcast the user presence during a reconnect.
       if (state.lastConnectionId !== undefined) {
-        state.buffer.presence = {
+        state.buffer.me = {
           type: "full",
-          data: state.me,
+          data: state.me.current,
         };
         tryFlushing();
       }
 
-      state.lastConnectionId = state.connection.id;
+      state.lastConnectionId = state.connection.current.id;
 
       if (state.root) {
         state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
@@ -1201,7 +1183,7 @@ function makeStateMachine<
   }
 
   function heartbeat() {
-    if (state.socket == null) {
+    if (state.socket === null) {
       // Should never happen, because we clear the pong timeout when the connection is dropped explictly
       return;
     }
@@ -1270,7 +1252,10 @@ function makeStateMachine<
       });
     }
 
-    if (state.socket == null || state.socket.readyState !== state.socket.OPEN) {
+    if (
+      state.socket === null ||
+      state.socket.readyState !== state.socket.OPEN
+    ) {
       state.buffer.storageOperations = [];
       return;
     }
@@ -1279,7 +1264,7 @@ function makeStateMachine<
 
     const elapsedTime = now - state.lastFlushTime;
 
-    if (elapsedTime > context.throttleDelay) {
+    if (elapsedTime > config.throttleDelay) {
       const messages = flushDataToMessages(state);
 
       if (messages.length === 0) {
@@ -1289,16 +1274,16 @@ function makeStateMachine<
       state.buffer = {
         messages: [],
         storageOperations: [],
-        presence: null,
+        me: null,
       };
       state.lastFlushTime = now;
     } else {
-      if (state.timeoutHandles.flush != null) {
+      if (state.timeoutHandles.flush !== null) {
         clearTimeout(state.timeoutHandles.flush);
       }
 
       state.timeoutHandles.flush = effects.delayFlush(
-        context.throttleDelay - (now - state.lastFlushTime)
+        config.throttleDelay - (now - state.lastFlushTime)
       );
     }
   }
@@ -1307,20 +1292,20 @@ function makeStateMachine<
     state: State<TPresence, TStorage, TUserMeta, TRoomEvent>
   ) {
     const messages: ClientMsg<TPresence, TRoomEvent>[] = [];
-    if (state.buffer.presence) {
+    if (state.buffer.me) {
       messages.push(
-        state.buffer.presence.type === "full"
+        state.buffer.me.type === "full"
           ? {
               type: ClientMsgCode.UPDATE_PRESENCE,
               // Populating the `targetActor` field turns this message into
               // a Full Presence™ update message (not a patch), which will get
               // interpreted by other clients as such.
               targetActor: -1,
-              data: state.buffer.presence.data,
+              data: state.buffer.me.data,
             }
           : {
               type: ClientMsgCode.UPDATE_PRESENCE,
-              data: state.buffer.presence.data,
+              data: state.buffer.me.data,
             }
       );
     }
@@ -1345,37 +1330,29 @@ function makeStateMachine<
       state.socket.close();
       state.socket = null;
     }
+
     updateConnection({ state: "closed" });
+
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
     }
     clearTimeout(state.timeoutHandles.reconnect);
     clearTimeout(state.timeoutHandles.pongTimeout);
     clearInterval(state.intervalHandles.heartbeat);
-    state.users = {};
+
+    state.others.clearOthers();
     notify({ others: [{ type: "reset" }] });
-    clearListeners();
+
+    // Clear all event listeners
+    Object.values(eventHub).forEach((eventSource) => eventSource.clear());
   }
 
-  function clearListeners() {
-    for (const key in state.listeners) {
-      state.listeners[
-        key as keyof State<
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent
-        >["listeners"]
-      ] = [];
-    }
-  }
-
-  function getPresence(): TPresence {
-    return state.me as TPresence;
+  function getPresence(): Readonly<TPresence> {
+    return state.me.current;
   }
 
   function getOthers(): Others<TPresence, TUserMeta> {
-    return state.others as Others<TPresence, TUserMeta>;
+    return state.others.current;
   }
 
   function broadcastEvent(
@@ -1384,7 +1361,7 @@ function makeStateMachine<
       shouldQueueEventIfNotReady: false,
     }
   ) {
-    if (state.socket == null && options.shouldQueueEventIfNotReady == false) {
+    if (state.socket === null && !options.shouldQueueEventIfNotReady) {
       return;
     }
 
@@ -1395,7 +1372,7 @@ function makeStateMachine<
     tryFlushing();
   }
 
-  function dispatch(ops: Op[]) {
+  function dispatchOps(ops: Op[]) {
     state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
@@ -1403,50 +1380,70 @@ function makeStateMachine<
   let _getInitialStatePromise: Promise<void> | null = null;
   let _getInitialStateResolver: (() => void) | null = null;
 
-  function getStorage(): Promise<{
-    root: LiveObject<TStorage>;
-  }> {
-    if (state.root) {
-      return new Promise((resolve) =>
-        resolve({
-          root: state.root as LiveObject<TStorage>,
-        })
-      );
-    }
-
-    if (_getInitialStatePromise == null) {
+  function startLoadingStorage(): Promise<void> {
+    if (_getInitialStatePromise === null) {
       state.buffer.messages.push({ type: ClientMsgCode.FETCH_STORAGE });
       tryFlushing();
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)
       );
     }
+    return _getInitialStatePromise;
+  }
 
-    return _getInitialStatePromise.then(() => {
-      return {
-        root: nn(state.root) as LiveObject<TStorage>,
-      };
-    });
+  /**
+   * Closely related to .getStorage(), but synchronously. Will be `null`
+   * initially. When requested for the first time, will kick off the loading of
+   * Storage if it hasn't happened yet.
+   *
+   * Once Storage is loaded, will return a stable reference to the storage
+   * root.
+   */
+  function getStorageSnapshot(): LiveObject<TStorage> | null {
+    const root = state.root;
+    if (root !== undefined) {
+      // Done loading
+      return root;
+    } else {
+      // Not done loading, kick off the loading (will not do anything if already kicked off)
+      startLoadingStorage();
+      return null;
+    }
+  }
+
+  async function getStorage(): Promise<{
+    root: LiveObject<TStorage>;
+  }> {
+    if (state.root) {
+      // Store has already loaded, so we can resolve it directly
+      return Promise.resolve({
+        root: state.root as LiveObject<TStorage>,
+      });
+    }
+
+    await startLoadingStorage();
+    return {
+      root: nn(state.root) as LiveObject<TStorage>,
+    };
   }
 
   function undo() {
-    if (state.isBatching) {
+    if (state.activeBatch) {
       throw new Error("undo is not allowed during a batch");
     }
-    const historyItem = state.undoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.undoStack.pop();
+    if (historyOps === undefined) {
       return;
     }
 
-    state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    state.pausedHistory = null;
+    const result = apply(historyOps, true);
 
     notify(result.updates);
     state.redoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1459,23 +1456,22 @@ function makeStateMachine<
   }
 
   function redo() {
-    if (state.isBatching) {
+    if (state.activeBatch) {
       throw new Error("redo is not allowed during a batch");
     }
 
-    const historyItem = state.redoStack.pop();
-
-    if (historyItem == null) {
+    const historyOps = state.redoStack.pop();
+    if (historyOps === undefined) {
       return;
     }
 
-    state.isHistoryPaused = false;
-    const result = apply(historyItem, true);
+    state.pausedHistory = null;
+    const result = apply(historyOps, true);
     notify(result.updates);
     state.undoStack.push(result.reverse);
     onHistoryChange();
 
-    for (const op of historyItem) {
+    for (const op of historyOps) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -1487,57 +1483,61 @@ function makeStateMachine<
     return state.redoStack.length > 0;
   }
 
-  function batch(callback: () => void) {
-    if (state.isBatching) {
-      throw new Error("batch should not be called during a batch");
+  function batch<T>(callback: () => T): T {
+    if (state.activeBatch) {
+      // If there already is an active batch, we don't have to handle this in
+      // any special way. That outer active batch will handle the batch. This
+      // nested call can be a no-op.
+      return callback();
     }
 
-    state.isBatching = true;
+    state.activeBatch = {
+      ops: [],
+      updates: {
+        storageUpdates: new Map(),
+        presence: false,
+        others: [],
+      },
+      reverseOps: [],
+    };
 
     try {
-      callback();
+      return callback();
     } finally {
-      state.isBatching = false;
+      // "Pop" the current batch of the state, closing the active batch, but
+      // handling it separately here
+      const currentBatch = state.activeBatch;
+      state.activeBatch = null;
 
-      if (state.batch.reverseOps.length > 0) {
-        addToUndoStack(state.batch.reverseOps);
+      if (currentBatch.reverseOps.length > 0) {
+        addToUndoStack(currentBatch.reverseOps);
       }
 
-      if (state.batch.ops.length > 0) {
+      if (currentBatch.ops.length > 0) {
         // Only clear the redo stack if something has changed during a batch
         // Clear the redo stack because batch is always called from a local operation
         state.redoStack = [];
       }
 
-      if (state.batch.ops.length > 0) {
-        dispatch(state.batch.ops);
+      if (currentBatch.ops.length > 0) {
+        dispatchOps(currentBatch.ops);
       }
 
-      notify(state.batch.updates);
-      state.batch = {
-        ops: [],
-        reverseOps: [],
-        updates: {
-          others: [],
-          storageUpdates: new Map(),
-          presence: false,
-        },
-      };
+      notify(currentBatch.updates);
       tryFlushing();
     }
   }
 
   function pauseHistory() {
     state.pausedHistory = [];
-    state.isHistoryPaused = true;
   }
 
   function resumeHistory() {
-    state.isHistoryPaused = false;
-    if (state.pausedHistory.length > 0) {
-      addToUndoStack(state.pausedHistory);
+    const historyOps = state.pausedHistory;
+    state.pausedHistory = null;
+    if (historyOps !== null && historyOps.length > 0) {
+      _addToRealUndoStack(historyOps);
     }
-    state.pausedHistory = [];
   }
 
   function simulateSocketClose() {
@@ -1566,7 +1566,7 @@ function makeStateMachine<
     simulateSendCloseEvent,
     onVisibilityChange,
     getUndoStack: () => state.undoStack,
-    getItemsCount: () => state.items.size,
+    getItemsCount: () => state.nodes.size,
 
     // Core
     connect,
@@ -1586,16 +1586,27 @@ function makeStateMachine<
     resumeHistory,
 
     getStorage,
+    getStorageSnapshot,
 
-    selectors: {
-      // Core
-      getConnectionState,
-      getSelf,
-
-      // Presence
-      getPresence,
-      getOthers,
+    events: {
+      customEvent: eventHub.customEvent.observable,
+      others: eventHub.others.observable,
+      me: eventHub.me.observable,
+      error: eventHub.error.observable,
+      connection: eventHub.connection.observable,
+      storage: eventHub.storage.observable,
+      history: eventHub.history.observable,
+      storageDidLoad: eventHub.storageDidLoad.observable,
     },
+
+    // Core
+    getConnectionState,
+    isSelfAware: () => isConnectionSelfAware(state.connection.current),
+    getSelf: () => self.current,
+
+    // Presence
+    getPresence,
+    getOthers,
   };
 }
 
@@ -1605,23 +1616,17 @@ function defaultState<
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  initialPresence?: TPresence,
+  initialPresence: TPresence,
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const others = new OthersRef<TPresence, TUserMeta>();
+
+  const connection = new ValueRef<Connection>({ state: "closed" });
+
   return {
-    connection: { state: "closed" },
     token: null,
     lastConnectionId: null,
     socket: null,
-    listeners: {
-      event: [],
-      others: [],
-      "my-presence": [],
-      error: [],
-      connection: [],
-      storage: [],
-      history: [],
-    },
     numberOfRetry: 0,
     lastFlushTime: 0,
     timeoutHandles: {
@@ -1630,11 +1635,11 @@ function defaultState<
       pongTimeout: 0,
     },
     buffer: {
-      presence:
+      me:
         // Queue up the initial presence message as a Full Presence™ update
         {
           type: "full",
-          data: initialPresence == null ? ({} as TPresence) : initialPresence,
+          data: initialPresence,
         },
       messages: [],
       storageOperations: [],
@@ -1642,32 +1647,25 @@ function defaultState<
     intervalHandles: {
       heartbeat: 0,
     },
-    me: initialPresence == null ? ({} as TPresence) : initialPresence,
-    users: {},
-    others: makeOthers({}),
-    defaultStorageRoot: initialStorage,
+
+    connection,
+    me: new MeRef(initialPresence),
+    others,
+
+    initialStorage,
     idFactory: null,
 
     // Storage
     clock: 0,
     opClock: 0,
-    items: new Map<string, LiveNode>(),
+    nodes: new Map<string, LiveNode>(),
     root: undefined,
+
     undoStack: [],
     redoStack: [],
+    pausedHistory: null,
 
-    isHistoryPaused: false,
-    pausedHistory: [],
-    isBatching: false,
-    batch: {
-      ops: [] as Op[],
-      updates: {
-        storageUpdates: new Map<string, StorageUpdate>(),
-        presence: false,
-        others: [],
-      },
-      reverseOps: [] as Op[],
-    },
+    activeBatch: null,
     offlineOperations: new Map<string, Op>(),
   };
 }
@@ -1693,44 +1691,47 @@ export function createRoom<
   TRoomEvent extends Json
 >(
   options: RoomInitializers<TPresence, TStorage>,
-  context: Context
+  config: Config
 ): InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const initialPresence = options.initialPresence ?? options.defaultPresence;
-  const initialStorage = options.initialStorage ?? options.defaultStorageRoot;
+  const { initialPresence, initialStorage } = options;
 
   const state = defaultState<TPresence, TStorage, TUserMeta, TRoomEvent>(
     typeof initialPresence === "function"
-      ? initialPresence(context.roomId)
+      ? initialPresence(config.roomId)
       : initialPresence,
     typeof initialStorage === "function"
-      ? initialStorage(context.roomId)
+      ? initialStorage(config.roomId)
       : initialStorage
   );
 
   const machine = makeStateMachine<TPresence, TStorage, TUserMeta, TRoomEvent>(
     state,
-    context
+    config
   );
 
   const room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> = {
-    id: context.roomId,
+    id: config.roomId,
     /////////////
     // Core    //
     /////////////
-    getConnectionState: machine.selectors.getConnectionState,
-    getSelf: machine.selectors.getSelf,
+    getConnectionState: machine.getConnectionState,
+    isSelfAware: machine.isSelfAware,
+    getSelf: machine.getSelf,
 
     subscribe: machine.subscribe,
 
     //////////////
     // Presence //
     //////////////
-    getPresence: machine.selectors.getPresence,
+    getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
-    getOthers: machine.selectors.getOthers,
+    getOthers: machine.getOthers,
     broadcastEvent: machine.broadcastEvent,
 
     getStorage: machine.getStorage,
+    getStorageSnapshot: machine.getStorageSnapshot,
+    events: machine.events,
+
     batch: machine.batch,
     history: {
       undo: machine.undo,
@@ -1766,7 +1767,7 @@ function prepareCreateWebSocket(
   liveblocksServer: string,
   WebSocketPolyfill?: typeof WebSocket
 ) {
-  if (typeof window === "undefined" && WebSocketPolyfill == null) {
+  if (typeof window === "undefined" && WebSocketPolyfill === undefined) {
     throw new Error(
       "To use Liveblocks client in a non-dom environment, you need to provide a WebSocket polyfill."
     );
@@ -1790,7 +1791,7 @@ function prepareAuthEndpoint(
   fetchPolyfill?: typeof window.fetch
 ): (room: string) => Promise<AuthorizeResponse> {
   if (authentication.type === "public") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a publicApiKey, you need to provide a fetch polyfill."
       );
@@ -1804,7 +1805,7 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "private") {
-    if (typeof window === "undefined" && fetchPolyfill == null) {
+    if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(
         "To use Liveblocks client in a non-dom environment with a url as auth endpoint, you need to provide a fetch polyfill."
       );
@@ -1817,24 +1818,21 @@ function prepareAuthEndpoint(
   }
 
   if (authentication.type === "custom") {
-    const authWithResponseValidation = (room: string) => {
-      return authentication.callback(room).then((response) => {
-        if (!response || !response.token) {
-          throw new Error(
-            'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
-          );
-        }
-        return response;
-      });
+    return async (room: string) => {
+      const response = await authentication.callback(room);
+      if (!response || !response.token) {
+        throw new Error(
+          'Authentication error. We expect the authentication callback to return a token, but it does not. Hint: the return value should look like: { token: "..." }'
+        );
+      }
+      return response;
     };
-
-    return authWithResponseValidation;
   }
 
   throw new Error("Internal error. Unexpected authentication type");
 }
 
-function fetchAuthEndpoint(
+async function fetchAuthEndpoint(
   fetch: typeof window.fetch,
   endpoint: string,
   body: {
@@ -1842,38 +1840,35 @@ function fetchAuthEndpoint(
     publicApiKey?: string;
   }
 ): Promise<{ token: string }> {
-  return fetch(endpoint, {
+  const res = await fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
-  })
-    .then((res) => {
-      if (!res.ok) {
-        throw new AuthenticationError(
-          `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
-        );
-      }
-
-      return (res.json() as Promise<Json>).catch((er) => {
-        throw new AuthenticationError(
-          `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
-        );
-      });
-    })
-    .then((data) => {
-      if (!isPlainObject(data) || typeof data.token !== "string") {
-        throw new AuthenticationError(
-          `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
-            data
-          )}`
-        );
-      }
-
-      const { token } = data;
-      return { token };
-    });
+  });
+  if (!res.ok) {
+    throw new AuthenticationError(
+      `Expected a status 200 but got ${res.status} when doing a POST request on "${endpoint}"`
+    );
+  }
+  let data: Json;
+  try {
+    data = await (res.json() as Promise<Json>);
+  } catch (er) {
+    throw new AuthenticationError(
+      `Expected a JSON response when doing a POST request on "${endpoint}". ${er}`
+    );
+  }
+  if (!isPlainObject(data) || typeof data.token !== "string") {
+    throw new AuthenticationError(
+      `Expected a JSON response of the form \`{ token: "..." }\` when doing a POST request on "${endpoint}", but got ${JSON.stringify(
+        data
+      )}`
+    );
+  }
+  const { token } = data;
+  return { token };
 }
 
 class AuthenticationError extends Error {

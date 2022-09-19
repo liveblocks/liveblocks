@@ -1,28 +1,97 @@
-import React from "react";
+import { memo } from "react";
 import ColorPicker from "./ColorPicker";
 import IconButton from "./IconButton";
-import { Color } from "../types";
+import { Camera, Color } from "../types";
 import styles from "./SelectionTools.module.css";
+import useDeleteLayers from "../hooks/useDeleteLayers";
+import useSelectionBounds from "../hooks/useSelectionBounds";
+import { useSelf, useMutation } from "../../liveblocks.config";
 
 type SelectionToolsProps = {
   isAnimated: boolean;
-  x: number;
-  y: number;
-  setFill: (color: Color) => void;
-  moveToFront: () => void;
-  moveToBack: () => void;
-  deleteItems: () => void;
+  camera: Camera;
+  setLastUsedColor: (color: Color) => void;
 };
 
-export default function SelectionTools({
+function SelectionTools({
   isAnimated,
-  x,
-  y,
-  setFill,
-  moveToFront,
-  moveToBack,
-  deleteItems,
+  camera,
+  setLastUsedColor,
 }: SelectionToolsProps) {
+  const selection = useSelf((me) => me.presence.selection);
+
+  /**
+   * Move all the selected layers to the front
+   */
+  const moveToFront = useMutation(
+    ({ storage }) => {
+      const liveLayerIds = storage.get("layerIds");
+      const indices: number[] = [];
+
+      const arr = liveLayerIds.toArray();
+
+      for (let i = 0; i < arr.length; i++) {
+        if (selection.includes(arr[i])) {
+          indices.push(i);
+        }
+      }
+
+      for (let i = indices.length - 1; i >= 0; i--) {
+        liveLayerIds.move(
+          indices[i],
+          arr.length - 1 - (indices.length - 1 - i)
+        );
+      }
+    },
+    [selection]
+  );
+
+  /**
+   * Move all the selected layers to the back
+   */
+  const moveToBack = useMutation(
+    ({ storage }) => {
+      const liveLayerIds = storage.get("layerIds");
+      const indices: number[] = [];
+
+      const arr = liveLayerIds.toArray();
+
+      for (let i = 0; i < arr.length; i++) {
+        if (selection.includes(arr[i])) {
+          indices.push(i);
+        }
+      }
+
+      for (let i = 0; i < indices.length; i++) {
+        liveLayerIds.move(indices[i], i);
+      }
+    },
+    [selection]
+  );
+
+  /**
+   * Change the color of all the selected layers
+   */
+  const setFill = useMutation(
+    ({ storage }, fill: Color) => {
+      const liveLayers = storage.get("layers");
+      setLastUsedColor(fill);
+      selection.forEach((id) => {
+        liveLayers.get(id)?.set("fill", fill);
+      });
+    },
+    [selection, setLastUsedColor]
+  );
+
+  const deleteLayers = useDeleteLayers();
+
+  const selectionBounds = useSelectionBounds();
+  if (!selectionBounds) {
+    return null;
+  }
+
+  const x = selectionBounds.width / 2 + selectionBounds.x + camera.x;
+  const y = selectionBounds.y + camera.y;
   return (
     <div
       className={styles.selection_inspector}
@@ -56,7 +125,7 @@ export default function SelectionTools({
         </IconButton>
       </div>
       <div className={styles.selection_inspector_delete}>
-        <IconButton onClick={deleteItems}>
+        <IconButton onClick={deleteLayers}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path
               d="M7.5 9H16.5V18C16.5 18.8284 15.8284 19.5 15 19.5H9C8.17157 19.5 7.5 18.8284 7.5 18V9Z"
@@ -72,3 +141,5 @@ export default function SelectionTools({
     </div>
   );
 }
+
+export default memo(SelectionTools);

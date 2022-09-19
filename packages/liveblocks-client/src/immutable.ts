@@ -271,25 +271,32 @@ function getParentsPath(node: LiveNode): Array<string | number> {
   return path;
 }
 
-export function patchImmutableObject<S extends JsonObject>(
+//
+// TODO: Remove `patchImmutableObject`!
+//
+// This helper is now only used internally, to support our Zustand and
+// Redux packages. We should be able to reimplement those using the new
+// `.toImmutable()` APIs.
+//
+export function legacy_patchImmutableObject<S extends JsonObject>(
   state: S,
   updates: StorageUpdate[]
 ): S {
   return updates.reduce(
-    (state, update) => patchImmutableObjectWithUpdate(state, update),
+    (state, update) => legacy_patchImmutableObjectWithUpdate(state, update),
     state
   );
 }
 
-function patchImmutableObjectWithUpdate<S extends JsonObject>(
+function legacy_patchImmutableObjectWithUpdate<S extends JsonObject>(
   state: S,
   update: StorageUpdate
 ): S {
   const path = getParentsPath(update.node);
-  return patchImmutableNode(state, path, update);
+  return legacy_patchImmutableNode(state, path, update);
 }
 
-function patchImmutableNode<S extends Json>(
+function legacy_patchImmutableNode<S extends Json>(
   state: S,
   path: Array<string | number>,
   update: StorageUpdate
@@ -421,7 +428,7 @@ function patchImmutableNode<S extends Json>(
 
   if (Array.isArray(state)) {
     const newArray: Json[] = [...state];
-    newArray[pathItem as number] = patchImmutableNode(
+    newArray[pathItem as number] = legacy_patchImmutableNode(
       state[pathItem as number],
       path,
       update
@@ -438,7 +445,7 @@ function patchImmutableNode<S extends Json>(
     } else {
       return {
         ...(state as JsonObject),
-        [pathItem]: patchImmutableNode(node, path, update),
+        [pathItem]: legacy_patchImmutableNode(node, path, update),
       } as S;
       //   ^
       //   FIXME Not completely true, because we could have been updating

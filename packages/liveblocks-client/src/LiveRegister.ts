@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
@@ -12,6 +12,7 @@ import type {
   SerializedRegister,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { Immutable } from "./types/Immutable";
 
 /**
  * INTERNAL
@@ -33,20 +34,20 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   static _deserialize(
     [id, item]: IdTuple<SerializedRegister>,
     _parentToChildren: ParentToChildNodeMap,
-    doc: Doc
+    pool: ManagedPool
   ): LiveRegister<Json> {
     const register = new LiveRegister(item.data);
-    register._attach(id, doc);
+    register._attach(id, pool);
     return register;
   }
 
   /** @internal */
-  _serialize(
+  _toOps(
     parentId: string,
     parentKey: string,
-    doc?: Doc
+    pool?: ManagedPool
   ): CreateRegisterOp[] {
-    if (this._id == null || parentId == null || parentKey == null) {
+    if (this._id === undefined) {
       throw new Error(
         "Cannot serialize register if parentId or parentKey is undefined"
       );
@@ -55,7 +56,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return [
       {
         type: OpCode.CREATE_REGISTER,
-        opId: doc?.generateOpId(),
+        opId: pool?.generateOpId(),
         id: this._id,
         parentId,
         parentKey,
@@ -65,7 +66,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toSerializedCrdt(): SerializedRegister {
+  _serialize(): SerializedRegister {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveRegister if parent is missing");
     }
@@ -91,5 +92,10 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   /** @internal */
   _apply(op: Op, isLocal: boolean): ApplyResult {
     return super._apply(op, isLocal);
+  }
+
+  /** @internal */
+  _toImmutable(): Immutable {
+    return this._data;
   }
 }

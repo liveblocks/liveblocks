@@ -12,7 +12,11 @@ import {
   BarChart,
 } from "recharts";
 import { dataRevenue, dataUsers, dataPlatforms, dataActivation } from "./data";
-import { RoomProvider, useMyPresence, useOthers } from "./liveblocks.config";
+import {
+  RoomProvider,
+  useMyPresence,
+  useOthersMapped,
+} from "./liveblocks.config";
 import styles from "./App.module.css";
 import Header from "./components/Header";
 import Card from "./components/Card";
@@ -23,7 +27,7 @@ overrideRoomId();
 
 function Example() {
   const [myPresence, updateMyPresence] = useMyPresence();
-  const others = useOthers();
+  const others = useOthersMapped((user) => user.presence.selectedDataset);
 
   const handleLegendPointerEnter = (e, cardId) => {
     const { dataKey } = e;
@@ -44,16 +48,16 @@ function Example() {
 
   const isDatasetSelected = (cardId, dataKey) => {
     if (
-      myPresence?.selectedDataset?.cardId === cardId &&
-      myPresence?.selectedDataset?.dataKey === dataKey
+      myPresence.selectedDataset?.cardId === cardId &&
+      myPresence.selectedDataset?.dataKey === dataKey
     ) {
       return true;
     }
 
-    for (const other of others.toArray()) {
+    for (const [, selectedDataset] of others) {
       if (
-        other.presence?.selectedDataset?.cardId === cardId &&
-        other.presence?.selectedDataset?.dataKey === dataKey
+        selectedDataset?.cardId === cardId &&
+        selectedDataset?.dataKey === dataKey
       ) {
         return true;
       }
@@ -232,7 +236,14 @@ function Example() {
 
 export default function App() {
   return (
-    <RoomProvider id={roomId} initialPresence={{ cardId: null, cursor: null }}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{
+        selectedDataset: { cardId: null, dataKey: null },
+        cursor: null,
+        cardId: null,
+      }}
+    >
       <Example />
     </RoomProvider>
   );

@@ -28,6 +28,7 @@ export default function Home() {
   return (
     <RoomProvider
       id={roomId}
+      initialPresence={{} as never}
       initialStorage={{
         object: new LiveObject<{
           [key: string]: number | LiveObject<{ a: number }>;

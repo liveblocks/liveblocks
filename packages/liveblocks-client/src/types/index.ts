@@ -1,3 +1,5 @@
+import type { Callback, Observable } from "../EventSource";
+import type { ReadonlyArrayWithLegacyMethods } from "../LegacyArray";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
@@ -31,43 +33,29 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type MyPresenceCallback<TPresence extends JsonObject> = (
-  me: TPresence
-) => void;
-
-export type OthersEventCallback<
-  TPresence extends JsonObject,
-  TUserMeta extends BaseUserMeta
-> = (
-  others: Others<TPresence, TUserMeta>,
-  event: OthersEvent<TPresence, TUserMeta>
-) => void;
-
-export type EventCallback<TRoomEvent extends Json> = ({
-  connectionId,
-  event,
-}: {
+export type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
-}) => void;
-
-export type ErrorCallback = (error: Error) => void;
-
-export type ConnectionCallback = (state: ConnectionState) => void;
-
-export type HistoryCallback = (event: HistoryEvent) => void;
+};
 
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 > = {
-  "my-presence": MyPresenceCallback<TPresence>;
-  others: OthersEventCallback<TPresence, TUserMeta>;
-  event: EventCallback<TRoomEvent>;
-  error: ErrorCallback;
-  connection: ConnectionCallback;
-  history: HistoryCallback;
+  event: Callback<CustomEvent<TRoomEvent>>;
+  "my-presence": Callback<TPresence>;
+  //
+  // NOTE: OthersEventCallback is the only one not taking a Callback<T> shape,
+  // since this API historically has taken _two_ callback arguments instead of
+  // just one.
+  others: (
+    others: Others<TPresence, TUserMeta>,
+    event: OthersEvent<TPresence, TUserMeta>
+  ) => void;
+  error: Callback<Error>;
+  connection: Callback<ConnectionState>;
+  history: Callback<HistoryEvent>;
 };
 
 export type RoomEventName = Extract<
@@ -196,21 +184,11 @@ export type RoomInitializers<
    * The initial Presence to use and announce when you enter the Room. The
    * Presence is available on all users in the Room (me & others).
    */
-  initialPresence?: TPresence | ((roomId: string) => TPresence);
+  initialPresence: TPresence | ((roomId: string) => TPresence);
   /**
    * The initial Storage to use when entering a new Room.
    */
   initialStorage?: TStorage | ((roomId: string) => TStorage);
-  /**
-   * @deprecated Please use `initialPresence` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultPresence?: () => TPresence;
-  /**
-   * @deprecated Please use `initialStorage` instead. This property is
-   * scheduled for removal in 0.18.
-   */
-  defaultStorageRoot?: TStorage;
 }>;
 
 export type Client = {
@@ -240,7 +218,7 @@ export type Client = {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options?: RoomInitializers<TPresence, TStorage>
+    options: RoomInitializers<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
 
   /**
@@ -253,27 +231,10 @@ export type Client = {
 /**
  * Represents all the other users connected in the room. Treated as immutable.
  */
-export interface Others<
+export type Others<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> {
-  /**
-   * Number of other users in the room.
-   */
-  readonly count: number;
-  /**
-   * Returns a new Iterator object that contains the users.
-   */
-  [Symbol.iterator](): IterableIterator<User<TPresence, TUserMeta>>;
-  /**
-   * Returns the array of connected users in room.
-   */
-  toArray(): User<TPresence, TUserMeta>[];
-  /**
-   * This function let you map over the connected users in the room.
-   */
-  map<U>(callback: (user: User<TPresence, TUserMeta>) => U): U[];
-}
+> = ReadonlyArrayWithLegacyMethods<User<TPresence, TUserMeta>>;
 
 /**
  * Represents a user connected in a room. Treated as immutable.
@@ -298,27 +259,8 @@ export type User<
   /**
    * The user presence.
    */
-  readonly presence?: TPresence;
-  /** @internal */
-  _hasReceivedInitialPresence?: boolean;
+  readonly presence: TPresence;
 };
-
-/**
- * @deprecated Whatever you want to store as presence is app-specific. Please
- * define your own Presence type instead of importing it from
- * `@liveblocks/client`, for example:
- *
- *    type Presence = {
- *      name: string,
- *      cursor: {
- *        x: number,
- *        y: number,
- *      } | null,
- *    }
- *
- * As long as it only contains JSON-serializable values, you're good!
- */
-export type Presence = JsonObject;
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
 
@@ -372,15 +314,28 @@ export type Authentication =
     };
 
 export type Connection =
+  /* The initial state, before connecting */
+  | { state: "closed" }
+  /* Authentication has started, but not finished yet */
+  | { state: "authenticating" }
+  /* Authentication succeeded, now attempting to connect to a room */
   | {
-      state: "closed" | "authenticating" | "unavailable" | "failed";
-    }
-  | {
-      state: "open" | "connecting";
+      state: "connecting";
       id: number;
       userId?: string;
       userInfo?: Json;
-    };
+    }
+  /* Successful room connection, on the happy path */
+  | {
+      state: "open";
+      id: number;
+      userId?: string;
+      userInfo?: Json;
+    }
+  /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
+  | { state: "unavailable" }
+  /* Connection failed due to known reason (e.g. rejected). Will throw error, then immediately jump to "unavailable" state, to attempt to reconnect */
+  | { state: "failed" };
 
 export type ConnectionState = Connection["state"];
 
@@ -499,8 +454,13 @@ export type Room<
    * The id of the room.
    */
   readonly id: string;
+  /**
+   * A client is considered "self aware" if it knows its own
+   * metadata and connection ID (from the auth server).
+   */
+  isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
-  subscribe: {
+  readonly subscribe: {
     /**
      * Subscribe to the current user presence updates.
      *
@@ -513,7 +473,7 @@ export type Room<
      *   // Do something
      * });
      */
-    (type: "my-presence", listener: MyPresenceCallback<TPresence>): () => void;
+    (type: "my-presence", listener: Callback<TPresence>): () => void;
 
     /**
      * Subscribe to the other users updates.
@@ -526,10 +486,14 @@ export type Room<
      * room.subscribe("others", (others) => {
      *   // Do something
      * });
+     *
      */
     (
       type: "others",
-      listener: OthersEventCallback<TPresence, TUserMeta>
+      listener: (
+        others: Others<TPresence, TUserMeta>,
+        event: OthersEvent<TPresence, TUserMeta>
+      ) => void
     ): () => void;
 
     /**
@@ -543,13 +507,15 @@ export type Room<
      * room.subscribe("event", ({ event, connectionId }) => {
      *   // Do something
      * });
+     *
      */
-    (type: "event", listener: EventCallback<TRoomEvent>): () => void;
+    (type: "event", listener: Callback<CustomEvent<TRoomEvent>>): () => void;
 
     /**
      * Subscribe to errors thrown in the room.
      *
      * @returns Unsubscribe function.
+     *
      */
     (type: "error", listener: ErrorCallback): () => void;
 
@@ -557,8 +523,9 @@ export type Room<
      * Subscribe to connection state updates.
      *
      * @returns Unsubscribe function.
+     *
      */
-    (type: "connection", listener: ConnectionCallback): () => void;
+    (type: "connection", listener: Callback<ConnectionState>): () => void;
 
     /**
      * Subscribes to changes made on a Live structure. Returns an unsubscribe function.
@@ -608,14 +575,15 @@ export type Room<
      * room.subscribe("history", ({ canUndo, canRedo }) => {
      *   // Do something
      * });
+     *
      */
-    (type: "history", listener: HistoryCallback): () => void;
+    (type: "history", listener: Callback<HistoryEvent>): () => void;
   };
 
   /**
    * Room's history contains functions that let you undo and redo operation made on by the current client on the presence and storage.
    */
-  history: History;
+  readonly history: History;
 
   /**
    * Gets the current user.
@@ -632,7 +600,7 @@ export type Room<
    * @example
    * const presence = room.getPresence();
    */
-  getPresence: () => TPresence;
+  getPresence(): TPresence;
 
   /**
    * Gets all the other users in the room.
@@ -640,12 +608,12 @@ export type Room<
    * @example
    * const others = room.getOthers();
    */
-  getOthers: () => Others<TPresence, TUserMeta>;
+  getOthers(): Others<TPresence, TUserMeta>;
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
-   * @param overrides A partial object that contains the properties you want to update.
-   * @param overrides Optional object to configure the behavior of updatePresence.
+   * @param patch A partial object that contains the properties you want to update.
+   * @param options Optional object to configure the behavior of updatePresence.
    *
    * @example
    * room.updatePresence({ x: 0 });
@@ -654,15 +622,15 @@ export type Room<
    * const presence = room.getPresence();
    * // presence is equivalent to { x: 0, y: 0 }
    */
-  updatePresence: (
-    overrides: Partial<TPresence>,
+  updatePresence(
+    patch: Partial<TPresence>,
     options?: {
       /**
        * Whether or not the presence should have an impact on the undo/redo history.
        */
       addToHistory: boolean;
     }
-  ) => void;
+  ): void;
 
   /**
    * Broadcasts an event to other users in the room. Event broadcasted to the room can be listened with {@link Room.subscribe}("event").
@@ -679,7 +647,7 @@ export type Room<
    *   }
    * });
    */
-  broadcastEvent: (event: TRoomEvent, options?: BroadcastOptions) => void;
+  broadcastEvent(event: TRoomEvent, options?: BroadcastOptions): void;
 
   /**
    * Get the room's storage asynchronously.
@@ -688,9 +656,36 @@ export type Room<
    * @example
    * const { root } = await room.getStorage();
    */
-  getStorage: () => Promise<{
+  getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
+
+  /**
+   * Get the room's storage synchronously.
+   * The storage's root is a {@link LiveObject}.
+   *
+   * @example
+   * const root = room.getStorageSnapshot();
+   */
+  getStorageSnapshot(): LiveObject<TStorage> | null;
+
+  readonly events: {
+    customEvent: Observable<{ connectionId: number; event: TRoomEvent }>;
+    me: Observable<TPresence>;
+    others: Observable<{
+      others: Others<TPresence, TUserMeta>;
+      event: OthersEvent<TPresence, TUserMeta>;
+    }>;
+    error: Observable<Error>;
+    connection: Observable<ConnectionState>;
+    storage: Observable<StorageUpdate[]>;
+    history: Observable<HistoryEvent>;
+    /**
+     * Subscribe to the storage loaded event. Will fire at most once during the
+     * lifetime of a Room.
+     */
+    storageDidLoad: Observable<void>;
+  };
 
   /**
    * Batches modifications made during the given function.
@@ -705,7 +700,7 @@ export type Room<
    *   room.updatePresence({ cursor: { x: 100, y: 100 }});
    * });
    */
-  batch: (fn: () => void) => void;
+  batch<T>(fn: () => T): T;
 
   /**
    * @internal Utilities only used for unit testing.
@@ -741,6 +736,7 @@ export type {
   UpdateStorageClientMsg,
 } from "./ClientMsg";
 export { ClientMsgCode } from "./ClientMsg";
+export type { Immutable, ToImmutable } from "./Immutable";
 export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";

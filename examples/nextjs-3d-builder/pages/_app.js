@@ -8,7 +8,11 @@ function App({ Component, pageProps }) {
   const roomId = useOverrideRoomId("nextjs-3d-builder");
 
   return (
-    <RoomProvider id={roomId} initialStorage={{ colors: new LiveObject() }}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{}}
+      initialStorage={{ colors: new LiveObject() }}
+    >
       <Head>
         <title>Liveblocks</title>
         <meta name="robots" content="noindex" />

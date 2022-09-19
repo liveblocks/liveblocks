@@ -1,4 +1,5 @@
 import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
+import { shallow } from "@liveblocks/client";
 import type { ServerMsg } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
@@ -9,10 +10,15 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import {
+  useCanRedo,
+  useCanUndo,
+  useMutation,
   useMyPresence,
   useObject,
   useOthers,
   useRoom,
+  useStorage,
+  useUndo,
 } from "./_liveblocks.config";
 import { act, renderHook, waitFor } from "./_utils"; // Basically re-exports from @testing-library/react
 
@@ -151,12 +157,46 @@ async function websocketSimulator() {
     });
   }
 
+  function simulateExistingStorageLoaded() {
+    simulateIncomingMessage({
+      type: ServerMsgCode.INITIAL_STORAGE_STATE,
+      items: [
+        ["root", { type: CrdtType.OBJECT, data: {} }],
+        [
+          "0:0",
+          {
+            type: CrdtType.OBJECT,
+            data: {},
+            parentId: "root",
+            parentKey: "obj",
+          },
+        ],
+      ],
+    });
+  }
+
   function simulateAbnormalClose() {
     socket.callbacks.close[0]({
       reason: "",
       wasClean: false,
       code: WebSocketErrorCodes.CLOSE_ABNORMAL,
     } as CloseEvent);
+  }
+
+  function simulateUserJoins(actor: number, presence: JsonObject) {
+    simulateIncomingMessage({
+      type: ServerMsgCode.USER_JOINED,
+      actor,
+      id: undefined,
+      info: undefined,
+    });
+
+    simulateIncomingMessage({
+      type: ServerMsgCode.UPDATE_PRESENCE,
+      targetActor: -1,
+      data: presence,
+      actor,
+    });
   }
 
   // Simulator API
@@ -166,11 +206,17 @@ async function websocketSimulator() {
     callbacks: socket.callbacks,
 
     //
-    // Simulating actions
+    // Simulating actions (low level)
     //
-    simulateStorageLoaded,
     simulateIncomingMessage,
+    simulateStorageLoaded,
+    simulateExistingStorageLoaded,
     simulateAbnormalClose,
+
+    //
+    // Composed simulations
+    //
+    simulateUserJoins,
   };
 }
 
@@ -179,7 +225,7 @@ describe("useRoom", () => {
     renderHook(() => useRoom()); // Ignore return value here, this hook triggers the initialization side effect
 
     const sim = await websocketSimulator();
-    expect(sim.sentMessages[0]).toStrictEqual(
+    expect(sim.sentMessages[0]).toBe(
       JSON.stringify([
         {
           type: ClientMsgCode.UPDATE_PRESENCE,
@@ -217,13 +263,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
@@ -234,14 +274,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 0 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 0 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 0 } },
@@ -264,13 +297,7 @@ describe("useOthers", () => {
     const { result } = renderHook(() => useOthers());
 
     const sim = await websocketSimulator();
-    act(() =>
-      sim.simulateIncomingMessage({
-        type: ServerMsgCode.UPDATE_PRESENCE,
-        data: { x: 2 },
-        actor: 1,
-      })
-    );
+    act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current.toArray()).toEqual([
       { connectionId: 1, presence: { x: 2 } },
@@ -292,7 +319,10 @@ describe("useObject", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateStorageLoaded());
 
-    await waitFor(() => expect(result.current?.toObject()).toEqual({ a: 0 }));
+    expect(result.current?.toImmutable()).toEqual({
+      a: 0,
+      nested: ["foo", "bar"],
+    });
   });
 
   test("unmounting useObject while storage is loading should not cause a memory leak", async () => {
@@ -321,5 +351,145 @@ describe("useObject", () => {
     );
 
     expect(result.current).toBeNull();
+  });
+});
+
+describe("useStorage", () => {
+  test("return null before storage has loaded", async () => {
+    const { result } = renderHook(() => useStorage((root) => root.obj));
+    expect(result.current).toBeNull();
+  });
+
+  test("nested data remains referentially equal between renders", async () => {
+    const { result, rerender } = renderHook(() =>
+      useStorage((root) => root.obj)
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current;
+    rerender();
+    const render2 = result.current;
+
+    expect(render1).toEqual({ a: 0, nested: ["foo", "bar"] });
+    expect(render2).toEqual({ a: 0, nested: ["foo", "bar"] });
+    expect(render1).toBe(render2); // Referentially equal!
+  });
+
+  test("unchanged nested data remains referentially equal between mutations", async () => {
+    const { result } = renderHook(() => useStorage((root) => root.obj));
+    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current!;
+    act(() =>
+      // Now, only change `a`, let `nested` remain untouched
+      liveObj.current!.set("a", 1)
+    );
+    const render2 = result.current!;
+
+    // Property `a` changed between renders...
+    expect(render1.a).toEqual(0);
+    expect(render2.a).toEqual(1);
+
+    // ...but `nested` remained referentially equal
+    expect(render1.nested).toEqual(["foo", "bar"]);
+    expect(render2.nested).toEqual(["foo", "bar"]);
+    expect(render1.nested).toBe(render2.nested); // Referentially equal!
+  });
+
+  test("arbitrary expressions", async () => {
+    const { result } = renderHook(() =>
+      useStorage((root) => JSON.stringify(root.obj).toUpperCase())
+    );
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    expect(result.current).toEqual('{"A":0,"NESTED":["FOO","BAR"]}');
+  });
+
+  test("dynamically computed results remain referentially equal only when using shallow comparison", async () => {
+    const { result } = renderHook(() =>
+      useStorage(
+        (root) => root.obj.nested.map((item) => item.toUpperCase()),
+        shallow // <-- Important! Key line of the test!
+      )
+    );
+    const { result: liveObj } = renderHook(() => useObject("obj")); // Used to trigger mutations
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateStorageLoaded());
+
+    const render1 = result.current!;
+    act(() =>
+      // Now, only change `a`, let `nested` remain untouched
+      liveObj.current!.set("a", 1)
+    );
+
+    const render2 = result.current!;
+
+    expect(render1).toEqual(["FOO", "BAR"]);
+    expect(render2).toEqual(["FOO", "BAR"]);
+    expect(render1).toBe(render2); // Referentially equal!
+  });
+});
+
+describe("useCanUndo / useCanRedo", () => {
+  test("can undo and redo", async () => {
+    const canUndo = renderHook(() => useCanUndo());
+    const canRedo = renderHook(() => useCanRedo());
+    const undo = renderHook(() => useUndo());
+    const mutation = renderHook(() =>
+      useMutation(
+        ({ storage }) => storage.get("obj").set("a", Math.random()),
+        []
+      )
+    );
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(false);
+
+    const sim = await websocketSimulator();
+    act(() => sim.simulateExistingStorageLoaded());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Run a mutation
+    act(() => mutation.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Undo that!
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(true);
+
+    // Run 3 mutations
+    act(() => mutation.result.current());
+    act(() => mutation.result.current());
+    act(() => mutation.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(false);
+
+    // Undo 2 of them
+    act(() => undo.result.current());
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(true);
+    expect(canRedo.result.current).toEqual(true);
+
+    // Undo the last one
+    act(() => undo.result.current());
+
+    expect(canUndo.result.current).toEqual(false);
+    expect(canRedo.result.current).toEqual(true);
   });
 });

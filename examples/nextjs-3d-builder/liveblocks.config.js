@@ -5,4 +5,5 @@ const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY,
 });
 
-export const { RoomProvider, useObject } = createRoomContext(client);
+export const { RoomProvider, useStorage, useMutation } =
+  createRoomContext(client);

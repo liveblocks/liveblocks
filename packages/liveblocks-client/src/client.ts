@@ -1,4 +1,4 @@
-import { errorIf } from "./deprecation";
+import { deprecateIf } from "./deprecation";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
@@ -87,7 +87,7 @@ export function createClient(options: ClientOptions): Client {
     TRoomEvent extends Json = never
   >(
     roomId: string,
-    options: EnterOptions<TPresence, TStorage> = {}
+    options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
     let internalRoom = rooms.get(roomId) as
       | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
@@ -101,21 +101,15 @@ export function createClient(options: ClientOptions): Client {
       >;
     }
 
-    errorIf(
-      options.defaultPresence,
-      "Argument `defaultPresence` will be removed in @liveblocks/client 0.18. Please use `initialPresence` instead. For more info, see https://bit.ly/3Niy5aP"
-    );
-    errorIf(
-      options.defaultStorageRoot,
-      "Argument `defaultStorageRoot` will be removed in @liveblocks/client 0.18. Please use `initialStorage` instead. For more info, see https://bit.ly/3Niy5aP"
+    deprecateIf(
+      options.initialPresence === null || options.initialPresence === undefined,
+      "Please provide an initial presence value for the current user when entering the room."
     );
 
     internalRoom = createRoom<TPresence, TStorage, TUserMeta, TRoomEvent>(
       {
-        initialPresence: options.initialPresence,
+        initialPresence: options.initialPresence ?? {},
         initialStorage: options.initialStorage,
-        defaultPresence: options.defaultPresence, // Will get removed in 0.18
-        defaultStorageRoot: options.defaultStorageRoot, // Will get removed in 0.18
       },
       {
         roomId,
@@ -144,8 +138,8 @@ export function createClient(options: ClientOptions): Client {
     );
     if (!options.DO_NOT_USE_withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
-      if (typeof atob == "undefined") {
-        if (clientOptions.polyfills?.atob == undefined) {
+      if (typeof atob === "undefined") {
+        if (clientOptions.polyfills?.atob === undefined) {
           throw new Error(
             "You need to polyfill atob to use the client in your environment. Please follow the instructions at https://liveblocks.io/docs/errors/liveblocks-client/atob-polyfill"
           );

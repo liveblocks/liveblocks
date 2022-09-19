@@ -1,4 +1,4 @@
-import type { ApplyResult, Doc } from "./AbstractCrdt";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import { LiveRegister } from "./LiveRegister";
@@ -17,6 +17,7 @@ import type {
   SerializedList,
 } from "./types";
 import { CrdtType, OpCode } from "./types";
+import type { ToImmutable } from "./types/Immutable";
 import {
   creationOpToLiveNode,
   deserialize,
@@ -40,7 +41,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _items: LiveNode[];
 
   /** @internal */
-  private _implicitlyDeletedItems: Set<LiveNode>;
+  private _implicitlyDeletedItems: WeakSet<LiveNode>;
 
   /** @internal */
   private _unacknowledgedSets: Map<string, string>;
@@ -48,7 +49,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   constructor(items: TItem[] = []) {
     super();
     this._items = [];
-    this._implicitlyDeletedItems = new Set();
+    this._implicitlyDeletedItems = new WeakSet();
     this._unacknowledgedSets = new Map();
 
     let position = undefined;
@@ -65,19 +66,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   static _deserialize(
     [id]: IdTuple<SerializedList>,
     parentToChildren: ParentToChildNodeMap,
-    doc: Doc
+    pool: ManagedPool
   ): LiveList<Lson> {
     const list = new LiveList();
-    list._attach(id, doc);
+    list._attach(id, pool);
 
     const children = parentToChildren.get(id);
-
-    if (children == null) {
+    if (children === undefined) {
       return list;
     }
 
     for (const [id, crdt] of children) {
-      const child = deserialize([id, crdt], parentToChildren, doc);
+      const child = deserialize([id, crdt], parentToChildren, pool);
 
       child._setParentLink(list, crdt.parentKey);
       list._insertAndSort(child);
@@ -87,15 +87,19 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _serialize(parentId: string, parentKey: string, doc?: Doc): CreateChildOp[] {
-    if (this._id == null) {
+  _toOps(
+    parentId: string,
+    parentKey: string,
+    pool?: ManagedPool
+  ): CreateChildOp[] {
+    if (this._id === undefined) {
       throw new Error("Cannot serialize item is not attached");
     }
 
     const ops: CreateChildOp[] = [];
     const op: CreateListOp = {
       id: this._id,
-      opId: doc?.generateOpId(),
+      opId: pool?.generateOpId(),
       type: OpCode.CREATE_LIST,
       parentId,
       parentKey,
@@ -104,7 +108,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     ops.push(op);
 
     for (const item of this._items) {
-      ops.push(...item._serialize(this._id, item._getParentKeyOrThrow(), doc));
+      ops.push(...item._toOps(this._id, item._getParentKeyOrThrow(), pool));
     }
 
     return ops;
@@ -123,6 +127,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   /** @internal */
   _sortItems(): void {
     this._items.sort(compareNodePosition);
+    this.invalidate();
   }
 
   /** @internal */
@@ -133,11 +138,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _attach(id: string, doc: Doc): void {
-    super._attach(id, doc);
+  _attach(id: string, pool: ManagedPool): void {
+    super._attach(id, pool);
 
     for (const item of this._items) {
-      item._attach(doc.generateId(), doc);
+      item._attach(pool.generateId(), pool);
     }
   }
 
@@ -152,13 +157,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applySetRemote(op: CreateChildOp): ApplyResult {
-    if (this._doc == null) {
-      throw new Error("Can't attach child if doc is not present");
+    if (this._pool === undefined) {
+      throw new Error("Can't attach child if managed pool is not present");
     }
 
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
-    child._attach(id, this._doc);
+    child._attach(id, this._pool);
     child._setParentLink(this, key);
 
     const deletedId = op.deletedId;
@@ -233,8 +238,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applySetAck(op: CreateChildOp): ApplyResult {
-    if (this._doc == null) {
-      throw new Error("Can't attach child if doc is not present");
+    if (this._pool === undefined) {
+      throw new Error("Can't attach child if managed pool is not present");
     }
 
     const delta: LiveListUpdateDelta[] = [];
@@ -247,7 +252,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const unacknowledgedOpId = this._unacknowledgedSets.get(op.parentKey);
 
-    if (unacknowledgedOpId != null) {
+    if (unacknowledgedOpId !== undefined) {
       if (unacknowledgedOpId !== op.opId) {
         return delta.length === 0
           ? { modified: false }
@@ -262,7 +267,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const existingItem = this._items.find((item) => item._id === op.id);
 
     // If item already exists...
-    if (existingItem != null) {
+    if (existingItem !== undefined) {
       // ...and if it's at the right position
       if (existingItem._parentKey === op.parentKey) {
         // ... do nothing
@@ -298,8 +303,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       };
     } else {
       // Item associated to the set ack does not exist either deleted localy or via remote undo/redo
-      const orphan = this._doc.getItem(op.id);
-
+      const orphan = this._pool.getNode(op.id);
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         // Reattach orphan at the new position
         orphan._setParentLink(this, op.parentKey);
@@ -351,18 +355,16 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   private _detachItemAssociatedToSetOperation(
     deletedId?: string
   ): LiveListUpdateDelta | null {
-    if (deletedId == null || this._doc == null) {
+    if (deletedId === undefined || this._pool === undefined) {
       return null;
     }
 
-    const deletedItem = this._doc.getItem(deletedId);
-
-    if (deletedItem == null) {
+    const deletedItem = this._pool.getNode(deletedId);
+    if (deletedItem === undefined) {
       return null;
     }
 
     const result = this._detachChild(deletedItem);
-
     if (result.modified === false) {
       return null;
     }
@@ -372,8 +374,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   private _applyRemoteInsert(op: CreateChildOp): ApplyResult {
-    if (this._doc == null) {
-      throw new Error("Can't attach child if doc is not present");
+    if (this._pool === undefined) {
+      throw new Error("Can't attach child if managed pool is not present");
     }
 
     const key = op.parentKey;
@@ -430,8 +432,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
         };
       }
     } else {
-      const orphan = nn(this._doc).getItem(op.id);
-
+      const orphan = nn(this._pool).getNode(op.id);
       if (orphan && this._implicitlyDeletedItems.has(orphan)) {
         // Implicit delete after set
         orphan._setParentLink(this, key);
@@ -465,11 +466,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
-    if (this._doc?.getItem(id) !== undefined) {
+    if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
 
-    child._attach(id, nn(this._doc));
+    child._attach(id, nn(this._pool));
     child._setParentLink(this, key);
 
     const existingItemIndex = this._indexOfPosition(key);
@@ -503,7 +504,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const { id, parentKey: key } = op;
     const child = creationOpToLiveNode(op);
 
-    if (this._doc?.getItem(id) !== undefined) {
+    if (this._pool?.getNode(id) !== undefined) {
       return { modified: false };
     }
 
@@ -511,7 +512,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     const indexOfItemWithSameKey = this._indexOfPosition(key);
 
-    child._attach(id, nn(this._doc));
+    child._attach(id, nn(this._pool));
     child._setParentLink(this, key);
 
     const newKey = key;
@@ -524,7 +525,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       this._items[indexOfItemWithSameKey] = child;
 
-      const reverse = existingItem._serialize(nn(this._id), key, this._doc);
+      const reverse = existingItem._toOps(nn(this._id), key, this._pool);
       addIntentAndDeletedIdToOperation(reverse, op.id);
 
       const delta = [setDelta(indexOfItemWithSameKey, child)];
@@ -556,32 +557,35 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
   /** @internal */
   _attachChild(op: CreateChildOp, source: OpSource): ApplyResult {
-    if (this._doc == null) {
-      throw new Error("Can't attach child if doc is not present");
+    if (this._pool === undefined) {
+      throw new Error("Can't attach child if managed pool is not present");
     }
+
+    let result: ApplyResult;
 
     if (op.intent === "set") {
       if (source === OpSource.REMOTE) {
-        return this._applySetRemote(op);
+        result = this._applySetRemote(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applySetAck(op);
+      } else {
+        result = this._applySetUndoRedo(op);
       }
-
-      if (source === OpSource.UNDOREDO_RECONNECT) {
-        return this._applySetUndoRedo(op);
-      }
-
-      if (source === OpSource.ACK) {
-        return this._applySetAck(op);
-      }
-    }
-
-    // Insert
-    if (source === OpSource.REMOTE) {
-      return this._applyRemoteInsert(op);
-    } else if (source === OpSource.ACK) {
-      return this._applyInsertAck(op);
     } else {
-      return this._applyInsertUndoRedo(op);
+      if (source === OpSource.REMOTE) {
+        result = this._applyRemoteInsert(op);
+      } else if (source === OpSource.ACK) {
+        result = this._applyInsertAck(op);
+      } else {
+        result = this._applyInsertUndoRedo(op);
+      }
     }
+
+    if (result.modified !== false) {
+      this.invalidate();
+    }
+
+    return result;
   }
 
   /** @internal */
@@ -590,7 +594,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   ): { reverse: Op[]; modified: LiveListUpdates<TItem> } | { modified: false } {
     if (child) {
       const parentKey = nn(child._parentKey);
-      const reverse = child._serialize(nn(this._id), parentKey, this._doc);
+      const reverse = child._toOps(nn(this._id), parentKey, this._pool);
 
       const indexToDelete = this._items.indexOf(child);
 
@@ -601,6 +605,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items.splice(indexToDelete, 1);
+      this.invalidate();
 
       child._detach();
 
@@ -822,7 +827,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toSerializedCrdt(): SerializedList {
+  _serialize(): SerializedList {
     if (this.parent.type !== "HasParent") {
       throw new Error("Cannot serialize LiveList if parent is missing");
     }
@@ -875,12 +880,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
     this._insertAndSort(value);
 
-    if (this._doc && this._id) {
-      const id = this._doc.generateId();
-      value._attach(id, this._doc);
+    if (this._pool && this._id) {
+      const id = this._pool.generateId();
+      value._attach(id, this._pool);
 
-      this._doc.dispatch(
-        value._serialize(this._id, position, this._doc),
+      this._pool.dispatch(
+        value._toOps(this._id, position, this._pool),
         [{ type: OpCode.DELETE_CRDT, id }],
         new Map<string, LiveListUpdates<TItem>>([
           [this._id, makeUpdate(this, [insertDelta(index, value)])],
@@ -937,17 +942,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     item._setParentLink(this, position);
     this._sortItems();
 
-    if (this._doc && this._id) {
+    if (this._pool && this._id) {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>([
         [this._id, makeUpdate(this, [moveDelta(index, targetIndex, item)])],
       ]);
 
-      this._doc.dispatch(
+      this._pool.dispatch(
         [
           {
             type: OpCode.SET_PARENT_KEY,
             id: nn(item._id),
-            opId: this._doc.generateOpId(),
+            opId: this._pool.generateOpId(),
             parentKey: position,
           },
         ],
@@ -979,8 +984,9 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const item = this._items[index];
     item._detach();
     this._items.splice(index, 1);
+    this.invalidate();
 
-    if (this._doc) {
+    if (this._pool) {
       const childRecordId = item._id;
       if (childRecordId) {
         const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
@@ -989,15 +995,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           makeUpdate(this, [deleteDelta(index)])
         );
 
-        this._doc.dispatch(
+        this._pool.dispatch(
           [
             {
               id: childRecordId,
-              opId: this._doc.generateOpId(),
+              opId: this._pool.generateOpId(),
               type: OpCode.DELETE_CRDT,
             },
           ],
-          item._serialize(nn(this._id), item._getParentKeyOrThrow()),
+          item._toOps(nn(this._id), item._getParentKeyOrThrow()),
           storageUpdates
         );
       }
@@ -1005,7 +1011,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   clear(): void {
-    if (this._doc) {
+    if (this._pool) {
       const ops: Op[] = [];
       const reverseOps: Op[] = [];
 
@@ -1018,10 +1024,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
           ops.push({
             type: OpCode.DELETE_CRDT,
             id: childId,
-            opId: this._doc.generateOpId(),
+            opId: this._pool.generateOpId(),
           });
           reverseOps.push(
-            ...item._serialize(nn(this._id), item._getParentKeyOrThrow())
+            ...item._toOps(nn(this._id), item._getParentKeyOrThrow())
           );
 
           // Index is always 0 because updates are applied one after another
@@ -1031,16 +1037,18 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       }
 
       this._items = [];
+      this.invalidate();
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(nn(this._id), makeUpdate(this, updateDelta));
 
-      this._doc.dispatch(ops, reverseOps, storageUpdates);
+      this._pool.dispatch(ops, reverseOps, storageUpdates);
     } else {
       for (const item of this._items) {
         item._detach();
       }
       this._items = [];
+      this.invalidate();
     }
   }
 
@@ -1062,21 +1070,22 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     const value = lsonToLiveNode(item);
     value._setParentLink(this, position);
     this._items[index] = value;
+    this.invalidate();
 
-    if (this._doc && this._id) {
-      const id = this._doc.generateId();
-      value._attach(id, this._doc);
+    if (this._pool && this._id) {
+      const id = this._pool.generateId();
+      value._attach(id, this._pool);
 
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = value._serialize(this._id, position, this._doc);
+      const ops = value._toOps(this._id, position, this._pool);
       addIntentAndDeletedIdToOperation(ops, existingId);
       this._unacknowledgedSets.set(position, nn(ops[0].opId));
-      const reverseOps = existingItem._serialize(this._id, position, undefined);
+      const reverseOps = existingItem._toOps(this._id, position, undefined);
       addIntentAndDeletedIdToOperation(reverseOps, id);
 
-      this._doc.dispatch(ops, reverseOps, storageUpdates);
+      this._pool.dispatch(ops, reverseOps, storageUpdates);
     }
   }
 
@@ -1209,7 +1218,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   } {
     const newItem = creationOpToLiveNode(op);
 
-    newItem._attach(op.id, nn(this._doc));
+    newItem._attach(op.id, nn(this._pool));
     newItem._setParentLink(this, key);
 
     this._insertAndSort(newItem);
@@ -1229,6 +1238,21 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
 
     this._items[index]._setParentLink(this, shiftedPosition);
+  }
+
+  toImmutable(): readonly ToImmutable<TItem>[] {
+    // Don't implement actual toJson logic in here. Implement it in ._toImmutable()
+    // instead. This helper merely exists to help TypeScript infer better
+    // return types.
+    return super.toImmutable() as readonly ToImmutable<TItem>[];
+  }
+
+  /** @internal */
+  _toImmutable(): readonly ToImmutable<TItem>[] {
+    const result = this._items.map((node) => node.toImmutable());
+    return (
+      process.env.NODE_ENV === "production" ? result : Object.freeze(result)
+    ) as readonly ToImmutable<TItem>[];
   }
 }
 

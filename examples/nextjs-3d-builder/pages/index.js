@@ -2,7 +2,7 @@ import { Canvas } from "@react-three/fiber";
 import React, { useState, Suspense } from "react";
 import { useGLTF, OrbitControls, ContactShadows } from "@react-three/drei";
 import { HexColorPicker } from "react-colorful";
-import { useObject } from "../liveblocks.config";
+import { useStorage, useMutation } from "../liveblocks.config";
 import styles from "./index.module.css";
 
 /**
@@ -13,7 +13,16 @@ import styles from "./index.module.css";
 
 export default function Example() {
   const [material, setMaterial] = useState(null);
-  const colors = useObject("colors");
+  const colors = useStorage((root) => root.colors);
+
+  const onChangeColor = useMutation(
+    ({ storage }, color) => {
+      if (material) {
+        storage.get("colors").set(material, color);
+      }
+    },
+    [material]
+  );
 
   if (!colors) {
     return (
@@ -39,7 +48,7 @@ export default function Example() {
           <Suspense fallback={null}>
             {colors && (
               <Shoe
-                snap={colors.toObject()}
+                snap={colors}
                 selectMaterial={(material) => setMaterial(material)}
               />
             )}
@@ -65,12 +74,8 @@ export default function Example() {
           }`}
         >
           <HexColorPicker
-            color={material ? colors.get(material) : undefined}
-            onChange={(color) => {
-              if (material) {
-                colors.set(material, color);
-              }
-            }}
+            color={material ? colors.material : undefined}
+            onChange={onChangeColor}
           />
         </div>
       </div>

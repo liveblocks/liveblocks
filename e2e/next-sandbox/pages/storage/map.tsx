@@ -22,6 +22,7 @@ export default function Home() {
   return (
     <RoomProvider
       id={roomId}
+      initialPresence={{} as never}
       initialStorage={{ map: new LiveMap<string, string>() }}
     >
       <Sandbox />

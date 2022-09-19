@@ -1,7 +1,9 @@
 import {
   useOthers,
   useUpdateMyPresence,
-  useObject,
+  useOthersMapped,
+  useMutation,
+  useStorage,
   useSelf,
 } from "../liveblocks.config";
 import React from "react";
@@ -31,13 +33,22 @@ export default function Example() {
   const updateMyPresence = useUpdateMyPresence();
 
   /**
-   * useObject is used to share a simple state to all the users in the room.
-   * It's using the storage block so the data is persisted even after all the users leave the room.
-   * For more information: https://liveblocks.io/docs/api-reference/liveblocks-react#useObject
+   * useStorage is used to read and stay in sync with the shared state, which
+   * all users in the room see. It's using Liveblocks Storage so the data is
+   * persisted even after all the users leave the room. For more information:
+   * https://liveblocks.io/docs/api-reference/liveblocks-react#useStorage
    */
-  const data = useObject("logo");
+  const logo = useStorage((root) => root.logo);
 
-  if (!data) {
+  const updateName = useMutation(({ storage }, name: string) => {
+    storage.get("logo").set("name", name);
+  }, []);
+
+  const updateTheme = useMutation(({ storage }, theme: "light" | "dark") => {
+    storage.get("logo").set("theme", theme);
+  }, []);
+
+  if (!logo) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
@@ -47,8 +58,7 @@ export default function Example() {
     );
   }
 
-  const { theme, name } = data.toObject();
-
+  const { theme, name } = logo;
   return (
     <div className={styles.container}>
       <div
@@ -80,9 +90,7 @@ export default function Example() {
                   value={name}
                   onFocus={(e) => updateMyPresence({ focusedId: e.target.id })}
                   onBlur={() => updateMyPresence({ focusedId: null })}
-                  onChange={(e) => {
-                    data.set("name", e.target.value);
-                  }}
+                  onChange={(e) => updateName(e.target.value)}
                   maxLength={20}
                 />
                 <Selections id="input-name" />
@@ -101,9 +109,7 @@ export default function Example() {
                         ? styles.button_theme_selected
                         : styles.button_theme
                     }
-                    onClick={() => {
-                      data.set("theme", "light");
-                    }}
+                    onClick={() => updateTheme("light")}
                     onFocus={(e) =>
                       updateMyPresence({ focusedId: e.target.id })
                     }
@@ -132,9 +138,7 @@ export default function Example() {
                         ? styles.button_theme_selected
                         : styles.button_theme
                     }
-                    onClick={() => {
-                      data.set("theme", "dark");
-                    }}
+                    onClick={() => updateTheme("dark")}
                     onFocus={(e) =>
                       updateMyPresence({ focusedId: e.target.id })
                     }
@@ -165,12 +169,11 @@ export default function Example() {
 }
 
 function Selections({ id }: { id: string }) {
-  const users = useOthers().toArray();
-
+  const users = useOthers();
   return (
     <>
       {users.map(({ connectionId, info, presence }) => {
-        if (presence?.focusedId === id) {
+        if (presence.focusedId === id) {
           return (
             <Selection
               key={connectionId}
@@ -184,13 +187,12 @@ function Selections({ id }: { id: string }) {
   );
 }
 
-function Avatars() {
-  const users = useOthers().toArray();
-  const currentUser = useSelf();
-
+const Avatars = React.memo(function Avatars() {
+  const me = useSelf((me) => me.info);
+  const users = useOthersMapped((others) => others.info);
   return (
     <div className={styles.avatars}>
-      {users.slice(0, 3).map(({ connectionId, info }) => {
+      {users.slice(0, 3).map(([connectionId, info]) => {
         return (
           <Avatar
             key={connectionId}
@@ -201,10 +203,10 @@ function Avatars() {
         );
       })}
 
-      {currentUser && <Avatar picture={currentUser.info.picture} name="You" />}
+      {me && <Avatar picture={me.picture} name="You" />}
     </div>
   );
-}
+});
 
 export async function getStaticProps() {
   const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;

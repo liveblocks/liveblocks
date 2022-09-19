@@ -29,7 +29,11 @@ export default function Home() {
     }
   }
   return (
-    <RoomProvider id={roomId} initialStorage={{ liveMap: new LiveMap() }}>
+    <RoomProvider
+      id={roomId}
+      initialPresence={{}}
+      initialStorage={{ liveMap: new LiveMap() }}
+    >
       <Sandbox />
     </RoomProvider>
   );

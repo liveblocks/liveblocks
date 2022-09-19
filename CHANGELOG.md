@@ -1,3 +1,22 @@
+# v0.18.0 (not released yet)
+
+### Breaking changes
+
+- Remove support for directly importing hooks from **@liveblocks/client** (e.g.
+  `import { useMyPresence } from '@liveblocks/react'`). If you’re still using
+  these imports, see the
+  [Upgrade Guide for 0.17](https://liveblocks.io/docs/guides/upgrading/0.17) for
+  instructions.
+- Remove `ClientProvider` and `useClient` hook
+- Remove `defaultPresence` and `defaultStorageRoot` arguments. (Just use
+  `initialPresence` and `initialStorage` arguments now.)
+- Remove second argument to `useMap()`, `useList()`, and `useObject()`.
+- Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
+  `new LiveMap([])`.)
+- `useStorage()` now returns `root` directory, no longer wrapped in `[root]`
+
+---
+
 # v0.17.11
 
 General:
@@ -8,6 +27,8 @@ In **@liveblocks/react**:
 
 - Deprecate an undocumented API
 
+---
+
 # v0.17.9
 
 - Fix bug that could cause duplicate copies of @liveblocks/client to end up in
@@ -15,6 +36,8 @@ In **@liveblocks/react**:
 - Fix bug where in some conditions the initial presence for a new connection
   would not come through to all existing clients in the room
 - Various internal changes
+
+---
 
 # v0.17.8
 
