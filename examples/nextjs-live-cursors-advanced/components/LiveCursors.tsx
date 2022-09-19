@@ -1,3 +1,4 @@
+import { shallow } from "@liveblocks/react";
 import { useOthersMapped, useUpdateMyPresence } from "../liveblocks.config";
 import React, { MutableRefObject, useEffect } from "react";
 import Cursor from "./Cursor";
@@ -26,10 +27,13 @@ export default function LiveCursors({ cursorPanel }: Props) {
   /**
    * Return all the other users in the room and their presence (a cursor position in this case)
    */
-  const others = useOthersMapped((other) => ({
-    cursor: other.presence.cursor,
-    info: other.info,
-  }));
+  const others = useOthersMapped(
+    (other) => ({
+      cursor: other.presence.cursor,
+      info: other.info,
+    }),
+    shallow
+  );
   const rectRef = useBoundingClientRectRef(cursorPanel);
 
   useEffect(() => {
@@ -95,7 +99,7 @@ export default function LiveCursors({ cursorPanel }: Props) {
             <Cursor
               variant="name"
               name={other.info.name}
-              key={`cursor-${id}`}
+              key={id}
               // connectionId is an integer that is incremented at every new connections
               // Assigning a color with a modulo makes sure that a specific user has the same colors on every clients
               color={other.info.color}
