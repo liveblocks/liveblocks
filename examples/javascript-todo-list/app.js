@@ -18,6 +18,7 @@ async function run() {
   });
 
   const room = client.enter(roomId, {
+    initialPresence: { isTyping: true },
     initialStorage: { todos: new LiveList() },
   });
 
