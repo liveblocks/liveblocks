@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "0.18.0",
+  "version": "0.18.0-dev",
   "description": "A middleware to integrate Liveblocks into Zustand stores.",
   "main": "./index.js",
   "module": "./index.mjs",
