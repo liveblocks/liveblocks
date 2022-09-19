@@ -28,8 +28,8 @@ type Storage = {
 
 export const {
   RoomProvider,
-  useMyPresence,
   useOthers,
-  useList,
+  useStorage,
+  useMutation,
   useUpdateMyPresence,
 } = createRoomContext<Presence, Storage>(client);
