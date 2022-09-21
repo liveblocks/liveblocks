@@ -388,7 +388,7 @@ export type RoomContextBundle<
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T;
+  ): T | undefined;
 
   /**
    * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
@@ -750,7 +750,7 @@ export type RoomContextBundle<
       connectionId: number,
       selector: (other: User<TPresence, TUserMeta>) => T,
       isEqual?: (prev: T, curr: T) => boolean
-    ): T;
+    ): T | undefined;
 
     /**
      * useUpdateMyPresence is similar to useMyPresence but it only returns the function to update the current user presence.
