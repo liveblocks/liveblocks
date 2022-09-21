@@ -188,7 +188,6 @@ export function createRoomContext<
     return useRoom().updatePresence;
   }
 
-  // Returns permissions
   function useOthers(): Others<TPresence, TUserMeta>;
   function useOthers<T>(
     selector: (others: Others<TPresence, TUserMeta>) => T,
@@ -249,67 +248,41 @@ export function createRoomContext<
 
   const sentinel = Symbol();
 
-  // Returns permissions
-  function useOther(connectionId: number): User<TPresence, TUserMeta>;
   function useOther<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOther<T>(
-    connectionId: number,
-    selector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | User<TPresence, TUserMeta> {
-    // Deliberately bypass React warnings about conditionally calling hooks
-    const _useCallback = React.useCallback;
-    const _useOthers = useOthers;
-    if (selector === undefined) {
-      const selector = _useCallback(
-        (others: Others<TPresence, TUserMeta>) =>
-          // TODO: Make this O(1) instead of O(n)?
-          others.find((other) => other.connectionId === connectionId),
-        [connectionId]
-      );
-      const other = _useOthers(selector, shallow);
-      if (other === undefined) {
-        throw new Error(
-          `No such other user with connection id ${connectionId} exists`
+  ): T {
+    const wrappedSelector = React.useCallback(
+      (others: Others<TPresence, TUserMeta>) => {
+        // TODO: Make this O(1) instead of O(n)?
+        const other = others.find(
+          (other) => other.connectionId === connectionId
         );
-      }
-      return other;
-    } else {
-      const wrappedSelector = _useCallback(
-        (others: Others<TPresence, TUserMeta>) => {
-          // TODO: Make this O(1) instead of O(n)?
-          const other = others.find(
-            (other) => other.connectionId === connectionId
-          );
-          return other !== undefined ? selector(other) : sentinel;
-        },
-        [connectionId, selector]
+        return other !== undefined ? selector(other) : sentinel;
+      },
+      [connectionId, selector]
+    );
+
+    const wrappedIsEqual = React.useCallback(
+      (prev: T | typeof sentinel, curr: T | typeof sentinel): boolean => {
+        if (prev === sentinel || curr === sentinel) {
+          return prev === curr;
+        }
+
+        const eq = isEqual ?? Object.is;
+        return eq(prev, curr);
+      },
+      [isEqual]
+    );
+
+    const other = useOthers(wrappedSelector, wrappedIsEqual);
+    if (other === sentinel) {
+      throw new Error(
+        `No such other user with connection id ${connectionId} exists`
       );
-
-      const wrappedIsEqual = _useCallback(
-        (prev: T | typeof sentinel, curr: T | typeof sentinel): boolean => {
-          if (prev === sentinel || curr === sentinel) {
-            return prev === curr;
-          }
-
-          const eq = isEqual ?? Object.is;
-          return eq(prev, curr);
-        },
-        [isEqual]
-      );
-
-      const other = _useOthers(wrappedSelector, wrappedIsEqual);
-      if (other === sentinel) {
-        throw new Error(
-          `No such other user with connection id ${connectionId} exists`
-        );
-      }
-      return other;
     }
+    return other;
   }
 
   function useBroadcastEvent(): (
@@ -365,7 +338,6 @@ export function createRoomContext<
     }, [room]);
   }
 
-  // Returns permissions
   function useSelf(): User<TPresence, TUserMeta> | null;
   function useSelf<T>(
     selector: (me: User<TPresence, TUserMeta>) => T,
@@ -457,8 +429,6 @@ export function createRoomContext<
     const canRedo = room.history.canRedo;
     return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
-  
-  // Returns errors / warnings on read only
   function useBatch<T>(): (callback: () => T) => T {
     return useRoom().batch;
   }
@@ -600,7 +570,6 @@ export function createRoomContext<
     });
   }
 
-  // Returns errors / warnings on read only
   function useMutation<
     F extends (
       context: MutationContext<TPresence, TStorage, TUserMeta>,
@@ -671,23 +640,13 @@ export function createRoomContext<
     return useOthersMapped(itemSelector, itemIsEqual);
   }
 
-  function useOtherSuspense(connectionId: number): User<TPresence, TUserMeta>;
   function useOtherSuspense<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T;
-  function useOtherSuspense<T>(
-    connectionId: number,
-    selector?: (other: User<TPresence, TUserMeta>) => T,
-    isEqual?: (prev: T, curr: T) => boolean
-  ): T | User<TPresence, TUserMeta> {
+  ): T {
     useSuspendUntilPresenceLoaded();
-    return useOther(
-      connectionId,
-      selector as (other: User<TPresence, TUserMeta>) => T,
-      isEqual as (prev: T, curr: T) => boolean
-    ) as T | User<TPresence, TUserMeta>;
+    return useOther(connectionId, selector, isEqual);
   }
 
   function useLegacyKeySuspense<TKey extends Extract<keyof TStorage, string>>(

@@ -1,4 +1,43 @@
-# v0.18.0 (not released yet)
+# v0.18.2
+
+- In **@liveblocks/react**:
+
+  - Disallow `useOther` without selector
+
+# v0.18.1
+
+- In **@liveblocks/react**:
+
+  - Fix a bug that could cause an error when patching presence during local
+    development. Not an issue in production builds. (#505)
+
+# v0.18.0
+
+For information, please read our
+[Upgrade Guide for 0.18](https://liveblocks.io/docs/guides/upgrading/0.18).
+
+### New React hooks ✨
+
+- In **@liveblocks/react**:
+
+  - [`useStorage`](https://liveblocks.io/docs/api-reference/liveblocks-react#useStorage)
+  - [`useMutation`](https://liveblocks.io/docs/api-reference/liveblocks-react#useMutation)
+  - [`useSelf`](https://liveblocks.io/docs/api-reference/liveblocks-react#useSelf)
+  - [`useOthers`](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthers)
+  - [`useOthersMapped`](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersMapped)
+  - [`useOthersConnectionIds`](https://liveblocks.io/docs/api-reference/liveblocks-react#useOthersConnectionIds)
+  - [`useOther`](https://liveblocks.io/docs/api-reference/liveblocks-react#useOther)
+    (singular)
+
+- In **@liveblocks/client**:
+
+  - New
+    [`.toImmutable()`](https://liveblocks.io/docs/api-reference/liveblocks-client#LiveObject.toImmutable)
+    method on `LiveObject`, `LiveList`, and `LiveMap` lets you work with an
+    immutable representation of the storage objects
+  - Improved core performance
+  - Reduced bundle size
+  - Others only become visible in the `others` array if their presence is known
 
 ### Breaking changes
 
@@ -13,7 +52,6 @@
 - Remove second argument to `useMap()`, `useList()`, and `useObject()`.
 - Remove `new LiveMap(null)` support. (Just use `new LiveMap()` or
   `new LiveMap([])`.)
-- `useStorage()` now returns `root` directory, no longer wrapped in `[root]`
 
 ---
 

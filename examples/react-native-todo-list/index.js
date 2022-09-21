@@ -13,7 +13,7 @@ const initialStorage = () => ({
 
 const Wrapper = () => {
   return (
-    <RoomProvider id={roomId} initialStorage={initialStorage}>
+    <RoomProvider id={roomId} initialStorage={initialStorage} initialPresence={{ isTyping: false }}>
       <App />
     </RoomProvider>
   );

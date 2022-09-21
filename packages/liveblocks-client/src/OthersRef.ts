@@ -7,7 +7,6 @@ type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
   readonly id: TUserMeta["id"];
   readonly info: TUserMeta["info"];
-  readonly permissions: TUserMeta["permissions"];
 };
 
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
