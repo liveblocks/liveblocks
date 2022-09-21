@@ -1166,7 +1166,11 @@ function makeStateMachine<
       if (state.lastConnectionId !== undefined) {
         state.buffer.me = {
           type: "full",
-          data: state.me.current,
+          data:
+            // Because state.me.current is a readonly object, we'll have to
+            // make a copy here. Otherwise, type errors happen later when
+            // "patching" my presence.
+            { ...state.me.current },
         };
         tryFlushing();
       }
