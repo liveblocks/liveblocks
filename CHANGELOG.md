@@ -1,3 +1,9 @@
+# v0.18.2
+
+- In **@liveblocks/react**:
+
+  - Disallow `useOther` without selector
+
 # v0.18.1
 
 - In **@liveblocks/react**:
