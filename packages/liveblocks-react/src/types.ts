@@ -376,17 +376,6 @@ export type RoomContextBundle<
   ): ReadonlyArray<readonly [connectionId: number, data: T]>;
 
   /**
-   * Given a connection ID (as obtained by using `useOthersConnectionIds`), you can
-   * call this selector deep down in your component stack to only have the
-   * component re-render if properties for this particular user change.
-   *
-   * @example
-   * // Returns full user and re-renders whenever anything on the user changes
-   * const secondUser = useOther(2);
-   */
-  useOther(connectionId: number): User<TPresence, TUserMeta>;
-
-  /**
    * Given a connection ID (as obtained by using `useOthersConnectionIds`), you
    * can call this selector deep down in your component stack to only have the
    * component re-render if properties for this particular user change.
@@ -746,18 +735,6 @@ export type RoomContextBundle<
       itemSelector: (other: User<TPresence, TUserMeta>) => T,
       itemIsEqual?: (prev: T, curr: T) => boolean
     ): ReadonlyArray<readonly [connectionId: number, data: T]>;
-
-    /**
-     * Given a connection ID (as obtained by using `useOthersConnectionIds`),
-     * you can call this selector deep down in your component stack to only
-     * have the component re-render if properties for this particular user
-     * change.
-     *
-     * @example
-     * // Returns full user and re-renders whenever anything on the user changes
-     * const secondUser = useOther(2);
-     */
-    useOther(connectionId: number): User<TPresence, TUserMeta>;
 
     /**
      * Given a connection ID (as obtained by using `useOthersConnectionIds`),
