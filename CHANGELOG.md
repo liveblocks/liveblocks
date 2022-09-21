@@ -1,3 +1,10 @@
+# v0.18.1
+
+- In **@liveblocks/react**:
+
+  - Fix a bug that could cause an error when patching presence during local
+    development. Not an issue in production builds. (#505)
+
 # v0.18.0
 
 For information, please read our
