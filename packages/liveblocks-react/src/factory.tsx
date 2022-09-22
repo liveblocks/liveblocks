@@ -254,7 +254,7 @@ export function createRoomContext<
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T | undefined {
+  ): T {
     const lastKnownValue = React.useRef<T | NotFound>(NOT_FOUND);
 
     const wrappedSelector = React.useCallback(
@@ -671,7 +671,7 @@ export function createRoomContext<
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
-  ): T | undefined {
+  ): T {
     useSuspendUntilPresenceLoaded();
     return useOther(connectionId, selector, isEqual);
   }
