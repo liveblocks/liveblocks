@@ -3,8 +3,8 @@
   "license": "Apache-2.0",
   "private": true,
   "dependencies": {
-    "@liveblocks/client": "^0.17.11",
-    "@liveblocks/zustand": "^0.17.11",
+    "@liveblocks/client": "^0.18.2",
+    "@liveblocks/zustand": "^0.18.2",
     "@testing-library/jest-dom": "^5.16.4",
     "@testing-library/react": "^13.3.0",
     "@testing-library/user-event": "^13.5.0",
