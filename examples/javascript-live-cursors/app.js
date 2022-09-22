@@ -16,7 +16,7 @@ const client = createClient({
   publicApiKey: PUBLIC_KEY,
 });
 
-const room = client.enter(roomId, { cursor: null });
+const room = client.enter(roomId, { initialPresence: { cursor: null } });
 
 const cursorsContainer = document.getElementById("cursors-container");
 const text = document.getElementById("text");
