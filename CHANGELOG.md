@@ -2,6 +2,9 @@
 
 - In **@liveblocks/react**:
 
+  - Make sure that `useOther` will not rerender if tracked users already left
+    the room, so that child components won't get rerendered before the parent
+    got the chance to unmount them.
   - Disallow `useOther` without selector
 
 # v0.18.1

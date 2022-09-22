@@ -246,27 +246,57 @@ export function createRoomContext<
     return useOthers(wrappedSelector, wrappedIsEqual);
   }
 
-  const sentinel = Symbol();
+  const NOT_FOUND = Symbol();
+
+  type NotFound = typeof NOT_FOUND;
 
   function useOther<T>(
     connectionId: number,
     selector: (other: User<TPresence, TUserMeta>) => T,
     isEqual?: (prev: T, curr: T) => boolean
   ): T {
+    const lastKnownValue = React.useRef<T | NotFound>(NOT_FOUND);
+
     const wrappedSelector = React.useCallback(
       (others: Others<TPresence, TUserMeta>) => {
         // TODO: Make this O(1) instead of O(n)?
         const other = others.find(
           (other) => other.connectionId === connectionId
         );
-        return other !== undefined ? selector(other) : sentinel;
+        if (other !== undefined) {
+          //
+          // NOTE:
+          // Whenever we run the selector, we'll retain the last known value.
+          // This value will be used if ever there comes a point where the
+          // tracked user leaves the room, but this selector will still be
+          // called for it, because the component using it hasn't been
+          // unmounted yet.
+          //
+          // Not doing so would, under normal use circumstances, throw an error
+          // (see below), only for the component to be unmounted moments later.
+          //
+          // This is something we'll have to address more properly, by not
+          // notifying child components before notifying parents. This change
+          // is a temporary stopgap while we prepare the more structural fix.
+          //
+          const value = selector(other);
+          lastKnownValue.current = value;
+          return value;
+        } else {
+          //
+          // NOTE:
+          // By returning the same value here, we will ensure that the isEqual
+          // check will make sure to not trigger a rerender for this component.
+          //
+          return lastKnownValue.current;
+        }
       },
       [connectionId, selector]
     );
 
     const wrappedIsEqual = React.useCallback(
-      (prev: T | typeof sentinel, curr: T | typeof sentinel): boolean => {
-        if (prev === sentinel || curr === sentinel) {
+      (prev: T | NotFound, curr: T | NotFound): boolean => {
+        if (prev === NOT_FOUND || curr === NOT_FOUND) {
           return prev === curr;
         }
 
@@ -277,11 +307,12 @@ export function createRoomContext<
     );
 
     const other = useOthers(wrappedSelector, wrappedIsEqual);
-    if (other === sentinel) {
+    if (other === NOT_FOUND) {
       throw new Error(
         `No such other user with connection id ${connectionId} exists`
       );
     }
+
     return other;
   }
 
