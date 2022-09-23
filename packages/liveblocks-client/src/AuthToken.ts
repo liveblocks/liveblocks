@@ -1,14 +1,7 @@
 import type { Json, JsonObject } from "./types";
 import { b64decode, isPlainObject, tryParseJson } from "./utils";
 
-export const SCOPES = [
-  "websocket:presence",
-  "websocket:storage",
-  "room:read",
-  "room:write",
-  "rooms:read",
-  "rooms:write",
-] as const;
+export const SCOPES = ["room:read", "room:write"] as const;
 
 export type Scope = typeof SCOPES[number];
 
