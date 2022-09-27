@@ -221,7 +221,7 @@ export function middleware<
 
       unsubscribeCallbacks.push(
         room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others: others.toArray() });
+          updateZustandLiveblocksState(set, { others });
         })
       );
 
