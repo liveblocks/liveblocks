@@ -274,6 +274,14 @@ type Config = {
   polyfills?: Polyfills;
 
   /**
+   * Optionally, pass in a reference to a `ReactDOM.unstable_batchedUpdates` or
+   * `ReactNative.unstable_batchedUpdates` here, which will avoid potential
+   * zombie child problems. This is a good idea if you're on React v17 or
+   * lower. Not necessary when you're on React v18 or later.
+   */
+  unstable_batchedUpdates?: (cb: () => void) => void;
+
+  /**
    * Backward-compatible way to set `polyfills.fetch`.
    */
   fetchPolyfill?: Polyfills["fetch"];
@@ -294,6 +302,10 @@ function makeStateMachine<
   config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const noop_batchedUpdated = (cb: () => void): void => void cb();
+  const polyfilled_batchedUpdates =
+    config.unstable_batchedUpdates ?? noop_batchedUpdated;
+
   const pool: ManagedPool = {
     roomId: config.roomId,
 
@@ -323,10 +335,12 @@ function makeStateMachine<
         });
         activeBatch.reverseOps.push(...reverse);
       } else {
-        addToUndoStack(reverse);
-        state.redoStack = [];
-        dispatchOps(ops);
-        notify({ storageUpdates });
+        polyfilled_batchedUpdates(() => {
+          addToUndoStack(reverse, noop_batchedUpdated);
+          state.redoStack = [];
+          dispatchOps(ops);
+          notify({ storageUpdates }, noop_batchedUpdated);
+        });
       }
     },
   };
@@ -411,14 +425,15 @@ function makeStateMachine<
   );
 
   function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
+    message: InitialDocumentStateServerMsg,
+    batchedUpdates: (cb: () => void) => void
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (state.root) {
-      updateRoot(message.items);
+      updateRoot(message.items, batchedUpdates);
     } else {
       // TODO: For now, we'll assume the happy path, but reading this data from
       // the central storage server, it may very well turn out to not match the
@@ -460,7 +475,10 @@ function makeStateMachine<
     return [root, parentToChildren];
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+  function updateRoot(
+    items: IdTuple<SerializedCrdt>[],
+    batchedUpdates: (cb: () => void) => void
+  ) {
     if (!state.root) {
       return;
     }
@@ -475,7 +493,7 @@ function makeStateMachine<
 
     const result = apply(ops, false);
 
-    notify(result.updates);
+    notify(result.updates, batchedUpdates);
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
@@ -484,48 +502,59 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOp<TPresence>[]) {
+  function _addToRealUndoStack(
+    historyOps: HistoryOp<TPresence>[],
+    batchedUpdates: (cb: () => void) => void
+  ) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
     state.undoStack.push(historyOps);
-    onHistoryChange();
+    onHistoryChange(batchedUpdates);
   }
 
-  function addToUndoStack(historyOps: HistoryOp<TPresence>[]) {
+  function addToUndoStack(
+    historyOps: HistoryOp<TPresence>[],
+    batchedUpdates: (cb: () => void) => void
+  ) {
     if (state.pausedHistory !== null) {
       state.pausedHistory.unshift(...historyOps);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(historyOps, batchedUpdates);
     }
   }
 
-  function notify({
-    storageUpdates = new Map<string, StorageUpdate>(),
-    presence = false,
-    others: otherEvents = [],
-  }: {
-    storageUpdates?: Map<string, StorageUpdate>;
-    presence?: boolean;
-    others?: OthersEvent<TPresence, TUserMeta>[];
-  }) {
-    if (otherEvents.length > 0) {
-      const others = state.others.current;
-      for (const event of otherEvents) {
-        eventHub.others.notify({ others, event });
+  function notify(
+    {
+      storageUpdates = new Map<string, StorageUpdate>(),
+      presence = false,
+      others: otherEvents = [],
+    }: {
+      storageUpdates?: Map<string, StorageUpdate>;
+      presence?: boolean;
+      others?: OthersEvent<TPresence, TUserMeta>[];
+    },
+    batchedUpdates: (cb: () => void) => void
+  ) {
+    batchedUpdates(() => {
+      if (otherEvents.length > 0) {
+        const others = state.others.current;
+        for (const event of otherEvents) {
+          eventHub.others.notify({ others, event });
+        }
       }
-    }
 
-    if (presence) {
-      eventHub.me.notify(state.me.current);
-    }
+      if (presence) {
+        eventHub.me.notify(state.me.current);
+      }
 
-    if (storageUpdates.size > 0) {
-      const updates = Array.from(storageUpdates.values());
-      eventHub.storage.notify(updates);
-    }
+      if (storageUpdates.size > 0) {
+        const updates = Array.from(storageUpdates.values());
+        eventHub.storage.notify(updates);
+      }
+    });
   }
 
   function getConnectionId() {
@@ -811,7 +840,7 @@ function makeStateMachine<
       config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
-    updateConnection({ state: "authenticating" });
+    updateConnection({ state: "authenticating" }, polyfilled_batchedUpdates);
     effects.authenticate(auth, createWebSocket);
   }
 
@@ -850,10 +879,15 @@ function makeStateMachine<
       state.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
-      if (options?.addToHistory) {
-        addToUndoStack([{ type: "presence", data: oldValues }]);
-      }
-      notify({ presence: true });
+      polyfilled_batchedUpdates(() => {
+        if (options?.addToHistory) {
+          addToUndoStack(
+            [{ type: "presence", data: oldValues }],
+            noop_batchedUpdated
+          );
+        }
+        notify({ presence: true }, noop_batchedUpdated);
+      });
     }
   }
 
@@ -863,12 +897,15 @@ function makeStateMachine<
     socket.addEventListener("close", onClose);
     socket.addEventListener("error", onError);
 
-    updateConnection({
-      state: "connecting",
-      id: token.actor,
-      userInfo: token.info,
-      userId: token.id,
-    });
+    updateConnection(
+      {
+        state: "connecting",
+        id: token.actor,
+        userInfo: token.info,
+        userId: token.id,
+      },
+      polyfilled_batchedUpdates
+    );
     state.idFactory = makeIdFactory(token.actor);
     state.socket = socket;
   }
@@ -878,7 +915,7 @@ function makeStateMachine<
       console.error("Call to authentication endpoint failed", error);
     }
     state.token = null;
-    updateConnection({ state: "unavailable" });
+    updateConnection({ state: "unavailable" }, polyfilled_batchedUpdates);
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
@@ -956,8 +993,10 @@ function makeStateMachine<
     }
   }
 
-  function onHistoryChange() {
-    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
+  function onHistoryChange(batchedUpdates: (cb: () => void) => void) {
+    batchedUpdates(() => {
+      eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
+    });
   }
 
   function onUserJoinedMessage(
@@ -1021,68 +1060,70 @@ function makeStateMachine<
       others: [] as OthersEvent<TPresence, TUserMeta>[],
     };
 
-    for (const message of messages) {
-      switch (message.type) {
-        case ServerMsgCode.USER_JOINED: {
-          const userJoinedUpdate = onUserJoinedMessage(message);
-          if (userJoinedUpdate) {
-            updates.others.push(userJoinedUpdate);
+    polyfilled_batchedUpdates(() => {
+      for (const message of messages) {
+        switch (message.type) {
+          case ServerMsgCode.USER_JOINED: {
+            const userJoinedUpdate = onUserJoinedMessage(message);
+            if (userJoinedUpdate) {
+              updates.others.push(userJoinedUpdate);
+            }
+            break;
           }
-          break;
-        }
-        case ServerMsgCode.UPDATE_PRESENCE: {
-          const othersPresenceUpdate = onUpdatePresenceMessage(message);
-          if (othersPresenceUpdate) {
-            updates.others.push(othersPresenceUpdate);
+          case ServerMsgCode.UPDATE_PRESENCE: {
+            const othersPresenceUpdate = onUpdatePresenceMessage(message);
+            if (othersPresenceUpdate) {
+              updates.others.push(othersPresenceUpdate);
+            }
+            break;
           }
-          break;
-        }
-        case ServerMsgCode.BROADCASTED_EVENT: {
-          eventHub.customEvent.notify({
-            connectionId: message.actor,
-            event: message.event,
-          });
-          break;
-        }
-        case ServerMsgCode.USER_LEFT: {
-          const event = onUserLeftMessage(message);
-          if (event) {
-            updates.others.push(event);
+          case ServerMsgCode.BROADCASTED_EVENT: {
+            eventHub.customEvent.notify({
+              connectionId: message.actor,
+              event: message.event,
+            });
+            break;
           }
-          break;
-        }
-        case ServerMsgCode.ROOM_STATE: {
-          updates.others.push(onRoomStateMessage(message));
-          break;
-        }
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          const offlineOps = new Map(state.offlineOperations);
-          createOrUpdateRootFromMessage(message);
-          applyAndSendOfflineOps(offlineOps);
-          _getInitialStateResolver?.();
-          eventHub.storageDidLoad.notify();
-          break;
-        }
-        case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = apply(message.ops, false);
-          applyResult.updates.storageUpdates.forEach((value, key) => {
-            updates.storageUpdates.set(
-              key,
-              mergeStorageUpdates(
-                updates.storageUpdates.get(key) as any, // FIXME
-                value
-              )
-            );
-          });
+          case ServerMsgCode.USER_LEFT: {
+            const event = onUserLeftMessage(message);
+            if (event) {
+              updates.others.push(event);
+            }
+            break;
+          }
+          case ServerMsgCode.ROOM_STATE: {
+            updates.others.push(onRoomStateMessage(message));
+            break;
+          }
+          case ServerMsgCode.INITIAL_STORAGE_STATE: {
+            // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+            // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+            const offlineOps = new Map(state.offlineOperations);
+            createOrUpdateRootFromMessage(message, noop_batchedUpdated);
+            applyAndSendOfflineOps(offlineOps, noop_batchedUpdated);
+            _getInitialStateResolver?.();
+            eventHub.storageDidLoad.notify();
+            break;
+          }
+          case ServerMsgCode.UPDATE_STORAGE: {
+            const applyResult = apply(message.ops, false);
+            applyResult.updates.storageUpdates.forEach((value, key) => {
+              updates.storageUpdates.set(
+                key,
+                mergeStorageUpdates(
+                  updates.storageUpdates.get(key) as any, // FIXME
+                  value
+                )
+              );
+            });
 
-          break;
+            break;
+          }
         }
       }
-    }
 
-    notify(updates);
+      notify(updates, noop_batchedUpdated);
+    });
   }
 
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
@@ -1096,44 +1137,52 @@ function makeStateMachine<
     clearTimeout(state.timeoutHandles.reconnect);
 
     state.others.clearOthers();
-    notify({ others: [{ type: "reset" }] });
 
-    if (event.code >= 4000 && event.code <= 4100) {
-      updateConnection({ state: "failed" });
+    polyfilled_batchedUpdates(() => {
+      notify({ others: [{ type: "reset" }] }, noop_batchedUpdated);
 
-      const error = new LiveblocksError(event.reason, event.code);
-      eventHub.error.notify(error);
+      if (event.code >= 4000 && event.code <= 4100) {
+        updateConnection({ state: "failed" }, noop_batchedUpdated);
 
-      const delay = getRetryDelay(true);
-      state.numberOfRetry++;
+        const error = new LiveblocksError(event.reason, event.code);
+        eventHub.error.notify(error);
 
-      if (process.env.NODE_ENV !== "production") {
-        console.error(
-          `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
-        );
+        const delay = getRetryDelay(true);
+        state.numberOfRetry++;
+
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+          );
+        }
+
+        updateConnection({ state: "unavailable" }, noop_batchedUpdated);
+        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+      } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
+        updateConnection({ state: "closed" }, noop_batchedUpdated);
+      } else {
+        const delay = getRetryDelay();
+        state.numberOfRetry++;
+
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
+          );
+        }
+        updateConnection({ state: "unavailable" }, noop_batchedUpdated);
+        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       }
-
-      updateConnection({ state: "unavailable" });
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
-    } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-      updateConnection({ state: "closed" });
-    } else {
-      const delay = getRetryDelay();
-      state.numberOfRetry++;
-
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
-        );
-      }
-      updateConnection({ state: "unavailable" });
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
-    }
+    });
   }
 
-  function updateConnection(connection: Connection) {
+  function updateConnection(
+    connection: Connection,
+    batchedUpdates: (cb: () => void) => void
+  ) {
     state.connection.set(connection);
-    eventHub.connection.notify(connection.state);
+    batchedUpdates(() => {
+      eventHub.connection.notify(connection.state);
+    });
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1159,7 +1208,10 @@ function makeStateMachine<
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
     if (state.connection.current.state === "connecting") {
-      updateConnection({ ...state.connection.current, state: "open" });
+      updateConnection(
+        { ...state.connection.current, state: "open" },
+        polyfilled_batchedUpdates
+      );
       state.numberOfRetry = 0;
 
       // Re-broadcast the user presence during a reconnect.
@@ -1215,7 +1267,7 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "unavailable" });
+    updateConnection({ state: "unavailable" }, polyfilled_batchedUpdates);
     clearTimeout(state.timeoutHandles.pongTimeout);
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
@@ -1225,8 +1277,11 @@ function makeStateMachine<
     connect();
   }
 
-  function applyAndSendOfflineOps(offlineOps: Map<string | undefined, Op>) {
-    //                                                     ^^^^^^^^^ NOTE: Bug? Unintended?
+  function applyAndSendOfflineOps(
+    offlineOps: Map<string | undefined, Op>,
+    //                       ^^^^^^^^^ NOTE: Bug? Unintended?
+    batchedUpdates: (cb: () => void) => void
+  ) {
     if (offlineOps.size === 0) {
       return;
     }
@@ -1242,7 +1297,7 @@ function makeStateMachine<
       ops,
     });
 
-    notify(result.updates);
+    notify(result.updates, batchedUpdates);
 
     effects.send(messages);
   }
@@ -1335,20 +1390,22 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "closed" });
+    polyfilled_batchedUpdates(() => {
+      updateConnection({ state: "closed" }, noop_batchedUpdated);
 
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
-    }
-    clearTimeout(state.timeoutHandles.reconnect);
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    clearInterval(state.intervalHandles.heartbeat);
+      if (state.timeoutHandles.flush) {
+        clearTimeout(state.timeoutHandles.flush);
+      }
+      clearTimeout(state.timeoutHandles.reconnect);
+      clearTimeout(state.timeoutHandles.pongTimeout);
+      clearInterval(state.intervalHandles.heartbeat);
 
-    state.others.clearOthers();
-    notify({ others: [{ type: "reset" }] });
+      state.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, noop_batchedUpdated);
 
-    // Clear all event listeners
-    Object.values(eventHub).forEach((eventSource) => eventSource.clear());
+      // Clear all event listeners
+      Object.values(eventHub).forEach((eventSource) => eventSource.clear());
+    });
   }
 
   function getPresence(): Readonly<TPresence> {
@@ -1443,9 +1500,11 @@ function makeStateMachine<
     state.pausedHistory = null;
     const result = apply(historyOps, true);
 
-    notify(result.updates);
-    state.redoStack.push(result.reverse);
-    onHistoryChange();
+    polyfilled_batchedUpdates(() => {
+      notify(result.updates, noop_batchedUpdated);
+      state.redoStack.push(result.reverse);
+      onHistoryChange(noop_batchedUpdated);
+    });
 
     for (const op of historyOps) {
       if (op.type !== "presence") {
@@ -1471,9 +1530,12 @@ function makeStateMachine<
 
     state.pausedHistory = null;
     const result = apply(historyOps, true);
-    notify(result.updates);
-    state.undoStack.push(result.reverse);
-    onHistoryChange();
+
+    polyfilled_batchedUpdates(() => {
+      notify(result.updates, noop_batchedUpdated);
+      state.undoStack.push(result.reverse);
+      onHistoryChange(noop_batchedUpdated);
+    });
 
     for (const op of historyOps) {
       if (op.type !== "presence") {
@@ -1495,41 +1557,47 @@ function makeStateMachine<
       return callback();
     }
 
-    state.activeBatch = {
-      ops: [],
-      updates: {
-        storageUpdates: new Map(),
-        presence: false,
-        others: [],
-      },
-      reverseOps: [],
-    };
+    let rv: T = undefined as unknown as T;
 
-    try {
-      return callback();
-    } finally {
-      // "Pop" the current batch of the state, closing the active batch, but
-      // handling it separately here
-      const currentBatch = state.activeBatch;
-      state.activeBatch = null;
+    polyfilled_batchedUpdates(() => {
+      state.activeBatch = {
+        ops: [],
+        updates: {
+          storageUpdates: new Map(),
+          presence: false,
+          others: [],
+        },
+        reverseOps: [],
+      };
 
-      if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(currentBatch.reverseOps);
+      try {
+        rv = callback();
+      } finally {
+        // "Pop" the current batch of the state, closing the active batch, but
+        // handling it separately here
+        const currentBatch = state.activeBatch;
+        state.activeBatch = null;
+
+        if (currentBatch.reverseOps.length > 0) {
+          addToUndoStack(currentBatch.reverseOps, noop_batchedUpdated);
+        }
+
+        if (currentBatch.ops.length > 0) {
+          // Only clear the redo stack if something has changed during a batch
+          // Clear the redo stack because batch is always called from a local operation
+          state.redoStack = [];
+        }
+
+        if (currentBatch.ops.length > 0) {
+          dispatchOps(currentBatch.ops);
+        }
+
+        notify(currentBatch.updates, noop_batchedUpdated);
+        tryFlushing();
       }
+    });
 
-      if (currentBatch.ops.length > 0) {
-        // Only clear the redo stack if something has changed during a batch
-        // Clear the redo stack because batch is always called from a local operation
-        state.redoStack = [];
-      }
-
-      if (currentBatch.ops.length > 0) {
-        dispatchOps(currentBatch.ops);
-      }
-
-      notify(currentBatch.updates);
-      tryFlushing();
-    }
+    return rv;
   }
 
   function pauseHistory() {
@@ -1540,7 +1608,7 @@ function makeStateMachine<
     const historyOps = state.pausedHistory;
     state.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(historyOps, polyfilled_batchedUpdates);
     }
   }
 

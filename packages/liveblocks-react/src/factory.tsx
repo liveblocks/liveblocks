@@ -106,7 +106,12 @@ export function createRoomContext<
   > | null>(null);
 
   function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
-    const { id: roomId, initialPresence, initialStorage } = props;
+    const {
+      id: roomId,
+      initialPresence,
+      initialStorage,
+      unstable_batchedUpdates,
+    } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -124,14 +129,16 @@ export function createRoomContext<
     const frozen = useInitial({
       initialPresence,
       initialStorage,
+      unstable_batchedUpdates,
     });
 
     const [room, setRoom] = React.useState<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
       client.enter(roomId, {
-        initialPresence,
-        initialStorage,
+        initialPresence: frozen.initialPresence,
+        initialStorage: frozen.initialStorage,
+        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as RoomInitializers<TPresence, TStorage>)
     );
@@ -141,6 +148,7 @@ export function createRoomContext<
         client.enter(roomId, {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
+          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as RoomInitializers<TPresence, TStorage>)
       );

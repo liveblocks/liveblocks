@@ -26,6 +26,14 @@ export type RoomProviderProps<
      */
     id: string;
     children: React.ReactNode;
+    /**
+     * Optionally, pass in a reference to `ReactDOM.unstable_batchedUpdates`,
+     * which will be used by the client to avoid the zombie child problem by
+     * batching all external Liveblocks notifications. This is a good idea if
+     * you're on React v17 or lower. Not necessary when you're on React v18 or
+     * later.
+     */
+    unstable_batchedUpdates?: (cb: () => void) => void;
   } & RoomInitializers<TPresence, TStorage>
 >;
 
