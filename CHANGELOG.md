@@ -1,3 +1,9 @@
+# v0.18.3
+
+- In **@liveblocks/zustand**:
+
+  - Fix a confusing error message
+
 # v0.18.2
 
 - In **@liveblocks/react**:
