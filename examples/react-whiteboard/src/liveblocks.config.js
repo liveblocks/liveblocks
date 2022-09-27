@@ -19,8 +19,6 @@ const client = createClient({
 export const {
   suspense: {
     useHistory,
-    useCanUndo,
-    useCanRedo,
     useOthers,
     useStorage,
     useMutation,

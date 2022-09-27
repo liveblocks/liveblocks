@@ -1,8 +1,6 @@
-import { useState, memo, Suspense } from "react";
+import { useState, Suspense } from "react";
 import {
   useHistory,
-  useCanUndo,
-  useCanRedo,
   useOthers,
   RoomProvider,
   useStorage,
@@ -16,10 +14,7 @@ function Canvas() {
   const [isDragging, setIsDragging] = useState(false);
   const shapeIds = useStorage((root) => Array.from(root.shapes.keys()), shallow);
 
-  const selectedShape = useSelf((me) => me.presence.selectedShape);
   const history = useHistory();
-  const canUndo = useCanUndo();
-  const canRedo = useCanRedo();
 
   const insertRectangle = useMutation(({ storage, setMyPresence }) => {
     const shapeId = Date.now().toString();
@@ -32,8 +27,10 @@ function Canvas() {
     setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
   }, []);
 
-  const deleteRectangle = useMutation(({ storage }, shapeId) => {
+  const deleteRectangle = useMutation(({ storage, self, setMyPresence }) => {
+    const shapeId = self.presence.selectedShape;
     storage.get("shapes").delete(shapeId);
+    setMyPresence({ selectedShape: null });
   }, []);
 
   const onShapePointerDown = useMutation(({ setMyPresence }, e, shapeId) => {
@@ -60,19 +57,14 @@ function Canvas() {
     }
 
     const shapeId = self.presence.selectedShape;
-    if (!shapeId) {
-      return;
-    }
-
     const shape = storage.get("shapes").get(shapeId);
-    if (!shape) {
-      return
-    }
 
-    shape.update({
-      x: e.clientX - 50,
-      y: e.clientY - 50,
-    });
+    if (shape) {
+      shape.update({
+        x: e.clientX - 50,
+        y: e.clientY - 50,
+      });
+    }
   }, [isDragging]);
 
   return (
@@ -94,42 +86,34 @@ function Canvas() {
       </div>
       <div className="toolbar">
         <button onClick={() => insertRectangle()}>Rectangle</button>
-        <button onClick={() => deleteRectangle(selectedShape)} disabled={selectedShape == null}>
-          Delete
-        </button>
-        <button onClick={history.undo} disabled={!canUndo}>
-          Undo
-        </button>
-        <button onClick={history.redo} disabled={!canRedo}>
-          Redo
-        </button>
+        <button onClick={() => deleteRectangle()}>Delete</button>
+        <button onClick={() => history.undo()}>Undo</button>
+        <button onClick={() => history.redo()}>Redo</button>
       </div>
     </>
   );
 }
 
-const Rectangle = memo(
-  ({ id, onShapePointerDown }) => {
-    const { x, y, fill } = useStorage((root) => root.shapes.get(id));
+function Rectangle({ id, onShapePointerDown }) {
+  const { x, y, fill } = useStorage((root) => root.shapes.get(id));
 
-    const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
-    const selectedByOthers = useOthers((others) => others.some(other => other.presence.selectedShape === id));
-    const selectionColor = selectedByMe ? "blue" : selectedByOthers ? "green" : "transparent";
+  const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
+  const selectedByOthers = useOthers((others) => others.some(other => other.presence.selectedShape === id));
+  const selectionColor = selectedByMe ? "blue" : selectedByOthers ? "green" : "transparent";
 
-    return (
-      <div
-        onPointerDown={(e) => onShapePointerDown(e, id)}
-        className="rectangle"
-        style={{
-          transform: `translate(${x}px, ${y}px)`,
-          transition: !selectedByMe ? "transform 120ms linear" : "none",
-          backgroundColor: fill ? fill : "#CCC",
-          borderColor: selectionColor,
-        }}
-      />
-    );
-  }
-);
+  return (
+    <div
+      onPointerDown={(e) => onShapePointerDown(e, id)}
+      className="rectangle"
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        transition: !selectedByMe ? "transform 120ms linear" : "none",
+        backgroundColor: fill || "#CCC",
+        borderColor: selectionColor,
+      }}
+    />
+  );
+}
 
 export default function App({ roomId }) {
   return (
