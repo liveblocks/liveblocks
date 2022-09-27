@@ -33,10 +33,10 @@ const identity: <T>(x: T) => T = (x) => x;
 
 function useSyncExternalStore<Snapshot>(
   s: (onStoreChange: () => void) => () => void,
-  g: () => Snapshot,
-  gg: undefined | null | (() => Snapshot)
+  gs: () => Snapshot,
+  gss: undefined | null | (() => Snapshot)
 ): Snapshot {
-  return useSyncExternalStoreWithSelector(s, g, gg, identity);
+  return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
 const EMPTY_OTHERS =
