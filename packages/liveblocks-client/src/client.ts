@@ -21,13 +21,12 @@ type EnterOptions<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
     /**
-     * A custom callback that will get wrapped around all emitted
-     * notifications. Typically used in the context of a React 17 (or lower)
-     * application to pass in a reference to
-     * a `ReactDOM.unstable_batchedUpdates` or
-     * `ReactNative.unstable_batchedUpdates` here, to announce to the React
-     * renderer that a series of updates can follow that should lead to
-     * a single rerender.
+     * Only necessary when you’re using Liveblocks with React v17 or lower.
+     *
+     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
+     * This will allow Liveblocks to circumvent the so-called "zombie child
+     * problem". To learn more, see
+     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
 
