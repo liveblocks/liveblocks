@@ -1,5 +1,30 @@
 # v0.18.3
 
+- In **@liveblocks/react**:
+
+  Fixes the "zombie-child" problem in React 17 or lower. If you’re on React 17
+  or lower, we’ll now start to enforce that you pass the
+  `unstable_batchedUpdates` prop to RoomProvider. This helps Liveblocks
+  circumvent the zombie child problem, which might save you hours of debugging
+  time in the future!
+
+  ```tsx
+  // ⚠️  Only if you’re on React 17 or lower
+  import { unstable_batchedUpdates } from "react-dom";  // 👈
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={...}
+    initialStorage={...}
+    unstable_batchedUpdates={unstable_batchedUpdates}  // 👈
+  >
+    <App />
+  </RoomProvider>
+  ```
+
+  To read more, see
+  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child-details
+
 - In **@liveblocks/zustand**:
 
   - Fix a confusing error message
