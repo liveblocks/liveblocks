@@ -274,10 +274,12 @@ type Config = {
   polyfills?: Polyfills;
 
   /**
-   * Optionally, pass in a reference to a `ReactDOM.unstable_batchedUpdates` or
-   * `ReactNative.unstable_batchedUpdates` here, which will avoid potential
-   * zombie child problems. This is a good idea if you're on React v17 or
-   * lower. Not necessary when you're on React v18 or later.
+   * A custom callback that will get wrapped around all emitted notifications.
+   * Typically used in the context of a React 17 (or lower) application to pass
+   * in a reference to a `ReactDOM.unstable_batchedUpdates` or
+   * `ReactNative.unstable_batchedUpdates` here, to announce to the React
+   * renderer that a series of updates can follow that should lead to a single
+   * rerender.
    */
   unstable_batchedUpdates?: (cb: () => void) => void;
 
@@ -302,9 +304,9 @@ function makeStateMachine<
   config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
-  const noop_batchedUpdated = (cb: () => void): void => void cb();
-  const polyfilled_batchedUpdates =
-    config.unstable_batchedUpdates ?? noop_batchedUpdated;
+  const doNotBatchUpdates = (cb: () => void): void => cb();
+  const batchUpdates =
+    config.unstable_batchedUpdates ?? doNotBatchUpdates;
 
   const pool: ManagedPool = {
     roomId: config.roomId,
@@ -335,11 +337,11 @@ function makeStateMachine<
         });
         activeBatch.reverseOps.push(...reverse);
       } else {
-        polyfilled_batchedUpdates(() => {
-          addToUndoStack(reverse, noop_batchedUpdated);
+        batchUpdates(() => {
+          addToUndoStack(reverse, doNotBatchUpdates);
           state.redoStack = [];
           dispatchOps(ops);
-          notify({ storageUpdates }, noop_batchedUpdated);
+          notify({ storageUpdates }, doNotBatchUpdates);
         });
       }
     },
@@ -426,14 +428,14 @@ function makeStateMachine<
 
   function createOrUpdateRootFromMessage(
     message: InitialDocumentStateServerMsg,
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (state.root) {
-      updateRoot(message.items, batchedUpdates);
+      updateRoot(message.items, batchedUpdatesWrapper);
     } else {
       // TODO: For now, we'll assume the happy path, but reading this data from
       // the central storage server, it may very well turn out to not match the
@@ -477,7 +479,7 @@ function makeStateMachine<
 
   function updateRoot(
     items: IdTuple<SerializedCrdt>[],
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (!state.root) {
       return;
@@ -493,7 +495,7 @@ function makeStateMachine<
 
     const result = apply(ops, false);
 
-    notify(result.updates, batchedUpdates);
+    notify(result.updates, batchedUpdatesWrapper);
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
@@ -504,7 +506,7 @@ function makeStateMachine<
 
   function _addToRealUndoStack(
     historyOps: HistoryOp<TPresence>[],
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
@@ -512,17 +514,17 @@ function makeStateMachine<
     }
 
     state.undoStack.push(historyOps);
-    onHistoryChange(batchedUpdates);
+    onHistoryChange(batchedUpdatesWrapper);
   }
 
   function addToUndoStack(
     historyOps: HistoryOp<TPresence>[],
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (state.pausedHistory !== null) {
       state.pausedHistory.unshift(...historyOps);
     } else {
-      _addToRealUndoStack(historyOps, batchedUpdates);
+      _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
     }
   }
 
@@ -536,9 +538,9 @@ function makeStateMachine<
       presence?: boolean;
       others?: OthersEvent<TPresence, TUserMeta>[];
     },
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
-    batchedUpdates(() => {
+    batchedUpdatesWrapper(() => {
       if (otherEvents.length > 0) {
         const others = state.others.current;
         for (const event of otherEvents) {
@@ -840,7 +842,7 @@ function makeStateMachine<
       config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
-    updateConnection({ state: "authenticating" }, polyfilled_batchedUpdates);
+    updateConnection({ state: "authenticating" }, batchUpdates);
     effects.authenticate(auth, createWebSocket);
   }
 
@@ -879,14 +881,14 @@ function makeStateMachine<
       state.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
-      polyfilled_batchedUpdates(() => {
+      batchUpdates(() => {
         if (options?.addToHistory) {
           addToUndoStack(
             [{ type: "presence", data: oldValues }],
-            noop_batchedUpdated
+            doNotBatchUpdates
           );
         }
-        notify({ presence: true }, noop_batchedUpdated);
+        notify({ presence: true }, doNotBatchUpdates);
       });
     }
   }
@@ -904,7 +906,7 @@ function makeStateMachine<
         userInfo: token.info,
         userId: token.id,
       },
-      polyfilled_batchedUpdates
+      batchUpdates
     );
     state.idFactory = makeIdFactory(token.actor);
     state.socket = socket;
@@ -915,7 +917,7 @@ function makeStateMachine<
       console.error("Call to authentication endpoint failed", error);
     }
     state.token = null;
-    updateConnection({ state: "unavailable" }, polyfilled_batchedUpdates);
+    updateConnection({ state: "unavailable" }, batchUpdates);
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
@@ -993,8 +995,8 @@ function makeStateMachine<
     }
   }
 
-  function onHistoryChange(batchedUpdates: (cb: () => void) => void) {
-    batchedUpdates(() => {
+  function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
+    batchedUpdatesWrapper(() => {
       eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
     });
   }
@@ -1060,7 +1062,7 @@ function makeStateMachine<
       others: [] as OthersEvent<TPresence, TUserMeta>[],
     };
 
-    polyfilled_batchedUpdates(() => {
+    batchUpdates(() => {
       for (const message of messages) {
         switch (message.type) {
           case ServerMsgCode.USER_JOINED: {
@@ -1099,8 +1101,8 @@ function makeStateMachine<
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
             const offlineOps = new Map(state.offlineOperations);
-            createOrUpdateRootFromMessage(message, noop_batchedUpdated);
-            applyAndSendOfflineOps(offlineOps, noop_batchedUpdated);
+            createOrUpdateRootFromMessage(message, doNotBatchUpdates);
+            applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
             _getInitialStateResolver?.();
             eventHub.storageDidLoad.notify();
             break;
@@ -1122,7 +1124,7 @@ function makeStateMachine<
         }
       }
 
-      notify(updates, noop_batchedUpdated);
+      notify(updates, doNotBatchUpdates);
     });
   }
 
@@ -1138,11 +1140,11 @@ function makeStateMachine<
 
     state.others.clearOthers();
 
-    polyfilled_batchedUpdates(() => {
-      notify({ others: [{ type: "reset" }] }, noop_batchedUpdated);
+    batchUpdates(() => {
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       if (event.code >= 4000 && event.code <= 4100) {
-        updateConnection({ state: "failed" }, noop_batchedUpdated);
+        updateConnection({ state: "failed" }, doNotBatchUpdates);
 
         const error = new LiveblocksError(event.reason, event.code);
         eventHub.error.notify(error);
@@ -1156,10 +1158,10 @@ function makeStateMachine<
           );
         }
 
-        updateConnection({ state: "unavailable" }, noop_batchedUpdated);
+        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
         state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-        updateConnection({ state: "closed" }, noop_batchedUpdated);
+        updateConnection({ state: "closed" }, doNotBatchUpdates);
       } else {
         const delay = getRetryDelay();
         state.numberOfRetry++;
@@ -1169,7 +1171,7 @@ function makeStateMachine<
             `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
           );
         }
-        updateConnection({ state: "unavailable" }, noop_batchedUpdated);
+        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
         state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       }
     });
@@ -1177,10 +1179,10 @@ function makeStateMachine<
 
   function updateConnection(
     connection: Connection,
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     state.connection.set(connection);
-    batchedUpdates(() => {
+    batchedUpdatesWrapper(() => {
       eventHub.connection.notify(connection.state);
     });
   }
@@ -1210,7 +1212,7 @@ function makeStateMachine<
     if (state.connection.current.state === "connecting") {
       updateConnection(
         { ...state.connection.current, state: "open" },
-        polyfilled_batchedUpdates
+        batchUpdates
       );
       state.numberOfRetry = 0;
 
@@ -1267,7 +1269,7 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "unavailable" }, polyfilled_batchedUpdates);
+    updateConnection({ state: "unavailable" }, batchUpdates);
     clearTimeout(state.timeoutHandles.pongTimeout);
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
@@ -1280,7 +1282,7 @@ function makeStateMachine<
   function applyAndSendOfflineOps(
     offlineOps: Map<string | undefined, Op>,
     //                       ^^^^^^^^^ NOTE: Bug? Unintended?
-    batchedUpdates: (cb: () => void) => void
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (offlineOps.size === 0) {
       return;
@@ -1297,7 +1299,7 @@ function makeStateMachine<
       ops,
     });
 
-    notify(result.updates, batchedUpdates);
+    notify(result.updates, batchedUpdatesWrapper);
 
     effects.send(messages);
   }
@@ -1390,8 +1392,8 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    polyfilled_batchedUpdates(() => {
-      updateConnection({ state: "closed" }, noop_batchedUpdated);
+    batchUpdates(() => {
+      updateConnection({ state: "closed" }, doNotBatchUpdates);
 
       if (state.timeoutHandles.flush) {
         clearTimeout(state.timeoutHandles.flush);
@@ -1401,7 +1403,7 @@ function makeStateMachine<
       clearInterval(state.intervalHandles.heartbeat);
 
       state.others.clearOthers();
-      notify({ others: [{ type: "reset" }] }, noop_batchedUpdated);
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
       // Clear all event listeners
       Object.values(eventHub).forEach((eventSource) => eventSource.clear());
@@ -1500,10 +1502,10 @@ function makeStateMachine<
     state.pausedHistory = null;
     const result = apply(historyOps, true);
 
-    polyfilled_batchedUpdates(() => {
-      notify(result.updates, noop_batchedUpdated);
+    batchUpdates(() => {
+      notify(result.updates, doNotBatchUpdates);
       state.redoStack.push(result.reverse);
-      onHistoryChange(noop_batchedUpdated);
+      onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of historyOps) {
@@ -1531,10 +1533,10 @@ function makeStateMachine<
     state.pausedHistory = null;
     const result = apply(historyOps, true);
 
-    polyfilled_batchedUpdates(() => {
-      notify(result.updates, noop_batchedUpdated);
+    batchUpdates(() => {
+      notify(result.updates, doNotBatchUpdates);
       state.undoStack.push(result.reverse);
-      onHistoryChange(noop_batchedUpdated);
+      onHistoryChange(doNotBatchUpdates);
     });
 
     for (const op of historyOps) {
@@ -1559,7 +1561,7 @@ function makeStateMachine<
 
     let rv: T = undefined as unknown as T;
 
-    polyfilled_batchedUpdates(() => {
+    batchUpdates(() => {
       state.activeBatch = {
         ops: [],
         updates: {
@@ -1579,7 +1581,7 @@ function makeStateMachine<
         state.activeBatch = null;
 
         if (currentBatch.reverseOps.length > 0) {
-          addToUndoStack(currentBatch.reverseOps, noop_batchedUpdated);
+          addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
         }
 
         if (currentBatch.ops.length > 0) {
@@ -1592,7 +1594,7 @@ function makeStateMachine<
           dispatchOps(currentBatch.ops);
         }
 
-        notify(currentBatch.updates, noop_batchedUpdated);
+        notify(currentBatch.updates, doNotBatchUpdates);
         tryFlushing();
       }
     });
@@ -1608,7 +1610,7 @@ function makeStateMachine<
     const historyOps = state.pausedHistory;
     state.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps, polyfilled_batchedUpdates);
+      _addToRealUndoStack(historyOps, batchUpdates);
     }
   }
 
