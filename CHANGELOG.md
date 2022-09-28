@@ -25,6 +25,10 @@
   To read more, see
   https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child-details
 
+- In **@liveblocks/zustand**:
+
+  - Fix a confusing error message
+
 # v0.18.2
 
 - In **@liveblocks/react**:
