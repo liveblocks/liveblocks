@@ -1154,7 +1154,7 @@ function makeStateMachine<
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
-            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+            `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
           );
         }
 
