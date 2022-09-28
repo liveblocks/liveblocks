@@ -21,9 +21,13 @@ type EnterOptions<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
     /**
-     * HACK: This option should be passed in from React v17 or earlier if you
-     * want to avoid the zombie child problem. Not necessary in React v18 or
-     * later.
+     * A custom callback that will get wrapped around all emitted
+     * notifications. Typically used in the context of a React 17 (or lower)
+     * application to pass in a reference to
+     * a `ReactDOM.unstable_batchedUpdates` or
+     * `ReactNative.unstable_batchedUpdates` here, to announce to the React
+     * renderer that a series of updates can follow that should lead to
+     * a single rerender.
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
 
