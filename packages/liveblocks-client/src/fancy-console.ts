@@ -11,7 +11,7 @@ function wrap(
         console[method]("%cliveblocks", badge, message, ...args);
 }
 
-export const log = wrap("log");
+// export const log = wrap("log");
 export const warn = wrap("warn");
 export const error = wrap("error");
 
@@ -30,6 +30,6 @@ function wrapBold(
         );
 }
 
-export const logBold = wrapBold("log");
-export const warnBold = wrapBold("warn");
+// export const logBold = wrapBold("log");
+// export const warnBold = wrapBold("warn");
 export const errorBold = wrapBold("error");
