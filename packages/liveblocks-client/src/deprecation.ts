@@ -1,3 +1,5 @@
+import * as console from "./fancy-console";
+
 /**
  * Tools to help with the controlled deprecation of public APIs.
  *
@@ -17,7 +19,7 @@ export function deprecate(message: string, key = message): void {
   if (process.env.NODE_ENV !== "production") {
     if (!_emittedDeprecationWarnings.has(key)) {
       _emittedDeprecationWarnings.add(key);
-      console.error(`DEPRECATION WARNING: ${message}`);
+      console.errorBold("Deprecation warning", message);
     }
   }
 }
@@ -48,6 +50,7 @@ export function throwUsageError(message: string): void {
   if (process.env.NODE_ENV !== "production") {
     const usageError = new Error(message);
     usageError.name = "Usage error";
+    console.errorBold("Usage error", message);
     throw usageError;
   }
 }

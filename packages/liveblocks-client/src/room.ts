@@ -5,6 +5,7 @@ import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
+import * as console from "./fancy-console";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
