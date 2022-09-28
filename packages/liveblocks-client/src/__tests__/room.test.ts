@@ -2,6 +2,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import type { RoomAuthToken } from "../AuthToken";
+import * as console from "../fancy-console";
 import { lsonToJson } from "../immutable";
 import { LiveList } from "../LiveList";
 import {
