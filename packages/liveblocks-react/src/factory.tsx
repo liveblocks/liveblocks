@@ -39,7 +39,6 @@ const missing_unstable_batchedUpdates = (
   reactVersion: number,
   roomId: string
 ) =>
-  // XXX  Add link to docs
   `We noticed you’re using React ${reactVersion}. Please pass unstable_batchedUpdates at the RoomProvider level until you’re ready to upgrade to React 18:
 
     import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
@@ -50,11 +49,7 @@ const missing_unstable_batchedUpdates = (
       ...
     </RoomProvider>
 
-🤔 Why?
-There’s a problem with React 17 or lower that is known as the “stale props” and/or “zombie child” problem.
-By passing unstable_batchedUpdates to RoomProvider, we can circumvent this problem for your app.
-
-See XXX for more information`;
+Why? Please see https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child for more information`;
 
 const superfluous_unstable_batchedUpdates =
   "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
