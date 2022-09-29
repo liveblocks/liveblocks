@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.18.3",
+  "version": "0.18.3-dev",
   "description": "A store enhancer to integrate Liveblocks into Redux stores.",
   "main": "./index.js",
   "module": "./index.mjs",
