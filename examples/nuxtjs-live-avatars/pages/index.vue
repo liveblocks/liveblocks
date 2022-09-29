@@ -47,6 +47,9 @@ const client = createClient({
   authEndpoint: "/api/auth",
 });
 
+// Presence not used in this example
+const initialPresence = {};
+
 let roomId = "nuxtjs-live-avatars";
 
 export default Vue.extend({
@@ -59,7 +62,7 @@ export default Vue.extend({
   mounted: function () {
     overrideRoomId();
 
-    const room = client.enter(roomId);
+    const room = client.enter(roomId, { initialPresence });
     this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
     this._unsubscribeConnection = room.subscribe(
       "connection",

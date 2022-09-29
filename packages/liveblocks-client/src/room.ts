@@ -274,6 +274,16 @@ type Config = {
   polyfills?: Polyfills;
 
   /**
+   * Only necessary when you’re using Liveblocks with React v17 or lower.
+   *
+   * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
+   * This will allow Liveblocks to circumvent the so-called "zombie child
+   * problem". To learn more, see
+   * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+   */
+  unstable_batchedUpdates?: (cb: () => void) => void;
+
+  /**
    * Backward-compatible way to set `polyfills.fetch`.
    */
   fetchPolyfill?: Polyfills["fetch"];
@@ -294,6 +304,9 @@ function makeStateMachine<
   config: Config,
   mockedEffects?: Effects<TPresence, TRoomEvent>
 ): Machine<TPresence, TStorage, TUserMeta, TRoomEvent> {
+  const doNotBatchUpdates = (cb: () => void): void => cb();
+  const batchUpdates = config.unstable_batchedUpdates ?? doNotBatchUpdates;
+
   const pool: ManagedPool = {
     roomId: config.roomId,
 
@@ -323,10 +336,12 @@ function makeStateMachine<
         });
         activeBatch.reverseOps.push(...reverse);
       } else {
-        addToUndoStack(reverse);
-        state.redoStack = [];
-        dispatchOps(ops);
-        notify({ storageUpdates });
+        batchUpdates(() => {
+          addToUndoStack(reverse, doNotBatchUpdates);
+          state.redoStack = [];
+          dispatchOps(ops);
+          notify({ storageUpdates }, doNotBatchUpdates);
+        });
       }
     },
   };
@@ -411,14 +426,15 @@ function makeStateMachine<
   );
 
   function createOrUpdateRootFromMessage(
-    message: InitialDocumentStateServerMsg
+    message: InitialDocumentStateServerMsg,
+    batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (message.items.length === 0) {
       throw new Error("Internal error: cannot load storage without items");
     }
 
     if (state.root) {
-      updateRoot(message.items);
+      updateRoot(message.items, batchedUpdatesWrapper);
     } else {
       // TODO: For now, we'll assume the happy path, but reading this data from
       // the central storage server, it may very well turn out to not match the
@@ -460,7 +476,10 @@ function makeStateMachine<
     return [root, parentToChildren];
   }
 
-  function updateRoot(items: IdTuple<SerializedCrdt>[]) {
+  function updateRoot(
+    items: IdTuple<SerializedCrdt>[],
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
     if (!state.root) {
       return;
     }
@@ -475,7 +494,7 @@ function makeStateMachine<
 
     const result = apply(ops, false);
 
-    notify(result.updates);
+    notify(result.updates, batchedUpdatesWrapper);
   }
 
   function load(items: IdTuple<SerializedCrdt>[]): LiveObject<LsonObject> {
@@ -484,48 +503,59 @@ function makeStateMachine<
     return LiveObject._deserialize(root, parentToChildren, pool);
   }
 
-  function _addToRealUndoStack(historyOps: HistoryOp<TPresence>[]) {
+  function _addToRealUndoStack(
+    historyOps: HistoryOp<TPresence>[],
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
     // If undo stack is too large, we remove the older item
     if (state.undoStack.length >= 50) {
       state.undoStack.shift();
     }
 
     state.undoStack.push(historyOps);
-    onHistoryChange();
+    onHistoryChange(batchedUpdatesWrapper);
   }
 
-  function addToUndoStack(historyOps: HistoryOp<TPresence>[]) {
+  function addToUndoStack(
+    historyOps: HistoryOp<TPresence>[],
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
     if (state.pausedHistory !== null) {
       state.pausedHistory.unshift(...historyOps);
     } else {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(historyOps, batchedUpdatesWrapper);
     }
   }
 
-  function notify({
-    storageUpdates = new Map<string, StorageUpdate>(),
-    presence = false,
-    others: otherEvents = [],
-  }: {
-    storageUpdates?: Map<string, StorageUpdate>;
-    presence?: boolean;
-    others?: OthersEvent<TPresence, TUserMeta>[];
-  }) {
-    if (otherEvents.length > 0) {
-      const others = state.others.current;
-      for (const event of otherEvents) {
-        eventHub.others.notify({ others, event });
+  function notify(
+    {
+      storageUpdates = new Map<string, StorageUpdate>(),
+      presence = false,
+      others: otherEvents = [],
+    }: {
+      storageUpdates?: Map<string, StorageUpdate>;
+      presence?: boolean;
+      others?: OthersEvent<TPresence, TUserMeta>[];
+    },
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
+    batchedUpdatesWrapper(() => {
+      if (otherEvents.length > 0) {
+        const others = state.others.current;
+        for (const event of otherEvents) {
+          eventHub.others.notify({ others, event });
+        }
       }
-    }
 
-    if (presence) {
-      eventHub.me.notify(state.me.current);
-    }
+      if (presence) {
+        eventHub.me.notify(state.me.current);
+      }
 
-    if (storageUpdates.size > 0) {
-      const updates = Array.from(storageUpdates.values());
-      eventHub.storage.notify(updates);
-    }
+      if (storageUpdates.size > 0) {
+        const updates = Array.from(storageUpdates.values());
+        eventHub.storage.notify(updates);
+      }
+    });
   }
 
   function getConnectionId() {
@@ -811,7 +841,7 @@ function makeStateMachine<
       config.polyfills?.WebSocket ?? config.WebSocketPolyfill
     );
 
-    updateConnection({ state: "authenticating" });
+    updateConnection({ state: "authenticating" }, batchUpdates);
     effects.authenticate(auth, createWebSocket);
   }
 
@@ -850,10 +880,15 @@ function makeStateMachine<
       state.activeBatch.updates.presence = true;
     } else {
       tryFlushing();
-      if (options?.addToHistory) {
-        addToUndoStack([{ type: "presence", data: oldValues }]);
-      }
-      notify({ presence: true });
+      batchUpdates(() => {
+        if (options?.addToHistory) {
+          addToUndoStack(
+            [{ type: "presence", data: oldValues }],
+            doNotBatchUpdates
+          );
+        }
+        notify({ presence: true }, doNotBatchUpdates);
+      });
     }
   }
 
@@ -865,19 +900,17 @@ function makeStateMachine<
     socket.addEventListener("close", onClose);
     socket.addEventListener("error", onError);
 
-    updateConnection({
-      state: "connecting",
-      id: token.actor,
-      userInfo: token.info,
-      userId: token.id,
-      // Add  permissions
-      permissions: [
-        "presence:write",
-        "storage:write",
-        "presence:read",
-        "storage:read",
-      ],
-    });
+    updateConnection(
+      {
+        state: "connecting",
+        id: token.actor,
+        userInfo: token.info,
+        userId: token.id,
+        // Add permissions
+        isReadOnly: token.scopes.includes("room:read"),
+      },
+      batchUpdates
+    );
     state.idFactory = makeIdFactory(token.actor);
     state.socket = socket;
   }
@@ -887,7 +920,7 @@ function makeStateMachine<
       console.error("Call to authentication endpoint failed", error);
     }
     state.token = null;
-    updateConnection({ state: "unavailable" });
+    updateConnection({ state: "unavailable" }, batchUpdates);
     state.numberOfRetry++;
     state.timeoutHandles.reconnect = effects.scheduleReconnect(getRetryDelay());
   }
@@ -965,8 +998,10 @@ function makeStateMachine<
     }
   }
 
-  function onHistoryChange() {
-    eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
+  function onHistoryChange(batchedUpdatesWrapper: (cb: () => void) => void) {
+    batchedUpdatesWrapper(() => {
+      eventHub.history.notify({ canUndo: canUndo(), canRedo: canRedo() });
+    });
   }
 
   function onUserJoinedMessage(
@@ -1030,81 +1065,80 @@ function makeStateMachine<
       others: [] as OthersEvent<TPresence, TUserMeta>[],
     };
 
-    for (const message of messages) {
-      switch (message.type) {
-        // Read event
-        case ServerMsgCode.USER_JOINED: {
-          const userJoinedUpdate = onUserJoinedMessage(message);
-          if (userJoinedUpdate) {
-            updates.others.push(userJoinedUpdate);
+    batchUpdates(() => {
+      for (const message of messages) {
+        switch (message.type) {
+          // Read event
+          case ServerMsgCode.USER_JOINED: {
+            const userJoinedUpdate = onUserJoinedMessage(message);
+            if (userJoinedUpdate) {
+              updates.others.push(userJoinedUpdate);
+            }
+            break;
           }
-          break;
-        }
 
-        // Read event
-        case ServerMsgCode.UPDATE_PRESENCE: {
-          const othersPresenceUpdate = onUpdatePresenceMessage(message);
-          if (othersPresenceUpdate) {
-            updates.others.push(othersPresenceUpdate);
+          // Read event
+          case ServerMsgCode.UPDATE_PRESENCE: {
+            const othersPresenceUpdate = onUpdatePresenceMessage(message);
+            if (othersPresenceUpdate) {
+              updates.others.push(othersPresenceUpdate);
+            }
+            break;
           }
-          break;
-        }
-        // Read event
-        case ServerMsgCode.BROADCASTED_EVENT: {
-          eventHub.customEvent.notify({
-            connectionId: message.actor,
-            event: message.event,
-          });
-          break;
-        }
 
-        // Read event
-        case ServerMsgCode.USER_LEFT: {
-          const event = onUserLeftMessage(message);
-          if (event) {
-            updates.others.push(event);
+          // Read event
+          case ServerMsgCode.BROADCASTED_EVENT: {
+            eventHub.customEvent.notify({
+              connectionId: message.actor,
+              event: message.event,
+            });
+            break;
           }
-          break;
-        }
 
-        // Read event
-        case ServerMsgCode.ROOM_STATE: {
-          updates.others.push(onRoomStateMessage(message));
-          break;
-        }
+          // Read event
+          case ServerMsgCode.USER_LEFT: {
+            const event = onUserLeftMessage(message);
+            if (event) {
+              updates.others.push(event);
+            }
+            break;
+          }
+          // Read event
+          case ServerMsgCode.ROOM_STATE: {
+            updates.others.push(onRoomStateMessage(message));
+            break;
+          }
+          // Read event
+          case ServerMsgCode.INITIAL_STORAGE_STATE: {
+            // createOrUpdateRootFromMessage function could add ops to offlineOperations.
+            // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
+            const offlineOps = new Map(state.offlineOperations);
+            createOrUpdateRootFromMessage(message, doNotBatchUpdates);
+            applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
+            _getInitialStateResolver?.();
+            eventHub.storageDidLoad.notify();
+            break;
+          }
+          // Write event
+          case ServerMsgCode.UPDATE_STORAGE: {
+            const applyResult = apply(message.ops, false);
+            applyResult.updates.storageUpdates.forEach((value, key) => {
+              updates.storageUpdates.set(
+                key,
+                mergeStorageUpdates(
+                  updates.storageUpdates.get(key) as any, // FIXME
+                  value
+                )
+              );
+            });
 
-        // Read event
-        case ServerMsgCode.INITIAL_STORAGE_STATE: {
-          // createOrUpdateRootFromMessage function could add ops to offlineOperations.
-          // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-          const offlineOps = new Map(state.offlineOperations);
-          createOrUpdateRootFromMessage(message);
-          applyAndSendOfflineOps(offlineOps);
-          _getInitialStateResolver?.();
-          eventHub.storageDidLoad.notify();
-          break;
-        }
-
-        // Write event
-        // Prevent the client from sending ops when read-only
-        case ServerMsgCode.UPDATE_STORAGE: {
-          const applyResult = apply(message.ops, false);
-          applyResult.updates.storageUpdates.forEach((value, key) => {
-            updates.storageUpdates.set(
-              key,
-              mergeStorageUpdates(
-                updates.storageUpdates.get(key) as any, // FIXME
-                value
-              )
-            );
-          });
-
-          break;
+            break;
+          }
         }
       }
-    }
 
-    notify(updates);
+      notify(updates, doNotBatchUpdates);
+    });
   }
 
   function onClose(event: { code: number; wasClean: boolean; reason: string }) {
@@ -1118,44 +1152,52 @@ function makeStateMachine<
     clearTimeout(state.timeoutHandles.reconnect);
 
     state.others.clearOthers();
-    notify({ others: [{ type: "reset" }] });
 
-    if (event.code >= 4000 && event.code <= 4100) {
-      updateConnection({ state: "failed" });
+    batchUpdates(() => {
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
-      const error = new LiveblocksError(event.reason, event.code);
-      eventHub.error.notify(error);
+      if (event.code >= 4000 && event.code <= 4100) {
+        updateConnection({ state: "failed" }, doNotBatchUpdates);
 
-      const delay = getRetryDelay(true);
-      state.numberOfRetry++;
+        const error = new LiveblocksError(event.reason, event.code);
+        eventHub.error.notify(error);
 
-      if (process.env.NODE_ENV !== "production") {
-        console.error(
-          `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
-        );
+        const delay = getRetryDelay(true);
+        state.numberOfRetry++;
+
+        if (process.env.NODE_ENV !== "production") {
+          console.error(
+            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+          );
+        }
+
+        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
+        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
+      } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
+        updateConnection({ state: "closed" }, doNotBatchUpdates);
+      } else {
+        const delay = getRetryDelay();
+        state.numberOfRetry++;
+
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
+          );
+        }
+        updateConnection({ state: "unavailable" }, doNotBatchUpdates);
+        state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
       }
-
-      updateConnection({ state: "unavailable" });
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
-    } else if (event.code === WebsocketCloseCodes.CLOSE_WITHOUT_RETRY) {
-      updateConnection({ state: "closed" });
-    } else {
-      const delay = getRetryDelay();
-      state.numberOfRetry++;
-
-      if (process.env.NODE_ENV !== "production") {
-        console.warn(
-          `Connection to Liveblocks websocket server closed (code: ${event.code}). Retrying in ${delay}ms.`
-        );
-      }
-      updateConnection({ state: "unavailable" });
-      state.timeoutHandles.reconnect = effects.scheduleReconnect(delay);
-    }
+    });
   }
 
-  function updateConnection(connection: Connection) {
+  function updateConnection(
+    connection: Connection,
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
     state.connection.set(connection);
-    eventHub.connection.notify(connection.state);
+    batchedUpdatesWrapper(() => {
+      eventHub.connection.notify(connection.state);
+    });
   }
 
   function getRetryDelay(slow: boolean = false) {
@@ -1181,7 +1223,10 @@ function makeStateMachine<
     state.intervalHandles.heartbeat = effects.startHeartbeatInterval();
 
     if (state.connection.current.state === "connecting") {
-      updateConnection({ ...state.connection.current, state: "open" });
+      updateConnection(
+        { ...state.connection.current, state: "open" },
+        batchUpdates
+      );
       state.numberOfRetry = 0;
 
       // Re-broadcast the user presence during a reconnect.
@@ -1237,7 +1282,7 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "unavailable" });
+    updateConnection({ state: "unavailable" }, batchUpdates);
     clearTimeout(state.timeoutHandles.pongTimeout);
     if (state.timeoutHandles.flush) {
       clearTimeout(state.timeoutHandles.flush);
@@ -1247,8 +1292,11 @@ function makeStateMachine<
     connect();
   }
 
-  function applyAndSendOfflineOps(offlineOps: Map<string | undefined, Op>) {
-    //                                                     ^^^^^^^^^ NOTE: Bug? Unintended?
+  function applyAndSendOfflineOps(
+    offlineOps: Map<string | undefined, Op>,
+    //                       ^^^^^^^^^ NOTE: Bug? Unintended?
+    batchedUpdatesWrapper: (cb: () => void) => void
+  ) {
     if (offlineOps.size === 0) {
       return;
     }
@@ -1264,7 +1312,7 @@ function makeStateMachine<
       ops,
     });
 
-    notify(result.updates);
+    notify(result.updates, batchedUpdatesWrapper);
 
     effects.send(messages);
   }
@@ -1357,20 +1405,22 @@ function makeStateMachine<
       state.socket = null;
     }
 
-    updateConnection({ state: "closed" });
+    batchUpdates(() => {
+      updateConnection({ state: "closed" }, doNotBatchUpdates);
 
-    if (state.timeoutHandles.flush) {
-      clearTimeout(state.timeoutHandles.flush);
-    }
-    clearTimeout(state.timeoutHandles.reconnect);
-    clearTimeout(state.timeoutHandles.pongTimeout);
-    clearInterval(state.intervalHandles.heartbeat);
+      if (state.timeoutHandles.flush) {
+        clearTimeout(state.timeoutHandles.flush);
+      }
+      clearTimeout(state.timeoutHandles.reconnect);
+      clearTimeout(state.timeoutHandles.pongTimeout);
+      clearInterval(state.intervalHandles.heartbeat);
 
-    state.others.clearOthers();
-    notify({ others: [{ type: "reset" }] });
+      state.others.clearOthers();
+      notify({ others: [{ type: "reset" }] }, doNotBatchUpdates);
 
-    // Clear all event listeners
-    Object.values(eventHub).forEach((eventSource) => eventSource.clear());
+      // Clear all event listeners
+      Object.values(eventHub).forEach((eventSource) => eventSource.clear());
+    });
   }
 
   function getPresence(): Readonly<TPresence> {
@@ -1465,9 +1515,11 @@ function makeStateMachine<
     state.pausedHistory = null;
     const result = apply(historyOps, true);
 
-    notify(result.updates);
-    state.redoStack.push(result.reverse);
-    onHistoryChange();
+    batchUpdates(() => {
+      notify(result.updates, doNotBatchUpdates);
+      state.redoStack.push(result.reverse);
+      onHistoryChange(doNotBatchUpdates);
+    });
 
     for (const op of historyOps) {
       if (op.type !== "presence") {
@@ -1493,9 +1545,12 @@ function makeStateMachine<
 
     state.pausedHistory = null;
     const result = apply(historyOps, true);
-    notify(result.updates);
-    state.undoStack.push(result.reverse);
-    onHistoryChange();
+
+    batchUpdates(() => {
+      notify(result.updates, doNotBatchUpdates);
+      state.undoStack.push(result.reverse);
+      onHistoryChange(doNotBatchUpdates);
+    });
 
     for (const op of historyOps) {
       if (op.type !== "presence") {
@@ -1517,41 +1572,47 @@ function makeStateMachine<
       return callback();
     }
 
-    state.activeBatch = {
-      ops: [],
-      updates: {
-        storageUpdates: new Map(),
-        presence: false,
-        others: [],
-      },
-      reverseOps: [],
-    };
+    let rv: T = undefined as unknown as T;
 
-    try {
-      return callback();
-    } finally {
-      // "Pop" the current batch of the state, closing the active batch, but
-      // handling it separately here
-      const currentBatch = state.activeBatch;
-      state.activeBatch = null;
+    batchUpdates(() => {
+      state.activeBatch = {
+        ops: [],
+        updates: {
+          storageUpdates: new Map(),
+          presence: false,
+          others: [],
+        },
+        reverseOps: [],
+      };
 
-      if (currentBatch.reverseOps.length > 0) {
-        addToUndoStack(currentBatch.reverseOps);
+      try {
+        rv = callback();
+      } finally {
+        // "Pop" the current batch of the state, closing the active batch, but
+        // handling it separately here
+        const currentBatch = state.activeBatch;
+        state.activeBatch = null;
+
+        if (currentBatch.reverseOps.length > 0) {
+          addToUndoStack(currentBatch.reverseOps, doNotBatchUpdates);
+        }
+
+        if (currentBatch.ops.length > 0) {
+          // Only clear the redo stack if something has changed during a batch
+          // Clear the redo stack because batch is always called from a local operation
+          state.redoStack = [];
+        }
+
+        if (currentBatch.ops.length > 0) {
+          dispatchOps(currentBatch.ops);
+        }
+
+        notify(currentBatch.updates, doNotBatchUpdates);
+        tryFlushing();
       }
+    });
 
-      if (currentBatch.ops.length > 0) {
-        // Only clear the redo stack if something has changed during a batch
-        // Clear the redo stack because batch is always called from a local operation
-        state.redoStack = [];
-      }
-
-      if (currentBatch.ops.length > 0) {
-        dispatchOps(currentBatch.ops);
-      }
-
-      notify(currentBatch.updates);
-      tryFlushing();
-    }
+    return rv;
   }
 
   function pauseHistory() {
@@ -1562,7 +1623,7 @@ function makeStateMachine<
     const historyOps = state.pausedHistory;
     state.pausedHistory = null;
     if (historyOps !== null && historyOps.length > 0) {
-      _addToRealUndoStack(historyOps);
+      _addToRealUndoStack(historyOps, batchUpdates);
     }
   }
 

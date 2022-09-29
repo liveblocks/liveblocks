@@ -21,6 +21,16 @@ type EnterOptions<
   // Enter options are just room initializers, plus an internal option
   RoomInitializers<TPresence, TStorage> & {
     /**
+     * Only necessary when you’re using Liveblocks with React v17 or lower.
+     *
+     * If so, pass in a reference to `ReactDOM.unstable_batchedUpdates` here.
+     * This will allow Liveblocks to circumvent the so-called "zombie child
+     * problem". To learn more, see
+     * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+     */
+    unstable_batchedUpdates?: (cb: () => void) => void;
+
+    /**
      * INTERNAL OPTION: Only used in a SSR context when you want an empty room
      * to make sure your react tree is rendered properly without connecting to
      * websocket
@@ -118,6 +128,8 @@ export function createClient(options: ClientOptions): Client {
         polyfills: clientOptions.polyfills,
         WebSocketPolyfill: clientOptions.WebSocketPolyfill, // Backward-compatible API for setting polyfills
         fetchPolyfill: clientOptions.fetchPolyfill, // Backward-compatible API for setting polyfills
+
+        unstable_batchedUpdates: options?.unstable_batchedUpdates,
 
         liveblocksServer:
           // TODO Patch this using public but marked internal fields?

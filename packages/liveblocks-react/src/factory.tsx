@@ -16,7 +16,11 @@ import type {
   RoomInitializers,
   ToImmutable,
 } from "@liveblocks/client/internal";
-import { asArrayWithLegacyMethods } from "@liveblocks/client/internal";
+import {
+  asArrayWithLegacyMethods,
+  deprecateIf,
+  errorIf,
+} from "@liveblocks/client/internal";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
@@ -31,12 +35,31 @@ import type {
 const noop = () => {};
 const identity: <T>(x: T) => T = (x) => x;
 
+const missing_unstable_batchedUpdates = (
+  reactVersion: number,
+  roomId: string
+) =>
+  `We noticed you’re using React ${reactVersion}. Please pass unstable_batchedUpdates at the RoomProvider level until you’re ready to upgrade to React 18:
+
+    import { unstable_batchedUpdates } from "react-dom";  // or "react-native"
+
+    <RoomProvider id=${JSON.stringify(
+      roomId
+    )} ... unstable_batchedUpdates={unstable_batchedUpdates}>
+      ...
+    </RoomProvider>
+
+Why? Please see https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child for more information`;
+
+const superfluous_unstable_batchedUpdates =
+  "You don’t need to pass unstable_batchedUpdates to RoomProvider anymore, since you’re on React 18+ already.";
+
 function useSyncExternalStore<Snapshot>(
   s: (onStoreChange: () => void) => () => void,
-  g: () => Snapshot,
-  gg: undefined | null | (() => Snapshot)
+  gs: () => Snapshot,
+  gss: undefined | null | (() => Snapshot)
 ): Snapshot {
-  return useSyncExternalStoreWithSelector(s, g, gg, identity);
+  return useSyncExternalStoreWithSelector(s, gs, gss, identity);
 }
 
 const EMPTY_OTHERS =
@@ -106,7 +129,12 @@ export function createRoomContext<
   > | null>(null);
 
   function RoomProvider(props: RoomProviderProps<TPresence, TStorage>) {
-    const { id: roomId, initialPresence, initialStorage } = props;
+    const {
+      id: roomId,
+      initialPresence,
+      initialStorage,
+      unstable_batchedUpdates,
+    } = props;
 
     if (process.env.NODE_ENV !== "production") {
       if (!roomId) {
@@ -114,9 +142,21 @@ export function createRoomContext<
           "RoomProvider id property is required. For more information: https://liveblocks.io/docs/errors/liveblocks-react/RoomProvider-id-property-is-required"
         );
       }
+
       if (typeof roomId !== "string") {
         throw new Error("RoomProvider id property should be a string.");
       }
+
+      const majorReactVersion = parseInt(React.version) || 1;
+      const oldReactVersion = majorReactVersion < 18;
+      errorIf(
+        oldReactVersion && props.unstable_batchedUpdates === undefined,
+        missing_unstable_batchedUpdates(majorReactVersion, roomId)
+      );
+      deprecateIf(
+        !oldReactVersion && props.unstable_batchedUpdates !== undefined,
+        superfluous_unstable_batchedUpdates
+      );
     }
 
     // Note: We'll hold on to the initial value given here, and ignore any
@@ -124,14 +164,16 @@ export function createRoomContext<
     const frozen = useInitial({
       initialPresence,
       initialStorage,
+      unstable_batchedUpdates,
     });
 
     const [room, setRoom] = React.useState<
       Room<TPresence, TStorage, TUserMeta, TRoomEvent>
     >(() =>
       client.enter(roomId, {
-        initialPresence,
-        initialStorage,
+        initialPresence: frozen.initialPresence,
+        initialStorage: frozen.initialStorage,
+        unstable_batchedUpdates: frozen.unstable_batchedUpdates,
         DO_NOT_USE_withoutConnecting: typeof window === "undefined",
       } as RoomInitializers<TPresence, TStorage>)
     );
@@ -141,6 +183,7 @@ export function createRoomContext<
         client.enter(roomId, {
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
+          unstable_batchedUpdates: frozen.unstable_batchedUpdates,
           DO_NOT_USE_withoutConnecting: typeof window === "undefined",
         } as RoomInitializers<TPresence, TStorage>)
       );
@@ -246,7 +289,9 @@ export function createRoomContext<
     return useOthers(wrappedSelector, wrappedIsEqual);
   }
 
-  const sentinel = Symbol();
+  const NOT_FOUND = Symbol();
+
+  type NotFound = typeof NOT_FOUND;
 
   function useOther<T>(
     connectionId: number,
@@ -259,14 +304,14 @@ export function createRoomContext<
         const other = others.find(
           (other) => other.connectionId === connectionId
         );
-        return other !== undefined ? selector(other) : sentinel;
+        return other !== undefined ? selector(other) : NOT_FOUND;
       },
       [connectionId, selector]
     );
 
     const wrappedIsEqual = React.useCallback(
-      (prev: T | typeof sentinel, curr: T | typeof sentinel): boolean => {
-        if (prev === sentinel || curr === sentinel) {
+      (prev: T | NotFound, curr: T | NotFound): boolean => {
+        if (prev === NOT_FOUND || curr === NOT_FOUND) {
           return prev === curr;
         }
 
@@ -277,11 +322,12 @@ export function createRoomContext<
     );
 
     const other = useOthers(wrappedSelector, wrappedIsEqual);
-    if (other === sentinel) {
+    if (other === NOT_FOUND) {
       throw new Error(
         `No such other user with connection id ${connectionId} exists`
       );
     }
+
     return other;
   }
 

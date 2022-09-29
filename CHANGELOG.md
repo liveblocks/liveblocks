@@ -1,7 +1,41 @@
+# v0.18.3
+
+- In **@liveblocks/react**:
+
+  Fixes the "zombie-child" problem that can occur with React 17 or lower. **If
+  you’re on React 18: great, you can ignore this!** If you’re using React 17 or
+  lower with Liveblocks, we’ll now start to enforce that you pass the
+  `unstable_batchedUpdates` prop to RoomProvider, so this problem can be
+  circumvented. This small addition may save you hours of debugging time!
+
+  ```tsx
+  // ⚠️  Only if you’re using React 17 or lower
+  import { unstable_batchedUpdates } from "react-dom";  // 👈
+
+  <RoomProvider
+    id="my-room"
+    initialPresence={...}
+    initialStorage={...}
+    unstable_batchedUpdates={unstable_batchedUpdates}  // 👈
+  >
+    <App />
+  </RoomProvider>
+  ```
+
+  To read more, see
+  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
+
+- In **@liveblocks/zustand**:
+
+  - Fix a confusing error message
+
 # v0.18.2
 
 - In **@liveblocks/react**:
 
+  - Make sure that `useOther` will not rerender if tracked users already left
+    the room, so that child components won't get rerendered before the parent
+    got the chance to unmount them.
   - Disallow `useOther` without selector
 
 # v0.18.1

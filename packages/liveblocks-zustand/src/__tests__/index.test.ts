@@ -755,25 +755,25 @@ describe("middleware", () => {
 
     test("mapping on function should throw", async () => {
       const { store } = await prepareWithStorage<{
-        value: any;
+        notAFunc: any;
         setFunction: () => void;
       }>(
         (set) => ({
-          value: null,
+          notAFunc: null,
 
           setFunction: () => {
-            set({ value: () => {} });
+            set({ notAFunc: /* 😈 */ () => {} });
           },
         }),
         {
-          storageMapping: { value: true },
+          storageMapping: { notAFunc: true },
           presenceMapping: {},
           items: [obj("root", {})],
         }
       );
 
       expect(() => store.getState().setFunction()).toThrow(
-        mappingToFunctionIsNotAllowed("value")
+        mappingToFunctionIsNotAllowed("notAFunc")
       );
     });
   });
