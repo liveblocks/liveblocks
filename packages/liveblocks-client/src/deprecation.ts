@@ -19,7 +19,7 @@ export function deprecate(message: string, key = message): void {
   if (process.env.NODE_ENV !== "production") {
     if (!_emittedDeprecationWarnings.has(key)) {
       _emittedDeprecationWarnings.add(key);
-      console.errorBold("Deprecation warning", message);
+      console.errorWithTitle("Deprecation warning", message);
     }
   }
 }
@@ -50,7 +50,7 @@ export function throwUsageError(message: string): void {
   if (process.env.NODE_ENV !== "production") {
     const usageError = new Error(message);
     usageError.name = "Usage error";
-    console.errorBold("Usage error", message);
+    console.errorWithTitle("Usage error", message);
     throw usageError;
   }
 }

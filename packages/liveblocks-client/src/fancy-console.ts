@@ -15,7 +15,7 @@ function wrap(
 export const warn = wrap("warn");
 export const error = wrap("error");
 
-function wrapBold(
+function wrapWithTitle(
   method: "log" | "warn" | "error"
 ): (title: string, message: string, ...args: readonly unknown[]) => void {
   return typeof window === "undefined" || process.env.NODE_ENV === "test"
@@ -30,6 +30,6 @@ function wrapBold(
         );
 }
 
-// export const logBold = wrapBold("log");
-// export const warnBold = wrapBold("warn");
-export const errorBold = wrapBold("error");
+// export const logWithTitle = wrapWithTitle("log");
+// export const warnWithTitle = wrapWithTitle("warn");
+export const errorWithTitle = wrapWithTitle("error");
