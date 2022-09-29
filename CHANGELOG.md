@@ -23,7 +23,7 @@
   ```
 
   To read more, see
-  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child-details
+  https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
 
 - In **@liveblocks/zustand**:
 
