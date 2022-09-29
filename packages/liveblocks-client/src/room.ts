@@ -421,6 +421,7 @@ function makeStateMachine<
             id: conn.userId,
             info: conn.userInfo,
             presence: me,
+            isReadonly: conn.isReadonly,
           }
         : null
   );
@@ -892,6 +893,10 @@ function makeStateMachine<
     }
   }
 
+  function isReadonly(scopes: string[]) {
+    return scopes.includes("room:read");
+  }
+
   function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
     // Can separate read only and read/write tokens here
     // Update addEventListener with onReadOnlyMessage
@@ -906,8 +911,7 @@ function makeStateMachine<
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
-        // Add permissions
-        isReadOnly: token.scopes.includes("room:read"),
+        isReadonly: isReadonly(token.scopes),
       },
       batchUpdates
     );
@@ -986,7 +990,13 @@ function makeStateMachine<
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      state.others.setConnection(connectionId, user.id, user.info);
+      // TODO: How to set isReadonly here?
+      state.others.setConnection(
+        connectionId,
+        user.id,
+        user.info,
+        isReadonly(user.scopes)
+      );
     }
     return { type: "reset" };
   }
@@ -1007,15 +1017,19 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.others.setConnection(message.actor, message.id, message.info);
-
-    // Send current presence to new user
-    // TODO: Consider storing it on the backend
-    state.buffer.messages.push({
-      type: ClientMsgCode.UPDATE_PRESENCE,
-      data: state.me.current,
-      targetActor: message.actor,
-    });
+    state.others.setConnection(
+      message.actor,
+      message.id,
+      message.info,
+      isReadonly(message.scopes)
+    ),
+      // Send current presence to new user
+      // TODO: Consider storing it on the backend
+      state.buffer.messages.push({
+        type: ClientMsgCode.UPDATE_PRESENCE,
+        data: state.me.current,
+        targetActor: message.actor,
+      });
     tryFlushing();
 
     // We recorded the connection, but we won't make the new user visible

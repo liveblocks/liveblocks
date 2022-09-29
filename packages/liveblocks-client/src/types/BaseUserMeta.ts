@@ -13,16 +13,7 @@ export type BaseUserMeta = {
   info?: Json;
 
   /**
-   * The permissions of the user that has been set in the authentication endpoint.
+   * Permissions that the user has in the room.
    */
-  permissions?: {
-    storage?: {
-      write: boolean;
-      read: boolean;
-    };
-    presence?: {
-      write: boolean;
-      read: boolean;
-    };
-  };
+  scopes: string[];
 };

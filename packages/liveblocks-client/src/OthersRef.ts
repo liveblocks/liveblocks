@@ -7,6 +7,7 @@ type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
   readonly id: TUserMeta["id"];
   readonly info: TUserMeta["info"];
+  readonly isReadonly: boolean;
 };
 
 function makeUser<TPresence extends JsonObject, TUserMeta extends BaseUserMeta>(
@@ -110,12 +111,14 @@ export class OthersRef<
   setConnection(
     connectionId: number,
     metaUserId: TUserMeta["id"],
-    metaUserInfo: TUserMeta["info"]
+    metaUserInfo: TUserMeta["info"],
+    metaIsReadonly: User<TPresence, TUserMeta>["isReadonly"]
   ): void {
     this._connections[connectionId] = freeze({
       connectionId,
       id: metaUserId,
       info: metaUserInfo,
+      isReadonly: metaIsReadonly,
     });
     if (this._presences[connectionId] !== undefined) {
       this._invalidateUser(connectionId);
