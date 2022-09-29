@@ -10,7 +10,7 @@ function wrap(
   return typeof window === "undefined" || process.env.NODE_ENV === "test"
     ? console[method]
     : (message, ...args) =>
-        console[method]("%cliveblocks", badge, message, ...args);
+        console[method]("%cLiveblocks", badge, message, ...args);
 }
 
 // export const log = wrap("log");
@@ -24,7 +24,7 @@ function wrapWithTitle(
     ? console[method]
     : (title, message, ...args) =>
         console[method](
-          `%cliveblocks%c ${title}`,
+          `%cLiveblocks%c ${title}`,
           badge,
           bold,
           message,
