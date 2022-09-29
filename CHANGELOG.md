@@ -2,14 +2,14 @@
 
 - In **@liveblocks/react**:
 
-  Fixes the "zombie-child" problem in React 17 or lower. If you’re on React 17
-  or lower, we’ll now start to enforce that you pass the
-  `unstable_batchedUpdates` prop to RoomProvider. This helps Liveblocks
-  circumvent the zombie child problem, which might save you hours of debugging
-  time in the future!
+  Fixes the "zombie-child" problem that can occur with React 17 or lower. **If
+  you’re on React 18: great, you can ignore this!** If you’re using React 17 or
+  lower with Liveblocks, we’ll now start to enforce that you pass the
+  `unstable_batchedUpdates` prop to RoomProvider, so this problem can be
+  circumvented. This small addition may save you hours of debugging time!
 
   ```tsx
-  // ⚠️  Only if you’re on React 17 or lower
+  // ⚠️  Only if you’re using React 17 or lower
   import { unstable_batchedUpdates } from "react-dom";  // 👈
 
   <RoomProvider
