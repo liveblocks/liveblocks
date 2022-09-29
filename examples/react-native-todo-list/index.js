@@ -1,5 +1,5 @@
 import React from "react";
-import { AppRegistry } from "react-native";
+import { AppRegistry, unstable_batchedUpdates } from "react-native";
 import { LiveList } from "@liveblocks/client";
 import { RoomProvider } from "./liveblocks.config";
 import App from "./App";
@@ -13,7 +13,16 @@ const initialStorage = () => ({
 
 const Wrapper = () => {
   return (
-    <RoomProvider id={roomId} initialStorage={initialStorage} initialPresence={{ isTyping: false }}>
+    <RoomProvider
+      id={roomId}
+      initialStorage={initialStorage}
+      initialPresence={{ isTyping: false }}
+      unstable_batchedUpdates={
+        // NOTE: Only needed while this project is on React 17. After upgrading
+        // to React 18, this can be removed.
+        unstable_batchedUpdates
+      }
+    >
       <App />
     </RoomProvider>
   );
