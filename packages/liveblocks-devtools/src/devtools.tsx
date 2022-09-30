@@ -1,6 +1,5 @@
 import * as React from "react";
 import fontPickerHTML from "url:./panels/font-picker/index.html";
-import fontPropertiesHTML from "url:./panels/font-properties/index.html";
 
 chrome.devtools.panels.create(
   "Font Picker",
