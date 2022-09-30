@@ -314,6 +314,7 @@ export async function prepareStorageTest<
       actor: -1,
       id: undefined,
       info: undefined,
+      scopes: [],
     })
   );
 
@@ -322,7 +323,7 @@ export async function prepareStorageTest<
   refMachine.onMessage(
     serverMessage({
       type: ServerMsgCode.ROOM_STATE,
-      users: { [currentActor]: {} },
+      users: { [currentActor]: { scopes: [] } },
     })
   );
 
@@ -375,6 +376,7 @@ export async function prepareStorageTest<
         actor,
         id: undefined,
         info: undefined,
+        scopes: [],
       })
     );
 
