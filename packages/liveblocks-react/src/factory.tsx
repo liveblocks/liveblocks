@@ -445,30 +445,25 @@ export function createRoomContext<
     return [useMutableStorageRoot()];
   }
 
-  // Returns errors / warnings on read only
   function useHistory(): History {
     return useRoom().history;
   }
-  
-  // Returns errors / warnings on read only
+
   function useUndo(): () => void {
     return useHistory().undo;
   }
-  
-  // Returns errors / warnings on read only
+
   function useRedo(): () => void {
     return useHistory().redo;
   }
-  
-  // Returns errors / warnings on read only
+
   function useCanUndo(): boolean {
     const room = useRoom();
     const subscribe = room.events.history.subscribe;
     const canUndo = room.history.canUndo;
     return useSyncExternalStore(subscribe, canUndo, canUndo);
   }
-  
-  // Returns errors / warnings on read only
+
   function useCanRedo(): boolean {
     const room = useRoom();
     const subscribe = room.events.history.subscribe;
