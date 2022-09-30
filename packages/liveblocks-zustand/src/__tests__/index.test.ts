@@ -352,6 +352,7 @@ describe("middleware", () => {
           users: {
             "1": {
               info: { name: "Testy McTester" },
+              scopes: [],
             },
           },
         } as RoomStateServerMsg<BaseUserMeta>),
@@ -373,6 +374,7 @@ describe("middleware", () => {
           info: {
             name: "Testy McTester",
           },
+          isReadonly: false,
           presence: { x: 1 },
         },
       ]);
