@@ -894,7 +894,11 @@ function makeStateMachine<
   }
 
   function isReadonly(scopes: string[]) {
-    return scopes.includes("room:read");
+    return (
+      scopes.includes("room:read") &&
+      scopes.includes("room:presence:write") &&
+      !scopes.includes("room:write")
+    );
   }
 
   function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
@@ -990,7 +994,6 @@ function makeStateMachine<
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      // TODO: How to set isReadonly here?
       state.others.setConnection(
         connectionId,
         user.id,

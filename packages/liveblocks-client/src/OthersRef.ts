@@ -112,7 +112,7 @@ export class OthersRef<
     connectionId: number,
     metaUserId: TUserMeta["id"],
     metaUserInfo: TUserMeta["info"],
-    metaIsReadonly: User<TPresence, TUserMeta>["isReadonly"]
+    metaIsReadonly: boolean
   ): void {
     this._connections[connectionId] = freeze({
       connectionId,
