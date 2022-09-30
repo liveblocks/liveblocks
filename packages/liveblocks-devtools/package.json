@@ -1,5 +1,8 @@
 {
   "name": "@liveblocks/devtools",
+  "displayName": "Liveblocks",
+  "description": "Liveblocks development extension",
+  "homepage": "https://liveblocks.io",
   "version": "0.18.3",
   "scripts": {
     "dev": "plasmo dev",
