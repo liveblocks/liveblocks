@@ -22,6 +22,9 @@
     "typescript": "4.8.4"
   },
   "manifest": {
+    "permissions": [
+      "scripting"
+    ],
     "host_permissions": [
       "https://*/*",
       "file://*/*"
