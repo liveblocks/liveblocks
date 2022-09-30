@@ -1,19 +1,16 @@
-import * as React from "react";
-import fontPickerHTML from "url:./panels/font-picker/index.html";
+import liveblocksPanelHTML from "url:./panels/liveblocks/index.html";
 
 chrome.devtools.panels.create(
-  "Font Picker",
+  "Liveblocks",
   null,
   // See: https://github.com/PlasmoHQ/plasmo/issues/106#issuecomment-1188539625
-  fontPickerHTML.split("/").pop()
+  liveblocksPanelHTML.split("/").pop()
 );
 
-function IndexDevtools() {
-  return (
-    <h2>
-      Welcome to your <a href="https://www.plasmo.com">Plasmo</a> Extension!
-    </h2>
-  );
+function Devtools() {
+  // TODO: Investigate if necessary.
+  //       It used to include a welcome message/page.
+  return null;
 }
 
-export default IndexDevtools;
+export default Devtools;
