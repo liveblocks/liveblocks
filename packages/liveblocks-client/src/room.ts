@@ -1025,14 +1025,14 @@ function makeStateMachine<
       message.id,
       message.info,
       isReadonly(message.scopes)
-    ),
-      // Send current presence to new user
-      // TODO: Consider storing it on the backend
-      state.buffer.messages.push({
-        type: ClientMsgCode.UPDATE_PRESENCE,
-        data: state.me.current,
-        targetActor: message.actor,
-      });
+    );
+    // Send current presence to new user
+    // TODO: Consider storing it on the backend
+    state.buffer.messages.push({
+      type: ClientMsgCode.UPDATE_PRESENCE,
+      data: state.me.current,
+      targetActor: message.actor,
+    });
     tryFlushing();
 
     // We recorded the connection, but we won't make the new user visible
