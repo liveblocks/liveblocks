@@ -189,6 +189,7 @@ async function websocketSimulator() {
       actor,
       id: undefined,
       info: undefined,
+      scopes: [],
     });
 
     simulateIncomingMessage({
@@ -265,8 +266,8 @@ describe("useOthers", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
-    expect(result.current.toArray()).toEqual([
-      { connectionId: 1, presence: { x: 2 } },
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
     ]);
   });
 
@@ -276,8 +277,8 @@ describe("useOthers", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateUserJoins(1, { x: 0 }));
 
-    expect(result.current.toArray()).toEqual([
-      { connectionId: 1, presence: { x: 0 } },
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 0 }, isReadonly: false },
     ]);
 
     act(() =>
@@ -288,8 +289,8 @@ describe("useOthers", () => {
       })
     );
 
-    expect(result.current.toArray()).toEqual([
-      { connectionId: 1, presence: { x: 0, y: 0 } },
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 0, y: 0 }, isReadonly: false },
     ]);
   });
 
@@ -299,13 +300,13 @@ describe("useOthers", () => {
     const sim = await websocketSimulator();
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
-    expect(result.current.toArray()).toEqual([
-      { connectionId: 1, presence: { x: 2 } },
+    expect(result.current).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
     ]);
 
     act(() => sim.simulateAbnormalClose());
 
-    expect(result.current.toArray()).toEqual([]);
+    expect(result.current).toEqual([]);
   });
 });
 
