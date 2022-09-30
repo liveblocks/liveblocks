@@ -262,7 +262,7 @@ export type User<
   readonly presence: TPresence;
 
   /**
-   * True if the user can modify the room storage, false otherwise.
+   * False if the user can modify the room storage, true otherwise.
    */
   readonly isReadonly: boolean;
 };
