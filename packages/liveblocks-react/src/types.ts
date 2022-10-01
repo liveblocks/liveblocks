@@ -28,6 +28,15 @@ export type RoomProviderProps<
     children: React.ReactNode;
 
     /**
+     * Weather or not the room should connect to Liveblocks servers
+     * when the RoomProvider is rendered.
+     *
+     * By default, the RoomProvider tries to connect to Liveblocks servers
+     * only on the client side.
+     */
+    withoutInitiallyConnecting?: boolean;
+
+    /**
      * If you're on React 17 or lower, pass in a reference to
      * `ReactDOM.unstable_batchedUpdates` or
      * `ReactNative.unstable_batchedUpdates` here.

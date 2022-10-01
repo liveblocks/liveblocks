@@ -31,11 +31,13 @@ type EnterOptions<
     unstable_batchedUpdates?: (cb: () => void) => void;
 
     /**
-     * INTERNAL OPTION: Only used in a SSR context when you want an empty room
+     * Weather or not the room connects to Liveblock servers
+     *
+     * Usually used in a SSR context when you want an empty room
      * to make sure your react tree is rendered properly without connecting to
      * websocket
      */
-    DO_NOT_USE_withoutConnecting?: boolean;
+    withoutConnecting?: boolean;
   }
 >;
 
@@ -148,7 +150,7 @@ export function createClient(options: ClientOptions): Client {
         Json
       >
     );
-    if (!options.DO_NOT_USE_withoutConnecting) {
+    if (!options.withoutConnecting) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
         if (clientOptions.polyfills?.atob === undefined) {

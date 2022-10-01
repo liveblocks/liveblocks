@@ -1,4 +1,9 @@
-import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
+import {
+  BaseUserMeta,
+  createClient,
+  Json,
+  JsonObject,
+} from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
 import type { ServerMsg } from "@liveblocks/client/internal";
 import {
@@ -6,8 +11,11 @@ import {
   CrdtType,
   ServerMsgCode,
 } from "@liveblocks/client/internal";
+import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
+import * as React from "react";
+import { createRoomContext } from "../factory";
 
 import {
   useCanRedo,
@@ -219,6 +227,50 @@ async function websocketSimulator() {
     simulateUserJoins,
   };
 }
+
+describe("RoomProvider", () => {
+  test("withoutInitiallyConnecting equals true should not call the auth endpoint", () => {
+    const authEndpointMock = jest.fn();
+    const client = createClient({
+      authEndpoint: authEndpointMock,
+    });
+
+    const { RoomProvider } = createRoomContext(client);
+
+    render(
+      <RoomProvider
+        id="room"
+        initialPresence={{}}
+        withoutInitiallyConnecting={true}
+      >
+        <></>
+      </RoomProvider>
+    );
+
+    expect(authEndpointMock).not.toBeCalled();
+  });
+
+  test("withoutInitiallyConnecting equals false should call the auth endpoint", () => {
+    const authEndpointMock = jest.fn();
+    const client = createClient({
+      authEndpoint: authEndpointMock,
+    });
+
+    const { RoomProvider } = createRoomContext(client);
+
+    render(
+      <RoomProvider
+        id="room"
+        initialPresence={{}}
+        withoutInitiallyConnecting={false}
+      >
+        <></>
+      </RoomProvider>
+    );
+
+    expect(authEndpointMock).toBeCalled();
+  });
+});
 
 describe("useRoom", () => {
   test("initial presence should be sent to other users when socket is connected", async () => {
