@@ -1,7 +1,7 @@
 {
   "name": "@liveblocks/devtools",
   "displayName": "Liveblocks",
-  "description": "Liveblocks development extension",
+  "description": "A browser extension that lets you inspect Liveblocks clients.",
   "homepage": "https://liveblocks.io",
   "version": "0.18.3",
   "scripts": {

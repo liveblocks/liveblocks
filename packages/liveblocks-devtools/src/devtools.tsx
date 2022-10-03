@@ -1,4 +1,4 @@
-import liveblocksPanelHTML from "url:./panels/liveblocks/index.html";
+import liveblocksPanelHTML from "url:./panel/index.html";
 
 chrome.devtools.panels.create(
   "Liveblocks",
@@ -7,10 +7,8 @@ chrome.devtools.panels.create(
   liveblocksPanelHTML.split("/").pop()
 );
 
-function Devtools() {
-  // TODO: Investigate if necessary.
-  //       It used to include a welcome message/page.
+function Page() {
   return null;
 }
 
-export default Devtools;
+export default Page;
