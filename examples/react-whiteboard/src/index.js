@@ -1,28 +1,12 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App";
-import { LiveMap } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config";
-import "./index.css";
+import "./App.css";
 
 let roomId = "react-whiteboard";
-
 overrideRoomId();
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-
-root.render(
-  <React.StrictMode>
-    <RoomProvider
-      id={roomId}
-      initialStorage={{
-        shapes: new LiveMap(),
-      }}
-    >
-      <App />
-    </RoomProvider>
-  </React.StrictMode>
-);
+const root = createRoot(document.getElementById("root"));
+root.render(<App roomId={roomId} />);
 
 /**
  * This function is used when deploying an example on liveblocks.io.
