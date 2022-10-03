@@ -374,7 +374,7 @@ describe("middleware", () => {
           info: {
             name: "Testy McTester",
           },
-          isReadonly: false,
+          isReadOnly: false,
           presence: { x: 1 },
         },
       ]);

@@ -343,7 +343,7 @@ describe("room", () => {
     }
 
     expect(users).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
   });
 
@@ -374,7 +374,7 @@ describe("room", () => {
     );
 
     expect(machine.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
     machine.onClose(
@@ -896,7 +896,7 @@ describe("room", () => {
       expect(refOthers).toEqual([
         {
           connectionId: 1,
-          isReadonly: false,
+          isReadOnly: false,
           presence: {
             x: 1,
           },
@@ -992,7 +992,7 @@ describe("room", () => {
       expect(others).toEqual([
         {
           connectionId: 1,
-          isReadonly: false,
+          isReadOnly: false,
           presence: {
             x: 2,
           },
@@ -1191,14 +1191,14 @@ describe("room", () => {
           id: undefined,
           info: undefined,
           presence: { x: 1 },
-          isReadonly: false,
+          isReadOnly: false,
         }, // old user is not cleaned directly
         {
           connectionId: 2,
           id: undefined,
           info: undefined,
           presence: { x: 1 },
-          isReadonly: false,
+          isReadOnly: false,
         },
       ]);
     });
@@ -1318,7 +1318,7 @@ describe("room", () => {
           connectionId: 1,
           id: undefined,
           info: undefined,
-          isReadonly: false,
+          isReadOnly: false,
           presence: {
             x: 2,
           },

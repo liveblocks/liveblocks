@@ -267,7 +267,7 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
   });
 
@@ -278,7 +278,7 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 0 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 0 }, isReadOnly: false },
     ]);
 
     act(() =>
@@ -290,7 +290,7 @@ describe("useOthers", () => {
     );
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 0, y: 0 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 0, y: 0 }, isReadOnly: false },
     ]);
   });
 
@@ -301,7 +301,7 @@ describe("useOthers", () => {
     act(() => sim.simulateUserJoins(1, { x: 2 }));
 
     expect(result.current).toEqual([
-      { connectionId: 1, presence: { x: 2 }, isReadonly: false },
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
     act(() => sim.simulateAbnormalClose());

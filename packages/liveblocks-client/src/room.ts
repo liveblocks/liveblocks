@@ -421,7 +421,7 @@ function makeStateMachine<
             id: conn.userId,
             info: conn.userInfo,
             presence: me,
-            isReadonly: conn.isReadonly,
+            isReadOnly: conn.isReadOnly,
           }
         : null
   );
@@ -893,7 +893,7 @@ function makeStateMachine<
     }
   }
 
-  function isReadonly(scopes: string[]) {
+  function isReadOnly(scopes: string[]) {
     return (
       scopes.includes("room:read") &&
       scopes.includes("room:presence:write") &&
@@ -915,7 +915,7 @@ function makeStateMachine<
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
-        isReadonly: isReadonly(token.scopes),
+        isReadOnly: isReadOnly(token.scopes),
       },
       batchUpdates
     );
@@ -998,7 +998,7 @@ function makeStateMachine<
         connectionId,
         user.id,
         user.info,
-        isReadonly(user.scopes)
+        isReadOnly(user.scopes)
       );
     }
     return { type: "reset" };
@@ -1024,7 +1024,7 @@ function makeStateMachine<
       message.actor,
       message.id,
       message.info,
-      isReadonly(message.scopes)
+      isReadOnly(message.scopes)
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend

@@ -413,7 +413,7 @@ describe("middleware", () => {
             name: "Testy McTester",
           },
           presence: { x: 1 },
-          isReadonly: false,
+          isReadOnly: false,
         },
       ]);
     });
