@@ -1,7 +1,7 @@
 import browser, { Runtime } from "webextension-polyfill";
 import type { PanelToClientMessage, ClientToPanelMessage } from "./lib/types";
 
-const ports: Record<string | number, Runtime.Port> = {};
+const ports: Map<number, Runtime.Port> = new Map();
 
 browser.runtime.onConnect.addListener((port) => {
   function handleMessage(message: PanelToClientMessage & { tabId: number }) {
@@ -13,7 +13,7 @@ browser.runtime.onConnect.addListener((port) => {
     // and this port.
     //
     if (message.name === "connect") {
-      ports[message.tabId] = port;
+      ports.set(message.tabId, port);
     }
 
     const { tabId, ...unpacked } = message;
@@ -25,9 +25,9 @@ browser.runtime.onConnect.addListener((port) => {
   port.onDisconnect.addListener((port) => {
     port.onMessage.removeListener(handleMessage);
 
-    for (const tabId of Object.keys(ports)) {
-      if (ports[tabId] === port) {
-        delete ports[tabId];
+    for (const [tabId, p] of ports) {
+      if (port === p) {
+        ports.delete(tabId);
         break;
       }
     }
@@ -38,13 +38,8 @@ browser.runtime.onMessage.addListener(
   (message: ClientToPanelMessage, sender) => {
     if (sender.tab) {
       const tabId = sender.tab.id;
-
-      if (tabId in ports) {
-        ports[tabId].postMessage(message);
-      }
+      ports.get(tabId)?.postMessage(message);
     }
-
-    return;
   }
 );
 
