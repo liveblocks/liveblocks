@@ -1,7 +1,6 @@
-import browser from "webextension-polyfill";
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { port } from "../port";
+import { onMessage, postMessage } from "./port";
 
 const Liveblocks = () => {
   const [messages, setMessages] = useState([]);
@@ -11,18 +10,17 @@ const Liveblocks = () => {
       setMessages((messages) => [...messages, message]);
     }
 
-    port.onMessage.addListener(receiveMessage);
+    onMessage.addListener(receiveMessage);
 
     return () => {
-      port.onMessage.removeListener(receiveMessage);
+      onMessage.removeListener(receiveMessage);
     };
   }, []);
 
   const handleClick = useCallback(() => {
-    port.postMessage({
+    postMessage({
       name: "message",
       value: Math.random(),
-      tabId: browser.devtools.inspectedWindow.tabId,
     });
   }, []);
 

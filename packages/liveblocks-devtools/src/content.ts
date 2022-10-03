@@ -1,5 +1,7 @@
 import browser from "webextension-polyfill";
-import { EXTENSION_ID } from "./constants";
+import type { PanelToClientMessage } from "./lib/types";
+
+const EXTENSION_ID = "liveblocks-devtools";
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) {
@@ -15,7 +17,7 @@ window.addEventListener("message", (event) => {
   browser.runtime.sendMessage(message);
 });
 
-browser.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message: PanelToClientMessage) => {
   window.postMessage(
     {
       source: EXTENSION_ID,
