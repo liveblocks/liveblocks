@@ -29,6 +29,7 @@
       "scripting"
     ],
     "host_permissions": [
+      "http://localhost:*/*",
       "https://*/*",
       "file://*/*"
     ],
