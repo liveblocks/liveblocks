@@ -1,3 +1,4 @@
+import browser from "webextension-polyfill";
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { port } from "../port";
@@ -21,7 +22,7 @@ const Liveblocks = () => {
     port.postMessage({
       name: "message",
       value: Math.random(),
-      tabId: chrome.devtools.inspectedWindow.tabId,
+      tabId: browser.devtools.inspectedWindow.tabId,
     });
   }, []);
 

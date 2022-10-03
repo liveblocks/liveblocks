@@ -1,3 +1,4 @@
+import browser from "webextension-polyfill";
 import { EXTENSION_ID } from "./constants";
 
 window.addEventListener("message", (event) => {
@@ -11,10 +12,10 @@ window.addEventListener("message", (event) => {
     return;
   }
 
-  chrome.runtime.sendMessage(message);
+  browser.runtime.sendMessage(message);
 });
 
-chrome.runtime.onMessage.addListener((message) => {
+browser.runtime.onMessage.addListener((message) => {
   window.postMessage(
     {
       source: EXTENSION_ID,
@@ -23,7 +24,7 @@ chrome.runtime.onMessage.addListener((message) => {
     "*"
   );
 
-  return true;
+  return;
 });
 
 export {};

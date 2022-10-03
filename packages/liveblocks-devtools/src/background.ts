@@ -1,18 +1,19 @@
+import browser, { Runtime } from "webextension-polyfill";
 import { PORT_INITIAL_EVENT } from "./constants";
 
-const ports: Record<string | number, chrome.runtime.Port> = {};
+const ports: Record<string | number, Runtime.Port> = {};
 
 interface Message {
   name: string;
   tabId: number;
 }
 
-chrome.runtime.onConnect.addListener((port) => {
+browser.runtime.onConnect.addListener((port) => {
   function handleMessage(message: Message) {
     if (message.name == PORT_INITIAL_EVENT) {
       ports[message.tabId] = port;
     } else {
-      chrome.tabs.sendMessage(message.tabId, message);
+      browser.tabs.sendMessage(message.tabId, message);
     }
 
     return;
@@ -32,7 +33,7 @@ chrome.runtime.onConnect.addListener((port) => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message, sender) => {
+browser.runtime.onMessage.addListener((message, sender) => {
   if (sender.tab) {
     const tabId = sender.tab.id;
 
@@ -41,7 +42,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     }
   }
 
-  return true;
+  return;
 });
 
 export {};

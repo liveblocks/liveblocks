@@ -6,7 +6,9 @@
   "version": "0.18.3",
   "scripts": {
     "dev": "plasmo dev",
-    "build": "plasmo build"
+    "dev:firefox": "plasmo dev --target=firefox-mv2",
+    "build": "plasmo build",
+    "build:firefox": "plasmo build --target=firefox-mv2"
   },
   "dependencies": {
     "plasmo": "0.55.0",
@@ -14,12 +16,13 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
-    "@types/chrome": "0.0.197",
     "@types/node": "18.7.23",
     "@types/react": "18.0.21",
     "@types/react-dom": "18.0.6",
+    "@types/webextension-polyfill": "^0.9.1",
     "prettier": "2.7.1",
-    "typescript": "4.8.4"
+    "typescript": "4.8.4",
+    "webextension-polyfill": "^0.10.0"
   },
   "manifest": {
     "permissions": [
@@ -28,6 +31,11 @@
     "host_permissions": [
       "https://*/*",
       "file://*/*"
-    ]
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "liveblocks-devtools@liveblocks.io"
+      }
+    }
   }
 }
