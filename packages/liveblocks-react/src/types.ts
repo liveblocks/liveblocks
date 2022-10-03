@@ -28,7 +28,7 @@ export type RoomProviderProps<
     children: React.ReactNode;
 
     /**
-     * Weather or not the room should connect to Liveblocks servers
+     * Whether or not the room should connect to Liveblocks servers
      * when the RoomProvider is rendered.
      *
      * By default, the RoomProvider tries to connect to Liveblocks servers
