@@ -1,10 +1,13 @@
 import browser, { Runtime } from "webextension-polyfill";
-import type { PanelToClientMessage, ClientToPanelMessage } from "./lib/types";
+import type {
+  FullPanelToClientMessage,
+  FullClientToPanelMessage,
+} from "./lib/protocol";
 
 const ports: Map<number, Runtime.Port> = new Map();
 
 browser.runtime.onConnect.addListener((port) => {
-  function handleMessage(message: PanelToClientMessage & { tabId: number }) {
+  function handleMessage(message: FullPanelToClientMessage) {
     //
     // NOTE: Special eaves dropping happening here when the panel sends their
     // "connect" message. While this message is intended to signify to the
@@ -16,8 +19,7 @@ browser.runtime.onConnect.addListener((port) => {
       ports.set(message.tabId, port);
     }
 
-    const { tabId, ...unpacked } = message;
-    browser.tabs.sendMessage(tabId, unpacked);
+    browser.tabs.sendMessage(message.tabId, message);
   }
 
   port.onMessage.addListener(handleMessage);
@@ -35,7 +37,7 @@ browser.runtime.onConnect.addListener((port) => {
 });
 
 browser.runtime.onMessage.addListener(
-  (message: ClientToPanelMessage, sender) => {
+  (message: FullClientToPanelMessage, sender) => {
     if (sender.tab) {
       const tabId = sender.tab.id;
       ports.get(tabId)?.postMessage(message);

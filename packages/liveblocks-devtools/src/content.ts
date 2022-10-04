@@ -1,7 +1,8 @@
 import browser from "webextension-polyfill";
-import type { PanelToClientMessage } from "./lib/types";
-
-const EXTENSION_ID = "liveblocks-devtools";
+import type {
+  FullPanelToClientMessage,
+  FullClientToPanelMessage,
+} from "./lib/protocol";
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) {
@@ -9,24 +10,16 @@ window.addEventListener("message", (event) => {
   }
 
   const message = event.data;
-
-  if (message?.source !== EXTENSION_ID) {
-    return;
+  if (message?.source === "liveblocks-devtools-client") {
+    // Relay messages from the client to the panel
+    browser.runtime.sendMessage(message as FullClientToPanelMessage);
   }
-
-  browser.runtime.sendMessage(message);
 });
 
-browser.runtime.onMessage.addListener((message: PanelToClientMessage) => {
-  window.postMessage(
-    {
-      source: EXTENSION_ID,
-      ...message,
-    },
-    "*"
-  );
-
-  return;
+browser.runtime.onMessage.addListener((message: FullPanelToClientMessage) => {
+  if (message?.source === "liveblocks-devtools-panel") {
+    window.postMessage(message, "*");
+  }
 });
 
 export {};

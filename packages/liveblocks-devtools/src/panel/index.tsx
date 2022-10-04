@@ -19,7 +19,7 @@ const Liveblocks = () => {
 
   const handleClick = useCallback(() => {
     postMessage({
-      name: "message",
+      name: "random-number",
       value: Math.random(),
     });
   }, []);
