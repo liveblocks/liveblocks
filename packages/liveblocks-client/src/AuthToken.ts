@@ -1,17 +1,6 @@
 import type { Json, JsonObject } from "./types";
 import { b64decode, isPlainObject, tryParseJson } from "./utils";
 
-export const SCOPES = [
-  "websocket:presence",
-  "websocket:storage",
-  "room:read",
-  "room:write",
-  "rooms:read",
-  "rooms:write",
-] as const;
-
-export type Scope = typeof SCOPES[number];
-
 export type AppOnlyAuthToken = {
   appId: string;
   roomId?: never; // Discriminating field for AuthToken type
@@ -49,10 +38,6 @@ function hasJwtMeta(data: unknown): data is JwtMetadata {
 export function isTokenExpired(token: JwtMetadata): boolean {
   const now = Date.now() / 1000;
   return now > token.exp - 300 || now < token.iat + 300;
-}
-
-export function isScope(value: unknown): value is Scope {
-  return (SCOPES as readonly unknown[]).includes(value);
 }
 
 function isStringList(value: unknown): value is string[] {

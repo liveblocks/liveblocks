@@ -386,7 +386,7 @@ function updatePresence<
 ) {
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
-      throw mappingToFunctionIsNotAllowed("value");
+      throw mappingToFunctionIsNotAllowed(key);
     }
 
     if (oldState[key] !== newState[key]) {
@@ -414,7 +414,7 @@ function patchLiveblocksStorage<
       process.env.NODE_ENV !== "production" &&
       typeof newState[key] === "function"
     ) {
-      throw mappingToFunctionIsNotAllowed("value");
+      throw mappingToFunctionIsNotAllowed(key);
     }
 
     if (oldState[key] !== newState[key]) {
