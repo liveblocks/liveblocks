@@ -19,6 +19,8 @@ export type ClientToPanelMessage =
     value: number;
   };
 
+// ------------------------------------------------------------
+
 export type FullPanelToClientMessage = PanelToClientMessage & {
   source: "liveblocks-devtools-panel";
   tabId: number;
