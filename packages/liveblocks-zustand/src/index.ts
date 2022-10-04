@@ -1,22 +1,61 @@
 import type {
   BaseUserMeta,
   Client,
-  Json,
-  JsonObject,
+  LiveList,
   LiveObject,
   LsonObject,
   Room,
+  StorageUpdate,
   User,
 } from "@liveblocks/client";
+import type {
+  Json,
+  JsonArray,
+  JsonObject,
+  JsonScalar,
+  Resolve,
+} from "@liveblocks/core";
 import {
   errorIf,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
-import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
+import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
+
+type MyState = {
+  // non-JSON keys can be used in Zustand, but they cannot be used for
+  // Liveblocks data
+  now: Date;
+
+  cursor: Cursor | null;
+  setCursor: (cursor: Cursor | null) => void;
+
+  maxBears: number;
+  setMaxBears: (maxBears: number) => void;
+
+  bears: Bear[];
+  setBears: (bears: Bear[]) => void;
+};
+
+const myMapping = {
+  bears: "storage",
+  maxBears: "storage",
+  cursor: "presence",
+} as const;
+
+type Cursor = {
+  x: number;
+  y: number;
+};
+
+type Bear = {
+  name: string;
+  livingArea: string;
+  age: number;
+};
 
 function mappingToFunctionIsNotAllowed(key: string): Error {
   return new Error(
@@ -35,12 +74,14 @@ function isJson(value: unknown): value is Json {
   );
 }
 
-export type ZustandState =
-  // TODO: Properly type out the constraints for this type here!
-  Record<string, unknown>;
+/**
+ * Returns the keys of T that are legal JSON values.
+ */
+type JsonKeys<T extends Pojo> = {
+  [K in keyof T]: T[K] extends Json ? K : never;
+}[keyof T];
 
 export type LiveblocksContext<
-  TState extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -49,9 +90,9 @@ export type LiveblocksContext<
   /**
    * Enters a room and starts sync it with zustand state
    * @param roomId The id of the room
-   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
    */
-  readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
+  readonly enterRoom: (roomId: string) => void;
+
   /**
    * Leaves a room and stops sync it with zustand state.
    * @param roomId The id of the room
@@ -81,8 +122,90 @@ export type LiveblocksContext<
     | "connecting";
 };
 
+/**
+ * Helper type to convert any Json value to the equivalent Lson node.
+ */
+// prettier-ignore
+type ToLson<J extends Json> =
+  J extends JsonScalar ? J :
+  J extends JsonArray ? LiveList<ToLson<J[number]>> :
+  J extends JsonObject ? LiveObject<ToLsonObject<J>>
+  : never;
+
+type ToLsonObject<J extends JsonObject> = Resolve<{
+  [K in keyof J]:
+    | ToLson<Exclude<J[K], undefined>>
+    | (undefined extends J[K] ? undefined : never);
+}>;
+
+type Cast<T, V> = T extends V ? T : V;
+
+type PresenceKeys<
+  TState extends Pojo,
+  TMapping extends MappingConfig<TState>
+> = {
+  [K in keyof TMapping]: TMapping[K] extends "presence" ? K : never;
+}[keyof TMapping] &
+  keyof TState &
+  string;
+
+type _Test1 = PresenceKeys<MyState, { bears: "storage"; cursor: "presence" }>;
+type _Test2 = StorageKeys<MyState, typeof myMapping>;
+
+type _Test3 = ExtractPresence<MyState, typeof myMapping>;
+type _Test4 = ExtractStorage<MyState, typeof myMapping>;
+
+type StorageKeys<
+  TState extends Pojo,
+  TMapping extends MappingConfig<TState>
+> = {
+  [K in keyof TMapping]: TMapping[K] extends "storage" ? K : never;
+}[keyof TMapping] &
+  keyof TState &
+  string;
+
+type ExtractPresence<
+  TState extends Pojo,
+  TMapping extends MappingConfig<TState>
+> = Cast<
+  Pick<TState, PresenceKeys<TState, TMapping> & keyof TState>,
+  JsonObject
+>;
+
+type ExtractStorage<
+  TState extends Pojo,
+  TMapping extends MappingConfig<TState>
+> = ToLsonObject<
+  Cast<Pick<TState, StorageKeys<TState, TMapping> & keyof TState>, JsonObject>
+>;
+
+type PresenceFromLiveblocksState<T> =
+  // prettier-ignore
+  T extends LiveblocksState<any, infer TPresence, any, any, any> ? TPresence : JsonObject;
+
+type StorageFromLiveblocksState<T> =
+  // prettier-ignore
+  T extends LiveblocksState<any, any, infer TStorage, any, any> ? TStorage : LsonObject;
+
+type UserMetaFromLiveblocksState<T> =
+  // prettier-ignore
+  T extends LiveblocksState<any, any, any, infer TUserMeta, any> ? TUserMeta : BaseUserMeta;
+
+type RoomEventFromLiveblocksState<T> =
+  // prettier-ignore
+  T extends LiveblocksState<any, any, any, any, infer TRoomEvent> ? TRoomEvent : Json;
+
+/**
+ * A plain old JavaScript object (POJO).
+ * This definition exists to enforce that a value is an actual "normal" object,
+ * and not an array or iterator or something. Using this constraints makes
+ * `keyof TState` always be a subset of `string`, and never `number | symbol`,
+ * which would be the case for a generic `keyof T`.
+ */
+type Pojo = { [key: string]: unknown };
+
 export type LiveblocksState<
-  TState extends ZustandState,
+  TState extends Pojo,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -92,7 +215,6 @@ export type LiveblocksState<
    * Liveblocks extra state attached by the middleware
    */
   readonly liveblocks: LiveblocksContext<
-    TState,
     TPresence,
     TStorage,
     TUserMeta,
@@ -100,234 +222,251 @@ export type LiveblocksState<
   >;
 };
 
-export type Mapping<T> = {
-  [K in keyof T]?: boolean;
+// XXX Rename to Mapping<T> eventually
+type MappingConfig<TState extends Pojo> = {
+  [K in JsonKeys<TState> & keyof TState]?: "presence" | "storage";
 };
 
-type Options<T> = {
+export function middleware<
+  TState extends Pojo,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TRoomEvent extends Json = Json,
+  Mps extends [StoreMutatorIdentifier, unknown][] = [],
+  Mcs extends [StoreMutatorIdentifier, unknown][] = []
+>(
+  config: StateCreator<TState, Mps, Mcs>
+): <TMapping extends MappingConfig<TState>>(options: {
   /**
    * Liveblocks client created by @liveblocks/client createClient
    */
   client: Client;
-  /**
-   * Mapping used to synchronize a part of your zustand state with one Liveblocks Room storage.
-   */
-  storageMapping?: Mapping<T>;
-  /**
-   * Mapping used to synchronize a part of your zustand state with one Liveblocks Room presence.
-   */
-  presenceMapping?: Mapping<T>;
-};
 
-export function middleware<
-  T extends ZustandState,
-  TPresence extends JsonObject = JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json
->(
-  config: StateCreator<
-    T,
-    SetState<T>,
-    GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-    StoreApi<T>
+  /**
+   * Mapping used to synchronize a subset of your Zustand state with your
+   * Liveblocks room's Presence or Storage.
+   */
+  mapping: TMapping;
+}) => StateCreator<
+  //
+  // NOTE: This ignores:
+  //
+  //   "TS2589: Type instantiation is excessively deep and possibly infinite"
+  //
+  // While TS errors on this line, it still seems to work on all the cases
+  // I tested it on. ¯\_(ツ)_/¯
+  //
+  // There likely is something we can/should improve on this, but I haven't
+  // found the root cause of this issue yet.
+  //
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  //
+  LiveblocksState<
+    TState,
+    ExtractPresence<TState, TMapping>,
+    ExtractStorage<TState, TMapping>,
+    TUserMeta,
+    TRoomEvent
   >,
-  options: Options<T>
-): StateCreator<
-  LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  SetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
+  Mps,
+  Mcs
 > {
-  const { client, presenceMapping, storageMapping } = validateOptions(options);
-  return (set: any, get, api: any) => {
-    const typedSet: (
-      callbackOrPartial: (
-        current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
-      ) =>
-        | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
-        | Partial<T>
-    ) => void = set;
+  return (options) => {
+    const client = options.client;
+    errorIf(!client, `${ERROR_PREFIX} client is missing`);
 
-    let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
-    let isPatching: boolean = false;
-    let storageRoot: LiveObject<any> | null = null;
-    let unsubscribeCallbacks: Array<() => void> = [];
+    const [presenceKeys, storageKeys] = validateMapping<
+      TState,
+      typeof options["mapping"]
+    >(options.mapping);
 
-    function enterRoom(roomId: string, initialState: any) {
-      if (storageRoot) {
-        return;
+    return (set, get, api) => {
+      type TGet = typeof get;
+      type TLiveblocksState = ReturnType<TGet>;
+
+      type TPresence = PresenceFromLiveblocksState<TLiveblocksState>;
+      type TStorage = StorageFromLiveblocksState<TLiveblocksState>;
+      type TUserMeta = UserMetaFromLiveblocksState<TLiveblocksState>;
+      type TRoomEvent = RoomEventFromLiveblocksState<TLiveblocksState>;
+
+      let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
+      let isPatching: boolean = false;
+      let storageRoot: LiveObject<TStorage> | null = null;
+      let unsubscribeCallbacks: Array<() => void> = [];
+
+      function initialPresence(): TPresence {
+        const currState = get();
+        const result = {} as TPresence;
+        for (const key of presenceKeys) {
+          (result as any)[key] = currState[key];
+        }
+        return result;
       }
 
-      room = client.enter(roomId, { initialPresence: {} as TPresence });
+      function enterRoom(roomId: string) {
+        if (storageRoot) {
+          return;
+        }
 
-      updateZustandLiveblocksState(set, {
-        isStorageLoading: true,
-        room: room as any,
-      });
+        room = client.enter(roomId, { initialPresence });
 
-      const state = get();
-
-      broadcastInitialPresence(room, state, presenceMapping as any);
-
-      unsubscribeCallbacks.push(
-        room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others });
-        })
-      );
-
-      unsubscribeCallbacks.push(
-        room.events.connection.subscribe(() => {
-          updateZustandLiveblocksState(set, {
-            connection: room!.getConnectionState(),
-          });
-        })
-      );
-
-      unsubscribeCallbacks.push(
-        room.events.me.subscribe(() => {
-          if (isPatching === false) {
-            set(
-              patchPresenceState(room!.getPresence(), presenceMapping as any)
-            );
-          }
-        })
-      );
-
-      room.getStorage().then(({ root }) => {
-        const updates: any = {};
-
-        room!.batch(() => {
-          for (const key in storageMapping) {
-            const liveblocksStatePart = root.get(key);
-
-            if (liveblocksStatePart == null) {
-              updates[key] = initialState[key];
-              patchLiveObjectKey(root, key, undefined, initialState[key]);
-            } else {
-              updates[key] = lsonToJson(liveblocksStatePart);
-            }
-          }
+        updateLiveblocksContext(set, {
+          isStorageLoading: true,
+          room: room as any,
         });
 
-        typedSet(updates);
-
-        storageRoot = root;
         unsubscribeCallbacks.push(
-          room!.subscribe(
-            root,
-            (updates) => {
-              if (isPatching === false) {
-                set(patchState(get(), updates, storageMapping as any));
-              }
-            },
-            { isDeep: true }
-          )
+          room.events.others.subscribe(({ others }) => {
+            updateLiveblocksContext(set, { others });
+          })
         );
 
-        // set isLoading storage to false once storage is loaded
-        updateZustandLiveblocksState(set, { isStorageLoading: false });
-      });
-    }
+        unsubscribeCallbacks.push(
+          room.events.connection.subscribe(() => {
+            updateLiveblocksContext(set, {
+              connection: room!.getConnectionState(),
+            });
+          })
+        );
 
-    function leaveRoom(roomId: string) {
-      for (const unsubscribe of unsubscribeCallbacks) {
-        unsubscribe();
-      }
-      storageRoot = null;
-      room = null;
-      isPatching = false;
-      unsubscribeCallbacks = [];
-      client.leave(roomId);
-      updateZustandLiveblocksState(set, {
-        others: [],
-        connection: "closed",
-        isStorageLoading: false,
-        room: null,
-      });
-    }
+        unsubscribeCallbacks.push(
+          room.events.me.subscribe(() => {
+            if (isPatching === false) {
+              set(pick(room!.getPresence(), presenceKeys as any[]) as any);
+            }
+          })
+        );
 
-    const store = config(
-      (args) => {
-        const oldState = get();
-        set(args);
-        const newState = get();
+        room.getStorage().then(({ root }) => {
+          const updates: any = {};
 
-        if (room) {
-          isPatching = true;
-          updatePresence(
-            room!,
-            oldState as any,
-            newState,
-            presenceMapping as any
-          );
+          room!.batch(() => {
+            for (const key of storageKeys) {
+              const liveblocksStatePart = root.get(key as any);
 
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping as any
-              );
+              if (liveblocksStatePart == null) {
+                updates[key] = get()[key];
+                patchLiveObjectKey(root, key, undefined, get()[key]);
+              } else {
+                updates[key] = lsonToJson(liveblocksStatePart);
+              }
             }
           });
 
-          isPatching = false;
-        }
-      },
-      get as any,
-      api
-    );
+          set(updates);
 
-    return {
-      ...store,
-      liveblocks: {
-        enterRoom,
-        leaveRoom,
-        room: null,
-        others: [],
-        connection: "closed",
-        isStorageLoading: false,
-      },
+          storageRoot = root;
+          unsubscribeCallbacks.push(
+            room!.subscribe(
+              root,
+              (updates) => {
+                if (isPatching === false) {
+                  // XXX This shouldn't be working with Partial<TState>, but
+                  // Pick<TState, TStorageKeys>, which is more accurate
+                  const ppp = patchState(get(), updates, storageKeys);
+                  set(ppp);
+                }
+              },
+              { isDeep: true }
+            )
+          );
+
+          // set isLoading storage to false once storage is loaded
+          updateLiveblocksContext(set, { isStorageLoading: false });
+        });
+      }
+
+      function leaveRoom(roomId: string) {
+        for (const unsubscribe of unsubscribeCallbacks) {
+          unsubscribe();
+        }
+        storageRoot = null;
+        room = null;
+        isPatching = false;
+        unsubscribeCallbacks = [];
+        client.leave(roomId);
+        updateLiveblocksContext(set, {
+          others: [],
+          connection: "closed",
+          isStorageLoading: false,
+          room: null,
+        });
+      }
+
+      const state = config(
+        (patch, _replace) => {
+          const oldState = get();
+          set(patch);
+          const newState = get();
+
+          if (room) {
+            isPatching = true;
+            updatePresence(room, oldState, newState, presenceKeys);
+
+            room.batch(() => {
+              if (storageRoot) {
+                patchLiveblocksStorage(
+                  storageRoot,
+                  oldState,
+                  newState,
+                  storageKeys
+                );
+              }
+            });
+
+            isPatching = false;
+          }
+        },
+        get,
+        api,
+        [] // $$storeMutations ????
+      );
+
+      return {
+        ...state,
+        liveblocks: {
+          enterRoom,
+          leaveRoom,
+          room: null,
+          others: [],
+          connection: "closed",
+          isStorageLoading: false,
+        },
+      };
     };
   };
 }
 
-function patchState<T>(
-  state: T,
-  updates: any[], // StorageUpdate
-  mapping: Mapping<T>
+function patchState<TState extends Pojo, K extends keyof TState & string>(
+  state: TState,
+  updates: StorageUpdate[],
+  storageKeys: K[]
 ) {
-  const partialState: Partial<T> = {};
+  const subState = pick(state, storageKeys);
+  const patched = legacy_patchImmutableObject(subState, updates);
+  return pick(patched, storageKeys);
+}
 
-  for (const key in mapping) {
-    partialState[key] = state[key];
+/**
+ * Creates a subset of the given object, containing only the selected keys.
+ *
+ * @example
+ * pick({ a: 1, b: 2 }, ['a'])       // { a: 1 }
+ * pick({ a: 1, b: 2 }, ['a', 'c'])  // { a: 1 }
+ */
+function pick<O, K extends keyof O & string>(
+  obj: O,
+  keys: readonly K[]
+): Pick<O, K> {
+  const result = {} as Pick<O, K>;
+  for (const key of keys) {
+    result[key] = obj[key];
   }
-
-  const patched = legacy_patchImmutableObject(partialState, updates);
-
-  const result: Partial<T> = {};
-
-  for (const key in mapping) {
-    result[key] = patched[key];
-  }
-
   return result;
 }
 
-function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
-  const partialState: Partial<T> = {};
-
-  for (const key in mapping) {
-    partialState[key] = presence[key];
-  }
-
-  return partialState;
-}
-
-function updateZustandLiveblocksState<
-  T extends ZustandState,
+function updateLiveblocksContext<
+  T extends Pojo,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -338,23 +477,15 @@ function updateZustandLiveblocksState<
       current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
     ) =>
       | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      // XXX Double-check - truly Partial?
       | Partial<any>
   ) => void,
+  // XXX Double-check - truly Partial?
   partial: Partial<
-    LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>["liveblocks"]
+    LiveblocksContext<TPresence, TStorage, TUserMeta, TRoomEvent>
   >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
-}
-
-function broadcastInitialPresence<T>(
-  room: Room<any, any, any, any>,
-  state: T,
-  mapping: Mapping<T>
-) {
-  for (const key in mapping) {
-    room?.updatePresence({ [key]: (state as any)[key] });
-  }
 }
 
 function updatePresence<
@@ -366,9 +497,9 @@ function updatePresence<
   room: Room<TPresence, TStorage, TUserMeta, TRoomEvent>,
   oldState: TPresence,
   newState: TPresence,
-  presenceMapping: Mapping<TPresence>
+  presenceKeys: (keyof TPresence & string)[]
 ) {
-  for (const key in presenceMapping) {
+  for (const key of presenceKeys) {
     if (typeof newState[key] === "function") {
       throw mappingToFunctionIsNotAllowed(key);
     }
@@ -382,7 +513,7 @@ function updatePresence<
 
 function patchLiveblocksStorage<
   O extends LsonObject,
-  TState extends ZustandState,
+  TState extends Pojo,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -391,9 +522,9 @@ function patchLiveblocksStorage<
   root: LiveObject<O>,
   oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
   newState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  mapping: Mapping<TState>
+  storageKeys: (keyof TState & string)[]
 ) {
-  for (const key in mapping) {
+  for (const key of storageKeys) {
     if (
       process.env.NODE_ENV !== "production" &&
       typeof newState[key] === "function"
@@ -419,68 +550,32 @@ function patchLiveblocksStorage<
   }
 }
 
-function isObject(value: any): value is object {
-  return Object.prototype.toString.call(value) === "[object Object]";
-}
-
-function validateNoDuplicateKeys<T>(
-  storageMapping: Mapping<T>,
-  presenceMapping: Mapping<T>
-) {
-  for (const key in storageMapping) {
-    if (presenceMapping[key] !== undefined) {
-      throw new Error(
-        `${ERROR_PREFIX} "${key}" is mapped on both presenceMapping and storageMapping. A key shouldn't exist on both mapping.`
-      );
-    }
-  }
-}
-
 /**
  * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware
  */
-function validateMapping<T>(
-  mapping: Mapping<T>,
-  mappingType: "storageMapping" | "presenceMapping"
-): Mapping<T> {
-  errorIf(
-    !isObject(mapping),
-    `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
-  );
+function validateMapping<
+  TState extends Pojo,
+  TMapping extends MappingConfig<TState>
+>(
+  mapping: TMapping
+): [PresenceKeys<TState, TMapping>[], StorageKeys<TState, TMapping>[]] {
+  const presenceKeys = [] as PresenceKeys<TState, TMapping>[];
+  const storageKeys = [] as StorageKeys<TState, TMapping>[];
 
-  const result: Mapping<T> = {};
-  for (const key in mapping) {
-    errorIf(
-      typeof mapping[key] !== "boolean",
-      `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
-    );
-
-    if (mapping[key] === true) {
-      result[key] = true;
+  for (const [k, value] of Object.entries(mapping)) {
+    const key = k as keyof TMapping;
+    if (value === "presence") {
+      presenceKeys.push(key as PresenceKeys<TState, TMapping>);
+    } else if (value === "storage") {
+      storageKeys.push(key as StorageKeys<TState, TMapping>);
+    } else {
+      throw new Error(
+        `${ERROR_PREFIX} mapping.${String(
+          key
+        )} should either be "presence" or "storage", but was: ${String(value)}`
+      );
     }
   }
-  return result;
-}
 
-function validateOptions<T extends ZustandState>(
-  options: Options<T>
-): Options<T> {
-  const client = options.client;
-  errorIf(!client, `${ERROR_PREFIX} client is missing`);
-
-  const storageMapping = validateMapping(
-    options.storageMapping ?? {},
-    "storageMapping"
-  );
-
-  const presenceMapping = validateMapping(
-    options.presenceMapping ?? {},
-    "presenceMapping"
-  );
-
-  if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(storageMapping, presenceMapping);
-  }
-
-  return { client, storageMapping, presenceMapping };
+  return [presenceKeys, storageKeys];
 }
