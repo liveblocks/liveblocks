@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { onMessage, postMessage } from "./port";
+import { onMessageFromClient, sendMessageToClient } from "./port";
 import type { PanelToClientMessage } from "../lib/protocol";
 
 const Liveblocks = () => {
@@ -12,9 +12,9 @@ const Liveblocks = () => {
       setReceivedMessages((msglist) => [...msglist, msg]);
     }
 
-    onMessage.addListener(receiveMessage);
+    onMessageFromClient.addListener(receiveMessage);
     return () => {
-      onMessage.removeListener(receiveMessage);
+      onMessageFromClient.removeListener(receiveMessage);
     };
   }, []);
 
@@ -24,7 +24,7 @@ const Liveblocks = () => {
       value: 10000 * Math.random(),
     };
     setSentMessages((msglist) => [...msglist, msg]);
-    postMessage(msg);
+    sendMessageToClient(msg);
   }, []);
 
   return (
