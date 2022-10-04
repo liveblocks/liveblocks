@@ -39,6 +39,48 @@ export type ZustandState =
   // TODO: Properly type out the constraints for this type here!
   Record<string, unknown>;
 
+export type LiveblocksContext<
+  TState extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  /**
+   * Enters a room and starts sync it with zustand state
+   * @param roomId The id of the room
+   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
+   */
+  readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
+  /**
+   * Leaves a room and stops sync it with zustand state.
+   * @param roomId The id of the room
+   */
+  readonly leaveRoom: (roomId: string) => void;
+  /**
+   * The room currently synced to your zustand state.
+   */
+  readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+  /**
+   * Other users in the room. Empty no room is currently synced
+   */
+  readonly others: readonly User<TPresence, TUserMeta>[];
+  /**
+   * Whether or not the room storage is currently loading
+   */
+  readonly isStorageLoading: boolean;
+  /**
+   * Connection state of the room
+   */
+  readonly connection:
+    | "closed"
+    | "authenticating"
+    | "unavailable"
+    | "failed"
+    | "open"
+    | "connecting";
+};
+
 export type LiveblocksState<
   TState extends ZustandState,
   TPresence extends JsonObject = JsonObject,
@@ -49,41 +91,13 @@ export type LiveblocksState<
   /**
    * Liveblocks extra state attached by the middleware
    */
-  readonly liveblocks: {
-    /**
-     * Enters a room and starts sync it with zustand state
-     * @param roomId The id of the room
-     * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
-     */
-    readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
-    /**
-     * Leaves a room and stops sync it with zustand state.
-     * @param roomId The id of the room
-     */
-    readonly leaveRoom: (roomId: string) => void;
-    /**
-     * The room currently synced to your zustand state.
-     */
-    readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
-    /**
-     * Other users in the room. Empty no room is currently synced
-     */
-    readonly others: readonly User<TPresence, TUserMeta>[];
-    /**
-     * Whether or not the room storage is currently loading
-     */
-    readonly isStorageLoading: boolean;
-    /**
-     * Connection state of the room
-     */
-    readonly connection:
-      | "closed"
-      | "authenticating"
-      | "unavailable"
-      | "failed"
-      | "open"
-      | "connecting";
-  };
+  readonly liveblocks: LiveblocksContext<
+    TState,
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >;
 };
 
 export type Mapping<T> = {
@@ -207,7 +221,7 @@ export function middleware<
 
       unsubscribeCallbacks.push(
         room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others: others.toArray() });
+          updateZustandLiveblocksState(set, { others });
         })
       );
 
