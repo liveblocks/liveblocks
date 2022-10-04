@@ -20,7 +20,7 @@ const Liveblocks = () => {
 
   const handleClick = useCallback(() => {
     const msg: PanelToClientMessage = {
-      name: "random-number",
+      name: "double-this-number-plz",
       value: 10000 * Math.random(),
     };
     setSentMessages((msglist) => [...msglist, msg]);

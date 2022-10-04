@@ -5,7 +5,7 @@ export type PanelToClientMessage =
   // Extend message list here
   | { name: "connect" }
   | {
-      name: "random-number";
+      name: "double-this-number-plz";
       value: number;
     };
 
@@ -15,7 +15,7 @@ export type PanelToClientMessage =
 export type ClientToPanelMessage =
   // Extend message list here
   {
-    name: "round-then-double-the-number";
+    name: "answer";
     value: number;
   };
 

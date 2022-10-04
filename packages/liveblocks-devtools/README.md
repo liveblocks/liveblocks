@@ -19,22 +19,6 @@
      window.postMessage(fullMsg, "*");
    }
 
-   function onMessageFromPanel(message /*: FullPanelToClientMessage */) {
-     switch (message.name) {
-       case "random-number": {
-         sendToPanel({
-           name: "round-then-double-the-number",
-           value: Math.ceil(message.value) * 2,
-         });
-         break;
-       }
-
-       default: {
-         console.error("Unknown message?", message);
-       }
-     }
-   }
-
    window.addEventListener("message", (event) => {
      if (
        event.source === window &&
@@ -45,6 +29,28 @@
        // Message not for us
      }
    });
+
+   function onMessageFromPanel(message /*: FullPanelToClientMessage */) {
+     switch (message.name) {
+       case "double-this-number-plz": {
+         setTimeout(
+           () => {
+             sendToPanel({
+               name: "answer",
+               value: Math.ceil(message.value) * 2,
+             });
+           },
+           // Fake slow response
+           500
+         );
+         break;
+       }
+
+       default: {
+         console.error("Unknown message?", message);
+       }
+     }
+   }
    ```
 
 1. Open the Liveblocks dev panel
