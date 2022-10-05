@@ -11,6 +11,8 @@
     "build:firefox": "plasmo build --target=firefox-mv2"
   },
   "dependencies": {
+    "@radix-ui/react-tabs": "^1.0.0",
+    "classnames": "^2.3.2",
     "plasmo": "0.55.0",
     "react": "18.2.0",
     "react-dom": "18.2.0"
@@ -23,6 +25,7 @@
     "autoprefixer": "^10.4.12",
     "postcss": "^8.4.17",
     "prettier": "2.7.1",
+    "prettier-plugin-tailwindcss": "^0.1.13",
     "tailwindcss": "^3.1.8",
     "typescript": "4.8.4",
     "webextension-polyfill": "^0.10.0"
