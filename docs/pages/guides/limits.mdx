@@ -1,0 +1,63 @@
+---
+meta:
+  title: "Limits"
+  parentTitle: "Guides"
+  description: "Learn more about Liveblocks API limits"
+---
+
+## Connections
+
+A connection is when a user initially connects to a Liveblocks room. If a user
+connects to your product on two different browsers and their phone, that would
+be three connections.
+
+### Connections per month
+
+This limit can be hit when too many connections are established during the
+monthly billing period:
+
+- Starter plan: <Limits.FreeMonthlyConnections /> connections per month.
+- Pro plan: <Limits.ProMonthlyConnections /> connections per month included +
+  $<Limits.ProExtraConnectionsPrice /> per extra connection
+- Organization plan: custom connections per month
+
+When this limit is reached, your account will still work and you won’t be
+charged on an occasional traffic spike. We’ll email you to kindly ask you
+upgrade your plan if you keep hitting that limit. You will never be charged
+extra for an occasional traffic spike. We will never stop counting your stats
+because of an occasional traffic spike. There are no surprise fees and your card
+will never be charged unexpectedly.
+
+### Simultaneous connections per room
+
+This limit can be hit when too many simultaneous connections are established on
+a single room:
+
+- Starter plan: <Limits.FreeMaxConnectionsPerRoom /> simultaneous connections
+  per room
+- Pro plan: <Limits.ProMaxConnectionsPerRoom /> simultaneous connections per
+  room
+- Organization plan: custom simultaneous connections per room
+
+When this limit is reached, the server declines the connection and the
+Liveblocks client raises the error with the code “4005”.
+
+## Other limits
+
+### Room `id`
+
+A room `id` cannot exceed 128 characters.
+
+### User `id`
+
+A user `id` cannot exceed 128 characters.
+
+### User information
+
+User information sent from the authentication endpoint cannot exceed 1024
+characters once serialized to JSON.
+
+### Storage
+
+The value of a `LiveObject`, `LiveList`, and `LiveMap` storage item cannot
+exceed 128 kB. This limit can be increased on the Organization plan.

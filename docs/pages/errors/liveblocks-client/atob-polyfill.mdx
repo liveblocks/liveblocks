@@ -1,0 +1,36 @@
+---
+meta:
+  title: "You need to polyfill atob to use the client in your environment"
+  parentTitle: "Error"
+  description:
+    "@liveblocks/client error: atob polyfill is required in your environment."
+---
+
+### Why this error occured
+
+You are using `@liveblocks/client` within a JavaScript runtime which doesn't
+implement [`atob`](https://developer.mozilla.org/en-US/docs/Web/API/atob).
+(environments like React Native or Node < 16)
+
+### Possible ways to fix it
+
+As a polyfill, we recommend installing the package
+[`base-64`](https://www.npmjs.com/package/base-64).
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts highlight="1,5-7" file="src/index.js"
+import { decode } from "base-64";
+
+const client = createClient({
+  /* ... your other client's options */
+  polyfills: {
+    atob: decode,
+  },
+});
+```

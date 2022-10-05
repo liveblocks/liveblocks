@@ -1,0 +1,481 @@
+---
+meta:
+  title: "Upgrading to 0.17"
+  parentTitle: "Guides"
+  description: "Guide to upgrade to the latest Liveblocks version"
+---
+
+With the release of 0.17 we’re making a big investment in the stability and
+reliability of Liveblocks. Our long term goal is to empower you to write and
+help evolve your apps in the best way possible, and at enterprise scale. It
+already was easy to get started with Liveblocks, and with these changes we want
+to make _evolving_ your app just as easy.
+
+The first step towards this goal is to take TypeScript support to the next level
+for [`@liveblocks/client`][] and [`@liveblocks/react`][] (but our other packages
+will soon follow suit). This will help you write code with confidence and catch
+bugs as soon as possible in the development process. We have strictened our type
+definitions to be more accurate and will recommend some new usage patterns, so
+it will be easier for you to create _bug free_ collaborative apps.
+
+To upgrade [`@liveblocks/client`][] and [`@liveblocks/react`][], run the
+following command.
+
+```bash
+npm update @liveblocks/cient@0.17 @liveblocks/react@0.17
+```
+
+With these changes, we’re clearing the path to enable schema validation per
+room, automatic data migrations, more powerful data selector APIs, and other
+enterprise-level features.
+
+Let’s dive in and take a look!
+
+## Changes in @liveblocks/react [#react]
+
+### Lifting up your state to the room level [#lifting-state-to-room]
+
+With 0.16, it was possible to initialize a storage key with [`useObject`][],
+[`useList`][], [`useMap`][].
+
+Even if handy, we realized that it introduced confusion and unpredictable
+behavior for most users. Imagine a scenario where you have two components
+initializing the same storage key.
+
+```tsx
+function ComponentA() {
+  const author = useObject("author", {
+    firstName: "Ada",
+    lastName: "Lovelace",
+  });
+
+  /* ... */
+}
+
+function ComponentB() {
+  const author = useObject("author", {
+    firstName: "Margaret",
+    lastName: "Hamilton",
+  });
+
+  /* ... */
+}
+```
+
+Depending on which component renders first, `author` will be Margaret Hamilton
+or Ada Lovelace. To make this more predictable, we’re deprecating this and
+recommend initializing the storage at the [`RoomProvider`][] level.
+
+#### Before ❌ [@hidden]
+
+```tsx
+function ComponentA() {
+  const author = useObject(
+    "author",
+
+    // ⚠️ Don’t initialize your data here anymore!
+    { firstName: "Ada", lastName: "Lovelace" }
+  );
+
+  /* ... */
+}
+```
+
+#### After ✅ [@hidden]
+
+```tsx highlight="5-10,13,20"
+import { LiveObject } from "@liveblocks/client";
+
+function Root() {
+  // Instead, initialize it at the RoomProvider level to remove all ambiguity
+  const initialStorage = {
+    author: new LiveObject({
+      firstName: "Ada",
+      lastName: "Lovelace",
+    }),
+  };
+
+  return (
+    <RoomProvider id="my-room-id" initialStorage={initialStorage}>
+      <ComponentA />
+    </RoomProvider>
+  );
+}
+
+function ComponentA() {
+  const author = useObject("author");
+
+  /* ... */
+}
+```
+
+<Banner title="Explicitly specify your live structures now">
+
+Notice the explicit use of LiveObject here now. Before, when using useObject (or
+useList, useMap), the data you passed to initialize it would automatically get
+wrapped in LiveObject for you. This seemed convenient at first, but it also
+caused confusion about which Storage keys were Live structures and which ones
+were “normal” values. By opting in to which keys you want to be Live structures,
+you now get full control over your storage data.
+
+</Banner>
+
+If you run into issues with these new patterns and you need help, please
+[let us know](https://github.com/liveblocks/liveblocks/discussions/359). We’re
+here to help!
+
+### A better way to annotate your own types [#react-better-type-annotations]
+
+In 0.16, most of our hooks accepted generic parameters that let you explicitly
+provide your own types. For example:
+
+```tsx highlight="3-5,11,19"
+import { useMyPresence, RoomProvider } from "@liveblocks/react";
+
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+function Root() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialPresence={{ cursor: { x: 100, y: 100 } }}
+    >
+      <Component />
+    </RoomProvider>
+  );
+}
+
+function Component() {
+  const [myPresence] = useMyPresence<Presence>();
+
+  const cursor = myPresence.cursor; // Valid
+
+  /* ... */
+}
+```
+
+One issue with this API was that there was no good way to make sure that
+`RoomProvider.initialPresence` and [`useMyPresence`][] types remain
+synchronized, as there was no inherent connection between these.
+
+If we added a `color` property to the `Presence` type, it would still be missing
+from the `initialPresence` at the `RoomProvider` level, and TypeScript would not
+be able to catch that bug. The opposite would also fail; omitting the `cursor`
+property on the `initialPresence` would break at runtime but TypeScript would
+not be able to catch this issue for you!
+
+Another issue is that there could be many places where you’d have to provide
+those extra type annotations.
+
+With 0.17, we’re fixing all of this!
+
+To do so, we’re introducing a new API called [`createRoomContext`][]. It lets
+you type your `RoomProvider` and make sure that all your hooks types are
+synchronized with the `RoomProvider`. Besides this initial setup, you will no
+longer have to provide any type annotations elsewhere anymore.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  /* client options */
+});
+
+type Presence = {
+  cursor: { x: number; y: number };
+};
+
+// This is just to illustrate the API - read on for tips on where to put this!
+const { RoomProvider, useMyPresence } = createRoomContext<Presence>(client);
+
+function Root() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialPresence={{ cursor: { x: 100, y: 100 } }}
+    >
+      <Component />
+    </RoomProvider>
+  );
+}
+
+function Component() {
+  const [myPresence] = useMyPresence();
+
+  // We can now be sure that cursor is a valid property without any generic typed param
+  const cursor = myPresence.cursor;
+
+  /* ... */
+}
+```
+
+As you can see, `createRoomContext` optionally takes type parameters that let
+you specify the shape of your app’s data (by specifying your own `Presence`,
+`Storage`, `UserMeta`, `Event` types). Depending on the complexity of your app,
+you may only need to use one or more of these.
+
+Take a look at these examples to better see how to use and configure it:
+
+- Our live-cursors-chat example app uses
+  [`Presence`](https://github.com/liveblocks/liveblocks/blob/a11e5744531a21201ae9f9f9ad4f1aa5e74e141e/examples/nextjs-live-cursors-chat/liveblocks.config.ts#L8-L25)
+  only
+- Our live-avatars example app uses
+  [`UserMeta`](https://github.com/liveblocks/liveblocks/blob/a11e5744531a21201ae9f9f9ad4f1aa5e74e141e/examples/nextjs-live-avatars/liveblocks.config.ts#L8-L26)
+  only
+- Our logo-builder example app uses
+  [`Presence`](https://github.com/liveblocks/liveblocks/blob/a11e5744531a21201ae9f9f9ad4f1aa5e74e141e/examples/nextjs-logo-builder/liveblocks.config.ts#L8-L31),
+  [`Storage`](https://github.com/liveblocks/liveblocks/blob/a11e5744531a21201ae9f9f9ad4f1aa5e74e141e/examples/nextjs-logo-builder/liveblocks.config.ts#L8-L31),
+  and
+  [`UserMeta`](https://github.com/liveblocks/liveblocks/blob/a11e5744531a21201ae9f9f9ad4f1aa5e74e141e/examples/nextjs-logo-builder/liveblocks.config.ts#L8-L31)
+
+### Recommended upgrade steps
+
+To make this refactoring as easy as possible, follow the steps below.
+
+#### Step 1 - Upgrade `@liveblocks/client` and `@liveblocks/react` [@hidden]
+
+To upgrade [`@liveblocks/client`][] and [`@liveblocks/react`], run the following
+command.
+
+```bash
+npm update @liveblocks/client@0.17 @liveblocks/react@0.17
+```
+
+#### Step 2 - Create a new file called `liveblocks.config.ts` where you will create your Liveblocks client, provider and hooks and re-export them. [@hidden]
+
+```tsx file="liveblocks.config.ts"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  /* client options */
+});
+
+// Presence represents the properties that will exist on every User in the Room
+// and that will automatically be kept in sync. Accessible through the
+// `user.presence` property. Must be JSON-serializable.
+type Presence = {
+  // cursor: { x: number, y: number } | null,
+  // ...
+};
+
+// Optionally, Storage represents the shared document that persists in the
+// Room, even after all Users leave. Fields under Storage typically are
+// LiveList, LiveMap, LiveObject instances, for which updates are
+// automatically persisted and synced to all connected clients.
+type Storage = {
+  // author: LiveObject<{ firstName: string, lastName: string }>,
+  // ...
+};
+
+// Optionally, UserMeta represents static/readonly metadata on each User, as
+// provided by your own custom auth backend (if used). Useful for data that
+// will not change during a session, like a User's name or avatar.
+// type UserMeta = {
+//   id?: string,  // Accessible through `user.id`
+//   info?: Json,  // Accessible through `user.info`
+// };
+
+// Optionally, the type of custom events broadcasted and listened for in this
+// room. Must be JSON-serializable.
+// type RoomEvent = {};
+
+export const {
+  RoomProvider,
+  useMyPresence,
+  useObject,
+  /* ...all the other hooks you’re using... */
+} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+```
+
+#### Step 3 - Replace all the direct hook imports from `@liveblocks/react` by your path to `liveblocks.config.ts` and remove all generic params. [@hidden]
+
+##### Before ❌ [@hidden]
+
+```tsx
+import { useMyPresence, useOthers, useObject } from "@liveblocks/react";
+import { Author } from "./types";
+
+type MyPresence = {
+  cursor: { x: number; y: number } | null;
+};
+
+function Component() {
+  const author = useObject<Author>("author");
+  const [{ cursor }] = useMyPresence<MyPresence>();
+  const others = useOthers<Presence>();
+}
+```
+
+##### After ✅ [@hidden]
+
+```tsx
+import { useMyPresence, useOthers, useObject } from "./liveblocks.config";
+
+function Component() {
+  const author = useObject("author");
+  const [{ cursor }] = useMyPresence();
+  const others = useOthers();
+}
+```
+
+#### Step 4 - Remove your [`LiveblocksProvider`][] at the top of your react tree. It’s not needed anymore! [@hidden]
+
+##### Before ❌ [@hidden]
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { LiveblocksProvider, RoomProvider } from "@liveblocks/react";
+
+const client = createClient({
+  /* ... */
+});
+
+ReactDOM.render(
+  <LiveblocksProvider client={client}>
+    <RoomProvider id="my-room-id">
+      <App />
+    </RoomProvider>
+  </LiveblocksProvider>,
+  document.getElementById("root")
+);
+```
+
+##### After ✅ [@hidden]
+
+```tsx
+import { RoomProvider } from "./liveblocks.config";
+
+ReactDOM.render(
+  <RoomProvider id="my-room-id">
+    <App />
+  </RoomProvider>,
+  document.getElementById("root")
+);
+```
+
+If you run into issues with these new patterns and you need help, please
+[let us know](https://github.com/liveblocks/liveblocks/discussions/360). We’re
+here to help!
+
+## Changes in @liveblocks/client [#client]
+
+### Removed dangerous default type params [#no-more-default-type-params]
+
+In 0.16, while [`LiveList`][], [`LiveMap`][], [`LiveObject`][] were generics,
+they also took default type params, which made them a footgun. It was easy to
+accidentally use them in a way that would discard useful type information and
+hinder inference.
+
+For example:
+
+```ts
+// ✅ Inferred
+let list = new LiveList([1, 2, 3]);
+
+// ✅ Explicit
+let list: LiveList<number> = new LiveList([1, 2, 3]);
+
+// ☢️ 0.16: Dangerous footgun: discards useful type information!
+// 🚫 0.17: No longer possible
+let list: LiveList = new LiveList([1, 2, 3]);
+```
+
+They now mimic their equivalent built-in TypeScript generics, so:
+
+- `LiveList<T>` is now just like `Array<T>`
+- `LiveMap<K, V>` is now just like `Map<K, V>`
+- `LiveObject<{ a: number, b: string }>` is now just like
+  `{ a: number, b: string }`
+
+### No longer import Presence [#define-dont-import-presence]
+
+In 0.16, we exposed a `Presence` type that you could import, which was just an
+alias for “any JSON object”—not that useful! Importing Presence from Liveblocks
+made no sense. By definition, Presence is data owned and defined by your
+application after all.
+
+You should no longer need to _import_ this type.
+
+```tsx
+// ❌ No longer need to _import_ Presence
+import type { Presence } from "@liveblocks/client";
+
+client.enter<Presence>("myRoom");
+```
+
+Instead, just _define_ it:
+
+```tsx
+// ✅ Just define the shape your app needs
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+
+client.enter<Presence>("myRoom");
+```
+
+### A better way to annotate your own types [#client-better-type-annotations]
+
+We already talked about why, in React, we
+[improved the way you can annotate your own app’s data](#react-better-type-annotations),
+by annotating the types only once, at the “top” of your app.
+
+For the same reason, we’re doing a similar thing in the client package.
+
+<Banner title="You may not need this">
+
+This section only applies if you’re not using the React package.
+
+</Banner>
+
+```tsx highlight="18-21,24"
+import { createClient } from "@liveblocks/client";
+import { Author } from "./types";
+
+const client = createClient({
+  /* client options */
+});
+
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+
+type Storage = {
+  author: LiveObject<Author>;
+};
+
+// ❌ In 0.16, you had to annotate each method separately
+const room = client.enter("myRoom");
+const { root } = await room.getStorage<Storage>();
+const author = root.get<Author>("author");
+const me = room.getPresence<Presence>();
+const others = room.getOthers<Presence>();
+
+// ✅ In 0.17, you can simply annotate it once, at the "top"
+const room = client.enter<Presence, Storage>("myRoom");
+const { root } = await room.getStorage();
+const author = root.get("author");
+const me = room.getPresence();
+const others = room.getOthers();
+```
+
+If you run into issues with these new patterns and you need help, please
+[let us know](https://github.com/liveblocks/liveblocks/discussions/360). We’re
+here to help!
+
+[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
+[`@liveblocks/react`]: /docs/api-reference/liveblocks-react
+[`createroomcontext`]: /docs/api-reference/liveblocks-react#createRoomContext
+[`liveblocksprovider`]: /docs/api-reference/liveblocks-react#LiveblocksProvider
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`uselist`]: /docs/api-reference/liveblocks-react#useList
+[`usemap`]: /docs/api-reference/liveblocks-react#useMap
+[`usemypresence`]: /docs/api-reference/liveblocks-react#useMyPresence
+[`useobject`]: /docs/api-reference/liveblocks-react#useObject

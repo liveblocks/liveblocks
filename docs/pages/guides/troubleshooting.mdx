@@ -1,0 +1,206 @@
+---
+meta:
+  title: "Troubleshooting"
+  parentTitle: "Guides"
+  description: "Troubleshoot common errors"
+---
+
+## Common issues [#common]
+
+### ReferenceError: process is not defined [#process-not-defined]
+
+When calling `client.enter()`, you stumble upon the following error:
+
+```text
+ReferenceError: process is not defined
+```
+
+The `@liveblocks/client` package expects to be consumed by a JavaScript bundler,
+like Webpack, Babel, ESbuild, Rollup, etc. If you see this error, you have most
+likely directly loaded the `@liveblocks/client` source code through a `<script>`
+tag.
+
+#### Solution [#process-not-defined-solution] [@hidden]
+
+If using a bundler isn’t possible for you, there are two available solutions.
+
+One solution is to load the source code from the
+[Skypack CDN](https://www.skypack.dev/view/@liveblocks/client), which will
+expose optimized production builds which have the `process` variable removed.
+
+Another solution is to define the necessary `process.env.NODE_ENV` variable
+manually, before loading the script, for example:
+
+```ts
+globalThis.process = { env: { NODE_ENV: "production" } };
+```
+
+### Why we’re asking you to pass unstable_batchedUpdates [#stale-props-zombie-child]
+
+If you’re **on React 17 or lower**, there is a well-known problem that all state
+management libraries need to deal with at some point, known as the
+["Stale-props / zombie-child" problem](https://kaihao.dev/posts/Stale-props-and-zombie-children-in-Redux)—Liveblocks
+is no exception.
+
+This issue can cause catastrophic bugs, inconsistent renders, or—in the best
+case—performance issues. Sooner or later, as your app grows in complexity, you
+will run into some manifestation of this bug, and we want to be ahead of that.
+
+Just do either of the following to avoid it!
+
+1. **Just upgrade to React 18** (recommended)
+1. If you cannot upgrade just yet, we ask you to pass the
+   `unstable_batchedUpdates` function to the RoomProvider in the mean time, so
+   Liveblocks can circumvent the issue on your behalf!
+
+```tsx highlight="1,8"
+import { unstable_batchedUpdates } from "react-dom";
+//                                      ^^^^^^^^^^^ ...or "react-native"!
+<RoomProvider
+  id="my-room"
+  initialPresence={/* ... */}
+  initialStorage={/* ... */}
+  unstable_batchedUpdates={unstable_batchedUpdates}
+>
+  <App />
+</RoomProvider>;
+```
+
+Starting with 0.18.3, this will be enforced in React 17 and lower, potentially
+saving hours of debugging.
+
+#### What’s the problem, exactly? [#stale-props-zombie-child-details] [@hidden]
+
+If you’re on React 17 or lower, state updates from “external” (non-DOM) events
+will **not** get batched together automatically. If two or more of your
+components subscribe to the same piece of state, and this state gets updated by
+another user in the room, then both components will individually rerender,
+separately.
+
+In most cases this is just inefficient but not catastrophic. However, if you
+happen to have a parent and child component that both rely on the same state,
+this can lead to hard-to-debug bugs.
+
+For example:
+
+```tsx highlight="2,7"
+function Parent() {
+  const shapes = useStorage((root) => root.shapes);
+  return shapes.map(({ id }) => <Child key={id} id={id} />);
+}
+function Child({ id }) {
+  const shape = useStorage((root) => root.shapes.get(id));
+  return <Shape x={shape.x} y={shape.y} />;
+}
+```
+
+Both of these components need to get rerendered if, for example, some shape gets
+deleted by another user in the room.
+
+In React 17 (or lower), those rerenders will **not get batched together** and as
+such they will not rerender together. Instead, they rerender individually,
+separately. Which component rerenders first is undefined and often unpredictable
+in larger apps. If you’re unlucky, this can lead to the Child component to get
+rerendered before its Parent has had the opportunity to unmount it, which should
+of course never happen.
+
+By providing `unstable_batchedUpdates` to the RoomProvider, Liveblocks will wrap
+all state updates in this helper, which will make sure that both Parent and
+Child get rerendered as part of the same render cycle. This way, React will
+ensure that the Parent component will always get rerendered before the Child.
+
+## TypeScript issues [#typescript]
+
+### Type "MyInterface" does not satisfy the constraint "Lson" [#lson-constraint-and-interfaces]
+
+If you found this page, chances are you stumbled upon this TypeScript error:
+
+```text
+TS2344: Type 'MyInterface' does not satisfy the constraint 'Lson'.
+  Type 'MyInterface' is not assignable to type 'JsonObject'.
+    Index signature for type 'string' is missing in type 'MyInterface'.
+```
+
+Liveblocks data structures (like `LiveObject`, `LiveMap`, and `LiveList`)
+require that their payloads are always JSON-serializable to be able to send them
+over WebSocket connections reliably and without surprises. Starting with 0.16,
+we’re enforcing this with `Lson` type constraint. (LSON is a Liveblocks-specific
+extension of JSON that also allows nesting more Live data structures.)
+
+If you encounter this error above, TypeScript is trying to tell you that the
+data type you are using in one of your Live structures is not (guaranteed to be)
+a legal LSON (or JSON) value. But why?
+
+```ts
+interface Person {
+  name: string;
+  age: number;
+}
+
+const people = new LiveList<Person>();
+//                          ~~~~~~
+//                          TS2344: Type "Person" does not
+//                          satisfy the constraint "Lson" ☹️
+```
+
+Although this `Person` type seems perfectly JSON-serializable with only those
+`string` and `number` fields, TypeScript still considers this a problem because
+it cannot _guarantee_ that all of its subtypes will also be that. Interface
+types are "open" and extensible by design. This means it’s possible to define a
+subtype that would still not be JSON-serializable.
+[Example](https://www.typescriptlang.org/play?#code/JYOwLgpgTgZghgYwgAgArQM4HsTIN4BQyyIcAthAFzIZhSgDmA3EcnA1SQK5kBG0LAL4ECAelHIAanAA2XCBmRYYyAAYBRAG7AZ6KNhCrkZYAwAWYElkv9kAKQDKAeQByAWgzRgs4AC84vDIQADRiEgCeEJZwUCi0OjLImj4AJmp6BqoYBKCQsIgoWjoZOMgQAB6QICmKJbiExOLIgLwbgBB7rCDWDl4+-oGcXCAA1p0A7iBMjRIARIMjWOPTyDDAEDI1xqYWVjZxPTJ+AUEEwkA).
+
+To fix this issue, there are roughly three available solutions.
+
+#### Solution 1: Change your interface to a type [#lson-interface-solution1] [@hidden]
+
+The simplest solution is to convert your `interface` to a `type`.
+
+```ts highlight="1"
+type Person = {
+  name: string;
+  age: number;
+};
+
+const people = new LiveList<Person>();
+//                          ^^^^^^ ✅ All good now
+```
+
+Check this solution out in the TypeScript
+[playground](https://www.typescriptlang.org/play?#code/JYWwDg9gTgLgBAbzgGWANwKaoM7wL5wBmUEIcA5AAIA26GARtRAMYDW2A9M7RgHYzkA3AChhMAJ5gMcAAoYo2CLzgBeRMLhxeAQxAYAXHFxRgvAOYjN2swa0BXEPXki8I4cyW44UiGGrS1XgwAdxQ6HBgAHjkFJQA+AAoAShEODk0MzKzs7IA9fIK4QFByOABBamo4MwgIABMtCGDhIA).
+
+#### Solution 2: Extend your interface [#lson-interface-solution2] [@hidden]
+
+You can also explicitly pledge that your interface will be JSON serializable by
+having it extend from `JsonObject`.
+
+```ts highlight="1,3"
+import { JsonObject } from "@liveblocks/client";
+
+interface Person extends JsonObject {
+  name: string;
+  age: number;
+}
+
+const people = new LiveList<Person>();
+//                          ^^^^^^ ✅ All good now
+```
+
+Check this solution out in the TypeScript
+[playground](https://www.typescriptlang.org/play?#code/JYWwDg9gTgLgBAbzgGWANwKaoM4wDRwBS2EAdgPIBGAVhgMbwC+cAZlBCHAOQACANugyU+EOgGtsAejoCMpGFwDcAKGXB5GKCwCGdDHAAKmkqTgYAHjDkATbERNVaDRMrhxS2kBgBccXFHUAcxU3bUCfdwBXEEpNFUYVZToyXDgwDAgwPn0AXncMAHcUQRwYAB4jKBMAPgAKAEoVSUk3Vrb2jo6APR7euEBQcjgAQT4+OECICGt3CALlIA).
+
+#### Solution 3: Wrap the interface in a helper [#lson-interface-solution3] [@hidden]
+
+This is the least preferred solution, but may be necessary if you don’t own the
+interface definition and it’s coming from an external package.
+
+```ts highlight="1,4"
+import type { LiveList, EnsureJson } from "@liveblocks/client";
+import { Person } from "some-external-package";
+
+const people = new LiveList<EnsureJson<Person>>();
+//                          ^^^^^^^^^^^^^^^^^^ ✅ All good now
+```
+
+Check this solution out in the TypeScript
+[playground](https://www.typescriptlang.org/play?#code/JYWwDg9gTgLgBAbzgGWANwKaoM4wDRwCiAdtgK5QYBS2ExcAvnAGZQQhwDkAAgDboYARrwgBjANbYA9KP4ZiMTgG4AUKEixEcACoARAKrYMURizYceMXgBMoAQwDuUq7cfKVUqXG8+4APQDAuAAlO2JrdjhgBWNmO1EMOBgATzBE1kj7cMiMAA8YY2I7XjgwePE7AHMMFRVROlw4MiMobDgAXjhiDAcUARwYAB4SckoaOkG9Q2MAPhmACgBKVSA).

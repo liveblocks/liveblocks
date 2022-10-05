@@ -1,0 +1,162 @@
+---
+meta:
+  title: "@liveblocks/zustand"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/zustand package"
+alwaysShowAllNavigationLevels: false
+---
+
+## Middleware
+
+Middleware that lets you connect a Zustand state to Liveblocks Presence and
+Storage features.
+
+```js highlight="2,5,9-13"
+import create from "zustand";
+import { middleware } from "@liveblocks/zustand";
+
+const useStore = create(
+  middleware(
+    (set) => ({
+      /* state and actions */
+    }),
+    {
+      client,
+      presenceMapping: {},
+      storageMapping: {},
+    }
+  )
+);
+```
+
+### client [#middleware-option-client]
+
+See different authentication methods in the [`createClient`][] method.
+
+```js
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({
+  authEndpoint: "/api/auth",
+});
+
+middleware(/* Zustand config */, { client })
+```
+
+### presenceMapping [#middleware-option-presence-mapping]
+
+Mapping used to synchronize a part of your Zustand state with one Liveblocks
+Room presence.
+
+```js highlight="8"
+const useStore = create(
+  middleware(
+    (set) => ({
+      cursor: { x: 0, y: 0 },
+    }),
+    {
+      client,
+      presenceMapping: { cursor: true },
+    }
+  )
+);
+```
+
+### storageMapping [#middleware-option-storage-mapping]
+
+Mapping used to synchronize a part of your Zustand state with one Liveblocks
+room storage.
+
+```js highlight="8"
+const useStore = create(
+  middleware(
+    (set) => ({
+      scientist: { name: "" },
+    }),
+    {
+      client,
+      storageMapping: { scientist: true },
+    }
+  )
+);
+```
+
+## state.liveblocks [#liveblocks-state]
+
+Liveblocks extra state attached by the middleware.
+
+### enterRoom [#liveblocks-state-enter-room]
+
+Enters a room and starts sync it with Zustand state.
+
+- `roomId`: The `id` of the room.
+- `initialState`: The initial state of the room storage.
+
+```js
+const {
+  liveblocks: { enterRoom },
+} = useStore();
+
+enterRoom("roomId", {});
+```
+
+### leaveRoom [#liveblocks-state-leave-room]
+
+Leaves a room and stops sync it with Zustand state.
+
+- `roomId`: The `id` of the room.
+
+```js
+const {
+  liveblocks: { leaveRoom },
+} = useStore();
+
+leaveRoom("roomId");
+```
+
+### room [#liveblocks-state-room]
+
+The [`Room`][] currently synced to your Zustand state.
+
+```js
+const {
+  liveblocks: { room },
+} = useStore();
+```
+
+### room [#liveblocks-state-others]
+
+Other users in the room. Empty when no room is currently synced.
+
+```js
+const {
+  liveblocks: { others },
+} = useStore();
+```
+
+### isStorageLoading [#liveblocks-state-is-storage-loading]
+
+Whether or not the room storage is currently loading.
+
+```js
+const {
+  liveblocks: { isStorageLoading },
+} = useStore();
+```
+
+### connection [#liveblocks-state-connection]
+
+Connection state of the room.
+
+The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
+`unavailable`.
+
+```js
+const {
+  liveblocks: { connection },
+} = useStore();
+```
+
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[`room`]: /docs/api-reference/liveblocks-client#room

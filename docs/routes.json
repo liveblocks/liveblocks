@@ -1,0 +1,178 @@
+[
+  {
+    "title": false,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/",
+        "file": "/index.mdx"
+      },
+      {
+        "title": "Concepts",
+        "path": "/concepts"
+      },
+      {
+        "title": "Get started",
+        "path": "/get-started",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/get-started/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/get-started/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/get-started/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/get-started/javascript"
+          },
+          {
+            "title": "Vue",
+            "path": "/get-started/vue"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Tutorials",
+    "routes": [
+      {
+        "title": "To-do list",
+        "path": "/multiplayer-to-do-list",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/multiplayer-to-do-list/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/multiplayer-to-do-list/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/multiplayer-to-do-list/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/multiplayer-to-do-list/javascript"
+          }
+        ]
+      },
+      {
+        "title": "Whiteboard",
+        "path": "/collaborative-online-whiteboard",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/collaborative-online-whiteboard/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/collaborative-online-whiteboard/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/collaborative-online-whiteboard/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/collaborative-online-whiteboard/javascript"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Guides",
+    "routes": [
+      {
+        "title": "Managing rooms, users, and permissions",
+        "path": "/guides/managing-rooms-users-permissions"
+      },
+      {
+        "title": "Authentication",
+        "path": "/authentication",
+        "routes": [
+          {
+            "title": "Next.js",
+            "path": "/authentication/next-js"
+          },
+          {
+            "title": "Firebase",
+            "path": "/authentication/firebase"
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/authentication/nuxt-js"
+          },
+          {
+            "title": "Express",
+            "path": "/authentication/express"
+          }
+        ]
+      },
+      {
+        "title": "Limits",
+        "path": "/guides/limits"
+      },
+      {
+        "title": "Troubleshooting",
+        "path": "/guides/troubleshooting"
+      },
+      {
+        "title": "Upgrading",
+        "path": "/upgrading",
+        "routes": [
+          {
+            "title": "Upgrading to 0.17",
+            "path": "/upgrading/0.17"
+          },
+          {
+            "title": "Upgrading to 0.18",
+            "path": "/upgrading/0.18"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "API Reference",
+    "routes": [
+      {
+        "title": "@liveblocks/client",
+        "path": "/api-reference/liveblocks-client"
+      },
+      {
+        "title": "@liveblocks/react",
+        "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/redux",
+        "path": "/api-reference/liveblocks-redux"
+      },
+      {
+        "title": "@liveblocks/zustand",
+        "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/node",
+        "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "API Endpoints",
+        "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "API v1 Endpoints",
+        "hidden": true,
+        "path": "/api-reference/rest-api-endpoints-v1"
+      }
+    ]
+  }
+]

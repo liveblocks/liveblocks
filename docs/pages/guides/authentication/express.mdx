@@ -1,0 +1,106 @@
+---
+meta:
+  title: "Authentication with Express"
+  parentTitle: "Guides"
+  description:
+    "Learn how to setup a Liveblocks authentication endpoint with Express"
+---
+
+This guide assumes that you already have
+[installed Liveblocks into your project](/docs/get-started/javascript) and that
+you’re already familiar with [Express](https://expressjs.com/).
+
+## Install the Liveblocks package [#setup]
+
+Run the following command to install Liveblocks package:
+
+```bash
+npm install @liveblocks/node
+```
+
+[`@liveblocks/node`][] is used from the backend to setup the authentication
+endpoint.
+
+## Setup authentication endpoint [#authentication]
+
+Users can only interact with rooms they have access to. You can configure
+permission access by creating a REST endpoint on your express server. You will
+implement your own security and define if the current user has access to a
+specific room.
+
+Create a POST endpoint that will read the room from the JSON body. Ensure that
+the caller of this endpoint is a valid user by validating the cookies or
+authentication headers and that it has access to the requested room. Then use
+[`authorize`][] to generate a token and return the body as a response.
+
+```js
+const express = require("express");
+const { authorize } = require("@liveblocks/node");
+
+// Replace this key with your secret key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const secret = "{{SECRET_KEY}}";
+
+const app = express();
+
+app.use(express.json());
+
+app.post("/api/auth", (req, res) => {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  authorize({
+    room: req.body.room,
+    secret,
+    userId: "123", // Optional
+    groupIds: ["456"], // Optional
+    userInfo: {
+      // Optional
+      name: "Ada Lovelace",
+    },
+  })
+    .then((authResponse) => {
+      res.send(authResponse.body);
+    })
+    .catch((er) => {
+      res.status(403).end();
+    });
+});
+```
+
+Here is a diagram that shows how things work behind the scenes.
+
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/auth-diagram.svg"
+    alt="Auth diagram"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
+## Connect to Liveblocks
+
+To connect to Liveblocks, you need to create a Liveblocks client with
+[`createClient`][] from the front-end and set the `authEndpoint` option based on
+the path of the endpoint created earlier.
+
+```js
+import { createClient } from "@liveblocks/client";
+
+// Create a Liveblocks client
+const client = createClient({
+  authEndpoint: "/api/auth",
+});
+```
+
+Liveblocks should now be integrated with your product!
+
+[`@liveblocks/node`]: /docs/api-reference/liveblocks-node
+[`authorize`]: /docs/api-reference/liveblocks-node#authorize

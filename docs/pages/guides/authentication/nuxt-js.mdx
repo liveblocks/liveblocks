@@ -1,0 +1,116 @@
+---
+meta:
+  title: "Authentication with Nuxt.js"
+  parentTitle: "Guides"
+  description:
+    "Learn how to setup a Liveblocks authentication endpoint with Nuxt.js"
+---
+
+This guide assumes that you already have
+[installed Liveblocks into your project](/docs/get-started/vue) and that you’re
+already familiar with
+[Nuxt.js](https://nuxtjs.org/docs/2.x/get-started/installation).
+
+Alternatively, you can copy this example and follow the instructions in the
+README:
+
+- [Live Avatar Stack](/examples/live-avatar-stack/nuxtjs)
+
+## Install the Liveblocks package [#setup]
+
+Run the following command to install Liveblocks package:
+
+```bash
+npm install @liveblocks/node
+```
+
+[`@liveblocks/node`][] is used from the backend to setup the authentication
+endpoint.
+
+## Setup authentication endpoint [#authentication]
+
+Users can only interact with rooms they have access to. You can configure
+permission access by creating a REST endpoint in your Nuxt app. You will
+implement your own security and define if the current user has access to a
+specific room.
+
+One way to create an API endpoint in your Nuxt app is to create a
+[server middleware to extend Express](https://nuxtjs.org/docs/2.x/configuration-glossary/configuration-servermiddleware#custom-api-endpoint).
+Modify your `nuxt.config.js` with the following config.
+
+```js file="nuxt.config.js"
+serverMiddleware: [{ path: "/api", handler: "~/api" }];
+```
+
+Then create a file called `api.js` at the root of your project and add an
+Express endpoint like below.
+
+```js file="api.js"
+import { authorize } from "@liveblocks/node";
+import express from "express";
+
+// Replace this key with your secret key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const secret = "{{SECRET_KEY}}";
+
+const app = express();
+app.use(express.json());
+
+app.post("/auth", (req, res) => {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  authorize({
+    room: req.body.room,
+    secret: secret,
+    userId: "123", // Optional
+    groupIds: ["456"], // Optional
+    userInfo: {
+      // Optional
+      name: "Ada Lovelace",
+    },
+  })
+    .then((authResponse) => {
+      res.send(authResponse.body);
+    })
+    .catch((er) => {
+      res.status(403).end();
+    });
+});
+```
+
+Here is a diagram that shows how things work behind the scenes:
+
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/auth-diagram.svg"
+    alt="Auth diagram"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
+## Connect to Liveblocks
+
+To connect to Liveblocks, you need to create a Liveblocks client with
+[`createClient`][] from the front-end and set the `authEndpoint` option based on
+the path of the endpoint created earlier.
+
+```js
+import { createClient } from "@liveblocks/client";
+
+// Create a Liveblocks client
+const client = createClient({
+  authEndpoint: "/api/auth",
+});
+```
+
+Liveblocks should now be integrated with your product!
+
+[`@liveblocks/node`]: /docs/api-reference/liveblocks-node

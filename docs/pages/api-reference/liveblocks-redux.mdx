@@ -1,0 +1,178 @@
+---
+meta:
+  title: "@liveblocks/redux"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/redux package"
+alwaysShowAllNavigationLevels: false
+---
+
+## Enhancer
+
+Enhancer that lets you connect a Redux state to Liveblocks Presence and Storage
+features.
+
+```js
+import { enhancer } from "@liveblocks/redux";
+import { configureStore } from "@reduxjs/toolkit";
+
+const store = configureStore({
+  reducer: /* reducer */,
+  enhancers: [
+    enhancer({
+      client,
+      storageMapping: {},
+      presenceMapping: {},
+    }),
+  ],
+});
+```
+
+### client [#enhancer-option-client]
+
+See different authentication methods in the [`createClient`][] method.
+
+```js highlight="1,4-6,12"
+import { createClient } from "@liveblocks/client";
+import { enhancer } from "@liveblocks/redux";
+
+const client = createClient({
+  authEndpoint: "/api/auth",
+});
+
+const store = configureStore({
+  reducer: /* reducer */,
+  enhancers: [
+    enhancer({
+      client,
+    }),
+  ],
+});
+```
+
+### presenceMapping [#enhancer-option-presence-mapping]
+
+Mapping used to synchronize a part of your Redux state with one Liveblocks room
+presence.
+
+```js highlight="20"
+import { enhancer } from "@liveblocks/redux";
+
+const initialState = {
+  cursor: { x: 0, y: 0 },
+};
+
+const slice = createSlice({
+  name: "state",
+  initialState,
+  reducers: {
+    /* reducers */
+  },
+});
+
+const store = configureStore({
+  reducer: slice.reducer,
+  enhancers: [
+    enhancer({
+      client,
+      presenceMapping: { cursor: true },
+    }),
+  ],
+});
+```
+
+### storageMapping [#enhancer-option-storage-mapping]
+
+Mapping used to synchronize a part of your Redux state with one Liveblocks Room
+storage.
+
+```js highlight="20"
+import { enhancer } from "@liveblocks/redux";
+
+const initialState = {
+  scientist: { name: "" },
+};
+
+const slice = createSlice({
+  name: "state",
+  initialState,
+  reducers: {
+    /* reducers */
+  },
+});
+
+const store = configureStore({
+  reducer: slice.reducer,
+  enhancers: [
+    enhancer({
+      client,
+      storageMapping: { scientist: true },
+    }),
+  ],
+});
+```
+
+## Actions
+
+### ENTER [#actions-enter]
+
+Dispatch `enterRoom` action to enter a room and start sync it with Redux state.
+
+- `roomId`: The `id` of the room.
+- `initialState`: The initial state of the room storage.
+
+```js
+import { actions } from "@liveblocks/redux";
+import { useDispatch, useSelector } from "react-redux";
+
+const dispatch = useDispatch();
+
+dispatch(actions.enterRoom("roomId", {}));
+```
+
+### LEAVE [#actions-leave]
+
+Dispatch `leaveRoom` action to leave a room and stop sync it with Redux state.
+
+- `roomId`: The `id` of the room.
+
+```js
+import { actions } from "@liveblocks/redux";
+import { useDispatch, useSelector } from "react-redux";
+
+const dispatch = useDispatch();
+
+dispatch(actions.leaveRoom("roomId"));
+```
+
+## state.liveblocks [#liveblocks-state]
+
+Liveblocks extra state attached by the enhancer.
+
+### others [#liveblocks-state-others]
+
+Other users in the room. Empty when no room is currently synced.
+
+```js
+const connection = useSelector((state) => state.liveblocks.others);
+```
+
+### isStorageLoading [#liveblocks-state-is-storage-loading]
+
+Whether or not the room storage is currently loading.
+
+```js
+const connection = useSelector((state) => state.liveblocks.isStorageLoading);
+```
+
+### connection [#liveblocks-state-connection]
+
+Connection state of the room.
+
+The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
+`unavailable`.
+
+```js
+const connection = useSelector((state) => state.liveblocks.connection);
+```
+
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
