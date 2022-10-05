@@ -34,17 +34,17 @@ const client = createClient({ authEndpoint: "/api/auth" });
 const useStore = create(
   persist(
     middleware<BasicStore, Presence, Storage, BaseUser, RoomEvent>(
-      (set, get, api) => ({
+      (set, get, _api) => ({
         value: 0,
-        setValue: (newValue: number) => {
+        setValue: (_newValue: number) => {
           // Liveblocks state should be available here
           const {
-            others,
-            connection,
-            enterRoom,
-            leaveRoom,
-            isStorageLoading,
-            room,
+            others: _others,
+            connection: _connection,
+            enterRoom: _enterRoom,
+            leaveRoom: _leaveRoom,
+            isStorageLoading: _isStorageLoading,
+            room: _room,
           } = get().liveblocks;
 
           // $ExpectError
@@ -96,7 +96,7 @@ const useStore = create(
   )
 );
 
-const { value, liveblocks } = useStore.getState();
+const { value: _value, liveblocks } = useStore.getState();
 
 // $ExpectError
 liveblocks.enterRoom = () => {}; // Readonly
