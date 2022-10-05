@@ -174,5 +174,18 @@
         "path": "/api-reference/rest-api-endpoints-v1"
       }
     ]
+  },
+  {
+    "title": "Updates",
+    "routes": [
+      {
+        "title": "System status",
+        "href": "https://liveblocks.statuspage.io/"
+      },
+      {
+        "title": "Release notes",
+        "href": "https://github.com/liveblocks/liveblocks/releases"
+      }
+    ]
   }
 ]
