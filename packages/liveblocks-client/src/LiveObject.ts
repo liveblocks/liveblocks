@@ -437,6 +437,12 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
+    console.log("LiveObject.set", key, value);
+    // An error could be thrown here if isReadOnly is true
+    // This is the lowest level of the API, ideally we should handle isReadOnly
+    // at a higher level
+    // This comment is valid for all AbstractCRDTs
+    // throw new Error("Not allowed to set on a LiveObject when isReadonly is true");
     this.update({ [key]: value } as unknown as Partial<O>);
   }
 
@@ -453,6 +459,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to delete
    */
   delete(key: keyof O): void {
+    console.log("LiveObject.delete", key);
     const keyAsString = key as string;
     const oldValue = this._map.get(keyAsString);
 
@@ -515,6 +522,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param patch The object used to overrides properties
    */
   update(patch: Partial<O>): void {
+    console.log("LiveObject.update", patch);
     if (this._pool === undefined || this._id === undefined) {
       for (const key in patch) {
         const newValue = patch[key];

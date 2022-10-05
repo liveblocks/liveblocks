@@ -258,6 +258,12 @@ export class LiveMap<
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue): void {
+    console.log("LiveMap.set", key, value);
+    // An error could be thrown here if isReadOnly is true
+    // This is the lowest level of the API, ideally we should handle isReadOnly
+    // at a higher level
+    // This comment is valid for all AbstractCRDTs
+    // throw new Error("Not allowed to set on a LiveMap when isReadonly is true");
     const oldValue = this._map.get(key);
 
     if (oldValue) {
@@ -316,6 +322,7 @@ export class LiveMap<
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
+    console.log("LiveMap.delete", key);
     const item = this._map.get(key);
 
     if (item === undefined) {

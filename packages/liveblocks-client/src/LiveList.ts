@@ -860,6 +860,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
    * @param index The index at which you want to insert the element.
    */
   insert(element: TItem, index: number): void {
+    // An error could be thrown here if isReadOnly is true
+    // This is the lowest level of the API, ideally we should handle isReadOnly
+    // at a higher level
+    // This comment is valid for all AbstractCRDTs
+    // throw new Error("Not allowed to insert on a LiveList when isReadonly is true");
     if (index < 0 || index > this._items.length) {
       throw new Error(
         `Cannot insert list item at index "${index}". index should be between 0 and ${this._items.length}`
