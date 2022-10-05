@@ -44,45 +44,45 @@
     "routes": [
       {
         "title": "To-do list",
-        "path": "/multiplayer-to-do-list",
+        "path": "/tutorials/multiplayer-to-do-list",
         "routes": [
           {
             "title": "React",
-            "path": "/multiplayer-to-do-list/react"
+            "path": "/tutorials/multiplayer-to-do-list/react"
           },
           {
             "title": "React + Redux",
-            "path": "/multiplayer-to-do-list/react-redux"
+            "path": "/tutorials/multiplayer-to-do-list/react-redux"
           },
           {
             "title": "React + Zustand",
-            "path": "/multiplayer-to-do-list/react-zustand"
+            "path": "/tutorials/multiplayer-to-do-list/react-zustand"
           },
           {
             "title": "JavaScript",
-            "path": "/multiplayer-to-do-list/javascript"
+            "path": "/tutorials/multiplayer-to-do-list/javascript"
           }
         ]
       },
       {
         "title": "Whiteboard",
-        "path": "/collaborative-online-whiteboard",
+        "path": "/tutorials/collaborative-online-whiteboard",
         "routes": [
           {
             "title": "React",
-            "path": "/collaborative-online-whiteboard/react"
+            "path": "/tutorials/collaborative-online-whiteboard/react"
           },
           {
             "title": "React + Redux",
-            "path": "/collaborative-online-whiteboard/react-redux"
+            "path": "/tutorials/collaborative-online-whiteboard/react-redux"
           },
           {
             "title": "React + Zustand",
-            "path": "/collaborative-online-whiteboard/react-zustand"
+            "path": "/tutorials/collaborative-online-whiteboard/react-zustand"
           },
           {
             "title": "JavaScript",
-            "path": "/collaborative-online-whiteboard/javascript"
+            "path": "/tutorials/collaborative-online-whiteboard/javascript"
           }
         ]
       }
@@ -97,23 +97,23 @@
       },
       {
         "title": "Authentication",
-        "path": "/authentication",
+        "path": "/guides/authentication",
         "routes": [
           {
             "title": "Next.js",
-            "path": "/authentication/next-js"
+            "path": "/guides/authentication/next-js"
           },
           {
             "title": "Firebase",
-            "path": "/authentication/firebase"
+            "path": "/guides/authentication/firebase"
           },
           {
             "title": "Nuxt.js",
-            "path": "/authentication/nuxt-js"
+            "path": "/guides/authentication/nuxt-js"
           },
           {
             "title": "Express",
-            "path": "/authentication/express"
+            "path": "/guides/authentication/express"
           }
         ]
       },
@@ -127,15 +127,15 @@
       },
       {
         "title": "Upgrading",
-        "path": "/upgrading",
+        "path": "/guides/upgrading",
         "routes": [
           {
             "title": "Upgrading to 0.17",
-            "path": "/upgrading/0.17"
+            "path": "/guides/upgrading/0.17"
           },
           {
             "title": "Upgrading to 0.18",
-            "path": "/upgrading/0.18"
+            "path": "/guides/upgrading/0.18"
           }
         ]
       }
