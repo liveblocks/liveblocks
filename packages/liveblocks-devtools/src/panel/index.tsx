@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { onMessageFromClient, sendMessageToClient } from "./port";
 import type { PanelToClientMessage } from "../lib/protocol";
+import { ThemeProvider, useTheme } from "./theme";
 
 const Liveblocks = () => {
+  const theme = useTheme();
   const [sentMessages, setSentMessages] = useState<unknown[]>([]);
   const [receivedMessages, setReceivedMessages] = useState<unknown[]>([]);
 
@@ -29,12 +31,11 @@ const Liveblocks = () => {
 
   return (
     <>
-      <h1>Liveblocks</h1>
+      <h1>Liveblocks ({theme})</h1>
       <button onClick={handleClick}>Send message</button>
-      <hr />
       <table>
         <tr>
-          <td width="50%">
+          <td className="w-1/2">
             <h3>Sent</h3>
             <ol>
               {sentMessages.map((message, index) => (
@@ -42,7 +43,7 @@ const Liveblocks = () => {
               ))}
             </ol>
           </td>
-          <td width="50%">
+          <td className="w-1/2">
             <h3>Received</h3>
             <ol>
               {receivedMessages.map((message, index) => (
@@ -57,4 +58,8 @@ const Liveblocks = () => {
 };
 
 const root = createRoot(document.getElementById("root"));
-root.render(<Liveblocks />);
+root.render(
+  <ThemeProvider>
+    <Liveblocks />
+  </ThemeProvider>
+);
