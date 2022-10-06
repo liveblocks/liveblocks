@@ -15,14 +15,13 @@ import {
 } from "@liveblocks/client/internal";
 import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
 
-import {
-  mappingShouldBeAnObject,
-  mappingShouldNotHaveTheSameKeys,
-  mappingToFunctionIsNotAllowed,
-  mappingValueShouldBeABoolean,
-  missingClient,
-  missingMapping,
-} from "./errors";
+const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
+
+function mappingToFunctionIsNotAllowed(key: string): Error {
+  return new Error(
+    `${ERROR_PREFIX} mapping.${key} is invalid. Mapping to a function is not allowed.`
+  );
+}
 
 function isJson(value: unknown): value is Json {
   return (
@@ -140,7 +139,7 @@ export function middleware<
   StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
-    throw missingClient();
+    throw new Error(`${ERROR_PREFIX} client is missing`);
   }
   const client = options.client;
   const storageMapping = validateMapping(
@@ -445,7 +444,9 @@ function validateNoDuplicateKeys<T>(
 ) {
   for (const key in storageMapping) {
     if (presenceMapping[key] !== undefined) {
-      throw mappingShouldNotHaveTheSameKeys(key);
+      throw new Error(
+        `${ERROR_PREFIX} "${key}" is mapped on both presenceMapping and storageMapping. A key shouldn't exist on both mapping.`
+      );
     }
   }
 }
@@ -459,10 +460,12 @@ function validateMapping<T>(
 ): Mapping<T> {
   if (process.env.NODE_ENV !== "production") {
     if (mapping == null) {
-      throw missingMapping(mappingType);
+      throw new Error(`${ERROR_PREFIX} ${mappingType} is missing.`);
     }
     if (!isObject(mapping)) {
-      throw mappingShouldBeAnObject(mappingType);
+      throw new Error(
+        `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
+      );
     }
   }
 
@@ -472,7 +475,9 @@ function validateMapping<T>(
       process.env.NODE_ENV !== "production" &&
       typeof mapping[key] !== "boolean"
     ) {
-      throw mappingValueShouldBeABoolean(mappingType, key);
+      throw new Error(
+        `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
+      );
     }
 
     if (mapping[key] === true) {
