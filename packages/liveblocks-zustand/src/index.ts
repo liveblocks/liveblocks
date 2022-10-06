@@ -154,39 +154,6 @@ export function middleware<
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
 
-    const store = config(
-      (args) => {
-        const oldState = get();
-        set(args);
-        const newState = get();
-
-        if (room) {
-          isPatching = true;
-          updatePresence(
-            room!,
-            oldState as any,
-            newState,
-            presenceMapping as any
-          );
-
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping as any
-              );
-            }
-          });
-
-          isPatching = false;
-        }
-      },
-      get as any,
-      api
-    );
-
     function enterRoom(roomId: string, initialState: any) {
       if (storageRoot) {
         return;
@@ -279,6 +246,39 @@ export function middleware<
         room: null,
       });
     }
+
+    const store = config(
+      (args) => {
+        const oldState = get();
+        set(args);
+        const newState = get();
+
+        if (room) {
+          isPatching = true;
+          updatePresence(
+            room!,
+            oldState as any,
+            newState,
+            presenceMapping as any
+          );
+
+          room.batch(() => {
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                oldState,
+                newState,
+                storageMapping as any
+              );
+            }
+          });
+
+          isPatching = false;
+        }
+      },
+      get as any,
+      api
+    );
 
     return {
       ...store,
