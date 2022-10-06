@@ -9,6 +9,7 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  errorIf,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
@@ -138,23 +139,7 @@ export function middleware<
   GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
   StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
-  if (process.env.NODE_ENV !== "production" && options.client == null) {
-    throw new Error(`${ERROR_PREFIX} client is missing`);
-  }
-  const client = options.client;
-  const storageMapping = validateMapping(
-    options.storageMapping || {},
-    "storageMapping"
-  );
-
-  const presenceMapping = validateMapping(
-    options.presenceMapping || {},
-    "presenceMapping"
-  );
-  if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(storageMapping, presenceMapping);
-  }
-
+  const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
@@ -458,31 +443,44 @@ function validateMapping<T>(
   mapping: Mapping<T>,
   mappingType: "storageMapping" | "presenceMapping"
 ): Mapping<T> {
-  if (process.env.NODE_ENV !== "production") {
-    if (mapping == null) {
-      throw new Error(`${ERROR_PREFIX} ${mappingType} is missing.`);
-    }
-    if (!isObject(mapping)) {
-      throw new Error(
-        `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
-      );
-    }
-  }
+  errorIf(
+    !isObject(mapping),
+    `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
+  );
 
   const result: Mapping<T> = {};
   for (const key in mapping) {
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof mapping[key] !== "boolean"
-    ) {
-      throw new Error(
-        `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
-      );
-    }
+    errorIf(
+      typeof mapping[key] !== "boolean",
+      `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
+    );
 
     if (mapping[key] === true) {
       result[key] = true;
     }
   }
   return result;
+}
+
+function validateOptions<T extends ZustandState>(
+  options: Options<T>
+): Options<T> {
+  const client = options.client;
+  errorIf(!client, `${ERROR_PREFIX} client is missing`);
+
+  const storageMapping = validateMapping(
+    options.storageMapping ?? {},
+    "storageMapping"
+  );
+
+  const presenceMapping = validateMapping(
+    options.presenceMapping ?? {},
+    "presenceMapping"
+  );
+
+  if (process.env.NODE_ENV !== "production") {
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
+  }
+
+  return { client, storageMapping, presenceMapping };
 }
