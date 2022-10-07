@@ -2,6 +2,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import type { RoomAuthToken } from "../AuthToken";
+import * as console from "../fancy-console";
 import { lsonToJson } from "../immutable";
 import { LiveList } from "../LiveList";
 import {
@@ -1242,7 +1243,7 @@ describe("room", () => {
       );
 
       expect(consoleErrorSpy.mock.calls[0][0]).toEqual(
-        "Connection to Liveblocks websocket server closed. Reason:  (code: 4002). Retrying in 2000ms."
+        "Connection to websocket server closed. Reason:  (code: 4002). Retrying in 2000ms."
       );
 
       expect(state.numberOfRetry).toEqual(1);

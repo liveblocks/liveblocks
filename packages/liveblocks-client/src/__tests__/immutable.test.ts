@@ -1,4 +1,5 @@
 import { LiveList, LiveMap } from "..";
+import * as console from "../fancy-console";
 import {
   legacy_patchImmutableObject,
   lsonToJson,

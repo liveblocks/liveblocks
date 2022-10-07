@@ -5,6 +5,7 @@ import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
+import * as console from "./fancy-console";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
@@ -1154,7 +1155,7 @@ function makeStateMachine<
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
-            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+            `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
           );
         }
 
