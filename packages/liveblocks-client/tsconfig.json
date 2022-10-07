@@ -1,16 +1,11 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "lib": ["dom", "es2015"],
-    "stripInternal": true,
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+    "lib": ["dom", "es2015"]
   },
   "include": ["src/**/*"]
 }

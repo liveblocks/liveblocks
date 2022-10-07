@@ -1,14 +1,10 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
-    "module": "es2020",
-    "noEmit": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+    "module": "es2020"
   },
   "include": ["src/**/*"]
 }

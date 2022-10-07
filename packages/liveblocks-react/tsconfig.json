@@ -1,20 +1,19 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "strict": true,
-    "noEmit": true,
     "lib": ["dom", "es2015"],
-    "moduleResolution": "node",
+
     "jsx": "react",
-    "forceConsistentCasingInFileNames": true,
+
+    // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
     "noImplicitReturns": true,
     "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "stripInternal": true,
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+    "noUnusedParameters": true
   },
   "include": ["src/**/*"]
 }

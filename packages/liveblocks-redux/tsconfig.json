@@ -1,17 +1,14 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "noEmit": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
     "lib": ["dom", "es2015"],
-    "stripInternal": true,
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+
+    // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
+    "noUncheckedIndexedAccess": true
   },
-  "file": ["src/**/*"]
+  "include": ["src/**/*"]
 }
