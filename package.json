@@ -1,0 +1,7 @@
+{
+  "name": "@liveblocks/monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ]
+}
