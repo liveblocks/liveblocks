@@ -42,9 +42,6 @@
     "redux": "^4"
   },
   "devDependencies": {
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
-    "@babel/preset-typescript": "^7.16.7",
     "@definitelytyped/dtslint": "^0.0.103",
     "@reduxjs/toolkit": "^1.7.2",
     "@testing-library/jest-dom": "^5.16.1",

@@ -43,10 +43,6 @@
     "react": "^16.14.0 || ^17 || ^18"
   },
   "devDependencies": {
-    "@babel/core": "^7.17.10",
-    "@babel/preset-env": "^7.17.10",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/preset-typescript": "^7.16.7",
     "@swc/core": "^1.2.233",
     "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^13.1.1",
