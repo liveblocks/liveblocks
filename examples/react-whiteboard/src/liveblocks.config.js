@@ -17,15 +17,14 @@ const client = createClient({
 });
 
 export const {
-  useMyPresence,
-  useMap,
-  useHistory,
-  useCanUndo,
-  useCanRedo,
-  useBatch,
-  useRoom,
-  useOthers,
-  RoomProvider,
+  suspense: {
+    useHistory,
+    useOthers,
+    useStorage,
+    useMutation,
+    RoomProvider,
+    useSelf,
+  }
 } = createRoomContext(client);
 
 /**
