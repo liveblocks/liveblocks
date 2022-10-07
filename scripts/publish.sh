@@ -383,14 +383,6 @@ else
     read
 fi
 
-echo "==> Bumping to next dev versions"
-( cd "$PRIMARY_PKG" && bump_version_in_pkg --no-peers "$PRIMARY_PKG" "$VERSION-dev" )
-for pkgdir in ${SECONDARY_PKGS[@]}; do
-    ( cd "$pkgdir" && bump_version_in_pkg --no-peers "$pkgdir" "$VERSION-dev" )
-done
-commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
-git push-current
-
 echo "==> Upgrade local examples?"
 echo "Now that you're all finished, you may want to also upgrade all our examples"
 echo "to the latest version. To do so, run:"
