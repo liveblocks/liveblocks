@@ -2,15 +2,13 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2020",
+    "noEmit": true,
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
     "moduleResolution": "node",
-    "outDir": "./lib/esm",
     "importsNotUsedAsValues": "error",
     "isolatedModules": true
   },
-  "include": ["./src/**/*"],
-  "exclude": ["node_modules", "src/**/*.spec.ts"]
+  "include": ["src/**/*"]
 }

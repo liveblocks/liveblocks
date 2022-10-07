@@ -2,17 +2,15 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "outDir": "./lib/esm",
     "strict": true,
+    "noEmit": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "declaration": true,
     "moduleResolution": "node",
     "lib": ["dom", "es2015"],
     "stripInternal": true,
     "importsNotUsedAsValues": "error",
     "isolatedModules": true
   },
-  "include": ["./src/**/*.ts", "./test/**/*.ts", "./e2e/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }

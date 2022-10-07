@@ -2,9 +2,8 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "outDir": "./lib/esm",
+    "noEmit": true,
     "strict": true,
-    "jsx": "react-jsx",
     "esModuleInterop": true,
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
@@ -14,6 +13,5 @@
     "importsNotUsedAsValues": "error",
     "isolatedModules": true
   },
-  "file": ["src/index.ts", "src/index.test.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }

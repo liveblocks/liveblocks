@@ -3,13 +3,10 @@
     "target": "es2015",
     "module": "es2015",
     "strict": true,
-    "outDir": "lib",
-    "rootDir": "src",
+    "noEmit": true,
     "lib": ["dom", "es2015"],
     "moduleResolution": "node",
-    "allowJs": false,
     "jsx": "react",
-    "declaration": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitReturns": true,
     "suppressImplicitAnyIndexErrors": true,
@@ -19,11 +16,5 @@
     "importsNotUsedAsValues": "error",
     "isolatedModules": true
   },
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./test/**/*.ts",
-    "./test/**/*.tsx"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }
