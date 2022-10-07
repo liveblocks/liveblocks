@@ -862,7 +862,7 @@ return <button onClick={deleteSelectedShapes} />;
 Mutations are automatically batched, so when using `useMutation` there’s no need
 to use `useBatch`, or call `room.batch()` manually.
 
-#### ESLint rule [#useMutation-lint-rule]
+#### ESLint rule [#useMutation-lint-rule] [@keywords=["exhaustive-deps", "additionalHooks", "eslint-plugin-react-hooks"]]
 
 If you are using ESLint in your project, and are using
 [the React hooks plugin](https://reactjs.org/docs/hooks-rules.html#eslint-plugin),
@@ -914,7 +914,7 @@ Please note that this will only do a shallow (one level deep) check. Hence the
 name. If you need to do an arbitrarily deep equality check, you’ll have to write
 a custom equality function or use a library like Lodash for that.
 
-## How selectors work [#selectors]
+## How selectors work [#selectors] [@keywords=["useStorage", "useSelf", "useOthers", "useOther", "useOthersMapped", "useOthersConnectionIds", "selectors", "comparison"]]
 
 The concepts and behaviors described in this section apply to all of our
 selector hooks: [`useStorage`][] , [`useSelf`][] , [`useOthers`][] ,
@@ -943,7 +943,7 @@ In a nutshell, the key behaviors for all selector APIs are:
 
 Let’s go over these traits and responsibilities in the next few sections.
 
-### Selectors receive immutable data
+### Selectors receive immutable data [#selectors-receive-immutable-data]
 
 The received input to all selector functions is a **read-only** and
 **immutable** top level context value that differs for each hook:
@@ -987,7 +987,7 @@ will **guarantee** to return the same memory instance. Selecting and returning
 these nodes directly is therefore safe and considered a good practice, because
 they are stable references by design.
 
-### Selectors return arbitrary values
+### Selectors return arbitrary values [#selectors-return-arbitrary-values] [@keywords=["shallow"]]
 
 ```tsx file="Component.tsx"
 const animals = useStorage((root) => root.animals);
@@ -1097,7 +1097,7 @@ And the following timeline:
 - Because the previous value and this value are different, the component will
   rerender, seeing the updated value.
 
-## Adopting Suspense [#suspense]
+## Adopting Suspense [#suspense] [@keywords=["null"]]
 
 Starting with 0.18, you can use Liveblocks hooks with React’s
 [Suspense](https://reactjs.org/docs/react-api.html#suspense).
