@@ -14,7 +14,6 @@
 
     // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
     "noImplicitReturns": true,
-    "suppressImplicitAnyIndexErrors": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
