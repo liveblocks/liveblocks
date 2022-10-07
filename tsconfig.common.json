@@ -14,8 +14,14 @@
 
     // Use better type checking
     "strict": true,
+    "allowUnreachableCode": false, // False makes this stricter: errors instead of warns
+    "allowUnusedLabels": false, // False makes this stricter: errors instead of warns
     "forceConsistentCasingInFileNames": true,
     "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+    "isolatedModules": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
   }
 }

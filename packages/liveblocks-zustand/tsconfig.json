@@ -5,10 +5,7 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "lib": ["dom", "es2015"],
-
-    // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
-    "noUncheckedIndexedAccess": true
+    "lib": ["dom", "es2015"]
   },
   "include": ["src/**/*"]
 }

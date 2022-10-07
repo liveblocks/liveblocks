@@ -12,10 +12,8 @@
     // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
     "jsx": "react",
 
-    // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
-    "noImplicitReturns": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true
+    // TODO: Try to get rid of these overrides
+    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
   "include": ["src/**/*"]
 }

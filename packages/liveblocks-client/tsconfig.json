@@ -5,7 +5,10 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "lib": ["dom", "es2015"]
+    "lib": ["dom", "es2015"],
+
+    // TODO: Try to get rid of these overrides
+    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
   "include": ["src/**/*"]
 }
