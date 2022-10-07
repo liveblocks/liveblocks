@@ -7,6 +7,9 @@
     "module": "es2015",
     "lib": ["dom", "es2015"],
 
+    // Transform JSX syntax from input *.tsx files into React.createElement()
+    // calls in the *.js build output.
+    // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
     "jsx": "react",
 
     // TODO: Consider making these the defaults for _all_ projects, in tsconfig.common.json
