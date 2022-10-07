@@ -53,11 +53,11 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._unacknowledgedSets = new Map();
 
     let position = undefined;
-    for (let i = 0; i < items.length; i++) {
+    for (const item of items) {
       const newPosition = makePosition(position);
-      const item = lsonToLiveNode(items[i]);
-      item._setParentLink(this, newPosition);
-      this._items.push(item);
+      const node = lsonToLiveNode(item);
+      node._setParentLink(this, newPosition);
+      this._items.push(node);
       position = newPosition;
     }
   }
@@ -478,12 +478,8 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     let newKey = key;
 
     if (existingItemIndex !== -1) {
-      const before = this._items[existingItemIndex]
-        ? this._items[existingItemIndex]._getParentKeyOrThrow()
-        : undefined;
-      const after = this._items[existingItemIndex + 1]
-        ? this._items[existingItemIndex + 1]._getParentKeyOrThrow()
-        : undefined;
+      const before = this._items[existingItemIndex]?._getParentKeyOrThrow();
+      const after = this._items[existingItemIndex + 1]?._getParentKeyOrThrow();
 
       newKey = makePosition(before, after);
       child._setParentLink(this, newKey);

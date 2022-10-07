@@ -97,7 +97,7 @@ type Machine<
   getItemsCount(): number;
 
   // Core
-  connect(): null | undefined;
+  connect(): void;
   disconnect(): void;
 
   // Generic storage callbacks
@@ -370,6 +370,7 @@ function makeStateMachine<
       if (parsedToken && !isTokenExpired(parsedToken)) {
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
+        return undefined;
       } else {
         return auth(config.roomId)
           .then(({ token }) => {
@@ -829,7 +830,7 @@ function makeStateMachine<
       state.connection.current.state !== "closed" &&
       state.connection.current.state !== "unavailable"
     ) {
-      return null;
+      return;
     }
 
     const auth = prepareAuthEndpoint(
