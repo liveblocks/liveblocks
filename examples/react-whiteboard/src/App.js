@@ -1,17 +1,135 @@
-import { useState, useEffect, memo } from "react";
+import { useState, Suspense } from "react";
 import {
-  useMyPresence,
-  useMap,
   useHistory,
-  useCanUndo,
-  useCanRedo,
-  useBatch,
-  useRoom,
   useOthers,
-} from "./liveblocks.config";
-import { LiveObject } from "@liveblocks/client";
+  RoomProvider,
+  useStorage,
+  useMutation,
+  useSelf,
+} from './liveblocks.config'
+import { LiveMap, LiveObject } from "@liveblocks/client";
+import { shallow } from "@liveblocks/react";
 
-import "./App.css";
+function Canvas() {
+  const [isDragging, setIsDragging] = useState(false);
+  const shapeIds = useStorage((root) => Array.from(root.shapes.keys()), shallow);
+
+  const history = useHistory();
+
+  const insertRectangle = useMutation(({ storage, setMyPresence }) => {
+    const shapeId = Date.now().toString();
+    const shape = new LiveObject({
+      x: getRandomInt(300),
+      y: getRandomInt(300),
+      fill: getRandomColor(),
+    });
+    storage.get("shapes").set(shapeId, shape);
+    setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
+  }, []);
+
+  const deleteRectangle = useMutation(({ storage, self, setMyPresence }) => {
+    const shapeId = self.presence.selectedShape;
+    storage.get("shapes").delete(shapeId);
+    setMyPresence({ selectedShape: null });
+  }, []);
+
+  const onShapePointerDown = useMutation(({ setMyPresence }, e, shapeId) => {
+    history.pause();
+    e.stopPropagation();
+
+    setMyPresence({ selectedShape: shapeId }, { addToHistory: true });
+    setIsDragging(true);
+  }, [history]);
+
+  const onCanvasPointerUp = useMutation(({ setMyPresence }, e) => {
+    if (!isDragging) {
+      setMyPresence({ selectedShape: null }, { addToHistory: true });
+    }
+
+    setIsDragging(false);
+    history.resume();
+  }, [isDragging, history]);
+
+  const onCanvasPointerMove = useMutation(({ storage, self }, e) => {
+    e.preventDefault();
+    if (!isDragging) {
+      return;
+    }
+
+    const shapeId = self.presence.selectedShape;
+    const shape = storage.get("shapes").get(shapeId);
+
+    if (shape) {
+      shape.update({
+        x: e.clientX - 50,
+        y: e.clientY - 50,
+      });
+    }
+  }, [isDragging]);
+
+  return (
+    <>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {shapeIds.map((shapeId) => {
+          return (
+            <Rectangle
+              key={shapeId}
+              id={shapeId}
+              onShapePointerDown={onShapePointerDown}
+            />
+          );
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={() => insertRectangle()}>Rectangle</button>
+        <button onClick={() => deleteRectangle()}>Delete</button>
+        <button onClick={() => history.undo()}>Undo</button>
+        <button onClick={() => history.redo()}>Redo</button>
+      </div>
+    </>
+  );
+}
+
+function Rectangle({ id, onShapePointerDown }) {
+  const { x, y, fill } = useStorage((root) => root.shapes.get(id));
+
+  const selectedByMe = useSelf((me) => me.presence.selectedShape === id);
+  const selectedByOthers = useOthers((others) => others.some(other => other.presence.selectedShape === id));
+  const selectionColor = selectedByMe ? "blue" : selectedByOthers ? "green" : "transparent";
+
+  return (
+    <div
+      onPointerDown={(e) => onShapePointerDown(e, id)}
+      className="rectangle"
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        transition: !selectedByMe ? "transform 120ms linear" : "none",
+        backgroundColor: fill || "#CCC",
+        borderColor: selectionColor,
+      }}
+    />
+  );
+}
+
+export default function App({ roomId }) {
+  return (
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ selectedShape: null }}
+      initialStorage={{
+        shapes: new LiveMap(),
+      }}
+    >
+      <Suspense fallback={<Loading />}>
+        <Canvas />
+      </Suspense>
+    </RoomProvider>
+  )
+}
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
@@ -23,150 +141,10 @@ function getRandomColor() {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-export default function App() {
-  const shapes = useMap("shapes");
-
-  if (shapes == null) {
-    return (
-      <div className="loading">
-        <img src="https://liveblocks.io/loading.svg" alt="Loading" />
-      </div>
-    );
-  }
-
-  return <Canvas shapes={shapes} />;
-}
-
-function Canvas({ shapes }) {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const [{ selectedShape }, setPresence] = useMyPresence();
-  const batch = useBatch();
-  const history = useHistory();
-  const canUndo = useCanUndo();
-  const canRedo = useCanRedo();
-  const others = useOthers();
-
-  const insertRectangle = () => {
-    batch(() => {
-      const shapeId = Date.now().toString();
-      const shape = new LiveObject({
-        x: getRandomInt(300),
-        y: getRandomInt(300),
-        fill: getRandomColor(),
-      });
-      shapes.set(shapeId, shape);
-      setPresence({ selectedShape: shapeId }, { addToHistory: true });
-    });
-  };
-
-  const deleteRectangle = () => {
-    shapes.delete(selectedShape);
-  };
-
-  const onShapePointerDown = (e, shapeId) => {
-    history.pause();
-    e.stopPropagation();
-
-    setPresence({ selectedShape: shapeId }, { addToHistory: true });
-
-    setIsDragging(true);
-  };
-
-  const onCanvasPointerUp = (e) => {
-    if (!isDragging) {
-      setPresence({ selectedShape: null }, { addToHistory: true });
-    }
-
-    setIsDragging(false);
-
-    history.resume();
-  };
-
-  const onCanvasPointerMove = (e) => {
-    e.preventDefault();
-
-    if (isDragging) {
-      const shape = shapes.get(selectedShape);
-      if (shape) {
-        shape.update({
-          x: e.clientX - 50,
-          y: e.clientY - 50,
-        });
-      }
-    }
-  };
-
+function Loading() {
   return (
-    <>
-      <div
-        className="canvas"
-        onPointerMove={onCanvasPointerMove}
-        onPointerUp={onCanvasPointerUp}
-      >
-        {Array.from(shapes, ([shapeId, shape]) => {
-          let selectionColor =
-            selectedShape === shapeId
-              ? "blue"
-              : others
-                  .toArray()
-                  .some((user) => user.presence?.selectedShape === shapeId)
-              ? "green"
-              : undefined;
-
-          return (
-            <Rectangle
-              key={shapeId}
-              id={shapeId}
-              onShapePointerDown={onShapePointerDown}
-              shape={shape}
-              selectionColor={selectionColor}
-              transition={selectedShape !== shapeId}
-            />
-          );
-        })}
-      </div>
-      <div className="toolbar">
-        <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteRectangle} disabled={selectedShape == null}>
-          Delete
-        </button>
-        <button onClick={history.undo} disabled={!canUndo}>
-          Undo
-        </button>
-        <button onClick={history.redo} disabled={!canRedo}>
-          Redo
-        </button>
-      </div>
-    </>
+    <div className="loading">
+      <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+    </div>
   );
 }
-
-const Rectangle = memo(
-  ({ shape, id, onShapePointerDown, selectionColor, transition }) => {
-    const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
-
-    const room = useRoom();
-
-    useEffect(() => {
-      function onChange() {
-        setShapeData(shape.toObject());
-      }
-
-      return room.subscribe(shape, onChange);
-    }, [room, shape]);
-
-    return (
-      <div
-        onPointerDown={(e) => onShapePointerDown(e, id)}
-        className="rectangle"
-        style={{
-          transform: `translate(${x}px, ${y}px)`,
-          transition: transition ? "transform 120ms linear" : "none",
-          backgroundColor: fill ? fill : "#CCC",
-          borderColor: selectionColor || "transparent",
-        }}
-      />
-    );
-  }
-);
