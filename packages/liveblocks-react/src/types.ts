@@ -10,11 +10,7 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
-import type {
-  Resolve,
-  RoomInitializers,
-  ToImmutable,
-} from "@liveblocks/client/internal";
+import type { Resolve, RoomInitializers, ToImmutable } from "@liveblocks/core";
 
 export type RoomProviderProps<
   TPresence extends JsonObject,

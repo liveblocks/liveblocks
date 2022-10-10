@@ -1,11 +1,7 @@
 import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
 import { createClient, shallow } from "@liveblocks/client";
-import type { ServerMsg } from "@liveblocks/client/internal";
-import {
-  ClientMsgCode,
-  CrdtType,
-  ServerMsgCode,
-} from "@liveblocks/client/internal";
+import type { ServerMsg } from "@liveblocks/core";
+import { ClientMsgCode, CrdtType, ServerMsgCode } from "@liveblocks/core";
 import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";

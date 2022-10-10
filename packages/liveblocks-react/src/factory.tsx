@@ -12,15 +12,12 @@ import type {
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import type {
-  RoomInitializers,
-  ToImmutable,
-} from "@liveblocks/client/internal";
+import type { RoomInitializers, ToImmutable } from "@liveblocks/core";
 import {
   asArrayWithLegacyMethods,
   deprecateIf,
   errorIf,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 

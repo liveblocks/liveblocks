@@ -6,12 +6,8 @@ import type {
   SerializedCrdt,
   ServerMsg,
   UpdatePresenceServerMsg,
-} from "@liveblocks/client/internal";
-import {
-  ClientMsgCode,
-  OpCode,
-  ServerMsgCode,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
+import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
 import type { Reducer } from "@reduxjs/toolkit";
 import { configureStore } from "@reduxjs/toolkit";
 import { rest } from "msw";
