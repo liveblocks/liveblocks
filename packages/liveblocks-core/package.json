@@ -1,7 +1,7 @@
 {
-  "name": "@liveblocks/zustand",
+  "name": "@liveblocks/core",
   "version": "0.18.3",
-  "description": "A middleware to integrate Liveblocks into Zustand stores.",
+  "description": "Shared code and foundational internals for Liveblocks",
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
@@ -9,52 +9,50 @@
     "**"
   ],
   "keywords": [
-    "zustand",
-    "react",
     "liveblocks",
     "multiplayer",
     "live-cursors",
     "collaborative"
   ],
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "scripts": {
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --watch --silent --verbose",
+    "test": "jest --watch --silent --verbose --config=./jest.config.js",
     "test-ci": "jest --silent --verbose",
-    "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
+    "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
   },
   "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/liveblocks-zustand"
-  },
-  "dependencies": {
-    "@liveblocks/core": "0.18.3",
-    "@liveblocks/client": "0.18.3"
-  },
-  "peerDependencies": {
-    "zustand": "^3"
-  },
   "devDependencies": {
-    "@definitelytyped/dtslint": "^0.0.103",
-    "@testing-library/jest-dom": "^5.16.5",
     "@types/jest": "^29.1.2",
+    "@types/node-fetch": "^2.6.1",
+    "@types/ws": "^8.5.3",
     "@typescript-eslint/eslint-plugin": "^5.26.0",
     "@typescript-eslint/parser": "^5.26.0",
+    "dotenv": "^16.0.3",
     "eslint": "^8.12.0",
     "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-rulesdir": "^0.2.1",
     "eslint-plugin-simple-import-sort": "^7.0.0",
+    "fast-check": "^3.0.1",
     "jest": "^29.1.2",
     "jest-environment-jsdom": "^29.1.2",
-    "msw": "^0.36.4",
+    "msw": "^0.39.1",
+    "node-fetch": "2.6.7",
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
     "tsup": "^6.2.2",
     "typescript": "^4.7.2",
     "whatwg-fetch": "^3.6.2",
-    "zustand": "^3.6.9"
+    "ws": "^8.5.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-core"
   },
   "sideEffects": false
 }

@@ -11,12 +11,8 @@ import type {
   SerializedCrdt,
   ServerMsg,
   UpdatePresenceServerMsg,
-} from "@liveblocks/client/internal";
-import {
-  ClientMsgCode,
-  OpCode,
-  ServerMsgCode,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
+import { ClientMsgCode, OpCode, ServerMsgCode } from "@liveblocks/core";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";

@@ -1,3 +1,6 @@
+const rulesDirPlugin = require("eslint-plugin-rulesdir");
+rulesDirPlugin.RULES_DIR = "./rules";
+
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
@@ -6,6 +9,7 @@ module.exports = {
     "@typescript-eslint",
     "eslint-plugin-import",
     "eslint-plugin-simple-import-sort",
+    "eslint-plugin-rulesdir",
   ],
   extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
   rules: {
@@ -54,6 +58,7 @@ module.exports = {
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
+    "rulesdir/console-must-be-fancy": "error",
     "no-restricted-syntax": [
       "error",
       {

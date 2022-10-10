@@ -12,6 +12,7 @@ fi
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 PACKAGE_DIRS=(
+    "packages/liveblocks-core"
     "packages/liveblocks-client"
     "packages/liveblocks-node"
     "packages/liveblocks-react"
@@ -58,7 +59,7 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# Turns "packages/liveblocks-client" => "@liveblocks/client"
+# Turns "packages/liveblocks-core" => "@liveblocks/core"
 npm_pkgname () {
     PKGDIR="$1"
     echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
@@ -215,9 +216,14 @@ bump_version_in_pkg () {
 
     jq ".version=\"$VERSION\"" package.json | sponge package.json
 
-    # If this is one of the client packages, also bump the peer dependency
-    if [ "$SKIP_PEERS" -eq 0 -a "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
-        jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
+    # If this is one of the dependant packages, also bump their versions
+    if [ "$SKIP_PEERS" -eq 0 ]; then
+        if [ "$(jq '.dependencies."@liveblocks/core"' package.json)" != "null" ]; then
+            jq ".dependencies.\"@liveblocks/core\"=\"$VERSION\"" package.json | sponge package.json
+        fi
+        if [ "$(jq '.dependencies."@liveblocks/client"' package.json)" != "null" ]; then
+            jq ".dependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
+        fi
     fi
 
     prettier --write package.json

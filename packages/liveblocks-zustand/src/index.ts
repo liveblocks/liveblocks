@@ -13,7 +13,7 @@ import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
 import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";

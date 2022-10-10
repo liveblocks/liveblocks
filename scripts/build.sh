@@ -14,10 +14,6 @@ err () {
 }
 
 generate_esm_wrappers () {
-    if [ -f "$DIST/internal.js" ]; then
-        npx gen-esm-wrapper "$DIST/internal.js" "$DIST/internal.mjs"
-    fi
-
     if [ -f "$DIST/index.js" ]; then
         npx gen-esm-wrapper "$DIST/index.js" "$DIST/index.mjs"
     fi

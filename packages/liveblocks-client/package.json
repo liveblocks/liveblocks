@@ -5,18 +5,6 @@
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
-  "exports": {
-    "./internal": {
-      "require": "./internal.js",
-      "import": "./internal.mjs",
-      "types": "./internal.d.ts"
-    },
-    ".": {
-      "require": "./index.js",
-      "import": "./index.mjs",
-      "types": "./index.d.ts"
-    }
-  },
   "files": [
     "**"
   ],
@@ -34,10 +22,12 @@
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --watch --silent --verbose --config=./jest.config.js",
-    "test-ci": "jest --silent --verbose",
-    "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
+    "test-ci": "jest --silent --verbose --passWithNoTests"
   },
   "license": "Apache-2.0",
+  "dependencies": {
+    "@liveblocks/core": "0.18.3"
+  },
   "devDependencies": {
     "@types/jest": "^29.1.2",
     "@types/node-fetch": "^2.6.1",
@@ -47,7 +37,6 @@
     "dotenv": "^16.0.3",
     "eslint": "^8.12.0",
     "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-rulesdir": "^0.2.1",
     "eslint-plugin-simple-import-sort": "^7.0.0",
     "fast-check": "^3.0.1",
     "jest": "^29.1.2",

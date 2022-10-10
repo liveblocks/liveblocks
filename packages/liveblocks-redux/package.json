@@ -5,13 +5,6 @@
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
-  "exports": {
-    ".": {
-      "require": "./index.js",
-      "import": "./index.mjs",
-      "types": "./index.d.ts"
-    }
-  },
   "files": [
     "**"
   ],
@@ -37,8 +30,11 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-redux"
   },
+  "dependencies": {
+    "@liveblocks/core": "0.18.3",
+    "@liveblocks/client": "0.18.3"
+  },
   "peerDependencies": {
-    "@liveblocks/client": "0.18.3",
     "redux": "^4"
   },
   "devDependencies": {

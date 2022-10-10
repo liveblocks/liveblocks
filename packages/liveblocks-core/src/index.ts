@@ -14,6 +14,7 @@
 export { assertNever, nn } from "./assert";
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
+export { createClient } from "./client";
 export {
   deprecate,
   deprecateIf,
@@ -26,7 +27,11 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { asArrayWithLegacyMethods } from "./LegacyArray";
+export { LiveList } from "./LiveList";
+export { LiveMap } from "./LiveMap";
+export { LiveObject } from "./LiveObject";
 export { comparePosition, makePosition } from "./position";
+export { shallow } from "./shallow";
 export type {
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
@@ -68,6 +73,22 @@ export type {
   UserJoinServerMsg,
   UserLeftServerMsg,
 } from "./types";
+export type {
+  BaseUserMeta,
+  BroadcastOptions,
+  Client,
+  History,
+  Immutable,
+  Json,
+  JsonObject,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  Others,
+  Room,
+  StorageUpdate,
+  User,
+} from "./types";
 export {
   ClientMsgCode,
   CrdtType,
@@ -79,3 +100,18 @@ export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
 export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
+
+/**
+ * Helper type to help users adopt to Lson types from interface definitions.
+ * You should only use this to wrap interfaces you don't control. For more
+ * information, see
+ * https://liveblocks.io/docs/guides/limits#lson-constraint-and-interfaces
+ */
+// prettier-ignore
+export type EnsureJson<T> =
+  // Retain `unknown` fields
+  [unknown] extends [T] ? T :
+  // Retain functions
+  T extends (...args: unknown[]) => unknown ? T :
+  // Resolve all other values explicitly
+  { [K in keyof T]: EnsureJson<T[K]> };
