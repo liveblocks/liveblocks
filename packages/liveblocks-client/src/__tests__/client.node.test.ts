@@ -80,6 +80,24 @@ describe("createClient", () => {
     }
   );
 
+  test("should not try to connect if withoutInitiallyConnecting is false", () => {
+    const authMock = jest.fn();
+
+    const client = createClient({
+      authEndpoint: authMock,
+      polyfills: {
+        atob: atobPolyfillMock,
+      },
+    });
+
+    client.enter("room", {
+      initialPresence: {},
+      shouldInitiallyConnect: false,
+    });
+
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
   test("should not throw if authEndpoint is string and fetch polyfill is defined", () => {
     expect(() =>
       createClientAndEnter({

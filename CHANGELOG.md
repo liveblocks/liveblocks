@@ -1,3 +1,20 @@
+# v0.18.4
+
+- In **@liveblocks/client**:
+
+  Add a new option `shouldInitiallyConnect` to `client.enter` that let you control whether or not the room connects to Liveblock servers. Default is true.
+
+  Usually set to false when the client is used from the server to not call
+  the authentication endpoint or connect via WebSocket.
+
+- In **@liveblocks/react**:
+
+  Add a new property `shouldInitiallyConnect` to `RoomProvider` that let you control whether or not the room connects to Liveblock servers. Default is true.
+
+  By default equals to `typeof window !== "undefined"`,
+  meaning the RoomProvider tries to connect to Liveblocks servers
+  only on the client side.
+
 # v0.18.3
 
 - In **@liveblocks/react**:

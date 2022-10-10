@@ -189,6 +189,13 @@ export type RoomInitializers<
    * The initial Storage to use when entering a new Room.
    */
   initialStorage?: TStorage | ((roomId: string) => TStorage);
+  /**
+   * Whether or not the room connects to Liveblock servers. Default is true.
+   *
+   * Usually set to false when the client is used from the server to not call
+   * the authentication endpoint or connect via WebSocket.
+   */
+  shouldInitiallyConnect?: boolean;
 }>;
 
 export type Client = {
