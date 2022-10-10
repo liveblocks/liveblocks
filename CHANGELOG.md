@@ -18,6 +18,8 @@
   By default equals to `typeof window !== "undefined"`, meaning the RoomProvider
   tries to connect to Liveblocks servers only on the client side.
 
+- Internal package restructurings
+
 # v0.18.3
 
 - In **@liveblocks/react**:
