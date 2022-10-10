@@ -1,5 +1,3 @@
-import "regenerator-runtime/runtime";
-
 import { lsonToJson } from "../src/immutable";
 import { LiveList } from "../src/LiveList";
 import type { Json } from "../src/types";

@@ -1,29 +1,19 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "strict": true,
-    "outDir": "lib",
-    "rootDir": "src",
     "lib": ["dom", "es2015"],
-    "moduleResolution": "node",
-    "allowJs": false,
+
+    // Transform JSX syntax from input *.tsx files into React.createElement()
+    // calls in the *.js build output.
+    // NOTE: We can change this to `react-jsx` once we stop supporting React 16.
     "jsx": "react",
-    "declaration": true,
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "stripInternal": true,
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+
+    // TODO: Try to get rid of these overrides
+    "noUncheckedIndexedAccess": false // OVERWRITTEN to relax a bit
   },
-  "include": [
-    "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./test/**/*.ts",
-    "./test/**/*.tsx"
-  ],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }

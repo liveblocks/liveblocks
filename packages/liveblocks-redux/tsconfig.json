@@ -1,19 +1,11 @@
 {
+  // Use the same settings for all packages
+  "extends": "../../tsconfig.common.json",
+
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "outDir": "./lib/esm",
-    "strict": true,
-    "jsx": "react-jsx",
-    "esModuleInterop": true,
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
-    "noUncheckedIndexedAccess": true,
-    "lib": ["dom", "es2015"],
-    "stripInternal": true,
-    "importsNotUsedAsValues": "error",
-    "isolatedModules": true
+    "lib": ["dom", "es2015"]
   },
-  "file": ["src/index.ts", "src/index.test.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*"]
 }

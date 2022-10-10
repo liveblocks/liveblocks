@@ -24,16 +24,11 @@ import create from "zustand";
 
 import type { Mapping, ZustandState } from "..";
 import { middleware } from "..";
-import {
-  mappingShouldBeAnObject,
-  mappingShouldNotHaveTheSameKeys,
-  mappingToFunctionIsNotAllowed,
-  mappingValueShouldBeABoolean,
-  missingClient,
-} from "../errors";
 import { list, MockWebSocket, obj, waitFor } from "./_utils";
 
 window.WebSocket = MockWebSocket as any;
+
+const INVALID_CONFIG_ERROR = /Invalid @liveblocks\/zustand middleware config/;
 
 const server = setupServer(
   rest.post("/api/auth", (_req, res, ctx) => {
@@ -708,7 +703,7 @@ describe("middleware", () => {
     test("missing client should throw", () => {
       expect(() =>
         middleware(() => ({}), { client: undefined as any, storageMapping: {} })
-      ).toThrow(missingClient());
+      ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("storageMapping should be an object", () => {
@@ -718,7 +713,7 @@ describe("middleware", () => {
           client,
           storageMapping: "invalid_mapping" as any,
         })
-      ).toThrow(mappingShouldBeAnObject("storageMapping"));
+      ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("invalid storageMapping key value should throw", () => {
@@ -728,7 +723,7 @@ describe("middleware", () => {
           client,
           storageMapping: { key: "value" },
         })
-      ).toThrow(mappingValueShouldBeABoolean("storageMapping", "key"));
+      ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("duplicated key should throw", () => {
@@ -739,7 +734,7 @@ describe("middleware", () => {
           storageMapping: { key: true },
           presenceMapping: { key: true },
         })
-      ).toThrow(mappingShouldNotHaveTheSameKeys("key"));
+      ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("invalid presenceMapping should throw", () => {
@@ -750,7 +745,7 @@ describe("middleware", () => {
           storageMapping: {},
           presenceMapping: "invalid_mapping",
         })
-      ).toThrow(mappingShouldBeAnObject("presenceMapping"));
+      ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("mapping on function should throw", async () => {
@@ -773,7 +768,7 @@ describe("middleware", () => {
       );
 
       expect(() => store.getState().setFunction()).toThrow(
-        mappingToFunctionIsNotAllowed("notAFunc")
+        INVALID_CONFIG_ERROR
       );
     });
   });

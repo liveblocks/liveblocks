@@ -5,6 +5,7 @@ import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
+import * as console from "./fancy-console";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
@@ -97,7 +98,7 @@ type Machine<
   getItemsCount(): number;
 
   // Core
-  connect(): null | undefined;
+  connect(): void;
   disconnect(): void;
 
   // Generic storage callbacks
@@ -370,6 +371,7 @@ function makeStateMachine<
       if (parsedToken && !isTokenExpired(parsedToken)) {
         const socket = createWebSocket(rawToken);
         authenticationSuccess(parsedToken, socket);
+        return undefined;
       } else {
         return auth(config.roomId)
           .then(({ token }) => {
@@ -829,7 +831,7 @@ function makeStateMachine<
       state.connection.current.state !== "closed" &&
       state.connection.current.state !== "unavailable"
     ) {
-      return null;
+      return;
     }
 
     const auth = prepareAuthEndpoint(
@@ -1153,7 +1155,7 @@ function makeStateMachine<
 
         if (process.env.NODE_ENV !== "production") {
           console.error(
-            `Connection to Liveblocks websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
+            `Connection to websocket server closed. Reason: ${error.message} (code: ${error.code}). Retrying in ${delay}ms.`
           );
         }
 
