@@ -470,6 +470,7 @@ export function createRoomContext<
     const canRedo = room.history.canRedo;
     return useSyncExternalStore(subscribe, canRedo, canRedo);
   }
+
   function useBatch<T>(): (callback: () => T) => T {
     return useRoom().batch;
   }
