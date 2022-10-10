@@ -902,8 +902,6 @@ function makeStateMachine<
   }
 
   function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
-    // Can separate read only and read/write tokens here
-    // Update addEventListener with onReadOnlyMessage
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
