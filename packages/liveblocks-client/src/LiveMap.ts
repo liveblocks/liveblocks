@@ -56,7 +56,7 @@ export class LiveMap<
   }
 
   /**
-   * @internal
+   * @internal  
    */
   _toOps(
     parentId: string,
@@ -259,6 +259,7 @@ export class LiveMap<
    */
   set(key: TKey, value: TValue): void {
     console.log("LiveMap.set", key, value);
+    this._pool?.isStorageWritable();
     // An error could be thrown here if isReadOnly is true
     // This is the lowest level of the API, ideally we should handle isReadOnly
     // at a higher level
@@ -322,6 +323,7 @@ export class LiveMap<
    * @returns true if an element existed and has been removed, or false if the element does not exist.
    */
   delete(key: TKey): boolean {
+    this._pool?.isStorageWritable();
     console.log("LiveMap.delete", key);
     const item = this._map.get(key);
 
