@@ -918,8 +918,6 @@ function makeStateMachine<
   }
 
   function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
-    // Can separate read only and read/write tokens here
-    // Update addEventListener with onReadOnlyMessage
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
     socket.addEventListener("close", onClose);
@@ -1101,7 +1099,6 @@ function makeStateMachine<
     batchUpdates(() => {
       for (const message of messages) {
         switch (message.type) {
-          // Read event
           case ServerMsgCode.USER_JOINED: {
             const userJoinedUpdate = onUserJoinedMessage(message);
             if (userJoinedUpdate) {
@@ -1110,7 +1107,6 @@ function makeStateMachine<
             break;
           }
 
-          // Read event
           case ServerMsgCode.UPDATE_PRESENCE: {
             const othersPresenceUpdate = onUpdatePresenceMessage(message);
             if (othersPresenceUpdate) {
@@ -1119,7 +1115,6 @@ function makeStateMachine<
             break;
           }
 
-          // Read event
           case ServerMsgCode.BROADCASTED_EVENT: {
             eventHub.customEvent.notify({
               connectionId: message.actor,
@@ -1128,7 +1123,6 @@ function makeStateMachine<
             break;
           }
 
-          // Read event
           case ServerMsgCode.USER_LEFT: {
             const event = onUserLeftMessage(message);
             if (event) {
@@ -1136,12 +1130,12 @@ function makeStateMachine<
             }
             break;
           }
-          // Read event
+
           case ServerMsgCode.ROOM_STATE: {
             updates.others.push(onRoomStateMessage(message));
             break;
           }
-          // Read event
+
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
