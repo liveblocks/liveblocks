@@ -11,6 +11,7 @@ type M = {
   info?: {
     avatar: string;
   };
+  scopes: string[];
 };
 
 describe('Read-only "others" ref cache', () => {
@@ -27,42 +28,62 @@ describe('Read-only "others" ref cache', () => {
       // information is known for this user. Normally, this information is
       // known before the .setOther() call is made, unlike how this test case
       // is structured.
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 1, y: 1 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 1, y: 1 },
+          isReadOnly: false,
+        },
       ]);
     });
 
     it("setting other", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
-      others.setConnection(3, "user-567", undefined);
+      others.setConnection(2, "user-123", undefined, false);
+      others.setConnection(3, "user-567", undefined, false);
 
       others.setOther(2, { x: 2, y: 2 });
       others.setOther(3, { x: 3, y: 3 });
       others.setOther(2, { x: -2, y: -2 });
 
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: -2, y: -2 } },
-        { connectionId: 3, id: "user-567", presence: { x: 3, y: 3 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: -2, y: -2 },
+          isReadOnly: false,
+        },
+        {
+          connectionId: 3,
+          id: "user-567",
+          presence: { x: 3, y: 3 },
+          isReadOnly: false,
+        },
       ]);
     });
 
     it("setting others removes explicitly-undefined keys", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2, z: undefined });
       //                             ^^^^^^^^^ 🔑
 
-      expect(others.current).toStrictEqual(
-        [{ connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } }]
-        //                                              ^ 🔑 (no explicit undefined here)
-      );
+      expect(others.current).toStrictEqual([
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: 2 },
+          //          ^ 🔑 (no explicit undefined here)
+          isReadOnly: false,
+        },
+      ]);
     });
 
     it("patching others ignores patches for unknown users", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.patchOther(2, { y: 1, z: 2 }); // .setOther() not called yet for actor 2
 
       expect(others.current).toStrictEqual([]);
@@ -70,32 +91,48 @@ describe('Read-only "others" ref cache', () => {
 
     it("patching others", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2 });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: 2 },
+          isReadOnly: false,
+        },
       ]);
 
       others.patchOther(2, { y: -2, z: -2 });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2, z: -2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: -2, z: -2 },
+          isReadOnly: false,
+        },
       ]);
 
       others.patchOther(2, { z: undefined });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: -2 },
+          isReadOnly: false,
+        },
       ]);
     });
 
     it("removing connections", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toStrictEqual({
         connectionId: 2,
         id: "user-123",
         presence: { x: 2, y: 2 },
+        isReadOnly: false,
       });
       others.removeConnection(2);
 
@@ -112,7 +149,7 @@ describe('Read-only "others" ref cache', () => {
   describe("caching", () => {
     it("caches immutable results (others)", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2 });
 
       const others1 = others.current;
@@ -141,7 +178,7 @@ describe('Read-only "others" ref cache', () => {
 
     it("getUser() returns stable cache results", () => {
       const others = new OthersRef<P, M>();
-      others.setConnection(2, "user-123", undefined);
+      others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2 });
 
       expect(others.getUser(2)).toBe(others.getUser(2));
