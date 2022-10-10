@@ -31,9 +31,9 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "use-sync-external-store": "^1.2.0",
+    "@liveblocks/client": "0.18.3",
     "@liveblocks/core": "0.18.3",
-    "@liveblocks/client": "0.18.3"
+    "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
     "react": "^16.14.0 || ^17 || ^18"
@@ -57,7 +57,6 @@
     "ts-jest": "^29.0.3",
     "ts-node": "^10.8.1",
     "tsup": "^6.2.2",
-    "typescript": "^4.7.3",
     "whatwg-fetch": "^3.6.2"
   },
   "repository": {

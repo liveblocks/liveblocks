@@ -33,8 +33,8 @@
     "directory": "packages/liveblocks-redux"
   },
   "dependencies": {
-    "@liveblocks/core": "0.18.3",
-    "@liveblocks/client": "0.18.3"
+    "@liveblocks/client": "0.18.3",
+    "@liveblocks/core": "0.18.3"
   },
   "peerDependencies": {
     "redux": "^4"
@@ -56,7 +56,6 @@
     "redux": "^4.1.2",
     "ts-jest": "^29.0.3",
     "tsup": "^6.2.2",
-    "typescript": "^4.7.2",
     "whatwg-fetch": "^3.6.2"
   },
   "sideEffects": false
