@@ -1,10 +1,5 @@
-import {
-  BaseUserMeta,
-  createClient,
-  Json,
-  JsonObject,
-} from "@liveblocks/client";
-import { shallow } from "@liveblocks/client";
+import type { BaseUserMeta, Json, JsonObject } from "@liveblocks/client";
+import { createClient, shallow } from "@liveblocks/client";
 import type { ServerMsg } from "@liveblocks/client/internal";
 import {
   ClientMsgCode,
@@ -15,8 +10,8 @@ import { render } from "@testing-library/react";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 import * as React from "react";
-import { createRoomContext } from "../factory";
 
+import { createRoomContext } from "../factory";
 import {
   useCanRedo,
   useCanUndo,
