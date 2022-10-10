@@ -18,6 +18,7 @@
     "collaborative"
   ],
   "scripts": {
+    "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",

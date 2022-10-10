@@ -2,6 +2,10 @@
   "$schema": "https://turborepo.org/schema.json",
   "globalDependencies": [".envrc"],
   "pipeline": {
+    "dev": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "build": {
       // Here, the `^` symbol signifies `upstream`
       "dependsOn": ["^build"],
