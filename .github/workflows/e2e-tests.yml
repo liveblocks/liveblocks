@@ -11,6 +11,7 @@ jobs:
         node-version: [16.x]
         pkg:
           [
+            "liveblocks-core",
             "liveblocks-client",
             "liveblocks-react",
             "liveblocks-redux",
