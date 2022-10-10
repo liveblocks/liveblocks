@@ -26,6 +26,9 @@
     "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
   },
   "license": "Apache-2.0",
+  "dependencies": {
+    "@liveblocks/core": "0.18.3"
+  },
   "devDependencies": {
     "@types/jest": "^29.1.2",
     "@types/node-fetch": "^2.6.1",
