@@ -1,7 +1,7 @@
 {
-  "name": "@liveblocks/client",
+  "name": "@liveblocks/core",
   "version": "0.18.3",
-  "description": "A client that lets you interact with Liveblocks servers.",
+  "description": "Shared code and foundational internals for Liveblocks",
   "main": "./index.js",
   "module": "./index.mjs",
   "types": "./index.d.ts",
@@ -52,7 +52,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/liveblocks-client"
+    "directory": "packages/liveblocks-core"
   },
   "sideEffects": false
 }
