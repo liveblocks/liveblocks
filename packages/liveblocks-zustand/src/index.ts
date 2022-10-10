@@ -9,20 +9,20 @@ import type {
   User,
 } from "@liveblocks/client";
 import {
+  errorIf,
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
 import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
 
-import {
-  mappingShouldBeAnObject,
-  mappingShouldNotHaveTheSameKeys,
-  mappingToFunctionIsNotAllowed,
-  mappingValueShouldBeABoolean,
-  missingClient,
-  missingMapping,
-} from "./errors";
+const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
+
+function mappingToFunctionIsNotAllowed(key: string): Error {
+  return new Error(
+    `${ERROR_PREFIX} mapping.${key} is invalid. Mapping to a function is not allowed.`
+  );
+}
 
 function isJson(value: unknown): value is Json {
   return (
@@ -39,6 +39,48 @@ export type ZustandState =
   // TODO: Properly type out the constraints for this type here!
   Record<string, unknown>;
 
+export type LiveblocksContext<
+  TState extends ZustandState,
+  TPresence extends JsonObject,
+  TStorage extends LsonObject,
+  TUserMeta extends BaseUserMeta,
+  TRoomEvent extends Json
+> = {
+  /**
+   * Enters a room and starts sync it with zustand state
+   * @param roomId The id of the room
+   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
+   */
+  readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
+  /**
+   * Leaves a room and stops sync it with zustand state.
+   * @param roomId The id of the room
+   */
+  readonly leaveRoom: (roomId: string) => void;
+  /**
+   * The room currently synced to your zustand state.
+   */
+  readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+  /**
+   * Other users in the room. Empty no room is currently synced
+   */
+  readonly others: readonly User<TPresence, TUserMeta>[];
+  /**
+   * Whether or not the room storage is currently loading
+   */
+  readonly isStorageLoading: boolean;
+  /**
+   * Connection state of the room
+   */
+  readonly connection:
+    | "closed"
+    | "authenticating"
+    | "unavailable"
+    | "failed"
+    | "open"
+    | "connecting";
+};
+
 export type LiveblocksState<
   TState extends ZustandState,
   TPresence extends JsonObject = JsonObject,
@@ -49,41 +91,13 @@ export type LiveblocksState<
   /**
    * Liveblocks extra state attached by the middleware
    */
-  readonly liveblocks: {
-    /**
-     * Enters a room and starts sync it with zustand state
-     * @param roomId The id of the room
-     * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
-     */
-    readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
-    /**
-     * Leaves a room and stops sync it with zustand state.
-     * @param roomId The id of the room
-     */
-    readonly leaveRoom: (roomId: string) => void;
-    /**
-     * The room currently synced to your zustand state.
-     */
-    readonly room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
-    /**
-     * Other users in the room. Empty no room is currently synced
-     */
-    readonly others: readonly User<TPresence, TUserMeta>[];
-    /**
-     * Whether or not the room storage is currently loading
-     */
-    readonly isStorageLoading: boolean;
-    /**
-     * Connection state of the room
-     */
-    readonly connection:
-      | "closed"
-      | "authenticating"
-      | "unavailable"
-      | "failed"
-      | "open"
-      | "connecting";
-  };
+  readonly liveblocks: LiveblocksContext<
+    TState,
+    TPresence,
+    TStorage,
+    TUserMeta,
+    TRoomEvent
+  >;
 };
 
 export type Mapping<T> = {
@@ -125,23 +139,7 @@ export function middleware<
   GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
   StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
-  if (process.env.NODE_ENV !== "production" && options.client == null) {
-    throw missingClient();
-  }
-  const client = options.client;
-  const storageMapping = validateMapping(
-    options.storageMapping || {},
-    "storageMapping"
-  );
-
-  const presenceMapping = validateMapping(
-    options.presenceMapping || {},
-    "presenceMapping"
-  );
-  if (process.env.NODE_ENV !== "production") {
-    validateNoDuplicateKeys(storageMapping, presenceMapping);
-  }
-
+  const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
@@ -155,39 +153,6 @@ export function middleware<
     let isPatching: boolean = false;
     let storageRoot: LiveObject<any> | null = null;
     let unsubscribeCallbacks: Array<() => void> = [];
-
-    const store = config(
-      (args) => {
-        const oldState = get();
-        set(args);
-        const newState = get();
-
-        if (room) {
-          isPatching = true;
-          updatePresence(
-            room!,
-            oldState as any,
-            newState,
-            presenceMapping as any
-          );
-
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping as any
-              );
-            }
-          });
-
-          isPatching = false;
-        }
-      },
-      get as any,
-      api
-    );
 
     function enterRoom(roomId: string, initialState: any) {
       if (storageRoot) {
@@ -207,7 +172,7 @@ export function middleware<
 
       unsubscribeCallbacks.push(
         room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others: others.toArray() });
+          updateZustandLiveblocksState(set, { others });
         })
       );
 
@@ -281,6 +246,39 @@ export function middleware<
         room: null,
       });
     }
+
+    const store = config(
+      (args) => {
+        const oldState = get();
+        set(args);
+        const newState = get();
+
+        if (room) {
+          isPatching = true;
+          updatePresence(
+            room!,
+            oldState as any,
+            newState,
+            presenceMapping as any
+          );
+
+          room.batch(() => {
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                oldState,
+                newState,
+                storageMapping as any
+              );
+            }
+          });
+
+          isPatching = false;
+        }
+      },
+      get as any,
+      api
+    );
 
     return {
       ...store,
@@ -431,7 +429,9 @@ function validateNoDuplicateKeys<T>(
 ) {
   for (const key in storageMapping) {
     if (presenceMapping[key] !== undefined) {
-      throw mappingShouldNotHaveTheSameKeys(key);
+      throw new Error(
+        `${ERROR_PREFIX} "${key}" is mapped on both presenceMapping and storageMapping. A key shouldn't exist on both mapping.`
+      );
     }
   }
 }
@@ -443,27 +443,44 @@ function validateMapping<T>(
   mapping: Mapping<T>,
   mappingType: "storageMapping" | "presenceMapping"
 ): Mapping<T> {
-  if (process.env.NODE_ENV !== "production") {
-    if (mapping == null) {
-      throw missingMapping(mappingType);
-    }
-    if (!isObject(mapping)) {
-      throw mappingShouldBeAnObject(mappingType);
-    }
-  }
+  errorIf(
+    !isObject(mapping),
+    `${ERROR_PREFIX} ${mappingType} should be an object where the values are boolean.`
+  );
 
   const result: Mapping<T> = {};
   for (const key in mapping) {
-    if (
-      process.env.NODE_ENV !== "production" &&
-      typeof mapping[key] !== "boolean"
-    ) {
-      throw mappingValueShouldBeABoolean(mappingType, key);
-    }
+    errorIf(
+      typeof mapping[key] !== "boolean",
+      `${ERROR_PREFIX} ${mappingType}.${key} value should be a boolean`
+    );
 
     if (mapping[key] === true) {
       result[key] = true;
     }
   }
   return result;
+}
+
+function validateOptions<T extends ZustandState>(
+  options: Options<T>
+): Options<T> {
+  const client = options.client;
+  errorIf(!client, `${ERROR_PREFIX} client is missing`);
+
+  const storageMapping = validateMapping(
+    options.storageMapping ?? {},
+    "storageMapping"
+  );
+
+  const presenceMapping = validateMapping(
+    options.presenceMapping ?? {},
+    "presenceMapping"
+  );
+
+  if (process.env.NODE_ENV !== "production") {
+    validateNoDuplicateKeys(storageMapping, presenceMapping);
+  }
+
+  return { client, storageMapping, presenceMapping };
 }

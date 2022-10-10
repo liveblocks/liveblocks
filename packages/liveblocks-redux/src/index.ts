@@ -11,7 +11,7 @@ import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
 import type { StoreEnhancer } from "redux";
 
 import {
