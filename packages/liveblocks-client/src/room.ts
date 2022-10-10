@@ -351,7 +351,9 @@ function makeStateMachine<
         isConnectionSelfAware(state.connection.current) &&
         state.connection.current.isReadOnly
       ) {
-        throw new Error("Storage is read-only");
+        throw new Error(
+          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+        );
       }
     },
   };
