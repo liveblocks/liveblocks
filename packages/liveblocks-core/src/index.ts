@@ -14,6 +14,7 @@
 export { assertNever, nn } from "./assert";
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
+export { createClient } from "./client";
 export {
   deprecate,
   deprecateIf,
@@ -26,7 +27,11 @@ export {
   patchLiveObjectKey,
 } from "./immutable";
 export { asArrayWithLegacyMethods } from "./LegacyArray";
+export { LiveList } from "./LiveList";
+export { LiveMap } from "./LiveMap";
+export { LiveObject } from "./LiveObject";
 export { comparePosition, makePosition } from "./position";
+export { shallow } from "./shallow";
 export type {
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
@@ -68,23 +73,6 @@ export type {
   UserJoinServerMsg,
   UserLeftServerMsg,
 } from "./types";
-export {
-  ClientMsgCode,
-  CrdtType,
-  OpCode,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./types";
-export type { ToImmutable } from "./types/Immutable";
-export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
-export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
-
-export { createClient } from "./client";
-export { LiveList } from "./LiveList";
-export { LiveMap } from "./LiveMap";
-export { LiveObject } from "./LiveObject";
-export { shallow } from "./shallow";
 export type {
   BaseUserMeta,
   BroadcastOptions,
@@ -101,6 +89,17 @@ export type {
   StorageUpdate,
   User,
 } from "./types";
+export {
+  ClientMsgCode,
+  CrdtType,
+  OpCode,
+  ServerMsgCode,
+  WebsocketCloseCodes,
+} from "./types";
+export type { ToImmutable } from "./types/Immutable";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
+export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
