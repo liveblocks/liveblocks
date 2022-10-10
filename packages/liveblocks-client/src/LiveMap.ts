@@ -258,7 +258,6 @@ export class LiveMap<
    * @param value The value of the element to add. Should be serializable to JSON.
    */
   set(key: TKey, value: TValue): void {
-    console.log("LiveMap.set", key, value);
     this._pool?.isStorageWritable();
     // An error could be thrown here if isReadOnly is true
     // This is the lowest level of the API, ideally we should handle isReadOnly
