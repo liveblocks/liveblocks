@@ -11,6 +11,7 @@ type M = {
   info?: {
     avatar: string;
   };
+  scopes: string[]
 };
 
 describe('Read-only "others" ref cache', () => {
