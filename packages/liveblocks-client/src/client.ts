@@ -29,15 +29,6 @@ type EnterOptions<
      * https://liveblocks.io/docs/guides/troubleshooting#stale-props-zombie-child
      */
     unstable_batchedUpdates?: (cb: () => void) => void;
-
-    /**
-     * Weather or not the room connects to Liveblock servers
-     *
-     * Usually used in a SSR context when you want an empty room
-     * to make sure your react tree is rendered properly without connecting to
-     * websocket
-     */
-    withoutConnecting?: boolean;
   }
 >;
 
@@ -101,6 +92,11 @@ export function createClient(options: ClientOptions): Client {
     roomId: string,
     options: EnterOptions<TPresence, TStorage>
   ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> {
+    const shouldConnect =
+      options.shouldInitiallyConnect === undefined
+        ? true
+        : options.shouldInitiallyConnect;
+
     let internalRoom = rooms.get(roomId) as
       | InternalRoom<TPresence, TStorage, TUserMeta, TRoomEvent>
       | undefined;
@@ -150,7 +146,7 @@ export function createClient(options: ClientOptions): Client {
         Json
       >
     );
-    if (!options.withoutConnecting) {
+    if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
         if (clientOptions.polyfills?.atob === undefined) {

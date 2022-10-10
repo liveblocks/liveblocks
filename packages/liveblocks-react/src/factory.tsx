@@ -134,7 +134,7 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
-      withoutInitiallyConnecting
+      shouldInitiallyConnect,
     } = props;
 
     if (process.env.NODE_ENV !== "production") {
@@ -166,7 +166,10 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
-      withoutInitiallyConnecting: withoutInitiallyConnecting === undefined ? typeof window === "undefined" : withoutInitiallyConnecting
+      shouldInitiallyConnect:
+        shouldInitiallyConnect === undefined
+          ? typeof window !== "undefined"
+          : shouldInitiallyConnect,
     });
 
     const [room, setRoom] = React.useState<
@@ -176,7 +179,7 @@ export function createRoomContext<
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        withoutConnecting: frozen.withoutInitiallyConnecting,
+        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
       } as RoomInitializers<TPresence, TStorage>)
     );
 
@@ -186,7 +189,7 @@ export function createRoomContext<
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-          withoutConnecting: frozen.withoutInitiallyConnecting,
+          withoutConnecting: frozen.shouldInitiallyConnect,
         } as RoomInitializers<TPresence, TStorage>)
       );
 

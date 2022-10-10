@@ -229,7 +229,7 @@ async function websocketSimulator() {
 }
 
 describe("RoomProvider", () => {
-  test("withoutInitiallyConnecting equals true should not call the auth endpoint", () => {
+  test("shouldInitiallyConnect equals false should not call the auth endpoint", () => {
     const authEndpointMock = jest.fn();
     const client = createClient({
       authEndpoint: authEndpointMock,
@@ -241,7 +241,7 @@ describe("RoomProvider", () => {
       <RoomProvider
         id="room"
         initialPresence={{}}
-        withoutInitiallyConnecting={true}
+        shouldInitiallyConnect={false}
       >
         <></>
       </RoomProvider>
@@ -250,7 +250,7 @@ describe("RoomProvider", () => {
     expect(authEndpointMock).not.toBeCalled();
   });
 
-  test("withoutInitiallyConnecting equals false should call the auth endpoint", () => {
+  test("shouldInitiallyConnect equals true should call the auth endpoint", () => {
     const authEndpointMock = jest.fn();
     const client = createClient({
       authEndpoint: authEndpointMock,
@@ -262,7 +262,7 @@ describe("RoomProvider", () => {
       <RoomProvider
         id="room"
         initialPresence={{}}
-        withoutInitiallyConnecting={false}
+        shouldInitiallyConnect={true}
       >
         <></>
       </RoomProvider>

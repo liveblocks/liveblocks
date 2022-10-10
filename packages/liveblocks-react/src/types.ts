@@ -31,10 +31,11 @@ export type RoomProviderProps<
      * Whether or not the room should connect to Liveblocks servers
      * when the RoomProvider is rendered.
      *
-     * By default, the RoomProvider tries to connect to Liveblocks servers
+     * By default equals to `typeof window !== "undefined"`,
+     * meaning the RoomProvider tries to connect to Liveblocks servers
      * only on the client side.
      */
-    withoutInitiallyConnecting?: boolean;
+    shouldInitiallyConnect?: boolean;
 
     /**
      * If you're on React 17 or lower, pass in a reference to
