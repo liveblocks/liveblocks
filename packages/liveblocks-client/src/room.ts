@@ -326,15 +326,6 @@ function makeStateMachine<
     ) {
       const activeBatch = state.activeBatch;
 
-      // OPTION 2: prevent dispatch of ops
-      // Prevents all ops from being processed
-      if (
-        isConnectionSelfAware(state.connection.current) &&
-        state.connection.current.isReadOnly
-      ) {
-        return;
-      }
-
       if (activeBatch) {
         activeBatch.ops.push(...ops);
         // TODO: understand what this does
@@ -355,6 +346,15 @@ function makeStateMachine<
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
+      }
+    },
+
+    isStorageWritable: () => {
+      if (
+        isConnectionSelfAware(state.connection.current) &&
+        state.connection.current.isReadOnly
+      ) {
+        throw new Error("Storage is read-only");
       }
     },
   };
@@ -694,14 +694,9 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        // OPTION 2: enforce that server ops should always trump 
+        // OPTION 2: enforce that server ops should always trump
         // local ops when isReadOnly
-        return node._apply(
-          op,
-          source === OpSource.UNDOREDO_RECONNECT ||
-            (isConnectionSelfAware(state.connection.current) &&
-              state.connection.current.isReadOnly)
-        );
+        return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
         const node = state.nodes.get(op.id);
