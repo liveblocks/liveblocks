@@ -21,28 +21,6 @@ generate_esm_wrappers () {
 
 main () {
     generate_esm_wrappers
-
-    # Copy these files into the distribution
-    cp "$ROOT/LICENSE" ./README.md "$DIST/"
-
-    # Strip keys from package.json and place the result in dist/
-    echo '
-    const data = require("./package.json");
-
-    data.type = undefined;
-    data.private = undefined;
-    data.scripts = undefined;
-    data.files = undefined;
-    data.devDependencies = undefined;
-    data.optionalDependencies = undefined;
-    data.jest = undefined;
-    data.prettier = undefined;
-    data.tsup = undefined;
-
-    console.log(JSON.stringify(data));
-    ' | node - > "$DIST/package.json"
-
-    node_modules/.bin/prettier --write "$DIST/package.json"
 }
 
 if [ ! -f "./package.json" ]; then
