@@ -12,6 +12,7 @@ fi
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 PACKAGE_DIRS=(
+    "packages/liveblocks-core"
     "packages/liveblocks-client"
     "packages/liveblocks-node"
     "packages/liveblocks-react"
@@ -58,7 +59,7 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# Turns "packages/liveblocks-client" => "@liveblocks/client"
+# Turns "packages/liveblocks-core" => "@liveblocks/core"
 npm_pkgname () {
     PKGDIR="$1"
     echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
