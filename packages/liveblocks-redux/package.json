@@ -55,7 +55,6 @@
     "prettier": "^2.7.1",
     "redux": "^4.1.2",
     "ts-jest": "^29.0.3",
-    "tsup": "^6.2.2",
     "whatwg-fetch": "^3.6.2"
   },
   "sideEffects": false
