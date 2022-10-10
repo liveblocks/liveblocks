@@ -105,7 +105,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: packages/liveblocks-client
+        working-directory: packages/liveblocks-core
 
     steps:
       - name: Checkout
