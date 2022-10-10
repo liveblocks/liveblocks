@@ -11,7 +11,7 @@ type M = {
   info?: {
     avatar: string;
   };
-  scopes: string[]
+  scopes: string[];
 };
 
 describe('Read-only "others" ref cache', () => {
@@ -30,7 +30,12 @@ describe('Read-only "others" ref cache', () => {
       // is structured.
       others.setConnection(2, "user-123", undefined, false);
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 1, y: 1 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 1, y: 1 },
+          isReadOnly: false,
+        },
       ]);
     });
 
@@ -44,8 +49,18 @@ describe('Read-only "others" ref cache', () => {
       others.setOther(2, { x: -2, y: -2 });
 
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: -2, y: -2 } },
-        { connectionId: 3, id: "user-567", presence: { x: 3, y: 3 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: -2, y: -2 },
+          isReadOnly: false,
+        },
+        {
+          connectionId: 3,
+          id: "user-567",
+          presence: { x: 3, y: 3 },
+          isReadOnly: false,
+        },
       ]);
     });
 
@@ -55,10 +70,15 @@ describe('Read-only "others" ref cache', () => {
       others.setOther(2, { x: 2, y: 2, z: undefined });
       //                             ^^^^^^^^^ 🔑
 
-      expect(others.current).toStrictEqual(
-        [{ connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } }]
-        //                                              ^ 🔑 (no explicit undefined here)
-      );
+      expect(others.current).toStrictEqual([
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: 2 },
+          //          ^ 🔑 (no explicit undefined here)
+          isReadOnly: false,
+        },
+      ]);
     });
 
     it("patching others ignores patches for unknown users", () => {
@@ -74,17 +94,32 @@ describe('Read-only "others" ref cache', () => {
       others.setConnection(2, "user-123", undefined, false);
       others.setOther(2, { x: 2, y: 2 });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: 2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: 2 },
+          isReadOnly: false,
+        },
       ]);
 
       others.patchOther(2, { y: -2, z: -2 });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2, z: -2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: -2, z: -2 },
+          isReadOnly: false,
+        },
       ]);
 
       others.patchOther(2, { z: undefined });
       expect(others.current).toStrictEqual([
-        { connectionId: 2, id: "user-123", presence: { x: 2, y: -2 } },
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: -2 },
+          isReadOnly: false,
+        },
       ]);
     });
 
@@ -97,6 +132,7 @@ describe('Read-only "others" ref cache', () => {
         connectionId: 2,
         id: "user-123",
         presence: { x: 2, y: 2 },
+        isReadOnly: false,
       });
       others.removeConnection(2);
 
