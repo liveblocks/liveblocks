@@ -20,7 +20,6 @@ PACKAGE_DIRS=(
     "packages/liveblocks-zustand"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
-SECONDARY_PKGS=${PACKAGE_DIRS[@]:1}
 
 err () {
     echo "$@" >&2
@@ -314,27 +313,17 @@ commit_to_git () {
     ) )
 }
 
-# First build and publish the primary package
-( cd "$PRIMARY_PKG" && (
-    pkgname="$(npm_pkgname "$PRIMARY_PKG")"
-    echo "==> Building and publishing $PRIMARY_PKG"
-    bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
-    build_pkg
-    publish_to_npm "$pkgname"
-    commit_to_git "Bump to $VERSION" "$PRIMARY_PKG"
-) )
-
-# Then, build and publish all the other packages
-for pkgdir in ${SECONDARY_PKGS[@]}; do
+# Build and publish all the other packages, one-by-one
+for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     echo "==> Building and publishing ${pkgname}"
     ( cd "$pkgdir" && (
         bump_version_in_pkg "$pkgdir" "$VERSION"
         build_pkg
         publish_to_npm "$pkgname"
+        commit_to_git "Bump $pkgname to $VERSION" "$pkgdir"
     ) )
 done
-commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
 
 # By now, all packages should be published under a "private" tag.
 # We'll verify that now, and if indeed correct, we'll "assign" the intended tag
