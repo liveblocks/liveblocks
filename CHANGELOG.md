@@ -18,7 +18,9 @@
   By default equals to `typeof window !== "undefined"`, meaning the RoomProvider
   tries to connect to Liveblocks servers only on the client side.
 
-- Internal package restructurings
+- Internal package restructurings to increase code sharing. You may notice a new
+  dependency show up in your dependency tree: `@liveblocks/core`. It contains
+  private APIs that aren't intended for direct consumption.
 
 # v0.18.3
 
