@@ -104,6 +104,10 @@ describe("LiveMap", () => {
     assert({ map: new Map() });
   });
 
+  it("set throws on read-only", () => {
+    throw new Error("Not implemented");
+  });
+
   it("init map with items", async () => {
     const { storage, assert } = await prepareStorageTest<{
       map: LiveMap<string, LiveObject<{ a: number }>>;
@@ -177,6 +181,10 @@ describe("LiveMap", () => {
   });
 
   describe("delete", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     it("should delete LiveObject", async () => {
       const { storage, assert, assertUndoRedo } = await prepareStorageTest<{
         map: LiveMap<string, number>;

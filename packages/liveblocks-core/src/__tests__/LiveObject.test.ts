@@ -76,6 +76,10 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
+  it("update throws on read-only", () => {
+    throw new Error("Not implemented");
+  });
+
   it("update existing property", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", { a: 0 }),
@@ -127,6 +131,10 @@ describe("LiveObject", () => {
     });
 
     assertUndoRedo();
+  });
+
+  it("set throws on read-only", () => {
+    throw new Error("Not implemented");
   });
 
   it("update with LiveObject", async () => {
@@ -470,6 +478,10 @@ describe("LiveObject", () => {
   });
 
   describe("delete", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     it("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");

@@ -96,6 +96,10 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     describe("updates", () => {
       it(
         "push on empty list update",
@@ -212,6 +216,10 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     describe("updates", () => {
       it(
         "insert at the middle update",
@@ -265,6 +273,10 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     describe("updates", () => {
       it(
         "delete first update",
@@ -344,6 +356,10 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     describe("updates", () => {
       it(
         "move at the end update",
@@ -449,6 +465,10 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     describe("updates", () => {
       it(
         "clear updates",
@@ -511,6 +531,10 @@ describe("LiveList", () => {
   });
 
   describe("batch", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     it("batch multiple inserts", async () => {
       const { storage, assert, assertUndoRedo, batch } =
         await prepareStorageTest<{
@@ -542,6 +566,10 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
+    it("throws on read-only", () => {
+      throw new Error("Not implemented");
+    });
+
     it("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
