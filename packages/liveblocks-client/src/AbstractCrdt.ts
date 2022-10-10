@@ -46,7 +46,7 @@ export interface ManagedPool {
    * @throws {Error} if storage is not writable
    * @returns {void}
    */
-  isStorageWritable: () => void;
+  assertStorageIsWritable: () => void;
 }
 
 export enum OpSource {

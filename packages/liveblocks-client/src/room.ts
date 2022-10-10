@@ -349,7 +349,7 @@ function makeStateMachine<
       }
     },
 
-    isStorageWritable: () => {
+    assertStorageIsWritable: () => {
       if (
         isConnectionSelfAware(state.connection.current) &&
         state.connection.current.isReadOnly
