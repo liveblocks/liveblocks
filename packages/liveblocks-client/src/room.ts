@@ -203,8 +203,6 @@ type State<
       | { type: "full"; data: TPresence }
       | null;
     messages: ClientMsg<TPresence, TRoomEvent>[];
-    // Set as readonly to easily see where we mutate it
-    // readonly storageOperations: readonly Op[];
     storageOperations: Op[];
   };
   timeoutHandles: {
@@ -328,7 +326,6 @@ function makeStateMachine<
 
       if (activeBatch) {
         activeBatch.ops.push(...ops);
-        // TODO: understand what this does
         storageUpdates.forEach((value, key) => {
           activeBatch.updates.storageUpdates.set(
             key,
@@ -585,7 +582,6 @@ function makeStateMachine<
     );
   }
 
-  // What does this do?
   function apply(
     ops: HistoryOp<TPresence>[],
     isLocal: boolean
@@ -694,8 +690,6 @@ function makeStateMachine<
           return { modified: false };
         }
 
-        // OPTION 2: enforce that server ops should always trump
-        // local ops when isReadOnly
         return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
       case OpCode.SET_PARENT_KEY: {
@@ -1148,7 +1142,6 @@ function makeStateMachine<
           }
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
-            // When isLocal is true, the message overwrites the local state.
             const applyResult = apply(message.ops, false);
             applyResult.updates.storageUpdates.forEach((value, key) => {
               updates.storageUpdates.set(
@@ -1335,7 +1328,6 @@ function makeStateMachine<
 
     const result = apply(ops, true);
 
-    // Adds all offline ops to a list of messages
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
       ops,
@@ -1343,8 +1335,6 @@ function makeStateMachine<
 
     notify(result.updates, batchedUpdatesWrapper);
 
-    // Sends messages to the server
-    // Server handles conflicts and sends back the new state
     effects.send(messages);
   }
 
@@ -1353,7 +1343,6 @@ function makeStateMachine<
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        // Adds the operation to the offline storage
         state.offlineOperations.set(nn(op.opId), op);
       });
     }
@@ -1370,15 +1359,12 @@ function makeStateMachine<
 
     const elapsedTime = now - state.lastFlushTime;
 
-    // If the last flush was less than 100ms ago, we'll wait a bit more.
     if (elapsedTime > config.throttleDelay) {
       const messages = flushDataToMessages(state);
 
       if (messages.length === 0) {
         return;
       }
-      // Sends messages to the server
-      // Server handles conflicts and sends back the new state
       effects.send(messages);
       state.buffer = {
         messages: [],
@@ -1422,9 +1408,6 @@ function makeStateMachine<
       messages.push(event);
     }
     if (state.buffer.storageOperations.length > 0) {
-      // TODO: pushes all storage operations in one message
-      // Local optimistic updates are not done here
-      // state.connection.current.state === "open" && state.connection.current.isReadOnly
       messages.push({
         type: ClientMsgCode.UPDATE_STORAGE,
         ops: state.buffer.storageOperations,
@@ -1487,7 +1470,6 @@ function makeStateMachine<
   }
 
   function dispatchOps(ops: Op[]) {
-    // FIXME
     state.buffer.storageOperations.push(...ops);
     tryFlushing();
   }
@@ -1603,18 +1585,7 @@ function makeStateMachine<
     return state.redoStack.length > 0;
   }
 
-  // Used for `useMutation`
   function batch<T>(callback: () => T): T {
-    // OPTION 1: prevent batch
-    // if (
-    //   isConnectionSelfAware(state.connection.current) &&
-    //   state.connection.current.isReadOnly
-    // ) {
-    //   console.log("Nothing happens BUT lose presence information");
-    //   // @ts-ignore
-    //   return;
-    // }
-
     if (state.activeBatch) {
       // If there already is an active batch, we don't have to handle this in
       // any special way. That outer active batch will handle the batch. This
@@ -1634,7 +1605,6 @@ function makeStateMachine<
         },
         reverseOps: [],
       };
-      // DO NOTHING if isReadOnly is true
       try {
         returnValue = callback();
       } finally {
@@ -1654,7 +1624,6 @@ function makeStateMachine<
         }
 
         if (currentBatch.ops.length > 0) {
-          // Adds ops to the buffer, which will be flushed later
           dispatchOps(currentBatch.ops);
         }
 

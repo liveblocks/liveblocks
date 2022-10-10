@@ -438,11 +438,6 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
     this._pool?.assertStorageIsWritable();
-    // An error could be thrown here if isReadOnly is true
-    // This is the lowest level of the API, ideally we should handle isReadOnly
-    // at a higher level
-    // This comment is valid for all AbstractCRDTs
-    // throw new Error("Not allowed to set on a LiveObject when isReadonly is true");
     this.update({ [key]: value } as unknown as Partial<O>);
   }
 
