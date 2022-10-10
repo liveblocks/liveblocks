@@ -22,8 +22,7 @@
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --watch --silent --verbose --config=./jest.config.js",
-    "test-ci": "jest --silent --verbose",
-    "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
+    "test-ci": "jest --silent --verbose --passWithNoTests"
   },
   "license": "Apache-2.0",
   "dependencies": {
