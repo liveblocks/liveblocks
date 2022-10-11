@@ -57,10 +57,6 @@ jobs:
       LIVEBLOCKS_AUTHORIZE_ENDPOINT:
         ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
 
-    defaults:
-      run:
-        working-directory: e2e/next-sandbox
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
