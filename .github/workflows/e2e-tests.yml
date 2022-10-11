@@ -30,6 +30,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
+      - name: Install dependencies
+        run: npm install
+
       - name: Turbo Cache
         id: turbo-cache
         uses: actions/cache@v3
@@ -41,9 +44,6 @@ jobs:
           restore-keys:
             turboooooooooooooooooo-cache-${{ github.job }}-${{
             matrix.node-version }}-${{ matrix.pkg }}
-
-      - name: Install dependencies
-        run: npm install
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
