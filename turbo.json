@@ -7,12 +7,11 @@
       "cache": false
     },
     "build": {
-      // Here, the `^` symbol signifies `upstream`
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
     "test": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "outputs": [],
       // A package's `test` script should only be rerun when either a `.tsx`,
       // or `.ts` file has changed in `src` or `test` folders.
