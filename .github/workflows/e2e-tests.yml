@@ -72,14 +72,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh
+      - name: Install dependencies
+        run: npm install
 
       - name: Install Playwright
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npm run test -- --filter next-sandbox
 
       - uses: actions/upload-artifact@v2
         if: always()
