@@ -1,8 +1,3 @@
-export { createClient } from "./client";
-export { LiveList } from "./LiveList";
-export { LiveMap } from "./LiveMap";
-export { LiveObject } from "./LiveObject";
-export { shallow } from "./shallow";
 export type {
   BaseUserMeta,
   BroadcastOptions,
@@ -18,7 +13,14 @@ export type {
   Room,
   StorageUpdate,
   User,
-} from "./types";
+} from "@liveblocks/core";
+export {
+  createClient,
+  LiveList,
+  LiveMap,
+  LiveObject,
+  shallow,
+} from "@liveblocks/core";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

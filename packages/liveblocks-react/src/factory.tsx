@@ -12,15 +12,12 @@ import type {
   User,
 } from "@liveblocks/client";
 import { shallow } from "@liveblocks/client";
-import type {
-  RoomInitializers,
-  ToImmutable,
-} from "@liveblocks/client/internal";
+import type { RoomInitializers, ToImmutable } from "@liveblocks/core";
 import {
   asArrayWithLegacyMethods,
   deprecateIf,
   errorIf,
-} from "@liveblocks/client/internal";
+} from "@liveblocks/core";
 import * as React from "react";
 import { useSyncExternalStoreWithSelector } from "use-sync-external-store/shim/with-selector";
 
@@ -134,6 +131,7 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
+      shouldInitiallyConnect,
     } = props;
 
     if (process.env.NODE_ENV !== "production") {
@@ -165,6 +163,10 @@ export function createRoomContext<
       initialPresence,
       initialStorage,
       unstable_batchedUpdates,
+      shouldInitiallyConnect:
+        shouldInitiallyConnect === undefined
+          ? typeof window !== "undefined"
+          : shouldInitiallyConnect,
     });
 
     const [room, setRoom] = React.useState<
@@ -174,7 +176,7 @@ export function createRoomContext<
         initialPresence: frozen.initialPresence,
         initialStorage: frozen.initialStorage,
         unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-        DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+        shouldInitiallyConnect: frozen.shouldInitiallyConnect,
       } as RoomInitializers<TPresence, TStorage>)
     );
 
@@ -184,7 +186,7 @@ export function createRoomContext<
           initialPresence: frozen.initialPresence,
           initialStorage: frozen.initialStorage,
           unstable_batchedUpdates: frozen.unstable_batchedUpdates,
-          DO_NOT_USE_withoutConnecting: typeof window === "undefined",
+          withoutConnecting: frozen.shouldInitiallyConnect,
         } as RoomInitializers<TPresence, TStorage>)
       );
 

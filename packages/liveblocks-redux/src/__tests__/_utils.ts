@@ -6,8 +6,8 @@ import type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "@liveblocks/client/internal";
-import { CrdtType } from "@liveblocks/client/internal";
+} from "@liveblocks/core";
+import { CrdtType } from "@liveblocks/core";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {

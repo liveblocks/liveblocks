@@ -2,7 +2,7 @@ import { createRoomContext } from "@liveblocks/react";
 import randomNumber from "../../utils/randomNumber";
 import React from "react";
 import { LiveObject } from "@liveblocks/client";
-import { lsonToJson } from "@liveblocks/client/internal";
+import { lsonToJson } from "@liveblocks/core";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();

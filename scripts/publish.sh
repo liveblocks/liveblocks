@@ -12,6 +12,7 @@ fi
 
 GITHUB_URL="https://github.com/liveblocks/liveblocks"
 PACKAGE_DIRS=(
+    "packages/liveblocks-core"
     "packages/liveblocks-client"
     "packages/liveblocks-node"
     "packages/liveblocks-react"
@@ -19,7 +20,6 @@ PACKAGE_DIRS=(
     "packages/liveblocks-zustand"
 )
 PRIMARY_PKG=${PACKAGE_DIRS[0]}
-SECONDARY_PKGS=${PACKAGE_DIRS[@]:1}
 
 err () {
     echo "$@" >&2
@@ -58,7 +58,7 @@ if [ "$#" -ne 0 ]; then
     exit 2
 fi
 
-# Turns "packages/liveblocks-client" => "@liveblocks/client"
+# Turns "packages/liveblocks-core" => "@liveblocks/core"
 npm_pkgname () {
     PKGDIR="$1"
     echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
@@ -215,9 +215,14 @@ bump_version_in_pkg () {
 
     jq ".version=\"$VERSION\"" package.json | sponge package.json
 
-    # If this is one of the client packages, also bump the peer dependency
-    if [ "$SKIP_PEERS" -eq 0 -a "$(jq '.peerDependencies."@liveblocks/client"' package.json)" != "null" ]; then
-        jq ".peerDependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
+    # If this is one of the dependant packages, also bump their versions
+    if [ "$SKIP_PEERS" -eq 0 ]; then
+        if [ "$(jq '.dependencies."@liveblocks/core"' package.json)" != "null" ]; then
+            jq ".dependencies.\"@liveblocks/core\"=\"$VERSION\"" package.json | sponge package.json
+        fi
+        if [ "$(jq '.dependencies."@liveblocks/client"' package.json)" != "null" ]; then
+            jq ".dependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
+        fi
     fi
 
     prettier --write package.json
@@ -308,27 +313,17 @@ commit_to_git () {
     ) )
 }
 
-# First build and publish the primary package
-( cd "$PRIMARY_PKG" && (
-    pkgname="$(npm_pkgname "$PRIMARY_PKG")"
-    echo "==> Building and publishing $PRIMARY_PKG"
-    bump_version_in_pkg "$PRIMARY_PKG" "$VERSION"
-    build_pkg
-    publish_to_npm "$pkgname"
-    commit_to_git "Bump to $VERSION" "$PRIMARY_PKG"
-) )
-
-# Then, build and publish all the other packages
-for pkgdir in ${SECONDARY_PKGS[@]}; do
+# Build and publish all the other packages, one-by-one
+for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
     echo "==> Building and publishing ${pkgname}"
     ( cd "$pkgdir" && (
         bump_version_in_pkg "$pkgdir" "$VERSION"
         build_pkg
         publish_to_npm "$pkgname"
+        commit_to_git "Bump $pkgname to $VERSION" "$pkgdir"
     ) )
 done
-commit_to_git "Bump to $VERSION" ${SECONDARY_PKGS[@]}
 
 # By now, all packages should be published under a "private" tag.
 # We'll verify that now, and if indeed correct, we'll "assign" the intended tag
@@ -382,14 +377,6 @@ else
     open "$URL"
     read
 fi
-
-echo "==> Bumping to next dev versions"
-( cd "$PRIMARY_PKG" && bump_version_in_pkg --no-peers "$PRIMARY_PKG" "$VERSION-dev" )
-for pkgdir in ${SECONDARY_PKGS[@]}; do
-    ( cd "$pkgdir" && bump_version_in_pkg --no-peers "$pkgdir" "$VERSION-dev" )
-done
-commit_to_git "Start new dev version $VERSION-dev" "$PRIMARY_PKG" ${SECONDARY_PKGS[@]}
-git push-current
 
 echo "==> Upgrade local examples?"
 echo "Now that you're all finished, you may want to also upgrade all our examples"
