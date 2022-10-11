@@ -34,13 +34,13 @@ jobs:
         run: npm install
 
       - name: Build
-        run: turbo run build --filter ${{ matrix.pkg }}
+        run: npm run build -- --filter ${{ matrix.pkg }}
 
       - name: Run unit tests
-        run: turbo run test --filter ${{ matrix.pkg }}
+        run: npm run test -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
-        run: turbo run lint --filter ${{ matrix.pkg }}
+        run: npm run lint -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
     runs-on: ubuntu-latest
