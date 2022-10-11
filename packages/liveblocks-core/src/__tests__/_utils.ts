@@ -1,4 +1,3 @@
-/* eslint-disable rulesdir/console-must-be-fancy */
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
 import { makePosition } from "../position";

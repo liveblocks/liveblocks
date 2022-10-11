@@ -1,4 +1,3 @@
-/* eslint-disable rulesdir/console-must-be-fancy */
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
