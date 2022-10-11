@@ -28,10 +28,4 @@ if [ ! -f "./package.json" ]; then
     exit 1
 fi
 
-if [ -d lib ]; then
-    # Clean up legacy build outputs that used to get written to
-    # lib/ instead of dist/
-    rm -rf lib
-fi
-
 main
