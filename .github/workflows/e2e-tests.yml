@@ -84,7 +84,7 @@ jobs:
         run: npm install
 
       - name: Install Playwright
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Run Playwright tests
         run: npm run test -- --filter @liveblocks/next-sandbox
