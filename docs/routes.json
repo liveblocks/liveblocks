@@ -79,10 +79,6 @@
           {
             "title": "React + Zustand",
             "path": "/tutorials/collaborative-online-whiteboard/react-zustand"
-          },
-          {
-            "title": "JavaScript",
-            "path": "/tutorials/collaborative-online-whiteboard/javascript"
           }
         ]
       }
