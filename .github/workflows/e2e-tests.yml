@@ -75,7 +75,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run Playwright tests
-        run: npm run test -- --filter next-sandbox
+        run: npm run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v2
         if: always()
