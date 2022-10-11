@@ -96,8 +96,24 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.push("first")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     describe("updates", () => {
@@ -216,8 +232,24 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.insert("first", 0)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     describe("updates", () => {
@@ -273,8 +305,24 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.delete(0)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     describe("updates", () => {
@@ -356,8 +404,24 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.move(0, 1)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     describe("updates", () => {
@@ -465,8 +529,22 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.clear()).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     describe("updates", () => {
@@ -531,10 +609,6 @@ describe("LiveList", () => {
   });
 
   describe("batch", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
-    });
-
     it("batch multiple inserts", async () => {
       const { storage, assert, assertUndoRedo, batch } =
         await prepareStorageTest<{
@@ -566,8 +640,22 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.set(0, "A")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     it("set register on detached list", () => {
