@@ -3,45 +3,16 @@ module.exports = {
   extends: ["@liveblocks/eslint-config"],
   rules: {
     // ----------------------------------------------------------------------
-    // NOTE: Only temporarily turned off!
-    // These checks are still GOOD IDEAS to re-enable later on, but for right
-    // now they're too noisy to enable.
+    // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
     "@typescript-eslint/no-explicit-any": "off",
     "@typescript-eslint/no-non-null-assertion": "off",
+    eqeqeq: "off",
 
-    // -------------------------------
-    // Not interested in these checks:
-    // -------------------------------
-    "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/no-inferrable-types": "off",
-    "no-constant-condition": "off",
-
-    // -----------------------------
-    // Enable auto-fixes for imports
-    // -----------------------------
-    "import/no-duplicates": "error",
-    "@typescript-eslint/consistent-type-imports": "error",
-    "simple-import-sort/imports": "error",
-    "simple-import-sort/exports": "error",
-
-    // ------------------------
-    // Customized default rules
-    // ------------------------
-    quotes: ["error", "double", "avoid-escape"],
-    "object-shorthand": "error",
-    "@typescript-eslint/explicit-module-boundary-types": "error",
-    "@typescript-eslint/no-unused-vars": [
-      "warn",
-      // Unused variables are fine if they start with an underscore
-      { args: "all", argsIgnorePattern: "^_.*", varsIgnorePattern: "^_.*" },
-    ],
-
-    // --------------------------------------------------------------
-    // "The Code is the To-Do List"
-    // https://www.executeprogram.com/blog/the-code-is-the-to-do-list
-    // --------------------------------------------------------------
-    "no-warning-comments": ["error", { terms: ["xxx"], location: "anywhere" }],
+    // ----------------------------------------------------------------------
+    // Extra rules for this project specifically
+    // ----------------------------------------------------------------------
+    /* None yet 😇 ! */
 
     // -------------------------------
     // Custom syntax we want to forbid
