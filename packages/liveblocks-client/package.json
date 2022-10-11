@@ -45,7 +45,6 @@
     "jest-environment-jsdom": "^29.1.2",
     "msw": "^0.39.1",
     "node-fetch": "2.6.7",
-    "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
     "whatwg-fetch": "^3.6.2",
     "ws": "^8.5.0"
