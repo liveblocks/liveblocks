@@ -110,9 +110,6 @@ jobs:
       - name: Run npm install
         run: npm install
 
-      - name: Build
-        run: npm run build -- --filter core
-
       - name: Run e2e client specs tests
         run: npm run test-e2e
         working-directory: packages/liveblocks-core
