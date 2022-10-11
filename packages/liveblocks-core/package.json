@@ -23,8 +23,8 @@
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --watch --silent --verbose --config=./jest.config.js",
-    "test-ci": "jest --silent --verbose",
+    "test": "jest --silent --verbose",
+    "test:watch": "jest --silent --verbose --watch",
     "test-e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
   },
   "license": "Apache-2.0",
