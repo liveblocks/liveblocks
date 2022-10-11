@@ -2,11 +2,12 @@
   "name": "@liveblocks/core",
   "version": "0.18.3",
   "description": "Shared code and foundational internals for Liveblocks",
-  "main": "./index.js",
-  "module": "./index.mjs",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
-    "**"
+    "dist/**",
+    "README.md"
   ],
   "keywords": [
     "liveblocks",

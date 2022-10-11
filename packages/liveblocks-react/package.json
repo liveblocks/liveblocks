@@ -2,11 +2,12 @@
   "name": "@liveblocks/react",
   "version": "0.18.3",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
-  "main": "./index.js",
-  "module": "./index.mjs",
-  "types": "./index.d.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "files": [
-    "**"
+    "dist/**",
+    "README.md"
   ],
   "keywords": [
     "react",
