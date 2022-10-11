@@ -11,17 +11,13 @@ jobs:
         node-version: [16.x]
         pkg:
           [
-            "liveblocks-core",
-            "liveblocks-client",
-            "liveblocks-react",
-            "liveblocks-redux",
-            "liveblocks-zustand",
-            "liveblocks-node",
+            "@liveblocks/core",
+            "@liveblocks/client",
+            "@liveblocks/react",
+            "@liveblocks/redux",
+            "@liveblocks/zustand",
+            "@liveblocks/node",
           ]
-
-    defaults:
-      run:
-        working-directory: packages/${{ matrix.pkg }}
 
     steps:
       - name: Checkout
@@ -34,17 +30,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh
+      - name: Install dependencies
+        run: npm install
 
       - name: Build
-        run: npm run build
+        run: turbo run build --filter ${{ matrix.pkg }}
 
       - name: Run unit tests
-        run: npm run test
+        run: turbo run test --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
-        run: npm run lint
+        run: turbo run lint --filter ${{ matrix.pkg }}
 
   e2e-tests:
     runs-on: ubuntu-latest
