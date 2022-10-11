@@ -8,12 +8,12 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/core": "^0.18.3",
-    "@liveblocks/client": "^0.18.3",
-    "@liveblocks/node": "^0.18.3",
-    "@liveblocks/react": "^0.18.3",
-    "@liveblocks/redux": "^0.18.3",
-    "@liveblocks/zustand": "^0.18.3",
+    "@liveblocks/client": "0.18.3",
+    "@liveblocks/core": "0.18.3",
+    "@liveblocks/node": "0.18.3",
+    "@liveblocks/react": "0.18.3",
+    "@liveblocks/redux": "0.18.3",
+    "@liveblocks/zustand": "0.18.3",
     "@reduxjs/toolkit": "^1.8.4",
     "encoding": "^0.1.13",
     "next": "^12.2.5",
