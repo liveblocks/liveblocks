@@ -3,7 +3,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev --port 3007",
-    "build": "next build",
     "start": "next start",
     "test": "playwright test"
   },
