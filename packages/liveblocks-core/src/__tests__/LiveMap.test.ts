@@ -104,8 +104,22 @@ describe("LiveMap", () => {
     assert({ map: new Map() });
   });
 
-  it("set throws on read-only", () => {
-    throw new Error("Not implemented");
+  it("set throws on read-only", async () => {
+    const { storage } = await prepareStorageTest<{
+      map: LiveMap<string, LiveObject<{ a: number }>>;
+    }>(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedMap("0:1", "0:0", "map"),
+      ],
+      1,
+      ["room:read", "room:presence:write"]
+    );
+
+    const map = storage.root.get("map");
+    expect(() => map.set("key", new LiveObject({ a: 0 }))).toThrowError(
+      "Cannot write to storage with a read only user, please ensure the user has write permissions"
+    );
   });
 
   it("init map with items", async () => {
@@ -181,8 +195,22 @@ describe("LiveMap", () => {
   });
 
   describe("delete", () => {
-    it("throws on read-only", () => {
-      throw new Error("Not implemented");
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        map: LiveMap<string, number>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedMap("0:1", "0:0", "map"),
+        ],
+        1,
+        ["room:read", "room:presence:write"]
+      );
+
+      const map = storage.root.get("map");
+      expect(() => map.delete("key")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
     });
 
     it("should delete LiveObject", async () => {
