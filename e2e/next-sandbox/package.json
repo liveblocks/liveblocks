@@ -1,6 +1,5 @@
 {
-  "name": "next-sandbox",
-  "version": "0.1.0",
+  "name": "@liveblocks/next-sandbox",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3007",
