@@ -1,27 +1,15 @@
+const commonRestrictedSyntax = require("@liveblocks/eslint-config/restricted-syntax");
+
 module.exports = {
   root: true,
   extends: ["@liveblocks/eslint-config"],
   rules: {
-    // ----------------------------------------------------------------------
-    // Overrides from default rule config used in all other projects!
-    // ----------------------------------------------------------------------
-    /* None yet 😇 ! */
-
-    // ----------------------------------------------------------------------
-    // Extra rules for this project specifically
-    // ----------------------------------------------------------------------
-    /* None yet 😇 ! */
-
     // -------------------------------
     // Custom syntax we want to forbid
     // -------------------------------
     "no-restricted-syntax": [
       "error",
-      {
-        selector: "PrivateIdentifier",
-        message:
-          "Avoid private identifiers to reduce bundle size. Instead of using `#foo`, prefer using `private _foo`.",
-      },
+      ...commonRestrictedSyntax,
       {
         selector:
           "CallExpression[callee.object.name='JSON'][callee.property.name='parse']",
@@ -33,22 +21,17 @@ module.exports = {
         message:
           "Non-null assertions mask real problems. Please use `nn(...)` (from src/assert.ts) instead.",
       },
-      {
-        selector: 'TSTypeReference[typeName.name="AbstractCrdt"]',
-        message: "Don't refer to AbstractCrdt as a type. Use LiveNode instead.",
-      },
-
-      // {
-      //   selector: "ForOfStatement",
-      //   message:
-      //     "Avoid for..of loops in libraries, because they generate unneeded Babel iterator runtime support code in the bundle",
-      // },
-      // {
-      //   selector: "ForInStatement",
-      //   message:
-      //     "for..in loops are never what you want. Loop over Object.keys() instead.",
-      // },
     ],
+
+    // ----------------------------------------------------------------------
+    // Overrides from default rule config used in all other projects!
+    // ----------------------------------------------------------------------
+    /* None yet 😇 ! */
+
+    // ----------------------------------------------------------------------
+    // Extra rules for this project specifically
+    // ----------------------------------------------------------------------
+    /* None yet 😇 ! */
   },
   overrides: [
     {
