@@ -3,15 +3,8 @@ rulesDirPlugin.RULES_DIR = "./rules";
 
 module.exports = {
   root: true,
-  parser: "@typescript-eslint/parser",
-  parserOptions: { project: ["./tsconfig.json"] },
-  plugins: [
-    "@typescript-eslint",
-    "eslint-plugin-import",
-    "eslint-plugin-simple-import-sort",
-    "eslint-plugin-rulesdir",
-  ],
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  plugins: ["eslint-plugin-rulesdir"],
+  extends: ["@liveblocks/eslint-config"],
   rules: {
     // ----------------------------------------------------------------------
     // NOTE: Only temporarily turned off!

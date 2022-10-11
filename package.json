@@ -2,6 +2,7 @@
   "name": "@liveblocks/monorepo",
   "private": true,
   "workspaces": [
+    "shared/*",
     "packages/*"
   ],
   "scripts": {

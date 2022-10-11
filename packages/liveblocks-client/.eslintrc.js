@@ -1,13 +1,6 @@
 module.exports = {
   root: true,
-  parser: "@typescript-eslint/parser",
-  parserOptions: { project: ["./tsconfig.json"] },
-  plugins: [
-    "@typescript-eslint",
-    "eslint-plugin-import",
-    "eslint-plugin-simple-import-sort",
-  ],
-  extends: ["eslint:recommended", "plugin:@typescript-eslint/recommended"],
+  extends: ["@liveblocks/eslint-config"],
   rules: {
     // ----------------------------------------------------------------------
     // NOTE: Only temporarily turned off!
