@@ -1,8 +1,10 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
+const commonJestConfig = require("@liveblocks/jest-config");
+
 module.exports = {
+  // Our standard Jest configuration, used by all projects in this monorepo
+  ...commonJestConfig,
+
+  // Our standard setup assumed jsdom environment. Override it for node here.
   testEnvironment: "node",
-  preset: "ts-jest",
-  modulePathIgnorePatterns: ["<rootDir>/dist/"],
-  testPathIgnorePatterns: ["__tests__/_.*"],
-  roots: ["<rootDir>/src"],
 };

@@ -42,14 +42,11 @@
   "devDependencies": {
     "@definitelytyped/dtslint": "^0.0.103",
     "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
     "@reduxjs/toolkit": "^1.7.2",
     "@testing-library/jest-dom": "^5.16.5",
-    "@types/jest": "^29.1.2",
-    "jest": "^29.1.2",
-    "jest-environment-jsdom": "^29.1.2",
     "msw": "^0.36.4",
     "redux": "^4.1.2",
-    "ts-jest": "^29.0.3",
     "whatwg-fetch": "^3.6.2"
   },
   "sideEffects": false

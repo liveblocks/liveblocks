@@ -32,16 +32,13 @@
   },
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
-    "@types/jest": "^29.1.2",
+    "@liveblocks/jest-config": "*",
     "@types/node-fetch": "^2.6.1",
     "@types/ws": "^8.5.3",
     "dotenv": "^16.0.3",
     "fast-check": "^3.0.1",
-    "jest": "^29.1.2",
-    "jest-environment-jsdom": "^29.1.2",
     "msw": "^0.39.1",
     "node-fetch": "2.6.7",
-    "ts-jest": "^29.0.3",
     "whatwg-fetch": "^3.6.2",
     "ws": "^8.5.0"
   },
