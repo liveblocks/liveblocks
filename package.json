@@ -3,7 +3,8 @@
   "private": true,
   "workspaces": [
     "shared/*",
-    "packages/*"
+    "packages/*",
+    "e2e/next-sandbox"
   ],
   "scripts": {
     "build": "turbo run build",
