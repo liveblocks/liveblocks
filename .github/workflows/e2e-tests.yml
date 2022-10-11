@@ -100,10 +100,6 @@ jobs:
     env:
       LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
 
-    defaults:
-      run:
-        working-directory: packages/liveblocks-core
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -119,7 +115,8 @@ jobs:
         run: npm install
 
       - name: Build
-        run: npm run build
+        run: npm run build -- --filter core
 
       - name: Run e2e client specs tests
         run: npm run test-e2e
+        working-directory: packages/liveblocks-core
