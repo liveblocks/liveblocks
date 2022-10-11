@@ -216,6 +216,10 @@ Gets all the other users in the Room.
 
 ```ts
 const others = room.getOthers();
+
+for (const { connectionId, id, info, presence, isReadOnly } of others) {
+  // Do things
+}
 ```
 
 ### Room.broadcastEvent
@@ -253,7 +257,7 @@ room.subscribe("event", ({ event }) => {
 Gets the current user. Returns `null` if it is not yet connected to the room.
 
 ```ts
-const { connectionId, presence, id, info } = room.getSelf();
+const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
 ```
 
 ### Room.subscribe(storageItem)
