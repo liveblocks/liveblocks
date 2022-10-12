@@ -194,30 +194,53 @@ while ! is_valid_version "$VERSION"; do
     read -p "Enter a new version: " VERSION
 done
 
+all_published_pkgnames () {
+    for pkgdir in ${PACKAGE_DIRS[@]}; do
+        jq -r .name "$ROOT/$pkgdir/package.json"
+    done
+}
+
 bump_version_in_pkg () {
     VERSION="$1"
 
-    jq ".version=\"$VERSION\"" package.json | sponge package.json
+    # Only bump if this is a workspace that _has_ a version
+    if [ "$(jq -r .version package.json)" != "null" ]; then
+        jq ".version = \"$VERSION\"" package.json | sponge package.json
+    fi
 
-    # If this is one of the dependant packages, also bump their versions
-    if [ "$(jq '.dependencies."@liveblocks/core"' package.json)" != "null" ]; then
-        jq ".dependencies.\"@liveblocks/core\"=\"$VERSION\"" package.json | sponge package.json
-    fi
-    if [ "$(jq '.dependencies."@liveblocks/client"' package.json)" != "null" ]; then
-        jq ".dependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
-    fi
-    if [ "$(jq '.dependencies."@liveblocks/react"' package.json)" != "null" ]; then
-        jq ".dependencies.\"@liveblocks/react\"=\"$VERSION\"" package.json | sponge package.json
-    fi
-    if [ "$(jq '.dependencies."@liveblocks/redux"' package.json)" != "null" ]; then
-        jq ".dependencies.\"@liveblocks/redux\"=\"$VERSION\"" package.json | sponge package.json
-    fi
-    if [ "$(jq '.dependencies."@liveblocks/zustand"' package.json)" != "null" ]; then
-        jq ".dependencies.\"@liveblocks/zustand\"=\"$VERSION\"" package.json | sponge package.json
-    fi
+    for pkgname in $( all_published_pkgnames ); do
+        for key in dependencies devDependencies peerDependencies; do
+            if [ "$(jq ".${key}.\"${pkgname}\"" package.json)" != "null" ]; then
+                jq ".${key}.\"${pkgname}\" = \"$VERSION\"" package.json | sponge package.json
+            fi
+        done
+    done
 
     prettier --write package.json
 }
+
+# NOTE: Isn't there just a simple NPM command that will list these?
+expand_workspace_globs () {
+    jq -r '.workspaces[]' "$ROOT/package.json" | sed -Ee 's/.*/echo &/' | sh | tr ' ' '\n'
+}
+
+all_workspaces () {
+    for possible_workspace in $( expand_workspace_globs ); do
+        if [ -f "$possible_workspace/package.json" ]; then
+            echo "$possible_workspace"
+        fi
+    done
+}
+
+build_version_everywhere () {
+    VERSION="$1"
+
+    echo "==> Bumping all workspaces to ${VERSION}"
+    for pkgdir in $( all_workspaces ); do
+        ( cd "$pkgdir" && bump_version_in_pkg "$VERSION" )
+    done
+}
+
 
 npm_pkg_exists () {
     PKGNAME="$1"
@@ -286,11 +309,7 @@ commit_to_git () {
 }
 
 # Build and publish all the other packages, one-by-one
-for pkgdir in ${PACKAGE_DIRS[@]}; do
-    pkgname="$(npm_pkgname "$pkgdir")"
-    echo "==> Bumping ${pkgname}"
-    ( cd "$pkgdir" && bump_version_in_pkg "$VERSION" )
-done
+build_version_everywhere "$VERSION"
 
 # Update package-lock.json with newly bumped versions
 npm install
