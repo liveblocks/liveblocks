@@ -324,6 +324,7 @@ function makeStateMachine<
       storageUpdates: Map<string, StorageUpdate>
     ) {
       const activeBatch = state.activeBatch;
+
       if (activeBatch) {
         activeBatch.ops.push(...ops);
         storageUpdates.forEach((value, key) => {
@@ -343,6 +344,17 @@ function makeStateMachine<
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
+      }
+    },
+
+    assertStorageIsWritable: () => {
+      if (
+        isConnectionSelfAware(state.connection.current) &&
+        state.connection.current.isReadOnly
+      ) {
+        throw new Error(
+          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+        );
       }
     },
   };
@@ -1585,7 +1597,7 @@ function makeStateMachine<
       return callback();
     }
 
-    let rv: T = undefined as unknown as T;
+    let returnValue: T = undefined as unknown as T;
 
     batchUpdates(() => {
       state.activeBatch = {
@@ -1597,9 +1609,8 @@ function makeStateMachine<
         },
         reverseOps: [],
       };
-
       try {
-        rv = callback();
+        returnValue = callback();
       } finally {
         // "Pop" the current batch of the state, closing the active batch, but
         // handling it separately here
@@ -1625,7 +1636,7 @@ function makeStateMachine<
       }
     });
 
-    return rv;
+    return returnValue;
   }
 
   function pauseHistory() {

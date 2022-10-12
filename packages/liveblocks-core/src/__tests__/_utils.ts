@@ -32,12 +32,12 @@ import { remove } from "../utils";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-function makeRoomToken(actor: number): RoomAuthToken {
+function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   return {
     appId: "my-app",
     roomId: "my-room",
     actor,
-    scopes: [],
+    scopes,
   };
 }
 
@@ -167,7 +167,8 @@ export async function prepareRoomWithStorage<
   items: IdTuple<SerializedCrdt>[],
   actor: number = 0,
   onSend: (messages: ClientMsg<TPresence, TRoomEvent>[]) => void = () => {},
-  defaultStorage?: TStorage
+  defaultStorage?: TStorage,
+  scopes: string[] = []
 ) {
   const effects = mockEffects();
   (effects.send as jest.MockedFunction<any>).mockImplementation(onSend);
@@ -184,7 +185,7 @@ export async function prepareRoomWithStorage<
   const ws = new MockWebSocket("");
 
   machine.connect();
-  machine.authenticationSuccess(makeRoomToken(actor), ws as any);
+  machine.authenticationSuccess(makeRoomToken(actor, scopes), ws as any);
   ws.open();
 
   const getStoragePromise = machine.getStorage();
@@ -259,14 +260,17 @@ export async function prepareStorageTest<
   TPresence extends JsonObject = never,
   TUserMeta extends BaseUserMeta = never,
   TRoomEvent extends Json = never
->(items: IdTuple<SerializedCrdt>[], actor: number = 0) {
+>(items: IdTuple<SerializedCrdt>[], actor: number = 0, scopes: string[] = []) {
   let currentActor = actor;
   const operations: Op[] = [];
 
   const { machine: refMachine, storage: refStorage } =
     await prepareRoomWithStorage<TPresence, TStorage, TUserMeta, TRoomEvent>(
       items,
-      -1
+      -1,
+      undefined,
+      undefined,
+      scopes
     );
 
   const { machine, storage, ws } = await prepareRoomWithStorage<
@@ -274,35 +278,41 @@ export async function prepareStorageTest<
     TStorage,
     TUserMeta,
     TRoomEvent
-  >(items, currentActor, (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
-    for (const message of messages) {
-      if (message.type === ClientMsgCode.UPDATE_STORAGE) {
-        operations.push(...message.ops);
+  >(
+    items,
+    currentActor,
+    (messages: ClientMsg<TPresence, TRoomEvent>[]) => {
+      for (const message of messages) {
+        if (message.type === ClientMsgCode.UPDATE_STORAGE) {
+          operations.push(...message.ops);
 
-        refMachine.onMessage(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-        machine.onMessage(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_STORAGE,
-            ops: message.ops,
-          })
-        );
-      } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
-        refMachine.onMessage(
-          serverMessage({
-            type: ServerMsgCode.UPDATE_PRESENCE,
-            data: message.data,
-            actor: currentActor,
-            targetActor: message.targetActor,
-          })
-        );
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+          machine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_STORAGE,
+              ops: message.ops,
+            })
+          );
+        } else if (message.type === ClientMsgCode.UPDATE_PRESENCE) {
+          refMachine.onMessage(
+            serverMessage({
+              type: ServerMsgCode.UPDATE_PRESENCE,
+              data: message.data,
+              actor: currentActor,
+              targetActor: message.targetActor,
+            })
+          );
+        }
       }
-    }
-  });
+    },
+    undefined,
+    scopes
+  );
 
   // Mock Server messages for Presence
 
@@ -365,7 +375,7 @@ export async function prepareStorageTest<
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(makeRoomToken(actor), ws as any);
+    machine.authenticationSuccess(makeRoomToken(actor, []), ws as any);
     ws.open();
 
     // Mock server messages for Presence.
@@ -500,7 +510,7 @@ export async function reconnect<
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess(makeRoomToken(actor), ws);
+  machine.authenticationSuccess(makeRoomToken(actor, []), ws);
   ws.open();
 
   machine.onMessage(
