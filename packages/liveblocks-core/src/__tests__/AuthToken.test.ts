@@ -1,5 +1,5 @@
 import type { JwtMetadata } from "../AuthToken";
-import { isTokenExpired, parseRoomAuthToken } from "../AuthToken";
+import { isTokenExpired, parseRoomAuthToken, RoomScope } from "../AuthToken";
 
 describe("isTokenExpired", () => {
   const MINUTES = 60 * 1000;
@@ -49,7 +49,7 @@ describe("parseRoomAuthToken", () => {
       exp: 1664570010,
       iat: 1664566410,
       roomId: "KXa6UclvraeGZNdXVz67Z",
-      scopes: ["room:write"],
+      scopes: [RoomScope.Write],
     });
   });
 

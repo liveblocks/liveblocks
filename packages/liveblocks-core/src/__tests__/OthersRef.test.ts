@@ -64,6 +64,30 @@ describe('Read-only "others" ref cache', () => {
       ]);
     });
 
+    it("setting other as read-only", () => {
+      const others = new OthersRef<P, M>();
+      others.setConnection(2, "user-123", undefined, true);
+      others.setConnection(3, "user-567", undefined, false);
+
+      others.setOther(2, { x: 2, y: 2 });
+      others.setOther(3, { x: 3, y: 3 });
+
+      expect(others.current).toStrictEqual([
+        {
+          connectionId: 2,
+          id: "user-123",
+          presence: { x: 2, y: 2 },
+          isReadOnly: true,
+        },
+        {
+          connectionId: 3,
+          id: "user-567",
+          presence: { x: 3, y: 3 },
+          isReadOnly: false,
+        },
+      ]);
+    });
+
     it("setting others removes explicitly-undefined keys", () => {
       const others = new OthersRef<P, M>();
       others.setConnection(2, "user-123", undefined, false);
