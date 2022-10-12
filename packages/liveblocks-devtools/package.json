@@ -1,9 +1,10 @@
 {
   "name": "@liveblocks/devtools",
+  "version": "0.18.4",
+  "private": true,
   "displayName": "Liveblocks",
   "description": "A browser extension that lets you inspect Liveblocks clients.",
   "homepage": "https://liveblocks.io",
-  "version": "0.18.3",
   "scripts": {
     "dev": "plasmo dev",
     "dev:firefox": "plasmo dev --target=firefox-mv2",
@@ -24,10 +25,8 @@
     "@types/webextension-polyfill": "^0.9.1",
     "autoprefixer": "^10.4.12",
     "postcss": "^8.4.17",
-    "prettier": "2.7.1",
     "prettier-plugin-tailwindcss": "^0.1.13",
     "tailwindcss": "^3.1.8",
-    "typescript": "4.8.4",
     "webextension-polyfill": "^0.10.0"
   },
   "manifest": {
