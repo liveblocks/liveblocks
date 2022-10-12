@@ -1,3 +1,4 @@
+import { RoomScope } from "../AuthToken";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -113,7 +114,7 @@ describe("LiveMap", () => {
         createSerializedMap("0:1", "0:0", "map"),
       ],
       1,
-      ["room:read", "room:presence:write"]
+      [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
     const map = storage.root.get("map");
@@ -204,7 +205,7 @@ describe("LiveMap", () => {
           createSerializedMap("0:1", "0:0", "map"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const map = storage.root.get("map");

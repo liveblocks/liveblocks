@@ -1,3 +1,4 @@
+import { RoomScope } from "../AuthToken";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -105,7 +106,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;
@@ -241,7 +242,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;
@@ -314,7 +315,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;
@@ -413,7 +414,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;
@@ -536,7 +537,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;
@@ -647,7 +648,7 @@ describe("LiveList", () => {
           createSerializedList("0:1", "0:0", "items"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       const root = storage.root;

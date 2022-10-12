@@ -1,4 +1,5 @@
 import { LiveList } from "..";
+import { RoomScope } from "../AuthToken";
 import { LiveObject } from "../LiveObject";
 import type { IdTuple, SerializedCrdt } from "../types";
 import { CrdtType, OpCode, WebsocketCloseCodes } from "../types";
@@ -80,7 +81,7 @@ describe("LiveObject", () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", { a: 0 })],
       1,
-      ["room:read", "room:presence:write"]
+      [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
     expect(() => storage.root.update({ a: 1 })).toThrowError(
@@ -145,7 +146,7 @@ describe("LiveObject", () => {
     const { storage } = await prepareStorageTest(
       [createSerializedObject("0:0", {})],
       1,
-      ["room:read", "room:presence:write"]
+      [RoomScope.Read, RoomScope.PresenceWrite]
     );
 
     expect(() => storage.root.set("a", 1)).toThrowError(
@@ -503,7 +504,7 @@ describe("LiveObject", () => {
           createSerializedObject("0:1", { b: 2 }, "0:0", "child"),
         ],
         1,
-        ["room:read", "room:presence:write"]
+        [RoomScope.Read, RoomScope.PresenceWrite]
       );
 
       expect(() => storage.root.get("child").delete("a")).toThrowError(
