@@ -1,4 +1,7 @@
-// Standard Jest configuration, used by all projects in this monorepo
+/**
+ * Standard Jest configuration, used by all projects in this monorepo.
+ */
+
 module.exports = {
   // By default, assume Jest will be used in a DOM environment. If you need to
   // use "node", you can overwrite it in the project.
@@ -8,4 +11,7 @@ module.exports = {
   modulePathIgnorePatterns: ["<rootDir>/dist/"],
   testPathIgnorePatterns: ["__tests__/_.*"],
   roots: ["<rootDir>/src"],
+
+  // Ensure `window.fetch` is polyfilled if it isn't available in the runtime
+  setupFiles: ["@liveblocks/jest-config/fetch-polyfill"],
 };

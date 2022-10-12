@@ -1,4 +1,3 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
 const commonJestConfig = require("@liveblocks/jest-config");
 
 module.exports = {

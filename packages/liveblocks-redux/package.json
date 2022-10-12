@@ -46,8 +46,7 @@
     "@reduxjs/toolkit": "^1.7.2",
     "@testing-library/jest-dom": "^5.16.5",
     "msw": "^0.36.4",
-    "redux": "^4.1.2",
-    "whatwg-fetch": "^3.6.2"
+    "redux": "^4.1.2"
   },
   "sideEffects": false
 }

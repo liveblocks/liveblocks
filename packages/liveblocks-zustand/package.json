@@ -45,7 +45,6 @@
     "@liveblocks/jest-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
     "msw": "^0.36.4",
-    "whatwg-fetch": "^3.6.2",
     "zustand": "^3.6.9"
   },
   "sideEffects": false
