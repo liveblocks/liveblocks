@@ -37,13 +37,10 @@ jobs:
         id: turbo-cache
         uses: actions/cache@v3
         with:
-          key:
-            turboooooooooooooooooo-cache-${{ github.job }}-${{
-            matrix.node-version }}-${{ matrix.pkg }}
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
           path: node_modules/.cache/turbo
           restore-keys:
-            turboooooooooooooooooo-cache-${{ github.job }}-${{
-            matrix.node-version }}-${{ matrix.pkg }}
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
 
       - name: Build
         run: npm run build -- --filter ${{ matrix.pkg }}
