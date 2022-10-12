@@ -1,7 +1,8 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import type { RoomAuthToken } from "../AuthToken";
+import type { RoomAuthToken} from "../AuthToken";
+import { RoomScope } from "../AuthToken";
 import * as console from "../fancy-console";
 import { lsonToJson } from "../immutable";
 import { LiveList } from "../LiveList";
@@ -345,6 +346,78 @@ describe("room", () => {
 
     expect(users).toEqual([
       { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+  });
+
+  test("others should be iterable", () => {
+    const { machine } = setupStateMachine({});
+
+    const ws = new MockWebSocket("");
+    machine.connect();
+    machine.authenticationSuccess(defaultRoomToken, ws);
+    ws.open();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [] },
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
+      })
+    );
+
+    const users = [];
+    for (const user of machine.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+  });
+
+  test("others should be read-only when associated scopes are received", () => {
+    const { machine } = setupStateMachine({});
+
+    const ws = new MockWebSocket("");
+    machine.connect();
+    machine.authenticationSuccess(defaultRoomToken, ws);
+    ws.open();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
+      })
+    );
+
+    const users = [];
+    for (const user of machine.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
     ]);
   });
 

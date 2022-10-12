@@ -2,7 +2,7 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
-import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
+import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import * as console from "./fancy-console";
@@ -909,9 +909,9 @@ function makeStateMachine<
 
   function isReadOnly(scopes: string[]) {
     return (
-      scopes.includes("room:read") &&
-      scopes.includes("room:presence:write") &&
-      !scopes.includes("room:write")
+      scopes.includes(RoomScope.Read) &&
+      scopes.includes(RoomScope.PresenceWrite) &&
+      !scopes.includes(RoomScope.Write)
     );
   }
 

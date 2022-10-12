@@ -7,6 +7,12 @@ export type AppOnlyAuthToken = {
   scopes: string[]; // Think Scope[], but it could also hold scopes from the future, hence string[]
 };
 
+export enum RoomScope {
+  Read = "room:read",
+  Write = "room:write",
+  PresenceWrite = "room:presence:write",
+}
+
 export type RoomAuthToken = {
   appId: string;
   roomId: string; // Discriminating field for AuthToken type
