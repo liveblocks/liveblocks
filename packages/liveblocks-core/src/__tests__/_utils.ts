@@ -32,7 +32,7 @@ import { remove } from "../utils";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
-function makeRoomToken(actor: number, scopes: string[] = []): RoomAuthToken {
+function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   return {
     appId: "my-app",
     roomId: "my-room",
@@ -375,7 +375,7 @@ export async function prepareStorageTest<
     currentActor = actor;
     const ws = new MockWebSocket("");
     machine.connect();
-    machine.authenticationSuccess(makeRoomToken(actor), ws as any);
+    machine.authenticationSuccess(makeRoomToken(actor, []), ws as any);
     ws.open();
 
     // Mock server messages for Presence.
@@ -510,7 +510,7 @@ export async function reconnect<
 ) {
   const ws = new MockWebSocket("");
   machine.connect();
-  machine.authenticationSuccess(makeRoomToken(actor), ws);
+  machine.authenticationSuccess(makeRoomToken(actor, []), ws);
   ws.open();
 
   machine.onMessage(
