@@ -1,12 +1,10 @@
 {
-  "name": "node-sandbox",
-  "version": "1.0.0",
-  "description": "",
+  "name": "@liveblocks/node-sandbox",
+  "private": true,
   "main": "index.js",
   "scripts": {
     "test": "jest"
   },
-  "author": "",
   "license": "MIT",
   "dependencies": {
     "@liveblocks/client": "^0.18.3",
