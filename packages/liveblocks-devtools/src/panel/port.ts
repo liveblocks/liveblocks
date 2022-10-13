@@ -2,13 +2,16 @@ import browser from "webextension-polyfill";
 import type {
   PanelToClientMessage,
   FullPanelToClientMessage,
+  FullClientToPanelMessage,
 } from "../lib/protocol";
 
 const DEV_PANEL = "liveblocks-devtools-panel";
 
 const port = browser.runtime.connect({ name: DEV_PANEL });
 
-export const { onMessage: onMessageFromClient } = port;
+export const onMessageFromClient = port.onMessage as browser.Events.Event<
+  (message: FullClientToPanelMessage) => void
+>;
 
 /**
  * Like port.postMessage(), but without having to provide the tabId to send it

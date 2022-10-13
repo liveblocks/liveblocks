@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { onMessageFromClient, sendMessageToClient } from "../port";
-import type { PanelToClientMessage } from "../../lib/protocol";
+import type {
+  FullClientToPanelMessage,
+  PanelToClientMessage,
+} from "../../lib/protocol";
 import { useTheme } from "../theme";
 
 export function Debug() {
   const theme = useTheme();
-  const [sentMessages, setSentMessages] = useState<unknown[]>([]);
-  const [receivedMessages, setReceivedMessages] = useState<unknown[]>([]);
+  const [sentMessages, setSentMessages] = useState<PanelToClientMessage[]>([]);
+  const [receivedMessages, setReceivedMessages] = useState<
+    FullClientToPanelMessage[]
+  >([]);
 
   useEffect(() => {
-    function receiveMessage(msg: unknown) {
+    function receiveMessage(msg: FullClientToPanelMessage) {
       setReceivedMessages((msglist) => [...msglist, msg]);
     }
 
