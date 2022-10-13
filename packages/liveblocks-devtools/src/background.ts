@@ -6,6 +6,10 @@ import type {
 
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 
+/**
+ * Handles messages being sent from the dev tool, intended for the browser tab
+ * running the client.
+ */
 browser.runtime.onConnect.addListener((port) => {
   function handleMessage(message: FullPanelToClientMessage) {
     //
@@ -36,6 +40,11 @@ browser.runtime.onConnect.addListener((port) => {
   });
 });
 
+/**
+ * Registers handlers for messages coming in from the various browser tabs.
+ * Senders contain the tab they were sent from, and the background script
+ * routes the message to the correct dev panel window.
+ */
 browser.runtime.onMessage.addListener(
   (message: FullClientToPanelMessage, sender) => {
     if (sender.tab) {
