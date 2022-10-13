@@ -78,12 +78,39 @@ that drive more people to your product.
 
 ### Types [#permissions-types]
 
-There’s currently one permission type, with more coming soon:
+Different permission types can be applied:
 
 <dl>
   <dt>room:write</dt>
   <dd>Enables people to view and edit the room.</dd>
+  <dt>`room:write`</dt>
+  <dd>
+    Full access. Enables people to view and edit the room. `isReadOnly` is
+    `false`.
+  </dd>
+  <dt>`room:read` + `room:presence:write`</dt>
+  <dd>
+    Read access with presence. Enables people to edit their presence, but only
+    view the room&rsquo;s storage. `isReadOnly` is `true`.
+  </dd>
 </dl>
+
+#### Read-only access
+
+To check if a user only has read-only access to storage in your app, the
+`isReadOnly` boolean can be retrieved from
+[`others`](/docs/api-reference/liveblocks-client#Room.getOthers) or
+[`self`](/docs/api-reference/liveblocks-client#Room).
+
+```ts
+// Vanilla
+const { isReadOnly } = room.getSelf();
+// React
+const selfIsReadOnly = useSelf((me) => me.isReadOnly);
+```
+
+You can also use our APIs to access this information, as well as set it, as
+we’ll detail below.
 
 ### Levels [#permissions-levels]
 
@@ -127,6 +154,9 @@ access level to your room.
 
 // public - everyone can edit and view the room
 "defaultAccesses": ["room:write"]
+
+// readable - everyone can view the room, but only presence can be edited
+"defaultAccesses": ["room:read", "room:presence:write"]
 ```
 
 ### Setting room access [#permissions-levels-default-accesses-example]
@@ -201,7 +231,8 @@ and an array of permissions as the value.
 
 #### Modifying group access [#permissions-levels-groups-accesses-example]
 
-To allow a "engineering" group access to a room, we can use the
+To allow an "engineering" group access to view a room, and modify their
+presence, we can use the
 [update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) with
 `engineering` as a `groupId`:
 
@@ -212,6 +243,7 @@ fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
   body: JSON.stringify({
     groupsAccesses: {
       engineering: ["room:write"],
+      engineering: ["room:read", "room:presence:write"],
     },
   }),
 });
