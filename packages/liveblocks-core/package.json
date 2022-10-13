@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/core",
-  "version": "0.18.4",
+  "version": "0.18.5",
   "description": "Shared code and foundational internals for Liveblocks",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
