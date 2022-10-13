@@ -4,7 +4,7 @@ import type {
   FullClientToPanelMessage,
 } from "./lib/protocol";
 
-const ports: Map<number, Runtime.Port> = new Map();
+const portsByTabId: Map<number, Runtime.Port> = new Map();
 
 browser.runtime.onConnect.addListener((port) => {
   function handleMessage(message: FullPanelToClientMessage) {
@@ -16,7 +16,7 @@ browser.runtime.onConnect.addListener((port) => {
     // and this port.
     //
     if (message.name === "connect") {
-      ports.set(message.tabId, port);
+      portsByTabId.set(message.tabId, port);
     }
 
     browser.tabs.sendMessage(message.tabId, message);
@@ -27,9 +27,9 @@ browser.runtime.onConnect.addListener((port) => {
   port.onDisconnect.addListener((port) => {
     port.onMessage.removeListener(handleMessage);
 
-    for (const [tabId, p] of ports) {
+    for (const [tabId, p] of portsByTabId) {
       if (port === p) {
-        ports.delete(tabId);
+        portsByTabId.delete(tabId);
         break;
       }
     }
@@ -40,7 +40,7 @@ browser.runtime.onMessage.addListener(
   (message: FullClientToPanelMessage, sender) => {
     if (sender.tab) {
       const tabId = sender.tab.id;
-      ports.get(tabId)?.postMessage(message);
+      portsByTabId.get(tabId)?.postMessage(message);
     }
   }
 );
