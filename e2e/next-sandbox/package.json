@@ -7,12 +7,12 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/client": "*",
-    "@liveblocks/core": "*",
-    "@liveblocks/node": "*",
-    "@liveblocks/react": "*",
-    "@liveblocks/redux": "*",
-    "@liveblocks/zustand": "*",
+    "@liveblocks/client": "0.18.4",
+    "@liveblocks/core": "0.18.4",
+    "@liveblocks/node": "0.18.4",
+    "@liveblocks/react": "0.18.4",
+    "@liveblocks/redux": "0.18.4",
+    "@liveblocks/zustand": "0.18.4",
     "@reduxjs/toolkit": "^1.8.4",
     "encoding": "^0.1.13",
     "next": "^12.2.5",
@@ -23,12 +23,10 @@
     "zustand": "^3.6.8"
   },
   "devDependencies": {
+    "@liveblocks/jest-config": "*",
     "@playwright/test": "^1.19.1",
     "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.182",
-    "jest": "^29.1.2",
-    "jest-environment-node": "^29.1.2",
-    "lodash": "^4.17.21",
-    "ts-jest": "^29.0.3"
+    "lodash": "^4.17.21"
   }
 }
