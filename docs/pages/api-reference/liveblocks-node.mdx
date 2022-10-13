@@ -1,0 +1,99 @@
+---
+meta:
+  title: "@liveblocks/node"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/node package"
+alwaysShowAllNavigationLevels: false
+---
+
+You can use the Liveblocks API in test mode, which does not affect your live
+data. The API key you use to authenticate the request determines whether the
+request is live mode or test mode.
+
+## authorize
+
+If the current user has access to the provided room, call this function from
+your authorization endpoint and returns the result as a http response.
+
+Optionally, you can also pass a `userId` and `userInfo` to add information about
+the current user that will not change during the session. This information will
+will be accessible in the client to all other users in [`Room.getOthers`][]. It
+can be helpful to implement avatars or display the user’s name without
+introducing a potential impersonification security issue.
+
+- `userId` cannot be longer than 128 characters.
+- `userInfo` cannot be longer than 1024 characters once serialized to JSON.
+
+### Example using Next.js [#nextjs-example]
+
+```js
+import { authorize } from "@liveblocks/node";
+
+// Replace this key with your secret key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const secret = "{{SECRET_KEY}}";
+
+export default async function auth(req, res) {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  const room = req.body.room;
+  const response = await authorize({
+    room,
+    secret,
+    userId: "123", // Optional
+    groupIds: ["456"], // Optional
+    userInfo: {
+      // Optional
+      name: "Ada Lovelace",
+    },
+  });
+  return res.status(response.status).end(response.body);
+}
+```
+
+### Example using Express.js [#express-example]
+
+```js
+const express = require("express");
+const { authorize } = require("@liveblocks/node");
+
+// Replace this key with your secret key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const secret = "{{SECRET_KEY}}";
+
+const app = express();
+
+app.use(express.json());
+
+app.post("/api/auth", (req, res) => {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  authorize({
+    room: req.body.room,
+    secret,
+    userId: "123", // Optional
+    userInfo: {
+      // Optional
+      name: "Ada Lovelace",
+    },
+  })
+    .then((authResponse) => {
+      res.send(authResponse.body);
+    })
+    .catch((er) => {
+      res.status(403).end();
+    });
+});
+```
+
+[`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers

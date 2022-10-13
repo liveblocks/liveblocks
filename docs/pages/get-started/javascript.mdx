@@ -1,0 +1,104 @@
+---
+meta:
+  title: "Get started with JavaScript"
+  parentTitle: "Get started"
+  description: "Learn how to get started with Liveblocks and JavaScript"
+---
+
+In this guide, you’ll learn how to use integrate Liveblocks into your JavaScript
+application. The `@liveblocks/client` package provides the Liveblocks Presence
+and Storage APIs you’ll be integrating with. If you’re using a UI framework such
+as React or Vue.js, we recommend reading with our dedicated guides below:
+
+- [React guide][]
+- [Vue.js guide][]
+
+This guide assumes that you’re already familiar with JavaScript and that you
+already have a way to bundle your JavaScript code for the client.
+
+## Install Liveblocks into your project [#install]
+
+### Install the Liveblocks client package [#setup]
+
+Run the following command to install the Liveblocks client package:
+
+```bash
+npm install @liveblocks/client
+```
+
+[`@liveblocks/client`][] lets you connect to Liveblocks servers.
+
+### Connect to Liveblocks
+
+To connect to Liveblocks, you need to create a Liveblocks client with
+[`createClient`][] from the front-end.
+
+```js
+import { createClient } from "@liveblocks/client";
+
+// Create a Liveblocks client
+// Replace this key with your public key provided at
+// https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+```
+
+Liveblocks should now be installed into your project!
+
+## Connect to a Liveblocks room [#connect-room]
+
+A room is the virtual space where people collaborate. To create a multiplayer
+experience, you’ll need to connect your users to a Liveblocks room following the
+instructions below.
+
+### Using Client.enter to connect to a room [#client-enter]
+
+You can easily connect to a room by using [`client.enter`][] as shown below.
+
+```js
+const room = client.enter("your-room-id", { initialPresence: {} });
+```
+
+### Using Liveblocks Client methods [#client-methods]
+
+Now that we have our room setup, we can start using Liveblocks Client methods to
+share any kind of data between users. For instance, [`Room.subscribe.others`][]
+allows us to subscribe to the other users updates.
+
+```js
+const room = client.enter("your-room-id", { initialPresence: {} });
+
+const container = document.getElementById("root-container");
+
+room.subscribe("others", (others) => {
+  if (others.count === 0) {
+    container.innerHTML = "You're the only one here.";
+  } else if (others.count === 1) {
+    container.innerHTML = "There is one other person here.";
+  } else {
+    container.innerHTML = "There are " + others.count + " other people here.";
+  }
+});
+```
+
+## Bonus: setup authentication endpoint [#authentication]
+
+Using the public key allows you to use Liveblocks without implementing your own
+authentication endpoint. It’s great for prototyping and marketing websites.
+
+If you want to implement your own security and define if the current user has
+access to a specific room, you can follow the [Authentication guide][].
+
+If you are using Express, you can also check the [Express Authentication
+guide][].
+
+[react guide]: /docs/get-started/react
+[vue.js guide]: /docs/get-started/vue
+[`@liveblocks/client`]: /docs/api-reference/liveblocks-client
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[`client.enter`]: /docs/api-reference/liveblocks-client#Client.enter
+[`room.subscribe.others`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.others
+[authentication guide]: /docs/guides/authentication
+[express authentication guide]: /docs/guides/authentication/express

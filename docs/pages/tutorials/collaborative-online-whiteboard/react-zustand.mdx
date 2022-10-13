@@ -1,0 +1,932 @@
+---
+meta:
+  title:
+    "Creating a collaborative online whiteboard with React, Zustand, and
+    Liveblocks"
+  parentTitle: "Tutorials"
+  description:
+    "Build a multiplayer whiteboard app with React, Zustand, and Liveblocks"
+---
+
+In this 25-minute guide, we’ll be building a collaborative whiteboard app using
+React, Zustand and Liveblocks. As users add and move rectangles in a canvas,
+changes will be automatically synced and persisted, allowing for a canvas that
+updates in real-time across clients. Users will also be able to see other users
+selections, and undo and redo actions.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+This guide assumes that you’re already familiar with
+[React](https://reactjs.org/) and [Zustand](https://github.com/pmndrs/zustand).
+If you’re not using Zustand, we recommend reading one of our dedicated
+whiteboard tutorials:
+
+- [React tutorial](/docs/tutorials/multiplayer-whiteboard/react)
+- [React + Redux tutorial](/docs/tutorials/multiplayer-whiteboard/react-redux)
+
+The source code for this guide is
+[available on github](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard).
+
+## Install Liveblocks into your project [#install-liveblocks]
+
+### Install Liveblocks packages
+
+Create a new app with [`create-react-app`](https://create-react-app.dev/):
+
+```bash
+npx create-react-app zustand-whiteboard
+```
+
+Then run the following command to install the Liveblocks packages and Zustand:
+
+```bash
+npm install zustand @liveblocks/client @liveblocks/zustand
+```
+
+### Connect to Liveblocks servers [#connect-liveblocks-servers]
+
+In order to use Liveblocks, we’ll need to sign up and get an API key.
+[Create an account](/api/auth/signup), then navigate to
+[the dashboard](/dashboard/apikeys) to find your public key. It should start
+with `pk_`.
+
+<Banner title="Public vs secret key">
+
+With a secret key, you can control who can access the room. it’s more secure but
+you need your own back-end endpoint. For this tutorial, we’ll go with a public
+key. For more info, see the [authentication guide](/docs/guides/authentication).
+
+</Banner>
+
+Create a new file `src/store.js` and initialize the Liveblocks client with your
+public API key. Then add our
+[middleware](/docs/api-reference/liveblocks-zustand#middleware) to your store
+configuration.
+
+```js file="src/store.js"
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+const useStore = create(
+  middleware(
+    (set) => ({
+      // state and action will be added here
+    }),
+    { client }
+  )
+);
+
+export default useStore;
+```
+
+### Connect to a Liveblocks room [#connect-liveblocks-room]
+
+Liveblocks uses the concept of _rooms_, separate virtual spaces where people can
+collaborate. To create a multiplayer experience, multiple users must be
+connected to the same room.
+
+Our middleware injected the object `liveblocks` to the store. Inside that
+object, the first methods that we are going to use are
+[`enterRoom`](/docs/api-reference/liveblocks-zustand#liveblocks-state-enter-room)
+and
+[`leaveRoom`](/docs/api-reference/liveblocks-zustand#liveblocks-state-leave-room).
+
+In our main component, we want to connect to the Liveblocks room when the
+component does mount, and leave the room when it unmounts.
+
+```js file="src/App.js"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const enterRoom = useStore((state) => state.liveblocks.enterRoom);
+  const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
+
+  useEffect(() => {
+    enterRoom("zustand-whiteboard");
+
+    return () => {
+      leaveRoom("zustand-whiteboard");
+    };
+  }, [enterRoom, leaveRoom]);
+
+  return <div className="container">Whiteboard app</div>;
+}
+```
+
+## Create a canvas [#basic-canvas]
+
+Whiteboard shapes will be stored even after all users disconnect, so we will use
+Liveblocks storage to persist them.
+
+Add a `shapes` property to your store, and tell the middleware to sync and
+persist them with Liveblocks.
+
+To achieve that, we are going to use the middleware option
+[`storageMapping: { shapes: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-storage-mapping).
+It means that the part of the state named `shapes` should be automatically
+synced with Liveblocks Storage.
+
+```js file="src/store.js" highlight="12,16"
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+const useStore = create(
+  middleware(
+    (set) => ({
+      shapes: {},
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+Afterwards, we draw the shapes in our canvas. To keep it simple for the
+tutorial, we are going to only support rectangle.
+
+```jsx file="src/App.js" highlight="7,10,13,20-30,33-43"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const enterRoom = useStore((state) => state.liveblocks.enterRoom);
+  const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
+  const isLoading = useStore((state) => state.liveblocks.isLoading);
+
+  useEffect(() => {
+    enterRoom("zustand-whiteboard", { shapes: {} });
+
+    return () => {
+      leaveRoom("zustand-whiteboard");
+    };
+  }, [enterRoom, leaveRoom]);
+
+  if (isLoading) {
+    return <div className="loading">Loading...</div>;
+  }
+
+  return (
+    <div className="canvas">
+      {Object.entries(shapes).map(([shapeId, shape]) => {
+        return <Rectangle key={shapeId} shape={shape} />;
+      })}
+    </div>
+  );
+}
+
+const Rectangle = ({ shape }) => {
+  return (
+    <div
+      className="rectangle"
+      style={{
+        transform: `translate(${shape.x}px, ${shape.y}px)`,
+        backgroundColor: shape.fill ? shape.fill : "#CCC",
+      }}
+    ></div>
+  );
+};
+```
+
+_For a tidier look, here’s some styling to place within `src/App.css`._
+
+```css file="src/App.css" isCollapsed isCollapsable
+body {
+  background-color: #eeeeee;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+.canvas {
+  background-color: #eeeeee;
+  touch-action: none;
+  width: 100vw;
+  height: 100vh;
+}
+
+.rectangle {
+  position: absolute;
+  /* transition: all 0.1s ease; */
+  stroke-width: 1;
+  border-style: solid;
+  border-width: 2px;
+  height: 100px;
+  width: 100px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  background-color: #ffffff;
+  user-select: none;
+}
+
+.toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  color: #181818;
+  border: none;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+  margin: 4px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.toolbar button:hover,
+.toolbar button:focus {
+  background-color: #ffffff;
+}
+
+.toolbar button:active {
+  background-color: #eeeeee;
+}
+```
+
+## Insert rectangles
+
+Currently our whiteboard is empty, and there’s no way to add rectangles. Let’s
+create a button that adds a randomly placed rectangle to the board.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-1.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Add a new function to your store that randomly insert a rectangle on the board.
+
+```js file="src/store.js" highlight="9-17,23-36"
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function getRandomColor() {
+  return COLORS[getRandomInt(COLORS.length)];
+}
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      shapes: {},
+      insertRectangle: () => {
+        const { shapes } = get();
+
+        const shapeId = Date.now().toString();
+        const shape = {
+          x: getRandomInt(300),
+          y: getRandomInt(300),
+          fill: getRandomColor(),
+        };
+
+        set({
+          shapes: { ...shapes, [shapeId]: shape },
+        });
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+Then add a button to call this function from the board.
+
+```jsx file="src/App.js" highlight="8,13,19-22"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+
+  /* ... */
+
+  return (
+    <>
+      <div className="canvas">
+        {Object.entries(shapes).map(([shapeId, shape]) => {
+          return <Rectangle key={shapeId} shape={shape} />;
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+      </div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+## Add selection [#selection]
+
+We can use Liveblocks to display which shape each user is currently selecting,
+in this case by adding a border to the rectangles. We’ll use a blue border to
+represent the local user, and green borders for remote users.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-2.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Any online user could select a shape, and we need to keep track of this, so it’s
+best if each user holds their own `selectedShape` property.
+
+Luckily, Liveblocks uses the concept of presence to handle these temporary
+states. A user’s presence can be used to represent the position of a cursor on
+screen, or in this case the selected shape in a design tool.
+
+We want to add some data to our Zustand store, `selectedShape` will contain the
+selected shape id. `selectedShape` will be set when the user select or insert a
+rectangle.
+
+The middleware option
+[`presenceMapping: { selectedShape: true }`](/docs/api-reference/liveblocks-zustand#middleware-option-presence-mapping)
+means that we want to automatically sync the part of the state named
+`selectedShape` to Liveblocks Presence.
+
+```js file="src/store.js" highlight="7,20,23-25,30"
+/* ... */
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      shapes: {},
+      selectedShape: null,
+      insertRectangle: () => {
+        const { shapes } = get();
+
+        const shapeId = Date.now().toString();
+        const shape = {
+          x: getRandomInt(300),
+          y: getRandomInt(300),
+          fill: getRandomColor(),
+        };
+
+        set({
+          shapes: { ...shapes, [shapeId]: shape },
+          selectedShape: shapeId,
+        });
+      },
+      onShapePointerDown: (shapeId) => {
+        set({ selectedShape: shapeId });
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+      presenceMapping: { selectedShape: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+Update your `App` and `Rectangle` components to show if a shape is selected by
+the current user or someone else in the room.
+
+```jsx file="src/App.js" highlight="9,10,18-26,31,33,45,46,54,56-59"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+  const others = useStore((state) => state.liveblocks.others);
+  const selectedShape = useStore((state) => state.selectedShape);
+
+  /* ... */
+
+  return (
+    <>
+      <div className="canvas">
+        {Object.entries(shapes).map(([shapeId, shape]) => {
+          let selectionColor = "transparent";
+
+          if (selectedShape === shapeId) {
+            selectionColor = "blue";
+          } else if (
+            others.some((user) => user.presence?.selectedShape === shapeId)
+          ) {
+            selectionColor = "green";
+          }
+
+          return (
+            <Rectangle
+              key={shapeId}
+              id={shapeId}
+              shape={shape}
+              selectionColor={selectionColor}
+            />
+          );
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+      </div>
+    </>
+  );
+}
+
+const Rectangle = ({ shape, selectionColor, id }) => {
+  const onShapePointerDown = useStore((state) => state.onShapePointerDown);
+
+  return (
+    <div
+      className="rectangle"
+      style={{
+        transform: `translate(${shape.x}px, ${shape.y}px)`,
+        backgroundColor: shape.fill ? shape.fill : "#CCC",
+        borderColor: selectionColor,
+      }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        onShapePointerDown(id);
+      }}
+    ></div>
+  );
+};
+```
+
+## Delete rectangles
+
+Now that users can select rectangles, we can add a button that allow deleting
+rectangles too.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-3.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Add a `deleteShape` to remove the selected shape from `shapes`, and then reset
+the user’s selection:
+
+```js file="src/store.js" highlight="14-21"
+/* ... */
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      shapes: {},
+      selectedShape: null,
+      insertRectangle: () => {
+        /* ... */
+      },
+      onShapePointerDown: (shapeId) => {
+        /* ... */
+      },
+      deleteShape: () => {
+        const { shapes, selectedShape } = get();
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
+        set({
+          shapes: newShapes,
+          selectedShape: null,
+        });
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+      presenceMapping: { selectedShape: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+```jsx file="src/App.js" highlight="11,20-22"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+  const others = useStore((state) => state.liveblocks.others);
+  const selectedShape = useStore((state) => state.selectedShape);
+  const deleteShape = useStore((state) => state.deleteShape);
+
+  /* ... */
+
+  return (
+    <>
+      <div className="canvas">{/* ... */}</div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+        <button onClick={deleteShape} disabled={selectedShape == null}>
+          Delete
+        </button>
+      </div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+## Move rectangles
+
+Let’s move some rectangles!
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-4.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+To allow users to move rectangles, we’ll update the `x` and `y` properties of
+the selected shape when a user drags it:
+
+```js file="src/store.js" highlight="8,14,19-41"
+/* ... */
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      shapes: {},
+      selectedShape: null,
+      isDragging: false,
+
+      insertRectangle: () => {
+        /* ... */
+      },
+      onShapePointerDown: (shapeId) => {
+        set({ selectedShape: shapeId, isDragging: true });
+      },
+      deleteShape: () => {
+        /* ... */
+      },
+      onCanvasPointerUp: () => {
+        set({ isDragging: false });
+      },
+      onCanvasPointerMove: (e) => {
+        e.preventDefault();
+
+        const { isDragging, shapes, selectedShape } = get();
+
+        const shape = shapes[selectedShape];
+
+        if (shape && isDragging) {
+          set({
+            shapes: {
+              ...shapes,
+              [selectedShape]: {
+                ...shape,
+                x: e.clientX - 50,
+                y: e.clientY - 50,
+              },
+            },
+          });
+        }
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+      presenceMapping: { selectedShape: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+```jsx file="src/App.js" highlight="12,13,21,22"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+  const others = useStore((state) => state.liveblocks.others);
+  const selectedShape = useStore((state) => state.selectedShape);
+  const deleteShape = useStore((state) => state.deleteShape);
+  const onCanvasPointerMove = useStore((state) => state.onCanvasPointerMove);
+  const onCanvasPointerUp = useStore((state) => state.onCanvasPointerUp);
+
+  /* ... */
+
+  return (
+    <>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {/* ... */}
+      </div>
+      <div className="toolbar">{/* ... */}</div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+## Multiplayer undo/redo [#undo-redo]
+
+With Liveblocks, you can enable multiplayer undo/redo in just a few lines of
+code.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-5.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Add two buttons to the toolbar and bind them to
+[`room.history.undo`](/docs/api-reference/liveblocks-client#Room.history.undo)
+and
+[`room.history.redo`](/docs/api-reference/liveblocks-client#Room.history.redo).
+These functions only impact modifications made to the room’s storage.
+
+```jsx file="src/App.js" highlight="14,15,33,34"
+import { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useStore((state) => state.shapes);
+  const insertRectangle = useStore((state) => state.insertRectangle);
+  const others = useStore((state) => state.liveblocks.others);
+  const selectedShape = useStore((state) => state.selectedShape);
+  const deleteShape = useStore((state) => state.deleteShape);
+  const onCanvasPointerMove = useStore((state) => state.onCanvasPointerMove);
+  const onCanvasPointerUp = useStore((state) => state.onCanvasPointerUp);
+  const undo = useStore((state) => state.liveblocks.room?.history.undo);
+  const redo = useStore((state) => state.liveblocks.room?.history.redo);
+
+  /* ... */
+
+  return (
+    <>
+      <div
+        className="canvas"
+        onPointerMove={onCanvasPointerMove}
+        onPointerUp={onCanvasPointerUp}
+      >
+        {/* ... */}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+        <button onClick={deleteShape} disabled={selectedShape == null}>
+          Delete
+        </button>
+        <button onClick={undo}>Undo</button>
+        <button onClick={redo}>Redo</button>
+      </div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+### Pause and resume history [#pause-resume-history]
+
+When a user moves a rectangle, a large number of actions are sent to Liveblocks
+and live synced, enabling other users to see movements in real-time.
+
+The problem with this is that the undo button returns the rectangle to the last
+intermediary position, and not the position where the rectangle started its
+movement. We can fix this by pausing storage history until the move has
+completed.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-6.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We’ll use
+[`history.pause`](/docs/api-reference/liveblocks-client#Room.history.pause) to
+disable adding any positions to the history stack while the cursors moves, and
+then call
+[`history.resume`](/docs/api-reference/liveblocks-client#Room.history.resume)
+afterwards.
+
+```js file="src/store.js" highlight="14,22"
+/* ... */
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      isDragging: false,
+      shapes: {},
+      selectedShape: null,
+
+      insertRectangle: () => {
+        /* ... */
+      },
+      onShapePointerDown: (shapeId) => {
+        get().liveblocks.room.history.pause();
+        set({ selectedShape: shapeId, isDragging: true });
+      },
+      deleteShape: () => {
+        /* ... */
+      },
+      onCanvasPointerUp: () => {
+        set({ isDragging: false });
+        get().liveblocks.room.history.resume();
+      },
+      onCanvasPointerMove: (e) => {
+        /* ... */
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+      presenceMapping: { selectedShape: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+### Add selection to history [#selection-history]
+
+By default, presence udpates are not added to the room’s history. Let’s add the
+current user selection to the room’s history to improve our undo/redo behavior.
+
+To accomplish that, use
+[`room.updatePresence`](/docs/api-reference/liveblocks-client#Room.updatePresence)
+with the option `addToHistory` to update `selectedShape`. Liveblocks middleware
+will update store `selectedShape` for you.
+
+```js file="src/store.js" highlight="11,20-26,29-32,38-46"
+/* ... */
+
+const useStore = create(
+  middleware(
+    (set, get) => ({
+      isDragging: false,
+      shapes: {},
+      selectedShape: null,
+
+      insertRectangle: () => {
+        const { shapes, liveblocks } = get();
+
+        const shapeId = Date.now().toString();
+        const shape = {
+          x: getRandomInt(300),
+          y: getRandomInt(300),
+          fill: getRandomColor(),
+        };
+
+        liveblocks.room.updatePresence(
+          { selectedShape: shapeId },
+          { addToHistory: true }
+        );
+        set({
+          shapes: { ...shapes, [shapeId]: shape },
+        });
+      },
+      onShapePointerDown: (shapeId) => {
+        const room = get().liveblocks.room;
+        room.history.pause();
+        room.updatePresence({ selectedShape: shapeId }, { addToHistory: true });
+        set({ isDragging: true });
+      },
+      deleteShape: () => {
+        const { shapes, selectedShape, liveblocks } = get();
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
+        liveblocks.room.updatePresence(
+          { selectedShape: null },
+          { addToHistory: true }
+        );
+        set({
+          shapes: newShapes,
+        });
+      },
+      onCanvasPointerUp: () => {
+        /* ... */
+      },
+      onCanvasPointerMove: (e) => {
+        /* ... */
+      },
+    }),
+    {
+      client,
+      storageMapping: { shapes: true },
+      presenceMapping: { selectedShape: true },
+    }
+  )
+);
+
+export default useStore;
+```
+
+Voilà! We have a working collaborative whiteboard app, with persistent data
+storage.
+
+## Summary
+
+In this tutorial, we’ve learnt about the concept of rooms, presence, and others.
+We've also learnt how to put all these into practice, and how to persist state
+using storage too.
+
+You can see some stats about the room you created in your
+[dashboard](https://liveblocks.io/dashboard/rooms).
+
+<Figure>
+  <Image
+    src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-dashboard.png"
+    alt="Liveblocks dashboard"
+    layout="responsive"
+    width={1336}
+    height={822}
+    quality={80}
+  />
+</Figure>
+
+## Next steps
+
+- [API reference](/docs/api-reference/liveblocks-zustand)
+- [Authentication](/docs/guides/authentication)

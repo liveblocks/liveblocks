@@ -1,0 +1,1082 @@
+---
+meta:
+  title: "@liveblocks/client"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/client package"
+alwaysShowAllNavigationLevels: false
+---
+
+## createClient
+
+Create a client that will be responsible to communicate with Liveblocks servers.
+
+### createClient with public key [#createClientPublicKey]
+
+When creating a client with a public key, you don’t need to setup an
+authorization endpoint:
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+```
+
+### createClient with auth endpoint [#createClientAuthEndpoint]
+
+If you are not using a public key, you need to setup your own `authEndpoint`.
+Please refer to our [Authentication guide](/docs/guides/authentication).
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({ authEndpoint: "/api/auth" });
+```
+
+### createClient with callback [#createClientCallback]
+
+If you need to add additional headers or use your own function to call the
+endpoint, `authEndpoint` also supports a callback.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  authEndpoint: async (room) => {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: {
+        Authentication: "token",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ room }),
+    });
+    return await response.json();
+  },
+});
+```
+
+### createClient for React Native [#createClientReactNative]
+
+If you want to use `@liveblocks/client` with
+[React Native](https://reactnative.dev/), you need to add an [`atob`][]
+polyfill.
+
+As a polyfill, we recommend installing the package [`base-64`][].
+
+```bash
+npm install base-64
+```
+
+Then you can pass the `decode` function to our `atob` polyfill option when you
+create the client.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import { decode } from "base-64";
+
+const client = createClient({
+  /* ... other options ... */
+  polyfills: {
+    atob: decode,
+  },
+});
+```
+
+### createClient for Node.js [#createClientNode]
+
+If you want to use `@liveblocks/client` in a Node.js environment, you need to
+provide [`WebSocket`][] and [`fetch`][] polyfills.
+
+As polyfills, we recommend installing the packages [`ws`][] and
+[`node-fetch`][].
+
+```bash
+npm install ws node-fetch
+```
+
+Then, pass them to the `createClient` function as below.
+
+```ts
+import { createClient } from "@liveblocks/client";
+import fetch from "node-fetch";
+import WebSocket from "ws";
+
+const client = createClient({
+  /* ... other options ... */
+  polyfills: {
+    fetch,
+    WebSocket,
+  },
+});
+```
+
+Note that `node-fetch` v3+
+[does not support CommonJS](https://github.com/node-fetch/node-fetch/blob/main/docs/v3-UPGRADE-GUIDE.md#converted-to-es-module).
+If you are using CommonJS, downgrade `node-fetch` to v2.
+
+### WebSocket throttle [#createClientThrottle]
+
+By default, the client throttle the WebSocket messages sent to 100 milliseconds.
+
+It is possible to override that configuration with the `throttle` option.
+
+`throttle` should be between 80 and 1000 milliseconds.
+
+```ts
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  /* ... other options ... */
+  throttle: 80,
+});
+```
+
+## Client
+
+Client returned by [`createClient`][].
+
+### Client.enter
+
+Enters a room and returns it. The authentication endpoint is called as soon as
+you call this function.
+
+The second argument is a configuration for the presence and storage.
+
+- `initialPresence` - The initial Presence to use for the User currently
+  entering the Room. Presence data belongs to the current User and is readable
+  to all other Users in the room while the current User is connected to the
+  Room. Must be serializable to JSON.
+- `initialStorage` (optional) - The initial Storage structure to create when a
+  new Room is entered for the first time. Storage data is shared and belongs to
+  the Room itself. It persists even after all Users leave the room, and is
+  mutable by every client. Must either contain Live structures (e.g.
+  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
+  JSON.
+
+```ts
+const room = client.enter("my-room", {
+  initialPresence: { cursor: null },
+  initialStorage: { todos: new LiveList() },
+});
+```
+
+### Client.leave
+
+Leaves a room.
+
+### Client.getRoom
+
+Gets a room by id. Returns `null` if [`client.enter`][] has not been called
+previously.
+
+```ts
+const room = client.getRoom("my-room");
+```
+
+## Room
+
+Room returned by [`client.enter`][] or [`client.getRoom`][].
+
+### Room.getPresence
+
+Gets the presence of the current user.
+
+```ts
+const presence = room.getPresence();
+```
+
+### Room.updatePresence
+
+Updates the presence of the current user. Only pass the properties you want to
+update. No need to send the full presence.
+
+```ts
+room.updatePresence({ x: 0 });
+room.updatePresence({ y: 0 });
+
+const presence = room.getPresence();
+// presence is equivalent to { x: 0, y: 0 }
+```
+
+`updatePresence` accepts an optional argument to add a new item to the undo/redo
+stack. See [`room.history`][] for more information.
+
+```ts
+room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.history.undo();
+// room.getPresence() equals { selectedId: "xxx" }
+```
+
+### Room.getOthers
+
+Gets all the other users in the Room.
+
+```ts
+const others = room.getOthers();
+
+for (const { connectionId, id, info, presence, isReadOnly } of others) {
+  // Do things
+}
+```
+
+### Room.broadcastEvent
+
+Broadcast an event to other users in the Room. Event broadcasted to the room can
+be listened with [`Room.subscribe("event")`][]. Takes a payload as first
+argument. Should be serializable to JSON.
+
+By default, broadcasting an event acts as a “fire and forget”. If the user is
+not currently in the room, the event is simply discarded. With the option
+`shouldQueueEventIfNotReady` , the event will be queued and sent once the
+connection is established.
+
+<Banner title="Notice">
+
+We are not sure if we want to support this option in the future so it might be
+deprecated to be replaced by something else.
+
+</Banner>
+
+```ts
+// On client A
+room.broadcastEvent({ type: "EMOJI", emoji: "🔥" });
+
+// On client B
+room.subscribe("event", ({ event }) => {
+  if (event.type === "EMOJI") {
+    // Do something
+  }
+});
+```
+
+### Room.getSelf
+
+Gets the current user. Returns `null` if it is not yet connected to the room.
+
+```ts
+const { connectionId, presence, id, info, isReadOnly } = room.getSelf();
+```
+
+### Room.subscribe(storageItem)
+
+Subscribe to updates for a particular storage item.
+
+Takes a callback that is called when the storage item is updated.
+
+Returns an unsubscribe function.
+
+```ts
+const { root } = await room.getStorage();
+const unsubscribe = room.subscribe(root, (root) => {
+  // Do something
+});
+```
+
+It’s also possible to subscribe to a storage item and its children by passing an
+optional `isDeep` parameter. In that case, the callback will get called with a
+list of updates instead. Each such update is a `{ type, node }` object.
+
+```ts
+const { root } = await room.getStorage();
+const unsubscribe = room.subscribe(
+  root,
+  (updates) => {
+    for (const update of updates) {
+      switch (update.type) {
+        case "LiveObject": {
+          // update.node is the LiveObject that has been updated
+          break;
+        }
+        case "LiveMap": {
+          // update.node is the LiveMap that has been updated
+          break;
+        }
+        case "LiveList": {
+          // update.node is the LiveList that has been updated
+          break;
+        }
+      }
+    }
+  },
+  { isDeep: true }
+);
+```
+
+### Room.subscribe("event") [#Room.subscribe.event]
+
+Subscribe to events broadcasted by [`Room.broadcastEvent`][].
+
+Takes a callback that is called when a user calls [`Room.broadcastEvent`][].
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("event", ({ event, connectionId }) => {
+  // Do something
+});
+```
+
+### Room.subscribe("my-presence") [#Room.subscribe.my-presence]
+
+Subscribe to the current user presence updates.
+
+Takes a callback that is called every time the current user presence is updated
+with [`Room.updatePresence`][].
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("my-presence", (presence) => {
+  // Do something
+});
+```
+
+### Room.subscribe("others") [#Room.subscribe.others]
+
+Subscribe to the other users updates.
+
+Takes a callback that is called when a user enters or leaves the room or when a
+user update its presence.
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("others", (others) => {
+  // Do something
+});
+```
+
+### Room.subscribe("connection") [#Room.subscribe.connection]
+
+Subscribe to the WebSocket connection status updates.
+
+Takes a callback that is called when the connection status changes.
+
+The value can be : `authenticating`, `connecting`, `open`, `failed`, `closed` or
+`unavailable`.
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("connection", (status) => {
+  // Do something
+});
+```
+
+### Room.subscribe("error") [#Room.subscribe.error]
+
+Subscribe to potential room connection errors.
+
+Returns an unsubscribe function.
+
+```ts
+const unsubscribe = room.subscribe("error", (error) => {
+  if (error.code === 4005) {
+    // Maximum concurrent connections per room exceeded.
+  }
+});
+```
+
+### Room.subscribe("history") [#Room.subscribe.history]
+
+Subscribe to the current user’s history changes.
+
+Returns an unsubscribe function.
+
+```ts
+room.subscribe("history", ({ canUndo, canRedo }) => {
+  // Do something
+});
+```
+
+### Room.batch
+
+Batches modifications made during the given function.
+
+All the modifications are sent to other clients in a single message.
+
+All the subscribers are called only after the batch is over.
+
+All the modifications are merged in a single history item (undo/redo).
+
+```ts
+const { root } = await room.getStorage();
+room.batch(() => {
+  root.set("x", 0);
+  room.updatePresence({ cursor: { x: 100, y: 100 } });
+});
+```
+
+### Room.history
+
+Room’s history contains functions that let you undo and redo operation made on
+by the current client on the presence and storage.
+
+```ts
+const { undo, redo, pause, resume } = room.history;
+```
+
+### Room.history.undo
+
+Undoes the last operation executed by the current client. It does not impact
+operations made by other clients.
+
+```ts
+room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.history.undo();
+// room.getPresence() equals { selectedId: "xxx" }
+```
+
+### Room.history.redo
+
+Redoes the last operation executed by the current client. It does not impact
+operations made by other clients.
+
+```ts
+room.updatePresence({ selectedId: "xxx" }, { addToHistory: true });
+room.updatePresence({ selectedId: "yyy" }, { addToHistory: true });
+room.history.undo();
+// room.getPresence() equals { selectedId: "xxx" }
+room.history.redo();
+// room.getPresence() equals { selectedId: "yyy" }
+```
+
+### Room.history.canUndo
+
+Returns whether there are any operations to undo.
+
+```ts
+room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+// room.history.canUndo() is true
+room.history.undo();
+// room.history.canUndo() is false
+```
+
+### Room.history.canRedo
+
+Returns whether there are any operations to redo.
+
+```ts
+room.updatePresence({ selectedId: "xx" }, { addToHistory: true });
+room.history.undo();
+// room.history.canRedo() is true
+room.history.redo();
+// room.history.canRedo() is false
+```
+
+### Room.history.pause
+
+All future modifications made on the Room will be merged together to create a
+single history item until resume is called.
+
+```ts
+room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+room.history.pause();
+room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+room.history.resume();
+room.history.undo();
+// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+```
+
+### Room.history.resume
+
+Resumes history. Modifications made on the Room are not merged into a single
+history item anymore.
+
+```ts
+room.updatePresence({ cursor: { x: 0, y: 0 } }, { addToHistory: true });
+room.history.pause();
+room.updatePresence({ cursor: { x: 1, y: 1 } }, { addToHistory: true });
+room.updatePresence({ cursor: { x: 2, y: 2 } }, { addToHistory: true });
+room.history.resume();
+room.history.undo();
+// room.getPresence() equals { cursor: { x: 0, y: 0 } }
+```
+
+## Storage
+
+<Banner title="The storage block is in beta">
+
+The following APIs are subject to change during the beta.
+
+</Banner>
+
+The room’s storage is a conflicts-free state that multiple users can edit at the
+same time. It persists even after everyone leaves the room. Liveblocks provides
+3 data structures that can be nested to create the state that you want.
+
+- [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
+  with fixed key names and where the values don’t necessarily have the same
+  types. For example, a `Person` with a `name` (string) and an `age` (number)
+  field.
+
+  If multiple clients update the same property simultaneously, the last
+  modification received by the Liveblocks servers is the winner.
+
+- [`LiveList`][] - An ordered collection of items synchronized across clients.
+  Even if multiple users add/remove/move elements simultaneously, LiveList will
+  solve the conflicts to ensure everyone sees the same collection of items.
+
+- [`LiveMap`][] - Similar to a JavaScript Map. Use this for indexing values that
+  all have the same structure. For example, to store an index of `Person` values
+  by their name. If multiple users update the same property simultaneously, the
+  last modification received by the Liveblocks servers is the winner.
+
+### Room.getStorage
+
+Get the room’s storage asynchronously (returns a Promise). The storage’s root is
+a [`LiveObject`][].
+
+```ts
+const { root } = await room.getStorage();
+```
+
+## LiveObject
+
+The `LiveObject` class is similar to a JavaScript object that is synchronized on
+all clients. Use this for storing records with fixed key names and where the
+values don’t necessarily have the same types. For example, a Person with a
+`name` (string) and an `age` (number) field.
+
+Keys should be strings, and values should be serializable to JSON.
+
+If multiple clients update the same property simultaneously, the last
+modification received by the Liveblocks servers is the winner.
+
+### new LiveObject [#LiveObject.constructor]
+
+Create an empty `LiveObject`
+
+```ts
+const object = new LiveObject();
+```
+
+Create a `LiveObject` with initial data.
+
+```ts
+const object = new LiveObject({ firstName: "Margaret", lastName: "Hamilton" });
+```
+
+### delete [#LiveObject.delete]
+
+Delete a property from the `LiveObject`
+
+```ts
+const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
+object.delete("lastName");
+object.toObject(); // equals to { firstName: "Ada" }
+```
+
+### get [#LiveObject.get]
+
+Get a property from the `LiveObject`
+
+```ts
+const object = new LiveObject({ firstName: "Ada", lastName: "Lovelace" });
+object.get("firstName"); // equals to "Ada"
+```
+
+### set [#LiveObject.set]
+
+Adds or updates a property with the specified key and a value.
+
+```ts
+const object = new LiveObject({ firstName: "Marie" });
+object.set("lastName", "Curie");
+```
+
+### update [#LiveObject.update]
+
+Adds or updates multiple properties at once.
+
+```ts
+const object = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
+object.update({ job: "Computer Scientist", birthDate: "December 9, 1906" });
+```
+
+### toObject [#LiveObject.toObject]
+
+<Banner title="Will be deprecated in the future">
+
+Starting with 0.18, we recommend [`toImmutable`][] instead. It’s faster, cached,
+and leads to fewer surprises.
+
+</Banner>
+
+Transform the `LiveObject` into a normal JavaScript object.
+
+```ts
+const liveObject = new LiveObject({ firstName: "Grace", lastName: "Hopper" });
+// { firstName: "Grace", lastName: "Hopper" }
+```
+
+Please note that this method won’t recursively convert Live structures, which
+may be surprising:
+
+```ts
+const liveObject = new LiveObject({
+  animals: new LiveList(["🦁", "🦊", "🐵"]),
+});
+liveObject.toObject();
+// { animals: <LiveList instance> } // ❗️
+```
+
+### toImmutable [#LiveObject.toImmutable]
+
+Returns an immutable JavaScript object that is equivalent to the `LiveObject`.
+Nested values will also be immutable.
+
+```ts
+const liveObject = new LiveObject({
+  firstName: "Grace",
+  lastName: "Hopper",
+  hobbies: new LiveList(["needlepoint", "reading", "playing piano"]),
+});
+liveObject.toImmutable();
+// {
+//   firstName: "Grace",
+//   lastName: "Hopper",
+//   hobbies: ["needlepoint", "reading", "playing piano"]
+// }
+```
+
+## LiveMap
+
+The `LiveMap` class is similar to a
+[JavaScript Map](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map)
+that is synchronized on all clients.
+
+Use this for indexing values that all have the same structure. For example, to
+store an index of `Person` values by their name. Keys should be strings, and
+values should be serializable to JSON. If multiple clients update the same
+property simultaneously, the last modification received by the Liveblocks
+servers is the winner.
+
+### new LiveMap [#LiveMap.constructor]
+
+Create an empty `LiveMap`.
+
+```ts
+const map = new LiveMap();
+```
+
+Create a `LiveMap` with initial data.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+```
+
+### delete [#LiveMap.delete]
+
+Removes the specified element by key. Returns true if an element existed and has
+been removed, or false if the element does not exist.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+map.delete("keyA"); // equals true
+map.get("keyA"); // equals undefined
+map.delete("unknownKey"); // equals false
+```
+
+### entries [#LiveMap.entries]
+
+Returns a new
+[Iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
+object that contains the `[key, value]` pairs for each element.
+
+```ts
+for (const [key, value] of map.entries()) {
+  // Iterate over all the keys and values of the map
+}
+```
+
+<Banner title="Iteration with TypeScript">
+
+If your TypeScript project targets <code>es5</code> or lower, you’ll need to
+enable the <code>--downlevelIteration</code> option to use this API.
+
+</Banner>
+
+### forEach [#LiveMap.forEach]
+
+Executes a provided function once per each key/value pair in the Map object.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+map.forEach((value, key) => console.log(value));
+// prints to the console "valueA", "valueB"
+```
+
+### get [#LiveMap.get]
+
+Returns a specified element from the LiveMap or undefined if the key can’t be
+found.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+map.get("keyA"); // equals "valueA"
+map.get("unknownKey"); // equals undefined
+```
+
+### has [#LiveMap.has]
+
+Returns a boolean indicating whether an element with the specified key exists or
+not.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+map.has("keyA"); // equals true
+map.has("unknownKey"); // equals false
+```
+
+### keys [#LiveMap.keys]
+
+Returns a new
+[Iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
+object that contains the keys for each element.
+
+```ts
+for (const key of map.keys()) {
+  // Iterate over all the keys and values of the map
+}
+```
+
+<Banner title="Iteration with TypeScript">
+
+If your TypeScript project targets <code>es5</code> or lower, you’ll need to
+enable the <code>--downlevelIteration</code> option to use this API.
+
+</Banner>
+
+### set [#LiveMap.set]
+
+Adds or updates an element with a specified key and a value.
+
+```ts
+const map = new LiveMap();
+map.set("keyA", "valueA");
+```
+
+### size [#LiveMap.size]
+
+Returns the number of elements in the `LiveMap`.
+
+```ts
+const map = new LiveMap([
+  ["keyA", "valueA"],
+  ["keyB", "valueB"],
+]);
+map.size; // equals 2
+```
+
+### values [#LiveMap.values]
+
+Returns a new
+[Iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators)
+object that contains the the values for each element.
+
+```ts
+for (const value of map.values()) {
+  // Iterate over all the values of the map
+}
+```
+
+<Banner title="Iteration with TypeScript">
+
+If your TypeScript project targets <code>es5</code> or lower, you’ll need to
+enable the <code>--downlevelIteration</code> option to use this API.
+
+</Banner>
+
+### toImmutable [#LiveMap.toImmutable]
+
+Returns an immutable ES6 Map that is equivalent to the `LiveMap`. Nested values
+will also be immutable.
+
+```ts
+const map = new LiveMap([
+  ["abc", new LiveObject({ firstName: "Grace", lastName: "Hopper" })],
+  ["pqr", new LiveObject({ firstName: "Ada", lastName: "Lovelace" })],
+]);
+map.toImmutable();
+// equal to:
+// Map(2) {
+//   'abc' => { firstName: 'Grace', lastName: 'Hopper' },
+//   'pqr' => { firstName: 'Ada', lastName: 'Lovelace' }
+// }
+```
+
+## LiveList
+
+The `LiveList` class represents an ordered collection of items that is
+synchorinized across clients. Items should be serializable to JSON or another
+Live data structure.
+
+### new LiveList [#LiveList.constructor]
+
+Create an empty `LiveList`
+
+```ts
+const list = new LiveList();
+```
+
+Create a `LiveList` with initial data
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+```
+
+### clear [#LiveList.clear]
+
+Removes all the elements.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.clear();
+list.toArray(); // equals []
+```
+
+### delete [#LiveList.delete]
+
+Deletes an element at the specified index.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.delete(1);
+list.toArray(); // equals ["🦁", "🐵"]
+```
+
+### every [#LiveList.every]
+
+Tests whether all elements pass the test implemented by the provided function.
+Returns true if the predicate function returns a truthy value for every element.
+Otherwise, false.
+
+```ts
+const list = new LiveList([0, 2, 4]);
+list.every((i) => i % 2 === 0); // equals true
+list.push(5);
+list.every((i) => i % 2 === 0); // equals false
+```
+
+### filter [#LiveList.filter]
+
+Creates an array with all elements that pass the test implemented by the
+provided function.
+
+```ts
+const list = new LiveList([0, 1, 2, 3, 4]);
+list.filter((i) => i % 2 === 0); // equals [0, 2, 4]
+```
+
+### find [#LiveList.find]
+
+Returns the first element that satisfies the provided testing function.
+
+```ts
+const list = new LiveList(["apple", "lemon", "tomato"]);
+list.find((fruit) => fruit.startsWith("l")); // equals "lemon"
+```
+
+### findIndex [#LiveList.findIndex]
+
+Returns the index of the first element in the `LiveList` that satisfies the
+provided testing function.
+
+```ts
+const list = new LiveList(["apple", "lemon", "tomato"]);
+list.findIndex((fruit) => fruit.startsWith("l")); // equals 1
+```
+
+### forEach [#LiveList.forEach]
+
+Executes a provided function once for each element.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.forEach((item) => console.log(item)); // prints to the console "🦁", "🦊", "🐵"
+```
+
+### get [#LiveList.get]
+
+Get the element at the specified index.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.get(2); // equals "🐵"
+```
+
+### indexOf [#LiveList.indexOf]
+
+Returns the first index at which a given element can be found in the `LiveList`,
+or -1 if it is not present.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.indexOf("🐵"); // equals 2
+list.indexOf("🐺"); // equals -1
+```
+
+### insert [#LiveList.insert]
+
+Inserts one element at a specified index.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.insert("🐺", 1);
+list.toArray(); // equals ["🦁", "🐺", "🦊", "🐵"]
+```
+
+### lastIndexOf [#LiveList.lastIndexOf]
+
+Returns the last index at which a given element can be found in the `LiveList`,
+or -1 if it is not present. The `LiveList` is searched backwards, starting at
+fromIndex.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵", "🦊"]);
+list.lastIndexOf("🦊"); // equals 3
+list.lastIndexOf("🐺"); // equals -1
+```
+
+### length [#LiveList.length]
+
+Returns the number of elements.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.length; // equals 3
+```
+
+### map [#LiveList.map]
+
+Creates an array populated with the results of calling a provided function on
+every element.
+
+```ts
+const list = new LiveList(["apple", "lemon", "tomato"]);
+list.map((fruit) => fruit.toUpperCase()); // equals ["APPLE", "LEMON", "TOMATO"]
+```
+
+### move [#LiveList.move]
+
+Moves one element at a specified index.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.move(2, 0); // move the "🐵" at index 0
+list.toArray(); // equals ["🐵", "🦁", "🦊"]
+```
+
+### push [#LiveList.push]
+
+Adds one element to the end of the `LiveList`.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.push("🐺");
+list.toArray(); // equals ["🦁", "🦊", "🐵", "🐺"]
+```
+
+### set [#LiveList.set]
+
+Replace one element at the specified index.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.set(1, "🐺");
+list.toArray(); // equals ["🦁", "🐺", "🐵"]
+```
+
+### some [#LiveList.some]
+
+Tests whether at least one element in the `LiveList` passes the test implemented
+by the provided function.
+
+```ts
+const list = new LiveList(["apple", "lemon", "tomato"]);
+list.some((fruit) => fruit.startsWith("l")); // equals true
+list.some((fruit) => fruit.startsWith("x")); // equals false
+```
+
+### toArray [#LiveList.toArray]
+
+<Banner title="Will be deprecated in the future">
+
+Starting with 0.18, we recommend [`toImmutable`][] instead. It’s faster, cached,
+and leads to fewer surprises.
+
+</Banner>
+
+Transforms the `LiveList` into a normal JavaScript array.
+
+```ts
+const list = new LiveList(["🦁", "🦊", "🐵"]);
+list.toArray();
+// ["🦁", "🦊", "🐵"]
+```
+
+Please note that this method won’t recursively convert Live structures, which
+may be surprising:
+
+```ts
+const list = new LiveList([
+  new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
+]);
+list.toArray();
+// [ <LiveObject instance> ]  // ❗️
+```
+
+### toImmutable [#LiveList.toImmutable]
+
+Returns an immutable JavaScript array that is equivalent to the `LiveList`.
+Nested values will also be immutable.
+
+```ts
+const list = new LiveList([
+  new LiveObject({ firstName: "Grace", lastName: "Hopper" }),
+]);
+list.toImmutable();
+// [ { firstName: "Grace", lastName: "Hopper" } ]
+```
+
+[`atob`]: https://developer.mozilla.org/en-US/docs/Web/API/atob
+[`base-64`]: https://www.npmjs.com/package/base-64
+[`client.enter`]: /docs/api-reference/liveblocks-client#Client.enter
+[`client.getroom`]: /docs/api-reference/liveblocks-client#Client.getRoom
+[`createclient`]: /docs/api-reference/liveblocks-client#createClient
+[`fetch`]: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable
+[`node-fetch`]: npmjs.com/package/node-fetch
+[`room.broadcastevent`]:
+  /docs/api-reference/liveblocks-client#Room.broadcastEvent
+[`room.history`]: /docs/api-reference/liveblocks-client#Room.history
+[`room.subscribe("event")`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe.event
+[`room.updatepresence`]:
+  /docs/api-reference/liveblocks-client#Room.updatePresence
+[`websocket`]: https://developer.mozilla.org/en-US/docs/Web/API/WebSocket
+[`ws`]: https://www.npmjs.com/package/ws

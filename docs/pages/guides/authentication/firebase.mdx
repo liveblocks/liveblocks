@@ -1,0 +1,100 @@
+---
+meta:
+  title: "Authentication with Firebase"
+  parentTitle: "Guides"
+  description:
+    "Learn how to setup a Liveblocks authentication endpoint with Firebase"
+---
+
+This guide assumes that you already have
+[installed Liveblocks into your project](/docs/get-started/javascript) and that
+you’re already familiar with
+[Firebase functions](https://firebase.google.com/docs/functions/get-started).
+
+## Install the Liveblocks package [#setup]
+
+To do that, let’s first install [`@liveblocks/node`][] package in your Firebase
+functions project.
+
+```bash
+npm install @liveblocks/node
+```
+
+## Setup authentication endpoint [#authentication]
+
+Next, create a new Firebase
+[callable function](https://firebase.google.com/docs/functions/callable) as
+shown below. This is where you will implement your security and define if the
+current user has access to a specific room.
+
+```js
+const functions = require("firebase-functions");
+const { authorize } = require("@liveblocks/node");
+
+exports.auth = functions.https.onCall((data, context) => {
+  /**
+   * Implement your own security here.
+   *
+   * It's your responsibility to ensure that the caller of this endpoint
+   * is a valid user by validating the cookies or authentication headers
+   * and that it has access to the requested room.
+   */
+  return authorize({
+    room: data.room,
+    secret: "sk_prod_xxxxxxxxxxxxxxxxxxxxxxxx",
+    userId: "123", // Optional
+    groupIds: ["456"], // Optional
+    userInfo: {
+      // Optional
+      name: "Ada Lovelace",
+    },
+  }).then((authResult) => {
+    if (authResult.status !== 200) {
+      throw new functions.https.HttpsError(authResult.status, authResult.body);
+    }
+    return JSON.parse(authResult.body);
+  });
+});
+```
+
+Then, deploy your function with `firebase deploy --only functions:auth`.
+
+Here is a diagram that shows how things work behind the scenes:
+
+<Figure highlight={false}>
+  <Image
+    src="/images/docs/auth-diagram.svg"
+    alt="Auth diagram"
+    layout="responsive"
+    width={730}
+    height={504}
+    quality={90}
+  />
+</Figure>
+
+## Connect to Liveblocks
+
+To connect to Liveblocks, you need to create a Liveblocks client with
+[`createClient`][] from the front-end and set the `authEndpoint` option based on
+the previously created “callable function”:
+
+```js
+import { createClient } from "@liveblocks/client";
+import firebase from "firebase";
+import "firebase/functions";
+
+firebase.initializeApp({
+  /* Firebase config */
+});
+
+const auth = firebase.functions().httpsCallable("auth");
+
+// Create a Liveblocks client
+const client = createClient({
+  authEndpoint: async (room) => (await auth({ room })).data,
+});
+```
+
+Liveblocks should now be integrated with your product!
+
+[`@liveblocks/node`]: /docs/api-reference/liveblocks-node

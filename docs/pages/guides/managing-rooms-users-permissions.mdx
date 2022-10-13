@@ -1,0 +1,309 @@
+---
+meta:
+  title: "Managing rooms, users, and permissions"
+  parentTitle: "Guides"
+  description: "Learn more Liveblocks rooms, users, and permissions concepts"
+---
+
+In this guide, we’ll walk you through different concepts to help you manage
+rooms in your product. Understanding these concepts will help you build
+experiences that are core to multiplayer products such as share dialogs,
+paginated overview pages, custom permission flows, and more.
+
+You can call the [API Endpoints](/docs/api-reference/rest-api-endpoints) to
+manage the rooms.
+
+## Metadata
+
+You can assign custom `metadata` to your room. For example, if you have
+different types of room experiences, you can store that type as `metadata`. This
+would then come handy when building an overview page listing all the rooms where
+the type `metadata` could be used as a filter, making it easy for people to find
+what they’re looking for.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/managing-rooms/rooms-type-metadata.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+One way to edit `metadata` is to use the
+[create room API](/docs/api-reference/rest-api-endpoints#post-rooms). In this
+example we’re creating a new room with a custom `roomType` property, and setting
+it to "whiteboard":
+
+```ts highlight="7"
+fetch("https://api.liveblocks.io/v2/rooms", {
+  method: "POST",
+  body: JSON.stringify({
+    id: "my-room-name",
+    defaultAccesses: [],
+    metadata: {
+      roomType: "whiteboard",
+    },
+  }),
+});
+```
+
+We can then use the
+[get rooms API](/docs/api-reference/rest-api-endpoints#get-rooms) to retrieve a
+list of rooms containing the "whiteboard" `roomType`:
+
+```ts
+const metadata = "metadata.roomType=whiteboard";
+const url = `https://api.liveblocks.io/v2/rooms?${metadata}`;
+const response = await fetch(url);
+const rooms = await response.json();
+```
+
+Metadata can be also be used within a number of our
+[other APIs](/docs/api-reference/rest-api-endpoints).
+
+## Permissions
+
+Rooms can have different permission types assigned at three different levels:
+default, groups, and users. The system is flexible enough to enable you to build
+a permission system that fits your needs. With that, you can build invite flows
+that drive more people to your product.
+
+<Figure>
+  <img
+    src="/images/docs/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+  />
+</Figure>
+
+### Types [#permissions-types]
+
+There’s currently one permission type, with more coming soon:
+
+<dl>
+  <dt>room:write</dt>
+  <dd>Enables people to view and edit the room.</dd>
+</dl>
+
+### Levels [#permissions-levels]
+
+Permission types can be applied at three different levels:
+
+<dl>
+  <dt>defaultAccesses</dt>
+  <dd>The default permission types to apply to the entire room.</dd>
+  <dt>groupsAccesses</dt>
+  <dd>Permission types to apply to specific groups of users.</dd>
+  <dt>usersAccesses</dt>
+  <dd>Permission types to apply to specific users.</dd>
+</dl>
+
+Each level further down will override access levels defined above, for example a
+room with private access will allow a user with `room:write` access to enter.
+
+### Default [#permissions-levels-default-accesses]
+
+The `defaultAccesses` level is used to set the default permissions of the entire
+room.
+
+<Figure>
+  <Image
+    layout="responsive"
+    src="/images/docs/managing-rooms/rooms-access-denied.png"
+    alt="Access denied illustration"
+    width={820}
+    height={412}
+    quality={90}
+  />
+</Figure>
+
+When used in our APIs, this property takes an array, with an empty array `[]`
+signifying no access. Add permission types to this array to define the default
+access level to your room.
+
+```ts
+// private - no one has access by default
+"defaultAccesses": []
+
+// public - everyone can edit and view the room
+"defaultAccesses": ["room:write"]
+```
+
+### Setting room access [#permissions-levels-default-accesses-example]
+
+We can use the
+[create room API](/docs/api-reference/rest-api-endpoints#post-rooms) to create a
+new room with public access levels:
+
+```ts highlight="5"
+fetch("https://api.liveblocks.io/v2/rooms", {
+  method: "POST",
+  body: JSON.stringify({
+    id: "my-public-room",
+    defaultAccesses: ["room:write"],
+  }),
+});
+```
+
+The default permission types can later be modified with the
+[update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId), in
+this example turning the room private:
+
+```ts highlight="5"
+const roomId = "my-room-name";
+fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
+  method: "POST",
+  body: JSON.stringify({
+    defaultAccesses: [],
+  }),
+});
+```
+
+Default accesses can be also be used within a number of our
+[other APIs](/docs/api-reference/rest-api-endpoints).
+
+### Groups [#permissions-levels-groups-accesses]
+
+The `groupsAccesses` level is used to set the default permissions of any given
+group within room.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/managing-rooms/rooms-groups.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Groups are represented by a `groupId`—a custom string that represents a
+selection of users in your app. Groups can be attached to a user by passing an
+array of `groupId` values in `groupIds`, during
+[authentication](/docs/guides/authentication).
+
+```js highlight="3"
+import { authorize } from "@liveblocks/node";
+const response = await authorize({
+  groupIds: ["engineering"],
+  // ...
+});
+```
+
+In our APIs you can then set group accesses by using the `groupId` as the key,
+and an array of permissions as the value.
+
+```ts
+// "engineering" group has access to view and edit
+"groupsAccesses": {
+  "engineering": ["room:write"],
+}
+```
+
+#### Modifying group access [#permissions-levels-groups-accesses-example]
+
+To allow a "engineering" group access to a room, we can use the
+[update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) with
+`engineering` as a `groupId`:
+
+```ts highlight="6"
+const roomId = "my-room-name";
+fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
+  method: "POST",
+  body: JSON.stringify({
+    groupsAccesses: {
+      engineering: ["room:write"],
+    },
+  }),
+});
+```
+
+To remove a group’s permissions, we can use the
+[update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId)
+again, and set the permission type to `null`:
+
+```ts highlight="6"
+const roomId = "my-room-name";
+fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
+  method: "POST",
+  body: JSON.stringify({
+    groupsAccesses: {
+      engineering: null,
+    },
+  }),
+});
+```
+
+Group accesses can be also be used within a number of our
+[other APIs](/docs/api-reference/rest-api-endpoints).
+
+### Users [#permissions-levels-users-accesses]
+
+The `usersAccesses` level is used to set permissions of any give user within a
+room.
+
+<Figure>
+  <Image
+    layout="responsive"
+    src="/images/docs/managing-rooms/rooms-share-dialog.png"
+    alt="Share dialog illustration"
+    width={820}
+    height={412}
+    quality={90}
+  />
+</Figure>
+
+To use this, first a user is given a `userId` during
+[authentication](/docs/guides/authentication).
+
+```js highlight="3"
+import { authorize } from "@liveblocks/node";
+const response = await authorize({
+  userId: "ellen@acme.inc",
+  // ...
+});
+```
+
+Then, if you want the user with the `userId` id to make edits, set `userId` to
+`["room:write"]` within `usersAccesses` when creating or updating a room.
+
+```ts
+// user with userId "ellen@acme.inc" has access to view and edit
+"usersAccesses": {
+  "ellen@acme.inc": ["room:write"]
+}
+```
+
+#### Checking user access [#permissions-levels-users-accesses-example]
+
+To create an invitation system, we can use the
+[update room API](/docs/api-reference/rest-api-endpoints#post-rooms-roomId) and
+use an email address as a `userId`:
+
+```ts highlight="6"
+const roomId = "my-room-name";
+fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
+  method: "POST",
+  body: JSON.stringify({
+    usersAccesses: {
+      "ellen@acme.inc": ["room:write"],
+    },
+  }),
+});
+```
+
+To check a user’s assigned permission types for this room, we can then use the
+[get room API](/docs/api-reference/rest-api-endpoints#get-rooms-roomId) and
+check `usersAccesses`:
+
+```ts
+const roomId = "my-room-name";
+const url = `https://api.liveblocks.io/v2/rooms/${roomId}`;
+const response = await fetch(url);
+const room = await response.json();
+
+// { "ellen@acme.inc": ["room:write"] }
+console.log(room.data.usersAccesses);
+```
+
+User accesses can be also be used within a number of our
+[other APIs](/docs/api-reference/rest-api-endpoints).

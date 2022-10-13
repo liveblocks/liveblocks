@@ -1,0 +1,212 @@
+---
+meta:
+  title: "API v1 Endpoints"
+  parentTitle: "API Reference"
+  description: "API Reference for the REST v1 endpoints"
+---
+
+Manage a room and its storage using the Liveblocks REST API endpoints. They’ll
+help you manage your data and extend Liveblocks’ functionality. You’ll find the
+API base URL below.
+
+```bash
+https://liveblocks.net/api/v1/
+```
+
+<Banner title="API v1 is deprecated">
+
+This is the API v1 reference, learn more about the latest version on the [API v2
+reference][].
+
+</Banner>
+
+## Authentication
+
+To use the API, you need to add a JWT token to the request’s authorization
+header:
+
+```bash
+curl https://liveblocks.net/api/v1/* \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+You can get a JWT token by calling our authorization endpoint, using your secret
+key (accessible from the dashboard). The token will be valid for one hour.
+
+```bash
+curl https://liveblocks.io/api/authorize \
+  -H "Authorization: Bearer YOUR_SECRET_KEY"
+```
+
+### Example response [@hidden]
+
+```json
+{ "token": "YOUR_JWT_TOKEN" }
+```
+
+## Get room storage
+
+Get the room storage data as a JSON using the endpoint below.
+
+<EndpointBlock
+  method="GET"
+  endpoint="https://liveblocks.net/api/v1/room/:roomId/storage"
+/>
+
+### Some implementation details [@hidden]
+
+- Each Liveblocks data structure is represented by a JSON element having two
+  properties:
+  - `"liveblocksType"`: [`"LiveObject"`][] | [`"LiveList"`][] | [`"LiveMap"`][]
+  - `"data"` => contains the nested data structures (children) and data.
+- The root is always a `LiveObject`.
+
+### Example response [@hidden]
+
+```json
+{
+  "liveblocksType": "LiveObject",
+  "data": {
+    "aLiveObject": {
+      "liveblocksType": "LiveObject",
+      "data": {
+        "a": 1
+      }
+    },
+    "aLiveList": {
+      "liveblocksType": "LiveList",
+      "data": ["a", "b"]
+    },
+    "aLiveMap": {
+      "liveblocksType": "LiveMap",
+      "data": {
+        "a": 1,
+        "b": 2
+      }
+    }
+  }
+}
+```
+
+## Initialize room storage
+
+Initialize a room storage using the following endpoint. The storage of the room
+you’re initializing must be empty. The new storage data can be passed as a JSON
+in the request body.
+
+<EndpointBlock
+  method="POST"
+  endpoint="https://liveblocks.net/api/v1/room/:roomId/storage"
+/>
+
+### Some implementation details [@hidden]
+
+- The format of the request body is the same as what's returned by the get
+  storage endpoint.
+- For each Liveblocks data structure that you want to create, you need a JSON
+  element having two properties:
+
+  - `"liveblocksType"`: [`"LiveObject"`][] | [`"LiveList"`][] | [`"LiveMap"`][]
+  - `"data"` => contains the nested data structures (children) and data.
+
+- The root's type can only be `LiveObject`.
+
+### Example request body [@hidden]
+
+```json
+{
+  "liveblocksType": "LiveObject",
+  "data": {
+    "aLiveObject": {
+      "liveblocksType": "LiveObject",
+      "data": {
+        "a": 1
+      }
+    },
+    "aLiveList": {
+      "liveblocksType": "LiveList",
+      "data": ["a", "b"]
+    },
+    "aLiveMap": {
+      "liveblocksType": "LiveMap",
+      "data": {
+        "a": 1,
+        "b": 2
+      }
+    }
+  }
+}
+```
+
+## Delete room storage
+
+Delete all elements of the room storage using the following endpoint.
+
+<EndpointBlock
+  method="DELETE"
+  endpoint="https://liveblocks.net/api/v1/room/:roomId/storage"
+/>
+
+## Get room users
+
+Get the current list of users connected to a room.
+
+<EndpointBlock
+  method="GET"
+  endpoint="https://liveblocks.net/api/v1/room/:roomId/users"
+/>
+
+### Some implementation details [@hidden]
+
+- User's custom properties `id` and `info` can be set during the authentication
+  to the room, see [`authorize`][].
+
+### Example response [@hidden]
+
+```json
+{
+  "data": [
+    {
+      "type": "user",
+      "connectionId": 0,
+      "id": "customUserId",
+      "info": {}
+    }
+  ]
+}
+```
+
+## Get rooms
+
+Gets a list of rooms. Pagination is cursor-based, the response contains the url
+for the next page.
+
+<EndpointBlock method="GET" endpoint="https://liveblocks.net/api/v1/rooms" />
+
+### Query parameters [@hidden]
+
+- `limit`: Optional, default is 20, accepted value between 1 and 100.
+- `starting_after`: Optional, automatically built and part of the response for
+  you to request the next page.
+
+### Example response [@hidden]
+
+```json
+{
+  "next_page": "/api/v1/rooms?limit=10&starting_after=W1siaWQiLCJuZXdSb29tLTE2NTQ1NDcyODA0MDkiXSxbImNyZWF0ZWRfYXQiLDE2NTQ1NDcyODA0ODldXQ==",
+  "data": [
+    {
+      "type": "room",
+      "id": "room1",
+      "last_connection_at": "2022-06-06T20:28:00.0000",
+      "created_at": "2022-04-02T18:12:00.0000"
+    }
+  ]
+}
+```
+
+[api v2 reference]: /docs/api-reference/rest-api-endpoints
+[`"livelist"`]: /docs/api-reference/liveblocks-client#LiveList
+[`"livemap"`]: /docs/api-reference/liveblocks-client#LiveMap
+[`"liveobject"`]: /docs/api-reference/liveblocks-client#LiveObject
+[`authorize`]: /docs/api-reference/liveblocks-node#authorize
