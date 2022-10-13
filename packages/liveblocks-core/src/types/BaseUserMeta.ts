@@ -1,7 +1,7 @@
 import type { Json } from "./Json";
 
 /**
- * This type is used by clients to define... TODO
+ * This type is used by clients to define the metadata for a user.
  */
 export type BaseUserMeta = {
   /**
