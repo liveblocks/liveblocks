@@ -1,5 +1,8 @@
 import type { Json } from "./Json";
 
+/**
+ * This type is used by clients to define... TODO
+ */
 export type BaseUserMeta = {
   /**
    * The id of the user that has been set in the authentication endpoint.
@@ -11,9 +14,4 @@ export type BaseUserMeta = {
    * Additional user information that has been set in the authentication endpoint.
    */
   info?: Json;
-
-  /**
-   * Permissions that the user has in the room.
-   */
-  scopes?: string[];
 };

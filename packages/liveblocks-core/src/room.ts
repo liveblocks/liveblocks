@@ -907,7 +907,7 @@ function makeStateMachine<
     }
   }
 
-  function isStorageReadOnly(scopes: string[] = [RoomScope.Write]) {
+  function isStorageReadOnly(scopes: string[]) {
     return (
       scopes.includes(RoomScope.Read) &&
       scopes.includes(RoomScope.PresenceWrite) &&
