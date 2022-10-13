@@ -1,0 +1,187 @@
+[
+  {
+    "title": false,
+    "routes": [
+      {
+        "title": "Overview",
+        "path": "/",
+        "file": "/index.mdx"
+      },
+      {
+        "title": "Concepts",
+        "path": "/concepts"
+      },
+      {
+        "title": "Get started",
+        "path": "/get-started",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/get-started/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/get-started/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/get-started/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/get-started/javascript"
+          },
+          {
+            "title": "Vue",
+            "path": "/get-started/vue"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Tutorials",
+    "routes": [
+      {
+        "title": "To-do list",
+        "path": "/tutorials/multiplayer-to-do-list",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/tutorials/multiplayer-to-do-list/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/tutorials/multiplayer-to-do-list/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/tutorials/multiplayer-to-do-list/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/tutorials/multiplayer-to-do-list/javascript"
+          }
+        ]
+      },
+      {
+        "title": "Whiteboard",
+        "path": "/tutorials/collaborative-online-whiteboard",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/tutorials/collaborative-online-whiteboard/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/tutorials/collaborative-online-whiteboard/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/tutorials/collaborative-online-whiteboard/react-zustand"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Guides",
+    "routes": [
+      {
+        "title": "Managing rooms, users, and permissions",
+        "path": "/guides/managing-rooms-users-permissions"
+      },
+      {
+        "title": "Authentication",
+        "path": "/guides/authentication",
+        "routes": [
+          {
+            "title": "Next.js",
+            "path": "/guides/authentication/next-js"
+          },
+          {
+            "title": "Firebase",
+            "path": "/guides/authentication/firebase"
+          },
+          {
+            "title": "Nuxt.js",
+            "path": "/guides/authentication/nuxt-js"
+          },
+          {
+            "title": "Express",
+            "path": "/guides/authentication/express"
+          }
+        ]
+      },
+      {
+        "title": "Limits",
+        "path": "/guides/limits"
+      },
+      {
+        "title": "Troubleshooting",
+        "path": "/guides/troubleshooting"
+      },
+      {
+        "title": "Upgrading",
+        "path": "/guides/upgrading",
+        "routes": [
+          {
+            "title": "Upgrading to 0.17",
+            "path": "/guides/upgrading/0.17"
+          },
+          {
+            "title": "Upgrading to 0.18",
+            "path": "/guides/upgrading/0.18"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "API Reference",
+    "routes": [
+      {
+        "title": "@liveblocks/client",
+        "path": "/api-reference/liveblocks-client"
+      },
+      {
+        "title": "@liveblocks/react",
+        "path": "/api-reference/liveblocks-react"
+      },
+      {
+        "title": "@liveblocks/redux",
+        "path": "/api-reference/liveblocks-redux"
+      },
+      {
+        "title": "@liveblocks/zustand",
+        "path": "/api-reference/liveblocks-zustand"
+      },
+      {
+        "title": "@liveblocks/node",
+        "path": "/api-reference/liveblocks-node"
+      },
+      {
+        "title": "API Endpoints",
+        "href": "/api-reference/rest-api-endpoints"
+      },
+      {
+        "title": "API v1 Endpoints",
+        "hidden": true,
+        "path": "/api-reference/rest-api-endpoints-v1"
+      }
+    ]
+  },
+  {
+    "title": "Updates",
+    "routes": [
+      {
+        "title": "System status",
+        "href": "https://liveblocks.statuspage.io/"
+      },
+      {
+        "title": "Release notes",
+        "href": "https://github.com/liveblocks/liveblocks/releases"
+      }
+    ]
+  }
+]

@@ -1,7 +1,8 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import type { RoomAuthToken } from "../AuthToken";
+import type { RoomAuthToken} from "../AuthToken";
+import { RoomScope } from "../AuthToken";
 import * as console from "../fancy-console";
 import { lsonToJson } from "../immutable";
 import { LiveList } from "../LiveList";
@@ -72,7 +73,7 @@ function setupStateMachine<
 
 describe("room / auth", () => {
   const token =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2MTY3MjM2NjcsImV4cCI6MTYxNjcyNzI2Nywicm9vbUlkIjoiazV3bWgwRjlVTGxyek1nWnRTMlpfIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA5MTQiLCJhY3RvciI6MCwic2NvcGVzIjpbIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIiwicm9vbTpyZWFkIiwicm9vbTp3cml0ZSJdfQ.IQFyw54-b4F6P0MTSzmBVwdZi2pwPaxZwzgkE2l0Mi4";
+    "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE2NjQ1NjY0MTAsImV4cCI6MTY2NDU3MDAxMCwicm9vbUlkIjoiS1hhNlVjbHZyYWVHWk5kWFZ6NjdaIiwiYXBwSWQiOiI2MDVhNGZkMzFhMzZkNWVhN2EyZTA4ZjEiLCJhY3RvciI6ODcsInNjb3BlcyI6WyJyb29tOndyaXRlIl19.uS0VcdeAPdMfJ2rseRRUnL_X3I-h6ljPKEiu1xfKRG0Qrth0zdqo2ngn7NZ8_fLcQBaIvaZ4q5vXg_Nex81Ae9sjmmLhjxHcE-iA-BC82NROVSnyGdVHJRMNqs6h57pCdiXwCwpcLjqi_EOIS8gmMB8dcRX748Wpa4C2T0e94An8_vP6eD66JKndxjFvVPrB_LSOOlQZoxW9USPS7ZUTAECeGQscrXnss_-1TJEaGf0RxVkNQsDfUKu4TjWYa3iBvBPip--Ev1bBETh0IHrGNsWVUd-691cCRAemiC_ADBaOg5IEszqoEw96Xe9BtQeWrjAgMKKrPS72cwkikVmiJQ";
   const server = setupServer(
     rest.post("/mocked-api/auth", (_req, res, ctx) => {
       return res(ctx.json({ token }));
@@ -324,7 +325,7 @@ describe("room", () => {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
-          "1": {},
+          "1": { scopes: [] },
         },
       })
     );
@@ -343,7 +344,81 @@ describe("room", () => {
       users.push(user);
     }
 
-    expect(users).toEqual([{ connectionId: 1, presence: { x: 2 } }]);
+    expect(users).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+  });
+
+  test("others should be iterable", () => {
+    const { machine } = setupStateMachine({});
+
+    const ws = new MockWebSocket("");
+    machine.connect();
+    machine.authenticationSuccess(defaultRoomToken, ws);
+    ws.open();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [] },
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
+      })
+    );
+
+    const users = [];
+    for (const user of machine.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
+    ]);
+  });
+
+  test("others should be read-only when associated scopes are received", () => {
+    const { machine } = setupStateMachine({});
+
+    const ws = new MockWebSocket("");
+    machine.connect();
+    machine.authenticationSuccess(defaultRoomToken, ws);
+    ws.open();
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.ROOM_STATE,
+        users: {
+          "1": { scopes: [RoomScope.Read, RoomScope.PresenceWrite] },
+        },
+      })
+    );
+
+    machine.onMessage(
+      serverMessage({
+        type: ServerMsgCode.UPDATE_PRESENCE,
+        data: { x: 2 },
+        actor: 1,
+        targetActor: 0, // Setting targetActor means this is a full presence update
+      })
+    );
+
+    const users = [];
+    for (const user of machine.getOthers()) {
+      users.push(user);
+    }
+
+    expect(users).toEqual([
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: true },
+    ]);
   });
 
   test("should clear users when socket close", () => {
@@ -358,7 +433,7 @@ describe("room", () => {
       serverMessage({
         type: ServerMsgCode.ROOM_STATE,
         users: {
-          "1": {},
+          "1": { scopes: [] },
         },
       })
     );
@@ -373,7 +448,7 @@ describe("room", () => {
     );
 
     expect(machine.getOthers()).toEqual([
-      { connectionId: 1, presence: { x: 2 } },
+      { connectionId: 1, presence: { x: 2 }, isReadOnly: false },
     ]);
 
     machine.onClose(
@@ -383,7 +458,7 @@ describe("room", () => {
       })
     );
 
-    expect(machine.getOthers().toArray()).toEqual([]);
+    expect(machine.getOthers()).toEqual([]);
   });
 
   describe("broadcast", () => {
@@ -892,9 +967,10 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
 
-      expect(refOthers?.toArray()).toEqual([
+      expect(refOthers).toEqual([
         {
           connectionId: 1,
+          isReadOnly: false,
           presence: {
             x: 1,
           },
@@ -964,7 +1040,7 @@ describe("room", () => {
       machine.onMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { 1: {} },
+          users: { 1: { scopes: [] } },
         })
       );
 
@@ -987,9 +1063,10 @@ describe("room", () => {
         })
       );
 
-      expect(others?.toArray()).toEqual([
+      expect(others).toEqual([
         {
           connectionId: 1,
+          isReadOnly: false,
           presence: {
             x: 2,
           },
@@ -1183,8 +1260,20 @@ describe("room", () => {
       const refMachineOthers = refMachine.getOthers().toArray();
 
       expect(refMachineOthers).toEqual([
-        { connectionId: 1, id: undefined, info: undefined, presence: { x: 1 } }, // old user is not cleaned directly
-        { connectionId: 2, id: undefined, info: undefined, presence: { x: 1 } },
+        {
+          connectionId: 1,
+          id: undefined,
+          info: undefined,
+          presence: { x: 1 },
+          isReadOnly: false,
+        }, // old user is not cleaned directly
+        {
+          connectionId: 2,
+          id: undefined,
+          info: undefined,
+          presence: { x: 1 },
+          isReadOnly: false,
+        },
       ]);
     });
   });
@@ -1271,7 +1360,7 @@ describe("room", () => {
       machine.onMessage(
         serverMessage({
           type: ServerMsgCode.ROOM_STATE,
-          users: { "1": { id: undefined } },
+          users: { "1": { id: undefined, scopes: [] } },
         })
       );
 
@@ -1303,6 +1392,7 @@ describe("room", () => {
           connectionId: 1,
           id: undefined,
           info: undefined,
+          isReadOnly: false,
           presence: {
             x: 2,
           },

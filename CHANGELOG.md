@@ -1,17 +1,34 @@
 # v0.18.4
 
-- In **@liveblocks/client**:
+All packages now provide an `isReadOnly` flag on user instances. It is available
+when getting self or others. `isReadOnly` is true when storage is read-only, see
+the
+[room management guide](https://liveblocks.io/docs/guides/managing-rooms-users-permissions#permissions)
+for more information.
 
-  Add a new option `shouldInitiallyConnect` to `client.enter` that let you
+```ts
+const me = room.getSelf();
+
+me.isReadOnly; // boolean
+
+const others = room.getOthers();
+for (const other of others) {
+  other.isReadOnly; // boolean
+}
+```
+
+In **@liveblocks/client**:
+
+- Add a new option `shouldInitiallyConnect` to `client.enter` that let you
   control whether or not the room connects to Liveblock servers. Default is
   true.
 
   Usually set to false when the client is used from the server to not call the
   authentication endpoint or connect via WebSocket.
 
-- In **@liveblocks/react**:
+In **@liveblocks/react**:
 
-  Add a new property `shouldInitiallyConnect` to `RoomProvider` that let you
+- Add a new property `shouldInitiallyConnect` to `RoomProvider` that let you
   control whether or not the room connects to Liveblock servers. Default is
   true.
 

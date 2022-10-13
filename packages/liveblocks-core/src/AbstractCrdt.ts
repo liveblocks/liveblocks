@@ -38,6 +38,15 @@ export interface ManagedPool {
     reverseOps: Op[],
     storageUpdates: Map<string, StorageUpdate>
   ) => void;
+
+  /**
+   * Ensures storage can be written to else throws an error.
+   * This is used to prevent writing to storage when the user does not have
+   * permission to do so.
+   * @throws {Error} if storage is not writable
+   * @returns {void}
+   */
+  assertStorageIsWritable: () => void;
 }
 
 export enum OpSource {

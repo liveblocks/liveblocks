@@ -114,6 +114,11 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
    * endpoint.
    */
   info: TUserMeta["info"];
+
+  /**
+   * Permissions that the user has in the Room.
+   */
+  scopes: string[];
 };
 
 /**

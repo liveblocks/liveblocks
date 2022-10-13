@@ -1,0 +1,1272 @@
+---
+meta:
+  title: "@liveblocks/react"
+  parentTitle: "API Reference"
+  description: "API Reference for the @liveblocks/react package"
+alwaysShowAllNavigationLevels: false
+---
+
+## Room
+
+### createRoomContext
+
+Creates a [`RoomProvider`][] and a set of typed hooks. We recommend using it in
+`liveblocks.config.ts` and re-exporting your typed hooks like below.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  /* client options */
+});
+
+// Presence represents the properties that will exist on every User in the Room
+// and that will automatically be kept in sync. Accessible through the
+// `user.presence` property. Must be JSON-serializable.
+type Presence = {
+  // cursor: { x: number, y: number } | null,
+  // ...
+};
+
+// Optionally, Storage represents the shared document that persists in the
+// Room, even after all Users leave. Fields under Storage typically are
+// LiveList, LiveMap, LiveObject instances, for which updates are
+// automatically persisted and synced to all connected clients.
+type Storage = {
+  // animals: LiveList<string>,
+  // ...
+};
+
+// Optionally, UserMeta represents static/readonly metadata on each User, as
+// provided by your own custom auth backend (if used). Useful for data that
+// will not change during a session, like a User's name or avatar.
+// type UserMeta = {
+//   id?: string,  // Accessible through `user.id`
+//   info?: Json,  // Accessible through `user.info`
+// };
+
+// Optionally, the type of custom events broadcasted and listened for in this
+// room. Must be JSON-serializable.
+// type RoomEvent = {};
+
+export const {
+  RoomProvider,
+  useMyPresence,
+  useObject,
+  /* ...all the other hooks you’re using... */
+} = createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);
+```
+
+### RoomProvider
+
+Makes a [`Room`] available in the component hierarchy below. When this component
+is unmounted, the current user leaves the room. That means that you can’t use
+two RoomProviders with the same room `id` in your React tree.
+
+The `initialPresence` and `initialStorage` props are ignored after the first
+render, so changes to the initial value argument won’t have an observable
+effect.
+
+```tsx
+import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+
+function AppRoot() {
+  return (
+    <RoomProvider
+      id="my-room"
+      // 😎 Replace with your own data!
+      initialPresence={{ cursor: { x: 0, y: 0 } }}
+      // 😎 Replace with your own data!
+      initialStorage={() => ({
+        animals: new LiveList(["🦁", "🦊", "🐵"]),
+
+        mathematician: new LiveObject({
+          firstName: "Ada",
+          lastName: "Lovelace",
+        }),
+
+        fruitsByName: new LiveMap([
+          ["apple", "🍎"],
+          ["banana", "🍌"],
+          ["cherry", "🍒"],
+        ]),
+      })}
+    >
+      {/* children */}
+    </RoomProvider>
+  );
+}
+```
+
+### useRoom
+
+Returns the [`Room`][] of the nearest [`RoomProvider`][] above in the React
+component tree.
+
+```ts
+import { useRoom } from "./liveblocks.config";
+
+const room = useRoom();
+```
+
+## Presence
+
+### useMyPresence
+
+Return the presence of the current user, and a function to update it.
+Automatically subscribes to updates to the current user’s presence.
+
+Note that the `updateMyPresence` setter function is different from the setter
+function as returned by React’s `useState` hook. Unlike the normal React state
+setter, you can pass a partial presence object to `updateMyPresence`, and it
+will get merged.
+
+```ts
+import { useMyPresence } from "./liveblocks.config";
+
+const [myPresence, updateMyPresence] = useMyPresence();
+updateMyPresence({ x: 0 });
+updateMyPresence({ y: 0 });
+
+// At the next render, "myPresence" will be equal to "{ x: 0, y: 0 }"
+```
+
+This is roughly equal to:
+
+```tsx
+const myPresence = useSelf((me) => me.presence);
+const updateMyPresence = useUpdateMyPresence();
+```
+
+### useUpdateMyPresence
+
+Returns a setter function to update the current user’s presence.
+
+Use this if you don’t need the current user’s presence in your component, but
+you need to update it (e.g. live cursor). It’s better to use
+`useUpdateMyPresence` because it won’t subscribe your component to get
+rerendered when the presence updates.
+
+```ts
+import { useUpdateMyPresence } from "./liveblocks.config";
+
+const updateMyPresence = useUpdateMyPresence();
+
+updateMyPresence({ y: 0 });
+```
+
+### useSelf
+
+Returns the current user once it is connected to the room, and automatically
+subscribes to updates to the current user.
+
+```ts
+import { useSelf } from "./liveblocks.config";
+
+const currentUser = useSelf();
+// {
+//   connectionId: 1,
+//   presence: { cursor: { x: 27, y: -8 } },
+// }
+
+const currentUser = useSelf((me) => me.presence.cursor);
+// { x: 27, y: -8 }
+```
+
+The benefit of using a selector is that it will only update your component if
+that particular selection changes. For full details, see [how selectors work][].
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+### useOthers
+
+Extracts data from the list of other users currently in the same Room, and
+automatically subscribes to updates on the selected data. For full details, see
+[how selectors work][].
+
+The `others` argument to the `useOthers` selector function is an _immutable_
+array of Users.
+
+```tsx
+// ✅ Rerenders only if the number of users changes
+const numOthers = useOthers((others) => others.length);
+
+// ✅ Rerenders only if someone starts or stops typing
+const isSomeoneTyping = useOthers((others) =>
+  others.some((other) => other.presence.isTyping)
+);
+
+// ✅ Rerenders only if actively typing users are updated
+const typingUsers = useOthers(
+  (others) => others.filter((other) => other.presence.isTyping),
+  shallow // 👈
+);
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+One caveat with this API is that selecting a subset of data for each user
+quickly becomes tricky. When you want to select and get updates for only a
+particular subset of each user’s data, we recommend using the
+[`useOthersMapped`][] hook instead, which is optimized for this use case.
+
+```tsx
+// ❌ Mapping is hard to get right with this hook
+const cursors = useOthers(
+  (others) => others.map((other) => other.presence.cursor),
+  shallow
+);
+
+// ✅ Better to use useOthersMapped
+const cursors = useOthersMapped((other) => other.presence.cursor);
+```
+
+When called without arguments, returns the user list and updates your component
+whenever _anything_ in it changes. This might be way more often than you want!
+
+```tsx
+const others = useOthers(); // ⚠️ Caution, might rerender often!
+// [
+//   { connectionId: 2, presence: { cursor: { x: 27, y: -8 } } },
+//   { connectionId: 3, presence: { cursor: { x: 0, y: 19 } } },
+// ]
+```
+
+<Banner type="error" title="Caution">
+
+In production-ready apps, you likely want to avoid calling `useOthers` without
+arguments.
+
+</Banner>
+
+### useOthersMapped
+
+Extract data using a [selector][] for every user in the room, and subscribe to
+all changes to the selected data. A [Suspense version][] of this hook is also
+available.
+
+The key difference with [`useOthers`][] is that the selector (and the optional
+comparison function) work at the _item_ level, like doing a `.map()` over the
+others array.
+
+```tsx
+// Example 1
+const others = useOthersMapped((other) => other.presence.cursor);
+// [
+//   [2, { x: 27, y: -8 }],
+//   [3, { x: 0, y: 19 }],
+// ]
+
+// Example 2
+const others = useOthersMapped(
+  (other) => ({
+    avatar: other.info.avatar,
+    isTyping: other.presence.isTyping,
+  }),
+  shallow // 👈
+);
+
+// [
+//   [2, { avatar: 'https://...', isTyping: true }],
+//   [3, { avatar: null, isTyping: false }],
+// ]
+```
+
+Returns an array where each item is a pair of `[connectionId, data]`. For
+pragmatic reasons, the results are keyed by the `connectionId`, because in most
+cases you’ll want to iterate over the results and draw some UI for each, which
+in React requires you to use a `key={connectionId}` prop.
+
+```tsx
+const others = useOthersMapped((other) => other.presence.cursor);
+
+// In JSX
+return (
+  <>
+    {others.map(([connectionId, cursor]) => (
+      <Cursor key={connectionId} x={cursor.x} y={cursor.y} />
+    ))}
+  </>
+);
+```
+
+### useOthersConnectionIds
+
+Returns an array of connection IDs (numbers), and rerenders automatically when
+users join or leave. This hook is useful in particular in combination with the
+[`useOther`][] (singular) hook, to implement high-frequency rerendering of
+components for each user in the room, e.g. cursors. See the [`useOther`][]
+(singular) documentation below for a full usage example.
+
+```tsx
+useOthersConnectionIds(); // [2, 4, 7]
+```
+
+Roughly equivalent to:
+
+```tsx
+useOthers((others) => others.map((other) => other.connectionId), shallow);
+```
+
+👉 A [Suspense version][] of this hook is also available.
+
+### useOther
+
+Extract data using a [selector][] for one specific user in the room, and
+subscribe to all changes to the selected data. A [Suspense version][] of this
+hook is also available.
+
+```tsx
+// ✅ Rerenders when this specific user’s isTyping changes (but not when their cursor changes)
+const isTyping = useOther(
+  3, // User with connectionId 3
+  (user) => user.presence.isTyping
+);
+```
+
+The reason this hook exists is to enable the most efficient rerendering model
+for high-frequency updates to other’s presences, which is the following
+structure:
+
+```tsx file="Cursors.tsx" highlight="2-3,4,9"
+const Cursors =
+  // (1) Wrap parent component in a memo and make sure it takes no props
+  React.memo(function () {
+    const othersConnectionIds = useOthersConnectionIds(); // (2)
+    return (
+      <>
+        {othersConnectionIds.map((connectionId) => (
+          <Cursor
+            key={connectionId} // (3)
+            connectionId={connectionId}
+          />
+        ))}
+      </>
+    );
+  });
+```
+
+```tsx file="Cursor.tsx" highlight="2"
+function Cursor({ connectionId }) {
+  const { x, y } = useOther(connectionId, (other) => other.presence.cursor); // (4)
+  return <Cursor x={x} y={y} />;
+}
+```
+
+1. Makes sure this whole component tree will never rerender beyond the first
+   time.
+2. Makes sure the parent component only rerenders when users join/leave.
+3. Makes sure each cursor remains associated to the same connection.
+4. Makes sure each cursor rerenders whenever _its_ data changes only.
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+### useBroadcastEvent
+
+Returns a callback that lets you broadcast custom events to other users in the
+room.
+
+```ts
+import { useBroadcastEvent } from "./liveblocks.config";
+
+const broadcast = useBroadcastEvent();
+
+broadcast({ type: "EMOJI", emoji: "🔥" });
+```
+
+### useEventListener
+
+Listen to custom events sent by other people in the room via
+[`useBroadcastEvent`][].
+
+```ts
+import { useEventListener } from "./liveblocks.config";
+
+useEventListener(({ connectionId, event }) => {
+  if (event.type === "EMOJI") {
+    // Do something
+  }
+});
+```
+
+### useErrorListener
+
+Listen to potential room connection errors.
+
+```ts
+import { useErrorListener } from "./liveblocks.config";
+
+useErrorListener((error) => {
+  if (error.code === 4005) {
+    // Maximum concurrent connections per room exceeded.
+  }
+});
+```
+
+## Storage
+
+<Banner title="The storage block is in beta">
+
+The following APIs are subject to change during the beta.
+
+</Banner>
+
+The room’s storage is a conflicts-free state that multiple users can edit at the
+same time. It persists even after everyone leaves the room. Liveblocks provides
+3 data structures that can be nested to create the state that you want.
+
+- [`LiveObject`][] - Similar to JavaScript object. Use this for storing records
+  with fixed key names and where the values don’t necessarily have the same
+  types. For example, a `Person` with a `name` (string) and an `age` (number)
+  field.
+
+  If multiple clients update the same property simultaneously, the last
+  modification received by the Liveblocks servers is the winner.
+
+- [`LiveList`][] - An ordered collection of items synchronized across clients.
+  Even if multiple users add/remove/move elements simultaneously, LiveList will
+  solve the conflicts to ensure everyone sees the same collection of items.
+
+- [`LiveMap`][] - Similar to a JavaScript Map. Use this for indexing values that
+  all have the same structure. For example, to store an index of `Person` values
+  by their name. If multiple users update the same property simultaneously, the
+  last modification received by the Liveblocks servers is the winner.
+
+`@liveblocks/react` provides a set of hooks that let you interact with the
+room’s storage.
+
+### useStorage
+
+Extracts data from Liveblocks Storage state and automatically subscribes to
+updates to that selected data. For full details, see [how selectors work][].
+
+```tsx
+// ✅ Rerenders if todos (or their children) change
+const items = useStorage((root) => root.todos);
+
+// ✅ Rerenders when todos are added or deleted
+const numTodos = useStorage((root) => root.todos.length);
+
+// ✅ Rerenders when the value of allDone changes
+const allDone = useStorage((root) => root.todos.every((item) => item.done));
+
+// ✅ Rerenders if any _unchecked_ todo items change
+const uncheckedItems = useStorage(
+  (root) => root.todos.filter((item) => !item.done),
+  shallow // 👈
+);
+```
+
+The `root` argument to the `useStorage` selector function is an _immutable_ copy
+of your entire Liveblocks Storage tree. Think of it as the value you provided in
+the `initialStorage` prop at the [`RoomProvider`][] level, but then
+(recursively) converted to their “normal” JavaScript equivalents (objects,
+arrays, maps) that are read-only.
+
+From that immutable `root`, you can select or compute any value you like. Your
+component will automatically get rerendered if the value you return differs from
+the last rendered value.
+
+This hook returns `null` while storage is still loading. To avoid that, use the
+[Suspense version][].
+
+<Banner type="success" title="Recommendation">
+
+It’s recommended to select only the subset of Storage data that your component
+needs. This will avoid unnecessary rerenders that happen with overselection.
+
+</Banner>
+
+### useObject
+
+<Banner title="No longer recommended">
+
+Starting with 0.18, we no longer recommend `useObject`. Instead, we recommend to
+switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
+Storage.
+
+</Banner>
+
+Returns the [`LiveObject`][] associated with the provided top-level key in your
+Storage root. The key should be a [`LiveObject`][] instance, as populated in the
+`initialStorage` prop at the [`RoomProvider`][] level.
+
+The hook returns `null` while the storage is loading, unless you use the
+[Suspense version][].
+
+⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
+select nested values from your Storage with this hook.
+
+⚠️ **Caveat 2**: The hook only triggers a rerender if direct keys or values of
+the [`LiveObject`][] are updated, but it does _not_ trigger a rerender if any of
+its nested values get updated.
+
+```tsx file="index.tsx"
+import { LiveObject } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+import { Component } from "./Component";
+
+export function App() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialStorage={{
+        mathematician: new LiveObject({
+          firstName: "Ada",
+          lastName: "Lovelace",
+        }),
+      }}
+    >
+      <Component />
+    </RoomProvider>
+  );
+}
+```
+
+```tsx file="Component.tsx"
+import { useObject } from "./liveblocks.config";
+
+function Component() {
+  const object = useObject("mathematician");
+
+  if (object == null) {
+    return <div>Loading...</div>;
+  }
+
+  object.get("firstName"); // => "Ada"
+  object.get("lastName"); // => "Lovelace"
+}
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+### useMap
+
+<Banner title="No longer recommended">
+
+Starting with 0.18, we no longer recommend `useMap`. Instead, we recommend to
+switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
+Storage.
+
+</Banner>
+
+Returns the [`LiveMap`][] associated with the provided top-level key in your
+Storage root. The key should be a [`LiveMap`][] instance, as populated in the
+`initialStorage` prop at the [`RoomProvider`][] level.
+
+The hook returns `null` while the storage is loading, unless you use the
+[Suspense version][].
+
+⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
+select nested values from your Storage with this hook.
+
+⚠️ **Caveat 2**: The hook only triggers a rerender if direct entries of the
+[`LiveMap`][] are updated, but it does _not_ trigger a rerender if a nested
+value gets updated.
+
+```tsx file="index.tsx"
+import { LiveMap } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+import { Component } from "./Component";
+
+export function App() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialStorage={{
+        fruitsByName: new LiveMap([
+          ["apple", "🍎"],
+          ["banana", "🍌"],
+          ["cherry", "🍒"],
+        ]),
+      }}
+    >
+      <Component />
+    </RoomProvider>
+  );
+}
+```
+
+```tsx file="Component.tsx"
+import { useMap } from "./liveblocks.config";
+
+function Component() {
+  const fruitsByName = useMap("fruitsByName");
+
+  if (fruitsByName == null) {
+    return <div>Loading...</div>;
+  }
+
+  fruitsByName.get("cherry"); // => "🍒"
+}
+```
+
+### useList
+
+<Banner title="No longer recommended">
+
+Starting with 0.18, we no longer recommend `useList`. Instead, we recommend to
+switch to [`useStorage`][] for reading and [`useMutation`][] for writing to
+Storage.
+
+</Banner>
+
+Returns the [`LiveList`][] associated with the provided top-level key in your
+Storage root. The key should be a [`LiveList`][] instance, as populated in the
+`initialStorage` prop at the [`RoomProvider`][] level.
+
+The hook returns `null` while the storage is loading, unless you use the
+[Suspense version][].
+
+⚠️ **Caveat 1**: This hook can only be used to select top-level keys. You cannot
+select nested values from your Storage with this hook.
+
+⚠️ **Caveat 2**: The hook only triggers a rerender if direct items in the
+[`LiveList`][] are updated, but it does _not_ trigger a rerender if a nested
+value gets updated.
+
+```tsx file="index.tsx"
+import { LiveList } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+import { Component } from "./Component";
+
+export function App() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialStorage={{
+        animals: new LiveList(["🦁", "🦊", "🐵"]),
+      }}
+    >
+      <Component />
+    </RoomProvider>
+  );
+}
+```
+
+```tsx file="Component.tsx"
+import { useList } from "./liveblocks.config";
+
+function Component() {
+  const animals = useList("animals");
+
+  if (animals == null) {
+    return <div>Loading...</div>;
+  }
+
+  animals.toArray(); // => ["🦁", "🦊", "🐵"]
+}
+```
+
+👉 A [Suspense version][] of this hook is also available, which will never
+return `null`.
+
+### useBatch
+
+<Banner title={<>You may not need <code>useBatch</code></>}>
+
+Starting with 0.18, we recommend using [`useMutation`][] for writing to Storage,
+which will automatically batch all mutations.
+
+</Banner>
+
+Returns a function that batches modifications made during the given function.
+All the modifications are sent to other clients in a single message. All the
+modifications are merged in a single history item (undo/redo). All the
+subscribers are called only after the batch is over.
+
+```tsx
+import { useBatch } from "./liveblocks.config";
+
+const batch = useBatch();
+batch(() => {
+  // All modifications made in this callback are batched
+});
+```
+
+### useHistory
+
+Returns the room’s history. See [`Room.history`][] for more information.
+
+```ts
+import { useHistory } from "./liveblocks.config";
+
+const { undo, redo, pause, resume } = useHistory();
+```
+
+### useUndo
+
+Returns a function that undoes the last operation executed by the current
+client. It does not impact operations made by other clients.
+
+```ts
+import { useUndo } from "./liveblocks.config";
+
+const undo = useUndo();
+```
+
+### useRedo
+
+Returns a function that redoes the last operation executed by the current
+client. It does not impact operations made by other clients.
+
+```ts
+import { useRedo } from "./liveblocks.config";
+
+const redo = useRedo();
+```
+
+### useCanUndo
+
+Returns whether there are any operations to undo.
+
+```ts
+import { useCanUndo, useUpdateMyPresence } from "./liveblocks.config";
+
+const updateMyPresence = useUpdateMyPresence();
+const canUndo = useCanUndo();
+
+updateMyPresence({ y: 0 });
+
+// At the next render, "canUndo" will be true
+```
+
+### useCanRedo
+
+Returns whether there are any operations to redo.
+
+```ts
+import { useCanRedo, useUndo, useUpdateMyPresence } from "./liveblocks.config";
+
+const updateMyPresence = useUpdateMyPresence();
+const undo = useUndo();
+const canRedo = useCanRedo();
+
+updateMyPresence({ y: 0 });
+undo();
+
+// At the next render, "canRedo" will be true
+```
+
+### useMutation
+
+Creates a callback function that lets you mutate Liveblocks state.
+
+```tsx
+const fillWithRed = useMutation(
+  // Mutation context is passed as the first argument
+  ({ storage, setMyPresence }) => {
+    // Mutate Storage
+    storage.get("shapes").get("circle1").set("fill", "red");
+    //                                   ^^^
+
+    // ...or Presence
+    setMyPresence({ lastUsedColor: "red" });
+  },
+  []
+);
+
+// JSX
+return <button onClick={fillWithRed} />;
+```
+
+To make the example above more flexible and work with _any_ color, you have two
+options:
+
+1. Close over a local variable and
+   [adding it to the dependency array](#useMutation-dep-arrays), or
+2. Have it take [an extra callback parameter](#useMutation-extra-params).
+
+Both are equally fine, just a matter of preference.
+
+#### With dependency arrays [#useMutation-dep-arrays]
+
+```tsx highlight="9"
+// Local state maintained outside Liveblocks
+const [currentColor, setCurrentColor] = useState("red");
+
+const fillWithCurrentColor = useMutation(
+  ({ storage, setMyPresence }) => {
+    storage.get("shapes").get("circle1").set("fill", currentColor);
+    setMyPresence({ lastUsedColor: currentColor });
+  },
+  [currentColor] // Works just like it would in useCallback
+);
+
+// JSX
+return <button onClick={fillWithCurrentColor} />;
+```
+
+<Banner type="success" title="Tip! Let ESLint check your dependencies">
+
+If you use ESLint, we recommend to
+[configure it to enforce](/docs/api-reference/liveblocks-react#useMutation-lint-rule)
+the correct use of your dependency arrays.
+
+</Banner>
+
+#### With extra callback parameters [#useMutation-extra-params]
+
+Alternatively, you can add extra parameters to your callback function:
+
+```tsx highlight="2,3,11,12"
+const fill = useMutation(
+  // Note the second argument
+  ({ storage, setMyPresence }, color: string) => {
+    storage.get("shapes").get("circle1").set("fill", color);
+    setMyPresence({ lastUsedColor: color });
+  },
+  []
+);
+
+// JSX
+return <button onClick={() => fill("red")} />;
+//                            ^^^^^^^^^^^ Now fill takes a color argument
+```
+
+#### Depending on current presence [#useMutation-presence]
+
+For convenience, the mutation context also receives `self` and `others`
+arguments, which are _immutable_ values reflecting the current Presence state,
+in case your mutation depends on it.
+
+For example, here’s a mutation that will delete all the shapes selected by the
+current user.
+
+```tsx highlight="3,6"
+const deleteSelectedShapes = useMutation(
+  // You can use current "self" or "others" state in the mutation
+  ({ storage, self, others, setMyPresence }) => {
+    // Delete the selected shapes
+    const shapes = storage.get("shapes");
+    for (const shapeId of self.presence.selectedShapeIds) {
+      shapes.delete(shapeId);
+    }
+
+    // Clear the current selection
+    setMyPresence({ selectedShapeIds: [] });
+  },
+  []
+);
+
+// JSX
+return <button onClick={deleteSelectedShapes} />;
+```
+
+Mutations are automatically batched, so when using `useMutation` there’s no need
+to use `useBatch`, or call `room.batch()` manually.
+
+#### ESLint rule [#useMutation-lint-rule] [@keywords=["exhaustive-deps", "additionalHooks", "eslint-plugin-react-hooks"]]
+
+If you are using ESLint in your project, and are using
+[the React hooks plugin](https://reactjs.org/docs/hooks-rules.html#eslint-plugin),
+we recommend to add a check for "additional hooks", so that it will also check
+the dependency arrays of your `useMutation` calls:
+
+```js
+{
+  "rules": {
+    // ...
+    "react-hooks/exhaustive-deps": ["warn", {
+      "additionalHooks": "useMutation"
+    }]
+  }
+}
+```
+
+## Helpers
+
+### shallow
+
+Compares two values shallowly. This can be used as the second argument to
+selector based functions to loosen the equality check:
+
+```tsx
+const redShapes = useStorage(
+  (root) => root.shapes.filter((shape) => shape.color === "red"),
+  shallow // 👈 here
+);
+```
+
+The default way [selector results](#selectors-return-arbitrary-values) are
+compared is by checking referential equality (`===`). If your selector returns
+computed arrays (like in the example above) or objects, this will not work.
+
+By passing `shallow` as the second argument, you can “loosen” this check. This
+is because `shallow` will shallowly compare the members of an array (or values
+in an object):
+
+```tsx
+// Comparing arrays
+shallow([1, 2, 3], [1, 2, 3]); // true
+
+// Comparison objects
+shallow({ a: 1 }, { a: 1 }); // true
+```
+
+Please note that this will only do a shallow (one level deep) check. Hence the
+name. If you need to do an arbitrarily deep equality check, you’ll have to write
+a custom equality function or use a library like Lodash for that.
+
+## How selectors work [#selectors] [@keywords=["useStorage", "useSelf", "useOthers", "useOther", "useOthersMapped", "useOthersConnectionIds", "selectors", "comparison"]]
+
+The concepts and behaviors described in this section apply to all of our
+selector hooks: [`useStorage`][] , [`useSelf`][] , [`useOthers`][] ,
+[`useOthersMapped`][], and [`useOther`][] (singular).
+
+```tsx file="Component.tsx"
+const child = useStorage((root) => root.child);
+const nested = useStorage((root) => root.child.nested);
+const total = useStorage((root) => root.x + root.y);
+const merged = useStorage((root) => [...root.items, ...root.more], shallow);
+```
+
+<Banner title="Examples are illustrated via useStorage">
+
+In this section, `useStorage` is used as the canonical example. This is for
+illustration purposes only. The described concepts and behaviors apply equally
+to the other selector hooks.
+
+</Banner>
+
+In a nutshell, the key behaviors for all selector APIs are:
+
+- They [receive immutable data](#selectors-receive-immutable-data)
+- They [return arbitrary values](#selectors-return-arbitrary-values)
+- They [auto-subscribe to updates](#selectors-subscribe-to-updates)
+
+Let’s go over these traits and responsibilities in the next few sections.
+
+### Selectors receive immutable data [#selectors-receive-immutable-data]
+
+The received input to all selector functions is a **read-only** and
+**immutable** top level context value that differs for each hook:
+
+- `useStorage((root) => ...)` receives the Storage root
+- `useSelf((me) => ...)` receives the current user
+- `useOthers((others) => ...)` receives a list of other users in the room
+- `useOthersMapped((other) => ...)` receives each individual other user in the
+  room
+- `useOther(connectionId, (other) => ...)` receives a specific user in the room
+
+For example, suppose you have set up Storage in the typical way by setting
+`initialStorage` in your [`RoomProvider`][] to a tree that describes your app’s
+data model using `LiveList`, `LiveObject`, and `LiveMap`.  
+The "root" argument for your selector function, however, will receive **an
+immutable and read-only representation** of that Storage tree, consisting of
+"normal" JavaScript datastructures. This makes consumption much easier.
+
+```tsx file="Component.tsx"
+function Component() {
+  useStorage((root) => ...);
+  //          ^^^^
+  //          Read-only. No mutable Live structures in here.
+  //
+  //          {
+  //            animals: ["🦁", "🦊", "🐵"],
+  //            mathematician: { firstName: "Ada", lastName: "Lovelace" },
+  //            fruitsByName: new Map([
+  //              ["apple", "🍎"],
+  //              ["banana", "🍌"],
+  //              ["cherry", "🍒"],
+  //            ])
+  //          }
+  //
+}
+```
+
+Internally, these read-only trees use a technique called **structural sharing**.
+This means that between rerenders, if nodes in the tree did not change, they
+will **guarantee** to return the same memory instance. Selecting and returning
+these nodes directly is therefore safe and considered a good practice, because
+they are stable references by design.
+
+### Selectors return arbitrary values [#selectors-return-arbitrary-values] [@keywords=["shallow"]]
+
+```tsx file="Component.tsx"
+const animals = useStorage((root) => root.animals);
+// ["🦁", "🦊", "🐵"]
+
+const ada = useStorage((root) => root.mathematician);
+// { firstName: "Ada", lastName: "Lovelace" }
+
+const fullname = useStorage(
+  (root) => `${root.mathematician.firstName} ${root.mathematician.lastName}`
+);
+// "Ada Lovelace"
+
+const fruits = useStorage((root) => [...root.fruitsByName.values()], shallow);
+// ["🍎", "🍌", "🍒"]
+```
+
+Selectors you write can return _any_ value. You can use it to “just” select
+nodes from the root tree (first two examples above), but you can also return
+computed values, like in the last two examples.
+
+💡 **Important**  
+One important rule is that selector functions **must return a stable result** to
+be efficient. This means calling the same selector twice with the same argument
+should return two results that are _referentially equal_. Special care needs to
+be taken when filtering or mapping over arrays, or when returning object
+literals, because those operations create new array or object instances on every
+call. (Why this is is detailed
+[in the next section](#selectors-subscribe-to-updates).)
+
+Some examples of what "a stable result" means:
+
+- ✅ `(root) => root.animals` is stable 👍  
+  Liveblocks guarantees this. All nodes in the Storage tree are stable
+  references as long as their contents don’t change.
+
+- ⚠️ `(root) => root.animals.map(...)` is **not** stable 👎  
+  Because `.map()` creates a new array instance every time. You’ll need to use
+  [`shallow`][] here.
+
+- ✅ `(root) => root.animals.map(...).join(', ')` is stable 👍  
+  Because `.join()` ultimately returns a string and all primitive values are
+  always stable.
+
+If your selector function doesn’t return a stable result, it will lead to an
+explosion of unnecessary rerenders. In most cases, you’ll want to use a
+[`shallow`][] comparison function to loosen the check:
+
+```tsx
+import { shallow } from "@liveblocks/react";
+
+// ❌ Bad - many unneeded rerenders
+const uncheckedItems = useStorage((root) =>
+  root.todos.filter((item) => !item.done)
+);
+
+// ✅ Great
+const uncheckedItems = useStorage(
+  (root) => root.todos.filter((item) => !item.done),
+  shallow // 👈 The fix!
+);
+```
+
+If your selector function constructs complex objects, then a [`shallow`][]
+comparison may not suffice. In those advanced cases, you can provide your own
+custom comparison function, or use `_.isEqual` from Lodash.
+
+### Selectors auto-subscribe to updates [#selectors-subscribe-to-updates]
+
+Selectors effectively automatically subscribe your components to updates to the
+selected or computed values. This means that your component will **automatically
+rerender** when the selected value changes.
+
+Using **multiple selector hooks** within a single React component is perfectly
+fine. Each such hook will individually listen for data changes. The component
+will rerender if _at least one_ of the hooks requires it. If more than one
+selector returns a new value, the component _still only rerenders once_.
+
+Technically, deciding if a rerender is needed works by re-running your selector
+function `(root) => root.child` every time something changes inside Liveblocks
+storage. Anywhere. That happens often in a busy multiplayer app! The reason why
+this is still no problem is that even though `root` will be a different value on
+every change, `root.child` will not be if it didn’t change (due to how
+Liveblocks internally uses structural sharing).
+
+Only once the returned value is different from the previously returned value,
+the component will get rerendered. Otherwise, your component will just remain
+idle.
+
+Consider the case:
+
+```tsx
+function Component() {
+  const animals = useStorage((root) => root.animals);
+}
+```
+
+And the following timeline:
+
+- First render, `root.animals` initially is `["🦁", "🦊", "🐵"]`.
+- Then, something unrelated elsewhere in Storage is changed. In response to the
+  change, `root.animals` gets re-evaluated, but it still returns the same
+  (unchanged) array instance.
+- Since the value didn’t change, no rerender is needed.
+- Then, someone removes an animal from the list. In response to the change,
+  `root.animals` gets re-evaluated, and now it returns `["🦁", "🦊"]`.
+- Because the previous value and this value are different, the component will
+  rerender, seeing the updated value.
+
+## Adopting Suspense [#suspense] [@keywords=["null"]]
+
+Starting with 0.18, you can use Liveblocks hooks with React’s
+[Suspense](https://reactjs.org/docs/react-api.html#suspense).
+
+The benefit of using Suspense with Liveblocks is that the hooks will no longer
+return `null` when Liveblocks is still loading. Instead, you can let your
+Suspense boundary handle the still-loading case centrally by showing the
+fallback state.
+
+This can turn code like this:
+
+```tsx
+// This example uses the "normal" version of useSelf
+
+function MyComponent() {
+  const cursor = useSelf((me) => me.presence.cursor);
+
+  // Liveblocks hasn’t loaded yet...
+  if (cursor === null) {
+    return null;
+  }
+
+  const { x, y } = cursor;
+  return <Cursor x={x} y={y} />;
+}
+```
+
+Into:
+
+```tsx
+// This example uses the "Suspense" version of useSelf
+
+function MyComponent() {
+  // Will never be null, so you can directly unpack 👍
+  const { x, y } = useSelf((me) => me.presence.cursor);
+  return <Cursor x={x} y={y} />;
+}
+```
+
+### Importing the special Suspense hooks [#suspense-hooks]
+
+To start using the special “Suspense versions” of our hooks, you can simply
+import them from under the `suspense` key in the object returned by the
+`createRoomContext` call. All the hooks have the same name, so switching is
+easy.
+
+```tsx file="liveblocks.config.ts" highlight="2"
+export const {
+  suspense: {
+    RoomProvider,
+    useHistory,
+    useSelf,
+    useOthers,
+    useStorage,
+    /* ... */
+  },
+} = createRoomContext(client);
+```
+
+Now all these hooks will no longer return `null` values while Liveblocks is
+still loading, and instead suspend rendering.
+
+<Banner type="success" title="Keep things simple">
+
+While you can absolutely use a mix of normal and Suspense hooks in your app
+without a problem, we don’t recommend it to keep things simple. We suggest to
+either get all hooks in their normal versions, or get them all as their Suspense
+versions. Even hooks that don’t strictly have a “Suspense version”—like
+`RoomProvider` or `useHistory`—are still available under the `suspense` key for
+convenience.
+
+</Banner>
+
+### Setting up the Suspense boundary [#suspense-boundary-setup]
+
+Next, you’ll have to wrap your app in a `<Suspense>` boundary where you want to
+centrally handle the loading state.
+
+Normally, this looks like:
+
+```tsx highlight="1,6"
+import { Suspense } from "react";
+
+function Page() {
+  return (
+    <RoomProvider /* ... */>
+      <Suspense fallback={<Loading />}>
+        <App />
+      </Suspense>
+    </RoomProvider>
+  );
+}
+```
+
+The above works fine if your app only runs in a browser. If your project uses
+server-side rendering (e.g. Next.js app), then the above solution won’t work and
+throw errors. In that case, please read on.
+
+### Avoid calling Suspense hooks on the server side [#suspense-avoid-ssr]
+
+One caveat with the Suspense hooks is that they cannot be run on the server
+side, as they will throw an error. So you’ll need to avoid rendering those
+components on the server side.
+
+Fortunately, this is easy to avoid with a tiny helper component we ship with our
+React package. It can be used in place of React’s default `<Suspense>`, almost
+as a drop-in replacement. This helper will make sure to always render the
+`fallback` on the server side, and only ever rendering its children on the
+client side, when it’s no problem.
+
+```tsx highlight="2,7-8"
+// Drop-in replacement for standard `Suspense`
+import { ClientSideSuspense } from "@liveblocks/react";
+
+function Page() {
+  return (
+    <RoomProvider /* ... */>
+      <ClientSideSuspense fallback={<Loading />}>
+        {() => <App />}
+      </ClientSideSuspense>
+    </RoomProvider>
+  );
+}
+```
+
+## Deprecated
+
+### LiveblocksProvider
+
+<Banner type="error" title="Deprecated in 0.17, removed in 0.18">
+
+For more information, see our
+[Upgrade Guide to 0.17](/docs/guides/upgrading/0.17#recommended-upgrade-steps).
+
+</Banner>
+
+React context provider that lets you use all the presence and storage hooks of
+`@liveblocks/react`.
+
+```tsx
+import { createClient } from "@liveblocks/client";
+import { LiveblocksProvider } from "@liveblocks/react";
+
+const client = createClient({
+  authEndpoint: "/api/auth",
+});
+
+function AppRoot() {
+  return (
+    <LiveblocksProvider client={client}>{/* children */}</LiveblocksProvider>
+  );
+}
+```
+
+[`livelist`]: /docs/api-reference/liveblocks-client#LiveList
+[`livemap`]: /docs/api-reference/liveblocks-client#LiveMap
+[`liveobject`]: /docs/api-reference/liveblocks-client#LiveObject
+[`room.history`]: /docs/api-reference/liveblocks-client#Room.history
+[`roomprovider`]: /docs/api-reference/liveblocks-react#RoomProvider
+[`usestorage`]: /docs/api-reference/liveblocks-react#useStorage
+[`useself`]: /docs/api-reference/liveblocks-react#useSelf
+[`useothers`]: /docs/api-reference/liveblocks-react#useOthers
+[`useothersmapped`]: /docs/api-reference/liveblocks-react#useOthersMapped
+[`useothersconnectionids`]:
+  /docs/api-reference/liveblocks-react#useOthersConnectionIds
+[`useother`]: /docs/api-reference/liveblocks-react#useOther
+[`usebroadcastevent`]: /docs/api-reference/liveblocks-react#useBroadcastEvent
+[`room`]: /docs/api-reference/liveblocks-client#Room
+[`shallow`]: /docs/api-reference/liveblocks-react#shallow
+[selector]: /docs/api-reference/liveblocks-react#selectors
+[how selectors work]: /docs/api-reference/liveblocks-react#selectors
+[suspense version]: /docs/api-reference/liveblocks-react#suspense-hooks

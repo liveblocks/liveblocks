@@ -1,0 +1,510 @@
+---
+meta:
+  title: "Upgrading to 0.18"
+  parentTitle: "Guides"
+  description: "Guide to upgrade to the latest Liveblocks version"
+---
+
+```bash
+npm update @liveblocks/client@0.18 @liveblocks/react@0.18
+```
+
+With the release of 0.18 we’re bringing some exciting and pretty major
+improvements to our React hooks, letting you build apps with ease and with more
+control over the exact behavior.
+
+The new APIs we’re introducing here solve many subtle and not-so-subtle pain
+points. We heard your feedback, and think we have shipped something awesome that
+you’ll love.
+
+This guide consists of two sections:
+
+1. Introduction of the new APIs to get a taste of the new features
+2. Recommended upgrade steps to get the most out of it for your app
+   ([jump straight to it](#upgrade-steps))
+
+Let’s dive right in!
+
+## Changes in @liveblocks/react [#react]
+
+With 0.18, the biggest conceptual shift is that our hooks to consume data from
+Liveblocks now return normal JavaScript data structures (objects, arrays, maps)
+that are _immutable_ by default.
+
+Suppose you have initialized your room with:
+
+```tsx highlight="5-9"
+<RoomProvider
+  id="my-room"
+  initialPresence={/* ... */}
+  initialStorage={{
+    scientist: new LiveObject({
+      firstName: "Ada",
+      lastName: "Lovelace",
+      pets: new LiveList(["🐶", "🐈"]),
+    }),
+  }}
+>
+  <App />
+</RoomProvider>
+```
+
+### Accessing nested data [#nested-data]
+
+Reading nested data from there is now much easier:
+
+#### Previously ❌ [@hidden]
+
+```tsx
+function Component() {
+  const scientist = useObject("scientist");
+  if (scientist == null) {
+    return null;
+  }
+
+  const pets = scientist.get("pets").toArray();
+  // ["🐶", "🐈"]
+}
+```
+
+#### Now ✅ [@hidden]
+
+```tsx
+function Component() {
+  const pets = useStorage((root) => root.scientist.pets);
+  // ["🐶", "🐈"]
+}
+```
+
+As you can see, because we can read data with normal JavaScript data structures,
+accessing nested data is now straightforward.
+
+### Subscribing to updates is automatic now [#subscriptions]
+
+Rerendering your components when nested data—like our scientist’s pets
+list—changes was a true head breaker before. This required extra helper
+components, manual subscriptions, and manual conversion to “normal” JavaScript
+arrays.
+
+Now, rerendering your component when data changes is automatic, even for deeply
+nested data.
+
+#### Previously ❌ [@hidden]
+
+```tsx
+function Component() {
+  const scientist = useObject("scientist");
+  if (scientist == null) {
+    return null;
+  }
+
+  return <Pets livePets={scientist.get("pets")} />;
+}
+
+function Pets({ livePets }) {
+  const room = useRoom();
+  const [pets, setPets] = useState(livePets.toArray());
+
+  useEffect(() => {
+    return room.subscribe(livePets, () => {
+      setPets(livePets.toArray());
+    });
+  }, [room, livePets]);
+}
+```
+
+#### Now ✅ [@hidden]
+
+```tsx
+function Component() {
+  const pets = useStorage((root) => root.scientist.pets);
+  // ["🐶", "🐈"]
+}
+```
+
+There is no typo in this example. This is the actual code.
+
+### Multiple subscriptions are just as easy [#multi-subscriptions]
+
+Previously, if you wanted to derive a computed value from multiple storage
+values, it took some manual setup to ensure the component would automatically
+rerender when either of those values changed.
+
+Now, this is fully automatic. Or should we say, automagic?
+
+#### Previously ❌ [@hidden]
+
+```tsx highlight="11"
+function Component() {
+  const objA = useObject("a");
+  const objB = useObject("b");
+
+  const room = useRoom();
+  const [sum, setSum] = useState();
+  //     ^^^ We’re trying to compute the result of a.x + b.x in here
+
+  useEffect(() => {
+    function onChange() {
+      setSum(objA.get("x") + objB.get("x"));
+    }
+
+    const unsubA = room.subscribe(objA, onChange);
+    const unsubB = room.subscribe(objB, onChange);
+
+    return () => {
+      unsubA();
+      unsubB();
+    };
+  }, [room, objA, objB]);
+}
+```
+
+#### Now ✅ [@hidden]
+
+```tsx
+function Component() {
+  const sum = useStorage((root) => root.a.x + root.b.x);
+}
+```
+
+This component will rerender automatically any time `a.x` or `b.x` changes, but
+not more often.
+
+### Guaranteed referential equality [#referential-equality]
+
+Previously we returned mutable Live structures for performance reasons because
+converting live changing data to JavaScript data structures constantly (and
+recursively) was previously too slow to do on every render. This led to
+unintuitive behavior when used with React hooks dependencies.
+
+Not anymore! Due to a technique called structural sharing, we’re now able to
+_guarantee_ for nodes in the Storage tree that as long as their (direct or
+nested) contents haven’t changed in Storage, their immutable representation will
+remain to be the same object references on the next render. This means that you
+can rely on referential equality, as you may have expected in the first place.
+
+#### Previously ❌ [@hidden]
+
+```tsx
+function Component() {
+  const scientist = useObject("scientist");
+
+  useEffect(() => {
+    // Effect never triggered when scientist (or their pets list) changes! :(
+  }, [scientist]);
+}
+```
+
+#### Now ✅ [@hidden]
+
+```tsx
+function Component() {
+  const scientist = useStorage((root) => root.scientist);
+
+  useEffect(() => {
+    // Effect triggered every time scientist (or their pets list) changes! :)
+    // But not more often than that!
+  }, [scientist]);
+}
+```
+
+### Suspense support
+
+Starting with 0.18, all hooks that read data from Liveblocks come with a
+Suspense version of the hook which will never return `null` to indicate the
+“still loading” state. Instead, they will suspend the rendering of the component
+tree until Liveblocks has finished loading.
+
+We recommend you to adopt Suspense if you can because it lets you get rid of the
+ugly `null` checks, helper components to “eat off” those null cases, and the
+prop drilling that necessarily comes with all that.
+
+#### Previously ❌ [@hidden]
+
+```tsx
+function Component() {
+  const camera = useObject("camera");
+  const items = useList("items");
+
+  // 👎
+  if (camera == null || items == null) {
+    return <div>Still loading...</div>;
+  }
+
+  return <MyRealComponent camera={camera} items={items} />;
+}
+```
+
+#### Now ✅ [@hidden]
+
+Set up a Suspense boundary once:
+
+```tsx file="App.tsx" highlight="6"
+import { Suspense } from "react";
+
+function Setup() {
+  return (
+    // Once
+    <Suspense fallback={<Loading />}>
+      <App />
+    </Suspense>
+  );
+}
+```
+
+Switch to use the Suspense versions of our hooks instead of the “normal” ones:
+
+```tsx file="liveblocks.config.ts" highlight="2"
+export const {
+  suspense: {
+    RoomProvider,
+    useStorage,
+    /* etc. */
+  },
+} = createRoomContext(client);
+```
+
+Then, enjoy no more null checks everywhere in your app:
+
+```tsx file="Component.tsx"
+function Component() {
+  const camera = useStorage((root) => root.camera);
+  const items = useStorage((root) => root.items);
+  // No more null checking! :)
+}
+```
+
+## Recommended upgrade steps [#upgrade-steps]
+
+To get the most out of the new hooks, we recommend following the steps below to
+gradually upgrade your app to make use of the new hooks.
+
+### Step 1: Install the latest package [@hidden]
+
+```bash
+npm update @liveblocks/client@0.18 @liveblocks/react@0.18
+```
+
+### Step 2: Make sure you’re setting initial presence [@hidden]
+
+We now require setting an initial presence value when you connect to a room
+explicitly. This ensures that every user is guaranteed to always have a known
+presence value.
+
+Check that you have this in your config file:
+
+```tsx file="liveblocks.config.ts" highlight="3"
+<RoomProvider
+  id="my-room"
+  initialPresence={{}}
+  //              ^^^^ No longer optional
+>
+  <App />
+</RoomProvider>
+```
+
+If your app somehow doesn’t use Presence, you can just set an empty object
+(`{}`) here.
+
+### Step 3: You can remove some uncertainty from user instances [@hidden]
+
+If you have expressions in your code that look like...
+
+```tsx
+user.info?.avatar;
+//       ^
+user.presence?.cursor.x;
+//           ^
+```
+
+You can now remove these optional chainings. The fields `info` and `presence`
+will now always be set on `User` instances.
+
+### Step 4: Adopt Suspense (optional) [@hidden]
+
+Now is a great moment to opt-in to Suspense (see the
+[React docs](https://reactjs.org/docs/react-api.html#suspense)) with Liveblocks,
+if you can or want to use it in your app. We recommend it for most apps because
+it makes working with the new hooks even nicer.
+
+To avoid repeating ourselves, please follow the instruction below.
+
+<Banner title="Adopting Suspense">
+
+Follow
+[these instructions to adopt Suspense](/docs/api-reference/liveblocks-react#suspense).
+Don’t worry, we’ll wait.
+
+</Banner>
+
+Now that you have updated your app to Suspense, you should be able to remove all
+these pesky `null` checks from your code.
+
+```tsx highlight="6-8"
+function Component() {
+  const a = useMap("a");
+  const b = useList("b");
+  const c = useObject("c");
+
+  if (a == null || b == null || c == null) {
+    return <Loading />;
+  }
+
+  /* ... */
+}
+```
+
+Afterward, please verify that your app still works like normal.
+
+### Step 5a: Replace reads with `useStorage` [@hidden]
+
+We recommend rewriting all usages of `useList`, `useObject` and `useMap` if
+those are used for _reading_ data only. If used only for reading values from
+Storage, you could turn these into an equivalent `useStorage` call, which has
+fewer gotchas.
+
+For example, change:
+
+```tsx
+// ❌
+const obj = useObject("a");
+const list = useObject("b");
+const map = useMap("c");
+```
+
+to:
+
+```tsx
+// ✅
+const obj = useStorage((root) => root.a);
+const list = useStorage((root) => root.b);
+const map = useStorage((root) => root.c);
+```
+
+Note that the `root` argument you receive here is the immutable normal
+JavaScript equivalent of your entire Storage tree, as returned by calling
+[`.toImmutable`][].
+
+So this means that if you have been manually converting the mutable Live
+structures to normal data structures, you no longer have to do this:
+
+```tsx
+// ❌
+obj.toObject();
+list.toArray();
+```
+
+```tsx
+// ✅
+obj; // Already a normal JS object
+list; // Already a normal JS array
+```
+
+Please note that `useList`, `useObject`, or `useMap` are not deprecated and
+still work with the same behavior as before. We just no longer recommend their
+use.
+
+### Step 5b: Replace mutations with `useMutation` [@hidden]
+
+If you are (also) using `useList`, `useObject` or `useMap` to obtain a mutable
+reference to the Live structure to _mutate_ it, you can rewrite those use cases
+to use the new `useMutation` hook instead.
+
+For example:
+
+```tsx
+// ❌
+const obj = useObject("a");
+
+return (
+  <input
+    value={obj.get("name")}
+    //         ^^^ Live object used for reading
+    onClick={() => {
+      obj.set("name", e.currentTarget.value);
+      //  ^^^ Live object used for mutating
+    }}
+  />
+);
+```
+
+The idiomatic way to deal with Storage is to _consume_ data using simple/normal
+JS data structures and to _mutate_ data using a callback function that you can
+create with `useMutation`, which provides access to the mutable Live structures.
+
+```tsx
+// ✅
+const name = useStorage((root) => root.a.name);
+
+const setName = useMutation(({ storage }, newName) => {
+  storage.get("a").set("name", newName);
+  //               ^^^ Mutation goes here
+}, []);
+
+return (
+  <input
+    value={name}
+    //     ^^^^ Reading uses simple values
+    onClick={(e) => setName(e.currentTarget.value)}
+  />
+);
+```
+
+Even though in this contrived example it may look more complicated, in large
+apps this pattern will vastly simplify your app’s complexity.
+
+<Banner title="Tip!">
+
+See the [`useMutation`][] documentation to learn all the details, because it has
+a lot more in store.
+
+</Banner>
+
+### Step 6: Get rid of `room.subscribe()` calls [@hidden]
+
+Historically the only way to get full control over exactly when and how your
+components would rerender was to use the low-level `room.subscribe()` API.
+
+Most, if not all, of these use cases can be replaced by an equivalent, yet much
+simpler call to `useStorage` with a selector function that does an equivalent
+thing.
+
+**Common use case: subscribing to nested data**  
+If you are using `room.subscribe` to manually rerender components when nested
+data changes, you can replace it by “just” selecting the nested fields you’re
+interested in. See [this example](#subscriptions).
+
+```tsx
+// ✅ Automatically rerenders if pets changes (but not more often)
+const nested = useStorage((root) => root.scientist.pets);
+```
+
+**Common use case: subscribing to a computed value**  
+If you are using `room.subscribe` to synchronize a computation based on multiple
+storage values, you can replace it by “just” doing the computation in See
+[this example](#multi-subscriptions).
+
+```tsx
+// ✅ Automatically rerenders if computed value changes
+const sum = useStorage((root) => root.a + root.b);
+```
+
+If you have another use case for `room.subscribe` that you think isn’t possible
+to express in an equivalent `useStorage` call, please
+[let us know about it](https://github.com/liveblocks/liveblocks/discussions/504).
+We’re happy to help!
+
+### Step 7: Get rid of manual batch calls [@hidden]
+
+Most, if not all, cases of manually calling `useBatch` or `room.batch` should no
+longer be needed and can be replaced by `useMutation`, which automatically
+batches already!
+
+That’s it!
+
+If you run into issues with these new patterns and you need help, please
+[let us know](https://github.com/liveblocks/liveblocks/discussions/504). We’re
+here to help!
+
+[`usemutation`]: /docs/api-reference/liveblocks-react#useMutation
+[`.toimmutable`]: /docs/api-reference/liveblocks-client#LiveObject.toImmutable

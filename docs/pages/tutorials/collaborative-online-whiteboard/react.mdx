@@ -1,0 +1,916 @@
+---
+meta:
+  title: "Creating a collaborative online whiteboard with React and Liveblocks"
+  parentTitle: "Tutorials"
+  description: "Build a multiplayer whiteboard app with React and Liveblocks"
+---
+
+In this 25-minute guide, we’ll be building a collaborative whiteboard app using
+React and Liveblocks. As users add and move rectangles in a canvas, changes will
+be automatically synced and persisted, allowing for a canvas that updates in
+real-time across clients. Users will also be able to see other users selections,
+and undo and redo actions.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+This guide assumes that you’re already familiar with React. If you’re using a
+state-management library such as Redux or Zustand, we recommend reading one of
+our dedicated whiteboard tutorials:
+
+- [React + Redux tutorial](/docs/tutorials/collaborative-online-whiteboard/react-redux)
+- [React + Zustand tutorial](/docs/tutorials/collaborative-online-whiteboard/react-zustand)
+
+The source code for this guide is
+[available on GitHub](https://github.com/liveblocks/liveblocks/tree/main/examples/react-whiteboard).
+
+## Install Liveblocks into your project [#install-liveblocks]
+
+### Install Liveblocks packages
+
+Create a new app with [`create-react-app`](https://create-react-app.dev/):
+
+```bash
+npx create-react-app react-whiteboard
+```
+
+Then run the following command to install the Liveblocks packages:
+
+```bash
+npm install @liveblocks/client @liveblocks/react
+```
+
+### Connect to Liveblocks servers [#connect-liveblocks-servers]
+
+In order to use Liveblocks, we’ll need to sign up and get an API key.
+[Create an account](/api/auth/signup), then navigate to
+[the dashboard](/dashboard/apikeys) to find your public key. It should start
+with `pk_`.
+
+<Banner title="Public vs secret key">
+
+With a secret key, you can control who can access the room. it’s more secure but
+you need your own back-end endpoint. For this tutorial, we’ll go with a public
+key. For more info, see the [authentication guide](/docs/guides/authentication).
+
+</Banner>
+
+Let’s now add a new file `src/liveblocks.config.js` in our application to create
+a Liveblocks client using the public key as shown below.
+
+```jsx file="src/liveblocks.config.js"
+import { createClient } from "@liveblocks/client";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+```
+
+### Connect to a Liveblocks room [#connect-liveblocks-room]
+
+Liveblocks uses the concept of _rooms_, separate virtual spaces where people can
+collaborate. To create a multiplayer experience, multiple users must be
+connected to the same room.
+
+Instead of using the client directly, we’re going to use
+[`createRoomContext`](/docs/api-reference/liveblocks-react#createRoomContext)
+from `@liveblocks/react` to create a
+[`RoomProvider`](/docs/api-reference/liveblocks-react#RoomProvider) and hooks to
+make it easy to consume from our components.
+
+```jsx file="src/liveblocks.config.js" highlight="2,8-10"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const { RoomProvider } = createRoomContext(client);
+```
+
+You might be wondering why we’re creating our Providers and Hooks with
+`createRoomContext` instead of importing them directly from
+`@liveblocks/client`. This allows TypeScript users to define their Liveblocks
+types once in one unique location—allowing them to get a great autocompletion
+experience when using those hooks elsewhere.
+
+We can now import the `RoomProvider` directly from our
+`src/liveblocks.config.js` file.
+
+```jsx file="src/index.js" highlight="6,10-12"
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+
+import { RoomProvider } from "./liveblocks.config";
+
+ReactDOM.render(
+  <React.StrictMode>
+    <RoomProvider id="react-whiteboard-app">
+      <App />
+    </RoomProvider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+```
+
+Every component wrapped inside `RoomProvider` will have access to the special
+React hooks we’ll be using to interact with this room.
+
+## Create a canvas [#basic-canvas]
+
+We’re going to use a [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap)
+to store a map of shapes inside the room’s storage. A `LiveMap` is a type of
+storage that Liveblocks provides. A `LiveMap` is like a JavaScript map, but its
+items are synced in real-time across different clients. Even if multiple users
+insert or delete items simultaneously, the `LiveMap` will still be consistent
+for all users in the room.
+
+Initialize the storage with the `initialStorage` prop on the `RoomProvider`.
+
+```jsx highlight="6,16-19" file="src/index.js"
+import React from "react";
+import ReactDOM from "react-dom";
+import "./index.css";
+import App from "./App";
+
+import { LiveMap } from "@liveblocks/client";
+import { RoomProvider } from "./liveblocks.config";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+ReactDOM.render(
+  <React.StrictMode>
+    <RoomProvider
+      id="react-whiteboard-app"
+      initialStorage={{
+        shapes: new LiveMap(),
+      }}
+    >
+      <App />
+    </RoomProvider>
+  </React.StrictMode>,
+  document.getElementById("root")
+);
+```
+
+We’re going to use the [`useMap`](/docs/api-reference/liveblocks-react#useMap)
+hook to get the map of shapes previously created. Let’s re-export it from
+`scr/liveblocks.config`.
+
+```jsx file="src/liveblocks.config.js" highlight="8,10"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const { RoomProvider, useMap } = createRoomContext(client);
+```
+
+`useMap` returns `null` while it’s still connecting to Liveblocks, so we can
+rely on that to show a loading state first. Once it’s connected, we can draw the
+shapes in our canvas. To keep it simple for the tutorial, we are going to only
+support rectangle.
+
+```jsx file="src/App.js"
+import { useMap } from "./liveblocks.config";
+
+import "./App.css";
+
+export default function App() {
+  const shapes = useMap("shapes");
+
+  if (shapes == null) {
+    return <div className="loading">Loading</div>;
+  }
+
+  return <Canvas shapes={shapes} />;
+}
+
+function Canvas({ shapes }) {
+  return (
+    <>
+      <div className="canvas">
+        {Array.from(shapes, ([shapeId, shape]) => {
+          return <Rectangle key={shapeId} shape={shape} />;
+        })}
+      </div>
+    </>
+  );
+}
+
+const Rectangle = ({ shape }) => {
+  const { x, y, fill } = shape;
+
+  return (
+    <div
+      className="rectangle"
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        backgroundColor: fill ? fill : "#CCC",
+      }}
+    ></div>
+  );
+};
+```
+
+_For a tidier look, here’s some styling to place within `src/App.css`._
+
+```css file="src/App.css" isCollapsed isCollapsable
+body {
+  background-color: #eeeeee;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+}
+
+.canvas {
+  background-color: #eeeeee;
+  touch-action: none;
+  width: 100vw;
+  height: 100vh;
+}
+
+.rectangle {
+  position: absolute;
+  /* transition: all 0.1s ease; */
+  stroke-width: 1;
+  border-style: solid;
+  border-width: 2px;
+  height: 100px;
+  width: 100px;
+}
+
+.toolbar {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px;
+  border-radius: 8px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  background-color: #ffffff;
+  user-select: none;
+}
+
+.toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #f8f8f8;
+  color: #181818;
+  border: none;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1), 0px 0px 0px 1px rgba(0, 0, 0, 0.05);
+  margin: 4px;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.toolbar button:hover,
+.toolbar button:focus {
+  background-color: #ffffff;
+}
+
+.toolbar button:active {
+  background-color: #eeeeee;
+}
+```
+
+## Insert rectangles
+
+Our whiteboard is currently empty, and there’s no way to add rectangles. Let’s
+create a button that adds a randomly placed rectangle to the board.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-1.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We’ll use `shapes.set` to add a new rectangle to the `LiveMap`.
+
+```js file="src/App.js" highlight="5,7-9,11-13,18-26,35-37"
+import { useMap } from "./liveblocks.config";
+
+import "./App.css";
+
+const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+function getRandomColor() {
+  return COLORS[getRandomInt(COLORS.length)];
+}
+
+/* App */
+
+function Canvas({ shapes }) {
+  const insertRectangle = () => {
+    const shapeId = Date.now().toString();
+    const rectangle = {
+      x: getRandomInt(300),
+      y: getRandomInt(300),
+      fill: getRandomColor(),
+    };
+    shapes.set(shapeId, rectangle);
+  };
+
+  return (
+    <>
+      <div className="canvas">
+        {Array.from(shapes, ([shapeId, shape]) => {
+          return <Rectangle key={shapeId} shape={shape} />;
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+      </div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+## Add selection [#selection]
+
+We can use Liveblocks to display which shape each user is currently selecting,
+in this case by adding a border to the rectangles. We’ll use a blue border to
+represent the local user, and green borders for remote users.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-2.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+To do this, we’ll employ the
+[`useMyPresence`](/docs/api-reference/liveblocks-react#useMyPresence) hook to
+store a user’s selected shape, and then the
+[`useOthers`](/docs/api-reference/liveblocks-react#useOthers) hook to find other
+users’ selected shapes. But first, let’s re-export those hooks from
+`src/liveblocks.config` like we did previously with `useMap`.
+
+```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const { RoomProvider, useOthers, useMyPresence, useMap } =
+  createRoomContext(client);
+```
+
+We can now use those hooks directly in our application by importing them from
+`src/liveblocks.config.js`.
+
+```js file="src/App.js" highlight="1,6,7,11-13,19-26,31-33,45,50,55"
+import { useMap, useMyPresence, useOthers } from "./liveblocks.config";
+
+/* ... */
+
+function Canvas({ shapes }) {
+  const [{ selectedShape }, setPresence] = useMyPresence();
+  const others = useOthers();
+
+  /* ... */
+
+  const onShapePointerDown = (e, shapeId) => {
+    setPresence({ selectedShape: shapeId });
+  };
+
+  return (
+    <>
+      <div className="canvas">
+        {Array.from(shapes, ([shapeId, shape]) => {
+          let selectionColor =
+            selectedShape === shapeId
+              ? "blue"
+              : others
+                  .toArray()
+                  .some((user) => user.presence?.selectedShape === shapeId)
+              ? "green"
+              : undefined;
+          return (
+            <Rectangle
+              key={shapeId}
+              shape={shape}
+              id={shapeId}
+              onShapePointerDown={onShapePointerDown}
+              selectionColor={selectionColor}
+            />
+          );
+        })}
+      </div>
+      <div className="toolbar">
+        <button onClick={insertRectangle}>Rectangle</button>
+      </div>
+    </>
+  );
+}
+
+const Rectangle = ({ shape, id, onShapePointerDown, selectionColor }) => {
+  const { x, y, fill } = shape;
+
+  return (
+    <div
+      onPointerDown={(e) => onShapePointerDown(e, id)}
+      className="rectangle"
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        backgroundColor: fill ? fill : "#CCC",
+        borderColor: selectionColor || "transparent",
+      }}
+    ></div>
+  );
+};
+```
+
+## Delete rectangles
+
+Now that users can select rectangles, we can add a button that allow deleting
+rectangles too.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-3.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We’ll use `shapes.delete` to remove the selected shape from the `LiveMap`, and
+then reset the user’s selection.
+
+```js file="src/App.js" highlight="3-6,12-14"
+/* ... */
+
+const deleteRectangle = () => {
+  shapes.delete(selectedShape);
+  setPresence({ selectedShape: null });
+};
+
+/* ... */
+
+<div className="toolbar">
+  <button onClick={insertRectangle}>Rectangle</button>
+  <button onClick={deleteRectangle} disabled={selectedShape == null}>
+    Delete
+  </button>
+</div>;
+
+/* ... */
+```
+
+## Move rectangles
+
+Let’s move some rectangles!
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-4.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+To allow users to move rectangles, we’ll update the `x` and `y` properties using
+`shapes.set` when a user drags a shape.
+
+```js file="src/App.js" highlight="7,13,17,20-26,28-41,46,47"
+import { useState } from "react";
+import { useMap, useMyPresence, useOthers } from "./liveblocks.config";
+
+/* ... */
+
+function Canvas({ shapes }) {
+  const [isDragging, setIsDragging] = useState(false);
+  const [{ selectedShape }, setPresence] = useMyPresence();
+
+  /* ... */
+
+  const onShapePointerDown = (e, shapeId) => {
+    e.stopPropagation();
+
+    setPresence({ selectedShape: shapeId });
+
+    setIsDragging(true);
+  };
+
+  const onCanvasPointerUp = (e) => {
+    if (!isDragging) {
+      setPresence({ selectedShape: null });
+    }
+
+    setIsDragging(false);
+  };
+
+  const onCanvasPointerMove = (e) => {
+    e.preventDefault();
+
+    if (isDragging) {
+      const shape = shapes.get(selectedShape);
+      if (shape) {
+        shapes.set(selectedShape, {
+          ...shape,
+          x: e.clientX - 50,
+          y: e.clientY - 50,
+        });
+      }
+    }
+  };
+
+  return (
+    <div
+      className="canvas"
+      onPointerMove={onCanvasPointerMove}
+      onPointerUp={onCanvasPointerUp}
+    >
+      {Array.from(shapes, ([shapeId, shape]) => {
+        return <Rectangle /* ... */ />;
+      })}
+    </div>
+  );
+}
+
+/* Rectangle */
+```
+
+## Multiplayer undo/redo [#undo-redo]
+
+With Liveblocks, you can enable multiplayer undo/redo in just a few lines of
+code.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-5.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We’ll add the [`useHistory`](/docs/api-reference/liveblocks-react#useHistory)
+hook and call `history.undo()` and `history.redo()` when the user presses "undo"
+or "redo". By default, only modifications made to the storage are added to the
+undo/redo history. In this example, that means all changes made to `shapes`
+(because it’s a `LiveMap`)."
+
+Like we did with the others hooks, re-export it from your
+`src/liveblocks.config`.
+
+```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const { RoomProvider, useOthers, useMyPresence, useMap, useHistory } =
+  createRoomContext(client);
+```
+
+To undo a change to presence we need to add the `{ addToHistory: true }` option
+to `setPresence`.
+
+```js file="src/App.js" highlight="6,12,19,26,39,40"
+import { useEffect, useState } from "react";
+import {
+  useMap,
+  useMyPresence,
+  useOthers,
+  useHistory,
+} from "./liveblocks.config";
+
+/* ... */
+
+function Canvas({ shapes }) {
+  const history = useHistory();
+
+  /* ... */
+
+  const onShapePointerDown = (e, shapeId) => {
+    e.stopPropagation();
+
+    setPresence({ selectedShape: shapeId }, { addToHistory: true });
+
+    setIsDragging(true);
+  };
+
+  const onCanvasPointerUp = (e) => {
+    if (!isDragging) {
+      setPresence({ selectedShape: null }, { addToHistory: true });
+    }
+
+    setIsDragging(false);
+  };
+
+  /* ... */
+
+  return (
+    <>
+      {/* ... */}
+      <div className="toolbar">
+        {/* ... */}
+        <button onClick={history.undo}>Undo</button>
+        <button onClick={history.redo}>Redo</button>
+      </div>
+    </>
+  );
+}
+
+/* Rectangle */
+```
+
+### Pause and resume history [#pause-resume-history]
+
+When a user moves a rectangle, a large number of actions are sent to Liveblocks
+and live synced, enabling other users to see movements in real-time.
+
+The problem with this is that the undo button returns the rectangle to the last
+intermediary position, and not the position where the rectangle started its
+movement. We can fix this by pausing storage history until the move has
+completed.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-6.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We’ll use
+[`history.pause`](/docs/api-reference/liveblocks-client#Room.history.pause) to
+disable adding any positions to the history stack while the cursors moves, and
+then call
+[`history.resume`](/docs/api-reference/liveblocks-client#Room.history.resume)
+afterwards.
+
+```js file="src/App.js" highlight="2,17"
+const onShapePointerDown = (e, shapeId) => {
+  history.pause();
+  e.stopPropagation();
+
+  setPresence({ selectedShape: shapeId }, { addToHistory: true });
+
+  setIsDragging(true);
+};
+
+const onCanvasPointerUp = (e) => {
+  if (!isDragging) {
+    setPresence({ selectedShape: null }, { addToHistory: true });
+  }
+
+  setIsDragging(false);
+
+  history.resume();
+};
+```
+
+### Batch insert and selection [#batch-insert-selection]
+
+In one click we can undo both creating a rectangle, and selecting a rectangle,
+by merging both changes into a single history state.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-7.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+We can add the [`useBatch`](/docs/api-reference/liveblocks-react#useBatch) hook
+to do this, by calling all our changes within the `batch()` callback argument.
+
+Like we did with the others hooks, re-export it from your
+`src/liveblocks.config`.
+
+```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const {
+  RoomProvider,
+  useOthers,
+  useMyPresence,
+  useMap,
+  useHistory,
+  useBatch,
+} = createRoomContext(client);
+```
+
+```js file="src/App.js" highlight="7,14,17,25,26"
+import { useEffect, useState } from "react";
+import {
+  useMap,
+  useMyPresence,
+  useOthers,
+  useHistory,
+  useBatch,
+} from "./liveblocks.config";
+
+/* ... */
+
+function Canvas({ shapes }) {
+  /* ... */
+  const batch = useBatch();
+
+  const insertRectangle = () => {
+    batch(() => {
+      const shapeId = Date.now().toString();
+      const rectangle = {
+        x: getRandomInt(300),
+        y: getRandomInt(300),
+        fill: getRandomColor(),
+      };
+      shapes.set(shapeId, rectangle);
+      setPresence({ selectedShape: shapeId }, { addToHistory: true });
+    });
+  };
+
+  /* ... */
+}
+```
+
+## Better performance and conflict resolution [#nest-object]
+
+If two users modify the same rectangle at the same time, it’s possible that
+problems will occur. To provide better conflict resolution, we can use the
+CRDT-like [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) to
+store each rectangle’s data. Liveblocks storage can contain nested data
+structures, and in our example, `shapes` is a `LiveMap` containing multiple
+`LiveObject` items.
+
+To get this working, we need to use [`room.subscribe`][], to rerender the
+rectangles when the nested data structure updates:
+
+Re-export `useRoom` from `src/liveblocks.config` to get the current `Room` from
+your components.
+
+```jsx file="src/liveblocks.config.js" highlight="8-26"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+export const {
+  RoomProvider,
+  useOthers,
+  useMyPresence,
+  useMap,
+  useHistory,
+  useBatch,
+  useRoom,
+} = createRoomContext(client);
+```
+
+```js file="src/App.js" highlight="8,10,20-24,36-42,50,52-60"
+import { useState, useEffect, memo } from "react";
+import {
+  useMyPresence,
+  useMap,
+  useOthers,
+  useHistory,
+  useBatch,
+  useRoom,
+} from "./liveblocks.config";
+import { LiveObject } from "@liveblocks/client";
+
+/* ... */
+
+function Canvas({ shapes }) {
+  /* ... */
+
+  const insertRectangle = () => {
+    batch(() => {
+      const shapeId = Date.now().toString();
+      const shape = new LiveObject({
+        x: getRandomInt(300),
+        y: getRandomInt(300),
+        fill: getRandomColor(),
+      });
+      shapes.set(shapeId, shape);
+      setPresence({ selectedShape: shapeId }, { addToHistory: true });
+    });
+  };
+
+  /* ... */
+
+  const onCanvasPointerMove = (e) => {
+    e.preventDefault();
+
+    if (isDragging) {
+      const shape = shapes.get(selectedShape);
+      if (shape) {
+        shape.update({
+          x: e.clientX - 50,
+          y: e.clientY - 50,
+        });
+      }
+    }
+  };
+
+  return (/* ... */);
+}
+
+const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
+  const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
+
+  const room = useRoom();
+
+  useEffect(() => {
+    function onChange() {
+      setShapeData(shape.toObject());
+    }
+
+    return room.subscribe(shape, onChange);
+  }, [room, shape]);
+
+  return (
+    <div
+      onPointerDown={(e) => onShapePointerDown(e, id)}
+      className="rectangle"
+      style={{
+        transform: `translate(${x}px, ${y}px)`,
+        backgroundColor: fill ? fill : "#CCC",
+        borderColor: selectionColor || "transparent",
+      }}
+    ></div>
+  );
+});
+
+```
+
+Voilà! We have a working collaborative whiteboard app, with persistent data
+storage.
+
+## Summary
+
+In this tutorial, we’ve learnt about the concept of rooms, presence, and others.
+We’ve also learnt how to put all these into practice, and how to persist state
+using storage too.
+
+You can see some stats about the room you created in your
+[dashboard](https://liveblocks.io/dashboard/rooms).
+
+<Figure>
+  <Image
+    src="/images/docs/tutorials/whiteboard/tutorial-whiteboard-dashboard.png"
+    alt="Liveblocks dashboard"
+    layout="responsive"
+    width={1336}
+    height={822}
+    quality={80}
+  />
+</Figure>
+
+## Next steps
+
+- [API reference](/docs/api-reference/liveblocks-react)
+- [Authentication](/docs/guides/authentication)
+
+[`room.subscribe`]:
+  /docs/api-reference/liveblocks-client#Room.subscribe(storageItem)

@@ -2,7 +2,7 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import { assertNever, nn } from "./assert";
 import type { RoomAuthToken } from "./AuthToken";
-import { isTokenExpired, parseRoomAuthToken } from "./AuthToken";
+import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
 import type { Callback, Observable } from "./EventSource";
 import { makeEventSource } from "./EventSource";
 import * as console from "./fancy-console";
@@ -324,6 +324,7 @@ function makeStateMachine<
       storageUpdates: Map<string, StorageUpdate>
     ) {
       const activeBatch = state.activeBatch;
+
       if (activeBatch) {
         activeBatch.ops.push(...ops);
         storageUpdates.forEach((value, key) => {
@@ -343,6 +344,17 @@ function makeStateMachine<
           dispatchOps(ops);
           notify({ storageUpdates }, doNotBatchUpdates);
         });
+      }
+    },
+
+    assertStorageIsWritable: () => {
+      if (
+        isConnectionSelfAware(state.connection.current) &&
+        state.connection.current.isReadOnly
+      ) {
+        throw new Error(
+          "Cannot write to storage with a read only user, please ensure the user has write permissions"
+        );
       }
     },
   };
@@ -423,6 +435,7 @@ function makeStateMachine<
             id: conn.userId,
             info: conn.userInfo,
             presence: me,
+            isReadOnly: conn.isReadOnly,
           }
         : null
   );
@@ -894,6 +907,14 @@ function makeStateMachine<
     }
   }
 
+  function isReadOnly(scopes: string[]) {
+    return (
+      scopes.includes(RoomScope.Read) &&
+      scopes.includes(RoomScope.PresenceWrite) &&
+      !scopes.includes(RoomScope.Write)
+    );
+  }
+
   function authenticationSuccess(token: RoomAuthToken, socket: WebSocket) {
     socket.addEventListener("message", onMessage);
     socket.addEventListener("open", onOpen);
@@ -906,6 +927,7 @@ function makeStateMachine<
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
+        isReadOnly: isReadOnly(token.scopes),
       },
       batchUpdates
     );
@@ -984,7 +1006,12 @@ function makeStateMachine<
     for (const key in message.users) {
       const user = message.users[key];
       const connectionId = Number(key);
-      state.others.setConnection(connectionId, user.id, user.info);
+      state.others.setConnection(
+        connectionId,
+        user.id,
+        user.info,
+        isReadOnly(user.scopes)
+      );
     }
     return { type: "reset" };
   }
@@ -1005,8 +1032,12 @@ function makeStateMachine<
   function onUserJoinedMessage(
     message: UserJoinServerMsg<TUserMeta>
   ): OthersEvent<TPresence, TUserMeta> | undefined {
-    state.others.setConnection(message.actor, message.id, message.info);
-
+    state.others.setConnection(
+      message.actor,
+      message.id,
+      message.info,
+      isReadOnly(message.scopes)
+    );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
     state.buffer.messages.push({
@@ -1073,6 +1104,7 @@ function makeStateMachine<
             }
             break;
           }
+
           case ServerMsgCode.UPDATE_PRESENCE: {
             const othersPresenceUpdate = onUpdatePresenceMessage(message);
             if (othersPresenceUpdate) {
@@ -1080,6 +1112,7 @@ function makeStateMachine<
             }
             break;
           }
+
           case ServerMsgCode.BROADCASTED_EVENT: {
             eventHub.customEvent.notify({
               connectionId: message.actor,
@@ -1087,6 +1120,7 @@ function makeStateMachine<
             });
             break;
           }
+
           case ServerMsgCode.USER_LEFT: {
             const event = onUserLeftMessage(message);
             if (event) {
@@ -1094,10 +1128,12 @@ function makeStateMachine<
             }
             break;
           }
+
           case ServerMsgCode.ROOM_STATE: {
             updates.others.push(onRoomStateMessage(message));
             break;
           }
+
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
@@ -1108,6 +1144,7 @@ function makeStateMachine<
             eventHub.storageDidLoad.notify();
             break;
           }
+          // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
             const applyResult = apply(message.ops, false);
             applyResult.updates.storageUpdates.forEach((value, key) => {
@@ -1560,7 +1597,7 @@ function makeStateMachine<
       return callback();
     }
 
-    let rv: T = undefined as unknown as T;
+    let returnValue: T = undefined as unknown as T;
 
     batchUpdates(() => {
       state.activeBatch = {
@@ -1572,9 +1609,8 @@ function makeStateMachine<
         },
         reverseOps: [],
       };
-
       try {
-        rv = callback();
+        returnValue = callback();
       } finally {
         // "Pop" the current batch of the state, closing the active batch, but
         // handling it separately here
@@ -1600,7 +1636,7 @@ function makeStateMachine<
       }
     });
 
-    return rv;
+    return returnValue;
   }
 
   function pauseHistory() {
@@ -1652,6 +1688,7 @@ function makeStateMachine<
     updatePresence,
     broadcastEvent,
 
+    // Storage
     batch,
     undo,
     redo,
@@ -1803,6 +1840,9 @@ export function createRoom<
     getOthers: machine.getOthers,
     broadcastEvent: machine.broadcastEvent,
 
+    //////////////
+    // Storage  //
+    //////////////
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
     events: machine.events,
