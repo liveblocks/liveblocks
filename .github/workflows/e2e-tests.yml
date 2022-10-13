@@ -11,17 +11,13 @@ jobs:
         node-version: [16.x]
         pkg:
           [
-            "liveblocks-core",
-            "liveblocks-client",
-            "liveblocks-react",
-            "liveblocks-redux",
-            "liveblocks-zustand",
-            "liveblocks-node",
+            "@liveblocks/core",
+            "@liveblocks/client",
+            "@liveblocks/react",
+            "@liveblocks/redux",
+            "@liveblocks/zustand",
+            "@liveblocks/node",
           ]
-
-    defaults:
-      run:
-        working-directory: packages/${{ matrix.pkg }}
 
     steps:
       - name: Checkout
@@ -34,17 +30,26 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh
+      - name: Install dependencies
+        run: npm install
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          path: node_modules/.cache/turbo
+          restore-keys:
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
 
       - name: Build
-        run: npm run build
+        run: npm run build -- --filter ${{ matrix.pkg }}
 
       - name: Run unit tests
-        run: npm run test-ci
+        run: npm run test -- --filter ${{ matrix.pkg }}
 
       - name: Run lint checks
-        run: npm run lint
+        run: npm run lint -- --filter ${{ matrix.pkg }}
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -61,10 +66,6 @@ jobs:
       LIVEBLOCKS_AUTHORIZE_ENDPOINT:
         ${{ secrets.E2E_TEST_LIVEBLOCKS_AUTHORIZE_ENDPOINT }}
 
-    defaults:
-      run:
-        working-directory: e2e/next-sandbox
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -76,14 +77,14 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install dependencies (and link to local Liveblocks source)
-        run: ../../scripts/link-liveblocks.sh
+      - name: Install dependencies
+        run: npm install
 
       - name: Install Playwright
-        run: npx playwright install --with-deps
+        run: npx playwright install chromium
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: npm run test -- --filter @liveblocks/next-sandbox
 
       - uses: actions/upload-artifact@v2
         if: always()
@@ -104,10 +105,6 @@ jobs:
     env:
       LIVEBLOCKS_PUBLIC_KEY: ${{ secrets.E2E_TEST_LIVEBLOCKS_PUBLIC_KEY }}
 
-    defaults:
-      run:
-        working-directory: packages/liveblocks-core
-
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -122,8 +119,6 @@ jobs:
       - name: Run npm install
         run: npm install
 
-      - name: Build
-        run: npm run build
-
       - name: Run e2e client specs tests
         run: npm run test-e2e
+        working-directory: packages/liveblocks-core

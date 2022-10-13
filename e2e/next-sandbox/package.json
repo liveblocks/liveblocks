@@ -1,20 +1,18 @@
 {
-  "name": "next-sandbox",
-  "version": "0.1.0",
+  "name": "@liveblocks/next-sandbox",
   "private": true,
   "scripts": {
     "dev": "next dev --port 3007",
-    "build": "next build",
     "start": "next start",
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/core": "^0.18.3",
-    "@liveblocks/client": "^0.18.3",
-    "@liveblocks/node": "^0.18.3",
-    "@liveblocks/react": "^0.18.3",
-    "@liveblocks/redux": "^0.18.3",
-    "@liveblocks/zustand": "^0.18.3",
+    "@liveblocks/client": "0.18.4",
+    "@liveblocks/core": "0.18.4",
+    "@liveblocks/node": "0.18.4",
+    "@liveblocks/react": "0.18.4",
+    "@liveblocks/redux": "0.18.4",
+    "@liveblocks/zustand": "0.18.4",
     "@reduxjs/toolkit": "^1.8.4",
     "encoding": "^0.1.13",
     "next": "^12.2.5",
@@ -22,16 +20,13 @@
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.1",
     "redux": "^4.1.2",
-    "ts-jest": "^27.0.3",
     "zustand": "^3.6.8"
   },
   "devDependencies": {
+    "@liveblocks/jest-config": "*",
     "@playwright/test": "^1.19.1",
-    "@types/jest": "^26.0.24",
+    "@types/jest": "^29.1.2",
     "@types/lodash": "^4.14.182",
-    "jest": "^27.0.6",
-    "jest-environment-node": "^27.0.6",
-    "lodash": "^4.17.21",
-    "typescript": "^4.3.5"
+    "lodash": "^4.17.21"
   }
 }

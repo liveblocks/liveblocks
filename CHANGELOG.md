@@ -1,5 +1,9 @@
 # v0.18.5 (not yet released)
 
+Internal updates:
+
+- Switch the monorepo over to Turborepo.
+
 # v0.18.4
 
 All packages now provide an `isReadOnly` flag on user instances. It is available

@@ -1,4 +1,5 @@
 {
+  "name": "@liveblocks/redux-whiteboard",
   "description": "This example shows how to build a collaborative whiteboard with Liveblocks, React and Redux.",
   "license": "Apache-2.0",
   "private": true,

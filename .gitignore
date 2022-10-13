@@ -2,6 +2,7 @@
 .next/
 .nuxt/
 .svelte-kit/
+.turbo/
 .vercel/
 .vscode/
 build/

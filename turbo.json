@@ -1,0 +1,26 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "globalDependencies": [".envrc"],
+  "pipeline": {
+    "dev": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": [],
+      // A package's `test` script should only be rerun when either a `.tsx`,
+      // or `.ts` file has changed in `src` or `test` folders.
+      "inputs": ["src/**/*.tsx", "src/**/*.ts", "test/**/*.ts", "test/**/*.tsx"]
+    },
+    "lint": {
+      // A package's `lint` script has no dependencies and can be run whenever.
+      // It also has no filesystem outputs.
+      "outputs": []
+    }
+  }
+}

@@ -1,4 +1,5 @@
 {
+  "name": "@liveblocks/javascript-live-cursors",
   "description": "This example shows how to build live cursors with Liveblocks and esbuild.",
   "license": "Apache-2.0",
   "private": true,

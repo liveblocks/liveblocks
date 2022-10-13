@@ -15,7 +15,7 @@ err () {
 
 generate_esm_wrappers () {
     if [ -f "$DIST/index.js" ]; then
-        npx gen-esm-wrapper "$DIST/index.js" "$DIST/index.mjs"
+        "$ROOT/node_modules/.bin/gen-esm-wrapper" "$DIST/index.js" "$DIST/index.mjs"
     fi
 }
 

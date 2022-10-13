@@ -1,12 +1,11 @@
 {
-  "name": "e2e-puppeteer-jest-demo",
-  "version": "1.0.0",
+  "name": "@liveblocks/e2e-puppeteer-jest-demo",
+  "private": true,
   "description": "E2E tests with puppeteer & jest",
   "main": "index.js",
   "scripts": {
     "test": "jest"
   },
-  "author": "",
   "license": "MIT",
   "devDependencies": {
     "jest": "^27.4.7",

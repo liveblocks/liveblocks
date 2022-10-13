@@ -1,4 +1,5 @@
 {
+  "name": "@liveblocks/zustand-todo-list",
   "description": "This example shows how to build a collaborative to-do list with Liveblocks, React and Zustand.",
   "license": "Apache-2.0",
   "private": true,

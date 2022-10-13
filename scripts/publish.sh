@@ -60,8 +60,7 @@ fi
 
 # Turns "packages/liveblocks-core" => "@liveblocks/core"
 npm_pkgname () {
-    PKGDIR="$1"
-    echo "@liveblocks/${PKGDIR#"packages/liveblocks-"}"
+    jq -r .name "$1/package.json"
 }
 
 check_git_toolbelt_installed () {
@@ -145,30 +144,22 @@ check_npm_stuff_is_stable () {
     for pkgdir in ${PACKAGE_DIRS[@]}; do
         pkgname="$(npm_pkgname "$pkgdir")"
         echo "Rebuilding node_modules for $pkgname (this may take a while)..."
-        ( cd "$pkgdir" && (
-            # Before bumping anything, first make sure that all projects have
-            # a clean and stable node_modules directory and lock files!
-            rm -rf node_modules
-
-            logfile="$(mktemp)"
-            if ! npm install > "$logfile" 2> "$logfile"; then
-                cat "$logfile" >&2
-                err ""
-                err "The error above happened during the building of $PKGDIR."
-                exit 4
-            fi
-
-            if git is-dirty; then
-                err "I just removed node_modules and reinstalled all package dependencies"
-                err "inside $pkgdir, and found unexpected changes in the following files:"
-                err ""
-                ( cd "$ROOT" && git modified )
-                err ""
-                err "Please fix those issues first."
-                exit 2
-            fi
-        ) )
+        rm -rf "$pkgdir/node_modules"
     done
+
+    echo "Rebuilding node_modules for all workspaces (this may take a while)..."
+    rm -rf node_modules
+    npm install
+
+    if git is-dirty; then
+        err "I just removed node_modules and reinstalled all package dependencies"
+        err "inside $pkgdir, and found unexpected changes in the following files:"
+        err ""
+        ( cd "$ROOT" && git modified )
+        err ""
+        err "Please fix those issues first."
+        exit 2
+    fi
 }
 
 check_all_the_things () {
@@ -203,49 +194,53 @@ while ! is_valid_version "$VERSION"; do
     read -p "Enter a new version: " VERSION
 done
 
+all_published_pkgnames () {
+    for pkgdir in ${PACKAGE_DIRS[@]}; do
+        jq -r .name "$ROOT/$pkgdir/package.json"
+    done
+}
+
 bump_version_in_pkg () {
-    SKIP_PEERS=0
-    if [ "$1" = "--no-peers" ]; then
-        SKIP_PEERS=1
-        shift 1
+    VERSION="$1"
+
+    # Only bump if this is a workspace that _has_ a version
+    if [ "$(jq -r .version package.json)" != "null" ]; then
+        jq ".version = \"$VERSION\"" package.json | sponge package.json
     fi
 
-    PKGDIR="$1"
-    VERSION="$2"
-
-    jq ".version=\"$VERSION\"" package.json | sponge package.json
-
-    # If this is one of the dependant packages, also bump their versions
-    if [ "$SKIP_PEERS" -eq 0 ]; then
-        if [ "$(jq '.dependencies."@liveblocks/core"' package.json)" != "null" ]; then
-            jq ".dependencies.\"@liveblocks/core\"=\"$VERSION\"" package.json | sponge package.json
-        fi
-        if [ "$(jq '.dependencies."@liveblocks/client"' package.json)" != "null" ]; then
-            jq ".dependencies.\"@liveblocks/client\"=\"$VERSION\"" package.json | sponge package.json
-        fi
-    fi
+    for pkgname in $( all_published_pkgnames ); do
+        for key in dependencies devDependencies peerDependencies; do
+            if [ "$(jq ".${key}.\"${pkgname}\"" package.json)" != "null" ]; then
+                jq ".${key}.\"${pkgname}\" = \"$VERSION\"" package.json | sponge package.json
+            fi
+        done
+    done
 
     prettier --write package.json
+}
 
-    logfile="$(mktemp)"
-    if ! npm install > "$logfile" 2> "$logfile"; then
-        cat "$logfile" >&2
-        err ""
-        err "The error above happened during the building of $PKGDIR."
-        exit 4
-    fi
+# NOTE: Isn't there just a simple NPM command that will list these?
+expand_workspace_globs () {
+    jq -r '.workspaces[]' "$ROOT/package.json" | sed -Ee 's/.*/echo &/' | sh | tr ' ' '\n'
+}
 
-    if [ "$CURRENT_VERSION" != "$VERSION" ]; then
-        if ! git modified | grep -qEe package-lock.json; then
-            err "Hmm. package-lock.json wasn\'t affected by the version bump. This is fishy. Please manually inspect!"
-            exit 5
+all_workspaces () {
+    for possible_workspace in $( expand_workspace_globs ); do
+        if [ -f "$possible_workspace/package.json" ]; then
+            echo "$possible_workspace"
         fi
-    fi
+    done
 }
 
-build_pkg () {
-    npm run build
+build_version_everywhere () {
+    VERSION="$1"
+
+    echo "==> Bumping all workspaces to ${VERSION}"
+    for pkgdir in $( all_workspaces ); do
+        ( cd "$pkgdir" && bump_version_in_pkg "$VERSION" )
+    done
 }
+
 
 npm_pkg_exists () {
     PKGNAME="$1"
@@ -314,15 +309,20 @@ commit_to_git () {
 }
 
 # Build and publish all the other packages, one-by-one
+build_version_everywhere "$VERSION"
+
+# Update package-lock.json with newly bumped versions
+npm install
+commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
+
+echo "==> Rebuilding packages"
+turbo run build --force
+
+# Publish to NPM
 for pkgdir in ${PACKAGE_DIRS[@]}; do
     pkgname="$(npm_pkgname "$pkgdir")"
-    echo "==> Building and publishing ${pkgname}"
-    ( cd "$pkgdir" && (
-        bump_version_in_pkg "$pkgdir" "$VERSION"
-        build_pkg
-        publish_to_npm "$pkgname"
-        commit_to_git "Bump $pkgname to $VERSION" "$pkgdir"
-    ) )
+    echo "==> Publishing ${pkgname} to NPM"
+    ( cd "$pkgdir" && publish_to_npm "$pkgname" )
 done
 
 # By now, all packages should be published under a "private" tag.
