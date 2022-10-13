@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/client",
-  "version": "0.18.3",
+  "version": "0.18.4",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -27,7 +27,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/core": "0.18.3"
+    "@liveblocks/core": "0.18.4"
   },
   "devDependencies": {
     "@types/jest": "^29.1.2",
