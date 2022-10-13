@@ -1,5 +1,10 @@
 # v0.18.5 (not yet released)
 
+Bug fix:
+
+- Fixes a small bug in a type definition. The newly added `scopes` field is
+  optional, but this wasn’t correctly reflected by the `BaseUserMeta` type.
+
 Internal updates:
 
 - Switch the monorepo over to Turborepo.
