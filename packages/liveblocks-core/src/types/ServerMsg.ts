@@ -155,7 +155,7 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
 export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
   type: ServerMsgCode.ROOM_STATE;
   users: {
-    [actor: number]: TUserMeta;
+    [actor: number]: TUserMeta & { scopes: string[] };
   };
 };
 

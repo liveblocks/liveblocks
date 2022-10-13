@@ -1,4 +1,8 @@
-# v0.18.5 (not yet released)
+# v0.18.5
+
+Bug fix:
+
+- Fixes a small bug in a type definition, `scopes` was removed from `BaseUserMeta`.
 
 Internal updates:
 

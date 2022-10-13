@@ -907,7 +907,7 @@ function makeStateMachine<
     }
   }
 
-  function isReadOnly(scopes: string[]) {
+  function isStorageReadOnly(scopes: string[]) {
     return (
       scopes.includes(RoomScope.Read) &&
       scopes.includes(RoomScope.PresenceWrite) &&
@@ -927,7 +927,7 @@ function makeStateMachine<
         id: token.actor,
         userInfo: token.info,
         userId: token.id,
-        isReadOnly: isReadOnly(token.scopes),
+        isReadOnly: isStorageReadOnly(token.scopes),
       },
       batchUpdates
     );
@@ -1010,7 +1010,7 @@ function makeStateMachine<
         connectionId,
         user.id,
         user.info,
-        isReadOnly(user.scopes)
+        isStorageReadOnly(user.scopes)
       );
     }
     return { type: "reset" };
@@ -1036,7 +1036,7 @@ function makeStateMachine<
       message.actor,
       message.id,
       message.info,
-      isReadOnly(message.scopes)
+      isStorageReadOnly(message.scopes)
     );
     // Send current presence to new user
     // TODO: Consider storing it on the backend
