@@ -7,12 +7,12 @@
     "test": "playwright test"
   },
   "dependencies": {
-    "@liveblocks/client": "0.18.4",
-    "@liveblocks/core": "0.18.4",
-    "@liveblocks/node": "0.18.4",
-    "@liveblocks/react": "0.18.4",
-    "@liveblocks/redux": "0.18.4",
-    "@liveblocks/zustand": "0.18.4",
+    "@liveblocks/client": "^0.18.5",
+    "@liveblocks/core": "^0.18.5",
+    "@liveblocks/node": "^0.18.5",
+    "@liveblocks/react": "^0.18.5",
+    "@liveblocks/redux": "^0.18.5",
+    "@liveblocks/zustand": "^0.18.5",
     "@reduxjs/toolkit": "^1.8.4",
     "encoding": "^0.1.13",
     "next": "^12.2.5",
