@@ -2,8 +2,7 @@
 
 Bug fix:
 
-- Fixes a small bug in a type definition. The newly added `scopes` field is
-  optional, but this wasn’t correctly reflected by the `BaseUserMeta` type.
+- Fixes a small bug in a type definition, `scopes` was removed from `BaseUserMeta`.
 
 Internal updates:
 
