@@ -11,4 +11,9 @@ export type BaseUserMeta = {
    * Additional user information that has been set in the authentication endpoint.
    */
   info?: Json;
+
+  /**
+   * Permissions that the user has in the room.
+   */
+  scopes: string[];
 };

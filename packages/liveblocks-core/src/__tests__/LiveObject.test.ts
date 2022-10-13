@@ -1,4 +1,5 @@
 import { LiveList } from "..";
+import { RoomScope } from "../AuthToken";
 import { LiveObject } from "../LiveObject";
 import type { IdTuple, SerializedCrdt } from "../types";
 import { CrdtType, OpCode, WebsocketCloseCodes } from "../types";
@@ -76,6 +77,18 @@ describe("LiveObject", () => {
     assertUndoRedo();
   });
 
+  it("update throws on read-only", async () => {
+    const { storage } = await prepareStorageTest(
+      [createSerializedObject("0:0", { a: 0 })],
+      1,
+      [RoomScope.Read, RoomScope.PresenceWrite]
+    );
+
+    expect(() => storage.root.update({ a: 1 })).toThrowError(
+      "Cannot write to storage with a read only user, please ensure the user has write permissions"
+    );
+  });
+
   it("update existing property", async () => {
     const { storage, assert, assertUndoRedo } = await prepareStorageTest([
       createSerializedObject("0:0", { a: 0 }),
@@ -127,6 +140,18 @@ describe("LiveObject", () => {
     });
 
     assertUndoRedo();
+  });
+
+  it("set throws on read-only", async () => {
+    const { storage } = await prepareStorageTest(
+      [createSerializedObject("0:0", {})],
+      1,
+      [RoomScope.Read, RoomScope.PresenceWrite]
+    );
+
+    expect(() => storage.root.set("a", 1)).toThrowError(
+      "Cannot write to storage with a read only user, please ensure the user has write permissions"
+    );
   });
 
   it("update with LiveObject", async () => {
@@ -470,6 +495,23 @@ describe("LiveObject", () => {
   });
 
   describe("delete", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        child: LiveObject<{ a: number }>;
+      }>(
+        [
+          createSerializedObject("0:0", { a: 1 }),
+          createSerializedObject("0:1", { b: 2 }, "0:0", "child"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      expect(() => storage.root.get("child").delete("a")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     it("detached", () => {
       const liveObject = new LiveObject({ a: 0 });
       liveObject.delete("a");

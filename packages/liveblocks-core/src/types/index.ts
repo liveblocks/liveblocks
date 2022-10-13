@@ -267,6 +267,11 @@ export type User<
    * The user presence.
    */
   readonly presence: TPresence;
+
+  /**
+   * False if the user can modify the room storage, true otherwise.
+   */
+  readonly isReadOnly: boolean;
 };
 
 type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
@@ -331,6 +336,7 @@ export type Connection =
       id: number;
       userId?: string;
       userInfo?: Json;
+      isReadOnly: boolean;
     }
   /* Successful room connection, on the happy path */
   | {
@@ -338,6 +344,7 @@ export type Connection =
       id: number;
       userId?: string;
       userInfo?: Json;
+      isReadOnly: boolean;
     }
   /* Connection lost unexpectedly, considered a temporary hiccup, will retry */
   | { state: "unavailable" }

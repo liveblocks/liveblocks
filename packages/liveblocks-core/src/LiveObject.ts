@@ -437,6 +437,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    */
   set<TKey extends keyof O>(key: TKey, value: O[TKey]): void {
     // TODO: Find out why typescript complains
+    this._pool?.assertStorageIsWritable();
     this.update({ [key]: value } as unknown as Partial<O>);
   }
 
@@ -453,6 +454,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param key The key of the property to delete
    */
   delete(key: keyof O): void {
+    this._pool?.assertStorageIsWritable();
     const keyAsString = key as string;
     const oldValue = this._map.get(keyAsString);
 
@@ -515,6 +517,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
    * @param patch The object used to overrides properties
    */
   update(patch: Partial<O>): void {
+    this._pool?.assertStorageIsWritable();
     if (this._pool === undefined || this._id === undefined) {
       for (const key in patch) {
         const newValue = patch[key];

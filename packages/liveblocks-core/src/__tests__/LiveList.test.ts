@@ -1,3 +1,4 @@
+import { RoomScope } from "../AuthToken";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
@@ -96,6 +97,26 @@ describe("LiveList", () => {
   });
 
   describe("push", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.push("first")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     describe("updates", () => {
       it(
         "push on empty list update",
@@ -212,6 +233,26 @@ describe("LiveList", () => {
   });
 
   describe("insert", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.insert("first", 0)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     describe("updates", () => {
       it(
         "insert at the middle update",
@@ -265,6 +306,26 @@ describe("LiveList", () => {
   });
 
   describe("delete", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.delete(0)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     describe("updates", () => {
       it(
         "delete first update",
@@ -344,6 +405,26 @@ describe("LiveList", () => {
   });
 
   describe("move", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{
+        items: LiveList<string>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.move(0, 1)).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     describe("updates", () => {
       it(
         "move at the end update",
@@ -449,6 +530,24 @@ describe("LiveList", () => {
   });
 
   describe("clear", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.clear()).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     describe("updates", () => {
       it(
         "clear updates",
@@ -542,6 +641,24 @@ describe("LiveList", () => {
   });
 
   describe("set", () => {
+    it("throws on read-only", async () => {
+      const { storage } = await prepareStorageTest<{ items: LiveList<string> }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+        ],
+        1,
+        [RoomScope.Read, RoomScope.PresenceWrite]
+      );
+
+      const root = storage.root;
+      const items = root.get("items");
+
+      expect(() => items.set(0, "A")).toThrowError(
+        "Cannot write to storage with a read only user, please ensure the user has write permissions"
+      );
+    });
+
     it("set register on detached list", () => {
       const list = new LiveList<string>(["A", "B", "C"]);
       list.set(0, "D");
