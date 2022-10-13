@@ -1,4 +1,4 @@
-# v0.18.5 (not yet released)
+# v0.18.5
 
 Bug fix:
 
