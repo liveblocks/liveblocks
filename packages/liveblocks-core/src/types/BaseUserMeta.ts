@@ -15,5 +15,5 @@ export type BaseUserMeta = {
   /**
    * Permissions that the user has in the room.
    */
-  scopes: string[];
+  scopes?: string[];
 };
