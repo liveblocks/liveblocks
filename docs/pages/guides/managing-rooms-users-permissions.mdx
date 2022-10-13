@@ -81,8 +81,6 @@ that drive more people to your product.
 Different permission types can be applied:
 
 <dl>
-  <dt>room:write</dt>
-  <dd>Enables people to view and edit the room.</dd>
   <dt>`room:write`</dt>
   <dd>
     Full access. Enables people to view and edit the room. `isReadOnly` is
@@ -155,7 +153,7 @@ access level to your room.
 // public - everyone can edit and view the room
 "defaultAccesses": ["room:write"]
 
-// readable - everyone can view the room, but only presence can be edited
+// read-only - everyone can view the room, but only presence can be edited
 "defaultAccesses": ["room:read", "room:presence:write"]
 ```
 
@@ -242,7 +240,6 @@ fetch(`https://api.liveblocks.io/v2/rooms/${roomId}`, {
   method: "POST",
   body: JSON.stringify({
     groupsAccesses: {
-      engineering: ["room:write"],
       engineering: ["room:read", "room:presence:write"],
     },
   }),
