@@ -3,28 +3,11 @@ import { CrdtType } from "../types";
 import { OpCode } from "../types/Op";
 import {
   b64decode,
-  compact,
   findNonSerializableValue,
   getTreesDiffOperations,
   tryParseJson,
 } from "../utils";
 import { FIRST_POSITION, SECOND_POSITION } from "./_utils";
-
-describe("compact", () => {
-  it("compact w/ empty list", () => {
-    expect(compact([])).toEqual([]);
-  });
-
-  it("compact removes nulls and undefined values", () => {
-    expect(compact(["a", "b", "c"])).toEqual(["a", "b", "c"]);
-    expect(compact(["x", undefined])).toEqual(["x"]);
-    expect(compact([0, null, undefined, NaN, Infinity])).toEqual([
-      0,
-      NaN,
-      Infinity,
-    ]);
-  });
-});
 
 describe("getTreesDiffOperations", () => {
   test("new liveList Register item", () => {

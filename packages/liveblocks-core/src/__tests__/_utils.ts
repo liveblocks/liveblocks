@@ -1,6 +1,7 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
 import { makePosition } from "../lib/position";
+import { remove } from "../lib/utils";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
@@ -28,7 +29,6 @@ import type {
 } from "../types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
 import type { Op } from "../types/Op";
-import { remove } from "../utils";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

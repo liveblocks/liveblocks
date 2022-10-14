@@ -1,4 +1,4 @@
-import { freeze } from "./utils";
+import { freeze } from "./lib/freeze";
 
 // prettier-ignore
 export type ReadonlyArrayWithLegacyMethods<T> =

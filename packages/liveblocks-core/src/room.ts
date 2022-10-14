@@ -6,6 +6,7 @@ import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
+import { compact } from "./lib/utils";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
@@ -60,7 +61,6 @@ import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
-  compact,
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,

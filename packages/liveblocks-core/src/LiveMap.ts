@@ -1,6 +1,7 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
+import { freeze } from "./lib/freeze";
 import type {
   IdTuple,
   LiveMapUpdates,
@@ -16,7 +17,6 @@ import { OpCode } from "./types/Op";
 import {
   creationOpToLiveNode,
   deserialize,
-  freeze,
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,

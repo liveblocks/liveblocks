@@ -1,7 +1,8 @@
 import { ImmutableRef, merge } from "./ImmutableRef";
 import { asArrayWithLegacyMethods } from "./LegacyArray";
+import { freeze } from "./lib/freeze";
+import { compact, compactObject } from "./lib/utils";
 import type { BaseUserMeta, JsonObject, Others, User } from "./types";
-import { compact, compactObject, freeze } from "./utils";
 
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;

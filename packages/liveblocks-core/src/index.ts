@@ -27,6 +27,7 @@ export {
   errorIf,
   throwUsageError,
 } from "./lib/deprecation";
+export { freeze } from "./lib/freeze";
 export { comparePosition, makePosition } from "./lib/position";
 export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
@@ -101,7 +102,7 @@ export type {
 } from "./types/Op";
 export { OpCode } from "./types/Op";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
+export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
