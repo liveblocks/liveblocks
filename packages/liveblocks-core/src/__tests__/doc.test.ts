@@ -1,7 +1,7 @@
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
-import { OpCode } from "../types";
+import { OpCode } from "../types/Op";
 import {
   createSerializedList,
   createSerializedMap,

@@ -27,7 +27,6 @@ import type {
   LiveStructure,
   LsonObject,
   NodeMap,
-  Op,
   Others,
   OthersEvent,
   ParentToChildNodeMap,
@@ -52,12 +51,13 @@ import type {
 import {
   ClientMsgCode,
   isRoomEventName,
-  OpCode,
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject } from "./types/Json";
+import type { Op } from "./types/Op";
+import { OpCode } from "./types/Op";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   compact,

@@ -36,21 +36,11 @@ export type {
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
-  CreateChildOp,
-  CreateListOp,
-  CreateMapOp,
-  CreateObjectOp,
-  CreateOp,
-  CreateRegisterOp,
-  CreateRootObjectOp,
-  DeleteCrdtOp,
-  DeleteObjectKeyOp,
   FetchStorageClientMsg,
   IdTuple,
   InitialDocumentStateServerMsg,
   LiveNode,
   NodeMap,
-  Op,
   ParentToChildNodeMap,
   Resolve,
   RoomInitializers,
@@ -63,9 +53,7 @@ export type {
   SerializedRegister,
   SerializedRootObject,
   ServerMsg,
-  SetParentKeyOp,
   ToJson,
-  UpdateObjectOp,
   UpdatePresenceClientMsg,
   UpdatePresenceServerMsg,
   UpdateStorageClientMsg,
@@ -92,12 +80,26 @@ export type {
 export {
   ClientMsgCode,
   CrdtType,
-  OpCode,
   ServerMsgCode,
   WebsocketCloseCodes,
 } from "./types";
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
+export type {
+  CreateChildOp,
+  CreateListOp,
+  CreateMapOp,
+  CreateObjectOp,
+  CreateOp,
+  CreateRegisterOp,
+  CreateRootObjectOp,
+  DeleteCrdtOp,
+  DeleteObjectKeyOp,
+  Op,
+  SetParentKeyOp,
+  UpdateObjectOp,
+} from "./types/Op";
+export { OpCode } from "./types/Op";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
 export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
 

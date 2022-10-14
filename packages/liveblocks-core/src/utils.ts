@@ -5,7 +5,6 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
-  CreateOp,
   IdTuple,
   Json,
   LiveListUpdates,
@@ -16,12 +15,13 @@ import type {
   Lson,
   LsonObject,
   NodeMap,
-  Op,
   ParentToChildNodeMap,
   SerializedCrdt,
   StorageUpdate,
 } from "./types";
-import { CrdtType, OpCode } from "./types";
+import { CrdtType } from "./types";
+import type { CreateOp, Op } from "./types/Op";
+import { OpCode } from "./types/Op";
 
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {

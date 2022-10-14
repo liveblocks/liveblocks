@@ -755,21 +755,6 @@ export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
-  CreateChildOp,
-  CreateListOp,
-  CreateMapOp,
-  CreateObjectOp,
-  CreateOp,
-  CreateRegisterOp,
-  CreateRootObjectOp,
-  DeleteCrdtOp,
-  DeleteObjectKeyOp,
-  Op,
-  SetParentKeyOp,
-  UpdateObjectOp,
-} from "./Op";
-export { OpCode } from "./Op";
-export type {
   IdTuple,
   SerializedChild,
   SerializedCrdt,

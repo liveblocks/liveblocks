@@ -3,7 +3,8 @@ import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
 import type { IdTuple, SerializedCrdt } from "../types";
-import { CrdtType, OpCode, WebsocketCloseCodes } from "../types";
+import { CrdtType, WebsocketCloseCodes } from "../types";
+import { OpCode } from "../types/Op";
 import {
   listUpdate,
   listUpdateDelete,

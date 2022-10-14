@@ -2,18 +2,17 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
-  CreateChildOp,
-  CreateMapOp,
   IdTuple,
   LiveMapUpdates,
   LiveNode,
   Lson,
-  Op,
   ParentToChildNodeMap,
   SerializedMap,
 } from "./types";
-import { CrdtType, OpCode } from "./types";
+import { CrdtType } from "./types";
 import type { ToImmutable } from "./types/Immutable";
+import type { CreateChildOp, CreateMapOp, Op } from "./types/Op";
+import { OpCode } from "./types/Op";
 import {
   creationOpToLiveNode,
   deserialize,

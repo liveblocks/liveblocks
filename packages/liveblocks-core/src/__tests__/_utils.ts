@@ -17,7 +17,6 @@ import type {
   Json,
   JsonObject,
   LsonObject,
-  Op,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
@@ -28,6 +27,7 @@ import type {
   ToImmutable,
 } from "../types";
 import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
+import type { Op } from "../types/Op";
 import { remove } from "../utils";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";

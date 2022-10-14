@@ -1,5 +1,6 @@
 import type { NodeMap } from "../types";
-import { CrdtType, OpCode } from "../types";
+import { CrdtType } from "../types";
+import { OpCode } from "../types/Op";
 import {
   b64decode,
   compact,

@@ -2,17 +2,16 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./assert";
 import type {
-  CreateChildOp,
-  CreateRegisterOp,
   IdTuple,
   Json,
   LiveNode,
-  Op,
   ParentToChildNodeMap,
   SerializedRegister,
 } from "./types";
-import { CrdtType, OpCode } from "./types";
+import { CrdtType } from "./types";
 import type { Immutable } from "./types/Immutable";
+import type { CreateChildOp, CreateRegisterOp, Op } from "./types/Op";
+import { OpCode } from "./types/Op";
 
 /**
  * INTERNAL
