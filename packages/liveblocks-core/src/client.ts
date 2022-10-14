@@ -293,7 +293,7 @@ export function createClient(options: ClientOptions): Client {
 
         const unsubs: (() => void)[] = [];
 
-        function unsubscibeAllSyncers() {
+        function unsubscribeAllSyncers() {
           let unsub: (() => void) | undefined;
           while ((unsub = unsubs.pop())) {
             // Unsubscribe all of the listeners we registered since the
@@ -308,7 +308,7 @@ export function createClient(options: ClientOptions): Client {
             // it the current state, and start sending it updates whenever
             // the state changes.
             case "connect": {
-              unsubscibeAllSyncers();
+              unsubscribeAllSyncers();
 
               // Sync the room ID instantly, as soon as we know it
               syncRoomId();
