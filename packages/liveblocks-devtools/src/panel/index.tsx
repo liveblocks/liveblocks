@@ -19,42 +19,38 @@ function Panel() {
 
   const room = roomOrNull;
   return (
-    <div>
-      <div>
-        Connected to <strong>{room.roomId}</strong>
-      </div>
-      <Tabs
-        className="h-full"
-        defaultValue="debug"
-        tabs={[
-          {
-            value: "debug",
-            title: "Debug",
-            content: <Debug />,
-          },
-          {
-            value: "storage",
-            title: "Storage",
-            content: null,
-          },
-          {
-            value: "presence",
-            title: "Presence",
-            content: null,
-          },
-          {
-            value: "history",
-            title: "History",
-            content: null,
-          },
-          {
-            value: "events",
-            title: "Events",
-            content: null,
-          },
-        ]}
-      />
-    </div>
+    <Tabs
+      className="h-full"
+      defaultValue="debug"
+      tabs={[
+        {
+          value: "debug",
+          title: "Debug",
+          content: <Debug />,
+        },
+        {
+          value: "storage",
+          title: "Storage",
+          content: null,
+        },
+        {
+          value: "presence",
+          title: "Presence",
+          content: null,
+        },
+        {
+          value: "history",
+          title: "History",
+          content: null,
+        },
+        {
+          value: "events",
+          title: "Events",
+          content: null,
+        },
+      ]}
+      extra={room.roomId}
+    />
   );
 }
 

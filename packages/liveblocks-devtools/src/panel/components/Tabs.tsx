@@ -16,6 +16,7 @@ interface Tab {
 
 interface TabsProps extends DefaultTabsProps {
   tabs: Tab[];
+  extra?: string;
 }
 
 export function Tabs({ tabs, className, ...props }: TabsProps) {
@@ -36,6 +37,19 @@ export function Tabs({ tabs, className, ...props }: TabsProps) {
             {tab.title}
           </Trigger>
         ))}
+        {props.extra ? (
+          <div
+            className={cx(
+              "relative flex items-center px-3",
+              "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:hidden after:h-0.5 after:w-full after:bg-orange-500",
+              "dark:after:bg-orange-400",
+              "font-bold",
+              "ml-auto"
+            )}
+          >
+            {props.extra}
+          </div>
+        ) : null}
       </List>
       {tabs.map((tab) => (
         <Content
