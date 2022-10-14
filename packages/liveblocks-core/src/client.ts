@@ -237,8 +237,11 @@ export function createClient(options: ClientOptions): Client {
         // devtool panels know the client is ready to connect
         sendToPanel({ name: "wake-up-devtools" });
 
-        // Any time storage updates, send the new storage root to the dev panel
-        room.events.storage.subscribe(() => {
+        function syncRoomId() {
+          sendToPanel({ name: "connected-to-room", roomId });
+        }
+
+        function syncStorage() {
           const root = room.getStorageSnapshot();
           if (root) {
             sendToPanel({
@@ -247,10 +250,9 @@ export function createClient(options: ClientOptions): Client {
               storage: root.toImmutable() as ImmutableDataObject,
             });
           }
-        });
+        }
 
-        // Any time me updates, send the new storage root to the dev panel
-        room.events.me.subscribe(() => {
+        function syncMe() {
           const me = room.getSelf();
           if (me) {
             sendToPanel({
@@ -259,10 +261,10 @@ export function createClient(options: ClientOptions): Client {
               me,
             });
           }
-        });
+        }
 
-        // Any time others updates, send the new storage root to the dev panel
-        room.events.others.subscribe(() => {
+        function syncOthers() {
+          // Any time others updates, send the new storage root to the dev panel
           const others = room.getOthers();
           if (others) {
             sendToPanel({
@@ -271,17 +273,67 @@ export function createClient(options: ClientOptions): Client {
               others,
             });
           }
-        });
+        }
+
+        function syncFullState() {
+          const root = room.getStorageSnapshot();
+          const me = room.getSelf();
+          const others = room.getOthers();
+          sendToPanel({
+            name: "sync-state",
+            roomId,
+            storage:
+              root !== null
+                ? (root.toImmutable() as ImmutableDataObject)
+                : undefined,
+            me: me ?? undefined,
+            others,
+          });
+        }
+
+        const unsubs: (() => void)[] = [];
+
+        function unsubscibeAllSyncers() {
+          let unsub: (() => void) | undefined;
+          while ((unsub = unsubs.pop())) {
+            // Unsubscribe all of the listeners we registered since the
+            // devpanel "connected"
+            unsub();
+          }
+        }
 
         onMessageFromPanel.subscribe((message) => {
           switch (message.name) {
+            // When a devtool panel "connects" to a live running client, send
+            // it the current state, and start sending it updates whenever
+            // the state changes.
             case "connect": {
-              sendToPanel({
-                name: "connected-to-room",
-                roomId,
-              });
+              unsubscibeAllSyncers();
+
+              // Sync the room ID instantly, as soon as we know it
+              syncRoomId();
+              syncFullState();
+
+              unsubs.push(
+                // When storage initializes, send the update
+                room.events.storageDidLoad.subscribeOnce(syncStorage),
+
+                // Any time storage updates, send the new storage root
+                room.events.storage.subscribe(syncStorage),
+
+                // Any time "me" or "others" updates, send the new values accordingly
+                room.events.me.subscribe(syncMe),
+                room.events.others.subscribe(syncOthers)
+              );
+
               break;
             }
+
+            // TODO: Implement this message from the dev panel, when it closes
+            // case "disconnect": {
+            //   unsubscibeAllSyncers();
+            //   break;
+            // }
 
             default: {
               throw new Error(`Unhandled message from panel: ${message.name}`);
