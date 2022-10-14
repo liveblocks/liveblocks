@@ -29,19 +29,3 @@ if (typeof window !== "undefined") {
 }
 
 export const onMessageFromPanel = eventSource.observable;
-
-// export function onMessageFromPanel(message: FullPanelToClientMessage) {
-//   switch (message.name) {
-//     // case "double-this-number-plz": {
-//     //   sendToPanel({
-//     //     name: "answer",
-//     //     value: Math.ceil(message.value) * 2,
-//     //   });
-//     //   break;
-//     // }
-
-//     default: {
-//       console.error("Unknown message?", message);
-//     }
-//   }
-// }
