@@ -1,6 +1,6 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
-import { makePosition } from "../position";
+import { makePosition } from "../lib/position";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,

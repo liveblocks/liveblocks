@@ -1,6 +1,6 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "..";
-import { assertNever } from "../assert";
 import { lsonToJson } from "../immutable";
+import { assertNever } from "../lib/assert";
 import type {
   LiveListUpdates,
   LiveObjectUpdateDelta,

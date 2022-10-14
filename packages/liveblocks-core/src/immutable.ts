@@ -1,4 +1,4 @@
-import * as console from "./fancy-console";
+import * as console from "./lib/fancy-console";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";

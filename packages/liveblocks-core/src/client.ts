@@ -1,4 +1,4 @@
-import { deprecateIf } from "./deprecation";
+import { deprecateIf } from "./lib/deprecation";
 import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {

@@ -1,11 +1,11 @@
 import { LiveList, LiveMap } from "..";
-import * as console from "../fancy-console";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObject,
   patchLiveObjectKey,
 } from "../immutable";
+import * as console from "../lib/fancy-console";
 import { LiveObject } from "../LiveObject";
 import type {
   BaseUserMeta,

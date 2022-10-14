@@ -1,5 +1,5 @@
 import type { ManagedPool } from "./AbstractCrdt";
-import { assertNever, nn } from "./assert";
+import { assertNever, nn } from "./lib/assert";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";

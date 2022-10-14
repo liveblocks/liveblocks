@@ -3,8 +3,8 @@ import { setupServer } from "msw/node";
 
 import type { RoomAuthToken } from "../AuthToken";
 import { RoomScope } from "../AuthToken";
-import * as console from "../fancy-console";
 import { lsonToJson } from "../immutable";
+import * as console from "../lib/fancy-console";
 import { LiveList } from "../LiveList";
 import {
   _private_defaultState as defaultState,

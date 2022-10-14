@@ -1,4 +1,4 @@
-import { assertNever } from "./assert";
+import { assertNever } from "./lib/assert";
 import type { LiveNode, SerializedCrdt, StorageUpdate } from "./types";
 import type { Immutable } from "./types/Immutable";
 import type { CreateChildOp, Op } from "./types/Op";

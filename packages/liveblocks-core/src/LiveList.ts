@@ -1,8 +1,8 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { nn } from "./lib/assert";
+import { comparePosition, makePosition } from "./lib/position";
 import { LiveRegister } from "./LiveRegister";
-import { comparePosition, makePosition } from "./position";
 import type {
   IdTuple,
   LiveListUpdateDelta,

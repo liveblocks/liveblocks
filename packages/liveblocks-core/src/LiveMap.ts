@@ -1,6 +1,6 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import { nn } from "./lib/assert";
 import type {
   IdTuple,
   LiveMapUpdates,

@@ -11,26 +11,26 @@
  * https://join.team/liveblocks ;)
  */
 
-export { assertNever, nn } from "./assert";
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
 export { createClient } from "./client";
-export {
-  deprecate,
-  deprecateIf,
-  errorIf,
-  throwUsageError,
-} from "./deprecation";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
 export { asArrayWithLegacyMethods } from "./LegacyArray";
+export { assertNever, nn } from "./lib/assert";
+export {
+  deprecate,
+  deprecateIf,
+  errorIf,
+  throwUsageError,
+} from "./lib/deprecation";
+export { comparePosition, makePosition } from "./lib/position";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export { comparePosition, makePosition } from "./position";
 export { shallow } from "./shallow";
 export type {
   BroadcastedEventServerMsg,
