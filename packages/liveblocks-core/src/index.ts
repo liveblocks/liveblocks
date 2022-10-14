@@ -28,10 +28,10 @@ export {
   throwUsageError,
 } from "./lib/deprecation";
 export { comparePosition, makePosition } from "./lib/position";
+export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export { shallow } from "./shallow";
 export type {
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,

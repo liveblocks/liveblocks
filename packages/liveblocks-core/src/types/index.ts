@@ -1,5 +1,5 @@
-import type { Callback, Observable } from "../EventSource";
 import type { ReadonlyArrayWithLegacyMethods } from "../LegacyArray";
+import type { Callback, Observable } from "../lib/EventSource";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";

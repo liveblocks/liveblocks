@@ -1,4 +1,4 @@
-import { makePosition, max, min, pos, posCodes } from "../lib/position";
+import { makePosition, max, min, pos, posCodes } from "../position";
 
 const mid = (min + max) >> 1;
 
