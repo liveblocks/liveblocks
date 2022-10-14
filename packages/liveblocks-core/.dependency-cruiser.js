@@ -1,7 +1,6 @@
 /** @type {import('dependency-cruiser').IConfiguration} */
 module.exports = {
   forbidden: [
-    /* rules from the 'recommended' preset: */
     {
       name: "no-circular",
       severity: "warn",
@@ -13,6 +12,7 @@ module.exports = {
         circular: true,
       },
     },
+
     {
       name: "no-orphans",
       comment:
@@ -33,6 +33,7 @@ module.exports = {
       },
       to: {},
     },
+
     {
       name: "no-deprecated-core",
       comment:
@@ -66,6 +67,7 @@ module.exports = {
         ],
       },
     },
+
     {
       name: "not-to-deprecated",
       comment:
@@ -77,6 +79,7 @@ module.exports = {
         dependencyTypes: ["deprecated"],
       },
     },
+
     {
       name: "no-non-package-json",
       severity: "error",
@@ -90,6 +93,7 @@ module.exports = {
         dependencyTypes: ["npm-no-pkg", "npm-unknown"],
       },
     },
+
     {
       name: "not-to-unresolvable",
       comment:
@@ -101,6 +105,7 @@ module.exports = {
         couldNotResolve: true,
       },
     },
+
     {
       name: "no-duplicate-dep-types",
       comment:
@@ -126,70 +131,51 @@ module.exports = {
         "implement functionality this is odd. Either you're writing a test outside the test folder " +
         "or there's something in the test folder that isn't a test.",
       severity: "error",
-      from: {
-        pathNot: "^(src/__tests__)",
-      },
-      to: {
-        path: "^(src/__tests__)",
-      },
+      from: { pathNot: "/__tests__/" },
+      to: { path: "/__tests__/" },
     },
+
+    // "Swimlane 0" - lib/
     {
-      name: "not-to-spec",
+      name: "illegal-import-from-libs",
       comment:
-        "This module depends on a spec (test) file. The sole responsibility of a spec file is to test code. " +
-        "If there's something in a spec that's of use to other modules, it doesn't have that single " +
-        "responsibility anymore. Factor it out into (e.g.) a separate utility/ helper or a mock.",
+        "All modules in lib/ must have no other dependencies. They aren't Liveblocks-specific. They could, theoretically, be NPM packages of their own.",
       severity: "error",
-      from: {},
-      to: {
-        path: "\\.(spec|test)\\.(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee\\.md)$",
-      },
+      from: { path: "^src/lib/" },
+      to: { pathNot: "^src/(lib)/" },
     },
+
+    // "Swimlane 1" - protocol/
     {
-      name: "not-to-dev-dep",
+      name: "illegal-import-from-protocol",
+      comment:
+        "All modules in protocol/ must have no other dependencies apart from lib/.",
       severity: "error",
-      comment:
-        "This module depends on an npm package from the 'devDependencies' section of your " +
-        "package.json. It looks like something that ships to production, though. To prevent problems " +
-        "with npm packages that aren't there on production declare it (only!) in the 'dependencies'" +
-        "section of your package.json. If this module is development only - add it to the " +
-        "from.pathNot re of the not-to-dev-dep rule in the dependency-cruiser configuration",
-      from: {
-        path: "^(src)",
-        pathNot:
-          "\\.(spec|test)\\.(js|mjs|cjs|ts|ls|coffee|litcoffee|coffee\\.md)$",
-      },
-      to: {
-        dependencyTypes: ["npm-dev"],
-      },
+      from: { path: "^src/protocol/" },
+      to: { pathNot: "^src/(protocol|lib)/" },
     },
+
+    // "Swimlane 2" - types/
     {
-      name: "optional-deps-used",
-      severity: "info",
+      name: "illegal-import-from-types",
       comment:
-        "This module depends on an npm package that is declared as an optional dependency " +
-        "in your package.json. As this makes sense in limited situations only, it's flagged here. " +
-        "If you're using an optional dependency here by design - add an exception to your" +
-        "dependency-cruiser configuration.",
-      from: {},
-      to: {
-        dependencyTypes: ["npm-optional"],
-      },
+        "All modules in types/ must have no other dependencies apart from protocol/ or lib/.",
+      severity: "error",
+      from: { path: "^src/types/" },
+      to: { pathNot: "^src/(types|protocol|lib)/" },
     },
+
+    // "Swimlane 3" - refs/
     {
-      name: "peer-deps-used",
+      name: "illegal-import-from-refs",
       comment:
-        "This module depends on an npm package that is declared as a peer dependency " +
-        "in your package.json. This makes sense if your package is e.g. a plugin, but in " +
-        "other cases - maybe not so much. If the use of a peer dependency is intentional " +
-        "add an exception to your dependency-cruiser configuration.",
-      severity: "warn",
-      from: {},
-      to: {
-        dependencyTypes: ["npm-peer"],
-      },
+        "All modules in refs/ must have no other dependencies apart from types/, protocol/ or lib/.",
+      severity: "error",
+      from: { path: "^src/refs/" },
+      to: { pathNot: "^src/(refs|types|protocol|lib)/" },
     },
   ],
+
   options: {
     /* conditions specifying which files not to follow further when encountered:
        - path: a regular expression to match
@@ -426,4 +412,3 @@ module.exports = {
     },
   },
 };
-// generated: dependency-cruiser@11.16.1 on 2022-10-14T14:11:20.984Z
