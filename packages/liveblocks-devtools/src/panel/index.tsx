@@ -2,10 +2,27 @@ import { createRoot } from "react-dom/client";
 import { Tabs } from "./components/Tabs";
 import { Debug } from "./tabs/debug";
 import { ThemeProvider } from "./theme";
+import {
+  ConnectedRoomProvider,
+  useConnectedRoomOrNull,
+} from "./contexts/ConnectedRoom";
 
 function Panel() {
+  const roomOrNull = useConnectedRoomOrNull();
+  if (roomOrNull === null) {
+    return (
+      <div className="h-full">
+        <p className="p-5">No Liveblocks application found.</p>
+      </div>
+    );
+  }
+
+  const room = roomOrNull;
   return (
-    <ThemeProvider>
+    <div>
+      <div>
+        Connected to <strong>{room.roomId}</strong>
+      </div>
       <Tabs
         className="h-full"
         defaultValue="debug"
@@ -37,9 +54,19 @@ function Panel() {
           },
         ]}
       />
+    </div>
+  );
+}
+
+function PanelApp() {
+  return (
+    <ThemeProvider>
+      <ConnectedRoomProvider>
+        <Panel />
+      </ConnectedRoomProvider>
     </ThemeProvider>
   );
 }
 
 const root = createRoot(document.getElementById("root"));
-root.render(<Panel />);
+root.render(<PanelApp />);

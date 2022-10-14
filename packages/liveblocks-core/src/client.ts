@@ -1,4 +1,8 @@
 import type { LsonObject } from "./crdts/Lson";
+// NOTE: These helpers belong to the _client_. If we move the client code into
+// @liveblocks/client, this code should move along there
+import { onMessageFromPanel, sendToPanel } from "./devtools";
+import type { ImmutableDataObject } from "./devtools/protocol";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -215,6 +219,77 @@ export function createClient(options: ClientOptions): Client {
       }
 
       internalRoom.connect();
+
+      // --------------------------------------------------------------------
+      // NOTE:
+      // This code isn't production ready yet and isn't well-abstracted yet!
+      // This is just me testing out a bunch of approaches.
+      // XXX This needs error handling, retry logic, and unsubscriptions!
+      // --------------------------------------------------------------------
+      // Send a message to the dev panel
+      if (
+        process.env.NODE_ENV !== "production" &&
+        typeof window !== "undefined"
+      ) {
+        const room = internalRoom.room;
+
+        // On connect, immediately send the broadcast to let any listening
+        // devtool panels know the client is ready to connect
+        sendToPanel({ name: "wake-up-devtools" });
+
+        // Any time storage updates, send the new storage root to the dev panel
+        room.events.storage.subscribe(() => {
+          const root = room.getStorageSnapshot();
+          if (root) {
+            sendToPanel({
+              name: "sync-state",
+              roomId,
+              storage: root.toImmutable() as ImmutableDataObject,
+            });
+          }
+        });
+
+        // Any time me updates, send the new storage root to the dev panel
+        room.events.me.subscribe(() => {
+          const me = room.getSelf();
+          if (me) {
+            sendToPanel({
+              name: "sync-state",
+              roomId,
+              me,
+            });
+          }
+        });
+
+        // Any time others updates, send the new storage root to the dev panel
+        room.events.others.subscribe(() => {
+          const others = room.getOthers();
+          if (others) {
+            sendToPanel({
+              name: "sync-state",
+              roomId,
+              others,
+            });
+          }
+        });
+
+        onMessageFromPanel.subscribe((message) => {
+          switch (message.name) {
+            case "connect": {
+              sendToPanel({
+                name: "connected-to-room",
+                roomId,
+              });
+              break;
+            }
+
+            default: {
+              throw new Error(`Unhandled message from panel: ${message.name}`);
+            }
+          }
+        });
+      }
+      // -----------------------------------------------------------
     }
     return internalRoom.room;
   }
@@ -224,6 +299,14 @@ export function createClient(options: ClientOptions): Client {
     if (room) {
       room.disconnect();
       rooms.delete(roomId);
+
+      // -----------------------------------------------------------
+      // XXX Add a bit more abstraction
+      sendToPanel({
+        name: "disconnected-from-room",
+        roomId,
+      });
+      // -----------------------------------------------------------
     }
   }
 

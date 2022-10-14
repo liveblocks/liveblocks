@@ -25,6 +25,13 @@ export type {
 } from "./crdts/Lson";
 export type { StorageUpdate } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/ToImmutable";
+export type {
+  ClientToPanelMessage,
+  FullClientToPanelMessage,
+  FullPanelToClientMessage,
+  ImmutableDataObject,
+  PanelToClientMessage,
+} from "./devtools/protocol";
 export {
   legacy_patchImmutableObject,
   lsonToJson,

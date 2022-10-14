@@ -2,7 +2,7 @@ import browser, { Runtime } from "webextension-polyfill";
 import type {
   FullPanelToClientMessage,
   FullClientToPanelMessage,
-} from "./lib/protocol";
+} from "@liveblocks/core";
 
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 

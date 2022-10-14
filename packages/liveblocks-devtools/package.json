@@ -12,6 +12,7 @@
     "build:firefox": "plasmo build --target=firefox-mv2"
   },
   "dependencies": {
+    "@liveblocks/core": "0.19.0",
     "@radix-ui/react-tabs": "^1.0.0",
     "classnames": "^2.3.2",
     "plasmo": "^0.56.1",

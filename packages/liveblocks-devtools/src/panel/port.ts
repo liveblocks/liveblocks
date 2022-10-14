@@ -3,7 +3,7 @@ import type {
   PanelToClientMessage,
   FullPanelToClientMessage,
   FullClientToPanelMessage,
-} from "../lib/protocol";
+} from "@liveblocks/core";
 
 const DEV_PANEL = "liveblocks-devtools-panel";
 
@@ -25,6 +25,3 @@ export function sendMessageToClient(message: PanelToClientMessage): void {
   };
   port.postMessage(fullMessage);
 }
-
-// Send the initial connect event
-sendMessageToClient({ name: "connect" });

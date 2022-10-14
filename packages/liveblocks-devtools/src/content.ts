@@ -2,7 +2,7 @@ import browser from "webextension-polyfill";
 import type {
   FullPanelToClientMessage,
   FullClientToPanelMessage,
-} from "./lib/protocol";
+} from "@liveblocks/core";
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) {
