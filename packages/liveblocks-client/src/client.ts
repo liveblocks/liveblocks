@@ -1,18 +1,14 @@
-import { deprecateIf } from "./deprecation";
-import type { InternalRoom } from "./room";
-import { createRoom } from "./room";
 import type {
-  Authentication,
   BaseUserMeta,
-  Client,
-  ClientOptions,
+  InternalRoom,
   Json,
   JsonObject,
   LsonObject,
   Resolve,
   Room,
   RoomInitializers,
-} from "./types";
+} from "@liveblocks/core";
+import { createRoom, deprecateIf } from "@liveblocks/core";
 
 type EnterOptions<
   TPresence extends JsonObject,
@@ -31,6 +27,75 @@ type EnterOptions<
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
 >;
+
+export type Polyfills = {
+  atob?: (data: string) => string;
+  fetch?: typeof fetch;
+  WebSocket?: unknown;
+};
+
+type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
+
+export type AuthEndpoint = string | AuthEndpointCallback;
+
+/**
+ * The authentication endpoint that is called to ensure that the current user has access to a room.
+ * Can be an url or a callback if you need to add additional headers.
+ */
+export type ClientOptions = {
+  throttle?: number;
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: Polyfills["fetch"];
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: Polyfills["WebSocket"];
+} & (
+  | { publicApiKey: string; authEndpoint?: never }
+  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
+);
+
+export type Client = {
+  /**
+   * Gets a room. Returns null if {@link Client.enter} has not been called previously.
+   *
+   * @param roomId The id of the room
+   */
+  getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
+  >(
+    roomId: string
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+
+  /**
+   * Enters a room and returns it.
+   * @param roomId The id of the room
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
+   */
+  enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
+  >(
+    roomId: string,
+    options: RoomInitializers<TPresence, TStorage>
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+
+  /**
+   * Leaves a room.
+   * @param roomId The id of the room
+   */
+  leave(roomId: string): void;
+};
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.
@@ -213,6 +278,25 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 
   return options.throttle;
 }
+
+export type AuthorizeResponse = {
+  token: string;
+};
+
+export type Authentication =
+  | {
+      type: "public";
+      publicApiKey: string;
+      url: string;
+    }
+  | {
+      type: "private";
+      url: string;
+    }
+  | {
+      type: "custom";
+      callback: (room: string) => Promise<AuthorizeResponse>;
+    };
 
 function prepareAuthentication(
   clientOptions: ClientOptions,

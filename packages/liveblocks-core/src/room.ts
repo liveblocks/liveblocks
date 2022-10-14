@@ -1782,7 +1782,6 @@ function defaultState<
   };
 }
 
-/** @internal */
 export type InternalRoom<
   TPresence extends JsonObject,
   TStorage extends LsonObject,

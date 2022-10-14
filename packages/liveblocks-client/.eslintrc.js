@@ -26,7 +26,7 @@ module.exports = {
     // ----------------------------------------------------------------------
     // Overrides from default rule config used in all other projects!
     // ----------------------------------------------------------------------
-    /* None yet 😇 ! */
+    "@typescript-eslint/no-explicit-any": "off",
 
     // ----------------------------------------------------------------------
     // Extra rules for this project specifically

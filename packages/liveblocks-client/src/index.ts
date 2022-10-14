@@ -1,7 +1,7 @@
+export { createClient } from "./client";
 export type {
   BaseUserMeta,
   BroadcastOptions,
-  Client,
   History,
   Immutable,
   Json,
@@ -14,13 +14,7 @@ export type {
   StorageUpdate,
   User,
 } from "@liveblocks/core";
-export {
-  createClient,
-  LiveList,
-  LiveMap,
-  LiveObject,
-  shallow,
-} from "@liveblocks/core";
+export { LiveList, LiveMap, LiveObject, shallow } from "@liveblocks/core";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

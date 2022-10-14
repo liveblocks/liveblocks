@@ -6,7 +6,7 @@
 import { Response } from "node-fetch";
 
 import { createClient } from "..";
-import type { ClientOptions } from "../types";
+import type { ClientOptions } from "../client";
 import { MockWebSocket } from "./_utils";
 
 const token =

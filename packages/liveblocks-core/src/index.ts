@@ -14,7 +14,6 @@
 export { assertNever, nn } from "./assert";
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
-export { createClient } from "./client";
 export {
   deprecate,
   deprecateIf,
@@ -31,6 +30,8 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export { comparePosition, makePosition } from "./position";
+export type { InternalRoom } from "./room";
+export { createRoom } from "./room";
 export { shallow } from "./shallow";
 export type {
   BroadcastedEventServerMsg,
@@ -76,7 +77,6 @@ export type {
 export type {
   BaseUserMeta,
   BroadcastOptions,
-  Client,
   History,
   Immutable,
   Json,
@@ -99,7 +99,13 @@ export {
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
+export {
+  b64decode,
+  freeze,
+  isPlainObject,
+  remove,
+  tryParseJson,
+} from "./utils";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.
