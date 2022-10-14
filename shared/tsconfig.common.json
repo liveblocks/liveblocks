@@ -12,6 +12,9 @@
     "esModuleInterop": true, // Emit safer code for packages that use namespace/default imports
     "stripInternal": true, // Don't emit public types for things annotated with @internal
 
+    // Use incremental type checking to speed up subsequent tsc checks
+    "incremental": true,
+
     // Use better type checking
     "strict": true,
     "allowUnreachableCode": false, // False makes this stricter: errors instead of warns
