@@ -34,7 +34,7 @@ export function isScalar(data: Immutable): data is Scalar {
  *   ToImmutable<string>                     // string
  *   ToImmutable<string | LiveList<number>>  // string | readonly number[]
  *   ToImmutable<LiveMap<string, LiveList<number>>>
- *                                           // { readonly [key: string]: readonly number[] }
+ *                                           // ReadonlyMap<string, readonly number[]>
  *   ToImmutable<LiveObject<{ a: number, b: LiveList<string>, c?: number }>>
  *                                           // { readonly a: null, readonly b: readonly string[], readonly c?: number }
  *
