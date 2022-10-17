@@ -2,7 +2,6 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import type {
-  IdTuple,
   JsonObject,
   LiveNode,
   LiveObjectUpdateDelta,
@@ -10,11 +9,8 @@ import type {
   Lson,
   LsonObject,
   ParentToChildNodeMap,
-  SerializedObject,
-  SerializedRootObject,
   UpdateDelta,
 } from "./types";
-import { CrdtType } from "./types";
 import type { ToImmutable } from "./types/Immutable";
 import type {
   CreateChildOp,
@@ -26,6 +22,12 @@ import type {
   UpdateObjectOp,
 } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type {
+  IdTuple,
+  SerializedObject,
+  SerializedRootObject,
+} from "./types/SerializedCrdt";
+import { CrdtType } from "./types/SerializedCrdt";
 import {
   creationOpToLson,
   deserializeToLson,

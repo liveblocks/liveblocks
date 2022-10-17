@@ -14,21 +14,24 @@ import type {
   Authentication,
   BaseUserMeta,
   ClientMsg,
-  IdTuple,
   Json,
   JsonObject,
   LsonObject,
+  ServerMsg,
+  ToImmutable,
+} from "../types";
+import { ClientMsgCode, ServerMsgCode } from "../types";
+import type { Op } from "../types/Op";
+import type {
+  IdTuple,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-  ServerMsg,
-  ToImmutable,
-} from "../types";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
-import type { Op } from "../types/Op";
+} from "../types/SerializedCrdt";
+import { CrdtType } from "../types/SerializedCrdt";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

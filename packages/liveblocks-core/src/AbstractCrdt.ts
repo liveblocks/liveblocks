@@ -1,8 +1,9 @@
 import { assertNever } from "./lib/assert";
-import type { LiveNode, SerializedCrdt, StorageUpdate } from "./types";
+import type { LiveNode, StorageUpdate } from "./types";
 import type { Immutable } from "./types/Immutable";
 import type { CreateChildOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type { SerializedCrdt } from "./types/SerializedCrdt";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }

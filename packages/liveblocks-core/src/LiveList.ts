@@ -4,18 +4,17 @@ import { nn } from "./lib/assert";
 import { comparePosition, makePosition } from "./lib/position";
 import { LiveRegister } from "./LiveRegister";
 import type {
-  IdTuple,
   LiveListUpdateDelta,
   LiveListUpdates,
   LiveNode,
   Lson,
   ParentToChildNodeMap,
-  SerializedList,
 } from "./types";
-import { CrdtType } from "./types";
 import type { ToImmutable } from "./types/Immutable";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type { IdTuple, SerializedList } from "./types/SerializedCrdt";
+import { CrdtType } from "./types/SerializedCrdt";
 import {
   creationOpToLiveNode,
   deserialize,

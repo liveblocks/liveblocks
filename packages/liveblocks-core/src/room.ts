@@ -20,7 +20,6 @@ import type {
   ConnectionState,
   CustomEvent,
   HistoryEvent,
-  IdTuple,
   InitialDocumentStateServerMsg,
   Json,
   JsonObject,
@@ -38,9 +37,6 @@ import type {
   RoomEventName,
   RoomInitializers,
   RoomStateServerMsg,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedRootObject,
   ServerMsg,
   StorageCallback,
   StorageUpdate,
@@ -59,6 +55,12 @@ import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject } from "./types/Json";
 import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type {
+  IdTuple,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedRootObject,
+} from "./types/SerializedCrdt";
 import { isRootCrdt } from "./types/SerializedCrdt";
 import {
   getTreesDiffOperations,

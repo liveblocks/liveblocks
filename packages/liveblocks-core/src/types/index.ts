@@ -755,17 +755,6 @@ export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
-  IdTuple,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
-} from "./SerializedCrdt";
-export { CrdtType } from "./SerializedCrdt";
-export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,

@@ -38,7 +38,6 @@ export type {
   BroadcastEventClientMsg,
   ClientMsg,
   FetchStorageClientMsg,
-  IdTuple,
   InitialDocumentStateServerMsg,
   LiveNode,
   NodeMap,
@@ -46,13 +45,6 @@ export type {
   Resolve,
   RoomInitializers,
   RoomStateServerMsg,
-  SerializedChild,
-  SerializedCrdt,
-  SerializedList,
-  SerializedMap,
-  SerializedObject,
-  SerializedRegister,
-  SerializedRootObject,
   ServerMsg,
   ToJson,
   UpdatePresenceClientMsg,
@@ -78,12 +70,7 @@ export type {
   StorageUpdate,
   User,
 } from "./types";
-export {
-  ClientMsgCode,
-  CrdtType,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./types";
+export { ClientMsgCode, ServerMsgCode, WebsocketCloseCodes } from "./types";
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export type {
@@ -101,6 +88,17 @@ export type {
   UpdateObjectOp,
 } from "./types/Op";
 export { OpCode } from "./types/Op";
+export type {
+  IdTuple,
+  SerializedChild,
+  SerializedCrdt,
+  SerializedList,
+  SerializedMap,
+  SerializedObject,
+  SerializedRegister,
+  SerializedRootObject,
+} from "./types/SerializedCrdt";
+export { CrdtType } from "./types/SerializedCrdt";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 

@@ -10,15 +10,14 @@ import { LiveObject } from "../LiveObject";
 import type {
   BaseUserMeta,
   ClientMsg,
-  IdTuple,
   Json,
   JsonObject,
   LsonObject,
-  SerializedCrdt,
   StorageUpdate,
   ToJson,
 } from "../types";
 import { ClientMsgCode, ServerMsgCode } from "../types";
+import type { IdTuple,SerializedCrdt } from "../types/SerializedCrdt";
 import {
   createSerializedList,
   createSerializedObject,

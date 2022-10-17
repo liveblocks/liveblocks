@@ -5,7 +5,6 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
-  IdTuple,
   Json,
   LiveListUpdates,
   LiveMapUpdates,
@@ -16,12 +15,12 @@ import type {
   LsonObject,
   NodeMap,
   ParentToChildNodeMap,
-  SerializedCrdt,
   StorageUpdate,
 } from "./types";
-import { CrdtType } from "./types";
 import type { CreateOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type { IdTuple, SerializedCrdt } from "./types/SerializedCrdt";
+import { CrdtType } from "./types/SerializedCrdt";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));

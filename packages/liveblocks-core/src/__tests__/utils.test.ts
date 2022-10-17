@@ -1,6 +1,6 @@
 import type { NodeMap } from "../types";
-import { CrdtType } from "../types";
 import { OpCode } from "../types/Op";
+import { CrdtType } from "../types/SerializedCrdt";
 import {
   b64decode,
   findNonSerializableValue,

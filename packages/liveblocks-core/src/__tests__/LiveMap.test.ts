@@ -2,9 +2,10 @@ import { RoomScope } from "../AuthToken";
 import { LiveList } from "../LiveList";
 import { LiveMap } from "../LiveMap";
 import { LiveObject } from "../LiveObject";
-import type { IdTuple, SerializedCrdt } from "../types";
-import { CrdtType, WebsocketCloseCodes } from "../types";
+import { WebsocketCloseCodes } from "../types";
 import { OpCode } from "../types/Op";
+import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
+import { CrdtType } from "../types/SerializedCrdt";
 import {
   createSerializedList,
   createSerializedMap,
