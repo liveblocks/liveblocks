@@ -33,17 +33,12 @@ export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export type { LiveNode, Resolve, RoomInitializers, ToJson } from "./types";
+export type { Resolve, RoomInitializers } from "./types";
 export type {
   BroadcastOptions,
   Client,
   History,
   Immutable,
-  Json,
-  JsonObject,
-  LiveStructure,
-  Lson,
-  LsonObject,
   Others,
   Room,
   StorageUpdate,
@@ -60,7 +55,15 @@ export type {
   UpdateStorageClientMsg,
 } from "./types/ClientMsg";
 export type { ToImmutable } from "./types/Immutable";
+export type { Json, JsonObject } from "./types/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
+export type {
+  LiveNode,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  ToJson,
+} from "./types/Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type {
   CreateChildOp,

@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "./types";
+import type { Json, JsonObject } from "./types/Json";
 import { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 export type AppOnlyAuthToken = {

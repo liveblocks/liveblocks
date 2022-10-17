@@ -5,16 +5,13 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type {
-  Json,
   LiveListUpdates,
   LiveMapUpdates,
-  LiveNode,
   LiveObjectUpdates,
-  LiveStructure,
-  Lson,
-  LsonObject,
   StorageUpdate,
 } from "./types";
+import type { Json } from "./types/Json";
+import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";

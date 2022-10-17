@@ -4,9 +4,9 @@ import { assertNever } from "../lib/assert";
 import type {
   LiveListUpdates,
   LiveObjectUpdateDelta,
-  ToJson,
   UpdateDelta,
 } from "../types";
+import type { ToJson } from "../types/Lson";
 
 export type JsonStorageUpdate =
   | JsonLiveListUpdate<Lson>

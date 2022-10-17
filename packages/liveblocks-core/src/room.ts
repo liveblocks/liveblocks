@@ -18,11 +18,6 @@ import type {
   ConnectionState,
   CustomEvent,
   HistoryEvent,
-  Json,
-  JsonObject,
-  LiveNode,
-  LiveStructure,
-  LsonObject,
   Others,
   OthersEvent,
   Polyfills,
@@ -40,7 +35,9 @@ import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
 import { ClientMsgCode } from "./types/ClientMsg";
+import type { Json, JsonObject } from "./types/Json";
 import { isJsonArray, isJsonObject } from "./types/Json";
+import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";

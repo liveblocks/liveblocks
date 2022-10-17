@@ -2,15 +2,13 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import type {
-  JsonObject,
-  LiveNode,
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
-  Lson,
-  LsonObject,
   UpdateDelta,
 } from "./types";
 import type { ToImmutable } from "./types/Immutable";
+import type { JsonObject } from "./types/Json";
+import type { LiveNode, Lson, LsonObject } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type {
   CreateChildOp,

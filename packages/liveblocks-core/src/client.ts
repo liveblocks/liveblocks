@@ -5,14 +5,13 @@ import type {
   Authentication,
   Client,
   ClientOptions,
-  Json,
-  JsonObject,
-  LsonObject,
   Resolve,
   Room,
   RoomInitializers,
 } from "./types";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
+import type { Json, JsonObject } from "./types/Json";
+import type { LsonObject } from "./types/Lson";
 
 type EnterOptions<
   TPresence extends JsonObject,

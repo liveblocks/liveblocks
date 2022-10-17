@@ -3,15 +3,9 @@ import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type {
-  Json,
-  JsonObject,
-  LiveNode,
-  Lson,
-  LsonObject,
-  StorageUpdate,
-  ToJson,
-} from "./types";
+import type { StorageUpdate } from "./types";
+import type { Json, JsonObject } from "./types/Json";
+import type { LiveNode, Lson, LsonObject, ToJson } from "./types/Lson";
 import {
   findNonSerializableValue,
   isLiveList,
