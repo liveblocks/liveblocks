@@ -45,7 +45,6 @@ export type {
   UpdateStorageClientMsg,
 } from "./types/ClientMsg";
 export type { Immutable } from "./types/Immutable";
-export type { ToImmutable } from "./types/Immutable";
 export type { Json, JsonObject } from "./types/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export type {
@@ -97,6 +96,7 @@ export type {
 } from "./types/ServerMsg";
 export { ServerMsgCode } from "./types/ServerMsg";
 export type { StorageUpdate } from "./types/StorageUpdates";
+export type { ToImmutable } from "./types/ToImmutable";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/Websocket";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";

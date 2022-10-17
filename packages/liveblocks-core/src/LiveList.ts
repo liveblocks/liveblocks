@@ -3,7 +3,6 @@ import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import { comparePosition, makePosition } from "./lib/position";
 import { LiveRegister } from "./LiveRegister";
-import type { ToImmutable } from "./types/Immutable";
 import type { LiveNode, Lson } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "./types/Op";
@@ -14,6 +13,7 @@ import type {
   LiveListUpdateDelta,
   LiveListUpdates,
 } from "./types/StorageUpdates";
+import type { ToImmutable } from "./types/ToImmutable";
 import {
   creationOpToLiveNode,
   deserialize,

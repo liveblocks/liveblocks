@@ -1,7 +1,6 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
-import type { ToImmutable } from "./types/Immutable";
 import type { JsonObject } from "./types/Json";
 import type { LiveNode, Lson, LsonObject } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
@@ -26,6 +25,7 @@ import type {
   LiveObjectUpdates,
   UpdateDelta,
 } from "./types/StorageUpdates";
+import type { ToImmutable } from "./types/ToImmutable";
 import {
   creationOpToLson,
   deserializeToLson,

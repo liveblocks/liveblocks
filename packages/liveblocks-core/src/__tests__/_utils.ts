@@ -14,7 +14,6 @@ import {
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import type { ClientMsg } from "../types/ClientMsg";
 import { ClientMsgCode } from "../types/ClientMsg";
-import type { ToImmutable } from "../types/Immutable";
 import type { Json, JsonObject } from "../types/Json";
 import type { LsonObject } from "../types/Lson";
 import type { Op } from "../types/Op";
@@ -30,6 +29,7 @@ import type {
 import { CrdtType } from "../types/SerializedCrdt";
 import type { ServerMsg } from "../types/ServerMsg";
 import { ServerMsgCode } from "../types/ServerMsg";
+import type { ToImmutable } from "../types/ToImmutable";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 
