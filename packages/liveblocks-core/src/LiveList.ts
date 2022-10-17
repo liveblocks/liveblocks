@@ -8,9 +8,9 @@ import type {
   LiveListUpdates,
   LiveNode,
   Lson,
-  ParentToChildNodeMap,
 } from "./types";
 import type { ToImmutable } from "./types/Immutable";
+import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type { IdTuple, SerializedList } from "./types/SerializedCrdt";

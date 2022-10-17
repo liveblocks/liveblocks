@@ -1,8 +1,9 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
-import type { Json, LiveNode, ParentToChildNodeMap } from "./types";
+import type { Json, LiveNode } from "./types";
 import type { Immutable } from "./types/Immutable";
+import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateChildOp, CreateRegisterOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type { IdTuple, SerializedRegister } from "./types/SerializedCrdt";

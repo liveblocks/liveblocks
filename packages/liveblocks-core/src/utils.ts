@@ -13,10 +13,9 @@ import type {
   LiveStructure,
   Lson,
   LsonObject,
-  NodeMap,
-  ParentToChildNodeMap,
   StorageUpdate,
 } from "./types";
+import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type { IdTuple, SerializedCrdt } from "./types/SerializedCrdt";

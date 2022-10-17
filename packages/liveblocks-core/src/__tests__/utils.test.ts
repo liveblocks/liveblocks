@@ -1,4 +1,4 @@
-import type { NodeMap } from "../types";
+import type { NodeMap } from "../types/NodeMap";
 import { OpCode } from "../types/Op";
 import { CrdtType } from "../types/SerializedCrdt";
 import {

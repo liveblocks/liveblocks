@@ -753,7 +753,6 @@ export { ClientMsgCode } from "./ClientMsg";
 export type { Immutable, ToImmutable } from "./Immutable";
 export type { Json, JsonObject } from "./Json";
 export type { LiveNode, LiveStructure, Lson, LsonObject, ToJson } from "./Lson";
-export type { NodeMap, ParentToChildNodeMap } from "./NodeMap";
 export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,

@@ -8,10 +8,10 @@ import type {
   LiveObjectUpdates,
   Lson,
   LsonObject,
-  ParentToChildNodeMap,
   UpdateDelta,
 } from "./types";
 import type { ToImmutable } from "./types/Immutable";
+import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type {
   CreateChildOp,
   CreateObjectOp,

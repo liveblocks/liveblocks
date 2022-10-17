@@ -26,10 +26,8 @@ import type {
   LiveNode,
   LiveStructure,
   LsonObject,
-  NodeMap,
   Others,
   OthersEvent,
-  ParentToChildNodeMap,
   Polyfills,
   Room,
   RoomEventCallback,
@@ -53,6 +51,7 @@ import {
 } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import { isJsonArray, isJsonObject } from "./types/Json";
+import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type {

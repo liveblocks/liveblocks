@@ -40,8 +40,6 @@ export type {
   FetchStorageClientMsg,
   InitialDocumentStateServerMsg,
   LiveNode,
-  NodeMap,
-  ParentToChildNodeMap,
   Resolve,
   RoomInitializers,
   RoomStateServerMsg,
@@ -73,6 +71,7 @@ export type {
 export { ClientMsgCode, ServerMsgCode, WebsocketCloseCodes } from "./types";
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
+export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type {
   CreateChildOp,
   CreateListOp,
