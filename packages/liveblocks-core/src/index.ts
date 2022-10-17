@@ -34,7 +34,6 @@ export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export type { RoomInitializers } from "./types";
 export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {

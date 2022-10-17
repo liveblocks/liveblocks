@@ -10,11 +10,7 @@ import { compact } from "./lib/utils";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
-import type {
-  Authentication,
-  AuthorizeResponse,
-  RoomInitializers,
-} from "./types";
+import type { Authentication, AuthorizeResponse } from "./types";
 import { WebsocketCloseCodes } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
@@ -273,6 +269,28 @@ export type Polyfills = {
   fetch?: typeof fetch;
   WebSocket?: any;
 };
+
+export type RoomInitializers<
+  TPresence extends JsonObject,
+  TStorage extends LsonObject
+> = Resolve<{
+  /**
+   * The initial Presence to use and announce when you enter the Room. The
+   * Presence is available on all users in the Room (me & others).
+   */
+  initialPresence: TPresence | ((roomId: string) => TPresence);
+  /**
+   * The initial Storage to use when entering a new Room.
+   */
+  initialStorage?: TStorage | ((roomId: string) => TStorage);
+  /**
+   * Whether or not the room connects to Liveblock servers. Default is true.
+   *
+   * Usually set to false when the client is used from the server to not call
+   * the authentication endpoint or connect via WebSocket.
+   */
+  shouldInitiallyConnect?: boolean;
+}>;
 
 type Config = {
   roomId: string;

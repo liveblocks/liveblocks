@@ -1,28 +1,3 @@
-import type { JsonObject } from "./Json";
-import type { LsonObject } from "./Lson";
-
-export type RoomInitializers<
-  TPresence extends JsonObject,
-  TStorage extends LsonObject
-> = Resolve<{
-  /**
-   * The initial Presence to use and announce when you enter the Room. The
-   * Presence is available on all users in the Room (me & others).
-   */
-  initialPresence: TPresence | ((roomId: string) => TPresence);
-  /**
-   * The initial Storage to use when entering a new Room.
-   */
-  initialStorage?: TStorage | ((roomId: string) => TStorage);
-  /**
-   * Whether or not the room connects to Liveblock servers. Default is true.
-   *
-   * Usually set to false when the client is used from the server to not call
-   * the authentication endpoint or connect via WebSocket.
-   */
-  shouldInitiallyConnect?: boolean;
-}>;
-
 export type AuthorizeResponse = {
   token: string;
 };
