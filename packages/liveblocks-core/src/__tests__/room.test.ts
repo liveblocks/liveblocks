@@ -6,12 +6,12 @@ import { RoomScope } from "../AuthToken";
 import { lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import { LiveList } from "../LiveList";
+import type { Authentication } from "../room";
 import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
-import type { Authentication } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import { ClientMsgCode } from "../types/ClientMsg";
 import type { Json, JsonObject } from "../types/Json";

@@ -1,7 +1,11 @@
 import { deprecateIf } from "./lib/deprecation";
-import type { InternalRoom, Polyfills, RoomInitializers } from "./room";
+import type {
+  Authentication,
+  InternalRoom,
+  Polyfills,
+  RoomInitializers,
+} from "./room";
 import { createRoom } from "./room";
-import type { Authentication } from "./types";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";

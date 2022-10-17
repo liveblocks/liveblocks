@@ -5,12 +5,12 @@ import { remove } from "../lib/utils";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
+  Authentication,
 } from "../room";
 import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
-import type { Authentication } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import type { ClientMsg } from "../types/ClientMsg";
 import { ClientMsgCode } from "../types/ClientMsg";

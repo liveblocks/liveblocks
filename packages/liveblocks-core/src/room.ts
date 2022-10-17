@@ -10,7 +10,6 @@ import { compact } from "./lib/utils";
 import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
-import type { Authentication, AuthorizeResponse } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
@@ -63,6 +62,25 @@ import {
   tryParseJson,
 } from "./utils";
 import { DerivedRef, ValueRef } from "./ValueRef";
+
+export type AuthorizeResponse = {
+  token: string;
+};
+
+export type Authentication =
+  | {
+      type: "public";
+      publicApiKey: string;
+      url: string;
+    }
+  | {
+      type: "private";
+      url: string;
+    }
+  | {
+      type: "custom";
+      callback: (room: string) => Promise<AuthorizeResponse>;
+    };
 
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
