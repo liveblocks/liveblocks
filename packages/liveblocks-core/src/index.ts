@@ -34,7 +34,7 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export type { Resolve, RoomInitializers } from "./types";
-export type { Client, Immutable } from "./types";
+export type { Client } from "./types";
 export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {
@@ -45,6 +45,7 @@ export type {
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
 } from "./types/ClientMsg";
+export type { Immutable } from "./types/Immutable";
 export type { ToImmutable } from "./types/Immutable";
 export type { Json, JsonObject } from "./types/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";

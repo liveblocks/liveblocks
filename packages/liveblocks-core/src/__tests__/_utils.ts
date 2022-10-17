@@ -10,10 +10,11 @@ import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
-import type { Authentication, ToImmutable } from "../types";
+import type { Authentication } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import type { ClientMsg } from "../types/ClientMsg";
 import { ClientMsgCode } from "../types/ClientMsg";
+import type { ToImmutable } from "../types/Immutable";
 import type { Json, JsonObject } from "../types/Json";
 import type { LsonObject } from "../types/Lson";
 import type { Op } from "../types/Op";

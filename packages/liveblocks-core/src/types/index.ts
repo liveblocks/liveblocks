@@ -155,5 +155,3 @@ export enum WebsocketCloseCodes {
   MAX_NUMBER_OF_CONCURRENT_CONNECTIONS_PER_ROOM = 4005,
   CLOSE_WITHOUT_RETRY = 4999,
 }
-
-export type { Immutable, ToImmutable } from "./Immutable";
