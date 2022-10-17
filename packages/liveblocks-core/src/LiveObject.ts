@@ -1,7 +1,7 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
-import type { JsonObject } from "./types/Json";
+import type { JsonObject } from "./lib/Json";
 import type { LiveNode, Lson, LsonObject } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type {

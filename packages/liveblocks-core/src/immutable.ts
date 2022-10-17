@@ -1,9 +1,9 @@
 import * as console from "./lib/fancy-console";
+import type { Json, JsonObject } from "./lib/Json";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json, JsonObject } from "./types/Json";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./types/Lson";
 import type { StorageUpdate } from "./types/StorageUpdates";
 import {

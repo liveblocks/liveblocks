@@ -28,6 +28,8 @@ export {
   throwUsageError,
 } from "./lib/deprecation";
 export { freeze } from "./lib/freeze";
+export type { Json, JsonObject } from "./lib/Json";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { comparePosition, makePosition } from "./lib/position";
 export { shallow } from "./lib/shallow";
@@ -45,8 +47,6 @@ export type {
   UpdateStorageClientMsg,
 } from "./types/ClientMsg";
 export type { Immutable } from "./types/Immutable";
-export type { Json, JsonObject } from "./types/Json";
-export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export type {
   LiveNode,
   LiveStructure,

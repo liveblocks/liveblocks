@@ -1,5 +1,6 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
+import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { remove } from "../lib/utils";
 import type {
@@ -14,7 +15,6 @@ import {
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import type { ClientMsg } from "../types/ClientMsg";
 import { ClientMsgCode } from "../types/ClientMsg";
-import type { Json, JsonObject } from "../types/Json";
 import type { LsonObject } from "../types/Lson";
 import type { Op } from "../types/Op";
 import type {

@@ -5,6 +5,7 @@ import type { RoomAuthToken } from "../AuthToken";
 import { RoomScope } from "../AuthToken";
 import { lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
+import type { Json, JsonObject } from "../lib/Json";
 import { LiveList } from "../LiveList";
 import type { Authentication } from "../room";
 import {
@@ -14,7 +15,6 @@ import {
 } from "../room";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import { ClientMsgCode } from "../types/ClientMsg";
-import type { Json, JsonObject } from "../types/Json";
 import type { LsonObject } from "../types/Lson";
 import type { Others } from "../types/Others";
 import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";

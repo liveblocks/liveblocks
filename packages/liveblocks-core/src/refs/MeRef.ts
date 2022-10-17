@@ -1,6 +1,6 @@
 import { freeze } from "../lib/freeze";
+import type { JsonObject } from "../lib/Json";
 import { compactObject } from "../lib/utils";
-import type { JsonObject } from "../types/Json";
 import { ImmutableRef, merge } from "./ImmutableRef";
 
 /**

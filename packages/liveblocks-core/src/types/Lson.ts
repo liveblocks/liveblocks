@@ -1,8 +1,8 @@
+import type { Json } from "../lib/Json";
 import type { LiveList } from "../LiveList";
 import type { LiveMap } from "../LiveMap";
 import type { LiveObject } from "../LiveObject";
 import type { LiveRegister } from "../LiveRegister";
-import type { Json } from "./Json";
 
 export type LiveStructure =
   | LiveObject<LsonObject>

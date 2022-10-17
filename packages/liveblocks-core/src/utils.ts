@@ -1,10 +1,10 @@
 import type { ManagedPool } from "./AbstractCrdt";
 import { assertNever, nn } from "./lib/assert";
+import type { Json } from "./lib/Json";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { Json } from "./types/Json";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateOp, Op } from "./types/Op";

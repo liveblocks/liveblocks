@@ -1,4 +1,5 @@
 import { deprecateIf } from "./lib/deprecation";
+import type { Json, JsonObject } from "./lib/Json";
 import type {
   Authentication,
   InternalRoom,
@@ -8,7 +9,6 @@ import type {
 } from "./room";
 import { createRoom } from "./room";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
-import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
 import type { Resolve } from "./types/Resolve";
 

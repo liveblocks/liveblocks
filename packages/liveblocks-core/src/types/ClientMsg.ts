@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "./Json";
+import type { Json, JsonObject } from "../lib/Json";
 import type { Op } from "./Op";
 
 export enum ClientMsgCode {
