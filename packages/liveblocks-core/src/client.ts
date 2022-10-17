@@ -3,6 +3,7 @@ import type {
   Authentication,
   InternalRoom,
   Polyfills,
+  Room,
   RoomInitializers,
 } from "./room";
 import { createRoom } from "./room";
@@ -10,7 +11,6 @@ import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
 import type { Resolve } from "./types/Resolve";
-import type { Room } from "./types/Room";
 
 type EnterOptions<
   TPresence extends JsonObject,
