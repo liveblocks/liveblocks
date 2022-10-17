@@ -1,4 +1,4 @@
-import type { ReadonlyArrayWithLegacyMethods } from "../LegacyArray";
+import type { ReadonlyArrayWithLegacyMethods } from "../lib/LegacyArray";
 import type { BaseUserMeta } from "./BaseUserMeta";
 import type { JsonObject } from "./Json";
 import type { User } from "./User";

@@ -1,6 +1,6 @@
 import { ImmutableRef, merge } from "./ImmutableRef";
-import { asArrayWithLegacyMethods } from "./LegacyArray";
 import { freeze } from "./lib/freeze";
+import { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 import { compact, compactObject } from "./lib/utils";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { JsonObject } from "./types/Json";

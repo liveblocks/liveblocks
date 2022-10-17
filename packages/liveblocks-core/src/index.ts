@@ -20,7 +20,6 @@ export {
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
-export { asArrayWithLegacyMethods } from "./LegacyArray";
 export { assertNever, nn } from "./lib/assert";
 export {
   deprecate,
@@ -29,6 +28,7 @@ export {
   throwUsageError,
 } from "./lib/deprecation";
 export { freeze } from "./lib/freeze";
+export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { comparePosition, makePosition } from "./lib/position";
 export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
