@@ -13,6 +13,7 @@
 
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
+export type { Client } from "./client";
 export { createClient } from "./client";
 export {
   legacy_patchImmutableObject,
@@ -34,7 +35,6 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export type { Resolve, RoomInitializers } from "./types";
-export type { Client } from "./types";
 export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {

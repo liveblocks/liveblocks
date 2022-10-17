@@ -1,7 +1,5 @@
-import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Json, JsonObject } from "./Json";
+import type { JsonObject } from "./Json";
 import type { LsonObject } from "./Lson";
-import type { Room } from "./Room";
 
 /**
  * This helper type is effectively a no-op, but will force TypeScript to
@@ -29,11 +27,6 @@ export type Resolve<T> = T extends (...args: unknown[]) => unknown
   ? T
   : { [K in keyof T]: T[K] };
 
-export type CustomEvent<TRoomEvent extends Json> = {
-  connectionId: number;
-  event: TRoomEvent;
-};
-
 export type RoomInitializers<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -55,75 +48,6 @@ export type RoomInitializers<
    */
   shouldInitiallyConnect?: boolean;
 }>;
-
-export type Client = {
-  /**
-   * Gets a room. Returns null if {@link Client.enter} has not been called previously.
-   *
-   * @param roomId The id of the room
-   */
-  getRoom<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
-  >(
-    roomId: string
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
-
-  /**
-   * Enters a room and returns it.
-   * @param roomId The id of the room
-   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
-   */
-  enter<
-    TPresence extends JsonObject,
-    TStorage extends LsonObject = LsonObject,
-    TUserMeta extends BaseUserMeta = BaseUserMeta,
-    TRoomEvent extends Json = never
-  >(
-    roomId: string,
-    options: RoomInitializers<TPresence, TStorage>
-  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
-
-  /**
-   * Leaves a room.
-   * @param roomId The id of the room
-   */
-  leave(roomId: string): void;
-};
-
-type AuthEndpointCallback = (room: string) => Promise<{ token: string }>;
-
-export type AuthEndpoint = string | AuthEndpointCallback;
-
-export type Polyfills = {
-  atob?: (data: string) => string;
-  fetch?: typeof fetch;
-  WebSocket?: any;
-};
-
-/**
- * The authentication endpoint that is called to ensure that the current user has access to a room.
- * Can be an url or a callback if you need to add additional headers.
- */
-export type ClientOptions = {
-  throttle?: number;
-  polyfills?: Polyfills;
-
-  /**
-   * Backward-compatible way to set `polyfills.fetch`.
-   */
-  fetchPolyfill?: Polyfills["fetch"];
-
-  /**
-   * Backward-compatible way to set `polyfills.WebSocket`.
-   */
-  WebSocketPolyfill?: Polyfills["WebSocket"];
-} & (
-  | { publicApiKey: string; authEndpoint?: never }
-  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
-);
 
 export type AuthorizeResponse = {
   token: string;

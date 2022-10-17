@@ -1,13 +1,7 @@
 import { deprecateIf } from "./lib/deprecation";
-import type { InternalRoom } from "./room";
+import type { InternalRoom, Polyfills } from "./room";
 import { createRoom } from "./room";
-import type {
-  Authentication,
-  Client,
-  ClientOptions,
-  Resolve,
-  RoomInitializers,
-} from "./types";
+import type { Authentication, Resolve, RoomInitializers } from "./types";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
@@ -30,6 +24,69 @@ type EnterOptions<
     unstable_batchedUpdates?: (cb: () => void) => void;
   }
 >;
+
+export type Client = {
+  /**
+   * Gets a room. Returns null if {@link Client.enter} has not been called previously.
+   *
+   * @param roomId The id of the room
+   */
+  getRoom<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
+  >(
+    roomId: string
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null;
+
+  /**
+   * Enters a room and returns it.
+   * @param roomId The id of the room
+   * @param options Optional. You can provide initializers for the Presence or Storage when entering the Room.
+   */
+  enter<
+    TPresence extends JsonObject,
+    TStorage extends LsonObject = LsonObject,
+    TUserMeta extends BaseUserMeta = BaseUserMeta,
+    TRoomEvent extends Json = never
+  >(
+    roomId: string,
+    options: RoomInitializers<TPresence, TStorage>
+  ): Room<TPresence, TStorage, TUserMeta, TRoomEvent>;
+
+  /**
+   * Leaves a room.
+   * @param roomId The id of the room
+   */
+  leave(roomId: string): void;
+};
+
+export type AuthEndpoint =
+  | string
+  | ((room: string) => Promise<{ token: string }>);
+
+/**
+ * The authentication endpoint that is called to ensure that the current user has access to a room.
+ * Can be an url or a callback if you need to add additional headers.
+ */
+export type ClientOptions = {
+  throttle?: number;
+  polyfills?: Polyfills;
+
+  /**
+   * Backward-compatible way to set `polyfills.fetch`.
+   */
+  fetchPolyfill?: Polyfills["fetch"];
+
+  /**
+   * Backward-compatible way to set `polyfills.WebSocket`.
+   */
+  WebSocketPolyfill?: Polyfills["WebSocket"];
+} & (
+  | { publicApiKey: string; authEndpoint?: never }
+  | { publicApiKey?: never; authEndpoint: AuthEndpoint }
+);
 
 /**
  * Create a client that will be responsible to communicate with liveblocks servers.

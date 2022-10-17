@@ -13,8 +13,6 @@ import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
-  CustomEvent,
-  Polyfills,
   RoomInitializers,
 } from "./types";
 import { WebsocketCloseCodes } from "./types";
@@ -68,6 +66,11 @@ import {
   tryParseJson,
 } from "./utils";
 import { DerivedRef, ValueRef } from "./ValueRef";
+
+type CustomEvent<TRoomEvent extends Json> = {
+  connectionId: number;
+  event: TRoomEvent;
+};
 
 type Machine<
   TPresence extends JsonObject,
@@ -262,6 +265,12 @@ type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   startHeartbeatInterval(): number;
   schedulePongTimeout(): number;
   scheduleReconnect(delay: number): number;
+};
+
+export type Polyfills = {
+  atob?: (data: string) => string;
+  fetch?: typeof fetch;
+  WebSocket?: any;
 };
 
 type Config = {
