@@ -27,6 +27,7 @@ import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type { Others, OthersEvent } from "./types/Others";
+import type { Resolve } from "./types/Resolve";
 import type {
   BroadcastOptions,
   Connection,

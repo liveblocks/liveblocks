@@ -34,7 +34,7 @@ export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export type { Resolve, RoomInitializers } from "./types";
+export type { RoomInitializers } from "./types";
 export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {
@@ -73,6 +73,7 @@ export type {
 } from "./types/Op";
 export { OpCode } from "./types/Op";
 export type { Others } from "./types/Others";
+export type { Resolve } from "./types/Resolve";
 export type { BroadcastOptions, History, Room } from "./types/Room";
 export type {
   IdTuple,

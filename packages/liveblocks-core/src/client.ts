@@ -1,10 +1,11 @@
 import { deprecateIf } from "./lib/deprecation";
 import type { InternalRoom, Polyfills } from "./room";
 import { createRoom } from "./room";
-import type { Authentication, Resolve, RoomInitializers } from "./types";
+import type { Authentication, RoomInitializers } from "./types";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { Json, JsonObject } from "./types/Json";
 import type { LsonObject } from "./types/Lson";
+import type { Resolve } from "./types/Resolve";
 import type { Room } from "./types/Room";
 
 type EnterOptions<
