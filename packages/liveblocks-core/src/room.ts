@@ -8,8 +8,9 @@ import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import { compact } from "./lib/utils";
 import { LiveObject } from "./LiveObject";
-import { MeRef } from "./MeRef";
-import { OthersRef } from "./OthersRef";
+import { MeRef } from "./refs/MeRef";
+import { OthersRef } from "./refs/OthersRef";
+import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
@@ -50,7 +51,6 @@ import {
   mergeStorageUpdates,
   tryParseJson,
 } from "./utils";
-import { DerivedRef, ValueRef } from "./ValueRef";
 
 export type AuthorizeResponse = {
   token: string;

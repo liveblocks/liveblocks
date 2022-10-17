@@ -1,5 +1,5 @@
-import type { EventSource, Observable } from "./lib/EventSource";
-import { makeEventSource } from "./lib/EventSource";
+import type { EventSource, Observable } from "../lib/EventSource";
+import { makeEventSource } from "../lib/EventSource";
 
 /**
  * Patches a target object by "merging in" the provided fields. Patch
