@@ -12,15 +12,14 @@ import {
 } from "../room";
 import type {
   Authentication,
-  ClientMsg,
   Json,
   JsonObject,
   LsonObject,
-  ServerMsg,
   ToImmutable,
 } from "../types";
-import { ClientMsgCode, ServerMsgCode } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
+import type { ClientMsg } from "../types/ClientMsg";
+import { ClientMsgCode } from "../types/ClientMsg";
 import type { Op } from "../types/Op";
 import type {
   IdTuple,
@@ -32,6 +31,8 @@ import type {
   SerializedRootObject,
 } from "../types/SerializedCrdt";
 import { CrdtType } from "../types/SerializedCrdt";
+import type { ServerMsg } from "../types/ServerMsg";
+import { ServerMsgCode } from "../types/ServerMsg";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

@@ -14,12 +14,10 @@ import type {
   Authentication,
   AuthorizeResponse,
   BroadcastOptions,
-  ClientMsg,
   Connection,
   ConnectionState,
   CustomEvent,
   HistoryEvent,
-  InitialDocumentStateServerMsg,
   Json,
   JsonObject,
   LiveNode,
@@ -33,23 +31,15 @@ import type {
   RoomEventCallbackFor,
   RoomEventName,
   RoomInitializers,
-  RoomStateServerMsg,
-  ServerMsg,
   StorageCallback,
   StorageUpdate,
-  UpdatePresenceServerMsg,
   User,
-  UserJoinServerMsg,
-  UserLeftServerMsg,
 } from "./types";
-import {
-  ClientMsgCode,
-  isRoomEventName,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./types";
+import { isRoomEventName, WebsocketCloseCodes } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
+import type { ClientMsg } from "./types/ClientMsg";
+import { ClientMsgCode } from "./types/ClientMsg";
 import { isJsonArray, isJsonObject } from "./types/Json";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";
@@ -61,6 +51,15 @@ import type {
   SerializedRootObject,
 } from "./types/SerializedCrdt";
 import { isRootCrdt } from "./types/SerializedCrdt";
+import type {
+  InitialDocumentStateServerMsg,
+  RoomStateServerMsg,
+  ServerMsg,
+  UpdatePresenceServerMsg,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
+} from "./types/ServerMsg";
+import { ServerMsgCode } from "./types/ServerMsg";
 import {
   getTreesDiffOperations,
   isLiveList,

@@ -33,25 +33,7 @@ export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export type {
-  BroadcastedEventServerMsg,
-  BroadcastEventClientMsg,
-  ClientMsg,
-  FetchStorageClientMsg,
-  InitialDocumentStateServerMsg,
-  LiveNode,
-  Resolve,
-  RoomInitializers,
-  RoomStateServerMsg,
-  ServerMsg,
-  ToJson,
-  UpdatePresenceClientMsg,
-  UpdatePresenceServerMsg,
-  UpdateStorageClientMsg,
-  UpdateStorageServerMsg,
-  UserJoinServerMsg,
-  UserLeftServerMsg,
-} from "./types";
+export type { LiveNode, Resolve, RoomInitializers, ToJson } from "./types";
 export type {
   BroadcastOptions,
   Client,
@@ -67,8 +49,16 @@ export type {
   StorageUpdate,
   User,
 } from "./types";
-export { ClientMsgCode, ServerMsgCode, WebsocketCloseCodes } from "./types";
+export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
+export type {
+  BroadcastEventClientMsg,
+  ClientMsg,
+  ClientMsgCode,
+  FetchStorageClientMsg,
+  UpdatePresenceClientMsg,
+  UpdateStorageClientMsg,
+} from "./types/ClientMsg";
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
@@ -99,6 +89,17 @@ export type {
 } from "./types/SerializedCrdt";
 export { CrdtType } from "./types/SerializedCrdt";
 export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+export type {
+  BroadcastedEventServerMsg,
+  InitialDocumentStateServerMsg,
+  RoomStateServerMsg,
+  ServerMsg,
+  UpdatePresenceServerMsg,
+  UpdateStorageServerMsg,
+  UserJoinServerMsg,
+  UserLeftServerMsg,
+} from "./types/ServerMsg";
+export { ServerMsgCode } from "./types/ServerMsg";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**
