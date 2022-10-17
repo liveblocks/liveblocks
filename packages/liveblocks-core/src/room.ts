@@ -13,22 +13,11 @@ import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
-  BroadcastOptions,
-  Connection,
-  ConnectionState,
   CustomEvent,
-  HistoryEvent,
-  Others,
-  OthersEvent,
   Polyfills,
-  Room,
-  RoomEventCallback,
-  RoomEventCallbackFor,
-  RoomEventName,
   RoomInitializers,
-  User,
 } from "./types";
-import { isRoomEventName, WebsocketCloseCodes } from "./types";
+import { WebsocketCloseCodes } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
@@ -39,6 +28,18 @@ import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";
 import { OpCode } from "./types/Op";
+import type { Others, OthersEvent } from "./types/Others";
+import type {
+  BroadcastOptions,
+  Connection,
+  ConnectionState,
+  HistoryEvent,
+  Room,
+  RoomEventCallback,
+  RoomEventCallbackFor,
+  RoomEventName,
+} from "./types/Room";
+import { isRoomEventName } from "./types/Room";
 import type {
   IdTuple,
   SerializedChild,
@@ -56,6 +57,7 @@ import type {
 } from "./types/ServerMsg";
 import { ServerMsgCode } from "./types/ServerMsg";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
+import type { User } from "./types/User";
 import {
   getTreesDiffOperations,
   isLiveList,

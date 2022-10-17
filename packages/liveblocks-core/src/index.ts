@@ -34,15 +34,7 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export type { Resolve, RoomInitializers } from "./types";
-export type {
-  BroadcastOptions,
-  Client,
-  History,
-  Immutable,
-  Others,
-  Room,
-  User,
-} from "./types";
+export type { Client, Immutable } from "./types";
 export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {
@@ -79,6 +71,8 @@ export type {
   UpdateObjectOp,
 } from "./types/Op";
 export { OpCode } from "./types/Op";
+export type { Others } from "./types/Others";
+export type { BroadcastOptions, History, Room } from "./types/Room";
 export type {
   IdTuple,
   SerializedChild,
@@ -103,6 +97,7 @@ export type {
 } from "./types/ServerMsg";
 export { ServerMsgCode } from "./types/ServerMsg";
 export type { StorageUpdate } from "./types/StorageUpdates";
+export type { User } from "./types/User";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**

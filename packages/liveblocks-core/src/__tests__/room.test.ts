@@ -11,12 +11,13 @@ import {
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
-import type { Authentication, Others } from "../types";
+import type { Authentication } from "../types";
 import { WebsocketCloseCodes } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import { ClientMsgCode } from "../types/ClientMsg";
 import type { Json, JsonObject } from "../types/Json";
 import type { LsonObject } from "../types/Lson";
+import type { Others } from "../types/Others";
 import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
 import { CrdtType } from "../types/SerializedCrdt";
 import { ServerMsgCode } from "../types/ServerMsg";
