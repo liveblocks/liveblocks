@@ -34,7 +34,6 @@ export { shallow } from "./lib/shallow";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export { WebsocketCloseCodes } from "./types";
 export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -99,6 +98,7 @@ export type {
 export { ServerMsgCode } from "./types/ServerMsg";
 export type { StorageUpdate } from "./types/StorageUpdates";
 export type { User } from "./types/User";
+export { WebsocketCloseCodes } from "./types/Websocket";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**

@@ -12,7 +12,6 @@ import {
   createRoom,
 } from "../room";
 import type { Authentication } from "../types";
-import { WebsocketCloseCodes } from "../types";
 import type { BaseUserMeta } from "../types/BaseUserMeta";
 import { ClientMsgCode } from "../types/ClientMsg";
 import type { Json, JsonObject } from "../types/Json";
@@ -21,6 +20,7 @@ import type { Others } from "../types/Others";
 import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
 import { CrdtType } from "../types/SerializedCrdt";
 import { ServerMsgCode } from "../types/ServerMsg";
+import { WebsocketCloseCodes } from "../types/Websocket";
 import {
   createSerializedList,
   createSerializedObject,

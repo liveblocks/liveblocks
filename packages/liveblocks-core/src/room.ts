@@ -11,7 +11,6 @@ import { LiveObject } from "./LiveObject";
 import { MeRef } from "./MeRef";
 import { OthersRef } from "./OthersRef";
 import type { Authentication, AuthorizeResponse } from "./types";
-import { WebsocketCloseCodes } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
@@ -53,6 +52,7 @@ import type {
 import { ServerMsgCode } from "./types/ServerMsg";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import type { User } from "./types/User";
+import { WebsocketCloseCodes } from "./types/Websocket";
 import {
   getTreesDiffOperations,
   isLiveList,
