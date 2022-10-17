@@ -26,8 +26,6 @@ import type {
   RoomEventCallbackFor,
   RoomEventName,
   RoomInitializers,
-  StorageCallback,
-  StorageUpdate,
   User,
 } from "./types";
 import { isRoomEventName, WebsocketCloseCodes } from "./types";
@@ -57,6 +55,7 @@ import type {
   UserLeftServerMsg,
 } from "./types/ServerMsg";
 import { ServerMsgCode } from "./types/ServerMsg";
+import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import {
   getTreesDiffOperations,
   isLiveList,

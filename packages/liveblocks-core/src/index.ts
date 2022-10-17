@@ -41,7 +41,6 @@ export type {
   Immutable,
   Others,
   Room,
-  StorageUpdate,
   User,
 } from "./types";
 export { WebsocketCloseCodes } from "./types";
@@ -103,6 +102,7 @@ export type {
   UserLeftServerMsg,
 } from "./types/ServerMsg";
 export { ServerMsgCode } from "./types/ServerMsg";
+export type { StorageUpdate } from "./types/StorageUpdates";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**

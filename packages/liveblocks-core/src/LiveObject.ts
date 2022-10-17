@@ -1,11 +1,6 @@
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
-import type {
-  LiveObjectUpdateDelta,
-  LiveObjectUpdates,
-  UpdateDelta,
-} from "./types";
 import type { ToImmutable } from "./types/Immutable";
 import type { JsonObject } from "./types/Json";
 import type { LiveNode, Lson, LsonObject } from "./types/Lson";
@@ -26,6 +21,11 @@ import type {
   SerializedRootObject,
 } from "./types/SerializedCrdt";
 import { CrdtType } from "./types/SerializedCrdt";
+import type {
+  LiveObjectUpdateDelta,
+  LiveObjectUpdates,
+  UpdateDelta,
+} from "./types/StorageUpdates";
 import {
   creationOpToLson,
   deserializeToLson,

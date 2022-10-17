@@ -2,7 +2,6 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import { freeze } from "./lib/freeze";
-import type { LiveMapUpdates } from "./types";
 import type { ToImmutable } from "./types/Immutable";
 import type { LiveNode, Lson } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
@@ -10,6 +9,7 @@ import type { CreateChildOp, CreateMapOp, Op } from "./types/Op";
 import { OpCode } from "./types/Op";
 import type { IdTuple, SerializedMap } from "./types/SerializedCrdt";
 import { CrdtType } from "./types/SerializedCrdt";
+import type { LiveMapUpdates } from "./types/StorageUpdates";
 import {
   creationOpToLiveNode,
   deserialize,
