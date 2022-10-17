@@ -26,7 +26,9 @@
     "test": "jest --silent --verbose",
     "test:watch": "jest --silent --verbose --watch",
     "test:e2e": "jest --silent --verbose --config=./jest.config.e2e.js",
-    "test:deps": "depcruise src --exclude __tests__ --config"
+    "test:deps": "depcruise src --exclude __tests__ --config",
+    "showdeps": "depcruise src --include-only '^src' --exclude='__tests__' --config --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg",
+    "showdeps:high-level": "depcruise src --include-only '^src' --exclude='(^src/index.ts|shallow.ts|__tests__)' --collapse='^src/(refs|lib|compat|types|crdts|protocol)' --config --output-type dot | dot -T svg > /tmp/dependency-graph.svg && open /tmp/dependency-graph.svg"
   },
   "license": "Apache-2.0",
   "devDependencies": {
