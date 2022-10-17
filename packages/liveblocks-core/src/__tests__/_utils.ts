@@ -12,7 +12,6 @@ import {
 } from "../room";
 import type {
   Authentication,
-  BaseUserMeta,
   ClientMsg,
   Json,
   JsonObject,
@@ -21,6 +20,7 @@ import type {
   ToImmutable,
 } from "../types";
 import { ClientMsgCode, ServerMsgCode } from "../types";
+import type { BaseUserMeta } from "../types/BaseUserMeta";
 import type { Op } from "../types/Op";
 import type {
   IdTuple,

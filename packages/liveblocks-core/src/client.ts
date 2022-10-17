@@ -3,7 +3,6 @@ import type { InternalRoom } from "./room";
 import { createRoom } from "./room";
 import type {
   Authentication,
-  BaseUserMeta,
   Client,
   ClientOptions,
   Json,
@@ -13,6 +12,7 @@ import type {
   Room,
   RoomInitializers,
 } from "./types";
+import type { BaseUserMeta } from "./types/BaseUserMeta";
 
 type EnterOptions<
   TPresence extends JsonObject,

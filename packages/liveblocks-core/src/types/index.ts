@@ -741,7 +741,6 @@ export enum WebsocketCloseCodes {
   CLOSE_WITHOUT_RETRY = 4999,
 }
 
-export type { BaseUserMeta } from "./BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,

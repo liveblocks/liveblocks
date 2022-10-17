@@ -13,7 +13,6 @@ import { OthersRef } from "./OthersRef";
 import type {
   Authentication,
   AuthorizeResponse,
-  BaseUserMeta,
   BroadcastOptions,
   ClientMsg,
   Connection,
@@ -50,6 +49,7 @@ import {
   WebsocketCloseCodes,
 } from "./types";
 import type { DocumentVisibilityState } from "./types/_compat";
+import type { BaseUserMeta } from "./types/BaseUserMeta";
 import { isJsonArray, isJsonObject } from "./types/Json";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./types/Op";

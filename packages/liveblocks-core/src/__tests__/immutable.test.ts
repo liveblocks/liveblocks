@@ -8,7 +8,6 @@ import {
 import * as console from "../lib/fancy-console";
 import { LiveObject } from "../LiveObject";
 import type {
-  BaseUserMeta,
   ClientMsg,
   Json,
   JsonObject,
@@ -17,7 +16,8 @@ import type {
   ToJson,
 } from "../types";
 import { ClientMsgCode, ServerMsgCode } from "../types";
-import type { IdTuple,SerializedCrdt } from "../types/SerializedCrdt";
+import type { BaseUserMeta } from "../types/BaseUserMeta";
+import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
 import {
   createSerializedList,
   createSerializedObject,

@@ -53,7 +53,6 @@ export type {
   UserLeftServerMsg,
 } from "./types";
 export type {
-  BaseUserMeta,
   BroadcastOptions,
   Client,
   History,
@@ -69,6 +68,7 @@ export type {
   User,
 } from "./types";
 export { ClientMsgCode, ServerMsgCode, WebsocketCloseCodes } from "./types";
+export type { BaseUserMeta } from "./types/BaseUserMeta";
 export type { ToImmutable } from "./types/Immutable";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
