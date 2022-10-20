@@ -100,7 +100,7 @@ allows us to subscribe to the other users updates.
     },
     destroyed: function () {
       this._room.unsubscribe("others", this.onOthersChange);
-      client.leave("your-room-id", { initialPresence: {} });
+      client.leave("your-room-id");
     },
     methods: {
       onOthersChange: function (others) {
