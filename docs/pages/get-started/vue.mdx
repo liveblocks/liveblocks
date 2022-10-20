@@ -71,6 +71,8 @@ Now that we have our room setup, we can start using Liveblocks Client methods to
 share any kind of data between users. For instance, [`Room.subscribe.others`][]
 allows us to subscribe to the other users updates.
 
+#### Vue2
+
 ```html
 <template>
   <span>{{message}}</span>
@@ -114,6 +116,53 @@ allows us to subscribe to the other users updates.
       },
     },
   });
+</script>
+```
+
+#### Vue3 Options Api
+
+```html
+<template>
+  <span>{{message}}</span>
+</template>
+
+<script>
+  import { createClient } from "@liveblocks/client";
+
+  // Create a Liveblocks client
+  // Replace this key with your secret key provided at
+  // https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+  const client = createClient({
+    publicApiKey: "{{PUBLIC_KEY}}",
+  });
+
+  export default {
+    data() {
+      return {
+        message: "You’re the only one here.",
+      };
+    },
+    mounted() {
+      const room = client.enter("your-room-id", { initialPresence: {} });
+      room.subscribe("others", this.onOthersChange);
+      this._room = room;
+    },
+    unmounted() {
+      this._room.unsubscribe("others", this.onOthersChange);
+      client.leave("your-room-id");
+    },
+    methods: {
+      onOthersChange(others) {
+        if (others.count === 0) {
+          this.message = "You’re the only one here.";
+        } else if (others.count === 1) {
+          this.message = "There is one other person here.";
+        } else {
+          this.message = "There are " + others.count + " other people here.";
+        }
+      },
+    },
+  };
 </script>
 ```
 
