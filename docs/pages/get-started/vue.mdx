@@ -97,11 +97,11 @@ allows us to subscribe to the other users updates.
     },
     mounted: function () {
       const room = client.enter("your-room-id", { initialPresence: {} });
-      room.subscribe("others", this.onOthersChange);
+      this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
       this._room = room;
     },
     destroyed: function () {
-      this._room.unsubscribe("others", this.onOthersChange);
+      this._unsubscribeOthers();
       client.leave("your-room-id");
     },
     methods: {
@@ -144,11 +144,12 @@ allows us to subscribe to the other users updates.
     },
     mounted() {
       const room = client.enter("your-room-id", { initialPresence: {} });
-      room.subscribe("others", this.onOthersChange);
+      this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
       this._room = room;
     },
     unmounted() {
       this._room.unsubscribe("others", this.onOthersChange);
+      this._unsubscribeOthers();
       client.leave("your-room-id");
     },
     methods: {
