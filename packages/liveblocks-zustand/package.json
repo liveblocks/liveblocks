@@ -21,10 +21,10 @@
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
-    "lint": "eslint src/",
+    "lint": "eslint src/ && npm run dtslint",
     "test": "jest --silent --verbose",
     "test:watch": "jest --silent --verbose --watch",
-    "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
+    "dtslint": "dtslint --localTs ../../node_modules/typescript/lib --expectOnly types"
   },
   "license": "Apache-2.0",
   "repository": {
