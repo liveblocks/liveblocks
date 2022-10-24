@@ -23,8 +23,7 @@
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose",
-    "test:watch": "jest --silent --verbose --watch",
-    "dtslint": "dtslint --localTs node_modules/typescript/lib --expectOnly types"
+    "test:watch": "jest --silent --verbose --watch"
   },
   "license": "Apache-2.0",
   "repository": {
@@ -40,7 +39,6 @@
     "redux": "^4"
   },
   "devDependencies": {
-    "@definitelytyped/dtslint": "^0.0.103",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@reduxjs/toolkit": "^1.7.2",
