@@ -40,7 +40,6 @@
     "zustand": "^3"
   },
   "devDependencies": {
-    "@definitelytyped/dtslint": "^0.0.103",
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
     "@testing-library/jest-dom": "^5.16.5",
