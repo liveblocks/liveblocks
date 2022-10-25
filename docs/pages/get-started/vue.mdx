@@ -71,13 +71,14 @@ Now that we have our room setup, we can start using Liveblocks Client methods to
 share any kind of data between users. For instance, [`Room.subscribe.others`][]
 allows us to subscribe to the other users updates.
 
+#### With the Vue Options API
+
 ```html
 <template>
   <span>{{message}}</span>
 </template>
 
 <script>
-  import Vue from "vue";
   import { createClient } from "@liveblocks/client";
 
   // Create a Liveblocks client
@@ -86,24 +87,25 @@ allows us to subscribe to the other users updates.
   const client = createClient({
     publicApiKey: "{{PUBLIC_KEY}}",
   });
+  
+  const roomId = "my-room";
 
-  export default Vue.extend({
-    data: function () {
+  export default {
+    data() {
       return {
         message: "You’re the only one here.",
       };
     },
-    mounted: function () {
-      const room = client.enter("your-room-id", { initialPresence: {} });
-      room.subscribe("others", this.onOthersChange);
-      this._room = room;
+    mounted() {
+      const room = client.enter(roomId, { initialPresence: {} });
+      this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
     },
-    destroyed: function () {
-      this._room.unsubscribe("others", this.onOthersChange);
-      client.leave("your-room-id", { initialPresence: {} });
+    unmounted() {
+      this._unsubscribeOthers();
+      client.leave(roomId);
     },
     methods: {
-      onOthersChange: function (others) {
+      onOthersChange(others) {
         if (others.count === 0) {
           this.message = "You’re the only one here.";
         } else if (others.count === 1) {
@@ -113,8 +115,50 @@ allows us to subscribe to the other users updates.
         }
       },
     },
+  };
+</script>
+```
+
+#### With the Vue Composition API
+
+```html
+<script setup>
+  import { onUnmounted, ref } from "vue";
+  import { createClient } from "@liveblocks/client";
+
+  // Create a Liveblocks client
+  // Replace this key with your secret key provided at
+  // https://liveblocks.io/dashboard/projects/{projectId}/apikeys
+  const client = createClient({
+    publicApiKey: "{{PUBLIC_KEY}}",
+  });
+
+  const roomId = "my-room";
+  const room = client.enter(roomId, { initialPresence: {} });
+  
+  const message = ref("You’re the only one here.");
+  
+  function onOthersChange(others) {
+    if (others.count === 0) {
+      message.value = "You’re the only one here.";
+    } else if (others.count === 1) {
+      message.value = "There is one other person here.";
+    } else {
+      message.value = "There are " + others.count + " other people here.";
+    }
+  }
+
+  const unsubscribeOthers = room.subscribe("others", onOthersChange);
+
+  onUnmounted(() => {
+    unsubscribeOthers();
+    client.leave(roomId);
   });
 </script>
+
+<template>
+  <span>{{message}}</span>
+</template>
 ```
 
 ## Bonus: setup authentication endpoint [#authentication]
