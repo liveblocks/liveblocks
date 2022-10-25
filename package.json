@@ -9,6 +9,7 @@
   "scripts": {
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:types": "turbo run test:types",
     "lint": "turbo run lint",
     "dev": "turbo run dev"
   },
