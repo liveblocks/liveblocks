@@ -21,10 +21,10 @@
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
-    "lint": "eslint src/ && npm run tsd",
+    "lint": "eslint src/",
     "test": "jest --silent --verbose",
-    "test:watch": "jest --silent --verbose --watch",
-    "tsd": "tsd test-d/"
+    "test:types": "tsd",
+    "test:watch": "jest --silent --verbose --watch"
   },
   "license": "Apache-2.0",
   "repository": {
