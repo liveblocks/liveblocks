@@ -99,10 +99,8 @@ allows us to subscribe to the other users updates.
     mounted() {
       const room = client.enter(roomId, { initialPresence: {} });
       this._unsubscribeOthers = room.subscribe("others", this.onOthersChange);
-      this._room = room;
     },
     unmounted() {
-      this._room.unsubscribe("others", this.onOthersChange);
       this._unsubscribeOthers();
       client.leave(roomId);
     },
