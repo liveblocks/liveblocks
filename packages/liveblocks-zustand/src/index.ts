@@ -606,20 +606,24 @@ const useBearStore = create<MyState>()(
   //     bears: "storage",
   //   },
   // })
-  middleware((set) => ({
-    now: new Date(),
-    cursor: null,
-    setCursor: (cursor: Cursor | null) => set({ cursor }),
-    maxBears: 0,
-    setMaxBears: (maxBears: number) => set({ maxBears }),
-    bears: [],
-    setBears: (bears: Bear[]) => set({ bears }),
-  }))
+  middleware(
+    (set) => ({
+      now: new Date(),
+      cursor: null,
+      setCursor: (cursor: Cursor | null) => set({ cursor }),
+      maxBears: 0,
+      setMaxBears: (maxBears: number) => set({ maxBears }),
+      bears: [],
+      setBears: (bears: Bear[]) => set({ bears }),
+    }),
+    { client }
+  )
 );
 
 useBearStore((state) => state.bears);
 useBearStore((state) => state.setBears);
 useBearStore((state) => state.liveblocks);
+useBearStore.liveblocks;
 
 const enterRoom = useBearStore((state) => state.liveblocks.enterRoom);
 enterRoom("my-room");
