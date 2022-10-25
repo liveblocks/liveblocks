@@ -8,6 +8,7 @@ import type {
   StorageUpdate,
   User,
 } from "@liveblocks/client";
+import { createClient } from "@liveblocks/client";
 import type {
   Json,
   JsonArray,
@@ -21,41 +22,42 @@ import {
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
+import create from "zustand";
 import type { StateCreator, StoreMutatorIdentifier } from "zustand";
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
-type MyState = {
-  // non-JSON keys can be used in Zustand, but they cannot be used for
-  // Liveblocks data
-  now: Date;
+// type MyState = {
+//   // non-JSON keys can be used in Zustand, but they cannot be used for
+//   // Liveblocks data
+//   now: Date;
 
-  cursor: Cursor | null;
-  setCursor: (cursor: Cursor | null) => void;
+//   cursor: Cursor | null;
+//   setCursor: (cursor: Cursor | null) => void;
 
-  maxBears: number;
-  setMaxBears: (maxBears: number) => void;
+//   maxBears: number;
+//   setMaxBears: (maxBears: number) => void;
 
-  bears: Bear[];
-  setBears: (bears: Bear[]) => void;
-};
+//   bears: Bear[];
+//   setBears: (bears: Bear[]) => void;
+// };
 
-const myMapping = {
-  bears: "storage",
-  maxBears: "storage",
-  cursor: "presence",
-} as const;
+// const myMapping = {
+//   bears: "storage",
+//   maxBears: "storage",
+//   cursor: "presence",
+// } as const;
 
-type Cursor = {
-  x: number;
-  y: number;
-};
+// type Cursor = {
+//   x: number;
+//   y: number;
+// };
 
-type Bear = {
-  name: string;
-  livingArea: string;
-  age: number;
-};
+// type Bear = {
+//   name: string;
+//   livingArea: string;
+//   age: number;
+// };
 
 function mappingToFunctionIsNotAllowed(key: string): Error {
   return new Error(
@@ -73,13 +75,6 @@ function isJson(value: unknown): value is Json {
     (typeof value === "object" && Object.values(value).every(isJson))
   );
 }
-
-/**
- * Returns the keys of T that are legal JSON values.
- */
-type JsonKeys<T extends Pojo> = {
-  [K in keyof T]: T[K] extends Json ? K : never;
-}[keyof T];
 
 export type LiveblocksContext<
   TPresence extends JsonObject,
@@ -139,41 +134,39 @@ type ToLsonObject<J extends JsonObject> = Resolve<{
 }>;
 
 type Cast<T, V> = T extends V ? T : V;
+type Write<T extends object, U extends object> = Omit<T, keyof U> & U;
 
-type PresenceKeys<
-  TState extends Pojo,
-  TMapping extends MappingConfig<TState>
-> = {
+declare module "zustand" {
+  interface StoreMutators<S, A> {
+    liveblocks: Write<Cast<S, object>, { liveblocks: A }>;
+  }
+}
+
+type PresenceKeys<TState, TMapping extends MappingConfig<TState>> = {
   [K in keyof TMapping]: TMapping[K] extends "presence" ? K : never;
 }[keyof TMapping] &
   keyof TState &
   string;
 
-type _Test1 = PresenceKeys<MyState, { bears: "storage"; cursor: "presence" }>;
-type _Test2 = StorageKeys<MyState, typeof myMapping>;
+// type _Test1 = PresenceKeys<MyState, { bears: "storage"; cursor: "presence" }>;
+// type _Test2 = StorageKeys<MyState, typeof myMapping>;
 
-type _Test3 = ExtractPresence<MyState, typeof myMapping>;
-type _Test4 = ExtractStorage<MyState, typeof myMapping>;
+// type _Test3 = ExtractPresence<MyState, typeof myMapping>;
+// type _Test4 = ExtractStorage<MyState, typeof myMapping>;
 
-type StorageKeys<
-  TState extends Pojo,
-  TMapping extends MappingConfig<TState>
-> = {
+type StorageKeys<TState, TMapping extends MappingConfig<TState>> = {
   [K in keyof TMapping]: TMapping[K] extends "storage" ? K : never;
 }[keyof TMapping] &
   keyof TState &
   string;
 
-type ExtractPresence<
-  TState extends Pojo,
-  TMapping extends MappingConfig<TState>
-> = Cast<
+type ExtractPresence<TState, TMapping extends MappingConfig<TState>> = Cast<
   Pick<TState, PresenceKeys<TState, TMapping> & keyof TState>,
   JsonObject
 >;
 
 type ExtractStorage<
-  TState extends Pojo,
+  TState,
   TMapping extends MappingConfig<TState>
 > = ToLsonObject<
   Cast<Pick<TState, StorageKeys<TState, TMapping> & keyof TState>, JsonObject>
@@ -202,10 +195,10 @@ type RoomEventFromLiveblocksState<T> =
  * `keyof TState` always be a subset of `string`, and never `number | symbol`,
  * which would be the case for a generic `keyof T`.
  */
-type Pojo = { [key: string]: unknown };
+// type Pojo = { [key: string]: unknown };
 
 export type LiveblocksState<
-  TState extends Pojo,
+  TState,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -223,221 +216,206 @@ export type LiveblocksState<
 };
 
 // XXX Rename to Mapping<T> eventually
-type MappingConfig<TState extends Pojo> = {
-  [K in JsonKeys<TState> & keyof TState]?: "presence" | "storage";
+type MappingConfig<TState> = {
+  [K in keyof TState]?: "presence" | "storage";
 };
 
+type LLLiveblocksContext = LiveblocksContext<
+  JsonObject,
+  LsonObject,
+  BaseUserMeta,
+  Json
+>;
+
 export function middleware<
-  TState extends Pojo,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json,
+  TState,
+  // TUserMeta extends BaseUserMeta = BaseUserMeta,
+  // TRoomEvent extends Json = Json,
   Mps extends [StoreMutatorIdentifier, unknown][] = [],
   Mcs extends [StoreMutatorIdentifier, unknown][] = []
 >(
-  config: StateCreator<TState, Mps, Mcs>
-): <TMapping extends MappingConfig<TState>>(options: {
-  /**
-   * Liveblocks client created by @liveblocks/client createClient
-   */
-  client: Client;
-
-  /**
-   * Mapping used to synchronize a subset of your Zustand state with your
-   * Liveblocks room's Presence or Storage.
-   */
-  mapping: TMapping;
-}) => StateCreator<
-  //
-  // NOTE: This ignores:
-  //
-  //   "TS2589: Type instantiation is excessively deep and possibly infinite"
-  //
-  // While TS errors on this line, it still seems to work on all the cases
-  // I tested it on. ¯\_(ツ)_/¯
-  //
-  // There likely is something we can/should improve on this, but I haven't
-  // found the root cause of this issue yet.
-  //
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  //
-  LiveblocksState<
+  config: StateCreator<
     TState,
-    ExtractPresence<TState, TMapping>,
-    ExtractStorage<TState, TMapping>,
-    TUserMeta,
-    TRoomEvent
+    [...Mps, ["liveblocks", LLLiveblocksContext]],
+    Mcs
   >,
-  Mps,
-  Mcs
-> {
-  return (options) => {
-    const client = options.client;
-    errorIf(!client, `${ERROR_PREFIX} client is missing`);
+  options: {
+    /**
+     * Liveblocks client created by @liveblocks/client createClient
+     */
+    client: Client;
 
-    const [presenceKeys, storageKeys] = validateMapping<
-      TState,
-      typeof options["mapping"]
-    >(options.mapping);
+    /**
+     * Mapping used to synchronize a subset of your Zustand state with your
+     * Liveblocks room's Presence or Storage.
+     */
+    // mapping: TMapping;
+  }
+): StateCreator<TState, Mps, [["liveblocks", LLLiveblocksContext], ...Mcs]> {
+  const client = options.client;
+  errorIf(!client, `${ERROR_PREFIX} client is missing`);
 
-    return (set, get, api) => {
-      type TGet = typeof get;
-      type TLiveblocksState = ReturnType<TGet>;
+  const [presenceKeys, storageKeys] = validateMapping<
+    TState,
+    typeof options["mapping"]
+  >(options.mapping);
 
-      type TPresence = PresenceFromLiveblocksState<TLiveblocksState>;
-      type TStorage = StorageFromLiveblocksState<TLiveblocksState>;
-      type TUserMeta = UserMetaFromLiveblocksState<TLiveblocksState>;
-      type TRoomEvent = RoomEventFromLiveblocksState<TLiveblocksState>;
+  return (set, get, api) => {
+    type TGet = typeof get;
+    type TLiveblocksState = ReturnType<TGet>;
 
-      let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
-      let isPatching: boolean = false;
-      let storageRoot: LiveObject<TStorage> | null = null;
-      let unsubscribeCallbacks: Array<() => void> = [];
+    type TPresence = PresenceFromLiveblocksState<TLiveblocksState>;
+    type TStorage = StorageFromLiveblocksState<TLiveblocksState>;
+    type TUserMeta = UserMetaFromLiveblocksState<TLiveblocksState>;
+    type TRoomEvent = RoomEventFromLiveblocksState<TLiveblocksState>;
 
-      function initialPresence(): TPresence {
-        const currState = get();
-        const result = {} as TPresence;
-        for (const key of presenceKeys) {
-          (result as any)[key] = currState[key];
-        }
-        return result;
+    let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
+    let isPatching: boolean = false;
+    let storageRoot: LiveObject<TStorage> | null = null;
+    let unsubscribeCallbacks: Array<() => void> = [];
+
+    function initialPresence(): TPresence {
+      const currState = get();
+      const result = {} as TPresence;
+      for (const key of presenceKeys) {
+        (result as any)[key] = currState[key];
+      }
+      return result;
+    }
+
+    function enterRoom(roomId: string) {
+      if (storageRoot) {
+        return;
       }
 
-      function enterRoom(roomId: string) {
-        if (storageRoot) {
-          return;
-        }
+      room = client.enter(roomId, { initialPresence });
 
-        room = client.enter(roomId, { initialPresence });
+      updateLiveblocksContext(set, {
+        isStorageLoading: true,
+        room: room as any,
+      });
 
-        updateLiveblocksContext(set, {
-          isStorageLoading: true,
-          room: room as any,
+      unsubscribeCallbacks.push(
+        room.events.others.subscribe(({ others }) => {
+          updateLiveblocksContext(set, { others });
+        })
+      );
+
+      unsubscribeCallbacks.push(
+        room.events.connection.subscribe(() => {
+          updateLiveblocksContext(set, {
+            connection: room!.getConnectionState(),
+          });
+        })
+      );
+
+      unsubscribeCallbacks.push(
+        room.events.me.subscribe(() => {
+          if (isPatching === false) {
+            set(pick(room!.getPresence(), presenceKeys as any[]) as any);
+          }
+        })
+      );
+
+      room.getStorage().then(({ root }) => {
+        const updates: any = {};
+
+        room!.batch(() => {
+          for (const key of storageKeys) {
+            const liveblocksStatePart = root.get(key as any);
+
+            if (liveblocksStatePart == null) {
+              updates[key] = get()[key];
+              patchLiveObjectKey(root, key, undefined, get()[key]);
+            } else {
+              updates[key] = lsonToJson(liveblocksStatePart);
+            }
+          }
         });
 
+        set(updates);
+
+        storageRoot = root;
         unsubscribeCallbacks.push(
-          room.events.others.subscribe(({ others }) => {
-            updateLiveblocksContext(set, { others });
-          })
-        );
-
-        unsubscribeCallbacks.push(
-          room.events.connection.subscribe(() => {
-            updateLiveblocksContext(set, {
-              connection: room!.getConnectionState(),
-            });
-          })
-        );
-
-        unsubscribeCallbacks.push(
-          room.events.me.subscribe(() => {
-            if (isPatching === false) {
-              set(pick(room!.getPresence(), presenceKeys as any[]) as any);
-            }
-          })
-        );
-
-        room.getStorage().then(({ root }) => {
-          const updates: any = {};
-
-          room!.batch(() => {
-            for (const key of storageKeys) {
-              const liveblocksStatePart = root.get(key as any);
-
-              if (liveblocksStatePart == null) {
-                updates[key] = get()[key];
-                patchLiveObjectKey(root, key, undefined, get()[key]);
-              } else {
-                updates[key] = lsonToJson(liveblocksStatePart);
+          room!.subscribe(
+            root,
+            (updates) => {
+              if (isPatching === false) {
+                // XXX This shouldn't be working with Partial<TState>, but
+                // Pick<TState, TStorageKeys>, which is more accurate
+                const ppp = patchState(get(), updates, storageKeys);
+                set(ppp);
               }
+            },
+            { isDeep: true }
+          )
+        );
+
+        // set isLoading storage to false once storage is loaded
+        updateLiveblocksContext(set, { isStorageLoading: false });
+      });
+    }
+
+    function leaveRoom(roomId: string) {
+      for (const unsubscribe of unsubscribeCallbacks) {
+        unsubscribe();
+      }
+      storageRoot = null;
+      room = null;
+      isPatching = false;
+      unsubscribeCallbacks = [];
+      client.leave(roomId);
+      updateLiveblocksContext(set, {
+        others: [],
+        connection: "closed",
+        isStorageLoading: false,
+        room: null,
+      });
+    }
+
+    const state = config(
+      (patch, _replace) => {
+        const oldState = get();
+        set(patch);
+        const newState = get();
+
+        if (room) {
+          isPatching = true;
+          updatePresence(room, oldState, newState, presenceKeys);
+
+          room.batch(() => {
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                oldState,
+                newState,
+                storageKeys
+              );
             }
           });
 
-          set(updates);
-
-          storageRoot = root;
-          unsubscribeCallbacks.push(
-            room!.subscribe(
-              root,
-              (updates) => {
-                if (isPatching === false) {
-                  // XXX This shouldn't be working with Partial<TState>, but
-                  // Pick<TState, TStorageKeys>, which is more accurate
-                  const ppp = patchState(get(), updates, storageKeys);
-                  set(ppp);
-                }
-              },
-              { isDeep: true }
-            )
-          );
-
-          // set isLoading storage to false once storage is loaded
-          updateLiveblocksContext(set, { isStorageLoading: false });
-        });
-      }
-
-      function leaveRoom(roomId: string) {
-        for (const unsubscribe of unsubscribeCallbacks) {
-          unsubscribe();
+          isPatching = false;
         }
-        storageRoot = null;
-        room = null;
-        isPatching = false;
-        unsubscribeCallbacks = [];
-        client.leave(roomId);
-        updateLiveblocksContext(set, {
-          others: [],
-          connection: "closed",
-          isStorageLoading: false,
-          room: null,
-        });
-      }
+      },
+      get,
+      api
+    );
 
-      const state = config(
-        (patch, _replace) => {
-          const oldState = get();
-          set(patch);
-          const newState = get();
-
-          if (room) {
-            isPatching = true;
-            updatePresence(room, oldState, newState, presenceKeys);
-
-            room.batch(() => {
-              if (storageRoot) {
-                patchLiveblocksStorage(
-                  storageRoot,
-                  oldState,
-                  newState,
-                  storageKeys
-                );
-              }
-            });
-
-            isPatching = false;
-          }
-        },
-        get,
-        api,
-        [] // $$storeMutations ????
-      );
-
-      return {
-        ...state,
-        liveblocks: {
-          enterRoom,
-          leaveRoom,
-          room: null,
-          others: [],
-          connection: "closed",
-          isStorageLoading: false,
-        },
-      };
+    return {
+      ...state,
+      liveblocks: {
+        enterRoom,
+        leaveRoom,
+        room: null,
+        others: [],
+        connection: "closed",
+        isStorageLoading: false,
+      },
     };
   };
 }
 
-function patchState<TState extends Pojo, K extends keyof TState & string>(
+function patchState<TState, K extends keyof TState & string>(
   state: TState,
   updates: StorageUpdate[],
   storageKeys: K[]
@@ -466,7 +444,7 @@ function pick<O, K extends keyof O & string>(
 }
 
 function updateLiveblocksContext<
-  T extends Pojo,
+  T,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -513,7 +491,7 @@ function updatePresence<
 
 function patchLiveblocksStorage<
   O extends LsonObject,
-  TState extends Pojo,
+  TState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -553,10 +531,7 @@ function patchLiveblocksStorage<
 /**
  * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware
  */
-function validateMapping<
-  TState extends Pojo,
-  TMapping extends MappingConfig<TState>
->(
+function validateMapping<TState, TMapping extends MappingConfig<TState>>(
   mapping: TMapping
 ): [PresenceKeys<TState, TMapping>[], StorageKeys<TState, TMapping>[]] {
   const presenceKeys = [] as PresenceKeys<TState, TMapping>[];
@@ -579,3 +554,77 @@ function validateMapping<
 
   return [presenceKeys, storageKeys];
 }
+
+// ---------------------------------------------------------------------------------
+
+type Cursor = { x: number; y: number };
+
+type MyState = {
+  // non-JSON keys can be used in Zustand, but they cannot be used for
+  // Liveblocks data
+  now: Date;
+
+  cursor: Cursor | null;
+  setCursor: (cursor: Cursor | null) => void;
+
+  maxBears: number;
+  setMaxBears: (maxBears: number) => void;
+
+  bears: Bear[];
+  setBears: (bears: Bear[]) => void;
+};
+
+// type _Test7 = ExtractPresence<MyState, "cursor" | "setCursor">;
+// type _Test8 = ExtractStorage<MyState, "bears" | "maxBears">;
+// type _Test9 = LiveblocksState<MyState, "cursor", "bears" | "maxBears">;
+
+type Bear = {
+  name: string;
+  livingArea: string;
+  age: number;
+};
+
+const client = createClient({ authEndpoint: "/api/auth" });
+
+const useBearStore = create<MyState>()(
+  // middleware((set) =>
+  // ({
+  //   now: new Date(),
+  //   cursor: null,
+  //   setCursor: (cursor: Cursor | null) => set({ cursor }),
+  //   maxBears: 0,
+  //   setMaxBears: (maxBears: number) => set({ maxBears }),
+  //   bears: [],
+  //   setBears: (bears: Bear[]) => set({ bears }),
+  // })
+  // )({
+  //   client,
+  //   mapping: {
+  //     cursor: "presence",
+  //     maxBears: "storage",
+  //     bears: "storage",
+  //   },
+  // })
+  middleware((set) => ({
+    now: new Date(),
+    cursor: null,
+    setCursor: (cursor: Cursor | null) => set({ cursor }),
+    maxBears: 0,
+    setMaxBears: (maxBears: number) => set({ maxBears }),
+    bears: [],
+    setBears: (bears: Bear[]) => set({ bears }),
+  }))
+);
+
+useBearStore((state) => state.bears);
+useBearStore((state) => state.setBears);
+useBearStore((state) => state.liveblocks);
+
+const enterRoom = useBearStore((state) => state.liveblocks.enterRoom);
+enterRoom("my-room");
+const room = useBearStore((state) => state.liveblocks.room)!;
+room.getStorage().then(({ root }) => root.get("maxBears").toFixed());
+room
+  .getStorage()
+  .then(({ root }) => root.get("bears").get(0)?.get("name").toLowerCase());
+room.getSelf()!.presence.cursor;
