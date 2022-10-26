@@ -14,7 +14,12 @@ import {
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
-import type { GetState, SetState, StateCreator, StoreApi } from "zustand";
+import type {
+  Mutate,
+  StateCreator,
+  StoreApi,
+  StoreMutatorIdentifier,
+} from "zustand";
 
 const ERROR_PREFIX = "Invalid @liveblocks/zustand middleware config.";
 
@@ -112,6 +117,22 @@ type Options<T> = {
   presenceMapping?: Mapping<T>;
 };
 
+// --------------------
+// XXX TO REMOVE LATER
+// --------------------
+type LLLiveblocksContext =
+  // XXX Replace with the real deal later on!
+  { hahaha: "tagine" };
+
+// LiveblocksContext<
+// JsonObject,
+// LsonObject,
+// BaseUserMeta,
+// Json
+// >;
+
+// --------------------
+
 // --------------------------------------------------------------------------------------------
 // Helpers, following guide from
 // https://github.com/pmndrs/zustand/blob/main/docs/guides/typescript.md#middleware-that-changes-the-store-type
@@ -120,7 +141,7 @@ type Options<T> = {
 // Boilerplate
 declare module "zustand" {
   interface StoreMutators<S, A> {
-    liveblocks: Write<Cast<S, object>, { liveblocks: A }>;
+    "liveblocks/zustand": Write<Cast<S, object>, { liveblocks: A }>;
   }
 }
 
@@ -128,192 +149,200 @@ declare module "zustand" {
 type Cast<T, U> = T extends U ? T : U;
 type Write<T extends object, U extends object> = Omit<T, keyof U> & U;
 
+// ---------
+
+// Custom impls
+
+type OuterLiveblocksMiddleware = <
+  TState,
+  Mps extends [StoreMutatorIdentifier, unknown][] = [],
+  Mcs extends [StoreMutatorIdentifier, unknown][] = []
+>(
+  config: StateCreator<
+    TState,
+    [...Mps, ["liveblocks/zustand", LLLiveblocksContext]],
+    Mcs
+  >,
+  options: Options<TState>
+) => StateCreator<
+  TState,
+  Mps,
+  [["liveblocks/zustand", LLLiveblocksContext], ...Mcs]
+>;
+
 // --------------------------------------------------------------------------------------------
 // End of helpers
 // --------------------------------------------------------------------------------------------
 
-export function middleware<
-  TState,
-  TPresence extends JsonObject = JsonObject,
-  TStorage extends LsonObject = LsonObject,
-  TUserMeta extends BaseUserMeta = BaseUserMeta,
-  TRoomEvent extends Json = Json
->(
-  config: StateCreator<
-    TState,
-    SetState<TState>,
-    GetState<
-      LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
-    >,
-    StoreApi<TState>
-  >,
+type InnerLiveblocksMiddleware = <TState /* A */>(
+  config: StateCreator<TState, [], []>,
   options: Options<TState>
-): StateCreator<
-  LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  SetState<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  GetState<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  StoreApi<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>
-> {
-  const { client, presenceMapping, storageMapping } = validateOptions(options);
-  return (set: any, get, api: any) => {
-    const typedSet: (
-      callbackOrPartial: (
-        current: LiveblocksState<
-          TState,
-          TPresence,
-          TStorage,
-          TUserMeta,
-          TRoomEvent
-        >
-      ) =>
-        | LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
-        | Partial<TState>
-    ) => void = set;
+) => StateCreator<TState, [], []>;
 
-    let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
-    let isPatching: boolean = false;
-    let storageRoot: LiveObject<any> | null = null;
-    let unsubscribeCallbacks: Array<() => void> = [];
+const middlewareImpl: InnerLiveblocksMiddleware =
+  (config, _options) => (set, get, store) => {
+    type TState = ReturnType<typeof config>;
+    type A = LLLiveblocksContext;
 
-    function enterRoom(roomId: string, initialState: any) {
-      if (storageRoot) {
-        return;
-      }
+    // Monkey-patch the Liveblocks value onto the store
+    const patchableStore = store as Mutate<
+      StoreApi<TState>,
+      [["liveblocks/zustand", A]]
+    >;
+    patchableStore.liveblocks = { hahaha: "tagine" };
 
-      room = client.enter(roomId, { initialPresence: {} as TPresence });
+    // XXX Replace this implementation with the stuff below eventually
+    return config(set, get, store);
 
-      updateZustandLiveblocksState(set, {
-        isStorageLoading: true,
-        room: room as any,
-      });
+    // const { client, presenceMapping, storageMapping } = validateOptions(options);
+    // return (set, get, api) => {
+    //   let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
+    //   let isPatching: boolean = false;
+    //   let storageRoot: LiveObject<any> | null = null;
+    //   let unsubscribeCallbacks: Array<() => void> = [];
 
-      const state = get();
+    //   function enterRoom(roomId: string, initialState: any) {
+    //     if (storageRoot) {
+    //       return;
+    //     }
 
-      broadcastInitialPresence(room, state, presenceMapping as any);
+    //     room = client.enter(roomId, { initialPresence: {} as TPresence });
 
-      unsubscribeCallbacks.push(
-        room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others });
-        })
-      );
+    //     updateZustandLiveblocksState(set, {
+    //       isStorageLoading: true,
+    //       room: room as any,
+    //     });
 
-      unsubscribeCallbacks.push(
-        room.events.connection.subscribe(() => {
-          updateZustandLiveblocksState(set, {
-            connection: room!.getConnectionState(),
-          });
-        })
-      );
+    //     const state = get();
 
-      unsubscribeCallbacks.push(
-        room.events.me.subscribe(() => {
-          if (isPatching === false) {
-            set(
-              patchPresenceState(room!.getPresence(), presenceMapping as any)
-            );
-          }
-        })
-      );
+    //     broadcastInitialPresence(room, state, presenceMapping as any);
 
-      room.getStorage().then(({ root }) => {
-        const updates: any = {};
+    //     unsubscribeCallbacks.push(
+    //       room.events.others.subscribe(({ others }) => {
+    //         updateZustandLiveblocksState(set, { others });
+    //       })
+    //     );
 
-        room!.batch(() => {
-          for (const key in storageMapping) {
-            const liveblocksStatePart = root.get(key);
+    //     unsubscribeCallbacks.push(
+    //       room.events.connection.subscribe(() => {
+    //         updateZustandLiveblocksState(set, {
+    //           connection: room!.getConnectionState(),
+    //         });
+    //       })
+    //     );
 
-            if (liveblocksStatePart == null) {
-              updates[key] = initialState[key];
-              patchLiveObjectKey(root, key, undefined, initialState[key]);
-            } else {
-              updates[key] = lsonToJson(liveblocksStatePart);
-            }
-          }
-        });
+    //     unsubscribeCallbacks.push(
+    //       room.events.me.subscribe(() => {
+    //         if (isPatching === false) {
+    //           set(
+    //             patchPresenceState(room!.getPresence(), presenceMapping as any)
+    //           );
+    //         }
+    //       })
+    //     );
 
-        typedSet(updates);
+    //     room.getStorage().then(({ root }) => {
+    //       const updates: any = {};
 
-        storageRoot = root;
-        unsubscribeCallbacks.push(
-          room!.subscribe(
-            root,
-            (updates) => {
-              if (isPatching === false) {
-                set(patchState(get(), updates, storageMapping as any));
-              }
-            },
-            { isDeep: true }
-          )
-        );
+    //       room!.batch(() => {
+    //         for (const key in storageMapping) {
+    //           const liveblocksStatePart = root.get(key);
 
-        // set isLoading storage to false once storage is loaded
-        updateZustandLiveblocksState(set, { isStorageLoading: false });
-      });
-    }
+    //           if (liveblocksStatePart == null) {
+    //             updates[key] = initialState[key];
+    //             patchLiveObjectKey(root, key, undefined, initialState[key]);
+    //           } else {
+    //             updates[key] = lsonToJson(liveblocksStatePart);
+    //           }
+    //         }
+    //       });
 
-    function leaveRoom(roomId: string) {
-      for (const unsubscribe of unsubscribeCallbacks) {
-        unsubscribe();
-      }
-      storageRoot = null;
-      room = null;
-      isPatching = false;
-      unsubscribeCallbacks = [];
-      client.leave(roomId);
-      updateZustandLiveblocksState(set, {
-        others: [],
-        connection: "closed",
-        isStorageLoading: false,
-        room: null,
-      });
-    }
+    //       set(updates);
 
-    const store = config(
-      (args) => {
-        const oldState = get();
-        set(args);
-        const newState = get();
+    //       storageRoot = root;
+    //       unsubscribeCallbacks.push(
+    //         room!.subscribe(
+    //           root,
+    //           (updates) => {
+    //             if (isPatching === false) {
+    //               set(patchState(get(), updates, storageMapping as any));
+    //             }
+    //           },
+    //           { isDeep: true }
+    //         )
+    //       );
 
-        if (room) {
-          isPatching = true;
-          updatePresence(
-            room!,
-            oldState as any,
-            newState,
-            presenceMapping as any
-          );
+    //       // set isLoading storage to false once storage is loaded
+    //       updateZustandLiveblocksState(set, { isStorageLoading: false });
+    //     });
+    //   }
 
-          room.batch(() => {
-            if (storageRoot) {
-              patchLiveblocksStorage(
-                storageRoot,
-                oldState,
-                newState,
-                storageMapping as any
-              );
-            }
-          });
+    //   function leaveRoom(roomId: string) {
+    //     for (const unsubscribe of unsubscribeCallbacks) {
+    //       unsubscribe();
+    //     }
+    //     storageRoot = null;
+    //     room = null;
+    //     isPatching = false;
+    //     unsubscribeCallbacks = [];
+    //     client.leave(roomId);
+    //     updateZustandLiveblocksState(set, {
+    //       others: [],
+    //       connection: "closed",
+    //       isStorageLoading: false,
+    //       room: null,
+    //     });
+    //   }
 
-          isPatching = false;
-        }
-      },
-      get as any,
-      api
-    );
+    //   const store = config(
+    //     (args) => {
+    //       const oldState = get();
+    //       set(args);
+    //       const newState = get();
 
-    return {
-      ...store,
-      liveblocks: {
-        enterRoom,
-        leaveRoom,
-        room: null,
-        others: [],
-        connection: "closed",
-        isStorageLoading: false,
-      },
-    };
+    //       if (room) {
+    //         isPatching = true;
+    //         updatePresence(
+    //           room!,
+    //           oldState as any,
+    //           newState,
+    //           presenceMapping as any
+    //         );
+
+    //         room.batch(() => {
+    //           if (storageRoot) {
+    //             patchLiveblocksStorage(
+    //               storageRoot,
+    //               oldState,
+    //               newState,
+    //               storageMapping as any
+    //             );
+    //           }
+    //         });
+
+    //         isPatching = false;
+    //       }
+    //     },
+    //     get as any,
+    //     api
+    //   );
+
+    //   return {
+    //     ...store,
+    //     liveblocks: {
+    //       enterRoom,
+    //       leaveRoom,
+    //       room: null,
+    //       others: [],
+    //       connection: "closed",
+    //       isStorageLoading: false,
+    //     },
+    //   };
+    // };
   };
-}
+
+export const middleware =
+  middlewareImpl as unknown as OuterLiveblocksMiddleware;
 
 function patchState<T>(
   state: T,
