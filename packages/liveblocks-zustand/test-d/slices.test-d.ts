@@ -1,59 +1,61 @@
-import type { GetState, SetState } from "zustand";
-import create from "zustand";
-import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+// import type { GetState, SetState } from "zustand";
+// import create from "zustand";
+// import { createClient } from "@liveblocks/client";
+// import { middleware } from "@liveblocks/zustand";
 
-import { expectType, expectAssignable } from "tsd";
+// import { expectType, expectAssignable } from "tsd";
 
-type BearSlice = {
-  eatFish: () => void;
-};
+// type BearSlice = {
+//   eatFish: () => void;
+// };
 
-type FishSlice = {
-  fishes: number;
-  repopulate: () => void;
-};
+// type FishSlice = {
+//   fishes: number;
+//   repopulate: () => void;
+// };
 
-const createBearSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
-  eatFish: () => {
-    set((prev) => ({ fishes: prev.fishes > 1 ? prev.fishes - 1 : 0 }));
-  },
-});
+// const createBearSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
+//   eatFish: () => {
+//     set((prev) => ({ fishes: prev.fishes > 1 ? prev.fishes - 1 : 0 }));
+//   },
+// });
 
-const maxFishes = 10;
+// const maxFishes = 10;
 
-const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
-  fishes: maxFishes,
-  repopulate: () => {
-    set((_prev) => ({ fishes: maxFishes }));
-  },
-});
+// const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
+//   fishes: maxFishes,
+//   repopulate: () => {
+//     set((_prev) => ({ fishes: maxFishes }));
+//   },
+// });
 
-type MyState = BearSlice & FishSlice;
+// type MyState = BearSlice & FishSlice;
 
-const useStore = create(
-  middleware<MyState>(
-    (set, get) => ({
-      ...createBearSlice(set, get),
-      ...createFishSlice(set, get),
-    }),
-    {
-      client: createClient({ publicApiKey: "pk_xxx" }),
-      presenceMapping: { fishes: true },
-    }
-  )
-);
+// const useStore = create(
+//   middleware<MyState>(
+//     (set, get) => ({
+//       ...createBearSlice(set, get),
+//       ...createFishSlice(set, get),
+//     }),
+//     {
+//       client: createClient({ publicApiKey: "pk_xxx" }),
+//       presenceMapping: { fishes: true },
+//     }
+//   )
+// );
 
-const store = useStore((s) => s);
+// const store = useStore((s) => s);
 
-// From fish slice
-expectType<number>(store.fishes);
-expectType<() => void>(store.repopulate);
+// // From fish slice
+// expectType<number>(store.fishes);
+// expectType<() => void>(store.repopulate);
 
-// From bear slice
-expectType<() => void>(store.eatFish);
+// // From bear slice
+// expectType<() => void>(store.eatFish);
 
-// Liveblocks state
-expectAssignable<Function>(store.liveblocks.enterRoom);
-expectAssignable<Function>(store.liveblocks.leaveRoom);
-expectType<string>(store.liveblocks.room!.id);
+// // Liveblocks state
+// expectAssignable<Function>(store.liveblocks.enterRoom);
+// expectAssignable<Function>(store.liveblocks.leaveRoom);
+// expectType<string>(store.liveblocks.room!.id);
+
+export {};
