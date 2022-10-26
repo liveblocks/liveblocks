@@ -18,7 +18,7 @@ import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";
 import create from "zustand";
 
-import type { Mapping, ZustandState } from "..";
+import type { Mapping } from "..";
 import { middleware } from "..";
 import { list, MockWebSocket, obj, waitFor } from "./_utils";
 
@@ -59,7 +59,7 @@ async function waitForSocketToBeConnected() {
   return socket;
 }
 
-interface BasicStore extends ZustandState {
+interface BasicStore {
   value: number;
   setValue: (newValue: number) => void;
 
@@ -94,7 +94,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 });
 
 function prepareClientAndStore<
-  T extends ZustandState,
+  T,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -123,7 +123,7 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<T extends ZustandState>(
+async function prepareWithStorage<T>(
   stateCreator: StateCreator<T>,
   options: {
     storageMapping: Mapping<T>;
