@@ -34,8 +34,8 @@ type RoomEvent = {
 
 const client = createClient({ authEndpoint: "/api/auth" });
 
-const useStore = create(
-  liveblocksMiddleware<MyState>(
+const useStore = create<WithLiveblocks<MyState>>()(
+  liveblocksMiddleware(
     (set, get, api) => ({
       value: 0,
       setValue: (newValue: number) => {

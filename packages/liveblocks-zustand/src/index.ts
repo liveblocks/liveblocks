@@ -166,7 +166,7 @@ type OuterLiveblocksMiddleware = <
     WithLiveblocks<TState>,
     [...Mps, ["liveblocks/zustand", LLLiveblocksContext]],
     Mcs,
-    TState
+    Omit<TState, "liveblocks">
   >,
   options: Options<TState>
 ) => StateCreator<
