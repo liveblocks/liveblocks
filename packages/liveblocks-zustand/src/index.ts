@@ -227,7 +227,7 @@ type LLLiveblocksContext = LiveblocksContext<
   Json
 >;
 
-declare function middleware<
+export function middleware<
   TState,
   // TUserMeta extends BaseUserMeta = BaseUserMeta,
   // TRoomEvent extends Json = Json,
@@ -251,170 +251,169 @@ declare function middleware<
      */
     // mapping: TMapping;
   }
-): StateCreator<TState, Mps, [["liveblocks", LLLiveblocksContext], ...Mcs]>;
+): StateCreator<TState, Mps, [["liveblocks", LLLiveblocksContext], ...Mcs]> {
+  const client = options.client;
+  errorIf(!client, `${ERROR_PREFIX} client is missing`);
 
-//   const client = options.client;
-//   errorIf(!client, `${ERROR_PREFIX} client is missing`);
+  const [presenceKeys, storageKeys] = validateMapping<
+    TState,
+    typeof options["mapping"]
+  >(options.mapping);
 
-//   const [presenceKeys, storageKeys] = validateMapping<
-//     TState,
-//     typeof options["mapping"]
-//   >(options.mapping);
+  return (set, get, api) => {
+    type TGet = typeof get;
+    type TLiveblocksState = ReturnType<TGet>;
 
-//   return (set, get, api) => {
-//     type TGet = typeof get;
-//     type TLiveblocksState = ReturnType<TGet>;
+    type TPresence = PresenceFromLiveblocksState<TLiveblocksState>;
+    type TStorage = StorageFromLiveblocksState<TLiveblocksState>;
+    type TUserMeta = UserMetaFromLiveblocksState<TLiveblocksState>;
+    type TRoomEvent = RoomEventFromLiveblocksState<TLiveblocksState>;
 
-//     type TPresence = PresenceFromLiveblocksState<TLiveblocksState>;
-//     type TStorage = StorageFromLiveblocksState<TLiveblocksState>;
-//     type TUserMeta = UserMetaFromLiveblocksState<TLiveblocksState>;
-//     type TRoomEvent = RoomEventFromLiveblocksState<TLiveblocksState>;
+    let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
+    let isPatching: boolean = false;
+    let storageRoot: LiveObject<TStorage> | null = null;
+    let unsubscribeCallbacks: Array<() => void> = [];
 
-//     let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
-//     let isPatching: boolean = false;
-//     let storageRoot: LiveObject<TStorage> | null = null;
-//     let unsubscribeCallbacks: Array<() => void> = [];
+    function initialPresence(): TPresence {
+      const currState = get();
+      const result = {} as TPresence;
+      for (const key of presenceKeys) {
+        (result as any)[key] = currState[key];
+      }
+      return result;
+    }
 
-//     function initialPresence(): TPresence {
-//       const currState = get();
-//       const result = {} as TPresence;
-//       for (const key of presenceKeys) {
-//         (result as any)[key] = currState[key];
-//       }
-//       return result;
-//     }
+    function enterRoom(roomId: string) {
+      if (storageRoot) {
+        return;
+      }
 
-//     function enterRoom(roomId: string) {
-//       if (storageRoot) {
-//         return;
-//       }
+      room = client.enter(roomId, { initialPresence });
 
-//       room = client.enter(roomId, { initialPresence });
+      updateLiveblocksContext(set, {
+        isStorageLoading: true,
+        room: room as any,
+      });
 
-//       updateLiveblocksContext(set, {
-//         isStorageLoading: true,
-//         room: room as any,
-//       });
+      unsubscribeCallbacks.push(
+        room.events.others.subscribe(({ others }) => {
+          updateLiveblocksContext(set, { others });
+        })
+      );
 
-//       unsubscribeCallbacks.push(
-//         room.events.others.subscribe(({ others }) => {
-//           updateLiveblocksContext(set, { others });
-//         })
-//       );
+      unsubscribeCallbacks.push(
+        room.events.connection.subscribe(() => {
+          updateLiveblocksContext(set, {
+            connection: room!.getConnectionState(),
+          });
+        })
+      );
 
-//       unsubscribeCallbacks.push(
-//         room.events.connection.subscribe(() => {
-//           updateLiveblocksContext(set, {
-//             connection: room!.getConnectionState(),
-//           });
-//         })
-//       );
+      unsubscribeCallbacks.push(
+        room.events.me.subscribe(() => {
+          if (isPatching === false) {
+            set(pick(room!.getPresence(), presenceKeys as any[]) as any);
+          }
+        })
+      );
 
-//       unsubscribeCallbacks.push(
-//         room.events.me.subscribe(() => {
-//           if (isPatching === false) {
-//             set(pick(room!.getPresence(), presenceKeys as any[]) as any);
-//           }
-//         })
-//       );
+      room.getStorage().then(({ root }) => {
+        const updates: any = {};
 
-//       room.getStorage().then(({ root }) => {
-//         const updates: any = {};
+        room!.batch(() => {
+          for (const key of storageKeys) {
+            const liveblocksStatePart = root.get(key as any);
 
-//         room!.batch(() => {
-//           for (const key of storageKeys) {
-//             const liveblocksStatePart = root.get(key as any);
+            if (liveblocksStatePart == null) {
+              updates[key] = get()[key];
+              patchLiveObjectKey(root, key, undefined, get()[key]);
+            } else {
+              updates[key] = lsonToJson(liveblocksStatePart);
+            }
+          }
+        });
 
-//             if (liveblocksStatePart == null) {
-//               updates[key] = get()[key];
-//               patchLiveObjectKey(root, key, undefined, get()[key]);
-//             } else {
-//               updates[key] = lsonToJson(liveblocksStatePart);
-//             }
-//           }
-//         });
+        set(updates);
 
-//         set(updates);
+        storageRoot = root;
+        unsubscribeCallbacks.push(
+          room!.subscribe(
+            root,
+            (updates) => {
+              if (isPatching === false) {
+                // XXX This shouldn't be working with Partial<TState>, but
+                // Pick<TState, TStorageKeys>, which is more accurate
+                const ppp = patchState(get(), updates, storageKeys);
+                set(ppp);
+              }
+            },
+            { isDeep: true }
+          )
+        );
 
-//         storageRoot = root;
-//         unsubscribeCallbacks.push(
-//           room!.subscribe(
-//             root,
-//             (updates) => {
-//               if (isPatching === false) {
-//                 // XXX This shouldn't be working with Partial<TState>, but
-//                 // Pick<TState, TStorageKeys>, which is more accurate
-//                 const ppp = patchState(get(), updates, storageKeys);
-//                 set(ppp);
-//               }
-//             },
-//             { isDeep: true }
-//           )
-//         );
+        // set isLoading storage to false once storage is loaded
+        updateLiveblocksContext(set, { isStorageLoading: false });
+      });
+    }
 
-//         // set isLoading storage to false once storage is loaded
-//         updateLiveblocksContext(set, { isStorageLoading: false });
-//       });
-//     }
+    function leaveRoom(roomId: string) {
+      for (const unsubscribe of unsubscribeCallbacks) {
+        unsubscribe();
+      }
+      storageRoot = null;
+      room = null;
+      isPatching = false;
+      unsubscribeCallbacks = [];
+      client.leave(roomId);
+      updateLiveblocksContext(set, {
+        others: [],
+        connection: "closed",
+        isStorageLoading: false,
+        room: null,
+      });
+    }
 
-//     function leaveRoom(roomId: string) {
-//       for (const unsubscribe of unsubscribeCallbacks) {
-//         unsubscribe();
-//       }
-//       storageRoot = null;
-//       room = null;
-//       isPatching = false;
-//       unsubscribeCallbacks = [];
-//       client.leave(roomId);
-//       updateLiveblocksContext(set, {
-//         others: [],
-//         connection: "closed",
-//         isStorageLoading: false,
-//         room: null,
-//       });
-//     }
+    const state = config(
+      (patch, _replace) => {
+        const oldState = get();
+        set(patch);
+        const newState = get();
 
-//     const state = config(
-//       (patch, _replace) => {
-//         const oldState = get();
-//         set(patch);
-//         const newState = get();
+        if (room) {
+          isPatching = true;
+          updatePresence(room, oldState, newState, presenceKeys);
 
-//         if (room) {
-//           isPatching = true;
-//           updatePresence(room, oldState, newState, presenceKeys);
+          room.batch(() => {
+            if (storageRoot) {
+              patchLiveblocksStorage(
+                storageRoot,
+                oldState,
+                newState,
+                storageKeys
+              );
+            }
+          });
 
-//           room.batch(() => {
-//             if (storageRoot) {
-//               patchLiveblocksStorage(
-//                 storageRoot,
-//                 oldState,
-//                 newState,
-//                 storageKeys
-//               );
-//             }
-//           });
+          isPatching = false;
+        }
+      },
+      get,
+      api
+    );
 
-//           isPatching = false;
-//         }
-//       },
-//       get,
-//       api
-//     );
-
-//     return {
-//       ...state,
-//       liveblocks: {
-//         enterRoom,
-//         leaveRoom,
-//         room: null,
-//         others: [],
-//         connection: "closed",
-//         isStorageLoading: false,
-//       },
-//     };
-//   };
-// }
+    return {
+      ...state,
+      liveblocks: {
+        enterRoom,
+        leaveRoom,
+        room: null,
+        others: [],
+        connection: "closed",
+        isStorageLoading: false,
+      },
+    };
+  };
+}
 
 function patchState<TState, K extends keyof TState & string>(
   state: TState,
