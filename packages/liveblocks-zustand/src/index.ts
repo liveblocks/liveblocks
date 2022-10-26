@@ -35,12 +35,7 @@ function isJson(value: unknown): value is Json {
   );
 }
 
-export type ZustandState =
-  // TODO: Properly type out the constraints for this type here!
-  Record<string, unknown>;
-
 export type LiveblocksContext<
-  TState extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -82,7 +77,7 @@ export type LiveblocksContext<
 };
 
 export type LiveblocksState<
-  TState extends ZustandState,
+  TState,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
@@ -92,7 +87,6 @@ export type LiveblocksState<
    * Liveblocks extra state attached by the middleware
    */
   readonly liveblocks: LiveblocksContext<
-    TState,
     TPresence,
     TStorage,
     TUserMeta,
@@ -120,33 +114,41 @@ type Options<T> = {
 };
 
 export function middleware<
-  T extends ZustandState,
+  TState,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
   TUserMeta extends BaseUserMeta = BaseUserMeta,
   TRoomEvent extends Json = Json
 >(
   config: StateCreator<
-    T,
-    SetState<T>,
-    GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-    StoreApi<T>
+    TState,
+    SetState<TState>,
+    GetState<
+      LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
+    >,
+    StoreApi<TState>
   >,
-  options: Options<T>
+  options: Options<TState>
 ): StateCreator<
-  LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  SetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
+  LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  SetState<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  GetState<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  StoreApi<LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+        current: LiveblocksState<
+          TState,
+          TPresence,
+          TStorage,
+          TUserMeta,
+          TRoomEvent
+        >
       ) =>
-        | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
-        | Partial<T>
+        | LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
+        | Partial<TState>
     ) => void = set;
 
     let room: Room<TPresence, TStorage, TUserMeta, TRoomEvent> | null = null;
@@ -327,7 +329,7 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
 }
 
 function updateZustandLiveblocksState<
-  T extends ZustandState,
+  TState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -335,13 +337,25 @@ function updateZustandLiveblocksState<
 >(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      current: LiveblocksState<
+        TState,
+        TPresence,
+        TStorage,
+        TUserMeta,
+        TRoomEvent
+      >
     ) =>
-      | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      | LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
       | Partial<any>
   ) => void,
   partial: Partial<
-    LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>["liveblocks"]
+    LiveblocksState<
+      TState,
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >["liveblocks"]
   >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
@@ -382,7 +396,7 @@ function updatePresence<
 
 function patchLiveblocksStorage<
   O extends LsonObject,
-  TState extends ZustandState,
+  TState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -462,9 +476,7 @@ function validateMapping<T>(
   return result;
 }
 
-function validateOptions<T extends ZustandState>(
-  options: Options<T>
-): Options<T> {
+function validateOptions<TState>(options: Options<TState>): Options<TState> {
   const client = options.client;
   errorIf(!client, `${ERROR_PREFIX} client is missing`);
 
