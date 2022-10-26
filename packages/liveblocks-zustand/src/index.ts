@@ -117,29 +117,6 @@ type Options<T> = {
   presenceMapping?: Mapping<T>;
 };
 
-// --------------------
-// XXX TO REMOVE LATER
-// --------------------
-type LLLiveblocksContext = { isStorageLoading: boolean };
-
-export type WithLiveblocks<T> = T & {
-  readonly liveblocks: LLLiveblocksContext;
-};
-
-// LiveblocksContext<
-// JsonObject,
-// LsonObject,
-// BaseUserMeta,
-// Json
-// >;
-
-// --------------------
-
-// --------------------------------------------------------------------------------------------
-// Helpers, following guide from
-// https://github.com/pmndrs/zustand/blob/main/docs/guides/typescript.md#middleware-that-changes-the-store-type
-// --------------------------------------------------------------------------------------------
-
 // Custom impls
 
 type OuterLiveblocksMiddleware = <
@@ -163,7 +140,7 @@ type InnerLiveblocksMiddleware = <TState /* A */>(
 const middlewareImpl: InnerLiveblocksMiddleware =
   (config, _options) => (set, get, store) => {
     type TState = ReturnType<typeof config>;
-    type A = LLLiveblocksContext;
+    type A = any; // LiveblocksContext
 
     // Monkey-patch the Liveblocks value onto the store
     const patchableStore = store as Mutate<

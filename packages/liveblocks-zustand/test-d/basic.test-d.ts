@@ -1,6 +1,8 @@
 import { createClient, LiveList } from "@liveblocks/client";
-import { middleware as liveblocksMiddleware } from "@liveblocks/zustand";
-import type { WithLiveblocks } from "@liveblocks/zustand";
+import {
+  LiveblocksState,
+  middleware as liveblocksMiddleware,
+} from "@liveblocks/zustand";
 import { devtools, persist } from "zustand/middleware";
 
 import create from "zustand";
@@ -35,7 +37,9 @@ type RoomEvent = {
 
 const client = createClient({ authEndpoint: "/api/auth" });
 
-const useStore = create<WithLiveblocks<MyState>>()(
+const useStore = create<
+  LiveblocksState<MyState, Presence, Storage, BaseUser, RoomEvent>
+>()(
   devtools(
     persist(
       liveblocksMiddleware(
@@ -49,6 +53,27 @@ const useStore = create<WithLiveblocks<MyState>>()(
             expectType<number>(state.value);
             expectType<(newValue: number) => void>(state.setValue);
             expectType<boolean>(state.liveblocks.isStorageLoading);
+
+            // Presence tests
+            expectType<Presence>(state.liveblocks.others[0]!.presence);
+            expectError(
+              state.liveblocks.others[0]!.presence.nonexistingProperty
+            );
+
+            // UserMeta tests
+            expectType<Meta>(state.liveblocks.others[0]!.info);
+            expectError(state.liveblocks.others[0]!.info.nonexistingProperty);
+
+            expectError(
+              state.liveblocks.room?.broadcastEvent({
+                type: "INVALID_MESSAGE",
+              })
+            );
+
+            state.liveblocks.room?.getStorage().then((storage) => {
+              storage.root.get("todos");
+              expectError(storage.root.get("unknown_key"));
+            });
 
             return set({ value: newValue });
           },
@@ -66,6 +91,19 @@ const state = useStore.getState();
 expectType<number>(state.value);
 expectType<(newValue: number) => void>(state.setValue);
 expectType<boolean>(state.liveblocks.isStorageLoading);
+expectType<Presence>(state.liveblocks.others[0]!.presence);
+expectError(state.liveblocks.others[0]!.presence.nonexistingProperty);
+expectType<Meta>(state.liveblocks.others[0]!.info);
+expectError(state.liveblocks.others[0]!.info.nonexistingProperty);
+expectError(
+  state.liveblocks.room?.broadcastEvent({
+    type: "INVALID_MESSAGE",
+  })
+);
+state.liveblocks.room?.getStorage().then((storage) => {
+  storage.root.get("todos");
+  expectError(storage.root.get("unknown_key"));
+});
 
 /**
  * Selected state
@@ -74,5 +112,18 @@ useStore((state) => {
   expectType<number>(state.value);
   expectType<(newValue: number) => void>(state.setValue);
   expectType<boolean>(state.liveblocks.isStorageLoading);
+  expectType<Presence>(state.liveblocks.others[0]!.presence);
+  expectError(state.liveblocks.others[0]!.presence.nonexistingProperty);
+  expectType<Meta>(state.liveblocks.others[0]!.info);
+  expectError(state.liveblocks.others[0]!.info.nonexistingProperty);
+  expectError(
+    state.liveblocks.room?.broadcastEvent({
+      type: "INVALID_MESSAGE",
+    })
+  );
+  state.liveblocks.room?.getStorage().then((storage) => {
+    storage.root.get("todos");
+    expectError(storage.root.get("unknown_key"));
+  });
   return state;
 });
