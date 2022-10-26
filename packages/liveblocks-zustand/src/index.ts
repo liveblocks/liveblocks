@@ -120,9 +120,7 @@ type Options<T> = {
 // --------------------
 // XXX TO REMOVE LATER
 // --------------------
-type LLLiveblocksContext =
-  // XXX Replace with the real deal later on!
-  { hahaha: "tagine" };
+type LLLiveblocksContext = { isStorageLoading: boolean };
 
 export type WithLiveblocks<T> = T & {
   readonly liveblocks: LLLiveblocksContext;
@@ -142,19 +140,6 @@ export type WithLiveblocks<T> = T & {
 // https://github.com/pmndrs/zustand/blob/main/docs/guides/typescript.md#middleware-that-changes-the-store-type
 // --------------------------------------------------------------------------------------------
 
-// Boilerplate
-declare module "zustand" {
-  interface StoreMutators<S, A> {
-    "liveblocks/zustand": Write<Cast<S, object>, { liveblocks: A }>;
-  }
-}
-
-// Boilerplate
-type Cast<T, U> = T extends U ? T : U;
-type Write<T extends object, U extends object> = Omit<T, keyof U> & U;
-
-// ---------
-
 // Custom impls
 
 type OuterLiveblocksMiddleware = <
@@ -162,18 +147,9 @@ type OuterLiveblocksMiddleware = <
   Mps extends [StoreMutatorIdentifier, unknown][] = [],
   Mcs extends [StoreMutatorIdentifier, unknown][] = []
 >(
-  config: StateCreator<
-    WithLiveblocks<TState>,
-    [...Mps, ["liveblocks/zustand", LLLiveblocksContext]],
-    Mcs,
-    Omit<TState, "liveblocks">
-  >,
+  config: StateCreator<TState, Mps, Mcs, Omit<TState, "liveblocks">>,
   options: Options<TState>
-) => StateCreator<
-  WithLiveblocks<TState>,
-  Mps,
-  [["liveblocks/zustand", LLLiveblocksContext], ...Mcs]
->;
+) => StateCreator<TState, Mps, Mcs, TState>;
 
 // --------------------------------------------------------------------------------------------
 // End of helpers
@@ -194,7 +170,7 @@ const middlewareImpl: InnerLiveblocksMiddleware =
       StoreApi<TState>,
       [["liveblocks/zustand", A]]
     >;
-    patchableStore.liveblocks = { hahaha: "tagine" };
+    // patchableStore.liveblocks = { hahaha: "tagine" };
 
     // XXX Replace this implementation with the stuff below eventually
     return config(set, get, store);
