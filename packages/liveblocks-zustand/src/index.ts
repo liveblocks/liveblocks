@@ -124,6 +124,10 @@ type LLLiveblocksContext =
   // XXX Replace with the real deal later on!
   { hahaha: "tagine" };
 
+export type WithLiveblocks<T> = T & {
+  readonly liveblocks: LLLiveblocksContext;
+};
+
 // LiveblocksContext<
 // JsonObject,
 // LsonObject,
@@ -159,13 +163,14 @@ type OuterLiveblocksMiddleware = <
   Mcs extends [StoreMutatorIdentifier, unknown][] = []
 >(
   config: StateCreator<
-    TState,
+    WithLiveblocks<TState>,
     [...Mps, ["liveblocks/zustand", LLLiveblocksContext]],
-    Mcs
+    Mcs,
+    TState
   >,
   options: Options<TState>
 ) => StateCreator<
-  TState,
+  WithLiveblocks<TState>,
   Mps,
   [["liveblocks/zustand", LLLiveblocksContext], ...Mcs]
 >;

@@ -1,5 +1,6 @@
 import { createClient, LiveList } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { middleware as liveblocksMiddleware } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
 
 import create from "zustand";
 
@@ -33,8 +34,8 @@ type RoomEvent = {
 
 const client = createClient({ authEndpoint: "/api/auth" });
 
-const useStore = create<MyState>()(
-  middleware(
+const useStore = create(
+  liveblocksMiddleware<MyState>(
     (set, get, api) => ({
       value: 0,
       setValue: (newValue: number) => {
@@ -42,16 +43,18 @@ const useStore = create<MyState>()(
         expectType<number>(oldValue);
 
         const liveblocks1 = api.liveblocks;
-        expectType<boolean>(liveblocks1.isStorageLoading);
-        expectAssignable<Function>(liveblocks1.enterRoom);
-        expectAssignable<Function>(liveblocks1.leaveRoom);
-        expectType<string>(liveblocks1.room!.id);
+        expectType<"tagine">(liveblocks1.hahaha);
+        // expectType<boolean>(liveblocks1.isStorageLoading);
+        // expectAssignable<Function>(liveblocks1.enterRoom);
+        // expectAssignable<Function>(liveblocks1.leaveRoom);
+        // expectType<string>(liveblocks1.room!.id);
 
         const liveblocks2 = get().liveblocks;
-        expectType<boolean>(liveblocks2.isStorageLoading);
-        expectAssignable<Function>(liveblocks2.enterRoom);
-        expectAssignable<Function>(liveblocks2.leaveRoom);
-        expectType<string>(liveblocks2.room!.id);
+        expectType<"tagine">(liveblocks2.hahaha);
+        // expectType<boolean>(liveblocks2.isStorageLoading);
+        // expectAssignable<Function>(liveblocks2.enterRoom);
+        // expectAssignable<Function>(liveblocks2.leaveRoom);
+        // expectType<string>(liveblocks2.room!.id);
 
         // Liveblocks state should be available here
         // const {
@@ -106,10 +109,11 @@ const useStore = create<MyState>()(
 );
 
 const liveblocks3 = useStore.getState().liveblocks;
-expectType<boolean>(liveblocks3.isStorageLoading);
-expectAssignable<Function>(liveblocks3.enterRoom);
-expectAssignable<Function>(liveblocks3.leaveRoom);
-expectType<string>(liveblocks3.room!.id);
+expectType<"tagine">(liveblocks3.hahaha);
+// expectType<boolean>(liveblocks3.isStorageLoading);
+// expectAssignable<Function>(liveblocks3.enterRoom);
+// expectAssignable<Function>(liveblocks3.leaveRoom);
+// expectType<string>(liveblocks3.room!.id);
 
 // expectError((liveblocks.enterRoom = () => {})); // Readonly
 // expectError((liveblocks.leaveRoom = () => {})); // Readonly
