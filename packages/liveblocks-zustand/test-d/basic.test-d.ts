@@ -1,13 +1,12 @@
-// This file is used to test our types definition with dtslint
-
 import { createClient, LiveList } from "@liveblocks/client";
-import create from "zustand";
 import { middleware } from "@liveblocks/zustand";
 import { persist } from "zustand/middleware";
 
+import create from "zustand";
+
 import { expectError, expectType } from "tsd";
 
-type BasicStore = {
+type MyState = {
   value: number;
   setValue: (newValue: number) => void;
 };
@@ -20,7 +19,9 @@ type Storage = {
   todos: LiveList<{ text: string }>;
 };
 
-type Meta = { name: string };
+type Meta = {
+  name: string;
+};
 
 type BaseUser = {
   info: Meta;
@@ -35,7 +36,7 @@ const client = createClient({ authEndpoint: "/api/auth" });
 
 const useStore = create(
   persist(
-    middleware<BasicStore, Presence, Storage, BaseUser, RoomEvent>(
+    middleware<MyState, Presence, Storage, BaseUser, RoomEvent>(
       (set, get, _api) => ({
         value: 0,
         setValue: (_newValue: number) => {
@@ -94,7 +95,7 @@ const useStore = create(
 
 const { liveblocks } = useStore.getState();
 
-expectType<(roomId: string, initialState: Partial<BasicStore>) => void>(
+expectType<(roomId: string, initialState: Partial<MyState>) => void>(
   liveblocks.enterRoom
 );
 

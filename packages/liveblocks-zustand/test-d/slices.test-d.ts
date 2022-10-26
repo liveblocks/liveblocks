@@ -1,7 +1,7 @@
 import type { GetState, SetState } from "zustand";
 import create from "zustand";
-import { middleware } from "@liveblocks/zustand";
 import { createClient } from "@liveblocks/client";
+import { middleware } from "@liveblocks/zustand";
 
 import { expectType, expectAssignable } from "tsd";
 
@@ -9,16 +9,16 @@ type BearSlice = {
   eatFish: () => void;
 };
 
+type FishSlice = {
+  fishes: number;
+  repopulate: () => void;
+};
+
 const createBearSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
   eatFish: () => {
     set((prev) => ({ fishes: prev.fishes > 1 ? prev.fishes - 1 : 0 }));
   },
 });
-
-type FishSlice = {
-  fishes: number;
-  repopulate: () => void;
-};
 
 const maxFishes = 10;
 
