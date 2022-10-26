@@ -112,6 +112,26 @@ type Options<T> = {
   presenceMapping?: Mapping<T>;
 };
 
+// --------------------------------------------------------------------------------------------
+// Helpers, following guide from
+// https://github.com/pmndrs/zustand/blob/main/docs/guides/typescript.md#middleware-that-changes-the-store-type
+// --------------------------------------------------------------------------------------------
+
+// Boilerplate
+declare module "zustand" {
+  interface StoreMutators<S, A> {
+    liveblocks: Write<Cast<S, object>, { liveblocks: A }>;
+  }
+}
+
+// Boilerplate
+type Cast<T, U> = T extends U ? T : U;
+type Write<T extends object, U extends object> = Omit<T, keyof U> & U;
+
+// --------------------------------------------------------------------------------------------
+// End of helpers
+// --------------------------------------------------------------------------------------------
+
 export function middleware<
   TState,
   TPresence extends JsonObject = JsonObject,
