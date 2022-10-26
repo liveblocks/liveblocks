@@ -125,7 +125,7 @@ type OuterLiveblocksMiddleware = <
   Mcs extends [StoreMutatorIdentifier, unknown][] = []
 >(
   config: StateCreator<TState, Mps, Mcs, Omit<TState, "liveblocks">>,
-  options: Options<TState>
+  options: Options<Omit<TState, "liveblocks">>
 ) => StateCreator<TState, Mps, Mcs, TState>;
 
 // --------------------------------------------------------------------------------------------

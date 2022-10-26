@@ -1,6 +1,7 @@
 import { createClient, LiveList } from "@liveblocks/client";
 import {
   LiveblocksState,
+  Mapping,
   middleware as liveblocksMiddleware,
 } from "@liveblocks/zustand";
 import { devtools, persist } from "zustand/middleware";
@@ -78,7 +79,7 @@ const useStore = create<
             return set({ value: newValue });
           },
         }),
-        { client, storageMapping: {}, presenceMapping: {} }
+        { client, storageMapping: {}, presenceMapping: { value: true } }
       )
     )
   )
@@ -127,3 +128,20 @@ useStore((state) => {
   });
   return state;
 });
+
+// Invalid configuration
+expectError(
+  create<LiveblocksState<MyState, Presence, Storage, BaseUser, RoomEvent>>()(
+    devtools(
+      persist(
+        liveblocksMiddleware(
+          (set, get, api) => ({
+            value: 0,
+            setValue: (newValue: number) => set({ value: newValue }),
+          }),
+          { client, storageMapping: {}, presenceMapping: { unknownKey: true } }
+        )
+      )
+    )
+  )
+);
