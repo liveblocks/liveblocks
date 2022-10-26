@@ -5,7 +5,14 @@
   "compilerOptions": {
     "target": "es2015",
     "module": "es2015",
-    "lib": ["dom", "es2015"]
+    "lib": ["dom", "es2015"],
+
+    // -----------------------------------
+    // XXX REMOVE THESE SETTINGS AGAIN!!!!!!!!!!!!
+    "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+    // -----------------------------------
   },
   "include": ["src/**/*"]
 }
