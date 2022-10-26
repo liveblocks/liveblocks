@@ -115,6 +115,15 @@ expectType<"tagine">(liveblocks3.hahaha);
 // expectAssignable<Function>(liveblocks3.leaveRoom);
 // expectType<string>(liveblocks3.room!.id);
 
+const liveblocks4 = useStore.liveblocks;
+expectType<"tagine">(liveblocks4.hahaha);
+
+useStore((s) => {
+  const liveblocks5 = s.liveblocks;
+  expectType<"tagine">(liveblocks5.hahaha);
+  return liveblocks5;
+});
+
 // expectError((liveblocks.enterRoom = () => {})); // Readonly
 // expectError((liveblocks.leaveRoom = () => {})); // Readonly
 // expectError((liveblocks.connection = "open")); // Readonly
