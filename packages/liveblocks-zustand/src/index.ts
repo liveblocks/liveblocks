@@ -44,9 +44,8 @@ export type LiveblocksContext<
   /**
    * Enters a room and starts sync it with zustand state
    * @param roomId The id of the room
-   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
    */
-  readonly enterRoom: (roomId: string, initialState: Partial<TState>) => void;
+  readonly enterRoom: (roomId: string) => void;
   /**
    * Leaves a room and stops sync it with zustand state.
    * @param roomId The id of the room
