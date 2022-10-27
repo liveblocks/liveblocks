@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import create from "zustand";
 
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
@@ -14,7 +14,7 @@ type State = {
 };
 
 const useStore = create(
-  middleware<State, never, never, never, never>(
+  liveblocks<State, never, never, never, never>(
     (set) => ({
       items: [],
       addItem: (newItem: string) =>

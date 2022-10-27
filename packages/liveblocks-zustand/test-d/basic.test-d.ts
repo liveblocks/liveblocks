@@ -1,5 +1,5 @@
 import { createClient, LiveList } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 import { persist } from "zustand/middleware";
 
 import create from "zustand";
@@ -36,7 +36,7 @@ const client = createClient({ authEndpoint: "/api/auth" });
 
 const useStore = create(
   persist(
-    middleware<MyState, Presence, Storage, BaseUser, RoomEvent>(
+    liveblocks<MyState, Presence, Storage, BaseUser, RoomEvent>(
       (set, get, _api) => ({
         value: 0,
         setValue: (_newValue: number) => {

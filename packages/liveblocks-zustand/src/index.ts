@@ -133,7 +133,7 @@ type Options<T> = {
   presenceMapping?: Mapping<T>;
 };
 
-export function middleware<
+export function liveblocks<
   T extends ZustandState,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -307,6 +307,11 @@ export function middleware<
     };
   };
 }
+
+/**
+ * @deprecated Renamed to `liveblocks`.
+ */
+export const middleware = liveblocks;
 
 function patchState<T>(
   state: T,

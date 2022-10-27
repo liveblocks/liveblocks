@@ -19,7 +19,7 @@ import type { StateCreator } from "zustand";
 import create from "zustand";
 
 import type { Mapping, ZustandState } from "..";
-import { middleware } from "..";
+import { liveblocks } from "..";
 import { list, MockWebSocket, obj, waitFor } from "./_utils";
 
 window.WebSocket = MockWebSocket as any;
@@ -108,7 +108,7 @@ function prepareClientAndStore<
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = create(
-    middleware<T, TPresence, TStorage, TUserMeta, TRoomEvent>(stateCreator, {
+    liveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>(stateCreator, {
       ...options,
       client,
     })
@@ -700,14 +700,14 @@ describe("middleware", () => {
   describe("configuration validation", () => {
     test("missing client should throw", () => {
       expect(() =>
-        middleware(() => ({}), { client: undefined as any, storageMapping: {} })
+        liveblocks(() => ({}), { client: undefined as any, storageMapping: {} })
       ).toThrow(INVALID_CONFIG_ERROR);
     });
 
     test("storageMapping should be an object", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        middleware(() => ({}), {
+        liveblocks(() => ({}), {
           client,
           storageMapping: "invalid_mapping" as any,
         })
@@ -717,7 +717,7 @@ describe("middleware", () => {
     test("invalid storageMapping key value should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        middleware(() => ({}), {
+        liveblocks(() => ({}), {
           client,
           storageMapping: { key: "value" },
         })
@@ -727,7 +727,7 @@ describe("middleware", () => {
     test("duplicated key should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        middleware(() => ({}), {
+        liveblocks(() => ({}), {
           client,
           storageMapping: { key: true },
           presenceMapping: { key: true },
@@ -738,7 +738,7 @@ describe("middleware", () => {
     test("invalid presenceMapping should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        middleware(() => ({}), {
+        liveblocks(() => ({}), {
           client,
           storageMapping: {},
           presenceMapping: "invalid_mapping",

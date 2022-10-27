@@ -1,7 +1,7 @@
 import type { GetState, SetState } from "zustand";
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 
 import { expectType, expectAssignable } from "tsd";
 
@@ -32,7 +32,7 @@ const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
 type MyState = BearSlice & FishSlice;
 
 const useStore = create(
-  middleware<MyState>(
+  liveblocks<MyState>(
     (set, get) => ({
       ...createBearSlice(set, get),
       ...createFishSlice(set, get),
