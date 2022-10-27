@@ -368,15 +368,21 @@ function updatePresence<
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
 ) {
+  const patch = {} as Partial<TPresence>;
+
   for (const key in presenceMapping) {
     if (typeof newState[key] === "function") {
       throw mappingToFunctionIsNotAllowed(key);
     }
 
     if (oldState[key] !== newState[key]) {
-      const val = newState[key] as unknown as Json | undefined;
-      room.updatePresence({ [key]: val } as any);
+      const val = newState[key];
+      patch[key] = val;
     }
+  }
+
+  if (Object.keys(patch).length > 0) {
+    room.updatePresence(patch);
   }
 }
 
