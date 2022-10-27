@@ -357,11 +357,11 @@ export const liveblocksEnhancer = internalEnhancer as <T>(options: {
  */
 export const enhancer = liveblocksEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject>(
+function patchLiveblocksStorage<O extends LsonObject, TState>(
   root: LiveObject<O>,
-  oldState: O,
-  newState: O,
-  mapping: Mapping<O>
+  oldState: TState,
+  newState: TState,
+  mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
     if (
@@ -372,7 +372,9 @@ function patchLiveblocksStorage<O extends LsonObject>(
     }
 
     if (oldState[key] !== newState[key]) {
-      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+      const oldVal = oldState[key];
+      const newVal = newState[key];
+      patchLiveObjectKey(root, key, oldVal as any, newVal);
     }
   }
 }
