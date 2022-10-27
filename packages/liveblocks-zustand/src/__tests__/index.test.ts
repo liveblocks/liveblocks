@@ -94,21 +94,21 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 });
 
 function prepareClientAndStore<
-  T extends ZustandState,
+  TState extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
   TRoomEvent extends Json
 >(
-  stateCreator: StateCreator<T>,
+  stateCreator: StateCreator<TState>,
   options: {
-    storageMapping: Mapping<T>;
-    presenceMapping: Mapping<T>;
+    storageMapping: Mapping<TState>;
+    presenceMapping: Mapping<TState>;
   }
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = create(
-    liveblocksMiddleware<T, TPresence, TStorage, TUserMeta, TRoomEvent>(
+    liveblocksMiddleware<TState, TPresence, TStorage, TUserMeta, TRoomEvent>(
       stateCreator,
       {
         ...options,
@@ -126,11 +126,11 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<T extends ZustandState>(
-  stateCreator: StateCreator<T>,
+async function prepareWithStorage<TState extends ZustandState>(
+  stateCreator: StateCreator<TState>,
   options: {
-    storageMapping: Mapping<T>;
-    presenceMapping: Mapping<T>;
+    storageMapping: Mapping<TState>;
+    presenceMapping: Mapping<TState>;
     room?: string;
     initialState?: any;
     items: IdTuple<SerializedCrdt>[];
