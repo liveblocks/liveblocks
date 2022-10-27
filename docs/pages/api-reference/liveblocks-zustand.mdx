@@ -8,15 +8,15 @@ alwaysShowAllNavigationLevels: false
 
 ## Middleware
 
-Middleware that lets you connect a Zustand state to Liveblocks Presence and
-Storage features.
+The `liveblocks` middleware lets you connect a Zustand state to Liveblocks
+Presence and Storage features.
 
 ```js highlight="2,5,9-13"
 import create from "zustand";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 
 const useStore = create(
-  middleware(
+  liveblocks(
     (set) => ({
       /* state and actions */
     }),
@@ -35,13 +35,13 @@ See different authentication methods in the [`createClient`][] method.
 
 ```js
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
 
 const client = createClient({
   authEndpoint: "/api/auth",
 });
 
-middleware(/* Zustand config */, { client })
+liveblocks(/* Zustand config */, { client })
 ```
 
 ### presenceMapping [#middleware-option-presence-mapping]
@@ -51,7 +51,7 @@ Room presence.
 
 ```js highlight="8"
 const useStore = create(
-  middleware(
+  liveblocks(
     (set) => ({
       cursor: { x: 0, y: 0 },
     }),
@@ -70,7 +70,7 @@ room storage.
 
 ```js highlight="8"
 const useStore = create(
-  middleware(
+  liveblocks(
     (set) => ({
       scientist: { name: "" },
     }),
@@ -84,7 +84,7 @@ const useStore = create(
 
 ## state.liveblocks [#liveblocks-state]
 
-Liveblocks extra state attached by the middleware.
+Liveblocks extra state attached by the liveblocks.
 
 ### enterRoom [#liveblocks-state-enter-room]
 
