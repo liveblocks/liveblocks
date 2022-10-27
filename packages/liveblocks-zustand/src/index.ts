@@ -92,6 +92,9 @@ export type LiveblocksState<
   TRoomEvent extends Json = Json
 > = WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>;
 
+/**
+ * Adds the `liveblocks` property to your custom Zustand state.
+ */
 export type WithLiveblocks<
   TState extends ZustandState,
   TPresence extends JsonObject = JsonObject,
