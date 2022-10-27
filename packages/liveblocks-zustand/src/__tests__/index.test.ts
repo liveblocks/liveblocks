@@ -18,7 +18,7 @@ import { setupServer } from "msw/node";
 import type { StateCreator } from "zustand";
 import create from "zustand";
 
-import type { Mapping, ZustandState } from "..";
+import type { Mapping, WithLiveblocks } from "..";
 import { liveblocks as liveblocksMiddleware } from "..";
 import { list, MockWebSocket, obj, waitFor } from "./_utils";
 
@@ -59,7 +59,7 @@ async function waitForSocketToBeConnected() {
   return socket;
 }
 
-interface BasicStore extends ZustandState {
+interface BasicStore {
   value: number;
   setValue: (newValue: number) => void;
 
@@ -94,7 +94,7 @@ const basicStateCreator: StateCreator<BasicStore> = (set) => ({
 });
 
 function prepareClientAndStore<
-  TState extends ZustandState,
+  TState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
   TUserMeta extends BaseUserMeta,
@@ -107,14 +107,13 @@ function prepareClientAndStore<
   }
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
-  const store = create(
-    liveblocksMiddleware<TState, TPresence, TStorage, TUserMeta, TRoomEvent>(
-      stateCreator,
-      {
-        ...options,
-        client,
-      }
-    )
+  const store = create<
+    WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>
+  >()(
+    liveblocksMiddleware(stateCreator, {
+      ...options,
+      client,
+    }) as any
   );
   return { client, store };
 }
@@ -126,13 +125,12 @@ function prepareClientAndBasicStore() {
   });
 }
 
-async function prepareWithStorage<TState extends ZustandState>(
+async function prepareWithStorage<TState>(
   stateCreator: StateCreator<TState>,
   options: {
     storageMapping: Mapping<TState>;
     presenceMapping: Mapping<TState>;
     room?: string;
-    initialState?: any;
     items: IdTuple<SerializedCrdt>[];
   }
 ) {
@@ -140,9 +138,7 @@ async function prepareWithStorage<TState extends ZustandState>(
     storageMapping: options.storageMapping,
     presenceMapping: options.presenceMapping,
   });
-  store
-    .getState()
-    .liveblocks.enterRoom(options?.room || "room", options?.initialState || {});
+  store.getState().liveblocks.enterRoom(options?.room || "room");
 
   const socket = await waitForSocketToBeConnected();
 
@@ -170,17 +166,13 @@ async function prepareWithStorage<TState extends ZustandState>(
 
 async function prepareBasicStoreWithStorage(
   items: IdTuple<SerializedCrdt>[],
-  options?: {
-    room?: string;
-    initialState?: any;
-  }
+  options?: { room?: string }
 ) {
   return prepareWithStorage(basicStateCreator, {
     storageMapping: { value: true, mappedToFalse: false, items: true },
     presenceMapping: { cursor: true },
     items,
     room: options?.room,
-    initialState: options?.initialState,
   });
 }
 
@@ -201,7 +193,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enterRoom("room", {});
+    liveblocks.enterRoom("room");
 
     expect(store.getState().liveblocks.isStorageLoading).toBe(true);
 
@@ -224,7 +216,7 @@ describe("middleware", () => {
 
     const { liveblocks } = store.getState();
 
-    liveblocks.enterRoom("room", {});
+    liveblocks.enterRoom("room");
 
     const socket = await waitForSocketToBeConnected();
 
@@ -239,7 +231,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enterRoom("room", {});
+      liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
 
@@ -277,7 +269,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enterRoom("room", {});
+      liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
 
@@ -300,7 +292,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enterRoom("room", {});
+      liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
 
@@ -334,7 +326,7 @@ describe("middleware", () => {
 
       const { liveblocks } = store.getState();
 
-      liveblocks.enterRoom("room", {});
+      liveblocks.enterRoom("room");
 
       const socket = await waitForSocketToBeConnected();
 
@@ -402,12 +394,13 @@ describe("middleware", () => {
       });
 
       test("should initialize with default state if key is missing from liveblocks storage", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", {})],
+        const items = [obj("root", {})];
+        const { store, socket } = await prepareWithStorage(
+          () => ({ value: 5 }),
           {
-            initialState: {
-              value: 5,
-            },
+            storageMapping: { value: true },
+            presenceMapping: {},
+            items,
           }
         );
 
@@ -431,13 +424,13 @@ describe("middleware", () => {
       });
 
       test("should batch initialization", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", {})],
+        const items = [obj("root", {})];
+        const { store, socket } = await prepareWithStorage(
+          () => ({ value: 5, items: [] }),
           {
-            initialState: {
-              value: 5,
-              items: [],
-            },
+            storageMapping: { value: true, items: true },
+            presenceMapping: {},
+            items,
           }
         );
 
@@ -468,12 +461,13 @@ describe("middleware", () => {
       });
 
       test("should not override liveblocks state with initial state if key exists", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", { value: 1 })],
+        const items = [obj("root", { value: 1 })];
+        const { store, socket } = await prepareWithStorage(
+          () => ({ value: 5 }),
           {
-            initialState: {
-              value: 5,
-            },
+            storageMapping: { value: true },
+            presenceMapping: {},
+            items,
           }
         );
 
@@ -531,6 +525,7 @@ describe("middleware", () => {
       test("should update liveblocks state if mapping allows it", async () => {
         const { store, socket } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
+          list("1:0", "root", "items"),
         ]);
 
         store.getState().setValue(2);
