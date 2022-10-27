@@ -1,6 +1,7 @@
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 
@@ -27,8 +28,8 @@ type Presence = {
   isTyping: boolean;
 };
 
-const useStore = create(
-  middleware<State, Presence>(
+const useStore = create<WithLiveblocks<State, Presence>>()(
+  liveblocks(
     (set) => ({
       draft: "",
       isTyping: false,

@@ -37,9 +37,7 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom(roomId, {
-      todos: [],
-    });
+    enterRoom(roomId);
 
     return () => {
       leaveRoom(roomId);
