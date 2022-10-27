@@ -161,7 +161,7 @@ export function middleware<
 
       room = client.enter(roomId, { initialPresence: {} as TPresence });
 
-      updateZustandLiveblocksState(set, {
+      updateLiveblocksContext(set, {
         isStorageLoading: true,
         room: room as any,
       });
@@ -172,13 +172,13 @@ export function middleware<
 
       unsubscribeCallbacks.push(
         room.events.others.subscribe(({ others }) => {
-          updateZustandLiveblocksState(set, { others });
+          updateLiveblocksContext(set, { others });
         })
       );
 
       unsubscribeCallbacks.push(
         room.events.connection.subscribe(() => {
-          updateZustandLiveblocksState(set, {
+          updateLiveblocksContext(set, {
             connection: room!.getConnectionState(),
           });
         })
@@ -226,7 +226,7 @@ export function middleware<
         );
 
         // set isLoading storage to false once storage is loaded
-        updateZustandLiveblocksState(set, { isStorageLoading: false });
+        updateLiveblocksContext(set, { isStorageLoading: false });
       });
     }
 
@@ -239,7 +239,7 @@ export function middleware<
       isPatching = false;
       unsubscribeCallbacks = [];
       client.leave(roomId);
-      updateZustandLiveblocksState(set, {
+      updateLiveblocksContext(set, {
         others: [],
         connection: "closed",
         isStorageLoading: false,
@@ -326,7 +326,7 @@ function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
   return partialState;
 }
 
-function updateZustandLiveblocksState<
+function updateLiveblocksContext<
   T extends ZustandState,
   TPresence extends JsonObject,
   TStorage extends LsonObject,
