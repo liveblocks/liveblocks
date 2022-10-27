@@ -1,7 +1,8 @@
 import type { GetState, SetState } from "zustand";
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { liveblocks } from "@liveblocks/zustand";
+import { middleware } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
 
 import { expectType, expectAssignable } from "tsd";
 
@@ -31,8 +32,8 @@ const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
 
 type MyState = BearSlice & FishSlice;
 
-const useStore = create(
-  liveblocks<MyState>(
+const useStore = create<WithLiveblocks<MyState>>()(
+  middleware(
     (set, get) => ({
       ...createBearSlice(set, get),
       ...createFishSlice(set, get),
@@ -44,16 +45,16 @@ const useStore = create(
   )
 );
 
-const store = useStore((s) => s);
+const fullstate = useStore((s) => s);
 
 // From fish slice
-expectType<number>(store.fishes);
-expectType<() => void>(store.repopulate);
+expectType<number>(fullstate.fishes);
+expectType<() => void>(fullstate.repopulate);
 
 // From bear slice
-expectType<() => void>(store.eatFish);
+expectType<() => void>(fullstate.eatFish);
 
 // Liveblocks state
-expectAssignable<Function>(store.liveblocks.enterRoom);
-expectAssignable<Function>(store.liveblocks.leaveRoom);
-expectType<string>(store.liveblocks.room!.id);
+expectAssignable<Function>(fullstate.liveblocks.enterRoom);
+expectAssignable<Function>(fullstate.liveblocks.leaveRoom);
+expectType<string>(fullstate.liveblocks.room!.id);
