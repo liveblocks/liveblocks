@@ -613,6 +613,54 @@ describe("middleware", () => {
         expect(store.getState().obj).toBe(newVal);
       });
     });
+
+    // Fixes this bug reported by Arcol
+    // https://github.com/liveblocks/liveblocks/issues/491
+    test("assigning explicit-`undefined` to a nested key should delete it", async () => {
+      const { store, socket } = await prepareWithStorage<{
+        nest: { a?: number };
+        setA: (a?: number) => void;
+      }>(
+        (set) => ({
+          nest: { a: 13 },
+          setA: (a) => {
+            set({ nest: { a } });
+          },
+        }),
+        {
+          storageMapping: { nest: true },
+          presenceMapping: {},
+          items: [
+            // Mimic the initial Zustand state to limit network syncing at the start
+            obj("root", {}),
+            obj("0:1", { a: 13 }, "root", "nest"),
+          ],
+        }
+      );
+
+      expect(store.getState().nest.a).toBe(13);
+
+      store.getState().setA(undefined);
+
+      // Waiting for last update to be sent because of room internal throttling
+      await waitFor(() => socket.sentMessages[1] != null);
+
+      expect(JSON.parse(socket.sentMessages[1]!)).toEqual([
+        {
+          type: ClientMsgCode.UPDATE_STORAGE,
+          ops: [
+            {
+              type: OpCode.DELETE_OBJECT_KEY,
+              opId: "0:0",
+              id: "0:1",
+              key: "a",
+            },
+          ],
+        },
+      ]);
+
+      expect(store.getState().nest.a).toBeUndefined();
+    });
   });
 
   describe("history", () => {
