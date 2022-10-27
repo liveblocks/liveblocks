@@ -93,15 +93,15 @@ const useStore = create(
   )
 );
 
-const { liveblocks } = useStore.getState();
+const fullstate = useStore.getState();
 
 expectType<(roomId: string, initialState: Partial<MyState>) => void>(
-  liveblocks.enterRoom
+  fullstate.liveblocks.enterRoom
 );
 
-expectError((liveblocks.enterRoom = () => {})); // Readonly
-expectError((liveblocks.leaveRoom = () => {})); // Readonly
-expectError((liveblocks.connection = "open")); // Readonly
-expectError((liveblocks.others = [])); // Readonly
-expectError((liveblocks.isStorageLoading = false)); // Readonly
-expectError((liveblocks.room = {})); // Readonly
+expectError((fullstate.liveblocks.enterRoom = () => {})); // Readonly
+expectError((fullstate.liveblocks.leaveRoom = () => {})); // Readonly
+expectError((fullstate.liveblocks.connection = "open")); // Readonly
+expectError((fullstate.liveblocks.others = [])); // Readonly
+expectError((fullstate.liveblocks.isStorageLoading = false)); // Readonly
+expectError((fullstate.liveblocks.room = {})); // Readonly
