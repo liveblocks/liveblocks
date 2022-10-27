@@ -81,7 +81,18 @@ export type LiveblocksContext<
     | "connecting";
 };
 
+/**
+ * @deprecated Please rename to WithLiveblocks<...>
+ */
 export type LiveblocksState<
+  TState extends ZustandState,
+  TPresence extends JsonObject = JsonObject,
+  TStorage extends LsonObject = LsonObject,
+  TUserMeta extends BaseUserMeta = BaseUserMeta,
+  TRoomEvent extends Json = Json
+> = WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>;
+
+export type WithLiveblocks<
   TState extends ZustandState,
   TPresence extends JsonObject = JsonObject,
   TStorage extends LsonObject = LsonObject,
@@ -129,23 +140,23 @@ export function middleware<
   config: StateCreator<
     T,
     SetState<T>,
-    GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+    GetState<WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
     StoreApi<T>
   >,
   options: Options<T>
 ): StateCreator<
-  LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  SetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  GetState<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
-  StoreApi<LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
+  WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  SetState<WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  GetState<WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>>,
+  StoreApi<WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>>
 > {
   const { client, presenceMapping, storageMapping } = validateOptions(options);
   return (set: any, get, api: any) => {
     const typedSet: (
       callbackOrPartial: (
-        current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+        current: WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>
       ) =>
-        | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+        | WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>
         | Partial<T>
     ) => void = set;
 
@@ -335,13 +346,13 @@ function updateLiveblocksContext<
 >(
   set: (
     callbackOrPartial: (
-      current: LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      current: WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>
     ) =>
-      | LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>
+      | WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>
       | Partial<any>
   ) => void,
   partial: Partial<
-    LiveblocksState<T, TPresence, TStorage, TUserMeta, TRoomEvent>["liveblocks"]
+    WithLiveblocks<T, TPresence, TStorage, TUserMeta, TRoomEvent>["liveblocks"]
   >
 ) {
   set((state) => ({ liveblocks: { ...state.liveblocks, ...partial } }));
@@ -395,8 +406,8 @@ function patchLiveblocksStorage<
   TRoomEvent extends Json
 >(
   root: LiveObject<O>,
-  oldState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
-  newState: LiveblocksState<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  oldState: WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
+  newState: WithLiveblocks<TState, TPresence, TStorage, TUserMeta, TRoomEvent>,
   mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
