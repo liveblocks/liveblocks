@@ -354,11 +354,20 @@ function leaveRoom(roomId: string): {
   };
 }
 
-export const enhancer = internalEnhancer as <T>(options: {
+/**
+ * Redux store enhancer that will make the `liveblocks` key available on your
+ * Redux store.
+ */
+export const liveblocksEnhancer = internalEnhancer as <T>(options: {
   client: Client;
   storageMapping?: Mapping<T>;
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
+
+/**
+ * @deprecated Renamed to `liveblocksEnhancer`.
+ */
+export const enhancer = liveblocksEnhancer;
 
 function patchLiveblocksStorage<O extends LsonObject>(
   root: LiveObject<O>,

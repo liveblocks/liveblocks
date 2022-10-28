@@ -13,8 +13,8 @@ import { configureStore } from "@reduxjs/toolkit";
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
-import type { LiveblocksState, Mapping } from "..";
-import { actions, enhancer } from "..";
+import type { Mapping, WithLiveblocks } from "..";
+import { actions, liveblocksEnhancer } from "..";
 import {
   mappingShouldBeAnObject,
   mappingShouldNotHaveTheSameKeys,
@@ -69,10 +69,10 @@ function prepareClientAndStore<T>(
 ) {
   const client = createClient({ authEndpoint: "/api/auth" });
   const store = configureStore<
-    LiveblocksState<BasicState, BasicPresence, never>
+    WithLiveblocks<BasicState, BasicPresence, never>
   >({
     reducer: reducer as any,
-    enhancers: [enhancer({ client, ...options })],
+    enhancers: [liveblocksEnhancer({ client, ...options })],
     preloadedState: preloadedState as any,
   });
   return { client, store };
@@ -750,14 +750,14 @@ describe("middleware", () => {
   describe("configuration validation", () => {
     test("missing client should throw", () => {
       expect(() =>
-        enhancer({ client: undefined as any, storageMapping: {} })
+        liveblocksEnhancer({ client: undefined as any, storageMapping: {} })
       ).toThrow(missingClient());
     });
 
     test("storageMapping should be an object", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        enhancer({
+        liveblocksEnhancer({
           client,
           storageMapping: "invalid_mapping" as any,
         })
@@ -767,7 +767,7 @@ describe("middleware", () => {
     test("invalid storageMapping key value should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        enhancer({
+        liveblocksEnhancer({
           client,
           storageMapping: { key: "value" as any },
         })
@@ -777,7 +777,7 @@ describe("middleware", () => {
     test("duplicated key should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        enhancer({
+        liveblocksEnhancer({
           client,
           storageMapping: { key: true },
           presenceMapping: { key: true },
@@ -788,7 +788,7 @@ describe("middleware", () => {
     test("invalid presenceMapping should throw", () => {
       const client = createClient({ authEndpoint: "/api/auth" });
       expect(() =>
-        enhancer({
+        liveblocksEnhancer({
           client,
           storageMapping: {},
           presenceMapping: "invalid_mapping" as any,
