@@ -10,7 +10,10 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "jsx": "preserve",
-    "incremental": true
+    "incremental": true,
+
+    // Overrides from default TS config
+    "noUncheckedIndexedAccess": false
   },
 
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],

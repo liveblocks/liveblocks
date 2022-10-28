@@ -5,6 +5,7 @@ import {
   assertContainText,
   getJsonContent,
 } from "../utils";
+import type { JsonObject } from "@liveblocks/core";
 
 const TEST_URL = "http://localhost:3007/batching";
 
@@ -30,11 +31,17 @@ test.describe("Storage - Batching", () => {
     await assertContainText(pages, "1");
 
     await waitForContentToBeEquals(pages);
-    const othersFirstPage = await getJsonContent(pages[0], "others");
+    const othersFirstPage = (await getJsonContent(
+      pages[0],
+      "others"
+    )) as JsonObject[];
     expect(othersFirstPage.length).toEqual(1);
     expect(othersFirstPage[0].presence).toEqual({});
 
-    const othersSecondPage = await getJsonContent(pages[1], "others");
+    const othersSecondPage = (await getJsonContent(
+      pages[1],
+      "others"
+    )) as any[];
     expect(othersSecondPage.length).toEqual(1);
     expect(othersSecondPage[0].presence.count).toEqual(1);
 

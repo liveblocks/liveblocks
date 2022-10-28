@@ -8,6 +8,7 @@ import {
   preparePages,
   assertContainText,
 } from "../utils";
+import type { Json } from "@liveblocks/core";
 
 function pickRandomAction() {
   return pickRandomItem(["#push", "#delete", "#move", "#undo", "#redo"]);
@@ -42,8 +43,8 @@ test.describe("Offline", () => {
     await pages[1].click("#push");
     await assertContainText([pages[0]], "2");
 
-    const firstPageItems = await getJsonContent(pages[0], "items");
-    const secondPageItems = await getJsonContent(pages[1], "items");
+    const firstPageItems = (await getJsonContent(pages[0], "items")) as Json[];
+    const secondPageItems = (await getJsonContent(pages[1], "items")) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);
@@ -72,8 +73,8 @@ test.describe("Offline", () => {
     await pages[1].click("#push");
     await assertContainText([pages[0]], "2");
 
-    const firstPageItems = await getJsonContent(pages[0], "items");
-    const secondPageItems = await getJsonContent(pages[1], "items");
+    const firstPageItems = (await getJsonContent(pages[0], "items")) as Json[];
+    const secondPageItems = (await getJsonContent(pages[1], "items")) as Json[];
 
     expect(firstPageItems.length).toEqual(2);
     expect(secondPageItems.length).toEqual(2);

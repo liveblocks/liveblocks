@@ -23,10 +23,10 @@ const useStore = create(
         })),
       deleteItem: (index: number) =>
         set((state) => ({
-          items: state.items.filter((item, i) => index != i),
+          items: state.items.filter((_, i) => index != i),
         })),
       clear: () =>
-        set((state) => ({
+        set(() => ({
           items: [],
         })),
     }),
