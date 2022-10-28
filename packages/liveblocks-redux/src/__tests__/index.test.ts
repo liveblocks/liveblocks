@@ -122,6 +122,14 @@ const basicStoreReducer = ((
   return state as BasicState;
 }) as Reducer<BasicState>;
 
+const basicInitialState = {
+  value: 0,
+  items: [],
+  mappedToFalse: 0,
+  notMapped: "default",
+  cursor: { x: 0, y: 0 },
+};
+
 function prepareClientAndBasicStore() {
   return prepareClientAndStore<BasicState>(
     basicStoreReducer,
@@ -146,7 +154,6 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     storageMapping: Mapping<T>;
     presenceMapping: Mapping<T>;
     room?: string;
-    initialState?: any;
     items: IdTuple<SerializedCrdt>[];
   }
 ) {
@@ -158,7 +165,7 @@ async function prepareWithStorage<T extends Record<string, unknown>>(
     },
     preloadedState
   );
-  store.dispatch(enterRoom(options?.room || "room", options?.initialState));
+  store.dispatch(enterRoom(options?.room || "room"));
 
   const socket = await waitForSocketToBeConnected();
 
@@ -188,26 +195,14 @@ async function prepareBasicStoreWithStorage(
   items: IdTuple<SerializedCrdt>[],
   options?: {
     room?: string;
-    initialState?: Partial<BasicState>;
   }
 ) {
-  return prepareWithStorage(
-    basicStoreReducer,
-    {
-      value: 0,
-      items: [],
-      mappedToFalse: 0,
-      notMapped: "default",
-      cursor: { x: 0, y: 0 },
-    },
-    {
-      storageMapping: { value: true, mappedToFalse: false, items: true },
-      presenceMapping: { cursor: true },
-      items,
-      room: options?.room,
-      initialState: options?.initialState,
-    }
-  );
+  return prepareWithStorage(basicStoreReducer, basicInitialState, {
+    storageMapping: { value: true, mappedToFalse: false, items: true },
+    presenceMapping: { cursor: true },
+    items,
+    room: options?.room,
+  });
 }
 
 describe("middleware", () => {
@@ -442,12 +437,17 @@ describe("middleware", () => {
       });
 
       test("should initialize with default state if key is missing from liveblocks storage", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", {})],
+        const items = [obj("root", {})];
+        const { store, socket } = await prepareWithStorage(
+          basicStoreReducer,
           {
-            initialState: {
-              value: 5,
-            },
+            ...basicInitialState,
+            value: 5,
+          },
+          {
+            storageMapping: { value: true },
+            presenceMapping: { cursor: true },
+            items,
           }
         );
 
@@ -471,12 +471,14 @@ describe("middleware", () => {
       });
 
       test("should initialize with LiveList if key is missing from liveblocks storage and initial value is an array", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", {})],
+        const items = [obj("root", {})];
+        const { store, socket } = await prepareWithStorage(
+          basicStoreReducer,
+          { ...basicInitialState, items: [] },
           {
-            initialState: {
-              items: [],
-            },
+            storageMapping: { mappedToFalse: false, items: true },
+            presenceMapping: { cursor: true },
+            items,
           }
         );
 
@@ -501,13 +503,18 @@ describe("middleware", () => {
       });
 
       test("should batch initialization", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", {})],
+        const items = [obj("root", {})];
+        const { store, socket } = await prepareWithStorage(
+          basicStoreReducer,
           {
-            initialState: {
-              value: 5,
-              items: [],
-            },
+            ...basicInitialState,
+            value: 5,
+            items: [],
+          },
+          {
+            storageMapping: { value: true, mappedToFalse: false, items: true },
+            presenceMapping: { cursor: true },
+            items,
           }
         );
 
@@ -538,18 +545,20 @@ describe("middleware", () => {
       });
 
       test("should not override liveblocks state with initial state if key exists", async () => {
-        const { store, socket } = await prepareBasicStoreWithStorage(
-          [obj("root", { value: 1 })],
+        const items = [obj("root", { value: 1 })];
+        const { store, socket } = await prepareWithStorage(
+          basicStoreReducer,
+          { ...basicInitialState, value: 5 },
           {
-            initialState: {
-              value: 5,
-            },
+            storageMapping: { value: true },
+            presenceMapping: { cursor: true },
+            items,
           }
         );
 
-        expect(store.getState().value).toBe(1);
+        expect(store.getState().value).toBe(1); // not 5!
 
-        expect(socket.sentMessages[1]).toEqual(undefined);
+        expect(socket.sentMessages[1]).toEqual(undefined); // no data sent to the server
       });
     });
 
@@ -601,6 +610,7 @@ describe("middleware", () => {
       test("should update liveblocks state if mapping allows it", async () => {
         const { store, socket } = await prepareBasicStoreWithStorage([
           obj("root", { value: 1 }),
+          list("1:0", "root", "items"),
         ]);
 
         store.dispatch({ type: "SET_VALUE", value: 2 });
