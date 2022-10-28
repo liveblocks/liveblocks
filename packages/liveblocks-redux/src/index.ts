@@ -36,35 +36,47 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
+type LiveblocksContext<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = {
+  /**
+   * Other users in the room. Empty no room is currently synced
+   */
+  readonly others: Array<User<TPresence, TUserMeta>>;
+  /**
+   * Whether or not the room storage is currently loading
+   */
+  readonly isStorageLoading: boolean;
+  /**
+   * Connection state of the room
+   */
+  readonly connection:
+    | "closed"
+    | "authenticating"
+    | "unavailable"
+    | "failed"
+    | "open"
+    | "connecting";
+};
+
+/**
+ * @deprecated Please rename to WithLiveblocks<...>
+ */
 export type LiveblocksState<
   TState,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> = TState & {
-  /**
-   * Liveblocks extra state attached by the enhancer
-   */
-  readonly liveblocks: {
-    /**
-     * Other users in the room. Empty no room is currently synced
-     */
-    readonly others: Array<User<TPresence, TUserMeta>>;
-    /**
-     * Whether or not the room storage is currently loading
-     */
-    readonly isStorageLoading: boolean;
-    /**
-     * Connection state of the room
-     */
-    readonly connection:
-      | "closed"
-      | "authenticating"
-      | "unavailable"
-      | "failed"
-      | "open"
-      | "connecting";
-  };
-};
+> = WithLiveblocks<TState, TPresence, TUserMeta>;
+
+/**
+ * Adds the `liveblocks` property to your custom Redux state.
+ */
+export type WithLiveblocks<
+  TState,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
 
 const internalEnhancer = <T>(options: {
   client: Client;
