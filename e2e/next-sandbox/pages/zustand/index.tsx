@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import create from "zustand";
 
 import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
 import createLiveblocksClient from "../../utils/createClient";
 
 const client = createLiveblocksClient();
@@ -13,8 +14,8 @@ type State = {
   clear: () => void;
 };
 
-const useStore = create(
-  liveblocks<State, never, never, never, never>(
+const useStore = create<WithLiveblocks<State, never, never, never, never>>()(
+  liveblocks(
     (set) => ({
       items: [],
       addItem: (newItem: string) =>
@@ -52,10 +53,7 @@ export default function Home() {
   }
 
   useEffect(() => {
-    enterRoom(roomId, {
-      items: [],
-    });
-
+    enterRoom(roomId);
     return () => {
       leaveRoom(roomId);
     };
@@ -107,14 +105,7 @@ export default function Home() {
         Redo
       </button>
 
-      <button
-        id="enter"
-        onClick={() =>
-          enterRoom(roomId, {
-            items: [],
-          })
-        }
-      >
+      <button id="enter" onClick={() => enterRoom(roomId)}>
         Enter room
       </button>
 
