@@ -220,10 +220,7 @@ const internalEnhancer = <T>(options: {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(
-                  room!.getPresence(),
-                  presenceMapping as any
-                ),
+                state: selectFields(room!.getPresence(), presenceMapping),
               });
             }
           })
