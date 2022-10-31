@@ -112,9 +112,13 @@ const internalEnhancer = <TState>(options: {
     validateNoDuplicateKeys(mapping, presenceMapping);
   }
 
-  return (createStore: TODO) =>
-    // prettier-ignore
-    (reducer: TODO, initialState: TState) => {
+  return (
+      createStore: (
+        reducer: TODO,
+        preloadedState: TState
+      ) => Store<TState, LiveblocksAction>
+    ) =>
+    (reducer: TODO, initialState: TState): TODO => {
       let room: OpaqueRoom | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
