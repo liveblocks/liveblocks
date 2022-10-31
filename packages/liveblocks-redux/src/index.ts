@@ -286,13 +286,13 @@ const internalEnhancer = <T>(options: {
         client.leave(roomId);
       }
 
-      function newDispatch(action: any, state: any) {
+      function newDispatch(action: any) {
         if (action.type === ACTION_TYPES.ENTER) {
           enterRoom(action.roomId);
         } else if (action.type === ACTION_TYPES.LEAVE) {
           leaveRoom(action.roomId);
         } else {
-          store.dispatch(action, state);
+          store.dispatch(action);
         }
       }
 
