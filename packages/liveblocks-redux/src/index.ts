@@ -43,7 +43,7 @@ type LiveblocksContext<
   /**
    * Other users in the room. Empty no room is currently synced
    */
-  readonly others: Array<User<TPresence, TUserMeta>>;
+  readonly others: readonly User<TPresence, TUserMeta>[];
   /**
    * Whether or not the room storage is currently loading
    */
@@ -210,7 +210,7 @@ const internalEnhancer = <T>(options: {
           room.events.others.subscribe(({ others }) => {
             store.dispatch({
               type: ACTION_TYPES.UPDATE_OTHERS,
-              others: others.toArray(),
+              others,
             });
           })
         );
