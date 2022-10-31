@@ -100,7 +100,7 @@ const internalEnhancer = <T>(options: {
   }
 
   return (createStore: any) =>
-    (reducer: any, initialState: any, enhancer: any) => {
+    (reducer: any, initialState: any) => {
       let room: Room<any, any, any, any> | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<any> | null = null;
@@ -183,7 +183,7 @@ const internalEnhancer = <T>(options: {
         }
       };
 
-      const store = createStore(newReducer, initialState, enhancer);
+      const store = createStore(newReducer, initialState);
 
       function enterRoom(roomId: string) {
         if (storageRoot) {
