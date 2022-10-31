@@ -22,6 +22,8 @@ import {
   missingClient,
 } from "./errors";
 
+type TODO = any;
+
 export type Mapping<T> = {
   [K in keyof T]?: boolean;
 };
@@ -99,14 +101,15 @@ const internalEnhancer = <TState>(options: {
     validateNoDuplicateKeys(mapping, presenceMapping);
   }
 
-  return (createStore: any) =>
-    (reducer: any, initialState: any) => {
-      let room: Room<any, any, any, any> | null = null;
+  return (createStore: TODO) =>
+    // prettier-ignore
+    (reducer: TODO, initialState: TODO) => {
+      let room: Room<TODO, TODO, TODO, TODO> | null = null;
       let isPatching: boolean = false;
-      let storageRoot: LiveObject<any> | null = null;
+      let storageRoot: LiveObject<TODO> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
 
-      const newReducer = (state: any, action: any) => {
+      const newReducer = (state: TODO, action: TODO) => {
         switch (action.type) {
           case ACTION_TYPES.PATCH_REDUX_STATE:
             return {
@@ -153,7 +156,7 @@ const internalEnhancer = <TState>(options: {
 
             if (room) {
               isPatching = true;
-              updatePresence(room!, state, newState, presenceMapping as any);
+              updatePresence(room!, state, newState, presenceMapping as TODO);
 
               room.batch(() => {
                 if (storageRoot) {
@@ -161,7 +164,7 @@ const internalEnhancer = <TState>(options: {
                     storageRoot,
                     state,
                     newState,
-                    mapping as any
+                    mapping as TODO
                   );
                 }
               });
@@ -193,7 +196,7 @@ const internalEnhancer = <TState>(options: {
         const initialPresence = selectFields(
           store.getState(),
           presenceMapping
-        ) as any;
+        ) as TODO;
 
         room = client.enter(roomId, { initialPresence });
 
@@ -231,7 +234,7 @@ const internalEnhancer = <TState>(options: {
         });
 
         room.getStorage().then(({ root }) => {
-          const updates: any = {};
+          const updates: TODO = {};
 
           room!.batch(() => {
             for (const key in mapping) {
@@ -262,7 +265,7 @@ const internalEnhancer = <TState>(options: {
                     state: patchState(
                       store.getState(),
                       updates,
-                      mapping as any
+                      mapping as TODO
                     ),
                   });
                 }
@@ -286,7 +289,7 @@ const internalEnhancer = <TState>(options: {
         client.leave(roomId);
       }
 
-      function newDispatch(action: any) {
+      function newDispatch(action: TODO) {
         if (action.type === ACTION_TYPES.ENTER) {
           enterRoom(action.roomId);
         } else if (action.type === ACTION_TYPES.LEAVE) {
@@ -371,13 +374,13 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     if (oldState[key] !== newState[key]) {
       const oldVal = oldState[key];
       const newVal = newState[key];
-      patchLiveObjectKey(root, key, oldVal as any, newVal);
+      patchLiveObjectKey(root, key, oldVal as TODO, newVal);
     }
   }
 }
 
 function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence, any, any, any>,
+  room: Room<TPresence, TODO, TODO, TODO>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>
@@ -393,7 +396,7 @@ function updatePresence<TPresence extends JsonObject>(
   }
 }
 
-function isObject(value: any): value is object {
+function isObject(value: TODO): value is object {
   return Object.prototype.toString.call(value) === "[object Object]";
 }
 
@@ -422,7 +425,7 @@ Partial<TState> {
 
 function patchState<TState extends JsonObject>(
   state: TState,
-  updates: any[], // StorageUpdate
+  updates: TODO[], // StorageUpdate
   mapping: Mapping<TState>
 ) {
   const partialState: Partial<TState> = {};
