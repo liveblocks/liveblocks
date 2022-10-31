@@ -13,7 +13,7 @@ import {
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
-import type { ConnectionState } from "@liveblocks/core";
+import type { ConnectionState, StorageUpdate } from "@liveblocks/core";
 import type { Store, StoreEnhancer } from "redux";
 
 import {
@@ -236,7 +236,7 @@ const internalEnhancer = <TState>(options: {
         store.dispatch(startLoadingStorage());
 
         room.getStorage().then(({ root }) => {
-          const updates: TODO = {};
+          const updates = {} as Partial<TState>;
 
           room!.batch(() => {
             for (const key in mapping) {
@@ -244,14 +244,11 @@ const internalEnhancer = <TState>(options: {
 
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
-                patchLiveObjectKey(
-                  root,
-                  key,
-                  undefined,
-                  store.getState()[key] as unknown as Json | undefined
-                );
+                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
               } else {
-                updates[key] = lsonToJson(liveblocksStatePart);
+                updates[key] = lsonToJson(
+                  liveblocksStatePart
+                ) as unknown as TState[typeof key];
               }
             }
           });
@@ -266,11 +263,7 @@ const internalEnhancer = <TState>(options: {
                 if (isPatching === false) {
                   store.dispatch(
                     patchReduxState(
-                      patchState(
-                        store.getState() as unknown as JsonObject,
-                        updates,
-                        mapping
-                      )
+                      patchState(store.getState(), updates, mapping)
                     )
                   );
                 }
@@ -411,7 +404,7 @@ function updatePresence<TPresence extends JsonObject>(
   }
 }
 
-function isObject(value: TODO): value is object {
+function isObject(value: unknown): value is object {
   return Object.prototype.toString.call(value) === "[object Object]";
 }
 
@@ -429,18 +422,17 @@ function validateNoDuplicateKeys<TState>(
 function selectFields<TState>(
   presence: TState,
   mapping: Mapping<TState>
-): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
-Partial<TState> {
-  const partialState = {} as Partial<TState>;
+): Partial<TState> {
+  const partialState = {} as Pick<TState, keyof Mapping<TState>>;
   for (const key in mapping) {
     partialState[key] = presence[key];
   }
   return partialState;
 }
 
-function patchState<TState extends JsonObject>(
+function patchState<TState>(
   state: TState,
-  updates: TODO[], // StorageUpdate
+  updates: StorageUpdate[],
   mapping: Mapping<TState>
 ) {
   const partialState: Partial<TState> = {};
