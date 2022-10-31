@@ -1,6 +1,7 @@
 import type {
   BaseUserMeta,
   Client,
+  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -85,6 +86,8 @@ const internalEnhancer = <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
+  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
@@ -104,9 +107,9 @@ const internalEnhancer = <TState>(options: {
   return (createStore: TODO) =>
     // prettier-ignore
     (reducer: TODO, initialState: TODO) => {
-      let room: Room<TODO, TODO, TODO, TODO> | null = null;
+      let room: OpaqueRoom | null = null;
       let isPatching: boolean = false;
-      let storageRoot: LiveObject<TODO> | null = null;
+      let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
 
       const newReducer = (state: TODO, action: TODO) => {
