@@ -13,7 +13,7 @@ import {
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
-import type { StoreEnhancer } from "redux";
+import type { Store, StoreEnhancer } from "redux";
 
 import {
   mappingShouldBeAnObject,
@@ -29,6 +29,21 @@ export type Mapping<T> = {
   [K in keyof T]?: boolean;
 };
 
+type LiveblocksAction =
+  | { type: "@@LIVEBLOCKS/ENTER"; roomId: string }
+  | { type: "@@LIVEBLOCKS/LEAVE"; roomId: string }
+  | { type: "@@LIVEBLOCKS/START_LOADING_STORAGE" }
+  | { type: "@@LIVEBLOCKS/INIT_STORAGE"; state: TODO }
+  | { type: "@@LIVEBLOCKS/PATCH_REDUX_STATE"; state: TODO }
+  | {
+      type: "@@LIVEBLOCKS/UPDATE_CONNECTION";
+      connection: string /* ConnectionState */;
+    }
+  | {
+      type: "@@LIVEBLOCKS/UPDATE_OTHERS";
+      others: readonly User<JsonObject, BaseUserMeta>[];
+    };
+
 const ACTION_TYPES = {
   ENTER: "@@LIVEBLOCKS/ENTER",
   LEAVE: "@@LIVEBLOCKS/LEAVE",
@@ -37,7 +52,7 @@ const ACTION_TYPES = {
   PATCH_REDUX_STATE: "@@LIVEBLOCKS/PATCH_REDUX_STATE",
   UPDATE_CONNECTION: "@@LIVEBLOCKS/UPDATE_CONNECTION",
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
-};
+} as const;
 
 type LiveblocksContext<
   TPresence extends JsonObject,
@@ -189,7 +204,10 @@ const internalEnhancer = <TState>(options: {
         }
       };
 
-      const store = createStore(newReducer, initialState);
+      const store: Store<TState, LiveblocksAction> = createStore(
+        newReducer,
+        initialState
+      );
 
       function enterRoom(roomId: string) {
         if (storageRoot) {
@@ -205,36 +223,29 @@ const internalEnhancer = <TState>(options: {
 
         unsubscribeCallbacks.push(
           room.events.connection.subscribe(() => {
-            store.dispatch({
-              type: ACTION_TYPES.UPDATE_CONNECTION,
-              connection: room!.getConnectionState(),
-            });
+            store.dispatch(updateConnection(room!.getConnectionState()));
           })
         );
 
         unsubscribeCallbacks.push(
           room.events.others.subscribe(({ others }) => {
-            store.dispatch({
-              type: ACTION_TYPES.UPDATE_OTHERS,
-              others,
-            });
+            store.dispatch(updateOthers(others));
           })
         );
 
         unsubscribeCallbacks.push(
           room.events.me.subscribe(() => {
             if (isPatching === false) {
-              store.dispatch({
-                type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: selectFields(room!.getPresence(), presenceMapping),
-              });
+              store.dispatch(
+                patchReduxState(
+                  selectFields(room!.getPresence(), presenceMapping)
+                )
+              );
             }
           })
         );
 
-        store.dispatch({
-          type: ACTION_TYPES.START_LOADING_STORAGE,
-        });
+        store.dispatch(startLoadingStorage());
 
         room.getStorage().then(({ root }) => {
           const updates: TODO = {};
@@ -245,17 +256,19 @@ const internalEnhancer = <TState>(options: {
 
               if (liveblocksStatePart == null) {
                 updates[key] = store.getState()[key];
-                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
+                patchLiveObjectKey(
+                  root,
+                  key,
+                  undefined,
+                  store.getState()[key] as unknown as Json | undefined
+                );
               } else {
                 updates[key] = lsonToJson(liveblocksStatePart);
               }
             }
           });
 
-          store.dispatch({
-            type: ACTION_TYPES.INIT_STORAGE,
-            state: updates,
-          });
+          store.dispatch(initStorage(updates));
 
           storageRoot = root;
           unsubscribeCallbacks.push(
@@ -263,14 +276,15 @@ const internalEnhancer = <TState>(options: {
               root,
               (updates) => {
                 if (isPatching === false) {
-                  store.dispatch({
-                    type: ACTION_TYPES.PATCH_REDUX_STATE,
-                    state: patchState(
-                      store.getState(),
-                      updates,
-                      mapping as TODO
-                    ),
-                  });
+                  store.dispatch(
+                    patchReduxState(
+                      patchState(
+                        store.getState() as unknown as JsonObject,
+                        updates,
+                        mapping as TODO
+                      )
+                    )
+                  );
                 }
               },
               { isDeep: true }
@@ -325,24 +339,34 @@ export const actions = {
   leaveRoom,
 };
 
-function enterRoom(roomId: string): {
-  type: string;
-  roomId: string;
-} {
-  return {
-    type: ACTION_TYPES.ENTER,
-    roomId,
-  };
+function enterRoom(roomId: string): LiveblocksAction {
+  return { type: ACTION_TYPES.ENTER, roomId };
 }
 
-function leaveRoom(roomId: string): {
-  type: string;
-  roomId: string;
-} {
-  return {
-    type: ACTION_TYPES.LEAVE,
-    roomId,
-  };
+function leaveRoom(roomId: string): LiveblocksAction {
+  return { type: ACTION_TYPES.LEAVE, roomId };
+}
+
+function startLoadingStorage(): LiveblocksAction {
+  return { type: ACTION_TYPES.START_LOADING_STORAGE };
+}
+
+function initStorage(state: TODO): LiveblocksAction {
+  return { type: ACTION_TYPES.INIT_STORAGE, state };
+}
+
+function patchReduxState(state: TODO): LiveblocksAction {
+  return { type: ACTION_TYPES.PATCH_REDUX_STATE, state };
+}
+
+function updateConnection(connection: string): LiveblocksAction {
+  return { type: ACTION_TYPES.UPDATE_CONNECTION, connection };
+}
+
+function updateOthers(
+  others: readonly User<JsonObject, BaseUserMeta>[]
+): LiveblocksAction {
+  return { type: ACTION_TYPES.UPDATE_OTHERS, others };
 }
 
 /**
