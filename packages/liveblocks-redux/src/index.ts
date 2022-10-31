@@ -8,12 +8,12 @@ import type {
   Room,
   User,
 } from "@liveblocks/client";
+import type { ConnectionState, StorageUpdate } from "@liveblocks/core";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
-import type { ConnectionState, StorageUpdate } from "@liveblocks/core";
 import type { Store, StoreEnhancer } from "redux";
 
 import {
