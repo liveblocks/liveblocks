@@ -78,10 +78,10 @@ export type WithLiveblocks<
   TUserMeta extends BaseUserMeta
 > = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
 
-const internalEnhancer = <T>(options: {
+const internalEnhancer = <TState>(options: {
   client: Client;
-  storageMapping?: Mapping<T>;
-  presenceMapping?: Mapping<T>;
+  storageMapping?: Mapping<TState>;
+  presenceMapping?: Mapping<TState>;
 }) => {
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
@@ -343,10 +343,10 @@ function leaveRoom(roomId: string): {
  * Redux store enhancer that will make the `liveblocks` key available on your
  * Redux store.
  */
-export const liveblocksEnhancer = internalEnhancer as <T>(options: {
+export const liveblocksEnhancer = internalEnhancer as <TState>(options: {
   client: Client;
-  storageMapping?: Mapping<T>;
-  presenceMapping?: Mapping<T>;
+  storageMapping?: Mapping<TState>;
+  presenceMapping?: Mapping<TState>;
 }) => StoreEnhancer;
 
 /**
@@ -397,9 +397,9 @@ function isObject(value: any): value is object {
   return Object.prototype.toString.call(value) === "[object Object]";
 }
 
-function validateNoDuplicateKeys<T>(
-  storageMapping: Mapping<T>,
-  presenceMapping: Mapping<T>
+function validateNoDuplicateKeys<TState>(
+  storageMapping: Mapping<TState>,
+  presenceMapping: Mapping<TState>
 ) {
   for (const key in storageMapping) {
     if (presenceMapping[key] !== undefined) {
@@ -420,12 +420,12 @@ Partial<TState> {
   return partialState;
 }
 
-function patchState<T extends JsonObject>(
-  state: T,
+function patchState<TState extends JsonObject>(
+  state: TState,
   updates: any[], // StorageUpdate
-  mapping: Mapping<T>
+  mapping: Mapping<TState>
 ) {
-  const partialState: Partial<T> = {};
+  const partialState: Partial<TState> = {};
 
   for (const key in mapping) {
     partialState[key] = state[key];
@@ -433,7 +433,7 @@ function patchState<T extends JsonObject>(
 
   const patched = legacy_patchImmutableObject(partialState, updates);
 
-  const result: Partial<T> = {};
+  const result: Partial<TState> = {};
 
   for (const key in mapping) {
     result[key] = patched[key];
@@ -445,17 +445,17 @@ function patchState<T extends JsonObject>(
 /**
  * Remove false keys from mapping and generate to a new object to avoid potential mutation from outside the middleware
  */
-function validateMapping<T>(
-  mapping: Mapping<T>,
+function validateMapping<TState>(
+  mapping: Mapping<TState>,
   mappingType: "storageMapping" | "presenceMapping"
-): Mapping<T> {
+): Mapping<TState> {
   if (process.env.NODE_ENV !== "production") {
     if (!isObject(mapping)) {
       throw mappingShouldBeAnObject(mappingType);
     }
   }
 
-  const result: Mapping<T> = {};
+  const result: Mapping<TState> = {};
   for (const key in mapping) {
     if (
       process.env.NODE_ENV !== "production" &&
