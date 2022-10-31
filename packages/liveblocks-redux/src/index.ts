@@ -1,6 +1,7 @@
 import type {
   BaseUserMeta,
   Client,
+  Json,
   JsonObject,
   LiveObject,
   LsonObject,
@@ -83,6 +84,8 @@ const internalEnhancer = <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
+  type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
+
   if (process.env.NODE_ENV !== "production" && options.client == null) {
     throw missingClient();
   }
@@ -99,11 +102,11 @@ const internalEnhancer = <TState>(options: {
     validateNoDuplicateKeys(mapping, presenceMapping);
   }
 
-  return (createStore: any) =>
-    (reducer: any, initialState: any) => {
-      let room: Room<any, any, any, any> | null = null;
+  return (createStore: any) => {
+    return (reducer: any, initialState: any) => {
+      let room: OpaqueRoom | null = null;
       let isPatching: boolean = false;
-      let storageRoot: LiveObject<any> | null = null;
+      let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
 
       const newReducer = (state: any, action: any) => {
@@ -301,6 +304,7 @@ const internalEnhancer = <TState>(options: {
         dispatch: newDispatch,
       };
     };
+  };
 };
 
 /**
