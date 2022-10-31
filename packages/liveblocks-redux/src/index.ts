@@ -13,6 +13,7 @@ import {
   lsonToJson,
   patchLiveObjectKey,
 } from "@liveblocks/core";
+import type { ConnectionState } from "@liveblocks/core";
 import type { Store, StoreEnhancer } from "redux";
 
 import {
@@ -35,10 +36,7 @@ type LiveblocksAction =
   | { type: "@@LIVEBLOCKS/START_LOADING_STORAGE" }
   | { type: "@@LIVEBLOCKS/INIT_STORAGE"; state: TODO }
   | { type: "@@LIVEBLOCKS/PATCH_REDUX_STATE"; state: TODO }
-  | {
-      type: "@@LIVEBLOCKS/UPDATE_CONNECTION";
-      connection: string /* ConnectionState */;
-    }
+  | { type: "@@LIVEBLOCKS/UPDATE_CONNECTION"; connection: ConnectionState }
   | {
       type: "@@LIVEBLOCKS/UPDATE_OTHERS";
       others: readonly User<JsonObject, BaseUserMeta>[];
@@ -69,13 +67,7 @@ type LiveblocksContext<
   /**
    * Connection state of the room
    */
-  readonly connection:
-    | "closed"
-    | "authenticating"
-    | "unavailable"
-    | "failed"
-    | "open"
-    | "connecting";
+  readonly connection: ConnectionState;
 };
 
 /**
@@ -101,6 +93,7 @@ const internalEnhancer = <TState>(options: {
   storageMapping?: Mapping<TState>;
   presenceMapping?: Mapping<TState>;
 }) => {
+  type StateWithLiveblocks = WithLiveblocks<TState, JsonObject, BaseUserMeta>;
   type OpaqueRoom = Room<JsonObject, LsonObject, BaseUserMeta, Json>;
 
   if (process.env.NODE_ENV !== "production" && options.client == null) {
@@ -121,13 +114,16 @@ const internalEnhancer = <TState>(options: {
 
   return (createStore: TODO) =>
     // prettier-ignore
-    (reducer: TODO, initialState: TODO) => {
+    (reducer: TODO, initialState: TState) => {
       let room: OpaqueRoom | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
       let unsubscribeCallbacks: Array<() => void> = [];
 
-      const newReducer = (state: TODO, action: TODO) => {
+      const newReducer = (
+        state: StateWithLiveblocks,
+        action: LiveblocksAction
+      ): StateWithLiveblocks => {
         switch (action.type) {
           case ACTION_TYPES.PATCH_REDUX_STATE:
             return {
@@ -174,16 +170,11 @@ const internalEnhancer = <TState>(options: {
 
             if (room) {
               isPatching = true;
-              updatePresence(room!, state, newState, presenceMapping as TODO);
+              updatePresence(room, state, newState, presenceMapping);
 
               room.batch(() => {
                 if (storageRoot) {
-                  patchLiveblocksStorage(
-                    storageRoot,
-                    state,
-                    newState,
-                    mapping as TODO
-                  );
+                  patchLiveblocksStorage(storageRoot, state, newState, mapping);
                 }
               });
               isPatching = false;
@@ -214,10 +205,7 @@ const internalEnhancer = <TState>(options: {
           return;
         }
 
-        const initialPresence = selectFields(
-          store.getState(),
-          presenceMapping
-        ) as TODO;
+        const initialPresence = selectFields(store.getState(), presenceMapping);
 
         room = client.enter(roomId, { initialPresence });
 
@@ -281,7 +269,7 @@ const internalEnhancer = <TState>(options: {
                       patchState(
                         store.getState() as unknown as JsonObject,
                         updates,
-                        mapping as TODO
+                        mapping
                       )
                     )
                   );
@@ -306,7 +294,7 @@ const internalEnhancer = <TState>(options: {
         client.leave(roomId);
       }
 
-      function newDispatch(action: TODO) {
+      function newDispatch(action: LiveblocksAction) {
         if (action.type === ACTION_TYPES.ENTER) {
           enterRoom(action.roomId);
         } else if (action.type === ACTION_TYPES.LEAVE) {
@@ -359,7 +347,7 @@ function patchReduxState(state: TODO): LiveblocksAction {
   return { type: ACTION_TYPES.PATCH_REDUX_STATE, state };
 }
 
-function updateConnection(connection: string): LiveblocksAction {
+function updateConnection(connection: ConnectionState): LiveblocksAction {
   return { type: ACTION_TYPES.UPDATE_CONNECTION, connection };
 }
 
@@ -399,15 +387,15 @@ function patchLiveblocksStorage<O extends LsonObject, TState>(
     }
 
     if (oldState[key] !== newState[key]) {
-      const oldVal = oldState[key];
-      const newVal = newState[key];
-      patchLiveObjectKey(root, key, oldVal as TODO, newVal);
+      const oldVal = oldState[key] as unknown as Json | undefined;
+      const newVal = newState[key] as unknown as Json | undefined;
+      patchLiveObjectKey(root, key, oldVal, newVal);
     }
   }
 }
 
 function updatePresence<TPresence extends JsonObject>(
-  room: Room<TPresence, TODO, TODO, TODO>,
+  room: Room<TPresence, LsonObject, BaseUserMeta, Json>,
   oldState: TPresence,
   newState: TPresence,
   presenceMapping: Mapping<TPresence>

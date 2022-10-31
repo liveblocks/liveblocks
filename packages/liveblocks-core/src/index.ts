@@ -36,6 +36,7 @@ export type {
   BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
+  ConnectionState,
   CreateChildOp,
   CreateListOp,
   CreateMapOp,
