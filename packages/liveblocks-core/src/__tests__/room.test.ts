@@ -7,19 +7,19 @@ import { lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import { LiveList } from "../LiveList";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { Authentication } from "../room";
 import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { LsonObject } from "../types/Lson";
 import type { Others } from "../types/Others";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import { ServerMsgCode } from "../protocol/ServerMsg";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   createSerializedList,

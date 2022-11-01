@@ -2,24 +2,24 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import { comparePosition, makePosition } from "./lib/position";
-import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, Lson } from "./types/Lson";
-import type { ParentToChildNodeMap } from "./types/NodeMap";
-import type { CreateChildOp, CreateListOp, CreateOp, Op } from "./protocol/Op";
-import { OpCode } from "./protocol/Op";
-import type { IdTuple, SerializedList } from "./protocol/SerializedCrdt";
-import { CrdtType } from "./protocol/SerializedCrdt";
-import type {
-  LiveListUpdateDelta,
-  LiveListUpdates,
-} from "./types/StorageUpdates";
-import type { ToImmutable } from "./types/ToImmutable";
 import {
   creationOpToLiveNode,
   deserialize,
   liveNodeToLson,
   lsonToLiveNode,
 } from "./liveblocks-helpers";
+import { LiveRegister } from "./LiveRegister";
+import type { CreateChildOp, CreateListOp, CreateOp, Op } from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
+import type { IdTuple, SerializedList } from "./protocol/SerializedCrdt";
+import { CrdtType } from "./protocol/SerializedCrdt";
+import type { LiveNode, Lson } from "./types/Lson";
+import type { ParentToChildNodeMap } from "./types/NodeMap";
+import type {
+  LiveListUpdateDelta,
+  LiveListUpdates,
+} from "./types/StorageUpdates";
+import type { ToImmutable } from "./types/ToImmutable";
 
 function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
   return comparePosition(

@@ -1,5 +1,7 @@
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
+import type { Resolve } from "./lib/Resolve";
+import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type {
   Authentication,
   InternalRoom,
@@ -8,9 +10,7 @@ import type {
   RoomInitializers,
 } from "./room";
 import { createRoom } from "./room";
-import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { LsonObject } from "./types/Lson";
-import type { Resolve } from "./lib/Resolve";
 
 type EnterOptions<
   TPresence extends JsonObject,

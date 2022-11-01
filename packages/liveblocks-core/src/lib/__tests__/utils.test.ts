@@ -1,4 +1,4 @@
-import { compact, b64decode, tryParseJson } from "../utils";
+import { b64decode, compact, tryParseJson } from "../utils";
 
 describe("compact", () => {
   it("compact w/ empty list", () => {

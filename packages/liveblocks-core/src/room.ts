@@ -2,27 +2,28 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { OpSource } from "./AbstractCrdt";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
+import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
-import { compact } from "./lib/utils";
+import type { Resolve } from "./lib/Resolve";
+import { compact, isPlainObject, tryParseJson } from "./lib/utils";
+import {
+  getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
+  isSameNodeOrChildOf,
+  mergeStorageUpdates,
+} from "./liveblocks-helpers";
 import { LiveObject } from "./LiveObject";
-import { MeRef } from "./refs/MeRef";
-import { OthersRef } from "./refs/OthersRef";
-import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
-import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
-import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
-import type { Others, OthersEvent } from "./types/Others";
-import type { Resolve } from "./lib/Resolve";
 import type {
   IdTuple,
   SerializedChild,
@@ -39,17 +40,15 @@ import type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import { MeRef } from "./refs/MeRef";
+import { OthersRef } from "./refs/OthersRef";
+import { DerivedRef, ValueRef } from "./refs/ValueRef";
+import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
+import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+import type { Others, OthersEvent } from "./types/Others";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
-import {
-  getTreesDiffOperations,
-  isLiveList,
-  isLiveNode,
-  isSameNodeOrChildOf,
-  mergeStorageUpdates,
-} from "./liveblocks-helpers";
-import { isPlainObject, tryParseJson } from "./lib/utils";
 
 export type AuthorizeResponse = {
   token: string;

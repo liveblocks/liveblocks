@@ -1,23 +1,23 @@
 import type { ManagedPool } from "./AbstractCrdt";
 import { assertNever, nn } from "./lib/assert";
 import type { Json } from "./lib/Json";
+import { entries, isPlainObject } from "./lib/utils";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
-import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
-import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { CreateOp, Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import { CrdtType } from "./protocol/SerializedCrdt";
+import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
+import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type {
   LiveListUpdates,
   LiveMapUpdates,
   LiveObjectUpdates,
   StorageUpdate,
 } from "./types/StorageUpdates";
-import { entries, isPlainObject } from "./lib/utils";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));

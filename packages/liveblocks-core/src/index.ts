@@ -32,11 +32,12 @@ export type { Json, JsonObject } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { comparePosition, makePosition } from "./lib/position";
+export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
+export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
 export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
-export type { BroadcastOptions, History, Room } from "./room";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -46,15 +47,6 @@ export type {
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
 } from "./protocol/ClientMsg";
-export type { Immutable } from "./types/Immutable";
-export type {
-  LiveNode,
-  LiveStructure,
-  Lson,
-  LsonObject,
-  ToJson,
-} from "./types/Lson";
-export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type {
   CreateChildOp,
   CreateListOp,
@@ -70,8 +62,6 @@ export type {
   UpdateObjectOp,
 } from "./protocol/Op";
 export { OpCode } from "./protocol/Op";
-export type { Others } from "./types/Others";
-export type { Resolve } from "./lib/Resolve";
 export type {
   IdTuple,
   SerializedChild,
@@ -95,11 +85,21 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { BroadcastOptions, History, Room } from "./room";
+export type { Immutable } from "./types/Immutable";
+export type {
+  LiveNode,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  ToJson,
+} from "./types/Lson";
+export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { Others } from "./types/Others";
 export type { StorageUpdate } from "./types/StorageUpdates";
 export type { ToImmutable } from "./types/ToImmutable";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
-export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

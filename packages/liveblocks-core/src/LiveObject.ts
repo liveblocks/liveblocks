@@ -2,8 +2,13 @@ import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { nn } from "./lib/assert";
 import type { JsonObject } from "./lib/Json";
-import type { LiveNode, Lson, LsonObject } from "./types/Lson";
-import type { ParentToChildNodeMap } from "./types/NodeMap";
+import { fromEntries } from "./lib/utils";
+import {
+  creationOpToLson,
+  deserializeToLson,
+  isLiveNode,
+  isLiveStructure,
+} from "./liveblocks-helpers";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -20,19 +25,14 @@ import type {
   SerializedRootObject,
 } from "./protocol/SerializedCrdt";
 import { CrdtType } from "./protocol/SerializedCrdt";
+import type { LiveNode, Lson, LsonObject } from "./types/Lson";
+import type { ParentToChildNodeMap } from "./types/NodeMap";
 import type {
   LiveObjectUpdateDelta,
   LiveObjectUpdates,
   UpdateDelta,
 } from "./types/StorageUpdates";
 import type { ToImmutable } from "./types/ToImmutable";
-import {
-  creationOpToLson,
-  deserializeToLson,
-  isLiveNode,
-  isLiveStructure,
-} from "./liveblocks-helpers";
-import { fromEntries } from "./lib/utils";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

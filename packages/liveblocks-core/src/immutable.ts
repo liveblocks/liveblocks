@@ -1,17 +1,17 @@
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
+import { isPlainObject } from "./lib/utils";
+import {
+  findNonSerializableValue,
+  isLiveList,
+  isLiveObject,
+} from "./liveblocks-helpers";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./types/Lson";
 import type { StorageUpdate } from "./types/StorageUpdates";
-import {
-  findNonSerializableValue,
-  isLiveList,
-  isLiveObject,
-} from "./liveblocks-helpers";
-import { isPlainObject } from "./lib/utils";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
