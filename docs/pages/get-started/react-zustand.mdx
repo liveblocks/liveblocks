@@ -23,9 +23,17 @@ to learn how to use Liveblocks.
 
 ## Install Liveblocks into your project [#install-liveblocks]
 
-Create a new app with [`create-react-app`](https://create-react-app.dev/) and
-once the installation is complete, run the following command to install
-Liveblocks dependencies:
+First, create a new app with
+[`create-react-app`](https://create-react-app.dev/):
+
+```bash
+npx create-react-app my-zustand-app --template typescript
+```
+
+To start a plain JavaScript project, you can omit the `--template typescript`
+flag.
+
+Then install the Liveblocks packages and Zustand:
 
 ```bash
 npm install @liveblocks/client @liveblocks/zustand zustand
@@ -40,7 +48,7 @@ You’ll need an API key in order to use Liveblocks.
 Then, create a client with [`createClient`][] and set your public key as shown
 below.
 
-```jsx
+```ts file=src/store.ts
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -50,28 +58,35 @@ const client = createClient({
 
 ## Setup your Liveblocks real‑time middleware [#setup-middleware]
 
-Use the Liveblocks real‑time `middleware` with your store and pass the client
-created previously as the configuration. This will add a new state called
-`liveblocks` to your store, enabling you to interact with our Presence and
+Use the `liveblocks` real‑time middleware with your store and pass the client
+created previously as the configuration. This will add a new `liveblocks`
+property to your store’s state, enabling you to interact with our Presence and
 Storage APIs.
 
-```jsx
+```ts file=src/store.ts
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+type State = {
+  // Your Zustand state type will be defined here
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
-      // state and action will be added here
+      // Your state and actions will go here
     }),
     { client }
   )
 );
+
+export default useStore;
 ```
 
 ## Connect to a Liveblocks room [#connect-to-room]
@@ -84,7 +99,7 @@ Liveblocks room and use `liveblocks.leaveRoom` to stop the synchronization. With
 React `useEffect`, you can automatically enter and leave a Liveblocks room as
 your component is mounting and unmounting.
 
-```jsx
+```tsx file=src/App.tsx
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -96,10 +111,7 @@ const App = () => {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("room-id", {
-      todos: [],
-    });
-
+    enterRoom("room-id");
     return () => {
       leaveRoom("room-id");
     };
@@ -116,7 +128,7 @@ export default App;
 If you want to list all the people connected to the room, you can use
 `liveblocks.others` to get an array of the other users in the room.
 
-```jsx
+```tsx
 import useStore from "./store";
 
 function YourComponent() {
@@ -129,60 +141,90 @@ function YourComponent() {
 To create immersive multiplayer experiences, it’s helpful for each person in the
 room to share their real‑time state with other connected users. That real‑time
 state often corresponds to a cursor position or even the item a user has
-currently selected. We call this concept "Presence".
+currently selected. We call this concept “Presence”.
 
 For instance, to share the cursor’s position in real‑time with others, we’re
-going to add a new `presenceMapping` option to our `middleware` to specify which
-part of the state maps to the current user’s `presence`. In this case, we’re
-updating the `cursor` position in our store in the `onPointerMove` event
-listener in our React component.
+going to add a new `presenceMapping` option to our `liveblocks` middleware
+configuration to specify which part of the state maps to the current user’s
+presence. In this case, we’re updating the `cursor` position in our store in the
+`onPointerMove` event listener in our React component.
 
-```jsx
-const useStore = create(
-  middleware(
+```ts file=src/store.ts highlight=6-7,9-10,20-21,25-27
+import create from "zustand";
+import { createClient } from "@liveblocks/client";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+type Cursor = { x: number; y: number };
+
+type State = {
+  cursor: Cursor;
+  setCursor: (cursor: Cursor) => void;
+};
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
       cursor: { x: 0, y: 0 },
       setCursor: (cursor) => set({ cursor }),
     }),
-    { client, presenceMapping: { cursor: true } }
+    {
+      client,
+      presenceMapping: {
+        cursor: true,
+      },
+    }
   )
 );
 
-function App() {
-  const setCursor = useStore((state) => state.setCursor);
+export default useStore;
+```
 
+```tsx file=src/App.tsx highlight=18-24
+import React, { useEffect } from "react";
+import useStore from "./store";
+
+import "./App.css";
+
+const App = () => {
+  const {
+    liveblocks: { enterRoom, leaveRoom },
+  } = useStore();
+
+  useEffect(() => {
+    enterRoom("room-id");
+    return () => {
+      leaveRoom("room-id");
+    };
+  }, [enterRoom, leaveRoom]);
+
+  const setCursor = useStore((state) => state.setCursor);
   return (
     <div
       style={{ width: "100vw", height: "100vh" }}
       onPointerMove={(e) => setCursor({ x: e.clientX, y: e.clientY })}
     />
   );
-}
+};
+
+export default App;
 ```
 
 ## Get other users’ presence [#get-others-presence]
 
 Get people’s cursor positions with
-`liveblocks.others.map(user => user.presence?.cursor)`. It’s worth noting that a
-user presence can be `undefined`.
+`liveblocks.others.map(user => user.presence.cursor)`.
 
-```jsx
-/* ...client setup */
-
-const useStore = create(
-  middleware(
-    (set) => ({
-      cursor: { x: 0, y: 0 },
-      setCursor: (cursor) => set({ cursor }),
-    }),
-    { client, presenceMapping: { cursor: true } }
-  )
-);
-
+```tsx file=src/App.tsx
 function App() {
-  const others = useStore((state) => state.liveblocks.others);
+  /* ... */
 
-  const othersCursors = others.map((user) => user.presence?.cursor);
+  const others = useStore((state) => state.liveblocks.others);
+  const othersCursors = others.map((user) => user.presence.cursor);
 
   // Render cursors with custom SVGs based on x and y
 }
@@ -190,10 +232,10 @@ function App() {
 
 ## Sync and persist the state across client [#storage-intro]
 
-As opposed to the `presence`, some collaborative features require that every
+As opposed to the “presence”, some collaborative features require that every
 user interacts with the same piece of state. For example, in Google Docs, it is
 the paragraphs, headings, images in the document. In Figma, it’s all the shapes
-that make your design. That’s what we call the room’s `storage`.
+that make your design. That’s what we call the room’s “storage”.
 
 The room’s storage is a conflicts-free state that multiple users can edit at the
 same time. It is persisted to our backend even after everyone leaves the room.
@@ -211,18 +253,18 @@ can be nested to create the state that you want.
   property simultaneously, the last modification received by the Liveblocks
   servers is the winner.
 
-When using our zustand integration you don't need to interact directly with
+When using our Zustand integration you don't need to interact directly with
 these data structures. Our middleware synchronize your store with our data
 structures based on the `storageMapping` configuration.
 
 Here is an example to explain how it works under the hood. Imagine you have the
 following store:
 
-```js
+```ts file=src/store.ts highlight=6-8,20-22
 /* ...client setup */
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
       firstName: "Marie",
       lastName: "Curie",
@@ -237,15 +279,19 @@ const useStore = create(
     }),
     {
       client,
-      storageMapping: { firstName: true, lastName: true, discoveries: true },
+      storageMapping: {
+        firstName: true,
+        lastName: true,
+        discoveries: true,
+      },
     }
   )
 );
 ```
 
-With this setup, the room's `storage` root is :
+With this setup, the room's `storage` root is:
 
-```js
+```ts
 const root = new LiveObject({
   firstName: "Marie",
   lastName: "Curie",
@@ -264,16 +310,8 @@ middleware patches your immutable state.
 
 When entering a room with `liveblocks.enterRoom`, the middleware fetches the
 room's storage from our server and patches your store. If this is the first time
-you're entering a room, the storage will be empty. `liveblocks.enterRoom` takes
-an additional argument to initialize the room's storage.
-
-```js
-enterRoom("room-id", {
-  firstName: "Lise",
-  lastName: "Meitner",
-  discoveries: ["Nuclear fission", "Protactinium"],
-});
-```
+you're entering a room, the storage will be initialized with the current value
+in your Zustand state, typically your initial state.
 
 ## Multiplayer undo/redo [#undo-redo]
 
@@ -306,7 +344,7 @@ Access these two functions from your store like below so you can easily bind
 them to keyboard events (⌘+Z/⌘+⇧+Z on Mac and Ctrl+Z/Ctrl+Y on Windows) or undo
 and redo buttons in your application..
 
-```jsx
+```tsx
 import useStore from "../store";
 
 function YourComponent() {
@@ -343,7 +381,7 @@ calls would look like that:
 At this point, if the user calls `room.history.undo`, the rectangle will go back
 to its initial position.
 
-```jsx
+```tsx
 import useStore from "../store";
 
 const pause = useStore((state) => state.liveblocks.room?.history.pause);
