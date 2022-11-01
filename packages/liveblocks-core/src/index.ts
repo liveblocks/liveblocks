@@ -51,11 +51,11 @@ export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
-  ClientMsgCode,
   FetchStorageClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
 } from "./protocol/ClientMsg";
+export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
   CreateChildOp,
   CreateListOp,
