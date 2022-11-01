@@ -149,7 +149,7 @@ configuration to specify which part of the state maps to the current user’s
 presence. In this case, we’re updating the `cursor` position in our store in the
 `onPointerMove` event listener in our React component.
 
-```ts file="src/store.ts" highlight="6-7,9-10,20-21,25-27"
+```ts file="src/store.ts" highlight="6,9-10,20-21,25-27"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
