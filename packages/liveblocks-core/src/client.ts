@@ -8,7 +8,7 @@ import type {
   RoomInitializers,
 } from "./room";
 import { createRoom } from "./room";
-import type { BaseUserMeta } from "./types/BaseUserMeta";
+import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { LsonObject } from "./types/Lson";
 import type { Resolve } from "./lib/Resolve";
 

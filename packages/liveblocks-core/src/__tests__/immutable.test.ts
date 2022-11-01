@@ -8,12 +8,12 @@ import {
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import { LiveObject } from "../LiveObject";
-import type { BaseUserMeta } from "../types/BaseUserMeta";
-import type { ClientMsg } from "../types/ClientMsg";
-import { ClientMsgCode } from "../types/ClientMsg";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { ClientMsg } from "../protocol/ClientMsg";
+import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { LsonObject, ToJson } from "../types/Lson";
-import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
-import { ServerMsgCode } from "../types/ServerMsg";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { StorageUpdate } from "../types/StorageUpdates";
 import {
   createSerializedList,

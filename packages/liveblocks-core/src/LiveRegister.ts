@@ -5,10 +5,10 @@ import type { Json } from "./lib/Json";
 import type { Immutable } from "./types/Immutable";
 import type { LiveNode } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
-import type { CreateChildOp, CreateRegisterOp, Op } from "./types/Op";
-import { OpCode } from "./types/Op";
-import type { IdTuple, SerializedRegister } from "./types/SerializedCrdt";
-import { CrdtType } from "./types/SerializedCrdt";
+import type { CreateChildOp, CreateRegisterOp, Op } from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
+import type { IdTuple, SerializedRegister } from "./protocol/SerializedCrdt";
+import { CrdtType } from "./protocol/SerializedCrdt";
 
 /**
  * INTERNAL

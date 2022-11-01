@@ -2,7 +2,7 @@ import { freeze } from "../lib/freeze";
 import type { JsonObject } from "../lib/Json";
 import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
 import { compact, compactObject } from "../lib/utils";
-import type { BaseUserMeta } from "../types/BaseUserMeta";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { Others } from "../types/Others";
 import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";

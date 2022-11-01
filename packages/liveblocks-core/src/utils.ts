@@ -7,10 +7,10 @@ import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-import type { CreateOp, Op } from "./types/Op";
-import { OpCode } from "./types/Op";
-import type { IdTuple, SerializedCrdt } from "./types/SerializedCrdt";
-import { CrdtType } from "./types/SerializedCrdt";
+import type { CreateOp, Op } from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
+import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
+import { CrdtType } from "./protocol/SerializedCrdt";
 import type {
   LiveListUpdates,
   LiveMapUpdates,

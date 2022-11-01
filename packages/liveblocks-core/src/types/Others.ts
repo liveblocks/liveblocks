@@ -1,6 +1,6 @@
 import type { JsonObject } from "../lib/Json";
 import type { ReadonlyArrayWithLegacyMethods } from "../lib/LegacyArray";
-import type { BaseUserMeta } from "./BaseUserMeta";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "./User";
 
 /**

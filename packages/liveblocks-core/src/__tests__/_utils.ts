@@ -12,11 +12,11 @@ import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
-import type { BaseUserMeta } from "../types/BaseUserMeta";
-import type { ClientMsg } from "../types/ClientMsg";
-import { ClientMsgCode } from "../types/ClientMsg";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { ClientMsg } from "../protocol/ClientMsg";
+import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { LsonObject } from "../types/Lson";
-import type { Op } from "../types/Op";
+import type { Op } from "../protocol/Op";
 import type {
   IdTuple,
   SerializedCrdt,
@@ -25,10 +25,10 @@ import type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "../types/SerializedCrdt";
-import { CrdtType } from "../types/SerializedCrdt";
-import type { ServerMsg } from "../types/ServerMsg";
-import { ServerMsgCode } from "../types/ServerMsg";
+} from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import type { ServerMsg } from "../protocol/ServerMsg";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import type { ToImmutable } from "../types/ToImmutable";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";

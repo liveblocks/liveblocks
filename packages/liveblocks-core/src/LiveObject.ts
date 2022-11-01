@@ -12,14 +12,14 @@ import type {
   DeleteObjectKeyOp,
   Op,
   UpdateObjectOp,
-} from "./types/Op";
-import { OpCode } from "./types/Op";
+} from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
 import type {
   IdTuple,
   SerializedObject,
   SerializedRootObject,
-} from "./types/SerializedCrdt";
-import { CrdtType } from "./types/SerializedCrdt";
+} from "./protocol/SerializedCrdt";
+import { CrdtType } from "./protocol/SerializedCrdt";
 import type {
   LiveObjectUpdateDelta,
   LiveObjectUpdates,

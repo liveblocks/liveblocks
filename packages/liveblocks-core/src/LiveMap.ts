@@ -4,10 +4,10 @@ import { nn } from "./lib/assert";
 import { freeze } from "./lib/freeze";
 import type { LiveNode, Lson } from "./types/Lson";
 import type { ParentToChildNodeMap } from "./types/NodeMap";
-import type { CreateChildOp, CreateMapOp, Op } from "./types/Op";
-import { OpCode } from "./types/Op";
-import type { IdTuple, SerializedMap } from "./types/SerializedCrdt";
-import { CrdtType } from "./types/SerializedCrdt";
+import type { CreateChildOp, CreateMapOp, Op } from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
+import type { IdTuple, SerializedMap } from "./protocol/SerializedCrdt";
+import { CrdtType } from "./protocol/SerializedCrdt";
 import type { LiveMapUpdates } from "./types/StorageUpdates";
 import type { ToImmutable } from "./types/ToImmutable";
 import {

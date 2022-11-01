@@ -1,5 +1,5 @@
 import type { JsonObject } from "../lib/Json";
-import type { BaseUserMeta } from "./BaseUserMeta";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 
 /**
  * Represents a user connected in a room. Treated as immutable.

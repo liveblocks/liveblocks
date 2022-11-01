@@ -13,13 +13,13 @@ import {
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
-import type { BaseUserMeta } from "../types/BaseUserMeta";
-import { ClientMsgCode } from "../types/ClientMsg";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { LsonObject } from "../types/Lson";
 import type { Others } from "../types/Others";
-import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
-import { CrdtType } from "../types/SerializedCrdt";
-import { ServerMsgCode } from "../types/ServerMsg";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   createSerializedList,

@@ -37,7 +37,7 @@ export { LiveList } from "./LiveList";
 export { LiveMap } from "./LiveMap";
 export { LiveObject } from "./LiveObject";
 export type { BroadcastOptions, History, Room } from "./room";
-export type { BaseUserMeta } from "./types/BaseUserMeta";
+export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
   ClientMsg,
@@ -45,7 +45,7 @@ export type {
   FetchStorageClientMsg,
   UpdatePresenceClientMsg,
   UpdateStorageClientMsg,
-} from "./types/ClientMsg";
+} from "./protocol/ClientMsg";
 export type { Immutable } from "./types/Immutable";
 export type {
   LiveNode,
@@ -68,8 +68,8 @@ export type {
   Op,
   SetParentKeyOp,
   UpdateObjectOp,
-} from "./types/Op";
-export { OpCode } from "./types/Op";
+} from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
 export type { Others } from "./types/Others";
 export type { Resolve } from "./lib/Resolve";
 export type {
@@ -81,9 +81,9 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-} from "./types/SerializedCrdt";
-export { CrdtType } from "./types/SerializedCrdt";
-export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
+} from "./protocol/SerializedCrdt";
+export { CrdtType } from "./protocol/SerializedCrdt";
+export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
@@ -93,8 +93,8 @@ export type {
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-} from "./types/ServerMsg";
-export { ServerMsgCode } from "./types/ServerMsg";
+} from "./protocol/ServerMsg";
+export { ServerMsgCode } from "./protocol/ServerMsg";
 export type { StorageUpdate } from "./types/StorageUpdates";
 export type { ToImmutable } from "./types/ToImmutable";
 export type { User } from "./types/User";

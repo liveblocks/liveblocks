@@ -14,13 +14,13 @@ import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
-import type { BaseUserMeta } from "./types/BaseUserMeta";
-import type { ClientMsg } from "./types/ClientMsg";
-import { ClientMsgCode } from "./types/ClientMsg";
+import type { BaseUserMeta } from "./protocol/BaseUserMeta";
+import type { ClientMsg } from "./protocol/ClientMsg";
+import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-import type { Op } from "./types/Op";
-import { OpCode } from "./types/Op";
+import type { Op } from "./protocol/Op";
+import { OpCode } from "./protocol/Op";
 import type { Others, OthersEvent } from "./types/Others";
 import type { Resolve } from "./lib/Resolve";
 import type {
@@ -28,8 +28,8 @@ import type {
   SerializedChild,
   SerializedCrdt,
   SerializedRootObject,
-} from "./types/SerializedCrdt";
-import { isRootCrdt } from "./types/SerializedCrdt";
+} from "./protocol/SerializedCrdt";
+import { isRootCrdt } from "./protocol/SerializedCrdt";
 import type {
   InitialDocumentStateServerMsg,
   RoomStateServerMsg,
@@ -37,8 +37,8 @@ import type {
   UpdatePresenceServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-} from "./types/ServerMsg";
-import { ServerMsgCode } from "./types/ServerMsg";
+} from "./protocol/ServerMsg";
+import { ServerMsgCode } from "./protocol/ServerMsg";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
