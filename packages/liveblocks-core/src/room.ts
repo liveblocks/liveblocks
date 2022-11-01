@@ -48,7 +48,7 @@ import {
   isLiveNode,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-} from "./utils";
+} from "./liveblocks-helpers";
 import { isPlainObject, tryParseJson } from "./lib/utils";
 
 export type AuthorizeResponse = {

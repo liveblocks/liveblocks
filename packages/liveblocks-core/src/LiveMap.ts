@@ -16,7 +16,7 @@ import {
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
-} from "./utils";
+} from "./liveblocks-helpers";
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.

@@ -19,7 +19,7 @@ import {
   deserialize,
   liveNodeToLson,
   lsonToLiveNode,
-} from "./utils";
+} from "./liveblocks-helpers";
 
 function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
   return comparePosition(

@@ -1,7 +1,10 @@
 import type { NodeMap } from "../types/NodeMap";
 import { OpCode } from "../protocol/Op";
 import { CrdtType } from "../protocol/SerializedCrdt";
-import { findNonSerializableValue, getTreesDiffOperations } from "../utils";
+import {
+  findNonSerializableValue,
+  getTreesDiffOperations,
+} from "../liveblocks-helpers";
 import { FIRST_POSITION, SECOND_POSITION } from "./_utils";
 
 describe("getTreesDiffOperations", () => {

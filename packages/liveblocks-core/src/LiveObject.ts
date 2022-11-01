@@ -31,7 +31,7 @@ import {
   deserializeToLson,
   isLiveNode,
   isLiveStructure,
-} from "./utils";
+} from "./liveblocks-helpers";
 import { fromEntries } from "./lib/utils";
 
 /**

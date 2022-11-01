@@ -6,7 +6,11 @@ import { LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./types/Lson";
 import type { StorageUpdate } from "./types/StorageUpdates";
-import { findNonSerializableValue, isLiveList, isLiveObject } from "./utils";
+import {
+  findNonSerializableValue,
+  isLiveList,
+  isLiveObject,
+} from "./liveblocks-helpers";
 import { isPlainObject } from "./lib/utils";
 
 function lsonObjectToJson<O extends LsonObject>(
