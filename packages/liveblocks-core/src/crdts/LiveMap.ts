@@ -12,7 +12,7 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ToImmutable } from "../types/ToImmutable";
+import type { ToImmutable } from "./ToImmutable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import type { LiveNode, Lson } from "./Lson";

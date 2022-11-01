@@ -29,7 +29,7 @@ import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
-import type { ToImmutable } from "../types/ToImmutable";
+import type { ToImmutable } from "../crdts/ToImmutable";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

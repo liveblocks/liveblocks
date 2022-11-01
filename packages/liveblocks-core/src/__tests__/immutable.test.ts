@@ -1,6 +1,7 @@
 import { LiveList, LiveMap } from "..";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject, ToJson } from "../crdts/Lson";
+import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -14,7 +15,6 @@ import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { StorageUpdate } from "../types/StorageUpdates";
 import {
   createSerializedList,
   createSerializedObject,

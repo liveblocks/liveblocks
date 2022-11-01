@@ -4,6 +4,7 @@ import { type LiveMapUpdates, LiveMap } from "./crdts/LiveMap";
 import { type LiveObjectUpdates, LiveObject } from "./crdts/LiveObject";
 import { LiveRegister } from "./crdts/LiveRegister";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./crdts/Lson";
+import type { StorageUpdate } from "./crdts/StorageUpdates";
 import { assertNever, nn } from "./lib/assert";
 import type { Json } from "./lib/Json";
 import { entries, isPlainObject } from "./lib/utils";
@@ -12,7 +13,6 @@ import { OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import { CrdtType } from "./protocol/SerializedCrdt";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
-import type { StorageUpdate } from "./types/StorageUpdates";
 
 export function creationOpToLiveNode(op: CreateOp): LiveNode {
   return lsonToLiveNode(creationOpToLson(op));

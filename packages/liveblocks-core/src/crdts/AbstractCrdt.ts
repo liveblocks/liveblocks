@@ -3,8 +3,8 @@ import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
 import type { Immutable } from "../types/Immutable";
-import type { StorageUpdate } from "../types/StorageUpdates";
 import type { LiveNode } from "./Lson";
+import type { StorageUpdate } from "./StorageUpdates";
 
 export type ApplyResult =
   | { reverse: Op[]; modified: StorageUpdate }

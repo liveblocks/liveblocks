@@ -5,6 +5,7 @@ import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
+import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -46,7 +47,6 @@ import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
-import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 

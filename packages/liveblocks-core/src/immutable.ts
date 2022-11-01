@@ -3,6 +3,7 @@ import { LiveMap } from "./crdts/LiveMap";
 import { LiveObject } from "./crdts/LiveObject";
 import { LiveRegister } from "./crdts/LiveRegister";
 import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
+import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
@@ -11,7 +12,6 @@ import {
   isLiveList,
   isLiveObject,
 } from "./liveblocks-helpers";
-import type { StorageUpdate } from "./types/StorageUpdates";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
