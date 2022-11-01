@@ -13,7 +13,7 @@ import { LiveObject } from "./LiveObject";
 import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { DocumentVisibilityState } from "./types/_compat";
+import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { ClientMsg } from "./types/ClientMsg";
 import { ClientMsgCode } from "./types/ClientMsg";
