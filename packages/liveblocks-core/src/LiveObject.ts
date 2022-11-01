@@ -29,10 +29,10 @@ import type { ToImmutable } from "./types/ToImmutable";
 import {
   creationOpToLson,
   deserializeToLson,
-  fromEntries,
   isLiveNode,
   isLiveStructure,
 } from "./utils";
+import { fromEntries } from "./lib/utils";
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

@@ -1,12 +1,7 @@
 import type { NodeMap } from "../types/NodeMap";
 import { OpCode } from "../protocol/Op";
 import { CrdtType } from "../protocol/SerializedCrdt";
-import {
-  b64decode,
-  findNonSerializableValue,
-  getTreesDiffOperations,
-  tryParseJson,
-} from "../utils";
+import { findNonSerializableValue, getTreesDiffOperations } from "../utils";
 import { FIRST_POSITION, SECOND_POSITION } from "./_utils";
 
 describe("getTreesDiffOperations", () => {
@@ -234,6 +229,7 @@ describe("getTreesDiffOperations", () => {
     ]);
   });
 });
+
 describe("findNonSerializableValue", () => {
   it("findNonSerializableValue should return path and value of non serializable value", () => {
     for (const [value, expectedPath] of [
@@ -257,31 +253,5 @@ describe("findNonSerializableValue", () => {
         expect(result).toEqual(false);
       }
     }
-  });
-});
-
-describe("b64decode", () => {
-  test("payload contains characters with accents", () => {
-    const tokenPayload =
-      "eyJyb29tSWQiOiJNaDNtTGQ1OUxWSjdLQTJlVWIwTWUiLCJhcHBJZCI6IjYxNDBlMzMyMjliY2ExNWQxNDYxMzBhOSIsImFjdG9yIjo5LCJzY29wZXMiOlsicm9vbTpyZWFkIiwicm9vbTp3cml0ZSIsIndlYnNvY2tldDpwcmVzZW5jZSIsIndlYnNvY2tldDpzdG9yYWdlIl0sImluZm8iOnsibmFtZSI6IkNoYXJsacOpIExheW5lIiwicGljdHVyZSI6Ii9hdmF0YXJzLzcucG5nIn0sImlhdCI6MTY1MzUxNjA4NiwiZXhwIjoxNjUzNTE5Njg2fQ";
-    const json = tryParseJson(b64decode(tokenPayload));
-
-    expect(json).toEqual({
-      actor: 9,
-      appId: "6140e33229bca15d146130a9",
-      exp: 1653519686,
-      iat: 1653516086,
-      info: {
-        name: "Charlié Layne",
-        picture: "/avatars/7.png",
-      },
-      roomId: "Mh3mLd59LVJ7KA2eUb0Me",
-      scopes: [
-        "room:read",
-        "room:write",
-        "websocket:presence",
-        "websocket:storage",
-      ],
-    });
   });
 });

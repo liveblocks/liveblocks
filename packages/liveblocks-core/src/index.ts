@@ -99,7 +99,7 @@ export type { StorageUpdate } from "./types/StorageUpdates";
 export type { ToImmutable } from "./types/ToImmutable";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
-export { b64decode, isPlainObject, tryParseJson } from "./utils";
+export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

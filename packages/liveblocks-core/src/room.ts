@@ -46,11 +46,10 @@ import {
   getTreesDiffOperations,
   isLiveList,
   isLiveNode,
-  isPlainObject,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-  tryParseJson,
 } from "./utils";
+import { isPlainObject, tryParseJson } from "./lib/utils";
 
 export type AuthorizeResponse = {
   token: string;
