@@ -1,5 +1,6 @@
 import type { StateCreator } from "zustand";
 import create from "zustand";
+import { subscribeWithSelector } from "zustand/middleware";
 import { createClient } from "@liveblocks/client";
 import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
@@ -45,15 +46,20 @@ const createFishSlice: StateCreator<
 type MyState = BearSlice & FishSlice;
 
 const useStore = create<WithLiveblocks<MyState>>()(
-  liveblocksMiddleware(
-    (set, get, api) => ({
-      ...createBearSlice(set, get, api),
-      ...createFishSlice(set, get, api),
-    }),
-    {
-      client: createClient({ publicApiKey: "pk_xxx" }),
-      presenceMapping: { fishes: true },
-    }
+  subscribeWithSelector(
+    liveblocksMiddleware(
+      (set, get, api) => ({
+        ...createBearSlice(set, get, api),
+        ...createFishSlice(set, get, api),
+      }),
+      {
+        client: createClient({ publicApiKey: "pk_xxx" }),
+        storageMapping: {
+          fishes: true,
+          bears: true,
+        },
+      }
+    )
   )
 );
 
@@ -70,3 +76,6 @@ expectType<() => void>(fullstate.eatFish);
 expectAssignable<Function>(fullstate.liveblocks.enterRoom);
 expectAssignable<Function>(fullstate.liveblocks.leaveRoom);
 expectType<string>(fullstate.liveblocks.room!.id);
+
+// Test subscribe with selector middleware
+expectType<() => void>(useStore.subscribe((state) => state.bears, console.log));
