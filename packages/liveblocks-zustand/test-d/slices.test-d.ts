@@ -1,4 +1,4 @@
-import type { StoreApi } from "zustand";
+import type { StateCreator } from "zustand";
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
@@ -7,32 +7,38 @@ import type { WithLiveblocks } from "@liveblocks/zustand";
 import { expectType, expectAssignable } from "tsd";
 
 type BearSlice = {
+  bears: number;
+  addBear: () => void;
   eatFish: () => void;
 };
 
 type FishSlice = {
   fishes: number;
-  repopulate: () => void;
+  addFish: () => void;
 };
 
-const createBearSlice = (
-  set: StoreApi<MyState>["setState"],
-  _get: StoreApi<MyState>["getState"]
-) => ({
+const createBearSlice: StateCreator<
+  BearSlice & FishSlice,
+  [],
+  [],
+  BearSlice
+> = (set) => ({
+  bears: 0,
+  addBear: () => set((state) => ({ bears: state.bears + 1 })),
   eatFish: () => {
-    set((prev) => ({ fishes: prev.fishes > 1 ? prev.fishes - 1 : 0 }));
+    set((state) => ({ fishes: state.fishes >= 1 ? state.fishes - 1 : 0 }));
   },
 });
 
-const maxFishes = 10;
-
-const createFishSlice = (
-  set: StoreApi<MyState>["setState"],
-  _get: StoreApi<MyState>["getState"]
-) => ({
-  fishes: maxFishes,
-  repopulate: () => {
-    set((_prev) => ({ fishes: maxFishes }));
+const createFishSlice: StateCreator<
+  BearSlice & FishSlice,
+  [],
+  [],
+  FishSlice
+> = (set) => ({
+  fishes: 0,
+  addFish: () => {
+    set((state) => ({ fishes: state.fishes + 1 }));
   },
 });
 
@@ -40,9 +46,9 @@ type MyState = BearSlice & FishSlice;
 
 const useStore = create<WithLiveblocks<MyState>>()(
   liveblocksMiddleware(
-    (set, get) => ({
-      ...createBearSlice(set, get),
-      ...createFishSlice(set, get),
+    (set, get, api) => ({
+      ...createBearSlice(set, get, api),
+      ...createFishSlice(set, get, api),
     }),
     {
       client: createClient({ publicApiKey: "pk_xxx" }),
@@ -55,7 +61,7 @@ const fullstate = useStore((s) => s);
 
 // From fish slice
 expectType<number>(fullstate.fishes);
-expectType<() => void>(fullstate.repopulate);
+expectType<() => void>(fullstate.addFish);
 
 // From bear slice
 expectType<() => void>(fullstate.eatFish);
