@@ -98,7 +98,7 @@ export { ServerMsgCode } from "./types/ServerMsg";
 export type { StorageUpdate } from "./types/StorageUpdates";
 export type { ToImmutable } from "./types/ToImmutable";
 export type { User } from "./types/User";
-export { WebsocketCloseCodes } from "./types/Websocket";
+export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 export { b64decode, isPlainObject, tryParseJson } from "./utils";
 
 /**

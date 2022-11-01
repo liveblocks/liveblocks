@@ -4,7 +4,7 @@ import { LiveObject } from "../LiveObject";
 import { OpCode } from "../types/Op";
 import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
 import { CrdtType } from "../types/SerializedCrdt";
-import { WebsocketCloseCodes } from "../types/Websocket";
+import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   createSerializedList,
   createSerializedObject,

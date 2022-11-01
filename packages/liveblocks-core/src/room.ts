@@ -41,7 +41,7 @@ import type {
 import { ServerMsgCode } from "./types/ServerMsg";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";
 import type { User } from "./types/User";
-import { WebsocketCloseCodes } from "./types/Websocket";
+import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 import {
   getTreesDiffOperations,
   isLiveList,

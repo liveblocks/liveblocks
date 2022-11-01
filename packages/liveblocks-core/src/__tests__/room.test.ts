@@ -20,7 +20,7 @@ import type { Others } from "../types/Others";
 import type { IdTuple, SerializedCrdt } from "../types/SerializedCrdt";
 import { CrdtType } from "../types/SerializedCrdt";
 import { ServerMsgCode } from "../types/ServerMsg";
-import { WebsocketCloseCodes } from "../types/Websocket";
+import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   createSerializedList,
   createSerializedObject,
