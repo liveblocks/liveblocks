@@ -11,15 +11,43 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type {
-  LiveListUpdateDelta,
-  LiveListUpdates,
-} from "../types/StorageUpdates";
 import type { ToImmutable } from "../types/ToImmutable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson } from "./Lson";
+
+export type LiveListUpdateDelta =
+  | {
+      index: number;
+      item: Lson;
+      type: "insert";
+    }
+  | {
+      index: number;
+      type: "delete";
+    }
+  | {
+      index: number;
+      previousIndex: number;
+      item: Lson;
+      type: "move";
+    }
+  | {
+      index: number;
+      item: Lson;
+      type: "set";
+    };
+
+/**
+ * A LiveList notification that is sent in-client to any subscribers whenever
+ * one or more of the items inside the LiveList instance have changed.
+ */
+export type LiveListUpdates<TItem extends Lson> = {
+  type: "LiveList";
+  node: LiveList<TItem>;
+  updates: LiveListUpdateDelta[];
+};
 
 function compareNodePosition(itemA: LiveNode, itemB: LiveNode) {
   return comparePosition(

@@ -25,14 +25,24 @@ import type {
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type {
-  LiveObjectUpdateDelta,
-  LiveObjectUpdates,
-  UpdateDelta,
-} from "../types/StorageUpdates";
 import type { ToImmutable } from "../types/ToImmutable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { UpdateDelta } from "./UpdateDelta";
+
+export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
+  [K in keyof O]?: UpdateDelta | undefined;
+};
+
+/**
+ * A LiveObject notification that is sent in-client to any subscribers whenever
+ * one or more of the entries inside the LiveObject instance have changed.
+ */
+export type LiveObjectUpdates<TData extends LsonObject> = {
+  type: "LiveObject";
+  node: LiveObject<TData>;
+  updates: LiveObjectUpdateDelta<TData>;
+};
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

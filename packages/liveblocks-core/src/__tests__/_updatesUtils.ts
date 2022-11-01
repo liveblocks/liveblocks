@@ -1,12 +1,10 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "..";
+import type { LiveListUpdates } from "../crdts/LiveList";
+import type { LiveObjectUpdateDelta } from "../crdts/LiveObject";
 import type { ToJson } from "../crdts/Lson";
+import type { UpdateDelta } from "../crdts/UpdateDelta";
 import { lsonToJson } from "../immutable";
 import { assertNever } from "../lib/assert";
-import type {
-  LiveListUpdates,
-  LiveObjectUpdateDelta,
-  UpdateDelta,
-} from "../types/StorageUpdates";
 
 export type JsonStorageUpdate =
   | JsonLiveListUpdate<Lson>
