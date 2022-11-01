@@ -1,3 +1,7 @@
+/**
+ * Mutates the array in-place by removing the first occurrence of `item` from
+ * the array.
+ */
 export function remove<T>(array: T[], item: T): void {
   for (let i = 0; i < array.length; i++) {
     if (array[i] === item) {
