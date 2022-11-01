@@ -78,4 +78,12 @@ expectAssignable<Function>(fullstate.liveblocks.leaveRoom);
 expectType<string>(fullstate.liveblocks.room!.id);
 
 // Test subscribe with selector middleware
-expectType<() => void>(useStore.subscribe((state) => state.bears, console.log));
+expectType<() => void>(
+  useStore.subscribe(
+    (state) => state.bears,
+    (n) => {
+      expectType<number>(n);
+      console.log(n);
+    }
+  )
+);
