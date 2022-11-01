@@ -7,14 +7,11 @@ import WebSocket from "ws";
 
 import type { Room } from "../src";
 import { createClient } from "../src/client";
-import type { LiveObject } from "../src/LiveObject";
-import type {
-  BaseUserMeta,
-  Json,
-  JsonObject,
-  LsonObject,
-  ToImmutable,
-} from "../src/types";
+import type { LiveObject } from "../src/crdts/LiveObject";
+import type { Json, JsonObject } from "../src/lib/Json";
+import type { BaseUserMeta } from "../src/protocol/BaseUserMeta";
+import type { LsonObject } from "../src/crdts/Lson";
+import type { ToImmutable } from "../src/crdts/ToImmutable";
 
 async function initializeRoomForTest<
   TPresence extends JsonObject,
