@@ -26,6 +26,7 @@ export type {
   ToJson,
 } from "./crdts/Lson";
 export type { StorageUpdate } from "./crdts/StorageUpdates";
+export type { ToImmutable } from "./crdts/ToImmutable";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -97,7 +98,6 @@ export type { BroadcastOptions, History, Room } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
-export type { ToImmutable } from "./crdts/ToImmutable";
 export type { User } from "./types/User";
 export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 

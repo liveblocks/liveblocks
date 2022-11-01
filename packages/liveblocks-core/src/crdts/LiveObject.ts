@@ -25,9 +25,9 @@ import type {
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ToImmutable } from "./ToImmutable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { ToImmutable } from "./ToImmutable";
 import type { UpdateDelta } from "./UpdateDelta";
 
 export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {

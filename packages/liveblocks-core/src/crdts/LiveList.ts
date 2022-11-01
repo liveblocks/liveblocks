@@ -11,11 +11,11 @@ import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
-import type { ToImmutable } from "./ToImmutable";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, Lson } from "./Lson";
+import type { ToImmutable } from "./ToImmutable";
 
 export type LiveListUpdateDelta =
   | {
