@@ -10,7 +10,7 @@ import type {
 import { createRoom } from "./room";
 import type { BaseUserMeta } from "./types/BaseUserMeta";
 import type { LsonObject } from "./types/Lson";
-import type { Resolve } from "./types/Resolve";
+import type { Resolve } from "./lib/Resolve";
 
 type EnterOptions<
   TPresence extends JsonObject,

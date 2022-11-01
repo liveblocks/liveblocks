@@ -71,7 +71,7 @@ export type {
 } from "./types/Op";
 export { OpCode } from "./types/Op";
 export type { Others } from "./types/Others";
-export type { Resolve } from "./types/Resolve";
+export type { Resolve } from "./lib/Resolve";
 export type {
   IdTuple,
   SerializedChild,
