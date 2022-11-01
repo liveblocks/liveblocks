@@ -1,17 +1,9 @@
-import { RoomScope } from "../AuthToken";
-import { LiveList } from "../LiveList";
-import { LiveMap } from "../LiveMap";
-import { LiveObject } from "../LiveObject";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   listUpdate,
   listUpdateDelete,
   listUpdateInsert,
   listUpdateMove,
-} from "./_updatesUtils";
+} from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -25,7 +17,15 @@ import {
   reconnect,
   SECOND_POSITION,
   THIRD_POSITION,
-} from "./_utils";
+} from "../../__tests__/_utils";
+import { RoomScope } from "../../AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { LiveList } from "../LiveList";
+import { LiveMap } from "../LiveMap";
+import { LiveObject } from "../LiveObject";
 
 describe("LiveList", () => {
   describe("not attached", () => {

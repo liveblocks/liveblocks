@@ -1,16 +1,16 @@
-import type { ManagedPool } from "./AbstractCrdt";
+import type { ManagedPool } from "./crdts/AbstractCrdt";
+import { LiveList } from "./crdts/LiveList";
+import { LiveMap } from "./crdts/LiveMap";
+import { LiveObject } from "./crdts/LiveObject";
+import { LiveRegister } from "./crdts/LiveRegister";
+import type { LiveNode, LiveStructure, Lson, LsonObject } from "./crdts/Lson";
 import { assertNever, nn } from "./lib/assert";
 import type { Json } from "./lib/Json";
 import { entries, isPlainObject } from "./lib/utils";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import { LiveRegister } from "./LiveRegister";
 import type { CreateOp, Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
 import type { IdTuple, SerializedCrdt } from "./protocol/SerializedCrdt";
 import { CrdtType } from "./protocol/SerializedCrdt";
-import type { LiveNode, LiveStructure, Lson, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type {
   LiveListUpdates,

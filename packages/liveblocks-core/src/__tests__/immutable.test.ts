@@ -1,4 +1,6 @@
 import { LiveList, LiveMap } from "..";
+import { LiveObject } from "../crdts/LiveObject";
+import type { LsonObject, ToJson } from "../crdts/Lson";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -7,13 +9,11 @@ import {
 } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
-import { LiveObject } from "../LiveObject";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { LsonObject, ToJson } from "../types/Lson";
 import type { StorageUpdate } from "../types/StorageUpdates";
 import {
   createSerializedList,

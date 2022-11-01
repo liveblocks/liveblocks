@@ -1,7 +1,7 @@
 import type { Json, LiveMap, Lson, LsonObject, StorageUpdate } from "..";
+import type { ToJson } from "../crdts/Lson";
 import { lsonToJson } from "../immutable";
 import { assertNever } from "../lib/assert";
-import type { ToJson } from "../types/Lson";
 import type {
   LiveListUpdates,
   LiveObjectUpdateDelta,

@@ -1,8 +1,8 @@
+import type { LiveList } from "../crdts/LiveList";
+import type { LiveMap } from "../crdts/LiveMap";
+import type { LiveObject } from "../crdts/LiveObject";
+import type { Lson, LsonObject } from "../crdts/Lson";
 import type { Json } from "../lib/Json";
-import type { LiveList } from "../LiveList";
-import type { LiveMap } from "../LiveMap";
-import type { LiveObject } from "../LiveObject";
-import type { Lson, LsonObject } from "./Lson";
 
 /**
  * Helper type to convert any valid Lson type to the equivalent Json type.

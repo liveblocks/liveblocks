@@ -1,8 +1,10 @@
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { OpSource } from "./AbstractCrdt";
 import type { RoomAuthToken } from "./AuthToken";
 import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
 import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
+import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
+import { OpSource } from "./crdts/AbstractCrdt";
+import { LiveObject } from "./crdts/LiveObject";
+import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -18,7 +20,6 @@ import {
   isSameNodeOrChildOf,
   mergeStorageUpdates,
 } from "./liveblocks-helpers";
-import { LiveObject } from "./LiveObject";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -43,7 +44,6 @@ import { ServerMsgCode } from "./protocol/ServerMsg";
 import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
-import type { LiveNode, LiveStructure, LsonObject } from "./types/Lson";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { StorageCallback, StorageUpdate } from "./types/StorageUpdates";

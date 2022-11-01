@@ -15,6 +15,16 @@ export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
 export type { Client } from "./client";
 export { createClient } from "./client";
+export { LiveList } from "./crdts/LiveList";
+export { LiveMap } from "./crdts/LiveMap";
+export { LiveObject } from "./crdts/LiveObject";
+export type {
+  LiveNode,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  ToJson,
+} from "./crdts/Lson";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -35,9 +45,6 @@ export { comparePosition, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
-export { LiveList } from "./LiveList";
-export { LiveMap } from "./LiveMap";
-export { LiveObject } from "./LiveObject";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,
@@ -87,13 +94,6 @@ export type {
 export { ServerMsgCode } from "./protocol/ServerMsg";
 export type { BroadcastOptions, History, Room } from "./room";
 export type { Immutable } from "./types/Immutable";
-export type {
-  LiveNode,
-  LiveStructure,
-  Lson,
-  LsonObject,
-  ToJson,
-} from "./types/Lson";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
 export type { StorageUpdate } from "./types/StorageUpdates";

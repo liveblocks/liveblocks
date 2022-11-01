@@ -1,7 +1,7 @@
-import type { LiveList } from "../LiveList";
-import type { LiveMap } from "../LiveMap";
-import type { LiveObject } from "../LiveObject";
-import type { Lson, LsonObject } from "./Lson";
+import type { LiveList } from "../crdts/LiveList";
+import type { LiveMap } from "../crdts/LiveMap";
+import type { LiveObject } from "../crdts/LiveObject";
+import type { Lson, LsonObject } from "../crdts/Lson";
 
 export type UpdateDelta =
   | {

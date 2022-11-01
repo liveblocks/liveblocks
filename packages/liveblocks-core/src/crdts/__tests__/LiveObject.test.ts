@@ -1,17 +1,17 @@
-import { LiveList } from "..";
-import { RoomScope } from "../AuthToken";
-import { LiveObject } from "../LiveObject";
-import { OpCode } from "../protocol/Op";
-import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
-import { CrdtType } from "../protocol/SerializedCrdt";
-import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
+import { LiveList } from "../..";
 import {
   createSerializedList,
   createSerializedObject,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   reconnect,
-} from "./_utils";
+} from "../../__tests__/_utils";
+import { RoomScope } from "../../AuthToken";
+import { OpCode } from "../../protocol/Op";
+import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
+import { CrdtType } from "../../protocol/SerializedCrdt";
+import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
   describe("roomId", () => {

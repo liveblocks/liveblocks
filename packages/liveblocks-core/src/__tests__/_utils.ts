@@ -1,5 +1,6 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
+import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { remove } from "../lib/utils";
@@ -28,7 +29,6 @@ import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
 } from "../room";
-import type { LsonObject } from "../types/Lson";
 import type { ToImmutable } from "../types/ToImmutable";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";

@@ -1,3 +1,4 @@
+import type { LsonObject } from "./crdts/Lson";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -10,7 +11,6 @@ import type {
   RoomInitializers,
 } from "./room";
 import { createRoom } from "./room";
-import type { LsonObject } from "./types/Lson";
 
 type EnterOptions<
   TPresence extends JsonObject,
