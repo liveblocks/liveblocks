@@ -1,7 +1,7 @@
-import type { GetState, SetState } from "zustand";
+import type { StoreApi } from "zustand";
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks as liveblocksMiddleware } from "@liveblocks/zustand";
 import type { WithLiveblocks } from "@liveblocks/zustand";
 
 import { expectType, expectAssignable } from "tsd";
@@ -15,7 +15,10 @@ type FishSlice = {
   repopulate: () => void;
 };
 
-const createBearSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
+const createBearSlice = (
+  set: StoreApi<MyState>["setState"],
+  _get: StoreApi<MyState>["getState"]
+) => ({
   eatFish: () => {
     set((prev) => ({ fishes: prev.fishes > 1 ? prev.fishes - 1 : 0 }));
   },
@@ -23,7 +26,10 @@ const createBearSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
 
 const maxFishes = 10;
 
-const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
+const createFishSlice = (
+  set: StoreApi<MyState>["setState"],
+  _get: StoreApi<MyState>["getState"]
+) => ({
   fishes: maxFishes,
   repopulate: () => {
     set((_prev) => ({ fishes: maxFishes }));
@@ -33,7 +39,7 @@ const createFishSlice = (set: SetState<MyState>, _get: GetState<MyState>) => ({
 type MyState = BearSlice & FishSlice;
 
 const useStore = create<WithLiveblocks<MyState>>()(
-  middleware(
+  liveblocksMiddleware(
     (set, get) => ({
       ...createBearSlice(set, get),
       ...createFishSlice(set, get),
