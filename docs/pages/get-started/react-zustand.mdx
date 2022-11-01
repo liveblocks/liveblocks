@@ -48,7 +48,7 @@ You’ll need an API key in order to use Liveblocks.
 Then, create a client with [`createClient`][] and set your public key as shown
 below.
 
-```ts file=src/store.ts
+```ts file="src/store.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -63,7 +63,7 @@ created previously as the configuration. This will add a new `liveblocks`
 property to your store’s state, enabling you to interact with our Presence and
 Storage APIs.
 
-```ts file=src/store.ts
+```ts file="src/store.ts"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
@@ -99,7 +99,7 @@ Liveblocks room and use `liveblocks.leaveRoom` to stop the synchronization. With
 React `useEffect`, you can automatically enter and leave a Liveblocks room as
 your component is mounting and unmounting.
 
-```tsx file=src/App.tsx
+```tsx file="src/App.tsx"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -149,7 +149,7 @@ configuration to specify which part of the state maps to the current user’s
 presence. In this case, we’re updating the `cursor` position in our store in the
 `onPointerMove` event listener in our React component.
 
-```ts file=src/store.ts highlight=6-7,9-10,20-21,25-27
+```ts file="src/store.ts" highlight="6-7,9-10,20-21,25-27"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
 import { liveblocks } from "@liveblocks/zustand";
@@ -184,7 +184,7 @@ const useStore = create<WithLiveblocks<State>>()(
 export default useStore;
 ```
 
-```tsx file=src/App.tsx highlight=18-24
+```tsx file="src/App.tsx" highlight="18-24"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -219,7 +219,7 @@ export default App;
 Get people’s cursor positions with
 `liveblocks.others.map(user => user.presence.cursor)`.
 
-```tsx file=src/App.tsx
+```tsx file="src/App.tsx"
 function App() {
   /* ... */
 
@@ -260,7 +260,7 @@ structures based on the `storageMapping` configuration.
 Here is an example to explain how it works under the hood. Imagine you have the
 following store:
 
-```ts file=src/store.ts highlight=6-8,20-22
+```ts file="src/store.ts" highlight="6-8,20-22"
 /* ...client setup */
 
 const useStore = create<WithLiveblocks<State>>()(
