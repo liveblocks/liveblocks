@@ -25,7 +25,8 @@
     "lint": "eslint src/",
     "test": "jest --silent --verbose",
     "test:watch": "jest --silent --verbose --watch",
-    "test:e2e": "jest --silent --verbose --config=./jest.config.e2e.js"
+    "test:e2e": "jest --silent --verbose --config=./jest.config.e2e.js",
+    "test:deps": "depcruise src --exclude __tests__ --config"
   },
   "license": "Apache-2.0",
   "devDependencies": {

@@ -51,6 +51,9 @@ jobs:
       - name: Run type tests
         run: npm run test:types -- --filter ${{ matrix.pkg }}
 
+      - name: Run dependency tests
+        run: npm run test:deps -- --filter ${{ matrix.pkg }}
+
       - name: Run lint checks
         run: npm run lint -- --filter ${{ matrix.pkg }}
 
