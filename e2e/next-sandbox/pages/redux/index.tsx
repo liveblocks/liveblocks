@@ -8,7 +8,7 @@ import store, { client, addItem, deleteItem, clear } from "./store";
 export default function Home() {
   return (
     <Provider store={store}>
-      <List />{" "}
+      <List />
     </Provider>
   );
 }
@@ -28,11 +28,7 @@ function List() {
   }
 
   useEffect(() => {
-    dispatch(
-      actions.enterRoom(roomId, {
-        items: [],
-      })
-    );
+    dispatch(actions.enterRoom(roomId));
 
     return () => {
       dispatch(actions.leaveRoom(roomId));

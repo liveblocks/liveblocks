@@ -1,5 +1,5 @@
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
@@ -48,7 +48,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { todos: true },
         presenceMapping: { isTyping: true },

@@ -1,8 +1,58 @@
+# v0.19.0
+
+This release brings Zustand v4 support. This is a breaking change **only if
+you’re using @liveblocks/zustand**.
+
+In **@liveblocks/zustand**:
+
+- Support Zustand v4 (actually v4.1.3 or higher)
+- Drop support for Zustand v3 (also v4.1.2 or lower are not supported)
+
+To migrate, make the following code changes:
+
+- `npm install zustand@latest`
+- `npm install @liveblocks/zustand@latest`
+- Change these imports, if applicable:
+  ```diff
+  -import { middleware } from "@liveblocks/zustand";
+  +import { liveblocks } from "@liveblocks/zustand";
+  ```
+  and
+  ```diff
+  -import type { LiveblocksState } from "@liveblocks/zustand";
+  +import type { WithLiveblocks } from "@liveblocks/zustand";
+  ```
+  and rename accordingly.
+- Change the pattern:
+  ```ts
+  create(liveblocks<MyState, ...>(...))
+  ```
+  to the Zustand v4 recommended pattern:
+  ```ts
+  create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+  ```
+  To be clear:
+  1. First, move the type annotation away from the `liveblocks` middleware call,
+     and onto the `create` call.
+  2. Next, wrap your `MyState` type in a `WithLiveblocks<...>` wrapper. This
+     will make sure the injected `liveblocks` property on your Zustand state
+     will be correctly typed.
+  3. Finally, make sure to add the extra call `()` wrapper, needed by Zustand v4
+     now:
+     ```ts
+     create<WithLiveblocks<MyState, ...>>()(liveblocks(...))
+     //                                  ^^ Not a typo
+     ```
+- Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
+  takes an explicit initial state. Instead, it's automatically be populated from
+  your Zustand state.
+
 # v0.18.5
 
 Bug fix:
 
-- Fixes a small bug in a type definition, `scopes` was removed from `BaseUserMeta`.
+- Fixes a small bug in a type definition, `scopes` was removed from
+  `BaseUserMeta`.
 
 Internal updates:
 

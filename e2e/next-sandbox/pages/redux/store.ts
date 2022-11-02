@@ -1,4 +1,4 @@
-import { LiveblocksState, enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer, type WithLiveblocks } from "@liveblocks/redux";
 import { configureStore, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import createLiveblocksClient from "../../utils/createClient";
 
@@ -34,7 +34,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer<State>({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { items: true },
       }),
@@ -44,7 +44,7 @@ export function makeStore() {
 
 const store = makeStore();
 
-export type AppState = LiveblocksState<
+export type AppState = WithLiveblocks<
   ReturnType<typeof store.getState>,
   { items: string[] },
   never

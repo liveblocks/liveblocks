@@ -8,6 +8,7 @@ import {
   assertContainText,
   waitForContentToBeEquals,
 } from "../utils";
+import type { JsonObject } from "@liveblocks/core";
 
 const TEST_URL = "http://localhost:3007/redux";
 
@@ -34,8 +35,14 @@ test.describe("Redux", () => {
     await assertContainText(pages, "0");
 
     await delay(3000);
-    const othersFirstPage = await getJsonContent(pages[0], "others");
-    const othersSecondPage = await getJsonContent(pages[1], "others");
+    const othersFirstPage = (await getJsonContent(
+      pages[0],
+      "others"
+    )) as JsonObject[];
+    const othersSecondPage = (await getJsonContent(
+      pages[1],
+      "others"
+    )) as JsonObject[];
 
     expect(othersFirstPage.length).toEqual(1);
     expect(othersFirstPage[0].presence).toEqual({});

@@ -1,4 +1,4 @@
-import { Json } from "@liveblocks/client";
+import type { Json, JsonObject } from "@liveblocks/client";
 import { Page, test, expect } from "@playwright/test";
 import {
   preparePage,
@@ -10,12 +10,12 @@ import {
   assertContainText,
 } from "../utils";
 
-function getOthers(page: Page): Promise<Json> {
-  return getJsonContent(page, "others");
+function getOthers(page: Page): Promise<JsonObject[]> {
+  return getJsonContent(page, "others") as Promise<JsonObject[]>;
 }
 
-function getEvents(page: Page): Promise<Json> {
-  return getJsonContent(page, "events");
+function getEvents(page: Page): Promise<Json[]> {
+  return getJsonContent(page, "events") as Promise<Json[]>;
 }
 
 const TEST_URL = "http://localhost:3007/presence";

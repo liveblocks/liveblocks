@@ -29,7 +29,7 @@ This example shows how to build a collaborative whiteboard with
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`store.js`](./src/store.js) by your
+- Replace `pk_YOUR_PUBLIC_KEY` in [`store.ts`](./src/store.ts) by your
   **public** key
 - Run `npm run start` and go to [http://localhost:3000](http://localhost:3000)
 

@@ -1,7 +1,7 @@
 import { chromium, expect, Page } from "@playwright/test";
-import { Json } from "@liveblocks/client";
 import _ from "lodash";
 import randomNumber from "../utils/randomNumber";
+import type { Json } from "@liveblocks/client";
 
 const WIDTH = 640;
 const HEIGHT = 800;

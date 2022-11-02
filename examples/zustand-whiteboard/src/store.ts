@@ -1,6 +1,7 @@
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
 import React from "react";
 
 let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
@@ -45,8 +46,8 @@ type Presence = {
   selectedShape: string | null;
 };
 
-const useStore = create(
-  middleware<Store, Presence>(
+const useStore = create<WithLiveblocks<Store, Presence>>()(
+  liveblocks(
     (set, get) => ({
       shapes: {},
       selectedShape: null,

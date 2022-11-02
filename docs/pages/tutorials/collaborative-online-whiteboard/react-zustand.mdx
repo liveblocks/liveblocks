@@ -41,10 +41,13 @@ The source code for this guide is
 Create a new app with [`create-react-app`](https://create-react-app.dev/):
 
 ```bash
-npx create-react-app zustand-whiteboard
+npx create-react-app zustand-whiteboard --template typescript
 ```
 
-Then run the following command to install the Liveblocks packages and Zustand:
+To start a plain JavaScript project, you can omit the `--template typescript`
+flag.
+
+Then install the Liveblocks packages and Zustand:
 
 ```bash
 npm install zustand @liveblocks/client @liveblocks/zustand
@@ -65,24 +68,29 @@ key. For more info, see the [authentication guide](/docs/guides/authentication).
 
 </Banner>
 
-Create a new file `src/store.js` and initialize the Liveblocks client with your
+Create a new file `src/store.ts` and initialize the Liveblocks client with your
 public API key. Then add our
-[middleware](/docs/api-reference/liveblocks-zustand#middleware) to your store
-configuration.
+[`liveblocks` middleware](/docs/api-reference/liveblocks-zustand#middleware) to
+your store configuration.
 
-```js file="src/store.js"
+```ts file="src/store.ts"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+type State = {
+  // Your Zustand state type will be defined here
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
-      // state and action will be added here
+      // Your state and actions will go here
     }),
     { client }
   )
@@ -106,7 +114,7 @@ and
 In our main component, we want to connect to the Liveblocks room when the
 component does mount, and leave the room when it unmounts.
 
-```js file="src/App.js"
+```tsx file="src/App.tsx"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -118,7 +126,6 @@ export default function App() {
 
   useEffect(() => {
     enterRoom("zustand-whiteboard");
-
     return () => {
       leaveRoom("zustand-whiteboard");
     };
@@ -141,17 +148,28 @@ To achieve that, we are going to use the middleware option
 It means that the part of the state named `shapes` should be automatically
 synced with Liveblocks Storage.
 
-```js file="src/store.js" highlight="12,16"
+```ts file="src/store.ts" highlight="6-10,13,23,27"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+export type Shape = {
+  x: number;
+  y: number;
+  fill: string;
+};
+
+type State = {
+  shapes: Record<string, Shape>;
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
       shapes: {},
     }),
@@ -168,9 +186,10 @@ export default useStore;
 Afterwards, we draw the shapes in our canvas. To keep it simple for the
 tutorial, we are going to only support rectangle.
 
-```jsx file="src/App.js" highlight="7,10,13,20-30,33-43"
+```tsx file="src/App.tsx" highlight="8,11,20-30,33-43"
 import { useEffect } from "react";
 import useStore from "./store";
+import type { Shape } from "./store";
 
 import "./App.css";
 
@@ -178,11 +197,10 @@ export default function App() {
   const shapes = useStore((state) => state.shapes);
   const enterRoom = useStore((state) => state.liveblocks.enterRoom);
   const leaveRoom = useStore((state) => state.liveblocks.leaveRoom);
-  const isLoading = useStore((state) => state.liveblocks.isLoading);
+  const isLoading = useStore((state) => state.liveblocks.isStorageLoading);
 
   useEffect(() => {
-    enterRoom("zustand-whiteboard", { shapes: {} });
-
+    enterRoom("zustand-whiteboard");
     return () => {
       leaveRoom("zustand-whiteboard");
     };
@@ -201,7 +219,7 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape }) => {
+const Rectangle = ({ shape }: { shape: Shape }) => {
   return (
     <div
       className="rectangle"
@@ -300,10 +318,22 @@ create a button that adds a randomly placed rectangle to the board.
 
 Add a new function to your store that randomly insert a rectangle on the board.
 
-```js file="src/store.js" highlight="9-17,23-36"
+```ts file="src/store.ts" highlight="14,21-29,33,35-48"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+export type Shape = {
+  x: number;
+  y: number;
+  fill: string;
+};
+
+type State = {
+  shapes: Record<string, Shape>;
+  insertRectangle: () => void;
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
@@ -311,7 +341,7 @@ const client = createClient({
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function getRandomInt(max) {
+function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
@@ -319,8 +349,8 @@ function getRandomColor() {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       shapes: {},
       insertRectangle: () => {
@@ -350,7 +380,7 @@ export default useStore;
 
 Then add a button to call this function from the board.
 
-```jsx file="src/App.js" highlight="8,13,19-22"
+```tsx file="src/App.tsx" highlight="8,13,19-22"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -410,11 +440,20 @@ The middleware option
 means that we want to automatically sync the part of the state named
 `selectedShape` to Liveblocks Presence.
 
-```js file="src/store.js" highlight="7,20,23-25,30"
+```ts file="src/store.ts" highlight="5,7,16,29,32-34,39"
 /* ... */
 
-const useStore = create(
-  middleware(
+type State = {
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string | null) => void;
+};
+
+/* ... */
+
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       shapes: {},
       selectedShape: null,
@@ -451,7 +490,7 @@ export default useStore;
 Update your `App` and `Rectangle` components to show if a shape is selected by
 the current user or someone else in the room.
 
-```jsx file="src/App.js" highlight="9,10,18-26,31,33,45,46,54,56-59"
+```tsx file="src/App.tsx" highlight="9,10,18-26,31,33,45-51,59,61-64"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -496,7 +535,12 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id }) => {
+const Rectangle = (props: {
+  id: string;
+  shape: Shape;
+  selectionColor: string;
+}) => {
+  const { id, shape, selectionColor } = props;
   const onShapePointerDown = useStore((state) => state.onShapePointerDown);
 
   return (
@@ -533,11 +577,21 @@ rectangles too.
 Add a `deleteShape` to remove the selected shape from `shapes`, and then reset
 the user’s selection:
 
-```js file="src/store.js" highlight="14-21"
+```ts file="src/store.ts" highlight="8,24-35"
 /* ... */
 
-const useStore = create(
-  middleware(
+type State = {
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string | null) => void;
+  deleteShape: () => void;
+};
+
+/* ... */
+
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       shapes: {},
       selectedShape: null,
@@ -550,6 +604,10 @@ const useStore = create(
       deleteShape: () => {
         const { shapes, selectedShape } = get();
         const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
+        if (!selectedShape) {
+          /* Nothing todo */
+          return;
+        }
         set({
           shapes: newShapes,
           selectedShape: null,
@@ -567,7 +625,7 @@ const useStore = create(
 export default useStore;
 ```
 
-```jsx file="src/App.js" highlight="11,20-22"
+```tsx file="src/App.ts" highlight="11,20-22"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -614,11 +672,24 @@ Let’s move some rectangles!
 To allow users to move rectangles, we’ll update the `x` and `y` properties of
 the selected shape when a user drags it:
 
-```js file="src/store.js" highlight="8,14,19-41"
+```ts file="src/store.ts" highlight="6,10-11,21,27,32-58"
 /* ... */
 
-const useStore = create(
-  middleware(
+type State = {
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  isDragging: boolean;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string | null) => void;
+  deleteShape: () => void;
+  onCanvasPointerUp: () => void;
+  onCanvasPointerMove: (e: React.PointerEvent) => void;
+};
+
+/* ... */
+
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       shapes: {},
       selectedShape: null,
@@ -640,6 +711,10 @@ const useStore = create(
         e.preventDefault();
 
         const { isDragging, shapes, selectedShape } = get();
+        if (!selectedShape) {
+          /* Nothing todo */
+          return;
+        }
 
         const shape = shapes[selectedShape];
 
@@ -668,7 +743,7 @@ const useStore = create(
 export default useStore;
 ```
 
-```jsx file="src/App.js" highlight="12,13,21,22"
+```tsx file="src/App.tsx" highlight="12,13,21,22"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -722,7 +797,7 @@ and
 [`room.history.redo`](/docs/api-reference/liveblocks-client#Room.history.redo).
 These functions only impact modifications made to the room’s storage.
 
-```jsx file="src/App.js" highlight="14,15,33,34"
+```tsx file="src/App.tsx" highlight="14,15,33,34"
 import { useEffect } from "react";
 import useStore from "./store";
 
@@ -791,11 +866,11 @@ then call
 [`history.resume`](/docs/api-reference/liveblocks-client#Room.history.resume)
 afterwards.
 
-```js file="src/store.js" highlight="14,22"
+```ts file="src/store.ts" highlight="14,22"
 /* ... */
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       isDragging: false,
       shapes: {},
@@ -805,7 +880,7 @@ const useStore = create(
         /* ... */
       },
       onShapePointerDown: (shapeId) => {
-        get().liveblocks.room.history.pause();
+        get().liveblocks.room?.history.pause();
         set({ selectedShape: shapeId, isDragging: true });
       },
       deleteShape: () => {
@@ -813,7 +888,7 @@ const useStore = create(
       },
       onCanvasPointerUp: () => {
         set({ isDragging: false });
-        get().liveblocks.room.history.resume();
+        get().liveblocks.room?.history.resume();
       },
       onCanvasPointerMove: (e) => {
         /* ... */
@@ -840,11 +915,11 @@ To accomplish that, use
 with the option `addToHistory` to update `selectedShape`. Liveblocks middleware
 will update store `selectedShape` for you.
 
-```js file="src/store.js" highlight="11,20-26,29-32,38-46"
+```ts file="src/store.ts" highlight="11,20-26,29-35,38,40-44"
 /* ... */
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set, get) => ({
       isDragging: false,
       shapes: {},
@@ -860,7 +935,7 @@ const useStore = create(
           fill: getRandomColor(),
         };
 
-        liveblocks.room.updatePresence(
+        liveblocks.room?.updatePresence(
           { selectedShape: shapeId },
           { addToHistory: true }
         );
@@ -870,20 +945,21 @@ const useStore = create(
       },
       onShapePointerDown: (shapeId) => {
         const room = get().liveblocks.room;
-        room.history.pause();
-        room.updatePresence({ selectedShape: shapeId }, { addToHistory: true });
+        room?.history.pause();
+        room?.updatePresence(
+          { selectedShape: shapeId },
+          { addToHistory: true }
+        );
         set({ isDragging: true });
       },
       deleteShape: () => {
         const { shapes, selectedShape, liveblocks } = get();
         const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
-        liveblocks.room.updatePresence(
+        liveblocks.room?.updatePresence(
           { selectedShape: null },
           { addToHistory: true }
         );
-        set({
-          shapes: newShapes,
-        });
+        set({ shapes: newShapes });
       },
       onCanvasPointerUp: () => {
         /* ... */
