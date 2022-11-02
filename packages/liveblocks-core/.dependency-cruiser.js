@@ -174,6 +174,16 @@ module.exports = {
       from: { path: "^src/refs/" },
       to: { pathNot: "^src/(refs|types|protocol|lib)/" },
     },
+
+    // "Swimlane 4" - crdts/
+    {
+      name: "illegal-import-from-crdts",
+      comment:
+        "All modules in crdts/ must have no other dependencies apart from refs/, types/, protocol/ or lib/.",
+      severity: "error",
+      from: { path: "^src/crdts/" },
+      to: { pathNot: "^src/(crdts|refs|types|protocol|lib)/" },
+    },
   ],
 
   options: {
