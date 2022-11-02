@@ -7,7 +7,7 @@ import {
   deserializeToLson,
   isLiveNode,
   isLiveStructure,
-} from "../liveblocks-helpers";
+} from "./liveblocks-helpers";
 import type {
   CreateChildOp,
   CreateObjectOp,

@@ -6,7 +6,7 @@ import {
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
-} from "../liveblocks-helpers";
+} from "./liveblocks-helpers";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";

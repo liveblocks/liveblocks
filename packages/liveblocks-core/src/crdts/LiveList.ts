@@ -5,7 +5,7 @@ import {
   deserialize,
   liveNodeToLson,
   lsonToLiveNode,
-} from "../liveblocks-helpers";
+} from "./liveblocks-helpers";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";

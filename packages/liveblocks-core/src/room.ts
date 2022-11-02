@@ -20,7 +20,7 @@ import {
   isLiveNode,
   isSameNodeOrChildOf,
   mergeStorageUpdates,
-} from "./liveblocks-helpers";
+} from "./crdts/liveblocks-helpers";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";

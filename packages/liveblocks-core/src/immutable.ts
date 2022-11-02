@@ -11,7 +11,7 @@ import {
   findNonSerializableValue,
   isLiveList,
   isLiveObject,
-} from "./liveblocks-helpers";
+} from "./crdts/liveblocks-helpers";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
