@@ -11,8 +11,6 @@
  * https://join.team/liveblocks ;)
  */
 
-export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
-export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
 export type { Client } from "./client";
 export { createClient } from "./client";
 export { LiveList } from "./crdts/LiveList";
@@ -47,6 +45,16 @@ export { comparePosition, makePosition } from "./lib/position";
 export type { Resolve } from "./lib/Resolve";
 export { shallow } from "./lib/shallow";
 export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
+export type {
+  AppOnlyAuthToken,
+  AuthToken,
+  RoomAuthToken,
+} from "./protocol/AuthToken";
+export {
+  isAppOnlyAuthToken,
+  isAuthToken,
+  isRoomAuthToken,
+} from "./protocol/AuthToken";
 export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
   BroadcastEventClientMsg,

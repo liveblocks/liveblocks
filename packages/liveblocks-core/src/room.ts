@@ -1,5 +1,3 @@
-import type { RoomAuthToken } from "./AuthToken";
-import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
 import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
@@ -22,6 +20,12 @@ import { isJsonArray, isJsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
 import type { Authentication } from "./protocol/Authentication";
+import type { RoomAuthToken } from "./protocol/AuthToken";
+import {
+  isTokenExpired,
+  parseRoomAuthToken,
+  RoomScope,
+} from "./protocol/AuthToken";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";

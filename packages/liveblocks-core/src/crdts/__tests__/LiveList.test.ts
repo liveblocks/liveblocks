@@ -18,7 +18,7 @@ import {
   SECOND_POSITION,
   THIRD_POSITION,
 } from "../../__tests__/_utils";
-import { RoomScope } from "../../AuthToken";
+import { RoomScope } from "../../protocol/AuthToken";
 import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
