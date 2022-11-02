@@ -103,7 +103,7 @@ const internalEnhancer = <TState>(options: {
   }
 
   return (createStore: any) => {
-    return (reducer: any, initialState: any) => {
+    return (reducer: any, initialState: any, enhancer: any) => {
       let room: OpaqueRoom | null = null;
       let isPatching: boolean = false;
       let storageRoot: LiveObject<LsonObject> | null = null;
@@ -186,7 +186,7 @@ const internalEnhancer = <TState>(options: {
         }
       };
 
-      const store = createStore(newReducer, initialState);
+      const store = createStore(newReducer, initialState, enhancer);
 
       function enterRoom(roomId: string) {
         if (storageRoot) {
