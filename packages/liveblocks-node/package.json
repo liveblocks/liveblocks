@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/node",
-  "version": "0.19.0-beta0",
+  "version": "0.19.0",
   "description": "A server-side utility that lets you set up a Liveblocks authentication endpoint.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

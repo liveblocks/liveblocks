@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/zustand",
-  "version": "0.19.0-beta0",
+  "version": "0.19.0",
   "description": "A middleware to integrate Liveblocks into Zustand stores.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -33,8 +33,8 @@
     "directory": "packages/liveblocks-zustand"
   },
   "dependencies": {
-    "@liveblocks/client": "0.19.0-beta0",
-    "@liveblocks/core": "0.19.0-beta0"
+    "@liveblocks/client": "0.19.0",
+    "@liveblocks/core": "0.19.0"
   },
   "peerDependencies": {
     "zustand": "^4.1.3"
