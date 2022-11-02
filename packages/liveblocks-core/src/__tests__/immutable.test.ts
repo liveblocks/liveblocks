@@ -1,24 +1,20 @@
 import { LiveList, LiveMap } from "..";
-import * as console from "../fancy-console";
+import { LiveObject } from "../crdts/LiveObject";
+import type { LsonObject, ToJson } from "../crdts/Lson";
+import type { StorageUpdate } from "../crdts/StorageUpdates";
 import {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObject,
   patchLiveObjectKey,
 } from "../immutable";
-import { LiveObject } from "../LiveObject";
-import type {
-  BaseUserMeta,
-  ClientMsg,
-  IdTuple,
-  Json,
-  JsonObject,
-  LsonObject,
-  SerializedCrdt,
-  StorageUpdate,
-  ToJson,
-} from "../types";
-import { ClientMsgCode, ServerMsgCode } from "../types";
+import * as console from "../lib/fancy-console";
+import type { Json, JsonObject } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { ClientMsg } from "../protocol/ClientMsg";
+import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
   createSerializedList,
   createSerializedObject,

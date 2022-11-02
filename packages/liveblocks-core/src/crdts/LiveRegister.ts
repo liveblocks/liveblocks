@@ -1,18 +1,14 @@
+import type { LiveNode } from "../crdts/Lson";
+import { nn } from "../lib/assert";
+import type { Json } from "../lib/Json";
+import type { CreateChildOp, CreateRegisterOp, Op } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import type { Immutable } from "../types/Immutable";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt } from "./AbstractCrdt";
-import { nn } from "./assert";
-import type {
-  CreateChildOp,
-  CreateRegisterOp,
-  IdTuple,
-  Json,
-  LiveNode,
-  Op,
-  ParentToChildNodeMap,
-  SerializedRegister,
-} from "./types";
-import { CrdtType, OpCode } from "./types";
-import type { Immutable } from "./types/Immutable";
 
 /**
  * INTERNAL

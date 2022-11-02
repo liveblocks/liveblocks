@@ -1,6 +1,7 @@
+import { freeze } from "../lib/freeze";
+import type { JsonObject } from "../lib/Json";
+import { compactObject } from "../lib/utils";
 import { ImmutableRef, merge } from "./ImmutableRef";
-import type { JsonObject } from "./types";
-import { compactObject, freeze } from "./utils";
 
 /**
  * Managed immutable cache for accessing "me" presence data as read-only.

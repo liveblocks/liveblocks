@@ -3,24 +3,24 @@ import { setupServer } from "msw/node";
 
 import type { RoomAuthToken } from "../AuthToken";
 import { RoomScope } from "../AuthToken";
-import * as console from "../fancy-console";
+import { LiveList } from "../crdts/LiveList";
+import type { LsonObject } from "../crdts/Lson";
 import { lsonToJson } from "../immutable";
-import { LiveList } from "../LiveList";
+import * as console from "../lib/fancy-console";
+import type { Json, JsonObject } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import { ServerMsgCode } from "../protocol/ServerMsg";
+import type { Authentication } from "../room";
 import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
   createRoom,
 } from "../room";
-import type { Authentication, IdTuple, Others, SerializedCrdt } from "../types";
-import {
-  ClientMsgCode,
-  CrdtType,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "../types";
-import type { BaseUserMeta } from "../types/BaseUserMeta";
-import type { Json, JsonObject } from "../types/Json";
-import type { LsonObject } from "../types/Lson";
+import type { Others } from "../types/Others";
+import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
 import {
   createSerializedList,
   createSerializedObject,

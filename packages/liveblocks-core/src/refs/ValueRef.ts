@@ -1,5 +1,6 @@
+import { freeze } from "../lib/freeze";
+import { compactObject } from "../lib/utils";
 import { ImmutableRef } from "./ImmutableRef";
-import { compactObject, freeze } from "./utils";
 
 export class ValueRef<T> extends ImmutableRef<T> {
   /** @internal */

@@ -1,5 +1,5 @@
+import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "./BaseUserMeta";
-import type { Json, JsonObject } from "./Json";
 import type { Op } from "./Op";
 import type { IdTuple, SerializedCrdt } from "./SerializedCrdt";
 

@@ -1,23 +1,17 @@
-import * as console from "./fancy-console";
-import { LiveList } from "./LiveList";
-import { LiveMap } from "./LiveMap";
-import { LiveObject } from "./LiveObject";
-import { LiveRegister } from "./LiveRegister";
-import type {
-  Json,
-  JsonObject,
-  LiveNode,
-  Lson,
-  LsonObject,
-  StorageUpdate,
-  ToJson,
-} from "./types";
+import { LiveList } from "./crdts/LiveList";
+import { LiveMap } from "./crdts/LiveMap";
+import { LiveObject } from "./crdts/LiveObject";
+import { LiveRegister } from "./crdts/LiveRegister";
+import type { LiveNode, Lson, LsonObject, ToJson } from "./crdts/Lson";
+import type { StorageUpdate } from "./crdts/StorageUpdates";
+import * as console from "./lib/fancy-console";
+import type { Json, JsonObject } from "./lib/Json";
+import { isPlainObject } from "./lib/utils";
 import {
   findNonSerializableValue,
   isLiveList,
   isLiveObject,
-  isPlainObject,
-} from "./utils";
+} from "./liveblocks-helpers";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O

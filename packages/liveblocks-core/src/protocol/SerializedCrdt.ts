@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "./Json";
+import type { Json, JsonObject } from "../lib/Json";
 
 export type IdTuple<T> = [id: string, value: T];
 

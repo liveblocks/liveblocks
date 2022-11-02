@@ -1,6 +1,6 @@
 import { lsonToJson } from "../src/immutable";
-import { LiveList } from "../src/LiveList";
-import type { Json } from "../src/types";
+import { LiveList } from "../src/crdts/LiveList";
+import type { Json } from "../src/lib/Json";
 import { prepareSingleClientTest, prepareTestsConflicts } from "./utils";
 
 describe.skip("LiveList conflicts", () => {

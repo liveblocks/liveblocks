@@ -1,27 +1,35 @@
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
-import type {
-  CreateChildOp,
-  CreateMapOp,
-  IdTuple,
-  LiveMapUpdates,
-  LiveNode,
-  Lson,
-  Op,
-  ParentToChildNodeMap,
-  SerializedMap,
-} from "./types";
-import { CrdtType, OpCode } from "./types";
-import type { ToImmutable } from "./types/Immutable";
+import { nn } from "../lib/assert";
+import { freeze } from "../lib/freeze";
 import {
   creationOpToLiveNode,
   deserialize,
-  freeze,
   isLiveNode,
   liveNodeToLson,
   lsonToLiveNode,
-} from "./utils";
+} from "../liveblocks-helpers";
+import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { LiveNode, Lson } from "./Lson";
+import type { ToImmutable } from "./ToImmutable";
+import type { UpdateDelta } from "./UpdateDelta";
+
+/**
+ * A LiveMap notification that is sent in-client to any subscribers whenever
+ * one or more of the values inside the LiveMap instance have changed.
+ */
+export type LiveMapUpdates<TKey extends string, TValue extends Lson> = {
+  type: "LiveMap";
+  node: LiveMap<TKey, TValue>;
+  updates: { [key: string]: UpdateDelta };
+  //               ^^^^^^
+  //               FIXME: `string` is not specific enough here. See if we can
+  //               improve this type to match TKey!
+};
 
 /**
  * The LiveMap class is similar to a JavaScript Map that is synchronized on all clients.

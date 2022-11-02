@@ -1,35 +1,48 @@
-import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
-import { AbstractCrdt, OpSource } from "./AbstractCrdt";
-import { nn } from "./assert";
+import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
+import { nn } from "../lib/assert";
+import type { JsonObject } from "../lib/Json";
+import { fromEntries } from "../lib/utils";
+import {
+  creationOpToLson,
+  deserializeToLson,
+  isLiveNode,
+  isLiveStructure,
+} from "../liveblocks-helpers";
 import type {
   CreateChildOp,
   CreateObjectOp,
   CreateOp,
   CreateRootObjectOp,
   DeleteObjectKeyOp,
-  IdTuple,
-  JsonObject,
-  LiveNode,
-  LiveObjectUpdateDelta,
-  LiveObjectUpdates,
-  Lson,
-  LsonObject,
   Op,
-  ParentToChildNodeMap,
+  UpdateObjectOp,
+} from "../protocol/Op";
+import { OpCode } from "../protocol/Op";
+import type {
+  IdTuple,
   SerializedObject,
   SerializedRootObject,
-  UpdateDelta,
-  UpdateObjectOp,
-} from "./types";
-import { CrdtType, OpCode } from "./types";
-import type { ToImmutable } from "./types/Immutable";
-import {
-  creationOpToLson,
-  deserializeToLson,
-  fromEntries,
-  isLiveNode,
-  isLiveStructure,
-} from "./utils";
+} from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import type { ParentToChildNodeMap } from "../types/NodeMap";
+import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
+import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import type { ToImmutable } from "./ToImmutable";
+import type { UpdateDelta } from "./UpdateDelta";
+
+export type LiveObjectUpdateDelta<O extends { [key: string]: unknown }> = {
+  [K in keyof O]?: UpdateDelta | undefined;
+};
+
+/**
+ * A LiveObject notification that is sent in-client to any subscribers whenever
+ * one or more of the entries inside the LiveObject instance have changed.
+ */
+export type LiveObjectUpdates<TData extends LsonObject> = {
+  type: "LiveObject";
+  node: LiveObject<TData>;
+  updates: LiveObjectUpdateDelta<TData>;
+};
 
 /**
  * The LiveObject class is similar to a JavaScript object that is synchronized on all clients.

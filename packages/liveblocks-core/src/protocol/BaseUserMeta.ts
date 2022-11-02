@@ -1,4 +1,4 @@
-import type { Json } from "./Json";
+import type { Json } from "../lib/Json";
 
 /**
  * This type is used by clients to define the metadata for a user.

@@ -1,34 +1,35 @@
 import type { LiveObject } from "..";
 import type { RoomAuthToken } from "../AuthToken";
-import { makePosition } from "../position";
+import type { LsonObject } from "../crdts/Lson";
+import type { ToImmutable } from "../crdts/ToImmutable";
+import type { Json, JsonObject } from "../lib/Json";
+import { makePosition } from "../lib/position";
+import { remove } from "../lib/utils";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { ClientMsg } from "../protocol/ClientMsg";
+import { ClientMsgCode } from "../protocol/ClientMsg";
+import type { Op } from "../protocol/Op";
 import type {
-  _private_Effects as Effects,
-  _private_Machine as Machine,
-} from "../room";
-import {
-  _private_defaultState as defaultState,
-  _private_makeStateMachine as makeStateMachine,
-} from "../room";
-import type {
-  Authentication,
-  BaseUserMeta,
-  ClientMsg,
   IdTuple,
-  Json,
-  JsonObject,
-  LsonObject,
-  Op,
   SerializedCrdt,
   SerializedList,
   SerializedMap,
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
-  ServerMsg,
-  ToImmutable,
-} from "../types";
-import { ClientMsgCode, CrdtType, ServerMsgCode } from "../types";
-import { remove } from "../utils";
+} from "../protocol/SerializedCrdt";
+import { CrdtType } from "../protocol/SerializedCrdt";
+import type { ServerMsg } from "../protocol/ServerMsg";
+import { ServerMsgCode } from "../protocol/ServerMsg";
+import type {
+  _private_Effects as Effects,
+  _private_Machine as Machine,
+  Authentication,
+} from "../room";
+import {
+  _private_defaultState as defaultState,
+  _private_makeStateMachine as makeStateMachine,
+} from "../room";
 import type { JsonStorageUpdate } from "./_updatesUtils";
 import { serializeUpdateToJson } from "./_updatesUtils";
 

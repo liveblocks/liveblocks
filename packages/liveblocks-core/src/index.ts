@@ -11,31 +11,52 @@
  * https://join.team/liveblocks ;)
  */
 
-export { assertNever, nn } from "./assert";
 export type { AppOnlyAuthToken, AuthToken, RoomAuthToken } from "./AuthToken";
 export { isAppOnlyAuthToken, isAuthToken, isRoomAuthToken } from "./AuthToken";
+export type { Client } from "./client";
 export { createClient } from "./client";
-export {
-  deprecate,
-  deprecateIf,
-  errorIf,
-  throwUsageError,
-} from "./deprecation";
+export { LiveList } from "./crdts/LiveList";
+export { LiveMap } from "./crdts/LiveMap";
+export { LiveObject } from "./crdts/LiveObject";
+export type {
+  LiveNode,
+  LiveStructure,
+  Lson,
+  LsonObject,
+  ToJson,
+} from "./crdts/Lson";
+export type { StorageUpdate } from "./crdts/StorageUpdates";
+export type { ToImmutable } from "./crdts/ToImmutable";
 export {
   legacy_patchImmutableObject,
   lsonToJson,
   patchLiveObjectKey,
 } from "./immutable";
-export { asArrayWithLegacyMethods } from "./LegacyArray";
-export { LiveList } from "./LiveList";
-export { LiveMap } from "./LiveMap";
-export { LiveObject } from "./LiveObject";
-export { comparePosition, makePosition } from "./position";
-export { shallow } from "./shallow";
+export { assertNever, nn } from "./lib/assert";
+export {
+  deprecate,
+  deprecateIf,
+  errorIf,
+  throwUsageError,
+} from "./lib/deprecation";
+export { freeze } from "./lib/freeze";
+export type { Json, JsonObject } from "./lib/Json";
+export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
+export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
+export { comparePosition, makePosition } from "./lib/position";
+export type { Resolve } from "./lib/Resolve";
+export { shallow } from "./lib/shallow";
+export { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
+export type { BaseUserMeta } from "./protocol/BaseUserMeta";
 export type {
-  BroadcastedEventServerMsg,
   BroadcastEventClientMsg,
   ClientMsg,
+  FetchStorageClientMsg,
+  UpdatePresenceClientMsg,
+  UpdateStorageClientMsg,
+} from "./protocol/ClientMsg";
+export { ClientMsgCode } from "./protocol/ClientMsg";
+export type {
   CreateChildOp,
   CreateListOp,
   CreateMapOp,
@@ -45,16 +66,13 @@ export type {
   CreateRootObjectOp,
   DeleteCrdtOp,
   DeleteObjectKeyOp,
-  FetchStorageClientMsg,
-  IdTuple,
-  InitialDocumentStateServerMsg,
-  LiveNode,
-  NodeMap,
   Op,
-  ParentToChildNodeMap,
-  Resolve,
-  RoomInitializers,
-  RoomStateServerMsg,
+  SetParentKeyOp,
+  UpdateObjectOp,
+} from "./protocol/Op";
+export { OpCode } from "./protocol/Op";
+export type {
+  IdTuple,
   SerializedChild,
   SerializedCrdt,
   SerializedList,
@@ -62,44 +80,26 @@ export type {
   SerializedObject,
   SerializedRegister,
   SerializedRootObject,
+} from "./protocol/SerializedCrdt";
+export { CrdtType } from "./protocol/SerializedCrdt";
+export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
+export type {
+  BroadcastedEventServerMsg,
+  InitialDocumentStateServerMsg,
+  RoomStateServerMsg,
   ServerMsg,
-  SetParentKeyOp,
-  ToJson,
-  UpdateObjectOp,
-  UpdatePresenceClientMsg,
   UpdatePresenceServerMsg,
-  UpdateStorageClientMsg,
   UpdateStorageServerMsg,
   UserJoinServerMsg,
   UserLeftServerMsg,
-} from "./types";
-export type {
-  BaseUserMeta,
-  BroadcastOptions,
-  Client,
-  History,
-  Immutable,
-  Json,
-  JsonObject,
-  LiveStructure,
-  Lson,
-  LsonObject,
-  Others,
-  Room,
-  StorageUpdate,
-  User,
-} from "./types";
-export {
-  ClientMsgCode,
-  CrdtType,
-  OpCode,
-  ServerMsgCode,
-  WebsocketCloseCodes,
-} from "./types";
-export type { ToImmutable } from "./types/Immutable";
-export { isJsonArray, isJsonObject, isJsonScalar } from "./types/Json";
-export { isChildCrdt, isRootCrdt } from "./types/SerializedCrdt";
-export { b64decode, freeze, isPlainObject, tryParseJson } from "./utils";
+} from "./protocol/ServerMsg";
+export { ServerMsgCode } from "./protocol/ServerMsg";
+export type { BroadcastOptions, History, Room, RoomInitializers } from "./room";
+export type { Immutable } from "./types/Immutable";
+export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
+export type { Others } from "./types/Others";
+export type { User } from "./types/User";
+export { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
 /**
  * Helper type to help users adopt to Lson types from interface definitions.

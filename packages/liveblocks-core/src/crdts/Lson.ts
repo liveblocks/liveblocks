@@ -1,8 +1,8 @@
-import type { LiveList } from "../LiveList";
-import type { LiveMap } from "../LiveMap";
-import type { LiveObject } from "../LiveObject";
-import type { LiveRegister } from "../LiveRegister";
-import type { Json } from "./Json";
+import type { LiveList } from "../crdts/LiveList";
+import type { LiveMap } from "../crdts/LiveMap";
+import type { LiveObject } from "../crdts/LiveObject";
+import type { LiveRegister } from "../crdts/LiveRegister";
+import type { Json } from "../lib/Json";
 
 export type LiveStructure =
   | LiveObject<LsonObject>

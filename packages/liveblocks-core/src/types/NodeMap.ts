@@ -2,7 +2,7 @@ import type {
   IdTuple,
   SerializedChild,
   SerializedCrdt,
-} from "./SerializedCrdt";
+} from "../protocol/SerializedCrdt";
 
 /**
  * Lookup table for nodes (= SerializedCrdt values) by their IDs.

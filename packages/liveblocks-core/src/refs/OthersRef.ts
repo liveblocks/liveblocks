@@ -1,7 +1,11 @@
+import { freeze } from "../lib/freeze";
+import type { JsonObject } from "../lib/Json";
+import { asArrayWithLegacyMethods } from "../lib/LegacyArray";
+import { compact, compactObject } from "../lib/utils";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { Others } from "../types/Others";
+import type { User } from "../types/User";
 import { ImmutableRef, merge } from "./ImmutableRef";
-import { asArrayWithLegacyMethods } from "./LegacyArray";
-import type { BaseUserMeta, JsonObject, Others, User } from "./types";
-import { compact, compactObject, freeze } from "./utils";
 
 type Connection<TUserMeta extends BaseUserMeta> = {
   readonly connectionId: number;
