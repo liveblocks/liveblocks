@@ -7,6 +7,8 @@ In **@liveblocks/zustand**:
 
 - Support Zustand v4 (actually v4.1.3 or higher)
 - Drop support for Zustand v3 (also v4.1.2 or lower are not supported)
+- Fix bug where some usage pattern could cause the Zustand store to stop
+  synching (#491)
 
 To migrate, make the following code changes:
 
@@ -46,6 +48,17 @@ To migrate, make the following code changes:
 - Remove the second argument to `state.liveblocks.enterRoom()`: it no longer
   takes an explicit initial state. Instead, it's automatically be populated from
   your Zustand state.
+
+In **@liveblocks/redux**:
+
+- The main export has been renamed:
+  ```diff
+  -import { enhancer } from "@liveblocks/redux";
+  +import { liveblocksEnhancer } from "@liveblocks/redux";
+  ```
+- The second argument to `state.liveblocks.enterRoom()` to send in an explicit
+  initial state is no longer supported. It will use the state in your Redux
+  store, for consistency and ease of use.
 
 # v0.18.5
 
