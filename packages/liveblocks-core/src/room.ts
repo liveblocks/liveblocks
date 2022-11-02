@@ -21,6 +21,7 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
+import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
@@ -50,29 +51,12 @@ import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
 import { WebsocketCloseCodes } from "./types/WebsocketCloseCodes";
 
-export type AuthorizeResponse = {
-  token: string;
-};
-
-export type Authentication =
-  | {
-      type: "public";
-      publicApiKey: string;
-      url: string;
-    }
-  | {
-      type: "private";
-      url: string;
-    }
-  | {
-      type: "custom";
-      callback: (room: string) => Promise<AuthorizeResponse>;
-    };
-
 type CustomEvent<TRoomEvent extends Json> = {
   connectionId: number;
   event: TRoomEvent;
 };
+
+type AuthCallback = (room: string) => Promise<{ token: string }>;
 
 export type Connection =
   /* The initial state, before connecting */
@@ -701,7 +685,7 @@ type State<
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
   authenticate(
-    auth: (room: string) => Promise<AuthorizeResponse>,
+    auth: AuthCallback,
     createWebSocket: (token: string) => WebSocket
   ): void;
   send(messages: ClientMsg<TPresence, TRoomEvent>[]): void;
@@ -848,7 +832,7 @@ function makeStateMachine<
 
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
     authenticate(
-      auth: (room: string) => Promise<AuthorizeResponse>,
+      auth: AuthCallback,
       createWebSocket: (token: string) => WebSocket
     ) {
       const rawToken = state.token;
@@ -2377,7 +2361,7 @@ function prepareCreateWebSocket(
 function prepareAuthEndpoint(
   authentication: Authentication,
   fetchPolyfill?: typeof window.fetch
-): (room: string) => Promise<AuthorizeResponse> {
+): AuthCallback {
   if (authentication.type === "public") {
     if (typeof window === "undefined" && fetchPolyfill === undefined) {
       throw new Error(

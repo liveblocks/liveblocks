@@ -2,14 +2,9 @@ import type { LsonObject } from "./crdts/Lson";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
+import type { Authentication } from "./protocol/Authentication";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
-import type {
-  Authentication,
-  InternalRoom,
-  Polyfills,
-  Room,
-  RoomInitializers,
-} from "./room";
+import type { InternalRoom, Polyfills, Room, RoomInitializers } from "./room";
 import { createRoom } from "./room";
 
 type EnterOptions<

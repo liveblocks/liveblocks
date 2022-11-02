@@ -8,12 +8,12 @@ import type { LsonObject } from "../crdts/Lson";
 import { lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
+import type { Authentication } from "../protocol/Authentication";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import { ClientMsgCode } from "../protocol/ClientMsg";
 import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
-import type { Authentication } from "../room";
 import {
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
