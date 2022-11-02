@@ -3,6 +3,13 @@ import { isTokenExpired, parseRoomAuthToken, RoomScope } from "./AuthToken";
 import type { DocumentVisibilityState } from "./compat/DocumentVisibilityState";
 import type { ApplyResult, ManagedPool } from "./crdts/AbstractCrdt";
 import { OpSource } from "./crdts/AbstractCrdt";
+import {
+  getTreesDiffOperations,
+  isLiveList,
+  isLiveNode,
+  isSameNodeOrChildOf,
+  mergeStorageUpdates,
+} from "./crdts/liveblocks-helpers";
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
@@ -14,13 +21,6 @@ import type { Json, JsonObject } from "./lib/Json";
 import { isJsonArray, isJsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
 import { compact, isPlainObject, tryParseJson } from "./lib/utils";
-import {
-  getTreesDiffOperations,
-  isLiveList,
-  isLiveNode,
-  isSameNodeOrChildOf,
-  mergeStorageUpdates,
-} from "./crdts/liveblocks-helpers";
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";

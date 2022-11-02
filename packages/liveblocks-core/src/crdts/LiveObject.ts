@@ -2,12 +2,6 @@ import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { fromEntries } from "../lib/utils";
-import {
-  creationOpToLson,
-  deserializeToLson,
-  isLiveNode,
-  isLiveStructure,
-} from "./liveblocks-helpers";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -27,6 +21,12 @@ import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import {
+  creationOpToLson,
+  deserializeToLson,
+  isLiveNode,
+  isLiveStructure,
+} from "./liveblocks-helpers";
 import type { ToImmutable } from "./ToImmutable";
 import type { UpdateDelta } from "./UpdateDelta";
 

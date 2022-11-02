@@ -1,12 +1,5 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
-import {
-  creationOpToLiveNode,
-  deserialize,
-  isLiveNode,
-  liveNodeToLson,
-  lsonToLiveNode,
-} from "./liveblocks-helpers";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
@@ -14,6 +7,13 @@ import { CrdtType } from "../protocol/SerializedCrdt";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
+import {
+  creationOpToLiveNode,
+  deserialize,
+  isLiveNode,
+  liveNodeToLson,
+  lsonToLiveNode,
+} from "./liveblocks-helpers";
 import type { LiveNode, Lson } from "./Lson";
 import type { ToImmutable } from "./ToImmutable";
 import type { UpdateDelta } from "./UpdateDelta";
