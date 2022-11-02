@@ -36,35 +36,47 @@ const ACTION_TYPES = {
   UPDATE_OTHERS: "@@LIVEBLOCKS/UPDATE_OTHERS",
 };
 
+type LiveblocksContext<
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = {
+  /**
+   * Other users in the room. Empty no room is currently synced
+   */
+  readonly others: Array<User<TPresence, TUserMeta>>;
+  /**
+   * Whether or not the room storage is currently loading
+   */
+  readonly isStorageLoading: boolean;
+  /**
+   * Connection state of the room
+   */
+  readonly connection:
+    | "closed"
+    | "authenticating"
+    | "unavailable"
+    | "failed"
+    | "open"
+    | "connecting";
+};
+
+/**
+ * @deprecated Please rename to WithLiveblocks<...>
+ */
 export type LiveblocksState<
   TState,
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta
-> = TState & {
-  /**
-   * Liveblocks extra state attached by the enhancer
-   */
-  readonly liveblocks: {
-    /**
-     * Other users in the room. Empty no room is currently synced
-     */
-    readonly others: Array<User<TPresence, TUserMeta>>;
-    /**
-     * Whether or not the room storage is currently loading
-     */
-    readonly isStorageLoading: boolean;
-    /**
-     * Connection state of the room
-     */
-    readonly connection:
-      | "closed"
-      | "authenticating"
-      | "unavailable"
-      | "failed"
-      | "open"
-      | "connecting";
-  };
-};
+> = WithLiveblocks<TState, TPresence, TUserMeta>;
+
+/**
+ * Adds the `liveblocks` property to your custom Redux state.
+ */
+export type WithLiveblocks<
+  TState,
+  TPresence extends JsonObject,
+  TUserMeta extends BaseUserMeta
+> = TState & { readonly liveblocks: LiveblocksContext<TPresence, TUserMeta> };
 
 const internalEnhancer = <T>(options: {
   client: Client;
@@ -173,18 +185,17 @@ const internalEnhancer = <T>(options: {
 
       const store = createStore(newReducer, initialState, enhancer);
 
-      function enterRoom(
-        roomId: string,
-        storageInitialState = {} as any,
-        reduxState: any
-      ) {
+      function enterRoom(roomId: string) {
         if (storageRoot) {
           return;
         }
 
-        room = client.enter(roomId, { initialPresence: {} as any });
+        const initialPresence = selectFields(
+          store.getState(),
+          presenceMapping
+        ) as any;
 
-        broadcastInitialPresence(room, reduxState, presenceMapping as any);
+        room = client.enter(roomId, { initialPresence });
 
         unsubscribeCallbacks.push(
           room.events.connection.subscribe(() => {
@@ -209,7 +220,7 @@ const internalEnhancer = <T>(options: {
             if (isPatching === false) {
               store.dispatch({
                 type: ACTION_TYPES.PATCH_REDUX_STATE,
-                state: patchPresenceState(
+                state: selectFields(
                   room!.getPresence(),
                   presenceMapping as any
                 ),
@@ -230,13 +241,8 @@ const internalEnhancer = <T>(options: {
               const liveblocksStatePart = root.get(key);
 
               if (liveblocksStatePart == null) {
-                updates[key] = storageInitialState[key];
-                patchLiveObjectKey(
-                  root,
-                  key,
-                  undefined,
-                  storageInitialState[key]
-                );
+                updates[key] = store.getState()[key];
+                patchLiveObjectKey(root, key, undefined, store.getState()[key]);
               } else {
                 updates[key] = lsonToJson(liveblocksStatePart);
               }
@@ -285,7 +291,7 @@ const internalEnhancer = <T>(options: {
 
       function newDispatch(action: any, state: any) {
         if (action.type === ACTION_TYPES.ENTER) {
-          enterRoom(action.roomId, action.initialState, store.getState());
+          enterRoom(action.roomId);
         } else if (action.type === ACTION_TYPES.LEAVE) {
           leaveRoom(action.roomId);
         } else {
@@ -305,30 +311,24 @@ const internalEnhancer = <T>(options: {
  */
 export const actions = {
   /**
-   * Enters a room and starts sync it with zustand state
+   * Enters a room and starts sync it with Redux state
    * @param roomId The id of the room
-   * @param initialState The initial state of the room storage. If a key does not exist if your room storage root, initialState[key] will be used.
    */
   enterRoom,
   /**
-   * Leaves a room and stops sync it with zustand state.
+   * Leaves a room and stops sync it with Redux state.
    * @param roomId The id of the room
    */
   leaveRoom,
 };
 
-function enterRoom<T>(
-  roomId: string,
-  initialState?: T
-): {
+function enterRoom(roomId: string): {
   type: string;
   roomId: string;
-  initialState?: T;
 } {
   return {
     type: ACTION_TYPES.ENTER,
     roomId,
-    initialState,
   };
 }
 
@@ -342,17 +342,26 @@ function leaveRoom(roomId: string): {
   };
 }
 
-export const enhancer = internalEnhancer as <T>(options: {
+/**
+ * Redux store enhancer that will make the `liveblocks` key available on your
+ * Redux store.
+ */
+export const liveblocksEnhancer = internalEnhancer as <T>(options: {
   client: Client;
   storageMapping?: Mapping<T>;
   presenceMapping?: Mapping<T>;
 }) => StoreEnhancer;
 
-function patchLiveblocksStorage<O extends LsonObject>(
+/**
+ * @deprecated Renamed to `liveblocksEnhancer`.
+ */
+export const enhancer = liveblocksEnhancer;
+
+function patchLiveblocksStorage<O extends LsonObject, TState>(
   root: LiveObject<O>,
-  oldState: O,
-  newState: O,
-  mapping: Mapping<O>
+  oldState: TState,
+  newState: TState,
+  mapping: Mapping<TState>
 ) {
   for (const key in mapping) {
     if (
@@ -363,18 +372,10 @@ function patchLiveblocksStorage<O extends LsonObject>(
     }
 
     if (oldState[key] !== newState[key]) {
-      patchLiveObjectKey(root, key, oldState[key], newState[key]);
+      const oldVal = oldState[key];
+      const newVal = newState[key];
+      patchLiveObjectKey(root, key, oldVal as any, newVal);
     }
-  }
-}
-
-function broadcastInitialPresence<T>(
-  room: Room<any, any, any, any>,
-  state: T,
-  mapping: Mapping<T>
-) {
-  for (const key in mapping) {
-    room?.updatePresence({ [key]: (state as any)[key] });
   }
 }
 
@@ -410,13 +411,15 @@ function validateNoDuplicateKeys<T>(
   }
 }
 
-function patchPresenceState<T>(presence: any, mapping: Mapping<T>) {
-  const partialState: Partial<T> = {};
-
+function selectFields<TState>(
+  presence: TState,
+  mapping: Mapping<TState>
+): /* TODO: Actually, Pick<TState, keyof Mapping<TState>> ? */
+Partial<TState> {
+  const partialState = {} as Partial<TState>;
   for (const key in mapping) {
     partialState[key] = presence[key];
   }
-
   return partialState;
 }
 

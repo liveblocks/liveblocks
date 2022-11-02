@@ -22,8 +22,7 @@ export default function App() {
   const isLoading = useStore((state) => state.liveblocks.isStorageLoading);
 
   useEffect(() => {
-    enterRoom(roomId, { shapes: {} });
-
+    enterRoom(roomId);
     return () => {
       leaveRoom(roomId);
     };

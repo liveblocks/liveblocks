@@ -40,10 +40,13 @@ First, we need to create a new app with
 [`create-react-app`](https://create-react-app.dev/):
 
 ```bash
-npx create-react-app zustand-todo-app
+npx create-react-app zustand-todo-app --template typescript
 ```
 
-Then run the following command to install the Liveblocks packages and Zustand:
+To start a plain JavaScript project, you can omit the `--template typescript`
+flag.
+
+Then install the Liveblocks packages and Zustand:
 
 ```bash
 npm install zustand @liveblocks/client @liveblocks/zustand
@@ -69,24 +72,29 @@ key. For more info, see the [authentication guide](/docs/guides/authentication).
 
 </Banner>
 
-Create a new file `src/store.js` and initialize the Liveblocks client with your
+Create a new file `src/store.ts` and initialize the Liveblocks client with your
 public API key. Then add our
-[middleware](/docs/api-reference/liveblocks-zustand#middleware) to your store
+[liveblocks](/docs/api-reference/liveblocks-zustand#liveblocks) to your store
 configuration.
 
-```js file="src/store.js"
+```ts file="src/store.ts"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+type State = {
+  // Your Zustand state type will be defined here
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
-      // state and action will be added here
+      // Your state and actions will go here
     }),
     { client }
   )
@@ -110,7 +118,7 @@ and
 In our main component, we want to connect to the Liveblocks room when the
 component does mount, and leave the room when it unmounts.
 
-```js file="src/App.js"
+```tsx file="src/App.tsx"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -122,10 +130,7 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-todo-app", {
-      todos: [],
-    });
-
+    enterRoom("zustand-todo-app");
     return () => {
       leaveRoom("zustand-todo-app");
     };
@@ -150,7 +155,7 @@ Now that Liveblocks is set up, we’re going to use the injected object
 [`liveblocks.others`](/docs/api-reference/liveblocks-zustand#liveblocks-state-others)
 to show who’s currently inside the room.
 
-```js highlight="6-14,32-34" file="src/App.js"
+```tsx highlight="6-14,30" file="src/App.tsx"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -172,10 +177,7 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-todo-app", {
-      todos: [],
-    });
-
+    enterRoom("zustand-todo-app");
     return () => {
       leaveRoom("zustand-todo-app");
     };
@@ -295,24 +297,33 @@ The middleware option
 means that we want to automatically sync the part of the state named `isTyping`
 to Liveblocks Presence.
 
-```js highlight="12-15,17" file="src/store.js"
+```ts highlight="7-9,19-21,25" file="src/store.ts"
 import create from "zustand";
 import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+import { liveblocks } from "@liveblocks/zustand";
+import type { WithLiveblocks } from "@liveblocks/zustand";
+
+type State = {
+  draft: string;
+  isTyping: boolean;
+  setDraft: (draft: string) => void;
+};
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const useStore = create(
-  middleware(
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
       draft: "",
       isTyping: false,
-      setDraft: (draft) =>
-        set({ draft, isTyping: draft === "" ? false : true }),
+      setDraft: (draft) => set({ draft, isTyping: draft !== "" }),
     }),
-    { client, presenceMapping: { isTyping: true } }
+    {
+      client,
+      presenceMapping: { isTyping: true },
+    }
   )
 );
 
@@ -323,7 +334,7 @@ Now that we set the `isTyping` state when necessary, create a new component
 called `SomeoneIsTyping` to display a message when at least one other user has
 `isTyping` equals to `true`.
 
-```js highlight="8-16,21-22,38-45" file="src/App.js"
+```tsx highlight="8-16,20-21,35-42" file="src/App.tsx"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -334,7 +345,7 @@ import "./App.css";
 function SomeoneIsTyping() {
   const others = useStore((state) => state.liveblocks.others);
 
-  const someoneIsTyping = others.some((user) => user.presence?.isTyping);
+  const someoneIsTyping = others.some((user) => user.presence.isTyping);
 
   return someoneIsTyping ? (
     <div className="someone_is_typing">Someone is typing</div>
@@ -349,10 +360,7 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-todo-app", {
-      todos: [],
-    });
-
+    enterRoom("zustand-todo-app");
     return () => {
       leaveRoom("zustand-todo-app");
     };
@@ -396,23 +404,27 @@ To achieve that, we are going to use the middleware option
 It means that the part of the state named `todos` should be automatically synced
 with Liveblocks Storage.
 
-```js highlight="14,17-25,30" file="src/store.js"
-import create from "zustand";
-import { createClient } from "@liveblocks/client";
-import { middleware } from "@liveblocks/zustand";
+```ts highlight="6,8-9,19,21-29,34" file="src/store.ts"
+/* ... */
 
-const client = createClient({
-  publicApiKey: "{{PUBLIC_KEY}}",
-});
+type State = {
+  draft: string;
+  isTyping: boolean;
+  todos: { text: string }[];
+  setDraft: (draft: string) => void;
+  addTodo: () => void;
+  deleteTodo: (index: number) => void;
+};
 
-const useStore = create(
-  middleware(
+/* ... */
+
+const useStore = create<WithLiveblocks<State>>()(
+  liveblocks(
     (set) => ({
       draft: "",
       isTyping: false,
       todos: [],
-      setDraft: (draft) =>
-        set({ draft, isTyping: draft === "" ? false : true }),
+      setDraft: (draft) => set({ draft, isTyping: draft !== "" }),
       addTodo: () =>
         set((state) => ({
           todos: state.todos.concat({ text: state.draft }),
@@ -420,7 +432,7 @@ const useStore = create(
         })),
       deleteTodo: (index) =>
         set((state) => ({
-          todos: state.todos.filter((todo, i) => index !== i),
+          todos: state.todos.filter((_, i) => index !== i),
         })),
     }),
     {
@@ -437,7 +449,7 @@ export default useStore;
 We can display the list of todos and use the functions `addTodo` and
 `deleteTodo` to update our list:
 
-```js highlight="13-16,29-31,42-46,49-63" file="src/App.js"
+```tsx highlight="13-15,39-43,46-60" file="src/App.tsx"
 import React, { useEffect } from "react";
 import useStore from "./store";
 
@@ -457,10 +469,7 @@ export default function App() {
   } = useStore();
 
   useEffect(() => {
-    enterRoom("zustand-todo-app", {
-      todos: [],
-    });
-
+    enterRoom("zustand-todo-app");
     return () => {
       leaveRoom("zustand-todo-app");
     };
