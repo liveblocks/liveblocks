@@ -210,7 +210,8 @@ bump_version_in_pkg () {
 
     for pkgname in $( all_published_pkgnames ); do
         for key in dependencies devDependencies peerDependencies; do
-            if [ "$(jq ".${key}.\"${pkgname}\"" package.json)" != "null" ]; then
+            currversion="$(jq -r ".${key}.\"${pkgname}\"" package.json)"
+            if [ "$currversion" != "null" -a "$currversion" != '*' ]; then
                 jq ".${key}.\"${pkgname}\" = \"$VERSION\"" package.json | sponge package.json
             fi
         done
