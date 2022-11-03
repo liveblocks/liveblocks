@@ -417,7 +417,7 @@
           }
         },
         "operationId": "delete-rooms-roomId",
-        "description": "Deletes a room. A deleted room cannot be accessible from the API or the dashboard and it cannot be restored. \n\n"
+        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
     "/rooms/{roomId}/active_users": {
