@@ -395,6 +395,29 @@
           },
           "description": ""
         }
+      },
+      "delete": {
+        "summary": "Delete room",
+        "tags": [],
+        "responses": {
+          "204": {
+            "description": "Success. The room was deleted"
+          },
+          "401": {
+            "$ref": "#/components/responses/401"
+          },
+          "403": {
+            "$ref": "#/components/responses/403"
+          },
+          "404": {
+            "$ref": "#/components/responses/404"
+          },
+          "422": {
+            "$ref": "#/components/responses/422"
+          }
+        },
+        "operationId": "delete-rooms-roomId",
+        "description": "Deletes a room. A deleted room is no longer accessible from the API or the dashboard and it cannot be restored. \n\n"
       }
     },
     "/rooms/{roomId}/active_users": {
