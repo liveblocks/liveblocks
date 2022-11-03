@@ -1,10 +1,11 @@
 import type { LiveObject } from "..";
-import type { RoomAuthToken } from "../AuthToken";
 import type { LsonObject } from "../crdts/Lson";
 import type { ToImmutable } from "../crdts/ToImmutable";
 import type { Json, JsonObject } from "../lib/Json";
 import { makePosition } from "../lib/position";
 import { remove } from "../lib/utils";
+import type { Authentication } from "../protocol/Authentication";
+import type { RoomAuthToken } from "../protocol/AuthToken";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { ClientMsg } from "../protocol/ClientMsg";
 import { ClientMsgCode } from "../protocol/ClientMsg";
@@ -24,7 +25,6 @@ import { ServerMsgCode } from "../protocol/ServerMsg";
 import type {
   _private_Effects as Effects,
   _private_Machine as Machine,
-  Authentication,
 } from "../room";
 import {
   _private_defaultState as defaultState,

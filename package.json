@@ -10,10 +10,12 @@
     "build": "turbo run build",
     "test": "turbo run test",
     "test:types": "turbo run test:types",
+    "test:deps": "turbo run test:deps",
     "lint": "turbo run lint",
     "dev": "turbo run dev"
   },
   "devDependencies": {
+    "dependency-cruiser": "^11.16.1",
     "gen-esm-wrapper": "^1.1.3",
     "prettier": "^2.7.1",
     "tsd": "^0.24.1",

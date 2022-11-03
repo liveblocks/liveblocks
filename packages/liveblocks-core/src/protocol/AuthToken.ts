@@ -1,5 +1,5 @@
-import type { Json, JsonObject } from "./lib/Json";
-import { b64decode, isPlainObject, tryParseJson } from "./lib/utils";
+import type { Json, JsonObject } from "../lib/Json";
+import { b64decode, isPlainObject, tryParseJson } from "../lib/utils";
 
 export type AppOnlyAuthToken = {
   appId: string;

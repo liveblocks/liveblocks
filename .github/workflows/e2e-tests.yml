@@ -51,6 +51,9 @@ jobs:
       - name: Run type tests
         run: npm run test:types -- --filter ${{ matrix.pkg }}
 
+      - name: Run dependency tests
+        run: npm run test:deps -- --filter ${{ matrix.pkg }}
+
       - name: Run lint checks
         run: npm run lint -- --filter ${{ matrix.pkg }}
 
@@ -123,5 +126,5 @@ jobs:
         run: npm install
 
       - name: Run e2e client specs tests
-        run: npm run test-e2e
+        run: npm run test:e2e
         working-directory: packages/liveblocks-core

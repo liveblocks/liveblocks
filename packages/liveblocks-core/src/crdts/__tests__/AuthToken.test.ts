@@ -1,5 +1,9 @@
-import type { JwtMetadata } from "../../AuthToken";
-import { isTokenExpired, parseRoomAuthToken, RoomScope } from "../../AuthToken";
+import type { JwtMetadata } from "../../protocol/AuthToken";
+import {
+  isTokenExpired,
+  parseRoomAuthToken,
+  RoomScope,
+} from "../../protocol/AuthToken";
 
 describe("isTokenExpired", () => {
   const MINUTES = 60 * 1000;

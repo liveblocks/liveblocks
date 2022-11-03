@@ -21,6 +21,11 @@
       "dependsOn": ["build"],
       "inputs": ["test-d/**"]
     },
+    "test:deps": {
+      // A package's `test:deps` script has no dependencies and can be run
+      // whenever. It also has no filesystem outputs.
+      "outputs": []
+    },
     "lint": {
       // A package's `lint` script has no dependencies and can be run whenever.
       // It also has no filesystem outputs.

@@ -1,3 +1,8 @@
+import {
+  findNonSerializableValue,
+  isLiveList,
+  isLiveObject,
+} from "./crdts/liveblocks-helpers";
 import { LiveList } from "./crdts/LiveList";
 import { LiveMap } from "./crdts/LiveMap";
 import { LiveObject } from "./crdts/LiveObject";
@@ -7,11 +12,6 @@ import type { StorageUpdate } from "./crdts/StorageUpdates";
 import * as console from "./lib/fancy-console";
 import type { Json, JsonObject } from "./lib/Json";
 import { isPlainObject } from "./lib/utils";
-import {
-  findNonSerializableValue,
-  isLiveList,
-  isLiveObject,
-} from "./liveblocks-helpers";
 
 function lsonObjectToJson<O extends LsonObject>(
   obj: O
