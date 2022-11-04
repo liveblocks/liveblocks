@@ -1,5 +1,6 @@
-import { DerivedRef, ValueRef } from "../ValueRef";
 import fc from "fast-check";
+
+import { DerivedRef, ValueRef } from "../ValueRef";
 
 describe("Value ref cache", () => {
   it("empty", () => {
