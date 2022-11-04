@@ -1,3 +1,5 @@
+/** @type {import('jest').Config} */
+
 const commonJestConfig = require("@liveblocks/jest-config");
 
 module.exports = {

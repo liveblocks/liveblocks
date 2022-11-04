@@ -1,7 +1,8 @@
+/** @type {import('jest').Config} */
+
 /**
  * Standard Jest configuration, used by all projects in this monorepo.
  */
-
 module.exports = {
   // By default, assume Jest will be used in a DOM environment. If you need to
   // use "node", you can overwrite it in the project.
