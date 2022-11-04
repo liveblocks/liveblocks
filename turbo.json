@@ -13,8 +13,6 @@
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
-      // A package's `test` script should only be rerun when either a `.tsx`,
-      // or `.ts` file has changed in `src` or `test` folders.
       "inputs": [
         "jest.*",
         "src/**/*.tsx",
