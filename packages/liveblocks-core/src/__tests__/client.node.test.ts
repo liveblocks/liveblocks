@@ -5,8 +5,8 @@
 // We're using node-fetch 2.X because 3+ only support ESM and jest is a pain to use with ESM
 import { Response } from "node-fetch";
 
-import { createClient } from "..";
 import type { ClientOptions } from "../client";
+import { createClient } from "../client";
 import { MockWebSocket } from "./_utils";
 
 const token =

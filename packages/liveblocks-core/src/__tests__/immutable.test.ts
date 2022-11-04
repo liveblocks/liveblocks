@@ -1,4 +1,5 @@
-import { LiveList, LiveMap } from "..";
+import { LiveList } from "../crdts/LiveList";
+import { LiveMap } from "../crdts/LiveMap";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject, ToJson } from "../crdts/Lson";
 import type { StorageUpdate } from "../crdts/StorageUpdates";

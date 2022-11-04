@@ -1,4 +1,3 @@
-import { LiveList } from "../..";
 import {
   createSerializedList,
   createSerializedObject,
@@ -11,6 +10,7 @@ import { OpCode } from "../../protocol/Op";
 import type { IdTuple, SerializedCrdt } from "../../protocol/SerializedCrdt";
 import { CrdtType } from "../../protocol/SerializedCrdt";
 import { WebsocketCloseCodes } from "../../types/WebsocketCloseCodes";
+import { LiveList } from "../LiveList";
 import { LiveObject } from "../LiveObject";
 
 describe("LiveObject", () => {
