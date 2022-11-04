@@ -2,7 +2,9 @@ import { freeze } from "../lib/freeze";
 import { compactObject } from "../lib/utils";
 import { ImmutableRef } from "./ImmutableRef";
 
-export class ValueRef<T> extends ImmutableRef<T> {
+export class ValueRef<
+  T extends Record<string, unknown>
+> extends ImmutableRef<T> {
   /** @internal */
   private _value: Readonly<T>;
 

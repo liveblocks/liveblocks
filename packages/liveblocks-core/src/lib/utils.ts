@@ -115,7 +115,7 @@ export function compact<T>(items: readonly T[]): NonNullable<T>[] {
  * Returns a new object instance where all explictly-undefined values are
  * removed.
  */
-export function compactObject<O>(obj: O): O {
+export function compactObject<O extends Record<string, unknown>>(obj: O): O {
   const newObj = { ...obj };
   Object.keys(obj).forEach((k) => {
     const key = k as keyof O;
