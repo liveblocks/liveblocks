@@ -1,5 +1,4 @@
 import { freeze } from "../lib/freeze";
-import { compactObject } from "../lib/utils";
 import { ImmutableRef } from "./ImmutableRef";
 
 export class ValueRef<
@@ -10,7 +9,7 @@ export class ValueRef<
 
   constructor(initialValue: T) {
     super();
-    this._value = freeze(compactObject(initialValue));
+    this._value = freeze(initialValue);
   }
 
   /** @internal */
