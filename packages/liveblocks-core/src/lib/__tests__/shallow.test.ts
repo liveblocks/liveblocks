@@ -93,6 +93,14 @@ describe("shallow", () => {
     expect(shallow({}, new Date())).toBe(false);
   });
 
+  it("key order does not matter", () => {
+    expect(shallow({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
+  });
+
+  it("different key counts are never equal", () => {
+    expect(shallow({ a: undefined, b: 1 }, { b: 1 })).toBe(false);
+  });
+
   it("sparse arrays", () => {
     // Sparse arrays should not break
     /* eslint-disable no-sparse-arrays */

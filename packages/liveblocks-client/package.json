@@ -23,8 +23,8 @@
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --silent --verbose --passWithNoTests",
-    "test:watch": "jest --silent --verbose --passWithNoTests --watch"
+    "test": "jest --silent --verbose --color=always --passWithNoTests",
+    "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },
   "license": "Apache-2.0",
   "dependencies": {

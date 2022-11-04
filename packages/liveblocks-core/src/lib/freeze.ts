@@ -4,5 +4,5 @@
  */
 export const freeze: typeof Object.freeze =
   process.env.NODE_ENV === "production"
-    ? (((x: unknown) => x) as typeof Object.freeze)
+    ? /* istanbul ignore next */ (((x: unknown) => x) as typeof Object.freeze)
     : Object.freeze;

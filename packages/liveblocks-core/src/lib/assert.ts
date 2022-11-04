@@ -17,6 +17,7 @@
  * this *statically*, rather than at runtime, and force you to handle the
  * 🍒 case.
  */
+// istanbul ignore next
 export function assertNever(_value: never, errmsg: string): never {
   throw new Error(errmsg);
 }
@@ -28,10 +29,13 @@ export function assertNever(_value: never, errmsg: string): never {
  * In production, nothing is asserted and this acts as a no-op.
  */
 export function assert(condition: boolean, errmsg: string): asserts condition {
-  if (process.env.NODE_ENV !== "production" && !condition) {
-    const err = new Error(errmsg);
-    err.name = "Assertion failure";
-    throw err;
+  if (process.env.NODE_ENV !== "production") {
+    // istanbul ignore if
+    if (!condition) {
+      const err = new Error(errmsg);
+      err.name = "Assertion failure";
+      throw err;
+    }
   }
 }
 
