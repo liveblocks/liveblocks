@@ -54,15 +54,21 @@ describe("Value ref cache", () => {
 describe("Derived ref cache", () => {
   it("Cache a derived value from other ref caches", () => {
     const greeting = new ValueRef("hi");
-    const count = new ValueRef({ times: 3 });
-    const ref = new DerivedRef([greeting, count], (x, y) => x.repeat(y.times));
+    const count = new ValueRef(3);
+    const suffix = new ValueRef("!");
+    const ref = new DerivedRef(
+      greeting,
+      count,
+      suffix,
+      (x, y, suffix) => x.repeat(y) + suffix
+    );
 
-    expect(ref.current).toStrictEqual("hihihi");
-
-    count.set({ times: 5 });
-    expect(ref.current).toStrictEqual("hihihihihi");
+    expect(ref.current).toStrictEqual("hihihi!");
+    count.set(5);
+    expect(ref.current).toStrictEqual("hihihihihi!");
 
     greeting.set("👋");
-    expect(ref.current).toStrictEqual("👋👋👋👋👋");
+    suffix.set(" ✨");
+    expect(ref.current).toStrictEqual("👋👋👋👋👋 ✨");
   });
 });
