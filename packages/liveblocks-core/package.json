@@ -23,7 +23,7 @@
     "build": "tsup && ../../scripts/build.sh",
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/",
-    "test": "jest --silent --verbose",
+    "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --watch",
     "test:e2e": "jest --silent --verbose --config=./jest.config.e2e.js",
     "test:deps": "depcruise src --exclude __tests__ --config",
