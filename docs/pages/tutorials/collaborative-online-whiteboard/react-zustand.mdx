@@ -954,6 +954,11 @@ const useStore = create<WithLiveblocks<State>>()(
       },
       deleteShape: () => {
         const { shapes, selectedShape, liveblocks } = get();
+        if (!selectedShape) {
+          /* Nothing todo */
+          return;
+        }
+        
         const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         liveblocks.room?.updatePresence(
           { selectedShape: null },
