@@ -74,10 +74,10 @@ two RoomProviders with the same room `id` in your React tree.
   mutable by every client. Must either contain Live structures (e.g.
   `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
   JSON.
-- `shouldInitiallyConnect` (optional) - Whether or not the room connects to
-  Liveblock servers. Default is `true`. Usually set to false when the client is
-  used from the server to not call the authentication endpoint or connect via
-  WebSocket.
+- `shouldInitiallyConnect` (optional) - Whether or not the room should connect
+  to Liveblocks servers when the RoomProvider is rendered. By default equals to
+  `typeof window !== "undefined"`, meaning the RoomProvider tries to connect to
+  Liveblocks servers only on the client side.
 
 The `initialPresence`, `initialStorage` and `shouldInitiallyConnect` props are
 ignored after the first render, so changes to the initial value argument won’t
