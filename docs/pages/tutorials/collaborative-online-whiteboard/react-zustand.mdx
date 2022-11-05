@@ -603,11 +603,11 @@ const useStore = create<WithLiveblocks<State>>()(
       },
       deleteShape: () => {
         const { shapes, selectedShape } = get();
-        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         if (!selectedShape) {
           /* Nothing todo */
           return;
         }
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         set({
           shapes: newShapes,
           selectedShape: null,
