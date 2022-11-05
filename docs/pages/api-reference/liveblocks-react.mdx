@@ -64,9 +64,24 @@ Makes a [`Room`] available in the component hierarchy below. When this component
 is unmounted, the current user leaves the room. That means that you can’t use
 two RoomProviders with the same room `id` in your React tree.
 
-The `initialPresence` and `initialStorage` props are ignored after the first
-render, so changes to the initial value argument won’t have an observable
-effect.
+- `initialPresence` - The initial Presence to use for the User currently
+  entering the Room. Presence data belongs to the current User and is readable
+  to all other Users in the room while the current User is connected to the
+  Room. Must be serializable to JSON.
+- `initialStorage` (optional) - The initial Storage structure to create when a
+  new Room is entered for the first time. Storage data is shared and belongs to
+  the Room itself. It persists even after all Users leave the room, and is
+  mutable by every client. Must either contain Live structures (e.g.
+  `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
+  JSON.
+- `shouldInitiallyConnect` (optional) - Whether or not the room connects to
+  Liveblock servers. Default is `true`. Usually set to false when the client is
+  used from the server to not call the authentication endpoint or connect via
+  WebSocket.
+
+The `initialPresence`, `initialStorage` and `shouldInitiallyConnect` props are
+ignored after the first render, so changes to the initial value argument won’t
+have an observable effect.
 
 ```tsx
 import { LiveList, LiveMap, LiveObject } from "@liveblocks/client";
