@@ -645,7 +645,7 @@ export default function App() {
       <div className="canvas">{/* ... */}</div>
       <div className="toolbar">
         <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteShape} disabled={selectedShape == null}>
+        <button onClick={deleteShape} disabled={selectedShape === null}>
           Delete
         </button>
       </div>
@@ -827,7 +827,7 @@ export default function App() {
       </div>
       <div className="toolbar">
         <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteShape} disabled={selectedShape == null}>
+        <button onClick={deleteShape} disabled={selectedShape === null}>
           Delete
         </button>
         <button onClick={undo}>Undo</button>
