@@ -103,7 +103,7 @@ In **@liveblocks/react**:
 
 - Add a new property `shouldInitiallyConnect` to `RoomProvider` that let you
   control whether or not the room connects to Liveblocks servers. Default is
-  true.
+  `true`.
 
   By default equals to `typeof window !== "undefined"`, meaning the RoomProvider
   tries to connect to Liveblocks servers only on the client side.
