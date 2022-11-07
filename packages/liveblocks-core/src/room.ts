@@ -1269,6 +1269,7 @@ function makeStateMachine<
         case "history":
           return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
 
+        // istanbul ignore next
         default:
           return assertNever(first, "Unknown event");
       }
@@ -1279,6 +1280,7 @@ function makeStateMachine<
         const storageCallback = first;
         return eventHub.storage.subscribe(storageCallback);
       } else {
+        // istanbul ignore next
         throw new Error("Please specify a listener callback");
       }
     }
@@ -1547,7 +1549,7 @@ function makeStateMachine<
 
     const messages = parseServerMessages(event.data);
     if (messages === null || messages.length === 0) {
-      // Unknown incoming message... ignore it
+      // istanbul ignore next: Unknown incoming message
       return;
     }
 
@@ -1602,7 +1604,9 @@ function makeStateMachine<
             const offlineOps = new Map(state.offlineOperations);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
             applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
-            _getInitialStateResolver?.();
+            if (_getInitialStateResolver !== null) {
+              _getInitialStateResolver();
+            }
             eventHub.storageDidLoad.notify();
             break;
           }
@@ -2355,9 +2359,10 @@ function prepareCreateWebSocket(
   return (token: string): WebSocket => {
     return new ws(
       `${liveblocksServer}/?token=${token}&version=${
+        // prettier-ignore
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
-        typeof __PACKAGE_VERSION__ === "string" ? __PACKAGE_VERSION__ : "dev"
+        typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev"
       }`
     );
   };
@@ -2375,10 +2380,14 @@ function prepareAuthEndpoint(
     }
 
     return (room: string) =>
-      fetchAuthEndpoint(fetchPolyfill || fetch, authentication.url, {
-        room,
-        publicApiKey: authentication.publicApiKey,
-      });
+      fetchAuthEndpoint(
+        fetchPolyfill || /* istanbul ignore next */ fetch,
+        authentication.url,
+        {
+          room,
+          publicApiKey: authentication.publicApiKey,
+        }
+      );
   }
 
   if (authentication.type === "private") {
