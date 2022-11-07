@@ -31,7 +31,7 @@ type StorageNotation =
 export function storageNotationToLiveObject(
   root: StorageNotationObject
 ): LiveObject<LsonObject> {
-  return dataToLiveObject(root.data);
+  return fieldsToLiveObject(root.data);
 }
 
 function dataToLiveNode(
@@ -40,15 +40,15 @@ function dataToLiveNode(
   if (isSpecialStorageNotationValue(data)) {
     switch (data.liveblocksType) {
       case "LiveObject": {
-        return dataToLiveObject(data.data);
+        return fieldsToLiveObject(data.data);
       }
 
       case "LiveList": {
-        return dataToLiveList(data.data);
+        return itemsToLiveList(data.data);
       }
 
       case "LiveMap": {
-        return dataToLiveMap(data.data);
+        return fieldsToLiveMap(data.data);
       }
 
       default:
@@ -59,36 +59,36 @@ function dataToLiveNode(
   }
 }
 
-function dataToLiveMap(map: StorageNotationFields): LiveMap<string, Lson> {
+function fieldsToLiveMap(fields: StorageNotationFields): LiveMap<string, Lson> {
   const liveMap = new LiveMap();
 
-  for (const [subKey, subValue] of Object.entries(map)) {
-    liveMap.set(subKey, dataToLiveNode(subValue));
+  for (const [key, value] of Object.entries(fields)) {
+    liveMap.set(key, dataToLiveNode(value));
   }
 
   return liveMap;
 }
 
-function dataToLiveList(list: StorageNotation[]): LiveList<Lson> {
+function itemsToLiveList(items: StorageNotation[]): LiveList<Lson> {
   const liveList = new LiveList();
 
-  list.forEach((subValue) => {
-    liveList.push(dataToLiveNode(subValue));
+  items.forEach((item) => {
+    liveList.push(dataToLiveNode(item));
   });
 
   return liveList;
 }
 
-function dataToLiveObject(
-  value: StorageNotationFields
+function fieldsToLiveObject(
+  fields: StorageNotationFields
 ): LiveObject<LsonObject> {
   const liveObject = new LiveObject();
 
-  for (const [subKey, subValue] of Object.entries(value)) {
-    if (isSpecialStorageNotationValue(subValue)) {
-      liveObject.set(subKey, dataToLiveNode(subValue));
+  for (const [key, value] of Object.entries(fields)) {
+    if (isSpecialStorageNotationValue(value)) {
+      liveObject.set(key, dataToLiveNode(value));
     } else {
-      liveObject.set(subKey, subValue);
+      liveObject.set(key, value);
     }
   }
 
