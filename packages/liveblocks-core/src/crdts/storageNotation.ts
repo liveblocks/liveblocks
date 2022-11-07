@@ -1,7 +1,7 @@
-import { LiveList } from "../crdts/LiveList";
-import { LiveMap } from "../crdts/LiveMap";
-import { LiveObject } from "../crdts/LiveObject";
-import { isJsonObject, Json } from "./Json";
+import { LiveList } from "./LiveList";
+import { LiveMap } from "./LiveMap";
+import { LiveObject } from "./LiveObject";
+import { isJsonObject, Json } from "../lib/Json";
 
 type PlainLsonFields = Record<string, PlainLson>;
 

@@ -1,9 +1,9 @@
 import {
   PlainLsonObject,
   storageNotationToLiveObject,
-} from "../storageNotationToLiveStructure";
+} from "../storageNotation";
 
-describe("storageNotationToLiveObject", () => {
+describe("storageNotation", () => {
   it("convert to LiveObject", () => {
     const example: PlainLsonObject = {
       liveblocksType: "LiveObject",
