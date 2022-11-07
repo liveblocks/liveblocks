@@ -23,11 +23,12 @@ type StorageNotationList = {
   data: StorageNotation[];
 };
 
-type StorageNotation =
+type StorageNotationNode =
   | StorageNotationObject
   | StorageNotationMap
-  | StorageNotationList
-  | Json;
+  | StorageNotationList;
+
+type StorageNotation = StorageNotationNode | Json;
 
 export function storageNotationToLiveObject(
   root: StorageNotationObject
@@ -35,10 +36,8 @@ export function storageNotationToLiveObject(
   return fieldsToLiveObject(root.data);
 }
 
-function dataToLiveNode(
-  data: StorageNotation
-): LiveObject<LsonObject> | LiveList<Lson> | LiveMap<string, Lson> | Json {
-  if (isSpecialStorageNotationValue(data)) {
+function storageNotationToLson(data: StorageNotation): Lson {
+  if (isStorageNotationNode(data)) {
     switch (data.liveblocksType) {
       case "LiveObject": {
         return fieldsToLiveObject(data.data);
@@ -64,7 +63,7 @@ function fieldsToLiveMap(fields: StorageNotationFields): LiveMap<string, Lson> {
   const liveMap = new LiveMap();
 
   for (const [key, value] of Object.entries(fields)) {
-    liveMap.set(key, dataToLiveNode(value));
+    liveMap.set(key, storageNotationToLson(value));
   }
 
   return liveMap;
@@ -74,7 +73,7 @@ function itemsToLiveList(items: StorageNotation[]): LiveList<Lson> {
   const liveList = new LiveList();
 
   items.forEach((item) => {
-    liveList.push(dataToLiveNode(item));
+    liveList.push(storageNotationToLson(item));
   });
 
   return liveList;
@@ -86,8 +85,8 @@ function fieldsToLiveObject(
   const liveObject = new LiveObject();
 
   for (const [key, value] of Object.entries(fields)) {
-    if (isSpecialStorageNotationValue(value)) {
-      liveObject.set(key, dataToLiveNode(value));
+    if (isStorageNotationNode(value)) {
+      liveObject.set(key, storageNotationToLson(value));
     } else {
       liveObject.set(key, value);
     }
@@ -96,8 +95,8 @@ function fieldsToLiveObject(
   return liveObject;
 }
 
-function isSpecialStorageNotationValue(
+function isStorageNotationNode(
   value: StorageNotation
-): value is StorageNotationObject | StorageNotationMap | StorageNotationList {
+): value is StorageNotationNode {
   return isJsonObject(value) && value.liveblocksType !== undefined;
 }
