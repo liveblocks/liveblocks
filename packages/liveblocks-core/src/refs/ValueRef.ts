@@ -1,16 +1,13 @@
 import { freeze } from "../lib/freeze";
-import { compactObject } from "../lib/utils";
 import { ImmutableRef } from "./ImmutableRef";
 
-export class ValueRef<
-  T extends Record<string, unknown>
-> extends ImmutableRef<T> {
+export class ValueRef<T> extends ImmutableRef<T> {
   /** @internal */
   private _value: Readonly<T>;
 
   constructor(initialValue: T) {
     super();
-    this._value = freeze(compactObject(initialValue));
+    this._value = freeze(initialValue);
   }
 
   /** @internal */
@@ -24,17 +21,24 @@ export class ValueRef<
   }
 }
 
-// TODO: Generalize to arbitrary number of "input refs"
-export class DerivedRef<T, V1, V2> extends ImmutableRef<T> {
+export class DerivedRef<
+  T,
+  Is extends readonly [ImmutableRef<unknown>, ...ImmutableRef<unknown>[]],
+  Vs extends readonly [unknown, ...unknown[]] = {
+    [K in keyof Is]: Is[K] extends ImmutableRef<unknown>
+      ? Is[K]["current"]
+      : never;
+  }
+> extends ImmutableRef<T> {
   /** @internal */
-  private _refs: readonly [ImmutableRef<V1>, ImmutableRef<V2>];
-  private _transform: (v1: V1, v2: V2) => T;
+  private _refs: Is;
+  private _transform: (...values: Vs) => T;
 
-  constructor(
-    otherRefs: readonly [ImmutableRef<V1>, ImmutableRef<V2>],
-    transformFn: (...args: [V1, V2]) => T
-  ) {
+  constructor(...args: [...otherRefs: Is, transformFn: (...values: Vs) => T]) {
     super();
+
+    const transformFn = args.pop() as (...values: Vs) => T;
+    const otherRefs = args as unknown as Is;
 
     this._refs = otherRefs;
     this._refs.forEach((ref) => {
@@ -47,6 +51,8 @@ export class DerivedRef<T, V1, V2> extends ImmutableRef<T> {
 
   /** @internal */
   _toImmutable(): Readonly<T> {
-    return this._transform(this._refs[0].current, this._refs[1].current);
+    return this._transform(
+      ...(this._refs.map((ref) => ref.current) as unknown as Vs)
+    );
   }
 }
