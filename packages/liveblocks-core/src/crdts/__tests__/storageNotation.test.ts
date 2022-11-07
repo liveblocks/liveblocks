@@ -1,34 +1,34 @@
-import type { StorageNotationObject } from "../storageNotation";
+import type { StorageNotationRoot } from "../storageNotation";
 import { storageNotationToLiveObject } from "../storageNotation";
 
-describe("storageNotation", () => {
-  it("convert to LiveObject", () => {
-    const example: StorageNotationObject = {
-      liveblocksType: "LiveObject",
-      data: {
-        aLiveObject: {
-          liveblocksType: "LiveObject",
-          data: {
-            a: 1,
-          },
-        },
-        aLiveList: {
-          liveblocksType: "LiveList",
-          data: ["a", "b"],
-        },
-        aLiveMap: {
-          liveblocksType: "LiveMap",
-          data: {
-            a: 1,
-            b: 2,
-          },
+describe("Storage notation", () => {
+  const example: StorageNotationRoot = {
+    liveblocksType: "LiveObject",
+    data: {
+      aLiveObject: {
+        liveblocksType: "LiveObject",
+        data: {
+          a: 1,
         },
       },
-    };
+      aLiveList: {
+        liveblocksType: "LiveList",
+        data: ["a", "b"],
+      },
+      aLiveMap: {
+        liveblocksType: "LiveMap",
+        data: {
+          a: 1,
+          b: 2,
+        },
+      },
+    },
+  };
 
+  it("convert to LiveObject", () => {
     const liveObject = storageNotationToLiveObject(example);
 
-    expect(liveObject._toImmutable()).toEqual({
+    expect(liveObject.toImmutable()).toEqual({
       aLiveList: ["a", "b"],
       aLiveMap: new Map([
         ["a", 1],

@@ -6,9 +6,11 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type { Lson, LsonObject } from "./Lson";
 
+export type StorageNotationRoot = StorageNotationObject;
+
 type StorageNotationFields = Record<string, StorageNotation>;
 
-export type StorageNotationObject = {
+type StorageNotationObject = {
   liveblocksType: "LiveObject";
   data: StorageNotationFields;
 };
@@ -31,7 +33,7 @@ type StorageNotationNode =
 type StorageNotation = StorageNotationNode | Json;
 
 export function storageNotationToLiveObject(
-  root: StorageNotationObject
+  root: StorageNotationRoot
 ): LiveObject<LsonObject> {
   return fieldsToLiveObject(root.data);
 }
@@ -39,17 +41,14 @@ export function storageNotationToLiveObject(
 function storageNotationToLson(data: StorageNotation): Lson {
   if (isStorageNotationNode(data)) {
     switch (data.liveblocksType) {
-      case "LiveObject": {
+      case "LiveObject":
         return fieldsToLiveObject(data.data);
-      }
 
-      case "LiveList": {
+      case "LiveList":
         return itemsToLiveList(data.data);
-      }
 
-      case "LiveMap": {
+      case "LiveMap":
         return fieldsToLiveMap(data.data);
-      }
 
       default:
         return assertNever(data, "Unknown `liveblocksType` field");
