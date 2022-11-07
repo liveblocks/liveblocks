@@ -603,11 +603,11 @@ const useStore = create<WithLiveblocks<State>>()(
       },
       deleteShape: () => {
         const { shapes, selectedShape } = get();
-        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         if (!selectedShape) {
           /* Nothing todo */
           return;
         }
+        const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         set({
           shapes: newShapes,
           selectedShape: null,
@@ -645,7 +645,7 @@ export default function App() {
       <div className="canvas">{/* ... */}</div>
       <div className="toolbar">
         <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteShape} disabled={selectedShape == null}>
+        <button onClick={deleteShape} disabled={selectedShape === null}>
           Delete
         </button>
       </div>
@@ -827,7 +827,7 @@ export default function App() {
       </div>
       <div className="toolbar">
         <button onClick={insertRectangle}>Rectangle</button>
-        <button onClick={deleteShape} disabled={selectedShape == null}>
+        <button onClick={deleteShape} disabled={selectedShape === null}>
           Delete
         </button>
         <button onClick={undo}>Undo</button>
@@ -915,7 +915,7 @@ To accomplish that, use
 with the option `addToHistory` to update `selectedShape`. Liveblocks middleware
 will update store `selectedShape` for you.
 
-```ts file="src/store.ts" highlight="11,20-26,29-35,38,40-44"
+```ts file="src/store.ts" highlight="11,20-26,29-35,38,44-48"
 /* ... */
 
 const useStore = create<WithLiveblocks<State>>()(
@@ -954,6 +954,10 @@ const useStore = create<WithLiveblocks<State>>()(
       },
       deleteShape: () => {
         const { shapes, selectedShape, liveblocks } = get();
+        if (!selectedShape) {
+          /* Nothing todo */
+          return;
+        }
         const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         liveblocks.room?.updatePresence(
           { selectedShape: null },
