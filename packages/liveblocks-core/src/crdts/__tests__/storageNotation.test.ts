@@ -1,9 +1,9 @@
-import type { PlainLsonObject } from "../storageNotation";
+import type { StorageNotationObject } from "../storageNotation";
 import { storageNotationToLiveObject } from "../storageNotation";
 
 describe("storageNotation", () => {
   it("convert to LiveObject", () => {
-    const example: PlainLsonObject = {
+    const example: StorageNotationObject = {
       liveblocksType: "LiveObject",
       data: {
         aLiveObject: {

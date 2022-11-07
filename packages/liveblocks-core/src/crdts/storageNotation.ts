@@ -5,35 +5,39 @@ import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
 import type { Lson, LsonObject } from "./Lson";
 
-type PlainLsonFields = Record<string, PlainLson>;
+type StorageNotationFields = Record<string, StorageNotation>;
 
-export type PlainLsonObject = {
+export type StorageNotationObject = {
   liveblocksType: "LiveObject";
-  data: PlainLsonFields;
+  data: StorageNotationFields;
 };
 
-type PlainLsonMap = {
+type StorageNotationMap = {
   liveblocksType: "LiveMap";
-  data: PlainLsonFields;
+  data: StorageNotationFields;
 };
 
-type PlainLsonList = {
+type StorageNotationList = {
   liveblocksType: "LiveList";
-  data: PlainLson[];
+  data: StorageNotation[];
 };
 
-type PlainLson = PlainLsonObject | PlainLsonMap | PlainLsonList | Json;
+type StorageNotation =
+  | StorageNotationObject
+  | StorageNotationMap
+  | StorageNotationList
+  | Json;
 
 export function storageNotationToLiveObject(
-  root: PlainLsonObject
+  root: StorageNotationObject
 ): LiveObject<LsonObject> {
   return dataToLiveObject(root.data);
 }
 
 function dataToLiveNode(
-  data: PlainLson
+  data: StorageNotation
 ): LiveObject<LsonObject> | LiveList<Lson> | LiveMap<string, Lson> | Json {
-  if (isSpecialPlainLsonValue(data)) {
+  if (isSpecialStorageNotationValue(data)) {
     switch (data.liveblocksType) {
       case "LiveObject": {
         return dataToLiveObject(data.data);
@@ -55,7 +59,7 @@ function dataToLiveNode(
   }
 }
 
-function dataToLiveMap(map: PlainLsonFields): LiveMap<string, Lson> {
+function dataToLiveMap(map: StorageNotationFields): LiveMap<string, Lson> {
   const liveMap = new LiveMap();
 
   for (const [subKey, subValue] of Object.entries(map)) {
@@ -65,7 +69,7 @@ function dataToLiveMap(map: PlainLsonFields): LiveMap<string, Lson> {
   return liveMap;
 }
 
-function dataToLiveList(list: PlainLson[]): LiveList<Lson> {
+function dataToLiveList(list: StorageNotation[]): LiveList<Lson> {
   const liveList = new LiveList();
 
   list.forEach((subValue) => {
@@ -75,11 +79,13 @@ function dataToLiveList(list: PlainLson[]): LiveList<Lson> {
   return liveList;
 }
 
-function dataToLiveObject(value: PlainLsonFields): LiveObject<LsonObject> {
+function dataToLiveObject(
+  value: StorageNotationFields
+): LiveObject<LsonObject> {
   const liveObject = new LiveObject();
 
   for (const [subKey, subValue] of Object.entries(value)) {
-    if (isSpecialPlainLsonValue(subValue)) {
+    if (isSpecialStorageNotationValue(subValue)) {
       liveObject.set(subKey, dataToLiveNode(subValue));
     } else {
       liveObject.set(subKey, subValue);
@@ -89,8 +95,8 @@ function dataToLiveObject(value: PlainLsonFields): LiveObject<LsonObject> {
   return liveObject;
 }
 
-function isSpecialPlainLsonValue(
-  value: PlainLson
-): value is PlainLsonObject | PlainLsonMap | PlainLsonList {
+function isSpecialStorageNotationValue(
+  value: StorageNotation
+): value is StorageNotationObject | StorageNotationMap | StorageNotationList {
   return isJsonObject(value) && value.liveblocksType !== undefined;
 }
