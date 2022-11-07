@@ -9,7 +9,8 @@ function wrap(
 ): (message: string, ...args: readonly unknown[]) => void {
   return typeof window === "undefined" || process.env.NODE_ENV === "test"
     ? console[method]
-    : (message, ...args) =>
+    : /* istanbul ignore next */
+      (message, ...args) =>
         console[method]("%cLiveblocks", badge, message, ...args);
 }
 
@@ -22,7 +23,8 @@ function wrapWithTitle(
 ): (title: string, message: string, ...args: readonly unknown[]) => void {
   return typeof window === "undefined" || process.env.NODE_ENV === "test"
     ? console[method]
-    : (title, message, ...args) =>
+    : /* istanbul ignore next */
+      (title, message, ...args) =>
         console[method](
           `%cLiveblocks%c ${title}`,
           badge,

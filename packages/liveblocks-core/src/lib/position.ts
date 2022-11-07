@@ -71,6 +71,7 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
     const beforeDigit: number = before[index] || min;
     const afterDigit: number = after[index] || max;
 
+    // istanbul ignore if
     if (beforeDigit > afterDigit) {
       throw new Error(
         `Impossible to generate position between ${before} and ${after}`

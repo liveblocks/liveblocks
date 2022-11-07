@@ -26,8 +26,8 @@
     "format": "eslint --fix src/ && prettier --write src/",
     "lint": "eslint src/ && npm run check:exports",
     "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
-    "test": "jest --silent --verbose",
-    "test:watch": "jest --silent --verbose --watch"
+    "test": "jest --silent --verbose --color=always",
+    "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "license": "Apache-2.0",
   "dependencies": {

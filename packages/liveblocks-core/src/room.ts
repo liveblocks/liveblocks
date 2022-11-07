@@ -888,7 +888,8 @@ function makeStateMachine<
   };
 
   const self = new DerivedRef(
-    [state.connection, state.me],
+    state.connection,
+    state.me,
     (conn, me): User<TPresence, TUserMeta> | null =>
       isConnectionSelfAware(conn)
         ? {
