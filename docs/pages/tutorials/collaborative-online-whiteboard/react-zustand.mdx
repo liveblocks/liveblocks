@@ -915,7 +915,7 @@ To accomplish that, use
 with the option `addToHistory` to update `selectedShape`. Liveblocks middleware
 will update store `selectedShape` for you.
 
-```ts file="src/store.ts" highlight="11,20-26,29-35,38,40-44"
+```ts file="src/store.ts" highlight="11,20-26,29-35,38,44-48"
 /* ... */
 
 const useStore = create<WithLiveblocks<State>>()(
@@ -958,7 +958,6 @@ const useStore = create<WithLiveblocks<State>>()(
           /* Nothing todo */
           return;
         }
-        
         const { [selectedShape]: shapeToDelete, ...newShapes } = shapes;
         liveblocks.room?.updatePresence(
           { selectedShape: null },
