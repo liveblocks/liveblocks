@@ -1,5 +1,5 @@
 import type { StorageNotationRoot } from "../storageNotation";
-import { storageNotationToLiveObject } from "../storageNotation";
+import { fromStorageNotation } from "../storageNotation";
 
 describe("Storage notation", () => {
   const example: StorageNotationRoot = {
@@ -26,7 +26,7 @@ describe("Storage notation", () => {
   };
 
   it("convert to LiveObject", () => {
-    const liveObject = storageNotationToLiveObject(example);
+    const liveObject = fromStorageNotation(example);
 
     expect(liveObject.toImmutable()).toEqual({
       aLiveList: ["a", "b"],
@@ -42,11 +42,11 @@ describe("Storage notation", () => {
 
   it("root must always be a LiveObject", () => {
     const exampleList = example.data.aLiveList;
-    expect(() => storageNotationToLiveObject(exampleList as any)).toThrow();
+    expect(() => fromStorageNotation(exampleList as any)).toThrow();
   });
 
   it("throws when there is missing data", () => {
     const missingData = { liveblocksType: "LiveObject" /* no data field */ };
-    expect(() => storageNotationToLiveObject(missingData as any)).toThrow();
+    expect(() => fromStorageNotation(missingData as any)).toThrow();
   });
 });
