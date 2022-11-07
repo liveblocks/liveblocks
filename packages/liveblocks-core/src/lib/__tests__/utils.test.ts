@@ -1,3 +1,4 @@
+import * as fc from "fast-check";
 import {
   b64decode,
   compact,
@@ -6,6 +7,7 @@ import {
   fromEntries,
   isPlainObject,
   keys,
+  mapValues,
   remove,
   tryParseJson,
   values,
@@ -86,6 +88,51 @@ describe("compactObject", () => {
     expect(
       compactObject({ a: undefined, b: undefined, c: undefined })
     ).toStrictEqual({});
+  });
+});
+
+describe("mapValues", () => {
+  it("empty object", () => {
+    expect(mapValues({}, (x) => x)).toStrictEqual({});
+  });
+
+  it("keys don't change", () => {
+    fc.assert(
+      fc.property(
+        fc.object(),
+
+        (obj) => {
+          const result = mapValues(obj, () => Math.random());
+          expect(Object.keys(result)).toStrictEqual(Object.keys(obj));
+        }
+      )
+    );
+  });
+
+  it("using keys in mapper", () => {
+    expect(
+      mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n))
+    ).toStrictEqual({ a: "aaaaa", b: "", c: "ccc" });
+
+    fc.assert(
+      fc.property(
+        fc.object(),
+
+        (obj) => {
+          const result = mapValues(obj, (_, k) => k);
+          expect(Object.keys(result)).toStrictEqual(Object.keys(obj));
+          expect(Object.values(result)).toStrictEqual(Object.keys(obj));
+        }
+      )
+    );
+  });
+
+  it("keys don't change", () => {
+    expect(mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2)).toStrictEqual({
+      a: 26,
+      b: 0,
+      c: -14,
+    });
   });
 });
 
