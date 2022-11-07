@@ -1,7 +1,5 @@
-import {
-  PlainLsonObject,
-  storageNotationToLiveObject,
-} from "../storageNotation";
+import type { PlainLsonObject } from "../storageNotation";
+import { storageNotationToLiveObject } from "../storageNotation";
 
 describe("storageNotation", () => {
   it("convert to LiveObject", () => {
