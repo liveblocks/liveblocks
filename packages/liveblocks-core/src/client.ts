@@ -229,7 +229,8 @@ export function createClient(options: ClientOptions): Client {
 
   if (
     typeof window !== "undefined" &&
-    typeof window.addEventListener !== "undefined" // e.g. React Native environment doesn't implement window.addEventListener
+    // istanbul ignore next: React Native environment doesn't implement window.addEventListener
+    typeof window.addEventListener !== "undefined"
   ) {
     // TODO: Expose a way to clear these
     window.addEventListener("online", () => {
