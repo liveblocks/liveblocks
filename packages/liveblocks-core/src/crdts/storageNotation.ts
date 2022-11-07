@@ -1,3 +1,4 @@
+import { assertNever } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { isJsonObject } from "../lib/Json";
 import { LiveList } from "./LiveList";
@@ -52,7 +53,7 @@ function dataToLiveNode(
       }
 
       default:
-        throw new Error("Unknown `liveblocksType` field");
+        return assertNever(data, "Unknown `liveblocksType` field");
     }
   } else {
     return data;
