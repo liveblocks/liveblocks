@@ -1,6 +1,7 @@
 import { assertNever } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { isJsonObject } from "../lib/Json";
+import { mapValues } from "../lib/utils";
 import { LiveList } from "./LiveList";
 import { LiveMap } from "./LiveMap";
 import { LiveObject } from "./LiveObject";
@@ -35,20 +36,23 @@ type StorageNotation = StorageNotationNode | Json;
 export function storageNotationToLiveObject(
   root: StorageNotationRoot
 ): LiveObject<LsonObject> {
-  return fieldsToLiveObject(root.data);
+  if (root.liveblocksType !== "LiveObject") {
+    throw new Error("Storage root must always be a LiveObject");
+  }
+  return objectNodeToLiveObject(root);
 }
 
 function storageNotationToLson(data: StorageNotation): Lson {
   if (isStorageNotationNode(data)) {
     switch (data.liveblocksType) {
       case "LiveObject":
-        return fieldsToLiveObject(data.data);
+        return objectNodeToLiveObject(data);
 
       case "LiveList":
-        return itemsToLiveList(data.data);
+        return listNodeToLiveList(data);
 
       case "LiveMap":
-        return fieldsToLiveMap(data.data);
+        return mapNodeToLiveMap(data);
 
       default:
         return assertNever(data, "Unknown `liveblocksType` field");
@@ -58,40 +62,25 @@ function storageNotationToLson(data: StorageNotation): Lson {
   }
 }
 
-function fieldsToLiveMap(fields: StorageNotationFields): LiveMap<string, Lson> {
-  const liveMap = new LiveMap();
-
-  for (const [key, value] of Object.entries(fields)) {
-    liveMap.set(key, storageNotationToLson(value));
-  }
-
-  return liveMap;
+function mapNodeToLiveMap(node: StorageNotationMap): LiveMap<string, Lson> {
+  return new LiveMap(
+    Object.entries(node.data).map(([key, value]) => [
+      key,
+      storageNotationToLson(value),
+    ])
+  );
 }
 
-function itemsToLiveList(items: StorageNotation[]): LiveList<Lson> {
-  const liveList = new LiveList();
-
-  items.forEach((item) => {
-    liveList.push(storageNotationToLson(item));
-  });
-
-  return liveList;
+function listNodeToLiveList(node: StorageNotationList): LiveList<Lson> {
+  return new LiveList(node.data.map((item) => storageNotationToLson(item)));
 }
 
-function fieldsToLiveObject(
-  fields: StorageNotationFields
+function objectNodeToLiveObject(
+  node: StorageNotationObject
 ): LiveObject<LsonObject> {
-  const liveObject = new LiveObject();
-
-  for (const [key, value] of Object.entries(fields)) {
-    if (isStorageNotationNode(value)) {
-      liveObject.set(key, storageNotationToLson(value));
-    } else {
-      liveObject.set(key, value);
-    }
-  }
-
-  return liveObject;
+  return new LiveObject(
+    mapValues(node.data, (value) => storageNotationToLson(value))
+  );
 }
 
 function isStorageNotationNode(

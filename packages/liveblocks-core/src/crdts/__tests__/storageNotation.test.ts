@@ -39,4 +39,14 @@ describe("Storage notation", () => {
       },
     });
   });
+
+  it("root must always be a LiveObject", () => {
+    const exampleList = example.data.aLiveList;
+    expect(() => storageNotationToLiveObject(exampleList as any)).toThrow();
+  });
+
+  it("throws when there is missing data", () => {
+    const missingData = { liveblocksType: "LiveObject" /* no data field */ };
+    expect(() => storageNotationToLiveObject(missingData as any)).toThrow();
+  });
 });
