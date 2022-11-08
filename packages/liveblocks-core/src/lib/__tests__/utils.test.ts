@@ -110,6 +110,19 @@ describe("mapValues", () => {
     );
   });
 
+  it("will skip copying dangerous keys", () => {
+    expect(mapValues({ __proto__: null }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ ["__proto__"]: null }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ __proto__: {} }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ ["__proto__"]: {} }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ __proto__: {}, b: 42 }, (x) => x)).toStrictEqual({
+      b: 42,
+    });
+    expect(mapValues({ ["__proto__"]: {}, b: 42 }, (x) => x)).toStrictEqual({
+      b: 42,
+    });
+  });
+
   it("using keys in mapper", () => {
     expect(
       mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n))
@@ -117,12 +130,21 @@ describe("mapValues", () => {
 
     fc.assert(
       fc.property(
-        fc.object(),
+        fc.object().map(
+          (o) => (
+            // Ensure the generator won't include objects with a __proto__ key in
+            // there. Those are handled by the test case above.
+            delete o["__proto__"], o
+          )
+        ),
 
-        (obj) => {
-          const result = mapValues(obj, (_, k) => k);
-          expect(Object.keys(result)).toStrictEqual(Object.keys(obj));
-          expect(Object.values(result)).toStrictEqual(Object.keys(obj));
+        (input) => {
+          const output1 = mapValues(input, (x) => x);
+          expect(output1).toStrictEqual(input);
+
+          const output2 = mapValues(input, (_, k) => k);
+          expect(Object.keys(output2)).toStrictEqual(Object.keys(input));
+          expect(Object.values(output2)).toStrictEqual(Object.keys(input));
         }
       )
     );
