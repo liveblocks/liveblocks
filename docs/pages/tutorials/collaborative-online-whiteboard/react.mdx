@@ -114,7 +114,7 @@ import { RoomProvider } from "./liveblocks.config";
 
 ReactDOM.render(
   <React.StrictMode>
-    <RoomProvider id="react-whiteboard-app">
+    <RoomProvider id="react-whiteboard-app" initialPresence={{}}>
       <App />
     </RoomProvider>
   </React.StrictMode>,
@@ -136,7 +136,7 @@ for all users in the room.
 
 Initialize the storage with the `initialStorage` prop on the `RoomProvider`.
 
-```jsx highlight="6,16-19" file="src/index.js"
+```jsx highlight="6,16-20" file="src/index.js"
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -153,6 +153,7 @@ ReactDOM.render(
   <React.StrictMode>
     <RoomProvider
       id="react-whiteboard-app"
+      initialPresence={{}}
       initialStorage={{
         shapes: new LiveMap(),
       }}
