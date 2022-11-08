@@ -1,5 +1,5 @@
-import { useTheme } from "../theme";
 import { useConnectedRoom } from "../contexts/ConnectedRoom";
+import { useTheme } from "../theme";
 
 export function Debug() {
   const theme = useTheme();

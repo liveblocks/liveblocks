@@ -1,11 +1,6 @@
+import type { TabsProps as DefaultTabsProps } from "@radix-ui/react-tabs";
+import { Content, List, Root, Trigger } from "@radix-ui/react-tabs";
 import cx from "classnames";
-import {
-  TabsProps as DefaultTabsProps,
-  Root,
-  List,
-  Trigger,
-  Content,
-} from "@radix-ui/react-tabs";
 import type { ReactNode } from "react";
 
 interface Tab {

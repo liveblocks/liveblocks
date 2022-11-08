@@ -1,5 +1,3 @@
-import { createContext, useEffect, useState, useContext } from "react";
-import { onMessageFromClient, sendMessageToClient } from "../port";
 import type {
   BaseUserMeta,
   FullClientToPanelMessage,
@@ -8,6 +6,9 @@ import type {
   User,
 } from "@liveblocks/core";
 import type { ReactNode } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
+
+import { onMessageFromClient, sendMessageToClient } from "../port";
 
 type ConnectedRoom = {
   readonly roomId: string;

@@ -1,8 +1,8 @@
-import browser from "webextension-polyfill";
 import type {
-  FullPanelToClientMessage,
   FullClientToPanelMessage,
+  FullPanelToClientMessage,
 } from "@liveblocks/core";
+import browser from "webextension-polyfill";
 
 window.addEventListener("message", (event) => {
   if (event.source !== window) {

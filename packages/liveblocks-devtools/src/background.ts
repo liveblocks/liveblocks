@@ -1,8 +1,9 @@
-import browser, { Runtime } from "webextension-polyfill";
 import type {
-  FullPanelToClientMessage,
   FullClientToPanelMessage,
+  FullPanelToClientMessage,
 } from "@liveblocks/core";
+import type { Runtime } from "webextension-polyfill";
+import browser from "webextension-polyfill";
 
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 

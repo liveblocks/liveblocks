@@ -1,9 +1,9 @@
-import browser from "webextension-polyfill";
 import type {
-  PanelToClientMessage,
-  FullPanelToClientMessage,
   FullClientToPanelMessage,
+  FullPanelToClientMessage,
+  PanelToClientMessage,
 } from "@liveblocks/core";
+import browser from "webextension-polyfill";
 
 const DEV_PANEL = "liveblocks-devtools-panel";
 

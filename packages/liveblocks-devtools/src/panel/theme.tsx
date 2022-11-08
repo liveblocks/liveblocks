@@ -1,10 +1,5 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useLayoutEffect,
-  useState,
-} from "react";
+import type { PropsWithChildren } from "react";
+import { createContext, useContext, useLayoutEffect, useState } from "react";
 
 const MEDIA_QUERY = window.matchMedia("(prefers-color-scheme: dark)");
 const THEMES: Theme[] = ["light", "dark"];

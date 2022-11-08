@@ -1,11 +1,12 @@
 import { createRoot } from "react-dom/client";
+
 import { Tabs } from "./components/Tabs";
-import { Debug } from "./tabs/debug";
-import { ThemeProvider } from "./theme";
 import {
   ConnectedRoomProvider,
   useConnectedRoomOrNull,
 } from "./contexts/ConnectedRoom";
+import { Debug } from "./tabs/debug";
+import { ThemeProvider } from "./theme";
 
 function Panel() {
   const roomOrNull = useConnectedRoomOrNull();
