@@ -7,7 +7,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@liveblocks/client": "^0.18.5",
+    "@liveblocks/client": "*",
     "node-fetch": "2.6.7",
     "ws": "^8.5.0"
   },
