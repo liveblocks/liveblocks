@@ -64,7 +64,7 @@ export function RoomMirrorProvider(props: Props) {
 
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
-        case "room::enter": {
+        case "room::available": {
           setCtx((ctx) => {
             const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
             const allRooms = new Map(ctx.allRooms);
@@ -80,9 +80,9 @@ export function RoomMirrorProvider(props: Props) {
           break;
         }
 
-        // When the client leaves a room, it no longer tracks it, so we can
-        // destroy it
-        case "room::leave": {
+        // When the client leaves a room, it won't track it any longer, so we
+        // can destroy it
+        case "room::unavailable": {
           setCtx((ctx) => {
             const allRooms = new Map(ctx.allRooms);
             allRooms.delete(msg.roomId);

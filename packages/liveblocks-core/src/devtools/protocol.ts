@@ -43,17 +43,17 @@ export type ClientToPanelMessage =
   | { msg: "wake-up-devtools" }
 
   /**
-   * Sent when a new room is attempted to be entered, i.e. "comes to life".
-   * This happens _before_ the actual connection to the room server is
-   * established, meaning the room is visible to the devtools even while it is
-   * connecting.
+   * Sent when a new room is available for the dev panel to track and watch.
+   * Sent by the client as soon as the room is attempted to be entered. This
+   * happens _before_ the actual connection to the room server is established,
+   * meaning the room is visible to the devtools even while it is connecting.
    */
-  | { msg: "room::enter"; roomId: string }
+  | { msg: "room::available"; roomId: string }
 
   /**
-   * Sent when a room is left and the client destroys the room instance.
+   * Sent when a room is left and the client loses track of the room instance.
    */
-  | { msg: "room::leave"; roomId: string }
+  | { msg: "room::unavailable"; roomId: string }
 
   /**
    * Sent initially, to synchronize the entire current state of the room.
