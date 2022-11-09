@@ -2,14 +2,14 @@ import { createRoot } from "react-dom/client";
 
 import { Tabs } from "./components/Tabs";
 import {
-  ConnectedRoomProvider,
-  useRoomMirrorOrNull,
+  RoomMirrorProvider,
+  useCurrentRoomOrNull,
 } from "./contexts/RoomMirror";
 import { Debug } from "./tabs/debug";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
-  const roomOrNull = useRoomMirrorOrNull();
+  const roomOrNull = useCurrentRoomOrNull();
   if (roomOrNull === null) {
     return (
       <div className="h-full">
@@ -58,9 +58,9 @@ function Panel() {
 function PanelApp() {
   return (
     <ThemeProvider>
-      <ConnectedRoomProvider>
+      <RoomMirrorProvider>
         <Panel />
-      </ConnectedRoomProvider>
+      </RoomMirrorProvider>
     </ThemeProvider>
   );
 }

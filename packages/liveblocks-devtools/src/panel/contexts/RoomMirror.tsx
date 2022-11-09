@@ -6,7 +6,14 @@ import type {
   User,
 } from "@liveblocks/core";
 import type { ReactNode } from "react";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
 import { onMessageFromClient, sendMessageToClient } from "../port";
 
@@ -20,14 +27,30 @@ type RoomMirror = {
   // sendMessage
 };
 
-const RoomMirrorContext = createContext<RoomMirror | null>(null);
+type InternalRoomsContext = {
+  readonly currentRoomId: string | null;
+  readonly allRooms: ReadonlyMap</* roomId */ string, RoomMirror>;
+};
+
+type RoomsContext = InternalRoomsContext & {
+  setCurrentRoomId: (currentRoomId: string | null) => void;
+};
+
+const RoomMirrorContext = createContext<RoomsContext | null>(null);
 
 type Props = {
   children?: ReactNode;
 };
 
 export function RoomMirrorProvider(props: Props) {
-  const [roomMirror, setRoomMirror] = useState<RoomMirror | null>(null);
+  const [ctx, setCtx] = useState<InternalRoomsContext>(() => ({
+    currentRoomId: null,
+    allRooms: new Map(),
+  }));
+
+  const setCurrentRoomId = useCallback((roomId: string | null): void => {
+    return setCtx((ctx) => ({ ...ctx, currentRoomId: roomId }));
+  }, []);
 
   useEffect(() => {
     // Listen for new handshakes/connections!
@@ -45,25 +68,50 @@ export function RoomMirrorProvider(props: Props) {
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
         case "connected-to-room": {
-          setRoomMirror((currRoom) => ({ ...currRoom, roomId: msg.roomId }));
+          setCtx((ctx) => {
+            const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
+            const allRooms = new Map(ctx.allRooms);
+            allRooms.set(msg.roomId, { ...currRoom, roomId: msg.roomId });
+            return {
+              currentRoomId: ctx.currentRoomId ?? msg.roomId,
+              allRooms,
+            };
+          });
           break;
         }
 
         // When the client disconnects from the room, erase it
         case "disconnected-from-room": {
-          setRoomMirror(null);
+          setCtx((ctx) => {
+            const allRooms = new Map(ctx.allRooms);
+            allRooms.delete(msg.roomId);
+            return {
+              currentRoomId:
+                ctx.currentRoomId === msg.roomId ? null : ctx.currentRoomId,
+              allRooms,
+            };
+          });
           break;
         }
 
         // Storage or presence got updated
         case "sync-state": {
-          setRoomMirror((currRoom) => ({
-            ...currRoom,
-            roomId: msg.roomId,
-            storage: msg.storage !== undefined ? msg.storage : currRoom.storage,
-            me: msg.me !== undefined ? msg.me : currRoom.me,
-            others: msg.others !== undefined ? msg.others : currRoom.others,
-          }));
+          setCtx((ctx) => {
+            const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
+            const allRooms = new Map(ctx.allRooms);
+            allRooms.set(msg.roomId, {
+              ...currRoom,
+              roomId: msg.roomId,
+              storage:
+                msg.storage !== undefined ? msg.storage : currRoom.storage,
+              me: msg.me !== undefined ? msg.me : currRoom.me,
+              others: msg.others !== undefined ? msg.others : currRoom.others,
+            });
+            return {
+              currentRoomId: ctx.currentRoomId ?? msg.roomId,
+              allRooms,
+            };
+          });
           break;
         }
 
@@ -87,21 +135,44 @@ export function RoomMirrorProvider(props: Props) {
     sendMessageToClient({ name: "connect" });
   }, []);
 
+  const value = useMemo(
+    () => ({
+      ...ctx,
+      setCurrentRoomId,
+    }),
+    [ctx, setCurrentRoomId]
+  );
+
   return (
-    <RoomMirrorContext.Provider value={roomMirror}>
+    <RoomMirrorContext.Provider value={value}>
       {props.children}
     </RoomMirrorContext.Provider>
   );
 }
 
-export function useRoomMirrorOrNull(): RoomMirror | null {
-  return useContext(RoomMirrorContext);
+export function useRoomsContext(): RoomsContext {
+  const ctx = useContext(RoomMirrorContext);
+  if (ctx === null) {
+    throw new Error(
+      "Please use a <RoomMirrorProvider> up the component tree to use useRoomsContext()"
+    );
+  }
+  return ctx;
 }
 
-export function useRoomMirror(): RoomMirror {
-  const room = useRoomMirrorOrNull();
+export function useCurrentRoomOrNull(): RoomMirror | null {
+  const ctx = useRoomsContext();
+  if (ctx.currentRoomId === null) {
+    return null;
+  } else {
+    return ctx.allRooms.get(ctx.currentRoomId);
+  }
+}
+
+export function useCurrentRoom(): RoomMirror {
+  const room = useCurrentRoomOrNull();
   if (room === null) {
-    throw new Error("Haven't found a connected Liveblocks room yet");
+    throw new Error("Please select a room to view first");
   }
   return room;
 }
