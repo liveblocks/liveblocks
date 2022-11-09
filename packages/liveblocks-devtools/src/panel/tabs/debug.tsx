@@ -1,9 +1,9 @@
-import { useConnectedRoom } from "../contexts/ConnectedRoom";
+import { useRoomMirror } from "../contexts/RoomMirror";
 import { useTheme } from "../theme";
 
 export function Debug() {
   const theme = useTheme();
-  const room = useConnectedRoom();
+  const room = useRoomMirror();
   return (
     <>
       <h1>Liveblocks ({theme})</h1>

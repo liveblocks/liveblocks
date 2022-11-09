@@ -3,13 +3,13 @@ import { createRoot } from "react-dom/client";
 import { Tabs } from "./components/Tabs";
 import {
   ConnectedRoomProvider,
-  useConnectedRoomOrNull,
-} from "./contexts/ConnectedRoom";
+  useRoomMirrorOrNull,
+} from "./contexts/RoomMirror";
 import { Debug } from "./tabs/debug";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
-  const roomOrNull = useConnectedRoomOrNull();
+  const roomOrNull = useRoomMirrorOrNull();
   if (roomOrNull === null) {
     return (
       <div className="h-full">
