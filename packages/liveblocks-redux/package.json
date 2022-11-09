@@ -42,6 +42,7 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-redux"
   },
+  "homepage": "https://liveblocks.io",
   "keywords": [
     "redux",
     "react",

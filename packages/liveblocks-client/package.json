@@ -39,6 +39,7 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-client"
   },
+  "homepage": "https://liveblocks.io",
   "keywords": [
     "liveblocks",
     "real-time",

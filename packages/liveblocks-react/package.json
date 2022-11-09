@@ -47,6 +47,7 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-react"
   },
+  "homepage": "https://liveblocks.io",
   "keywords": [
     "react",
     "liveblocks",

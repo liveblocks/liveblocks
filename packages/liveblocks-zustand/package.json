@@ -42,6 +42,7 @@
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-zustand"
   },
+  "homepage": "https://liveblocks.io",
   "keywords": [
     "zustand",
     "react",
