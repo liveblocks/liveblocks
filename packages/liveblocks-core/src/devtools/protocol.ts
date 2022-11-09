@@ -41,8 +41,23 @@ export type ClientToPanelMessage =
    * of the two-way connection.
    */
   | { name: "wake-up-devtools" }
-  | { name: "connected-to-room"; roomId: string }
-  | { name: "disconnected-from-room"; roomId: string }
+
+  /**
+   * Sent when a new room is attempted to be entered, i.e. "comes to life".
+   * This happens _before_ the actual connection to the room server is
+   * established, meaning the room is visible to the devtools even while it is
+   * connecting.
+   */
+  | { name: "spawn-room"; roomId: string }
+
+  /**
+   * Sent when a room is left and the client destroys the room instance.
+   */
+  | { name: "destroy-room"; roomId: string }
+
+  /**
+   * Sent whenever something about the internals of a room changes.
+   */
   | {
       name: "sync-state";
       roomId: string;

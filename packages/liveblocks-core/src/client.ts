@@ -238,7 +238,7 @@ export function createClient(options: ClientOptions): Client {
         sendToPanel({ name: "wake-up-devtools" });
 
         function syncRoomId() {
-          sendToPanel({ name: "connected-to-room", roomId });
+          sendToPanel({ name: "spawn-room", roomId });
         }
 
         function syncStorage() {
@@ -349,16 +349,16 @@ export function createClient(options: ClientOptions): Client {
   function leave(roomId: string) {
     const room = rooms.get(roomId);
     if (room) {
-      room.disconnect();
-      rooms.delete(roomId);
-
       // -----------------------------------------------------------
       // XXX Add a bit more abstraction
       sendToPanel({
-        name: "disconnected-from-room",
+        name: "destroy-room",
         roomId,
       });
       // -----------------------------------------------------------
+
+      room.disconnect();
+      rooms.delete(roomId);
     }
   }
 

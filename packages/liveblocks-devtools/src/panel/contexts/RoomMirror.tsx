@@ -67,7 +67,7 @@ export function RoomMirrorProvider(props: Props) {
 
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
-        case "connected-to-room": {
+        case "spawn-room": {
           setCtx((ctx) => {
             const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
             const allRooms = new Map(ctx.allRooms);
@@ -81,7 +81,7 @@ export function RoomMirrorProvider(props: Props) {
         }
 
         // When the client disconnects from the room, erase it
-        case "disconnected-from-room": {
+        case "destroy-room": {
           setCtx((ctx) => {
             const allRooms = new Map(ctx.allRooms);
             allRooms.delete(msg.roomId);
