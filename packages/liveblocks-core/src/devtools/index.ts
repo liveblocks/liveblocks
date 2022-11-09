@@ -5,6 +5,11 @@ import type {
 } from "./protocol";
 
 export function sendToPanel(message: ClientToPanelMessage): void {
+  // Devtools communication only happens on the client side
+  if (typeof window === "undefined") {
+    return;
+  }
+
   const fullMsg = {
     ...message,
     source: "liveblocks-devtools-client",
