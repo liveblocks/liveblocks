@@ -48,10 +48,6 @@ export function RoomMirrorProvider(props: Props) {
     allRooms: new Map(),
   }));
 
-  const setCurrentRoomId = useCallback((roomId: string | null): void => {
-    return setCtx((ctx) => ({ ...ctx, currentRoomId: roomId }));
-  }, []);
-
   useEffect(() => {
     // Listen for new handshakes/connections!
 
@@ -87,7 +83,9 @@ export function RoomMirrorProvider(props: Props) {
             allRooms.delete(msg.roomId);
             return {
               currentRoomId:
-                ctx.currentRoomId === msg.roomId ? null : ctx.currentRoomId,
+                ctx.currentRoomId === msg.roomId || allRooms.size === 0
+                  ? null
+                  : ctx.currentRoomId,
               allRooms,
             };
           });
@@ -135,11 +133,17 @@ export function RoomMirrorProvider(props: Props) {
     sendMessageToClient({ name: "connect" });
   }, []);
 
+  /**
+   * Can be used by the panel UI to "switch" between currently visible room.
+   */
+  const setCurrentRoomId = useCallback((roomId: string | null): void => {
+    if (roomId === null || ctx.allRooms.has(roomId)) {
+      setCtx((ctx) => ({ ...ctx, currentRoomId: roomId }));
+    }
+  }, []);
+
   const value = useMemo(
-    () => ({
-      ...ctx,
-      setCurrentRoomId,
-    }),
+    () => ({ ...ctx, setCurrentRoomId }),
     [ctx, setCurrentRoomId]
   );
 
