@@ -56,10 +56,21 @@ export type ClientToPanelMessage =
   | { name: "destroy-room"; roomId: string }
 
   /**
+   * Sent initially, to synchronize the entire current state of the room.
+   */
+  | {
+      name: "sync-room:full";
+      roomId: string;
+      storage: ImmutableDataObject | null;
+      me: User<JsonObject, BaseUserMeta> | null;
+      others: readonly User<JsonObject, BaseUserMeta>[] | null;
+    }
+
+  /**
    * Sent whenever something about the internals of a room changes.
    */
   | {
-      name: "sync-state";
+      name: "sync-room:partial";
       roomId: string;
       storage?: ImmutableDataObject;
       me?: User<JsonObject, BaseUserMeta>;

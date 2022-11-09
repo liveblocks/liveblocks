@@ -245,7 +245,7 @@ export function createClient(options: ClientOptions): Client {
           const root = room.getStorageSnapshot();
           if (root) {
             sendToPanel({
-              name: "sync-state",
+              name: "sync-room:partial",
               roomId,
               storage: root.toImmutable() as ImmutableDataObject,
             });
@@ -256,7 +256,7 @@ export function createClient(options: ClientOptions): Client {
           const me = room.getSelf();
           if (me) {
             sendToPanel({
-              name: "sync-state",
+              name: "sync-room:partial",
               roomId,
               me,
             });
@@ -268,7 +268,7 @@ export function createClient(options: ClientOptions): Client {
           const others = room.getOthers();
           if (others) {
             sendToPanel({
-              name: "sync-state",
+              name: "sync-room:partial",
               roomId,
               others,
             });
@@ -280,7 +280,7 @@ export function createClient(options: ClientOptions): Client {
           const me = room.getSelf();
           const others = room.getOthers();
           sendToPanel({
-            name: "sync-state",
+            name: "sync-room:partial",
             roomId,
             storage:
               root !== null

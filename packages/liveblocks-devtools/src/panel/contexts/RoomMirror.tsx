@@ -5,6 +5,7 @@ import type {
   JsonObject,
   User,
 } from "@liveblocks/core";
+import { assertNever } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -93,7 +94,8 @@ export function RoomMirrorProvider(props: Props) {
         }
 
         // Storage or presence got updated
-        case "sync-state": {
+        case "sync-room:full":
+        case "sync-room:partial": {
           setCtx((ctx) => {
             const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
             const allRooms = new Map(ctx.allRooms);
@@ -113,9 +115,16 @@ export function RoomMirrorProvider(props: Props) {
           break;
         }
 
-        default:
-        // Ignore any other messages here. We'll be listening for these
-        // messages elsewhere.
+        default: {
+          // Ensure that we exhaustively handle all messages
+          if (process.env.NODE_ENV === "production") {
+            // Ignore these errors in production
+          } else {
+            // Ensure we exhaustively handle all possible messages
+            assertNever(msg, "Unknown message type");
+          }
+          break;
+        }
       }
     }
 
