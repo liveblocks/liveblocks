@@ -1,24 +1,81 @@
-import type { Room } from "../room";
+import type { LsonObject } from "../crdts/Lson";
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { LsonObject } from "../crdts/Lson";
+import type { Room } from "../room";
+import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 import type { ImmutableDataObject } from "./protocol";
-import { sendToPanel, onMessageFromPanel } from "./bridge";
 
-export function linkDevtools(
-  roomId: string,
-  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
-) {
+let _hasBeenSetup = false;
+
+/**
+ * Sends a wake up message to the devtools panel, if any such panel exists, and
+ * listens for the initial connect message, which would be the trigger to start
+ * emitting updates.
+ *
+ * Must be called before linkDevtools() can be used.
+ *
+ * Will only run once, even when called multiple times.
+ */
+export function setupDevtools(getAllRooms: () => string[]): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
   }
 
-  // On connect, immediately send the broadcast to let any listening
-  // devtool panels know the client is ready to connect
-  sendToPanel({ msg: "wake-up-devtools" });
+  if (_hasBeenSetup) {
+    // This setup code should only happen the first time
+    return;
+  }
 
-  // TODO: Only send these panel messages after we have had an acknowledgement from them
+  _hasBeenSetup = true;
+
+  onMessageFromPanel.subscribe((msg) => {
+    switch (msg.msg) {
+      // When a devtool panel sends an explicit "connect" message back to this
+      // live running client (in response to the "wake-up-devtools" message,
+      // or when the devtool panel is opened for the first time), it means that it's okay to
+      // start emitting messages.
+      // Before this explicit acknowledgement, any call to sendToPanel() will
+      // be a no-op.
+      case "connect": {
+        // Allows future sendToPanel() messages to go through
+        activateBridge(true);
+
+        // Emit an explicit "room::available" message for every known room at
+        // this point. These can be used by the devpanel to subscribe to such
+        // room's updates.
+        for (const roomId of getAllRooms()) {
+          sendToPanel({ msg: "room::available", roomId });
+        }
+
+        break;
+      }
+
+      // TODO: Later on, we can support explicit disconnects, too
+      // case "disconnect": {
+      //   // Make sendToPanel() no-ops again
+      //   activateBridge(false);
+      //   break;
+      // }
+    }
+  });
+
+  // Send initial wake up message, in case the devtool panel is already open!
+  sendToPanel({ msg: "wake-up-devtools" }, { force: true });
+}
+
+/**
+ * Publicly announce to the devtool panel that a new room is available.
+ */
+export function linkDevtools(
+  roomId: string,
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): void {
+  // Define it as a no-op in production environments or when run outside of a browser context
+  if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
+    return;
+  }
+
   sendToPanel({ msg: "room::available", roomId });
 
   function syncStorage() {
@@ -68,6 +125,7 @@ export function linkDevtools(
     });
   }
 
+  // XXX Lift this up to the module level, so we can use it in unlinkDevtools() too
   const unsubs: (() => void)[] = [];
 
   function unsubscribeAllSyncers() {
@@ -84,7 +142,12 @@ export function linkDevtools(
       // When a devtool panel "connects" to a live running client, send
       // it the current state, and start sending it updates whenever
       // the state changes.
-      case "connect": {
+      case "room::subscribe": {
+        if (msg.roomId !== roomId) {
+          // Not for this room
+          break;
+        }
+
         unsubscribeAllSyncers();
 
         // Sync the room ID instantly, as soon as we know it
@@ -106,19 +169,22 @@ export function linkDevtools(
       }
 
       // TODO: Implement this message from the dev panel, when it closes
-      // case "disconnect": {
-      //   unsubscibeAllSyncers();
+      // case "room:unsubscribe": {
+      //   unsubscribeAllSyncers();
       //   break;
       // }
 
+      // We don't have to handle "connect" events here, at the individual room level
+      case "connect":
       default: {
-        throw new Error(`Unhandled message from panel: ${msg.msg}`);
+        // Ignore unknown messages
+        break;
       }
     }
   });
 }
 
-export function unlinkDevtools(roomId: string) {
+export function unlinkDevtools(roomId: string): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;

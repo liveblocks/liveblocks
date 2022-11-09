@@ -1,6 +1,6 @@
-import type { User } from "../types/User";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { JsonObject, JsonScalar } from "../lib/Json";
+import type { BaseUserMeta } from "../protocol/BaseUserMeta";
+import type { User } from "../types/User";
 
 /**
  * A bit like ToImmutable<T>, but without a specific data type to convert, so
@@ -27,7 +27,12 @@ export type PanelToClientMessage =
    *    communication between panel and client for the remainder of the time.
    * 2. It signifies to the client that the devpanel is listening.
    */
-  { msg: "connect" }; // = special message
+  | { msg: "connect" } // = special message
+
+  /**
+   * XXX Document me
+   */
+  | { msg: "room::subscribe"; roomId: string };
 
 /**
  * Definition of all messages the Client can send to the Panel.

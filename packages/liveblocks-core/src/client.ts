@@ -1,5 +1,5 @@
 import type { LsonObject } from "./crdts/Lson";
-import { linkDevtools, unlinkDevtools } from "./devtools";
+import { linkDevtools, setupDevtools, unlinkDevtools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -166,6 +166,9 @@ export function createClient(options: ClientOptions): Client {
       >;
     }
 
+    // console.trace("enter");
+    // console.log("enter(", roomId, options, ") called");
+
     deprecateIf(
       options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
@@ -194,6 +197,7 @@ export function createClient(options: ClientOptions): Client {
         authentication: prepareAuthentication(clientOptions, roomId),
       }
     );
+
     rooms.set(
       roomId,
       internalRoom as unknown as InternalRoom<
@@ -204,6 +208,7 @@ export function createClient(options: ClientOptions): Client {
       >
     );
 
+    setupDevtools(() => Array.from(rooms.keys()));
     linkDevtools(roomId, internalRoom.room);
 
     if (shouldConnect) {
@@ -225,6 +230,7 @@ export function createClient(options: ClientOptions): Client {
   }
 
   function leave(roomId: string) {
+    // console.trace("leave");
     unlinkDevtools(roomId);
 
     const room = rooms.get(roomId);
