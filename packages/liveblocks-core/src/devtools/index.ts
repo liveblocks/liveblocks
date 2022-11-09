@@ -154,6 +154,8 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   });
 }
 
+let roomChannels: Record<string, () => void> = {};
+
 /**
  * Publicly announce to the devtool panel that a new room is available.
  */
@@ -168,7 +170,16 @@ export function linkDevtools(
 
   sendToPanel({ msg: "room::available", roomId });
 
-  onMessageFromPanel.subscribe((msg) => {
+  // Before adding a new listener, stop all active listeners, so there is only
+  // ever going to be one per room "channel"
+  // XXX Abstract / DRY up this "room channel"
+  const listener = roomChannels[roomId];
+  if (listener) {
+    delete roomChannels[roomId];
+    listener();
+  }
+
+  roomChannels[roomId] = onMessageFromPanel.subscribe((msg) => {
     switch (msg.msg) {
       // When a devtool panel "connects" to a live running client, send
       // it the current state, and start sending it updates whenever
@@ -177,13 +188,16 @@ export function linkDevtools(
         // Only act on this message if it's intended for this room
         if (msg.roomId === roomId) {
           startSyncStream(room);
-          break;
         }
+        break;
       }
 
       // TODO: Implement this message from the dev panel, when it closes
       // case "room:unsubscribe": {
-      //   unsubscribeAllSyncers();
+      //   // Only act on this message if it's intended for this room
+      //   if (msg.roomId === roomId) {
+      //     unsubscribeAllSyncers();
+      //   }
       //   break;
       // }
 
@@ -201,6 +215,13 @@ export function unlinkDevtools(roomId: string): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
+  }
+
+  // XXX Abstract / DRY up this "room channel"
+  const listener = roomChannels[roomId];
+  if (listener) {
+    delete roomChannels[roomId];
+    listener();
   }
 
   // Immediately stop the sync stream of room updates to the dev panel
