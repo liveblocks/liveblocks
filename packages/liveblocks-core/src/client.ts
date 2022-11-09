@@ -235,17 +235,17 @@ export function createClient(options: ClientOptions): Client {
 
         // On connect, immediately send the broadcast to let any listening
         // devtool panels know the client is ready to connect
-        sendToPanel({ name: "wake-up-devtools" });
+        sendToPanel({ msg: "wake-up-devtools" });
 
         function syncRoomId() {
-          sendToPanel({ name: "spawn-room", roomId });
+          sendToPanel({ msg: "room::enter", roomId });
         }
 
         function syncStorage() {
           const root = room.getStorageSnapshot();
           if (root) {
             sendToPanel({
-              name: "sync-room:partial",
+              msg: "room::sync::partial",
               roomId,
               storage: root.toImmutable() as ImmutableDataObject,
             });
@@ -256,7 +256,7 @@ export function createClient(options: ClientOptions): Client {
           const me = room.getSelf();
           if (me) {
             sendToPanel({
-              name: "sync-room:partial",
+              msg: "room::sync::partial",
               roomId,
               me,
             });
@@ -268,7 +268,7 @@ export function createClient(options: ClientOptions): Client {
           const others = room.getOthers();
           if (others) {
             sendToPanel({
-              name: "sync-room:partial",
+              msg: "room::sync::partial",
               roomId,
               others,
             });
@@ -280,7 +280,7 @@ export function createClient(options: ClientOptions): Client {
           const me = room.getSelf();
           const others = room.getOthers();
           sendToPanel({
-            name: "sync-room:partial",
+            msg: "room::sync::partial",
             roomId,
             storage:
               root !== null
@@ -302,8 +302,8 @@ export function createClient(options: ClientOptions): Client {
           }
         }
 
-        onMessageFromPanel.subscribe((message) => {
-          switch (message.name) {
+        onMessageFromPanel.subscribe((msg) => {
+          switch (msg.msg) {
             // When a devtool panel "connects" to a live running client, send
             // it the current state, and start sending it updates whenever
             // the state changes.
@@ -336,7 +336,7 @@ export function createClient(options: ClientOptions): Client {
             // }
 
             default: {
-              throw new Error(`Unhandled message from panel: ${message.name}`);
+              throw new Error(`Unhandled message from panel: ${msg.msg}`);
             }
           }
         });
@@ -352,7 +352,7 @@ export function createClient(options: ClientOptions): Client {
       // -----------------------------------------------------------
       // XXX Add a bit more abstraction
       sendToPanel({
-        name: "destroy-room",
+        msg: "room::leave",
         roomId,
       });
       // -----------------------------------------------------------

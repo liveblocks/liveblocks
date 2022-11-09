@@ -27,7 +27,7 @@ export type PanelToClientMessage =
    *    communication between panel and client for the remainder of the time.
    * 2. It signifies to the client that the devpanel is listening.
    */
-  { name: "connect" }; // = special message
+  { msg: "connect" }; // = special message
 
 /**
  * Definition of all messages the Client can send to the Panel.
@@ -40,7 +40,7 @@ export type ClientToPanelMessage =
    * it will replay its initial "connect" message, which triggers the loading
    * of the two-way connection.
    */
-  | { name: "wake-up-devtools" }
+  | { msg: "wake-up-devtools" }
 
   /**
    * Sent when a new room is attempted to be entered, i.e. "comes to life".
@@ -48,18 +48,18 @@ export type ClientToPanelMessage =
    * established, meaning the room is visible to the devtools even while it is
    * connecting.
    */
-  | { name: "spawn-room"; roomId: string }
+  | { msg: "room::enter"; roomId: string }
 
   /**
    * Sent when a room is left and the client destroys the room instance.
    */
-  | { name: "destroy-room"; roomId: string }
+  | { msg: "room::leave"; roomId: string }
 
   /**
    * Sent initially, to synchronize the entire current state of the room.
    */
   | {
-      name: "sync-room:full";
+      msg: "room::sync::full";
       roomId: string;
       storage: ImmutableDataObject | null;
       me: User<JsonObject, BaseUserMeta> | null;
@@ -70,7 +70,7 @@ export type ClientToPanelMessage =
    * Sent whenever something about the internals of a room changes.
    */
   | {
-      name: "sync-room:partial";
+      msg: "room::sync::partial";
       roomId: string;
       storage?: ImmutableDataObject;
       me?: User<JsonObject, BaseUserMeta>;

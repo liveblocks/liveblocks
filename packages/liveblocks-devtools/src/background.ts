@@ -20,7 +20,7 @@ browser.runtime.onConnect.addListener((port) => {
     // utilizes this special message to register the link between the tab ID
     // and this port.
     //
-    if (message.name === "connect") {
+    if (message.msg === "connect") {
       portsByTabId.set(message.tabId, port);
     }
 

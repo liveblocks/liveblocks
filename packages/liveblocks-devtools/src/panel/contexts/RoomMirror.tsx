@@ -53,22 +53,25 @@ export function RoomMirrorProvider(props: Props) {
     // Listen for new handshakes/connections!
 
     function onClientMessage(msg: FullClientToPanelMessage) {
-      switch (msg.name) {
+      switch (msg.msg) {
         // A new client just announced itself! Let's connect to it, by sending
         // it the connect message, so it knows it should start broadcasting
         // internal updates to the devtools.
         case "wake-up-devtools": {
-          sendMessageToClient({ name: "connect" });
+          sendMessageToClient({ msg: "connect" });
           break;
         }
 
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
-        case "spawn-room": {
+        case "room::enter": {
           setCtx((ctx) => {
             const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
             const allRooms = new Map(ctx.allRooms);
-            allRooms.set(msg.roomId, { ...currRoom, roomId: msg.roomId });
+            allRooms.set(msg.roomId, {
+              ...currRoom,
+              roomId: msg.roomId,
+            });
             return {
               currentRoomId: ctx.currentRoomId ?? msg.roomId,
               allRooms,
@@ -77,8 +80,9 @@ export function RoomMirrorProvider(props: Props) {
           break;
         }
 
-        // When the client disconnects from the room, erase it
-        case "destroy-room": {
+        // When the client leaves a room, it no longer tracks it, so we can
+        // destroy it
+        case "room::leave": {
           setCtx((ctx) => {
             const allRooms = new Map(ctx.allRooms);
             allRooms.delete(msg.roomId);
@@ -94,8 +98,8 @@ export function RoomMirrorProvider(props: Props) {
         }
 
         // Storage or presence got updated
-        case "sync-room:full":
-        case "sync-room:partial": {
+        case "room::sync::full":
+        case "room::sync::partial": {
           setCtx((ctx) => {
             const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
             const allRooms = new Map(ctx.allRooms);
@@ -139,7 +143,7 @@ export function RoomMirrorProvider(props: Props) {
   // acknowledged, in which case the dev panel will remain idle until we
   // receive an "wake-up-devtools" message.
   useEffect(() => {
-    sendMessageToClient({ name: "connect" });
+    sendMessageToClient({ msg: "connect" });
   }, []);
 
   /**
