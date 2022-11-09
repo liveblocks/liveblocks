@@ -3,7 +3,7 @@
   "globalDependencies": [".envrc"],
   "pipeline": {
     "dev": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "build": {
