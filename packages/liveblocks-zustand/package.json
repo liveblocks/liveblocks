@@ -1,21 +1,14 @@
 {
   "name": "@liveblocks/zustand",
   "version": "0.19.0",
-  "description": "A middleware to integrate Liveblocks into Zustand stores.",
+  "description": "A middleware to integrate Liveblocks into Zustand stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
     "README.md"
-  ],
-  "keywords": [
-    "zustand",
-    "react",
-    "liveblocks",
-    "multiplayer",
-    "live-cursors",
-    "collaborative"
   ],
   "scripts": {
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
@@ -25,12 +18,6 @@
     "test": "jest --silent --verbose --color=always",
     "test:types": "tsd",
     "test:watch": "jest --silent --verbose --color=always --watch"
-  },
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/liveblocks/liveblocks.git",
-    "directory": "packages/liveblocks-zustand"
   },
   "dependencies": {
     "@liveblocks/client": "0.19.0",
@@ -46,5 +33,30 @@
     "msw": "^0.36.4",
     "zustand": "^4.1.3"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/liveblocks-zustand"
+  },
+  "keywords": [
+    "zustand",
+    "react",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
 }

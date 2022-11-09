@@ -1,7 +1,8 @@
 {
   "name": "@liveblocks/react",
   "version": "0.19.0",
-  "description": "A set of React hooks and providers to use Liveblocks declaratively.",
+  "description": "A set of React hooks and providers to use Liveblocks declaratively. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -9,16 +10,6 @@
     "dist/**",
     "README.md"
   ],
-  "keywords": [
-    "react",
-    "liveblocks",
-    "multiplayer",
-    "live-cursors",
-    "collaborative"
-  ],
-  "bugs": {
-    "url": "https://github.com/liveblocks/liveblocks/issues"
-  },
   "scripts": {
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
@@ -29,7 +20,6 @@
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@liveblocks/client": "0.19.0",
     "@liveblocks/core": "0.19.0",
@@ -48,10 +38,29 @@
     "msw": "^0.27.1",
     "react-error-boundary": "^3.1.1"
   },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-react"
   },
-  "sideEffects": false
+  "keywords": [
+    "react",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
 }
