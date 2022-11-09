@@ -64,6 +64,96 @@ export function setupDevtools(getAllRooms: () => string[]): void {
   sendToPanel({ msg: "wake-up-devtools" }, { force: true });
 }
 
+const unsubsByRoomId = new Map<string, (() => void)[]>();
+
+function stopSyncStream(roomId: string): void {
+  const unsubs = unsubsByRoomId.get(roomId) ?? [];
+  unsubsByRoomId.delete(roomId); // Pop it off
+
+  for (const unsub of unsubs) {
+    // Cancel all of the subscriptions to room updates that are synchronizing
+    // partial state to the devtools panel
+    unsub();
+  }
+}
+
+/**
+ * Starts the stream of sync messages for the given room. A sync stream
+ * consists of an initial "full sync" message, followed by many "partial"
+ * messages that happen whenever part of the room changes.
+ */
+function startSyncStream(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+): void {
+  stopSyncStream(room.id);
+
+  // Sync the room ID instantly, as soon as we know it
+  fullSync(room);
+
+  unsubsByRoomId.set(room.id, [
+    // When storage initializes, send the update
+    room.events.storageDidLoad.subscribeOnce(() => partialSyncStorage(room)),
+
+    // Any time storage updates, send the new storage root
+    room.events.storage.subscribe(() => partialSyncStorage(room)),
+
+    // Any time "me" or "others" updates, send the new values accordingly
+    room.events.me.subscribe(() => partialSyncMe(room)),
+    room.events.others.subscribe(() => partialSyncOthers(room)),
+  ]);
+}
+
+function partialSyncStorage(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+) {
+  const root = room.getStorageSnapshot();
+  if (root) {
+    sendToPanel({
+      msg: "room::sync::partial",
+      roomId: room.id,
+      storage: root.toImmutable() as ImmutableDataObject,
+    });
+  }
+}
+
+function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
+  const me = room.getSelf();
+  if (me) {
+    sendToPanel({
+      msg: "room::sync::partial",
+      roomId: room.id,
+      me,
+    });
+  }
+}
+
+function partialSyncOthers(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+) {
+  // Any time others updates, send the new storage root to the dev panel
+  const others = room.getOthers();
+  if (others) {
+    sendToPanel({
+      msg: "room::sync::partial",
+      roomId: room.id,
+      others,
+    });
+  }
+}
+
+function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
+  const root = room.getStorageSnapshot();
+  const me = room.getSelf();
+  const others = room.getOthers();
+  sendToPanel({
+    msg: "room::sync::full",
+    roomId: room.id,
+    storage: (root?.toImmutable() as ImmutableDataObject) ?? null,
+    me,
+    others,
+  });
+}
+
 /**
  * Publicly announce to the devtool panel that a new room is available.
  */
@@ -78,94 +168,17 @@ export function linkDevtools(
 
   sendToPanel({ msg: "room::available", roomId });
 
-  function syncStorage() {
-    const root = room.getStorageSnapshot();
-    if (root) {
-      sendToPanel({
-        msg: "room::sync::partial",
-        roomId,
-        storage: root.toImmutable() as ImmutableDataObject,
-      });
-    }
-  }
-
-  function syncMe() {
-    const me = room.getSelf();
-    if (me) {
-      sendToPanel({
-        msg: "room::sync::partial",
-        roomId,
-        me,
-      });
-    }
-  }
-
-  function syncOthers() {
-    // Any time others updates, send the new storage root to the dev panel
-    const others = room.getOthers();
-    if (others) {
-      sendToPanel({
-        msg: "room::sync::partial",
-        roomId,
-        others,
-      });
-    }
-  }
-
-  function syncFullState() {
-    const root = room.getStorageSnapshot();
-    const me = room.getSelf();
-    const others = room.getOthers();
-    sendToPanel({
-      msg: "room::sync::full",
-      roomId,
-      storage: (root?.toImmutable() as ImmutableDataObject) ?? null,
-      me,
-      others,
-    });
-  }
-
-  // XXX Lift this up to the module level, so we can use it in unlinkDevtools() too
-  const unsubs: (() => void)[] = [];
-
-  function unsubscribeAllSyncers() {
-    let unsub: (() => void) | undefined;
-    while ((unsub = unsubs.pop())) {
-      // Unsubscribe all of the listeners we registered since the
-      // devpanel "connected"
-      unsub();
-    }
-  }
-
   onMessageFromPanel.subscribe((msg) => {
     switch (msg.msg) {
       // When a devtool panel "connects" to a live running client, send
       // it the current state, and start sending it updates whenever
       // the state changes.
       case "room::subscribe": {
-        if (msg.roomId !== roomId) {
-          // Not for this room
+        // Only act on this message if it's intended for this room
+        if (msg.roomId === roomId) {
+          startSyncStream(room);
           break;
         }
-
-        unsubscribeAllSyncers();
-
-        // Sync the room ID instantly, as soon as we know it
-        syncFullState();
-
-        unsubs.push(
-          // When storage initializes, send the update
-          room.events.storageDidLoad.subscribeOnce(syncStorage),
-
-          // Any time storage updates, send the new storage root
-          room.events.storage.subscribe(syncStorage),
-
-          // Any time "me" or "others" updates, send the new values accordingly
-          room.events.me.subscribe(syncMe),
-          room.events.others.subscribe(syncOthers)
-        );
-
-        break;
       }
 
       // TODO: Implement this message from the dev panel, when it closes
@@ -190,8 +203,10 @@ export function unlinkDevtools(roomId: string): void {
     return;
   }
 
-  // XXX TODO Unsubscribe runtime stuff here!
+  // Immediately stop the sync stream of room updates to the dev panel
+  stopSyncStream(roomId);
 
+  // Inform dev panel that this room is no longer available
   sendToPanel({
     msg: "room::unavailable",
     roomId,

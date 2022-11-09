@@ -65,18 +65,7 @@ export function RoomMirrorProvider(props: Props) {
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
         case "room::available": {
-          setCtx((ctx) => {
-            const currRoom = ctx.allRooms.get(msg.roomId) ?? ({} as RoomMirror);
-            const allRooms = new Map(ctx.allRooms);
-            allRooms.set(msg.roomId, {
-              ...currRoom,
-              roomId: msg.roomId,
-            });
-            return {
-              currentRoomId: ctx.currentRoomId ?? msg.roomId,
-              allRooms,
-            };
-          });
+          sendMessageToClient({ msg: "room::subscribe", roomId: msg.roomId });
           break;
         }
 

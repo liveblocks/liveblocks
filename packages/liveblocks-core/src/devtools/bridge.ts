@@ -35,12 +35,25 @@ export function sendToPanel(
 
   if (!(options?.force || _bridgeActive)) {
     // eslint-disable-next-line rulesdir/console-must-be-fancy
-    console.log("[devtools] message NOT sent!", fullMsg.msg, fullMsg);
+    console.log(
+      "%c[client → panel] %c%s",
+      "color: green",
+      "color: green; font-weight: bold",
+      fullMsg.msg,
+      "[🚫 NOT sent!]",
+      fullMsg
+    );
     return;
   }
 
   // eslint-disable-next-line rulesdir/console-must-be-fancy
-  console.log("[devtools]", fullMsg.msg, fullMsg);
+  console.log(
+    "%c[client → panel] %c%s",
+    "color: green",
+    "color: green; font-weight: bold",
+    fullMsg.msg,
+    fullMsg
+  );
   window.postMessage(fullMsg, "*");
 }
 
@@ -53,6 +66,13 @@ if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {
       event.source === window &&
       event.data?.source === "liveblocks-devtools-panel"
     ) {
+      console.log(
+        "%c[client ← panel] %c%s",
+        "color: purple",
+        "color: purple; font-weight: bold",
+        event.data.msg,
+        event.data
+      );
       eventSource.notify(event.data);
     } else {
       // Message not for us
