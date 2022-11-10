@@ -1,6 +1,7 @@
 import cx from "classnames";
 import { createRoot } from "react-dom/client";
 
+import { useRenderCount } from "../hooks/useRenderCount";
 import { Tabs } from "./components/Tabs";
 import {
   RoomMirrorProvider,
@@ -11,6 +12,9 @@ import { Debug } from "./tabs/debug";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
+  const renderCount = useRenderCount();
+
+  // XXX Clean up these accesses
   const allRooms = Array.from(useRoomsContext().allRooms.keys());
   const setCurrentRoomId = useRoomsContext().setCurrentRoomId;
   const roomOrNull = useCurrentRoomOrNull();
@@ -56,6 +60,7 @@ function Panel() {
       ]}
       extra={
         <div className="flex space-x-3">
+          <span className="text-gray-400">[#{renderCount}]</span>
           {allRooms.map((r) => (
             <button
               key={r}
