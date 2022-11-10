@@ -30,7 +30,10 @@ export type PanelToClientMessage =
   | { msg: "connect" } // = special message
 
   /**
-   * XXX Document me
+   * Expresses to the client that the devtool is interested in
+   * receiving the "sync stream" for the room. The sync stream
+   * that follows is an initial "full sync", followed by many
+   * "partial" syncs, happening for every update.
    */
   | { msg: "room::subscribe"; roomId: string };
 

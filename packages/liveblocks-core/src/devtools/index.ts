@@ -78,9 +78,9 @@ function stopSyncStream(roomId: string): void {
 }
 
 /**
- * Starts the stream of sync messages for the given room. A sync stream
- * consists of an initial "full sync" message, followed by many "partial"
- * messages that happen whenever part of the room changes.
+ * Starts, or restarts, the stream of sync messages for the given room. A sync
+ * stream consists of an initial "full sync" message, followed by many
+ * "partial" messages that happen whenever part of the room changes.
  */
 function startSyncStream(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
@@ -154,7 +154,17 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   });
 }
 
-let roomChannels: Record<string, () => void> = {};
+// Currently registered "channel" listeners, waiting for "room::subscribe" or
+// "room::unsubscribe" messages coming from the devtools panel
+const roomChannelListeners = new Map<string, () => void>();
+
+function stopRoomChannelListener(roomId: string) {
+  const listener = roomChannelListeners.get(roomId);
+  roomChannelListeners.delete(roomId);
+  if (listener) {
+    listener();
+  }
+}
 
 /**
  * Publicly announce to the devtool panel that a new room is available.
@@ -171,44 +181,36 @@ export function linkDevtools(
   sendToPanel({ msg: "room::available", roomId });
 
   // Before adding a new listener, stop all active listeners, so there is only
-  // ever going to be one per room "channel"
-  // XXX Abstract / DRY up this "room channel"
-  const listener = roomChannels[roomId];
-  if (listener) {
-    delete roomChannels[roomId];
-    listener();
-  }
+  // ever going to be one listener per room "channel"
+  stopRoomChannelListener(roomId);
+  roomChannelListeners.set(
+    roomId,
 
-  roomChannels[roomId] = onMessageFromPanel.subscribe((msg) => {
-    switch (msg.msg) {
-      // When a devtool panel "connects" to a live running client, send
-      // it the current state, and start sending it updates whenever
-      // the state changes.
-      case "room::subscribe": {
-        // Only act on this message if it's intended for this room
-        if (msg.roomId === roomId) {
-          startSyncStream(room);
+    // Returns the unsubscribe callback, that we store in the
+    // roomChannelListeners registry
+    onMessageFromPanel.subscribe((msg) => {
+      switch (msg.msg) {
+        // Sent by the devtool panel when it wants to receive the sync stream
+        // for a room
+        case "room::subscribe": {
+          // Only act on this message if it's intended for this room
+          if (msg.roomId === roomId) {
+            startSyncStream(room);
+          }
+          break;
         }
-        break;
-      }
 
-      // TODO: Implement this message from the dev panel, when it closes
-      // case "room:unsubscribe": {
-      //   // Only act on this message if it's intended for this room
-      //   if (msg.roomId === roomId) {
-      //     unsubscribeAllSyncers();
-      //   }
-      //   break;
-      // }
-
-      // We don't have to handle "connect" events here, at the individual room level
-      case "connect":
-      default: {
-        // Ignore unknown messages
-        break;
+        // TODO: Implement this message from the dev panel, when it closes
+        // case "room:unsubscribe": {
+        //   // Only act on this message if it's intended for this room
+        //   if (msg.roomId === roomId) {
+        //     unsubscribeAllSyncers();
+        //   }
+        //   break;
+        // }
       }
-    }
-  });
+    })
+  );
 }
 
 export function unlinkDevtools(roomId: string): void {
@@ -217,15 +219,10 @@ export function unlinkDevtools(roomId: string): void {
     return;
   }
 
-  // XXX Abstract / DRY up this "room channel"
-  const listener = roomChannels[roomId];
-  if (listener) {
-    delete roomChannels[roomId];
-    listener();
-  }
-
   // Immediately stop the sync stream of room updates to the dev panel
   stopSyncStream(roomId);
+
+  stopRoomChannelListener(roomId);
 
   // Inform dev panel that this room is no longer available
   sendToPanel({
