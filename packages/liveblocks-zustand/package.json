@@ -18,8 +18,8 @@
     "collaborative"
   ],
   "scripts": {
-    "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
-    "build": "tsup && ../../scripts/build.sh",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always",
