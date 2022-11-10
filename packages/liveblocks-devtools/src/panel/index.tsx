@@ -1,14 +1,18 @@
+import cx from "classnames";
 import { createRoot } from "react-dom/client";
 
 import { Tabs } from "./components/Tabs";
 import {
   RoomMirrorProvider,
   useCurrentRoomOrNull,
+  useRoomsContext,
 } from "./contexts/RoomMirror";
 import { Debug } from "./tabs/debug";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
+  const allRooms = Array.from(useRoomsContext().allRooms.keys());
+  const setCurrentRoomId = useRoomsContext().setCurrentRoomId;
   const roomOrNull = useCurrentRoomOrNull();
   if (roomOrNull === null) {
     return (
@@ -50,7 +54,19 @@ function Panel() {
           content: null,
         },
       ]}
-      extra={room.roomId}
+      extra={
+        <div className="flex space-x-3">
+          {allRooms.map((r) => (
+            <button
+              key={r}
+              className={cx({ "font-bold": room.roomId === r })}
+              onClick={() => setCurrentRoomId(r)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      }
     />
   );
 }

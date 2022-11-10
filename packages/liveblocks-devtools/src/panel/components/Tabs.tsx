@@ -11,7 +11,7 @@ interface Tab {
 
 interface TabsProps extends DefaultTabsProps {
   tabs: Tab[];
-  extra?: string;
+  extra?: React.ReactNode;
 }
 
 export function Tabs({ tabs, className, ...props }: TabsProps) {
@@ -38,7 +38,6 @@ export function Tabs({ tabs, className, ...props }: TabsProps) {
               "relative flex items-center px-3",
               "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:hidden after:h-0.5 after:w-full after:bg-orange-500",
               "dark:after:bg-orange-400",
-              "font-bold",
               "ml-auto"
             )}
           >

@@ -65,7 +65,20 @@ export function RoomMirrorProvider(props: Props) {
         // The client just connected to a room - we don't know anything yet,
         // except the room's ID
         case "room::available": {
-          sendMessageToClient({ msg: "room::subscribe", roomId: msg.roomId });
+          // sendMessageToClient({ msg: "room::subscribe", roomId: msg.roomId });
+          setCtx((ctx) => {
+            const allRooms = new Map(ctx.allRooms);
+            allRooms.set(msg.roomId, { roomId: msg.roomId });
+
+            // If the current room is the one that's disappearing, switch to
+            // a random other room if one is available
+            let currentRoomId = ctx.currentRoomId;
+            if (!allRooms.has(currentRoomId)) {
+              currentRoomId = msg.roomId;
+            }
+
+            return { currentRoomId, allRooms };
+          });
           break;
         }
 
@@ -75,13 +88,15 @@ export function RoomMirrorProvider(props: Props) {
           setCtx((ctx) => {
             const allRooms = new Map(ctx.allRooms);
             allRooms.delete(msg.roomId);
-            return {
-              currentRoomId:
-                ctx.currentRoomId === msg.roomId || allRooms.size === 0
-                  ? null
-                  : ctx.currentRoomId,
-              allRooms,
-            };
+
+            // If the current room is the one that's disappearing, switch to
+            // a random other room if one is available
+            let currentRoomId = ctx.currentRoomId;
+            if (!allRooms.has(currentRoomId)) {
+              currentRoomId = allRooms.keys().next().value ?? null;
+            }
+
+            return { currentRoomId, allRooms };
           });
           break;
         }
@@ -138,11 +153,25 @@ export function RoomMirrorProvider(props: Props) {
   /**
    * Can be used by the panel UI to "switch" between currently visible room.
    */
-  const setCurrentRoomId = useCallback((roomId: string | null): void => {
-    if (roomId === null || ctx.allRooms.has(roomId)) {
-      setCtx((ctx) => ({ ...ctx, currentRoomId: roomId }));
-    }
-  }, []);
+  const setCurrentRoomId = useCallback(
+    (roomId: string | null): void => {
+      if (roomId === null || ctx.allRooms.has(roomId)) {
+        setCtx((ctx) => ({ ...ctx, currentRoomId: roomId }));
+      }
+    },
+    [ctx.currentRoomId, ctx.allRooms]
+  );
+
+  useEffect(() => {
+    sendMessageToClient({ msg: "room::subscribe", roomId: ctx.currentRoomId });
+
+    return () => {
+      sendMessageToClient({
+        msg: "room::unsubscribe",
+        roomId: ctx.currentRoomId,
+      });
+    };
+  }, [ctx.currentRoomId]);
 
   const value = useMemo(
     () => ({ ...ctx, setCurrentRoomId }),
