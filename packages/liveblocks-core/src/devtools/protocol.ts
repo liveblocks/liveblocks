@@ -35,7 +35,15 @@ export type PanelToClientMessage =
    * that follows is an initial "full sync", followed by many
    * "partial" syncs, happening for every update.
    */
-  | { msg: "room::subscribe"; roomId: string };
+  | { msg: "room::subscribe"; roomId: string }
+
+  /**
+   * Expresses to the client that the devtool no longer is
+   * interested in the "sync stream" for a room, for example,
+   * because the devtools panel is closed, or if it switched to
+   * a different room.
+   */
+  | { msg: "room::unsubscribe"; roomId: string };
 
 /**
  * Definition of all messages the Client can send to the Panel.

@@ -200,14 +200,13 @@ export function linkDevtools(
           break;
         }
 
-        // TODO: Implement this message from the dev panel, when it closes
-        // case "room:unsubscribe": {
-        //   // Only act on this message if it's intended for this room
-        //   if (msg.roomId === roomId) {
-        //     unsubscribeAllSyncers();
-        //   }
-        //   break;
-        // }
+        case "room::unsubscribe": {
+          // Only act on this message if it's intended for this room
+          if (msg.roomId === roomId) {
+            stopSyncStream(roomId);
+          }
+          break;
+        }
       }
     })
   );
