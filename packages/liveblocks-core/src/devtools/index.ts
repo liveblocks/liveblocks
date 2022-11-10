@@ -5,7 +5,7 @@ import type { Room } from "../room";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 import type { ImmutableDataObject } from "./protocol";
 
-let _hasBeenSetup = false;
+let _devtoolsSetupHasRun = false;
 
 /**
  * Sends a wake up message to the devtools panel, if any such panel exists, and
@@ -22,12 +22,12 @@ export function setupDevtools(getAllRooms: () => string[]): void {
     return;
   }
 
-  if (_hasBeenSetup) {
+  if (_devtoolsSetupHasRun) {
     // This setup code should only happen the first time
     return;
   }
 
-  _hasBeenSetup = true;
+  _devtoolsSetupHasRun = true;
 
   onMessageFromPanel.subscribe((msg) => {
     switch (msg.msg) {
