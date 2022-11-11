@@ -1,4 +1,6 @@
 import { nn } from "../lib/assert";
+import { nanoid } from "../lib/ArboristNode";
+import type { ArboristNode } from "../lib/ArboristNode";
 import { comparePosition, makePosition } from "../lib/position";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
@@ -1264,6 +1266,17 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     );
 
     this._items[index]._setParentLink(this, shiftedPosition);
+  }
+
+  // XXX Change to StorageNotation output type when that is merged to main?
+  _toStorageNotation(key?: number): ArboristNode {
+    const id = nanoid();
+    return {
+      type: "LiveList",
+      id,
+      name: key ?? this._parentKey ?? "??",
+      children: this._items.map((item, index) => item.toStorageNotation(index)),
+    };
   }
 
   toImmutable(): readonly ToImmutable<TItem>[] {

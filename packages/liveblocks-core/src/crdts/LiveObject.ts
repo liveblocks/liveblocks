@@ -1,5 +1,7 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
+import { nanoid } from "../lib/ArboristNode";
+import type { ArboristNode } from "../lib/ArboristNode";
 import type { JsonObject } from "../lib/Json";
 import { fromEntries } from "../lib/utils";
 import type {
@@ -635,6 +637,26 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     // ._toImmutable() instead. This helper merely exists to help TypeScript
     // infer better return types.
     return super.toImmutable() as ToImmutable<O>;
+  }
+
+  // XXX Change to StorageNotation output type when that is merged to main?
+  _toStorageNotation(key?: number): ArboristNode {
+    const id = nanoid();
+    return {
+      type: "LiveObject",
+      id,
+      name: key ?? this._parentKey ?? "root",
+      children: Array.from(this._map.entries()).map(([key, val]) =>
+        isLiveNode(val)
+          ? val.toStorageNotation()
+          : {
+              type: "Json",
+              id: nanoid(),
+              name: key,
+              data: val,
+            }
+      ),
+    };
   }
 
   /** @internal */

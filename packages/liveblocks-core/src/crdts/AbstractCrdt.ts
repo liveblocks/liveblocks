@@ -1,4 +1,5 @@
 import { assertNever } from "../lib/assert";
+import type { ArboristNode } from "../lib/ArboristNode";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -290,9 +291,16 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * This caches the result of the last .toImmutable() call for any Live node.
+   * This caches the result of the last .toImmutable() call for this Live node.
    */
   private _cachedImmutable?: Immutable;
+
+  /**
+   * @internal
+   *
+   * This caches the result of the last .toStorageNotation() call for this Live node.
+   */
+  private _cachedSN?: ArboristNode;
 
   /**
    * @internal
@@ -302,13 +310,30 @@ export abstract class AbstractCrdt {
    * mutation to the Live node.
    */
   invalidate(): void {
-    if (this._cachedImmutable !== undefined) {
+    if (this._cachedImmutable !== undefined || this._cachedSN !== undefined) {
       this._cachedImmutable = undefined;
+      this._cachedSN = undefined;
 
       if (this.parent.type === "HasParent") {
         this.parent.node.invalidate();
       }
     }
+  }
+
+  /** @internal */
+  abstract _toStorageNotation(key?: number): ArboristNode;
+
+  /**
+   * Return an snapshot of this Live node in "storage notation" of itself, and
+   * all its children.
+   */
+  toStorageNotation(key?: number): ArboristNode {
+    if (this._cachedSN === undefined) {
+      this._cachedSN = this._toStorageNotation(key);
+    }
+
+    // Return cached version
+    return this._cachedSN;
   }
 
   /** @internal */

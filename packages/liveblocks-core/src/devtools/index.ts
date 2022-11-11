@@ -3,7 +3,6 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { Room } from "../room";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
-import type { ImmutableDataObject } from "./protocol";
 
 let _devtoolsSetupHasRun = false;
 
@@ -111,7 +110,7 @@ function partialSyncStorage(
     sendToPanel({
       msg: "room::sync::partial",
       roomId: room.id,
-      storage: root.toImmutable() as ImmutableDataObject,
+      storage: root.toStorageNotation(),
     });
   }
 }
@@ -148,7 +147,7 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
-    storage: (root?.toImmutable() as ImmutableDataObject) ?? null,
+    storage: root?.toStorageNotation() ?? null,
     me,
     others,
   });

@@ -1,20 +1,9 @@
-import type { JsonObject, JsonScalar } from "../lib/Json";
+import type { JsonObject, Json } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 
-/**
- * A bit like ToImmutable<T>, but without a specific data type to convert, so
- * more of a generic/opaque version. Inside the DevTool, we can make no
- * assumptions about the actual data in storage or presence, since it can be
- * anything and depends on the app that’s being inspected.
- */
-type ImmutableData =
-  | JsonScalar
-  | readonly ImmutableData[]
-  | ImmutableDataObject
-  | ReadonlyMap<string, ImmutableData>;
-
-export type ImmutableDataObject = { readonly [key: string]: ImmutableData };
+// XXX Replace by actual StorageNotation type when the change lands
+type StorageNotation = Json;
 
 /**
  * Definition of all messages the Panel can send to the Client.
@@ -77,7 +66,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::full";
       roomId: string;
-      storage: ImmutableDataObject | null;
+      storage: StorageNotation | null;
       me: User<JsonObject, BaseUserMeta> | null;
       others: readonly User<JsonObject, BaseUserMeta>[] | null;
     }
@@ -88,7 +77,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::partial";
       roomId: string;
-      storage?: ImmutableDataObject;
+      storage?: StorageNotation;
       me?: User<JsonObject, BaseUserMeta>;
       others?: readonly User<JsonObject, BaseUserMeta>[];
     };

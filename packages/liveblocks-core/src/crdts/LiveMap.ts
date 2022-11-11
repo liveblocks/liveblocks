@@ -1,5 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
+import { nanoid } from "../lib/ArboristNode";
+import type { ArboristNode } from "../lib/ArboristNode";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
@@ -446,6 +448,19 @@ export class LiveMap<
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }
+  }
+
+  // XXX Change to StorageNotation output type when that is merged to main?
+  _toStorageNotation(key?: number): ArboristNode {
+    const id = nanoid();
+    return {
+      type: "LiveMap",
+      id,
+      name: key ?? this._parentKey ?? "??",
+      children: Array.from(this._map.values()).map((val) =>
+        val.toStorageNotation()
+      ),
+    };
   }
 
   toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {

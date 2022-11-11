@@ -1,7 +1,7 @@
 import type {
   BaseUserMeta,
   FullClientToPanelMessage,
-  ImmutableDataObject,
+  Json,
   JsonObject,
   User,
 } from "@liveblocks/core";
@@ -18,9 +18,12 @@ import {
 
 import { onMessageFromClient, sendMessageToClient } from "../port";
 
+// XXX Replace by actual StorageNotation type when the change lands
+type StorageNotation = Json;
+
 type RoomMirror = {
   readonly roomId: string;
-  readonly storage?: ImmutableDataObject;
+  readonly storage?: StorageNotation;
   readonly me?: User<JsonObject, BaseUserMeta>;
   readonly others?: readonly User<JsonObject, BaseUserMeta>[];
 

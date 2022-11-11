@@ -29,7 +29,6 @@ export type {
   ClientToPanelMessage,
   FullClientToPanelMessage,
   FullPanelToClientMessage,
-  ImmutableDataObject,
   PanelToClientMessage,
 } from "./devtools/protocol";
 export {
