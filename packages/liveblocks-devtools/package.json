@@ -10,7 +10,7 @@
     "dev:firefox": "plasmo dev --target=firefox-mv2",
     "build": "tsc && plasmo build",
     "build:firefox": "tsc && plasmo build --target=firefox-mv2",
-    "format": "eslint --fix src/ && prettier --write src/"
+    "format": "eslint --fix src/; prettier --write src/"
   },
   "dependencies": {
     "@liveblocks/core": "0.19.0",

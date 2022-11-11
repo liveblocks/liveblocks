@@ -23,8 +23,8 @@
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
     "start": "tsup --watch",
-    "format": "eslint --fix src/ && prettier --write src/",
-    "lint": "eslint src/ && npm run check:exports",
+    "format": "eslint --fix src/; prettier --write src/",
+    "lint": "eslint src/; npm run check:exports",
     "check:exports": "tsc scripts/check-factory-exports.ts && node scripts/check-factory-exports.js",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"

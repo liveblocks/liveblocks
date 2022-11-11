@@ -21,7 +21,7 @@
   "scripts": {
     "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
     "build": "tsup && ../../scripts/build.sh",
-    "format": "eslint --fix src/ && prettier --write src/",
+    "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always --passWithNoTests",
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
