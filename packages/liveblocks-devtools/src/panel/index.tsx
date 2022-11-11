@@ -9,6 +9,8 @@ import {
   useRoomsContext,
 } from "./contexts/RoomMirror";
 import { Debug } from "./tabs/debug";
+import { Presence } from "./tabs/presence";
+import { Storage } from "./tabs/storage";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
@@ -27,52 +29,54 @@ function Panel() {
   }
 
   const room = roomOrNull;
+
   return (
-    <Tabs
-      className="h-full"
-      defaultValue="debug"
-      tabs={[
-        {
-          value: "debug",
-          title: "Debug",
-          content: <Debug />,
-        },
-        {
-          value: "storage",
-          title: "Storage",
-          content: null,
-        },
-        {
-          value: "presence",
-          title: "Presence",
-          content: null,
-        },
-        {
-          value: "history",
-          title: "History",
-          content: null,
-        },
-        {
-          value: "events",
-          title: "Events",
-          content: null,
-        },
-      ]}
-      extra={
-        <div className="flex space-x-3">
-          <span className="text-gray-400">[#{renderCount}]</span>
-          {allRooms.map((r) => (
-            <button
-              key={r}
-              className={cx({ "font-bold": room.roomId === r })}
-              onClick={() => setCurrentRoomId(r)}
-            >
-              {r}
-            </button>
-          ))}
-        </div>
-      }
-    />
+    <div className="grid h-full grid-rows-3 sm:grid-cols-3 sm:grid-rows-none">
+      <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
+        <Tabs
+          className="h-full"
+          defaultValue="debug"
+          tabs={[
+            {
+              value: "storage",
+              title: "Storage",
+              content: <Storage />,
+            },
+            {
+              value: "debug",
+              title: "Debug",
+              content: <Debug />,
+            },
+          ]}
+        >
+          <div className="flex space-x-3">
+            <span className="text-gray-400">[#{renderCount}]</span>
+            {allRooms.map((r) => (
+              <button
+                key={r}
+                className={cx({ "font-bold": room.roomId === r })}
+                onClick={() => setCurrentRoomId(r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
+        </Tabs>
+      </div>
+      <div className="row-span-1 sm:col-span-1 sm:row-auto">
+        <Tabs
+          className="h-full"
+          defaultValue="presence"
+          tabs={[
+            {
+              value: "presence",
+              title: "Presence",
+              content: <Presence />,
+            },
+          ]}
+        />
+      </div>
+    </div>
   );
 }
 

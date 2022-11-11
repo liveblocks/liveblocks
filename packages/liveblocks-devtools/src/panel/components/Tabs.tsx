@@ -11,10 +11,9 @@ interface Tab {
 
 interface TabsProps extends DefaultTabsProps {
   tabs: Tab[];
-  extra?: React.ReactNode;
 }
 
-export function Tabs({ tabs, className, ...props }: TabsProps) {
+export function Tabs({ tabs, className, children, ...props }: TabsProps) {
   return (
     <Root className={cx(className, "flex flex-col")} {...props}>
       <List className="flex h-7 flex-none overflow-x-auto border-b border-gray-200 bg-gray-100 px-2 text-gray-600 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -32,7 +31,7 @@ export function Tabs({ tabs, className, ...props }: TabsProps) {
             {tab.title}
           </Trigger>
         ))}
-        {props.extra ? (
+        {children ? (
           <div
             className={cx(
               "relative flex items-center px-3",
@@ -41,7 +40,7 @@ export function Tabs({ tabs, className, ...props }: TabsProps) {
               "ml-auto"
             )}
           >
-            {props.extra}
+            {children}
           </div>
         ) : null}
       </List>
