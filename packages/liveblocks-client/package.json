@@ -3,7 +3,6 @@
   "version": "0.19.1-test1",
   "description": "A client that lets you interact with Liveblocks servers.",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",

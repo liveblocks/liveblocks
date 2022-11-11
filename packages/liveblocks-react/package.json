@@ -3,7 +3,6 @@
   "version": "0.19.1-test1",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
