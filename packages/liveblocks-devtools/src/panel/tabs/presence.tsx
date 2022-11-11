@@ -1,36 +1,19 @@
 import { Tree } from "react-arborist";
-
 import { useRenderCount } from "../../hooks/useRenderCount";
 import { useCurrentRoom } from "../contexts/RoomMirror";
 
 export function Me() {
   const renderCount = useRenderCount();
   const room = useCurrentRoom();
-  const me = room.me;
-  const meTreeData = me
-    ? [
-        {
-          type: "User",
-          id: me.connectionId,
-          name: "Me",
-          info: me.info,
-          children: Object.entries(me.presence).map(([key, value]) => ({
-            type: "Json",
-            id: `${me.connectionId}-${key}`,
-            name: key,
-            data: value,
-          })),
-        },
-      ]
-    : undefined;
   return (
     <div className="relative">
       <span className="absolute right-0 top-0 text-gray-400">
         [#{renderCount}]
       </span>
       <div>
-        {meTreeData !== undefined ? (
-          <Tree height={170} width={360} data={meTreeData as any}>
+        {room.me !== undefined ? (
+          // XXX Make type safe!
+          <Tree height={170} width={360} data={[room.me] as any}>
             {TreeNode as any}
           </Tree>
         ) : null}
@@ -41,12 +24,18 @@ export function Me() {
 
 export function Others() {
   const renderCount = useRenderCount();
+  const room = useCurrentRoom();
   return (
     <div className="relative">
       <span className="absolute right-0 top-0 text-gray-400">
         [#{renderCount}]
       </span>
-      <div>Others (TODO)</div>
+      <div>
+        {/* XXX Make type safe! */}
+        <Tree height={500} width={360} data={room.others as any}>
+          {TreeNode as any}
+        </Tree>
+      </div>
     </div>
   );
 }

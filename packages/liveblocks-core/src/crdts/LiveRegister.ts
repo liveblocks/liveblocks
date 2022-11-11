@@ -1,8 +1,8 @@
 import type { LiveNode } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
-import { nanoid } from "../lib/ArboristNode";
-import type { ArboristNode } from "../lib/ArboristNode";
+import { nanoid } from "../lib/nanoid";
+import type { StorageTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateRegisterOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
@@ -94,12 +94,12 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
 
   /** @internal */
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageNotation(key?: number): ArboristNode {
+  _toStorageTreeNode(key: string | number): StorageTreeNode {
     return {
       type: "Json",
       id: nanoid(),
-      name: key ?? this._parentKey ?? "??",
-      data: this._data /* json: this._data  */,
+      name: key,
+      data: this._data,
     };
   }
 

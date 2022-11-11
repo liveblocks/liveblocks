@@ -1,9 +1,7 @@
 import type {
-  BaseUserMeta,
   FullClientToPanelMessage,
-  Json,
-  JsonObject,
-  User,
+  StorageTreeNode,
+  UserTreeNode,
 } from "@liveblocks/core";
 import { assertNever } from "@liveblocks/core";
 import type { ReactNode } from "react";
@@ -18,14 +16,11 @@ import {
 
 import { onMessageFromClient, sendMessageToClient } from "../port";
 
-// XXX Replace by actual StorageNotation type when the change lands
-type StorageNotation = Json;
-
 type RoomMirror = {
   readonly roomId: string;
-  readonly storage?: StorageNotation;
-  readonly me?: User<JsonObject, BaseUserMeta>;
-  readonly others?: readonly User<JsonObject, BaseUserMeta>[];
+  readonly storage?: StorageTreeNode[];
+  readonly me?: UserTreeNode;
+  readonly others?: UserTreeNode[];
 
   // onMessage
   // sendMessage

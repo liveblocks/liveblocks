@@ -29,6 +29,7 @@ import {
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
+import type { UserTreeNode } from "./protocol/DevtoolsTreeNode";
 import type { Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
 import type {
@@ -47,6 +48,7 @@ import type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { ImmutableRef } from "./refs/ImmutableRef";
 import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
@@ -372,6 +374,9 @@ export type Room<
    */
   getSelf(): User<TPresence, TUserMeta> | null;
 
+  // XXX Don't use this name as the final API. Find a better/clearer name!
+  getSelfAsTreeNode(): UserTreeNode | null;
+
   /**
    * Gets the presence of the current user.
    *
@@ -387,6 +392,9 @@ export type Room<
    * const others = room.getOthers();
    */
   getOthers(): Others<TPresence, TUserMeta>;
+
+  // XXX Don't use this name as the final API. Find a better/clearer name!
+  getOthersAsTreeNode(): UserTreeNode[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -582,10 +590,12 @@ type Machine<
   isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
   getSelf(): User<TPresence, TUserMeta> | null;
+  getSelfAsTreeNode(): UserTreeNode | null;
 
   // Presence
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
+  getOthersAsTreeNode(): UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -651,6 +661,7 @@ type State<
   readonly connection: ValueRef<Connection>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
+  readonly othersAsTreeNode: ImmutableRef<UserTreeNode[]>;
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
@@ -755,6 +766,25 @@ type Config = {
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
 };
+
+// XXX Give this API a better name/place!
+function userToTreeNode(
+  key: number | string,
+  user: User<JsonObject, BaseUserMeta>
+): UserTreeNode {
+  return {
+    type: "User",
+    id: `${user.connectionId}`,
+    name: key,
+    info: user.info ?? null,
+    children: Object.entries(user.presence).map(([key, value]) => ({
+      type: "Json",
+      id: `${user.connectionId}-${key}`,
+      name: key,
+      data: value ?? null,
+    })),
+  };
+}
 
 function makeStateMachine<
   TPresence extends JsonObject,
@@ -900,6 +930,11 @@ function makeStateMachine<
             isReadOnly: conn.isReadOnly,
           }
         : null
+  );
+
+  const selfAsTreeNode = new DerivedRef(
+    self as ImmutableRef<User<TPresence, TUserMeta> | null>,
+    (me): UserTreeNode | null => (me !== null ? userToTreeNode("Me", me) : null)
   );
 
   function createOrUpdateRootFromMessage(
@@ -1922,6 +1957,10 @@ function makeStateMachine<
     return state.others.current;
   }
 
+  function getOthersAsTreeNode(): UserTreeNode[] {
+    return state.othersAsTreeNode.current as UserTreeNode[];
+  }
+
   function broadcastEvent(
     event: TRoomEvent,
     options: BroadcastOptions = {
@@ -2181,10 +2220,12 @@ function makeStateMachine<
     getConnectionState,
     isSelfAware: () => isConnectionSelfAware(state.connection.current),
     getSelf: () => self.current,
+    getSelfAsTreeNode: () => selfAsTreeNode.current,
 
     // Presence
     getPresence,
     getOthers,
+    getOthersAsTreeNode,
   };
 }
 
@@ -2198,6 +2239,9 @@ function defaultState<
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
+  const othersAsTreeNode = new DerivedRef(others, (others) =>
+    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  );
 
   const connection = new ValueRef<Connection>({ state: "closed" });
 
@@ -2229,6 +2273,7 @@ function defaultState<
     connection,
     me: new MeRef(initialPresence),
     others,
+    othersAsTreeNode,
 
     initialStorage,
     idFactory: null,
@@ -2295,6 +2340,7 @@ export function createRoom<
     getConnectionState: machine.getConnectionState,
     isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
+    getSelfAsTreeNode: machine.getSelfAsTreeNode,
 
     subscribe: machine.subscribe,
 
@@ -2304,6 +2350,7 @@ export function createRoom<
     getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
     getOthers: machine.getOthers,
+    getOthersAsTreeNode: machine.getOthersAsTreeNode,
     broadcastEvent: machine.broadcastEvent,
 
     //////////////

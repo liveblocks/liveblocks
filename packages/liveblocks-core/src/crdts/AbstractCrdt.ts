@@ -1,5 +1,5 @@
 import { assertNever } from "../lib/assert";
-import type { ArboristNode } from "../lib/ArboristNode";
+import type { StorageTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -300,7 +300,7 @@ export abstract class AbstractCrdt {
    *
    * This caches the result of the last .toStorageNotation() call for this Live node.
    */
-  private _cachedSN?: ArboristNode;
+  private _cachedSN?: StorageTreeNode;
 
   /**
    * @internal
@@ -321,15 +321,15 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toStorageNotation(key?: number): ArboristNode;
+  abstract _toStorageTreeNode(key: string | number): StorageTreeNode;
 
   /**
    * Return an snapshot of this Live node in "storage notation" of itself, and
    * all its children.
    */
-  toStorageNotation(key?: number): ArboristNode {
+  toStorageTreeNode(key: string | number): StorageTreeNode {
     if (this._cachedSN === undefined) {
-      this._cachedSN = this._toStorageNotation(key);
+      this._cachedSN = this._toStorageTreeNode(key);
     }
 
     // Return cached version

@@ -1,9 +1,7 @@
-import type { JsonObject, Json } from "../lib/Json";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { User } from "../types/User";
-
-// XXX Replace by actual StorageNotation type when the change lands
-type StorageNotation = Json;
+import type {
+  StorageTreeNode,
+  UserTreeNode,
+} from "../protocol/DevtoolsTreeNode";
 
 /**
  * Definition of all messages the Panel can send to the Client.
@@ -66,9 +64,9 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::full";
       roomId: string;
-      storage: StorageNotation | null;
-      me: User<JsonObject, BaseUserMeta> | null;
-      others: readonly User<JsonObject, BaseUserMeta>[] | null;
+      storage: StorageTreeNode[] | null;
+      me: UserTreeNode | null;
+      others: UserTreeNode[];
     }
 
   /**
@@ -77,9 +75,9 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::partial";
       roomId: string;
-      storage?: StorageNotation;
-      me?: User<JsonObject, BaseUserMeta>;
-      others?: readonly User<JsonObject, BaseUserMeta>[];
+      storage?: StorageTreeNode[];
+      me?: UserTreeNode;
+      others?: UserTreeNode[];
     };
 
 // ----------------------------------------------------------------------------

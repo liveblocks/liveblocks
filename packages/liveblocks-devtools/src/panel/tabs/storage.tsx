@@ -12,7 +12,8 @@ export function Storage() {
         [#{renderCount}]
       </span>
       {room.storage !== undefined ? (
-        <Tree width={600} data={(room.storage as any).children}>
+        // XXX Make type safe!
+        <Tree width={600} data={room.storage as any}>
           {TreeNode as any}
         </Tree>
       ) : null}

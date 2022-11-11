@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
-import { nanoid } from "../lib/ArboristNode";
-import type { ArboristNode } from "../lib/ArboristNode";
+import { nanoid } from "../lib/nanoid";
 import { comparePosition, makePosition } from "../lib/position";
+import type { LiveStructureTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
@@ -1269,13 +1269,13 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageNotation(key?: number): ArboristNode {
+  _toStorageTreeNode(key: string | number): LiveStructureTreeNode {
     const id = nanoid();
     return {
       type: "LiveList",
       id,
-      name: key ?? this._parentKey ?? "??",
-      children: this._items.map((item, index) => item.toStorageNotation(index)),
+      name: key,
+      children: this._items.map((item, index) => item.toStorageTreeNode(index)),
     };
   }
 

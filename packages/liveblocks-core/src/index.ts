@@ -71,6 +71,10 @@ export type {
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
+  StorageTreeNode,
+  UserTreeNode,
+} from "./protocol/DevtoolsTreeNode";
+export type {
   CreateChildOp,
   CreateListOp,
   CreateMapOp,

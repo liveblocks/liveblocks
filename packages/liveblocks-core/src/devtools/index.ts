@@ -110,13 +110,13 @@ function partialSyncStorage(
     sendToPanel({
       msg: "room::sync::partial",
       roomId: room.id,
-      storage: root.toStorageNotation(),
+      storage: root.toStorageTreeNode("root").children,
     });
   }
 }
 
 function partialSyncMe(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
-  const me = room.getSelf();
+  const me = room.getSelfAsTreeNode();
   if (me) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -130,7 +130,7 @@ function partialSyncOthers(
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ) {
   // Any time others updates, send the new storage root to the dev panel
-  const others = room.getOthers();
+  const others = room.getOthersAsTreeNode();
   if (others) {
     sendToPanel({
       msg: "room::sync::partial",
@@ -142,12 +142,12 @@ function partialSyncOthers(
 
 function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   const root = room.getStorageSnapshot();
-  const me = room.getSelf();
-  const others = room.getOthers();
+  const me = room.getSelfAsTreeNode();
+  const others = room.getOthersAsTreeNode();
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
-    storage: root?.toStorageNotation() ?? null,
+    storage: root?.toStorageTreeNode("root").children ?? null,
     me,
     others,
   });
