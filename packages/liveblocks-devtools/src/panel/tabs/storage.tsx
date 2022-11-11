@@ -20,6 +20,7 @@ export function Storage() {
   );
 }
 
+// XXX Factor out as helper method
 function truncate(s: string): string {
   return s.length > 24 ? s.substring(0, 24) + "..." : s;
 }
