@@ -35,7 +35,7 @@ function Panel() {
       <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
         <Tabs
           className="h-full"
-          defaultValue="debug"
+          defaultValue="storage"
           tabs={[
             {
               value: "storage",
