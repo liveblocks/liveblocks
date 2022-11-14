@@ -1,5 +1,3 @@
-import type { TreeApi, NodeRendererProps } from "react-arborist";
-import { Tree as ArboristTree } from "react-arborist";
 import type {
   JsonTreeNode,
   LiveListTreeNode,
@@ -10,6 +8,8 @@ import type {
   UserTreeNode,
 } from "@liveblocks/core";
 import { assertNever } from "@liveblocks/core";
+import type { NodeRendererProps, TreeApi } from "react-arborist";
+import { Tree as ArboristTree } from "react-arborist";
 
 // XXX Factor out as helper method
 // function truncate(s: string): string {

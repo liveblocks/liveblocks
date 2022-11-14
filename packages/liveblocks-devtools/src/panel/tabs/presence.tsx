@@ -1,5 +1,5 @@
-import { Tree } from "../components/TreeNode";
 import { useRenderCount } from "../../hooks/useRenderCount";
+import { Tree } from "../components/TreeView";
 import { useCurrentRoom } from "../contexts/RoomMirror";
 
 export function Me() {
