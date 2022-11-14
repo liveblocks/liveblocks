@@ -8,8 +8,8 @@
   "scripts": {
     "dev": "plasmo dev",
     "dev:firefox": "plasmo dev --target=firefox-mv2",
-    "build": "tsc && plasmo build",
-    "build:firefox": "tsc && plasmo build --target=firefox-mv2",
+    "build": "tsc && plasmo build && rm -rf dist && mv build dist",
+    "build:firefox": "tsc && plasmo build --target=firefox-mv2 && rm -rf dist && mv build dist",
     "format": "eslint --fix src/; prettier --write src/"
   },
   "dependencies": {

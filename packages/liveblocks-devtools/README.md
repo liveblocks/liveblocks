@@ -4,7 +4,7 @@
    build the browser extension for Chrome
 1. Navigate to chrome://extensions
 1. Enable "Developer mode"
-1. Click "Load unpacked" and select the outputted `build/chrome-mv3-prod`
+1. Click "Load unpacked" and select the outputted `dist/chrome-mv3-prod`
    directory (which contains the `manifest.json` file)
 
 # Testing the browser extension on an app
