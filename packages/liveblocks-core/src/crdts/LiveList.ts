@@ -1269,12 +1269,12 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageTreeNode(key: string | number): LiveListTreeNode {
+  _toTreeNode(key: string | number): LiveListTreeNode {
     return {
       type: "LiveList",
       id: this._id ?? nanoid(),
       key,
-      items: this._items.map((item, index) => item.toStorageTreeNode(index)),
+      items: this._items.map((item, index) => item.toTreeNode(index)),
     };
   }
 

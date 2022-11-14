@@ -110,7 +110,7 @@ function partialSyncStorage(
     sendToPanel({
       msg: "room::sync::partial",
       roomId: room.id,
-      storage: root.toStorageTreeNode("root").fields,
+      storage: root.toTreeNode("root").fields,
     });
   }
 }
@@ -147,7 +147,7 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
-    storage: root?.toStorageTreeNode("root").fields ?? null,
+    storage: root?.toTreeNode("root").fields ?? null,
     me,
     others,
   });

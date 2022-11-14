@@ -298,9 +298,9 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * This caches the result of the last .toStorageNotation() call for this Live node.
+   * This caches the result of the last .toTreeNode() call for this Live node.
    */
-  private _cachedSN?: StorageTreeNode;
+  private _cachedTreeNode?: StorageTreeNode;
 
   /**
    * @internal
@@ -310,9 +310,12 @@ export abstract class AbstractCrdt {
    * mutation to the Live node.
    */
   invalidate(): void {
-    if (this._cachedImmutable !== undefined || this._cachedSN !== undefined) {
+    if (
+      this._cachedImmutable !== undefined ||
+      this._cachedTreeNode !== undefined
+    ) {
       this._cachedImmutable = undefined;
-      this._cachedSN = undefined;
+      this._cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
         this.parent.node.invalidate();
@@ -321,19 +324,19 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toStorageTreeNode(key: string | number): StorageTreeNode;
+  abstract _toTreeNode(key: string | number): StorageTreeNode;
 
   /**
    * Return an snapshot of this Live node in "storage notation" of itself, and
    * all its children.
    */
-  toStorageTreeNode(key: string | number): StorageTreeNode {
-    if (this._cachedSN === undefined) {
-      this._cachedSN = this._toStorageTreeNode(key);
+  toTreeNode(key: string | number): StorageTreeNode {
+    if (this._cachedTreeNode === undefined) {
+      this._cachedTreeNode = this._toTreeNode(key);
     }
 
     // Return cached version
-    return this._cachedSN;
+    return this._cachedTreeNode;
   }
 
   /** @internal */

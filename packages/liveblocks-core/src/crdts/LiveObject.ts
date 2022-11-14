@@ -639,22 +639,22 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return super.toImmutable() as ToImmutable<O>;
   }
 
-  toStorageTreeNode(key: string | number): LiveObjectTreeNode {
+  toTreeNode(key: string | number): LiveObjectTreeNode {
     // Don't implement actual toStorageNotation logic in here. Implement it in
     // ._toStorageNotation() instead. This helper merely exists to help
     // TypeScript infer better return types.
-    return super.toStorageTreeNode(key) as LiveObjectTreeNode;
+    return super.toTreeNode(key) as LiveObjectTreeNode;
   }
 
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageTreeNode(key: string | number): LiveObjectTreeNode {
+  _toTreeNode(key: string | number): LiveObjectTreeNode {
     return {
       type: "LiveObject",
       id: this._id ?? nanoid(),
       key,
       fields: Array.from(this._map.entries()).map(([key, value]) =>
         isLiveNode(value)
-          ? value.toStorageTreeNode(key)
+          ? value.toTreeNode(key)
           : { type: "Json", id: nanoid(), key, value }
       ),
     };
