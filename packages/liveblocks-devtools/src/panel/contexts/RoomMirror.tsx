@@ -73,7 +73,7 @@ export function RoomMirrorProvider(props: Props) {
             // If the current room is the one that's disappearing, switch to
             // a random other room if one is available
             let currentRoomId = ctx.currentRoomId;
-            if (!allRooms.has(currentRoomId)) {
+            if (currentRoomId === null || !allRooms.has(currentRoomId)) {
               currentRoomId = msg.roomId;
             }
 
@@ -92,7 +92,7 @@ export function RoomMirrorProvider(props: Props) {
             // If the current room is the one that's disappearing, switch to
             // a random other room if one is available
             let currentRoomId = ctx.currentRoomId;
-            if (!allRooms.has(currentRoomId)) {
+            if (currentRoomId === null || !allRooms.has(currentRoomId)) {
               currentRoomId = allRooms.keys().next().value ?? null;
             }
 
@@ -163,13 +163,13 @@ export function RoomMirrorProvider(props: Props) {
   );
 
   useEffect(() => {
-    sendMessageToClient({ msg: "room::subscribe", roomId: ctx.currentRoomId });
-
+    const roomId = ctx.currentRoomId;
+    if (!roomId) {
+      return;
+    }
+    sendMessageToClient({ msg: "room::subscribe", roomId });
     return () => {
-      sendMessageToClient({
-        msg: "room::unsubscribe",
-        roomId: ctx.currentRoomId,
-      });
+      sendMessageToClient({ msg: "room::unsubscribe", roomId });
     };
   }, [ctx.currentRoomId]);
 
@@ -200,7 +200,7 @@ export function useCurrentRoomOrNull(): RoomMirror | null {
   if (ctx.currentRoomId === null) {
     return null;
   } else {
-    return ctx.allRooms.get(ctx.currentRoomId);
+    return ctx.allRooms.get(ctx.currentRoomId) ?? null;
   }
 }
 

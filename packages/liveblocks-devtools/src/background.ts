@@ -48,8 +48,8 @@ browser.runtime.onConnect.addListener((port) => {
  */
 browser.runtime.onMessage.addListener(
   (message: FullClientToPanelMessage, sender) => {
-    if (sender.tab) {
-      const tabId = sender.tab.id;
+    const tabId = sender.tab?.id;
+    if (tabId) {
       portsByTabId.get(tabId)?.postMessage(message);
     }
   }

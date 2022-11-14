@@ -7,16 +7,14 @@ import { useCurrentRoom } from "../contexts/RoomMirror";
 export function Me() {
   const renderCount = useRenderCount();
   const room = useCurrentRoom();
-  const me = useMemo(() => [room.me], [room.me]);
+  const me = useMemo(() => (room.me ? [room.me] : null), [room.me]);
   return (
     <div className="relative">
       <span className="absolute right-0 top-0 text-gray-400">
         [#{renderCount}]
       </span>
       <div>
-        {room.me !== undefined ? (
-          <Tree height={170} width={360} data={me} />
-        ) : null}
+        {me !== null ? <Tree height={170} width={360} data={me} /> : null}
       </div>
     </div>
   );

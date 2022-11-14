@@ -159,11 +159,23 @@ function TreeNodeRenderer(
   return props.node.data.type === "User" ? (
     <UserNodeRenderer {...(props as NodeRendererProps<UserTreeNode>)} />
   ) : props.node.data.type === "LiveMap" ? (
-    <LiveNodeRenderer {...(props as NodeRendererProps<LiveMapTreeNode>)} />
+    <LiveNodeRenderer
+      {...(props as NodeRendererProps<
+        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
+      >)}
+    />
   ) : props.node.data.type === "LiveList" ? (
-    <LiveNodeRenderer {...(props as NodeRendererProps<LiveListTreeNode>)} />
+    <LiveNodeRenderer
+      {...(props as NodeRendererProps<
+        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
+      >)}
+    />
   ) : props.node.data.type === "LiveObject" ? (
-    <LiveNodeRenderer {...(props as NodeRendererProps<LiveObjectTreeNode>)} />
+    <LiveNodeRenderer
+      {...(props as NodeRendererProps<
+        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
+      >)}
+    />
   ) : (
     <JsonNodeRenderer {...(props as NodeRendererProps<JsonTreeNode>)} />
   );
@@ -184,7 +196,8 @@ function childrenAccessor(node: TreeNode): TreeNode[] {
       return node.presence;
 
     case "Json":
-      return null;
+      // XXX Should we use `[]` here instead of `null`?
+      return null as unknown as TreeNode[];
 
     default:
       return assertNever(node, "Unhandled node type");
@@ -197,9 +210,8 @@ export function Tree(
   props: TreeProps<StorageTreeNode | UserTreeNode> &
     React.RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>
 ): React.ReactElement {
-  const { children, ...rest } = props;
   return (
-    <ArboristTree childrenAccessor={childrenAccessor} {...rest}>
+    <ArboristTree childrenAccessor={childrenAccessor} {...props}>
       {TreeNodeRenderer}
     </ArboristTree>
   );
