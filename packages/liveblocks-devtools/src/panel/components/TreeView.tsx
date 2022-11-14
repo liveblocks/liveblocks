@@ -14,24 +14,96 @@ function assertNever(_value: never, errmsg: string): never {
   throw new Error(errmsg);
 }
 
-function truncate(s: string): string {
-  return s.length > 24 ? s.substring(0, 24) + "..." : s;
+const MAX_LEN = 64;
+function truncate(s: string, len: number = MAX_LEN): string {
+  return s.length > len + 3 ? s.substring(0, len) + "..." : s;
+}
+
+function icon(node: StorageTreeNode | UserTreeNode): string {
+  switch (node.type) {
+    case "LiveObject":
+      return "📦";
+
+    case "LiveList":
+      return "📜";
+
+    case "LiveMap":
+      return "🗺️";
+
+    case "User":
+      return "🤓";
+
+    case "Json":
+      return "🔑";
+
+    default:
+      return assertNever(node, "Unhandled node type in icon()");
+  }
+}
+
+/**
+ * Function that helps construct a "preview" string for a collapsed node.
+ */
+function summarize(node: StorageTreeNode | UserTreeNode): string {
+  switch (node.type) {
+    case "LiveObject":
+      return node.fields
+        .map(
+          (f) =>
+            `${f.key}=${String(
+              f.type === "Json" &&
+                (f.value === null || typeof f.value !== "object")
+                ? f.value
+                : "…"
+            )}`
+        )
+        .join(", ");
+
+    case "LiveList":
+      return `${node.items.length} items`;
+
+    case "LiveMap":
+      return `${node.entries.length} entries`;
+
+    case "User":
+      return node.presence
+        .map((p) => `${p.key}=${JSON.stringify(p.value)}`)
+        .join(", ");
+
+    case "Json":
+      return JSON.stringify(node.value);
+
+    default:
+      return assertNever(node, "Unhandled node type in summarize()");
+  }
 }
 
 function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   return (
     <div
+      className="space-x-2"
       style={style}
       // ref={dragHandle}
+      onClick={() => node.toggle()}
     >
+      <span>{icon(node.data)}</span>
       <span className="space-x-3">
-        {"🙎‍♂️"} {node.data.key} (connection #{node.data.id})
+        <span>{node.data.key}</span>
+
+        {node.data.info ? (
+          <span className="text-gray-500">
+            {JSON.stringify(node.data.info, null, 2)}
+          </span>
+        ) : null}
+
+        {node.isOpen ? (
+          <span>(conn #{node.data.id})</span>
+        ) : (
+          <span className="text-gray-500">
+            {truncate(summarize(node.data), 42)}
+          </span>
+        )}
       </span>
-      {node.data.info ? (
-        <div className="text-gray-500">
-          {JSON.stringify(node.data.info, null, 2)}
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -40,14 +112,6 @@ function LiveNodeRenderer({
   node,
   style,
 }: NodeRendererProps<LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode>) {
-  const icon =
-    node.data.type === "LiveMap"
-      ? "🗺️"
-      : node.data.type === "LiveObject"
-      ? "📦"
-      : node.data.type === "LiveList"
-      ? "📜"
-      : "🔑";
   return (
     <div
       className="space-x-2"
@@ -55,27 +119,35 @@ function LiveNodeRenderer({
       // ref={dragHandle}
       onClick={() => node.toggle()}
     >
-      <span>{icon}</span>
+      <span>{icon(node.data)}</span>
       <span className="space-x-3">
         <span>{node.data.key}</span>
-        <span>({node.data.type})</span>
+        {node.isOpen ? (
+          <span className="text-xs text-gray-600">({node.data.type})</span>
+        ) : (
+          <span className="text-gray-500">
+            {truncate(summarize(node.data))}
+          </span>
+        )}
       </span>
     </div>
   );
 }
 
 function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
-  const value = node.isFocused
-    ? JSON.stringify(node.data.value)
-    : truncate(JSON.stringify(node.data.value));
+  const value = JSON.stringify(node.data.value);
   return (
     <div
+      className="space-x-2"
       style={style}
       // ref={dragHandle}
     >
+      <span>{icon(node.data)}</span>
       <span className="space-x-3">
         <span>{node.data.key}</span>
-        <span className="text-gray-500">{value}</span>
+        <span className="text-gray-500">
+          {node.isFocused ? value : truncate(value)}
+        </span>
       </span>
     </div>
   );
