@@ -14,10 +14,9 @@ function assertNever(_value: never, errmsg: string): never {
   throw new Error(errmsg);
 }
 
-// XXX Factor out as helper method
-// function truncate(s: string): string {
-//   return s.length > 24 ? s.substring(0, 24) + "..." : s;
-// }
+function truncate(s: string): string {
+  return s.length > 24 ? s.substring(0, 24) + "..." : s;
+}
 
 function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   return (
@@ -66,6 +65,9 @@ function LiveNodeRenderer({
 }
 
 function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
+  const value = node.isFocused
+    ? JSON.stringify(node.data.value)
+    : truncate(JSON.stringify(node.data.value));
   return (
     <div
       style={style}
@@ -73,7 +75,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
     >
       <span className="space-x-3">
         <span>{node.data.key}</span>
-        <span className="text-gray-500">{JSON.stringify(node.data.value)}</span>
+        <span className="text-gray-500">{value}</span>
       </span>
     </div>
   );
