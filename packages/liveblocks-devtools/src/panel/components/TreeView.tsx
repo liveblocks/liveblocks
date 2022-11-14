@@ -7,9 +7,12 @@ import type {
   TreeNode,
   UserTreeNode,
 } from "@liveblocks/core";
-import { assertNever } from "@liveblocks/core";
 import type { NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
+
+function assertNever(_value: never, errmsg: string): never {
+  throw new Error(errmsg);
+}
 
 // XXX Factor out as helper method
 // function truncate(s: string): string {
@@ -111,7 +114,7 @@ function childrenAccessor(node: TreeNode): TreeNode[] {
       return node.presence;
 
     case "Json":
-      throw new Error("Json nodes cannot have children");
+      return null;
 
     default:
       return assertNever(node, "Unhandled node type");
