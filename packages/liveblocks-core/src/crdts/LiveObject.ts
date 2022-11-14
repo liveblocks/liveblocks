@@ -646,7 +646,7 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return super.toTreeNode(key) as LiveObjectTreeNode;
   }
 
-  // XXX Change to StorageNotation output type when that is merged to main?
+  /** @internal */
   _toTreeNode(key: string | number): LiveObjectTreeNode {
     return {
       type: "LiveObject",

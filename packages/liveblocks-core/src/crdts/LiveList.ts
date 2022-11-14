@@ -1268,7 +1268,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
     this._items[index]._setParentLink(this, shiftedPosition);
   }
 
-  // XXX Change to StorageNotation output type when that is merged to main?
+  /** @internal */
   _toTreeNode(key: string | number): LiveListTreeNode {
     return {
       type: "LiveList",

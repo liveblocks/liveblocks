@@ -450,7 +450,7 @@ export class LiveMap<
     }
   }
 
-  // XXX Change to StorageNotation output type when that is merged to main?
+  /** @internal */
   _toTreeNode(key: string | number): LiveMapTreeNode {
     return {
       type: "LiveMap",

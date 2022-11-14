@@ -93,7 +93,6 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  // XXX Change to StorageNotation output type when that is merged to main?
   _toTreeNode(key: string | number): StorageTreeNode {
     return {
       type: "Json",
