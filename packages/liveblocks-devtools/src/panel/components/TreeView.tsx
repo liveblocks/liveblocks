@@ -97,10 +97,6 @@ function TreeNodeRenderer(
   );
 }
 
-// function idAccessor(node: StorageTreeNode | UserTreeNode): string {
-//   return node.id;
-// }
-
 function childrenAccessor(node: TreeNode): TreeNode[] {
   switch (node.type) {
     case "LiveList":
@@ -128,14 +124,10 @@ type TreeProps<T> = TreeApi<T>["props"];
 export function Tree(
   props: TreeProps<StorageTreeNode | UserTreeNode> &
     React.RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>
-): React.ReactElement<any, string | React.JSXElementConstructor<any>> | null {
+): React.ReactElement {
   const { children, ...rest } = props;
   return (
-    <ArboristTree
-      // idAccessor={idAccessor}
-      childrenAccessor={childrenAccessor}
-      {...rest}
-    >
+    <ArboristTree childrenAccessor={childrenAccessor} {...rest}>
       {TreeNodeRenderer}
     </ArboristTree>
   );
