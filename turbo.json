@@ -10,6 +10,10 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
+    "@liveblocks/devtools#build": {
+      "dependsOn": ["^build"],
+      "outputs": ["build/**"] // devtools uses Plasmo, which cannot be configured to output to dist :(
+    },
     "test": {
       "dependsOn": ["^build"],
       "outputs": ["coverage/**"],
