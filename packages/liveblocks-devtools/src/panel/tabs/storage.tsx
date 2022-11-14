@@ -1,7 +1,6 @@
-import { Tree } from "react-arborist";
-
-import { useRenderCount } from "../../hooks/useRenderCount";
+import { Tree } from "../components/TreeNode";
 import { useCurrentRoom } from "../contexts/RoomMirror";
+import { useRenderCount } from "../../hooks/useRenderCount";
 
 export function Storage() {
   const renderCount = useRenderCount();
@@ -12,48 +11,8 @@ export function Storage() {
         [#{renderCount}]
       </span>
       {room.storage !== undefined ? (
-        // XXX Make type safe!
-        <Tree width={600} data={room.storage as any}>
-          {TreeNode as any}
-        </Tree>
+        <Tree width={600} data={room.storage} />
       ) : null}
-    </div>
-  );
-}
-
-// XXX Factor out as helper method
-function truncate(s: string): string {
-  return s.length > 24 ? s.substring(0, 24) + "..." : s;
-}
-
-function TreeNode({ node, style, dragHandle }) {
-  /* This node instance can do many things. See the API reference. */
-  return (
-    <div
-      className="space-x-2"
-      style={style}
-      ref={dragHandle}
-      onClick={() => node.toggle()}
-    >
-      <span>
-        {node.data.type === "LiveMap"
-          ? "🗺️"
-          : node.data.type === "LiveObject"
-          ? "📦"
-          : node.data.type === "LiveList"
-          ? "📜"
-          : "🔑"}
-      </span>
-      <span className="space-x-3">
-        <span>{node.data.name}</span>
-        {node.data.type === "Json" ? (
-          <span className="text-gray-500">
-            {truncate(JSON.stringify(node.data.data))}
-          </span>
-        ) : (
-          <span>({node.data.type})</span>
-        )}
-      </span>
     </div>
   );
 }

@@ -98,8 +98,8 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
     return {
       type: "Json",
       id: nanoid(),
-      name: key,
-      data: this._data,
+      key,
+      value: this._data,
     };
   }
 

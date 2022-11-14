@@ -1,7 +1,7 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { LiveStructureTreeNode } from "../protocol/DevtoolsTreeNode";
+import type { LiveMapTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
@@ -451,13 +451,13 @@ export class LiveMap<
   }
 
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageTreeNode(key: string | number): LiveStructureTreeNode {
+  _toStorageTreeNode(key: string | number): LiveMapTreeNode {
     const id = nanoid();
     return {
       type: "LiveMap",
       id,
-      name: key,
-      children: Array.from(this._map.entries()).map(([key, val]) =>
+      key,
+      entries: Array.from(this._map.entries()).map(([key, val]) =>
         val.toStorageTreeNode(key)
       ),
     };

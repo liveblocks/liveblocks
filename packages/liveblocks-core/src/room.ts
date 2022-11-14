@@ -775,13 +775,13 @@ function userToTreeNode(
   return {
     type: "User",
     id: `${user.connectionId}`,
-    name: key,
+    key,
     info: user.info ?? null,
-    children: Object.entries(user.presence).map(([key, value]) => ({
+    presence: Object.entries(user.presence).map(([key, value]) => ({
       type: "Json",
       id: `${user.connectionId}-${key}`,
-      name: key,
-      data: value ?? null,
+      key,
+      value: value ?? null,
     })),
   };
 }

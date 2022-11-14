@@ -5,29 +5,51 @@
 
 import type { Json } from "../lib/Json";
 
-export type JsonPropNode = {
+export type JsonTreeNode = {
   type: "Json";
   id: string;
-  name: number | string; // XXX Rename to `key`
-  data: Json; // XXX Rename to `value`
+  key: number | string;
+  value: Json;
 };
-
-export type LiveStructureTreeNode = {
-  type: "LiveMap" | "LiveList" | "LiveObject";
-  id: string;
-  name: number | string; // XXX Rename to `key`
-  children: StorageTreeNode[];
-};
-
-export type StorageTreeNode = LiveStructureTreeNode | JsonPropNode;
 
 export type UserTreeNode = {
   type: "User";
   id: string;
-  name: number | string; // XXX Rename to `key`
+  key: number | string;
   info: Json;
-  children: JsonPropNode[]; // XXX <- This contains all the Json properties
+  presence: JsonTreeNode[];
 };
 
-// XXX Do we still need this type for anything?
-// export type PresenceTreeNode = UserTreeNode | JsonPropNode;
+export type LiveMapTreeNode = {
+  type: "LiveMap";
+  id: string;
+  key: number | string;
+  entries: StorageTreeNode[];
+};
+
+export type LiveListTreeNode = {
+  type: "LiveList";
+  id: string;
+  key: number | string;
+  items: StorageTreeNode[];
+};
+
+export type LiveObjectTreeNode = {
+  type: "LiveObject";
+  id: string;
+  key: number | string;
+  fields: StorageTreeNode[];
+};
+
+export type StorageTreeNode =
+  | LiveMapTreeNode
+  | LiveListTreeNode
+  | LiveObjectTreeNode
+  | JsonTreeNode;
+
+export type TreeNode =
+  | LiveMapTreeNode
+  | LiveListTreeNode
+  | LiveObjectTreeNode
+  | UserTreeNode
+  | JsonTreeNode;

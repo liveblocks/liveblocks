@@ -3,7 +3,7 @@ import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import { fromEntries } from "../lib/utils";
-import type { LiveStructureTreeNode } from "../protocol/DevtoolsTreeNode";
+import type { LiveObjectTreeNode } from "../protocol/DevtoolsTreeNode";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -639,29 +639,24 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return super.toImmutable() as ToImmutable<O>;
   }
 
-  toStorageTreeNode(key: string | number): LiveStructureTreeNode {
+  toStorageTreeNode(key: string | number): LiveObjectTreeNode {
     // Don't implement actual toStorageNotation logic in here. Implement it in
     // ._toStorageNotation() instead. This helper merely exists to help
     // TypeScript infer better return types.
-    return super.toStorageTreeNode(key) as LiveStructureTreeNode;
+    return super.toStorageTreeNode(key) as LiveObjectTreeNode;
   }
 
   // XXX Change to StorageNotation output type when that is merged to main?
-  _toStorageTreeNode(key: string | number): LiveStructureTreeNode {
+  _toStorageTreeNode(key: string | number): LiveObjectTreeNode {
     const id = nanoid();
     return {
       type: "LiveObject",
       id,
-      name: key,
-      children: Array.from(this._map.entries()).map(([key, val]) =>
-        isLiveNode(val)
-          ? val.toStorageTreeNode(key)
-          : {
-              type: "Json",
-              id: nanoid(),
-              name: key,
-              data: val,
-            }
+      key,
+      fields: Array.from(this._map.entries()).map(([key, value]) =>
+        isLiveNode(value)
+          ? value.toStorageTreeNode(key)
+          : { type: "Json", id: nanoid(), key, value }
       ),
     };
   }

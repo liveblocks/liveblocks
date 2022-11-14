@@ -71,7 +71,12 @@ export type {
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
+  JsonTreeNode,
+  LiveListTreeNode,
+  LiveMapTreeNode,
+  LiveObjectTreeNode,
   StorageTreeNode,
+  TreeNode,
   UserTreeNode,
 } from "./protocol/DevtoolsTreeNode";
 export type {
