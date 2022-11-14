@@ -90,6 +90,9 @@ function startSyncStream(
   fullSync(room);
 
   unsubsByRoomId.set(room.id, [
+    // When the connection status changes
+    room.events.connection.subscribe(() => partialSyncConnection(room)),
+
     // When storage initializes, send the update
     room.events.storageDidLoad.subscribeOnce(() => partialSyncStorage(room)),
 
@@ -100,6 +103,16 @@ function startSyncStream(
     room.events.me.subscribe(() => partialSyncMe(room)),
     room.events.others.subscribe(() => partialSyncOthers(room)),
   ]);
+}
+
+function partialSyncConnection(
+  room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
+) {
+  sendToPanel({
+    msg: "room::sync::partial",
+    roomId: room.id,
+    status: room.getConnectionState(),
+  });
 }
 
 function partialSyncStorage(
@@ -147,6 +160,7 @@ function fullSync(room: Room<JsonObject, LsonObject, BaseUserMeta, Json>) {
   sendToPanel({
     msg: "room::sync::full",
     roomId: room.id,
+    status: room.getConnectionState(),
     storage: root?.toTreeNode("root").fields ?? null,
     me,
     others,

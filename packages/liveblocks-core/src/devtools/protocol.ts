@@ -1,3 +1,4 @@
+import type { ConnectionState } from "../room";
 import type {
   StorageTreeNode,
   UserTreeNode,
@@ -64,6 +65,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::full";
       roomId: string;
+      status: ConnectionState;
       storage: StorageTreeNode[] | null;
       me: UserTreeNode | null;
       others: UserTreeNode[];
@@ -75,6 +77,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::sync::partial";
       roomId: string;
+      status?: ConnectionState;
       storage?: StorageTreeNode[];
       me?: UserTreeNode;
       others?: UserTreeNode[];

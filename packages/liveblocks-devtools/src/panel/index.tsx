@@ -57,7 +57,20 @@ function Panel() {
                 className={cx({ "font-bold": room.roomId === r })}
                 onClick={() => setCurrentRoomId(r)}
               >
-                {r}
+                {room.roomId === r ? (
+                  <span className="mr-2 text-sm">
+                    {room.status === "open"
+                      ? "🟢"
+                      : room.status === "closed"
+                      ? "⚫️"
+                      : room.status === "authenticating"
+                      ? "🔐"
+                      : room.status === "connecting"
+                      ? "🟠"
+                      : "❌"}
+                  </span>
+                ) : null}
+                <span>{r}</span>
               </button>
             ))}
           </div>

@@ -117,7 +117,13 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
-export type { BroadcastOptions, History, Room, RoomInitializers } from "./room";
+export type {
+  BroadcastOptions,
+  ConnectionState,
+  History,
+  Room,
+  RoomInitializers,
+} from "./room";
 export type { Immutable } from "./types/Immutable";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";

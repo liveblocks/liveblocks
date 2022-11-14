@@ -1,4 +1,5 @@
 import type {
+  ConnectionState,
   FullClientToPanelMessage,
   StorageTreeNode,
   UserTreeNode,
@@ -18,6 +19,7 @@ import { onMessageFromClient, sendMessageToClient } from "../port";
 
 type RoomMirror = {
   readonly roomId: string;
+  readonly status?: ConnectionState;
   readonly storage?: StorageTreeNode[];
   readonly me?: UserTreeNode;
   readonly others?: UserTreeNode[];
@@ -108,10 +110,10 @@ export function RoomMirrorProvider(props: Props) {
             allRooms.set(msg.roomId, {
               ...currRoom,
               roomId: msg.roomId,
-              storage:
-                msg.storage !== undefined ? msg.storage : currRoom.storage,
-              me: msg.me !== undefined ? msg.me : currRoom.me,
-              others: msg.others !== undefined ? msg.others : currRoom.others,
+              status: msg.status ?? currRoom.status,
+              storage: msg.storage ?? currRoom.storage,
+              me: msg.me ?? currRoom.me,
+              others: msg.others ?? currRoom.others,
             });
             return {
               currentRoomId: ctx.currentRoomId ?? msg.roomId,
