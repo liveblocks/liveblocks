@@ -88,18 +88,19 @@ Liveblocks extra state attached by the liveblocks.
 
 ### enterRoom [#liveblocks-state-enter-room]
 
-Enters a room and starts sync it with Zustand state.
+Enters a room and starts syncing it with your Zustand state.
 
 - `roomId`: The `id` of the room.
-- `initialState`: The initial state of the room storage.
 
 ```js
 const {
   liveblocks: { enterRoom },
 } = useStore();
 
-enterRoom("roomId", {});
+enterRoom("roomId");
 ```
+
+If this is the first time you’re entering the room, the room is initialized from your local Zustand state (only for the keys mentioned in your `storageMapping` configuration).
 
 ### leaveRoom [#liveblocks-state-leave-room]
 
