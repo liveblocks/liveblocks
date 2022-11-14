@@ -97,7 +97,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   _toStorageTreeNode(key: string | number): StorageTreeNode {
     return {
       type: "Json",
-      id: nanoid(),
+      id: this._id ?? nanoid(),
       key,
       value: this._data,
     };

@@ -452,10 +452,9 @@ export class LiveMap<
 
   // XXX Change to StorageNotation output type when that is merged to main?
   _toStorageTreeNode(key: string | number): LiveMapTreeNode {
-    const id = nanoid();
     return {
       type: "LiveMap",
-      id,
+      id: this._id ?? nanoid(),
       key,
       entries: Array.from(this._map.entries()).map(([key, val]) =>
         val.toStorageTreeNode(key)

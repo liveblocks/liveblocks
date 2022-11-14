@@ -648,10 +648,9 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   // XXX Change to StorageNotation output type when that is merged to main?
   _toStorageTreeNode(key: string | number): LiveObjectTreeNode {
-    const id = nanoid();
     return {
       type: "LiveObject",
-      id,
+      id: this._id ?? nanoid(),
       key,
       fields: Array.from(this._map.entries()).map(([key, value]) =>
         isLiveNode(value)
