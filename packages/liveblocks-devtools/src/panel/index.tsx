@@ -77,25 +77,26 @@ function RoomSelector() {
     <div className="flex space-x-3">
       <span className="text-gray-400">[#{renderCount}]</span>
       {roomIds.map((roomId) => (
-        <button
-          key={roomId}
-          className={cx({ "font-bold": currentRoomId === roomId })}
-          onClick={() => setCurrentRoomId(roomId)}
-        >
+        <button key={roomId} onClick={() => setCurrentRoomId(roomId)}>
           {currentRoomId === roomId ? (
-            <span className="mr-2 text-sm">
-              {currentStatus === "open"
-                ? "🟢"
-                : currentStatus === "closed"
-                ? "⚫️"
-                : currentStatus === "authenticating"
-                ? "🔐"
-                : currentStatus === "connecting"
-                ? "🟠"
-                : "❌"}
+            <span className="mr-2 space-x-1 text-xs text-gray-400">
+              {currentStatus !== "open" ? <span>{currentStatus}</span> : null}
+              <span>
+                {currentStatus === "open"
+                  ? "🟢"
+                  : currentStatus === "closed"
+                  ? "⚫️"
+                  : currentStatus === "authenticating"
+                  ? "🔐"
+                  : currentStatus === "connecting"
+                  ? "🟠"
+                  : "❌"}
+              </span>
             </span>
           ) : null}
-          <span>{roomId}</span>
+          <span className={cx({ "font-bold": currentRoomId === roomId })}>
+            {roomId}
+          </span>
         </button>
       ))}
     </div>
