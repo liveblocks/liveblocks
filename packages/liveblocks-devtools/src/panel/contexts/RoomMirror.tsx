@@ -204,10 +204,19 @@ export function useCurrentRoomOrNull(): RoomMirror | null {
   }
 }
 
-export function useCurrentRoom(): RoomMirror {
+export function useMe(): UserTreeNode | null {
   const room = useCurrentRoomOrNull();
-  if (room === null) {
-    throw new Error("Please select a room to view first");
-  }
-  return room;
+  return room?.me ?? null;
+}
+
+export function useOthers(): UserTreeNode[] | null {
+  const room = useCurrentRoomOrNull();
+  return room?.others !== undefined && room.others.length > 0
+    ? room.others
+    : null;
+}
+
+export function useStorage(): StorageTreeNode[] | null {
+  const room = useCurrentRoomOrNull();
+  return room?.storage ?? null;
 }

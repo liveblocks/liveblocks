@@ -2,19 +2,19 @@ import { useMemo } from "react";
 
 import { useRenderCount } from "../../hooks/useRenderCount";
 import { Tree } from "../components/TreeView";
-import { useCurrentRoom } from "../contexts/RoomMirror";
+import { useMe, useOthers } from "../contexts/RoomMirror";
 
 export function Me() {
   const renderCount = useRenderCount();
-  const room = useCurrentRoom();
-  const me = useMemo(() => (room.me ? [room.me] : null), [room.me]);
+  const me = useMe();
+  const data = useMemo(() => (me ? [me] : null), [me]);
   return (
     <div className="relative">
       <span className="absolute right-0 top-0 text-gray-400">
         [#{renderCount}]
       </span>
       <div>
-        {me !== null ? <Tree height={170} width={360} data={me} /> : null}
+        {data !== null ? <Tree height={170} width={360} data={data} /> : null}
       </div>
     </div>
   );
@@ -22,19 +22,16 @@ export function Me() {
 
 export function Others() {
   const renderCount = useRenderCount();
-  const room = useCurrentRoom();
+  const others = useOthers();
   return (
     <div className="relative">
       <span className="absolute right-0 top-0 text-gray-400">
         [#{renderCount}]
       </span>
       <div>
-        <Tree
-          height={500}
-          width={360}
-          data={room.others}
-          openByDefault={false}
-        />
+        {others !== null ? (
+          <Tree height={500} width={360} data={others} openByDefault={false} />
+        ) : null}
       </div>
     </div>
   );

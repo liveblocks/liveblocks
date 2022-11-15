@@ -29,7 +29,6 @@ function Panel() {
   }
 
   const room = roomOrNull;
-
   return (
     <div className="grid h-full grid-rows-3 sm:grid-cols-3 sm:grid-rows-none">
       <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
