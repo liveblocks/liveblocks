@@ -7,7 +7,7 @@ import type {
   TreeNode,
   UserTreeNode,
 } from "@liveblocks/core";
-import type { NodeRendererProps, TreeApi } from "react-arborist";
+import type { NodeRendererProps, NodeApi, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 
 import { assertNever } from "../../lib/assert";
@@ -72,13 +72,28 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
   }
 }
 
+function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
+  if (options.siblings) {
+    const siblings = node.parent?.children;
+    if (siblings) {
+      if (node.isOpen) {
+        siblings.forEach((sibling) => sibling.close());
+      } else {
+        siblings.forEach((sibling) => sibling.open());
+      }
+    }
+  } else {
+    node.toggle();
+  }
+}
+
 function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   return (
     <div
       className="space-x-2"
       style={style}
       // ref={dragHandle}
-      onClick={() => node.toggle()}
+      onClick={(e) => toggleNode(node, { siblings: e.altKey })}
     >
       <span>{icon(node.data)}</span>
       <span className="space-x-3">
@@ -111,7 +126,7 @@ function LiveNodeRenderer({
       className="space-x-2"
       style={style}
       // ref={dragHandle}
-      onClick={() => node.toggle()}
+      onClick={(e) => toggleNode(node, { siblings: e.altKey })}
     >
       <span>{icon(node.data)}</span>
       <span className="space-x-3">
