@@ -205,7 +205,10 @@ function childrenAccessor(node: TreeNode): TreeNode[] {
       return node.presence;
 
     case "Json":
-      // XXX Should we use `[]` here instead of `null`?
+      // XXX This works, but the types of react-arborist don't correctly
+      // reflect this reality. I've made a PR for this. When they publish this
+      // fix, we can get rid of this hack. See
+      // https://github.com/brimdata/react-arborist/pull/65
       return null as unknown as TreeNode[];
 
     default:

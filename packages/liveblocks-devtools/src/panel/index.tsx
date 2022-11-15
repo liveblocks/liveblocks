@@ -16,7 +16,6 @@ import { Storage } from "./tabs/storage";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
-  // XXX Clean up these accesses
   const currentRoomId = useCurrentRoomId();
   if (currentRoomId === null) {
     return (
