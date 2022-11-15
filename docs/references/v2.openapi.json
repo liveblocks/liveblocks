@@ -72,7 +72,7 @@
           }
         },
         "operationId": "get-rooms",
-        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups works by giving a list of groups like `groupIds=marketing,GZo7tQ,product`.\nNotice here the operator OR is applied between each `groupIds`.\n",
+        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "parameters": [
           {
             "schema": {
