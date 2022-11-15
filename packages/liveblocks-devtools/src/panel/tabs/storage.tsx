@@ -1,6 +1,6 @@
 import { useRenderCount } from "../../hooks/useRenderCount";
 import { Tree } from "../components/TreeView";
-import { useStorage } from "../contexts/RoomMirror";
+import { useStorage } from "../contexts/CurrentRoom";
 
 export function Storage() {
   const renderCount = useRenderCount();

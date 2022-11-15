@@ -2,7 +2,7 @@ import { useMemo } from "react";
 
 import { useRenderCount } from "../../hooks/useRenderCount";
 import { Tree } from "../components/TreeView";
-import { useMe, useOthers } from "../contexts/RoomMirror";
+import { useMe, useOthers } from "../contexts/CurrentRoom";
 
 export function Me() {
   const renderCount = useRenderCount();

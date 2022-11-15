@@ -10,14 +10,8 @@ import type {
 import type { NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 
-function assertNever(_value: never, errmsg: string): never {
-  throw new Error(errmsg);
-}
-
-const MAX_LEN = 64;
-function truncate(s: string, len: number = MAX_LEN): string {
-  return s.length > len + 3 ? s.substring(0, len) + "..." : s;
-}
+import { assertNever } from "../../lib/assert";
+import { truncate } from "../../lib/truncate";
 
 function icon(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {

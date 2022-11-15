@@ -4,23 +4,21 @@ import { createRoot } from "react-dom/client";
 import { useRenderCount } from "../hooks/useRenderCount";
 import { Tabs } from "./components/Tabs";
 import {
-  RoomMirrorProvider,
-  useCurrentRoomOrNull,
-  useRoomsContext,
-} from "./contexts/RoomMirror";
+  CurrentRoomProvider,
+  useCurrentRoomId,
+  useRoomIds,
+  useSetCurrentRoomId,
+  useStatus,
+} from "./contexts/CurrentRoom";
 import { Debug } from "./tabs/debug";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 import { ThemeProvider } from "./theme";
 
 function Panel() {
-  const renderCount = useRenderCount();
-
   // XXX Clean up these accesses
-  const allRooms = Array.from(useRoomsContext().allRooms.keys());
-  const setCurrentRoomId = useRoomsContext().setCurrentRoomId;
-  const roomOrNull = useCurrentRoomOrNull();
-  if (roomOrNull === null) {
+  const currentRoomId = useCurrentRoomId();
+  if (currentRoomId === null) {
     return (
       <div className="h-full">
         <p className="p-5">No Liveblocks application found.</p>
@@ -28,7 +26,6 @@ function Panel() {
     );
   }
 
-  const room = roomOrNull;
   return (
     <div className="grid h-full grid-rows-3 sm:grid-cols-3 sm:grid-rows-none">
       <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
@@ -48,31 +45,7 @@ function Panel() {
             },
           ]}
         >
-          <div className="flex space-x-3">
-            <span className="text-gray-400">[#{renderCount}]</span>
-            {allRooms.map((r) => (
-              <button
-                key={r}
-                className={cx({ "font-bold": room.roomId === r })}
-                onClick={() => setCurrentRoomId(r)}
-              >
-                {room.roomId === r ? (
-                  <span className="mr-2 text-sm">
-                    {room.status === "open"
-                      ? "🟢"
-                      : room.status === "closed"
-                      ? "⚫️"
-                      : room.status === "authenticating"
-                      ? "🔐"
-                      : room.status === "connecting"
-                      ? "🟠"
-                      : "❌"}
-                  </span>
-                ) : null}
-                <span>{r}</span>
-              </button>
-            ))}
-          </div>
+          <RoomSelector />
         </Tabs>
       </div>
       <div className="row-span-1 sm:col-span-1 sm:row-auto">
@@ -92,12 +65,49 @@ function Panel() {
   );
 }
 
+function RoomSelector() {
+  const renderCount = useRenderCount();
+
+  const currentRoomId = useCurrentRoomId();
+  const setCurrentRoomId = useSetCurrentRoomId();
+
+  const roomIds = useRoomIds();
+  const currentStatus = useStatus();
+  return (
+    <div className="flex space-x-3">
+      <span className="text-gray-400">[#{renderCount}]</span>
+      {roomIds.map((roomId) => (
+        <button
+          key={roomId}
+          className={cx({ "font-bold": currentRoomId === roomId })}
+          onClick={() => setCurrentRoomId(roomId)}
+        >
+          {currentRoomId === roomId ? (
+            <span className="mr-2 text-sm">
+              {currentStatus === "open"
+                ? "🟢"
+                : currentStatus === "closed"
+                ? "⚫️"
+                : currentStatus === "authenticating"
+                ? "🔐"
+                : currentStatus === "connecting"
+                ? "🟠"
+                : "❌"}
+            </span>
+          ) : null}
+          <span>{roomId}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function PanelApp() {
   return (
     <ThemeProvider>
-      <RoomMirrorProvider>
+      <CurrentRoomProvider>
         <Panel />
-      </RoomMirrorProvider>
+      </CurrentRoomProvider>
     </ThemeProvider>
   );
 }
