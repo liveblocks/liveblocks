@@ -28,9 +28,6 @@ type Room = {
   others: UserTreeNode[] | null;
 };
 
-/**
- * These events are emitted any time a subset of the room data updates.
- */
 type EventHub = {
   readonly onStatus: EventSource<void>;
   readonly onMe: EventSource<void>;
@@ -38,8 +35,16 @@ type EventHub = {
   readonly onStorage: EventSource<void>;
 };
 
-// XXX Handlers to register notifications for when parts of a room update
-const _eventHubs: Map<string, EventHub> = new Map();
+/**
+ * An "event hub" is a set of event sources that can happen for a given Room,
+ * for example, "its storage updated", or "its connection status updated". Each
+ * room has a corresponding event hub, and this lookup table tracks all of
+ * them, keyed by their room IDs.
+ *
+ * Once an event hub is created for a room, it will never be released, and
+ * gets reused next time the room becomes known again.
+ */
+const _eventHubsByRoomId: Map<string, EventHub> = new Map();
 
 function makeEventHub(roomId: string): EventHub {
   const newEventHub: EventHub = {
@@ -48,12 +53,12 @@ function makeEventHub(roomId: string): EventHub {
     onOthers: makeEventSource(),
     onStorage: makeEventSource(),
   };
-  _eventHubs.set(roomId, newEventHub);
+  _eventHubsByRoomId.set(roomId, newEventHub);
   return newEventHub;
 }
 
 function getOrCreateEventHubForRoomId(roomId: string): EventHub {
-  return _eventHubs.get(roomId) ?? makeEventHub(roomId);
+  return _eventHubsByRoomId.get(roomId) ?? makeEventHub(roomId);
 }
 
 function getRoomHub(roomId: null): null;
@@ -76,13 +81,32 @@ function getSubscribe(
   }
 }
 
-// XXX Document purpose of this LUT
+/**
+ * Global lookup table for rooms, by their IDs. Rooms get added here when they
+ * become known (i.e. when a client announces that that room is available).
+ * They are removed when the client announces that the room has been left.
+ *
+ * While receiving updates, the rooms (i.e. the values of this lookup table)
+ * are mutated in-place, and events are emitted through the "event hub" for
+ * that roomId.
+ */
 const roomsById: Map<string, Room> = new Map();
 
-// XXX Intended to be kept in sync whenever roomsById changes
+/**
+ * Global list of all room IDs that are currently known. The UI uses this to
+ * allow picking another current room.
+ *
+ * Derived value, basically always equivalent to Array.from(roomsById.keys()).
+ * The reason this is not computed on the fly, is that this is used in
+ * useSyncExternalStore's getSnapshot function, which must always return
+ * a stable value.
+ */
 let allRoomIds: string[] = [];
 
-// XXX Document purpose of this event source
+/**
+ * Event sent whenever a new room becomes known to the devtool panel, or when
+ * a room disappears (because the client enters or leaves rooms).
+ */
 const onRoomCountChanged: EventSource<void> = makeEventSource();
 
 function makeRoom(roomId: string): Room {
