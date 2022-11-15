@@ -289,19 +289,14 @@ export function useSetCurrentRoomId(): (roomId: string) => void {
 const nosub: SubscribeFn = () => () => {};
 
 export function useRoomIds(): string[] {
-  return useSyncExternalStore(
-    onRoomCountChanged.subscribe,
-    () => allRoomIds,
-    () => [] // XXX Do we need to specify these server snapshots, or can we get rid of them everywhere?
-  );
+  return useSyncExternalStore(onRoomCountChanged.subscribe, () => allRoomIds);
 }
 
 export function useStatus(): ConnectionState | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStatus") ?? nosub,
-    () => getRoom(currentRoomId)?.status ?? null,
-    () => null
+    () => getRoom(currentRoomId)?.status ?? null
   );
 }
 
@@ -309,8 +304,7 @@ export function useMe(): UserTreeNode | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onMe") ?? nosub,
-    () => getRoom(currentRoomId)?.me ?? null,
-    () => null
+    () => getRoom(currentRoomId)?.me ?? null
   );
 }
 
@@ -321,8 +315,7 @@ export function useOthers(): UserTreeNode[] | null {
     () => {
       const room = getRoom(currentRoomId);
       return room?.others && room.others.length > 0 ? room.others : null;
-    },
-    () => null
+    }
   );
 }
 
@@ -330,7 +323,6 @@ export function useStorage(): StorageTreeNode[] | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,
-    () => getRoom(currentRoomId)?.storage ?? null,
-    () => null
+    () => getRoom(currentRoomId)?.storage ?? null
   );
 }
