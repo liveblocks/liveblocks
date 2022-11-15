@@ -1,8 +1,8 @@
-import type { ConnectionState } from "../room";
 import type {
   StorageTreeNode,
   UserTreeNode,
 } from "../protocol/DevtoolsTreeNode";
+import type { ConnectionState } from "../room";
 
 /**
  * Definition of all messages the Panel can send to the Client.
