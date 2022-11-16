@@ -1,23 +1,14 @@
 {
   "name": "@liveblocks/node",
   "version": "0.19.1-test2",
-  "description": "A server-side utility that lets you set up a Liveblocks authentication endpoint.",
+  "description": "A server-side utility that lets you set up a Liveblocks authentication endpoint. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
     "README.md"
   ],
-  "keywords": [
-    "node",
-    "liveblocks",
-    "multiplayer",
-    "live-cursors",
-    "collaborative"
-  ],
-  "bugs": {
-    "url": "https://github.com/liveblocks/liveblocks/issues"
-  },
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
@@ -26,7 +17,6 @@
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
-  "license": "Apache-2.0",
   "devDependencies": {
     "@liveblocks/eslint-config": "*",
     "@liveblocks/jest-config": "*",
@@ -35,9 +25,29 @@
   "dependencies": {
     "node-fetch": "^2.6.1"
   },
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-node"
-  }
+  },
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "node",
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
 }

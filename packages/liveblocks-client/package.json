@@ -1,22 +1,14 @@
 {
   "name": "@liveblocks/client",
   "version": "0.19.1-test2",
-  "description": "A client that lets you interact with Liveblocks servers.",
+  "description": "A client that lets you interact with Liveblocks servers. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
     "README.md"
   ],
-  "keywords": [
-    "liveblocks",
-    "multiplayer",
-    "live-cursors",
-    "collaborative"
-  ],
-  "bugs": {
-    "url": "https://github.com/liveblocks/liveblocks/issues"
-  },
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
@@ -25,7 +17,6 @@
     "test": "jest --silent --verbose --color=always --passWithNoTests",
     "test:watch": "jest --silent --verbose --color=always --passWithNoTests --watch"
   },
-  "license": "Apache-2.0",
   "dependencies": {
     "@liveblocks/core": "0.19.1-test2"
   },
@@ -38,10 +29,29 @@
     "msw": "^0.39.1",
     "ws": "^8.5.0"
   },
+  "sideEffects": false,
+  "bugs": {
+    "url": "https://github.com/liveblocks/liveblocks/issues"
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/liveblocks/liveblocks.git",
     "directory": "packages/liveblocks-client"
   },
-  "sideEffects": false
+  "homepage": "https://liveblocks.io",
+  "keywords": [
+    "liveblocks",
+    "real-time",
+    "toolkit",
+    "multiplayer",
+    "websockets",
+    "collaboration",
+    "collaborative",
+    "presence",
+    "crdts",
+    "synchronize",
+    "rooms",
+    "documents",
+    "conflict resolution"
+  ]
 }
