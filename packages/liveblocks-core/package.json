@@ -1,9 +1,8 @@
 {
   "name": "@liveblocks/core",
-  "version": "0.19.0",
+  "version": "0.19.1-test2",
   "description": "Shared code and foundational internals for Liveblocks",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
@@ -19,8 +18,8 @@
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "scripts": {
-    "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
-    "build": "tsup && ../../scripts/build.sh",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always",

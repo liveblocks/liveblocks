@@ -1,9 +1,8 @@
 {
   "name": "@liveblocks/react",
-  "version": "0.19.0",
+  "version": "0.19.1-test2",
   "description": "A set of React hooks and providers to use Liveblocks declaratively.",
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
@@ -20,8 +19,8 @@
     "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "scripts": {
-    "dev": "tsup --watch --onSuccess ../../scripts/build.sh",
-    "build": "tsup && ../../scripts/build.sh",
+    "dev": "tsup --watch",
+    "build": "tsup",
     "start": "tsup --watch",
     "format": "eslint --fix src/; prettier --write src/",
     "lint": "eslint src/; npm run check:exports",
@@ -31,8 +30,8 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@liveblocks/client": "0.19.0",
-    "@liveblocks/core": "0.19.0",
+    "@liveblocks/client": "0.19.1-test2",
+    "@liveblocks/core": "0.19.1-test2",
     "use-sync-external-store": "^1.2.0"
   },
   "peerDependencies": {
