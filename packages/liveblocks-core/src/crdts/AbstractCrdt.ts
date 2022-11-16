@@ -300,6 +300,7 @@ export abstract class AbstractCrdt {
    *
    * This caches the result of the last .toTreeNode() call for this Live node.
    */
+  private _cachedTreeNodeKey?: string | number;
   private _cachedTreeNode?: StorageTreeNode;
 
   /**
@@ -331,7 +332,8 @@ export abstract class AbstractCrdt {
    * all its children.
    */
   toTreeNode(key: string | number): StorageTreeNode {
-    if (this._cachedTreeNode === undefined) {
+    if (this._cachedTreeNode === undefined || this._cachedTreeNodeKey !== key) {
+      this._cachedTreeNodeKey = key;
       this._cachedTreeNode = this._toTreeNode(key);
     }
 
