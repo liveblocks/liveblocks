@@ -32,7 +32,7 @@ export function Tabs({
               key={tab.value}
               value={tab.value}
               className={cx(
-                "relative flex items-center px-3",
+                "relative flex items-center px-3 font-medium",
                 "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:hidden after:h-0.5 after:w-full after:bg-orange-500 [&[data-state='active']]:after:block",
                 "hover:bg-gray-100 hover:text-gray-800 focus-visible:bg-gray-100 focus-visible:text-gray-800 [&[data-state='active']]:text-gray-800",
                 "dark:after:bg-orange-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus-visible:bg-gray-800 dark:focus-visible:text-gray-200 dark:[&[data-state='active']]:text-gray-200"

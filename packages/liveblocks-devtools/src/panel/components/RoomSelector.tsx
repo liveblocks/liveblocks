@@ -29,7 +29,7 @@ export function RoomSelector() {
           xmlns="http://www.w3.org/2000/svg"
           className="ml-1 translate-y-px text-gray-300"
         >
-          <path d="m1 1 3.5 3.5L8 1" stroke="currentColor" stroke-width="1.5" />
+          <path d="m1 1 3.5 3.5L8 1" stroke="currentColor" strokeWidth="1.5" />
         </svg>
       </Popover.Trigger>
       <Popover.Portal>

@@ -7,8 +7,14 @@ import type {
   TreeNode,
   UserTreeNode,
 } from "@liveblocks/core";
-import type { ComponentProps, ReactElement, RefAttributes } from "react";
-import { forwardRef } from "react";
+import cx from "classnames";
+import type {
+  ComponentProps,
+  MouseEvent,
+  ReactElement,
+  RefAttributes,
+} from "react";
+import { forwardRef, useCallback, useMemo } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
@@ -17,11 +23,19 @@ import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import { truncate } from "../../lib/truncate";
 
+const PADDING = 6;
+const ROW_HEIGHT = 26;
+const ROW_INDENT = 18;
+
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
 type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
   ArboristTreeProps<StorageTreeNode | UserTreeNode> &
   RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>;
+
+interface RowProps extends ComponentProps<"div"> {
+  node: NodeApi;
+}
 
 interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
   children: (dimensions: { width: number; height: number }) => ReactElement;
@@ -57,11 +71,11 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
     case "LiveObject":
       return node.fields
         .map(
-          (f) =>
-            `${f.key}=${String(
-              f.type === "Json" &&
-                (f.value === null || typeof f.value !== "object")
-                ? f.value
+          (node) =>
+            `${node.key}=${String(
+              node.type === "Json" &&
+                (node.value === null || typeof node.value !== "object")
+                ? node.value
                 : "…"
             )}`
         )
@@ -101,33 +115,74 @@ function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   }
 }
 
-function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
+function recursivelyGetParentNodes(
+  node: NodeApi,
+  parents: NodeApi[] = []
+): NodeApi[] {
+  return node.parent
+    ? recursivelyGetParentNodes(node.parent, [...parents, node.parent])
+    : parents;
+}
+
+function Row({ node, children, className, ...props }: RowProps) {
+  const parents = useMemo(() => recursivelyGetParentNodes(node), [node]);
+  const hasFocusedParent = useMemo(
+    () => parents.some((parent) => parent.isFocused),
+    [parents]
+  );
+
   return (
     <div
-      className="space-x-2"
-      style={style}
-      // ref={dragHandle}
-      onClick={(e) => toggleNode(node, { siblings: e.altKey })}
+      className={cx(
+        className,
+        "flex h-full items-center gap-2 rounded pr-2",
+        node.isFocused
+          ? "bg-gray-200"
+          : hasFocusedParent
+          ? "bg-gray-100"
+          : "bg-transparent",
+        node.isOpen && "rounded-b-none",
+        hasFocusedParent && "rounded-none"
+      )}
+      {...props}
     >
-      <span>{icon(node.data)}</span>
-      <span className="space-x-3">
-        <span>{node.data.key}</span>
-
-        {node.data.info ? (
-          <span className="text-gray-500">
-            {JSON.stringify(node.data.info, null, 2)}
-          </span>
-        ) : null}
-
-        {node.isOpen ? (
-          <span>(conn #{node.data.id})</span>
-        ) : (
-          <span className="text-gray-500">
-            {truncate(summarize(node.data), 42)}
-          </span>
+      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
+        {node.isInternal && (
+          <svg
+            width="8"
+            height="8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={cx("transition-transform", node.isOpen && "rotate-90")}
+          >
+            <path
+              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+              className="fill-gray-400"
+            />
+          </svg>
         )}
-      </span>
+      </div>
+      <div className="flex h-[16px] w-[16px] content-center items-center">
+        {icon(node.data)}
+      </div>
+      <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
+        {children}
+      </div>
     </div>
+  );
+}
+
+function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) =>
+      toggleNode(node, { siblings: event.altKey }),
+    []
+  );
+
+  return (
+    <Row node={node} style={style} onClick={handleClick}>
+      <div>{node.data.key}</div>
+    </Row>
   );
 }
 
@@ -135,44 +190,36 @@ function LiveNodeRenderer({
   node,
   style,
 }: NodeRendererProps<LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode>) {
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) =>
+      toggleNode(node, { siblings: event.altKey }),
+    []
+  );
+
   return (
-    <div
-      className="space-x-2"
-      style={style}
-      // ref={dragHandle}
-      onClick={(e) => toggleNode(node, { siblings: e.altKey })}
-    >
-      <span>{icon(node.data)}</span>
-      <span className="space-x-3">
-        <span>{node.data.key}</span>
-        {node.isOpen ? (
-          <span className="text-xs text-gray-600">({node.data.type})</span>
-        ) : (
-          <span className="text-gray-500">
-            {truncate(summarize(node.data))}
-          </span>
-        )}
-      </span>
-    </div>
+    <Row node={node} style={style} onClick={handleClick}>
+      <div>{node.data.key}</div>
+      {node.isOpen ? (
+        <div className="text-xs text-gray-600">({node.data.type})</div>
+      ) : (
+        <div className="truncate text-gray-500">
+          {truncate(summarize(node.data))}
+        </div>
+      )}
+    </Row>
   );
 }
 
 function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   const value = JSON.stringify(node.data.value);
+
   return (
-    <div
-      className="space-x-2"
-      style={style}
-      // ref={dragHandle}
-    >
-      <span>{icon(node.data)}</span>
-      <span className="space-x-3">
-        <span>{node.data.key}</span>
-        <span className="text-gray-500">
-          {node.isFocused ? value : truncate(value)}
-        </span>
-      </span>
-    </div>
+    <Row node={node} style={style}>
+      <div>{node.data.key}</div>
+      <div className="truncate text-gray-500">
+        {node.isFocused ? value : truncate(value)}
+      </div>
+    </Row>
   );
 }
 
@@ -256,12 +303,21 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
 
 export function Tree({ className, style, ...props }: TreeProps): ReactElement {
   return (
-    <AutoSizer className={className} style={style}>
+    <AutoSizer
+      className={className}
+      style={{ ...style, paddingLeft: PADDING, paddingRight: PADDING }}
+    >
       {({ width, height }) => (
         <ArboristTree
           width={width}
           height={height}
           childrenAccessor={childrenAccessor}
+          disableDrag
+          disableDrop
+          selectionFollowsFocus
+          rowHeight={ROW_HEIGHT}
+          indent={ROW_INDENT}
+          padding={PADDING}
           {...props}
         >
           {TreeNodeRenderer}
