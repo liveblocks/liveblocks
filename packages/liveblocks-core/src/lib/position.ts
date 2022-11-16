@@ -1,29 +1,102 @@
-export const min = 32;
-export const max = 126;
+/**
+ * Positions are efficient encodings of "positions" in a list, using the
+ * following subset of the ASCII alphabet:
+ *
+ *    !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+ *   ^                                                                                             ^
+ *   min                                                                                         max
+ *
+ * Just like with floating point numbers, there is an order to these values,
+ * and it's always possible to inject a number between two arbitrary position
+ * values.
+ *
+ * Some facts/examples:
+ * - ! < "    (like how  .1 < .2)
+ * - ! < ~    (like how  .1 < .9)
+ * - !! < !~  (like how .11 < .19)
+ * - ~! < ~~  (like how .91 < .99)
+ * - ~! > ~   (like how .91 > .9)
+ * - !! < !O  (like how .1 < .5)
+ * - !O < !~  (like how .5 < .9)
+ *
+ * - `~! is greater than `~` (similarly to how 9.1 is greater than 9)
+ *
+ * Weird maybe:
+ * - ` ` is less than `!`    (you can think of ` ` as going into negative number territory)
+ *
+ */
 
-export function makePosition(before?: string, after?: string): string {
-  // Between
-  if (before !== undefined && after !== undefined) {
-    return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
-  }
+export const min = 32; // " ", think 0 (zero)
+export const max = 126; // "~", think 9 (nine)
 
-  // Insert at the end
-  else if (before !== undefined) {
-    return getNextPosition(before);
-  }
+/**
+ * A valid "position" string. These values are used as "parentKey"s by LiveList
+ * children, and define their relative ordering.
+ *
+ * A position string consists of 1 or more "digits", which should be thought of
+ * as the tail of digits in a floating point number between 0 and 1. The
+ * alphabet is equivalent to the numerical "alphabet" 0-9:
+ *   0 ≃ ' '
+ *   1 ≃ '!'
+ *   2 ≃ '"'
+ *   ...
+ *   9 ≃ '~'
+ *
+ * Then, think:
+ *   '!'    ≃ 0.1
+ *   '"'    ≃ 0.2
+ *   '!"~'  ≃ 0.129
+ *
+ */
+type Pos = string;
 
-  // Insert at the start
-  else if (after !== undefined) {
-    return getPreviousPosition(after);
-  }
+/**
+ * The "first" canonical position.
+ * In an equivalent decimal number system, think of this as the value .1.
+ */
+export const first: Pos = "!"; // = pos([min + 1])
 
-  // No children
-  return pos([min + 1]);
+/**
+ * Given two positions, returns the position value that lies in the middle.
+ * When given only a `hi` bound, computes the canonical position "before" it.
+ * When given only a `lo` bound, computes the canonical position "after" it.
+ * When given no bounds at all, returns the "first" canonical position.
+ */
+export function makePosition(lo?: Pos, hi?: Pos): Pos {
+  return lo !== undefined && hi !== undefined
+    ? between(lo, hi)
+    : lo !== undefined
+    ? after(lo)
+    : hi !== undefined
+    ? before(hi)
+    : first;
 }
 
-function getPreviousPosition(after: string): string {
+/**
+ * Given any position value, computes the canonical position "before" it.
+ *
+ * The equivalent in a decimal number system would be:
+ *   before(.1)   // .09
+ *   before(.2)   // .1
+ *   before(.3)   // .2
+ *   ...
+ *   before(.8)   // .7
+ *   before(.9)   // .8
+ *   before(.91)  // .909
+ *   before(.92)  // .91
+ *   before(.93)  // .92
+ *   ...
+ *   before(.98)  // .97
+ *   before(.99)  // .98
+ *
+ * Note:
+ *   before(.01)   // .009
+ *   before(.001)  // .0009
+ *
+ */
+export function before(value: Pos): Pos {
   const result = [];
-  const afterCodes = posCodes(after);
+  const afterCodes = posCodes(value);
   for (let i = 0; i < afterCodes.length; i++) {
     const code = afterCodes[i];
 
@@ -42,9 +115,27 @@ function getPreviousPosition(after: string): string {
   return pos(result);
 }
 
-function getNextPosition(before: string): string {
+/**
+ * Given any position value, computes the canonical position "after" it.
+ *
+ * The equivalent in a decimal number system would be:
+ *   after(.1)   // .2
+ *   after(.2)   // .3
+ *   after(.3)   // .4
+ *   ...
+ *   after(.8)   // .9
+ *   after(.9)   // .91
+ *   after(.91)  // .92
+ *   after(.92)  // .93
+ *   after(.93)  // .94
+ *   ...
+ *   after(.98)  // .99
+ *   after(.99)  // .991
+ *
+ */
+export function after(value: Pos): Pos {
   const result = [];
-  const beforeCodes = posCodes(before);
+  const beforeCodes = posCodes(value);
   for (let i = 0; i < beforeCodes.length; i++) {
     const code = beforeCodes[i];
 
@@ -61,6 +152,18 @@ function getNextPosition(before: string): string {
   }
 
   return pos(result);
+}
+
+/**
+ * Given two positions, returns the position value that lies in the middle.
+ *
+ * Think:
+ *   between('!', '%')  // '#'    (like how between(.1, .5) would be .3)
+ *   between('!', '"')  // '!O'   (like how between(.1, .2) would be .15)
+ *
+ */
+export function between(before: Pos, after: Pos): Pos {
+  return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
 }
 
 function makePositionFromCodes(before: number[], after: number[]): number[] {
@@ -106,11 +209,11 @@ export function posCodes(str: string): number[] {
   return codes;
 }
 
-export function pos(codes: number[]): string {
+export function pos(codes: number[]): Pos {
   return String.fromCharCode(...codes);
 }
 
-export function comparePosition(posA: string, posB: string): number {
+export function comparePosition(posA: Pos, posB: Pos): number {
   const aCodes = posCodes(posA);
   const bCodes = posCodes(posB);
 
