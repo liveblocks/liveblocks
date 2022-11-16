@@ -23,7 +23,10 @@ export type PanelToClientMessage =
    * that follows is an initial "full sync", followed by many
    * "partial" syncs, happening for every update.
    */
-  | { msg: "room::subscribe"; roomId: string }
+  | {
+      msg: "room::subscribe";
+      roomId: string;
+    }
 
   /**
    * Expresses to the client that the devtool no longer is
@@ -31,7 +34,10 @@ export type PanelToClientMessage =
    * because the devtools panel is closed, or if it switched to
    * a different room.
    */
-  | { msg: "room::unsubscribe"; roomId: string };
+  | {
+      msg: "room::unsubscribe";
+      roomId: string;
+    };
 
 /**
  * Definition of all messages the Client can send to the Panel.
@@ -52,12 +58,18 @@ export type ClientToPanelMessage =
    * happens _before_ the actual connection to the room server is established,
    * meaning the room is visible to the devtools even while it is connecting.
    */
-  | { msg: "room::available"; roomId: string }
+  | {
+      msg: "room::available";
+      roomId: string;
+    }
 
   /**
    * Sent when a room is left and the client loses track of the room instance.
    */
-  | { msg: "room::unavailable"; roomId: string }
+  | {
+      msg: "room::unavailable";
+      roomId: string;
+    }
 
   /**
    * Sent initially, to synchronize the entire current state of the room.
@@ -66,9 +78,9 @@ export type ClientToPanelMessage =
       msg: "room::sync::full";
       roomId: string;
       status: ConnectionState;
-      storage: StorageTreeNode[] | null;
+      storage: readonly StorageTreeNode[] | null;
       me: UserTreeNode | null;
-      others: UserTreeNode[];
+      others: readonly UserTreeNode[];
     }
 
   /**
@@ -78,9 +90,9 @@ export type ClientToPanelMessage =
       msg: "room::sync::partial";
       roomId: string;
       status?: ConnectionState;
-      storage?: StorageTreeNode[];
+      storage?: readonly StorageTreeNode[];
       me?: UserTreeNode;
-      others?: UserTreeNode[];
+      others?: readonly UserTreeNode[];
     };
 
 // ----------------------------------------------------------------------------

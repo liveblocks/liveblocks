@@ -23,9 +23,9 @@ import { onMessageFromClient, sendMessageToClient } from "../port";
 type Room = {
   readonly roomId: string;
   status: ConnectionState | null;
-  storage: StorageTreeNode[] | null;
+  storage: readonly StorageTreeNode[] | null;
   me: UserTreeNode | null;
-  others: UserTreeNode[] | null;
+  others: readonly UserTreeNode[];
 };
 
 type EventHub = {
@@ -115,7 +115,7 @@ function makeRoom(roomId: string): Room {
     status: null,
     storage: null,
     me: null,
-    others: null,
+    others: [],
   };
 
   roomsById.set(roomId, newRoom);
@@ -332,18 +332,17 @@ export function useMe(): UserTreeNode | null {
   );
 }
 
-export function useOthers(): UserTreeNode[] | null {
+const empty: readonly UserTreeNode[] = [];
+
+export function useOthers(): readonly UserTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onOthers") ?? nosub,
-    () => {
-      const room = getRoom(currentRoomId);
-      return room?.others && room.others.length > 0 ? room.others : null;
-    }
+    () => getRoom(currentRoomId)?.others ?? empty
   );
 }
 
-export function useStorage(): StorageTreeNode[] | null {
+export function useStorage(): readonly StorageTreeNode[] | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,

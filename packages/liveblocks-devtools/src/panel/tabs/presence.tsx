@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 
+import type { UserTreeNode } from "@liveblocks/core";
 import { useRenderCount } from "../../hooks/useRenderCount";
 import { Tree } from "../components/TreeView";
 import { useMe, useOthers } from "../contexts/CurrentRoom";
@@ -30,7 +31,16 @@ export function Others() {
       </span>
       <div>
         {others !== null ? (
-          <Tree height={500} width={360} data={others} openByDefault={false} />
+          <Tree
+            height={500}
+            width={360}
+            data={
+              // XXX Passing readonly arrays is currently not possible
+              // See https://github.com/brimdata/react-arborist/pull/65
+              others as UserTreeNode[]
+            }
+            openByDefault={false}
+          />
         ) : null}
       </div>
     </div>

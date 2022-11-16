@@ -394,7 +394,7 @@ export type Room<
   getOthers(): Others<TPresence, TUserMeta>;
 
   // XXX Don't use this name as the final API. Find a better/clearer name!
-  getOthersAsTreeNode(): UserTreeNode[];
+  getOthersAsTreeNode(): readonly UserTreeNode[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -595,7 +595,7 @@ type Machine<
   // Presence
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
-  getOthersAsTreeNode(): UserTreeNode[];
+  getOthersAsTreeNode(): readonly UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -1957,8 +1957,8 @@ function makeStateMachine<
     return state.others.current;
   }
 
-  function getOthersAsTreeNode(): UserTreeNode[] {
-    return state.othersAsTreeNode.current as UserTreeNode[];
+  function getOthersAsTreeNode(): readonly UserTreeNode[] {
+    return state.othersAsTreeNode.current;
   }
 
   function broadcastEvent(
