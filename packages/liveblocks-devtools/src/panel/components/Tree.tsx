@@ -187,7 +187,16 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
 
   return (
     <Row node={node} style={style} onClick={handleClick}>
-      <div>{node.data.key}</div>
+      <div className="flex-none">{node.data.key}</div>
+      {node.isOpen ? (
+        <div className="text-gray-500 dark:text-gray-400">
+          (#{node.data.id})
+        </div>
+      ) : (
+        <div className="truncate text-gray-500 dark:text-gray-400">
+          {truncate(summarize(node.data))}
+        </div>
+      )}
     </Row>
   );
 }
@@ -204,7 +213,7 @@ function LiveNodeRenderer({
 
   return (
     <Row node={node} style={style} onClick={handleClick}>
-      <div>{node.data.key}</div>
+      <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
         <div className="text-xs text-gray-500 dark:text-gray-400">
           ({node.data.type})
@@ -223,7 +232,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
 
   return (
     <Row node={node} style={style}>
-      <div>{node.data.key}</div>
+      <div className="flex-none">{node.data.key}</div>
       <div className="truncate text-gray-500 dark:text-gray-400">
         {node.isFocused ? value : truncate(value)}
       </div>
