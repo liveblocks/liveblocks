@@ -11,7 +11,7 @@ import { useStorage } from "../contexts/CurrentRoom";
 
 export function Storage() {
   const storage = useStorage();
-  const tree = useRef<TreeApi<StorageTreeNode | UserTreeNode>>();
+  const tree = useRef<TreeApi<StorageTreeNode | UserTreeNode>>(null);
   const [nodes, setNodes] = useState<NodeApi<StorageTreeNode | UserTreeNode>[]>(
     []
   );
