@@ -125,7 +125,7 @@ export function recursivelyGetParentNodes<T>(
   node: NodeApi<T>,
   parents: NodeApi<T>[] = []
 ): NodeApi<T>[] {
-  return node.parent
+  return node.parent && !node.parent.isRoot
     ? recursivelyGetParentNodes(node.parent, [...parents, node.parent])
     : parents;
 }
