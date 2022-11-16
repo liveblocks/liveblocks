@@ -7,7 +7,7 @@ import type {
   TreeNode,
   UserTreeNode,
 } from "@liveblocks/core";
-import type { NodeRendererProps, NodeApi, TreeApi } from "react-arborist";
+import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 
 import { assertNever } from "../../lib/assert";
@@ -218,7 +218,7 @@ function childrenAccessor(node: TreeNode): TreeNode[] {
 
 type TreeProps<T> = TreeApi<T>["props"];
 
-export function Tree(
+export function TreeView(
   props: TreeProps<StorageTreeNode | UserTreeNode> &
     React.RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>
 ): React.ReactElement {

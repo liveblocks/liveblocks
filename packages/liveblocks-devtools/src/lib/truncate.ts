@@ -1,5 +1,7 @@
-const MAX_LEN = 64;
+const MAX_LENGTH = 64;
 
-export function truncate(s: string, len: number = MAX_LEN): string {
-  return s.length > len + 3 ? s.substring(0, len) + "..." : s;
+export function truncate(string: string, length: number = MAX_LENGTH): string {
+  return string.length > length + 3
+    ? string.substring(0, length) + "…"
+    : string;
 }
