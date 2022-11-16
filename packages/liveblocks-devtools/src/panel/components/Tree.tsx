@@ -7,11 +7,25 @@ import type {
   TreeNode,
   UserTreeNode,
 } from "@liveblocks/core";
+import type { ComponentProps, ReactElement, RefAttributes } from "react";
+import { forwardRef } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
+import useResizeObserver from "use-resize-observer";
 
 import { assertNever } from "../../lib/assert";
+import { mergeRefs } from "../../lib/mergeRefs";
 import { truncate } from "../../lib/truncate";
+
+type ArboristTreeProps<T> = TreeApi<T>["props"];
+
+type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
+  ArboristTreeProps<StorageTreeNode | UserTreeNode> &
+  RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>;
+
+interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
+  children: (dimensions: { width: number; height: number }) => ReactElement;
+}
 
 function icon(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
@@ -216,15 +230,43 @@ function childrenAccessor(node: TreeNode): TreeNode[] {
   }
 }
 
-type TreeProps<T> = TreeApi<T>["props"];
+const autoSizerStyle = {
+  flex: 1,
+  width: "100%",
+  height: "100%",
+  minHeight: 0,
+  minWidth: 0,
+};
 
-export function TreeView(
-  props: TreeProps<StorageTreeNode | UserTreeNode> &
-    React.RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>
-): React.ReactElement {
+const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
+  ({ children, style, ...props }, forwardRef) => {
+    const { ref, width, height } = useResizeObserver();
+
+    return (
+      <div
+        style={{ ...autoSizerStyle, ...style }}
+        ref={mergeRefs(ref, forwardRef)}
+        {...props}
+      >
+        {width && height ? children({ width, height }) : null}
+      </div>
+    );
+  }
+);
+
+export function Tree({ className, style, ...props }: TreeProps): ReactElement {
   return (
-    <ArboristTree childrenAccessor={childrenAccessor} {...props}>
-      {TreeNodeRenderer}
-    </ArboristTree>
+    <AutoSizer className={className} style={style}>
+      {({ width, height }) => (
+        <ArboristTree
+          width={width}
+          height={height}
+          childrenAccessor={childrenAccessor}
+          {...props}
+        >
+          {TreeNodeRenderer}
+        </ArboristTree>
+      )}
+    </AutoSizer>
   );
 }

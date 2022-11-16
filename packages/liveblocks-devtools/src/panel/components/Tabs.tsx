@@ -9,19 +9,19 @@ interface Tab {
   content: ReactNode;
 }
 
-interface TabViewProps extends DefaultTabsProps {
+interface TabsProps extends DefaultTabsProps {
   tabs: Tab[];
   leading?: ReactNode;
   trailing?: ReactNode;
 }
 
-export function TabView({
+export function Tabs({
   tabs,
   className,
   leading,
   trailing,
   ...props
-}: TabViewProps) {
+}: TabsProps) {
   return (
     <Root className={cx(className, "flex flex-col")} {...props}>
       <div className="flex h-8 border-b border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900">
@@ -45,11 +45,7 @@ export function TabView({
         {trailing ?? null}
       </div>
       {tabs.map((tab) => (
-        <Content
-          key={tab.value}
-          value={tab.value}
-          className="flex-1 overflow-y-auto"
-        >
+        <Content key={tab.value} value={tab.value} className="relative flex-1">
           {tab.content}
         </Content>
       ))}

@@ -1,17 +1,10 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import cx from "classnames";
 import { createRoot } from "react-dom/client";
 
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
-import { TabView } from "./components/TabView";
-import {
-  CurrentRoomProvider,
-  useCurrentRoomId,
-  useRoomIds,
-  useSetCurrentRoomId,
-  useStatus,
-} from "./contexts/CurrentRoom";
+import { Tabs } from "./components/Tabs";
+import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 import { ThemeProvider } from "./theme";
@@ -30,7 +23,7 @@ function Panel() {
   return (
     <div className="grid h-full grid-rows-3 sm:grid-cols-3 sm:grid-rows-none">
       <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
-        <TabView
+        <Tabs
           className="h-full"
           defaultValue="storage"
           tabs={[
@@ -49,7 +42,7 @@ function Panel() {
         />
       </div>
       <div className="row-span-1 sm:col-span-1 sm:row-auto">
-        <TabView
+        <Tabs
           className="h-full"
           defaultValue="presence"
           tabs={[

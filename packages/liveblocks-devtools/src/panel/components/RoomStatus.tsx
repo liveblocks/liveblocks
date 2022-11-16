@@ -1,6 +1,6 @@
 import cx from "classnames";
 import type { ComponentProps } from "react";
-import { ReactNode, useMemo } from "react";
+import { useMemo } from "react";
 
 import { capitalize } from "../../lib/capitalize";
 import { useStatus } from "../contexts/CurrentRoom";

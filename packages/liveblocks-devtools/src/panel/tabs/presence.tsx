@@ -1,7 +1,7 @@
 import type { UserTreeNode } from "@liveblocks/core";
 import { useMemo } from "react";
 
-import { TreeView } from "../components/TreeView";
+import { Tree } from "../components/Tree";
 import { useMe, useOthers } from "../contexts/CurrentRoom";
 
 export function Me() {
@@ -9,8 +9,8 @@ export function Me() {
   const data = useMemo(() => (me ? [me] : null), [me]);
 
   return (
-    <div className="relative">
-      {data !== null ? <TreeView height={170} width={360} data={data} /> : null}
+    <div className="relative flex h-1/3 flex-none border-b border-gray-200 dark:border-gray-600">
+      {data !== null ? <Tree data={data} /> : null}
     </div>
   );
 }
@@ -21,9 +21,7 @@ export function Others() {
   return (
     <div className="relative w-full flex-1">
       {others !== null ? (
-        <TreeView
-          height={500}
-          width={360}
+        <Tree
           data={
             // XXX Passing readonly arrays is currently not possible
             // See https://github.com/brimdata/react-arborist/pull/65
@@ -38,7 +36,7 @@ export function Others() {
 
 export function Presence() {
   return (
-    <div className="divide-y">
+    <div className="absolute inset-0 flex h-full flex-col">
       <Me />
       <Others />
     </div>

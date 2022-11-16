@@ -21,7 +21,8 @@
     "plasmo": "^0.56.1",
     "react": "18.2.0",
     "react-arborist": "^2.1.0",
-    "react-dom": "18.2.0"
+    "react-dom": "18.2.0",
+    "use-resize-observer": "^9.0.2"
   },
   "devDependencies": {
     "@types/node": "18.7.23",
