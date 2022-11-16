@@ -37,6 +37,11 @@ interface RowProps extends ComponentProps<"div"> {
   node: NodeApi;
 }
 
+interface BreadcrumbsProps extends ComponentProps<"div"> {
+  nodes: NodeApi[];
+  onNodeClick: (node: NodeApi) => void;
+}
+
 interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
   children: (dimensions: { width: number; height: number }) => ReactElement;
 }
@@ -103,6 +108,7 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
 function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   if (options.siblings) {
     const siblings = node.parent?.children;
+
     if (siblings) {
       if (node.isOpen) {
         siblings.forEach((sibling) => sibling.close());
@@ -115,10 +121,10 @@ function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   }
 }
 
-function recursivelyGetParentNodes(
-  node: NodeApi,
-  parents: NodeApi[] = []
-): NodeApi[] {
+export function recursivelyGetParentNodes<T>(
+  node: NodeApi<T>,
+  parents: NodeApi<T>[] = []
+): NodeApi<T>[] {
   return node.parent
     ? recursivelyGetParentNodes(node.parent, [...parents, node.parent])
     : parents;
@@ -303,28 +309,64 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
   }
 );
 
-export function Tree({ className, style, ...props }: TreeProps): ReactElement {
+export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
+  ({ className, style, ...props }, ref) => {
+    return (
+      <AutoSizer
+        className={className}
+        style={{ ...style, paddingLeft: PADDING, paddingRight: PADDING }}
+      >
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={childrenAccessor}
+            disableDrag
+            disableDrop
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            padding={PADDING}
+            {...props}
+          >
+            {TreeNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    );
+  }
+);
+
+export function Breadcrumbs({
+  nodes = [],
+  onNodeClick,
+  className,
+  ...props
+}: BreadcrumbsProps) {
   return (
-    <AutoSizer
-      className={className}
-      style={{ ...style, paddingLeft: PADDING, paddingRight: PADDING }}
-    >
-      {({ width, height }) => (
-        <ArboristTree
-          width={width}
-          height={height}
-          childrenAccessor={childrenAccessor}
-          disableDrag
-          disableDrop
-          selectionFollowsFocus
-          rowHeight={ROW_HEIGHT}
-          indent={ROW_INDENT}
-          padding={PADDING}
-          {...props}
-        >
-          {TreeNodeRenderer}
-        </ArboristTree>
+    <div
+      className={cx(
+        className,
+        "flex h-8 items-center gap-1.5 overflow-x-auto border-t border-gray-200 bg-white px-1.5 dark:border-gray-600 dark:bg-gray-900"
       )}
-    </AutoSizer>
+      {...props}
+    >
+      {nodes.map((node) => {
+        const handleClick = () => {
+          onNodeClick(node);
+        };
+
+        return (
+          <button
+            key={node.data.id}
+            className="flex h-5 items-center rounded px-1.5 hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-800 dark:focus:bg-gray-800"
+            onClick={handleClick}
+          >
+            {node.data.key}
+          </button>
+        );
+      })}
+    </div>
   );
 }

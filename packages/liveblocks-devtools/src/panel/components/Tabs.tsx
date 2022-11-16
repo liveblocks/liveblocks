@@ -26,7 +26,7 @@ export function Tabs({
     <Root className={cx(className, "flex flex-col")} {...props}>
       <div className="flex h-8 border-b border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900">
         {leading ?? null}
-        <List className="flex h-full flex-none overflow-x-auto px-2 text-gray-600 dark:text-gray-400">
+        <List className="flex h-full flex-none overflow-x-auto px-1.5 text-gray-600 dark:text-gray-400">
           {tabs.map((tab) => (
             <Trigger
               key={tab.value}
