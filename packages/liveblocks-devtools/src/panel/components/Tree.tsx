@@ -137,9 +137,9 @@ function Row({ node, children, className, ...props }: RowProps) {
         className,
         "flex h-full items-center gap-2 rounded pr-2",
         node.isFocused
-          ? "bg-gray-200"
+          ? "bg-gray-200 dark:bg-gray-700"
           : hasFocusedParent
-          ? "bg-gray-100"
+          ? "bg-gray-100 dark:bg-gray-800"
           : "bg-transparent",
         node.isOpen && "rounded-b-none",
         hasFocusedParent && "rounded-none"
@@ -157,7 +157,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           >
             <path
               d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-              className="fill-gray-400"
+              className="fill-gray-400 dark:fill-gray-500"
             />
           </svg>
         )}
@@ -200,9 +200,11 @@ function LiveNodeRenderer({
     <Row node={node} style={style} onClick={handleClick}>
       <div>{node.data.key}</div>
       {node.isOpen ? (
-        <div className="text-xs text-gray-600">({node.data.type})</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          ({node.data.type})
+        </div>
       ) : (
-        <div className="truncate text-gray-500">
+        <div className="truncate text-gray-500 dark:text-gray-400">
           {truncate(summarize(node.data))}
         </div>
       )}
@@ -216,7 +218,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   return (
     <Row node={node} style={style}>
       <div>{node.data.key}</div>
-      <div className="truncate text-gray-500">
+      <div className="truncate text-gray-500 dark:text-gray-400">
         {node.isFocused ? value : truncate(value)}
       </div>
     </Row>
