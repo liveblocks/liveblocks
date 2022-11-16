@@ -1,3 +1,8 @@
+# v0.19.1
+
+Fixes an issue where `import`s from Liveblocks packages could not be resolved
+correctly in certain build environments.
+
 # v0.19.0
 
 This release brings Zustand v4 support. This is a breaking change **only if
