@@ -357,23 +357,42 @@ export function Breadcrumbs({
     <div
       className={cx(
         className,
-        "flex h-8 items-center gap-1.5 overflow-x-auto border-t border-gray-200 bg-white px-1.5 dark:border-gray-600 dark:bg-gray-900"
+        "flex h-8 items-center gap-1.5 overflow-x-auto border-t border-gray-200 bg-white px-2.5 dark:border-gray-600 dark:bg-gray-900"
       )}
       {...props}
     >
-      {nodes.map((node) => {
+      {nodes.map((node, index) => {
+        const isLast = index === nodes.length - 1;
+
         const handleClick = () => {
           onNodeClick(node);
         };
 
         return (
-          <button
-            key={node.data.id}
-            className="flex h-5 items-center rounded px-1.5 hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-800 dark:focus:bg-gray-800"
-            onClick={handleClick}
-          >
-            {node.data.key}
-          </button>
+          <>
+            <button
+              key={node.data.id}
+              className="flex h-5 items-center"
+              onClick={handleClick}
+            >
+              {node.data.key}
+            </button>
+            {!isLast && (
+              <svg
+                width="7"
+                height="10"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="text-gray-300"
+              >
+                <path
+                  d="M1.5 8.5 5 5 1.5 1.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                />
+              </svg>
+            )}
+          </>
         );
       })}
     </div>

@@ -33,6 +33,18 @@ function Panel() {
               title: "Presence",
               content: <Presence />,
             },
+            {
+              value: "history",
+              title: "History",
+              content: null,
+              disabled: true,
+            },
+            {
+              value: "events",
+              title: "Events",
+              content: null,
+              disabled: true,
+            },
           ]}
         />
       }
@@ -46,9 +58,15 @@ function Panel() {
             title: "Storage",
             content: <Storage />,
           },
+          {
+            value: "settings",
+            title: "Settings",
+            content: null,
+            disabled: true,
+          },
         ]}
         leading={
-          <div className="relative flex items-center px-1.5 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px after:bg-gray-200 dark:after:bg-gray-600">
+          <div className="relative flex flex-none items-center px-1.5 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px after:bg-gray-200 dark:after:bg-gray-600">
             <RoomStatus />
             <RoomSelector />
           </div>

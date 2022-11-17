@@ -6,8 +6,8 @@ import type {
   ReactNode,
 } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useLatest } from "src/hooks/useLatest";
 
+import { useLatest } from "../../hooks/useLatest";
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { clamp } from "../../lib/clamp";
 

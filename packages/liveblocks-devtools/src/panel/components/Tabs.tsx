@@ -1,15 +1,14 @@
-import type { TabsProps as DefaultTabsProps } from "@radix-ui/react-tabs";
-import { Content, List, Root, Trigger } from "@radix-ui/react-tabs";
+import * as RadixTabs from "@radix-ui/react-tabs";
 import cx from "classnames";
-import type { ReactNode } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
-interface Tab {
+interface Tab extends ComponentProps<typeof RadixTabs.Trigger> {
   value: string;
   title: string;
   content: ReactNode;
 }
 
-interface TabsProps extends DefaultTabsProps {
+interface TabsProps extends RadixTabs.TabsProps {
   tabs: Tab[];
   leading?: ReactNode;
   trailing?: ReactNode;
@@ -23,32 +22,36 @@ export function Tabs({
   ...props
 }: TabsProps) {
   return (
-    <Root className={cx(className, "flex flex-col")} {...props}>
+    <RadixTabs.Root className={cx(className, "flex flex-col")} {...props}>
       <div className="flex h-8 border-b border-gray-200 bg-white dark:border-gray-600 dark:bg-gray-900">
         {leading ?? null}
-        <List className="flex h-full flex-none overflow-x-auto px-1.5 text-gray-600 dark:text-gray-400">
+        <RadixTabs.List className="flex h-full flex-1 overflow-x-auto px-1.5 text-gray-600 dark:text-gray-400">
           {tabs.map((tab) => (
-            <Trigger
+            <RadixTabs.Trigger
               key={tab.value}
               value={tab.value}
+              disabled={tab.disabled}
               className={cx(
-                "relative flex items-center px-3 font-medium",
-                "after:pointer-events-none after:absolute after:bottom-0 after:left-0 after:hidden after:h-0.5 after:w-full after:bg-orange-500 [&[data-state='active']]:after:block",
-                "hover:bg-gray-100 hover:text-gray-800 focus-visible:bg-gray-100 focus-visible:text-gray-800 [&[data-state='active']]:text-gray-800",
-                "dark:after:bg-orange-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 dark:focus-visible:bg-gray-800 dark:focus-visible:text-gray-200 dark:[&[data-state='active']]:text-gray-200"
+                "relative flex items-center px-2 font-medium text-gray-400",
+                "enabled:hover:text-gray-500 enabled:focus-visible:text-gray-500 disabled:opacity-50 enabled:[&[data-state='active']]:text-gray-800",
+                "dark:text-gray-500 dark:enabled:hover:text-gray-400 dark:enabled:focus-visible:text-gray-400 dark:enabled:[&[data-state='active']]:text-gray-100"
               )}
             >
               {tab.title}
-            </Trigger>
+            </RadixTabs.Trigger>
           ))}
-        </List>
+        </RadixTabs.List>
         {trailing ?? null}
       </div>
       {tabs.map((tab) => (
-        <Content key={tab.value} value={tab.value} className="relative flex-1">
+        <RadixTabs.Content
+          key={tab.value}
+          value={tab.value}
+          className="relative flex-1"
+        >
           {tab.content}
-        </Content>
+        </RadixTabs.Content>
       ))}
-    </Root>
+    </RadixTabs.Root>
   );
 }

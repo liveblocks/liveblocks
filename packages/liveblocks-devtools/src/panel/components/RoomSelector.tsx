@@ -1,4 +1,6 @@
-import * as Popover from "@radix-ui/react-popover";
+import * as RadixPopover from "@radix-ui/react-popover";
+import cx from "classnames";
+import type { ComponentProps } from "react";
 import { useCallback, useState } from "react";
 
 import {
@@ -7,7 +9,10 @@ import {
   useSetCurrentRoomId,
 } from "../contexts/CurrentRoom";
 
-export function RoomSelector() {
+export function RoomSelector({
+  className,
+  ...props
+}: ComponentProps<typeof RadixPopover.Trigger>) {
   const [isOpen, setOpen] = useState(false);
   const currentRoomId = useCurrentRoomId();
   const setCurrentRoomId = useSetCurrentRoomId();
@@ -19,8 +24,14 @@ export function RoomSelector() {
   }, []);
 
   return (
-    <Popover.Root open={isOpen} onOpenChange={handleOpenChange} modal>
-      <Popover.Trigger className="flex h-5 items-center rounded px-1.5 font-medium hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-gray-800 dark:focus:bg-gray-800">
+    <RadixPopover.Root open={isOpen} onOpenChange={handleOpenChange} modal>
+      <RadixPopover.Trigger
+        className={cx(
+          className,
+          "flex h-5 items-center pr-1.5 pl-1 font-medium"
+        )}
+        {...props}
+      >
         <span>{currentRoomId}</span>
         <svg
           width="9"
@@ -31,9 +42,9 @@ export function RoomSelector() {
         >
           <path d="m1 1 3.5 3.5L8 1" stroke="currentColor" strokeWidth="1.5" />
         </svg>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
+      </RadixPopover.Trigger>
+      <RadixPopover.Portal>
+        <RadixPopover.Content
           className="min-w-[120px] max-w-[360px] overflow-hidden rounded bg-gray-800 text-white"
           align="start"
           side="bottom"
@@ -80,9 +91,9 @@ export function RoomSelector() {
               );
             })}
           </ul>
-          <Popover.Arrow height={4} className="fill-gray-900" />
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+          <RadixPopover.Arrow height={4} className="fill-gray-900" />
+        </RadixPopover.Content>
+      </RadixPopover.Portal>
+    </RadixPopover.Root>
   );
 }
