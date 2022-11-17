@@ -6,6 +6,7 @@ import type {
   ReactNode,
 } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useLatest } from "src/hooks/useLatest";
 
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { clamp } from "../../lib/clamp";
@@ -26,6 +27,7 @@ interface HandleProps extends ComponentProps<"div"> {
   direction: "horizontal" | "vertical";
   value: number;
   onValueChange: (value: number) => void;
+  onValueApply: (value: number) => void;
   min: number;
   max: number;
 }
@@ -34,6 +36,7 @@ function Handle({
   direction,
   value,
   onValueChange,
+  onValueApply,
   min,
   max,
   className,
@@ -42,6 +45,8 @@ function Handle({
   const [isDragging, setDragging] = useState(false);
   const startOffset = useRef<number>();
   const startValue = useRef<number>();
+  const latestOnValueChange = useLatest(onValueChange);
+  const latestOnValueApply = useLatest(onValueApply);
 
   const handleDrag = useCallback(
     (event: PointerEvent) => {
@@ -49,7 +54,9 @@ function Handle({
         (startOffset.current ?? 0) -
         (direction === "vertical" ? event.pageY : event.pageX);
 
-      onValueChange(clamp((startValue.current ?? 0) + delta, min, max));
+      latestOnValueChange.current(
+        clamp((startValue.current ?? 0) + delta, min, max)
+      );
     },
     [direction, min, max]
   );
@@ -61,7 +68,9 @@ function Handle({
           (startOffset.current ?? 0) -
           (direction === "vertical" ? event.pageY : event.pageX);
 
-        onValueChange(clamp((startValue.current ?? 0) + delta, min, max));
+        latestOnValueApply.current(
+          clamp((startValue.current ?? 0) + delta, min, max)
+        );
       }
 
       setDragging(false);
@@ -98,7 +107,7 @@ function Handle({
 
   useEffect(() => {
     return handleDragEnd;
-  }, [handleDragEnd, handleDrag]);
+  }, [handleDragEnd]);
 
   return (
     <div
@@ -128,11 +137,13 @@ export function ResizablePanel({
 }: Props) {
   const id = useId();
   const isVertical = useMediaQuery(`(max-width: ${BREAKPOINT}px)`);
-  const [width, setWidth] = useStorage(`panel-width-${id}-0`, INITIAL_WIDTH);
-  const [height, setHeight] = useStorage(
-    `panel-height-${id}-0`,
-    INITIAL_HEIGHT
-  );
+  const [width, , { setRenderValue: setRenderWidth, setStoreValue: setWidth }] =
+    useStorage(`panel-width-${id}-0`, INITIAL_WIDTH);
+  const [
+    height,
+    ,
+    { setRenderValue: setRenderHeight, setStoreValue: setHeight },
+  ] = useStorage(`panel-height-${id}-0`, INITIAL_HEIGHT);
 
   return (
     <div
@@ -159,7 +170,8 @@ export function ResizablePanel({
           <Handle
             direction="vertical"
             value={height}
-            onValueChange={setHeight}
+            onValueChange={setRenderHeight}
+            onValueApply={setHeight}
             min={MIN_HEIGHT}
             max={MAX_HEIGHT}
           />
@@ -167,7 +179,8 @@ export function ResizablePanel({
           <Handle
             direction="horizontal"
             value={width}
-            onValueChange={setWidth}
+            onValueChange={setRenderWidth}
+            onValueApply={setWidth}
             min={MIN_WIDTH}
             max={MAX_WIDTH}
           />
