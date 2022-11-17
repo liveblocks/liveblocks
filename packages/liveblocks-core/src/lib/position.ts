@@ -26,9 +26,6 @@
  *
  */
 
-const min = 32; // " ", think 0 (zero)
-const max = 126; // "~", think 9 (nine)
-
 /**
  * A valid "position" string. These values are used as "parentKey"s by LiveList
  * children, and define their relative ordering.
@@ -48,13 +45,24 @@ const max = 126; // "~", think 9 (nine)
  *   '!"~'  ≃ 0.129
  *
  */
-type Pos = string;
+type Pos = string & { _brand: "Pos" };
+
+/**
+ * The integer value between 32 and 126, representing each character in a valid
+ * Pos string numerically.
+ */
+type Code = number & { _brand: "Code" };
+
+const min = 32 as Code;
+const max = 126 as Code;
+
+const ZERO: Pos = pos([min as Code]); // " "
 
 /**
  * The "first" canonical position.
  * In an equivalent decimal number system, think of this as the value .1.
  */
-const first: Pos = "!"; // = pos([min + 1])
+const ONE: Pos = pos([(min + 1) as Code]); // "!"
 
 /**
  * Given two positions, returns the position value that lies in the middle.
@@ -69,7 +77,7 @@ function makePosition(lo?: Pos, hi?: Pos): Pos {
     ? after(lo)
     : hi !== undefined
     ? before(hi)
-    : first;
+    : ONE;
 }
 
 /**
@@ -95,8 +103,8 @@ function makePosition(lo?: Pos, hi?: Pos): Pos {
  *
  */
 function before(value: Pos): Pos {
-  const result = [];
-  const afterCodes = posCodes(value);
+  const result: Code[] = [];
+  const afterCodes = toCodes(value);
   for (let i = 0; i < afterCodes.length; i++) {
     const code = afterCodes[i];
 
@@ -107,7 +115,10 @@ function before(value: Pos): Pos {
         break;
       }
     } else {
-      result.push(code - 1);
+      result.push(
+        // Here, `code > min + 1`, so safe to cast to Code
+        (code - 1) as Code
+      );
       break;
     }
   }
@@ -134,19 +145,23 @@ function before(value: Pos): Pos {
  *
  */
 function after(value: Pos): Pos {
-  const result = [];
-  const beforeCodes = posCodes(value);
+  const result: Code[] = [];
+  const beforeCodes = toCodes(value);
   for (let i = 0; i < beforeCodes.length; i++) {
     const code = beforeCodes[i];
 
     if (code === max) {
       result.push(code);
       if (beforeCodes.length - 1 === i) {
-        result.push(min + 1);
+        result.push(
+          // Guaranteed to be within the min-max range, so safe to cast to Code
+          (min + 1) as Code
+        );
         break;
       }
     } else {
-      result.push(code + 1);
+      // Here, `code >= min && code < max`, so safe to cast
+      result.push((code + 1) as Code);
       break;
     }
   }
@@ -162,22 +177,28 @@ function after(value: Pos): Pos {
  *   between('!', '"')  // '!O'   (like how between(.1, .2) would be .15)
  *
  */
-function between(before: Pos, after: Pos): Pos {
-  return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
+function between(first: Pos, second: Pos): Pos {
+  if (first === second) {
+    throw new Error("Cannot compute value between two equal positions");
+  } else if (first < second) {
+    return pos(makePositionFromCodes(toCodes(first), toCodes(second)));
+  } else {
+    return pos(makePositionFromCodes(toCodes(second), toCodes(first)));
+  }
 }
 
-function makePositionFromCodes(before: number[], after: number[]): number[] {
+function makePositionFromCodes(lo: Code[], hi: Code[]): Code[] {
   let index = 0;
-  const result = [];
+  const result: Code[] = [];
 
   while (true) {
-    const beforeDigit: number = before[index] || min;
-    const afterDigit: number = after[index] || max;
+    const beforeDigit = lo[index] ?? min;
+    const afterDigit = hi[index] ?? max;
 
     // istanbul ignore if
     if (beforeDigit > afterDigit) {
       throw new Error(
-        `Impossible to generate position between ${before} and ${after}`
+        `Impossible to generate position between ${lo} and ${hi}`
       );
     }
 
@@ -189,11 +210,11 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
 
     if (afterDigit - beforeDigit === 1) {
       result.push(beforeDigit);
-      result.push(...makePositionFromCodes(before.slice(index + 1), []));
+      result.push(...makePositionFromCodes(lo.slice(index + 1), []));
       break;
     }
 
-    const mid = (afterDigit + beforeDigit) >> 1;
+    const mid = ((afterDigit + beforeDigit) >> 1) as Code;
     result.push(mid);
     break;
   }
@@ -201,21 +222,75 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
   return result;
 }
 
-function posCodes(str: string): number[] {
-  const codes: number[] = [];
+function isCode(n: number): n is Code {
+  return n >= min && n <= max;
+}
+
+function isPos(str: string): str is Pos {
+  // All chars in the string must be in the min-max range
   for (let i = 0; i < str.length; i++) {
-    codes.push(str.charCodeAt(i));
+    const code = str.charCodeAt(i);
+    if (!isCode(code)) {
+      return false;
+    }
+  }
+
+  // Additionally, the string must not be empty and cannot end in "trailing
+  // zeroes"
+  return str.length > 0 && str[str.length - 1] !== ZERO;
+}
+
+function convertToPos(str: string): Pos {
+  const codes: Code[] = [];
+
+  // All chars in the string must be in the min-max range
+  for (let i = 0; i < str.length; i++) {
+    const code = str.charCodeAt(i);
+
+    // Clamp to min-max range
+    codes.push(code < min ? min : code > max ? max : (code as Code));
+  }
+
+  // Strip all trailing zeros
+  while (codes.length > 0 && codes[codes.length - 1] === min) {
+    codes.length--;
+  }
+
+  return codes.length > 0
+    ? pos(codes)
+    : // Edge case: the str was a 0-only string, which is invalid. Default back to .1
+      ONE;
+}
+
+/**
+ * Checks that a str is a valid Pos, and converts it to the nearest valid one
+ * if not.
+ */
+function asPos(str: string): Pos {
+  // This is a hot code path, so we prefer to only check the value and not
+  // compute it, unless it's invalid (which should never happen under normal
+  // circumstances)
+  return isPos(str) ? str : convertToPos(str);
+}
+
+function toCodes(str: Pos): Code[] {
+  const codes: Code[] = [];
+  for (let i = 0; i < str.length; i++) {
+    codes.push(
+      // Guaranteed to be a valid Code
+      str.charCodeAt(i) as Code
+    );
   }
   return codes;
 }
 
-function pos(codes: number[]): Pos {
-  return String.fromCharCode(...codes);
+function pos(codes: Code[]): Pos {
+  return String.fromCharCode(...codes) as Pos;
 }
 
 function comparePosition(posA: Pos, posB: Pos): number {
-  const aCodes = posCodes(posA);
-  const bCodes = posCodes(posB);
+  const aCodes = toCodes(posA);
+  const bCodes = toCodes(posB);
 
   const maxLength = Math.max(aCodes.length, bCodes.length);
 
@@ -240,11 +315,15 @@ export { comparePosition, makePosition };
 // For unit tests only
 export {
   after as __after,
+  asPos as __asPos,
   before as __before,
   between as __between,
-  first as __first,
   max as __max,
   min as __min,
+  ONE as __ONE,
+  ZERO as __ZERO,
   pos as __pos,
-  posCodes as __posCodes,
+  toCodes as __posCodes,
 };
+
+export type { Pos as __Pos, Code as __Code };

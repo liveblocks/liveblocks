@@ -1,13 +1,16 @@
 import * as fc from "fast-check";
 
+import type { __Code as Code, __Pos as Pos } from "../position";
 import {
   __after as after,
   __before as before,
   __between as between,
-  __first as first,
+  __ONE as ONE,
+  __ZERO as ZERO,
   __max as max,
   __min as min,
   __pos as pos,
+  __asPos as asPos,
   __posCodes as posCodes,
   comparePosition,
   makePosition,
@@ -31,25 +34,31 @@ const mid = (min + max) >> 1;
  */
 function validPosition() {
   const digits = fc.constantFrom(...ALPHABET);
-  return fc.stringOf(digits, { minLength: 1 }).filter(
-    (pos) =>
-      // " " (aka zero) is not a valid value
-      !pos.split("").every((ch) => ch === " ")
-  );
+  return fc.stringOf(digits, { minLength: 1 }).map(asPos);
 }
 
 /**
- * Any non-empty string, really. But will ensure to throw in a lot of valid
- * position values.
+ * Any string, really, but ran through the asPos checker.
  */
 function validAndInvalidPosition() {
-  return fc.oneof(
-    // When fed valid Pos values...
-    validPosition(),
+  return fc
+    .oneof(
+      // Some valid positions
+      validPosition(),
 
-    // ...or even random strings
-    fc.string({ minLength: 1 })
-  );
+      // Some valid positions with trailing zeroes
+      fc.tuple(validPosition(), zeroPosition()).map(([s, trail]) => s + trail),
+
+      fc.string(),
+
+      // But ensure to throw in a higher likeliness of position-like values
+      fc.constantFrom(...ALPHABET),
+
+      // Also throw in a couple definitely-illegal chars from the entire ASCII charset
+      fc.ascii(),
+      fc.unicodeString()
+    )
+    .map(asPos);
 }
 
 /**
@@ -57,7 +66,7 @@ function validAndInvalidPosition() {
  * Possible values: "", " ", "  ", "   ", etc.
  */
 function zeroPosition() {
-  return fc.stringOf(fc.constantFrom(" "));
+  return fc.stringOf(fc.constantFrom(ZERO));
 }
 
 /**
@@ -65,14 +74,7 @@ function zeroPosition() {
  * second one.
  */
 function positionRange() {
-  return (
-    fc
-      .tuple(validPosition(), validPosition())
-      // TODO: Is this x < y enough? Or should we go full on...?
-      // .filter(([x, y]) => x !== y)
-      // .map(([x, y]) => (comparePosition(x, y) < 0 ? [x, y] : [y, x]));
-      .filter(([x, y]) => x < y)
-  );
+  return fc.tuple(validPosition(), validPosition()).filter(([x, y]) => x < y);
 }
 
 function testPosition(
@@ -80,24 +82,45 @@ function testPosition(
   hi: string | undefined,
   expected: string
 ) {
-  const result = makePosition(lo, hi);
-  expect(posCodes(result)).toEqual(posCodes(expected));
+  const result = makePosition(
+    lo !== undefined ? asPos(lo) : undefined,
+    hi !== undefined ? asPos(hi) : undefined
+  );
+  expect(posCodes(result)).toEqual(posCodes(expected as Pos));
 }
 
 describe("position datastructure", () => {
-  // XXX Currently not the case, but these tests _should_ pass
-  it.skip("zero is illegal", () => {
+  it("zero is an illegal Pos value", () => {
     fc.assert(
       fc.property(
         zeroPosition(),
-        zeroPosition(),
 
-        (zero1, zero2) => {
-          expect(() => after(zero1)).toThrow();
-          expect(() => after(zero2)).toThrow();
-          expect(() => before(zero1)).toThrow();
-          expect(() => before(zero2)).toThrow();
-          expect(() => between(zero1, zero2)).toThrow();
+        (strOfZeroes) => {
+          expect(asPos(strOfZeroes)).toBe(ONE);
+        }
+      )
+    );
+  });
+
+  it("asPos is idempotent", () => {
+    fc.assert(
+      fc.property(
+        fc.string(),
+
+        (s) => {
+          expect(asPos(s)).toBe(asPos(asPos(s)));
+        }
+      )
+    );
+  });
+
+  it("valid Pos strings aren't modified", () => {
+    fc.assert(
+      fc.property(
+        validPosition(),
+
+        (pos) => {
+          expect(asPos(pos)).toBe(pos);
         }
       )
     );
@@ -124,14 +147,14 @@ describe("position datastructure", () => {
 
 describe("after", () => {
   it("increment by .1 (typical)", () => {
-    expect(first).toBe("!");
-    expect(after(first)).toBe('"');
-    expect(after(after(first))).toBe("#");
+    expect(ONE).toBe("!");
+    expect(after(ONE)).toBe('"');
+    expect(after(after(ONE))).toBe("#");
   });
 
   it("increment by .1 (edge)", () => {
-    expect(after("~")).toBe("~!"); // e.g. after(.9) => .91
-    expect(after("~~~")).toBe("~~~!"); // e.g. after(.999) => .9991
+    expect(after(asPos("~"))).toBe("~!"); // e.g. after(.9) => .91
+    expect(after(asPos("~~~"))).toBe("~~~!"); // e.g. after(.999) => .9991
   });
 
   it("always output valid positions", () => {
@@ -140,7 +163,7 @@ describe("after", () => {
         validAndInvalidPosition(),
 
         (pos) => {
-          const output = after(pos);
+          const output = after(asPos(pos));
           expect(output).toMatch(posRegex);
         }
       )
@@ -155,7 +178,7 @@ describe("before", () => {
         validAndInvalidPosition(),
 
         (pos) => {
-          const output = before(pos);
+          const output = before(asPos(pos));
           expect(output).toMatch(posRegex);
         }
       )
@@ -164,33 +187,33 @@ describe("before", () => {
 });
 
 describe("between", () => {
-  // XXX Currently not the case, but these tests _should_ pass
-  it.skip("throws for equal values", () => {
-    expect(() => between("x", "x")).toThrow();
-    expect(() => between("x  ", "x")).toThrow();
-    expect(() => between("x", "x  ")).toThrow();
-  });
+  it("throws for equal values", () => {
+    expect(() => between(asPos("x"), asPos("x"))).toThrow();
+    expect(() => between(asPos("x"), asPos("x        "))).toThrow();
 
-  it("throws when arg order is incorrect", () => {
-    expect(between("a", "b")).toBe("aO");
-    expect(() => between("b", "a")).toThrow();
-  });
-
-  // XXX Currently not the case for the pinned seed, but these _should_ pass
-  it.skip("throws when second arg is less then first", () => {
     fc.assert(
       fc.property(
         validAndInvalidPosition(),
-        validAndInvalidPosition(),
+
+        (pos) => {
+          expect(() => between(pos, pos)).toThrow();
+        }
+      )
+    );
+  });
+
+  it("can flip arguments", () => {
+    fc.assert(
+      fc.property(
+        validPosition(),
+        validPosition(),
 
         (pos1, pos2) => {
-          expect(() =>
-            // Either one of these should throw
-            [between(pos1, pos2), between(pos2, pos1)]
-          ).toThrow();
+          if (pos1 !== pos2) {
+            expect(between(pos1, pos2)).toBe(between(pos2, pos1));
+          }
         }
-      ),
-      { seed: -1142756350, path: "87:5:2" }
+      )
     );
   });
 
@@ -209,74 +232,96 @@ describe("between", () => {
 });
 
 describe("makePosition", () => {
-  test("No children", () => testPosition(undefined, undefined, pos([min + 1])));
+  test("No children", () =>
+    testPosition(undefined, undefined, pos([(min + 1) as Code])));
 
   test("Insert after .1", () =>
-    testPosition(pos([min + 1]), undefined, pos([min + 2])));
+    testPosition(
+      pos([(min + 1) as Code]),
+      undefined,
+      pos([(min + 2) as Code])
+    ));
 
   test("Insert before .9", () =>
-    testPosition(undefined, pos([max]), pos([max - 1])));
+    testPosition(undefined, pos([max]), pos([(max - 1) as Code])));
 
   test("Insert after .9", () =>
-    testPosition(pos([max]), undefined, pos([max, min + 1])));
+    testPosition(pos([max]), undefined, pos([max, (min + 1) as Code])));
 
   test("Insert before .1", () =>
-    testPosition(undefined, pos([min + 1]), pos([min, max])));
+    testPosition(undefined, pos([(min + 1) as Code]), pos([min, max])));
 
   test("Insert between .1 and .3", () =>
-    testPosition(pos([min + 1]), pos([min + 3]), pos([min + 2])));
+    testPosition(
+      pos([(min + 1) as Code]),
+      pos([(min + 3) as Code]),
+      pos([(min + 2) as Code])
+    ));
 
   test("Insert between .1 and .5", () =>
-    testPosition(pos([min + 1]), pos([min + 5]), pos([min + 3])));
+    testPosition(
+      pos([(min + 1) as Code]),
+      pos([(min + 5) as Code]),
+      pos([(min + 3) as Code])
+    ));
 
   test("Insert between .1 and .4", () =>
-    testPosition(pos([min + 1]), pos([min + 4]), pos([min + 2])));
+    testPosition(
+      pos([(min + 1) as Code]),
+      pos([(min + 4) as Code]),
+      pos([(min + 2) as Code])
+    ));
 
   test("Insert between .1 and .2", () =>
-    testPosition(pos([min + 1]), pos([min + 2]), pos([min + 1, mid])));
+    testPosition(
+      pos([(min + 1) as Code]),
+      pos([(min + 2) as Code]),
+      pos([(min + 1) as Code, mid as Code])
+    ));
 
   test("Insert between .11 and .12", () =>
     testPosition(
-      pos([min + 1, min + 1]),
-      pos([min + 1, min + 2]),
-      pos([min + 1, min + 1, mid])
+      pos([(min + 1) as Code, (min + 1) as Code]),
+      pos([(min + 1) as Code, (min + 2) as Code]),
+      pos([(min + 1) as Code, (min + 1) as Code, mid as Code])
     ));
 
   test("Insert between .09 and .1 should .095", () =>
-    testPosition(pos([min, max]), pos([min + 1]), pos([min, max, mid])));
+    testPosition(
+      pos([min, max]),
+      pos([(min + 1) as Code]),
+      pos([min, max, mid as Code])
+    ));
 
   test("Insert between .19 and .21 should be .195", () =>
     testPosition(
-      pos([min + 1, max]),
-      pos([min + 2, min + 1]),
-      pos([min + 1, max, mid])
+      pos([(min + 1) as Code, max]),
+      pos([(min + 2) as Code, (min + 1) as Code]),
+      pos([(min + 1) as Code, max, mid as Code])
     ));
 
   test("Insert between .11 and .21 should be .15", () =>
     testPosition(
-      pos([min + 1, min + 1]),
-      pos([min + 2, min + 1]),
-      pos([min + 1, (min + 1 + max) >> 1])
+      pos([(min + 1) as Code, (min + 1) as Code]),
+      pos([(min + 2) as Code, (min + 1) as Code]),
+      pos([(min + 1) as Code, ((min + 1 + max) >> 1) as Code])
     ));
 });
 
 describe("comparePosition", () => {
   it("basics", () => {
-    expect(comparePosition("1", "2")).toBeLessThan(0);
-    expect(comparePosition("!", "~~")).toBeLessThan(0);
-    expect(comparePosition("11111", "11")).toBeGreaterThan(0);
+    expect(comparePosition(asPos("1"), asPos("2"))).toBeLessThan(0);
+    expect(comparePosition(asPos("!"), asPos("~~"))).toBeLessThan(0);
+    expect(comparePosition(asPos("11111"), asPos("11"))).toBeGreaterThan(0);
   });
 
   it("throws when equal", () => {
     fc.assert(
       fc.property(
         validAndInvalidPosition(),
-        zeroPosition(),
 
-        (pos, zeroes) => {
+        (pos) => {
           expect(() => comparePosition(pos, pos)).toThrow();
-          expect(() => comparePosition(pos, pos + zeroes)).toThrow();
-          expect(() => comparePosition(pos + zeroes, pos)).toThrow();
         }
       )
     );
@@ -285,10 +330,13 @@ describe("comparePosition", () => {
   it("inverted comparison leads to opposite result", () => {
     fc.assert(
       fc.property(
-        positionRange(),
+        validAndInvalidPosition(),
+        validAndInvalidPosition(),
 
-        ([p1, p2]) => {
-          expect(comparePosition(p1, p2)).toBe(-comparePosition(p2, p1));
+        (p1, p2) => {
+          if (p1 !== p2) {
+            expect(comparePosition(p1, p2)).toBe(-comparePosition(p2, p1));
+          }
         }
       )
     );
