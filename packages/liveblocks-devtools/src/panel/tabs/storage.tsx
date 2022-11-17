@@ -34,15 +34,7 @@ export function Storage() {
     <div className="absolute inset-0 flex flex-col">
       {storage ? (
         <>
-          <Tree
-            data={
-              // XXX Passing readonly arrays is currently not possible
-              // See https://github.com/brimdata/react-arborist/pull/65
-              storage as StorageTreeNode[]
-            }
-            ref={tree}
-            onFocus={handleFocus}
-          />
+          <Tree data={storage} ref={tree} onFocus={handleFocus} />
           <Breadcrumbs
             className="flex-none"
             nodes={nodes}

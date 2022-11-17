@@ -1,4 +1,3 @@
-import type { UserTreeNode } from "@liveblocks/core";
 import { useMemo } from "react";
 
 import { Tree } from "../components/Tree";
@@ -20,16 +19,7 @@ export function Others() {
 
   return (
     <div className="relative w-full flex-1">
-      {others !== null ? (
-        <Tree
-          data={
-            // XXX Passing readonly arrays is currently not possible
-            // See https://github.com/brimdata/react-arborist/pull/65
-            others as UserTreeNode[]
-          }
-          openByDefault={false}
-        />
-      ) : null}
+      {others !== null ? <Tree data={others} openByDefault={false} /> : null}
     </div>
   );
 }
