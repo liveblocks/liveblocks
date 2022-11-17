@@ -7,9 +7,9 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import type { NodeMap, ParentToChildNodeMap } from "../types/NodeMap";
 import type { ManagedPool } from "./AbstractCrdt";
-import { LiveList, type LiveListUpdates } from "./LiveList";
-import { LiveMap, type LiveMapUpdates } from "./LiveMap";
-import { LiveObject, type LiveObjectUpdates } from "./LiveObject";
+import { type LiveListUpdates, LiveList } from "./LiveList";
+import { type LiveMapUpdates, LiveMap } from "./LiveMap";
+import { type LiveObjectUpdates, LiveObject } from "./LiveObject";
 import { LiveRegister } from "./LiveRegister";
 import type { LiveNode, LiveStructure, Lson, LsonObject } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
@@ -232,7 +232,7 @@ function mergeObjectStorageUpdates<A extends LsonObject, B extends LsonObject>(
   first: LiveObjectUpdates<A>,
   second: LiveObjectUpdates<B>
 ): LiveObjectUpdates<B> {
-  const updates = first.updates as (typeof second)["updates"];
+  const updates = first.updates as typeof second["updates"];
   for (const [key, value] of entries(second.updates)) {
     updates[key] = value;
   }

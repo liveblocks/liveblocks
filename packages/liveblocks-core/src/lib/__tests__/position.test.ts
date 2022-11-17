@@ -1,17 +1,17 @@
 import * as fc from "fast-check";
 
-import type { __Code as Code, __Pos as Pos } from "../position";
+import type { __Code as Code, Pos } from "../position";
 import {
   __after as after,
   __before as before,
   __between as between,
-  __ONE as ONE,
-  __ZERO as ZERO,
   __max as max,
   __min as min,
+  __ONE as ONE,
   __pos as pos,
-  __asPos as asPos,
   __posCodes as posCodes,
+  __ZERO as ZERO,
+  asPos,
   comparePosition,
   makePosition,
 } from "../position";

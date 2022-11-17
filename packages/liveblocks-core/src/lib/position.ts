@@ -45,7 +45,7 @@
  *   '!"~'  ≃ 0.129
  *
  */
-type Pos = string & { _brand: "Pos" };
+export type Pos = string & { _brand: "Pos" };
 
 /**
  * The integer value between 32 and 126, representing each character in a valid
@@ -310,20 +310,19 @@ function comparePosition(posA: Pos, posB: Pos): number {
   );
 }
 
-export { comparePosition, makePosition };
+export { asPos, comparePosition, makePosition };
 
 // For unit tests only
 export {
   after as __after,
-  asPos as __asPos,
   before as __before,
   between as __between,
   max as __max,
   min as __min,
   ONE as __ONE,
-  ZERO as __ZERO,
   pos as __pos,
   toCodes as __posCodes,
+  ZERO as __ZERO,
 };
 
-export type { Pos as __Pos, Code as __Code };
+export type { Code as __Code };
