@@ -42,7 +42,7 @@ function Handle({
   const startOffset = useRef<number>();
   const startValue = useRef<number>();
 
-  const handlePointerMove = useCallback(
+  const handleDrag = useCallback(
     (event: PointerEvent) => {
       const delta =
         (startOffset.current ?? 0) -
@@ -53,13 +53,15 @@ function Handle({
     [direction, min, max]
   );
 
-  const handlePointerUp = useCallback(
-    (event: PointerEvent) => {
-      const delta =
-        (startOffset.current ?? 0) -
-        (direction === "vertical" ? event.pageY : event.pageX);
+  const handleDragEnd = useCallback(
+    (event?: PointerEvent) => {
+      if (event) {
+        const delta =
+          (startOffset.current ?? 0) -
+          (direction === "vertical" ? event.pageY : event.pageX);
 
-      onValueChange(clamp((startValue.current ?? 0) + delta, min, max));
+        onValueChange(clamp((startValue.current ?? 0) + delta, min, max));
+      }
 
       setDragging(false);
 
@@ -69,13 +71,13 @@ function Handle({
       document.body.style.removeProperty("cursor");
       document.body.style.removeProperty("user-select");
 
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handleDragEnd);
+      document.removeEventListener("pointermove", handleDrag);
     },
-    [direction, min, max, handlePointerMove]
+    [direction, min, max, handleDrag]
   );
 
-  const handlePointerDown = useCallback(
+  const handleDragStart = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
       startOffset.current =
         direction === "vertical" ? event.pageY : event.pageX;
@@ -87,27 +89,21 @@ function Handle({
       document.body.style.cursor =
         direction === "vertical" ? "row-resize" : "col-resize";
 
-      document.addEventListener("pointerup", handlePointerUp);
-      document.addEventListener("pointermove", handlePointerMove);
+      document.addEventListener("pointerup", handleDragEnd);
+      document.addEventListener("pointermove", handleDrag);
     },
-    [value, direction, handlePointerUp, handlePointerMove]
+    [value, direction, handleDragEnd, handleDrag]
   );
 
   useEffect(() => {
-    return () => {
-      document.body.style.removeProperty("cursor");
-      document.body.style.removeProperty("user-select");
-
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointermove", handlePointerMove);
-    };
-  }, [handlePointerUp, handlePointerMove]);
+    return handleDragEnd;
+  }, [handleDragEnd, handleDrag]);
 
   return (
     <div
       className={cx(
         className,
-        "absolute bg-black/5 transition-opacity hover:opacity-100",
+        "absolute z-50 bg-black/5 transition-opacity hover:opacity-100",
         isDragging ? "opacity-100" : "opacity-0",
         {
           "left-0 -top-1.5 h-3 w-full cursor-row-resize":
@@ -116,7 +112,7 @@ function Handle({
             direction === "horizontal",
         }
       )}
-      onPointerDown={handlePointerDown}
+      onPointerDown={handleDragStart}
       {...props}
     />
   );
