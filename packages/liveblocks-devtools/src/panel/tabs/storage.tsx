@@ -1,30 +1,23 @@
-import type { StorageTreeNode, UserTreeNode } from "@liveblocks/core";
+import type { TreeNode } from "@liveblocks/core";
 import { useCallback, useRef, useState } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
 
-import {
-  Breadcrumbs,
-  recursivelyGetParentNodes,
-  Tree,
-} from "../components/Tree";
+import { Breadcrumbs, Tree } from "../components/Tree";
 import { useStorage } from "../contexts/CurrentRoom";
 
 export function Storage() {
   const storage = useStorage();
-  const tree = useRef<TreeApi<StorageTreeNode | UserTreeNode>>(null);
-  const [nodes, setNodes] = useState<NodeApi<StorageTreeNode | UserTreeNode>[]>(
-    []
+  const tree = useRef<TreeApi<TreeNode>>(null);
+  const [focusedNode, setFocusedNode] = useState<NodeApi<TreeNode> | null>(
+    null
   );
 
-  const handleFocus = useCallback(
-    (node: NodeApi<StorageTreeNode | UserTreeNode>) => {
-      setNodes([...recursivelyGetParentNodes(node).reverse(), node]);
-    },
-    []
-  );
+  const handleFocus = useCallback((node: NodeApi<TreeNode>) => {
+    setFocusedNode(node);
+  }, []);
 
   const handleBreadcrumbClick = useCallback(
-    (node: NodeApi<StorageTreeNode | UserTreeNode>) => {
+    (node: NodeApi<TreeNode> | null) => {
       tree.current?.focus(node, { scroll: true });
     },
     []
@@ -35,11 +28,13 @@ export function Storage() {
       {storage ? (
         <>
           <Tree data={storage} ref={tree} onFocus={handleFocus} />
-          <Breadcrumbs
-            className="flex-none"
-            nodes={nodes}
-            onNodeClick={handleBreadcrumbClick}
-          />
+          {focusedNode ? (
+            <Breadcrumbs
+              className="flex-none"
+              node={focusedNode}
+              onNodeClick={handleBreadcrumbClick}
+            />
+          ) : null}
         </>
       ) : null}
     </div>

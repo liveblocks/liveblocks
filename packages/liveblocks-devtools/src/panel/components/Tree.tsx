@@ -14,7 +14,7 @@ import type {
   ReactElement,
   RefAttributes,
 } from "react";
-import { forwardRef, useCallback, useMemo } from "react";
+import { forwardRef, useCallback } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
@@ -38,8 +38,8 @@ interface RowProps extends ComponentProps<"div"> {
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
-  nodes: NodeApi[];
-  onNodeClick: (node: NodeApi) => void;
+  node: NodeApi<TreeNode>;
+  onNodeClick: (node: NodeApi<TreeNode> | null) => void;
 }
 
 interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
@@ -121,34 +121,32 @@ function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   }
 }
 
-export function recursivelyGetParentNodes<T>(
-  node: NodeApi<T>,
-  parents: NodeApi<T>[] = []
-): NodeApi<T>[] {
-  return node.parent && !node.parent.isRoot
-    ? recursivelyGetParentNodes(node.parent, [...parents, node.parent])
-    : parents;
+function hasFocusedParent<T>(node: NodeApi<T>): boolean {
+  let curr: NodeApi<T> | null = node.parent;
+  while (curr !== null) {
+    if (curr.isFocused) {
+      return true;
+    }
+    curr = curr.parent;
+  }
+  return false;
 }
 
 function Row({ node, children, className, ...props }: RowProps) {
-  const parents = useMemo(() => recursivelyGetParentNodes(node), [node]);
-  const hasFocusedParent = useMemo(
-    () => parents.some((parent) => parent.isFocused),
-    [parents]
-  );
-
+  const isFocused = node.isFocused;
+  const isParentFocused = !node.isFocused && hasFocusedParent(node);
   return (
     <div
       className={cx(
         className,
         "flex h-full items-center gap-2 rounded pr-2",
-        node.isFocused
+        isFocused
           ? "bg-gray-200 dark:bg-gray-700"
-          : hasFocusedParent
+          : isParentFocused
           ? "bg-gray-100 dark:bg-gray-800"
           : "bg-transparent",
         node.isOpen && "rounded-b-none",
-        hasFocusedParent && "rounded-none"
+        isParentFocused && "rounded-none"
       )}
       {...props}
     >
@@ -343,12 +341,30 @@ export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
   }
 );
 
+/**
+ * Returns the list of nodes, from the root (excluded) all the way down to the
+ * current node (included). The current node will always be last in this list.
+ *
+ * The root node itself is excluded because it's an internal Arborist node
+ * (invisible in the tree view).
+ */
+function getNodePath<T>(node: NodeApi<T>): NodeApi<T>[] {
+  if (node.parent === null) {
+    return [];
+  } else {
+    const path = getNodePath(node.parent);
+    path.push(node);
+    return path;
+  }
+}
+
 export function Breadcrumbs({
-  nodes = [],
+  node,
   onNodeClick,
   className,
   ...props
 }: BreadcrumbsProps) {
+  const nodePath = getNodePath(node);
   return (
     <div
       className={cx(
@@ -357,37 +373,36 @@ export function Breadcrumbs({
       )}
       {...props}
     >
-      {nodes.map((node, index) => {
-        const isLast = index === nodes.length - 1;
-
-        const handleClick = () => {
-          onNodeClick(node);
-        };
-
+      <button
+        key={node.data.id}
+        className="flex h-5 items-center"
+        onClick={() => onNodeClick(null)}
+      >
+        $
+      </button>
+      {nodePath.map((node) => {
         return (
           <>
+            <svg
+              width="7"
+              height="10"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="text-gray-300"
+            >
+              <path
+                d="M1.5 8.5 5 5 1.5 1.5"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
             <button
               key={node.data.id}
               className="flex h-5 items-center"
-              onClick={handleClick}
+              onClick={() => onNodeClick(node)}
             >
               {node.data.key}
             </button>
-            {!isLast && (
-              <svg
-                width="7"
-                height="10"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                className="text-gray-300"
-              >
-                <path
-                  d="M1.5 8.5 5 5 1.5 1.5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            )}
           </>
         );
       })}
