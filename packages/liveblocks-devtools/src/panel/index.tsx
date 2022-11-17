@@ -1,6 +1,7 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { createRoot } from "react-dom/client";
 
+import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
 import { Tabs } from "./components/Tabs";
@@ -21,27 +22,8 @@ function Panel() {
   }
 
   return (
-    <div className="grid h-full grid-rows-3 sm:grid-cols-3 sm:grid-rows-none">
-      <div className="row-span-2 border-b border-gray-200 dark:border-gray-600 sm:col-span-2 sm:row-auto sm:border-b-0 sm:border-r">
-        <Tabs
-          className="h-full"
-          defaultValue="storage"
-          tabs={[
-            {
-              value: "storage",
-              title: "Storage",
-              content: <Storage />,
-            },
-          ]}
-          leading={
-            <div className="relative flex items-center px-1.5 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px after:bg-gray-200 dark:after:bg-gray-600">
-              <RoomStatus />
-              <RoomSelector />
-            </div>
-          }
-        />
-      </div>
-      <div className="row-span-1 sm:col-span-1 sm:row-auto">
+    <ResizablePanel
+      content={
         <Tabs
           className="h-full"
           defaultValue="presence"
@@ -53,8 +35,26 @@ function Panel() {
             },
           ]}
         />
-      </div>
-    </div>
+      }
+    >
+      <Tabs
+        className="h-full"
+        defaultValue="storage"
+        tabs={[
+          {
+            value: "storage",
+            title: "Storage",
+            content: <Storage />,
+          },
+        ]}
+        leading={
+          <div className="relative flex items-center px-1.5 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px after:bg-gray-200 dark:after:bg-gray-600">
+            <RoomStatus />
+            <RoomSelector />
+          </div>
+        }
+      />
+    </ResizablePanel>
   );
 }
 
