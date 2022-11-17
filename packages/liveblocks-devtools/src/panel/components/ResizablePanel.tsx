@@ -1,10 +1,11 @@
+import { useStorage } from "@plasmohq/storage/hook";
 import cx from "classnames";
 import type {
   ComponentProps,
   PointerEvent as ReactPointerEvent,
   ReactNode,
 } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { useMediaQuery } from "../../hooks/useMediaQuery";
 import { clamp } from "../../lib/clamp";
@@ -125,9 +126,13 @@ export function ResizablePanel({
   style,
   ...props
 }: Props) {
+  const id = useId();
   const isVertical = useMediaQuery(`(max-width: ${BREAKPOINT}px)`);
-  const [width, setWidth] = useState(INITIAL_WIDTH);
-  const [height, setHeight] = useState(INITIAL_HEIGHT);
+  const [width, setWidth] = useStorage(`panel-width-${id}-0`, INITIAL_WIDTH);
+  const [height, setHeight] = useStorage(
+    `panel-height-${id}-0`,
+    INITIAL_HEIGHT
+  );
 
   return (
     <div
