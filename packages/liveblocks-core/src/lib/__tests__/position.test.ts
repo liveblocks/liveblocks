@@ -1,16 +1,16 @@
 import * as fc from "fast-check";
 
 import {
-  after,
-  before,
-  between,
+  __after as after,
+  __before as before,
+  __between as between,
+  __first as first,
+  __max as max,
+  __min as min,
+  __pos as pos,
+  __posCodes as posCodes,
   comparePosition,
-  first,
   makePosition,
-  max,
-  min,
-  pos,
-  posCodes,
 } from "../position";
 
 // The alphabet that all positions values will consist of

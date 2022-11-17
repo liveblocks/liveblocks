@@ -26,8 +26,8 @@
  *
  */
 
-export const min = 32; // " ", think 0 (zero)
-export const max = 126; // "~", think 9 (nine)
+const min = 32; // " ", think 0 (zero)
+const max = 126; // "~", think 9 (nine)
 
 /**
  * A valid "position" string. These values are used as "parentKey"s by LiveList
@@ -54,7 +54,7 @@ type Pos = string;
  * The "first" canonical position.
  * In an equivalent decimal number system, think of this as the value .1.
  */
-export const first: Pos = "!"; // = pos([min + 1])
+const first: Pos = "!"; // = pos([min + 1])
 
 /**
  * Given two positions, returns the position value that lies in the middle.
@@ -62,7 +62,7 @@ export const first: Pos = "!"; // = pos([min + 1])
  * When given only a `lo` bound, computes the canonical position "after" it.
  * When given no bounds at all, returns the "first" canonical position.
  */
-export function makePosition(lo?: Pos, hi?: Pos): Pos {
+function makePosition(lo?: Pos, hi?: Pos): Pos {
   return lo !== undefined && hi !== undefined
     ? between(lo, hi)
     : lo !== undefined
@@ -94,7 +94,7 @@ export function makePosition(lo?: Pos, hi?: Pos): Pos {
  *   before(.001)  // .0009
  *
  */
-export function before(value: Pos): Pos {
+function before(value: Pos): Pos {
   const result = [];
   const afterCodes = posCodes(value);
   for (let i = 0; i < afterCodes.length; i++) {
@@ -133,7 +133,7 @@ export function before(value: Pos): Pos {
  *   after(.99)  // .991
  *
  */
-export function after(value: Pos): Pos {
+function after(value: Pos): Pos {
   const result = [];
   const beforeCodes = posCodes(value);
   for (let i = 0; i < beforeCodes.length; i++) {
@@ -162,7 +162,7 @@ export function after(value: Pos): Pos {
  *   between('!', '"')  // '!O'   (like how between(.1, .2) would be .15)
  *
  */
-export function between(before: Pos, after: Pos): Pos {
+function between(before: Pos, after: Pos): Pos {
   return pos(makePositionFromCodes(posCodes(before), posCodes(after)));
 }
 
@@ -201,7 +201,7 @@ function makePositionFromCodes(before: number[], after: number[]): number[] {
   return result;
 }
 
-export function posCodes(str: string): number[] {
+function posCodes(str: string): number[] {
   const codes: number[] = [];
   for (let i = 0; i < str.length; i++) {
     codes.push(str.charCodeAt(i));
@@ -209,11 +209,11 @@ export function posCodes(str: string): number[] {
   return codes;
 }
 
-export function pos(codes: number[]): Pos {
+function pos(codes: number[]): Pos {
   return String.fromCharCode(...codes);
 }
 
-export function comparePosition(posA: Pos, posB: Pos): number {
+function comparePosition(posA: Pos, posB: Pos): number {
   const aCodes = posCodes(posA);
   const bCodes = posCodes(posB);
 
@@ -234,3 +234,17 @@ export function comparePosition(posA: Pos, posB: Pos): number {
     `Impossible to compare similar position "${posA}" and "${posB}"`
   );
 }
+
+export { comparePosition, makePosition };
+
+// For unit tests only
+export {
+  after as __after,
+  before as __before,
+  between as __between,
+  first as __first,
+  max as __max,
+  min as __min,
+  pos as __pos,
+  posCodes as __posCodes,
+};
