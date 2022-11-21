@@ -80,7 +80,7 @@ function background(node: StorageTreeNode | UserTreeNode): string {
       return "bg-blue-500 dark:bg-blue-400";
 
     case "Json":
-      return "bg-light-500 dark:bg-dark-500";
+      return "bg-dark-800 dark:bg-dark-600";
 
     case "User":
       return "bg-amber-500 dark:bg-amber-500";
@@ -99,7 +99,6 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -117,7 +116,6 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -135,7 +133,6 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -153,7 +150,6 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -171,7 +167,6 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -263,11 +258,12 @@ function Row({ node, children, className, ...props }: RowProps) {
         className,
         "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
         isFocused
-          ? "bg-light-200 dark:bg-dark-200 hover:bg-light-300 dark:hover:bg-dark-300"
+          ? [background(node.data), "!text-light-0"]
           : isParentFocused
           ? "bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
+      data-active={isFocused || undefined}
       {...props}
     >
       <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
@@ -278,7 +274,7 @@ function Row({ node, children, className, ...props }: RowProps) {
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
             className={cx(
-              "text-dark-900 dark:text-light-900 transition-transform",
+              "opacity-60 transition-transform",
               node.isOpen && "rotate-90"
             )}
           >
@@ -289,7 +285,12 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div className="flex h-[16px] w-[16px] content-center items-center">
+      <div
+        className={cx(
+          "flex h-[16px] w-[16px] content-center items-center",
+          isFocused ? "text-light-0" : color(node.data)
+        )}
+      >
         {icon(node.data)}
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
@@ -304,7 +305,7 @@ function Badge({ children, className, ...props }: ComponentProps<"span">) {
     <span
       className={cx(
         className,
-        "text-2xs relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
+        "text-2xs [[data-active]_&]:!text-light-0 relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
       )}
       {...props}
     >
@@ -324,11 +325,9 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
-        <Badge className="text-dark-800 dark:text-light-800">
-          #{node.data.id}
-        </Badge>
+        <Badge className="opacity-60">#{node.data.id}</Badge>
       ) : (
-        <div className="text-dark-800 dark:text-light-800 truncate">
+        <div className="truncate opacity-60">
           {truncate(summarize(node.data))}
         </div>
       )}
@@ -352,7 +351,7 @@ function LiveNodeRenderer({
       {node.isOpen ? (
         <Badge className={color(node.data)}>{node.data.type}</Badge>
       ) : (
-        <div className="text-dark-800 dark:text-light-800 truncate">
+        <div className="truncate opacity-60">
           {truncate(summarize(node.data))}
         </div>
       )}
@@ -366,7 +365,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   return (
     <Row node={node} style={style}>
       <div className="flex-none">{node.data.key}</div>
-      <div className="text-dark-800 dark:text-light-800 truncate">{value}</div>
+      <div className="truncate opacity-60">{value}</div>
     </Row>
   );
 }
