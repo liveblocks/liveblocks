@@ -23,8 +23,7 @@ import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import { truncate } from "../../lib/truncate";
 
-const PADDING = 6;
-const ROW_HEIGHT = 26;
+const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
 type ArboristTreeProps<T> = TreeApi<T>["props"];
@@ -138,8 +137,16 @@ function Row({ node, children, className, ...props }: RowProps) {
 
   return (
     <div
-      className="h-full"
-      style={{ paddingLeft: PADDING, paddingRight: PADDING }}
+      className={cx(
+        className,
+        "flex h-full items-center gap-2 pr-2",
+        isFocused
+          ? "bg-gray-200 dark:bg-gray-700"
+          : isParentFocused
+          ? "bg-gray-100 dark:bg-gray-800"
+          : "bg-transparent"
+      )}
+      {...props}
     >
       <div
         className={cx(
@@ -333,7 +340,6 @@ export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
             selectionFollowsFocus
             rowHeight={ROW_HEIGHT}
             indent={ROW_INDENT}
-            padding={PADDING}
             {...props}
           >
             {TreeNodeRenderer}
