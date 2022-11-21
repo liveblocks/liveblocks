@@ -65,7 +65,12 @@ function genUnverifiedPos() {
       fc.ascii(),
       fc.unicodeString()
     )
-    .map((s) => s as ReturnType<typeof asPos>);
+    .map(
+      (s) =>
+        // Deliberately force-casted to a Pos, even if these inputs are invalid
+        // Pos values. Used to test unexpected inputs.
+        s as ReturnType<typeof asPos>
+    );
 }
 
 /**
