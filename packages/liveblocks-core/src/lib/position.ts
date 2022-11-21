@@ -1,68 +1,86 @@
 /**
- * Positions are efficient encodings of "positions" in a list, using the
- * following subset of the ASCII alphabet:
+ * Positions, aka the Pos type, are efficient encodings of "positions" in
+ * a list, using the following printable subset of the ASCII alphabet:
  *
  *    !"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
  *   ^                                                                                             ^
- *   min                                                                                         max
+ *   Lowest digit                                                                      Highest digit
  *
- * Just like with floating point numbers, there is an order to these values,
- * and it's always possible to inject a number between two arbitrary position
- * values.
+ * Each Pos is a sequence of characters from the above alphabet, conceptually
+ * codifying a floating point number 0 < n < 1. For example, the string "31007"
+ * would be used to represent the number 0.31007, except that this
+ * representation uses base 96.
  *
- * Some facts/examples:
- * - ! < "    (like how  .1 < .2)
- * - ! < ~    (like how  .1 < .9)
- * - !! < !~  (like how .11 < .19)
- * - ~! < ~~  (like how .91 < .99)
- * - ~! > ~   (like how .91 > .9)
- * - !! < !O  (like how .1 < .5)
- * - !O < !~  (like how .5 < .9)
- *
- * - `~! is greater than `~` (similarly to how 9.1 is greater than 9)
- *
- * Weird maybe:
- * - ` ` is less than `!`    (you can think of ` ` as going into negative number territory)
- *
- */
-
-/**
- * A valid "position" string. These values are used as "parentKey"s by LiveList
- * children, and define their relative ordering.
- *
- * A position string consists of 1 or more "digits", which should be thought of
- * as the tail of digits in a floating point number between 0 and 1. The
- * alphabet is equivalent to the numerical "alphabet" 0-9:
- *   0 ≃ ' '
+ *   0 ≃ ' '  (lowest digit)
  *   1 ≃ '!'
  *   2 ≃ '"'
  *   ...
- *   9 ≃ '~'
+ *   9 ≃ '~'  (highest digit)
  *
- * Then, think:
+ * So think:
  *   '!'    ≃ 0.1
  *   '"'    ≃ 0.2
  *   '!"~'  ≃ 0.129
  *
+ * Three rules:
+ * - All "characters" in the string should be valid digits (from the above
+ *   alphabet)
+ * - The value 0.0 is not a valid Pos value
+ * - A Pos cannot have trailing "zeroes"
+ *
+ * This representation has the following benefits:
+ *
+ * 1. It's always possible to get a number that lies before, after, or between
+ *    two arbitrary Pos values.
+ * 2. Pos values can be compared using normal string comparison.
+ *
+ * Some examples:
+ * - '!'  < '"'   (like how .1  < .2)
+ * - '!'  < '~'   (like how .1  < .9)
+ * - '!!' < '!~'  (like how .11 < .19)
+ * - '~!' < '~~'  (like how .91 < .99)
+ * - '~'  < '~!'  (like how .9  < .91)
+ * - '!!' < '!O'  (like how .1  < .5)
+ * - '!O' < '!~'  (like how .5  < .9)
+ *
+ */
+
+/**
+ * A valid/verified "position" string. These values are used as "parentKey"s by
+ * LiveList children, and define their relative ordering.
  */
 export type Pos = string & { _brand: "Pos" };
 
-/**
- * The integer value between 32 and 126, representing each character in a valid
- * Pos string numerically.
- */
-type Code = number & { _brand: "Code" };
+const minCode = 32;
+const maxCode = 126;
 
-const min = 32 as Code;
-const max = 126 as Code;
+const NUM_DIGITS = maxCode - minCode + 1;
 
-const ZERO: Pos = pos([min as Code]); // " "
+const ZERO: string = nthDigit(0); // " "
 
 /**
  * The "first" canonical position.
  * In an equivalent decimal number system, think of this as the value .1.
  */
-const ONE: Pos = pos([(min + 1) as Code]); // "!"
+const ONE: Pos = nthDigit(1); // "!"
+
+const ZERO_NINE = (ZERO + nthDigit(-1)) as Pos;
+
+/**
+ * Returns the Pos value for the nth digit in the alphabet.
+ * Value must be between 0 and 94.
+ *
+ * Just used to generate some static data, and for usage in test cases.
+ */
+function nthDigit(n: 0): string; // "0" is a legal _digit_, but not a legal Pos value
+function nthDigit(n: number): Pos;
+function nthDigit(n: number): Pos {
+  let code = minCode + (n < 0 ? NUM_DIGITS + n : n);
+  if (code < minCode || code > maxCode) {
+    throw new Error(`Invalid n value: ${n}`);
+  }
+  return String.fromCharCode(code) as Pos;
+}
 
 /**
  * Given two positions, returns the position value that lies in the middle.
@@ -84,89 +102,100 @@ function makePosition(lo?: Pos, hi?: Pos): Pos {
  * Given any position value, computes the canonical position "before" it.
  *
  * The equivalent in a decimal number system would be:
- *   before(.1)   // .09
- *   before(.2)   // .1
- *   before(.3)   // .2
+ *   before(.1)     // .09
+ *   before(.11)    // .1
+ *   before(.111)   // .1
+ *   before(.2)     // .1
+ *   before(.23101) // .2
+ *   before(.3)     // .2
  *   ...
- *   before(.8)   // .7
- *   before(.9)   // .8
- *   before(.91)  // .909
- *   before(.92)  // .91
- *   before(.93)  // .92
+ *   before(.8)     // .7
+ *   before(.9)     // .8
+ *   before(.91)    // .9
+ *   before(.92)    // .9
+ *   before(.93)    // .9
  *   ...
- *   before(.98)  // .97
- *   before(.99)  // .98
+ *   before(.98)    // .9
+ *   before(.99)    // .9
  *
  * Note:
- *   before(.01)   // .009
- *   before(.001)  // .0009
+ *   before(.01)    // .009
+ *   before(.001)   // .0009
+ *   before(.002)   // .001
+ *   before(.00283) // .002
  *
  */
-function before(value: Pos): Pos {
-  const result: Code[] = [];
-  const afterCodes = toCodes(value);
-  for (let i = 0; i < afterCodes.length; i++) {
-    const code = afterCodes[i];
+function before(pos: Pos): Pos {
+  const lastIndex = pos.length - 1;
+  for (let i = 0; i <= lastIndex; i++) {
+    const code = pos.charCodeAt(i);
 
-    if (code <= min + 1) {
-      result.push(min);
-      if (afterCodes.length - 1 === i) {
-        result.push(max);
-        break;
+    // Scan away all leading zeros, if there are any
+    if (code <= minCode) {
+      continue;
+    }
+
+    //
+    // Now, i points to the first non-zero digit
+    //
+    // Two options:
+    // 1. It's the last digit.
+    //    a. If it's a 1, it's on the edge. Replace with "09".
+    //    b. Otherwise, just lower it.
+    // 2. It's not the last digit, so we can just chop off the remainder.
+    //
+    if (i === lastIndex) {
+      if (code === minCode + 1) {
+        return (pos.substring(0, i) + ZERO_NINE) as Pos;
+      } else {
+        return (pos.substring(0, i) + String.fromCharCode(code - 1)) as Pos;
       }
     } else {
-      result.push(
-        // Here, `code > min + 1`, so safe to cast to Code
-        (code - 1) as Code
-      );
-      break;
+      return pos.substring(0, i + 1) as Pos;
     }
   }
 
-  return pos(result);
+  // If we end up here, it means the input consisted of only zeroes, which is
+  // invalid, so return the canonical first value as a best effort
+  return ONE;
 }
 
 /**
  * Given any position value, computes the canonical position "after" it.
  *
  * The equivalent in a decimal number system would be:
- *   after(.1)   // .2
- *   after(.2)   // .3
- *   after(.3)   // .4
+ *   after(.001)  // .1
+ *   after(.1)    // .2
+ *   after(.101)  // .2
+ *   after(.2)    // .3
+ *   after(.3)    // .4
  *   ...
- *   after(.8)   // .9
- *   after(.9)   // .91
- *   after(.91)  // .92
- *   after(.92)  // .93
- *   after(.93)  // .94
+ *   after(.8)    // .9
+ *   after(.9)    // .91
+ *   after(.91)   // .92
+ *   after(.9123) // .92
  *   ...
- *   after(.98)  // .99
- *   after(.99)  // .991
+ *   after(.98)   // .99
+ *   after(.99)   // .991
+ *   after(.9999) // .99991
  *
  */
-function after(value: Pos): Pos {
-  const result: Code[] = [];
-  const beforeCodes = toCodes(value);
-  for (let i = 0; i < beforeCodes.length; i++) {
-    const code = beforeCodes[i];
+function after(pos: Pos): Pos {
+  for (let i = 0; i <= pos.length - 1; i++) {
+    const code = pos.charCodeAt(i);
 
-    if (code === max) {
-      result.push(code);
-      if (beforeCodes.length - 1 === i) {
-        result.push(
-          // Guaranteed to be within the min-max range, so safe to cast to Code
-          (min + 1) as Code
-        );
-        break;
-      }
-    } else {
-      // Here, `code >= min && code < max`, so safe to cast
-      result.push((code + 1) as Code);
-      break;
+    // Scan away all leading "nines", if there are any
+    if (code >= maxCode) {
+      continue;
     }
+
+    // Now, i points to the first non-"nine" digit
+    return (pos.substring(0, i) + String.fromCharCode(code + 1)) as Pos;
   }
 
-  return pos(result);
+  // If we end up here, it means the input consisted of only "nines", means we
+  // can just append a ONE digit.
+  return (pos + ONE) as Pos;
 }
 
 /**
@@ -176,88 +205,109 @@ function after(value: Pos): Pos {
  *   between('!', '%')  // '#'    (like how between(.1, .5) would be .3)
  *   between('!', '"')  // '!O'   (like how between(.1, .2) would be .15)
  *
+ *   between(.1, .3)      // .2
+ *   between(.1, .4)      // also .2
+ *   between(.1, .5)      // .3
+ *   between(.11, .21)    // .15
+ *   between(.1,  .1003)  // .1001
+ *   between(.11, .12)    // .115
+ *   between(.09, .1)     // .095
+ *   between(.19, .21)    // .195
+ *
  */
-function between(first: Pos, second: Pos): Pos {
-  if (first === second) {
-    throw new Error("Cannot compute value between two equal positions");
-  } else if (first < second) {
-    return pos(makePositionFromCodes(toCodes(first), toCodes(second)));
+function between(lo: Pos, hi: Pos): Pos {
+  if (lo < hi) {
+    return _between(lo, hi) as Pos;
+  } else if (lo > hi) {
+    return _between(hi, lo) as Pos;
   } else {
-    return pos(makePositionFromCodes(toCodes(second), toCodes(first)));
+    throw new Error("Cannot compute value between two equal positions");
   }
 }
 
-function makePositionFromCodes(lo: Code[], hi: Code[]): Code[] {
+/**
+ * Like between(), but guaranteed that lo < hi.
+ */
+function _between(lo: Pos, hi: Pos | ""): Pos {
   let index = 0;
-  const result: Code[] = [];
 
+  const loLen = lo.length;
+  const hiLen = hi.length;
   while (true) {
-    const beforeDigit = lo[index] ?? min;
-    const afterDigit = hi[index] ?? max;
+    const loCode = index < loLen ? lo.charCodeAt(index) : minCode;
+    const hiCode = index < hiLen ? hi.charCodeAt(index) : maxCode;
 
-    // istanbul ignore if
-    if (beforeDigit > afterDigit) {
-      throw new Error(
-        `Impossible to generate position between ${lo} and ${hi}`
-      );
-    }
-
-    if (beforeDigit === afterDigit) {
-      result.push(beforeDigit);
+    if (loCode === hiCode) {
       index++;
       continue;
     }
 
-    if (afterDigit - beforeDigit === 1) {
-      result.push(beforeDigit);
-      result.push(...makePositionFromCodes(lo.slice(index + 1), []));
-      break;
+    // Difference of only 1 means we'll have to settle this in the next digit
+    if (hiCode - loCode === 1) {
+      const prefix = lo.substring(0, index + 1);
+      const suffix = lo.substring(index + 1) as Pos;
+      const nines = ""; // Will get interpreted like .999999…
+      return (prefix + _between(suffix, nines)) as Pos;
+    } else {
+      // Difference of more than 1 means we take the "middle" between these digits
+      return (takeN(lo, index) +
+        String.fromCharCode((hiCode + loCode) >> 1)) as Pos;
     }
-
-    const mid = ((afterDigit + beforeDigit) >> 1) as Code;
-    result.push(mid);
-    break;
   }
-
-  return result;
 }
 
-function isCode(n: number): n is Code {
-  return n >= min && n <= max;
+function takeN(pos: string, n: number): string {
+  return n < pos.length
+    ? pos.substring(0, n)
+    : pos + ZERO.repeat(n - pos.length);
 }
+
+/**
+ * Okay, this regex may need a little explanation.
+ *
+ * It checks whether a given string is a valid Pos value. There are three
+ * rules:
+ *
+ *   - All characters in the string must be from our alphabet
+ *   - The string must not have any trailing "zeroes" (trailing " ")
+ *   - The string must not be the empty string
+ *
+ * The first range [\x20-\x7E] checks whether all characters are from the
+ * alphabet. Here, \x20 = 32 (min), and \x7E = 126 (max).
+ *
+ * In the second range, we check [\x21-\x7E], which excludes the " " char
+ * (\x20). This ensures there are no trailing zeroes, _and_ ensures the string
+ * is non-empty.
+ *
+ * Using this regex is faster than iterating over the string
+ * character-by-character and checking ranges.
+ */
+const posRegex = /^[\x20-\x7E]*[\x21-\x7E]$/;
+//                 ^^^^^^^^^^^ ^^^^^^^^^^^
+//                     (1)         (2)
 
 function isPos(str: string): str is Pos {
-  // All chars in the string must be in the min-max range
-  for (let i = 0; i < str.length; i++) {
-    const code = str.charCodeAt(i);
-    if (!isCode(code)) {
-      return false;
-    }
-  }
-
-  // Additionally, the string must not be empty and cannot end in "trailing
-  // zeroes"
-  return str.length > 0 && str[str.length - 1] !== ZERO;
+  return posRegex.test(str);
 }
 
 function convertToPos(str: string): Pos {
-  const codes: Code[] = [];
+  const codes: number[] = [];
 
   // All chars in the string must be in the min-max range
   for (let i = 0; i < str.length; i++) {
     const code = str.charCodeAt(i);
 
     // Clamp to min-max range
-    codes.push(code < min ? min : code > max ? max : (code as Code));
+    codes.push(code < minCode ? minCode : code > maxCode ? maxCode : code);
   }
 
   // Strip all trailing zeros
-  while (codes.length > 0 && codes[codes.length - 1] === min) {
+  while (codes.length > 0 && codes[codes.length - 1] === minCode) {
     codes.length--;
   }
 
   return codes.length > 0
-    ? pos(codes)
+    ? (String.fromCharCode(...codes) as Pos)
     : // Edge case: the str was a 0-only string, which is invalid. Default back to .1
       ONE;
 }
@@ -267,62 +317,23 @@ function convertToPos(str: string): Pos {
  * if not.
  */
 function asPos(str: string): Pos {
-  // This is a hot code path, so we prefer to only check the value and not
-  // compute it, unless it's invalid (which should never happen under normal
-  // circumstances)
+  // Calling convertToPos(str) would suffice here, but since this is a hot code
+  // path, we prefer to just check, which is a lot faster.
   return isPos(str) ? str : convertToPos(str);
 }
 
-function toCodes(str: Pos): Code[] {
-  const codes: Code[] = [];
-  for (let i = 0; i < str.length; i++) {
-    codes.push(
-      // Guaranteed to be a valid Code
-      str.charCodeAt(i) as Code
-    );
-  }
-  return codes;
-}
-
-function pos(codes: Code[]): Pos {
-  return String.fromCharCode(...codes) as Pos;
-}
-
 function comparePosition(posA: Pos, posB: Pos): number {
-  const aCodes = toCodes(posA);
-  const bCodes = toCodes(posB);
-
-  const maxLength = Math.max(aCodes.length, bCodes.length);
-
-  for (let i = 0; i < maxLength; i++) {
-    const a = aCodes[i] === undefined ? min : aCodes[i];
-    const b = bCodes[i] === undefined ? min : bCodes[i];
-
-    if (a === b) {
-      continue;
-    } else {
-      return a - b;
-    }
-  }
-
-  throw new Error(
-    `Impossible to compare similar position "${posA}" and "${posB}"`
-  );
+  return posA === posB ? 0 : posA < posB ? -1 : 1;
 }
 
 export { asPos, comparePosition, makePosition };
 
-// For unit tests only
+// For use in unit tests only
 export {
   after as __after,
   before as __before,
   between as __between,
-  max as __max,
-  min as __min,
-  ONE as __ONE,
-  pos as __pos,
-  toCodes as __posCodes,
-  ZERO as __ZERO,
+  nthDigit as __nthDigit,
+  isPos as __isPos,
+  NUM_DIGITS as __NUM_DIGITS,
 };
-
-export type { Code as __Code };

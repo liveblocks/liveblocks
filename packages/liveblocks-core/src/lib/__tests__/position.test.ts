@@ -1,53 +1,57 @@
 import * as fc from "fast-check";
 
-import type { __Code as Code, Pos } from "../position";
 import {
   __after as after,
   __before as before,
   __between as between,
-  __max as max,
-  __min as min,
-  __ONE as ONE,
-  __pos as pos,
-  __posCodes as posCodes,
-  __ZERO as ZERO,
+  __nthDigit as nthDigit,
+  __isPos as isPos,
+  __NUM_DIGITS as NUM_DIGITS,
   asPos,
   comparePosition,
   makePosition,
 } from "../position";
 
+const ZERO = nthDigit(0); // " "
+const ONE = nthDigit(1); // "!"
+const TWO = nthDigit(2); // "\""
+const THREE = nthDigit(3); // "#"
+const FOUR = nthDigit(4); // "$"
+const FIVE = nthDigit(5); // "%"
+
+// Think of MID as .5 in decimal, right in between 0.0 and 1.0
+const MID = nthDigit(NUM_DIGITS >> 1); // "O"
+
+const NINE = nthDigit(-1); // "~"
+const EIGHT = nthDigit(-2); // "}"
+const SEVEN = nthDigit(-3); // "|"
+
 // The alphabet that all positions values will consist of
 const ALPHABET =
   " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
-// Regex that matches all valid position values
-const posRegex = new RegExp(
-  "^[" + ALPHABET.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "]+$"
-);
-
-const mid = (min + max) >> 1;
-
 /**
- * Generate random position arbitraries.
+ * Generate random (valid) Pos values.
  *
  * Possible values: "!", "#", "O", "~", "~!", "~~~R", etc.
  */
-function validPosition() {
+function genPos() {
   const digits = fc.constantFrom(...ALPHABET);
   return fc.stringOf(digits, { minLength: 1 }).map(asPos);
 }
 
 /**
- * Any string, really, but ran through the asPos checker.
+ * Generate random (valid and invalid) values for using in places that expect
+ * Pos values.
  */
-function validAndInvalidPosition() {
+function genUnverifiedPos() {
   return fc
     .oneof(
       // Some valid positions
-      validPosition(),
+      genPos(),
 
       // Some valid positions with trailing zeroes
-      fc.tuple(validPosition(), zeroPosition()).map(([s, trail]) => s + trail),
+      fc.tuple(genPos(), genZeroPos()).map(([s, trail]) => s + trail),
 
       fc.string(),
 
@@ -58,14 +62,14 @@ function validAndInvalidPosition() {
       fc.ascii(),
       fc.unicodeString()
     )
-    .map(asPos);
+    .map((s) => s as ReturnType<typeof asPos>);
 }
 
 /**
- * Generates random "zero" positions.
+ * Generates random "zero" positions, which are invalid Pos values.
  * Possible values: "", " ", "  ", "   ", etc.
  */
-function zeroPosition() {
+function genZeroPos() {
   return fc.stringOf(fc.constantFrom(ZERO));
 }
 
@@ -73,30 +77,76 @@ function zeroPosition() {
  * Generates pairs of positions, where the first position is "smaller" than the
  * second one.
  */
-function positionRange() {
-  return fc.tuple(validPosition(), validPosition()).filter(([x, y]) => x < y);
+function genPosRange() {
+  return fc
+    .tuple(genPos(), genPos())
+    .filter(([x, y]) => x !== y)
+    .map(([x, y]) => (x < y ? [x, y] : [y, x]));
 }
 
-function testPosition(
-  lo: string | undefined,
-  hi: string | undefined,
-  expected: string
-) {
-  const result = makePosition(
-    lo !== undefined ? asPos(lo) : undefined,
-    hi !== undefined ? asPos(hi) : undefined
-  );
-  expect(posCodes(result)).toEqual(posCodes(expected as Pos));
-}
+describe("digits", () => {
+  test("alphabet is correct", () => {
+    expect(ALPHABET.length).toBe(NUM_DIGITS);
+  });
+
+  test("basic digits", () => {
+    expect(nthDigit(0)).toBe(" ");
+    expect(nthDigit(1)).toBe("!");
+    expect(nthDigit(3)).toBe("#");
+    expect(nthDigit(47)).toBe("O");
+    expect(nthDigit(94)).toBe("~");
+
+    expect(nthDigit(-1)).toBe("~");
+    expect(nthDigit(-2)).toBe("}");
+    expect(nthDigit(-94)).toBe("!");
+    expect(nthDigit(-95)).toBe(" ");
+
+    expect(() => nthDigit(95)).toThrow();
+    expect(() => nthDigit(-96)).toThrow();
+  });
+
+  test("matches entire alphabet", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -95, max: 94 }),
+
+        (n) => {
+          if (n >= 0) {
+            expect(nthDigit(n)).toBe(ALPHABET.charAt(n));
+          } else {
+            expect(nthDigit(n)).toBe(
+              ALPHABET.split("")
+                .reverse()
+                .join("")
+                .charAt(-(n + 1))
+            );
+          }
+        }
+      )
+    );
+  });
+});
 
 describe("position datastructure", () => {
   it("zero is an illegal Pos value", () => {
     fc.assert(
       fc.property(
-        zeroPosition(),
+        genZeroPos(),
 
         (strOfZeroes) => {
           expect(asPos(strOfZeroes)).toBe(ONE);
+        }
+      )
+    );
+  });
+
+  it("for valid strings, asPos is a noop", () => {
+    fc.assert(
+      fc.property(
+        genPos(),
+
+        (s) => {
+          expect(asPos(s)).toBe(s);
         }
       )
     );
@@ -109,6 +159,7 @@ describe("position datastructure", () => {
 
         (s) => {
           expect(asPos(s)).toBe(asPos(asPos(s)));
+          expect(asPos(s)).toBe(asPos(asPos(asPos(asPos(s)))));
         }
       )
     );
@@ -117,7 +168,7 @@ describe("position datastructure", () => {
   it("valid Pos strings aren't modified", () => {
     fc.assert(
       fc.property(
-        validPosition(),
+        genPos(),
 
         (pos) => {
           expect(asPos(pos)).toBe(pos);
@@ -129,8 +180,8 @@ describe("position datastructure", () => {
   it("position's string representation is also alphabetically sortable", () => {
     fc.assert(
       fc.property(
-        validPosition(),
-        validPosition(),
+        genPos(),
+        genPos(),
 
         (pos1, pos2) => {
           if (pos1 !== pos2) {
@@ -145,41 +196,141 @@ describe("position datastructure", () => {
   });
 });
 
-describe("after", () => {
-  it("increment by .1 (typical)", () => {
-    expect(ONE).toBe("!");
-    expect(after(ONE)).toBe('"');
-    expect(after(after(ONE))).toBe("#");
-  });
+describe("after / before", () => {
+  test("after hops to next major digit when possible", () => {
+    expect(after(ONE)).toBe(TWO);
+    expect(after(TWO)).toBe(THREE);
+    expect(after(THREE)).toBe(FOUR);
+    expect(after(asPos(ZERO + ZERO + ONE))).toBe(ONE);
+    expect(after(ONE)).toBe(TWO);
+    expect(after(asPos(ONE + ZERO + ONE))).toBe(TWO);
+    expect(after(TWO)).toBe(THREE);
+    expect(after(THREE)).toBe(FOUR);
+    expect(after(EIGHT)).toBe(NINE);
+    expect(after(NINE)).toBe(NINE + ONE);
+    expect(after(asPos(NINE + ONE))).toBe(NINE + TWO);
+    expect(after(asPos(NINE + ONE + TWO + THREE))).toBe(NINE + TWO);
+    expect(after(asPos(NINE + EIGHT))).toBe(NINE + NINE);
+    expect(after(asPos(NINE + NINE))).toBe(NINE + NINE + ONE);
+    expect(after(asPos(NINE + NINE + NINE + NINE))).toBe(
+      NINE + NINE + NINE + NINE + ONE
+    );
 
-  it("increment by .1 (edge)", () => {
-    expect(after(asPos("~"))).toBe("~!"); // e.g. after(.9) => .91
-    expect(after(asPos("~~~"))).toBe("~~~!"); // e.g. after(.999) => .9991
-  });
-
-  it("always output valid positions", () => {
+    // Generically stated, if the first digit isn't a 9, the result is always
+    // going to be a single digit position
     fc.assert(
       fc.property(
-        validAndInvalidPosition(),
+        genPos(),
 
         (pos) => {
-          const output = after(asPos(pos));
-          expect(output).toMatch(posRegex);
+          if (pos[0] !== NINE) {
+            expect(after(pos).length).toBe(1); // Always generates a single-digit
+          }
         }
       )
     );
   });
-});
 
-describe("before", () => {
-  it("always output valid positions", () => {
+  test("before hops to prior major digit when possible", () => {
+    expect(before(NINE)).toBe(EIGHT);
+    expect(before(FOUR)).toBe(THREE);
+    expect(before(THREE)).toBe(TWO);
+    expect(before(TWO)).toBe(ONE);
+
+    // Not possible when reading the "left edge" of .1, .01, .001, .0001, etc.
+    expect(before(ONE)).toBe(ZERO + NINE); // e.g. before(.1) => .09
+
+    expect(before(asPos(ONE + ONE))).toBe(ONE);
+    expect(before(asPos(ONE + ONE))).toBe(ONE);
+    expect(before(TWO)).toBe(ONE);
+    expect(before(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(TWO);
+    expect(before(THREE)).toBe(TWO);
+    expect(before(NINE)).toBe(EIGHT);
+    expect(before(asPos(NINE + ONE))).toBe(NINE);
+    expect(before(asPos(NINE + TWO))).toBe(NINE);
+    expect(before(asPos(NINE + THREE))).toBe(NINE);
+    expect(before(asPos(NINE + EIGHT))).toBe(NINE);
+    expect(before(asPos(NINE + NINE))).toBe(NINE);
+    expect(before(asPos(ZERO + ONE))).toBe(ZERO + ZERO + NINE);
+    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE);
+    expect(before(asPos(ONE + ZERO + ZERO + ONE))).toBe(ONE); // e.g. before(.1001) => .1
+
+    expect(before(asPos(NINE + THREE))).toBe(NINE); // e.g. before(.93) => .9
+    expect(before(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(TWO); // e.g. before(.23101) => .2
+
+    expect(before(asPos(ZERO + ZERO + TWO))).toBe(ZERO + ZERO + ONE);
+    expect(before(asPos(ZERO + ZERO + TWO + EIGHT + THREE))).toBe(
+      ZERO + ZERO + TWO
+    );
+    expect(before(asPos(ZERO + ZERO + TWO + ZERO + THREE))).toBe(
+      ZERO + ZERO + TWO
+    );
+
+    // Generically stated, if this isn't the "left edge", the result is always
+    // going to be a single digit
     fc.assert(
       fc.property(
-        validAndInvalidPosition(),
+        genUnverifiedPos(),
 
         (pos) => {
-          const output = before(asPos(pos));
-          expect(output).toMatch(posRegex);
+          if (!(pos === ONE || pos[0] === ZERO)) {
+            expect(before(pos).length).toBe(1); // Always generates a single-digit
+          }
+        }
+      )
+    );
+  });
+
+  test("hops to next subdigit at edges", () => {
+    expect(after(asPos(TWO + THREE + ONE + ZERO + ONE))).toBe(THREE); // e.g. after(.23101) => .3
+    expect(after(asPos(EIGHT + NINE + NINE + EIGHT))).toBe(NINE); // e.g. after(.8998) => .9
+    expect(after(asPos(NINE + NINE + NINE + EIGHT))).toBe(
+      NINE + NINE + NINE + NINE
+    ); // e.g. after(.9998) => .9999
+    expect(after(asPos(ONE + ZERO + ZERO + ONE))).toBe(TWO); // e.g. after(.1001) => .2
+    expect(after(NINE)).toBe(NINE + ONE); // e.g. after(.9) => .91
+    expect(after(asPos(NINE + NINE + NINE))).toBe(NINE + NINE + NINE + ONE); // e.g. after(.999) => .9991
+
+    expect(before(asPos(ZERO + ZERO + ONE))).toBe(ZERO + ZERO + ZERO + NINE); // e.g. before(.001) => .0009
+
+    expect(after(asPos(EIGHT + THREE))).toBe(NINE); // e.g. after(.83) => .9
+    expect(after(asPos(NINE + THREE))).toBe(NINE + FOUR); // e.g. after(.93) => .99
+  });
+
+  it("always outputs valid Pos values", () => {
+    fc.assert(
+      fc.property(
+        genPos(),
+
+        (pos) => {
+          expect(isPos(after(pos))).toBe(true);
+          expect(isPos(before(pos))).toBe(true);
+        }
+      )
+    );
+  });
+
+  it('after generates alphabetically "higher" values', () => {
+    fc.assert(
+      fc.property(
+        genUnverifiedPos(),
+
+        (pos) => {
+          expect(after(pos) > pos).toBe(true);
+          expect(pos < after(pos)).toBe(true);
+        }
+      )
+    );
+  });
+
+  it('before generates alphabetically "lower" values', () => {
+    fc.assert(
+      fc.property(
+        genPos(),
+
+        (pos) => {
+          expect(before(pos) < pos).toBe(true);
+          expect(pos > before(pos)).toBe(true);
         }
       )
     );
@@ -193,7 +344,7 @@ describe("between", () => {
 
     fc.assert(
       fc.property(
-        validAndInvalidPosition(),
+        genUnverifiedPos(),
 
         (pos) => {
           expect(() => between(pos, pos)).toThrow();
@@ -202,11 +353,23 @@ describe("between", () => {
     );
   });
 
-  it("can flip arguments", () => {
+  it("always output valid positions", () => {
     fc.assert(
       fc.property(
-        validPosition(),
-        validPosition(),
+        genPosRange(),
+
+        ([lo, hi]) => {
+          expect(isPos(between(lo, hi))).toBe(true);
+        }
+      )
+    );
+  });
+
+  it("arguments are commutative", () => {
+    fc.assert(
+      fc.property(
+        genPos(),
+        genPos(),
 
         (pos1, pos2) => {
           if (pos1 !== pos2) {
@@ -217,14 +380,14 @@ describe("between", () => {
     );
   });
 
-  it("always output valid positions", () => {
+  it("generates values that are alphabetically between inputs", () => {
     fc.assert(
       fc.property(
-        positionRange(),
+        genPosRange(),
 
-        ([pos1, pos2]) => {
-          const output = between(pos1, pos2);
-          expect(output).toMatch(posRegex);
+        ([lo, hi]) => {
+          expect(between(lo, hi) > lo).toBe(true);
+          expect(between(lo, hi) < hi).toBe(true);
         }
       )
     );
@@ -232,80 +395,96 @@ describe("between", () => {
 });
 
 describe("makePosition", () => {
-  test("No children", () =>
-    testPosition(undefined, undefined, pos([(min + 1) as Code])));
+  test("default/first position is .1", () =>
+    expect(makePosition(undefined, undefined)).toBe(ONE));
 
-  test("Insert after .1", () =>
-    testPosition(
-      pos([(min + 1) as Code]),
-      undefined,
-      pos([(min + 2) as Code])
+  test("after .1 lies .2", () =>
+    expect(makePosition(ONE, undefined)).toBe(TWO));
+
+  test("before .9 lies .8", () =>
+    expect(makePosition(undefined, NINE)).toBe(EIGHT));
+
+  test("after .9 lies .91", () =>
+    expect(makePosition(NINE, undefined)).toBe(NINE + ONE));
+
+  test("before .1 lies .09", () =>
+    expect(makePosition(undefined, ONE)).toBe(ZERO + NINE));
+
+  test("between .1 and .3 lies .2", () =>
+    expect(makePosition(ONE, THREE)).toBe(TWO));
+
+  test("between .1 and .5 lies .3", () =>
+    expect(makePosition(ONE, FIVE)).toBe(THREE));
+
+  test("between .1 and .4 lies .2", () =>
+    expect(makePosition(ONE, FOUR)).toBe(TWO));
+
+  test("between .1 and .2 lies .15", () =>
+    expect(makePosition(ONE, TWO)).toBe(ONE + MID));
+
+  test("between .1 and .12 lies .11", () =>
+    expect(makePosition(asPos(ONE), asPos(ONE + TWO))).toBe(ONE + ONE));
+
+  test("between .1 and .102 lies .101", () =>
+    expect(makePosition(asPos(ONE), asPos(ONE + ZERO + TWO))).toBe(
+      ONE + ZERO + ONE
     ));
 
-  test("Insert before .9", () =>
-    testPosition(undefined, pos([max]), pos([(max - 1) as Code])));
-
-  test("Insert after .9", () =>
-    testPosition(pos([max]), undefined, pos([max, (min + 1) as Code])));
-
-  test("Insert before .1", () =>
-    testPosition(undefined, pos([(min + 1) as Code]), pos([min, max])));
-
-  test("Insert between .1 and .3", () =>
-    testPosition(
-      pos([(min + 1) as Code]),
-      pos([(min + 3) as Code]),
-      pos([(min + 2) as Code])
+  test("between .1 and .1003 lies .1001", () =>
+    expect(makePosition(asPos(ONE), asPos(ONE + ZERO + ZERO + THREE))).toBe(
+      ONE + ZERO + ZERO + ONE
     ));
 
-  test("Insert between .1 and .5", () =>
-    testPosition(
-      pos([(min + 1) as Code]),
-      pos([(min + 5) as Code]),
-      pos([(min + 3) as Code])
+  test("between .11 and .12 lies .115", () =>
+    expect(makePosition(asPos(ONE + ONE), asPos(ONE + TWO))).toBe(
+      ONE + ONE + MID
     ));
 
-  test("Insert between .1 and .4", () =>
-    testPosition(
-      pos([(min + 1) as Code]),
-      pos([(min + 4) as Code]),
-      pos([(min + 2) as Code])
+  test("between .09 and .1 should .095", () =>
+    expect(makePosition(asPos(ZERO + NINE), ONE)).toBe(ZERO + NINE + MID));
+
+  test("between .19 and .21 should be .195", () =>
+    expect(makePosition(asPos(ONE + NINE), asPos(TWO + ONE))).toBe(
+      ONE + NINE + MID
     ));
 
-  test("Insert between .1 and .2", () =>
-    testPosition(
-      pos([(min + 1) as Code]),
-      pos([(min + 2) as Code]),
-      pos([(min + 1) as Code, mid as Code])
+  test("between .177 and .21 should be .18", () =>
+    expect(makePosition(asPos(ONE + SEVEN + SEVEN), asPos(TWO + ONE))).toBe(
+      ONE + EIGHT
     ));
 
-  test("Insert between .11 and .12", () =>
-    testPosition(
-      pos([(min + 1) as Code, (min + 1) as Code]),
-      pos([(min + 1) as Code, (min + 2) as Code]),
-      pos([(min + 1) as Code, (min + 1) as Code, mid as Code])
+  test("between .188 and .21 should be .19", () =>
+    expect(makePosition(asPos(ONE + EIGHT + EIGHT), asPos(TWO + ONE))).toBe(
+      ONE + EIGHT + EIGHT + MID
     ));
 
-  test("Insert between .09 and .1 should .095", () =>
-    testPosition(
-      pos([min, max]),
-      pos([(min + 1) as Code]),
-      pos([min, max, mid as Code])
-    ));
+  test("between .199009 and .21 should be .1995", () =>
+    expect(
+      makePosition(
+        asPos(ONE + NINE + NINE + ZERO + ZERO + NINE),
+        asPos(TWO + ONE)
+      )
+    ).toBe(ONE + NINE + NINE + MID));
 
-  test("Insert between .19 and .21 should be .195", () =>
-    testPosition(
-      pos([(min + 1) as Code, max]),
-      pos([(min + 2) as Code, (min + 1) as Code]),
-      pos([(min + 1) as Code, max, mid as Code])
-    ));
+  test("between .1901 and .2188 should be .195", () =>
+    expect(
+      makePosition(
+        asPos(ONE + NINE + ZERO + ONE),
+        asPos(TWO + ONE + EIGHT + EIGHT)
+      )
+    ).toBe(ONE + NINE + MID));
 
-  test("Insert between .11 and .21 should be .15", () =>
-    testPosition(
-      pos([(min + 1) as Code, (min + 1) as Code]),
-      pos([(min + 2) as Code, (min + 1) as Code]),
-      pos([(min + 1) as Code, ((min + 1 + max) >> 1) as Code])
-    ));
+  test("between .19 and .210001 should also be .195", () => {
+    expect(
+      makePosition(
+        asPos(ONE + NINE),
+        asPos(TWO + ONE + ZERO + ZERO + ZERO + ONE)
+      )
+    ).toBe(ONE + NINE + MID);
+  });
+
+  test("between .11 and .21 should be .15", () =>
+    expect(makePosition(asPos(ONE + ONE), asPos(TWO + ONE))).toBe(ONE + MID));
 });
 
 describe("comparePosition", () => {
@@ -315,13 +494,13 @@ describe("comparePosition", () => {
     expect(comparePosition(asPos("11111"), asPos("11"))).toBeGreaterThan(0);
   });
 
-  it("throws when equal", () => {
+  it("returns 0 when equal", () => {
     fc.assert(
       fc.property(
-        validAndInvalidPosition(),
+        genUnverifiedPos(),
 
         (pos) => {
-          expect(() => comparePosition(pos, pos)).toThrow();
+          expect(comparePosition(pos, pos)).toBe(0);
         }
       )
     );
@@ -330,8 +509,8 @@ describe("comparePosition", () => {
   it("inverted comparison leads to opposite result", () => {
     fc.assert(
       fc.property(
-        validAndInvalidPosition(),
-        validAndInvalidPosition(),
+        genUnverifiedPos(),
+        genUnverifiedPos(),
 
         (p1, p2) => {
           if (p1 !== p2) {
@@ -345,7 +524,7 @@ describe("comparePosition", () => {
   it("correct compares output of before/after", () => {
     fc.assert(
       fc.property(
-        validPosition(),
+        genPos(),
 
         (pos) => {
           expect(comparePosition(pos, after(pos))).toBe(-1);
@@ -360,14 +539,14 @@ describe("comparePosition", () => {
   it("correct compares output of between", () => {
     fc.assert(
       fc.property(
-        positionRange(),
+        genPosRange(),
 
-        ([pos1, pos2]) => {
-          const mid = between(pos1, pos2);
-          expect(comparePosition(pos1, mid)).toBeLessThan(0);
-          expect(comparePosition(mid, pos2)).toBeLessThan(0);
-          expect(comparePosition(mid, pos1)).toBeGreaterThan(0);
-          expect(comparePosition(pos2, mid)).toBeGreaterThan(0);
+        ([lo, hi]) => {
+          const mid = between(lo, hi);
+          expect(comparePosition(lo, mid)).toBe(-1);
+          expect(comparePosition(mid, hi)).toBe(-1);
+          expect(comparePosition(mid, lo)).toBe(1);
+          expect(comparePosition(hi, mid)).toBe(1);
         }
       )
     );
