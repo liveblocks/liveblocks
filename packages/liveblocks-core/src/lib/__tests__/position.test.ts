@@ -22,6 +22,9 @@ const FIVE = nthDigit(5); // "%"
 // Think of MID as .5 in decimal, right in between 0.0 and 1.0
 const MID = nthDigit(NUM_DIGITS >> 1); // "O"
 
+// When used in tests below, think of NINE as meaning "the last" digit, not the
+// 9th digit. We're in base96 land here after all, so NINE here could
+// technically be named "ninety five" here, but you'd lose the intuition.
 const NINE = nthDigit(-1); // "~"
 const EIGHT = nthDigit(-2); // "}"
 const SEVEN = nthDigit(-3); // "|"
