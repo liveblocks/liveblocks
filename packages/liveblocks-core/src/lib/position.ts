@@ -75,7 +75,7 @@ const ZERO_NINE = (ZERO + nthDigit(-1)) as Pos;
 function nthDigit(n: 0): string; // "0" is a legal _digit_, but not a legal Pos value
 function nthDigit(n: number): Pos;
 function nthDigit(n: number): Pos {
-  let code = minCode + (n < 0 ? NUM_DIGITS + n : n);
+  const code = minCode + (n < 0 ? NUM_DIGITS + n : n);
   if (code < minCode || code > maxCode) {
     throw new Error(`Invalid n value: ${n}`);
   }
@@ -333,7 +333,7 @@ export {
   after as __after,
   before as __before,
   between as __between,
-  nthDigit as __nthDigit,
   isPos as __isPos,
+  nthDigit as __nthDigit,
   NUM_DIGITS as __NUM_DIGITS,
 };
