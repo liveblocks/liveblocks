@@ -53,14 +53,14 @@ export function RoomSelector({
         </RadixSelect.Icon>
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
-        <RadixSelect.Content className="bg-dark-0 text-light-0 dark:bg-dark-100 dark:border-dark-300 border-dark-0 rounded-lg border p-1">
+        <RadixSelect.Content className="bg-light-0 text-dark-400 dark:text-light-0 dark:bg-dark-100 dark:border-dark-300 border-light-300 rounded-lg border p-1">
           <RadixSelect.Viewport>
             {roomIds.map((roomId) => (
               <RadixSelect.Item
                 value={roomId}
                 key={roomId}
                 className={cx(
-                  "data-[highlighted]:bg-light-0 data-[highlighted]:text-dark-0 relative flex items-center rounded py-0.5 pr-1.5 pl-6"
+                  "data-[highlighted]:text-light-0 data-[highlighted]:bg-dark-800 dark:data-[highlighted]:bg-dark-600 relative flex items-center rounded py-0.5 pr-1.5 pl-6"
                 )}
               >
                 <RadixSelect.ItemIndicator className="absolute left-1">
