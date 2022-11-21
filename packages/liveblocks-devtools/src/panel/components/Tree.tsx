@@ -167,22 +167,6 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
-        {node.isInternal && (
-          <svg
-            width="8"
-            height="8"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={cx("transition-transform", node.isOpen && "rotate-90")}
-          >
-            <path
-              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-              className="fill-gray-400 dark:fill-gray-500"
-            />
-          </svg>
-        )}
-      </div>
       <div className="flex h-[16px] w-[16px] content-center items-center">
         {icon(node.data)}
       </div>
