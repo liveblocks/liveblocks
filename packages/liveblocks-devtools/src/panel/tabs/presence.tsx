@@ -8,7 +8,7 @@ export function Me() {
   const data = useMemo(() => (me ? [me] : null), [me]);
 
   return (
-    <div className="relative flex h-1/3 flex-none border-b border-gray-200 dark:border-gray-600">
+    <div className="border-light-300 dark:border-dark-300 relative flex h-1/3 flex-none border-b">
       {data !== null ? <Tree data={data} /> : null}
     </div>
   );

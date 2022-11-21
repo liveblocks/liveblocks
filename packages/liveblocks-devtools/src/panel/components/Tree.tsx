@@ -139,51 +139,55 @@ function Row({ node, children, className, ...props }: RowProps) {
     <div
       className={cx(
         className,
-        "flex h-full items-center gap-2 pr-2",
+        "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
         isFocused
-          ? "bg-gray-200 dark:bg-gray-700"
+          ? "bg-light-200 dark:bg-dark-200 hover:bg-light-300 dark:hover:bg-dark-300"
           : isParentFocused
-          ? "bg-gray-100 dark:bg-gray-800"
-          : "bg-transparent"
+          ? "bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200"
+          : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
       {...props}
     >
-      <div
-        className={cx(
-          className,
-          "flex h-full items-center gap-2 rounded pr-2",
-          isFocused
-            ? "bg-gray-200 dark:bg-gray-700"
-            : isParentFocused
-            ? "bg-gray-100 dark:bg-gray-800"
-            : "bg-transparent",
-          node.isOpen && "rounded-b-none",
-          isParentFocused && "rounded-none"
+      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
+        {node.isInternal && (
+          <svg
+            width="8"
+            height="8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={cx(
+              "text-dark-900 dark:text-light-900 transition-transform",
+              node.isOpen && "rotate-90"
+            )}
+          >
+            <path
+              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+              fill="currentColor"
+            />
+          </svg>
         )}
-        {...props}
-      >
-        <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
-          {node.isInternal && (
-            <svg
-              width="8"
-              height="8"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className={cx("transition-transform", node.isOpen && "rotate-90")}
-            >
-              <path
-                d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
-                className="fill-gray-400 dark:fill-gray-500"
-              />
-            </svg>
-          )}
-        </div>
-        <div className="flex h-[16px] w-[16px] content-center items-center">
-          {icon(node.data)}
-        </div>
-        <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
-          {children}
-        </div>
+      </div>
+      <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
+        {node.isInternal && (
+          <svg
+            width="8"
+            height="8"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={cx("transition-transform", node.isOpen && "rotate-90")}
+          >
+            <path
+              d="M2 6.117V1.883a.5.5 0 0 1 .757-.429l3.528 2.117a.5.5 0 0 1 0 .858L2.757 6.546A.5.5 0 0 1 2 6.116Z"
+              className="fill-gray-400 dark:fill-gray-500"
+            />
+          </svg>
+        )}
+      </div>
+      <div className="flex h-[16px] w-[16px] content-center items-center">
+        {icon(node.data)}
+      </div>
+      <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
+        {children}
       </div>
     </div>
   );
@@ -200,11 +204,11 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
-        <div className="text-gray-500 dark:text-gray-400">
+        <div className="text-dark-800 dark:text-light-800">
           (#{node.data.id})
         </div>
       ) : (
-        <div className="truncate text-gray-500 dark:text-gray-400">
+        <div className="text-dark-800 dark:text-light-800 truncate">
           {truncate(summarize(node.data))}
         </div>
       )}
@@ -226,11 +230,11 @@ function LiveNodeRenderer({
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
-        <div className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="text-dark-800 dark:text-light-800">
           ({node.data.type})
         </div>
       ) : (
-        <div className="truncate text-gray-500 dark:text-gray-400">
+        <div className="text-dark-800 dark:text-light-800 truncate">
           {truncate(summarize(node.data))}
         </div>
       )}
@@ -244,7 +248,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   return (
     <Row node={node} style={style}>
       <div className="flex-none">{node.data.key}</div>
-      <div className="truncate text-gray-500 dark:text-gray-400">
+      <div className="text-dark-800 dark:text-light-800 truncate">
         {node.isFocused ? value : truncate(value)}
       </div>
     </Row>
@@ -378,18 +382,20 @@ export function Breadcrumbs({
     <div
       className={cx(
         className,
-        "flex h-8 items-center gap-1.5 overflow-x-auto border-t border-gray-200 bg-white px-2.5 dark:border-gray-600 dark:bg-gray-900"
+        "border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 items-center gap-1.5 overflow-x-auto border-t px-2.5"
       )}
       {...props}
     >
       <button
         key={node.data.id}
-        className="flex h-5 items-center"
+        className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center"
         onClick={() => onNodeClick(null)}
       >
         $
       </button>
-      {nodePath.map((node) => {
+      {nodePath.map((node, index) => {
+        const isTrailingNode = index === nodePath.length - 1;
+
         return (
           <>
             <svg
@@ -397,7 +403,7 @@ export function Breadcrumbs({
               height="10"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="text-gray-300"
+              className="opacity-50"
             >
               <path
                 d="M1.5 8.5 5 5 1.5 1.5"
@@ -407,7 +413,12 @@ export function Breadcrumbs({
             </svg>
             <button
               key={node.data.id}
-              className="flex h-5 items-center"
+              className={cx(
+                " hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center",
+                isTrailingNode
+                  ? "text-dark-0 dark:text-light-0"
+                  : "text-dark-600 dark:text-light-600"
+              )}
               onClick={() => onNodeClick(node)}
             >
               {node.data.key}

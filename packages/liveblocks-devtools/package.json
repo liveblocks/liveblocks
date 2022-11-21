@@ -16,6 +16,7 @@
     "@liveblocks/core": "0.19.0",
     "@plasmohq/storage": "^0.12.2",
     "@radix-ui/react-popover": "^1.0.2",
+    "@radix-ui/react-select": "^1.1.2",
     "@radix-ui/react-tabs": "^1.0.0",
     "@radix-ui/react-tooltip": "^1.0.2",
     "classnames": "^2.3.2",

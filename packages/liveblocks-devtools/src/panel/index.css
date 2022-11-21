@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 body {
-  @apply overflow-hidden bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
+  @apply bg-light-0 text-dark-0 dark:bg-dark-0 dark:text-light-0 overflow-hidden;
 }
 
 #root {

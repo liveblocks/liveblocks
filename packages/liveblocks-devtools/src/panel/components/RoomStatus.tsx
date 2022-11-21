@@ -26,9 +26,6 @@ function Ping({ animate = true, className, ...props }: PingProps) {
 
 export function RoomStatus() {
   const currentStatus = useStatus();
-  const tooltipContent = useMemo(() => {
-    return currentStatus ? capitalize(currentStatus) : null;
-  }, [currentStatus]);
   const statusContent = useMemo(() => {
     switch (currentStatus) {
       case "open":
@@ -46,15 +43,27 @@ export function RoomStatus() {
         return <Ping className="text-gray-500" animate={false} />;
     }
   }, [currentStatus]);
+  const tooltipContent = useMemo(() => {
+    return currentStatus ? (
+      <>
+        <div className="mr-2">{statusContent}</div>
+        <span>{capitalize(currentStatus)}</span>
+      </>
+    ) : null;
+  }, [currentStatus]);
 
   const content = (
-    <div className="flex h-5 w-5 items-center justify-center">
+    <div className="flex h-5 w-5 cursor-help items-center justify-center">
       {statusContent}
     </div>
   );
 
   return tooltipContent ? (
-    <Tooltip content={tooltipContent} sideOffset={1}>
+    <Tooltip
+      content={tooltipContent}
+      sideOffset={10}
+      className="flex items-center"
+    >
       {content}
     </Tooltip>
   ) : (

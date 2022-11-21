@@ -154,7 +154,7 @@ export function ResizablePanel({
       <div className="flex-1">{children}</div>
       <div
         className={cx(
-          "relative flex-none border-gray-200 dark:border-gray-600",
+          "border-light-300 dark:border-dark-300 relative flex-none",
           isVertical ? "border-t" : "border-l"
         )}
         style={{

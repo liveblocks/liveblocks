@@ -66,9 +66,10 @@ function Panel() {
           },
         ]}
         leading={
-          <div className="relative flex flex-none items-center px-1.5 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px after:bg-gray-200 dark:after:bg-gray-600">
+          <div className="relative flex flex-none items-center px-1.5">
             <RoomStatus />
             <RoomSelector />
+            <div className="bg-light-300 dark:bg-dark-300 absolute -right-px top-[20%] h-[60%] w-px" />
           </div>
         }
       />
