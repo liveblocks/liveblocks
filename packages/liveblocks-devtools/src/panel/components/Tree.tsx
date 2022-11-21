@@ -46,6 +46,50 @@ interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
   children: (dimensions: { width: number; height: number }) => ReactElement;
 }
 
+function color(node: StorageTreeNode | UserTreeNode): string {
+  switch (node.type) {
+    case "LiveObject":
+      return "text-purple-500 dark:text-purple-400";
+
+    case "LiveList":
+      return "text-rose-500 dark:text-rose-400";
+
+    case "LiveMap":
+      return "text-blue-500 dark:text-blue-400";
+
+    case "Json":
+      return "text-light-500 dark:text-dark-500";
+
+    case "User":
+      return "text-amber-500 dark:text-amber-500";
+
+    default:
+      return assertNever(node, "Unhandled node type in icon()");
+  }
+}
+
+function background(node: StorageTreeNode | UserTreeNode): string {
+  switch (node.type) {
+    case "LiveObject":
+      return "bg-purple-500 dark:bg-purple-400";
+
+    case "LiveList":
+      return "bg-rose-500 dark:bg-rose-400";
+
+    case "LiveMap":
+      return "bg-blue-500 dark:bg-blue-400";
+
+    case "Json":
+      return "bg-light-500 dark:bg-dark-500";
+
+    case "User":
+      return "bg-amber-500 dark:bg-amber-500";
+
+    default:
+      return assertNever(node, "Unhandled node type in icon()");
+  }
+}
+
 function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
   switch (node.type) {
     case "LiveObject":
@@ -55,7 +99,7 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-purple-500 dark:text-purple-400"
+          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -73,7 +117,7 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-rose-500 dark:text-rose-400"
+          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -91,7 +135,7 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-blue-500 dark:text-blue-400"
+          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -109,7 +153,7 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-light-500 dark:text-dark-500"
+          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -127,7 +171,7 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
           height="16"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className="text-yellow-500 dark:text-yellow-500"
+          className={color(node)}
         >
           <path
             fillRule="evenodd"
@@ -162,10 +206,12 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
         .join(", ");
 
     case "LiveList":
-      return `${node.items.length} items`;
+      return `${node.items.length} item${node.items.length > 1 ? "s" : ""}`;
 
     case "LiveMap":
-      return `${node.entries.length} entries`;
+      return `${node.entries.length} ${
+        node.entries.length > 1 ? "entries" : "entry"
+      }`;
 
     case "User":
       return node.presence
@@ -253,6 +299,20 @@ function Row({ node, children, className, ...props }: RowProps) {
   );
 }
 
+function Badge({ children, className, ...props }: ComponentProps<"span">) {
+  return (
+    <span
+      className={cx(
+        className,
+        "text-2xs relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
+      )}
+      {...props}
+    >
+      {children}
+    </span>
+  );
+}
+
 function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
@@ -264,9 +324,9 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
-        <div className="text-dark-800 dark:text-light-800">
-          (#{node.data.id})
-        </div>
+        <Badge className="text-dark-800 dark:text-light-800">
+          #{node.data.id}
+        </Badge>
       ) : (
         <div className="text-dark-800 dark:text-light-800 truncate">
           {truncate(summarize(node.data))}
@@ -290,9 +350,7 @@ function LiveNodeRenderer({
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
       {node.isOpen ? (
-        <div className="text-dark-800 dark:text-light-800">
-          ({node.data.type})
-        </div>
+        <Badge className={color(node.data)}>{node.data.type}</Badge>
       ) : (
         <div className="text-dark-800 dark:text-light-800 truncate">
           {truncate(summarize(node.data))}
@@ -308,9 +366,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   return (
     <Row node={node} style={style}>
       <div className="flex-none">{node.data.key}</div>
-      <div className="text-dark-800 dark:text-light-800 truncate">
-        {node.isFocused ? value : truncate(value)}
-      </div>
+      <div className="text-dark-800 dark:text-light-800 truncate">{value}</div>
     </Row>
   );
 }
@@ -401,6 +457,7 @@ export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
             childrenAccessor={childrenAccessor}
             disableDrag
             disableDrop
+            className="!overflow-x-hidden"
             selectionFollowsFocus
             rowHeight={ROW_HEIGHT}
             indent={ROW_INDENT}

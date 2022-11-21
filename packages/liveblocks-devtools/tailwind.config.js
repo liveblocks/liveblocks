@@ -30,6 +30,20 @@ module.exports = {
           900: "#949598",
         },
       },
+      fontSize: {
+        "2xs": [
+          "0.65rem",
+          {
+            lineHeight: 1,
+          },
+        ],
+        "3xs": [
+          "0.55rem",
+          {
+            lineHeight: 1,
+          },
+        ],
+      },
     },
   },
 };
