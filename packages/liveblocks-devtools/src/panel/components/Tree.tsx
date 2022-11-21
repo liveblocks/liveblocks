@@ -498,7 +498,7 @@ export function Breadcrumbs({
     <div
       className={cx(
         className,
-        "border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 items-center gap-1.5 overflow-x-auto border-t px-2.5"
+        "border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 scrollbar-hidden flex h-8 items-center gap-1.5 overflow-x-auto border-t px-2.5"
       )}
       {...props}
     >
@@ -519,7 +519,7 @@ export function Breadcrumbs({
               height="10"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="opacity-50"
+              className="flex-none opacity-50"
             >
               <path
                 d="M1.5 8.5 5 5 1.5 1.5"

@@ -1,3 +1,6 @@
+const plugin = require("tailwindcss/plugin");
+
+/** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.tsx"],
   darkMode: "class",
@@ -46,4 +49,27 @@ module.exports = {
       },
     },
   },
+  plugins: [
+    plugin(({ addUtilities }) => {
+      addUtilities(
+        {
+          ".scrollbar-hidden": {
+            "-ms-overflow-style": "none",
+            "scrollbar-width": "none",
+            "&::-webkit-scrollbar": {
+              display: "none",
+            },
+          },
+          ".scrollbar-auto": {
+            "-ms-overflow-style": "auto",
+            "scrollbar-width": "auto",
+            "&::-webkit-scrollbar": {
+              display: "block",
+            },
+          },
+        },
+        ["responsive"]
+      );
+    }),
+  ],
 };

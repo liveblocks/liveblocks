@@ -25,7 +25,7 @@ export function Tabs({
     <RadixTabs.Root className={cx(className, "flex flex-col")} {...props}>
       <div className="border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 flex h-8 border-b">
         {leading ?? null}
-        <RadixTabs.List className="flex h-full flex-1 overflow-x-auto px-1.5">
+        <RadixTabs.List className="scrollbar-hidden flex h-full flex-1 overflow-x-auto px-1.5">
           {tabs.map((tab) => (
             <RadixTabs.Trigger
               key={tab.value}
