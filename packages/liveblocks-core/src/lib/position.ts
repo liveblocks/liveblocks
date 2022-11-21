@@ -84,17 +84,17 @@ function nthDigit(n: number): Pos {
 
 /**
  * Given two positions, returns the position value that lies in the middle.
- * When given only a `hi` bound, computes the canonical position "before" it.
- * When given only a `lo` bound, computes the canonical position "after" it.
+ * When given only a high bound, computes the canonical position "before" it.
+ * When given only a low bound, computes the canonical position "after" it.
  * When given no bounds at all, returns the "first" canonical position.
  */
-function makePosition(lo?: Pos, hi?: Pos): Pos {
-  return lo !== undefined && hi !== undefined
-    ? between(lo, hi)
-    : lo !== undefined
-    ? after(lo)
-    : hi !== undefined
-    ? before(hi)
+function makePosition(x?: Pos, y?: Pos): Pos {
+  return x !== undefined && y !== undefined
+    ? between(x, y)
+    : x !== undefined
+    ? after(x)
+    : y !== undefined
+    ? before(y)
     : ONE;
 }
 
