@@ -29,18 +29,22 @@ export function RoomStatus() {
   const statusContent = useMemo(() => {
     switch (currentStatus) {
       case "open":
-        return <Ping className="text-green-500" />;
+        return <Ping className="text-lime-500 dark:text-lime-400" />;
 
       case "connecting":
       case "authenticating":
-        return <Ping className="text-amber-500" />;
+        return <Ping className="text-amber-500 dark:text-amber-400" />;
 
       case "closed":
       case "failed":
-        return <Ping className="text-red-500" animate={false} />;
+        return (
+          <Ping className="text-red-500 dark:text-red-400" animate={false} />
+        );
 
       default:
-        return <Ping className="text-gray-500" animate={false} />;
+        return (
+          <Ping className="text-dark-900 dark:text-light-900" animate={false} />
+        );
     }
   }, [currentStatus]);
   const tooltipContent = useMemo(() => {
