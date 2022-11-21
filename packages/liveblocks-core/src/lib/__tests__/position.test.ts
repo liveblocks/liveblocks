@@ -51,7 +51,7 @@ function genUnverifiedPos() {
       genPos(),
 
       // Some valid positions with trailing zeroes
-      fc.tuple(genPos(), genZeroPos()).map(([s, trail]) => s + trail),
+      fc.tuple(genPos(), genZeroes()).map(([s, trail]) => s + trail),
 
       fc.string(),
 
@@ -69,7 +69,7 @@ function genUnverifiedPos() {
  * Generates random "zero" positions, which are invalid Pos values.
  * Possible values: "", " ", "  ", "   ", etc.
  */
-function genZeroPos() {
+function genZeroes() {
   return fc.stringOf(fc.constantFrom(ZERO));
 }
 
@@ -131,7 +131,7 @@ describe("position datastructure", () => {
   it("zero is an illegal Pos value", () => {
     fc.assert(
       fc.property(
-        genZeroPos(),
+        genZeroes(),
 
         (strOfZeroes) => {
           expect(asPos(strOfZeroes)).toBe(ONE);
