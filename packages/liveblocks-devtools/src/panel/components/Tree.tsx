@@ -324,9 +324,8 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   return (
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
-      {node.isOpen ? (
-        <Badge className="opacity-60">#{node.data.id}</Badge>
-      ) : (
+      <Badge className="opacity-60">#{node.data.id}</Badge>
+      {!node.isOpen && (
         <div className="truncate opacity-60">
           {truncate(summarize(node.data))}
         </div>
@@ -348,9 +347,8 @@ function LiveNodeRenderer({
   return (
     <Row node={node} style={style} onClick={handleClick}>
       <div className="flex-none">{node.data.key}</div>
-      {node.isOpen ? (
-        <Badge className={color(node.data)}>{node.data.type}</Badge>
-      ) : (
+      <Badge className={color(node.data)}>{node.data.type}</Badge>
+      {!node.isOpen && (
         <div className="truncate opacity-60">
           {truncate(summarize(node.data))}
         </div>
