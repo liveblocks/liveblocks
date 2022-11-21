@@ -64,7 +64,7 @@ function color(node: StorageTreeNode | UserTreeNode): string {
       return "text-amber-500 dark:text-amber-500";
 
     default:
-      return assertNever(node, "Unhandled node type in icon()");
+      return assertNever(node, "Unhandled node type in color()");
   }
 }
 
@@ -86,7 +86,7 @@ function background(node: StorageTreeNode | UserTreeNode): string {
       return "bg-amber-500 dark:bg-amber-500";
 
     default:
-      return assertNever(node, "Unhandled node type in icon()");
+      return assertNever(node, "Unhandled node type in background()");
   }
 }
 
@@ -285,12 +285,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div
-        className={cx(
-          "flex h-[16px] w-[16px] content-center items-center",
-          isFocused ? "text-light-0" : color(node.data)
-        )}
-      >
+      <div className={isFocused ? "text-light-0" : color(node.data)}>
         {icon(node.data)}
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
@@ -500,13 +495,12 @@ export function Breadcrumbs({
       )}
       {...props}
     >
-      <button
+      <span
         key={node.data.id}
-        className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center"
-        onClick={() => onNodeClick(null)}
+        className="text-dark-600 dark:text-light-600 flex h-5 items-center"
       >
         $
-      </button>
+      </span>
       {nodePath.map((node, index) => {
         const isTrailingNode = index === nodePath.length - 1;
 
@@ -528,14 +522,15 @@ export function Breadcrumbs({
             <button
               key={node.data.id}
               className={cx(
-                " hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center",
+                " hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center gap-1.5",
                 isTrailingNode
                   ? "text-dark-0 dark:text-light-0"
                   : "text-dark-600 dark:text-light-600"
               )}
               onClick={() => onNodeClick(node)}
             >
-              {node.data.key}
+              <div className={color(node.data)}>{icon(node.data)}</div>
+              <span>{node.data.key}</span>
             </button>
           </>
         );
