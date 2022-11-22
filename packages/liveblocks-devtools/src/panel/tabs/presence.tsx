@@ -8,10 +8,7 @@ import { useMe, useOthers } from "../contexts/CurrentRoom";
 export function Presence({ className, ...props }: ComponentProps<"div">) {
   const me = useMe();
   const others = useOthers();
-  const data = useMemo(
-    () => (me && others.length > 0 ? (me ? [me, ...others] : others) : null),
-    [me, others]
-  );
+  const data = useMemo(() => (me ? [me, ...others] : others), [me, others]);
 
   return (
     <div
