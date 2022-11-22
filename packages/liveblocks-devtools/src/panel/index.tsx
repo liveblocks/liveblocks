@@ -1,6 +1,6 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { ChangeEvent } from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import browser from "webextension-polyfill";
 
@@ -30,6 +30,10 @@ function Panel() {
   const handleRefresh = useCallback(() => {
     browser.tabs.reload();
   }, []);
+
+  useEffect(() => {
+    handleSearchClear();
+  }, [currentRoomId, handleSearchClear]);
 
   if (currentRoomId === null) {
     return (
@@ -169,7 +173,11 @@ function Panel() {
             value: "storage",
             title: "Storage",
             content: (
-              <Storage search={search} onSearchClear={handleSearchClear} />
+              <Storage
+                key={currentRoomId}
+                search={search}
+                onSearchClear={handleSearchClear}
+              />
             ),
           },
           {
