@@ -49,7 +49,7 @@ interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
 function color(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "text-purple-500 dark:text-purple-400";
+      return "text-violet-500 dark:text-violet-400";
 
     case "LiveList":
       return "text-rose-500 dark:text-rose-400";
@@ -71,7 +71,7 @@ function color(node: StorageTreeNode | UserTreeNode): string {
 function background(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "bg-purple-500 dark:bg-purple-400";
+      return "bg-violet-500 dark:bg-violet-400";
 
     case "LiveList":
       return "bg-rose-500 dark:bg-rose-400";
@@ -501,40 +501,31 @@ export function Breadcrumbs({
       >
         $
       </span>
-      {nodePath.map((node, index) => {
-        const isTrailingNode = index === nodePath.length - 1;
-
-        return (
-          <>
-            <svg
-              width="7"
-              height="10"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="flex-none opacity-50"
-            >
-              <path
-                d="M1.5 8.5 5 5 1.5 1.5"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-            </svg>
-            <button
-              key={node.data.id}
-              className={cx(
-                " hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center gap-1.5",
-                isTrailingNode
-                  ? "text-dark-0 dark:text-light-0"
-                  : "text-dark-600 dark:text-light-600"
-              )}
-              onClick={() => onNodeClick(node)}
-            >
-              <div className={color(node.data)}>{icon(node.data)}</div>
-              <span>{node.data.key}</span>
-            </button>
-          </>
-        );
-      })}
+      {nodePath.map((node) => (
+        <>
+          <svg
+            width="7"
+            height="10"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className="flex-none opacity-50"
+          >
+            <path
+              d="M1.5 8.5 5 5 1.5 1.5"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
+          <button
+            key={node.data.id}
+            className=" hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 text-dark-600 dark:text-light-600 flex h-5 items-center gap-1.5"
+            onClick={() => onNodeClick(node)}
+          >
+            <div className={color(node.data)}>{icon(node.data)}</div>
+            <span>{node.data.key}</span>
+          </button>
+        </>
+      ))}
     </div>
   );
 }
