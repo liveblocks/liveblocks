@@ -65,7 +65,7 @@ export function EmptyState({
               <button
                 key={index}
                 onClick={handleClick}
-                className="text-light-0 dark:text-dark-0 flex flex-none cursor-pointer items-center justify-center gap-2 rounded-md bg-violet-500 py-1.5 px-3 font-medium hover:opacity-80 focus-visible:opacity-50 dark:bg-violet-400"
+                className="text-light-0 dark:text-dark-0 bg-brand-dark dark:bg-brand-light flex flex-none cursor-pointer items-center justify-center gap-2 rounded-md py-1.5 px-3 font-medium hover:opacity-80 focus-visible:opacity-50"
               >
                 {action.title}
               </button>
