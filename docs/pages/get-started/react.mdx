@@ -92,7 +92,7 @@ import { RoomProvider } from "./liveblocks.config.js";
 
 function Index() {
   return (
-    <RoomProvider id="my-room-id">
+    <RoomProvider id="my-room-id" initialPresence={{}}>
       <ClientSideSuspense fallback={<div>Loading...</div>}>
         {() => <App />}
       </ClientSideSuspense>

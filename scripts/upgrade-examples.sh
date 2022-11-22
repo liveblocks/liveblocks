@@ -43,8 +43,12 @@ list_all_projects () {
 }
 
 list_liveblocks_deps () {
-    jq -r '(.dependencies // {})|keys[]' package.json \
-        | grep -Ee '^@liveblocks'
+    for dep in $(jq -r '(.dependencies // {})|keys[]' package.json | grep -Ee '^@liveblocks/'); do
+        # Skip dependencies that are explicitly pinned to "*"
+        if [ "$(jq -r ".dependencies.\"$dep\"" package.json)" != "*" ]; then
+            echo "$dep"
+        fi
+    done
 }
 
 list_install_args () {

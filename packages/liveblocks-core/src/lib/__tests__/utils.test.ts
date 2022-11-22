@@ -14,6 +14,17 @@ import {
   values,
 } from "../utils";
 
+/**
+ * This Arbitrary generator ensures that the generated object won't include
+ * a __proto__ key, which makes expressing the tests easier. Tests to cover the
+ * __proto__ cases are written separately.
+ */
+const objectWithoutProto = () =>
+  fc.object().map((o) => {
+    delete o["__proto__"];
+    return o;
+  });
+
 describe("TypeScript wrapper utils", () => {
   it("keys (alias of Object.keys)", () => {
     expect(keys({})).toEqual([]);
@@ -97,10 +108,18 @@ describe("mapValues", () => {
     expect(mapValues({}, (x) => x)).toStrictEqual({});
   });
 
+  it("maps values, not keys", () => {
+    expect(mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2)).toStrictEqual({
+      a: 26,
+      b: 0,
+      c: -14,
+    });
+  });
+
   it("keys don't change", () => {
     fc.assert(
       fc.property(
-        fc.object(),
+        objectWithoutProto(),
 
         (obj) => {
           const result = mapValues(obj, () => Math.random());
@@ -110,6 +129,19 @@ describe("mapValues", () => {
     );
   });
 
+  it("will skip copying dangerous keys", () => {
+    expect(mapValues({ __proto__: null }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ ["__proto__"]: null }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ __proto__: {} }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ ["__proto__"]: {} }, (x) => x)).toStrictEqual({});
+    expect(mapValues({ __proto__: {}, b: 42 }, (x) => x)).toStrictEqual({
+      b: 42,
+    });
+    expect(mapValues({ ["__proto__"]: {}, b: 42 }, (x) => x)).toStrictEqual({
+      b: 42,
+    });
+  });
+
   it("using keys in mapper", () => {
     expect(
       mapValues({ a: 5, b: 0, c: 3 }, (n, k) => k.repeat(n))
@@ -117,23 +149,18 @@ describe("mapValues", () => {
 
     fc.assert(
       fc.property(
-        fc.object(),
+        objectWithoutProto(),
 
-        (obj) => {
-          const result = mapValues(obj, (_, k) => k);
-          expect(Object.keys(result)).toStrictEqual(Object.keys(obj));
-          expect(Object.values(result)).toStrictEqual(Object.keys(obj));
+        (input) => {
+          const output1 = mapValues(input, (x) => x);
+          expect(output1).toStrictEqual(input);
+
+          const output2 = mapValues(input, (_, k) => k);
+          expect(Object.keys(output2)).toStrictEqual(Object.keys(input));
+          expect(Object.values(output2)).toStrictEqual(Object.keys(input));
         }
       )
     );
-  });
-
-  it("keys don't change", () => {
-    expect(mapValues({ a: 13, b: 0, c: -7 }, (n) => n * 2)).toStrictEqual({
-      a: 26,
-      b: 0,
-      c: -14,
-    });
   });
 });
 

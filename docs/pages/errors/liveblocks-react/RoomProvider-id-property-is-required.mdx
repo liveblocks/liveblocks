@@ -17,7 +17,7 @@ import { RoomProvider } from "@liveblocks/react";
 
 function Component() {
   return (
-    <RoomProvider id="your-room-id">
+    <RoomProvider id="your-room-id" initialPresence={{}}>
       <YourComponent />
     </RoomProvider>
   );
