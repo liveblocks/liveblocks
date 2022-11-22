@@ -49,7 +49,7 @@ interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
 function color(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "text-violet-500 dark:text-violet-400";
+      return "text-amber-500 dark:text-amber-400";
 
     case "LiveList":
       return "text-rose-500 dark:text-rose-400";
@@ -61,7 +61,7 @@ function color(node: StorageTreeNode | UserTreeNode): string {
       return "text-light-500 dark:text-dark-500";
 
     case "User":
-      return "text-amber-500 dark:text-amber-500";
+      return "text-teal-500 dark:text-teal-500";
 
     default:
       return assertNever(node, "Unhandled node type in color()");
@@ -71,7 +71,7 @@ function color(node: StorageTreeNode | UserTreeNode): string {
 function background(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "bg-violet-500 dark:bg-violet-400";
+      return "bg-amber-500 dark:bg-amber-400";
 
     case "LiveList":
       return "bg-rose-500 dark:bg-rose-400";
@@ -83,7 +83,7 @@ function background(node: StorageTreeNode | UserTreeNode): string {
       return "bg-dark-800 dark:bg-dark-600";
 
     case "User":
-      return "bg-amber-500 dark:bg-amber-500";
+      return "bg-teal-500 dark:bg-teal-500";
 
     default:
       return assertNever(node, "Unhandled node type in background()");
