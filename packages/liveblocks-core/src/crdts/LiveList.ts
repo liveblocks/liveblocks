@@ -1379,7 +1379,7 @@ function HACK_addIntentAndDeletedIdToOperation(
       return {
         ...firstOp,
         intent: "set",
-        deletedId: deletedId,
+        deletedId,
       };
     } else {
       return op;
