@@ -1068,7 +1068,7 @@ function makeStateMachine<
 
     const createdNodeIds = new Set<string>();
 
-    for (const op of ops) {
+    for (let op of ops) {
       if (op.type === "presence") {
         const reverse = {
           type: "presence" as const,
@@ -1098,7 +1098,7 @@ function makeStateMachine<
 
         // Ops applied after undo/redo don't have an opId.
         if (!op.opId) {
-          op.opId = pool.generateOpId();
+          op = { ...op, opId: pool.generateOpId() };
         }
 
         if (isLocal) {
