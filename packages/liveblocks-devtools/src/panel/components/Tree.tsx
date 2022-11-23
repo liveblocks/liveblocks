@@ -10,6 +10,7 @@ import type {
 import cx from "classnames";
 import type {
   ComponentProps,
+  CSSProperties,
   MouseEvent,
   ReactElement,
   ReactNode,
@@ -249,6 +250,7 @@ function hasFocusedParent<T>(node: NodeApi<T>): boolean {
 }
 
 function Row({ node, children, className, ...props }: RowProps) {
+  const isOpen = node.isOpen;
   const isFocused = node.isFocused;
   const isParentFocused = !node.isFocused && hasFocusedParent(node);
 
@@ -264,6 +266,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
       data-active={isFocused || undefined}
+      data-open={isOpen || undefined}
       {...props}
     >
       <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
@@ -275,7 +278,7 @@ function Row({ node, children, className, ...props }: RowProps) {
             xmlns="http://www.w3.org/2000/svg"
             className={cx(
               "opacity-60 transition-transform",
-              node.isOpen && "rotate-90"
+              isOpen && "rotate-90"
             )}
           >
             <path
@@ -288,9 +291,35 @@ function Row({ node, children, className, ...props }: RowProps) {
       <div className={isFocused ? "text-light-0" : color(node.data)}>
         {icon(node.data)}
       </div>
-      <div className="flex min-w-0 flex-1 items-center gap-[inherit]">
+      <div
+        className={cx(
+          "grid min-w-0 flex-1 items-center gap-[inherit]",
+          isOpen
+            ? "grid-cols-[1fr]"
+            : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)] sm:grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.5)]"
+        )}
+      >
         {children}
       </div>
+    </div>
+  );
+}
+
+function RowInfo({ children, className, ...props }: ComponentProps<"div">) {
+  return (
+    <div
+      className={cx(className, "flex flex-none items-center gap-[inherit]")}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+}
+
+function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
+  return (
+    <div className={cx(className, "truncate opacity-60")} {...props}>
+      {children}
     </div>
   );
 }
@@ -318,12 +347,12 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
 
   return (
     <Row node={node} style={style} onClick={handleClick}>
-      <div className="flex-none">{node.data.key}</div>
-      <Badge className="opacity-60">#{node.data.id}</Badge>
+      <RowInfo>
+        <span className="truncate">{node.data.key}</span>
+        <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
+      </RowInfo>
       {!node.isOpen && (
-        <div className="truncate opacity-60">
-          {truncate(summarize(node.data))}
-        </div>
+        <RowPreview>{truncate(summarize(node.data))}</RowPreview>
       )}
     </Row>
   );
@@ -341,12 +370,14 @@ function LiveNodeRenderer({
 
   return (
     <Row node={node} style={style} onClick={handleClick}>
-      <div className="flex-none">{node.data.key}</div>
-      <Badge className={color(node.data)}>{node.data.type}</Badge>
+      <RowInfo>
+        <span className="truncate">{node.data.key}</span>
+        <Badge className={cx(color(node.data), "flex-none")}>
+          {node.data.type}
+        </Badge>
+      </RowInfo>
       {!node.isOpen && (
-        <div className="truncate opacity-60">
-          {truncate(summarize(node.data))}
-        </div>
+        <RowPreview>{truncate(summarize(node.data))}</RowPreview>
       )}
     </Row>
   );
@@ -357,8 +388,10 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
 
   return (
     <Row node={node} style={style}>
-      <div className="flex-none">{node.data.key}</div>
-      <div className="truncate opacity-60">{value}</div>
+      <RowInfo>
+        <span className="truncate">{node.data.key}</span>
+      </RowInfo>
+      <RowPreview>{value}</RowPreview>
     </Row>
   );
 }
@@ -427,7 +460,14 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
 
     return (
       <div
-        style={{ ...autoSizerStyle, ...style }}
+        style={
+          {
+            "--width": `${width}px`,
+            "--height": `${height}px`,
+            ...autoSizerStyle,
+            ...style,
+          } as CSSProperties
+        }
         ref={mergeRefs(ref, forwardRef)}
         {...props}
       >
