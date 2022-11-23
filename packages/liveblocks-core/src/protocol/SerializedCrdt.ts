@@ -18,38 +18,38 @@ export type SerializedChild =
   | SerializedRegister;
 
 export type SerializedRootObject = {
-  type: CrdtType.OBJECT;
-  data: JsonObject;
+  readonly type: CrdtType.OBJECT;
+  readonly data: JsonObject;
 
   // Root objects don't have a parent relationship
-  parentId?: never;
-  parentKey?: never;
+  readonly parentId?: never;
+  readonly parentKey?: never;
 };
 
 export type SerializedObject = {
-  type: CrdtType.OBJECT;
-  parentId: string;
-  parentKey: string;
-  data: JsonObject;
+  readonly type: CrdtType.OBJECT;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: JsonObject;
 };
 
 export type SerializedList = {
-  type: CrdtType.LIST;
-  parentId: string;
-  parentKey: string;
+  readonly type: CrdtType.LIST;
+  readonly parentId: string;
+  readonly parentKey: string;
 };
 
 export type SerializedMap = {
-  type: CrdtType.MAP;
-  parentId: string;
-  parentKey: string;
+  readonly type: CrdtType.MAP;
+  readonly parentId: string;
+  readonly parentKey: string;
 };
 
 export type SerializedRegister = {
-  type: CrdtType.REGISTER;
-  parentId: string;
-  parentKey: string;
-  data: Json;
+  readonly type: CrdtType.REGISTER;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: Json;
 };
 
 export function isRootCrdt(crdt: SerializedCrdt): crdt is SerializedRootObject {
