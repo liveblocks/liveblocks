@@ -32,79 +32,79 @@ export type CreateChildOp =
   | CreateListOp;
 
 export type UpdateObjectOp = {
-  opId?: string;
-  id: string;
-  type: OpCode.UPDATE_OBJECT;
-  data: Partial<JsonObject>;
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.UPDATE_OBJECT;
+  readonly data: Partial<JsonObject>;
 };
 
 export type CreateObjectOp = {
-  opId?: string;
-  id: string;
-  intent?: "set";
-  deletedId?: string;
-  type: OpCode.CREATE_OBJECT;
-  parentId: string;
-  parentKey: string;
-  data: JsonObject;
+  readonly opId?: string;
+  readonly id: string;
+  readonly intent?: "set";
+  readonly deletedId?: string;
+  readonly type: OpCode.CREATE_OBJECT;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: JsonObject;
 };
 
 export type CreateRootObjectOp = {
-  opId?: string;
-  id: string;
-  type: OpCode.CREATE_OBJECT;
-  data: JsonObject;
-  parentId?: never;
-  parentKey?: never;
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.CREATE_OBJECT;
+  readonly data: JsonObject;
+  readonly parentId?: never;
+  readonly parentKey?: never;
 };
 
 export type CreateListOp = {
-  opId?: string;
-  id: string;
-  intent?: "set";
-  deletedId?: string;
-  type: OpCode.CREATE_LIST;
-  parentId: string;
-  parentKey: string;
+  readonly opId?: string;
+  readonly id: string;
+  readonly intent?: "set";
+  readonly deletedId?: string;
+  readonly type: OpCode.CREATE_LIST;
+  readonly parentId: string;
+  readonly parentKey: string;
 };
 
 export type CreateMapOp = {
-  opId?: string;
-  id: string;
-  intent?: "set";
-  deletedId?: string;
-  type: OpCode.CREATE_MAP;
-  parentId: string;
-  parentKey: string;
+  readonly opId?: string;
+  readonly id: string;
+  readonly intent?: "set";
+  readonly deletedId?: string;
+  readonly type: OpCode.CREATE_MAP;
+  readonly parentId: string;
+  readonly parentKey: string;
 };
 
 export type CreateRegisterOp = {
-  opId?: string;
-  id: string;
-  intent?: "set";
-  deletedId?: string;
-  type: OpCode.CREATE_REGISTER;
-  parentId: string;
-  parentKey: string;
-  data: Json;
+  readonly opId?: string;
+  readonly id: string;
+  readonly intent?: "set";
+  readonly deletedId?: string;
+  readonly type: OpCode.CREATE_REGISTER;
+  readonly parentId: string;
+  readonly parentKey: string;
+  readonly data: Json;
 };
 
 export type DeleteCrdtOp = {
-  opId?: string;
-  id: string;
-  type: OpCode.DELETE_CRDT;
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.DELETE_CRDT;
 };
 
 export type SetParentKeyOp = {
-  opId?: string;
-  id: string;
-  type: OpCode.SET_PARENT_KEY;
-  parentKey: string;
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.SET_PARENT_KEY;
+  readonly parentKey: string;
 };
 
 export type DeleteObjectKeyOp = {
-  opId?: string;
-  id: string;
-  type: OpCode.DELETE_OBJECT_KEY;
-  key: string;
+  readonly opId?: string;
+  readonly id: string;
+  readonly type: OpCode.DELETE_OBJECT_KEY;
+  readonly key: string;
 };
