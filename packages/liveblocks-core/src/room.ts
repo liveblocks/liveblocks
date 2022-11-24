@@ -969,7 +969,7 @@ function makeStateMachine<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = apply(ops, false);
+    const result = applyOps(ops, false);
 
     notify(result.updates, batchedUpdatesWrapper);
   }
@@ -1048,7 +1048,7 @@ function makeStateMachine<
     );
   }
 
-  function apply<O extends HistoryOp<TPresence>>(
+  function applyOps<O extends HistoryOp<TPresence>>(
     rawOps: readonly O[],
     isLocal: boolean
   ): {
@@ -1625,7 +1625,7 @@ function makeStateMachine<
           }
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
-            const applyResult = apply(message.ops, false);
+            const applyResult = applyOps(message.ops, false);
             applyResult.updates.storageUpdates.forEach((value, key) => {
               updates.storageUpdates.set(
                 key,
@@ -1809,7 +1809,7 @@ function makeStateMachine<
 
     const ops = Array.from(offlineOps.values());
 
-    const result = apply(ops, true);
+    const result = applyOps(ops, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
@@ -2017,7 +2017,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
@@ -2048,7 +2048,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
