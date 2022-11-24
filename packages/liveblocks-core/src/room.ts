@@ -614,8 +614,8 @@ function isConnectionSelfAware(
 type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
-      type: "presence";
-      data: TPresence;
+      readonly type: "presence";
+      readonly data: TPresence;
     };
 
 type IdFactory = () => string;
@@ -1049,7 +1049,7 @@ function makeStateMachine<
   }
 
   function apply(
-    ops: HistoryOp<TPresence>[],
+    ops: readonly HistoryOp<TPresence>[],
     isLocal: boolean
   ): {
     reverse: HistoryOp<TPresence>[];

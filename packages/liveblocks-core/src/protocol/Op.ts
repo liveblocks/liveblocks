@@ -32,14 +32,14 @@ export type CreateChildOp =
   | CreateListOp;
 
 export type UpdateObjectOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly type: OpCode.UPDATE_OBJECT;
   readonly data: Partial<JsonObject>;
 };
 
 export type CreateObjectOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly intent?: "set";
   readonly deletedId?: string;
@@ -50,7 +50,7 @@ export type CreateObjectOp = {
 };
 
 export type CreateRootObjectOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly type: OpCode.CREATE_OBJECT;
   readonly data: JsonObject;
@@ -59,7 +59,7 @@ export type CreateRootObjectOp = {
 };
 
 export type CreateListOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly intent?: "set";
   readonly deletedId?: string;
@@ -69,7 +69,7 @@ export type CreateListOp = {
 };
 
 export type CreateMapOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly intent?: "set";
   readonly deletedId?: string;
@@ -79,7 +79,7 @@ export type CreateMapOp = {
 };
 
 export type CreateRegisterOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly intent?: "set";
   readonly deletedId?: string;
@@ -90,20 +90,20 @@ export type CreateRegisterOp = {
 };
 
 export type DeleteCrdtOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly type: OpCode.DELETE_CRDT;
 };
 
 export type SetParentKeyOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly type: OpCode.SET_PARENT_KEY;
   readonly parentKey: string;
 };
 
 export type DeleteObjectKeyOp = {
-  opId?: string;
+  readonly opId?: string;
   readonly id: string;
   readonly type: OpCode.DELETE_OBJECT_KEY;
   readonly key: string;
