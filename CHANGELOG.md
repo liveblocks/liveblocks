@@ -1,3 +1,7 @@
+# v0.19.2
+
+Fixes some internal type definitions.
+
 # v0.19.1
 
 Fixes an issue where `import`s from Liveblocks packages could not be resolved

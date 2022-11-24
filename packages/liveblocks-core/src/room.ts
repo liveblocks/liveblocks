@@ -614,8 +614,8 @@ function isConnectionSelfAware(
 type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
-      type: "presence";
-      data: TPresence;
+      readonly type: "presence";
+      readonly data: TPresence;
     };
 
 type IdFactory = () => string;
@@ -969,7 +969,7 @@ function makeStateMachine<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = apply(ops, false);
+    const result = applyOps(ops, false);
 
     notify(result.updates, batchedUpdatesWrapper);
   }
@@ -1048,25 +1048,35 @@ function makeStateMachine<
     );
   }
 
-  function apply(
-    ops: HistoryOp<TPresence>[],
+  function applyOps<O extends HistoryOp<TPresence>>(
+    rawOps: readonly O[],
     isLocal: boolean
   ): {
-    reverse: HistoryOp<TPresence>[];
+    // Input Ops can get opIds assigned during application.
+    ops: O[];
+    reverse: O[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    const result = {
-      reverse: [] as HistoryOp<TPresence>[],
-      updates: {
-        storageUpdates: new Map<string, StorageUpdate>(),
-        presence: false,
-      },
+    const output = {
+      reverse: [] as O[],
+      storageUpdates: new Map<string, StorageUpdate>(),
+      presence: false,
     };
 
     const createdNodeIds = new Set<string>();
+
+    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
+    // that right now first.
+    const ops = rawOps.map((op) => {
+      if (op.type !== "presence" && !op.opId) {
+        return { ...op, opId: pool.generateOpId() };
+      } else {
+        return op;
+      }
+    });
 
     for (const op of ops) {
       if (op.type === "presence") {
@@ -1091,15 +1101,10 @@ function makeStateMachine<
           }
         }
 
-        result.reverse.unshift(reverse);
-        result.updates.presence = true;
+        output.reverse.unshift(reverse as O);
+        output.presence = true;
       } else {
         let source: OpSource;
-
-        // Ops applied after undo/redo don't have an opId.
-        if (!op.opId) {
-          op.opId = pool.generateOpId();
-        }
 
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
@@ -1121,16 +1126,16 @@ function makeStateMachine<
           // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
           if (!parentId || !createdNodeIds.has(parentId)) {
-            result.updates.storageUpdates.set(
+            output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
-                result.updates.storageUpdates.get(
+                output.storageUpdates.get(
                   nn(applyOpResult.modified.node._id)
                 ) as any, // FIXME
                 applyOpResult.modified
               )
             );
-            result.reverse.unshift(...applyOpResult.reverse);
+            output.reverse.unshift(...(applyOpResult.reverse as O[]));
           }
 
           if (
@@ -1143,7 +1148,15 @@ function makeStateMachine<
         }
       }
     }
-    return result;
+
+    return {
+      ops,
+      reverse: output.reverse,
+      updates: {
+        storageUpdates: output.storageUpdates,
+        presence: output.presence,
+      },
+    };
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
@@ -1612,7 +1625,7 @@ function makeStateMachine<
           }
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
-            const applyResult = apply(message.ops, false);
+            const applyResult = applyOps(message.ops, false);
             applyResult.updates.storageUpdates.forEach((value, key) => {
               updates.storageUpdates.set(
                 key,
@@ -1796,11 +1809,11 @@ function makeStateMachine<
 
     const ops = Array.from(offlineOps.values());
 
-    const result = apply(ops, true);
+    const result = applyOps(ops, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops,
+      ops: result.ops,
     });
 
     notify(result.updates, batchedUpdatesWrapper);
@@ -2004,7 +2017,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
@@ -2012,7 +2025,7 @@ function makeStateMachine<
       onHistoryChange(doNotBatchUpdates);
     });
 
-    for (const op of historyOps) {
+    for (const op of result.ops) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -2035,7 +2048,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
@@ -2043,7 +2056,7 @@ function makeStateMachine<
       onHistoryChange(doNotBatchUpdates);
     });
 
-    for (const op of historyOps) {
+    for (const op of result.ops) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }

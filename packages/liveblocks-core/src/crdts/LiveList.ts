@@ -545,8 +545,10 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
 
       this._items[indexOfItemWithSameKey] = child;
 
-      const reverse = existingItem._toOps(nn(this._id), key, this._pool);
-      addIntentAndDeletedIdToOperation(reverse, op.id);
+      const reverse = HACK_addIntentAndDeletedIdToOperation(
+        existingItem._toOps(nn(this._id), key, this._pool),
+        op.id
+      );
 
       const delta = [setDelta(indexOfItemWithSameKey, child)];
       const deletedDelta = this._detachItemAssociatedToSetOperation(
@@ -1105,11 +1107,15 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
       const storageUpdates = new Map<string, LiveListUpdates<TItem>>();
       storageUpdates.set(this._id, makeUpdate(this, [setDelta(index, value)]));
 
-      const ops = value._toOps(this._id, position, this._pool);
-      addIntentAndDeletedIdToOperation(ops, existingId);
+      const ops = HACK_addIntentAndDeletedIdToOperation(
+        value._toOps(this._id, position, this._pool),
+        existingId
+      );
       this._unacknowledgedSets.set(position, nn(ops[0].opId));
-      const reverseOps = existingItem._toOps(this._id, position, undefined);
-      addIntentAndDeletedIdToOperation(reverseOps, id);
+      const reverseOps = HACK_addIntentAndDeletedIdToOperation(
+        existingItem._toOps(this._id, position, undefined),
+        id
+      );
 
       this._pool.dispatch(ops, reverseOps, storageUpdates);
     }
@@ -1362,17 +1368,21 @@ function moveDelta(
  * As soon as we refactor the operations structure,
  * serializing a LiveStructure should not know anything about intent
  */
-function addIntentAndDeletedIdToOperation(
+function HACK_addIntentAndDeletedIdToOperation(
   ops: CreateChildOp[],
   deletedId: string | undefined
-) {
-  if (ops.length === 0) {
-    throw new Error(
-      "Internal error. Serialized LiveStructure should have at least 1 operation"
-    );
-  }
-
-  const firstOp = ops[0];
-  firstOp.intent = "set";
-  firstOp.deletedId = deletedId;
+): CreateChildOp[] {
+  return ops.map((op, index) => {
+    if (index === 0) {
+      // NOTE: Only patch the first Op here
+      const firstOp = op;
+      return {
+        ...firstOp,
+        intent: "set",
+        deletedId,
+      };
+    } else {
+      return op;
+    }
+  });
 }
