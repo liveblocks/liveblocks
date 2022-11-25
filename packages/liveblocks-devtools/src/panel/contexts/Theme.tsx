@@ -1,5 +1,6 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useContext, useLayoutEffect, useState } from "react";
+import browser from "webextension-polyfill";
 
 const MEDIA_QUERY = window.matchMedia("(prefers-color-scheme: dark)");
 const THEMES: Theme[] = ["light", "dark"];
@@ -9,7 +10,11 @@ export type Theme = "light" | "dark";
 const ThemeContext = createContext<Theme | undefined>(undefined);
 
 function getTheme(): Theme {
-  return MEDIA_QUERY.matches ? "dark" : "light";
+  if (browser.devtools.panels.themeName === "dark") {
+    return "dark";
+  } else {
+    return MEDIA_QUERY.matches ? "dark" : "light";
+  }
 }
 
 export function ThemeProvider({ children }: PropsWithChildren) {

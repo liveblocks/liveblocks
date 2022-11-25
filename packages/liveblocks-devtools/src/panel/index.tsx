@@ -10,9 +10,9 @@ import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
 import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
+import { ThemeProvider } from "./contexts/Theme";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
-import { ThemeProvider } from "./theme";
 
 function Panel() {
   const [search, setSearch] = useState("");
