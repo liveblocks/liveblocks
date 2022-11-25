@@ -5,9 +5,11 @@ import { createRoot } from "react-dom/client";
 import browser from "webextension-polyfill";
 
 import { EmptyState } from "./components/EmptyState";
+import { ReloadButton } from "./components/ReloadButton";
 import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
+import { StorageSearch } from "./components/StorageSearch";
 import { Tabs } from "./components/Tabs";
 import { Tooltip } from "./components/Tooltip";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
@@ -189,64 +191,15 @@ function Panel() {
           },
         ]}
         leading={
-          <div className="relative flex flex-none items-center px-1.5">
-            <Tooltip content="Reload" sideOffset={10}>
-              <button
-                aria-label="Reload"
-                className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
-                onClick={handleReload}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path d="M11 .5V5H6.5" fill="currentColor" />
-                  <path
-                    d="M10.5 3.974 9 2.624a4.5 4.5 0 1 0 1 5.485"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  />
-                </svg>
-              </button>
-            </Tooltip>
+          <div className="after:bg-light-300 after:dark:bg-dark-300 relative flex flex-none items-center pl-1.5 pr-1 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px">
+            <ReloadButton onClick={handleReload} />
             <RoomStatus />
             <RoomSelector />
-            <div className="bg-light-300 dark:bg-dark-300 absolute -right-px top-[20%] h-[60%] w-px" />
           </div>
         }
         trailing={
-          <div className="relative flex w-[30%] min-w-[140px] flex-none items-center">
-            <input
-              type="search"
-              value={search}
-              onChange={handleSearchChange}
-              placeholder="Search storage…"
-              className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
-            />
-            <svg
-              width="14"
-              height="14"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              className="absolute left-1.5 translate-x-px opacity-50"
-            >
-              <path
-                d="M6.5 11a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="m12.5 12.5-3-3"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <div className="bg-light-300 dark:bg-dark-300 absolute -left-px top-[20%] h-[60%] w-px" />
+          <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
+            <StorageSearch value={search} onChange={handleSearchChange} />
           </div>
         }
       />
