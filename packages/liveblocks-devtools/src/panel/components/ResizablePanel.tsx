@@ -78,8 +78,7 @@ function Handle({
       startOffset.current = undefined;
       startValue.current = undefined;
 
-      document.body.style.removeProperty("cursor");
-      document.body.style.removeProperty("user-select");
+      document.body.removeAttribute("data-resizing");
 
       document.removeEventListener("pointerup", handleDragEnd);
       document.removeEventListener("pointermove", handleDrag);
@@ -95,9 +94,7 @@ function Handle({
 
       setDragging(true);
 
-      document.body.style.userSelect = "none";
-      document.body.style.cursor =
-        direction === "vertical" ? "row-resize" : "col-resize";
+      document.body.setAttribute("data-resizing", direction);
 
       document.addEventListener("pointerup", handleDragEnd);
       document.addEventListener("pointermove", handleDrag);
