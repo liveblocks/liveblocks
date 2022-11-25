@@ -57,17 +57,13 @@ export function RoomStatus() {
   }, [currentStatus]);
 
   const content = (
-    <div className="flex h-5 w-5 cursor-help items-center justify-center">
+    <div className="flex h-5 w-5 items-center justify-center">
       {statusContent}
     </div>
   );
 
   return tooltipContent ? (
-    <Tooltip
-      content={tooltipContent}
-      sideOffset={10}
-      className="flex items-center"
-    >
+    <Tooltip content={tooltipContent} sideOffset={10}>
       {content}
     </Tooltip>
   ) : (

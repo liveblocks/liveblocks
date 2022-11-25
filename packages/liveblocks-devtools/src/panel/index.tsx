@@ -9,6 +9,7 @@ import { ResizablePanel } from "./components/ResizablePanel";
 import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
 import { Tabs } from "./components/Tabs";
+import { Tooltip } from "./components/Tooltip";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { ThemeProvider } from "./contexts/Theme";
 import { Presence } from "./tabs/presence";
@@ -27,7 +28,7 @@ function Panel() {
     setSearch("");
   }, []);
 
-  const handleRefresh = useCallback(() => {
+  const handleReload = useCallback(() => {
     browser.tabs.reload();
   }, []);
 
@@ -125,12 +126,12 @@ function Panel() {
         title={<>No Liveblocks&nbsp;rooms found.</>}
         description={
           <>
-            Try refreshing the page if something is wrong or go to the docs to
+            Try reloading the page if something is wrong or go to the docs to
             get started with&nbsp;Liveblocks.
           </>
         }
         actions={[
-          { title: "Refresh", onClick: handleRefresh },
+          { title: "Reload", onClick: handleReload },
           { title: "Get started", href: "https://liveblocks.io/docs" },
         ]}
       />
@@ -189,6 +190,27 @@ function Panel() {
         ]}
         leading={
           <div className="relative flex flex-none items-center px-1.5">
+            <Tooltip content="Reload" sideOffset={10}>
+              <button
+                aria-label="Reload"
+                className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
+                onClick={handleReload}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M11 .5V5H6.5" fill="currentColor" />
+                  <path
+                    d="M10.5 3.974 9 2.624a4.5 4.5 0 1 0 1 5.485"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </button>
+            </Tooltip>
             <RoomStatus />
             <RoomSelector />
             <div className="bg-light-300 dark:bg-dark-300 absolute -right-px top-[20%] h-[60%] w-px" />
@@ -204,18 +226,24 @@ function Panel() {
               className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
             />
             <svg
-              width="16"
-              height="16"
+              width="14"
+              height="14"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
-              className="absolute left-1.5 -translate-y-px translate-x-px opacity-50"
+              className="absolute left-1.5 translate-x-px opacity-50"
             >
               <path
-                d="M7.25 12a4.75 4.75 0 1 0 0-9.5 4.75 4.75 0 0 0 0 9.5ZM13.25 13.25 11 11"
+                d="M6.5 11a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"
                 stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="m12.5 12.5-3-3"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linejoin="round"
               />
             </svg>
             <div className="bg-light-300 dark:bg-dark-300 absolute -left-px top-[20%] h-[60%] w-px" />

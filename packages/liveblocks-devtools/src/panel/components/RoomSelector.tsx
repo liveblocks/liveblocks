@@ -8,6 +8,7 @@ import {
   useRoomIds,
   useSetCurrentRoomId,
 } from "../contexts/CurrentRoom";
+import { Tooltip } from "./Tooltip";
 
 export function RoomSelector({
   className,
@@ -27,31 +28,33 @@ export function RoomSelector({
       onValueChange={handleValueChange}
       value={currentRoomId ?? undefined}
     >
-      <RadixSelect.Trigger
-        className={cx(
-          className,
-          "text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center pr-1.5 pl-1"
-        )}
-        aria-label="Room"
-        {...props}
-      >
-        <RadixSelect.Value />
-        <RadixSelect.Icon className="ml-1 block">
-          <svg
-            width="9"
-            height="6"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className="translate-y-px opacity-50"
-          >
-            <path
-              d="m1 1 3.5 3.5L8 1"
-              stroke="currentColor"
-              strokeWidth="1.5"
-            />
-          </svg>
-        </RadixSelect.Icon>
-      </RadixSelect.Trigger>
+      <Tooltip content="Choose a room" sideOffset={10}>
+        <RadixSelect.Trigger
+          className={cx(
+            className,
+            "text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center pr-1.5 pl-1"
+          )}
+          aria-label="Choose a room"
+          {...props}
+        >
+          <RadixSelect.Value />
+          <RadixSelect.Icon className="ml-1 block">
+            <svg
+              width="9"
+              height="6"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="translate-y-px opacity-50"
+            >
+              <path
+                d="m1 1 3.5 3.5L8 1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+            </svg>
+          </RadixSelect.Icon>
+        </RadixSelect.Trigger>
+      </Tooltip>
       <RadixSelect.Portal>
         <RadixSelect.Content className="bg-light-0 text-dark-400 dark:text-light-0 dark:bg-dark-100 dark:border-dark-300 border-light-300 rounded-lg border p-1">
           <RadixSelect.Viewport>

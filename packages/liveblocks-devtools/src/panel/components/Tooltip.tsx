@@ -36,7 +36,7 @@ export const Tooltip = forwardRef<HTMLDivElement, Props>(
           <RadixTooltip.Content
             className={cx(
               className,
-              "bg-light-0 text-dark-400 dark:text-light-0 dark:bg-dark-100 dark:border-dark-300 border-light-300 rounded-lg border px-2.5 py-1"
+              "text-light-0 bg-dark-300 border-dark-400 dark flex items-center rounded-md border px-2.5 py-1"
             )}
             ref={ref}
             collisionPadding={4}
