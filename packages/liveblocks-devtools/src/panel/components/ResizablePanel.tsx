@@ -55,7 +55,7 @@ function Handle({
         (direction === "vertical" ? event.pageY : event.pageX);
 
       latestOnValueChange.current(
-        clamp((startValue.current ?? 0) + delta, min, max)
+        Math.round(clamp((startValue.current ?? 0) + delta, min, max))
       );
     },
     [direction, min, max]
@@ -69,7 +69,7 @@ function Handle({
           (direction === "vertical" ? event.pageY : event.pageX);
 
         latestOnValueApply.current(
-          clamp((startValue.current ?? 0) + delta, min, max)
+          Math.round(clamp((startValue.current ?? 0) + delta, min, max))
         );
       }
 
@@ -151,7 +151,7 @@ export function ResizablePanel({
       style={{ ...style, flexDirection: isVertical ? "column" : "row" }}
       {...props}
     >
-      <div className="flex-1">{children}</div>
+      <div className="min-h-0 min-w-0 flex-1">{children}</div>
       <div
         className={cx(
           "border-light-300 dark:border-dark-300 relative flex-none",
