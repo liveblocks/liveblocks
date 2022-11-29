@@ -1,10 +1,8 @@
-### Description
+#### Description
 
-<!--
 - Please include a summary of the change and which issue is fixed.
 - Please also include relevant motivation and context.
 - List any dependencies that are required for this change.
--->
 
 #### Type of change
 
@@ -18,12 +16,9 @@
 
 #### Related issue(s)
 
-<!-- Add the related issue(s) here -->
-<!-- https://github.com/liveblocks/[REPOSITORY]/issues/[ISSUE_NUMBER] -->
+ Add the related issue(s) here i.e.
+ https://github.com/liveblocks/[REPOSITORY]/issues/[ISSUE_NUMBER] 
 
 #### Testing Steps
-
-<!--
 - Please include the steps you took to test your change.  
-- If change is visual in nature please provide a screen shot or screen recording of the change. 
--->
+- If change is visual in nature please provide a screen shot or screen recording of the change.

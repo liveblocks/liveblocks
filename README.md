@@ -51,7 +51,7 @@ See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or l
 - [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
 
 ## Contribution
-We love when you share contributions, as our user experience is central to everything we do.  If creating a pull request, please complete the pull request template to the best of your ability to provide context and make reviewing your change straightforward. 
+We love when you share contributions, as our user experience is central to everything we do. If creating a pull request, please complete the pull request template to the best of your ability to provide context and make reviewing your change straightforward. 
 
 ## License
 
