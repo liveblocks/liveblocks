@@ -148,10 +148,12 @@ export function ResizablePanel({
       style={{ ...style, flexDirection: isVertical ? "column" : "row" }}
       {...props}
     >
-      <div className="min-h-0 min-w-0 flex-1">{children}</div>
+      <div className="bg-light-0 dark:bg-dark-0 min-h-0 min-w-0 flex-1">
+        {children}
+      </div>
       <div
         className={cx(
-          "border-light-300 dark:border-dark-300 relative flex-none",
+          "border-light-300 dark:border-dark-300 bg-light-0 dark:bg-dark-0 relative flex-none",
           isVertical ? "border-t" : "border-l"
         )}
         style={{

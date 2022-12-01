@@ -1,4 +1,5 @@
 import type {
+  Json,
   JsonTreeNode,
   LiveListTreeNode,
   LiveMapTreeNode,
@@ -23,7 +24,7 @@ import useResizeObserver from "use-resize-observer";
 
 import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
-import { truncate } from "../../lib/truncate";
+import { stringify } from "../../lib/stringify";
 
 const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
@@ -36,6 +37,10 @@ type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
 
 interface RowProps extends ComponentProps<"div"> {
   node: NodeApi;
+}
+
+interface JsonPreviewProps extends ComponentProps<"div"> {
+  value: Json;
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
@@ -211,11 +216,11 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
 
     case "User":
       return node.presence
-        .map((p) => `${p.key}=${JSON.stringify(p.value)}`)
+        .map((p) => `${p.key}=${stringify(p.value)}`)
         .join(", ");
 
     case "Json":
-      return JSON.stringify(node.value);
+      return stringify(node.value);
 
     default:
       return assertNever(node, "Unhandled node type in summarize()");
@@ -323,6 +328,23 @@ function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
     </div>
   );
 }
+("tr");
+
+const JsonPreview = forwardRef<HTMLDivElement, JsonPreviewProps>(
+  ({ value, className, ...props }, forwardRef) => {
+    const { ref, width } = useResizeObserver();
+
+    return (
+      <div
+        ref={mergeRefs(ref, forwardRef)}
+        className={cx(className, "truncate")}
+        {...props}
+      >
+        {stringify(value)}
+      </div>
+    );
+  }
+);
 
 function Badge({ children, className, ...props }: ComponentProps<"span">) {
   return (
@@ -351,9 +373,7 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
         <span className="truncate">{node.data.key}</span>
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
       </RowInfo>
-      {!node.isOpen && (
-        <RowPreview>{truncate(summarize(node.data))}</RowPreview>
-      )}
+      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
     </Row>
   );
 }
@@ -376,22 +396,20 @@ function LiveNodeRenderer({
           {node.data.type}
         </Badge>
       </RowInfo>
-      {!node.isOpen && (
-        <RowPreview>{truncate(summarize(node.data))}</RowPreview>
-      )}
+      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
     </Row>
   );
 }
 
 function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
-  const value = JSON.stringify(node.data.value);
-
   return (
     <Row node={node} style={style}>
       <RowInfo>
         <span className="truncate">{node.data.key}</span>
       </RowInfo>
-      <RowPreview>{value}</RowPreview>
+      <RowPreview>
+        <JsonPreview value={node.data.value} />
+      </RowPreview>
     </Row>
   );
 }
