@@ -173,18 +173,6 @@ describe("position datastructure", () => {
     );
   });
 
-  it("valid Pos strings aren't modified", () => {
-    fc.assert(
-      fc.property(
-        genPos(),
-
-        (pos) => {
-          expect(asPos(pos)).toBe(pos);
-        }
-      )
-    );
-  });
-
   it("position's string representation is also alphabetically sortable", () => {
     fc.assert(
       fc.property(
