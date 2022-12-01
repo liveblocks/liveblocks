@@ -11,7 +11,6 @@ import { RoomSelector } from "./components/RoomSelector";
 import { RoomStatus } from "./components/RoomStatus";
 import { StorageSearch } from "./components/StorageSearch";
 import { Tabs } from "./components/Tabs";
-import { Tooltip } from "./components/Tooltip";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
 import { ThemeProvider } from "./contexts/Theme";
 import { Presence } from "./tabs/presence";

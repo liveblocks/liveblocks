@@ -54,7 +54,11 @@ export function Tabs({
             );
 
             return tab.disabled ? (
-              <Tooltip content="Not available yet" sideOffset={5}>
+              <Tooltip
+                key={tab.value}
+                content="Not available yet"
+                sideOffset={5}
+              >
                 {content}
               </Tooltip>
             ) : (

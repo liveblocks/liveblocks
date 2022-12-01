@@ -29,15 +29,15 @@ export function StorageSearch({ value, onChange, className, ...props }: Props) {
         <path
           d="M6.5 11a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9Z"
           stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
         <path
           d="m12.5 12.5-3-3"
           stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linejoin="round"
+          strokeWidth="1.5"
+          strokeLinejoin="round"
         />
       </svg>
     </div>
