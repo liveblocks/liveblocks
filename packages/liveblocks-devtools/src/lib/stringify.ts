@@ -1,4 +1,5 @@
 import type { Json } from "@liveblocks/core";
+import shouldQuote from "should-quote";
 
 const MAX_DEPTH = Infinity;
 const SEPARATOR = ", ";
@@ -8,13 +9,13 @@ export function stringify(value?: Json, depth = 0): string {
     if (value.length === 0) {
       return "[]";
     } else if (depth >= MAX_DEPTH) {
-      return "[ … ]";
+      return "[…]";
     } else {
       const values = value
         .map((value) => stringify(value, depth + 1))
         .join(SEPARATOR);
 
-      return `[ ${values} ]`;
+      return `[${values}]`;
     }
   } else if (typeof value === "object" && value !== null) {
     const keys = Object.keys(value);
@@ -25,7 +26,13 @@ export function stringify(value?: Json, depth = 0): string {
       return "{ … }";
     } else {
       const values = keys
-        .map((key) => `${key}: ${stringify(value[key], depth + 1)}`)
+        .map(
+          (key) =>
+            `${shouldQuote(key) ? `"${key}"` : key}: ${stringify(
+              value[key],
+              depth + 1
+            )}`
+        )
         .join(SEPARATOR);
 
       return `{ ${values} }`;
