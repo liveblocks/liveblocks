@@ -1,0 +1,27 @@
+.cursor {
+  position: absolute;
+  z-index: var(--z-above);
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  transition: transform var(--transition-linear);
+  user-select: none;
+}
+
+.pointer {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.name {
+  position: absolute;
+  top: var(--space-8);
+  left: var(--space-8);
+  overflow: hidden;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--size-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}

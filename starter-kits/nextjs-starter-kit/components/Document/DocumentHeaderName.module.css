@@ -1,0 +1,46 @@
+.container {
+  display: flex;
+  width: 100%;
+  place-content: center;
+  place-items: center;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nameInput {
+  width: 100%;
+  background: transparent;
+  outline: none;
+  text-align: center;
+}
+
+.renameButton,
+.badge {
+  flex: none;
+  margin-left: var(--space-6);
+}
+
+.renameButton {
+  color: var(--color-text-lightest);
+  transition: color var(--transition);
+  outline: none;
+}
+
+.renameButton:hover,
+.renameButton:focus-visible {
+  color: var(--color-text-lighter);
+}
+
+.badge {
+  position: relative;
+  display: inline-block;
+  padding: 0 var(--space-3);
+  border-radius: 1em;
+  color: var(--color-text-lighter);
+  background: var(--color-surface);
+  font-size: 0.8em;
+}
