@@ -68,14 +68,45 @@ const UserEnteredMessage = {
 ### Endpoints
 Creating endpoints is simple, and is done from within the webhooks dashboard for your project.  The only criteria for creating an endpoint is that it must be one that you control.  You also have the ability to test sending events to the svix endpoint. 
 Once your endpoint is created, you can test sending events to it from within the Testing tab of the Dashboard. 
+<Figure>
+  <img
+    src="/images/docs/webhooks/webhooks-endpoint-create.png"
+    alt="Share  webhooks endpoint Dashboard"
+  />
+</Figure>
 
 In order to disable an endpoint from the dashboard, you will select it and then click the kebab menu at the top right of the frame.  This option gives you the ability to disable the endpoint so that you may maintain the data provided, while no longer recieving messages. 
 
+<Figure>
+  <img
+    src="/images/docs/webhooks/webhooks-replay.png"
+    alt="Share replay and disable"
+  />
+</Figure>
+
 Before sending events, you should disable CSRF protection for the endpoint if it is enabled by default, and use the steps outlined in the ##Verifying Section to ensure the security of the message.  
 
-If the need arises, you can rotate the signing secret from within the Endpoint portion of the dashboard by clicking on the dropdown menu.  Rotating the secret will sign the message with the new secret and old secret. This method of roation gives you time to update the secret on the client side, without losing any event driven data.
+If the need arises, you can rotate the signing secret from within the Endpoint portion of the dashboard by clicking on the dropdown menu located above the item named Signing Secret.  Rotating the secret will sign the message with the new secret and old secret for a period of 24 hours. This method of roation gives you time to update the secret on the client side, without losing any event driven data.
+
+<Figure>
+  <img
+    src="/images/docs/webhooks/webhooks-advanced-configuration.png"
+    alt="Share advanced configuration"
+  />
+</Figure>
 
 In the event that your service needs custom headers to be set in order to work with load balancers or application servers, the Advanced section of the Endpoint configuration provides the option to configure these values, alongside custom rate limiting. 
+
+From within the dashboard you also have the ability to filter events by date and eventType.  This feature is nested within the Logs tab of the Dashboard and can be seen below. 
+
+<Figure>
+  <img
+    src="/images/docs/webhooks/webhooks-filter.png"
+    alt="Share filtering capability"
+  />
+</Figure>
+
+
 
 
 ### Verifying Webhooks
