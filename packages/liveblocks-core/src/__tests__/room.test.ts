@@ -1376,6 +1376,28 @@ describe("room", () => {
 
       expect(state.numberOfRetry).toEqual(1);
     });
+
+    test("manual reconnection", () => {
+      const { machine } = setupStateMachine({ x: 0 });
+      expect(machine.getConnectionState()).toBe("closed");
+
+      const ws = new MockWebSocket("");
+      machine.connect();
+      expect(machine.getConnectionState()).toBe("authenticating");
+
+      machine.authenticationSuccess(defaultRoomToken, ws);
+      expect(machine.getConnectionState()).toBe("connecting");
+
+      ws.open();
+      expect(machine.getConnectionState()).toBe("open");
+
+      machine.reconnect();
+      expect(machine.getConnectionState()).toBe("authenticating");
+
+      machine.authenticationSuccess(defaultRoomToken, ws);
+      ws.open();
+      expect(machine.getConnectionState()).toBe("open");
+    });
   });
 
   describe("Initial UpdatePresenceServerMsg", () => {
