@@ -332,14 +332,8 @@ function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
 
 const JsonPreview = forwardRef<HTMLDivElement, JsonPreviewProps>(
   ({ value, className, ...props }, forwardRef) => {
-    const { ref, width } = useResizeObserver();
-
     return (
-      <div
-        ref={mergeRefs(ref, forwardRef)}
-        className={cx(className, "truncate")}
-        {...props}
-      >
+      <div ref={forwardRef} className={cx(className, "truncate")} {...props}>
         {stringify(value)}
       </div>
     );
