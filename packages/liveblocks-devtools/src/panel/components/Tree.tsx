@@ -26,7 +26,6 @@ import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import {
   ELLIPSIS,
-  quoteAsNeeded,
   stringify,
   wrapObject,
   wrapProperty,
@@ -61,10 +60,10 @@ interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
 function color(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "text-amber-500 dark:text-amber-400";
+      return "text-orange-500 dark:text-orange-400";
 
     case "LiveList":
-      return "text-rose-500 dark:text-rose-400";
+      return "text-red-500 dark:text-red-400";
 
     case "LiveMap":
       return "text-blue-500 dark:text-blue-400";
@@ -83,10 +82,10 @@ function color(node: StorageTreeNode | UserTreeNode): string {
 function background(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "bg-amber-500 dark:bg-amber-400";
+      return "bg-orange-500 dark:bg-orange-400";
 
     case "LiveList":
-      return "bg-rose-500 dark:bg-rose-400";
+      return "bg-red-500 dark:bg-red-400";
 
     case "LiveMap":
       return "bg-blue-500 dark:bg-blue-400";

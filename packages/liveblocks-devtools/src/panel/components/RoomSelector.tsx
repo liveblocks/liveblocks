@@ -63,7 +63,7 @@ export function RoomSelector({
                 value={roomId}
                 key={roomId}
                 className={cx(
-                  "data-[highlighted]:text-light-0 dark:data-[highlighted]:text-dark-0 data-[highlighted]:bg-brand-dark dark:data-[highlighted]:bg-brand-light relative flex items-center rounded py-0.5 pr-1.5 pl-6"
+                  "data-[highlighted]:text-light-0 dark:data-[highlighted]:text-dark-0 data-[highlighted]:bg-brand-500 dark:data-[highlighted]:bg-brand-400 relative flex items-center rounded py-0.5 pr-1.5 pl-6"
                 )}
               >
                 <RadixSelect.ItemIndicator className="absolute left-1">

@@ -29,11 +29,11 @@ export function RoomStatus() {
   const statusContent = useMemo(() => {
     switch (currentStatus) {
       case "open":
-        return <Ping className="text-lime-500 dark:text-lime-400" />;
+        return <Ping className="text-green-500 dark:text-green-400" />;
 
       case "connecting":
       case "authenticating":
-        return <Ping className="text-amber-500 dark:text-amber-400" />;
+        return <Ping className="text-orange-500 dark:text-orange-400" />;
 
       case "closed":
       case "failed":
