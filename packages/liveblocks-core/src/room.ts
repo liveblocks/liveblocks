@@ -481,6 +481,11 @@ export type Room<
   batch<T>(fn: () => T): T;
 
   /**
+   * Close room connection and try to reconnect
+   */
+  reconnect(): void;
+
+  /**
    * @internal Utilities only used for unit testing.
    */
   __INTERNAL_DO_NOT_USE: {
@@ -533,6 +538,7 @@ type Machine<
   // Core
   connect(): void;
   disconnect(): void;
+  reconnect(): void;
 
   // Generic storage callbacks
   subscribe(callback: StorageCallback): () => void;
@@ -2161,6 +2167,7 @@ function makeStateMachine<
     // Core
     connect,
     disconnect,
+    reconnect,
     subscribe,
 
     // Presence
@@ -2308,6 +2315,7 @@ export function createRoom<
     getConnectionState: machine.getConnectionState,
     isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
+    reconnect: machine.reconnect,
 
     subscribe: machine.subscribe,
 
