@@ -17,14 +17,20 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, useCallback } from "react";
+import { forwardRef, Fragment, useCallback } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 
 import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
-import { stringify } from "../../lib/stringify";
+import {
+  ELLIPSIS,
+  quoteAsNeeded,
+  stringify,
+  wrapObject,
+  wrapProperty,
+} from "../../lib/stringify";
 
 const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
@@ -194,17 +200,16 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
 function summarize(node: StorageTreeNode | UserTreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return node.fields
-        .map(
-          (node) =>
-            `${node.key}=${String(
-              node.type === "Json" &&
-                (node.value === null || typeof node.value !== "object")
-                ? node.value
-                : "…"
-            )}`
-        )
-        .join(", ");
+      return wrapObject(
+        node.fields
+          .map((node: StorageTreeNode) =>
+            wrapProperty(
+              node.key,
+              node.type === "Json" ? stringify(node.value) : ELLIPSIS
+            )
+          )
+          .join(", ")
+      );
 
     case "LiveList":
       return `${node.items.length} item${node.items.length > 1 ? "s" : ""}`;
@@ -215,9 +220,16 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
       }`;
 
     case "User":
-      return node.presence
-        .map((p) => `${p.key}=${stringify(p.value)}`)
-        .join(", ");
+      return wrapObject(
+        node.presence
+          .map((node) =>
+            wrapProperty(
+              node.key,
+              node.type === "Json" ? stringify(node.value) : ELLIPSIS
+            )
+          )
+          .join(", ")
+      );
 
     case "Json":
       return stringify(node.value);
@@ -554,7 +566,7 @@ export function Breadcrumbs({
         $
       </span>
       {nodePath.map((node) => (
-        <>
+        <Fragment key={node.id}>
           <svg
             width="7"
             height="10"
@@ -576,7 +588,7 @@ export function Breadcrumbs({
             <div className={color(node.data)}>{icon(node.data)}</div>
             <span>{node.data.key}</span>
           </button>
-        </>
+        </Fragment>
       ))}
     </div>
   );
