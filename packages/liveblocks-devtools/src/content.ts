@@ -2,6 +2,7 @@ import type {
   FullClientToPanelMessage,
   FullPanelToClientMessage,
 } from "@liveblocks/core";
+import type { PlasmoContentScript } from "plasmo";
 import browser from "webextension-polyfill";
 
 window.addEventListener("message", (event) => {
@@ -22,4 +23,7 @@ browser.runtime.onMessage.addListener((message: FullPanelToClientMessage) => {
   }
 });
 
-export {};
+export const config: PlasmoContentScript = {
+  matches: ["http://localhost:*/*", "https://*/*", "file://*/*"],
+  all_frames: true,
+};
