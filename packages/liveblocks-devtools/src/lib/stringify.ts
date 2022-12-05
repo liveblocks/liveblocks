@@ -1,14 +1,13 @@
 import type { Json } from "@liveblocks/core";
-import shouldQuote from "should-quote";
+import unquotedPropertyValidator from "unquoted-property-validator";
 
-const MAX_DEPTH = Infinity;
 const SEPARATOR = ", ";
 
-export function stringify(value?: Json, depth = 0): string {
+export function stringify(value?: Json, depth = 0, maxDepth = 1): string {
   if (Array.isArray(value)) {
     if (value.length === 0) {
       return "[]";
-    } else if (depth >= MAX_DEPTH) {
+    } else if (depth >= maxDepth) {
       return "[…]";
     } else {
       const values = value
@@ -22,17 +21,17 @@ export function stringify(value?: Json, depth = 0): string {
 
     if (keys.length === 0) {
       return "{}";
-    } else if (depth >= MAX_DEPTH) {
+    } else if (depth >= maxDepth) {
       return "{ … }";
     } else {
       const values = keys
-        .map(
-          (key) =>
-            `${shouldQuote(key) ? `"${key}"` : key}: ${stringify(
-              value[key],
-              depth + 1
-            )}`
-        )
+        .map((key) => {
+          const formattedKey = unquotedPropertyValidator(key).needsQuotes
+            ? `"${key}"`
+            : key;
+
+          return `${formattedKey}: ${stringify(value[key], depth + 1)}`;
+        })
         .join(SEPARATOR);
 
       return `{ ${values} }`;

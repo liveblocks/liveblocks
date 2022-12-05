@@ -24,7 +24,7 @@
     "react": "18.2.0",
     "react-arborist": "^2.1.1",
     "react-dom": "18.2.0",
-    "should-quote": "^1.0.0",
+    "unquoted-property-validator": "^1.1.0",
     "use-resize-observer": "^9.0.2"
   },
   "devDependencies": {
