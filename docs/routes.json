@@ -137,7 +137,8 @@
       },
       {
         "title": "Webhooks",
-        "path": "/guides/webhooks"
+        "path": "/guides/webhooks",
+        "hidden": true
       }
     ]
   },
