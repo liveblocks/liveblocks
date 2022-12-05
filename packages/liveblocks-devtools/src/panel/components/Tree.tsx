@@ -335,7 +335,7 @@ function RowInfo({ children, className, ...props }: ComponentProps<"div">) {
 
 function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
   return (
-    <div className={cx(className, "truncate opacity-60")} {...props}>
+    <div className={cx(className, "truncate font-mono opacity-60")} {...props}>
       {children}
     </div>
   );
