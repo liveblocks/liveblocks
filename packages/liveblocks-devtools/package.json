@@ -3,7 +3,7 @@
   "version": "0.19.0",
   "private": true,
   "displayName": "Liveblocks",
-  "description": "A browser extension that lets you inspect Liveblocks clients.",
+  "description": "A browser extension that lets you inspect Liveblocks rooms.",
   "homepage": "https://liveblocks.io",
   "scripts": {
     "dev": "plasmo dev",
@@ -40,16 +40,18 @@
   },
   "manifest": {
     "permissions": [
+      "file:///*",
+      "http://*/*",
+      "https://*/*",
+      "storage",
       "scripting"
     ],
     "host_permissions": [
-      "http://localhost:*/*",
-      "https://*/*",
-      "file://*/*"
+      "<all_urls>"
     ],
     "browser_specific_settings": {
       "gecko": {
-        "id": "liveblocks-devtools@liveblocks.io"
+        "id": "devtools@liveblocks.io"
       }
     }
   }

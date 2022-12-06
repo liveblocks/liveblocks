@@ -17,7 +17,7 @@ export function StorageSearch({ value, onChange, className, ...props }: Props) {
         value={value}
         onChange={onChange}
         placeholder="Search storage…"
-        className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
+        className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 h-full w-full bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
       />
       <svg
         width="14"

@@ -24,6 +24,6 @@ browser.runtime.onMessage.addListener((message: FullPanelToClientMessage) => {
 });
 
 export const config: PlasmoContentScript = {
-  matches: ["http://localhost:*/*", "https://*/*", "file://*/*"],
+  matches: ["<all_urls>"],
   all_frames: true,
 };
