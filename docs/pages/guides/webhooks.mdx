@@ -7,34 +7,61 @@ meta:
 
 ## Webhooks
 
-In this guide, we will explain how to use webhooks within your product so that you can react to Liveblocks events as they happen.  Now that our platform is observable, you can use webhooks to reduce development time and the need for polling.
+In this guide, we will explain how to use webhooks within your product so that
+you can react to Liveblocks events as they happen. Now that our platform is
+observable, you can use webhooks to reduce development time and the need for
+polling.
 
 ### What is a webhook?
-Webhooks make a platform observable. They let users subscribe to events on the platform for them to react to. In this sense, webhooks streamline the collection of data between two connected services.
 
-Like an API, webhooks are a mechanism for a client to receive data. The main difference between webhooks and APIs is that a webhook functions as an inverted API.  A traditional API receives requests and sends responses, whereas a webhook is an endpoint that you provide where we send events.
+Webhooks make a platform observable. They let users subscribe to events on the
+platform for them to react to. In this sense, webhooks streamline the collection
+of data between two connected services.
 
-The lifecycle of a webhook: 
-1. You create and provide a client endpoint, which listens to event messages 
-2. The Liveblocks server broadcasts a message (event) to the client endpoint when an event occurs
-3. You verify the event message payload from the webhook service provider (Svix), and send a 200 response once the webhook has been verified
-4. You use the message payload to trigger a task 
+Like an API, webhooks are a mechanism for a client to receive data. The main
+difference between webhooks and APIs is that a webhook functions as an inverted
+API. A traditional API receives requests and sends responses, whereas a webhook
+is an endpoint that you provide where we send events.
 
-Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events. 
+The lifecycle of a webhook:
 
-In this way, webhooks provide a real-time connection between two services. While APIs are useful for obtaining data on a scheduled basis, they are not efficient for observing changes on a platform that has a high volume of activity.
+1. You create and provide a client endpoint, which listens to event messages
+2. The Liveblocks server broadcasts a message (event) to the client endpoint
+   when an event occurs
+3. You verify the event message payload from the webhook service provider
+   (Svix), and send a 200 response once the webhook has been verified
+4. You use the message payload to trigger a task
+
+Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.
+
+In this way, webhooks provide a real-time connection between two services. While
+APIs are useful for obtaining data on a scheduled basis, they are not efficient
+for observing changes on a platform that has a high volume of activity.
 
 ### Concepts
 
 ## Messages
-For each activity that occurs under the defined list of events within the Event Catalog a message is generated. Messages contain the metadata for each event that you may choose to subscribe to. They also contain event data and an alphanumeric identifier.
+
+For each activity that occurs under the defined list of events within the Event
+Catalog a message is generated. Messages contain the metadata for each event
+that you may choose to subscribe to. They also contain event data and an
+alphanumeric identifier.
 
 ## Events
-Messages sent through Svix each have an `eventType` property which is used to identify and filter what is being sent to the client. Each endpoint you provide in the webhooks dashboard listens to all events by default but can be easily configured to only listen to a subset by updating the Message Filtering section. As a new user, you may opt to listen to all events or subscribe to only the ones that are relevant to your use case. 
 
-Alternatively, you can use the Event Catalog provided as a way to determine which events make the most sense. The Event Catalog provides a list of events available for subscription, along with their schema.
+Messages sent through Svix each have an `eventType` property which is used to
+identify and filter what is being sent to the client. Each endpoint you provide
+in the webhooks dashboard listens to all events by default but can be easily
+configured to only listen to a subset by updating the Message Filtering section.
+As a new user, you may opt to listen to all events or subscribe to only the ones
+that are relevant to your use case.
+
+Alternatively, you can use the Event Catalog provided as a way to determine
+which events make the most sense. The Event Catalog provides a list of events
+available for subscription, along with their schema.
 
 The example schema for monitoring users joining a room:
+
 ```typescript
 type UserEntered {
 	type: "userEntered"
@@ -47,9 +74,11 @@ type UserEntered {
 		joinedAt: string // ISO 8601 UTC // 2021-10-06T01:45:56.558+00:00z
 		numActiveUsers: number
 	}
-} 
+}
 ```
+
 the sample payload of such an event:
+
 ```typescript
 const UserEnteredMessage = {
 	type: "userEntered",
@@ -66,11 +95,20 @@ const UserEnteredMessage = {
 ```
 
 ## Endpoints
-An endpoint is a URL whose purpose is to receive event messages and trigger a task based on the message payload. The only criterion for creating an endpoint is that it must be one that you control.
+
+An endpoint is a URL whose purpose is to receive event messages and trigger a
+task based on the message payload. The only criterion for creating an endpoint
+is that it must be one that you control.
 
 ## Use Case
-Prior to webhooks, if you wanted to update internal data based on Liveblocks' state, you would need to set up a cron job to poll the [rooms API](https://development.liveblocks.io/docs/api-reference/rest-api-endpoints) for recurrent updates. With webhooks, you can now subscribe to the events you are interested in, and be alerted of the change when it happens. 
-Powerful ways to leverage webhooks with Liveblocks include:
+
+Prior to webhooks, if you wanted to update internal data based on Liveblocks'
+state, you would need to set up a cron job to poll the
+[rooms API](https://development.liveblocks.io/docs/api-reference/rest-api-endpoints)
+for recurrent updates. With webhooks, you can now subscribe to the events you
+are interested in, and be alerted of the change when it happens. Powerful ways
+to leverage webhooks with Liveblocks include:
+
 - Storage Synchronization between room(s) and internal database
 - Alerting the client when a user leaves or enters a room
 - Notifying the client if max concurrency has been reached
@@ -78,29 +116,60 @@ Powerful ways to leverage webhooks with Liveblocks include:
 ### Setup
 
 ## Creating an endpoint
-Creating endpoints is simple, and is done from within the webhooks dashboard for your project.
 
-Before sending events, you should disable CSRF protection for the endpoint if it is enabled by default, and use the steps outlined in the Security Section to ensure the validity of the message.  
+Creating endpoints is simple, and is done from within the webhooks dashboard for
+your project.
 
-If your service needs custom headers to be set to work with load balancers or application servers, the Advanced section of the Endpoint configuration provides the option to configure these values, alongside custom rate limiting. 
+Before sending events, you should disable CSRF protection for the endpoint if it
+is enabled by default, and use the steps outlined in the Security Section to
+ensure the validity of the message.
+
+If your service needs custom headers to be set to work with load balancers or
+application servers, the Advanced section of the Endpoint configuration provides
+the option to configure these values, alongside custom rate limiting.
+
 <Will insert video here>
 
 ## Subscribing to events
-Each endpoint you provide in the webhooks dashboard listens to all events by default but can be easily configured to only listen to a subset by updating the Message Filtering section during endpoint creation. The subscribed events can be edited later in the Endpoints Overview. 
+
+Each endpoint you provide in the webhooks dashboard listens to all events by
+default but can be easily configured to only listen to a subset by updating the
+Message Filtering section during endpoint creation. The subscribed events can be
+edited later in the Endpoints Overview.
+
 <will show screenshot of where to edit the event >
 
 ## Replaying events
-If your service is unreachable, retries will automatically be attempted. If your service incurs considerable downtime (over 10 hours), you can replay individual messages from the Endpoints portion of the dashboard by clicking the kebab menu on an individual message, or you can opt to bulk replay events by clicking the main menu and selecting "Replay Failed Messages."  For a list of the specific retry intervals, see the [Svix Documentation on Retries](https://docs.svix.com/retries)
+
+If your service is unreachable, retries will automatically be attempted. If your
+service incurs considerable downtime (over 10 hours), you can replay individual
+messages from the Endpoints portion of the dashboard by clicking the kebab menu
+on an individual message, or you can opt to bulk replay events by clicking the
+main menu and selecting "Replay Failed Messages." For a list of the specific
+retry intervals, see the
+[Svix Documentation on Retries](https://docs.svix.com/retries)
+
 <will video here>
 
 ## Security
-Webhooks have the ability to generate security holes, but with Svix verification features this can be mitigated. When you verify your webhooks using Svix, your protect agains man-in-the-middle, CSRF, and replay attacks. Because of this, the importance of verification cannot be understated and should be considered paramount in your integration. For a deeper dive into why you should verify webhooks, the [Svix Documentation](https://docs.svix.com/receiving/verifying-payloads/why) is a great resource.
 
-In order to validate a webhook with the Svix libraries run: 
+Webhooks have the ability to generate security holes, but with Svix verification
+features this can be mitigated. When you verify your webhooks using Svix, your
+protect agains man-in-the-middle, CSRF, and replay attacks. Because of this, the
+importance of verification cannot be understated and should be considered
+paramount in your integration. For a deeper dive into why you should verify
+webhooks, the
+[Svix Documentation](https://docs.svix.com/receiving/verifying-payloads/why) is
+a great resource.
+
+In order to validate a webhook with the Svix libraries run:
+
 ```
 npm install svix
 ```
+
 Then, inside your application where you call the webhook:
+
 ```typescript
 import { Webhook } from "svix";
 
@@ -119,8 +188,9 @@ const wh = new Webhook(secret);
 const payload = wh.verify(payload, headers);
 ```
 
-This snippet serves as an example of how to parse one incoming message. To dynamically verify the authenticity of a webhook, you would programmatically define the headers and payload as JSON objects and pass them as an argument to the `verify` function.
-Though not recommended, manual verification is possible and outlined [here](https://docs.svix.com/receiving/verifying-payloads/how-manual)
-
-
-
+This snippet serves as an example of how to parse one incoming message. To
+dynamically verify the authenticity of a webhook, you would programmatically
+define the headers and payload as JSON objects and pass them as an argument to
+the `verify` function. Though not recommended, manual verification is possible
+and outlined
+[here](https://docs.svix.com/receiving/verifying-payloads/how-manual)
