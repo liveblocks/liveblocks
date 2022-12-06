@@ -134,6 +134,11 @@
             "path": "/guides/upgrading/0.18"
           }
         ]
+      },
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/guides/nextjs-starter-kit",
+        "hidden": true
       }
     ]
   },
