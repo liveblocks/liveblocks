@@ -13,7 +13,7 @@ export function wrapProperty(key: string | number, value: string) {
 }
 
 export function wrapArray(values?: string) {
-  return `[${values}]`;
+  return `[${values ?? ""}]`;
 }
 
 export function wrapObject(values?: string) {
