@@ -2157,7 +2157,7 @@ function makeStateMachine<
     if (state.root) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
-        root: state.root as LiveObject<TStorage>,
+        root: state.root,
       });
     }
 

@@ -314,7 +314,7 @@ function legacy_patchImmutableNode<S extends Json>(
           );
         }
 
-        const newState = Object.assign({}, state as JsonObject);
+        const newState = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -399,7 +399,7 @@ function legacy_patchImmutableNode<S extends Json>(
             "Internal: received update on LiveMap but state was not an object"
           );
         }
-        const newState = Object.assign({}, state as JsonObject);
+        const newState = Object.assign({}, state);
 
         for (const key in update.updates) {
           if (update.updates[key]?.type === "update") {
@@ -439,7 +439,7 @@ function legacy_patchImmutableNode<S extends Json>(
       return state;
     } else {
       return {
-        ...(state as JsonObject),
+        ...state,
         [pathItem]: legacy_patchImmutableNode(node, path, update),
       } as S;
       //   ^
