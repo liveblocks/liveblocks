@@ -1076,7 +1076,7 @@ describe("LiveObject", () => {
       const obj = root.get("obj");
       const secondItem = obj.get("b");
 
-      const applyResult = obj._detachChild(secondItem!);
+      const applyResult = obj._detachChild(secondItem);
 
       expect(applyResult).toEqual({
         modified: {

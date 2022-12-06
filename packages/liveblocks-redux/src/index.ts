@@ -156,7 +156,7 @@ const internalEnhancer = <TState>(options: {
 
             if (room) {
               isPatching = true;
-              updatePresence(room!, state, newState, presenceMapping as any);
+              updatePresence(room, state, newState, presenceMapping as any);
 
               room.batch(() => {
                 if (storageRoot) {

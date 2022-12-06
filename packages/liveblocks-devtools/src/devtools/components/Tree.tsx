@@ -508,11 +508,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
     case "LiveMap":
     case "LiveList":
     case "LiveObject":
-      return (
-        <LiveNodeRenderer
-          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
-        />
-      );
+      return <LiveNodeRenderer {...props} />;
 
     case "Json":
       return (
@@ -523,11 +519,7 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
 
     default:
       // e.g. future LiveXxx types
-      return (
-        <LiveNodeRenderer
-          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
-        />
-      );
+      return <LiveNodeRenderer {...props} />;
   }
 }
 

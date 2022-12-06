@@ -2023,7 +2023,7 @@ export function createRoom<
     if (context.root) {
       // Store has already loaded, so we can resolve it directly
       return Promise.resolve({
-        root: context.root as LiveObject<TStorage>,
+        root: context.root,
       });
     }
 

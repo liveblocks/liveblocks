@@ -558,7 +558,7 @@ export function createRoomContext<
       } else {
         const root = rootOrNull;
         const imm = root.toImmutable();
-        return imm as ToImmutable<TStorage>;
+        return imm;
       }
     }, [rootOrNull]);
 
