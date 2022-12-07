@@ -5,8 +5,6 @@ meta:
   description: "Learn Liveblocks Webhooks concepts and implementation"
 ---
 
-# Webhooks
-
 In this guide, we will explain how to use webhooks within your product so that
 you can react to Liveblocks events as they happen. Now that our platform is
 observable, you can use webhooks to reduce development time and the need for
@@ -42,16 +40,11 @@ for observing changes on a platform that has a high volume of activity.
 
 ### Messages
 
-For each activity that occurs under the defined list of events within the Event
-Catalog a message is generated. Messages contain the metadata for each event
-that you may choose to subscribe to. They also contain event data and an
-alphanumeric identifier.
+A message is generated for each event that happens within Liveblocks, as defined in the Event Catalog.  Messages contain a `type` along with data attached to it.  The message request contains headers used for security purposes.
 
 ### Events
 
-Messages sent through Svix each have an `eventType` property which is used to
-identify and filter what is being sent to the client. Each endpoint you provide
-in the webhooks dashboard listens to all events by default but can be easily
+An event occurs when a change is made to Liveblocks data. Updates to storage and rooms are common events that will trigger a message.   Each endpoint you provide in the webhooks dashboard listens to all events by default but can be easily
 configured to only listen to a subset by updating the Message Filtering section.
 As a new user, you may opt to listen to all events or subscribe to only the ones
 that are relevant to your use case.
@@ -60,39 +53,11 @@ Alternatively, you can use the Event Catalog provided as a way to determine
 which events make the most sense. The Event Catalog provides a list of events
 available for subscription, along with their schema.
 
-The example schema for monitoring users joining a room:
-
-```typescript
-type UserEntered {
-	type: "userEntered"
-	data: {
-		roomId: string
-		appId: string
-		connectionId: number // actor
-		userId: string | null
-		userInfo: Record<string, any> | null
-		joinedAt: string // ISO 8601 UTC // 2021-10-06T01:45:56.558+00:00z
-		numActiveUsers: number
-	}
-}
-```
-
-The sample payload of such an event:
-
-```typescript
-const UserEnteredMessage = {
-	type: "userEntered",
-	data: {
-		appId: "aasdbe234bsdf"
-		roomId: "my-room-1"
-		numActiveUsers: 8
-		connectionId: 4
-		userId: '1234sdgs'
-		userInfo: null
-		enteredAt: '2021-10-06T01:45:56.558+00:00'
-	}
-}
-```
+Events available for use include:
+- UserEntered/ UserLeft
+- StorageUpdated
+- RoomCreated/ RoomDeleted
+- MaxConnectionsReached
 
 ### Endpoints
 
@@ -101,16 +66,16 @@ task based on the message payload. The only criterion for creating an endpoint
 is that it must be one that you control.
 
 ### Use Cases
-Before webhooks, if you wanted to update internal data based on Liveblocks'
+Before webhooks, if you wanted to update an internal data based on Liveblocks'
 state, you would need to set up a cron job to poll the
 [rooms API](https://development.liveblocks.io/docs/api-reference/rest-api-endpoints)
 for recurrent updates. With webhooks, you can now subscribe to the events you
 are interested in, and be alerted of the change when it happens. Powerful ways
 to leverage webhooks with Liveblocks include:
 
-- Storage Synchronization between room(s) and internal database
+- Storage Synchronization between room(s) and an internal database
 - Alerting the client when a user leaves or enters a room
-- Notifying the client if max concurrency has been reached
+- Notifying the client if maximum concurrency has been reached
 
 ## Setup
 
@@ -122,10 +87,6 @@ your project.
 Before sending events, you should disable CSRF protection for the endpoint if it
 is enabled by default, and use the steps outlined in the Security Section to
 ensure the validity of the message.
-
-If your service needs custom headers to be set to work with load balancers or
-application servers, the Advanced section of the Endpoint configuration provides
-the option to configure these values, alongside custom rate limiting.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -173,7 +134,7 @@ retry intervals, see the
 </Figure>
 
 ## Security
-Webhooks can generate security holes, but with verification can be mitigated. When you verify your webhooks, you
+Webhooks can generate security holes, but verification can mitigate this risk. When you verify your webhooks, you
 protect against man-in-the-middle, CSRF, and replay attacks. Because of this, the
 importance of verification cannot be understated and should be considered
 paramount in your integration. If you are interested in a more comprehensive overview of why you should verify webhooks, the [Svix Documentation](https://docs.svix.com/receiving/verifying-payloads/why) is a great resource.
@@ -189,8 +150,8 @@ Then, inside your application where you call the webhook:
 ```typescript
 import { Webhook } from "svix";
 
-const secret = "<your signing secret>";
-
+const secret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+// the secret is provided in the Webhooks Dashboard under "Signing Secret"
 // This is an example sent from server
 const headers = {
   "webhook-id": "msg_p5jXN8AQM9LWM0D4loKWxJek",
