@@ -37,6 +37,8 @@ const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
+const USE_GRID_LAYOUT = false;
+
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
 type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
@@ -363,15 +365,27 @@ function Row({ node, children, className, ...props }: RowProps) {
       </div>
       <div
         className={cx(
-          "grid min-w-0 flex-1 items-center gap-[inherit]",
-          isOpen
-            ? "grid-cols-[1fr]"
-            : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]"
+          USE_GRID_LAYOUT
+            ? [
+                "grid min-w-0 flex-1 items-center gap-[inherit]",
+                isOpen
+                  ? "grid-cols-[1fr]"
+                  : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]",
+              ]
+            : "flex min-w-0 flex-1 items-center gap-[inherit]"
         )}
       >
         {children}
       </div>
     </div>
+  );
+}
+
+function RowName({ children, className, ...props }: ComponentProps<"span">) {
+  return (
+    <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
+      {children}
+    </span>
   );
 }
 
@@ -429,7 +443,7 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
   return (
     <Row node={node} style={style} onClick={handleClick}>
       <RowInfo>
-        <span className="truncate">{node.data.key}</span>
+        <RowName>{node.data.key}</RowName>
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
       </RowInfo>
       {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
@@ -450,7 +464,7 @@ function LiveNodeRenderer({
   return (
     <Row node={node} style={style} onClick={handleClick}>
       <RowInfo>
-        <span className="truncate">{node.data.key}</span>
+        <RowName>{node.data.key}</RowName>
         <Badge className={cx(color(node.data), "flex-none")}>
           {node.data.type}
         </Badge>
@@ -464,7 +478,7 @@ function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
   return (
     <Row node={node} style={style}>
       <RowInfo>
-        <span className="truncate">{node.data.key}</span>
+        <RowName className="truncate">{node.data.key}</RowName>
       </RowInfo>
       <RowPreview>
         <JsonPreview value={node.data.value} />
