@@ -17,11 +17,12 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, Fragment, useCallback } from "react";
+import { forwardRef, Fragment, useCallback, useRef } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 
+import { useDeepEffect } from "../../hooks/useDeepEffect";
 import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import {
@@ -31,6 +32,7 @@ import {
   wrapProperty,
 } from "../../lib/stringify";
 
+const HIGHLIGHT_ANIMATION_DURATION = 600;
 const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
@@ -41,6 +43,10 @@ type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
   RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>;
 
 interface RowProps extends ComponentProps<"div"> {
+  node: NodeApi;
+}
+
+interface RowHighlightProps extends ComponentProps<"div"> {
   node: NodeApi;
 }
 
@@ -265,28 +271,71 @@ function hasFocusedParent<T>(node: NodeApi<T>): boolean {
   return false;
 }
 
+function RowHighlight({ node, className, ...props }: RowHighlightProps) {
+  const isInitial = useRef(true);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useDeepEffect(() => {
+    if (isInitial.current) {
+      isInitial.current = false;
+
+      return;
+    }
+
+    ref.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
+      duration: HIGHLIGHT_ANIMATION_DURATION,
+      easing: "ease-out",
+      fill: "forwards",
+    });
+  }, [node.data]);
+
+  return (
+    <div
+      ref={ref}
+      className={cx(
+        className,
+        "pointer-events-none absolute inset-0 -z-10 opacity-0"
+      )}
+      {...props}
+    />
+  );
+}
+
 function Row({ node, children, className, ...props }: RowProps) {
   const isOpen = node.isOpen;
-  const isFocused = node.isFocused;
-  const isParentFocused = !node.isFocused && hasFocusedParent(node);
+  const isParent = node.isInternal;
+  const isActive = node.isFocused;
+  const isWithinActiveParent = !isActive && hasFocusedParent(node);
+  const shouldShowUpdates = isParent ? !isOpen : true;
 
   return (
     <div
       className={cx(
         className,
         "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
-        isFocused
+        isActive
           ? [background(node.data), "!text-light-0"]
-          : isParentFocused
+          : isWithinActiveParent
           ? "bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
-      data-active={isFocused || undefined}
-      data-open={isOpen || undefined}
+      data-active={isActive || undefined}
       {...props}
     >
+      {shouldShowUpdates && (
+        <RowHighlight
+          node={node}
+          className={
+            isActive
+              ? "bg-white/20"
+              : isWithinActiveParent
+              ? "bg-light-200 dark:bg-dark-200"
+              : "bg-light-100 dark:bg-dark-100"
+          }
+        />
+      )}
       <div className="ml-2 flex h-[8px] w-[8px] items-center justify-center">
-        {node.isInternal && (
+        {isParent && (
           <svg
             width="8"
             height="8"
@@ -304,7 +353,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div className={isFocused ? "text-light-0" : color(node.data)}>
+      <div className={isActive ? "text-light-0" : color(node.data)}>
         {icon(node.data)}
       </div>
       <div
