@@ -26,8 +26,8 @@ The lifecycle of a webhook:
 1. You create and provide a client endpoint, which listens to event messages
 2. The Liveblocks server broadcasts a message (event) to the client endpoint
    when an event occurs
-3. You verify the event message payload from the webhook service provider
-   (Svix), and send a 200 response once the webhook has been verified
+3. You verify the message request sent to the endpoint and send a 200 response
+   once the request has been verified
 4. You use the message payload to trigger a task
 
 Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.
