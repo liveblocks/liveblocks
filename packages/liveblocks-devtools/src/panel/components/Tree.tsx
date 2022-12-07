@@ -366,7 +366,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           "grid min-w-0 flex-1 items-center gap-[inherit]",
           isOpen
             ? "grid-cols-[1fr]"
-            : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)] sm:grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.5)]"
+            : "grid-cols-[minmax(0,1fr)_calc(var(--width)_*_0.4)]"
         )}
       >
         {children}
