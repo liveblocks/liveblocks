@@ -40,11 +40,15 @@ for observing changes on a platform that has a high volume of activity.
 
 ### Messages
 
-A message is generated for each event that happens within Liveblocks, as defined in the Event Catalog.  Messages contain a `type` along with data attached to it.  The message request contains headers used for security purposes.
+A message is generated for each event that happens within Liveblocks, as defined
+in the Event Catalog. Messages contain a `type` along with data attached to it.
+The message request contains headers used for security purposes.
 
 ### Events
 
-An event occurs when a change is made to Liveblocks data. Updates to storage and rooms are common events that will trigger a message.   Each endpoint you provide in the webhooks dashboard listens to all events by default but can be easily
+An event occurs when a change is made to Liveblocks data. Updates to storage and
+rooms are common events that will trigger a message. Each endpoint you provide
+in the webhooks dashboard listens to all events by default but can be easily
 configured to only listen to a subset by updating the Message Filtering section.
 As a new user, you may opt to listen to all events or subscribe to only the ones
 that are relevant to your use case.
@@ -54,6 +58,7 @@ which events make the most sense. The Event Catalog provides a list of events
 available for subscription, along with their schema.
 
 Events available for use include:
+
 - UserEntered/UserLeft
 - StorageUpdated
 - RoomCreated/RoomDeleted
@@ -66,6 +71,7 @@ task based on the message payload. The only criterion for creating an endpoint
 is that it must be one that you control.
 
 ### Use Cases
+
 Before webhooks, if you wanted to update an internal data based on Liveblocks'
 state, you would need to set up a cron job to poll the
 [rooms API](https://development.liveblocks.io/docs/api-reference/rest-api-endpoints)
@@ -90,10 +96,7 @@ ensure the validity of the message.
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/webhooks/create-endpoint.mp4"
-      type="video/mp4"
-    />
+    <source src="/images/docs/webhooks/create-endpoint.mp4" type="video/mp4" />
   </video>
 </Figure>
 
@@ -106,10 +109,7 @@ edited later in the Endpoints Overview.
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/webhooks/edit-events.mp4"
-      type="video/mp4"
-    />
+    <source src="/images/docs/webhooks/edit-events.mp4" type="video/mp4" />
   </video>
 </Figure>
 
@@ -119,54 +119,58 @@ If your service is unreachable, retries will automatically be attempted. If your
 service incurs considerable downtime (over 10 hours), you can replay individual
 messages from the Endpoints portion of the dashboard by clicking the kebab menu
 on an individual message, or you can opt to bulk replay events by clicking the
-main menu and selecting "Replay Failed Messages." For a list of the specific
-retry intervals, see the
-[Svix Documentation on Retries](https://docs.svix.com/retries)
+main menu and selecting "Replay Failed Messages."
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/webhooks/replay-events.mp4"
-      type="video/mp4"
-    />
+    <source src="/images/docs/webhooks/replay-events.mp4" type="video/mp4" />
   </video>
 </Figure>
 
 ## Security
-Webhooks can generate security holes, but verification can mitigate this risk. When you verify your webhooks, you
-protect against man-in-the-middle, CSRF, and replay attacks. Because of this, the
-importance of verification cannot be understated and should be considered
-paramount in your integration. If you are interested in a more comprehensive overview of why you should verify webhooks, the [Svix Documentation](https://docs.svix.com/receiving/verifying-payloads/why) is a great resource.
 
-To validate a webhook run:
+Webhooks can generate security holes, but verification can mitigate this risk.
+When you verify your webhooks, you protect against man-in-the-middle, CSRF, and
+replay attacks. Because of this, the importance of verification cannot be
+understated and should be considered paramount in your integration.
 
-```
-npm install svix
-```
+Here's how to validate a webhook message:
 
-Then, inside your application where you call the webhook:
+#### 1. Construct the signed content
 
-```typescript
-import { Webhook } from "svix";
+The content to sign is composed by concatenating the id, timestamp and payload
+of the request, separated by the full-stop character (`.`). In code, it will
+look something like:
 
-const secret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
-// the secret is provided in the Webhooks Dashboard under "Signing Secret"
-// This is an example sent from server
-const headers = {
-  "webhook-id": "msg_p5jXN8AQM9LWM0D4loKWxJek",
-  "webhook-timestamp": "1614265330",
-  "webhook-signature": "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE=",
-};
-const payload = '{"test": 2432232314}';
+```ts
+const crypto = require("crypto");
 
-const wh = new Webhook(secret);
-// Throws on error, returns the verified content on success
-const payload = wh.verify(payload, headers);
+// webhookId comes from the `webhook-id` header
+// webhookTimestamp comes from the `webhook-timestamp` header
+// body is the request body
+signedContent = `${webhookId}.${webhookTimestamp}.${body}`;
 ```
 
-This snippet serves as an example of how to parse one incoming message. To
-dynamically verify the authenticity of a webhook, you would programmatically
-define the headers and payload as JSON objects and pass them as an argument to
-the `verify` function. Though not recommended, manual verification is possible
-and outlined
-[here](https://docs.svix.com/receiving/verifying-payloads/how-manual)
+#### 2. Generate the signature
+
+```ts
+// Your endpoint's signing secret
+const secret = "whsec_5WbX5kEWLlFzsG3jH64I8loOqUB6e8FH";
+
+// Need to base64 decode the secret
+const secretBytes = new Buffer(secret.split("_")[1], "base64");
+// This is the signature you will compare against the signature header
+const signature = crypto
+  .createHmac("sha256", secretBytes)
+  .update(signedContent)
+  .digest("base64");
+```
+
+#### 2. Validate the signature to the signature header
+
+```ts
+// signatureHeader comes from the `webhook-signature` header
+if (signature !== signatureHeader) {
+  throw new Error("Invalid signature");
+}
+```
