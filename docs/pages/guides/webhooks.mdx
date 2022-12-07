@@ -127,6 +127,24 @@ main menu and selecting "Replay Failed Messages."
   </video>
 </Figure>
 
+Each message is attempted based on the following schedule, where each period is
+started following the failure of the preceding attempt:
+
+- Immediately
+- 5 seconds
+- 5 minutes
+- 30 minutes
+- 2 hours
+- 5 hours
+- 10 hours
+- 10 hours (in addition to the previous)
+
+If an endpoint is removed or disabled delivery attempts to the endpoint will be
+disabled as well.
+
+For example, an attempt that fails three times before eventually succeeding will
+be delivered roughly 35 minutes and 5 seconds following the first attempt.
+
 ## Security
 
 Webhooks can generate security holes, but verification can mitigate this risk.
