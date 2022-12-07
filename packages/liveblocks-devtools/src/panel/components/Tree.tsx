@@ -33,6 +33,7 @@ import {
 } from "../../lib/stringify";
 
 const HIGHLIGHT_ANIMATION_DURATION = 600;
+const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
@@ -282,10 +283,14 @@ function RowHighlight({ node, className, ...props }: RowHighlightProps) {
       return;
     }
 
+    ref.current?.animate([{ opacity: 1 }], {
+      fill: "forwards",
+    });
     ref.current?.animate([{ opacity: 1 }, { opacity: 0 }], {
       duration: HIGHLIGHT_ANIMATION_DURATION,
       easing: "ease-out",
       fill: "forwards",
+      delay: HIGHLIGHT_ANIMATION_DELAY,
     });
   }, [node.data]);
 
