@@ -2,5 +2,11 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "editor.formatOnSave": true,
     "editor.tabSize": 2,
-    "editor.detectIndentation": false
+    "editor.detectIndentation": false,
+    "grammarly.selectors": [
+      {
+        "language": "markdown",
+        "scheme": "file"
+      }
+    ]
 }
