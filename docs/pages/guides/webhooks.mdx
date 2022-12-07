@@ -69,31 +69,31 @@ Events available for use include:
 ```ts
 // Schema
 type UserEntered = {
-	type: "userEntered"
-	data: {
-		appId: string
-		roomId: string
-	  connectionId: number
-		userId: string | null
-		userInfo: Record<string, any> | null
-		enteredAt: string
-		numActiveUsers: number
-	}
-}
+  type: "userEntered";
+  data: {
+    appId: string;
+    roomId: string;
+    connectionId: number;
+    userId: string | null;
+    userInfo: Record<string, any> | null;
+    enteredAt: string;
+    numActiveUsers: number;
+  };
+};
 
 // Example
 const userEnteredMessage = {
-	type: "userEntered",
-	data: {
-		appId: "aasdbe234bsdf"
-		roomId: "my-room-1"
-		connectionId: 4
-		userId: '1234sdgs'
-		userInfo: null
-		enteredAt: '2021-10-06T01:45:56.558Z'
-		numActiveUsers: 8
-	}
-}
+  type: "userEntered",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    connectionId: 4,
+    userId: "a-user-id",
+    userInfo: null,
+    enteredAt: "2021-10-06T01:45:56.558Z",
+    numActiveUsers: 8,
+  },
+};
 ```
 
 #### UserLeft
@@ -101,33 +101,33 @@ const userEnteredMessage = {
 ```ts
 // Schema
 type UserLeft = {
-  type: "userLeft"
+  type: "userLeft";
   data: {
-    appId: string
-    roomId: string
-    connectionId: number
-    userId: string | null
-    userInfo: Record<string, any> | null
-    leftAt: string
-    numActiveUsers: number
-  }
-}
+    appId: string;
+    roomId: string;
+    connectionId: number;
+    userId: string | null;
+    userInfo: Record<string, any> | null;
+    leftAt: string;
+    numActiveUsers: number;
+  };
+};
 
 // Example
 const userLeftMessage = {
   type: "userLeft",
   data: {
-    appId: "aasdbe234bsdf"
-    roomId: "my-room-1"
-    numActiveUsers: 8
-    connectionId: 4
-    userId: '1234sdgs'
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    connectionId: 4,
+    userId: "a-user-id",
     userInfo: {
-      name: 'John Doe'
-    }
-    leftAt: '2021-10-06T01:45:56.558Z'
-  }
-}
+      name: "John Doe",
+    },
+    leftAt: "2021-10-06T01:45:56.558Z",
+    numActiveUsers: 7,
+  },
+};
 ```
 
 #### StorageUpdated
@@ -135,23 +135,23 @@ const userLeftMessage = {
 ```ts
 // Schema
 type StorageUpdated = {
-  type: "storageUpdated"
+  type: "storageUpdated";
   data: {
-    roomId: string
-    appId: string
-    updatedAt: string
-  }
-}
+    roomId: string;
+    appId: string;
+    updatedAt: string;
+  };
+};
 
 // Example
 const storageUpdatedMessage = {
   type: "storageUpdated",
   data: {
-    appId: "aasdbe234bsdf"
-    roomId: "my-room-1"
-    updatedAt: '2021-10-06T01:45:56.558Z'
-  }
-}
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
 ```
 
 ### Endpoints
