@@ -274,9 +274,19 @@ signedContent = `${webhookId}.${webhookTimestamp}.${body}`;
 
 #### 2. Generate the signature
 
+Liveblocks uses an HMAC with SHA-256 to sign its webhooks.
+
+So to calculate the expected signature, you should HMAC the `signedContent` from
+above using the base64 portion of your signing secret (this is the part after
+the `whsec_` prefix) as the key. For example, given the secret
+`whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw` you will want to use
+`MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`.
+
+For example, this is how you can calculate the signature in Node.js:
+
 ```ts
 // Your endpoint's signing secret
-const secret = "whsec_5WbX5kEWLlFzsG3jH64I8loOqUB6e8FH";
+const secret = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
 
 // Need to base64 decode the secret
 const secretBytes = new Buffer(secret.split("_")[1], "base64");
@@ -289,9 +299,26 @@ const signature = crypto
 
 #### 2. Validate the signature
 
-```ts
-// signatureHeader comes from the `webhook-signature` header
-if (signature !== signatureHeader) {
-  throw new Error("Invalid signature");
-}
+This generated signature should match one of the ones sent in the svix-signature
+header.
+
+The webhook-signature header is composed of a list of space delimited signatures
+and their corresponding version identifiers. The signature list is most commonly
+of length one. Though there could be any number of signatures. For example:
+
 ```
+v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE= v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo=
+```
+
+Make sure to remove the version prefix and delimiter (e.g. `v1,`) before
+verifying the signature.
+
+Please note that to compare the signatures it's recommended to use a
+constant-time string comparison method in order to prevent timing attacks.
+
+#### 3. Verify the timestamp
+
+As mentioned above, Liveblocks also sends the timestamp of the attempt in the
+`webhook-timestamp` header. You should compare this timestamp against your
+system timestamp and make sure it's within your tolerance in order to prevent
+timestamp attacks.
