@@ -648,14 +648,15 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
 
   /** @internal */
   _toTreeNode(key: string | number): LiveObjectTreeNode {
+    const nodeId = this._id ?? nanoid();
     return {
       type: "LiveObject",
-      id: this._id ?? nanoid(),
+      id: nodeId,
       key,
       fields: Array.from(this._map.entries()).map(([key, value]) =>
         isLiveNode(value)
           ? value.toTreeNode(key)
-          : { type: "Json", id: nanoid(), key, value }
+          : { type: "Json", id: `${nodeId}:${key}`, key, value }
       ),
     };
   }
