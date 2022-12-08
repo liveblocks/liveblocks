@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   GetDocumentsProps,
   GetDocumentsResponse,
@@ -60,7 +59,7 @@ export async function getDocuments(
 
   // Get session and rooms
   const [session, rooms] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRooms(getRoomsOptions),
   ]);
 

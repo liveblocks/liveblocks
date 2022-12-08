@@ -14,7 +14,6 @@ import { updateDocumentName } from "../../lib/client";
 import * as Server from "../../lib/server";
 import { RoomProvider } from "../../liveblocks.config";
 import { Document, ErrorData } from "../../types";
-import { authOptions } from "../api/auth/[...nextauth]";
 
 export default function WhiteboardDocumentView({
   initialDocument,
@@ -91,7 +90,7 @@ export const getServerSideProps: GetServerSideProps<ServerSideProps> = async ({
 
   const [document, session] = await Promise.all([
     Server.getDocument(req, res, { documentId }),
-    Server.getServerSession(req, res, authOptions),
+    Server.getServerSession(req, res),
   ]);
 
   const { data = null, error = null } = document;

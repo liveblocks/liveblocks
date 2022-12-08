@@ -8,7 +8,6 @@ import { signIn } from "next-auth/react";
 import * as Server from "../lib/server";
 import { Button, LinkButton } from "../primitives/Button";
 import { Container } from "../primitives/Container";
-import { authOptions } from "./api/auth/[...nextauth]";
 import styles from "./index.module.css";
 
 interface FeatureProps extends Omit<ComponentProps<"div">, "title"> {
@@ -116,7 +115,7 @@ export default function Index() {
 
 // If logged in, redirect to dashboard
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await Server.getServerSession(req, res, authOptions);
+  const session = await Server.getServerSession(req, res);
 
   if (session) {
     return {

@@ -5,7 +5,6 @@ import { useEffect } from "react";
 import { AuthenticationLayout } from "../layouts/Authentication";
 import { useSession } from "next-auth/react";
 import * as Server from "../lib/server";
-import { authOptions } from "./api/auth/[...nextauth]";
 
 interface Props {
   providers: Awaited<ReturnType<typeof getProviders>>;
@@ -25,7 +24,7 @@ export default function SignIn({ providers }: Props) {
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await Server.getServerSession(req, res, authOptions);
+  const session = await Server.getServerSession(req, res);
 
   // If logged in, go to dashboard
   if (session) {

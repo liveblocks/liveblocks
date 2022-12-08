@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   DocumentUser,
   FetchApiResult,
@@ -33,7 +32,7 @@ export async function removeUserAccess(
 ): Promise<FetchApiResult<DocumentUser[]>> {
   // Get session, room, and user
   const [session, room, user] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRoom({ roomId: documentId }),
     getUser(userId),
   ]);

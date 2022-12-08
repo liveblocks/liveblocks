@@ -1,7 +1,6 @@
 import { nanoid } from "nanoid";
 import { GetServerSidePropsContext } from "next";
 import { buildDocument, createRoom, getServerSession } from "../";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   CreateDocumentProps,
   Document,
@@ -31,7 +30,7 @@ export async function createDocument(
   { name, type, userId, groupIds, draft }: CreateDocumentProps
 ): Promise<FetchApiResult<Document>> {
   // Check user is logged in
-  const session = await getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res);
 
   if (!session) {
     return {

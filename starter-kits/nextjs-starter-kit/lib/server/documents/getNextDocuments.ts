@@ -1,6 +1,5 @@
 import { decode } from "base-64";
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   FetchApiResult,
   GetDocumentsResponse,
@@ -28,7 +27,7 @@ export async function getNextDocuments(
 ): Promise<FetchApiResult<GetDocumentsResponse>> {
   // Get session and next rooms
   const [session, nextRooms] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getNextRoom({ next: decode(nextPage) }),
   ]);
 

@@ -5,7 +5,6 @@ import {
   getServerSession,
 } from "../../../lib/server";
 import { User } from "../../../types";
-import { authOptions } from "../auth/[...nextauth]";
 
 /**
  * AUTH - Used in /liveblocks.config.ts
@@ -21,7 +20,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const { roomId } = req.body;
 
   // Get current session from NextAuth
-  const session = await getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res);
 
   // Anonymous user info
   const anonymousUser: User = {

@@ -1,6 +1,5 @@
 import { GetServerSidePropsContext } from "next";
 import { getRoom, getServerSession, userAllowedInRoom } from "../";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   DeleteDocumentProps,
   Document,
@@ -27,7 +26,7 @@ export async function deleteDocument(
   { documentId }: DeleteDocumentProps
 ): Promise<FetchApiResult<Document["id"]>> {
   const [session, room] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRoom({ roomId: documentId }),
   ]);
 

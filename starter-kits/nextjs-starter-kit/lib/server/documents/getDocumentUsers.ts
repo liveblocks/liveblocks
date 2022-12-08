@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   DocumentUser,
   FetchApiResult,
@@ -23,7 +22,7 @@ export async function getDocumentUsers(
 ): Promise<FetchApiResult<DocumentUser[]>> {
   // Get session and room
   const [session, room] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRoom({ roomId: documentId }),
   ]);
 

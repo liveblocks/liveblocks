@@ -5,7 +5,6 @@ import { DashboardLayout } from "../../layouts/Dashboard";
 import { DocumentsLayout } from "../../layouts/Documents";
 import * as Server from "../../lib/server";
 import { Group } from "../../types";
-import { authOptions } from "../api/auth/[...nextauth]";
 
 export default function Drafts({
   groups,
@@ -30,7 +29,7 @@ export const getServerSideProps: GetServerSideProps<ServerSideProps> = async ({
   req,
   res,
 }) => {
-  const session = await Server.getServerSession(req, res, authOptions);
+  const session = await Server.getServerSession(req, res);
 
   // If not logged in, redirect to marketing page
   if (!session) {
