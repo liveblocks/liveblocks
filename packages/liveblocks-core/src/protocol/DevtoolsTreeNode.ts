@@ -12,12 +12,18 @@ export type JsonTreeNode = {
   value: Json;
 };
 
+export type ObjectTreeNode = {
+  type: "Object";
+  id: string;
+  key: number | string;
+  fields: PrimitiveTreeNode[];
+};
+
 export type UserTreeNode = {
   type: "User";
   id: string;
   key: number | string;
-  info: Json;
-  presence: JsonTreeNode[];
+  fields: PrimitiveTreeNode[];
 };
 
 export type LiveMapTreeNode = {
@@ -41,15 +47,12 @@ export type LiveObjectTreeNode = {
   fields: StorageTreeNode[];
 };
 
+export type PrimitiveTreeNode = ObjectTreeNode | JsonTreeNode;
+
 export type StorageTreeNode =
   | LiveMapTreeNode
   | LiveListTreeNode
   | LiveObjectTreeNode
-  | JsonTreeNode;
+  | PrimitiveTreeNode;
 
-export type TreeNode =
-  | LiveMapTreeNode
-  | LiveListTreeNode
-  | LiveObjectTreeNode
-  | UserTreeNode
-  | JsonTreeNode;
+export type TreeNode = StorageTreeNode | UserTreeNode;

@@ -1,9 +1,8 @@
 import type {
-  Json,
-  JsonTreeNode,
   LiveListTreeNode,
   LiveMapTreeNode,
   LiveObjectTreeNode,
+  PrimitiveTreeNode,
   StorageTreeNode,
   TreeNode,
   UserTreeNode,
@@ -17,7 +16,7 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, Fragment, useCallback, useRef } from "react";
+import { forwardRef, Fragment, useCallback, useMemo, useRef } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
@@ -42,8 +41,8 @@ const USE_GRID_LAYOUT = false;
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
 type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
-  ArboristTreeProps<StorageTreeNode | UserTreeNode> &
-  RefAttributes<TreeApi<StorageTreeNode | UserTreeNode> | undefined>;
+  ArboristTreeProps<TreeNode> &
+  RefAttributes<TreeApi<TreeNode> | undefined>;
 
 interface RowProps extends ComponentProps<"div"> {
   node: NodeApi;
@@ -51,10 +50,6 @@ interface RowProps extends ComponentProps<"div"> {
 
 interface RowHighlightProps extends ComponentProps<"div"> {
   node: NodeApi;
-}
-
-interface JsonPreviewProps extends ComponentProps<"div"> {
-  value: Json;
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
@@ -66,7 +61,7 @@ interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
   children: (dimensions: { width: number; height: number }) => ReactElement;
 }
 
-function color(node: StorageTreeNode | UserTreeNode): string {
+function color(node: TreeNode): string {
   switch (node.type) {
     case "LiveObject":
       return "text-orange-500 dark:text-orange-400";
@@ -77,18 +72,19 @@ function color(node: StorageTreeNode | UserTreeNode): string {
     case "LiveMap":
       return "text-blue-500 dark:text-blue-400";
 
-    case "Json":
-      return "text-light-500 dark:text-dark-500";
-
     case "User":
       return "text-teal-500 dark:text-teal-500";
+
+    case "Json":
+    case "Object":
+      return "text-light-500 dark:text-dark-500";
 
     default:
       return assertNever(node, "Unhandled node type in color()");
   }
 }
 
-function background(node: StorageTreeNode | UserTreeNode): string {
+function background(node: TreeNode): string {
   switch (node.type) {
     case "LiveObject":
       return "bg-orange-500 dark:bg-orange-400";
@@ -99,19 +95,21 @@ function background(node: StorageTreeNode | UserTreeNode): string {
     case "LiveMap":
       return "bg-blue-500 dark:bg-blue-400";
 
-    case "Json":
-      return "bg-dark-800 dark:bg-dark-600";
-
     case "User":
       return "bg-teal-500 dark:bg-teal-500";
+
+    case "Json":
+    case "Object":
+      return "bg-dark-800 dark:bg-dark-600";
 
     default:
       return assertNever(node, "Unhandled node type in background()");
   }
 }
 
-function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
+function icon(node: TreeNode): ReactNode {
   switch (node.type) {
+    case "Object":
     case "LiveObject":
       return (
         <svg
@@ -205,8 +203,9 @@ function icon(node: StorageTreeNode | UserTreeNode): ReactNode {
 /**
  * Function that helps construct a "preview" string for a collapsed node.
  */
-function summarize(node: StorageTreeNode | UserTreeNode): string {
+function summarize(node: TreeNode): string {
   switch (node.type) {
+    case "Object":
     case "LiveObject":
       return wrapObject(
         node.fields
@@ -229,7 +228,7 @@ function summarize(node: StorageTreeNode | UserTreeNode): string {
 
     case "User":
       return wrapObject(
-        node.presence
+        node.fields
           .map((node) =>
             wrapProperty(
               node.key,
@@ -409,16 +408,6 @@ function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
 }
 ("tr");
 
-const JsonPreview = forwardRef<HTMLDivElement, JsonPreviewProps>(
-  ({ value, className, ...props }, forwardRef) => {
-    return (
-      <div ref={forwardRef} className={cx(className, "truncate")} {...props}>
-        {stringify(value)}
-      </div>
-    );
-  }
-);
-
 function Badge({ children, className, ...props }: ComponentProps<"span">) {
   return (
     <span
@@ -474,45 +463,53 @@ function LiveNodeRenderer({
   );
 }
 
-function JsonNodeRenderer({ node, style }: NodeRendererProps<JsonTreeNode>) {
+function PrimitiveNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<PrimitiveTreeNode>) {
+  const isParent = useMemo(() => node.isInternal, []);
+
+  const handleClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) =>
+      toggleNode(node, { siblings: event.altKey }),
+    []
+  );
+
   return (
-    <Row node={node} style={style}>
+    <Row node={node} style={style} onClick={isParent ? handleClick : undefined}>
       <RowInfo>
-        <RowName className="truncate">{node.data.key}</RowName>
+        <RowName>{node.data.key}</RowName>
       </RowInfo>
-      <RowPreview>
-        <JsonPreview value={node.data.value} />
-      </RowPreview>
+      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
     </Row>
   );
 }
 
-function TreeNodeRenderer(
-  props: NodeRendererProps<StorageTreeNode | UserTreeNode>
-) {
-  return props.node.data.type === "User" ? (
-    <UserNodeRenderer {...(props as NodeRendererProps<UserTreeNode>)} />
-  ) : props.node.data.type === "LiveMap" ? (
-    <LiveNodeRenderer
-      {...(props as NodeRendererProps<
-        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
-      >)}
-    />
-  ) : props.node.data.type === "LiveList" ? (
-    <LiveNodeRenderer
-      {...(props as NodeRendererProps<
-        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
-      >)}
-    />
-  ) : props.node.data.type === "LiveObject" ? (
-    <LiveNodeRenderer
-      {...(props as NodeRendererProps<
-        LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
-      >)}
-    />
-  ) : (
-    <JsonNodeRenderer {...(props as NodeRendererProps<JsonTreeNode>)} />
-  );
+function TreeNodeRenderer(props: NodeRendererProps<TreeNode>) {
+  switch (props.node.data.type) {
+    case "LiveMap":
+    case "LiveList":
+    case "LiveObject":
+      return (
+        <LiveNodeRenderer
+          {...(props as NodeRendererProps<
+            LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
+          >)}
+        />
+      );
+
+    case "User":
+      return (
+        <UserNodeRenderer {...(props as NodeRendererProps<UserTreeNode>)} />
+      );
+
+    default:
+      return (
+        <PrimitiveNodeRenderer
+          {...(props as NodeRendererProps<PrimitiveTreeNode>)}
+        />
+      );
+  }
 }
 
 function childrenAccessor(node: TreeNode): TreeNode[] | null {
@@ -523,11 +520,10 @@ function childrenAccessor(node: TreeNode): TreeNode[] | null {
     case "LiveMap":
       return node.entries;
 
+    case "User":
+    case "Object":
     case "LiveObject":
       return node.fields;
-
-    case "User":
-      return node.presence;
 
     case "Json":
       return null;

@@ -29,7 +29,10 @@ import {
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
-import type { UserTreeNode } from "./protocol/DevtoolsTreeNode";
+import type {
+  PrimitiveTreeNode,
+  UserTreeNode,
+} from "./protocol/DevtoolsTreeNode";
 import type { Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
 import type {
@@ -772,17 +775,36 @@ function userToTreeNode(
   key: number | string,
   user: User<JsonObject, BaseUserMeta>
 ): UserTreeNode {
+  const fields: PrimitiveTreeNode[] = Object.entries(user).map(
+    ([key, value]) => {
+      if (key === "presence" && value) {
+        return {
+          type: "Object",
+          id: `${user.connectionId}:${key}`,
+          key,
+          fields: Object.entries(value).map(([presenceKey, presenceValue]) => ({
+            type: "Json",
+            id: `${user.connectionId}:${key}:${presenceKey}`,
+            key: presenceKey,
+            value: presenceValue ?? null,
+          })),
+        };
+      } else {
+        return {
+          type: "Json",
+          id: `${user.connectionId}:${key}`,
+          key,
+          value: value ?? null,
+        };
+      }
+    }
+  );
+
   return {
     type: "User",
     id: `${user.connectionId}`,
     key,
-    info: user.info ?? null,
-    presence: Object.entries(user.presence).map(([key, value]) => ({
-      type: "Json",
-      id: `${user.connectionId}-${key}`,
-      key,
-      value: value ?? null,
-    })),
+    fields: fields.sort(({ type }) => (type === "Object" ? -1 : 0)),
   };
 }
 

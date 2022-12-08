@@ -75,6 +75,7 @@ export type {
   LiveListTreeNode,
   LiveMapTreeNode,
   LiveObjectTreeNode,
+  PrimitiveTreeNode,
   StorageTreeNode,
   TreeNode,
   UserTreeNode,
