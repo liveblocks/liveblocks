@@ -624,7 +624,7 @@ export function Breadcrumbs({
     >
       <span
         key={node.data.id}
-        className="text-dark-600 dark:text-light-600 flex h-5 items-center"
+        className="text-dark-600 dark:text-light-600 flex h-5 items-center font-mono text-[95%]"
       >
         $
       </span>
@@ -645,7 +645,7 @@ export function Breadcrumbs({
           </svg>
           <button
             key={node.data.id}
-            className=" hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 text-dark-600 dark:text-light-600 flex h-5 items-center gap-1.5"
+            className=" hover:text-dark-0 focus-visible:text-dark-0 dark:hover:text-light-0 dark:focus-visible:text-light-0 text-dark-600 dark:text-light-600 flex h-5 items-center gap-1.5 font-mono text-[95%]"
             onClick={() => onNodeClick(node)}
           >
             <div className={color(node.data)}>{icon(node.data)}</div>
