@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
+import { signIn } from "next-auth/react";
 import { users } from "../../data/users";
-import { signIn } from "../../lib/client";
 import { Button } from "../../primitives/Button";
 import { Select } from "../../primitives/Select";
 import { getProviders } from "next-auth/react";

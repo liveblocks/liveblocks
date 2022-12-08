@@ -5,7 +5,8 @@ import {
   GetDocumentsProps,
   GetDocumentsResponse,
 } from "../../types";
-import { usePaginatedDocumentsSWR, useSession } from "../../lib/client";
+import { useSession } from "next-auth/react";
+import { usePaginatedDocumentsSWR } from "../../lib/client";
 import {
   DocumentCreatePopover,
   DocumentRowSkeleton,

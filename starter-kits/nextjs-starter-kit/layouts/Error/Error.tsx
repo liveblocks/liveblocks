@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { ComponentProps } from "react";
-import { signIn, useSession } from "../../lib/client";
+import { signIn, useSession } from "next-auth/react";
 import { Button, LinkButton } from "../../primitives/Button";
 import { ErrorData } from "../../types";
 import styles from "./Error.module.css";

@@ -4,7 +4,7 @@ import { ComponentProps, ReactNode } from "react";
 import { DASHBOARD_URL } from "../constants";
 import { GitHubIcon, SignInIcon } from "../icons";
 import { MarketingLayout } from "../layouts/Marketing";
-import { signIn } from "../lib/client";
+import { signIn } from "next-auth/react";
 import * as Server from "../lib/server";
 import { Button, LinkButton } from "../primitives/Button";
 import { Container } from "../primitives/Container";

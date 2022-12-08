@@ -3,7 +3,7 @@ import { getProviders } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { AuthenticationLayout } from "../layouts/Authentication";
-import { useSession } from "../lib/client";
+import { useSession } from "next-auth/react";
 import * as Server from "../lib/server";
 import { authOptions } from "./api/auth/[...nextauth]";
 

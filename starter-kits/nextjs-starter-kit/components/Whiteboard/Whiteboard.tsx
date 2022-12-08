@@ -11,7 +11,7 @@ import {
   useState,
 } from "react";
 import { PlusIcon, RedoIcon, UndoIcon } from "../../icons";
-import { useSession } from "../../lib/client";
+import { useSession } from "next-auth/react";
 import {
   UserMeta,
   useCanRedo,
