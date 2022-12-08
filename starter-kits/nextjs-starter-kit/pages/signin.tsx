@@ -5,11 +5,10 @@ import { useEffect } from "react";
 import { AuthenticationLayout } from "../layouts/Authentication";
 import { useSession } from "../lib/client";
 import * as Server from "../lib/server";
-import { AUTHENTICATION_DEMO_MODE } from "../liveblocks.config";
 import { authOptions } from "./api/auth/[...nextauth]";
 
 interface Props {
-  providers: ReturnType<typeof getProviders>;
+  providers: Awaited<ReturnType<typeof getProviders>>;
 }
 
 export default function SignIn({ providers }: Props) {
@@ -35,12 +34,6 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
         destination: "/",
         permanent: false,
       },
-    };
-  }
-
-  if (AUTHENTICATION_DEMO_MODE) {
-    return {
-      props: {},
     };
   }
 

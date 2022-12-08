@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
-import GithubProvider from "next-auth/providers/github";
+import CredentialsProvider from "next-auth/providers/credentials";
+
+// import GithubProvider from "next-auth/providers/github";
 // import Auth0Provider from "next-auth/providers/auth0";
 import { getUser } from "../../../lib/server";
 import { User } from "../../../types";
@@ -26,9 +28,36 @@ export const authOptions = {
   // Configure one or more authentication providers
   // More info: https://next-auth.js.org/providers/
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    // GithubProvider({
+    //   clientId: process.env.GITHUB_CLIENT_ID as string,
+    //   clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
+    // }),
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: {
+          label: "email",
+          type: "text",
+        },
+      },
+      async authorize(credentials, req) {
+        if (credentials == null) {
+          return null;
+        }
+
+        const user = await getUser(credentials.email);
+
+        if (user == null) {
+          return null;
+        }
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.id,
+          image: user.avatar,
+        };
+      },
     }),
     /*
     Auth0Provider({
