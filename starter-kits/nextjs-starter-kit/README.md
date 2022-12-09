@@ -98,10 +98,20 @@ export const authOptions = {
 };
 ```
 
-#### Final step
-
-Change `AUTHENTICATION_DEMO_MODE` to `false` in `/liveblocks.config.ts` to try
-out your new authentication method!
+And remove `CredentialsProvider` from the same object, as this was only necessary for the demo authentication system:
+```ts
+export const authOptions = {
+  // ...
+  providers: {
+    // Delete from here
+    CredentialsProvider({
+      // ...
+    }),
+    // Until here
+  }
+};
+```
+GitHub authentication is now set up!
 
 </details>
 
