@@ -22,7 +22,9 @@ export type RoomAuthToken = {
 
   // Extra payload as defined by the customer's own authorization
   id?: string;
+  anonymousId?: string;
   info?: Json;
+  groupIds?: string[];
 };
 
 export type AuthToken = AppOnlyAuthToken | RoomAuthToken;
