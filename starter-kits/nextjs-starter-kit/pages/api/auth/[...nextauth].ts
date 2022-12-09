@@ -1,10 +1,11 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-// import GithubProvider from "next-auth/providers/github";
-// import Auth0Provider from "next-auth/providers/auth0";
 import { getUser } from "../../../lib/server";
 import { User } from "../../../types";
-import { NEXTAUTH_SECRET } from "../../../liveblocks.server.config";
+
+// Your NextAuth secret (generate a new one for production)
+// More info: https://next-auth.js.org/configuration/options#secret
+export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
 
 export const authOptions = {
   secret: NEXTAUTH_SECRET,
@@ -29,6 +30,8 @@ export const authOptions = {
   // Configure one or more authentication providers
   // More info: https://next-auth.js.org/providers/
   providers: [
+    // CredentialsProvider is used for the demo auth system
+    // Replace this with a real provider, e.g. GitHub, Auth0
     CredentialsProvider({
       name: "Credentials",
       credentials: {
@@ -38,13 +41,13 @@ export const authOptions = {
         },
       },
       async authorize(credentials) {
-        if (credentials == null) {
+        if (!credentials) {
           return null;
         }
 
-        const user = await getUser(credentials.email);
+        const user: User | null = await getUser(credentials.email);
 
-        if (user == null) {
+        if (!user) {
           return null;
         }
 
@@ -56,19 +59,26 @@ export const authOptions = {
         };
       },
     }),
+
     /*
+    // Use GitHub authentication
+    // import GithubProvider from "next-auth/providers/github";
     GithubProvider({
       clientId: process.env.GITHUB_CLIENT_ID as string,
       clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
     }),
     */
+
     /*
+    // Use Auth0 authentication
+    // import Auth0Provider from "next-auth/providers/auth0";
     Auth0Provider({
       clientId: process.env.AUTH0_CLIENT_ID as string,
       clientSecret: process.env.AUTH0_CLIENT_SECRET as string,
       issuer: process.env.AUTH0_ISSUER_BASE_URL,
     }),
     */
+
     // ...add more providers here
   ],
 };
