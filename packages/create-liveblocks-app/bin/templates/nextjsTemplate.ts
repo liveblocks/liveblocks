@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
 import { cloneRepo } from "../cloneRepo.js";
@@ -82,11 +83,21 @@ export async function create(flags: Record<string, any>) {
   const packageJsonLocation = path.join(appDir, "package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonLocation, "utf8"));
   const filesToWrite: { location: string; content: string }[] = [];
-  let envVariables = ["LIVEBLOCKS_SECRET_KEY"];
+  const envVariables = [
+    {
+      key: "LIVEBLOCKS_SECRET_KEY",
+      value: ""
+    },
+    {
+      // https://next-auth.js.org/configuration/options#secret
+      key: "NEXTAUTH_SECRET",
+      value: crypto.randomBytes(32).toString("base64"),
+    },
+  ];
 
   filesToWrite.push({
     location: path.join(appDir, ".env.local"),
-    content: envVariables.map((envVariable) => `${envVariable}=`).join("\n"),
+    content: envVariables.map(({ key, value }) => `${key}=${value}`).join("\n"),
   });
 
   filesToWrite.push({
