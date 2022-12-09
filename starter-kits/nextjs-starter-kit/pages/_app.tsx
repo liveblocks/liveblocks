@@ -1,9 +1,9 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { Session } from "next-auth";
+import { SessionProvider } from "next-auth/react";
 import { AppProps } from "next/app";
 import Head from "next/head";
 import { Badge } from "../components/Badge";
-import { SessionProvider } from "../lib/client";
 import "../styles/globals.css";
 
 export default function App({

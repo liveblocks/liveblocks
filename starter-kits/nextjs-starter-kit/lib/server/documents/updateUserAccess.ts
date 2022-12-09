@@ -1,6 +1,5 @@
 import { GetServerSidePropsContext } from "next";
 import { DOCUMENT_URL } from "../../../constants";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   Document,
   DocumentUser,
@@ -39,7 +38,7 @@ export async function updateUserAccess(
 ): Promise<FetchApiResult<DocumentUser[]>> {
   // Get session, room, and user
   const [session, room, user] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRoom({ roomId: documentId }),
     getUser(userId),
   ]);

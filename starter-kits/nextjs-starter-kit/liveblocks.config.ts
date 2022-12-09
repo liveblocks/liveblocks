@@ -3,11 +3,6 @@ import { createRoomContext } from "@liveblocks/react";
 import Router from "next/router";
 import { User } from "./types";
 
-// Enable an authentication demo mode that requires no setup
-// Set this to false and follow the guide to add real authentication
-// [link]
-export const AUTHENTICATION_DEMO_MODE = true;
-
 // The location of the liveblocks custom API endpoints
 export const ENDPOINT_BASE_URL = "/api/liveblocks";
 

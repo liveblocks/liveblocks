@@ -1,13 +1,13 @@
 import * as Tabs from "@radix-ui/react-tabs";
 import { useRouter } from "next/router";
 import { ComponentProps, useCallback, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { UserIcon, UsersIcon } from "../../icons";
 import {
   getDocument,
   getDocumentGroups,
   getDocumentUsers,
   useDocumentsFunctionSWR,
-  useSession,
   getDocumentAccess,
 } from "../../lib/client";
 import { useBroadcastEvent, useEventListener } from "../../liveblocks.config";

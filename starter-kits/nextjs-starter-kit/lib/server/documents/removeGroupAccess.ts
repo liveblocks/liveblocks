@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   DocumentGroup,
   FetchApiResult,
@@ -29,7 +28,7 @@ export async function removeGroupAccess(
 ): Promise<FetchApiResult<DocumentGroup[]>> {
   // Get session, room, and group
   const [session, room, group] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getRoom({ roomId: documentId }),
     getGroup(groupId),
   ]);

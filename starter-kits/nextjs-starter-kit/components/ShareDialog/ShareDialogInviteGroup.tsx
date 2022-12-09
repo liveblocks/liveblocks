@@ -1,7 +1,8 @@
 import clsx from "clsx";
 import { ComponentProps, FormEvent, useState } from "react";
+import { useSession } from "next-auth/react";
 import { PlusIcon } from "../../icons";
-import { updateGroupAccess, useSession } from "../../lib/client";
+import { updateGroupAccess } from "../../lib/client";
 import { Button } from "../../primitives/Button";
 import { Select } from "../../primitives/Select";
 import { Spinner } from "../../primitives/Spinner";

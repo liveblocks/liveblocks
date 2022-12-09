@@ -1,5 +1,4 @@
 import { GetServerSidePropsContext } from "next";
-import { authOptions } from "../../../pages/api/auth/[...nextauth]";
 import {
   FetchApiResult,
   GetLiveUsersProps,
@@ -24,7 +23,7 @@ export async function getLiveUsers(
 ): Promise<FetchApiResult<LiveUsersResponse[]>> {
   // Get session and active users
   const [session, activeUsers] = await Promise.all([
-    getServerSession(req, res, authOptions),
+    getServerSession(req, res),
     getActiveUsersInRooms({ roomIds: documentIds }),
   ]);
 
