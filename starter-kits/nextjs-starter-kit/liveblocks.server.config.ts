@@ -4,6 +4,10 @@ export const API_BASE_URL = "https://api.liveblocks.io";
 // Your Liveblocks secret key
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
+// Your NextAuth secret (generate a new one for production)
+// More info: https://next-auth.js.org/configuration/options#secret
+export const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET;
+
 // ============================================================================
 if (typeof window !== "undefined") {
   console.log();
