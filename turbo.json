@@ -10,13 +10,12 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@liveblocks/devtools#build": {
+    "@liveblocks/devtools#dev:firefox": {
       "dependsOn": ["^build"],
-      "outputs": ["build/**"] // devtools uses Plasmo, which cannot be configured to output to dist :(
+      "cache": false
     },
     "@liveblocks/devtools#build:firefox": {
-      "dependsOn": ["^build"],
-      "outputs": ["build/**"] // devtools uses Plasmo, which cannot be configured to output to dist :(
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["^build"],

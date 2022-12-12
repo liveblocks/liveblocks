@@ -37,7 +37,7 @@ Download the extension for your browser:
    build the browser extension
 1. Navigate to [chrome://extensions](chrome://extensions)
 1. Enable "Developer mode"
-1. Click "Load unpacked" and select the outputted `build/chrome-mv3-prod`
+1. Click "Load unpacked" and select the outputted `dist/chrome-mv3-prod`
    directory (which contains the `manifest.json` file)
 
 ### Firefox
@@ -47,7 +47,7 @@ Download the extension for your browser:
 1. Navigate to
    [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
 1. Click "Load temporary add-on..." and select the `manifest.json` file within
-   the outputted `build/firefox-mv2-prod` directory
+   the outputted `dist/firefox-mv2-prod` directory
 
 ### Testing with an example
 

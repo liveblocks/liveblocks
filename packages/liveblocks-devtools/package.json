@@ -6,10 +6,10 @@
   "description": "A browser extension that lets you inspect Liveblocks rooms. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "homepage": "https://liveblocks.io",
   "scripts": {
-    "dev": "plasmo dev",
-    "dev:firefox": "plasmo dev --target=firefox-mv2",
-    "build": "tsc && plasmo build",
-    "build:firefox": "tsc && plasmo build --target=firefox-mv2",
+    "dev": "plasmo dev --build-path=dist",
+    "dev:firefox": "plasmo dev --build-path=dist --target=firefox-mv2",
+    "build": "tsc && plasmo build --build-path=dist",
+    "build:firefox": "tsc && plasmo build --build-path=dist --target=firefox-mv2",
     "format": "eslint --fix src/; prettier --write src/"
   },
   "dependencies": {
