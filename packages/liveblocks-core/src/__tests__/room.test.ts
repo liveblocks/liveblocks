@@ -1277,6 +1277,45 @@ describe("room", () => {
         },
       ]);
     });
+
+    test("hasPendingStorageModifications", async () => {
+      const { storage, assert, machine, refStorage, reconnect, ws } =
+        await prepareStorageTest<{ x: number }>(
+          [createSerializedObject("0:0", { x: 0 })],
+          1
+        );
+
+      assert({ x: 0 });
+
+      expect(machine.hasPendingStorageModifications()).toBe(false);
+
+      ws.closeFromBackend(
+        new CloseEvent("close", {
+          code: WebsocketCloseCodes.CLOSE_ABNORMAL,
+          wasClean: false,
+        })
+      );
+
+      storage.root.set("x", 1);
+
+      expect(machine.hasPendingStorageModifications()).toBe(true);
+
+      const storageJson = lsonToJson(storage.root);
+      expect(storageJson).toEqual({ x: 1 });
+      const refStorageJson = lsonToJson(refStorage.root);
+      expect(refStorageJson).toEqual({ x: 0 });
+
+      const newInitStorage: IdTuple<SerializedCrdt>[] = [
+        createSerializedObject("0:0", { x: 0 }),
+      ];
+
+      reconnect(2, newInitStorage);
+
+      assert({
+        x: 1,
+      });
+      expect(machine.hasPendingStorageModifications()).toBe(false);
+    });
   });
 
   describe("reconnect", () => {
@@ -1337,6 +1376,28 @@ describe("room", () => {
       );
 
       expect(state.numberOfRetry).toEqual(1);
+    });
+
+    test("manual reconnection", () => {
+      const { machine } = setupStateMachine({ x: 0 });
+      expect(machine.getConnectionState()).toBe("closed");
+
+      const ws = new MockWebSocket("");
+      machine.connect();
+      expect(machine.getConnectionState()).toBe("authenticating");
+
+      machine.authenticationSuccess(defaultRoomToken, ws);
+      expect(machine.getConnectionState()).toBe("connecting");
+
+      ws.open();
+      expect(machine.getConnectionState()).toBe("open");
+
+      machine.reconnect();
+      expect(machine.getConnectionState()).toBe("authenticating");
+
+      machine.authenticationSuccess(defaultRoomToken, ws);
+      ws.open();
+      expect(machine.getConnectionState()).toBe("open");
     });
   });
 

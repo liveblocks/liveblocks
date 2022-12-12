@@ -481,6 +481,16 @@ export type Room<
   batch<T>(fn: () => T): T;
 
   /**
+   * Whether or not the room has storage modifications that have not been acknowledged by the server.
+   */
+  hasPendingStorageModifications(): boolean;
+
+  /**
+   * Close room connection and try to reconnect
+   */
+  reconnect(): void;
+
+  /**
    * @internal Utilities only used for unit testing.
    */
   __INTERNAL_DO_NOT_USE: {
@@ -533,6 +543,7 @@ type Machine<
   // Core
   connect(): void;
   disconnect(): void;
+  reconnect(): void;
 
   // Generic storage callbacks
   subscribe(callback: StorageCallback): () => void;
@@ -558,6 +569,7 @@ type Machine<
   canRedo(): boolean;
   pauseHistory(): void;
   resumeHistory(): void;
+  hasPendingStorageModifications(): boolean;
 
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
@@ -2130,6 +2142,10 @@ function makeStateMachine<
     }
   }
 
+  function hasPendingStorageModifications() {
+    return state.offlineOperations.size > 0;
+  }
+
   function simulateSocketClose() {
     if (state.socket) {
       state.socket = null;
@@ -2161,6 +2177,7 @@ function makeStateMachine<
     // Core
     connect,
     disconnect,
+    reconnect,
     subscribe,
 
     // Presence
@@ -2175,6 +2192,7 @@ function makeStateMachine<
     canRedo,
     pauseHistory,
     resumeHistory,
+    hasPendingStorageModifications,
 
     getStorage,
     getStorageSnapshot,
@@ -2308,6 +2326,7 @@ export function createRoom<
     getConnectionState: machine.getConnectionState,
     isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
+    reconnect: machine.reconnect,
 
     subscribe: machine.subscribe,
 
@@ -2335,6 +2354,7 @@ export function createRoom<
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
+    hasPendingStorageModifications: machine.hasPendingStorageModifications,
 
     __INTERNAL_DO_NOT_USE: {
       simulateCloseWebsocket: machine.simulateSocketClose,
