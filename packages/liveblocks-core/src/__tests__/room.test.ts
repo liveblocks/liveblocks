@@ -49,6 +49,7 @@ const defaultContext = {
 const defaultRoomToken: RoomAuthToken = {
   appId: "my-app",
   roomId: "my-room",
+  id: "user1",
   actor: 0,
   scopes: [],
 };
