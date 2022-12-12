@@ -3,7 +3,7 @@
   "version": "0.19.0",
   "private": true,
   "displayName": "Liveblocks",
-  "description": "A browser extension that lets you inspect Liveblocks rooms.",
+  "description": "A browser extension that lets you inspect Liveblocks rooms. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "homepage": "https://liveblocks.io",
   "scripts": {
     "dev": "plasmo dev",
