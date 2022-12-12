@@ -71,7 +71,7 @@ More events will come later such as:
 
 A user enters a room when they connect to a room, which is when this event is
 triggered. The `numActiveUsers` field represents the number of users in the room
-after the user has entered.
+after the user has entered. This event is not throttled.
 
 ```ts
 // Schema
@@ -107,7 +107,7 @@ const userEnteredMessage = {
 
 A user leaves a room when they disconnect from a room, which is when this event
 is triggered. The `numActiveUsers` field represents the number of users in the
-room after the user has left.
+room after the user has left. This event, like `UserEntered` is not throttled.
 
 ```ts
 // Schema
@@ -143,8 +143,7 @@ const userLeftMessage = {
 
 #### StorageUpdated
 
-Storage is updated when a user writes to storage. This event is throttled and,
-as such, may not be triggered for every write. The `updatedAt` field is the time
+Storage is updated when a user writes to storage. This event is throttled at five minutes and, as such, may not be triggered for every write. The `updatedAt` field is the time
 of the last write.
 
 ```ts
