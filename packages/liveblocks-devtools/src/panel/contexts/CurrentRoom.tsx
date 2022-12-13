@@ -332,20 +332,22 @@ export function useMe(): UserTreeNode | null {
   );
 }
 
-const empty: readonly UserTreeNode[] = [];
+const emptyOthers: readonly UserTreeNode[] = [];
 
 export function useOthers(): readonly UserTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onOthers") ?? nosub,
-    () => getRoom(currentRoomId)?.others ?? empty
+    () => getRoom(currentRoomId)?.others ?? emptyOthers
   );
 }
 
-export function useStorage(): readonly StorageTreeNode[] | null {
+const emptyStorage: readonly StorageTreeNode[] = [];
+
+export function useStorage(): readonly StorageTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,
-    () => getRoom(currentRoomId)?.storage ?? null
+    () => getRoom(currentRoomId)?.storage ?? emptyStorage
   );
 }

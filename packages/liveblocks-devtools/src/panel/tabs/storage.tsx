@@ -47,46 +47,42 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
 
   return (
     <div className={cx(className, "absolute inset-0")} {...props}>
-      {storage ? (
-        <>
-          {isEmptySearch ? (
-            <EmptyState
-              title={
-                <>
-                  Nothing found for “
-                  <span className="text-dark-0 dark:text-light-0 font-semibold">
-                    {truncate(search ?? "", 32)}
-                  </span>
-                  ”.
-                </>
-              }
-              description={<>Only properties are searchable, not values.</>}
-              actions={[{ title: "Clear search", onClick: onSearchClear }]}
-            />
-          ) : null}
-          <div
-            className={cx(
-              "absolute inset-0 flex flex-col",
-              isEmptySearch && "hidden"
-            )}
-          >
-            <Tree
-              data={storage}
-              ref={tree}
-              onFocus={handleFocus}
-              searchTerm={search}
-              searchMatch={searchMatch}
-            />
-            {focusedNode ? (
-              <Breadcrumbs
-                className="flex-none"
-                node={focusedNode}
-                onNodeClick={handleBreadcrumbClick}
-              />
-            ) : null}
-          </div>
-        </>
+      {isEmptySearch ? (
+        <EmptyState
+          title={
+            <>
+              Nothing found for “
+              <span className="text-dark-0 dark:text-light-0 font-semibold">
+                {truncate(search ?? "", 32)}
+              </span>
+              ”.
+            </>
+          }
+          description={<>Only properties are searchable, not values.</>}
+          actions={[{ title: "Clear search", onClick: onSearchClear }]}
+        />
       ) : null}
+      <div
+        className={cx(
+          "absolute inset-0 flex flex-col",
+          isEmptySearch && "hidden"
+        )}
+      >
+        <Tree
+          data={storage}
+          ref={tree}
+          onFocus={handleFocus}
+          searchTerm={search}
+          searchMatch={searchMatch}
+        />
+        {focusedNode ? (
+          <Breadcrumbs
+            className="flex-none"
+            node={focusedNode}
+            onNodeClick={handleBreadcrumbClick}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

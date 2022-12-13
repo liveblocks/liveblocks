@@ -3,27 +3,31 @@
  * presence trees for displaying in the Liveblocks browser extension.
  */
 
-import type { Json } from "../lib/Json";
+import type { Json, JsonObject } from "../lib/Json";
+import type { User } from "../types/User";
+import type { BaseUserMeta } from "./BaseUserMeta";
 
-export type JsonTreeNode = {
+export type JsonTreeNode<TKey = string | number, TValue = Json> = {
   type: "Json";
   id: string;
-  key: number | string;
-  value: Json;
+  key: TKey;
+  value: TValue;
 };
 
-export type ObjectTreeNode = {
+export type ObjectTreeNode<K = string | number> = {
   type: "Object";
   id: string;
-  key: number | string;
+  key: K;
   fields: PrimitiveTreeNode[];
 };
 
-export type UserTreeNode = {
+export type UserTreeNode<
+  TUser extends User<JsonObject, BaseUserMeta> = User<JsonObject, BaseUserMeta>
+> = {
   type: "User";
   id: string;
   key: number | string;
-  fields: PrimitiveTreeNode[];
+  fields: PrimitiveTreeNode<keyof TUser>[];
 };
 
 export type LiveMapTreeNode = {
@@ -47,7 +51,9 @@ export type LiveObjectTreeNode = {
   fields: StorageTreeNode[];
 };
 
-export type PrimitiveTreeNode = ObjectTreeNode | JsonTreeNode;
+export type PrimitiveTreeNode<TKey = string | number> =
+  | ObjectTreeNode<TKey>
+  | JsonTreeNode<TKey>;
 
 export type StorageTreeNode =
   | LiveMapTreeNode

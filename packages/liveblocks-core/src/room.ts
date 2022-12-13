@@ -775,30 +775,28 @@ function userToTreeNode(
   key: number | string,
   user: User<JsonObject, BaseUserMeta>
 ): UserTreeNode {
-  const fields: PrimitiveTreeNode[] = Object.entries(user).map(
-    ([key, value]) => {
-      if (key === "presence" && value) {
-        return {
-          type: "Object",
-          id: `${user.connectionId}:${key}`,
-          key,
-          fields: Object.entries(value).map(([presenceKey, presenceValue]) => ({
-            type: "Json",
-            id: `${user.connectionId}:${key}:${presenceKey}`,
-            key: presenceKey,
-            value: presenceValue ?? null,
-          })),
-        };
-      } else {
-        return {
+  const fields = Object.entries(user).map(([key, value]) => {
+    if (key === "presence" && value) {
+      return {
+        type: "Object",
+        id: `${user.connectionId}:${key}`,
+        key,
+        fields: Object.entries(value).map(([presenceKey, presenceValue]) => ({
           type: "Json",
-          id: `${user.connectionId}:${key}`,
-          key,
-          value: value ?? null,
-        };
-      }
+          id: `${user.connectionId}:${key}:${presenceKey}`,
+          key: presenceKey,
+          value: presenceValue ?? null,
+        })),
+      } as PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
+    } else {
+      return {
+        type: "Json",
+        id: `${user.connectionId}:${key}`,
+        key,
+        value: value ?? null,
+      } as PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
     }
-  );
+  });
 
   return {
     type: "User",
