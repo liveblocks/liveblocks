@@ -1,0 +1,42 @@
+.default {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  place-items: center;
+}
+
+.sectionLabel {
+  display: flex;
+  color: var(--color-text-lighter);
+  cursor: pointer;
+  font-size: var(--size-sm);
+  place-items: center;
+}
+
+.sectionLabel[data-disabled] {
+  cursor: default;
+  opacity: var(--opacity-disabled);
+}
+
+.sectionLabelIcon {
+  margin-right: var(--space-4);
+  color: var(--color-text);
+}
+
+.sectionAction {
+  margin-left: auto;
+}
+
+.shareLinkSection {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.shareLinkInput {
+  flex: 1 0 auto;
+  user-select: all;
+}

@@ -1,0 +1,24 @@
+@keyframes skeleton {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  display: block;
+  height: 1em;
+  animation: skeleton 6s linear infinite;
+  background: linear-gradient(
+    270deg,
+    var(--color-skeleton),
+    var(--color-skeleton-shine),
+    var(--color-skeleton-shine),
+    var(--color-skeleton)
+  );
+  background-size: 400% 100%;
+  border-radius: var(--radius-xs);
+}

@@ -1,0 +1,66 @@
+.documents {
+  display: flex;
+  flex-direction: column;
+  padding-top: var(--space-16);
+  padding-bottom: var(--space-16);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-10);
+  place-items: center;
+}
+
+.headerTitle {
+  font-size: var(--size-xl);
+  font-weight: 600;
+}
+
+.headerActions {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.headerSelect:not(:hover),
+.headerSelect:not(:focus-visible) {
+  border: 1px solid var(--color-border-contrasted);
+  transition-property: background, color, border, opacity;
+}
+
+.headerSelect:hover,
+.headerSelect:focus-visible {
+  border: 1px solid var(--color-surface-hover);
+}
+
+.container {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius);
+}
+
+.row:not(:last-child) {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.actions {
+  margin: var(--space-8) auto;
+}
+
+.actions:disabled {
+  cursor: default;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 320px;
+  flex-direction: column;
+  color: var(--color-text-lighter);
+  gap: var(--space-6);
+  place-content: center;
+  place-items: center;
+  text-align: center;
+}
