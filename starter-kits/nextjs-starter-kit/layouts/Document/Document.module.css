@@ -1,0 +1,16 @@
+.container {
+  display: grid;
+  min-height: 100vh;
+  background: var(--color-surface);
+  grid-template-rows: var(--header-height) 1fr;
+}
+
+.header {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+}
+
+.header,
+.main {
+  position: relative;
+}

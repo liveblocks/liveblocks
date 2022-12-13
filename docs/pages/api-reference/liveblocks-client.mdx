@@ -155,8 +155,8 @@ The second argument is a configuration for the presence and storage.
   `new LiveList()`, `new LiveObject({ a: 1 })`, etc.) or be serializable to
   JSON.
 - `shouldInitiallyConnect` (optional) - Whether or not the room connects to
-  Liveblocks servers. Default is `true`. Usually set to `false` when the client is
-  used from the server to not call the authentication endpoint or connect via
+  Liveblocks servers. Default is `true`. Usually set to `false` when the client
+  is used from the server to not call the authentication endpoint or connect via
   WebSocket.
 
 ```ts
@@ -289,17 +289,21 @@ const unsubscribe = room.subscribe(
   root,
   (updates) => {
     for (const update of updates) {
-      switch (update.type) {
+      const {
+        type, // "update" or "delete"
+        node,
+      } = update;
+      switch (node.type) {
         case "LiveObject": {
-          // update.node is the LiveObject that has been updated
+          // update.node is the LiveObject that has been updated/deleted
           break;
         }
         case "LiveMap": {
-          // update.node is the LiveMap that has been updated
+          // update.node is the LiveMap that has been updated/deleted
           break;
         }
         case "LiveList": {
-          // update.node is the LiveList that has been updated
+          // update.node is the LiveList that has been updated/deleted
           break;
         }
       }
@@ -501,6 +505,15 @@ room.history.resume();
 room.history.undo();
 // room.getPresence() equals { cursor: { x: 0, y: 0 } }
 ```
+
+### Room.hasPendingStorageModifications
+
+Whether or not the room has storage modifications that have not been
+acknowledged by the server.
+
+### Room.reconnect
+
+Close room connection and try to reconnect.
 
 ## Storage
 

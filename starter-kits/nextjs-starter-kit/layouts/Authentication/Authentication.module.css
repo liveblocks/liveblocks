@@ -1,0 +1,39 @@
+.container {
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.main,
+.aside {
+  flex: 1 0 50%;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.aside {
+  display: none;
+  background: var(--color-surface);
+}
+
+.title {
+  margin-bottom: var(--space-9);
+  font-size: var(--size-2xl);
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-6);
+}
+
+@media (min-width: 1024px) {
+  .aside {
+    display: block;
+  }
+}

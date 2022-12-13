@@ -1,0 +1,49 @@
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.row {
+  display: flex;
+  place-items: center;
+}
+
+.rowInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.rowAvatar {
+  margin-right: var(--space-4);
+}
+
+.rowName {
+  font-size: var(--size-sm);
+  font-weight: 500;
+}
+
+.rowRemoveButton,
+.rowDescription {
+  font-size: var(--size-xs);
+}
+
+.rowRemoveButton {
+  color: rgb(var(--color-red) / 80%);
+  transition: opacity var(--transition);
+  outline: none;
+}
+
+.rowRemoveButton:hover,
+.rowRemoveButton:focus-visible {
+  opacity: var(--opacity-hover);
+}
+
+.rowDescription {
+  color: var(--color-text-lighter);
+}
+
+.rowAccessSelect {
+  margin-left: auto;
+}
