@@ -23,7 +23,8 @@ const defaultPresenceValues: Partial<
 function filterPresenceTree(tree: readonly UserTreeNode[]): UserTreeNode[] {
   return tree.map((user) => {
     const fields = user.fields.map((field) => {
-      const isVisibleElsewhere = field.key === "connectionId";
+      const isVisibleElsewhere =
+        field.key === "connectionId" || field.key === "isReadOnly";
       const isDefaultValue =
         field.type === "Json"
           ? defaultPresenceValues[field.key] === field.value

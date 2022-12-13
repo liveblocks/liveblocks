@@ -27,6 +27,7 @@ export type UserTreeNode<
   type: "User";
   id: string;
   key: number | string;
+  isReadOnly: boolean;
   fields: PrimitiveTreeNode<keyof TUser>[];
 };
 

@@ -434,6 +434,9 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
       <RowInfo>
         <RowName>{node.data.key}</RowName>
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
+        {node.data.isReadOnly && (
+          <Badge className="flex-none opacity-60">Read-only</Badge>
+        )}
       </RowInfo>
       {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
     </Row>

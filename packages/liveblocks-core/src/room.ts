@@ -802,6 +802,7 @@ function userToTreeNode(
     type: "User",
     id: `${user.connectionId}`,
     key,
+    isReadOnly: user.isReadOnly,
     fields: fields.sort(({ type }) => (type === "Object" ? -1 : 0)),
   };
 }
