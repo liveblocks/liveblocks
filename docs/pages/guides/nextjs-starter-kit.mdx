@@ -76,6 +76,38 @@ GitHub authentication is now set up!
 
 </details>
 
+<details>
+  <summary>How to set up Auth0 authentication</summary>
+  
+  ### GitHub authentication
+  
+  It's possible to allow users to sign up to your app using GitHub. This is how to
+  implement it.
+
+  1. Go to your [Auth 0 Dashboard](https://manage.auth0.com/dashboard) and click "Create Application"
+  2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new app for each environment, so it's helpful to place "dev" in the name.
+  3. Next, select "Single Page Web Applications", and press "Create"
+  4. Copy your "Client ID" from the top of the page, and place it within `.env.local` as `AUTH0_CLIENT_ID`
+  5. Click the "Settings" tab—we'll be making a number of changes here.
+  6. Find the "Client Secret" input field, and copy the value into `.env.local` as `AUTH0_CLIENT_SECRET`
+  7. Copy your "Domain" from the input field, add "https://" to the start, and place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`
+  8. Add the following to the "Allowed Callback URLs" textarea: `http://localhost:3000/api/auth/callback/auth0`
+  
+  9. Add the following to the "Allowed Logout URLs" textarea: `http://localhost:3000`
+  
+  10. Scroll to the bottom and press "Save changes"
+  
+`.env.local` should now contain these three lines, along with anything previously there:
+
+\```
+AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
+\```
+  
+  Auth0 authentication is now set up! Next, add yourself a user to test out your authentication.
+</details>
+
 ### How to sign up - add yourself as a user
 
 We haven't set up a database, so we're temporarily using the `/data` folder
