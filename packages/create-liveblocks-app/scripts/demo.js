@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from "child_process";
+import { esbuildOptions } from "./esbuild.js";
 import fs from "fs";
 import path from "path";
 
@@ -16,7 +17,7 @@ const testDir = path.join(process.cwd(), "./.demo");
 fs.rmSync(testDir, { recursive: true, force: true });
 fs.mkdirSync(testDir);
 
-execSync(`node ../dist/index.js ${flags}`, {
+execSync(`node ${esbuildOptions.outfile} ${flags}`, {
   cwd: testDir,
-  stdio: 'inherit',
+  stdio: "inherit",
 });
