@@ -29,11 +29,12 @@
     "prompts": "^2.4.2"
   },
   "bugs": {
-    "url": "https://github.com/liveblocks/create-liveblocks-app/issues"
+    "url": "https://github.com/liveblocks/liveblocks/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/liveblocks/create-liveblocks-app.git#main"
+    "url": "https://github.com/liveblocks/liveblocks.git",
+    "directory": "packages/create-liveblocks-app"
   },
   "homepage": "https://liveblocks.io",
   "keywords": [
