@@ -101,5 +101,11 @@ export async function createLiveblocksApp() {
     template = flags.template,
   }: { template: TemplateName } = await prompts(initialQuestions);
 
-  await templates?.[template].create(flags);
+  if (!templates?.[template]) {
+    console.log();
+    console.log(c.redBright.bold("Template not valid, try running the installer without flags"));
+    return;
+  }
+
+  await templates[template].create(flags);
 }
