@@ -1,4 +1,4 @@
-import type { Json } from "@liveblocks/core";
+import type { Json, JsonObject } from "@liveblocks/core";
 import unquotedPropertyValidator from "unquoted-property-validator";
 
 export const SEPARATOR = ", ";
@@ -20,7 +20,12 @@ export function wrapObject(values?: string) {
   return values ? `{ ${values} }` : "{}";
 }
 
-export function stringify(value?: Json, depth = 0, maxDepth = 1): string {
+export function stringify(
+  value?: Json,
+  maxDepth = 1,
+  depth = 0,
+  seen = new WeakSet<JsonObject>()
+): string {
   if (Array.isArray(value)) {
     if (value.length === 0) {
       return wrapArray();
@@ -28,21 +33,26 @@ export function stringify(value?: Json, depth = 0, maxDepth = 1): string {
       return wrapArray(ELLIPSIS);
     } else {
       const values = value
-        .map((value) => stringify(value, depth + 1))
+        .map((value) => stringify(value, maxDepth, depth + 1, seen))
         .join(SEPARATOR);
 
       return wrapArray(values);
     }
   } else if (typeof value === "object" && value !== null) {
     const keys = Object.keys(value);
+    const isCircular = seen.has(value);
+
+    seen.add(value);
 
     if (keys.length === 0) {
       return wrapObject();
-    } else if (depth >= maxDepth) {
+    } else if (depth >= maxDepth || isCircular) {
       return wrapObject(ELLIPSIS);
     } else {
       const values = keys
-        .map((key) => wrapProperty(key, stringify(value[key], depth + 1)))
+        .map((key) =>
+          wrapProperty(key, stringify(value[key], maxDepth, depth + 1, seen))
+        )
         .join(SEPARATOR);
 
       return wrapObject(values);
