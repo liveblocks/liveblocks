@@ -212,7 +212,9 @@ function summarize(node: TreeNode): string {
           .map((node: StorageTreeNode) =>
             wrapProperty(
               node.key,
-              node.type === "Json" ? stringify(node.value) : ELLIPSIS
+              node.type === "Json"
+                ? stringify(node.value)
+                : wrapObject(ELLIPSIS)
             )
           )
           .join(", ")
@@ -232,7 +234,9 @@ function summarize(node: TreeNode): string {
           .map((node) =>
             wrapProperty(
               node.key,
-              node.type === "Json" ? stringify(node.value) : ELLIPSIS
+              node.type === "Json"
+                ? stringify(node.value)
+                : wrapObject(ELLIPSIS)
             )
           )
           .join(", ")
