@@ -1,10 +1,10 @@
 import path from "path";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { cloneRepo } from "../cloneRepo.js";
-import { initializeGit } from "../initializeGit.js";
-import { install as installApp } from "../install.js";
-import { getPackageManager } from "../getPackageManager.js";
+import { cloneRepo } from "../utils/cloneRepo.js";
+import { initializeGit } from "../utils/initializeGit.js";
+import { install as installApp } from "../utils/install.js";
+import { getPackageManager } from "../utils/getPackageManager.js";
 
 export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
 export const EXAMPLES_URL = "https://github.com/liveblocks/liveblocks/tree/main/examples";
@@ -30,7 +30,7 @@ export async function create(flags: Record<string, any>) {
       message: "Where would you like to create your project?",
     },
     {
-      type: flags.git !== undefined ? null : "toggle",
+      type: flags.git !== undefined ? null : "confirm",
       name: "git",
       message: "Would you like to initialize a new git repository?",
       initial: true,

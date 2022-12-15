@@ -49,14 +49,6 @@ export const commandLineFlags: OptionDefinition[] = [
     name: "no-git",
     type: Boolean,
   },
-  {
-    name: "prettier",
-    type: Boolean,
-  },
-  {
-    name: "no-prettier",
-    type: Boolean,
-  },
 ];
 
 export async function createLiveblocksApp() {
