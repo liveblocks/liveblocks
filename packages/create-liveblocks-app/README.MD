@@ -8,41 +8,63 @@
 
 The easiest way to get started with a Liveblocks starter kit or example. 
 
-### Dev
-Build changes on every save:
+## Get started
 
-```shell
-npm run dev
+You can create a new Liveblocks project using the following command:
+```
+npx create-liveblocks-app
 ```
 
-### Build
-Build a single time:
+The initial prompt allows you to set up one of the following:
+1. [Next.js Starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit)—Our official starter kit for Next.js
+2. [An example from the Liveblocks repo](https://github.com/liveblocks/liveblocks/tree/main/examples)—Any example from `liveblocks/liveblocks`
 
-```shell
-npm run build
-```
+From there, follow the instructions to set up your app!
 
-### Demo
-Run a demo with no flags
-```shell
-npm run demo
-```
-
-### Use flags
-
-Enter the `/.demo` folder with a command line and run the following, with your flags on the end:
+### Flags (optional)
+If you wish, you can skip certain `create-liveblocks-app` prompts with the following flags. Please note that these are optional, and if no flags are used, you will be prompted about these options in the installer instead.
 
 ```
-node ../dist/index.js
+npx create-liveblocks-app [options]
+
+Options:
+
+  --next 
+  Use the Next.js Starter Kit
+  
+  --example [example name]
+  Use a Liveblocks example, the name corresponding to the example name in the repo 
+  e.g. `--example zustand-whiteboard` for https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-whiteboard
+  
+  --name [repo name]
+  The name of the project/directory
+  e.g. `--name my-liveblocks-project`
+  
+  --package-manager [`npm`|`yarn`|`pnpm`]
+  Select your package manager, default is `npm`
+  e.g `--package-manager yarn`
+  
+  --install
+  Install the project with the selected package manager
+  
+  --no-install
+  Don't install the project
+  
+  --git
+  Initialize git
+  
+  --no-git
+  Don't initialize git
+
 ```
 
 #### Examples
 Next.js Starter Kit with no install:
 ```
-node ../dist/index.js --next --skip-install
+npx create-liveblocks-app --next --no-install
 ```
 
 Example from Liveblocks repo with directory/project name specified:
 ```
-node ../dist/index.js --example nextjs-live-avatars --name my-liveblocks-app
+npx create-liveblocks-app --example nextjs-live-avatars --name my-liveblocks-app
 ```
