@@ -9,8 +9,10 @@ import { install as installApp } from "../utils/install.js";
 import { getPackageManager } from "../utils/getPackageManager.js";
 
 // TODO change for guide on liveblocks.io when complete
-const NEXTJS_STARTER_KIT_GUIDE_URL = "https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/README.md";
-const NEXTJS_STARTER_KIT_REPO_DIRECTORY = "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
+const NEXTJS_STARTER_KIT_GUIDE_URL =
+  "https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/README.md";
+const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
+  "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
 
 type Questions = {
   name: string;
@@ -32,9 +34,21 @@ export async function create(flags: Record<string, any>) {
       name: "auth",
       message: "Which authentication method would you like to use?",
       choices: [
-        { title: "Demo", description: "Add your own authentication later", value: "demo" },
-        { title: "GitHub", description: "Sign in with GitHub (instructions in guide)", value: "github" },
-        { title: "Auth0", description: "Sign in with Auth0 (instructions in guide)", value: "auth0" },
+        {
+          title: "Demo",
+          description: "Add your own authentication later",
+          value: "demo",
+        },
+        {
+          title: "GitHub",
+          description: "Sign in with GitHub (instructions in guide)",
+          value: "github",
+        },
+        {
+          title: "Auth0",
+          description: "Sign in with Auth0 (instructions in guide)",
+          value: "auth0",
+        },
       ],
       initial: false,
       active: "yes",
@@ -46,7 +60,7 @@ export async function create(flags: Record<string, any>) {
       message: "Would you like to initialize a new git repository?",
       initial: true,
       active: "yes",
-      inactive: "no"
+      inactive: "no",
     },
     {
       type: flags.install !== undefined ? null : "confirm",
@@ -65,7 +79,9 @@ export async function create(flags: Record<string, any>) {
     auth = "demo",
     git = flags.git,
     install = flags.install,
-  }: Questions = await prompts(questions, { onCancel: () => cancelInstall = true });
+  }: Questions = await prompts(questions, {
+    onCancel: () => (cancelInstall = true),
+  });
 
   console.log();
 
@@ -89,7 +105,13 @@ export async function create(flags: Record<string, any>) {
   const filesToWrite: { location: string; content: string }[] = [];
 
   // Set up authentication
-  const nextauthTsLocation = path.join(appDir, "pages", "api", "auth", "[...nextauth].ts");
+  const nextauthTsLocation = path.join(
+    appDir,
+    "pages",
+    "api",
+    "auth",
+    "[...nextauth].ts"
+  );
   const nextauthTs = fs.readFileSync(nextauthTsLocation, "utf-8");
   filesToWrite.push({
     location: nextauthTsLocation,
@@ -100,7 +122,7 @@ export async function create(flags: Record<string, any>) {
   const envVariables = [
     {
       key: "LIVEBLOCKS_SECRET_KEY",
-      value: ""
+      value: "",
     },
     ...getAuthEnvVariables(auth),
     {
@@ -144,8 +166,12 @@ export async function create(flags: Record<string, any>) {
   console.log();
   console.log(c.bold("Start using the Next.js Starter Kit by typing:"));
 
-  console.log(` ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${!install ? `
- ${instructionCount++}: ${c.cyanBright(`${packageManager} install`)}` : ""}
+  console.log(` ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${
+    !install
+      ? `
+ ${instructionCount++}: ${c.cyanBright(`${packageManager} install`)}`
+      : ""
+  }
  ${instructionCount++}: ${c.cyanBright(`${cmd} dev`)}`);
 
   console.log();
@@ -153,7 +179,11 @@ export async function create(flags: Record<string, any>) {
 
   console.log();
   if (auth && auth !== "demo") {
-    console.log(c.bold("Read the guide to finish setting up your authentication, and the rest of your app:"));
+    console.log(
+      c.bold(
+        "Read the guide to finish setting up your authentication, and the rest of your app:"
+      )
+    );
   } else {
     console.log(c.bold("Read the guide to finish setting up your app:"));
   }
@@ -179,18 +209,28 @@ function getAuthEnvVariables(auth: Questions["auth"]) {
 }
 
 // Add the selected auth provider code to a `[...nextauth].ts` file
-function addAuthproviderSetup(auth: Questions["auth"], nextauthTs: string): string {
+function addAuthproviderSetup(
+  auth: Questions["auth"],
+  nextauthTs: string
+): string {
   let newFileContent = nextauthTs;
 
   // RegExp for finding the content within the array: `providers: []`
   // Works so long as `providers` contains no nested arrays more than 3 layers deep
-  const findProviders = /providers:[\s]*\[(?:[^\]\[]|\[(?:[^\]\[]|\[(?:[^\]\[]|\[[^\]\[]*])*])*])*]/;
-  newFileContent = newFileContent.replace(findProviders, "providers: [" + getAuthProvider(auth) + "  ]");
+  const findProviders =
+    /providers:[\s]*\[(?:[^\]\[]|\[(?:[^\]\[]|\[(?:[^\]\[]|\[[^\]\[]*])*])*])*]/;
+  newFileContent = newFileContent.replace(
+    findProviders,
+    "providers: [" + getAuthProvider(auth) + "  ]"
+  );
 
   // RegExp for finding CredentialsProvider import line
   // Works if import is on one single line
   const findImport = /^import[\s]+CredentialsProvider[\w\W]+?$/m;
-  newFileContent = newFileContent.replace(findImport, getAuthProviderImport(auth));
+  newFileContent = newFileContent.replace(
+    findImport,
+    getAuthProviderImport(auth)
+  );
 
   return newFileContent;
 }
@@ -263,7 +303,7 @@ function getAuthProviderImport(auth: Questions["auth"]): string {
   const imports = {
     demo: 'import CredentialsProvider from "next-auth/providers/credentials";',
     github: 'import GithubProvider from "next-auth/providers/github";',
-    auth0: 'import Auth0Provider from "next-auth/providers/auth0";'
+    auth0: 'import Auth0Provider from "next-auth/providers/auth0";',
   };
 
   return imports?.[auth] || "";

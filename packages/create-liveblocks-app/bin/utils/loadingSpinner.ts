@@ -15,7 +15,7 @@ export function loadingSpinner(text?: string) {
         c.whiteBright.magentaBright("  🖱  "),
         c.whiteBright.magentaBright(" 🖱   "),
         c.whiteBright.magentaBright("🖱    "),
-      ]
+      ],
     },
     text: text,
   }) as any;

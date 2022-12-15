@@ -4,12 +4,12 @@ import prompts, { PromptObject } from "prompts";
 import * as nextjsTemplate from "./templates/nextjsTemplate.js";
 import * as exampleTemplate from "./templates/exampleTemplate.js";
 
-type TemplateName = "next"|"example";
+type TemplateName = "next" | "example";
 
 const templates: { [K in TemplateName]: any } = {
-  "next": nextjsTemplate,
-  "example": exampleTemplate,
-}
+  next: nextjsTemplate,
+  example: exampleTemplate,
+};
 
 export const commandLineFlags: OptionDefinition[] = [
   {
@@ -52,11 +52,13 @@ export const commandLineFlags: OptionDefinition[] = [
 ];
 
 export async function createLiveblocksApp() {
-  console.log(c.magentaBright(`
+  console.log(
+    c.magentaBright(`
 ▀█████▀  ▄   
  ▀██▀  ▄██▄  
   ▀  ▄█████▄ 
-`));
+`)
+  );
 
   console.log(c.bold.bgMagenta(" Liveblocks "));
   console.log();
@@ -69,7 +71,7 @@ export async function createLiveblocksApp() {
     if (val === true) {
       flags[key.slice(3)] = false;
     }
-  })
+  });
 
   // If --example specified, this is an example
   if (flags.example) {
@@ -84,7 +86,7 @@ export async function createLiveblocksApp() {
   const initialQuestions: PromptObject<"template">[] = [
     {
       // Skip question if template already set
-      type: (flags.template) ? null : "select",
+      type: flags.template ? null : "select",
       name: "template",
       message: "Which template would you like to use?",
       choices: [

@@ -11,7 +11,10 @@ const managers = Object.values(PackageManager);
 // Prioritising `npm` (with fallbacks) because we have `package-lock.json` in our examples
 export function getPackageManager(): PackageManager {
   for (const manager of managers) {
-    if (process.env.npm_config_user_agent && process.env.npm_config_user_agent.startsWith(manager)) {
+    if (
+      process.env.npm_config_user_agent &&
+      process.env.npm_config_user_agent.startsWith(manager)
+    ) {
       return manager;
     }
   }

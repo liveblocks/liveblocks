@@ -1,9 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext",
-      "dom"
-    ],
+    "lib": ["ESNext", "dom"],
     "outDir": "dist",
     "removeComments": true,
     "target": "ES6",
@@ -24,7 +21,5 @@
     "isolatedModules": true
   },
   "include": ["./**/*.ts"],
-  "exclude": [
-    "node_modules/**/*"
-  ]
+  "exclude": ["node_modules/**/*"]
 }

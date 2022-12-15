@@ -24,7 +24,10 @@ export async function initializeGit({ appDir }: { appDir: string }) {
     await execAsync("git init", options);
     await execAsync("git checkout -b main", options);
     await execAsync("git add -A", options);
-    await execAsync('git commit -m "Initial commit from create-liveblocks-app', options);
+    await execAsync(
+      'git commit -m "Initial commit from create-liveblocks-app',
+      options
+    );
   } catch (err) {
     spinner.fail(c.redBright.bold("Problem initializing git"));
     console.log(err);

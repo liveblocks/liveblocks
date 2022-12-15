@@ -7,7 +7,7 @@ import { loadingSpinner } from "./loadingSpinner.js";
 type CloneRepo = {
   repoDir: string;
   appDir: string;
-}
+};
 
 export async function cloneRepo({ repoDir, appDir }: CloneRepo) {
   const spinner = loadingSpinner().start("Downloading repo...");

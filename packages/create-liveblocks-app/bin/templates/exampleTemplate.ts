@@ -7,7 +7,8 @@ import { install as installApp } from "../utils/install.js";
 import { getPackageManager } from "../utils/getPackageManager.js";
 
 export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
-export const EXAMPLES_URL = "https://github.com/liveblocks/liveblocks/tree/main/examples";
+export const EXAMPLES_URL =
+  "https://github.com/liveblocks/liveblocks/tree/main/examples";
 
 type Questions = {
   example: string;
@@ -35,7 +36,7 @@ export async function create(flags: Record<string, any>) {
       message: "Would you like to initialize a new git repository?",
       initial: true,
       active: "yes",
-      inactive: "no"
+      inactive: "no",
     },
     {
       type: flags.install !== undefined ? null : "confirm",
@@ -54,7 +55,9 @@ export async function create(flags: Record<string, any>) {
     name = flags.name,
     git = flags.git,
     install = flags.install,
-  }: Questions = await prompts(questions, { onCancel: () => cancelInstall = true });
+  }: Questions = await prompts(questions, {
+    onCancel: () => (cancelInstall = true),
+  });
 
   console.log();
 
@@ -90,8 +93,12 @@ export async function create(flags: Record<string, any>) {
 
   console.log(`
 ${c.bold("Start developing by typing:")}
- ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${!install ? c.cyanBright(`
- ${instructionCount++}: ${packageManager} install`) : ""}
+ ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${
+    !install
+      ? c.cyanBright(`
+ ${instructionCount++}: ${packageManager} install`)
+      : ""
+  }
  ${instructionCount++}: ${c.cyanBright(`${cmd} dev`)}
 
 ✨ ${c.bold.magentaBright("Ready to collaborate!")}`);
