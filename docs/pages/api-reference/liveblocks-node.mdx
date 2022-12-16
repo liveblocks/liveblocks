@@ -48,13 +48,13 @@ export default async function auth(req, res) {
     userId: "123", // Optional
     groupIds: ["456"], // Optional
     userInfo: {
-      // Optional
+      // Optional refer to the type you set for UserMeta.info in your liveblocks.config.ts file 
       name: "Ada Lovelace",
+      color: "red"
     },
   });
   return res.status(response.status).end(response.body);
 }
-```
 
 ### Example using Express.js [#express-example]
 
@@ -85,6 +85,7 @@ app.post("/api/auth", (req, res) => {
     userInfo: {
       // Optional
       name: "Ada Lovelace",
+      color: "red"
     },
   })
     .then((authResponse) => {
