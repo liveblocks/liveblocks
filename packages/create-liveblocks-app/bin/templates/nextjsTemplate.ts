@@ -27,7 +27,7 @@ export async function create(flags: Record<string, any>) {
     {
       type: flags.name ? null : "text",
       name: "name",
-      message: "Where would you like to create your project?",
+      message: "What would you like to name your project directory?",
     },
     {
       type: "select",
