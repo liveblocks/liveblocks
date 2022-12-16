@@ -2,7 +2,7 @@ import degit from "degit";
 import { existsSync } from "fs";
 import { join } from "path";
 import c from "ansi-colors";
-import { loadingSpinner } from "./loadingSpinner.js";
+import { loadingSpinner } from "./loadingSpinner";
 
 type CloneRepo = {
   repoDir: string;

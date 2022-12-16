@@ -1,6 +1,6 @@
 import c from "ansi-colors";
-import { loadingSpinner } from "./loadingSpinner.js";
-import { execAsync } from "./execAsync.js";
+import { loadingSpinner } from "./loadingSpinner";
+import { execAsync } from "./execAsync";
 import { execSync } from "child_process";
 
 export async function initializeGit({ appDir }: { appDir: string }) {

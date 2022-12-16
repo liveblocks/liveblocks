@@ -3,10 +3,10 @@ import path from "path";
 import crypto from "crypto";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { cloneRepo } from "../utils/cloneRepo.js";
-import { initializeGit } from "../utils/initializeGit.js";
-import { install as installApp } from "../utils/install.js";
-import { getPackageManager } from "../utils/getPackageManager.js";
+import { cloneRepo } from "../utils/cloneRepo";
+import { initializeGit } from "../utils/initializeGit";
+import { install as installApp } from "../utils/install";
+import { getPackageManager } from "../utils/getPackageManager";
 import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
 
 // TODO change for guide on liveblocks.io when complete

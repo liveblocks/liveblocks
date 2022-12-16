@@ -1,7 +1,7 @@
 import c from "ansi-colors";
-import { PackageManager } from "./getPackageManager.js";
-import { loadingSpinner } from "./loadingSpinner.js";
-import { execAsync } from "./execAsync.js";
+import { PackageManager } from "./getPackageManager";
+import { loadingSpinner } from "./loadingSpinner";
+import { execAsync } from "./execAsync";
 
 type Props = {
   packageManager: PackageManager;
