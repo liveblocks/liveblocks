@@ -22,18 +22,26 @@ export async function cloneRepo({ repoDir, appDir }: CloneRepo) {
         finalResult = result;
       } else {
         spinner.fail(c.redBright.bold("Repo does not exist: ") + repoDir);
+        console.log();
+        process.exit(0);
       }
     } else {
-      spinner.fail(c.redBright.bold("Problem downloading repo"));
+      spinner.fail(c.redBright.bold("Problem downloading repo:"));
+      console.log();
       console.log(result.message);
+      console.log();
+      process.exit(0);
     }
   });
 
   try {
     await emitter.clone(appDir);
   } catch (err) {
-    spinner.fail(c.redBright.bold("Problem downloading repo"));
+    spinner.fail(c.redBright.bold("Problem downloading repo:"));
+    console.log();
     console.log(err);
+    console.log();
+    process.exit(0);
   }
 
   if (finalResult) {

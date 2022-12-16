@@ -5,6 +5,7 @@ import { cloneRepo } from "../utils/cloneRepo.js";
 import { initializeGit } from "../utils/initializeGit.js";
 import { install as installApp } from "../utils/install.js";
 import { getPackageManager } from "../utils/getPackageManager.js";
+import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
 
 export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
 export const EXAMPLES_URL =
@@ -48,32 +49,30 @@ export async function create(flags: Record<string, any>) {
     },
   ];
 
-  let cancelInstall = false;
-
   const {
     example = flags.example,
     name = flags.name,
     git = flags.git,
     install = flags.install,
   }: Questions = await prompts(questions, {
-    onCancel: () => (cancelInstall = true),
+    onCancel: () => {
+      console.log(c.redBright.bold("  Cancelled"));
+      console.log();
+      process.exit(0);
+    },
   });
 
-  console.log();
-
-  if (cancelInstall) {
-    console.log(c.redBright.bold("Cancelled"));
-    return;
-  }
-
-  const packageManager = flags.packageManager || getPackageManager();
   const repoDir = EXAMPLES_REPO_LOCATION + example;
   const appDir = path.join(process.cwd(), "./" + name);
+
+  await confirmDirectoryEmpty(appDir);
   const result = await cloneRepo({ repoDir, appDir });
 
   if (!result) {
     return;
   }
+
+  const packageManager = flags.packageManager || getPackageManager();
 
   if (install) {
     await installApp({

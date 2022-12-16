@@ -3,6 +3,7 @@ import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
 import * as nextjsTemplate from "./templates/nextjsTemplate.js";
 import * as exampleTemplate from "./templates/exampleTemplate.js";
+import readline from "readline";
 
 type TemplateName = "next" | "example";
 
@@ -52,6 +53,8 @@ export const commandLineFlags: OptionDefinition[] = [
 ];
 
 export async function createLiveblocksApp() {
+  listenForQuit();
+
   console.log(
     c.magentaBright(`
 ▀█████▀  ▄   
@@ -99,13 +102,50 @@ export async function createLiveblocksApp() {
   const {
     // If question skipped, use answer from flags
     template = flags.template,
-  }: { template: TemplateName } = await prompts(initialQuestions);
+  }: { template: TemplateName } = await prompts(initialQuestions, {
+    onCancel: () => {
+      console.log(c.redBright.bold("  Cancelled"));
+      console.log();
+      process.exit(0);
+    },
+  });
 
   if (!templates?.[template]) {
     console.log();
-    console.log(c.redBright.bold("Template not valid, try running the installer without flags"));
-    return;
+    console.log(
+      c.redBright.bold(
+        "Template not valid, try running the installer without flags"
+      )
+    );
+    console.log();
+    process.exit(0);
   }
 
   await templates[template].create(flags);
+  process.exit(0);
+}
+
+function listenForQuit() {
+  function closeTerminal() {
+    console.log();
+    console.log(c.redBright.bold("Cancelled"));
+    console.log();
+    process.exit(0);
+  }
+
+  if (process.platform === "win32") {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+      terminal: false,
+    });
+
+    rl.on("SIGINT", () => process.emit("SIGINT"));
+    rl.on("SIGQUIT", () => process.emit("SIGQUIT"));
+    rl.on("SIGTERM", () => process.emit("SIGTERM"));
+  }
+
+  process.on("SIGINT", closeTerminal);
+  process.on("SIGQUIT", closeTerminal);
+  process.on("SIGTERM", closeTerminal);
 }

@@ -7,6 +7,7 @@ import { cloneRepo } from "../utils/cloneRepo.js";
 import { initializeGit } from "../utils/initializeGit.js";
 import { install as installApp } from "../utils/install.js";
 import { getPackageManager } from "../utils/getPackageManager.js";
+import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
 
 // TODO change for guide on liveblocks.io when complete
 const NEXTJS_STARTER_KIT_GUIDE_URL =
@@ -72,32 +73,29 @@ export async function create(flags: Record<string, any>) {
     },
   ];
 
-  let cancelInstall = false;
-
   const {
     name = flags.name,
     auth = "demo",
     git = flags.git,
     install = flags.install,
   }: Questions = await prompts(questions, {
-    onCancel: () => (cancelInstall = true),
+    onCancel: () => {
+      console.log(c.redBright.bold("  Cancelled"));
+      console.log();
+      process.exit(0);
+    },
   });
-
-  console.log();
-
-  if (cancelInstall) {
-    console.log();
-    console.log(c.redBright.bold("Cancelled"));
-    return;
-  }
 
   const repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
   const appDir = path.join(process.cwd(), "./" + name);
+
+  await confirmDirectoryEmpty(appDir);
   const result = await cloneRepo({ repoDir, appDir });
 
   if (!result) {
     console.log();
-    console.log("Target repo is empty");
+    console.log(c.redBright.bold("Target repo is empty"));
+    console.log();
     return;
   }
 

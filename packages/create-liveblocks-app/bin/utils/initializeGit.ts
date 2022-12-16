@@ -29,9 +29,11 @@ export async function initializeGit({ appDir }: { appDir: string }) {
       options
     );
   } catch (err) {
-    spinner.fail(c.redBright.bold("Problem initializing git"));
+    spinner.fail(c.redBright.bold("Problem initializing git:"));
+    console.log();
     console.log(err);
-    return;
+    console.log();
+    process.exit(0);
   }
 
   spinner.succeed(c.green("Git initialized!"));

@@ -18,9 +18,11 @@ export async function install({ packageManager, appDir }: Props) {
       cwd: appDir,
     });
   } catch (err) {
-    spinner.fail(c.redBright.bold("Problem during installation"));
+    spinner.fail(c.redBright.bold("Problem during installation:"));
+    console.log();
     console.log(err);
-    return;
+    console.log();
+    process.exit(0);
   }
 
   spinner.succeed(c.green(`Installed with ${packageManager}!`));
