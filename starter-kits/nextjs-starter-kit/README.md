@@ -2,23 +2,19 @@
 
 ## Features
 
-<!--
-📄 Document listings page with pagination, drafts, and groups <br>
-🗒 Example collaborative app with a 2D whiteboard <br>
-👥 Live share menu with different permissions <br>
-✏ Create draft documents, then convert them to group documents <br>
+📄 Documents dashboard with pagination, drafts, groups, auto-revalidation <br>
+🗒 Collaborative whiteboard app with fully-featured share menu <br>
 🔑 Access can be granted to users, groups, and the public <br>
-🆔 NextAuth.js authentication, compatible with GitHub, Google, Auth0 etc. <br>
-👨🏻‍💻 Modify documents from both client & server in your app <br>
-🔁 Revalidate your data using custom SWR hooks <br>
--->
+🆔 Authentication compatible with GitHub, Google, Auth0, and more <br>
+✏ Type-safe client & server functions, and everything documented <br>
+✅ A great starting point for your collaborative application <br>
 
-📄 Documents dashboard with pagination, drafts, groups, auto-revalidation <br> 🗒
-Collaborative whiteboard app with fully-featured share menu <br> 🔑 Access can
-be granted to users, groups, and the public <br> 🆔 Authentication compatible
-with GitHub, Google, Auth0, and more <br> ✏ Type-safe client & server functions,
-and everything documented <br> ✅ A great starting point for your collaborative
-app <br>
+## Get started
+Get started by running the following command, and running through the instructions, before following the rest of the guide.
+
+```
+npx create-liveblocks-app --next
+```
 
 ## Liveblocks
 
@@ -30,10 +26,10 @@ collaboration. Here's how to get it running.
    project..."
 3. Create a new project with "Development" as the environment.
 4. Go to "API keys" on the side menu, reveal your secret key, and copy it
-5. Create a file called `.env.local` alongside `package.json` in your project.
+5. Go to your downloaded starter kit, and enter the file called `.env.local` alongside `package.json` in your project.
 6. Place your secret key into the file as `LIVEBLOCKS_SECRET_KEY`.
 
-Liveblocks will now work! Your `.env.local` file should look similar to this:
+Liveblocks will now work! Your `.env.local` file should contain a line similar to this:
 
 ```
 LIVEBLOCKS_SECRET_KEY=sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -71,48 +67,47 @@ implement it.
 9. Go back to the previous page and find the "Client ID" near the top. Copy this
    into your `.env.local` file as `GITHUB_ID`
 
-Almost there! `.env.local` should now look similar to this:
+Almost there! `.env.local` should now contain these two lines, along with anything previously there:
 
 ```
-LIVEBLOCKS_SECRET_KEY=sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
 
-#### Add the provider
-
-Next, go to `/pages/api/auth/[...nextAuth].ts` in your project, and add a GitHub
-provider:
-
-```ts
-import GithubProvider from "next-auth/providers/github";
-
-export const authOptions = {
-  // ...
-  providers: {
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    }),
-  }
-};
-```
-
-And remove `CredentialsProvider` from the same object, as this was only necessary for the demo authentication system:
-```ts
-export const authOptions = {
-  // ...
-  providers: {
-    // Delete from here
-    CredentialsProvider({
-      // ...
-    }),
-    // Until here
-  }
-};
-```
 GitHub authentication is now set up!
 
+</details>
+
+<details>
+  <summary>How to set up Auth0 authentication</summary>
+
+### GitHub authentication
+
+It's possible to allow users to sign up to your app using GitHub. This is how to
+implement it.
+
+1. Go to your [Auth 0 Dashboard](https://manage.auth0.com/dashboard) and click "Create Application"
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new app for each environment, so it's helpful to place "dev" in the name.
+3. Next, select "Single Page Web Applications", and press "Create"
+4. Copy your "Client ID" from the top of the page, and place it within `.env.local` as `AUTH0_CLIENT_ID`
+5. Click the "Settings" tab—we'll be making a number of changes here.
+6. Find the "Client Secret" input field, and copy the value into `.env.local` as `AUTH0_CLIENT_SECRET`
+7. Copy your "Domain" from the input field, add "https://" to the start, and place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`
+8. Add the following to the "Allowed Callback URLs" textarea: `http://localhost:3000/api/auth/callback/auth0`
+
+9. Add the following to the "Allowed Logout URLs" textarea: `http://localhost:3000`
+
+10. Scroll to the bottom and press "Save changes"
+
+`.env.local` should now contain these three lines, along with anything previously there:
+
+\```
+AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
+\```
+
+Auth0 authentication is now set up! Next, add yourself a user to test out your authentication.
 </details>
 
 ### How to sign up - add yourself as a user
@@ -132,6 +127,10 @@ Navigate there and add your details, for example, if you're signing in with
 ```
 
 ## Assorted info
+
+### Room vs Document
+
+A `Room` is a Liveblocks format for a collaborative space, whereas a `Document` is your application's custom document type. `Rooms` are converted to `Documents` inside the `/lib/server/documents` functions, ready to be used in the rest of the app.
 
 ### Data/error
 
@@ -290,7 +289,12 @@ Next run the following command to check for problems:
 npm run typecheck
 ```
 
-And now you're good to go!
+And you're good to go! The new property will now be available to use in your app:
+
+ ```tsx
+ // 0.91485821,
+ console.log(document.randomNumber);
+ ```
 
 ### How to extend the `User` & `Session` type
 
@@ -315,7 +319,7 @@ return { randomNumber: Math.random() /* ... */ };
 The new property will now be available to use in your app:
 
 ```tsx
-// randomNumber: Math.random(),
+// randomNumber: 0.7091672,
 console.log(session.user.info.randomNumber);
 ```
 
@@ -392,3 +396,25 @@ correct properties:
 - `/lib/server/database/getUser.ts`
 
 You can then remove the `/data` folder. Everything else should work correctly.
+
+### Permissions
+
+There are _four_ permission types in the starter kit. _Edit access_ is the maximum permission level you can give to public or team users, but **if you're added as a user (e.g. by email), you can't be given _edit access_, but you can be given _full access_**.
+
+**No access** - `DocumentAccess.NONE`
+Can't view the document.
+_Available for public permission level._
+
+**Read-only access** - `DocumentAccess.READONLY`
+Can only read the document.
+_Available for all permission levels._
+
+**Edit access** - `DocumentAccess.EDIT`
+Can read & edit the document.
+_Only available for public and team level permissions._
+
+**Full access** - `DocumentAccess.FULL`
+Can read & edit the document; can invite & delete users; can add & remove teams.
+_Only available for user (e.g. email) level permissions._
+
+To sum up—you must be added to the document by id (e.g. by email), and not be set to read-only, to change document permissions.
