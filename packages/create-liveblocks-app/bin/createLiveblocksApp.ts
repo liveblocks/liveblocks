@@ -50,6 +50,11 @@ export const commandLineFlags: OptionDefinition[] = [
     name: "no-git",
     type: Boolean,
   },
+  // For Next.js starter kit
+  {
+    name: "auth",
+    type: String,
+  },
 ];
 
 export async function createLiveblocksApp() {

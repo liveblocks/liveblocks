@@ -15,9 +15,11 @@ const NEXTJS_STARTER_KIT_GUIDE_URL =
 const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
   "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
 
+const AUTH_PROVIDERS = ["demo", "github", "auth0"] as const;
+
 type Questions = {
   name: string;
-  auth: "demo" | "github" | "auth0";
+  auth: typeof AUTH_PROVIDERS[number];
   prettier: boolean;
   git: boolean;
   install: boolean;
@@ -31,7 +33,7 @@ export async function create(flags: Record<string, any>) {
       message: "What would you like to name your project directory?",
     },
     {
-      type: "select",
+      type: flags.auth && AUTH_PROVIDERS.includes(flags.auth) ? null : "select",
       name: "auth",
       message: "Which authentication method would you like to use?",
       choices: [
@@ -75,7 +77,7 @@ export async function create(flags: Record<string, any>) {
 
   const {
     name = flags.name,
-    auth = "demo",
+    auth = flags.auth,
     git = flags.git,
     install = flags.install,
   }: Questions = await prompts(questions, {
@@ -186,6 +188,7 @@ export async function create(flags: Record<string, any>) {
     console.log(c.bold("Read the guide to finish setting up your app:"));
   }
   console.log(NEXTJS_STARTER_KIT_GUIDE_URL);
+  console.log();
 }
 
 // Get environment variables required for your auth solution

@@ -101,4 +101,5 @@ ${c.bold("Start developing by typing:")}
  ${instructionCount++}: ${c.cyanBright(`${cmd} dev`)}
 
 ✨ ${c.bold.magentaBright("Ready to collaborate!")}`);
+  console.log();
 }
