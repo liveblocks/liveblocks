@@ -25,7 +25,7 @@ export async function initializeGit({ appDir }: { appDir: string }) {
     await execAsync("git checkout -b main", options);
     await execAsync("git add -A", options);
     await execAsync(
-      'git commit -m "Initial commit from create-liveblocks-app',
+      'git commit -m "Initial commit from create-liveblocks-app"',
       options
     );
   } catch (err) {
