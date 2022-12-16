@@ -44,6 +44,10 @@ Options:
   Select your package manager, default is `npm`
   e.g `--package-manager yarn`
   
+  --auth [`demo`|`github`|`auth0`]
+  Select your authentication method. Option only for Next.js Starter Kit. 
+  e.g. `--auth github`
+  
   --install
   Install the project with the selected package manager
   
@@ -55,7 +59,7 @@ Options:
   
   --no-git
   Don't initialize git
-
+ 
 ```
 
 #### Examples
@@ -67,4 +71,9 @@ npx create-liveblocks-app --next --no-install
 Example from Liveblocks repo with directory/project name specified:
 ```
 npx create-liveblocks-app --example nextjs-live-avatars --name my-liveblocks-app
+```
+
+Next.js Starter Kit with every option:
+```
+npx create-liveblocks-app --next --name my-project --auth github --package-manager npm --install --git 
 ```
