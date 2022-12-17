@@ -15,8 +15,7 @@
     "@types/degit": "^2.8.3",
     "@types/node": "^17.0.39",
     "@types/prompts": "^2.4.1",
-    "esbuild": "^0.15.12",
-    "pre-commit": "^1.2.2"
+    "esbuild": "^0.15.12"
   },
   "dependencies": {
     "ansi-colors": "^4.1.3",

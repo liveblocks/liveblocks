@@ -108,6 +108,7 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   connection: Callback<ConnectionState>;
   history: Callback<HistoryEvent>;
+  "pending-storage-modifications": Callback<PendingHasModificationsEvent>;
 };
 
 export interface History {
@@ -189,10 +190,14 @@ export interface History {
   resume: () => void;
 }
 
-export interface HistoryEvent {
+export type HistoryEvent = {
   canUndo: boolean;
   canRedo: boolean;
-}
+};
+
+export type PendingHasModificationsEvent = {
+  hasPendingStorageModifications: boolean;
+};
 
 export type RoomEventName = Extract<
   keyof RoomEventCallbackMap<never, never, never>,
@@ -353,9 +358,23 @@ export type Room<
      * room.subscribe("history", ({ canUndo, canRedo }) => {
      *   // Do something
      * });
-     *
      */
     (type: "history", listener: Callback<HistoryEvent>): () => void;
+
+    /**
+     * Subscribe to pending storage modifications updates.
+     *
+     * @returns Unsubscribe function.
+     *
+     * @example
+     * room.subscribe("pending-storage-modifications", ({ hasPendingStorageModifications }) => {
+     *   // Do something
+     * });
+     */
+    (
+      type: "pending-storage-modifications",
+      listener: Callback<PendingHasModificationsEvent>
+    ): () => void;
   };
 
   /**
@@ -588,6 +607,7 @@ type Machine<
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
     readonly storageDidLoad: Observable<void>;
+    readonly pendingStorageModifications: Observable<PendingHasModificationsEvent>;
   };
 
   // Core
@@ -844,6 +864,8 @@ function makeStateMachine<
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
+    pendingStorageModifications:
+      makeEventSource<PendingHasModificationsEvent>(),
   };
 
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
@@ -1090,6 +1112,8 @@ function makeStateMachine<
       }
     });
 
+    const hasPendingStorageModifs = hasPendingStorageModifications();
+
     for (const op of ops) {
       if (op.type === "presence") {
         const reverse = {
@@ -1159,6 +1183,12 @@ function makeStateMachine<
           }
         }
       }
+    }
+
+    if (hasPendingStorageModifs && hasPendingStorageModifications() === false) {
+      eventHub.pendingStorageModifications.notify({
+        hasPendingStorageModifications: false,
+      });
     }
 
     return {
@@ -1293,6 +1323,11 @@ function makeStateMachine<
 
         case "history":
           return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
+
+        case "pending-storage-modifications":
+          return eventHub.pendingStorageModifications.subscribe(
+            callback as Callback<PendingHasModificationsEvent>
+          );
 
         // istanbul ignore next
         default:
@@ -1837,9 +1872,15 @@ function makeStateMachine<
     const storageOps = state.buffer.storageOperations;
 
     if (storageOps.length > 0) {
+      const hasAlreadyPendingModifications = hasPendingStorageModifications();
       storageOps.forEach((op) => {
         state.offlineOperations.set(nn(op.opId), op);
       });
+      if (!hasAlreadyPendingModifications) {
+        eventHub.pendingStorageModifications.notify({
+          hasPendingStorageModifications: true,
+        });
+      }
     }
 
     if (
@@ -2206,6 +2247,7 @@ function makeStateMachine<
       storage: eventHub.storage.observable,
       history: eventHub.history.observable,
       storageDidLoad: eventHub.storageDidLoad.observable,
+      pendingStorageModifications: eventHub.pendingStorageModifications,
     },
 
     // Core

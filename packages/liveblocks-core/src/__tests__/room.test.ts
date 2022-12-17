@@ -1289,6 +1289,12 @@ describe("room", () => {
 
       expect(machine.hasPendingStorageModifications()).toBe(false);
 
+      const pendingStorageModificationsCallback = jest.fn();
+
+      machine.events.pendingStorageModifications.subscribe(
+        pendingStorageModificationsCallback
+      );
+
       ws.closeFromBackend(
         new CloseEvent("close", {
           code: WebsocketCloseCodes.CLOSE_ABNORMAL,
@@ -1298,6 +1304,9 @@ describe("room", () => {
 
       storage.root.set("x", 1);
 
+      expect(pendingStorageModificationsCallback).toBeCalledWith({
+        hasPendingStorageModifications: true,
+      });
       expect(machine.hasPendingStorageModifications()).toBe(true);
 
       const storageJson = lsonToJson(storage.root);
@@ -1315,6 +1324,11 @@ describe("room", () => {
         x: 1,
       });
       expect(machine.hasPendingStorageModifications()).toBe(false);
+      expect(pendingStorageModificationsCallback).toBeCalledWith({
+        hasPendingStorageModifications: false,
+      });
+
+      expect(pendingStorageModificationsCallback).toHaveBeenCalledTimes(2);
     });
   });
 
