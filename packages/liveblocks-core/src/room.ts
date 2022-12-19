@@ -529,7 +529,8 @@ export function isRoomEventName(value: string): value is RoomEventName {
     value === "event" ||
     value === "error" ||
     value === "connection" ||
-    value === "history"
+    value === "history" ||
+    value === "pending-storage-modifications"
   );
 }
 
