@@ -90,6 +90,16 @@ export type Connection =
 
 export type ConnectionState = Connection["state"];
 
+export type StorageStatus =
+  /* The storage is not loaded and has not been requested. */
+  | "not-loaded"
+  /* The storage is loading from Liveblocks servers */
+  | "loading"
+  /* Some storage modifications has not been acknowledged yet by the server */
+  | "synchronizing"
+  /* The storage is sync with Liveblocks servers */
+  | "synchronized";
+
 type RoomEventCallbackMap<
   TPresence extends JsonObject,
   TUserMeta extends BaseUserMeta,
@@ -108,7 +118,7 @@ type RoomEventCallbackMap<
   error: Callback<Error>;
   connection: Callback<ConnectionState>;
   history: Callback<HistoryEvent>;
-  "pending-storage-modifications": Callback<PendingHasModificationsEvent>;
+  "storage-status": Callback<StorageStatus>;
 };
 
 export interface History {
@@ -193,10 +203,6 @@ export interface History {
 export type HistoryEvent = {
   canUndo: boolean;
   canRedo: boolean;
-};
-
-export type PendingHasModificationsEvent = {
-  hasPendingStorageModifications: boolean;
 };
 
 export type RoomEventName = Extract<
@@ -362,19 +368,18 @@ export type Room<
     (type: "history", listener: Callback<HistoryEvent>): () => void;
 
     /**
-     * Subscribe to pending storage modifications updates.
+     * Subscribe to storage status changes.
      *
      * @returns Unsubscribe function.
      *
      * @example
-     * room.subscribe("pending-storage-modifications", ({ hasPendingStorageModifications }) => {
-     *   // Do something
+     * room.subscribe("storage-status", (status) => {
+     *   switch(status) {
+     *      case
+     *   }
      * });
      */
-    (
-      type: "pending-storage-modifications",
-      listener: Callback<PendingHasModificationsEvent>
-    ): () => void;
+    (type: "storage-status", listener: Callback<StorageStatus>): () => void;
   };
 
   /**
@@ -500,9 +505,9 @@ export type Room<
   batch<T>(fn: () => T): T;
 
   /**
-   * Whether or not the room has storage modifications that have not been acknowledged by the server.
+   * Get the storage status.
    */
-  hasPendingStorageModifications(): boolean;
+  getStorageStatus(): StorageStatus;
 
   /**
    * Close room connection and try to reconnect
@@ -589,12 +594,12 @@ type Machine<
   canRedo(): boolean;
   pauseHistory(): void;
   resumeHistory(): void;
-  hasPendingStorageModifications(): boolean;
 
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
   }>;
   getStorageSnapshot(): LiveObject<TStorage> | null;
+  getStorageStatus(): StorageStatus;
 
   readonly events: {
     readonly customEvent: Observable<CustomEvent<TRoomEvent>>;
@@ -608,7 +613,7 @@ type Machine<
     readonly storage: Observable<StorageUpdate[]>;
     readonly history: Observable<HistoryEvent>;
     readonly storageDidLoad: Observable<void>;
-    readonly pendingStorageModifications: Observable<PendingHasModificationsEvent>;
+    readonly storageStatus: Observable<StorageStatus>;
   };
 
   // Core
@@ -865,8 +870,7 @@ function makeStateMachine<
     storage: makeEventSource<StorageUpdate[]>(),
     history: makeEventSource<HistoryEvent>(),
     storageDidLoad: makeEventSource<void>(),
-    pendingStorageModifications:
-      makeEventSource<PendingHasModificationsEvent>(),
+    storageStatus: makeEventSource<StorageStatus>(),
   };
 
   const effects: Effects<TPresence, TRoomEvent> = mockedEffects || {
@@ -1113,8 +1117,6 @@ function makeStateMachine<
       }
     });
 
-    const hasPendingStorageModifs = hasPendingStorageModifications();
-
     for (const op of ops) {
       if (op.type === "presence") {
         const reverse = {
@@ -1186,11 +1188,7 @@ function makeStateMachine<
       }
     }
 
-    if (hasPendingStorageModifs && hasPendingStorageModifications() === false) {
-      eventHub.pendingStorageModifications.notify({
-        hasPendingStorageModifications: false,
-      });
-    }
+    notifyStorageStatus();
 
     return {
       ops,
@@ -1325,9 +1323,9 @@ function makeStateMachine<
         case "history":
           return eventHub.history.subscribe(callback as Callback<HistoryEvent>);
 
-        case "pending-storage-modifications":
-          return eventHub.pendingStorageModifications.subscribe(
-            callback as Callback<PendingHasModificationsEvent>
+        case "storage-status":
+          return eventHub.storageStatus.subscribe(
+            callback as Callback<StorageStatus>
           );
 
         // istanbul ignore next
@@ -1668,6 +1666,7 @@ function makeStateMachine<
             if (_getInitialStateResolver !== null) {
               _getInitialStateResolver();
             }
+            notifyStorageStatus();
             eventHub.storageDidLoad.notify();
             break;
           }
@@ -1873,15 +1872,10 @@ function makeStateMachine<
     const storageOps = state.buffer.storageOperations;
 
     if (storageOps.length > 0) {
-      const hasAlreadyPendingModifications = hasPendingStorageModifications();
       storageOps.forEach((op) => {
         state.offlineOperations.set(nn(op.opId), op);
       });
-      if (!hasAlreadyPendingModifications) {
-        eventHub.pendingStorageModifications.notify({
-          hasPendingStorageModifications: true,
-        });
-      }
+      notifyStorageStatus();
     }
 
     if (
@@ -2021,6 +2015,7 @@ function makeStateMachine<
       _getInitialStatePromise = new Promise(
         (resolve) => (_getInitialStateResolver = resolve)
       );
+      notifyStorageStatus();
     }
     return _getInitialStatePromise;
   }
@@ -2184,10 +2179,6 @@ function makeStateMachine<
     }
   }
 
-  function hasPendingStorageModifications() {
-    return state.offlineOperations.size > 0;
-  }
-
   function simulateSocketClose() {
     if (state.socket) {
       state.socket = null;
@@ -2200,6 +2191,36 @@ function makeStateMachine<
     reason: string;
   }) {
     onClose(event);
+  }
+
+  function getStorageStatus(): StorageStatus {
+    if (state.root != null) {
+      return state.offlineOperations.size === 0
+        ? "synchronized"
+        : "synchronizing";
+    }
+
+    if (_getInitialStatePromise != null) {
+      return "loading";
+    }
+
+    return "not-loaded";
+  }
+
+  /**
+   * Storage status is a computed value based other internal states so we need to keep a reference to the previous computed value to avoid triggering events when it does not change
+   * This is far from ideal because we need to call this function whenever we update our internal states.
+   *
+   * TODO: Encapsulate our internal state differently to make sure this event is triggered whenever necessary.
+   * Currently okay because we only have 4 callers and shielded by tests.
+   */
+  let _lastStorageStatus = getStorageStatus();
+  function notifyStorageStatus() {
+    const storageStatus = getStorageStatus();
+    if (_lastStorageStatus !== storageStatus) {
+      _lastStorageStatus = storageStatus;
+      eventHub.storageStatus.notify(storageStatus);
+    }
   }
 
   return {
@@ -2234,10 +2255,10 @@ function makeStateMachine<
     canRedo,
     pauseHistory,
     resumeHistory,
-    hasPendingStorageModifications,
 
     getStorage,
     getStorageSnapshot,
+    getStorageStatus,
 
     events: {
       customEvent: eventHub.customEvent.observable,
@@ -2248,7 +2269,7 @@ function makeStateMachine<
       storage: eventHub.storage.observable,
       history: eventHub.history.observable,
       storageDidLoad: eventHub.storageDidLoad.observable,
-      pendingStorageModifications: eventHub.pendingStorageModifications,
+      storageStatus: eventHub.storageStatus.observable,
     },
 
     // Core
@@ -2386,6 +2407,7 @@ export function createRoom<
     //////////////
     getStorage: machine.getStorage,
     getStorageSnapshot: machine.getStorageSnapshot,
+    getStorageStatus: machine.getStorageStatus,
     events: machine.events,
 
     batch: machine.batch,
@@ -2397,7 +2419,6 @@ export function createRoom<
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
-    hasPendingStorageModifications: machine.hasPendingStorageModifications,
 
     __INTERNAL_DO_NOT_USE: {
       simulateCloseWebsocket: machine.simulateSocketClose,
