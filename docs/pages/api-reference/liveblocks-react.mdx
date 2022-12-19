@@ -495,7 +495,7 @@ This hook returns `null` while storage is still loading. To avoid that, use the
 It’s recommended to select only the subset of Storage data that your component
 needs. This will avoid unnecessary rerenders that happen with overselection.
 
-In order to select one item from a LiveMap within the storage tree with the `useStorage` method you can use the example below: 
+In order to select one item from a LiveMap within the storage tree with the `useStorage` method, you can use the example below: 
 ```ts
 const key = 'errands'
 const myTodos = useStorage(root => root.todoMap.get(key))
