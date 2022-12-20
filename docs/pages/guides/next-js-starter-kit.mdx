@@ -7,6 +7,12 @@ meta:
 
 In this guide, you'll learn how to build a document-based product using standard collaborative patterns.  This guide will help you to understand how to navigate, organize, and create new documents while managing user permissions and authentication.
 
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/next-js-starter-kit/starter-kit.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
 ## Features
 The Next.js Starter Kit will include the following 
 - Documents dashboard with pagination, drafts, groups, auto-revalidation
@@ -16,6 +22,176 @@ The Next.js Starter Kit will include the following
 
 
 ## Set up the Next.js Starter Kit
+The starter guide has the following structure:
+```
+|____types
+|____liveblocks.config.ts
+|____next.config.js
+|____next-auth.d.ts
+|____utils
+|____next-env.d.ts
+|____primitives
+| |____Tooltip
+| |____Input
+| |____Skeleton
+| |____Checkbox
+| |____Spinnerx
+| |____Dialog
+| |____Popover
+| |____Container
+| |____Button
+| |____Avatar
+| |____Select
+|____styles
+| |____normalize.css
+| |____globals.css
+|____components
+| |____Whiteboard
+| |____ShareDialog
+| |____Document
+| |____Dashboard
+| |____Logo
+| |____Marketing
+| |____Documents
+| |____Cursors
+| |____Badge
+|____layouts
+| |____Authenticated
+| |____Document
+| |____Dashboard
+| |____Marketing
+| |____Documents
+| |____Error
+| |____Authentication
+|____constants.ts
+|____icons
+|____dir
+|____lib
+| |____server
+| | |____database
+| | | |____getGroup.ts
+| | | |____getUser.ts
+| | | |____getGroups.ts
+| | | |____index.ts
+| | |____notify
+| | | |____notify.ts
+| | | |____index.ts
+| | |____auth
+| | | |____getServerSession.ts
+| | | |____index.ts
+| | |____utils
+| | | |____buildDocumentUsers.ts
+| | | |____fetchLiveblocksApi.ts
+| | | |____userAllowedInRooms.ts
+| | | |____getDraftsGroupName.ts
+| | | |____convertAccessType.ts
+| | | |____buildDocuments.ts
+| | | |____buildDocumentGroups.ts
+| | | |____isUserDocumentOwner.ts
+| | | |____index.ts
+| | | |____getRandom.ts
+| | |____index.ts
+| | |____documents
+| | | |____getDocuments.ts
+| | | |____getLiveUsers.ts
+| | | |____updateUserAccess.ts
+| | | |____getDocumentGroups.ts
+| | | |____deleteDocument.ts
+| | | |____createDocument.ts
+| | | |____updateGroupAccess.ts
+| | | |____getNextDocuments.ts
+| | | |____updateDefaultAccess.ts
+| | | |____updateDocument.ts
+| | | |____getDocumentUsers.ts
+| | | |____removeUserAccess.ts
+| | | |____index.ts
+| | | |____getDocument.ts
+| | | |____removeGroupAccess.ts
+| | |____liveblocks
+| | | |____getNextRooms.ts
+| | | |____initializeStorage.ts
+| | | |____getActiveUsers.ts
+| | | |____getStorage.ts
+| | | |____createRoom.ts
+| | | |____getActiveUsersInRooms.ts
+| | | |____deleteRoom.ts
+| | | |____updateRoom.ts
+| | | |____deleteStorage.ts
+| | | |____getRooms.ts
+| | | |____getRoom.ts
+| | | |____authorize.ts
+| | | |____index.ts
+| |____client
+| | |____database
+| | | |____getGroup.ts
+| | | |____getUser.ts
+| | | |____getGroups.ts
+| | | |____index.ts
+| | |____utils
+| | | |____getDocumentAccess.ts
+| | | |____fetchApiEndpoint.ts
+| | | |____index.ts
+| | |____hooks
+| | | |____useDocumentsFunctionSWR.ts
+| | | |____index.ts
+| | | |____usePaginatedDocumentsSWR.ts
+| | |____index.ts
+| | |____documents
+| | | |____getDocuments.ts
+| | | |____getLiveUsers.ts
+| | | |____updateUserAccess.ts
+| | | |____updateDocumentName.ts
+| | | |____getDocumentGroups.ts
+| | | |____deleteDocument.ts
+| | | |____createDocument.ts
+| | | |____updateGroupAccess.ts
+| | | |____getNextDocuments.ts
+| | | |____updateDefaultAccess.ts
+| | | |____getDocumentUsers.ts
+| | | |____removeUserAccess.ts
+| | | |____index.ts
+| | | |____getDocument.ts
+| | | |____removeGroupAccess.ts
+|____tsconfig.json
+|____data
+| |____colors.ts
+| |____groups.ts
+| |____users.ts
+|____pages
+| |____index.tsx
+| |____whiteboard
+| | |____[id].tsx
+| |____index.module.css
+| |____dashboard
+| | |____index.tsx
+| | |____drafts.tsx
+| | |____group
+| | | |____[groupId].tsx
+| |____api
+| | |____database
+| | | |____groups.ts
+| | | |____users.ts
+| | |____auth
+| | | |____[...nextauth].ts
+| | |____liveblocks
+| | | |____documents
+| | | | |____next.ts
+| | | | |____[documentId]
+| | | | | |____defaultAccess.ts
+| | | | | |____groups.ts
+| | | | | |____users.ts
+| | | | | |____index.ts
+| | | | |____liveUsers.ts
+| | | | |____index.ts
+| | | | |____create.ts
+| | | |____auth.ts
+| |_____app.tsx
+| |____signin.tsx
+|____structure
+|
+``` 
+The important thing to note is that there are primitives, which are base level components such as buttons (think of these as the small building blocks of a page), components, which you can think of as multiplayer impementations (cursors, badges, etc), pages, which render document level experiences and both server side and client side methods which contain the logic to create and modify documments.
+
 ### Liveblocks Configuration
 If you already have a Liveblocks Development account, you may skip to step 4.
 1. Create an account at [liveblocks.io](https://liveblocks.io])
