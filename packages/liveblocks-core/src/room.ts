@@ -375,7 +375,16 @@ export type Room<
      * @example
      * room.subscribe("storage-status", (status) => {
      *   switch(status) {
-     *      case
+     *      case "not-loaded":
+     *        break;
+     *      case "loading":
+     *        break;
+     *      case "synchronizing":
+     *        break;
+     *      case "synchronized":
+     *        break;
+     *      default:
+     *        break;
      *   }
      * });
      */
@@ -506,6 +515,11 @@ export type Room<
 
   /**
    * Get the storage status.
+   *
+   * - `not-loaded`: Initial state when entering the room.
+   * - `loading`: Once the storage has been requested via room.getStorage().
+   * - `synchronizing`: When some local updates have not been acknowledged by Liveblocks servers.
+   * - `synchronized`: Storage is in sync with Liveblocks servers.
    */
   getStorageStatus(): StorageStatus;
 
@@ -2197,11 +2211,11 @@ function makeStateMachine<
     if (_getInitialStatePromise === null) {
       return "not-loaded";
     }
-    
+
     if (state.root === undefined) {
       return "loading";
     }
-    
+
     return state.offlineOperations.size === 0
       ? "synchronized"
       : "synchronizing";
