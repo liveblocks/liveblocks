@@ -2194,13 +2194,13 @@ function makeStateMachine<
   }
 
   function getStorageStatus(): StorageStatus {
-    if (state.root != null) {
+    if (state.root !== undefined) {
       return state.offlineOperations.size === 0
         ? "synchronized"
         : "synchronizing";
     }
 
-    if (_getInitialStatePromise != null) {
+    if (_getInitialStatePromise !== null) {
       return "loading";
     }
 
