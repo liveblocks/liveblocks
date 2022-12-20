@@ -400,6 +400,29 @@ room.subscribe("history", ({ canUndo, canRedo }) => {
 });
 ```
 
+### Room.subscribe("storage-status") [#Room.subscribe.storage-status]
+
+Subscribe to storage status changes.
+
+Returns an unsubscribe function.
+
+```typescript
+room.subscribe("storage-status", (status) => {
+  switch (status) {
+    case "not-loaded":
+      break;
+    case "loading":
+      break;
+    case "synchronizing":
+      break;
+    case "synchronized":
+      break;
+    default:
+      break;
+  }
+});
+```
+
 ### Room.batch
 
 Batches modifications made during the given function.
@@ -506,14 +529,27 @@ room.history.undo();
 // room.getPresence() equals { cursor: { x: 0, y: 0 } }
 ```
 
-### Room.hasPendingStorageModifications
+### Room.getStorageStatus
 
-Whether or not the room has storage modifications that have not been
-acknowledged by the server.
+Get the storage status.
+
+- `not-loaded`: Initial state when entering the room.
+- `loading`: Once the storage has been requested via room.getStorage().
+- `synchronizing`: When some local updates have not been acknowledged by
+  Liveblocks servers.
+- `synchronized`: Storage is in sync with Liveblocks servers.
+
+```ts
+const status = room.getStorageStatus();
+```
 
 ### Room.reconnect
 
-Close room connection and try to reconnect.
+Close the room connection and try to reconnect.
+
+```ts
+room.reconnect();
+```
 
 ## Storage
 
