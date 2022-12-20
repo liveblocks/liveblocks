@@ -1,3 +1,42 @@
+# v0.19.3
+
+In **@liveblocks/client**:
+
+## Room.getStorageStatus
+
+Get the storage status.
+- `not-loaded`: Initial state when entering the room.
+- `loading`: Once the storage has been requested via room.getStorage().
+- `synchronizing`: When some local updates have not been acknowledged by Liveblocks servers.
+- `synchronized`: Storage is in sync with Liveblocks servers.
+
+## Room.subscribe("storage-status", status => { })
+
+Subscribe to storage status changes.
+
+Returns an unsubscribe function.
+
+```typescript
+room.subscribe("storage-status", (status) => {
+  switch(status) {
+     case "not-loaded":
+       break;
+     case "loading":
+       break;
+     case "synchronizing":
+       break;
+     case "synchronized":
+       break;
+     default:
+       break;
+  }
+});
+```
+
+## Room.reconnect
+
+Close the room connection and try to reconnect.
+
 # v0.19.2
 
 Fixes some internal type definitions.
