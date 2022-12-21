@@ -12,18 +12,35 @@ export async function initializeGit({ appDir }: { appDir: string }) {
   } as const;
 
   try {
-    const insideRepo = execSync("git rev-parse --is-inside-work-tree", {
+    // Check git installed
+    await execAsync("git --version", {
       cwd: appDir,
       encoding: "utf-8",
     });
 
-    if (insideRepo === "true") {
+    // Check if inside a repo
+    let insideRepo;
+    try {
+      const result = execSync("git rev-parse --is-inside-work-tree", {
+        cwd: appDir,
+        encoding: "utf-8",
+      });
+      insideRepo = result === "true";
+    } catch (err) {
+      // Error means not inside a repo
+      insideRepo = false;
+    }
+
+    // Skip rest of function if already inside a repo
+    if (insideRepo) {
       return;
     }
 
     await execAsync("git init", options);
     await execAsync("git checkout -b main", options);
+    spinner.text = "Adding files...";
     await execAsync("git add -A", options);
+    spinner.text = "Making first commit...";
     await execAsync(
       'git commit -m "Initial commit from create-liveblocks-app"',
       options

@@ -79,8 +79,6 @@ export async function create(flags: Record<string, any>) {
       appDir: appDir,
       packageManager: packageManager,
     });
-  } else {
-    console.log(c.yellowBright("Skipping install..."));
   }
 
   if (git) {
