@@ -21,9 +21,13 @@ This example shows how to build a live cursors with [Liveblocks](https://liveblo
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="536" alt="Live Cursors" />
 
+```
+npx create-liveblocks-app --example solidjs-live-cursors
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`index.jsx`](./src/index.jsx) with your **public** key

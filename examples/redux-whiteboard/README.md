@@ -23,9 +23,13 @@ This example shows how to build a collaborative whiteboard with
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/whiteboard.png" width="536" alt="Collaborative Whiteboard" />
 
+```
+npx create-liveblocks-app --example redux-whiteboard
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)

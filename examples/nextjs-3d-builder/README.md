@@ -22,9 +22,13 @@ This example shows how to build a collaborative 3D builder with [Liveblocks](htt
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/3d-builder.png" width="536" alt="Multiplayer 3D Builder" />
 
+```
+npx create-liveblocks-app --example nextjs-
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **public** key as the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable

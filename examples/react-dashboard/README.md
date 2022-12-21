@@ -20,9 +20,13 @@ This example shows how to build collaborative data visualization with [Liveblock
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/dashboard.png" width="536" alt="Multiplayer Dashboard" />
 
+```
+npx create-liveblocks-app --example react-dashboard
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`liveblocks.config.js`](./src/liveblocks.config.js) by your **public** key

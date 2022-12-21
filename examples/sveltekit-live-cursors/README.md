@@ -21,9 +21,13 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-cursors.png" width="536" alt="Live Cursors" />
 
+```
+npx create-liveblocks-app --example sveltekit-live-cursors
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the `VITE_LIVEBLOCKS_SECRET_KEY` environment variable

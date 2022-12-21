@@ -21,9 +21,13 @@ This example shows how to build a live avatar stack with [Liveblocks](https://li
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/live-avatars.png" width="536" alt="Live Avatar Stack" />
 
+```
+npx create-liveblocks-app --example solidjs-live-avatars
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`index.jsx`](./src/index.jsx) with your **public** key

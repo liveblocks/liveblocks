@@ -18,9 +18,13 @@ This example shows how to build an advanced collaborative spreadsheet with [Live
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/collaborative-spreadsheet-advanced.png" width="536" alt="Collaborative Spreadsheet (Advanced)" />
 
+```
+npx create-liveblocks-app --example nextjs-spreadsheet-advanced
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable

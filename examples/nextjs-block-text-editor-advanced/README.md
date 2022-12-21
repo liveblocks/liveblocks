@@ -22,9 +22,13 @@ This example shows how to build a collaborative block text editor with
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/block-text-editor-advanced.png" width="536" alt="Collaborative Block Text Editor (Advanced)" />
 
+```
+npx create-liveblocks-app --example nextjs-block-text-editor-advanced
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **secret** key from the
   [dashboard](https://liveblocks.io/dashboard/apikeys)

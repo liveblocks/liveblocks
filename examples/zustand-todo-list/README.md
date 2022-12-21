@@ -23,9 +23,13 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/examples/todo-list.png" width="536" alt="Collaborative To-do List" />
 
+```
+npx create-liveblocks-app --example zustand-todo-list
+```
+
 ## Getting started
 
-- Install all dependencies with `npm install`
+- Download and install the project with the above command
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Replace `pk_YOUR_PUBLIC_KEY` in [`store.ts`](./src/store.ts) by your **public** key
