@@ -21,6 +21,8 @@ type Questions = {
 };
 
 export async function create(flags: Record<string, any>) {
+  const packageManager = flags.packageManager || getPackageManager();
+
   const questions: PromptObject<keyof Questions>[] = [
     {
       type: flags.example ? null : "text",
@@ -44,7 +46,7 @@ export async function create(flags: Record<string, any>) {
     {
       type: flags.install !== undefined ? null : "confirm",
       name: "install",
-      message: "Would you like to install?",
+      message: `Would you like to install with ${packageManager}?`,
       initial: true,
       active: "yes",
       inactive: "no",
@@ -73,8 +75,6 @@ export async function create(flags: Record<string, any>) {
   if (!result) {
     return;
   }
-
-  const packageManager = flags.packageManager || getPackageManager();
 
   if (install) {
     await installApp({

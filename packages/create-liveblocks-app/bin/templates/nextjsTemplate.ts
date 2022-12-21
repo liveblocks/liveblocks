@@ -26,6 +26,8 @@ type Questions = {
 };
 
 export async function create(flags: Record<string, any>) {
+  const packageManager = flags.packageManager || getPackageManager();
+
   const questions: PromptObject<keyof Questions>[] = [
     {
       type: flags.name ? null : "text",
@@ -68,7 +70,7 @@ export async function create(flags: Record<string, any>) {
     {
       type: flags.install !== undefined ? null : "confirm",
       name: "install",
-      message: "Would you like to install?",
+      message: `Would you like to install with ${packageManager}?`,
       initial: true,
       active: "yes",
       inactive: "no",
@@ -101,7 +103,6 @@ export async function create(flags: Record<string, any>) {
     return;
   }
 
-  const packageManager = flags.packageManager || getPackageManager();
   const filesToWrite: { location: string; content: string }[] = [];
 
   // Set up authentication
