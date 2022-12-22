@@ -1,4 +1,4 @@
-import type { Json, JsonObject } from "@liveblocks/core";
+import type { Json, JsonArray, JsonObject } from "@liveblocks/core";
 import unquotedPropertyValidator from "unquoted-property-validator";
 
 export const SEPARATOR = ", ";
@@ -24,12 +24,16 @@ export function stringify(
   value?: Json,
   maxDepth = 1,
   depth = 0,
-  seen = new WeakSet<JsonObject>()
+  seen = new WeakSet<JsonObject | Json[]>()
 ): string {
   if (Array.isArray(value)) {
+    const isCircular = seen.has(value);
+
+    seen.add(value);
+
     if (value.length === 0) {
       return wrapArray();
-    } else if (depth >= maxDepth) {
+    } else if (depth >= maxDepth || isCircular) {
       return wrapArray(ELLIPSIS);
     } else {
       const values = value
