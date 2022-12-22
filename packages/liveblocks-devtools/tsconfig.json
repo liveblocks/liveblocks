@@ -4,6 +4,6 @@
     "baseUrl": ".",
     "strict": true
   },
-  "include": [".plasmo/**/*", "./**/*.ts", "./**/*.tsx"],
+  "include": ["./**/*.ts", "./**/*.tsx"],
   "exclude": ["node_modules"]
 }
