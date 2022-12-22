@@ -42,10 +42,8 @@
   "manifest": {
     "description": "A browser extension that lets you inspect Liveblocks rooms.",
     "permissions": [
-      "storage",
-      "file:///*",
-      "http://*/*",
-      "https://*/*"
+      "<all_urls>",
+      "storage"
     ],
     "host_permissions": [
       "<all_urls>"
