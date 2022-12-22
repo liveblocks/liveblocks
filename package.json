@@ -1,0 +1,45 @@
+{
+  "name": "@liveblocks/schema",
+  "private": true,
+  "version": "0.0.1",
+  "description": "The Liveblocks schema language",
+  "main": "src/index.ts",
+  "scripts": {
+    "build-ast": "ts-node bin/generate-ast.ts",
+    "build-parser": "bin/build-parser",
+    "watch-ast": "watch 'ts-node bin/generate-ast.ts' src/ast",
+    "watch-parser": "watch 'bin/build-parser' src/parser",
+    "bundle": "bin/bundle",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+  },
+  "keywords": [
+    "liveblocks",
+    "schema",
+    "validation",
+    "language",
+    "parser"
+  ],
+  "devDependencies": {
+    "@types/invariant": "^2.2.34",
+    "@types/jest": "^29.1.2",
+    "jest": "^29.1.2",
+    "pegjs": "^0.10.0",
+    "pkg": "^4.4.9",
+    "prettier": "^2.7.1",
+    "ts-jest": "^29.0.3",
+    "ts-node": "^9.1.1",
+    "tsup": "^6.4.0",
+    "watch": "^1.0.2"
+  },
+  "dependencies": {
+    "chalk": "^4.1.0",
+    "colors": "^1.4.0",
+    "commander": "^6.2.1",
+    "invariant": "^2.2.4",
+    "typescript": "^4.9.0"
+  }
+}
