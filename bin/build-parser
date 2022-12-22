@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+
+PROJROOT="$(git rev-parse --show-toplevel)"
+INPUT=src/parser/schema-lang.pegjs
+OUTPUT=src/parser/generated-parser.js
+
+FORCE=0
+if [ $# -gt 0 ]; then
+    if [ "$1" = "-f" ]; then
+        FORCE=1
+    fi
+fi
+
+main () {
+    if [ ! -f "$OUTPUT" -o "$INPUT" -nt "$OUTPUT" -o $FORCE -eq 1 ]; then
+        echo "Rebuilding parser..." >&2
+
+        set +e
+        node_modules/.bin/pegjs --cache -o "$OUTPUT" "$INPUT"
+        exitcode="$?"
+        if [ "$exitcode" -gt 0 ]; then
+            rm -f "$OUTPUT"
+            exit "$exitcode"
+        fi
+        set -e
+
+        echo "Done" >&2
+    else
+        echo "Parser up to date" >&2
+    fi
+}
+
+( cd "$PROJROOT" && main )
