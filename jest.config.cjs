@@ -13,13 +13,17 @@ const commonJestConfig = {
   roots: ["<rootDir>/src"],
 
   // Ensure `window.fetch` is polyfilled if it isn't available in the runtime
-  // setupFiles: ["@liveblocks/jest-config/fetch-polyfill"],
+  setupFiles: ["@liveblocks/jest-config/fetch-polyfill"],
 };
 // ------------------------------------------------------------------------------------------
 
 module.exports = {
   // Our standard Jest configuration, used by all projects in this monorepo
   ...commonJestConfig,
+
+  // Undo the defaults set above!
+  testEnvironment: undefined,
+  setupFiles: undefined,
 
   // Collect code coverage for this project
   collectCoverage: true,

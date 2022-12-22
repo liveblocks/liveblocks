@@ -3,7 +3,7 @@ set -eu
 
 PROJROOT="$(git rev-parse --show-toplevel)"
 INPUT=src/parser/schema-lang.pegjs
-OUTPUT=src/parser/generated-parser.js
+OUTPUT=src/parser/generated-parser.ts
 
 FORCE=0
 if [ $# -gt 0 ]; then
@@ -17,7 +17,12 @@ main () {
         echo "Rebuilding parser..." >&2
 
         set +e
-        node_modules/.bin/pegjs --cache -o "$OUTPUT" "$INPUT"
+        node_modules/.bin/peggy                             \
+            --plugin ./node_modules/ts-pegjs/src/tspegjs.js \
+            --extra-options-file pegconfig.json             \
+            --cache                                         \
+            -o "$OUTPUT"                                    \
+            "$INPUT"
         exitcode="$?"
         if [ "$exitcode" -gt 0 ]; then
             rm -f "$OUTPUT"

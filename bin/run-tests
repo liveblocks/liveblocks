@@ -7,7 +7,7 @@ while true; do
     clear
     set +e
     "$ROOT/bin/build-parser" \
-      && ts-node "$ROOT/bin/generate-ast.ts" \
+      && ts-node-esm "$ROOT/bin/generate-ast.ts" \
       && jest
     set -e
     echo "Press Enter to re-run the tests"

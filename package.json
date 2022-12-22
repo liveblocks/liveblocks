@@ -4,10 +4,11 @@
   "version": "0.0.1",
   "description": "The Liveblocks schema language",
   "main": "src/index.ts",
+  "type": "module",
   "scripts": {
-    "build-ast": "ts-node bin/generate-ast.ts",
+    "build-ast": "ts-node-esm bin/generate-ast.ts",
     "build-parser": "bin/build-parser",
-    "watch-ast": "watch 'ts-node bin/generate-ast.ts' src/ast",
+    "watch-ast": "watch 'ts-node-esm bin/generate-ast.ts' src/ast",
     "watch-parser": "watch 'bin/build-parser' src/parser",
     "bundle": "bin/bundle",
     "test": "jest"
@@ -27,11 +28,12 @@
     "@types/invariant": "^2.2.34",
     "@types/jest": "^29.1.2",
     "jest": "^29.1.2",
-    "pegjs": "^0.10.0",
+    "peggy": "^2.0.1",
     "pkg": "^4.4.9",
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
+    "ts-pegjs": "^2.1.0",
     "tsup": "^6.4.0",
     "watch": "^1.0.2"
   },

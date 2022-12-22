@@ -1,0 +1,5 @@
+{
+  "tspegjs": {
+    "customHeader": "// @ts-nocheck\n\nimport ast from \"../ast\";"
+  }
+}
