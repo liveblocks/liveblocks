@@ -31,7 +31,7 @@
     "pkg": "^4.4.9",
     "prettier": "^2.7.1",
     "ts-jest": "^29.0.3",
-    "ts-node": "^9.1.1",
+    "ts-node": "^10.9.1",
     "tsup": "^6.4.0",
     "watch": "^1.0.2"
   },
@@ -40,6 +40,6 @@
     "colors": "^1.4.0",
     "commander": "^6.2.1",
     "invariant": "^2.2.4",
-    "typescript": "^4.9.0"
+    "typescript": "^4.9.4"
   }
 }
