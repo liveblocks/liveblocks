@@ -1,382 +1,391 @@
-import fs from 'fs'
-import invariant from 'invariant'
-import chalk from 'chalk'
-import prettier, { Options as PrettierOptions } from 'prettier'
+import chalk from "chalk";
+import fs from "fs";
+import invariant from "invariant";
+import prettier, { Options as PrettierOptions } from "prettier";
 
-const INPUT_FILE = 'src/ast/ast.grammar'
-const OUTPUT_FILE = 'src/ast/index.ts'
+const INPUT_FILE = "src/ast/ast.grammar";
+const OUTPUT_FILE = "src/ast/index.ts";
 const PRETTIER_OPTIONS: PrettierOptions = {
-    parser: 'typescript',
-    semi: false,
-    printWidth: 90,
-    tabWidth: 4,
-    singleQuote: true,
-    trailingComma: 'all',
-}
+  parser: "typescript",
+  semi: false,
+  printWidth: 90,
+  tabWidth: 4,
+  singleQuote: true,
+  trailingComma: "all",
+};
 
-const TYPEOF_CHECKS = new Set(['number', 'string'])
-const BUILTIN_TYPES = new Set(['number', 'string'])
+const TYPEOF_CHECKS = new Set(["number", "string"]);
+const BUILTIN_TYPES = new Set(["number", "string"]);
 
 // e.g. "SomeNode" or "@SomeGroup"
 type BaseNodeRef =
-    | {
-          ref: 'Node'
-          name: string
-      }
-    | {
-          ref: 'NodeGroup'
-          name: string
-      }
+  | {
+      ref: "Node";
+      name: string;
+    }
+  | {
+      ref: "NodeGroup";
+      name: string;
+    };
 
 // e.g. "SomeNode+" or "@SomeGroup*"
 type MultiNodeRef =
-    | BaseNodeRef
-    | {
-          ref: 'List'
-          of: BaseNodeRef
-          min: 0 | 1
-      }
+  | BaseNodeRef
+  | {
+      ref: "List";
+      of: BaseNodeRef;
+      min: 0 | 1;
+    };
 
 // e.g. "SomeNode?" or "@SomeGroup*?"
 type NodeRef =
-    | MultiNodeRef
-    | {
-          ref: 'Optional'
-          of: MultiNodeRef
-      }
+  | MultiNodeRef
+  | {
+      ref: "Optional";
+      of: MultiNodeRef;
+    };
 
 // e.g. ['FloatLiteral', 'IntLiteral', '@StringExpr']
 type NodeGroup = {
-    name: string
-    members: NodeRef[]
-}
+  name: string;
+  members: NodeRef[];
+};
 
 type Field = {
-    name: string
-    ref: NodeRef
-}
+  name: string;
+  ref: NodeRef;
+};
 
 // e.g. { pattern: '@AssignmentPattern', expr: '@Expr' }
 type Node = {
-    name: string
-    fieldsByName: LUT<Field>
-    fields: Field[]
-}
+  name: string;
+  fieldsByName: LUT<Field>;
+  fields: Field[];
+};
 
-type LUT<T> = { [key: string]: T }
+type LUT<T> = { [key: string]: T };
 
 type Grammar = {
-    nodesByName: LUT<Node>
-    nodes: Node[] // Sorted list of nodes
+  nodesByName: LUT<Node>;
+  nodes: Node[]; // Sorted list of nodes
 
-    nodeGroupsByName: LUT<NodeGroup>
-    nodeGroups: NodeGroup[] // Sorted list of node groups
-}
+  nodeGroupsByName: LUT<NodeGroup>;
+  nodeGroups: NodeGroup[]; // Sorted list of node groups
+};
 
 function takeWhile<T>(items: T[], predicate: (item: T) => boolean): T[] {
-    const result = []
-    for (const item of items) {
-        if (predicate(item)) {
-            result.push(item)
-        } else {
-            break
-        }
+  const result = [];
+  for (const item of items) {
+    if (predicate(item)) {
+      result.push(item);
+    } else {
+      break;
     }
-    return result
+  }
+  return result;
 }
 
 function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {
-    const gold: T[] = []
-    const dirt: T[] = []
-    for (const item of items) {
-        if (predicate(item)) {
-            gold.push(item)
-        } else {
-            dirt.push(item)
-        }
+  const gold: T[] = [];
+  const dirt: T[] = [];
+  for (const item of items) {
+    if (predicate(item)) {
+      gold.push(item);
+    } else {
+      dirt.push(item);
     }
-    return [gold, dirt]
+  }
+  return [gold, dirt];
 }
 
 function parseBaseNodeRef(spec: string): BaseNodeRef {
-    const match = spec.match(/^(@?[a-z]+)$/i)
-    invariant(match, `Invalid reference: "${spec}"`)
-    if (spec.startsWith('@')) {
-        return {
-            ref: 'NodeGroup',
-            name: spec.substr(1),
-        }
-    } else {
-        return {
-            ref: 'Node',
-            name: spec,
-        }
-    }
+  const match = spec.match(/^(@?[a-z]+)$/i);
+  invariant(match, `Invalid reference: "${spec}"`);
+  if (spec.startsWith("@")) {
+    return {
+      ref: "NodeGroup",
+      name: spec.substring(1),
+    };
+  } else {
+    return {
+      ref: "Node",
+      name: spec,
+    };
+  }
 }
 
 function parseMultiNodeRef(spec: string): MultiNodeRef {
-    if (spec.endsWith('*')) {
-        return {
-            ref: 'List',
-            of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
-            min: 0,
-        }
-    } else if (spec.endsWith('+')) {
-        return {
-            ref: 'List',
-            of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
-            min: 1,
-        }
-    } else {
-        return parseBaseNodeRef(spec)
-    }
+  if (spec.endsWith("*")) {
+    return {
+      ref: "List",
+      of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
+      min: 0,
+    };
+  } else if (spec.endsWith("+")) {
+    return {
+      ref: "List",
+      of: parseBaseNodeRef(spec.substring(0, spec.length - 1)),
+      min: 1,
+    };
+  } else {
+    return parseBaseNodeRef(spec);
+  }
 }
 
 function parseSpec(spec: string): NodeRef {
-    if (spec.endsWith('?')) {
-        return {
-            ref: 'Optional',
-            of: parseMultiNodeRef(spec.substring(0, spec.length - 1)),
-        }
-    } else {
-        return parseMultiNodeRef(spec)
-    }
+  if (spec.endsWith("?")) {
+    return {
+      ref: "Optional",
+      of: parseMultiNodeRef(spec.substring(0, spec.length - 1)),
+    };
+  } else {
+    return parseMultiNodeRef(spec);
+  }
 }
 
 /**
  * Given a NodeRef instance, returns its formatted string, e.g. "@SomeNode*"
  */
 function serializeRef(ref: NodeRef): string {
-    if (ref.ref === 'Optional') {
-        return serializeRef(ref.of) + '?'
-    } else if (ref.ref === 'List') {
-        const base = serializeRef(ref.of)
-        if (ref.min > 0) {
-            return base + '+'
-        } else {
-            return base + '*'
-        }
-    } else if (ref.ref === 'NodeGroup') {
-        return '@' + ref.name
+  if (ref.ref === "Optional") {
+    return serializeRef(ref.of) + "?";
+  } else if (ref.ref === "List") {
+    const base = serializeRef(ref.of);
+    if (ref.min > 0) {
+      return base + "+";
     } else {
-        return ref.name
+      return base + "*";
     }
+  } else if (ref.ref === "NodeGroup") {
+    return "@" + ref.name;
+  } else {
+    return ref.name;
+  }
 }
 
 function getBareRef(ref: NodeRef): string {
-    return ref.ref === 'Optional'
-        ? getBareRef(ref.of)
-        : ref.ref === 'List'
-        ? getBareRef(ref.of)
-        : ref.name
+  return ref.ref === "Optional"
+    ? getBareRef(ref.of)
+    : ref.ref === "List"
+    ? getBareRef(ref.of)
+    : ref.name;
 }
 
-function getBareRefTarget(ref: NodeRef): 'Node' | 'NodeGroup' {
-    return ref.ref === 'Optional' || ref.ref === 'List'
-        ? getBareRefTarget(ref.of)
-        : ref.ref
+function getBareRefTarget(ref: NodeRef): "Node" | "NodeGroup" {
+  return ref.ref === "Optional" || ref.ref === "List"
+    ? getBareRefTarget(ref.of)
+    : ref.ref;
 }
 
 function getTypeScriptType(ref: NodeRef): string {
-    return ref.ref === 'Optional'
-        ? getTypeScriptType(ref.of) + ' | null'
-        : ref.ref === 'List'
-        ? getTypeScriptType(ref.of) + '[]'
-        : ref.name
+  return ref.ref === "Optional"
+    ? getTypeScriptType(ref.of) + " | null"
+    : ref.ref === "List"
+    ? getTypeScriptType(ref.of) + "[]"
+    : ref.name;
 }
 
 function validate(grammar: Grammar) {
-    // Keep track of which node names are referenced/used
-    const referenced: Set<string> = new Set()
+  // Keep track of which node names are referenced/used
+  const referenced: Set<string> = new Set();
 
-    for (const nodeGroup of grammar.nodeGroups) {
-        for (const ref of nodeGroup.members) {
-            const memberName = getBareRef(ref)
-            referenced.add(memberName)
-            invariant(
-                grammar.nodesByName[memberName] ||
-                    (nodeGroup.name !== memberName &&
-                        !!grammar.nodeGroupsByName[memberName]),
-                `Member "${memberName}" of group "${nodeGroup.name}" is not defined in the grammar`,
-            )
-        }
+  for (const nodeGroup of grammar.nodeGroups) {
+    for (const ref of nodeGroup.members) {
+      const memberName = getBareRef(ref);
+      referenced.add(memberName);
+      invariant(
+        grammar.nodesByName[memberName] ||
+          (nodeGroup.name !== memberName &&
+            !!grammar.nodeGroupsByName[memberName]),
+        `Member "${memberName}" of group "${nodeGroup.name}" is not defined in the grammar`
+      );
     }
+  }
 
-    for (const node of grammar.nodes) {
-        for (const field of node.fields) {
-            invariant(
-                !field.name.startsWith('_'),
-                `Illegal field name: "${node.name}.${field.name}" (fields starting with "_" are reserved)`,
-            )
-            const bare = getBareRef(field.ref)
-            referenced.add(bare)
-            invariant(
-                BUILTIN_TYPES.has(bare) ||
-                    !!grammar.nodeGroupsByName[bare] ||
-                    !!grammar.nodesByName[bare],
-                `Unknown node kind "${bare}" (in "${node.name}.${field.name}")`,
-            )
-        }
+  for (const node of grammar.nodes) {
+    for (const field of node.fields) {
+      invariant(
+        !field.name.startsWith("_"),
+        `Illegal field name: "${node.name}.${field.name}" (fields starting with "_" are reserved)`
+      );
+      const bare = getBareRef(field.ref);
+      referenced.add(bare);
+      invariant(
+        BUILTIN_TYPES.has(bare) ||
+          !!grammar.nodeGroupsByName[bare] ||
+          !!grammar.nodesByName[bare],
+        `Unknown node kind "${bare}" (in "${node.name}.${field.name}")`
+      );
     }
+  }
 
-    // Check that all defined nodes are referenced
-    const defined = new Set(grammar.nodes.map((n) => n.name))
-    for (const name of referenced) {
-        defined.delete(name)
-    }
+  // Check that all defined nodes are referenced
+  const defined = new Set(grammar.nodes.map((n) => n.name));
+  for (const name of referenced) {
+    defined.delete(name);
+  }
 
-    // "Module" is the top-level node kind, which by definition won't be referenced
-    defined.delete('Module')
-    invariant(
-        defined.size === 0,
-        `The following node kinds are never referenced: ${Array.from(defined).join(
-            ', ',
-        )}`,
-    )
+  // "Module" is the top-level node kind, which by definition won't be referenced
+  defined.delete("Module");
+  invariant(
+    defined.size === 0,
+    `The following node kinds are never referenced: ${Array.from(defined).join(
+      ", "
+    )}`
+  );
 }
 
-function generateTypeCheckCondition(expected: NodeRef, actualValue: string): string {
-    let conditions = []
+function generateTypeCheckCondition(
+  expected: NodeRef,
+  actualValue: string
+): string {
+  let conditions = [];
 
-    if (expected.ref === 'Optional') {
-        conditions.push(
-            `${actualValue} === null || ${generateTypeCheckCondition(
-                expected.of,
-                actualValue,
-            )}`,
-        )
-    } else if (expected.ref === 'List') {
-        conditions.push(`Array.isArray(${actualValue})`)
-        if (expected.min > 0) {
-            conditions.push(`${actualValue}.length > 0`)
-        }
-        conditions.push(
-            `${actualValue}.every(item => ${generateTypeCheckCondition(
-                expected.of,
-                'item',
-            )})`,
-        )
-    } else if (expected.ref === 'NodeGroup') {
-        conditions.push(`is${expected.name}(${actualValue})`)
-    } else if (TYPEOF_CHECKS.has(expected.name)) {
-        conditions.push(`typeof ${actualValue} === ${JSON.stringify(expected.name)}`)
-    } else {
-        conditions.push(`${actualValue}._kind === ${JSON.stringify(expected.name)}`)
+  if (expected.ref === "Optional") {
+    conditions.push(
+      `${actualValue} === null || ${generateTypeCheckCondition(
+        expected.of,
+        actualValue
+      )}`
+    );
+  } else if (expected.ref === "List") {
+    conditions.push(`Array.isArray(${actualValue})`);
+    if (expected.min > 0) {
+      conditions.push(`${actualValue}.length > 0`);
     }
+    conditions.push(
+      `${actualValue}.every(item => ${generateTypeCheckCondition(
+        expected.of,
+        "item"
+      )})`
+    );
+  } else if (expected.ref === "NodeGroup") {
+    conditions.push(`is${expected.name}(${actualValue})`);
+  } else if (TYPEOF_CHECKS.has(expected.name)) {
+    conditions.push(
+      `typeof ${actualValue} === ${JSON.stringify(expected.name)}`
+    );
+  } else {
+    conditions.push(
+      `${actualValue}._kind === ${JSON.stringify(expected.name)}`
+    );
+  }
 
-    return conditions.map((c) => `(${c})`).join(' && ')
+  return conditions.map((c) => `(${c})`).join(" && ");
 }
 
 function parseGrammarDefinition(): Grammar {
-    const src = fs.readFileSync(INPUT_FILE, 'utf-8')
-    const lines = src
-        .split('\n')
-        .map((line) => line.trim())
-        .filter((line) => line && !line.startsWith('#'))
+  const src = fs.readFileSync(INPUT_FILE, "utf-8");
+  const lines = src
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
 
-    const nodeGroupsByName: LUT<NodeGroup> = {}
-    const nodesByName: LUT<Node> = {}
+  const nodeGroupsByName: LUT<NodeGroup> = {};
+  const nodesByName: LUT<Node> = {};
 
-    let currGroup: NodeRef[] | void
-    let currNode: LUT<Field> | void
+  let currGroup: NodeRef[] | void;
+  let currNode: LUT<Field> | void;
 
-    for (let line of lines) {
-        if (line.endsWith(':')) {
-            line = line.substr(0, line.length - 1).trim()
+  for (let line of lines) {
+    if (line.endsWith(":")) {
+      line = line.substring(0, line.length - 1).trim();
 
-            // NodeGroup or Node?
-            if (line.startsWith('@')) {
-                currGroup = []
-                currNode = undefined
-                nodeGroupsByName[line.substr(1)] = {
-                    name: line.substr(1),
-                    members: currGroup,
-                }
-            } else {
-                currNode = {}
-                currGroup = undefined
-                nodesByName[line] = {
-                    name: line,
-                    fieldsByName: currNode,
-                    fields: [], // Will be populated in a later pass
-                }
-            }
-            continue
-        }
-
-        if (line.startsWith('|')) {
-            const group = line.substr(1).trim()
-            invariant(currGroup, 'Expect a curr node group')
-            currGroup.push(parseBaseNodeRef(group))
-        } else {
-            const [name, spec] = line.split(/\s+/)
-            invariant(currNode, 'Expect a curr node')
-            currNode[name] = { name, ref: parseSpec(spec) }
-        }
+      // NodeGroup or Node?
+      if (line.startsWith("@")) {
+        currGroup = [];
+        currNode = undefined;
+        nodeGroupsByName[line.substring(1)] = {
+          name: line.substring(1),
+          members: currGroup,
+        };
+      } else {
+        currNode = {};
+        currGroup = undefined;
+        nodesByName[line] = {
+          name: line,
+          fieldsByName: currNode,
+          fields: [], // Will be populated in a later pass
+        };
+      }
+      continue;
     }
 
-    // Populate all the fields, for easier looping later
-    for (const node of Object.values(nodesByName)) {
-        node.fields = Object.values(node.fieldsByName)
+    if (line.startsWith("|")) {
+      const group = line.substring(1).trim();
+      invariant(currGroup, "Expect a curr node group");
+      currGroup.push(parseBaseNodeRef(group));
+    } else {
+      const [name, spec] = line.split(/\s+/);
+      invariant(currNode, "Expect a curr node");
+      currNode[name] = { name, ref: parseSpec(spec) };
     }
+  }
 
-    return {
-        nodesByName,
-        nodes: Object.keys(nodesByName)
-            .sort()
-            .map((name) => nodesByName[name]),
+  // Populate all the fields, for easier looping later
+  for (const node of Object.values(nodesByName)) {
+    node.fields = Object.values(node.fieldsByName);
+  }
 
-        nodeGroupsByName,
-        nodeGroups: Object.keys(nodeGroupsByName)
-            .sort()
-            .map((name) => nodeGroupsByName[name]),
-    }
+  return {
+    nodesByName,
+    nodes: Object.keys(nodesByName)
+      .sort()
+      .map((name) => nodesByName[name]),
+
+    nodeGroupsByName,
+    nodeGroups: Object.keys(nodeGroupsByName)
+      .sort()
+      .map((name) => nodeGroupsByName[name]),
+  };
 }
 
 function generateCode(grammar: Grammar): string {
-    // Will throw in case of errors
-    validate(grammar)
+  // Will throw in case of errors
+  validate(grammar);
 
-    const output = [
-        '/**',
-        ' * This file is AUTOMATICALLY GENERATED.',
-        ' * DO NOT edit this file manually.',
-        ' *',
-        ' * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`',
-        ' */',
-        '',
-        'import invariant from "invariant"',
-        '',
-    ]
+  const output = [
+    "/**",
+    " * This file is AUTOMATICALLY GENERATED.",
+    " * DO NOT edit this file manually.",
+    " *",
+    " * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`",
+    " */",
+    "",
+    'import invariant from "invariant"',
+    "",
+  ];
 
-    for (const nodeGroup of grammar.nodeGroups) {
-        const [subNodes, subGroups] = partition(
-            nodeGroup.members,
-            (ref) => getBareRefTarget(ref) === 'Node',
-        )
-        const conditions = subNodes
-            .map((ref) => `node._kind === ${JSON.stringify(getBareRef(ref))}`)
-            .concat(subGroups.map((ref) => `is${getBareRef(ref)}(node)`))
-        output.push(`
+  for (const nodeGroup of grammar.nodeGroups) {
+    const [subNodes, subGroups] = partition(
+      nodeGroup.members,
+      (ref) => getBareRefTarget(ref) === "Node"
+    );
+    const conditions = subNodes
+      .map((ref) => `node._kind === ${JSON.stringify(getBareRef(ref))}`)
+      .concat(subGroups.map((ref) => `is${getBareRef(ref)}(node)`));
+    output.push(`
           function is${nodeGroup.name}(node: Node): node is ${nodeGroup.name} {
             return (
-              ${conditions.join(' || ')}
+              ${conditions.join(" || ")}
             )
           }
-        `)
-    }
+        `);
+  }
 
-    for (const nodeGroup of grammar.nodeGroups) {
-        output.push(`
-            export type ${nodeGroup.name} =
-                ${nodeGroup.members.map((member) => `${getBareRef(member)}`).join(' | ')};
-            `)
-    }
-
+  for (const nodeGroup of grammar.nodeGroups) {
     output.push(`
+            export type ${nodeGroup.name} =
+                ${nodeGroup.members
+                  .map((member) => `${getBareRef(member)}`)
+                  .join(" | ")};
+            `);
+  }
+
+  output.push(`
         export type Range = [number, number]
 
-        export type Node = ${grammar.nodes.map((node) => node.name).join(' | ')}
+        export type Node = ${grammar.nodes.map((node) => node.name).join(" | ")}
 
         function isRange(thing: Range): thing is Range {
             return (
@@ -390,114 +399,118 @@ function generateCode(grammar: Grammar): string {
         function isNode(node: Node): node is Node {
             return (
                 ${grammar.nodes
-                    .map((node) => `node._kind === ${JSON.stringify(node.name)}`)
-                    .join(' || ')}
+                  .map((node) => `node._kind === ${JSON.stringify(node.name)}`)
+                  .join(" || ")}
             )
         }
-    `)
+    `);
 
-    for (const node of grammar.nodes) {
-        output.push(`
+  for (const node of grammar.nodes) {
+    output.push(`
             export type ${node.name} = {
                 _kind: ${JSON.stringify(node.name)}
                 _type?: Type
                 ${node.fields
-                    .map((field) => `${field.name}: ${getTypeScriptType(field.ref)}`)
-                    .join('\n')}
+                  .map(
+                    (field) => `${field.name}: ${getTypeScriptType(field.ref)}`
+                  )
+                  .join("\n")}
                 range?: Range
             }
-        `)
-    }
+        `);
+  }
 
-    output.push('')
-    output.push('export default {')
-    for (const node of grammar.nodes) {
-        const optionals = new Set(
-            takeWhile(
-                node.fields.slice().reverse(),
-                (field) =>
-                    field.ref.ref === 'Optional' ||
-                    (field.ref.ref === 'List' && field.ref.min === 0),
-            ).map((field) => field.name),
-        )
+  output.push("");
+  output.push("export default {");
+  for (const node of grammar.nodes) {
+    const optionals = new Set(
+      takeWhile(
+        node.fields.slice().reverse(),
+        (field) =>
+          field.ref.ref === "Optional" ||
+          (field.ref.ref === "List" && field.ref.min === 0)
+      ).map((field) => field.name)
+    );
 
-        const argChecks = node.fields
-            .map((field) => {
-                return `invariant(${generateTypeCheckCondition(
-                    field.ref,
-                    field.name,
-                )}, \`Invalid value for "${field.name}" arg in "${
-                    node.name
-                }" call.\\nExpected: ${serializeRef(
-                    field.ref,
-                )}\\nGot:      \${JSON.stringify(${field.name})}\`)\n`
-            })
-            .filter(Boolean)
-        argChecks.push(
-            `invariant(
+    const argChecks = node.fields
+      .map((field) => {
+        return `invariant(${generateTypeCheckCondition(
+          field.ref,
+          field.name
+        )}, \`Invalid value for "${field.name}" arg in "${
+          node.name
+        }" call.\\nExpected: ${serializeRef(
+          field.ref
+        )}\\nGot:      \${JSON.stringify(${field.name})}\`)\n`;
+      })
+      .filter(Boolean);
+    argChecks.push(
+      `invariant(
                 !range || isRange(range),
                 \`Invalid value for range in "${node.name}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
-             )`,
-        )
+             )`
+    );
 
-        output.push(
-            `
+    output.push(
+      `
             ${node.name}(${[
-                ...node.fields.map((field) => {
-                    let key = field.name
-                    const type = getTypeScriptType(field.ref)
-                    return optionals.has(field.name)
-                        ? `${key}: ${type} = ${
-                              field.ref.ref === 'Optional' ? 'null' : '[]'
-                          }`
-                        : `${key}: ${type}`
-                }),
-                'range?: Range',
-            ].join(', ')}): ${node.name} {
-                ${argChecks.join('\n')}
+        ...node.fields.map((field) => {
+          let key = field.name;
+          const type = getTypeScriptType(field.ref);
+          return optionals.has(field.name)
+            ? `${key}: ${type} = ${
+                field.ref.ref === "Optional" ? "null" : "[]"
+              }`
+            : `${key}: ${type}`;
+        }),
+        "range?: Range",
+      ].join(", ")}): ${node.name} {
+                ${argChecks.join("\n")}
                 return {
                     _kind: ${JSON.stringify(node.name)},
                     // _type: undefined,
-                    ${[...node.fields.map((field) => field.name), 'range'].join(', ')}
+                    ${[...node.fields.map((field) => field.name), "range"].join(
+                      ", "
+                    )}
                 }
             },
-            `,
-        )
-    }
+            `
+    );
+  }
 
-    output.push('')
-    output.push('// Node groups')
-    output.push(`isNode,`)
-    for (const nodeGroup of grammar.nodeGroups) {
-        output.push(`is${nodeGroup.name},`)
-    }
-    output.push('}')
+  output.push("");
+  output.push("// Node groups");
+  output.push(`isNode,`);
+  for (const nodeGroup of grammar.nodeGroups) {
+    output.push(`is${nodeGroup.name},`);
+  }
+  output.push("}");
 
-    return prettier.format(output.join('\n'), PRETTIER_OPTIONS)
+  return prettier.format(output.join("\n"), PRETTIER_OPTIONS);
 }
 
 function writeFile(contents: string, path: string) {
-    const existing = fs.existsSync(path)
-        ? fs.readFileSync(path, { encoding: 'utf-8' })
-        : null
-    if (contents !== existing) {
-        fs.writeFileSync(path, contents, { encoding: 'utf-8' })
-        console.error(`Wrote ${path}`)
-    } else {
-        // Output file is still up to date, let's not write (since it may
-        // trigger another watch proc)
-    }
+  const existing = fs.existsSync(path)
+    ? fs.readFileSync(path, { encoding: "utf-8" })
+    : null;
+  if (contents !== existing) {
+    fs.writeFileSync(path, contents, { encoding: "utf-8" });
+    console.error(`Wrote ${path}`);
+  } else {
+    // Output file is still up to date, let's not write (since it may
+    // trigger another watch proc)
+  }
 }
 
 function main() {
-    const grammar = parseGrammarDefinition()
-    const code = generateCode(grammar)
-    writeFile(code, OUTPUT_FILE)
+  const grammar = parseGrammarDefinition();
+  const code = generateCode(grammar);
+  writeFile(code, OUTPUT_FILE);
 }
 
 try {
-    main()
-} catch (e) {
-    console.error(chalk.red(`Error: ${e.message}`))
-    process.exit(2)
+  main();
+} catch (e: unknown) {
+  console.error(chalk.red(`Error: ${(e as Error).message}`));
+  process.exit(2);
 }
