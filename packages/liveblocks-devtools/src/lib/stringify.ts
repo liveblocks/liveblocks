@@ -1,4 +1,4 @@
-import type { Json, JsonArray, JsonObject } from "@liveblocks/core";
+import type { Json, JsonObject } from "@liveblocks/core";
 import unquotedPropertyValidator from "unquoted-property-validator";
 
 export const SEPARATOR = ", ";
