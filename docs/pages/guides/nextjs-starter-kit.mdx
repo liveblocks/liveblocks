@@ -5,24 +5,33 @@ meta:
   description: "Create Multiplayer Documents with Authentication in Minutes"
 ---
 
-In this guide, you'll learn how to build a document-based product using standard collaborative patterns.  This guide will help you to understand how to navigate, organize, and create new documents while managing user permissions and authentication.
+In this guide, you'll learn how to build a document-based product using standard
+collaborative patterns. This guide will help you to understand how to navigate,
+organize, and create new documents while managing user permissions and
+authentication.
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source src="/images/docs/next-js-starter-kit/starter-kit.mp4" type="video/mp4" />
+    <source
+      src="/images/docs/next-js-starter-kit/starter-kit.mp4"
+      type="video/mp4"
+    />
   </video>
 </Figure>
 
 ## Features
+
 The Next.js Starter Kit will include the following
+
 - Documents dashboard with pagination, drafts, groups, auto-revalidation
 - Collaborative whiteboard app with a fully-featured share menu
 - Authentication compatible with GitHub, Google, Auth0, and more
 - Document permissions can be scoped to users, groups, and the public
 
-
 ## Set up the Next.js Starter Kit
+
 The starter guide has the following structure:
+
 ```
 components
 data
@@ -39,7 +48,12 @@ liveblocks.server.config.ts
 package.json
 ```
 
-The important thing to note is that there are primitives, which are base level components such as buttons (think of these as the small building blocks of a page), components, which you can think of as multiplayer implementations (cursors, badges, etc), pages, which render document level experiences and both server side and client side methods which contain the logic to create and modify documents.
+The important thing to note is that there are primitives, which are base level
+components such as buttons (think of these as the small building blocks of a
+page), components, which you can think of as multiplayer implementations
+(cursors, badges, etc), pages, which render document level experiences and both
+server side and client side methods which contain the logic to create and modify
+documents.
 
 <br />
 <details>
@@ -55,7 +69,9 @@ The important thing to note is that there are primitives, which are base level c
     <dt>`/lib/client/`</dt>
     <dd>Client functions used for accessing documents, database, SWR hooks.</dd>
     <dt>`/lib/server/`</dt>
-    <dd>Server functions used for accessing documents, database, liveblocks.</dd>
+    <dd>
+      Server functions used for accessing documents, database, liveblocks.
+    </dd>
     <dt>`/pages/`</dt>
     <dd>Next.js pages.</dd>
     <dt>`/primitives/`</dt>
@@ -70,7 +86,9 @@ The important thing to note is that there are primitives, which are base level c
 </details>
 
 ### Liveblocks Configuration
+
 If you already have a Liveblocks Development account, you may skip to step 4.
+
 1. Create an account at [liveblocks.io](https://liveblocks.io])
 2. Navigate to the [dashboard](https://liveblocks.io/dashboard) and click "Add
    project..."
@@ -79,21 +97,28 @@ If you already have a Liveblocks Development account, you may skip to step 4.
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source src="/images/docs/next-js-starter-kit/create-api-key.mp4" type="video/mp4" />
+    <source
+      src="/images/docs/next-js-starter-kit/create-api-key.mp4"
+      type="video/mp4"
+    />
   </video>
 </Figure>
 
 5. Install the starter kit by running
+
 ```ts
 npx create-liveblocks-app --next
 ```
-6. Enter the `.env.local` file, which is located alongside `package.json` at the root level in your project.
-6. Place your secret key into the file as `LIVEBLOCKS_SECRET_KEY`.
+
+6. Enter the `.env.local` file, which is located alongside `package.json` at the
+   root level in your project.
+7. Place your secret key into the file as `LIVEBLOCKS_SECRET_KEY`.
 
 Your `.env.local` file should contain a line similar to this:
 
 ```ts
-LIVEBLOCKS_SECRET_KEY=sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+LIVEBLOCKS_SECRET_KEY =
+  sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;
 ```
 
 At this point, Liveblocks can be run with
@@ -103,11 +128,12 @@ npm run dev
 ```
 
 ### Authentication
+
 The Liveblocks starter kit uses [NextAuth.js](https://next-auth.js.org/) for
-authentication, meaning many authentication providers can be configured
-with minimal code changes. A demo authentication system is used by default, but
- it's easy to add real providers, such as GitHub, Auth0, and more.
- 
+authentication, meaning many authentication providers can be configured with
+minimal code changes. A demo authentication system is used by default, but it's
+easy to add real providers, such as GitHub, Auth0, and more.
+
 Take a look at the guide for your chosen authentication method:
 
 - [GitHub authentication](#github-authentication)
@@ -116,7 +142,10 @@ Take a look at the guide for your chosen authentication method:
 
 ### GitHub authentication [#github-authentication]
 
-To use GitHub auth, make sure you selected "GitHub authentication" when running the installer (or you've set up the [provider manually](#add-multiple-authentication-providers)). This is how to set up your secret keys.
+To use GitHub auth, make sure you selected "GitHub authentication" when running
+the installer (or you've set up the
+[provider manually](#add-multiple-authentication-providers)). This is how to set
+up your secret keys.
 
 1. Go to [Developer Settings](https://github.com/settings/apps) on GitHub and
    click "New GitHub App".
@@ -130,7 +159,10 @@ To use GitHub auth, make sure you selected "GitHub authentication" when running 
 
 <Figure>
   <video autoPlay loop muted playsInline>
-    <source src="/images/docs/next-js-starter-kit/github-auth.mp4" type="video/mp4" />
+    <source
+      src="/images/docs/next-js-starter-kit/github-auth.mp4"
+      type="video/mp4"
+    />
   </video>
 </Figure>
 
@@ -147,24 +179,36 @@ GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
 
-GitHub authentication is now complete! Next, [add yourself a user](#how-to-sign-up) to test out your authentication.
+GitHub authentication is now complete! Next,
+[add yourself a user](#how-to-sign-up) to test out your authentication.
 
 ### Auth0 authentication [#auth0-authentication]
 
-To use Auth0 auth, make sure you selected "Auth0 authentication" when running the installer (or you've set up the [provider manually](#add-multiple-authentication-providers)). This is how to set up your secret keys.
+To use Auth0 auth, make sure you selected "Auth0 authentication" when running
+the installer (or you've set up the
+[provider manually](#add-multiple-authentication-providers)). This is how to set
+up your secret keys.
 
-1. Go to your [Auth0 Dashboard](https://manage.auth0.com/dashboard) and click "Create Application".
-2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new app for each environment, so it's helpful to place "dev" in the name.
+1. Go to your [Auth0 Dashboard](https://manage.auth0.com/dashboard) and click
+   "Create Application".
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new
+   app for each environment, so it's helpful to place "dev" in the name.
 3. Next, select "Single Page Web Applications", and press "Create".
-4. Copy your "Client ID" from the top of the page, and place it within `.env.local` as `AUTH0_CLIENT_ID`.
+4. Copy your "Client ID" from the top of the page, and place it within
+   `.env.local` as `AUTH0_CLIENT_ID`.
 5. Click the "Settings" tab—we'll be making a number of changes here.
-6. Find the "Client Secret" input field, and copy the value into `.env.local` as `AUTH0_CLIENT_SECRET`.
-7. Copy your "Domain" from the input field, add "https://" to the start, and place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`.
-8. Add the following to the "Allowed Callback URLs" textarea: `http://localhost:3000/api/auth/callback/auth0`.
-9. Add the following to the "Allowed Logout URLs" textarea: `http://localhost:3000`.
+6. Find the "Client Secret" input field, and copy the value into `.env.local` as
+   `AUTH0_CLIENT_SECRET`.
+7. Copy your "Domain" from the input field, add "https://" to the start, and
+   place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`.
+8. Add the following to the "Allowed Callback URLs" textarea:
+   `http://localhost:3000/api/auth/callback/auth0`.
+9. Add the following to the "Allowed Logout URLs" textarea:
+   `http://localhost:3000`.
 10. Scroll to the bottom and press "Save changes".
 
-`.env.local` should now contain these three lines, along with anything previously there:
+`.env.local` should now contain these three lines, along with anything
+previously there:
 
 ```
 AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -172,7 +216,8 @@ AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
 ```
 
-Auth0 authentication is now set up! Next, [add yourself a user](#how-to-sign-up) to test out your authentication.
+Auth0 authentication is now set up! Next, [add yourself a user](#how-to-sign-up)
+to test out your authentication.
 
 ### How to sign up - add yourself as a user [#how-to-sign-up]
 
@@ -192,7 +237,8 @@ Navigate there and add your details, for example, if you're signing in with
 
 ### Ready to go
 
-The Next.js starter kit is now ready to use! After setting up authentication, make sure to restart the dev server to see your authentication in action.
+The Next.js starter kit is now ready to use! After setting up authentication,
+make sure to restart the dev server to see your authentication in action.
 
 ```
 npm run dev
@@ -247,9 +293,10 @@ export default async function (req, res) {
 }
 ```
 
-These functions can also be leveraged on the client side. To do so, simply import from the
-`/lib/client` folder, and omit `res` and `res` instead. This works by calling an
-API endpoint for you and then calling the `/lib/server` function.
+These functions can also be leveraged on the client side. To do so, simply
+import from the `/lib/client` folder, and omit `res` and `res` instead. This
+works by calling an API endpoint for you and then calling the `/lib/server`
+function.
 
 ```tsx
 import { createDocument } from "../../lib/client";
@@ -267,7 +314,10 @@ export function CreateDocumentButton() {
   return <button onClick={handleCreateDocument}>New document</button>;
 }
 ```
-Functions that return data can be used with [SWR hooks](https://swr.vercel.app/) that automatically update your data in components.  For example, `getDocumentUsers` returns a list of users with access to the room:
+
+Functions that return data can be used with [SWR hooks](https://swr.vercel.app/)
+that automatically update your data in components. For example,
+`getDocumentUsers` returns a list of users with access to the room:
 
 ```tsx
 // Convert from this
@@ -300,15 +350,15 @@ export function ListUsers() {
     ],
     { refreshInterval: 1000 }
   );
-  
+
   if (usersError) {
     return <div>Error</div>;
   }
-  
+
   if (!users) {
     return <div>Loading...</div>;
   }
-  
+
   return (
     <ul>
       {users.map((user) => (
@@ -353,7 +403,8 @@ If no errors are returned, the document properties were successfully extended.
 
 ### How to extend the `User` & `Session` type
 
-Similar to the way we extend the `Document` type, we can also extend the `User` and `Session` type.
+Similar to the way we extend the `Document` type, we can also extend the `User`
+and `Session` type.
 
 Adding a new property to `User`/`Session` is simple. First, edit the `User` type
 in `/types/data.ts`.
@@ -440,10 +491,14 @@ const everyonesRandomNumbers = useOthersMapped(
 ```
 
 ### Adding multiple authentication providers [#add-multiple-authentication-providers]
-It's possible to add multiple authentication providers to the starter kit using [NextAuth Providers](https://next-auth.js.org/providers/). Open `/pages/api/auth/[...nextAuth].ts` and place your providers in the object:
+
+It's possible to add multiple authentication providers to the starter kit using
+[NextAuth Providers](https://next-auth.js.org/providers/). Open
+`/pages/api/auth/[...nextAuth].ts` and place your providers in the object:
 
 ```ts
 import GithubProvider from "next-auth/providers/github";
+import Auth0Provider from "next-auth/providers/auth0";
 
 export const authOptions = {
   // ...
@@ -461,8 +516,8 @@ export const authOptions = {
 };
 ```
 
-It's not only possible with GitHub and Auth0, any [NextAuth provider](https://next-auth.js.org/providers/) will work.
-
+It's not only possible with GitHub and Auth0, any
+[NextAuth provider](https://next-auth.js.org/providers/) will work.
 
 ### Adding a database
 
@@ -477,167 +532,58 @@ You can then remove the `/data` folder. Everything else should work as expected.
 
 ### Total file structure
 
-
 ```html file="File structure" isCollapsed isCollapsable
-|____components - Components used in the app
-| |____Whiteboard
-| |____ShareDialog
-| |____Document
-| |____Dashboard
-| |____Logo
-| |____Marketing
-| |____Documents
-| |____Cursors
-| |____Badge
-|____data - A demo database
-|____layouts - Page layout components
-| |____Authenticated
-| |____Document
-| |____Dashboard
-| |____Marketing
-| |____Documents
-| |____Error
-| |____Authentication
-|____icons
-|____lib
-| |____server - Server functions used for accessing documents, database, liveblocks
-| | |____database
-| | | |____getGroup.ts
-| | | |____getUser.ts
-| | | |____getGroups.ts
-| | | |____index.ts
-| | |____notify
-| | | |____notify.ts
-| | | |____index.ts
-| | |____auth
-| | | |____getServerSession.ts
-| | | |____index.ts
-| | |____utils
-| | | |____buildDocumentUsers.ts
-| | | |____fetchLiveblocksApi.ts
-| | | |____userAllowedInRooms.ts
-| | | |____getDraftsGroupName.ts
-| | | |____convertAccessType.ts
-| | | |____buildDocuments.ts
-| | | |____buildDocumentGroups.ts
-| | | |____isUserDocumentOwner.ts
-| | | |____index.ts
-| | | |____getRandom.ts
-| | |____index.ts
-| | |____documents
-| | | |____getDocuments.ts
-| | | |____getLiveUsers.ts
-| | | |____updateUserAccess.ts
-| | | |____getDocumentGroups.ts
-| | | |____deleteDocument.ts
-| | | |____createDocument.ts
-| | | |____updateGroupAccess.ts
-| | | |____getNextDocuments.ts
-| | | |____updateDefaultAccess.ts
-| | | |____updateDocument.ts
-| | | |____getDocumentUsers.ts
-| | | |____removeUserAccess.ts
-| | | |____index.ts
-| | | |____getDocument.ts
-| | | |____removeGroupAccess.ts
-| | |____liveblocks
-| | | |____getNextRooms.ts
-| | | |____initializeStorage.ts
-| | | |____getActiveUsers.ts
-| | | |____getStorage.ts
-| | | |____createRoom.ts
-| | | |____getActiveUsersInRooms.ts
-| | | |____deleteRoom.ts
-| | | |____updateRoom.ts
-| | | |____deleteStorage.ts
-| | | |____getRooms.ts
-| | | |____getRoom.ts
-| | | |____authorize.ts
-| | | |____index.ts
-| |____client - Client functions used for accessing documents, database, SWR hooks
-| | |____database
-| | | |____getGroup.ts
-| | | |____getUser.ts
-| | | |____getGroups.ts
-| | | |____index.ts
-| | |____utils
-| | | |____getDocumentAccess.ts
-| | | |____fetchApiEndpoint.ts
-| | | |____index.ts
-| | |____hooks
-| | | |____useDocumentsFunctionSWR.ts
-| | | |____index.ts
-| | | |____usePaginatedDocumentsSWR.ts
-| | |____index.ts
-| | |____documents
-| | | |____getDocuments.ts
-| | | |____getLiveUsers.ts
-| | | |____updateUserAccess.ts
-| | | |____updateDocumentName.ts
-| | | |____getDocumentGroups.ts
-| | | |____deleteDocument.ts
-| | | |____createDocument.ts
-| | | |____updateGroupAccess.ts
-| | | |____getNextDocuments.ts
-| | | |____updateDefaultAccess.ts
-| | | |____getDocumentUsers.ts
-| | | |____removeUserAccess.ts
-| | | |____index.ts
-| | | |____getDocument.ts
-| | | |____removeGroupAccess.ts
-|____tsconfig.json
-|____pages - Next.js pages
-| |____index.tsx
-| |____whiteboard
-| | |____[id].tsx
-| |____index.module.css
-| |____dashboard
-| | |____index.tsx
-| | |____drafts.tsx
-| | |____group
-| | | |____[groupId].tsx
-| |____api
-| | |____database
-| | | |____groups.ts
-| | | |____users.ts
-| | |____auth
-| | | |____[...nextauth].ts
-| | |____liveblocks
-| | | |____documents
-| | | | |____next.ts
-| | | | |____[documentId]
-| | | | | |____defaultAccess.ts
-| | | | | |____groups.ts
-| | | | | |____users.ts
-| | | | | |____index.ts
-| | | | |____liveUsers.ts
-| | | | |____index.ts
-| | | | |____create.ts
-| | | |____auth.ts
-| |_____app.tsx
-| |____signin.tsx
-|____primitives
-| |____Tooltip
-| |____Input
-| |____Skeleton
-| |____Checkbox
-| |____Spinnerx
-| |____Dialog
-| |____Popover
-| |____Container
-| |____Button
-| |____Avatar
-| |____Select
-|____styles
-| |____normalize.css
-| |____globals.css
-|____types
-|____utils - Handy utils
-|____constants.ts
-|____liveblocks.config.ts
-|____liveblocks.server.config.ts
-|____next.config.js
-|____next-auth.d.ts
-|____next-env.d.ts
-|
+|____components - Components used in the app | |____Whiteboard |
+|____ShareDialog | |____Document | |____Dashboard | |____Logo | |____Marketing |
+|____Documents | |____Cursors | |____Badge |____data - A demo database
+|____layouts - Page layout components | |____Authenticated | |____Document |
+|____Dashboard | |____Marketing | |____Documents | |____Error |
+|____Authentication |____icons |____lib | |____server - Server functions used
+for accessing documents, database, liveblocks | | |____database | | |
+|____getGroup.ts | | | |____getUser.ts | | | |____getGroups.ts | | |
+|____index.ts | | |____notify | | | |____notify.ts | | | |____index.ts | |
+|____auth | | | |____getServerSession.ts | | | |____index.ts | | |____utils | |
+| |____buildDocumentUsers.ts | | | |____fetchLiveblocksApi.ts | | |
+|____userAllowedInRooms.ts | | | |____getDraftsGroupName.ts | | |
+|____convertAccessType.ts | | | |____buildDocuments.ts | | |
+|____buildDocumentGroups.ts | | | |____isUserDocumentOwner.ts | | |
+|____index.ts | | | |____getRandom.ts | | |____index.ts | | |____documents | | |
+|____getDocuments.ts | | | |____getLiveUsers.ts | | | |____updateUserAccess.ts |
+| | |____getDocumentGroups.ts | | | |____deleteDocument.ts | | |
+|____createDocument.ts | | | |____updateGroupAccess.ts | | |
+|____getNextDocuments.ts | | | |____updateDefaultAccess.ts | | |
+|____updateDocument.ts | | | |____getDocumentUsers.ts | | |
+|____removeUserAccess.ts | | | |____index.ts | | | |____getDocument.ts | | |
+|____removeGroupAccess.ts | | |____liveblocks | | | |____getNextRooms.ts | | |
+|____initializeStorage.ts | | | |____getActiveUsers.ts | | | |____getStorage.ts
+| | | |____createRoom.ts | | | |____getActiveUsersInRooms.ts | | |
+|____deleteRoom.ts | | | |____updateRoom.ts | | | |____deleteStorage.ts | | |
+|____getRooms.ts | | | |____getRoom.ts | | | |____authorize.ts | | |
+|____index.ts | |____client - Client functions used for accessing documents,
+database, SWR hooks | | |____database | | | |____getGroup.ts | | |
+|____getUser.ts | | | |____getGroups.ts | | | |____index.ts | | |____utils | | |
+|____getDocumentAccess.ts | | | |____fetchApiEndpoint.ts | | | |____index.ts | |
+|____hooks | | | |____useDocumentsFunctionSWR.ts | | | |____index.ts | | |
+|____usePaginatedDocumentsSWR.ts | | |____index.ts | | |____documents | | |
+|____getDocuments.ts | | | |____getLiveUsers.ts | | | |____updateUserAccess.ts |
+| | |____updateDocumentName.ts | | | |____getDocumentGroups.ts | | |
+|____deleteDocument.ts | | | |____createDocument.ts | | |
+|____updateGroupAccess.ts | | | |____getNextDocuments.ts | | |
+|____updateDefaultAccess.ts | | | |____getDocumentUsers.ts | | |
+|____removeUserAccess.ts | | | |____index.ts | | | |____getDocument.ts | | |
+|____removeGroupAccess.ts |____tsconfig.json |____pages - Next.js pages |
+|____index.tsx | |____whiteboard | | |____[id].tsx | |____index.module.css |
+|____dashboard | | |____index.tsx | | |____drafts.tsx | | |____group | | |
+|____[groupId].tsx | |____api | | |____database | | | |____groups.ts | | |
+|____users.ts | | |____auth | | | |____[...nextauth].ts | | |____liveblocks | |
+| |____documents | | | | |____next.ts | | | | |____[documentId] | | | | |
+|____defaultAccess.ts | | | | | |____groups.ts | | | | | |____users.ts | | | | |
+|____index.ts | | | | |____liveUsers.ts | | | | |____index.ts | | | |
+|____create.ts | | | |____auth.ts | |_____app.tsx | |____signin.tsx
+|____primitives | |____Tooltip | |____Input | |____Skeleton | |____Checkbox |
+|____Spinnerx | |____Dialog | |____Popover | |____Container | |____Button |
+|____Avatar | |____Select |____styles | |____normalize.css | |____globals.css
+|____types |____utils - Handy utils |____constants.ts |____liveblocks.config.ts
+|____liveblocks.server.config.ts |____next.config.js |____next-auth.d.ts
+|____next-env.d.ts |
 ```
