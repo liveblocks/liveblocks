@@ -39,33 +39,33 @@ liveblocks.server.config.ts
 package.json
 ```
 
-The important thing to note is that there are primitives, which are base level components such as buttons (think of these as the small building blocks of a page), components, which you can think of as multiplayer impementations (cursors, badges, etc), pages, which render document level experiences and both server side and client side methods which contain the logic to create and modify documents.
+The important thing to note is that there are primitives, which are base level components such as buttons (think of these as the small building blocks of a page), components, which you can think of as multiplayer implementations (cursors, badges, etc), pages, which render document level experiences and both server side and client side methods which contain the logic to create and modify documents.
 
 <br />
 <details>
   <summary>More info about the structure</summary>
   <br />
   <dl>
-    <dt>/components</dt>
-    <dd>Components used in the app</dd>
-    <dt>/data</dt>
-    <dd>A demo database</dd>
-    <dt>/layouts</dt>
-    <dd>Page layout components</dd>
-    <dt>/lib/client</dt>
-    <dd>Client functions used for accessing documents, database, SWR hooks</dd>
-    <dt>/lib/server</dt>
-    <dd>Server functions used for accessing documents, database, liveblocks</dd>
-    <dt>/pages</dt>
-    <dd>Next.js pages</dd>
-    <dt>/primitives</dt>
-    <dd>Generic reusable components</dd>
-    <dt>/types</dt>
-    <dd>All reusable TypeScript types</dd>
-    <dt>liveblocks.config.ts</dt>
-    <dd>Liveblocks config file</dd>
-    <dt>liveblocks.server.config.ts</dt>
-    <dd>Server-side Liveblocks config file</dd>
+    <dt>`/components/`</dt>
+    <dd>Components used in the app.</dd>
+    <dt>`/data/`</dt>
+    <dd>A demo database.</dd>
+    <dt>`/layouts/`</dt>
+    <dd>Page layout components.</dd>
+    <dt>`/lib/client/`</dt>
+    <dd>Client functions used for accessing documents, database, SWR hooks.</dd>
+    <dt>`/lib/server/`</dt>
+    <dd>Server functions used for accessing documents, database, liveblocks.</dd>
+    <dt>`/pages/`</dt>
+    <dd>Next.js pages.</dd>
+    <dt>`/primitives/`</dt>
+    <dd>Generic reusable components.</dd>
+    <dt>`/types/`</dt>
+    <dd>All reusable TypeScript types.</dd>
+    <dt>`/liveblocks.config.ts`</dt>
+    <dd>Liveblocks config file.</dd>
+    <dt>`/liveblocks.server.config.ts`</dt>
+    <dd>Server-side Liveblocks config file.</dd>
   </dl>
 </details>
 
@@ -132,10 +132,9 @@ with minimal code changes. A demo authentication system is used by default, but 
 9. Go back to the previous page and find the "Client ID" near the top. Copy this
    into your `.env.local` file as `GITHUB_ID`
 
-Almost there! `.env.local` should now look similar to this:
+Almost there! `.env.local` should now contain lines similar to this:
 
 ```
-LIVEBLOCKS_SECRET_KEY=sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
