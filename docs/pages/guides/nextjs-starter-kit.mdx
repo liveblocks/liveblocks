@@ -146,38 +146,6 @@ GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
 
-#### Add the authentication provider
-
-Next, go to `/pages/api/auth/[...nextAuth].ts` in your project, and add a GitHub
-provider:
-
-```ts
-import GithubProvider from "next-auth/providers/github";
-
-export const authOptions = {
-  // ...
-  providers: {
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    }),
-  }
-};
-```
-
-And remove `CredentialsProvider` from the same object, as this was only necessary for the demo authentication system:
-```ts
-export const authOptions = {
-  // ...
-  providers: {
-    // Delete from here
-    CredentialsProvider({
-      // ...
-    }),
-    // Until here
-  }
-};
-```
 GitHub authentication is now complete!
 
 ### Auth0 authentication [#auth0-authentication]
