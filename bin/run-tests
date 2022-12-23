@@ -6,9 +6,11 @@ ROOT="$(git root)"
 while true; do
     clear
     set +e
-    "$ROOT/bin/build-parser" \
+    ts-node-esm "$ROOT/bin/generate-ast.ts"
+    "$ROOT/bin/build-parser"                     \
       && ts-node-esm "$ROOT/bin/generate-ast.ts" \
-      && jest
+      && tsc                                     \
+      && jest --no-silent --verbose --bail --no-coverage
     set -e
     echo "Press Enter to re-run the tests"
     read answer

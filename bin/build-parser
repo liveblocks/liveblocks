@@ -20,14 +20,18 @@ main () {
         node_modules/.bin/peggy                             \
             --plugin ./node_modules/ts-pegjs/src/tspegjs.js \
             --extra-options-file pegconfig.json             \
+            --allowed-start-rules Document,TypeExpr         \
             --cache                                         \
             -o "$OUTPUT"                                    \
-            "$INPUT"
+            "$INPUT"                                        \
+            2>errors.log
         exitcode="$?"
-        if [ "$exitcode" -gt 0 ]; then
-            rm -f "$OUTPUT"
+        if [ "$exitcode" -gt 0 -o "$(cat errors.log | wc -l)" -gt 0 ]; then
+            cat errors.log >&2
+            rm -f "$OUTPUT" errors.log
             exit "$exitcode"
         fi
+        rm -f errors.log
         set -e
 
         echo "Done" >&2

@@ -1,0 +1,411 @@
+#
+# Below you'll find the full Nox AST specification.  This is a simplistic
+# specification format (a DSL) for specifying which AST node hierarchies are
+# valid.
+#
+
+# @ArrowFunctionBody:
+#     | @Expr
+#     | Block
+
+
+# @AssignPat:
+#     | ListAssignPat
+#     | RecordAssignPat
+#     | TupleAssignPat
+#     | VariablePat
+#     | Wildcard
+
+
+# @AssignPatOrSpread:
+#     | @AssignPat
+#     | Spread
+
+
+# @BlockOrIf:
+#     | Block
+#     | IfStatement
+
+
+# @Comment:
+#     | BlockComment
+#     | LineComment
+
+
+# @Definition:
+#     | AliasTypeDef
+#     | Assignment
+#     | EnumDef
+#     | FunctionDef
+#     | TypeDef
+
+
+# @Expr:
+#     | ArrowFunction
+#     | BinaryOp
+#     | CallExpr
+#     | ConstructorExpr
+#     | Identifier
+#     | IndexExpr
+#     | ListExpr
+#     | @Literal
+#     | MatchExpr
+#     | PropertyExpr
+#     | RecordExpr
+#     | SetExpr
+#     | TupleExpr
+#     | UnaryOp
+
+
+@Literal:
+    # | FloatLiteral
+    # | IntLiteral
+    | StringLiteral
+
+
+# @MatchPat:
+#     | @Literal
+#     | EnumVariantPat
+#     | RecordMatchPat
+#     | TupleMatchPat
+#     | VariablePat
+#     | Wildcard
+
+
+# # TODO: Should we simplify this to Identifier? and treat "null" as a wildcard?
+# @SpreadArgument:
+#     | Identifier
+#     | Wildcard
+
+
+# @Statement:
+#     | @Definition
+#     | IfStatement
+#     | ReturnStatement
+
+
+# @StringExpr:
+#     | StringLiteral
+#     | TemplateLiteral
+
+
+# @Type:
+#     | FunctionType
+#     | LiteralType
+#     | RecordType
+#     | TupleType
+#     | TypeRef
+
+
+# AliasTypeDef:
+#     name        TypeName
+#     typeParams  TypeName*
+#     type        @Type
+
+
+# ArrowFunction:
+#     typeParams    TypeName*
+#     params        Parameter*
+#     returnType    @Type?
+#     expr          @ArrowFunctionBody
+
+
+# Assignment:
+#     pattern  @AssignPat
+#     expr     @Expr
+
+
+# BinaryOp:
+#     op     string
+#     left   @Expr
+#     right  @Expr
+
+
+# Block:
+#     statements  @Statement*
+
+
+# BlockComment:
+#     text      string
+
+
+# CallExpr:
+#     callee  @Expr
+#     args    @Expr*
+#     kwargs  KeyValueExpr*
+
+
+# Case:
+#     patterns  @MatchPat+
+#     expr      @Expr
+
+
+# ConstructorExpr:
+#     name  TypeName
+#     arg   @Expr?
+
+
+# EnumDef:
+#     name        TypeName
+#     typeParams  TypeName*
+#     variants    EnumVariant+
+
+
+# EnumVariant:
+#     name   TypeName
+#     param  @Type?
+
+
+# EnumVariantPat:
+#     name     TypeName
+#     pattern  @MatchPat?
+
+
+# # e.g. `x: Int` or `y: A<T> | B => C`
+# Field:
+#     name  Identifier
+#     type  @Type
+
+
+# FieldAssignPat:
+#     name     Identifier
+#     pattern  @AssignPat
+
+
+# FieldMatchPat:
+#     name     Identifier
+#     pattern  @MatchPat
+
+
+# FloatLiteral:
+#     value     number
+#     rawValue  string
+
+
+# FunctionDef:
+#     name        Identifier
+#     typeParams  TypeName*
+#     params      Parameter*
+#     returnType  @Type?
+#     body        Block
+
+
+# # e.g. (Int, Str) => Str
+# FunctionType:
+#     args        @Type*
+#     returnType  @Type
+
+
+# Identifier:
+#     name  string
+
+
+# IfStatement:
+#     condition  @Expr
+#     thenBlock  Block
+#     elseBlock  @BlockOrIf?
+
+
+# IndexExpr:
+#     expr     @Expr
+#     indexer  @Expr
+
+
+# IntLiteral:
+#     value     number
+#     rawValue  string
+
+
+# # e.g. `x = 42`, or `y = some_expr()`
+# KeyValueExpr:
+#     name   Identifier
+#     value  @Expr
+
+
+# LineComment:
+#     text      string
+
+
+# ListAssignPat:
+#     patterns  @AssignPatOrSpread*
+
+
+# ListExpr:
+#     items  @Expr*
+
+
+# LiteralType:
+#     literal  @Literal
+
+
+# MatchExpr:
+#     matchee  @Expr
+#     cases    Case*
+
+
+# Document:
+#     definitions  @Definition*
+#     comments     @Comment*
+
+
+# Parameter:
+#     name  Identifier
+#     type  @Type?
+
+
+# PropertyExpr:
+#     expr   @Expr
+#     field  Identifier
+
+
+# # e.g. { x = 42, y = 13 }
+# RecordExpr:
+#     fields  KeyValueExpr*
+
+
+# # e.g. { x, y } = expr
+# # e.g. { x as x2, y } = expr
+# # e.g. { x, .. } = expr
+# # e.g. { x, ..rest } = expr
+# RecordAssignPat:
+#     fields  FieldAssignPat+
+#     spread  Spread?
+
+
+# # e.g. { x, y }
+# # e.g. { x as x2, y }
+# # e.g. { x, .. }
+# # e.g. { x, ..rest }
+# RecordMatchPat:
+#     fields  FieldMatchPat+
+#     spread  Spread?
+
+
+# # e.g. { x: Int, y: Int }
+# RecordType:
+#     members  Field*
+
+
+# ReturnStatement:
+#     expr     @Expr
+
+
+# SetExpr:
+#     members  @Expr*
+
+
+# Spread:
+#     name  @SpreadArgument
+
+
+StringLiteral:
+    value     string
+    rawValue  string
+
+
+# TemplateLiteral:
+#     literals  string+
+#     exprs     @Expr+
+
+
+# TupleAssignPat:
+#     patterns  @AssignPat*
+
+
+# TupleExpr:
+#     values  @Expr+
+
+
+# TupleMatchPat:
+#     patterns  @MatchPat*
+
+
+# # e.g. (Int, Str)
+# TupleType:
+#     types  @Type+
+
+
+# # e.g. type Thing<L, R> = { left: L, right: R }
+# TypeDef:
+#     name        TypeName
+#     typeParams  TypeName*
+#     type        @Type  # TODO: Should this exclude FunctionType?
+
+
+# TypeName:
+#     name  string
+
+
+# TypeRef:
+#     name    TypeName
+#     args    @Type*
+
+
+# UnaryOp:
+#     op       string
+#     operand  @Expr
+
+
+# VariablePat:
+#     name  Identifier
+#     type  @Type?
+
+
+# Wildcard:
+#     # (empty)
+
+Document:
+    definitions  @Definition*
+    comments     @Comment*
+
+
+@Comment:
+    # | BlockComment
+    | LineComment
+
+
+@Definition:
+    # | AliasTypeDef
+    # | Assignment
+    # | EnumDef
+    # | FunctionDef
+    | ObjectTypeDef
+
+
+@TypeExpr:
+    # | FunctionType
+    # | NumberLiteral
+    | @Literal
+    | ObjectTypeExpr
+    # | TupleType
+    # | TypeRef
+
+
+# e.g. type Circle { cx: Number; cy: Number; r: Float }
+ObjectTypeDef:
+    name  TypeName
+    type  ObjectTypeExpr
+
+
+TypeName:
+    name  string
+
+
+# e.g. { x: Int, y: LiveList<Int> }
+ObjectTypeExpr:
+    members  FieldDef*
+
+
+FieldDef:
+    name      Identifier
+    optional  boolean
+    type      @TypeExpr
+
+
+LineComment:
+    text  string
+
+
+Identifier:
+    name  string
+

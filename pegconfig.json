@@ -1,5 +1,6 @@
 {
   "tspegjs": {
-    "customHeader": "// @ts-nocheck\n\nimport ast from \"../ast\";"
-  }
+    "customHeader": "import ast from \"../ast\";\nimport type * as AST from \"../ast\";\n"
+  },
+  "returnTypes": {}
 }

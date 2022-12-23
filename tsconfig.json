@@ -7,8 +7,13 @@
     "module": "es2015",
     "lib": ["dom", "es2015"],
 
-    // TODO: Try to get rid of these overrides
-    "noUncheckedIndexedAccess": false, // OVERWRITTEN to relax a bit
+    // Relax the strict defaults a bit. They don't play super well with the
+    // generated parser in particular.
+    "noUncheckedIndexedAccess": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    "downlevelIteration": true,
     "esModuleInterop": true
   },
   "include": ["bin/**/*", "src/**/*"]

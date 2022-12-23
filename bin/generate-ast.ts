@@ -14,8 +14,8 @@ const PRETTIER_OPTIONS: PrettierOptions = {
   trailingComma: "all",
 };
 
-const TYPEOF_CHECKS = new Set(["number", "string"]);
-const BUILTIN_TYPES = new Set(["number", "string"]);
+const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
+const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
 
 // e.g. "SomeNode" or "@SomeGroup"
 type BaseNodeRef =
@@ -225,8 +225,8 @@ function validate(grammar: Grammar) {
     defined.delete(name);
   }
 
-  // "Module" is the top-level node kind, which by definition won't be referenced
-  defined.delete("Module");
+  // "Document" is the top-level node kind, which by definition won't be referenced
+  defined.delete("Document");
   invariant(
     defined.size === 0,
     `The following node kinds are never referenced: ${Array.from(defined).join(
@@ -409,7 +409,7 @@ function generateCode(grammar: Grammar): string {
     output.push(`
             export type ${node.name} = {
                 _kind: ${JSON.stringify(node.name)}
-                _type?: Type
+                // _type?: Type
                 ${node.fields
                   .map(
                     (field) => `${field.name}: ${getTypeScriptType(field.ref)}`
