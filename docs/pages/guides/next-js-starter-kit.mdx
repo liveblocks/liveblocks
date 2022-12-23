@@ -14,7 +14,7 @@ In this guide, you'll learn how to build a document-based product using standard
 </Figure>
 
 ## Features
-The Next.js Starter Kit will include the following 
+The Next.js Starter Kit will include the following
 - Documents dashboard with pagination, drafts, groups, auto-revalidation
 - Collaborative whiteboard app with a fully-featured share menu
 - Authentication compatible with GitHub, Google, Auth0, and more
@@ -23,7 +23,7 @@ The Next.js Starter Kit will include the following
 
 ## Set up the Next.js Starter Kit
 The starter guide has the following structure:
-```
+```html file="File structure" isCollapsed isCollapsable
 |____types
 |____liveblocks.config.ts
 |____next.config.js
@@ -189,7 +189,7 @@ The starter guide has the following structure:
 | |____signin.tsx
 |____structure
 |
-``` 
+```
 The important thing to note is that there are primitives, which are base level components such as buttons (think of these as the small building blocks of a page), components, which you can think of as multiplayer impementations (cursors, badges, etc), pages, which render document level experiences and both server side and client side methods which contain the logic to create and modify documments.
 
 ### Liveblocks Configuration
@@ -206,8 +206,8 @@ If you already have a Liveblocks Development account, you may skip to step 4.
   </video>
 </Figure>
 
-5. Install the starter kit by running 
-```ts 
+5. Install the starter kit by running
+```ts
 npx create-liveblocks-app --next
 ```
 6. Enter the `.env.local` file, which is located alongside `package.json` at the root level in your project.
@@ -219,7 +219,7 @@ Your `.env.local` file should contain a line similar to this:
 LIVEBLOCKS_SECRET_KEY=sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
-At this point, Liveblocks can be run with 
+At this point, Liveblocks can be run with
 
 ```ts
 npm run dev
@@ -231,7 +231,7 @@ authentication, so many authentication providers can be configured
 with minimal code changes. A demo authentication system is used by default, but it's easy to add real providers, such as GitHub, Google, Auth0.
 
 ### GitHub Authentication
- 
+
 #### Getting the secrets
 1. Go to [Developer Settings](https://github.com/settings/apps) on GitHub and
    click "New GitHub App"
@@ -270,6 +270,7 @@ provider:
 
 ```ts
 import GithubProvider from "next-auth/providers/github";
+
 export const authOptions = {
   // ...
   providers: {
@@ -323,17 +324,19 @@ fetching async resources:
 const { data, error } = await getDocument({
   /* ... */
 });
+
 // An error has occured
 if (error) {
   // { code: 400, message: "Document not found", suggestion: "Please check the URL is..." }
   console.log(error);
   return;
 }
+
 // Success, but result is empty
 if (!data) {
   return;
-// { code: 404, message: "Room not found", suggestion: "Check that you're on the correct page"}
 }
+
 // Success
 // { name: "my-document", id: "hIas7GuihgHF8Fhv8Sskg",  ... }
 console.log(data);
@@ -347,6 +350,7 @@ type-safe objects. For example in an API endpoint:
 
 ```ts
 import { createDocument } from "../../lib/server";
+
 export default async function (req, res) {
   // Create a new document
   const { data, error } = await createDocument(req, res, {
@@ -364,6 +368,7 @@ API endpoint for you and then calling the `/lib/server` function.
 
 ```tsx
 import { createDocument } from "../../lib/client";
+
 export function CreateDocumentButton() {
   async function handleCreateDocument() {
     // Create a new document
@@ -377,13 +382,14 @@ export function CreateDocumentButton() {
   return <button onClick={handleCreateDocument}>New document</button>;
 }
 ```
-Functions that return data can be used with [SWR hooks](https://swr.vercel.app/) that automatically update your data in components.  For example, `getDocumentUsers` returns a list of users with access to the room: 
+Functions that return data can be used with [SWR hooks](https://swr.vercel.app/) that automatically update your data in components.  For example, `getDocumentUsers` returns a list of users with access to the room:
 
 ```tsx
 // Convert from this
 const { data, error } = await getDocumentUsers({
   documentId: "my-document-id",
 });
+
 // To this
 const { data, error } = useDocumentsFunctionSWR([
   getDocumentUsers,
@@ -397,6 +403,7 @@ Here's a working example:
 
 ```tsx
 import { getDocumentUsers, useDocumentsFunctionSWR } from "../../lib/client";
+
 export function ListUsers() {
   // Get users attached to a document and update every 1000ms
   const { data: users, error: usersError } = useDocumentsFunctionSWR(
@@ -408,12 +415,15 @@ export function ListUsers() {
     ],
     { refreshInterval: 1000 }
   );
+  
   if (usersError) {
     return <div>Error</div>;
   }
+  
   if (!users) {
     return <div>Loading...</div>;
   }
+  
   return (
     <ul>
       {users.map((user) => (
@@ -537,6 +547,7 @@ Once that's working, the new property can then be used in your app:
 ```tsx
 // My random number
 const myRandomNumber = useSelf((me) => me.info.randomNumber);
+
 // An array of everyone else's random numbers
 const everyonesRandomNumbers = useOthersMapped(
   (other) => other.info.randomNumber
