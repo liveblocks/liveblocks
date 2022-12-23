@@ -106,7 +106,7 @@ If you already have a Liveblocks Development account, you may skip to step 4.
 
 5. Install the starter kit by running
 
-```ts
+```shell
 npx create-liveblocks-app --next
 ```
 
@@ -116,14 +116,14 @@ npx create-liveblocks-app --next
 
 Your `.env.local` file should contain a line similar to this:
 
-```ts
+```dotenv file=".env.local"
 LIVEBLOCKS_SECRET_KEY =
   sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;
 ```
 
 At this point, Liveblocks can be run with
 
-```ts
+```shell
 npm run dev
 ```
 
@@ -174,7 +174,7 @@ up your secret keys.
 
 Almost there! `.env.local` should now contain lines similar to this:
 
-```
+```dotenv file=".env.local"
 GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
@@ -210,7 +210,7 @@ up your secret keys.
 `.env.local` should now contain these three lines, along with anything
 previously there:
 
-```
+```dotenv file=".env.local"
 AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
@@ -226,7 +226,7 @@ instead. Before any user can sign in, they need to be added to `/data/users.ts`.
 Navigate there and add your details, for example, if you're signing in with
 `yourname@example.com`:
 
-```ts
+```ts file="data/users.ts"
 {
   id: "yourname@example.com",
   name: "Your Name",
@@ -374,7 +374,7 @@ export function ListUsers() {
 If you'd like to add a new property to `Document`, it's simple. First, edit the
 `Document` type in `/types/documents.ts`:
 
-```ts
+```ts file="types/documents.ts"
 export type Document = {
   // Your new property
   randomNumber: number;
@@ -385,7 +385,7 @@ export type Document = {
 Then modify the return value in `/lib/server/utils/buildDocuments.ts`. This is a
 function that converts a Liveblocks room into your custom document format:
 
-```ts
+```ts file="lib/server/utils/buildDocuments.ts"
 // Return our custom Document format
 const document: Document = {
   randomNumber: Math.random(),
@@ -409,7 +409,7 @@ and `Session` type.
 Adding a new property to `User`/`Session` is simple. First, edit the `User` type
 in `/types/data.ts`.
 
-```ts
+```ts file="types/data.ts"
 export type User = {
   // Your new property
   randomNumber: number;
@@ -419,13 +419,13 @@ export type User = {
 
 Then make sure to return this new property in `/lib/server/database/getUser.ts`.
 
-```ts
+```ts file="lib/server/database/getUser.ts"
 return { randomNumber: Math.random() /* ... */ };
 ```
 
 The new property will now be available to use in your app:
 
-```tsx
+```ts
 // randomNumber: Math.random(),
 console.log(session.user.info.randomNumber);
 ```
@@ -436,14 +436,14 @@ If you'd like your new property to be available inside your Liveblocks app (e.g.
 the React hooks used in whiteboard), you must modify `UserInfo` in
 `/liveblocks.config.ts`
 
-```tsx
+```ts file="liveblocks.config.ts"
 export type UserInfo = Pick<User, "randomNumber" /* ... */>;
 ```
 
 Then modify `/pages/api/liveblocks/auth.ts`. First, we'll give an anonymous user
 a property:
 
-```ts
+```ts file="pages/api/liveblocks/auth.ts"
 // Anonymous user info
 const anonymousUser: User = {
   randomNumber: Math.random(),
@@ -453,7 +453,7 @@ const anonymousUser: User = {
 
 Next, we'll get the signed-in user's property:
 
-```ts
+```ts file="pages/api/liveblocks/auth.ts"
 // Get current user info from session (defined in /pages/api/auth/[...nextauth].ts)
 // If no session found, this is a logged out/anonymous user
 const {
@@ -464,7 +464,7 @@ const {
 
 And then pass this info to `authorize`:
 
-```ts
+```ts file="pages/api/liveblocks/auth.ts"
 // Get Liveblocks access token
 const { data, error } = await authorize({
   userInfo: { randomNumber /* ... */ },
@@ -529,61 +529,3 @@ correct properties:
 - `/lib/server/database/getUser.ts`
 
 You can then remove the `/data` folder. Everything else should work as expected.
-
-### Total file structure
-
-```html file="File structure" isCollapsed isCollapsable
-|____components - Components used in the app | |____Whiteboard |
-|____ShareDialog | |____Document | |____Dashboard | |____Logo | |____Marketing |
-|____Documents | |____Cursors | |____Badge |____data - A demo database
-|____layouts - Page layout components | |____Authenticated | |____Document |
-|____Dashboard | |____Marketing | |____Documents | |____Error |
-|____Authentication |____icons |____lib | |____server - Server functions used
-for accessing documents, database, liveblocks | | |____database | | |
-|____getGroup.ts | | | |____getUser.ts | | | |____getGroups.ts | | |
-|____index.ts | | |____notify | | | |____notify.ts | | | |____index.ts | |
-|____auth | | | |____getServerSession.ts | | | |____index.ts | | |____utils | |
-| |____buildDocumentUsers.ts | | | |____fetchLiveblocksApi.ts | | |
-|____userAllowedInRooms.ts | | | |____getDraftsGroupName.ts | | |
-|____convertAccessType.ts | | | |____buildDocuments.ts | | |
-|____buildDocumentGroups.ts | | | |____isUserDocumentOwner.ts | | |
-|____index.ts | | | |____getRandom.ts | | |____index.ts | | |____documents | | |
-|____getDocuments.ts | | | |____getLiveUsers.ts | | | |____updateUserAccess.ts |
-| | |____getDocumentGroups.ts | | | |____deleteDocument.ts | | |
-|____createDocument.ts | | | |____updateGroupAccess.ts | | |
-|____getNextDocuments.ts | | | |____updateDefaultAccess.ts | | |
-|____updateDocument.ts | | | |____getDocumentUsers.ts | | |
-|____removeUserAccess.ts | | | |____index.ts | | | |____getDocument.ts | | |
-|____removeGroupAccess.ts | | |____liveblocks | | | |____getNextRooms.ts | | |
-|____initializeStorage.ts | | | |____getActiveUsers.ts | | | |____getStorage.ts
-| | | |____createRoom.ts | | | |____getActiveUsersInRooms.ts | | |
-|____deleteRoom.ts | | | |____updateRoom.ts | | | |____deleteStorage.ts | | |
-|____getRooms.ts | | | |____getRoom.ts | | | |____authorize.ts | | |
-|____index.ts | |____client - Client functions used for accessing documents,
-database, SWR hooks | | |____database | | | |____getGroup.ts | | |
-|____getUser.ts | | | |____getGroups.ts | | | |____index.ts | | |____utils | | |
-|____getDocumentAccess.ts | | | |____fetchApiEndpoint.ts | | | |____index.ts | |
-|____hooks | | | |____useDocumentsFunctionSWR.ts | | | |____index.ts | | |
-|____usePaginatedDocumentsSWR.ts | | |____index.ts | | |____documents | | |
-|____getDocuments.ts | | | |____getLiveUsers.ts | | | |____updateUserAccess.ts |
-| | |____updateDocumentName.ts | | | |____getDocumentGroups.ts | | |
-|____deleteDocument.ts | | | |____createDocument.ts | | |
-|____updateGroupAccess.ts | | | |____getNextDocuments.ts | | |
-|____updateDefaultAccess.ts | | | |____getDocumentUsers.ts | | |
-|____removeUserAccess.ts | | | |____index.ts | | | |____getDocument.ts | | |
-|____removeGroupAccess.ts |____tsconfig.json |____pages - Next.js pages |
-|____index.tsx | |____whiteboard | | |____[id].tsx | |____index.module.css |
-|____dashboard | | |____index.tsx | | |____drafts.tsx | | |____group | | |
-|____[groupId].tsx | |____api | | |____database | | | |____groups.ts | | |
-|____users.ts | | |____auth | | | |____[...nextauth].ts | | |____liveblocks | |
-| |____documents | | | | |____next.ts | | | | |____[documentId] | | | | |
-|____defaultAccess.ts | | | | | |____groups.ts | | | | | |____users.ts | | | | |
-|____index.ts | | | | |____liveUsers.ts | | | | |____index.ts | | | |
-|____create.ts | | | |____auth.ts | |_____app.tsx | |____signin.tsx
-|____primitives | |____Tooltip | |____Input | |____Skeleton | |____Checkbox |
-|____Spinnerx | |____Dialog | |____Popover | |____Container | |____Button |
-|____Avatar | |____Select |____styles | |____normalize.css | |____globals.css
-|____types |____utils - Handy utils |____constants.ts |____liveblocks.config.ts
-|____liveblocks.server.config.ts |____next.config.js |____next-auth.d.ts
-|____next-env.d.ts |
-```
