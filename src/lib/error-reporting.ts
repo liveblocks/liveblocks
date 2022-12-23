@@ -56,7 +56,7 @@ function buildOffsetLUT(lines: Array<string>): Array<number> {
  * Given (at least a) filename, will be able to print error messages in a human
  * friendly way, annotating the source file.
  *
- *     ErrorReporter.fromPath('/path/to/file.nox')
+ *     ErrorReporter.fromPath('/path/to/file.lsl')
  *     ErrorReporter.fromText('x = 42')
  *
  */

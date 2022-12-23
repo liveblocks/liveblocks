@@ -7,8 +7,6 @@ import { parse } from "./parser";
 
 const version = "0.0.1";
 
-console.log("henkkkkkkkkkk");
-
 async function main() {
   const program = commander.name("schematizer");
 
@@ -18,7 +16,6 @@ async function main() {
     .command("parse <file>")
     .description("Parse a Liveblocks schema and display the AST")
     .action((filename) => {
-      console.error("yo", filename);
       if (!filename) {
         program.help();
         process.exit(0);
@@ -34,11 +31,11 @@ async function main() {
       }
     });
 
-  // When you type "nox check"
+  // When you type "schematizer check"
   //program
   //  .version(version)
   //  .command("check <file>")
-  //  //.description('Parse a Nox program and type check it')
+  //  //.description('Parse a Liveblocks schema and type check it')
   //  // .option('-a, --action <action>')
   //  .action((filename) => {
   //    if (!filename) {
@@ -102,16 +99,6 @@ async function main() {
     );
     process.exit(1);
   });
-
-  // Main compiler
-  program
-    .command("run")
-    //.description('Run a Nox program')
-    .action((_file) => {
-      console.log(
-        "Nox is not mature enough to actually have a runner yet! Please bare with us!"
-      );
-    });
 
   // Run it!
   program.parse(process.argv);

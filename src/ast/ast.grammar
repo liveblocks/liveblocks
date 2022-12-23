@@ -1,5 +1,5 @@
 #
-# Below you'll find the full Nox AST specification.  This is a simplistic
+# Below you'll find the full AST specification. This is a simplistic
 # specification format (a DSL) for specifying which AST node hierarchies are
 # valid.
 #
@@ -408,4 +408,3 @@ LineComment:
 
 Identifier:
     name  string
-

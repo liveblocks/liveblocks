@@ -51,21 +51,12 @@ Document
         defs ?? [],
 
         // Comments have been consumed as a side-effect during parsing, and
-        // have been stored on the `options` global.  This way, they stay
-        // out of the way in the resulting parse tree, but still get
-        // consumed and recorded, so tools like nox-fmt can access them.
+        // have been stored on the `options` global.  This way, they stay out
+        // of the way in the resulting parse tree, but still get consumed and
+        // recorded, so tools like formatters can access them.
         options?.comments,
       )
     }
-
-  // XXX TODO REMOVE ME
-  / TypeExpr
-
-
-
-// XXX TODO Implement me for real
-TypeExpr
-  = "henk" { return ast.StringLiteral("henk", "\"henk\"") }
 
 
 // Single-underscore means "whitespace but no newlines"
@@ -92,16 +83,14 @@ Comment
     }
 
 
-LineComment = "henk"
-
-/* LineComment */
-/*   = '//' text:$( [^\n] )* &[\n] */
-/*     { return ast.LineComment(text, rng()) } */
+LineComment
+  = '//' text:$( [^\n] )* &[\n]
+    { return ast.LineComment(text, rng()) }
 
 
-//////   LOWER_CHAR = [a-z]
-//////   UPPER_CHAR = [A-Z]
-//////   WORD_CHAR = [a-zA-Z0-9_]
+LOWER_CHAR = [a-z]
+UPPER_CHAR = [A-Z]
+WORD_CHAR = [a-zA-Z0-9_]
 //////   UPPER_WORD_CHAR = [A-Z0-9_]
 //////   
 //////   
@@ -122,11 +111,11 @@ LineComment = "henk"
 //////       { return ast.Identifier(name, rng()) }
 //////   
 //////   
-//////   TypeName "type name"
-//////     = name:$( UPPER_CHAR WORD_CHAR* ) !WORD_CHAR _
-//////       { return ast.TypeName(name, rng()) }
-//////   
-//////   
+TypeName "type name"
+  = name:$( UPPER_CHAR WORD_CHAR* ) !WORD_CHAR _
+    { return ast.TypeName(name, rng()) }
+
+
 //////   //
 //////   // Function / variable definitions at the top of the document
 //////   //
@@ -140,7 +129,17 @@ DefinitionList
 
 
 Definition
-  = "henk"
+  = TYPE name:TypeName LCURLY RCURLY
+    { return ast.ObjectTypeDef(name, ast.ObjectTypeExpr([])) }
+
+
+
+// XXX TODO Implement me for real
+TypeExpr
+  = "todo"
+
+
+
 
 
 //////   Definition
@@ -771,10 +770,10 @@ DoubleQuotedString
 //////     = $( [0-9]+ ([_][0-9]+)* )
 //////   
 //////   
-//////   EOK "end of keyword"
-//////     = ![a-zA-Z0-9_] __
-//////   
-//////   
+EOK "end of keyword"
+  = ![a-zA-Z0-9_] __
+
+
 //////   Keyword "keyword"
 //////     = ALIAS
 //////     / AS
@@ -802,7 +801,7 @@ DoubleQuotedString
 //////   IF     = _ 'if'     EOK
 //////   MATCH  = __ 'match' EOK
 //////   RETURN = _ 'return' EOK
-//////   TYPE   = _ 'type'   EOK
+TYPE   = _ 'type'   EOK
 //////   WITH   = __ 'with'  EOK
 //////   XOR    = __ 'xor'   EOK  { return 'xor' }
 //////   
@@ -818,10 +817,8 @@ DoubleQuotedString
 //////   //           ^ Can't consume newlines here, since this is a valid start of
 //////   //           a new statement
 //////   RPAREN     = __ ')' _ { return null }
-//////   LCURLY     = _ '{' __ { return null }
-//////   //           ^ Can't consume newlines here, since this is a valid start of
-//////   //           a new statement
-//////   RCURLY     = __ '}' _ { return null }
+LCURLY     = __ '{' __ { return null }
+RCURLY     = __ '}' __ { return null }
 //////   LBRACKET   = __ '[' __ { return null }
 //////   RBRACKET   = __ ']' _ { return null }
 //////   
