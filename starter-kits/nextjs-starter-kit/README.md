@@ -1,4 +1,4 @@
-# Liveblocks Next.js Starter Kit (beta)
+# [Liveblocks Next.js Starter Kit](https://liveblocks.io/guides/nextjs-starter-kit)
 
 ## Features
 
@@ -12,7 +12,7 @@
 ## Get started
 Get started by running the following command, and running through the instructions, before following the rest of the guide.
 
-```
+```shell
 npx create-liveblocks-app --next
 ```
 
