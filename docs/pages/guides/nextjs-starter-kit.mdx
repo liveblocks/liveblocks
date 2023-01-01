@@ -169,8 +169,7 @@ up your secret keys.
 7. On the next page under "Client secrets", press "Generate a new client
    secret".
 8. Copy this secret into the `/.env.local` file as `GITHUB_SECRET`
-9. Go back to the previous page and find the "Client ID" near the top. Copy this
-   into your `.env.local` file as `GITHUB_ID`
+9. Go back to the previous page and find the "Client ID" near the top. Copy this into your `.env.local` file as `GITHUB_ID`
 
 Almost there! `.env.local` should now contain lines similar to this:
 
@@ -180,7 +179,7 @@ GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
 ```
 
 GitHub authentication is now complete! Next,
-[add yourself a user](#how-to-sign-up) to test out your authentication.
+[add yourself as a user](#how-to-sign-up) to test out your authentication.
 
 ### Auth0 authentication [#auth0-authentication]
 
@@ -196,7 +195,7 @@ up your secret keys.
 3. Next, select "Single Page Web Applications", and press "Create".
 4. Copy your "Client ID" from the top of the page, and place it within
    `.env.local` as `AUTH0_CLIENT_ID`.
-5. Click the "Settings" tab—we'll be making a number of changes here.
+5. Click the "Settings" tab— we'll be making a number of changes here.
 6. Find the "Client Secret" input field, and copy the value into `.env.local` as
    `AUTH0_CLIENT_SECRET`.
 7. Copy your "Domain" from the input field, add "https://" to the start, and
@@ -206,6 +205,15 @@ up your secret keys.
 9. Add the following to the "Allowed Logout URLs" textarea:
    `http://localhost:3000`.
 10. Scroll to the bottom and press "Save changes".
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/auth0-auth.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
 
 `.env.local` should now contain these three lines, along with anything
 previously there:
