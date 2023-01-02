@@ -10,7 +10,7 @@ PROJ_ROOT=$(git rev-parse --show-toplevel)
 rebuild_if_needed () {
 
     # To determine if a rebuild is needed:
-    # 1. `dist/schematizer` (output file) does not exist yet
+    # 1. `dist/parse-schema` (output file) does not exist yet
     # 2. Scan the `src/` folder for changes
 
     if [ -f dist/index.cjs ]; then

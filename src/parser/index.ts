@@ -15,7 +15,7 @@ function parseGrammarRule(
     typeof src === "string"
       ? ErrorReporter.fromText(src)
       : "path" in src
-      ? new ErrorReporter(src)
+      ? ErrorReporter.fromSrc(src)
       : src;
 
   try {
@@ -27,7 +27,7 @@ function parseGrammarRule(
      * If this is a parse error (due to a syntax error), report this in
      * a visually pleasing manner in the console.
      */
-    if (/SyntaxError/.test(e.message)) {
+    if (/SyntaxError/.test(e.name)) {
       type SyntaxError = Error & {
         location: {
           start: { offset: number; line: number; column: number };

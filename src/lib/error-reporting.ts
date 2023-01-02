@@ -18,7 +18,7 @@ export class Source {
     return new Source("<string>", text);
   }
 
-  constructor(path: string, contents?: string) {
+  private constructor(path: string, contents?: string) {
     this.path = path;
     this.#contents = contents;
   }
@@ -73,7 +73,11 @@ export class ErrorReporter {
     return new ErrorReporter(Source.fromText(programText));
   }
 
-  constructor(src: string | Source) {
+  static fromSrc(src: Source): ErrorReporter {
+    return new ErrorReporter(src);
+  }
+
+  private constructor(src: string | Source) {
     this.src = typeof src === "string" ? Source.fromText(src) : src;
   }
 

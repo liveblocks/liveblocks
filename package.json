@@ -41,7 +41,7 @@
   "dependencies": {
     "chalk": "^4.1.0",
     "colors": "^1.4.0",
-    "commander": "^6.2.1",
+    "commander": "^9.4.1",
     "invariant": "^2.2.4",
     "typescript": "^4.9.4"
   }
