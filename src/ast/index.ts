@@ -20,7 +20,11 @@ function isLiteral(node: Node): node is Literal {
 }
 
 function isTypeExpr(node: Node): node is TypeExpr {
-    return node._kind === 'ObjectTypeExpr' || isLiteral(node)
+    return node._kind === 'ObjectLiteralExpr' || isLiteral(node) || isTypeRef(node)
+}
+
+function isTypeRef(node: Node): node is TypeRef {
+    return node._kind === 'InstantiatedType' || node._kind === 'TypeName'
 }
 
 export type Comment = LineComment
@@ -29,7 +33,9 @@ export type Definition = ObjectTypeDef
 
 export type Literal = StringLiteral
 
-export type TypeExpr = Literal | ObjectTypeExpr
+export type TypeExpr = Literal | ObjectLiteralExpr | TypeRef
+
+export type TypeRef = InstantiatedType | TypeName
 
 export type Range = [number, number]
 
@@ -37,9 +43,10 @@ export type Node =
     | Document
     | FieldDef
     | Identifier
+    | InstantiatedType
     | LineComment
+    | ObjectLiteralExpr
     | ObjectTypeDef
-    | ObjectTypeExpr
     | StringLiteral
     | TypeName
 
@@ -57,9 +64,10 @@ function isNode(node: Node): node is Node {
         node._kind === 'Document' ||
         node._kind === 'FieldDef' ||
         node._kind === 'Identifier' ||
+        node._kind === 'InstantiatedType' ||
         node._kind === 'LineComment' ||
+        node._kind === 'ObjectLiteralExpr' ||
         node._kind === 'ObjectTypeDef' ||
-        node._kind === 'ObjectTypeExpr' ||
         node._kind === 'StringLiteral' ||
         node._kind === 'TypeName'
     )
@@ -89,6 +97,14 @@ export type Identifier = {
     range?: Range
 }
 
+export type InstantiatedType = {
+    _kind: 'InstantiatedType'
+    // _type?: Type
+    name: TypeName
+    args: TypeExpr[]
+    range?: Range
+}
+
 export type LineComment = {
     _kind: 'LineComment'
     // _type?: Type
@@ -96,18 +112,18 @@ export type LineComment = {
     range?: Range
 }
 
+export type ObjectLiteralExpr = {
+    _kind: 'ObjectLiteralExpr'
+    // _type?: Type
+    fields: FieldDef[]
+    range?: Range
+}
+
 export type ObjectTypeDef = {
     _kind: 'ObjectTypeDef'
     // _type?: Type
     name: TypeName
-    type: ObjectTypeExpr
-    range?: Range
-}
-
-export type ObjectTypeExpr = {
-    _kind: 'ObjectTypeExpr'
-    // _type?: Type
-    members: FieldDef[]
+    fields: FieldDef[]
     range?: Range
 }
 
@@ -226,6 +242,38 @@ export default {
         }
     },
 
+    InstantiatedType(name: TypeName, args: TypeExpr[], range?: Range): InstantiatedType {
+        invariant(
+            name._kind === 'TypeName',
+            `Invalid value for "name" arg in "InstantiatedType" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+                name,
+            )}`,
+        )
+
+        invariant(
+            Array.isArray(args) &&
+                args.length > 0 &&
+                args.every((item) => isTypeExpr(item)),
+            `Invalid value for "args" arg in "InstantiatedType" call.\nExpected: @TypeExpr+\nGot:      ${JSON.stringify(
+                args,
+            )}`,
+        )
+
+        invariant(
+            !range || isRange(range),
+            `Invalid value for range in "InstantiatedType".\nExpected: Range\nGot: ${JSON.stringify(
+                range,
+            )}`,
+        )
+        return {
+            _kind: 'InstantiatedType',
+            // _type: undefined,
+            name,
+            args,
+            range,
+        }
+    },
+
     LineComment(text: string, range?: Range): LineComment {
         invariant(
             typeof text === 'string',
@@ -248,7 +296,29 @@ export default {
         }
     },
 
-    ObjectTypeDef(name: TypeName, type: ObjectTypeExpr, range?: Range): ObjectTypeDef {
+    ObjectLiteralExpr(fields: FieldDef[] = [], range?: Range): ObjectLiteralExpr {
+        invariant(
+            Array.isArray(fields) && fields.every((item) => item._kind === 'FieldDef'),
+            `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+                fields,
+            )}`,
+        )
+
+        invariant(
+            !range || isRange(range),
+            `Invalid value for range in "ObjectLiteralExpr".\nExpected: Range\nGot: ${JSON.stringify(
+                range,
+            )}`,
+        )
+        return {
+            _kind: 'ObjectLiteralExpr',
+            // _type: undefined,
+            fields,
+            range,
+        }
+    },
+
+    ObjectTypeDef(name: TypeName, fields: FieldDef[] = [], range?: Range): ObjectTypeDef {
         invariant(
             name._kind === 'TypeName',
             `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
@@ -257,9 +327,9 @@ export default {
         )
 
         invariant(
-            type._kind === 'ObjectTypeExpr',
-            `Invalid value for "type" arg in "ObjectTypeDef" call.\nExpected: ObjectTypeExpr\nGot:      ${JSON.stringify(
-                type,
+            Array.isArray(fields) && fields.every((item) => item._kind === 'FieldDef'),
+            `Invalid value for "fields" arg in "ObjectTypeDef" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+                fields,
             )}`,
         )
 
@@ -273,29 +343,7 @@ export default {
             _kind: 'ObjectTypeDef',
             // _type: undefined,
             name,
-            type,
-            range,
-        }
-    },
-
-    ObjectTypeExpr(members: FieldDef[] = [], range?: Range): ObjectTypeExpr {
-        invariant(
-            Array.isArray(members) && members.every((item) => item._kind === 'FieldDef'),
-            `Invalid value for "members" arg in "ObjectTypeExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-                members,
-            )}`,
-        )
-
-        invariant(
-            !range || isRange(range),
-            `Invalid value for range in "ObjectTypeExpr".\nExpected: Range\nGot: ${JSON.stringify(
-                range,
-            )}`,
-        )
-        return {
-            _kind: 'ObjectTypeExpr',
-            // _type: undefined,
-            members,
+            fields,
             range,
         }
     },
@@ -358,4 +406,5 @@ export default {
     isDefinition,
     isLiteral,
     isTypeExpr,
+    isTypeRef,
 }

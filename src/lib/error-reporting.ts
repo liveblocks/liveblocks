@@ -1,6 +1,6 @@
 import colors from "colors";
 import fs from "fs";
-import prettify from "../prettify";
+import { prettify } from "../prettify";
 import { indent } from "./indent";
 import type { Range } from "../ast";
 

@@ -4,32 +4,59 @@ function escape(value: string, chars: RegExp): string {
   return value.replace(chars, "\\$1");
 }
 
-function _quoteSingle(value: string): string {
-  return "'" + escape(value, /(['\n\\\t])/g) + "'";
-}
+// function quoteSingle(value: string): string {
+//   return "'" + escape(value, /(['\n\\\t])/g) + "'";
+// }
 
-function _quoteDouble(value: string): string {
+function quoteDouble(value: string): string {
   return '"' + escape(value, /(["\n\\\t])/g) + '"';
 }
 
-function _assertNever(_value: never, msg: string): never {
+function assertNever(_value: never, msg: string): never {
   throw new Error(msg);
 }
 
 /**
  * This provides a one-line prettification (summary) the node.
  */
-export default function prettify(node: Node): string {
+export function prettify(node: Node): string {
   switch (node._kind) {
     case "Document":
-    case "FieldDef":
-    case "Identifier":
-    case "LineComment":
+      return node.definitions.map(prettify).join("\n\n");
+
     case "ObjectTypeDef":
-    case "ObjectTypeExpr":
+      return [
+        `type ${prettify(node.name)} {`,
+        ...node.fields.map((field) => `  ${prettify(field)}`),
+        "}",
+      ].join("\n");
+
+    case "ObjectLiteralExpr":
+      return `{ ${node.fields.map(prettify).join(", ")} }`;
+
+    case "Identifier":
+      return node.name;
+
     case "TypeName":
+      return node.name;
+
+    case "FieldDef":
+      return `${prettify(node.name)}${node.optional ? "?" : ""}: ${prettify(
+        node.type
+      )}`;
+
+    case "InstantiatedType":
+      return [`${prettify(node.name)}<`, ...node.args.map(prettify), ">"].join(
+        ""
+      );
+
+    case "StringLiteral":
+      return quoteDouble(node.value);
+
+    case "LineComment":
+      return `# ${node.text}`;
+
     default:
-      return "// TODO: Implement me";
-    // return assertNever(node, "Please define prettify for all node types");
+      return assertNever(node, "Please define prettify for all node types");
   }
 }

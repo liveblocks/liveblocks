@@ -1,6 +1,6 @@
 import { Command } from "commander";
 import { ErrorReporter } from "./lib/error-reporting";
-import { formatAST } from "./formatter";
+import { prettify } from "./prettify";
 import { parse } from "./parser";
 
 const version = "0.0.1";
@@ -22,7 +22,7 @@ async function main() {
   const reporter = ErrorReporter.fromPath(filename);
   try {
     const ast = parse(reporter);
-    console.log(formatAST(ast));
+    console.log(prettify(ast));
   } catch (err: unknown) {
     console.log((err as Error).message);
     process.exit(1);
