@@ -1,5 +1,5 @@
 <a href="https://liveblocks.io">
-  <video src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/starter-kits/nextjs-starter-kit.mp4" alt="Next.js starter kit video demo" />
+  <video src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/starter-kits/nextjs-starter-kit.mp4" />
 </a>
 
 # [Next.js Starter Kit](https://liveblocks.io/guides/nextjs-starter-kit)
