@@ -12,6 +12,16 @@ type Circle {
   fill?: RGB
 }
 
+type Int { x: Int }
+
+type Curcle { x: Int }
+
+type Point { x: Int }
+
+type SelfRef { x: SelfRef }
+
+type Point { x: Int }
+
 type Storage = {
   # This is a line comment
   mycircle: Circle     // Just a circle
@@ -22,8 +32,7 @@ type Storage = {
   fill: {
     r: Int,
     g: Int,
-    b: Int,
-    stroke: {
+    b: Int;            stroke: {
       r: Int ; g: Int,
       b: Int,
     },

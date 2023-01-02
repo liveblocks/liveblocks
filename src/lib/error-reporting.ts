@@ -216,7 +216,7 @@ export class ErrorReporter {
     }
   }
 
-  *iterTypeError(
+  *iterSemanticError(
     title: string,
     description: Array<string>,
     range?: Range
@@ -224,14 +224,16 @@ export class ErrorReporter {
     const [startOffset, endOffset] = range ?? [undefined, undefined];
 
     yield "";
-    yield colors.cyan(this.formatHeading(`Type error`, ` in ${this.src.path}`));
+    yield colors.cyan(
+      this.formatHeading(`Schema error`, ` in ${this.src.path}`)
+    );
     if (title) {
       yield "";
       yield indent(2, title);
-      yield "";
     }
 
     if (startOffset !== undefined && endOffset !== undefined) {
+      yield "";
       yield* this.iterAnnotateSourceLines(startOffset, endOffset);
     }
 
@@ -246,30 +248,32 @@ export class ErrorReporter {
     yield "";
   }
 
-  getTypeError(
+  getSemanticError(
     title: string,
     description: Array<string>,
     range?: Range
   ): string {
-    return Array.from(this.iterTypeError(title, description, range)).join("\n");
+    return Array.from(this.iterSemanticError(title, description, range)).join(
+      "\n"
+    );
   }
 
-  throwTypeError(
+  throwSemanticError(
     title: string,
     description: Array<string>,
     range?: Range
   ): void /* throws */ {
-    const err = new Error(this.getTypeError(title, description, range));
-    err.name = "TypeError";
+    const err = new Error(this.getSemanticError(title, description, range));
+    err.name = "SemanticError";
     throw err;
   }
 
-  printTypeError(
+  printSemanticError(
     title: string,
     description: Array<string>,
     range?: Range
   ): void {
-    for (const line of this.iterTypeError(title, description, range)) {
+    for (const line of this.iterSemanticError(title, description, range)) {
       console.log(line);
     }
   }
