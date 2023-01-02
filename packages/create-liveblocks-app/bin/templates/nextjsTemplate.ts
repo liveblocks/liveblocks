@@ -9,9 +9,8 @@ import { install as installApp } from "../utils/install";
 import { getPackageManager } from "../utils/getPackageManager";
 import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
 
-// TODO change for guide on liveblocks.io when complete
 const NEXTJS_STARTER_KIT_GUIDE_URL =
-  "https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/README.md";
+  "https://liveblocks.io/docs/guides/nextjs-starter-kit";
 const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
   "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
 
