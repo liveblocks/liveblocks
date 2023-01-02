@@ -13,6 +13,9 @@ if (!SECRET_API_KEY) {
   console.warn(
     "You can find your secret keys on https://liveblocks.io/dashboard"
   );
+  console.warn(
+    "Follow the full starter kit guide on https://liveblocks.io/docs/guides/nextjs-starter-kit"
+  );
   console.log();
 }
 
