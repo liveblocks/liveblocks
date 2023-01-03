@@ -32,7 +32,6 @@ type RegisteredTypeInfo = {
 };
 
 type Context = {
-  hasErrors: boolean; // TODO: Move this into ErrorReporter
   errorReporter: ErrorReporter;
 
   // A registry of types by their identifier names
@@ -54,7 +53,6 @@ function makeContext(errorReporter: ErrorReporter): Context {
   );
 
   return {
-    hasErrors: false, // TODO: Move this into ErrorReporter
     errorReporter,
     registeredTypes,
   };
@@ -86,7 +84,6 @@ function checkObjectLiteralExpr(
   context: Context
 ): void {
   for (const [first, second] of dupes(obj.fields, (f) => f.name.name)) {
-    context.hasErrors = true;
     context.errorReporter.printSemanticError(
       `A field named ${JSON.stringify(
         first.name.name
@@ -116,7 +113,6 @@ function checkTypeName(
       Array.from(context.registeredTypes.keys())
     );
 
-    context.hasErrors = true;
     context.errorReporter.printSemanticError(
       `Unknown type ${JSON.stringify(node.name)}`,
       [
@@ -142,7 +138,6 @@ function checkTypeRef(node: TypeRef, context: Context): void {
   if (typeDef.cardinality !== node.args.length) {
     // Too many arguments
     if (typeDef.cardinality < node.args.length) {
-      context.hasErrors = true;
       const what =
         typeDef.cardinality === 0
           ? `needs no arguments`
@@ -156,7 +151,6 @@ function checkTypeRef(node: TypeRef, context: Context): void {
 
     // Too few arguments
     else {
-      context.hasErrors = true;
       context.errorReporter.printSemanticError(
         `Too few arguments: type ${JSON.stringify(node.name.name)} needs ${
           typeDef.cardinality
@@ -175,7 +169,6 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       node.args[0]?.name._kind !== "TypeName" ||
       node.args[0]?.name.name !== "String"
     ) {
-      context.hasErrors = true;
       context.errorReporter.printSemanticError(
         `First argument to type "LiveMap" must be of type "String"`,
         [
@@ -192,7 +185,6 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       context.registeredTypes.get(node.args[0]?.name.name)?.definition ===
         BUILT_IN
     ) {
-      context.hasErrors = true;
       context.errorReporter.printSemanticError(
         `The argument to a "LiveObject" type must be a (named) object type`,
         node.args[0]?._kind === "ObjectLiteralExpr"
@@ -219,7 +211,6 @@ function checkDocument(document: Document, context: Context): void {
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
       if (existing.definition === BUILT_IN) {
-        context.hasErrors = true;
         context.errorReporter.printSemanticError(
           `Type ${JSON.stringify(name)} is a built-in type`,
           [
@@ -229,7 +220,6 @@ function checkDocument(document: Document, context: Context): void {
           def.name.range
         );
       } else {
-        context.hasErrors = true;
         context.errorReporter.printSemanticError(
           `A type named ${JSON.stringify(
             name
@@ -249,7 +239,6 @@ function checkDocument(document: Document, context: Context): void {
       }
     } else {
       if (/^live/i.test(name)) {
-        context.hasErrors = true;
         context.errorReporter.printSemanticError(
           `The name ${JSON.stringify(name)} is not allowed`,
           [
@@ -269,7 +258,6 @@ function checkDocument(document: Document, context: Context): void {
   }
 
   if (!context.registeredTypes.has("Storage")) {
-    context.hasErrors = true;
     context.errorReporter.throwSemanticError(
       'Missing root definition "Storage"',
       [
@@ -287,7 +275,7 @@ function checkDocument(document: Document, context: Context): void {
     checkNode(def, context);
   }
 
-  if (context.hasErrors) {
+  if (context.errorReporter.hasErrors) {
     throw new Error("There were errors");
   }
 }

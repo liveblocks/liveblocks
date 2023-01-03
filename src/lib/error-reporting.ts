@@ -64,6 +64,7 @@ export class ErrorReporter {
   src: Source;
   #lines: Array<string> | undefined;
   #offsets: Array<number> | undefined;
+  #hasErrors: boolean = false;
 
   static fromPath(path: string): ErrorReporter {
     return new ErrorReporter(Source.fromPath(path));
@@ -79,6 +80,10 @@ export class ErrorReporter {
 
   private constructor(src: string | Source) {
     this.src = typeof src === "string" ? Source.fromText(src) : src;
+  }
+
+  get hasErrors() {
+    return this.#hasErrors;
   }
 
   contents(): string {
@@ -188,6 +193,7 @@ export class ErrorReporter {
   }
 
   *iterParseError(message: string, range?: Range): Generator<string> {
+    this.#hasErrors = true;
     const [startOffset, endOffset] = range ?? [undefined, undefined];
 
     yield "";
@@ -221,6 +227,7 @@ export class ErrorReporter {
     description: (string | null)[],
     range?: Range
   ): Generator<string> {
+    this.#hasErrors = true;
     const [startOffset, endOffset] = range ?? [undefined, undefined];
 
     yield "";
