@@ -16,9 +16,20 @@ type Int { x: Int }
 
 type Curcle { x: Int }
 
-type Point { x: Int }
+type Point {
+  x: Int,
+  y: String,
+  y?: Cuurle
+  z?: LiveMap<Foo, Bar>
+}
 
 type SelfRef { x: SelfRef }
+
+type IndirectSelfRefA { x: IndirectSelfRefB }
+
+type IndirectSelfRefB { x: IndirectSelfRefC }
+
+type IndirectSelfRefC { x: IndirectSelfRefA }
 
 type Point { x: Int }
 

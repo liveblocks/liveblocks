@@ -218,7 +218,7 @@ export class ErrorReporter {
 
   *iterSemanticError(
     title: string,
-    description: Array<string>,
+    description: (string | null)[],
     range?: Range
   ): Generator<string> {
     const [startOffset, endOffset] = range ?? [undefined, undefined];
@@ -239,6 +239,9 @@ export class ErrorReporter {
 
     yield "";
     for (const desc of description) {
+      if (desc === null) {
+        continue;
+      }
       const text =
         typeof desc === "string"
           ? desc
@@ -250,7 +253,7 @@ export class ErrorReporter {
 
   getSemanticError(
     title: string,
-    description: Array<string>,
+    description: (string | null)[],
     range?: Range
   ): string {
     return Array.from(this.iterSemanticError(title, description, range)).join(
@@ -260,7 +263,7 @@ export class ErrorReporter {
 
   throwSemanticError(
     title: string,
-    description: Array<string>,
+    description: (string | null)[],
     range?: Range
   ): void /* throws */ {
     const err = new Error(this.getSemanticError(title, description, range));
@@ -270,7 +273,7 @@ export class ErrorReporter {
 
   printSemanticError(
     title: string,
-    description: Array<string>,
+    description: (string | null)[],
     range?: Range
   ): void {
     for (const line of this.iterSemanticError(title, description, range)) {
