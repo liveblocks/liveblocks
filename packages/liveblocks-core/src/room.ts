@@ -696,7 +696,9 @@ type State<
     };
   };
 
-  offlineOperations: Map<string, Op>;
+  // A registry of yet-unacknowledged Ops. These Ops have already been
+  // submitted to the server, but have not yet been acknowledged.
+  unacknowledgedOps: Map<string, Op>;
 };
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
@@ -1121,7 +1123,7 @@ function makeStateMachine<
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.offlineOperations.delete(nn(op.opId));
+          const deleted = state.unacknowledgedOps.delete(nn(op.opId));
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1626,9 +1628,9 @@ function makeStateMachine<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const offlineOps = new Map(state.offlineOperations);
+            const unacknowledgedOps = new Map(state.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
+            applyAndSendOfflineOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
               _getInitialStateResolver();
             }
@@ -1838,7 +1840,7 @@ function makeStateMachine<
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(nn(op.opId), op);
+        state.unacknowledgedOps.set(nn(op.opId), op);
       });
     }
 
@@ -2143,7 +2145,7 @@ function makeStateMachine<
   }
 
   function hasPendingStorageModifications() {
-    return state.offlineOperations.size > 0;
+    return state.unacknowledgedOps.size > 0;
   }
 
   function simulateSocketClose() {
@@ -2275,7 +2277,7 @@ function defaultState<
     pausedHistory: null,
 
     activeBatch: null,
-    offlineOperations: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, Op>(),
   };
 }
 
