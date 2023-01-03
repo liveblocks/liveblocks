@@ -1,4 +1,5 @@
-import ast, { Node } from "../ast";
+import * as ast from "../ast";
+import type { Node } from "../ast";
 import colors from "colors";
 import { indentIfMultiLine } from "../lib/indent";
 

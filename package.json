@@ -6,11 +6,11 @@
   "main": "src/index.ts",
   "type": "module",
   "scripts": {
-    "build": "npm run build-ast && npm run build-parser && tsup",
-    "build-ast": "ts-node-esm bin/generate-ast.ts",
-    "build-parser": "bin/build-parser",
-    "watch-ast": "watch 'ts-node-esm bin/generate-ast.ts' src/ast",
-    "watch-parser": "watch 'bin/build-parser' src/parser",
+    "build": "npm run build:ast && npm run build:parser && tsup",
+    "build:ast": "ts-node-esm bin/generate-ast.ts",
+    "build:parser": "bin/build-parser",
+    "watch:ast": "watch 'ts-node-esm bin/generate-ast.ts' src/ast",
+    "watch:parser": "watch 'bin/build-parser' src/parser",
     "bundle": "bin/bundle",
     "test": "jest"
   },

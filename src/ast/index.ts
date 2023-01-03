@@ -7,19 +7,19 @@
 
 import invariant from "invariant";
 
-function isComment(node: Node): node is Comment {
+export function isComment(node: Node): node is Comment {
   return node._kind === "LineComment";
 }
 
-function isDefinition(node: Node): node is Definition {
+export function isDefinition(node: Node): node is Definition {
   return node._kind === "ObjectTypeDef";
 }
 
-function isLiteral(node: Node): node is Literal {
+export function isLiteral(node: Node): node is Literal {
   return node._kind === "StringLiteral";
 }
 
-function isTypeExpr(node: Node): node is TypeExpr {
+export function isTypeExpr(node: Node): node is TypeExpr {
   return (
     node._kind === "ObjectLiteralExpr" || node._kind === "TypeRef" || isLiteral(node)
   );
@@ -46,7 +46,7 @@ export type Node =
   | TypeName
   | TypeRef;
 
-function isRange(thing: Range): thing is Range {
+export function isRange(thing: Range): thing is Range {
   return (
     Array.isArray(thing) &&
     thing.length === 2 &&
@@ -55,7 +55,7 @@ function isRange(thing: Range): thing is Range {
   );
 }
 
-function isNode(node: Node): node is Node {
+export function isNode(node: Node): node is Node {
   return (
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
@@ -129,261 +129,263 @@ export type TypeRef = {
   range: Range;
 };
 
-export default {
-  Document(
-    definitions: Definition[] = [],
-    comments: Comment[] = [],
-    range: Range = [0, 0]
-  ): Document {
-    invariant(
-      Array.isArray(definitions) && definitions.every((item) => isDefinition(item)),
-      `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition*\nGot:      ${JSON.stringify(
-        definitions
-      )}`
-    );
+export function Document(
+  definitions: Definition[] = [],
+  comments: Comment[] = [],
+  range: Range = [0, 0]
+): Document {
+  invariant(
+    Array.isArray(definitions) && definitions.every((item) => isDefinition(item)),
+    `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition*\nGot:      ${JSON.stringify(
+      definitions
+    )}`
+  );
 
-    invariant(
-      Array.isArray(comments) && comments.every((item) => isComment(item)),
-      `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*\nGot:      ${JSON.stringify(
-        comments
-      )}`
-    );
+  invariant(
+    Array.isArray(comments) && comments.every((item) => isComment(item)),
+    `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*\nGot:      ${JSON.stringify(
+      comments
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "Document".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "Document",
-      definitions,
-      comments,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "Document".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "Document",
+    definitions,
+    comments,
+    range,
+  };
+}
 
-  FieldDef(
-    name: Identifier,
-    optional: boolean,
-    type: TypeExpr,
-    range: Range = [0, 0]
-  ): FieldDef {
-    invariant(
-      name._kind === "Identifier",
-      `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
-        name
-      )}`
-    );
+export function FieldDef(
+  name: Identifier,
+  optional: boolean,
+  type: TypeExpr,
+  range: Range = [0, 0]
+): FieldDef {
+  invariant(
+    name._kind === "Identifier",
+    `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
+      name
+    )}`
+  );
 
-    invariant(
-      typeof optional === "boolean",
-      `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
-        optional
-      )}`
-    );
+  invariant(
+    typeof optional === "boolean",
+    `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
+      optional
+    )}`
+  );
 
-    invariant(
-      isTypeExpr(type),
-      `Invalid value for "type" arg in "FieldDef" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
-        type
-      )}`
-    );
+  invariant(
+    isTypeExpr(type),
+    `Invalid value for "type" arg in "FieldDef" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+      type
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "FieldDef".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "FieldDef",
-      name,
-      optional,
-      type,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "FieldDef".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "FieldDef",
+    name,
+    optional,
+    type,
+    range,
+  };
+}
 
-  Identifier(name: string, range: Range = [0, 0]): Identifier {
-    invariant(
-      typeof name === "string",
-      `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
-        name
-      )}`
-    );
+export function Identifier(name: string, range: Range = [0, 0]): Identifier {
+  invariant(
+    typeof name === "string",
+    `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
+      name
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "Identifier".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "Identifier",
-      name,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "Identifier".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "Identifier",
+    name,
+    range,
+  };
+}
 
-  LineComment(text: string, range: Range = [0, 0]): LineComment {
-    invariant(
-      typeof text === "string",
-      `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
-        text
-      )}`
-    );
+export function LineComment(text: string, range: Range = [0, 0]): LineComment {
+  invariant(
+    typeof text === "string",
+    `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
+      text
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "LineComment".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "LineComment",
-      text,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "LineComment".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "LineComment",
+    text,
+    range,
+  };
+}
 
-  ObjectLiteralExpr(fields: FieldDef[] = [], range: Range = [0, 0]): ObjectLiteralExpr {
-    invariant(
-      Array.isArray(fields) && fields.every((item) => item._kind === "FieldDef"),
-      `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-        fields
-      )}`
-    );
+export function ObjectLiteralExpr(
+  fields: FieldDef[] = [],
+  range: Range = [0, 0]
+): ObjectLiteralExpr {
+  invariant(
+    Array.isArray(fields) && fields.every((item) => item._kind === "FieldDef"),
+    `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+      fields
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "ObjectLiteralExpr".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "ObjectLiteralExpr",
-      fields,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "ObjectLiteralExpr".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "ObjectLiteralExpr",
+    fields,
+    range,
+  };
+}
 
-  ObjectTypeDef(
-    name: TypeName,
-    obj: ObjectLiteralExpr,
-    range: Range = [0, 0]
-  ): ObjectTypeDef {
-    invariant(
-      name._kind === "TypeName",
-      `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-        name
-      )}`
-    );
+export function ObjectTypeDef(
+  name: TypeName,
+  obj: ObjectLiteralExpr,
+  range: Range = [0, 0]
+): ObjectTypeDef {
+  invariant(
+    name._kind === "TypeName",
+    `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+      name
+    )}`
+  );
 
-    invariant(
-      obj._kind === "ObjectLiteralExpr",
-      `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
-        obj
-      )}`
-    );
+  invariant(
+    obj._kind === "ObjectLiteralExpr",
+    `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
+      obj
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "ObjectTypeDef".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "ObjectTypeDef",
-      name,
-      obj,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "ObjectTypeDef".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "ObjectTypeDef",
+    name,
+    obj,
+    range,
+  };
+}
 
-  StringLiteral(value: string, rawValue: string, range: Range = [0, 0]): StringLiteral {
-    invariant(
-      typeof value === "string",
-      `Invalid value for "value" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
-        value
-      )}`
-    );
+export function StringLiteral(
+  value: string,
+  rawValue: string,
+  range: Range = [0, 0]
+): StringLiteral {
+  invariant(
+    typeof value === "string",
+    `Invalid value for "value" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
+      value
+    )}`
+  );
 
-    invariant(
-      typeof rawValue === "string",
-      `Invalid value for "rawValue" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
-        rawValue
-      )}`
-    );
+  invariant(
+    typeof rawValue === "string",
+    `Invalid value for "rawValue" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
+      rawValue
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "StringLiteral".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "StringLiteral",
-      value,
-      rawValue,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "StringLiteral".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "StringLiteral",
+    value,
+    rawValue,
+    range,
+  };
+}
 
-  TypeName(name: string, range: Range = [0, 0]): TypeName {
-    invariant(
-      typeof name === "string",
-      `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
-        name
-      )}`
-    );
+export function TypeName(name: string, range: Range = [0, 0]): TypeName {
+  invariant(
+    typeof name === "string",
+    `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
+      name
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "TypeName".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "TypeName",
-      name,
-      range,
-    };
-  },
+  invariant(
+    isRange(range),
+    `Invalid value for range in "TypeName".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "TypeName",
+    name,
+    range,
+  };
+}
 
-  TypeRef(name: TypeName, args: TypeExpr[] = [], range: Range = [0, 0]): TypeRef {
-    invariant(
-      name._kind === "TypeName",
-      `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-        name
-      )}`
-    );
+export function TypeRef(
+  name: TypeName,
+  args: TypeExpr[] = [],
+  range: Range = [0, 0]
+): TypeRef {
+  invariant(
+    name._kind === "TypeName",
+    `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+      name
+    )}`
+  );
 
-    invariant(
-      Array.isArray(args) && args.every((item) => isTypeExpr(item)),
-      `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
-        args
-      )}`
-    );
+  invariant(
+    Array.isArray(args) && args.every((item) => isTypeExpr(item)),
+    `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
+      args
+    )}`
+  );
 
-    invariant(
-      isRange(range),
-      `Invalid value for range in "TypeRef".\nExpected: Range\nGot: ${JSON.stringify(
-        range
-      )}`
-    );
-    return {
-      _kind: "TypeRef",
-      name,
-      args,
-      range,
-    };
-  },
-
-  // Node groups
-  isNode,
-  isComment,
-  isDefinition,
-  isLiteral,
-  isTypeExpr,
-};
+  invariant(
+    isRange(range),
+    `Invalid value for range in "TypeRef".\nExpected: Range\nGot: ${JSON.stringify(
+      range
+    )}`
+  );
+  return {
+    _kind: "TypeRef",
+    name,
+    args,
+    range,
+  };
+}

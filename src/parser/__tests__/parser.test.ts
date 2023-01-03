@@ -1,4 +1,4 @@
-import ast from "../../ast";
+import * as ast from "../../ast";
 import { expectDocument, expectTypeExpr, parseDocument } from "./helpers";
 
 const String = ast.StringLiteral;

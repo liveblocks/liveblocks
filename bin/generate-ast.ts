@@ -371,7 +371,9 @@ function generateCode(grammar: Grammar): string {
       .map((ref) => `node._kind === ${JSON.stringify(getBareRef(ref))}`)
       .concat(subGroups.map((ref) => `is${getBareRef(ref)}(node)`));
     output.push(`
-          function is${nodeGroup.name}(node: Node): node is ${nodeGroup.name} {
+          export function is${nodeGroup.name}(node: Node): node is ${
+      nodeGroup.name
+    } {
             return (
               ${conditions.join(" || ")}
             )
@@ -393,7 +395,7 @@ function generateCode(grammar: Grammar): string {
 
         export type Node = ${grammar.nodes.map((node) => node.name).join(" | ")}
 
-        function isRange(thing: Range): thing is Range {
+        export function isRange(thing: Range): thing is Range {
             return (
                 Array.isArray(thing)
                 && thing.length === 2
@@ -402,7 +404,7 @@ function generateCode(grammar: Grammar): string {
             )
         }
 
-        function isNode(node: Node): node is Node {
+        export function isNode(node: Node): node is Node {
             return (
                 ${grammar.nodes
                   .map((node) => `node._kind === ${JSON.stringify(node.name)}`)
@@ -426,7 +428,6 @@ function generateCode(grammar: Grammar): string {
   }
 
   output.push("");
-  output.push("export default {");
   for (const node of grammar.nodes) {
     const optionals = new Set(
       takeWhile(
@@ -458,7 +459,7 @@ function generateCode(grammar: Grammar): string {
 
     output.push(
       `
-            ${node.name}(${[
+            export function ${node.name}(${[
         ...node.fields.map((field) => {
           let key = field.name;
           const type = getTypeScriptType(field.ref);
@@ -477,18 +478,10 @@ function generateCode(grammar: Grammar): string {
                       ", "
                     )}
                 }
-            },
+            }
             `
     );
   }
-
-  output.push("");
-  output.push("// Node groups");
-  output.push(`isNode,`);
-  for (const nodeGroup of grammar.nodeGroups) {
-    output.push(`is${nodeGroup.name},`);
-  }
-  output.push("}");
 
   return prettier.format(output.join("\n"), PRETTIER_OPTIONS);
 }
