@@ -5,6 +5,7 @@ import type {
   Node,
   ObjectLiteralExpr,
   ObjectTypeDef,
+  Range,
   TypeName,
   TypeRef,
 } from "../ast";
@@ -31,31 +32,49 @@ type RegisteredTypeInfo = {
   cardinality: number;
 };
 
-type Context = {
+class Context {
   errorReporter: ErrorReporter;
 
   // A registry of types by their identifier names
   registeredTypes: Map<string, RegisteredTypeInfo>;
-};
 
-function makeContext(errorReporter: ErrorReporter): Context {
-  const registeredTypes = new Map(
-    BUILT_IN_NAMES.map((name) => [
-      name,
-      {
-        definition: BUILT_IN,
+  constructor(errorReporter: ErrorReporter) {
+    this.errorReporter = errorReporter;
+    this.registeredTypes = new Map(
+      BUILT_IN_NAMES.map((name) => [
+        name,
+        {
+          definition: BUILT_IN,
 
-        // Only our hardcoded "Live" objects take params for now, you cannot
-        // define your own custom parameterized types
-        cardinality: CARDINALITIES[name] ?? 0,
-      } as const,
-    ])
-  );
+          // Only our hardcoded "Live" objects take params for now, you cannot
+          // define your own custom parameterized types
+          cardinality: CARDINALITIES[name] ?? 0,
+        } as const,
+      ])
+    );
+  }
 
-  return {
-    errorReporter,
-    registeredTypes,
-  };
+  //
+  // Convenience helpers
+  //
+
+  lineno(range?: Range): string {
+    if (range === undefined) {
+      return "???";
+    }
+
+    const startLine = this.errorReporter.lineInfo(range[0]).line1;
+    const endLine = this.errorReporter.lineInfo(range[1]).line1;
+    if (startLine === endLine) {
+      return `${startLine}`;
+    } else {
+      return `${startLine}–${endLine}`;
+    }
+  }
+
+  report(title: string, description: (string | null)[], range?: Range): void {
+    this.errorReporter.printSemanticError(title, description, range);
+  }
 }
 
 function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
@@ -84,14 +103,12 @@ function checkObjectLiteralExpr(
   context: Context
 ): void {
   for (const [first, second] of dupes(obj.fields, (f) => f.name.name)) {
-    context.errorReporter.printSemanticError(
+    context.report(
       `A field named ${JSON.stringify(
         first.name.name
-      )} is defined multiple times (on line ${
-        context.errorReporter.lineInfo(first.name.range?.[0] ?? 0).line1
-      } and ${
-        context.errorReporter.lineInfo(second.name.range?.[0] ?? 0).line1
-      })`,
+      )} is defined multiple times (on line ${context.lineno(
+        first.name.range
+      )} and ${context.lineno(second.name.range)})`,
       [],
       second.name.range
     );
@@ -113,7 +130,7 @@ function checkTypeName(
       Array.from(context.registeredTypes.keys())
     );
 
-    context.errorReporter.printSemanticError(
+    context.report(
       `Unknown type ${JSON.stringify(node.name)}`,
       [
         `I didn't understand what ${JSON.stringify(node.name)} refers to.`,
@@ -142,7 +159,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
         typeDef.cardinality === 0
           ? `needs no arguments`
           : `needs only ${typeDef.cardinality} arguments, but ${node.args.length} were found`;
-      context.errorReporter.printSemanticError(
+      context.report(
         `Too many arguments: type ${JSON.stringify(node.name.name)} ${what}`,
         [`Please remove the excessive arguments`],
         node.args[typeDef.cardinality].range
@@ -151,7 +168,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
 
     // Too few arguments
     else {
-      context.errorReporter.printSemanticError(
+      context.report(
         `Too few arguments: type ${JSON.stringify(node.name.name)} needs ${
           typeDef.cardinality
         } type arguments`,
@@ -169,7 +186,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       node.args[0]?.name._kind !== "TypeName" ||
       node.args[0]?.name.name !== "String"
     ) {
-      context.errorReporter.printSemanticError(
+      context.report(
         `First argument to type "LiveMap" must be of type "String"`,
         [
           `In the future, we may loosen this constraint, but it's not supported right now.`,
@@ -185,7 +202,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       context.registeredTypes.get(node.args[0]?.name.name)?.definition ===
         BUILT_IN
     ) {
-      context.errorReporter.printSemanticError(
+      context.report(
         `The argument to a "LiveObject" type must be a (named) object type`,
         node.args[0]?._kind === "ObjectLiteralExpr"
           ? [
@@ -211,7 +228,7 @@ function checkDocument(document: Document, context: Context): void {
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
       if (existing.definition === BUILT_IN) {
-        context.errorReporter.printSemanticError(
+        context.report(
           `Type ${JSON.stringify(name)} is a built-in type`,
           [
             'You cannot redefine built-in types like "Int", "String", or "LiveList".',
@@ -220,16 +237,12 @@ function checkDocument(document: Document, context: Context): void {
           def.name.range
         );
       } else {
-        context.errorReporter.printSemanticError(
+        context.report(
           `A type named ${JSON.stringify(
             name
-          )} is defined multiple times (on line ${
-            context.errorReporter.lineInfo(
-              existing.definition.name.range?.[0] ?? 0
-            ).line1
-          } and ${
-            context.errorReporter.lineInfo(def.name.range?.[0] ?? 0).line1
-          })`,
+          )} is defined multiple times (on line ${context.lineno(
+            existing.definition.name.range
+          )} and ${context.lineno(def.name.range)})`,
           [
             "You cannot declare types multiple times.",
             "Please remove the duplicate definition, or use a different name.",
@@ -239,7 +252,7 @@ function checkDocument(document: Document, context: Context): void {
       }
     } else {
       if (/^live/i.test(name)) {
-        context.errorReporter.printSemanticError(
+        context.report(
           `The name ${JSON.stringify(name)} is not allowed`,
           [
             'Type names starting with "Live" are reserved for future use.',
@@ -305,7 +318,7 @@ function checkNode(node: Node, context: Context): void {
 }
 
 function check(doc: Document, errorReporter: ErrorReporter): Document {
-  const context = makeContext(errorReporter);
+  const context = new Context(errorReporter);
   checkDocument(doc, context);
   return doc;
 }
