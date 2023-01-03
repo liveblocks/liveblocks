@@ -1,6 +1,6 @@
 {
   "tspegjs": {
-    "customHeader": "import ast from \"../ast\";\nimport type * as AST from \"../ast\";\n"
+    "customHeader": "import ast from \"../ast\";\n"
   },
   "returnTypes": {}
 }

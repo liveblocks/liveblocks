@@ -53,6 +53,7 @@ Document
         // of the way in the resulting parse tree, but still get consumed and
         // recorded, so tools like formatters can access them.
         options?.comments,
+        rng(),
       )
     }
 

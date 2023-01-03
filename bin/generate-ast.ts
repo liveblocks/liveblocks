@@ -7,11 +7,17 @@ const INPUT_FILE = "src/ast/ast.grammar";
 const OUTPUT_FILE = "src/ast/index.ts";
 const PRETTIER_OPTIONS: PrettierOptions = {
   parser: "typescript",
-  semi: false,
+  semi: true,
   printWidth: 90,
-  tabWidth: 4,
-  singleQuote: true,
-  trailingComma: "all",
+  tabWidth: 2,
+  singleQuote: false,
+  trailingComma: "es5",
+  useTabs: false,
+  jsxSingleQuote: false,
+  arrowParens: "always",
+  bracketSpacing: true,
+  bracketSameLine: false,
+  proseWrap: "always",
 };
 
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
@@ -409,13 +415,12 @@ function generateCode(grammar: Grammar): string {
     output.push(`
             export type ${node.name} = {
                 _kind: ${JSON.stringify(node.name)}
-                // _type?: Type
                 ${node.fields
                   .map(
                     (field) => `${field.name}: ${getTypeScriptType(field.ref)}`
                   )
                   .join("\n")}
-                range?: Range
+                range: Range
             }
         `);
   }
@@ -446,7 +451,7 @@ function generateCode(grammar: Grammar): string {
       .filter(Boolean);
     argChecks.push(
       `invariant(
-                !range || isRange(range),
+                isRange(range),
                 \`Invalid value for range in "${node.name}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
              )`
     );
@@ -463,12 +468,11 @@ function generateCode(grammar: Grammar): string {
               }`
             : `${key}: ${type}`;
         }),
-        "range?: Range",
+        "range: Range = [0, 0]",
       ].join(", ")}): ${node.name} {
                 ${argChecks.join("\n")}
                 return {
                     _kind: ${JSON.stringify(node.name)},
-                    // _type: undefined,
                     ${[...node.fields.map((field) => field.name), "range"].join(
                       ", "
                     )}
