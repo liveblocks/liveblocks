@@ -1,11 +1,5 @@
 import didyoumean from "didyoumean";
-import type {
-  Document,
-  Definition,
-  Node,
-  TypeName,
-  InstantiatedType,
-} from "../ast";
+import type { Document, ObjectTypeDef, Node, TypeName, TypeRef } from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
 
 const BUILT_IN = "BUILT_IN" as const;
@@ -75,7 +69,7 @@ function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
   return dupes;
 }
 
-function checkObjectTypeDef(definition: Definition, context: Context): void {
+function checkObjectTypeDef(definition: ObjectTypeDef, context: Context): void {
   for (const [first, second] of dupes(definition.fields, (f) => f.name.name)) {
     context.hasErrors = true;
     context.errorReporter.printSemanticError(
@@ -96,7 +90,10 @@ function checkObjectTypeDef(definition: Definition, context: Context): void {
   }
 }
 
-function checkTypeName(node: TypeName, context: Context): void {
+function checkTypeName(
+  node: TypeName,
+  context: Context
+): RegisteredTypeInfo | undefined {
   const typeDef = context.registeredTypes.get(node.name);
   if (typeDef === undefined) {
     const suggestion = didyoumean(
@@ -113,34 +110,71 @@ function checkTypeName(node: TypeName, context: Context): void {
       ],
       node.range
     );
-  } else if (typeDef.cardinality > 0) {
-    context.hasErrors = true;
-    context.errorReporter.printSemanticError(
-      `Type ${JSON.stringify(node.name)} is a type that needs ${
-        typeDef.cardinality
-      } arguments`,
-      [`Did you mean to write ${JSON.stringify(node.name + "<...>")}?`],
-      node.range
-    );
+
+    return undefined;
+  } else {
+    return typeDef;
   }
 }
 
-function checkInstantiatedType(node: InstantiatedType, context: Context): void {
-  // if (!context.registeredTypes.has(node.name)) {
-  //   const suggestion = didyoumean(
-  //     node.name,
-  //     Array.from(context.registeredTypes.keys())
-  //   );
-  //   context.hasErrors = true;
-  //   context.errorReporter.printSemanticError(
-  //     `Unknown type ${JSON.stringify(node.name)}`,
-  //     [
-  //       `I didn't understand what ${JSON.stringify(node.name)} refers to.`,
-  //       suggestion ? `Did you mean ${JSON.stringify(suggestion)}?` : null,
-  //     ],
-  //     node.range
-  //   );
-  // }
+function checkTypeRef(node: TypeRef, context: Context): void {
+  const typeDef = checkTypeName(node.name, context);
+  if (typeDef === undefined) {
+    return undefined;
+  }
+
+  // Check for cardinality mismatch
+  if (typeDef.cardinality !== node.args.length) {
+    // Too many arguments
+    if (typeDef.cardinality < node.args.length) {
+      context.hasErrors = true;
+      const what =
+        typeDef.cardinality === 0
+          ? `needs no arguments`
+          : `needs only ${typeDef.cardinality} arguments, but ${node.args.length} were found`;
+      context.errorReporter.printSemanticError(
+        `Too many arguments: type ${JSON.stringify(node.name.name)} ${what}`,
+        [`Please remove the excessive arguments`],
+        node.args[typeDef.cardinality].range
+      );
+    }
+
+    // Too few arguments
+    else {
+      context.hasErrors = true;
+      context.errorReporter.printSemanticError(
+        `Too few arguments: type ${JSON.stringify(node.name.name)} needs ${
+          typeDef.cardinality
+        } type arguments`,
+        [`Did you mean to write ${JSON.stringify(node.name.name + "<...>")}?`],
+        node.range
+      );
+    }
+  }
+
+  // Special check for the LiveMap type
+  if (node.name.name === "LiveMap") {
+    if (
+      // Pretty ugly hardcoded limit. Yuck, I know, but we'll generalize this later :(
+      node.args.length < 1 ||
+      node.args[0]?._kind !== "TypeRef" ||
+      node.args[0]?.name._kind !== "TypeName" ||
+      node.args[0]?.name.name !== "String"
+    ) {
+      context.hasErrors = true;
+      context.errorReporter.printSemanticError(
+        `First argument to type "LiveMap" must be of type "String"`,
+        [
+          `In the future, we may loosen this constraint, but it's not supported right now.`,
+        ],
+        node.args[0]?.range
+      );
+    }
+  }
+
+  for (const arg of node.args) {
+    checkNode(arg, context);
+  }
 }
 
 function checkDocument(document: Document, context: Context): void {
@@ -219,14 +253,12 @@ function checkNode(node: Node, context: Context): void {
     case "ObjectTypeDef":
       return checkObjectTypeDef(node, context);
 
-    case "TypeName":
-      return checkTypeName(node, context);
-
-    case "InstantiatedType":
-      return checkInstantiatedType(node, context);
+    case "TypeRef":
+      return checkTypeRef(node, context);
 
     // Ignore the following node types
     case "StringLiteral":
+    case "TypeName":
       return;
 
     default:

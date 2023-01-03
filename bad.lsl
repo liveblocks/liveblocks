@@ -8,7 +8,7 @@ type Circle {
   type: "circle"
   cx: Int
   cy: Int
-  radius: Number
+  radius: Int<String>
   fill?: RGB
 }
 
@@ -21,6 +21,8 @@ type Point {
   y: String,
   y?: Cuurle
   z?: LiveMap<Foo, Bar>
+  z2?: LiveMap<LiveMap, Bar>
+  p: LiveObject<LiveMap, Bar>
 }
 
 type SelfRef { x: SelfRef }
@@ -36,10 +38,8 @@ type Point { x: Int }
 type Storage = {
   # This is a line comment
   mycircle: Circle     // Just a circle
-  mycircles: LiveList <
-  Foo, 
-        Bar<Qux
-        >>
+  mybad: LiveMap<Int, Int> ;
+  mycircles: LiveList < Foo, >
   fill: {
     r: Int,
     g: Int,

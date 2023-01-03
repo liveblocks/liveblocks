@@ -95,7 +95,7 @@ WORD_CHAR = [a-zA-Z0-9_]
 
 Identifier "identifier"
   // An identifier _must_ start with a lowercase char
-  = name:$( WORD_CHAR* ) !WORD_CHAR _
+  = name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.Identifier(name, rng()) }
 
 
@@ -155,13 +155,9 @@ TypeExprList
 
 
 TypeRef
-  = InstantiatedType
-  / TypeName
-
-
-InstantiatedType
-  = name:TypeName LT args:TypeExprList GT
-    { return ast.InstantiatedType(name, args, rng()) }
+  = name:TypeName args:( LT args:TypeExprList GT
+                         { return args } )?
+    { return ast.TypeRef(name, args ?? [], rng()) }
 
 
 Literal

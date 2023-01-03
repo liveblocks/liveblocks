@@ -20,11 +20,9 @@ function isLiteral(node: Node): node is Literal {
 }
 
 function isTypeExpr(node: Node): node is TypeExpr {
-    return node._kind === 'ObjectLiteralExpr' || isLiteral(node) || isTypeRef(node)
-}
-
-function isTypeRef(node: Node): node is TypeRef {
-    return node._kind === 'InstantiatedType' || node._kind === 'TypeName'
+    return (
+        node._kind === 'ObjectLiteralExpr' || node._kind === 'TypeRef' || isLiteral(node)
+    )
 }
 
 export type Comment = LineComment
@@ -35,20 +33,18 @@ export type Literal = StringLiteral
 
 export type TypeExpr = Literal | ObjectLiteralExpr | TypeRef
 
-export type TypeRef = InstantiatedType | TypeName
-
 export type Range = [number, number]
 
 export type Node =
     | Document
     | FieldDef
     | Identifier
-    | InstantiatedType
     | LineComment
     | ObjectLiteralExpr
     | ObjectTypeDef
     | StringLiteral
     | TypeName
+    | TypeRef
 
 function isRange(thing: Range): thing is Range {
     return (
@@ -64,12 +60,12 @@ function isNode(node: Node): node is Node {
         node._kind === 'Document' ||
         node._kind === 'FieldDef' ||
         node._kind === 'Identifier' ||
-        node._kind === 'InstantiatedType' ||
         node._kind === 'LineComment' ||
         node._kind === 'ObjectLiteralExpr' ||
         node._kind === 'ObjectTypeDef' ||
         node._kind === 'StringLiteral' ||
-        node._kind === 'TypeName'
+        node._kind === 'TypeName' ||
+        node._kind === 'TypeRef'
     )
 }
 
@@ -94,14 +90,6 @@ export type Identifier = {
     _kind: 'Identifier'
     // _type?: Type
     name: string
-    range?: Range
-}
-
-export type InstantiatedType = {
-    _kind: 'InstantiatedType'
-    // _type?: Type
-    name: TypeName
-    args: TypeExpr[]
     range?: Range
 }
 
@@ -139,6 +127,14 @@ export type TypeName = {
     _kind: 'TypeName'
     // _type?: Type
     name: string
+    range?: Range
+}
+
+export type TypeRef = {
+    _kind: 'TypeRef'
+    // _type?: Type
+    name: TypeName
+    args: TypeExpr[]
     range?: Range
 }
 
@@ -238,38 +234,6 @@ export default {
             _kind: 'Identifier',
             // _type: undefined,
             name,
-            range,
-        }
-    },
-
-    InstantiatedType(name: TypeName, args: TypeExpr[], range?: Range): InstantiatedType {
-        invariant(
-            name._kind === 'TypeName',
-            `Invalid value for "name" arg in "InstantiatedType" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-                name,
-            )}`,
-        )
-
-        invariant(
-            Array.isArray(args) &&
-                args.length > 0 &&
-                args.every((item) => isTypeExpr(item)),
-            `Invalid value for "args" arg in "InstantiatedType" call.\nExpected: @TypeExpr+\nGot:      ${JSON.stringify(
-                args,
-            )}`,
-        )
-
-        invariant(
-            !range || isRange(range),
-            `Invalid value for range in "InstantiatedType".\nExpected: Range\nGot: ${JSON.stringify(
-                range,
-            )}`,
-        )
-        return {
-            _kind: 'InstantiatedType',
-            // _type: undefined,
-            name,
-            args,
             range,
         }
     },
@@ -400,11 +364,40 @@ export default {
         }
     },
 
+    TypeRef(name: TypeName, args: TypeExpr[] = [], range?: Range): TypeRef {
+        invariant(
+            name._kind === 'TypeName',
+            `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+                name,
+            )}`,
+        )
+
+        invariant(
+            Array.isArray(args) && args.every((item) => isTypeExpr(item)),
+            `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
+                args,
+            )}`,
+        )
+
+        invariant(
+            !range || isRange(range),
+            `Invalid value for range in "TypeRef".\nExpected: Range\nGot: ${JSON.stringify(
+                range,
+            )}`,
+        )
+        return {
+            _kind: 'TypeRef',
+            // _type: undefined,
+            name,
+            args,
+            range,
+        }
+    },
+
     // Node groups
     isNode,
     isComment,
     isDefinition,
     isLiteral,
     isTypeExpr,
-    isTypeRef,
 }

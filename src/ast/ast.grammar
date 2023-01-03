@@ -24,12 +24,7 @@
 @TypeExpr:
     | @Literal
     | ObjectLiteralExpr
-    | @TypeRef
-
-
-@TypeRef:
-  | InstantiatedType
-  | TypeName
+    | TypeRef
 
 
 Document:
@@ -45,13 +40,6 @@ FieldDef:
 
 Identifier:
     name  string
-
-
-# e.g. LiveObject<{ cx: Number; cy: Number; r: Float }>
-# e.g. LiveList<Int>
-InstantiatedType:
-    name  TypeName  # must be "LiveObject", "LiveList", or "LiveMap"
-    args  @TypeExpr+
 
 
 LineComment:
@@ -76,3 +64,8 @@ StringLiteral:
 
 TypeName:
     name  string
+
+
+TypeRef:
+    name  TypeName
+    args  @TypeExpr*

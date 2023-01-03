@@ -45,10 +45,10 @@ export function prettify(node: Node): string {
         node.type
       )}`;
 
-    case "InstantiatedType":
-      return [`${prettify(node.name)}<`, ...node.args.map(prettify), ">"].join(
-        ""
-      );
+    case "TypeRef":
+      return node.args.length > 0
+        ? [`${prettify(node.name)}<`, ...node.args.map(prettify), ">"].join("")
+        : prettify(node.name);
 
     case "StringLiteral":
       return quoteDouble(node.value);
@@ -57,6 +57,6 @@ export function prettify(node: Node): string {
       return `# ${node.text}`;
 
     default:
-      return assertNever(node, "Please define prettify for all node types");
+      return assertNever(node, `Please define prettify for «${node}» nodes`);
   }
 }
