@@ -483,6 +483,64 @@ function generateCode(grammar: Grammar): string {
     );
   }
 
+  // Generate a general purpose AST traversal/visit function
+  output.push("interface Visitor<TContext> {");
+  for (const node of grammar.nodes) {
+    output.push(
+      `  ${node.name}?(node: ${node.name}, context: TContext): void;`
+    );
+  }
+  output.push("}");
+
+  output.push(
+    `
+      export function visit<TNode extends Node>(node: TNode, visitor: Visitor<undefined>): TNode;
+      export function visit<TNode extends Node, TContext>(node: TNode, visitor: Visitor<TContext>, context: TContext): TNode;
+      export function visit<TNode extends Node, TContext>(node: TNode, visitor: Visitor<TContext | undefined>, context?: TContext): TNode {
+        switch (node._kind) {
+        `
+  );
+
+  for (const node of grammar.nodes) {
+    const fields = node.fields.filter(
+      (field) => !BUILTIN_TYPES.has(getBareRef(field.ref))
+    );
+
+    output.push(`case ${JSON.stringify(node.name)}:`);
+    output.push(`  visitor.${node.name}?.(node, context);`);
+    for (const field of fields) {
+      switch (field.ref.ref) {
+        case "Node":
+        case "NodeGroup":
+          output.push(`  visit(node.${field.name}, visitor, context);`);
+          break;
+
+        case "List":
+          output.push(
+            `  node.${field.name}.forEach(${field.name[0]} => visit(${field.name[0]}, visitor, context));`
+          );
+          break;
+
+        case "Optional":
+          output.push(
+            `  // TODO: Implement visiting for _optional_ field node.${field.name}`
+          );
+          break;
+      }
+    }
+    output.push("  break;");
+    output.push("");
+  }
+
+  output.push(
+    `
+        }
+
+        return node;
+      }
+      `
+  );
+
   return prettier.format(output.join("\n"), PRETTIER_OPTIONS);
 }
 

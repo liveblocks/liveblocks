@@ -2,13 +2,12 @@ import didyoumean from "didyoumean";
 import type {
   Definition,
   Document,
-  Node,
   ObjectLiteralExpr,
-  ObjectTypeDef,
   Range,
   TypeName,
   TypeRef,
 } from "../ast";
+import { visit } from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
 
 const BUILT_IN = Symbol("BUILT_IN");
@@ -94,10 +93,6 @@ function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
   return dupes;
 }
 
-function checkObjectTypeDef(def: ObjectTypeDef, context: Context): void {
-  checkNode(def.obj, context);
-}
-
 function checkObjectLiteralExpr(
   obj: ObjectLiteralExpr,
   context: Context
@@ -112,10 +107,6 @@ function checkObjectLiteralExpr(
       [],
       second.name.range
     );
-  }
-
-  for (const field of obj.fields) {
-    checkNode(field.type, context);
   }
 }
 
@@ -215,15 +206,11 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       );
     }
   }
-
-  for (const arg of node.args) {
-    checkNode(arg, context);
-  }
 }
 
-function checkDocument(document: Document, context: Context): void {
+function checkDocument(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
-  for (const def of document.definitions) {
+  for (const def of doc.definitions) {
     const name = def.name.name;
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
@@ -283,57 +270,25 @@ function checkDocument(document: Document, context: Context): void {
       ]
     );
   }
+}
 
-  for (const def of document.definitions) {
-    checkNode(def, context);
-  }
+export function check(doc: Document, errorReporter: ErrorReporter): Document {
+  const context = new Context(errorReporter);
+
+  // Check the entire tree
+  visit(
+    doc,
+    {
+      Document: checkDocument,
+      ObjectLiteralExpr: checkObjectLiteralExpr,
+      TypeRef: checkTypeRef,
+    },
+    context
+  );
 
   if (context.errorReporter.hasErrors) {
     throw new Error("There were errors");
   }
-}
 
-function checkNode(node: Node, context: Context): void {
-  switch (node._kind) {
-    case "Document":
-      return checkDocument(node, context);
-
-    case "ObjectTypeDef":
-      return checkObjectTypeDef(node, context);
-
-    case "ObjectLiteralExpr":
-      return checkObjectLiteralExpr(node, context);
-
-    case "TypeRef":
-      return checkTypeRef(node, context);
-
-    // Ignore the following node types
-    case "StringLiteral":
-    case "TypeName":
-      return;
-
-    default:
-      throw new Error(`TODO: Implement checker for «${node._kind}» nodes`);
-  }
-}
-
-function check(doc: Document, errorReporter: ErrorReporter): Document {
-  const context = new Context(errorReporter);
-  checkDocument(doc, context);
   return doc;
 }
-
-// function checkWithErrorReporter(
-//   node: Node,
-//   errorReporter: ErrorReporter
-// ): boolean {
-//   const context = makeContext(errorReporter);
-//   return check(node, context);
-// }
-
-// export default checkWithErrorReporter;
-
-// Export these only for direct access in unit tests
-// export { makeContext, check as checkWithContext };
-
-export { check };

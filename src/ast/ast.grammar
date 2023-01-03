@@ -29,7 +29,7 @@
 
 Document:
     definitions  @Definition*
-    comments     @Comment*
+    comments     @Comment*?
 
 
 FieldDef:

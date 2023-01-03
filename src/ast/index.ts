@@ -72,7 +72,7 @@ export function isNode(node: Node): node is Node {
 export type Document = {
   _kind: "Document";
   definitions: Definition[];
-  comments: Comment[];
+  comments: Comment[] | null;
   range: Range;
 };
 
@@ -131,7 +131,7 @@ export type TypeRef = {
 
 export function Document(
   definitions: Definition[] = [],
-  comments: Comment[] = [],
+  comments: Comment[] | null = null,
   range: Range = [0, 0]
 ): Document {
   invariant(
@@ -142,8 +142,9 @@ export function Document(
   );
 
   invariant(
-    Array.isArray(comments) && comments.every((item) => isComment(item)),
-    `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*\nGot:      ${JSON.stringify(
+    comments === null ||
+      (Array.isArray(comments) && comments.every((item) => isComment(item))),
+    `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*?\nGot:      ${JSON.stringify(
       comments
     )}`
   );
@@ -388,4 +389,80 @@ export function TypeRef(
     args,
     range,
   };
+}
+
+interface Visitor<TContext> {
+  Document?(node: Document, context: TContext): void;
+  FieldDef?(node: FieldDef, context: TContext): void;
+  Identifier?(node: Identifier, context: TContext): void;
+  LineComment?(node: LineComment, context: TContext): void;
+  ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
+  ObjectTypeDef?(node: ObjectTypeDef, context: TContext): void;
+  StringLiteral?(node: StringLiteral, context: TContext): void;
+  TypeName?(node: TypeName, context: TContext): void;
+  TypeRef?(node: TypeRef, context: TContext): void;
+}
+
+export function visit<TNode extends Node>(
+  node: TNode,
+  visitor: Visitor<undefined>
+): TNode;
+export function visit<TNode extends Node, TContext>(
+  node: TNode,
+  visitor: Visitor<TContext>,
+  context: TContext
+): TNode;
+export function visit<TNode extends Node, TContext>(
+  node: TNode,
+  visitor: Visitor<TContext | undefined>,
+  context?: TContext
+): TNode {
+  switch (node._kind) {
+    case "Document":
+      visitor.Document?.(node, context);
+      node.definitions.forEach((d) => visit(d, visitor, context));
+      // TODO: Implement visiting for _optional_ field node.comments
+      break;
+
+    case "FieldDef":
+      visitor.FieldDef?.(node, context);
+      visit(node.name, visitor, context);
+      visit(node.type, visitor, context);
+      break;
+
+    case "Identifier":
+      visitor.Identifier?.(node, context);
+      break;
+
+    case "LineComment":
+      visitor.LineComment?.(node, context);
+      break;
+
+    case "ObjectLiteralExpr":
+      visitor.ObjectLiteralExpr?.(node, context);
+      node.fields.forEach((f) => visit(f, visitor, context));
+      break;
+
+    case "ObjectTypeDef":
+      visitor.ObjectTypeDef?.(node, context);
+      visit(node.name, visitor, context);
+      visit(node.obj, visitor, context);
+      break;
+
+    case "StringLiteral":
+      visitor.StringLiteral?.(node, context);
+      break;
+
+    case "TypeName":
+      visitor.TypeName?.(node, context);
+      break;
+
+    case "TypeRef":
+      visitor.TypeRef?.(node, context);
+      visit(node.name, visitor, context);
+      node.args.forEach((a) => visit(a, visitor, context));
+      break;
+  }
+
+  return node;
 }

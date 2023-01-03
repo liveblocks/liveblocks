@@ -12,14 +12,14 @@ describe("documents", () => {
 describe("comments", () => {
   it("line comment", () => {
     const result = parseDocument("// This is comment\n");
-    expect(result.comments.length).toBe(1);
-    expect(result.comments[0].text).toEqual(" This is comment");
+    expect(result.comments?.length).toBe(1);
+    expect(result.comments?.[0].text).toEqual(" This is comment");
   });
 
   it("block comment (multi-line)", () => {
     const result = parseDocument("/* This is\n   a multi-line comment */");
-    expect(result.comments.length).toBe(1);
-    expect(result.comments[0].text).toEqual(
+    expect(result.comments?.length).toBe(1);
+    expect(result.comments?.[0].text).toEqual(
       " This is\n   a multi-line comment "
     );
   });
