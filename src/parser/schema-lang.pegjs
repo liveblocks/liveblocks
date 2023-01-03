@@ -30,8 +30,6 @@
   }
 
 
-  const WHITESPACE_PREFIX = /^([ \t]*)[^\s]/m
-
   function unescape(s: string): string {
       return s
           // Escaping replaces special characters
@@ -109,12 +107,13 @@ TypeName "type name"
 //////   //
 //////   
 DefinitionList
-  = first:Definition rest:Definition*
+  = first:Definition __ rest:( x:Definition __
+                               { return x } )*
     { return [first, ...rest] }
 
 
 Definition
-  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr __
+  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
     { return ast.ObjectTypeDef(name, obj, rng()) }
 
 
