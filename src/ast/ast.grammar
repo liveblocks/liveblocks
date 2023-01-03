@@ -54,7 +54,7 @@ ObjectLiteralExpr:
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
 ObjectTypeDef:
     name  TypeName
-    fields  FieldDef*
+    obj   ObjectLiteralExpr
 
 
 StringLiteral:

@@ -27,7 +27,7 @@ export function prettify(node: Node): string {
     case "ObjectTypeDef":
       return [
         `type ${prettify(node.name)} {`,
-        ...node.fields.map((field) => `  ${prettify(field)}`),
+        ...node.obj.fields.map((field) => `  ${prettify(field)}`),
         "}",
       ].join("\n");
 

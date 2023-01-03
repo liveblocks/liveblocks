@@ -111,7 +111,7 @@ export type ObjectTypeDef = {
     _kind: 'ObjectTypeDef'
     // _type?: Type
     name: TypeName
-    fields: FieldDef[]
+    obj: ObjectLiteralExpr
     range?: Range
 }
 
@@ -282,7 +282,7 @@ export default {
         }
     },
 
-    ObjectTypeDef(name: TypeName, fields: FieldDef[] = [], range?: Range): ObjectTypeDef {
+    ObjectTypeDef(name: TypeName, obj: ObjectLiteralExpr, range?: Range): ObjectTypeDef {
         invariant(
             name._kind === 'TypeName',
             `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
@@ -291,9 +291,9 @@ export default {
         )
 
         invariant(
-            Array.isArray(fields) && fields.every((item) => item._kind === 'FieldDef'),
-            `Invalid value for "fields" arg in "ObjectTypeDef" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-                fields,
+            obj._kind === 'ObjectLiteralExpr',
+            `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
+                obj,
             )}`,
         )
 
@@ -307,7 +307,7 @@ export default {
             _kind: 'ObjectTypeDef',
             // _type: undefined,
             name,
-            fields,
+            obj,
             range,
         }
     },

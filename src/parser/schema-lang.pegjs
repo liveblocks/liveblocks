@@ -114,8 +114,8 @@ DefinitionList
 
 
 Definition
-  = TYPE name:TypeName EQ? LCURLY fields:FieldDefList RCURLY __
-    { return ast.ObjectTypeDef(name, fields, rng()) }
+  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr __
+    { return ast.ObjectTypeDef(name, obj, rng()) }
 
 
 ObjectLiteralExpr

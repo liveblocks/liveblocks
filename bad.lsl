@@ -44,7 +44,8 @@ type Storage = {
     r: Int,
     g: Int,
     b: Int;            stroke: {
-      r: Int ; g: Int,
+      r: Int ; g: 
+            Innnt,
       b: Int,
     },
   }

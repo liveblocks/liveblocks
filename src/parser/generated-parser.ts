@@ -260,7 +260,7 @@ function peg$parse(input: string, options?: IParseOptions) {
   const peg$c24 = peg$otherExpectation("type name");
   const peg$c25 = function(name: any): any { return ast.TypeName(name, rng()) };
   const peg$c26 = function(first: any, rest: any): any { return [first, ...rest] };
-  const peg$c27 = function(name: any, fields: any): any { return ast.ObjectTypeDef(name, fields, rng()) };
+  const peg$c27 = function(name: any, obj: any): any { return ast.ObjectTypeDef(name, obj, rng()) };
   const peg$c28 = function(fields: any): any { return ast.ObjectLiteralExpr(fields, rng()) };
   const peg$c29 = function(first: any, def: any): any { return def };
   const peg$c30 = function(name: any, question: any, type: any): any {
@@ -1070,7 +1070,7 @@ function peg$parse(input: string, options?: IParseOptions) {
   }
 
   function peg$parseDefinition(): any {
-    let s0, s1, s2, s3, s4, s5, s6, s7;
+    let s0, s1, s2, s3, s4, s5;
 
     const key = peg$currPos * 35 + 13;
     const cached: ICached = peg$resultsCache[key];
@@ -1091,25 +1091,13 @@ function peg$parse(input: string, options?: IParseOptions) {
           s3 = null;
         }
         if (s3 as any !== peg$FAILED) {
-          s4 = peg$parseLCURLY();
+          s4 = peg$parseObjectLiteralExpr();
           if (s4 as any !== peg$FAILED) {
-            s5 = peg$parseFieldDefList();
+            s5 = peg$parse__();
             if (s5 as any !== peg$FAILED) {
-              s6 = peg$parseRCURLY();
-              if (s6 as any !== peg$FAILED) {
-                s7 = peg$parse__();
-                if (s7 as any !== peg$FAILED) {
-                  peg$savedPos = s0;
-                  s1 = peg$c27(s2, s5);
-                  s0 = s1;
-                } else {
-                  peg$currPos = s0;
-                  s0 = peg$FAILED;
-                }
-              } else {
-                peg$currPos = s0;
-                s0 = peg$FAILED;
-              }
+              peg$savedPos = s0;
+              s1 = peg$c27(s2, s4);
+              s0 = s1;
             } else {
               peg$currPos = s0;
               s0 = peg$FAILED;

@@ -1,5 +1,13 @@
 import didyoumean from "didyoumean";
-import type { Document, ObjectTypeDef, Node, TypeName, TypeRef } from "../ast";
+import type {
+  Definition,
+  Document,
+  Node,
+  ObjectLiteralExpr,
+  ObjectTypeDef,
+  TypeName,
+  TypeRef,
+} from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
 
 const BUILT_IN = "BUILT_IN" as const;
@@ -69,8 +77,15 @@ function dupes<T>(items: Iterable<T>, keyFn: (item: T) => string): [T, T][] {
   return dupes;
 }
 
-function checkObjectTypeDef(definition: ObjectTypeDef, context: Context): void {
-  for (const [first, second] of dupes(definition.fields, (f) => f.name.name)) {
+function checkObjectTypeDef(def: ObjectTypeDef, context: Context): void {
+  checkNode(def.obj, context);
+}
+
+function checkObjectLiteralExpr(
+  obj: ObjectLiteralExpr,
+  context: Context
+): void {
+  for (const [first, second] of dupes(obj.fields, (f) => f.name.name)) {
     context.hasErrors = true;
     context.errorReporter.printSemanticError(
       `A field named ${JSON.stringify(
@@ -85,7 +100,7 @@ function checkObjectTypeDef(definition: ObjectTypeDef, context: Context): void {
     );
   }
 
-  for (const field of definition.fields) {
+  for (const field of obj.fields) {
     checkNode(field.type, context);
   }
 }
@@ -151,9 +166,8 @@ function checkTypeRef(node: TypeRef, context: Context): void {
       );
     }
   }
-
   // Special check for the LiveMap type
-  if (node.name.name === "LiveMap") {
+  else if (node.name.name === "LiveMap") {
     if (
       // Pretty ugly hardcoded limit. Yuck, I know, but we'll generalize this later :(
       node.args.length < 1 ||
@@ -167,7 +181,7 @@ function checkTypeRef(node: TypeRef, context: Context): void {
         [
           `In the future, we may loosen this constraint, but it's not supported right now.`,
         ],
-        node.args[0]?.range
+        node.args[0]?.range ?? node.range
       );
     }
   }
@@ -252,6 +266,9 @@ function checkNode(node: Node, context: Context): void {
 
     case "ObjectTypeDef":
       return checkObjectTypeDef(node, context);
+
+    case "ObjectLiteralExpr":
+      return checkObjectLiteralExpr(node, context);
 
     case "TypeRef":
       return checkTypeRef(node, context);
