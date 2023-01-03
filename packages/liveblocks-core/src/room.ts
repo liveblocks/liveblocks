@@ -1630,7 +1630,7 @@ function makeStateMachine<
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
             const unacknowledgedOps = new Map(state.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOfflineOps(unacknowledgedOps, doNotBatchUpdates);
+            applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
               _getInitialStateResolver();
             }
@@ -1810,7 +1810,7 @@ function makeStateMachine<
     connect();
   }
 
-  function applyAndSendOfflineOps(
+  function applyAndSendOps(
     offlineOps: Map<string | undefined, Op>,
     //                       ^^^^^^^^^ NOTE: Bug? Unintended?
     batchedUpdatesWrapper: (cb: () => void) => void
