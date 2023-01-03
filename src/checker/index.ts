@@ -10,8 +10,7 @@ import type {
 } from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
 
-const BUILT_IN = "BUILT_IN" as const;
-type BUILT_IN = typeof BUILT_IN;
+const BUILT_IN = Symbol("BUILT_IN");
 
 const BUILT_IN_NAMES = [
   "Int",
@@ -28,7 +27,7 @@ const CARDINALITIES: Record<string, number> = {
 };
 
 type RegisteredTypeInfo = {
-  definition: BUILT_IN | Definition;
+  definition: typeof BUILT_IN | Definition;
   cardinality: number;
 };
 
@@ -50,7 +49,7 @@ function makeContext(errorReporter: ErrorReporter): Context {
         // Only our hardcoded "Live" objects take params for now, you cannot
         // define your own custom parameterized types
         cardinality: CARDINALITIES[name] ?? 0,
-      },
+      } as const,
     ])
   );
 
