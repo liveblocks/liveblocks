@@ -1811,8 +1811,7 @@ function makeStateMachine<
   }
 
   function applyAndSendOps(
-    offlineOps: Map<string | undefined, Op>,
-    //                       ^^^^^^^^^ NOTE: Bug? Unintended?
+    offlineOps: Map<string, Op>,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (offlineOps.size === 0) {
