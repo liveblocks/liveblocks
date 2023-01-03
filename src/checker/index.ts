@@ -21,6 +21,12 @@ const BUILT_IN_NAMES = [
   "LiveObject",
 ] as const;
 
+const CARDINALITIES: Record<string, number> = {
+  LiveList: 1,
+  LiveMap: 2,
+  LiveObject: 1,
+};
+
 type RegisteredTypeInfo = {
   definition: BUILT_IN | Definition;
   cardinality: number;
@@ -35,28 +41,23 @@ type Context = {
 };
 
 function makeContext(errorReporter: ErrorReporter): Context {
+  const registeredTypes = new Map(
+    BUILT_IN_NAMES.map((name) => [
+      name,
+      {
+        definition: BUILT_IN,
+
+        // Only our hardcoded "Live" objects take params for now, you cannot
+        // define your own custom parameterized types
+        cardinality: CARDINALITIES[name] ?? 0,
+      },
+    ])
+  );
+
   return {
     hasErrors: false, // TODO: Move this into ErrorReporter
     errorReporter,
-    registeredTypes: new Map(
-      BUILT_IN_NAMES.map((name) => [
-        name,
-        {
-          definition: BUILT_IN,
-
-          // Only our hardcoded "Live" objects take params for now, you cannot
-          // define your own custom parameterized types
-          cardinality:
-            name === "LiveList"
-              ? 1
-              : name === "LiveMap"
-              ? 2
-              : name === "LiveObject"
-              ? 1
-              : 0,
-        },
-      ])
-    ),
+    registeredTypes,
   };
 }
 
@@ -184,6 +185,27 @@ function checkTypeRef(node: TypeRef, context: Context): void {
         node.args[0]?.range ?? node.range
       );
     }
+  } else if (node.name.name === "LiveObject") {
+    if (
+      node.args.length !== 1 ||
+      node.args[0]?._kind !== "TypeRef" ||
+      node.args[0]?.name._kind !== "TypeName" ||
+      context.registeredTypes.get(node.args[0]?.name.name)?.definition ===
+        BUILT_IN
+    ) {
+      context.hasErrors = true;
+      context.errorReporter.printSemanticError(
+        `The argument to a "LiveObject" type must be a (named) object type`,
+        node.args[0]?._kind === "ObjectLiteralExpr"
+          ? [
+              "You cannot use object literal types for now. We may loosen this constraint in the future.",
+              "",
+              "To fix this, declare the object literal as a named type, and refer to it here.",
+            ]
+          : [],
+        node.args[0]?.range ?? node.range
+      );
+    }
   }
 
   for (const arg of node.args) {
@@ -227,6 +249,18 @@ function checkDocument(document: Document, context: Context): void {
         );
       }
     } else {
+      if (/^live/i.test(name)) {
+        context.hasErrors = true;
+        context.errorReporter.printSemanticError(
+          `The name ${JSON.stringify(name)} is not allowed`,
+          [
+            'Type names starting with "Live" are reserved for future use.',
+            "Please use a different name for your custom type.",
+          ],
+          def.name.range
+        );
+      }
+
       // All good, let's register it!
       context.registeredTypes.set(name, {
         definition: def,
