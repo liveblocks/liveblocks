@@ -11,7 +11,7 @@
   <img src="https://img.shields.io/badge/next.js-message?style=flat&logo=next.js&color=07f&logoColor=fff" alt="Next.js" />
 </p>
 
-Kickstart start your collaborative Next.js app with this starter kit. [Read the guide](http://liveblocks.io/docs/guides/nextjs-starter-kit) to get started.
+Kickstart start your collaborative Next.js app with this starter kit.
 
 ## Features
 
@@ -19,3 +19,6 @@ Kickstart start your collaborative Next.js app with this starter kit. [Read the 
 🗒 Collaborative whiteboard app with a fully-featured share menu <br>
 🆔 Authentication compatible with GitHub, Google, Auth0, and more <br>
 🔑 Document permissions can be scoped to users, groups, and the public <br>
+
+## Get started
+[Read the guide](http://liveblocks.io/docs/guides/nextjs-starter-kit) to get started.
