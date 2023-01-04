@@ -2292,7 +2292,7 @@ function defaultState<
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
-  const othersAsTreeNode = new DerivedRef(others, (others) =>
+  const others_forDevTools = new DerivedRef(others, (others) =>
     others.map((other, index) => userToTreeNode(`Other ${index}`, other))
   );
 
@@ -2326,7 +2326,7 @@ function defaultState<
     connection,
     me: new MeRef(initialPresence),
     others,
-    others_forDevTools: othersAsTreeNode,
+    others_forDevTools,
 
     initialStorage,
     idFactory: null,
