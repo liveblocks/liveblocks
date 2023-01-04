@@ -1,0 +1,93 @@
+.row {
+  display: flex;
+  place-items: center;
+  position: relative;
+}
+
+.container {
+  display: grid;
+  flex: 1 0 auto;
+  width: 100%;
+  padding: var(--space-8) var(--space-19) var(--space-8) var(--space-8);
+  gap: var(--space-8);
+  grid-template-columns: auto 1fr auto;
+  outline: none;
+}
+
+.icon,
+.info {
+  transition: opacity var(--transition);
+}
+
+.link:hover .icon,
+.link:hover .info,
+.link:focus-visible .icon,
+.link:focus-visible .info {
+  opacity: var(--opacity-hover);
+}
+
+.icon {
+  display: flex;
+  width: 40px;
+  height: 52px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-xs);
+  box-shadow: var(--shadow-xs);
+  place-content: center;
+  place-items: center;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  place-content: center;
+}
+
+.infoSkeleton {
+  gap: var(--space-4);
+}
+
+.documentName {
+  font-size: var(--size-sm);
+  font-weight: 500;
+}
+
+.documentDate {
+  color: var(--color-text-lighter);
+  font-size: var(--size-xs);
+}
+
+.groups {
+  display: inline-flex;
+  margin-left: var(--space-3);
+  gap: var(--space-3);
+}
+
+.group {
+  position: relative;
+  display: inline-block;
+  padding: 0 var(--space-3);
+  border-radius: 1em;
+  color: var(--color-text-lighter);
+  background: var(--color-surface);
+  font-size: 0.8em;
+}
+
+.presence {
+  display: flex;
+  place-items: center;
+}
+
+.more {
+  position: absolute;
+  right: var(--space-10);
+}
+
+.morePopover {
+  display: flex;
+  min-width: 160px;
+  max-width: 320px;
+  flex-direction: column;
+  padding: var(--space-3);
+}

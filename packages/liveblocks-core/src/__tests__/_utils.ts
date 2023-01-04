@@ -37,6 +37,7 @@ function makeRoomToken(actor: number, scopes: string[]): RoomAuthToken {
   return {
     appId: "my-app",
     roomId: "my-room",
+    id: "user1",
     actor,
     scopes,
   };

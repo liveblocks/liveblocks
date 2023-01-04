@@ -134,6 +134,11 @@
             "path": "/guides/upgrading/0.18"
           }
         ]
+      },
+      {
+        "title": "Webhooks",
+        "path": "/guides/webhooks",
+        "hidden": true
       }
     ]
   },

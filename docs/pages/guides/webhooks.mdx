@@ -1,0 +1,325 @@
+---
+meta:
+  title: "Webhooks"
+  parentTitle: "Guides"
+  description: "Learn Liveblocks Webhooks concepts and implementation"
+---
+
+In this guide, we will explain how to use webhooks within your product so that
+you can react to Liveblocks events as they happen. Now that our platform is
+observable, you can use webhooks to reduce development time and the need for
+polling.
+
+## What is a webhook?
+
+Webhooks make a platform observable. They let users subscribe to events on the
+platform for them to react to. In this sense, webhooks streamline the collection
+of data between two connected services.
+
+Like an API, webhooks are a mechanism for a client to receive data. The main
+difference between webhooks and APIs is that a webhook functions as an inverted
+API. A traditional API receives requests and sends responses, whereas a webhook
+is an endpoint that you provide where we send events.
+
+The lifecycle of a webhook:
+
+1. You create and provide a client endpoint, which listens to event messages
+2. The Liveblocks server broadcasts a message (event) to the client endpoint
+   when an event occurs
+3. You verify the message request sent to the endpoint and send a 200 response
+   once the request has been verified
+4. You use the message payload to trigger a task
+
+Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.
+
+In this way, webhooks provide a real-time connection between two services. While
+APIs are useful for obtaining data on a scheduled basis, they are not efficient
+for observing changes on a platform that has a high volume of activity.
+
+## Concepts
+
+### Messages
+
+A message is generated for each event that happens within Liveblocks, as defined
+in the Event Catalog. Messages contain a `type` along with data attached to it.
+The message request contains headers used for security purposes.
+
+### Events
+
+An event occurs when a change is made to Liveblocks data. Updates to storage and
+rooms are common events that will trigger a message. Each endpoint you provide
+in the webhooks dashboard listens to all events by default but can be easily
+configured to only listen to a subset by updating the Message Filtering section.
+As a new user, you may opt to listen to all events or subscribe to only the ones
+that are relevant to your use case.
+
+Alternatively, you can use the Event Catalog provided as a way to determine
+which events make the most sense. The Event Catalog provides a list of events
+available for subscription, along with their schema.
+
+Events available for use include:
+
+- UserEntered/UserLeft
+- StorageUpdated
+
+More events will come later such as:
+
+- RoomCreated/RoomDeleted
+- MaxConnectionsReached
+
+#### UserEntered
+
+A user enters a room when they connect to a room, which is when this event is
+triggered. The `numActiveUsers` field represents the number of users in the room
+after the user has entered. This event is not throttled.
+
+```ts
+// Schema
+type UserEntered = {
+  type: "userEntered";
+  data: {
+    appId: string;
+    roomId: string;
+    connectionId: number;
+    userId: string | null;
+    userInfo: Record<string, any> | null;
+    enteredAt: string;
+    numActiveUsers: number;
+  };
+};
+
+// Example
+const userEnteredMessage = {
+  type: "userEntered",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    connectionId: 4,
+    userId: "a-user-id",
+    userInfo: null,
+    enteredAt: "2021-10-06T01:45:56.558Z",
+    numActiveUsers: 8,
+  },
+};
+```
+
+#### UserLeft
+
+A user leaves a room when they disconnect from a room, which is when this event
+is triggered. The `numActiveUsers` field represents the number of users in the
+room after the user has left. This event, like `UserEntered`, is not throttled.
+
+```ts
+// Schema
+type UserLeft = {
+  type: "userLeft";
+  data: {
+    appId: string;
+    roomId: string;
+    connectionId: number;
+    userId: string | null;
+    userInfo: Record<string, any> | null;
+    leftAt: string;
+    numActiveUsers: number;
+  };
+};
+
+// Example
+const userLeftMessage = {
+  type: "userLeft",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    connectionId: 4,
+    userId: "a-user-id",
+    userInfo: {
+      name: "John Doe",
+    },
+    leftAt: "2021-10-06T01:45:56.558Z",
+    numActiveUsers: 7,
+  },
+};
+```
+
+#### StorageUpdated
+
+Storage is updated when a user writes to storage. This event is throttled at five minutes and, as such, may not be triggered for every write. The `updatedAt` field is the time
+of the last write.
+
+```ts
+// Schema
+type StorageUpdated = {
+  type: "storageUpdated";
+  data: {
+    roomId: string;
+    appId: string;
+    updatedAt: string;
+  };
+};
+
+// Example
+const storageUpdatedMessage = {
+  type: "storageUpdated",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    updatedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+### Endpoints
+
+An endpoint is a URL whose purpose is to receive event messages and trigger a
+task based on the message payload. The only criterion for creating an endpoint
+is that it must be one that you control.
+
+### Use Cases
+
+Before webhooks, if you wanted to update an internal data based on Liveblocks'
+state, you would need to set up a cron job to poll the
+[rooms API](https://development.liveblocks.io/docs/api-reference/rest-api-endpoints)
+for recurrent updates. With webhooks, you can now subscribe to the events you
+are interested in, and be alerted of the change when it happens. Powerful ways
+to leverage webhooks with Liveblocks include:
+
+- Storage Synchronization between room(s) and an internal database
+- Alerting the client when a user leaves or enters a room
+- Notifying the client if maximum concurrency has been reached
+
+## Setup
+
+### Creating an endpoint
+
+Creating endpoints is simple, and is done from within the webhooks dashboard for
+your project.
+
+Before sending events, you should disable CSRF protection for the endpoint if it
+is enabled by default, and use the steps outlined in the Security Section to
+ensure the validity of the message.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/webhooks/create-endpoint.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+### Subscribing to events
+
+Each endpoint you provide in the webhooks dashboard listens to all events by
+default but can be easily configured to only listen to a subset by updating the
+Message Filtering section during endpoint creation. The subscribed events can be
+edited later in the Endpoints Overview.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/webhooks/edit-events.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+### Replaying events
+
+If your service is unreachable, retries will automatically be attempted. If your
+service incurs considerable downtime (over 10 hours), you can replay individual
+messages from the Endpoints portion of the dashboard by clicking the kebab menu
+on an individual message, or you can opt to bulk replay events by clicking the
+main menu and selecting "Replay Failed Messages."
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source src="/images/docs/webhooks/replay-events.mp4" type="video/mp4" />
+  </video>
+</Figure>
+
+Each message is attempted based on the following schedule, where each period is
+started following the failure of the preceding attempt:
+
+- Immediately
+- 5 seconds
+- 5 minutes
+- 30 minutes
+- 2 hours
+- 5 hours
+- 10 hours
+- 10 hours (in addition to the previous)
+
+If an endpoint is removed or disabled, delivery attempts to the endpoint will be
+disabled as well.
+
+For example, an attempt that fails three times before eventually succeeding will
+be delivered roughly 35 minutes and 5 seconds following the first attempt.
+
+## Security
+
+Webhooks can generate security holes, but verification can mitigate this risk.
+When you verify your webhooks, you protect against man-in-the-middle, CSRF, and
+replay attacks. Because of this, the importance of verification cannot be
+understated and should be considered paramount in your integration.
+
+Here's how to validate a webhook message:
+
+#### 1. Construct the signed content
+
+The content to sign is composed by concatenating the id, timestamp and payload
+of the request, separated by the full-stop character (`.`). In code, it will
+look something like:
+
+```ts
+const crypto = require("crypto");
+
+// webhookId comes from the `webhook-id` header
+// webhookTimestamp comes from the `webhook-timestamp` header
+// body is the request body
+signedContent = `${webhookId}.${webhookTimestamp}.${body}`;
+```
+
+#### 2. Generate the signature
+
+Liveblocks uses an HMAC with SHA-256 to sign its webhooks.
+
+So to calculate the expected signature, you should HMAC the `signedContent` from
+above using the base64 portion of your signing secret (this is the part after
+the `whsec_` prefix) as the key. For example, given the secret
+`whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw` you will want to use
+`MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw`.
+
+For example, this is how you can calculate the signature in Node.js:
+
+```ts
+// Your endpoint's signing secret
+const secret = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
+
+// Need to base64 decode the secret
+const secretBytes = new Buffer(secret.split("_")[1], "base64");
+// This is the signature you will compare against the signature header
+const signature = crypto
+  .createHmac("sha256", secretBytes)
+  .update(signedContent)
+  .digest("base64");
+```
+
+#### 2. Validate the signature
+
+This generated signature should match one of the ones sent in the
+`webhook-signature` header.
+
+The webhook-signature header is composed of a list of space delimited signatures
+and their corresponding version identifiers. The signature list is most commonly
+of length one. Though there could be any number of signatures. For example:
+
+```
+v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE= v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo=
+```
+
+Make sure to remove the version prefix and delimiter (e.g. `v1,`) before
+verifying the signature.
+
+Please note that to compare the signatures it's recommended to use a
+constant-time string comparison method in order to prevent timing attacks.
+
+#### 3. Verify the timestamp
+
+As mentioned above, Liveblocks also sends the timestamp of the attempt in the
+`webhook-timestamp` header. You should compare this timestamp against your
+system timestamp and make sure it's within your tolerance in order to prevent
+timestamp attacks.

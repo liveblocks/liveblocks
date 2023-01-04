@@ -33,7 +33,7 @@ export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
   // Full Presence™ message
   //
   | {
-      type: ClientMsgCode.UPDATE_PRESENCE;
+      readonly type: ClientMsgCode.UPDATE_PRESENCE;
       /**
        * Set this to any number to signify that this is a Full Presence™
        * update, not a patch.
@@ -47,28 +47,28 @@ export type UpdatePresenceClientMsg<TPresence extends JsonObject> =
        * is a backward-compatible way of expressing that the `data` contains
        * all presence fields, and isn't a partial "patch".
        */
-      targetActor: number;
-      data: TPresence;
+      readonly targetActor: number;
+      readonly data: TPresence;
     }
 
   //
   // Partial Presence™ message
   //
   | {
-      type: ClientMsgCode.UPDATE_PRESENCE;
+      readonly type: ClientMsgCode.UPDATE_PRESENCE;
       /**
        * Absence of the `targetActor` field signifies that this is a Partial
        * Presence™ "patch".
        */
-      targetActor?: undefined;
-      data: Partial<TPresence>;
+      readonly targetActor?: undefined;
+      readonly data: Partial<TPresence>;
     };
 
 export type UpdateStorageClientMsg = {
-  type: ClientMsgCode.UPDATE_STORAGE;
-  ops: Op[];
+  readonly type: ClientMsgCode.UPDATE_STORAGE;
+  readonly ops: Op[];
 };
 
 export type FetchStorageClientMsg = {
-  type: ClientMsgCode.FETCH_STORAGE;
+  readonly type: ClientMsgCode.FETCH_STORAGE;
 };

@@ -1,0 +1,17 @@
+.dialog {
+  width: 420px;
+  max-width: 100%;
+  padding: var(--space-8);
+}
+
+.description {
+  margin-bottom: var(--space-12);
+  color: var(--color-text-light);
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-8);
+  gap: var(--space-8);
+}

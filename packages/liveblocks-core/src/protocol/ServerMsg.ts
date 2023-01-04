@@ -51,11 +51,11 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
   // Full Presence™ message
   //
   | {
-      type: ServerMsgCode.UPDATE_PRESENCE;
+      readonly type: ServerMsgCode.UPDATE_PRESENCE;
       /**
        * The User whose Presence has changed.
        */
-      actor: number;
+      readonly actor: number;
       /**
        * When set, signifies that this is a Full Presence™ update, not a patch.
        *
@@ -68,33 +68,33 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
        * is a backward-compatible way of expressing that the `data` contains
        * all presence fields, and isn't a partial "patch".
        */
-      targetActor: number;
+      readonly targetActor: number;
       /**
        * The partial or full Presence of a User. If the `targetActor` field is set,
        * this will be the full Presence, otherwise it only contain the fields that
        * have changed since the last broadcast.
        */
-      data: TPresence;
+      readonly data: TPresence;
     }
 
   //
   // Partial Presence™ message
   //
   | {
-      type: ServerMsgCode.UPDATE_PRESENCE;
+      readonly type: ServerMsgCode.UPDATE_PRESENCE;
       /**
        * The User whose Presence has changed.
        */
-      actor: number;
+      readonly actor: number;
       /**
        * Not set for partial presence updates.
        */
-      targetActor?: undefined;
+      readonly targetActor?: undefined;
       /**
        * A partial Presence patch to apply to the User. It will only contain the
        * fields that have changed since the last broadcast.
        */
-      data: Partial<TPresence>;
+      readonly data: Partial<TPresence>;
     };
 
 /**
@@ -102,23 +102,23 @@ export type UpdatePresenceServerMsg<TPresence extends JsonObject> =
  * a new User has joined the Room.
  */
 export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
-  type: ServerMsgCode.USER_JOINED;
-  actor: number;
+  readonly type: ServerMsgCode.USER_JOINED;
+  readonly actor: number;
   /**
    * The id of the User that has been set in the authentication endpoint.
    * Useful to get additional information about the connected user.
    */
-  id: TUserMeta["id"];
+  readonly id: TUserMeta["id"];
   /**
    * Additional user information that has been set in the authentication
    * endpoint.
    */
-  info: TUserMeta["info"];
+  readonly info: TUserMeta["info"];
 
   /**
    * Permissions that the user has in the Room.
    */
-  scopes: string[];
+  readonly scopes: string[];
 };
 
 /**
@@ -126,8 +126,8 @@ export type UserJoinServerMsg<TUserMeta extends BaseUserMeta> = {
  * a new User has left the Room.
  */
 export type UserLeftServerMsg = {
-  type: ServerMsgCode.USER_LEFT;
-  actor: number;
+  readonly type: ServerMsgCode.USER_LEFT;
+  readonly actor: number;
 };
 
 /**
@@ -135,16 +135,16 @@ export type UserLeftServerMsg = {
  * a User broadcasted an Event to everyone in the Room.
  */
 export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
-  type: ServerMsgCode.BROADCASTED_EVENT;
+  readonly type: ServerMsgCode.BROADCASTED_EVENT;
   /**
    * The User who broadcasted the Event.
    */
-  actor: number;
+  readonly actor: number;
   /**
    * The arbitrary payload of the Event. This can be any JSON value. Clients
    * will have to manually verify/decode this event.
    */
-  event: TRoomEvent;
+  readonly event: TRoomEvent;
 };
 
 /**
@@ -153,9 +153,9 @@ export type BroadcastedEventServerMsg<TRoomEvent extends Json> = {
  * includes a list of all other Users that already are in the Room.
  */
 export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
-  type: ServerMsgCode.ROOM_STATE;
-  users: {
-    [actor: number]: TUserMeta & { scopes: string[] };
+  readonly type: ServerMsgCode.ROOM_STATE;
+  readonly users: {
+    readonly [actor: number]: TUserMeta & { scopes: string[] };
   };
 };
 
@@ -165,8 +165,8 @@ export type RoomStateServerMsg<TUserMeta extends BaseUserMeta> = {
  * payload includes the entire Storage document.
  */
 export type InitialDocumentStateServerMsg = {
-  type: ServerMsgCode.INITIAL_STORAGE_STATE;
-  items: IdTuple<SerializedCrdt>[];
+  readonly type: ServerMsgCode.INITIAL_STORAGE_STATE;
+  readonly items: IdTuple<SerializedCrdt>[];
 };
 
 /**
@@ -177,6 +177,6 @@ export type InitialDocumentStateServerMsg = {
  * mutations to make to the initially loaded document).
  */
 export type UpdateStorageServerMsg = {
-  type: ServerMsgCode.UPDATE_STORAGE;
-  ops: Op[];
+  readonly type: ServerMsgCode.UPDATE_STORAGE;
+  readonly ops: Op[];
 };

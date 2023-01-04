@@ -483,6 +483,16 @@ export type Room<
   batch<T>(fn: () => T): T;
 
   /**
+   * Whether or not the room has storage modifications that have not been acknowledged by the server.
+   */
+  hasPendingStorageModifications(): boolean;
+
+  /**
+   * Close room connection and try to reconnect
+   */
+  reconnect(): void;
+
+  /**
    * @internal Utilities only used for unit testing.
    */
   readonly __INTERNAL_DO_NOT_USE: {
@@ -541,6 +551,7 @@ type Machine<
   // Core
   connect(): void;
   disconnect(): void;
+  reconnect(): void;
 
   // Generic storage callbacks
   subscribe(callback: StorageCallback): () => void;
@@ -566,6 +577,7 @@ type Machine<
   canRedo(): boolean;
   pauseHistory(): void;
   resumeHistory(): void;
+  hasPendingStorageModifications(): boolean;
 
   getStorage(): Promise<{
     root: LiveObject<TStorage>;
@@ -626,8 +638,8 @@ function isConnectionSelfAware(
 type HistoryOp<TPresence extends JsonObject> =
   | Op
   | {
-      type: "presence";
-      data: TPresence;
+      readonly type: "presence";
+      readonly data: TPresence;
     };
 
 type IdFactory = () => string;
@@ -699,7 +711,9 @@ type State<
     };
   };
 
-  offlineOperations: Map<string, Op>;
+  // A registry of yet-unacknowledged Ops. These Ops have already been
+  // submitted to the server, but have not yet been acknowledged.
+  unacknowledgedOps: Map<string, Op>;
 };
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
@@ -1026,7 +1040,7 @@ function makeStateMachine<
     // Get operations that represent the diff between 2 states.
     const ops = getTreesDiffOperations(currentItems, new Map(items));
 
-    const result = apply(ops, false);
+    const result = applyOps(ops, false);
 
     notify(result.updates, batchedUpdatesWrapper);
   }
@@ -1105,25 +1119,35 @@ function makeStateMachine<
     );
   }
 
-  function apply(
-    ops: HistoryOp<TPresence>[],
+  function applyOps<O extends HistoryOp<TPresence>>(
+    rawOps: readonly O[],
     isLocal: boolean
   ): {
-    reverse: HistoryOp<TPresence>[];
+    // Input Ops can get opIds assigned during application.
+    ops: O[];
+    reverse: O[];
     updates: {
       storageUpdates: Map<string, StorageUpdate>;
       presence: boolean;
     };
   } {
-    const result = {
-      reverse: [] as HistoryOp<TPresence>[],
-      updates: {
-        storageUpdates: new Map<string, StorageUpdate>(),
-        presence: false,
-      },
+    const output = {
+      reverse: [] as O[],
+      storageUpdates: new Map<string, StorageUpdate>(),
+      presence: false,
     };
 
     const createdNodeIds = new Set<string>();
+
+    // Ops applied after undo/redo won't have opIds assigned, yet. Let's do
+    // that right now first.
+    const ops = rawOps.map((op) => {
+      if (op.type !== "presence" && !op.opId) {
+        return { ...op, opId: pool.generateOpId() };
+      } else {
+        return op;
+      }
+    });
 
     for (const op of ops) {
       if (op.type === "presence") {
@@ -1148,20 +1172,15 @@ function makeStateMachine<
           }
         }
 
-        result.reverse.unshift(reverse);
-        result.updates.presence = true;
+        output.reverse.unshift(reverse as O);
+        output.presence = true;
       } else {
         let source: OpSource;
-
-        // Ops applied after undo/redo don't have an opId.
-        if (!op.opId) {
-          op.opId = pool.generateOpId();
-        }
 
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.offlineOperations.delete(nn(op.opId));
+          const deleted = state.unacknowledgedOps.delete(nn(op.opId));
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1178,16 +1197,16 @@ function makeStateMachine<
           // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
           // storage updates for the children.
           if (!parentId || !createdNodeIds.has(parentId)) {
-            result.updates.storageUpdates.set(
+            output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
-                result.updates.storageUpdates.get(
+                output.storageUpdates.get(
                   nn(applyOpResult.modified.node._id)
                 ) as any, // FIXME
                 applyOpResult.modified
               )
             );
-            result.reverse.unshift(...applyOpResult.reverse);
+            output.reverse.unshift(...(applyOpResult.reverse as O[]));
           }
 
           if (
@@ -1200,7 +1219,15 @@ function makeStateMachine<
         }
       }
     }
-    return result;
+
+    return {
+      ops,
+      reverse: output.reverse,
+      updates: {
+        storageUpdates: output.storageUpdates,
+        presence: output.presence,
+      },
+    };
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
@@ -1658,9 +1685,9 @@ function makeStateMachine<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const offlineOps = new Map(state.offlineOperations);
+            const unacknowledgedOps = new Map(state.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
+            applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
               _getInitialStateResolver();
             }
@@ -1669,7 +1696,7 @@ function makeStateMachine<
           }
           // Write event
           case ServerMsgCode.UPDATE_STORAGE: {
-            const applyResult = apply(message.ops, false);
+            const applyResult = applyOps(message.ops, false);
             applyResult.updates.storageUpdates.forEach((value, key) => {
               updates.storageUpdates.set(
                 key,
@@ -1840,9 +1867,8 @@ function makeStateMachine<
     connect();
   }
 
-  function applyAndSendOfflineOps(
-    offlineOps: Map<string | undefined, Op>,
-    //                       ^^^^^^^^^ NOTE: Bug? Unintended?
+  function applyAndSendOps(
+    offlineOps: Map<string, Op>,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (offlineOps.size === 0) {
@@ -1853,11 +1879,11 @@ function makeStateMachine<
 
     const ops = Array.from(offlineOps.values());
 
-    const result = apply(ops, true);
+    const result = applyOps(ops, true);
 
     messages.push({
       type: ClientMsgCode.UPDATE_STORAGE,
-      ops,
+      ops: result.ops,
     });
 
     notify(result.updates, batchedUpdatesWrapper);
@@ -1870,7 +1896,7 @@ function makeStateMachine<
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(nn(op.opId), op);
+        state.unacknowledgedOps.set(nn(op.opId), op);
       });
     }
 
@@ -2061,7 +2087,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
@@ -2069,7 +2095,7 @@ function makeStateMachine<
       onHistoryChange(doNotBatchUpdates);
     });
 
-    for (const op of historyOps) {
+    for (const op of result.ops) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -2092,7 +2118,7 @@ function makeStateMachine<
     }
 
     state.pausedHistory = null;
-    const result = apply(historyOps, true);
+    const result = applyOps(historyOps, true);
 
     batchUpdates(() => {
       notify(result.updates, doNotBatchUpdates);
@@ -2100,7 +2126,7 @@ function makeStateMachine<
       onHistoryChange(doNotBatchUpdates);
     });
 
-    for (const op of historyOps) {
+    for (const op of result.ops) {
       if (op.type !== "presence") {
         state.buffer.storageOperations.push(op);
       }
@@ -2174,6 +2200,10 @@ function makeStateMachine<
     }
   }
 
+  function hasPendingStorageModifications() {
+    return state.unacknowledgedOps.size > 0;
+  }
+
   function simulateSocketClose() {
     if (state.socket) {
       state.socket = null;
@@ -2205,6 +2235,7 @@ function makeStateMachine<
     // Core
     connect,
     disconnect,
+    reconnect,
     subscribe,
 
     // Presence
@@ -2219,6 +2250,7 @@ function makeStateMachine<
     canRedo,
     pauseHistory,
     resumeHistory,
+    hasPendingStorageModifications,
 
     getStorage,
     getStorageSnapshot,
@@ -2310,7 +2342,7 @@ function defaultState<
     pausedHistory: null,
 
     activeBatch: null,
-    offlineOperations: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, Op>(),
   };
 }
 
@@ -2361,6 +2393,7 @@ export function createRoom<
     getConnectionState: machine.getConnectionState,
     isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
+    reconnect: machine.reconnect,
 
     subscribe: machine.subscribe,
 
@@ -2388,6 +2421,7 @@ export function createRoom<
       pause: machine.pauseHistory,
       resume: machine.resumeHistory,
     },
+    hasPendingStorageModifications: machine.hasPendingStorageModifications,
 
     __INTERNAL_DO_NOT_USE: {
       simulateCloseWebsocket: machine.simulateSocketClose,
@@ -2500,6 +2534,8 @@ async function fetchAuthEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
+    // necessary for cookies
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {

@@ -1,0 +1,7 @@
+.popover {
+  display: flex;
+  min-width: 160px;
+  max-width: 320px;
+  flex-direction: column;
+  padding: var(--space-3);
+}

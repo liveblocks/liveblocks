@@ -1,0 +1,27 @@
+.sidebar {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: var(--space-4);
+}
+
+.navigation {
+  overflow: auto;
+  flex: 1 1 auto;
+}
+
+.category:not(:last-of-type) {
+  margin-bottom: var(--space-4);
+}
+
+.categoryTitle {
+  display: block;
+  padding: 0 var(--space-5);
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
