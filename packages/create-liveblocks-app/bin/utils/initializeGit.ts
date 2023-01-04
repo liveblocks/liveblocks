@@ -61,6 +61,10 @@ async function checkIfInsideRepo(appDir: string): Promise<boolean> {
   } catch (err) {
     // Error means not inside a repo
     insideRepo = false;
+
+    // Remove git error message
+    process.stdout.moveCursor(0, -1);
+    process.stdout.clearLine(1);
   }
 
   if (insideRepo) {
