@@ -538,9 +538,10 @@ It's not only possible with GitHub and Auth0, any
 
 ### Switching themes
 
-The starter kit comes with both a dark mode and light mode. By default, the user
-sees the theme that corresponds to their system setting, but it's easy to switch
+The starter kit comes with both a dark mode and light mode. By default, the user sees the theme that corresponds to their system setting, but it's easy to switch
 your whole app to just dark or light mode by modifying [`styles/globals.css`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/styles/globals.css).
+
+To change the theme, you will alter the media query in `styles/globals.css`.  The two possible values you can pass are `@media (prefers-color-scheme: dark)` and `@media (prefers-color-scheme: light)`
 
 ### Adding a database
 
