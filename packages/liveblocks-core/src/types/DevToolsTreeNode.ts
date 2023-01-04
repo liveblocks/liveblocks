@@ -2,6 +2,7 @@ import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { User } from "../types/User";
 
+// XXX Get rid of type params here - this is all dynamic/runtime data, so they should not be needed?
 export type JsonTreeNode<TKey = string | number, TValue = Json> = {
   type: "Json";
   id: string;
@@ -9,6 +10,7 @@ export type JsonTreeNode<TKey = string | number, TValue = Json> = {
   value: TValue;
 };
 
+// XXX Get rid of this type?
 export type ObjectTreeNode<K = string | number> = {
   type: "Object";
   id: string;
@@ -23,6 +25,8 @@ export type UserTreeNode<
   id: string;
   key: number | string;
   isReadOnly: boolean;
+
+  // XXX Restore info and presence fields?
   fields: PrimitiveTreeNode<keyof TUser>[];
 };
 
@@ -47,6 +51,7 @@ export type LiveObjectTreeNode = {
   fields: StorageTreeNode[];
 };
 
+// XXX Get rid of this type?
 export type PrimitiveTreeNode<TKey = string | number> =
   | ObjectTreeNode<TKey>
   | JsonTreeNode<TKey>;
