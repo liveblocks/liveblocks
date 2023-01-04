@@ -295,12 +295,12 @@ export abstract class AbstractCrdt {
    */
   private _cachedImmutable?: Immutable;
 
+  /** @internal */
+  private _cachedTreeNodeKey?: string | number;
   /**
    * @internal
-   *
    * This caches the result of the last .toTreeNode() call for this Live node.
    */
-  private _cachedTreeNodeKey?: string | number;
   private _cachedTreeNode?: DevTools.StorageTreeNode;
 
   /**
