@@ -1,4 +1,4 @@
-import type { DevTools } from "@liveblocks/core";
+import type { DevToolsMsg } from "@liveblocks/core";
 import type { PlasmoContentScript } from "plasmo";
 import browser from "webextension-polyfill";
 
@@ -10,12 +10,14 @@ window.addEventListener("message", (event) => {
   const message = event.data;
   if (message?.source === "liveblocks-devtools-client") {
     // Relay messages from the client to the panel
-    browser.runtime.sendMessage(message as DevTools.FullClientToPanelMessage);
+    browser.runtime.sendMessage(
+      message as DevToolsMsg.FullClientToPanelMessage
+    );
   }
 });
 
 browser.runtime.onMessage.addListener(
-  (message: DevTools.FullPanelToClientMessage) => {
+  (message: DevToolsMsg.FullPanelToClientMessage) => {
     if (message?.source === "liveblocks-devtools-panel") {
       window.postMessage(message, "*");
     }

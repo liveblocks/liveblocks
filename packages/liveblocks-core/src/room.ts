@@ -11,7 +11,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
-import type * as DevTools from "./devtools/protocol";
+import type * as DevTools from "./protocol/DevToolsTreeNode";
 import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";

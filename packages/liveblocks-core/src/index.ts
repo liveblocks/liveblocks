@@ -25,8 +25,6 @@ export type {
 } from "./crdts/Lson";
 export type { StorageUpdate } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/ToImmutable";
-import type * as DevTools from "./devtools/protocol";
-export type { DevTools };
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -131,3 +129,9 @@ export type EnsureJson<T> =
   T extends (...args: unknown[]) => unknown ? T :
   // Resolve all other values explicitly
   { [K in keyof T]: EnsureJson<T[K]> };
+
+// Support for DevTools
+import type * as DevToolsMsg from "./devtools/protocol";
+export type { DevToolsMsg };
+import type * as DevTools from "./protocol/DevToolsTreeNode";
+export type { DevTools };

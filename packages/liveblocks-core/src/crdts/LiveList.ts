@@ -1,4 +1,4 @@
-import type * as DevTools from "../devtools/protocol";
+import type * as DevTools from "../protocol/DevToolsTreeNode";
 import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import { comparePosition, makePosition } from "../lib/position";

@@ -1,5 +1,5 @@
 import type { LiveNode } from "../crdts/Lson";
-import type * as DevTools from "../devtools/protocol";
+import type * as DevTools from "../protocol/DevToolsTreeNode";
 import { nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";

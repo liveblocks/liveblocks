@@ -1,4 +1,4 @@
-import type { DevTools } from "@liveblocks/core";
+import type { DevToolsMsg } from "@liveblocks/core";
 import browser from "webextension-polyfill";
 
 const DEV_PANEL = "liveblocks-devtools-panel";
@@ -6,7 +6,7 @@ const DEV_PANEL = "liveblocks-devtools-panel";
 const port = browser.runtime.connect({ name: DEV_PANEL });
 
 export const onMessageFromClient = port.onMessage as browser.Events.Event<
-  (message: DevTools.FullClientToPanelMessage) => void
+  (message: DevToolsMsg.FullClientToPanelMessage) => void
 >;
 
 /**
@@ -14,9 +14,9 @@ export const onMessageFromClient = port.onMessage as browser.Events.Event<
  * to. Will always send to the current inspected window.
  */
 export function sendMessageToClient(
-  message: DevTools.PanelToClientMessage
+  message: DevToolsMsg.PanelToClientMessage
 ): void {
-  const fullMessage: DevTools.FullPanelToClientMessage = {
+  const fullMessage: DevToolsMsg.FullPanelToClientMessage = {
     ...message,
     source: DEV_PANEL,
     tabId: browser.devtools.inspectedWindow.tabId,

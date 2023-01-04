@@ -1,4 +1,4 @@
-import type { ConnectionState, DevTools } from "@liveblocks/core";
+import type { ConnectionState, DevTools, DevToolsMsg } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -174,7 +174,7 @@ export function CurrentRoomProvider(props: Props) {
   useEffect(() => {
     // Listen for new handshakes/connections!
 
-    function onClientMessage(msg: DevTools.FullClientToPanelMessage) {
+    function onClientMessage(msg: DevToolsMsg.FullClientToPanelMessage) {
       switch (msg.msg) {
         // A new client just announced itself! Let's connect to it, by sending
         // it the connect message, so it knows it should start broadcasting
