@@ -771,7 +771,6 @@ type Config = {
   WebSocketPolyfill?: Polyfills["WebSocket"];
 };
 
-// XXX Give this API a better name/place!
 function userToTreeNode(
   key: number | string,
   user: User<JsonObject, BaseUserMeta>
@@ -957,8 +956,7 @@ function makeStateMachine<
   // For use in dev tools
   const selfAsTreeNode = new DerivedRef(
     self as ImmutableRef<User<TPresence, TUserMeta> | null>,
-    (me): DevTools.UserTreeNode | null =>
-      me !== null ? userToTreeNode("Me", me) : null
+    (me) => (me !== null ? userToTreeNode("Me", me) : null)
   );
 
   function createOrUpdateRootFromMessage(
