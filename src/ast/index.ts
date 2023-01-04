@@ -21,7 +21,9 @@ export function isLiteral(node: Node): node is Literal {
 
 export function isTypeExpr(node: Node): node is TypeExpr {
   return (
-    node._kind === "ObjectLiteralExpr" || node._kind === "TypeRef" || isLiteral(node)
+    node._kind === "ObjectLiteralExpr" ||
+    node._kind === "TypeRef" ||
+    isLiteral(node)
   );
 }
 

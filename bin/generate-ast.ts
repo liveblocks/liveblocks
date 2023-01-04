@@ -1,24 +1,10 @@
 import chalk from "chalk";
 import fs from "fs";
 import invariant from "invariant";
-import prettier, { Options as PrettierOptions } from "prettier";
+import prettier from "prettier";
 
 const INPUT_FILE = "src/ast/ast.grammar";
 const OUTPUT_FILE = "src/ast/index.ts";
-const PRETTIER_OPTIONS: PrettierOptions = {
-  parser: "typescript",
-  semi: true,
-  printWidth: 90,
-  tabWidth: 2,
-  singleQuote: false,
-  trailingComma: "es5",
-  useTabs: false,
-  jsxSingleQuote: false,
-  arrowParens: "always",
-  bracketSpacing: true,
-  bracketSameLine: false,
-  proseWrap: "always",
-};
 
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
 const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
@@ -346,7 +332,7 @@ function parseGrammarDefinition(): Grammar {
   };
 }
 
-function generateCode(grammar: Grammar): string {
+async function generateCode(grammar: Grammar): Promise<string> {
   // Will throw in case of errors
   validate(grammar);
 
@@ -541,7 +527,17 @@ function generateCode(grammar: Grammar): string {
       `
   );
 
-  return prettier.format(output.join("\n"), PRETTIER_OPTIONS);
+  const config = await prettier.resolveConfig(OUTPUT_FILE);
+  if (config === null) {
+    throw new Error(
+      "Could not find or read .prettierrc config for this project"
+    );
+  }
+
+  return prettier.format(output.join("\n"), {
+    ...config,
+    parser: "typescript",
+  });
 }
 
 function writeFile(contents: string, path: string) {
@@ -557,15 +553,13 @@ function writeFile(contents: string, path: string) {
   }
 }
 
-function main() {
+async function main() {
   const grammar = parseGrammarDefinition();
-  const code = generateCode(grammar);
+  const code = await generateCode(grammar);
   writeFile(code, OUTPUT_FILE);
 }
 
-try {
-  main();
-} catch (e: unknown) {
+main().catch((e) => {
   console.error(chalk.red(`Error: ${(e as Error).message}`));
   process.exit(2);
-}
+});
