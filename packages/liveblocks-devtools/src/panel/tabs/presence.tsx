@@ -54,7 +54,7 @@ export function Presence({ className, ...props }: ComponentProps<"div">) {
       className={cx(className, "absolute inset-0 flex h-full flex-col")}
       {...props}
     >
-      <Tree data={filteredTree} openByDefault={false} />
+      <Tree data={filteredTree} />
     </div>
   );
 }
