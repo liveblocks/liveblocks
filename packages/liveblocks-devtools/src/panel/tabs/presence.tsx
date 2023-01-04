@@ -2,9 +2,8 @@ import type {
   BaseUserMeta,
   Json,
   JsonObject,
-  PrimitiveTreeNode,
   User,
-  UserTreeNode,
+  DevTools,
 } from "@liveblocks/core";
 import cx from "classnames";
 import type { ComponentProps } from "react";
@@ -20,7 +19,9 @@ const defaultPresenceValues: Partial<
   info: null,
 };
 
-function filterPresenceTree(tree: readonly UserTreeNode[]): UserTreeNode[] {
+function filterPresenceTree(
+  tree: readonly DevTools.UserTreeNode[]
+): DevTools.UserTreeNode[] {
   return tree.map((user) => {
     const fields = user.fields.map((field) => {
       const isVisibleElsewhere =
@@ -36,7 +37,7 @@ function filterPresenceTree(tree: readonly UserTreeNode[]): UserTreeNode[] {
 
     return {
       ...user,
-      fields: fields.filter(Boolean) as PrimitiveTreeNode<
+      fields: fields.filter(Boolean) as DevTools.PrimitiveTreeNode<
         keyof User<JsonObject, BaseUserMeta>
       >[],
     };

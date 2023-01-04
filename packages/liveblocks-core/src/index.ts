@@ -25,12 +25,8 @@ export type {
 } from "./crdts/Lson";
 export type { StorageUpdate } from "./crdts/StorageUpdates";
 export type { ToImmutable } from "./crdts/ToImmutable";
-export type {
-  ClientToPanelMessage,
-  FullClientToPanelMessage,
-  FullPanelToClientMessage,
-  PanelToClientMessage,
-} from "./devtools/protocol";
+import type * as DevTools from "./devtools/protocol";
+export type { DevTools };
 export {
   legacy_patchImmutableObject,
   lsonToJson,
@@ -70,16 +66,6 @@ export type {
   UpdateStorageClientMsg,
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
-export type {
-  JsonTreeNode,
-  LiveListTreeNode,
-  LiveMapTreeNode,
-  LiveObjectTreeNode,
-  PrimitiveTreeNode,
-  StorageTreeNode,
-  TreeNode,
-  UserTreeNode,
-} from "./protocol/DevtoolsTreeNode";
 export type {
   CreateChildOp,
   CreateListOp,

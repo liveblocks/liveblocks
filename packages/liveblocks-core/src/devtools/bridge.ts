@@ -1,8 +1,5 @@
 import { makeEventSource } from "../lib/EventSource";
-import type {
-  ClientToPanelMessage,
-  FullPanelToClientMessage,
-} from "./protocol";
+import type * as DevTools from "./protocol";
 
 type SendToPanelOptions = {
   /**
@@ -19,7 +16,7 @@ export function activateBridge(allowed: boolean): void {
 }
 
 export function sendToPanel(
-  message: ClientToPanelMessage,
+  message: DevTools.ClientToPanelMessage,
   options?: SendToPanelOptions
 ): void {
   // Devtools communication only happens on the client side
@@ -56,7 +53,7 @@ export function sendToPanel(
   window.postMessage(fullMsg, "*");
 }
 
-const eventSource = makeEventSource<FullPanelToClientMessage>();
+const eventSource = makeEventSource<DevTools.FullPanelToClientMessage>();
 
 // Define it as a no-op in production environments or when run outside of a browser context
 if (process.env.NODE_ENV !== "production" && typeof window !== "undefined") {

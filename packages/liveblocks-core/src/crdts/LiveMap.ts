@@ -1,7 +1,7 @@
+import type * as DevTools from "../devtools/protocol";
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
-import type { LiveMapTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
@@ -451,7 +451,7 @@ export class LiveMap<
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): LiveMapTreeNode {
+  _toTreeNode(key: string | number): DevTools.LiveMapTreeNode {
     return {
       type: "LiveMap",
       id: this._id ?? nanoid(),

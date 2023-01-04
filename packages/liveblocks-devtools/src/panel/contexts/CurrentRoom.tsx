@@ -1,9 +1,4 @@
-import type {
-  ConnectionState,
-  FullClientToPanelMessage,
-  StorageTreeNode,
-  UserTreeNode,
-} from "@liveblocks/core";
+import type { ConnectionState, DevTools } from "@liveblocks/core";
 import type { ReactNode } from "react";
 import {
   createContext,
@@ -23,9 +18,9 @@ import { onMessageFromClient, sendMessageToClient } from "../port";
 type Room = {
   readonly roomId: string;
   status: ConnectionState | null;
-  storage: readonly StorageTreeNode[] | null;
-  me: UserTreeNode | null;
-  others: readonly UserTreeNode[];
+  storage: readonly DevTools.StorageTreeNode[] | null;
+  me: DevTools.UserTreeNode | null;
+  others: readonly DevTools.UserTreeNode[];
 };
 
 type EventHub = {
@@ -179,7 +174,7 @@ export function CurrentRoomProvider(props: Props) {
   useEffect(() => {
     // Listen for new handshakes/connections!
 
-    function onClientMessage(msg: FullClientToPanelMessage) {
+    function onClientMessage(msg: DevTools.FullClientToPanelMessage) {
       switch (msg.msg) {
         // A new client just announced itself! Let's connect to it, by sending
         // it the connect message, so it knows it should start broadcasting
@@ -324,7 +319,7 @@ export function useStatus(): ConnectionState | null {
   );
 }
 
-export function useMe(): UserTreeNode | null {
+export function useMe(): DevTools.UserTreeNode | null {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onMe") ?? nosub,
@@ -332,9 +327,9 @@ export function useMe(): UserTreeNode | null {
   );
 }
 
-const emptyOthers: readonly UserTreeNode[] = [];
+const emptyOthers: readonly DevTools.UserTreeNode[] = [];
 
-export function useOthers(): readonly UserTreeNode[] {
+export function useOthers(): readonly DevTools.UserTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onOthers") ?? nosub,
@@ -342,9 +337,9 @@ export function useOthers(): readonly UserTreeNode[] {
   );
 }
 
-const emptyStorage: readonly StorageTreeNode[] = [];
+const emptyStorage: readonly DevTools.StorageTreeNode[] = [];
 
-export function useStorage(): readonly StorageTreeNode[] {
+export function useStorage(): readonly DevTools.StorageTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,

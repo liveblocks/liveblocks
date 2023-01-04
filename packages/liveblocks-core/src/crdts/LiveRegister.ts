@@ -1,8 +1,8 @@
 import type { LiveNode } from "../crdts/Lson";
+import type * as DevTools from "../devtools/protocol";
 import { nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
-import type { StorageTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateRegisterOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
@@ -93,7 +93,7 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): StorageTreeNode {
+  _toTreeNode(key: string | number): DevTools.StorageTreeNode {
     return {
       type: "Json",
       id: this._id ?? nanoid(),

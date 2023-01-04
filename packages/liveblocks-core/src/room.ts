@@ -11,6 +11,7 @@ import {
 import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
+import type * as DevTools from "./devtools/protocol";
 import { assertNever, nn } from "./lib/assert";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
@@ -29,10 +30,6 @@ import {
 import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
-import type {
-  PrimitiveTreeNode,
-  UserTreeNode,
-} from "./protocol/DevtoolsTreeNode";
 import type { Op } from "./protocol/Op";
 import { OpCode } from "./protocol/Op";
 import type {
@@ -377,9 +374,6 @@ export type Room<
    */
   getSelf(): User<TPresence, TUserMeta> | null;
 
-  // XXX Don't use this name as the final API. Find a better/clearer name!
-  getSelfAsTreeNode(): UserTreeNode | null;
-
   /**
    * Gets the presence of the current user.
    *
@@ -395,9 +389,6 @@ export type Room<
    * const others = room.getOthers();
    */
   getOthers(): Others<TPresence, TUserMeta>;
-
-  // XXX Don't use this name as the final API. Find a better/clearer name!
-  getOthersAsTreeNode(): readonly UserTreeNode[];
 
   /**
    * Updates the presence of the current user. Only pass the properties you want to update. No need to send the full presence.
@@ -494,7 +485,7 @@ export type Room<
   /**
    * @internal Utilities only used for unit testing.
    */
-  __INTERNAL_DO_NOT_USE: {
+  readonly __INTERNAL_DO_NOT_USE: {
     simulateCloseWebsocket(): void;
     simulateSendCloseEvent(event: {
       code: number;
@@ -502,6 +493,12 @@ export type Room<
       reason: string;
     }): void;
   };
+
+  /** @internal - For dev tools support */
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+
+  /** @internal - For dev tools support */
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 export function isRoomEventName(value: string): value is RoomEventName {
@@ -528,7 +525,7 @@ type Machine<
   heartbeat(): void;
   onNavigatorOnline(): void;
 
-  // Internal dev tools
+  // Internal unit testing tools
   simulateSocketClose(): void;
   simulateSendCloseEvent(event: {
     code: number;
@@ -593,12 +590,14 @@ type Machine<
   isSelfAware(): boolean;
   getConnectionState(): ConnectionState;
   getSelf(): User<TPresence, TUserMeta> | null;
-  getSelfAsTreeNode(): UserTreeNode | null;
 
   // Presence
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
-  getOthersAsTreeNode(): readonly UserTreeNode[];
+
+  // Dev tools support
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -664,7 +663,9 @@ type State<
   readonly connection: ValueRef<Connection>;
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
-  readonly othersAsTreeNode: ImmutableRef<UserTreeNode[]>;
+
+  /** @internal */
+  readonly others_forDevTools: ImmutableRef<DevTools.UserTreeNode[]>;
 
   idFactory: IdFactory | null;
   numberOfRetry: number;
@@ -774,7 +775,7 @@ type Config = {
 function userToTreeNode(
   key: number | string,
   user: User<JsonObject, BaseUserMeta>
-): UserTreeNode {
+): DevTools.UserTreeNode {
   const fields = Object.entries(user).map(([key, value]) => {
     if (key === "presence" && value) {
       return {
@@ -787,14 +788,14 @@ function userToTreeNode(
           key: presenceKey,
           value: presenceValue ?? null,
         })),
-      } as PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
+      } as DevTools.PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
     } else {
       return {
         type: "Json",
         id: `${user.connectionId}:${key}`,
         key,
         value: value ?? null,
-      } as PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
+      } as DevTools.PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
     }
   });
 
@@ -953,9 +954,11 @@ function makeStateMachine<
         : null
   );
 
+  // For use in dev tools
   const selfAsTreeNode = new DerivedRef(
     self as ImmutableRef<User<TPresence, TUserMeta> | null>,
-    (me): UserTreeNode | null => (me !== null ? userToTreeNode("Me", me) : null)
+    (me): DevTools.UserTreeNode | null =>
+      me !== null ? userToTreeNode("Me", me) : null
   );
 
   function createOrUpdateRootFromMessage(
@@ -1978,10 +1981,6 @@ function makeStateMachine<
     return state.others.current;
   }
 
-  function getOthersAsTreeNode(): readonly UserTreeNode[] {
-    return state.othersAsTreeNode.current;
-  }
-
   function broadcastEvent(
     event: TRoomEvent,
     options: BroadcastOptions = {
@@ -2241,12 +2240,15 @@ function makeStateMachine<
     getConnectionState,
     isSelfAware: () => isConnectionSelfAware(state.connection.current),
     getSelf: () => self.current,
-    getSelfAsTreeNode: () => selfAsTreeNode.current,
 
     // Presence
     getPresence,
     getOthers,
-    getOthersAsTreeNode,
+
+    // Support for the Liveblocks browser extension
+    getSelf_forDevTools: () => selfAsTreeNode.current,
+    getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+      state.others_forDevTools.current,
   };
 }
 
@@ -2294,7 +2296,7 @@ function defaultState<
     connection,
     me: new MeRef(initialPresence),
     others,
-    othersAsTreeNode,
+    others_forDevTools: othersAsTreeNode,
 
     initialStorage,
     idFactory: null,
@@ -2361,7 +2363,6 @@ export function createRoom<
     getConnectionState: machine.getConnectionState,
     isSelfAware: machine.isSelfAware,
     getSelf: machine.getSelf,
-    getSelfAsTreeNode: machine.getSelfAsTreeNode,
 
     subscribe: machine.subscribe,
 
@@ -2371,7 +2372,6 @@ export function createRoom<
     getPresence: machine.getPresence,
     updatePresence: machine.updatePresence,
     getOthers: machine.getOthers,
-    getOthersAsTreeNode: machine.getOthersAsTreeNode,
     broadcastEvent: machine.broadcastEvent,
 
     //////////////
@@ -2395,6 +2395,9 @@ export function createRoom<
       simulateCloseWebsocket: machine.simulateSocketClose,
       simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
+
+    getSelf_forDevTools: machine.getSelf_forDevTools,
+    getOthers_forDevTools: machine.getOthers_forDevTools,
   };
 
   return {

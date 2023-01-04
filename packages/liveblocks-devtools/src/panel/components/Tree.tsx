@@ -1,12 +1,4 @@
-import type {
-  LiveListTreeNode,
-  LiveMapTreeNode,
-  LiveObjectTreeNode,
-  PrimitiveTreeNode,
-  StorageTreeNode,
-  TreeNode,
-  UserTreeNode,
-} from "@liveblocks/core";
+import type { DevTools } from "@liveblocks/core";
 import cx from "classnames";
 import type {
   ComponentProps,
@@ -30,6 +22,14 @@ import {
   wrapObject,
   wrapProperty,
 } from "../../lib/stringify";
+
+type LiveListTreeNode = DevTools.LiveListTreeNode;
+type LiveMapTreeNode = DevTools.LiveMapTreeNode;
+type LiveObjectTreeNode = DevTools.LiveObjectTreeNode;
+type PrimitiveTreeNode = DevTools.PrimitiveTreeNode;
+type StorageTreeNode = DevTools.StorageTreeNode;
+type TreeNode = DevTools.TreeNode;
+type UserTreeNode = DevTools.UserTreeNode;
 
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;

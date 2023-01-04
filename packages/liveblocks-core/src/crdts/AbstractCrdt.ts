@@ -1,5 +1,5 @@
+import type * as DevTools from "../devtools/protocol";
 import { assertNever } from "../lib/assert";
-import type { StorageTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
@@ -301,7 +301,7 @@ export abstract class AbstractCrdt {
    * This caches the result of the last .toTreeNode() call for this Live node.
    */
   private _cachedTreeNodeKey?: string | number;
-  private _cachedTreeNode?: StorageTreeNode;
+  private _cachedTreeNode?: DevTools.StorageTreeNode;
 
   /**
    * @internal
@@ -325,13 +325,14 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toTreeNode(key: string | number): StorageTreeNode;
+  abstract _toTreeNode(key: string | number): DevTools.StorageTreeNode;
 
   /**
-   * Return an snapshot of this Live node in "storage notation" of itself, and
-   * all its children.
+   * @internal
+   *
+   * Return an snapshot of this Live tree for use in DevTools.
    */
-  toTreeNode(key: string | number): StorageTreeNode {
+  toTreeNode(key: string | number): DevTools.StorageTreeNode {
     if (this._cachedTreeNode === undefined || this._cachedTreeNodeKey !== key) {
       this._cachedTreeNodeKey = key;
       this._cachedTreeNode = this._toTreeNode(key);

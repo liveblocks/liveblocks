@@ -1,4 +1,4 @@
-import type { StorageTreeNode, TreeNode, UserTreeNode } from "@liveblocks/core";
+import type { DevTools } from "@liveblocks/core";
 import cx from "classnames";
 import type { ComponentProps, MouseEvent } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -8,6 +8,10 @@ import { truncate } from "../../lib/truncate";
 import { EmptyState } from "../components/EmptyState";
 import { Breadcrumbs, Tree } from "../components/Tree";
 import { useStorage } from "../contexts/CurrentRoom";
+
+type StorageTreeNode = DevTools.StorageTreeNode;
+type TreeNode = DevTools.TreeNode;
+type UserTreeNode = DevTools.UserTreeNode;
 
 interface Props extends ComponentProps<"div"> {
   search?: string;

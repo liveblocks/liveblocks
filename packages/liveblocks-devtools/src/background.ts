@@ -1,7 +1,4 @@
-import type {
-  FullClientToPanelMessage,
-  FullPanelToClientMessage,
-} from "@liveblocks/core";
+import type { DevTools } from "@liveblocks/core";
 import type { Runtime } from "webextension-polyfill";
 import browser from "webextension-polyfill";
 
@@ -12,7 +9,7 @@ const portsByTabId: Map<number, Runtime.Port> = new Map();
  * running the client.
  */
 browser.runtime.onConnect.addListener((port) => {
-  function handleMessage(message: FullPanelToClientMessage) {
+  function handleMessage(message: DevTools.FullPanelToClientMessage) {
     //
     // NOTE: Special eaves dropping happening here when the panel sends their
     // "connect" message. While this message is intended to signify to the
@@ -47,7 +44,7 @@ browser.runtime.onConnect.addListener((port) => {
  * routes the message to the correct dev panel window.
  */
 browser.runtime.onMessage.addListener(
-  (message: FullClientToPanelMessage, sender) => {
+  (message: DevTools.FullClientToPanelMessage, sender) => {
     const tabId = sender.tab?.id;
     if (tabId) {
       portsByTabId.get(tabId)?.postMessage(message);

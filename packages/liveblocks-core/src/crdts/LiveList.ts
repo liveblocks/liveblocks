@@ -1,7 +1,7 @@
+import type * as DevTools from "../devtools/protocol";
 import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import { comparePosition, makePosition } from "../lib/position";
-import type { LiveListTreeNode } from "../protocol/DevtoolsTreeNode";
 import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
@@ -1269,7 +1269,7 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): LiveListTreeNode {
+  _toTreeNode(key: string | number): DevTools.LiveListTreeNode {
     return {
       type: "LiveList",
       id: this._id ?? nanoid(),

@@ -1,9 +1,9 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
+import type * as DevTools from "../devtools/protocol";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
 import { fromEntries } from "../lib/utils";
-import type { LiveObjectTreeNode } from "../protocol/DevtoolsTreeNode";
 import type {
   CreateChildOp,
   CreateObjectOp,
@@ -639,15 +639,16 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     return super.toImmutable() as ToImmutable<O>;
   }
 
-  toTreeNode(key: string | number): LiveObjectTreeNode {
-    // Don't implement actual toStorageNotation logic in here. Implement it in
-    // ._toStorageNotation() instead. This helper merely exists to help
-    // TypeScript infer better return types.
-    return super.toTreeNode(key) as LiveObjectTreeNode;
+  /** @internal */
+  toTreeNode(key: string | number): DevTools.LiveObjectTreeNode {
+    // Don't implement actual toTreeNode logic in here. Implement it in
+    // ._toTreeNode() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toTreeNode(key) as DevTools.LiveObjectTreeNode;
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): LiveObjectTreeNode {
+  _toTreeNode(key: string | number): DevTools.LiveObjectTreeNode {
     const nodeId = this._id ?? nanoid();
     return {
       type: "LiveObject",
