@@ -1,4 +1,3 @@
-import type * as DevTools from "../types/DevToolsTreeNode";
 import { nn } from "../lib/assert";
 import { nanoid } from "../lib/nanoid";
 import { comparePosition, makePosition } from "../lib/position";
@@ -6,6 +5,7 @@ import type { CreateChildOp, CreateListOp, CreateOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedList } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";

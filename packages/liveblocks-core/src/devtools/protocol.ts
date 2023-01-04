@@ -1,5 +1,5 @@
-import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ConnectionState } from "../room";
+import type * as DevTools from "../types/DevToolsTreeNode";
 
 /**
  * Definition of all messages the Panel can send to the Client.

@@ -1,5 +1,4 @@
 import type { LiveNode } from "../crdts/Lson";
-import type * as DevTools from "../types/DevToolsTreeNode";
 import { nn } from "../lib/assert";
 import type { Json } from "../lib/Json";
 import { nanoid } from "../lib/nanoid";
@@ -7,6 +6,7 @@ import type { CreateChildOp, CreateRegisterOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedRegister } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";

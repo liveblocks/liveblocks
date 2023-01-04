@@ -1,8 +1,8 @@
-import type * as DevTools from "../types/DevToolsTreeNode";
 import { assertNever } from "../lib/assert";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
 import type { LiveNode } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
