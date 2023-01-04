@@ -1,9 +1,9 @@
 import type {
   BaseUserMeta,
+  DevTools,
   Json,
   JsonObject,
   User,
-  DevTools,
 } from "@liveblocks/core";
 import cx from "classnames";
 import type { ComponentProps } from "react";
