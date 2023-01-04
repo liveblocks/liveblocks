@@ -449,9 +449,7 @@ console.log(session.user.info.randomNumber);
 
 #### Adding this to your Liveblocks app (optional)
 
-If you'd like your new property to be available inside your Liveblocks app (e.g.
-the React hooks used in whiteboard), you must modify `UserInfo` in
-[`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
+Liveblocks presence is a way of displaying online presence between users, helpful for live avatars, real-time cursors, etc., and it's possible to attach a properties to it for each user. To make a property accessible in presence (and within the React hooks used in whiteboard), you must modify `UserInfo` in [`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
 
 ```ts file="liveblocks.config.ts"
 export type UserInfo = Pick<User, "randomNumber" /* ... */>;
