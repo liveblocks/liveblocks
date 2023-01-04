@@ -5,7 +5,7 @@ import { AuthenticatedLayout } from "../../../layouts/Authenticated";
 import { DashboardLayout } from "../../../layouts/Dashboard";
 import { DocumentsLayout } from "../../../layouts/Documents";
 import * as Server from "../../../lib/server";
-import { DocumentGroup, Group } from "../../../types";
+import { Group } from "../../../types";
 
 export default function GroupPage({
   groups,
@@ -18,7 +18,7 @@ export default function GroupPage({
       <DashboardLayout groups={groups}>
         <DocumentsLayout
           filter="group"
-          groupId={router.query.groupId as DocumentGroup["id"]}
+          group={groups.find((group) => group.id === router.query.groupId)}
         />
       </DashboardLayout>
     </AuthenticatedLayout>
