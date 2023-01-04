@@ -1,6 +1,6 @@
 import type { Json, JsonObject } from "../lib/Json";
 import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { User } from "../types/User";
+import type { User } from "./User";
 
 // XXX Get rid of type params here - this is all dynamic/runtime data, so they should not be needed?
 export type JsonTreeNode<TKey = string | number, TValue = Json> = {
