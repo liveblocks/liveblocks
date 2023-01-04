@@ -457,7 +457,7 @@ the React hooks used in whiteboard), you must modify `UserInfo` in
 export type UserInfo = Pick<User, "randomNumber" /* ... */>;
 ```
 
-Then modify [`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts). First, we'll give an anonymous user
+In this example [Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates the UserInfo type based off of the User type and adds additional keys based on the properties you provide. After this, modify [`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts). First, we'll give an anonymous user
 a property:
 
 ```ts file="pages/api/liveblocks/auth.ts"
