@@ -5,7 +5,6 @@ import { DashboardLayout } from "../../layouts/Dashboard";
 import { DocumentsLayout } from "../../layouts/Documents";
 import * as Server from "../../lib/server";
 import { Group } from "../../types";
-import { authOptions } from "../api/auth/[...nextauth]";
 
 export default function Index({
   groups,
