@@ -5,7 +5,7 @@
  * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`
  */
 
-import invariant from "invariant";
+import invariant from "tiny-invariant";
 
 export function isComment(node: Node): node is Comment {
   return node._kind === "LineComment";

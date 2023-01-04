@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import fs from "fs";
-import invariant from "invariant";
+import invariant from "tiny-invariant";
 import prettier from "prettier";
 
 const INPUT_FILE = "src/ast/ast.grammar";
@@ -344,7 +344,7 @@ async function generateCode(grammar: Grammar): Promise<string> {
     " * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`",
     " */",
     "",
-    'import invariant from "invariant"',
+    'import invariant from "tiny-invariant"',
     "",
   ];
 
