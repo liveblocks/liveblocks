@@ -98,5 +98,8 @@ module.exports = {
         ["responsive"]
       );
     }),
+    plugin(({ addVariant }) => {
+      addVariant("tree-focus", ".tree:focus-within &");
+    }),
   ],
 };

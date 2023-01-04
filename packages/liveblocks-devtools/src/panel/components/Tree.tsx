@@ -87,20 +87,20 @@ function color(node: TreeNode): string {
 function background(node: TreeNode): string {
   switch (node.type) {
     case "LiveObject":
-      return "bg-orange-500 dark:bg-orange-400";
+      return "tree-focus:bg-orange-500 dark:tree-focus:bg-orange-400";
 
     case "LiveList":
-      return "bg-red-500 dark:bg-red-400";
+      return "tree-focus:bg-red-500 dark:tree-focus:bg-red-400";
 
     case "LiveMap":
-      return "bg-blue-500 dark:bg-blue-400";
+      return "tree-focus:bg-blue-500 dark:tree-focus:bg-blue-400";
 
     case "User":
-      return "bg-teal-500 dark:bg-teal-500";
+      return "tree-focus:bg-teal-500 dark:tree-focus:bg-teal-500";
 
     case "Json":
     case "Object":
-      return "bg-dark-800 dark:bg-dark-600";
+      return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
 
     default:
       return assertNever(node, "Unhandled node type in background()");
@@ -325,12 +325,14 @@ function Row({ node, children, className, ...props }: RowProps) {
         className,
         "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
         isSelected
-          ? [background(node.data), "!text-light-0"]
+          ? [
+              background(node.data),
+              "tree-focus:text-light-0 bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200",
+            ]
           : isWithinSelectedParent
-          ? "bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200"
+          ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
-      data-selected={isSelected || undefined}
       {...props}
     >
       {shouldShowUpdates && (
@@ -364,7 +366,12 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div className={isSelected ? "text-light-0" : color(node.data)}>
+      <div
+        className={cx(
+          color(node.data),
+          isSelected && "tree-focus:text-light-0"
+        )}
+      >
         {icon(node.data)}
       </div>
       <div
@@ -418,7 +425,7 @@ function Badge({ children, className, ...props }: ComponentProps<"span">) {
     <span
       className={cx(
         className,
-        "text-2xs [[data-selected]_&]:!text-light-0 relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
+        "text-2xs relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
       )}
       {...props}
     >
@@ -462,7 +469,13 @@ function LiveNodeRenderer({
     <Row node={node} style={style} onClick={handleClick}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
-        <Badge className={cx(color(node.data), "flex-none")}>
+        <Badge
+          className={cx(
+            "flex-none",
+            node.isSelected && "tree-focus:text-current",
+            color(node.data)
+          )}
+        >
           {node.data.type}
         </Badge>
       </RowInfo>
@@ -575,7 +588,7 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
 export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
   ({ className, style, ...props }, ref) => {
     return (
-      <AutoSizer className={className} style={style}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
         {({ width, height }) => (
           <ArboristTree
             ref={ref}
@@ -588,7 +601,6 @@ export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
             className="!overflow-x-hidden"
             selectionFollowsFocus
             rowHeight={ROW_HEIGHT}
-            onSelect={(node) => console.log(node)}
             indent={ROW_INDENT}
             {...props}
           >
