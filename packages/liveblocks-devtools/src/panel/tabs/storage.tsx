@@ -17,13 +17,19 @@ interface Props extends ComponentProps<"div"> {
 export function Storage({ search, onSearchClear, className, ...props }: Props) {
   const storage = useStorage();
   const tree = useRef<TreeApi<TreeNode>>(null);
-  const [focusedNode, setFocusedNode] = useState<NodeApi<TreeNode> | null>(
+  const [selectedNode, setSelectedNode] = useState<NodeApi<TreeNode> | null>(
     null
   );
   const [isEmptySearch, setEmptySearch] = useState(false);
 
-  const handleFocus = useCallback((node: NodeApi<TreeNode>) => {
-    setFocusedNode(node);
+  const handleSelect = useCallback((nodes: NodeApi<TreeNode>[]) => {
+    const [node] = nodes;
+
+    if (node) {
+      setSelectedNode(node);
+    } else {
+      setSelectedNode(null);
+    }
   }, []);
 
   const handleBreadcrumbClick = useCallback(
@@ -71,14 +77,14 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
         <Tree
           data={storage}
           ref={tree}
-          onFocus={handleFocus}
+          onSelect={handleSelect}
           searchTerm={search}
           searchMatch={searchMatch}
         />
-        {focusedNode ? (
+        {selectedNode ? (
           <Breadcrumbs
             className="flex-none"
-            node={focusedNode}
+            node={selectedNode}
             onNodeClick={handleBreadcrumbClick}
           />
         ) : null}

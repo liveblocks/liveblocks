@@ -266,13 +266,14 @@ function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   }
 }
 
-function hasFocusedParent<T>(node: NodeApi<T>): boolean {
-  let curr: NodeApi<T> | null = node.parent;
-  while (curr !== null) {
-    if (curr.isFocused) {
+function hasSelectedParent<T>(node: NodeApi<T>): boolean {
+  let current: NodeApi<T> | null = node.parent;
+
+  while (current !== null) {
+    if (current.isSelected) {
       return true;
     }
-    curr = curr.parent;
+    current = current.parent;
   }
   return false;
 }
@@ -314,8 +315,8 @@ function RowHighlight({ node, className, ...props }: RowHighlightProps) {
 function Row({ node, children, className, ...props }: RowProps) {
   const isOpen = node.isOpen;
   const isParent = node.isInternal;
-  const isActive = node.isFocused;
-  const isWithinActiveParent = !isActive && hasFocusedParent(node);
+  const isSelected = node.isSelected;
+  const isWithinSelectedParent = !isSelected && hasSelectedParent(node);
   const shouldShowUpdates = isParent ? !isOpen : true;
 
   return (
@@ -323,22 +324,22 @@ function Row({ node, children, className, ...props }: RowProps) {
       className={cx(
         className,
         "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
-        isActive
+        isSelected
           ? [background(node.data), "!text-light-0"]
-          : isWithinActiveParent
+          : isWithinSelectedParent
           ? "bg-light-100 dark:bg-dark-100 hover:bg-light-200 dark:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
-      data-active={isActive || undefined}
+      data-selected={isSelected || undefined}
       {...props}
     >
       {shouldShowUpdates && (
         <RowHighlight
           node={node}
           className={
-            isActive
+            isSelected
               ? "bg-white/20"
-              : isWithinActiveParent
+              : isWithinSelectedParent
               ? "bg-light-200 dark:bg-dark-200"
               : "bg-light-100 dark:bg-dark-100"
           }
@@ -363,7 +364,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           </svg>
         )}
       </div>
-      <div className={isActive ? "text-light-0" : color(node.data)}>
+      <div className={isSelected ? "text-light-0" : color(node.data)}>
         {icon(node.data)}
       </div>
       <div
@@ -417,7 +418,7 @@ function Badge({ children, className, ...props }: ComponentProps<"span">) {
     <span
       className={cx(
         className,
-        "text-2xs [[data-active]_&]:!text-light-0 relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
+        "text-2xs [[data-selected]_&]:!text-light-0 relative block whitespace-nowrap rounded-full px-2 py-1 font-medium before:absolute before:inset-0 before:rounded-[inherit] before:bg-current before:opacity-10 dark:before:opacity-[0.15]"
       )}
       {...props}
     >
@@ -583,9 +584,11 @@ export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
             childrenAccessor={childrenAccessor}
             disableDrag
             disableDrop
+            disableMultiSelection
             className="!overflow-x-hidden"
             selectionFollowsFocus
             rowHeight={ROW_HEIGHT}
+            onSelect={(node) => console.log(node)}
             indent={ROW_INDENT}
             {...props}
           >
@@ -621,6 +624,7 @@ export function Breadcrumbs({
   ...props
 }: BreadcrumbsProps) {
   const nodePath = getNodePath(node);
+
   return (
     <div
       className={cx(
