@@ -5,12 +5,13 @@ export const API_BASE_URL = "https://api.liveblocks.io";
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 // ============================================================================
-if (!SECRET_API_KEY) {
-  throw new Error(`No Liveblocks secret key
-  
-You must add your Liveblocks secret key to .env.local use the starter kit
-You can find your secret keys on https://liveblocks.io/dashboard 
+if (SECRET_API_KEY) {
+  throw new Error(`You must add your Liveblocks secret key to .env.local to use the starter kit 
 
+Example .env.local file:
+LIVEBLOCKS_SECRET_KEY=sk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+You can find your secret keys on https://liveblocks.io/dashboard 
 Follow the full starter kit guide on https://liveblocks.io/docs/guides/nextjs-starter-kit
  
 `);
