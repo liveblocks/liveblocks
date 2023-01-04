@@ -5,7 +5,7 @@ meta:
   description: "Create Multiplayer Documents with Authentication in Minutes"
 ---
 
-In this guide, you'll learn how to build a document-based product using standard
+In this guide, you’ll learn how to build a document-based product using standard
 collaborative patterns. This guide will help you to understand how to navigate,
 organize, and create new documents while managing user permissions and
 authentication.
@@ -131,7 +131,7 @@ npm run dev
 
 The Liveblocks starter kit uses [NextAuth.js](https://next-auth.js.org/) for
 authentication, meaning many authentication providers can be configured with
-minimal code changes. A demo authentication system is used by default, but it's
+minimal code changes. A demo authentication system is used by default, but it’s
 easy to add real providers, such as GitHub, Auth0, and more.
 
 Take a look at the guide for your chosen authentication method:
@@ -143,15 +143,15 @@ Take a look at the guide for your chosen authentication method:
 ### GitHub authentication [#github-authentication]
 
 To use GitHub auth, make sure you selected "GitHub authentication" when running
-the installer (or you've set up the
+the installer (or you’ve set up the
 [provider manually](#add-multiple-authentication-providers)). This is how to set
 up your GitHub secret key and client id.
 
 1. Go to [Developer Settings](https://github.com/settings/apps) on GitHub and
    click "New GitHub App".
-2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new
-   app for each environment, so it's helpful to place "dev" in the name.
-3. Add a homepage URL—this isn't important now, so a placeholder will do.
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
+   app for each environment, so it’s helpful to place "dev" in the name.
+3. Add a homepage URL—this isn’t important now, so a placeholder will do.
 4. Find the "Callback URL" input just below, and add your local development URL
    (e.g. `http://localhost:3000`).
 5. Look for the "Webhook" section and make sure to uncheck "Active".
@@ -184,18 +184,18 @@ GitHub authentication is now complete! Next,
 ### Auth0 authentication [#auth0-authentication]
 
 To use Auth0 auth, make sure you selected "Auth0 authentication" when running
-the installer (or you've set up the
+the installer (or you’ve set up the
 [provider manually](#add-multiple-authentication-providers)). This is how to set
 up your Auth0 secret key and client information.
 
 1. Go to your [Auth0 Dashboard](https://manage.auth0.com/dashboard) and click
    "Create Application".
-2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You'll need a new
-   app for each environment, so it's helpful to place "dev" in the name.
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
+   app for each environment, so it’s helpful to place "dev" in the name.
 3. Next, select "Single Page Web Applications", and press "Create".
 4. Copy your "Client ID" from the top of the page, and place it within
    `.env.local` as `AUTH0_CLIENT_ID`.
-5. Click the "Settings" tab— we'll be making a number of changes here.
+5. Click the "Settings" tab— we’ll be making a number of changes here.
 6. Find the "Client Secret" input field, and copy the value into `.env.local` as
    `AUTH0_CLIENT_SECRET`.
 7. Copy your "Domain" from the input field, add "https://" to the start, and
@@ -238,9 +238,9 @@ Read the [next section](#how-to-sign-up) to learn how to add a new user to your 
 
 ### How to sign up - add yourself as a user [#how-to-sign-up]
 
-We haven't set up a database, so we're temporarily using the [`/data`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data) folder
+We haven’t set up a database, so we’re temporarily using the [`/data`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data) folder
 instead. Before any user can sign in, they need to be added to [`/data/users.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data/users.ts).
-Navigate there and add your details, for example, if you're signing in with
+Navigate there and add your details, for example, if you’re signing in with
 `yourname@example.com`:
 
 ```ts file="data/users.ts"
@@ -292,7 +292,7 @@ console.log(data);
 
 ### Document functions
 
-Much of the starter kit's power is in the [`/lib/server/documents`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server/documents) directory. The
+Much of the starter kit’s power is in the [`/lib/server/documents`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server/documents) directory. The
 functions in these files allow you to edit your documents easily and return
 type-safe objects. For example in an API endpoint:
 
@@ -351,7 +351,7 @@ const { data, error } = useDocumentsFunctionSWR([
 ]);
 ```
 
-Here's a working example:
+Here’s a working example:
 
 ```tsx
 import { getDocumentUsers, useDocumentsFunctionSWR } from "../../lib/client";
@@ -388,7 +388,7 @@ export function ListUsers() {
 
 ### How to extend the `Document` type
 
-If you'd like to add a new property to `Document`, it's simple. First, edit the
+If you’d like to add a new property to `Document`, it’s simple. First, edit the
 `Document` type in [`/types/documents.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/types/document.ts):
 
 ```ts file="types/documents.ts"
@@ -449,13 +449,13 @@ console.log(session.user.info.randomNumber);
 
 #### Adding this to your Liveblocks app (optional)
 
-Liveblocks presence is a way of displaying online presence between users, helpful for live avatars, real-time cursors, etc., and it's possible to attach a properties to it for each user. To make a property accessible in presence (and within the React hooks used in whiteboard), you must modify `UserInfo` in [`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
+Liveblocks presence is a way of displaying online presence between users, helpful for live avatars, real-time cursors, etc., and it’s possible to attach a properties to it for each user. To make a property accessible in presence (and within the React hooks used in whiteboard), you must modify `UserInfo` in [`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
 
 ```ts file="liveblocks.config.ts"
 export type UserInfo = Pick<User, "randomNumber" /* ... */>;
 ```
 
-In this example [Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates the UserInfo type based off of the User type and adds additional keys based on the properties you provide. After this, modify [`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts). First, we'll give an anonymous user
+In this example [Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates the UserInfo type based off of the User type and adds additional keys based on the properties you provide. After this, modify [`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts). First, we’ll give an anonymous user
 a property:
 
 ```ts file="pages/api/liveblocks/auth.ts"
@@ -466,7 +466,7 @@ const anonymousUser: User = {
 };
 ```
 
-Next, we'll get the signed-in user's property:
+Next, we’ll get the signed-in user’s property:
 
 ```ts file="pages/api/liveblocks/auth.ts"
 // Get current user info from session (defined in /pages/api/auth/[...nextauth].ts)
@@ -487,19 +487,19 @@ const { data, error } = await authorize({
 });
 ```
 
-To make sure to check everything's hooked up correctly:
+To make sure to check everything’s hooked up correctly:
 
 ```
 npm run typecheck
 ```
 
-Once that's working, the new property can then be used in your app:
+Once that’s working, the new property can then be used in your app:
 
 ```tsx
 // My random number
 const myRandomNumber = useSelf((me) => me.info.randomNumber);
 
-// An array of everyone else's random numbers
+// An array of everyone else’s random numbers
 const everyonesRandomNumbers = useOthersMapped(
   (other) => other.info.randomNumber
 );
@@ -507,7 +507,7 @@ const everyonesRandomNumbers = useOthersMapped(
 
 ### Adding multiple authentication providers [#add-multiple-authentication-providers]
 
-It's possible to add multiple authentication providers to the starter kit using
+It’s possible to add multiple authentication providers to the starter kit using
 [NextAuth Providers](https://next-auth.js.org/providers/). Open
 [`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts) and place your providers in the object:
 
@@ -531,12 +531,12 @@ export const authOptions = {
 };
 ```
 
-It's not only possible with GitHub and Auth0, any
+It’s not only possible with GitHub and Auth0, any
 [NextAuth provider](https://next-auth.js.org/providers/) will work.
 
 ### Switching themes
 
-The starter kit comes with both a dark mode and light mode. By default, the user sees the theme that corresponds to their system setting, but it's easy to switch
+The starter kit comes with both a dark mode and light mode. By default, the user sees the theme that corresponds to their system setting, but it’s easy to switch
 your whole app to just dark or light mode by modifying [`styles/globals.css`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/styles/globals.css).
 
 To change the theme, you will alter the media query in `styles/globals.css`.  The two possible values you can pass are `@media (prefers-color-scheme: dark)` and `@media (prefers-color-scheme: light)`
