@@ -11,11 +11,11 @@ let _devtoolsSetupHasRun = false;
  * listens for the initial connect message, which would be the trigger to start
  * emitting updates.
  *
- * Must be called before linkDevtools() can be used.
+ * Must be called before linkDevTools() can be used.
  *
  * Will only run once, even when called multiple times.
  */
-export function setupDevtools(getAllRooms: () => string[]): void {
+export function setupDevTools(getAllRooms: () => string[]): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
@@ -182,7 +182,7 @@ function stopRoomChannelListener(roomId: string) {
 /**
  * Publicly announce to the devtool panel that a new room is available.
  */
-export function linkDevtools(
+export function linkDevTools(
   roomId: string,
   room: Room<JsonObject, LsonObject, BaseUserMeta, Json>
 ): void {
@@ -225,7 +225,7 @@ export function linkDevtools(
   );
 }
 
-export function unlinkDevtools(roomId: string): void {
+export function unlinkDevTools(roomId: string): void {
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;

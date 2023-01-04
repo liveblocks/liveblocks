@@ -1,5 +1,5 @@
 import type { LsonObject } from "./crdts/Lson";
-import { linkDevtools, setupDevtools, unlinkDevtools } from "./devtools";
+import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -208,8 +208,8 @@ export function createClient(options: ClientOptions): Client {
       >
     );
 
-    setupDevtools(() => Array.from(rooms.keys()));
-    linkDevtools(roomId, internalRoom.room);
+    setupDevTools(() => Array.from(rooms.keys()));
+    linkDevTools(roomId, internalRoom.room);
 
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
@@ -231,7 +231,7 @@ export function createClient(options: ClientOptions): Client {
 
   function leave(roomId: string) {
     // console.trace("leave");
-    unlinkDevtools(roomId);
+    unlinkDevTools(roomId);
 
     const room = rooms.get(roomId);
     if (room) {

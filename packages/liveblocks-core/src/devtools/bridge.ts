@@ -19,7 +19,7 @@ export function sendToPanel(
   message: DevTools.ClientToPanelMessage,
   options?: SendToPanelOptions
 ): void {
-  // Devtools communication only happens on the client side
+  // DevTools communication only happens on the client side
   // Define it as a no-op in production environments or when run outside of a browser context
   if (process.env.NODE_ENV === "production" || typeof window === "undefined") {
     return;
