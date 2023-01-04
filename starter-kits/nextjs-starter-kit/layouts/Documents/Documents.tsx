@@ -1,7 +1,7 @@
 import { ComponentProps, useMemo, useState } from "react";
 import {
   DocumentType,
-  DocumentGroup,
+  Group,
   GetDocumentsProps,
   GetDocumentsResponse,
 } from "../../types";
@@ -17,7 +17,6 @@ import { PlusIcon } from "../../icons";
 import { Button } from "../../primitives/Button";
 import { Select } from "../../primitives/Select";
 import { Spinner } from "../../primitives/Spinner";
-import { capitalize } from "../../utils";
 import styles from "./Documents.module.css";
 import { DocumentRowGroup } from "../../components/Documents/DocumentRowGroup";
 
@@ -26,17 +25,16 @@ const DOCUMENT_LOAD_LIMIT = 10;
 
 interface Props extends ComponentProps<"div"> {
   filter?: "all" | "drafts" | "group";
-  groupId?: DocumentGroup["id"];
+  group?: Group;
 }
 
 export function DocumentsLayout({
   filter = "all",
-  groupId,
+  group,
   className,
   ...props
 }: Props) {
   const { data: session } = useSession();
-
   const [documentType, setDocumentType] = useState<DocumentType | "all">("all");
 
   // Return `getDocuments` params for the current filters/group
@@ -59,10 +57,10 @@ export function DocumentsLayout({
     }
 
     // Get the current group's documents
-    if (filter === "group" && groupId) {
+    if (filter === "group" && group?.id) {
       return {
         documentType: currentDocumentType,
-        groupIds: [groupId],
+        groupIds: [group.id],
         limit: DOCUMENT_LOAD_LIMIT,
       };
     }
@@ -74,7 +72,7 @@ export function DocumentsLayout({
       groupIds: session.user.info.groupIds,
       limit: DOCUMENT_LOAD_LIMIT,
     };
-  }, [filter, groupId, session, documentType]);
+  }, [filter, group, session, documentType]);
 
   // When session is found, find pages of documents with the above document options
   const {
@@ -115,12 +113,12 @@ export function DocumentsLayout({
     <DocumentCreatePopover
       align="end"
       userId={session.user.info.id}
-      groupIds={groupId ? [groupId] : undefined}
+      groupIds={group?.id ? [group.id] : undefined}
       draft={filter === "drafts" || filter === "all"}
       sideOffset={12}
     >
       <Button icon={<PlusIcon />}>
-        {groupId ? "New document" : "New draft"}
+        {group?.id ? "New document" : "New draft"}
       </Button>
     </DocumentCreatePopover>
   );
@@ -132,7 +130,7 @@ export function DocumentsLayout({
       {...props}
     >
       <div className={styles.header}>
-        <h1 className={styles.headerTitle}>{capitalize(groupId ?? filter)}</h1>
+        <h1 className={styles.headerTitle}>{group?.name ?? filter}</h1>
         <div className={styles.headerActions}>
           <Select
             initialValue="all"
