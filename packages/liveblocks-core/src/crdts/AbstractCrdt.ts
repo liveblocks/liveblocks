@@ -1,4 +1,4 @@
-import type * as DevTools from "../protocol/DevToolsTreeNode";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import { assertNever } from "../lib/assert";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";

@@ -133,5 +133,5 @@ export type EnsureJson<T> =
 // Support for DevTools
 import type * as DevToolsMsg from "./devtools/protocol";
 export type { DevToolsMsg };
-import type * as DevTools from "./protocol/DevToolsTreeNode";
+import type * as DevTools from "./types/DevToolsTreeNode";
 export type { DevTools };

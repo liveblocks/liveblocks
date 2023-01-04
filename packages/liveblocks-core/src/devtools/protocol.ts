@@ -1,4 +1,4 @@
-import type * as DevTools from "../protocol/DevToolsTreeNode";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ConnectionState } from "../room";
 
 /**

@@ -1,4 +1,4 @@
-import type * as DevTools from "../protocol/DevToolsTreeNode";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
 import { nanoid } from "../lib/nanoid";
