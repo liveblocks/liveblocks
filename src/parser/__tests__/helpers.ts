@@ -59,40 +59,16 @@ export function parseDocument(src: string): Document {
   return stripRanges(parseGrammarRule(src, "Document") as Document);
 }
 
-function parseTypeExpr(src: string): TypeExpr {
-  return stripRanges(parseGrammarRule(src.trim(), "TypeExpr") as TypeExpr);
-}
-
 ///
 /// Custom expecters
 ///
 
-export function expectDocument(src: string, node: unknown) {
+export function expectDocument(src: string, expected: Node) {
   try {
-    return expect(parseDocument(src)).toEqual(node);
+    return expect(parseDocument(src)).toEqual(stripRanges(expected));
   } catch (error: unknown) {
     // Trick from https://kentcdodds.com/blog/improve-test-error-messages-of-your-abstractions
     Error.captureStackTrace(error as Error, expectDocument);
-    throw error;
-  }
-}
-
-export function expectTypeExpr(src: string, node: unknown) {
-  try {
-    return expect(parseTypeExpr(src)).toEqual(node);
-  } catch (error: unknown) {
-    // Trick from https://kentcdodds.com/blog/improve-test-error-messages-of-your-abstractions
-    Error.captureStackTrace(error as Error, expectTypeExpr);
-    throw error;
-  }
-}
-
-export function expectTypeExprEqual(src1: string, src2: string) {
-  try {
-    return expect(parseTypeExpr(src2)).toEqual(parseTypeExpr(src1));
-  } catch (error: unknown) {
-    // Trick from https://kentcdodds.com/blog/improve-test-error-messages-of-your-abstractions
-    Error.captureStackTrace(error as Error, expectTypeExprEqual);
     throw error;
   }
 }

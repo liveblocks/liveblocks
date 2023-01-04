@@ -28,7 +28,7 @@
 
 
 Document:
-    definitions  @Definition*
+    definitions  @Definition+
     comments     @Comment*?
 
 

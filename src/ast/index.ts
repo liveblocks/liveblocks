@@ -130,13 +130,15 @@ export type TypeRef = {
 };
 
 export function Document(
-  definitions: Definition[] = [],
+  definitions: Definition[],
   comments: Comment[] | null = null,
   range: Range = [0, 0]
 ): Document {
   invariant(
-    Array.isArray(definitions) && definitions.every((item) => isDefinition(item)),
-    `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition*\nGot:      ${JSON.stringify(
+    Array.isArray(definitions) &&
+      definitions.length > 0 &&
+      definitions.every((item) => isDefinition(item)),
+    `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition+\nGot:      ${JSON.stringify(
       definitions
     )}`
   );
