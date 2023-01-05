@@ -24,9 +24,14 @@ to learn how to use Liveblocks.
 
 ## Install Liveblocks into your project [#install-liveblocks]
 
-Create a new app with [`create-react-app`](https://create-react-app.dev/) and
-once the installation is complete, run the following command to install
-Liveblocks dependencies:
+Create a new app with [`create-react-app `](https://create-react-app.dev/) 
+
+```bash
+npx create-react-app my-react-app --template typescript
+```
+
+Once the installation is complete, run the following command to install
+Liveblocks and react/ redux dependencies:
 
 ```bash
 npm install @liveblocks/client @liveblocks/redux redux react-redux @reduxjs/toolkit
@@ -41,7 +46,7 @@ You’ll need an API key in order to use Liveblocks.
 Then, create a client with [`createClient`][] and set your public key as shown
 below.
 
-```jsx
+```ts file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -55,7 +60,7 @@ Use our `enhancer` in your store setup and pass the client created previously as
 the configuration. This will add a new state called `liveblocks` to your store,
 enabling you to interact with our Presence and Storage APIs.
 
-```jsx file="src/store.js"
+```ts file="src/store.ts"
 import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -92,7 +97,7 @@ export default store;
 
 Then setup your redux store at the top of your React tree.
 
-```jsx
+```tsx file="index.tsx"
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -121,7 +126,7 @@ and dispatch `leaveRoom` to stop the synchronization. With React `useEffect`,
 you can automatically enter and leave a Liveblocks room as your component is
 mounting and unmounting.
 
-```jsx file="src/App.js"
+```tsx file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { actions } from "@liveblocks/redux";
@@ -148,7 +153,7 @@ export default function App() {
 If you want to list all the people connected to the room, you can use
 `state.liveblocks.others` to get an array of the other users in the room.
 
-```jsx
+```tsx
 import { useSelector } from "react-redux";
 
 function App() {
@@ -167,7 +172,7 @@ For instance, to share the cursor’s position in real‑time with others, we’
 going to add a new `presenceMapping` option to our `enhancer` to specify which
 part of the state maps to the current user’s `presence`.
 
-```jsx file="src/store.js"
+```ts file="src/store.ts"
 /* ... imports and client setup ... */
 
 const initialState = {
@@ -206,7 +211,7 @@ export default store;
 Then you can dispatch an action like in any redux app and we will broadcast this
 cursor to everyone in the room.
 
-```jsx
+```tsx
 import { useDispatch } from "react-redux";
 import { setCursor } from "./store.js";
 
@@ -228,7 +233,7 @@ Get people’s cursor positions with
 `liveblocks.others.map(user => user.presence?.cursor)`. It’s worth noting that a
 user presence can be `undefined`.
 
-```jsx
+```tsx
 import { useSelector } from "react-redux";
 
 function OthersCursors() {
@@ -270,7 +275,7 @@ based on the `storageMapping` configuration.
 Here is an example to explain how it works under the hood. Imagine you have the
 following store:
 
-```js
+```ts
 /* ...client setup... */
 
 const initialState = {
@@ -314,7 +319,7 @@ const store = makeStore();
 
 With this setup, the room's `storage` root is :
 
-```js
+```ts
 const root = new LiveObject({
   firstName: "Marie",
   lastName: "Curie",
@@ -336,7 +341,7 @@ from our server and patches your store. If this is the first time you're
 entering a room, the storage will be empty. `enterRoom` takes an additional
 argument to initialize the room's storage.
 
-```js
+```ts
 enterRoom("room-id", {
   firstName: "Lise",
   lastName: "Meitner",
@@ -375,7 +380,7 @@ Access these two functions from the client like below so you can easily bind
 them to keyboard events (⌘+Z/⌘+⇧+Z on Mac and Ctrl+Z/Ctrl+Y on Windows) or undo
 and redo buttons in your application..
 
-```js
+```ts
 const { undo, redo } = client.getRoom("room-id").history;
 ```
 
@@ -400,7 +405,7 @@ calls would look like that:
 At this point, if the user calls `room.history.undo`, the rectangle will go back
 to its initial position.
 
-```js
+```ts
 const { pause, resume } = client.getRoom("room-id").history;
 ```
 

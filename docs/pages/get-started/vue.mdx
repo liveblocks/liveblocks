@@ -16,6 +16,12 @@ This guide assumes that you’re already familiar with
 
 ### Install the Liveblocks client package [#setup]
 
+Create a new vue app by running the following command and selecting Typescript as an option:
+
+```bash
+npx @vue/cli create liveblocks-app
+```
+
 Run the following command to install the Liveblocks client package:
 
 ```bash
@@ -36,9 +42,9 @@ would like to use, please let us know about it on this
 ### Connect to Liveblocks [#connect-to-liveblocks]
 
 To connect to Liveblocks, you need to create a Liveblocks client with
-[`createClient`][] inside one of your Vue component.
+[`createClient`][] inside one of your Vue components.
 
-```js
+```ts
 import { createClient } from "@liveblocks/client";
 
 // Create a Liveblocks client
@@ -49,7 +55,7 @@ const client = createClient({
 });
 ```
 
-Liveblocks should now be installed into your project!
+Liveblocks should now be installed in your project!
 
 ## Connect to a Liveblocks room [#connect-room]
 
@@ -61,7 +67,7 @@ instructions below.
 
 You can easily connect to a room by using [`client.enter`][] as shown below.
 
-```js
+```ts
 const room = client.enter("your-room-id", { initialPresence: {} });
 ```
 
