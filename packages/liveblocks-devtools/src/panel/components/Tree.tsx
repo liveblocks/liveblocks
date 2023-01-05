@@ -205,6 +205,14 @@ function toggleNode<T>(node: NodeApi<T>, options: { siblings: boolean }): void {
   }
 }
 
+function useToggleNode<T>(node: NodeApi<T>) {
+  return useCallback(
+    (event: MouseEvent<HTMLDivElement>) =>
+      toggleNode(node, { siblings: event.altKey }),
+    []
+  );
+}
+
 function hasSelectedParent<T>(node: NodeApi<T>): boolean {
   let current: NodeApi<T> | null = node.parent;
 
@@ -376,14 +384,9 @@ function UserNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.UserTreeNode>) {
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLDivElement>) =>
-      toggleNode(node, { siblings: event.altKey }),
-    []
-  );
-
+  const toggle = useToggleNode(node);
   return (
-    <Row node={node} style={style} onClick={handleClick}>
+    <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
@@ -400,14 +403,9 @@ function LiveNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.LsonTreeNode>) {
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLDivElement>) =>
-      toggleNode(node, { siblings: event.altKey }),
-    []
-  );
-
+  const toggle = useToggleNode(node);
   return (
-    <Row node={node} style={style} onClick={handleClick}>
+    <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
         <Badge
@@ -429,14 +427,9 @@ function JsonNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.JsonTreeNode>) {
-  const handleClick = useCallback(
-    (event: MouseEvent<HTMLDivElement>) =>
-      toggleNode(node, { siblings: event.altKey }),
-    []
-  );
-
+  const toggle = useToggleNode(node);
   return (
-    <Row node={node} style={style} onClick={handleClick}>
+    <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
       </RowInfo>
