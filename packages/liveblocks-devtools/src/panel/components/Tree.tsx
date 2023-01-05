@@ -30,6 +30,16 @@ import {
   UserIcon,
 } from "./Icons";
 
+/**
+ * Node types that can be used in the Storage tree view.
+ */
+type StorageTreeNode = DevTools.LsonTreeNode;
+
+/**
+ * Node types that can be used in the Presence tree view.
+ */
+type PresenceTreeNode = DevTools.UserTreeNode | DevTools.JsonTreeNode;
+
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
@@ -52,9 +62,10 @@ function makeJsonNode(
 
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
-type TreeProps<
-  TTreeNode extends DevTools.UserTreeNode | DevTools.LsonTreeNode
-> = Pick<ComponentProps<"div">, "className" | "style"> &
+type TreeProps<TTreeNode extends DevTools.TreeNode> = Pick<
+  ComponentProps<"div">,
+  "className" | "style"
+> &
   ArboristTreeProps<TTreeNode> &
   RefAttributes<TreeApi<TTreeNode> | undefined>;
 
@@ -67,8 +78,8 @@ interface RowHighlightProps extends ComponentProps<"div"> {
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
-  node: NodeApi<DevTools.LsonTreeNode>;
-  onNodeClick: (node: NodeApi<DevTools.LsonTreeNode> | null) => void;
+  node: NodeApi<StorageTreeNode>;
+  onNodeClick: (node: NodeApi<StorageTreeNode> | null) => void;
 }
 
 interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
@@ -423,21 +434,6 @@ function LiveNodeRenderer({
   );
 }
 
-function JsonNodeRenderer({
-  node,
-  style,
-}: NodeRendererProps<DevTools.JsonTreeNode>) {
-  const toggle = useToggleNode(node);
-  return (
-    <Row node={node} style={style} onClick={toggle}>
-      <RowInfo>
-        <RowName>{node.data.key}</RowName>
-      </RowInfo>
-      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
-    </Row>
-  );
-}
-
 function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
   switch (props.node.data.type) {
     case "LiveMap":
@@ -466,9 +462,22 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
   }
 }
 
-function PresenceNodeRenderer(
-  props: NodeRendererProps<DevTools.UserTreeNode | DevTools.JsonTreeNode>
-) {
+function JsonNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<DevTools.JsonTreeNode>) {
+  const toggle = useToggleNode(node);
+  return (
+    <Row node={node} style={style} onClick={toggle}>
+      <RowInfo>
+        <RowName>{node.data.key}</RowName>
+      </RowInfo>
+      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+    </Row>
+  );
+}
+
+function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
   switch (props.node.data.type) {
     case "User":
       return (
@@ -489,12 +498,9 @@ function PresenceNodeRenderer(
   }
 }
 
-function childrenAccessor(
-  node: DevTools.UserTreeNode | DevTools.JsonTreeNode
-): (DevTools.UserTreeNode | DevTools.JsonTreeNode)[] | null;
-function childrenAccessor(
-  node: DevTools.LsonTreeNode
-): DevTools.LsonTreeNode[] | null;
+// XXX Split this up? This might further contain the hack!
+function childrenAccessor(node: PresenceTreeNode): PresenceTreeNode[] | null;
+function childrenAccessor(node: StorageTreeNode): StorageTreeNode[] | null;
 function childrenAccessor(node: DevTools.TreeNode): DevTools.TreeNode[] | null {
   switch (node.type) {
     case "LiveList":
@@ -619,8 +625,8 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
 );
 
 export const StorageTree = forwardRef<
-  TreeApi<DevTools.LsonTreeNode>,
-  TreeProps<DevTools.LsonTreeNode>
+  TreeApi<StorageTreeNode>,
+  TreeProps<StorageTreeNode>
 >(({ className, style, ...props }, ref) => {
   return (
     <AutoSizer className={cx(className, "tree")} style={style}>
@@ -647,8 +653,8 @@ export const StorageTree = forwardRef<
 });
 
 export const PresenceTree = forwardRef<
-  TreeApi<DevTools.UserTreeNode | DevTools.JsonTreeNode>,
-  TreeProps<DevTools.UserTreeNode | DevTools.JsonTreeNode>
+  TreeApi<PresenceTreeNode>,
+  TreeProps<PresenceTreeNode>
 >(({ className, style, ...props }, ref) => {
   return (
     <AutoSizer className={cx(className, "tree")} style={style}>
