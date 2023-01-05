@@ -93,12 +93,12 @@ export class LiveRegister<TValue extends Json> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): DevTools.StorageTreeNode {
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
     return {
       type: "Json",
       id: this._id ?? nanoid(),
       key,
-      value: this._data,
+      payload: this._data,
     };
   }
 

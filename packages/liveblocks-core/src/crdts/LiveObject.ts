@@ -640,24 +640,29 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  toTreeNode(key: string | number): DevTools.LiveObjectTreeNode {
+  toTreeNode(
+    key: string
+  ): DevTools.Wrap<"LiveObject", DevTools.LsonTreeNode[]> {
     // Don't implement actual toTreeNode logic in here. Implement it in
     // ._toTreeNode() instead. This helper merely exists to help TypeScript
     // infer better return types.
-    return super.toTreeNode(key) as DevTools.LiveObjectTreeNode;
+    return super.toTreeNode(key) as DevTools.Wrap<
+      "LiveObject",
+      DevTools.LsonTreeNode[]
+    >;
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): DevTools.LiveObjectTreeNode {
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
     const nodeId = this._id ?? nanoid();
     return {
       type: "LiveObject",
       id: nodeId,
       key,
-      fields: Array.from(this._map.entries()).map(([key, value]) =>
+      payload: Array.from(this._map.entries()).map(([key, value]) =>
         isLiveNode(value)
           ? value.toTreeNode(key)
-          : { type: "Json", id: `${nodeId}:${key}`, key, value }
+          : { type: "Json", id: `${nodeId}:${key}`, key, payload: value }
       ),
     };
   }

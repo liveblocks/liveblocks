@@ -786,38 +786,14 @@ type Config = {
 };
 
 function userToTreeNode(
-  key: number | string,
+  key: string,
   user: User<JsonObject, BaseUserMeta>
 ): DevTools.UserTreeNode {
-  const fields = Object.entries(user).map(([key, value]) => {
-    if (key === "presence" && value) {
-      return {
-        type: "Object",
-        id: `${user.connectionId}:${key}`,
-        key,
-        fields: Object.entries(value).map(([presenceKey, presenceValue]) => ({
-          type: "Json",
-          id: `${user.connectionId}:${key}:${presenceKey}`,
-          key: presenceKey,
-          value: presenceValue ?? null,
-        })),
-      } as DevTools.PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
-    } else {
-      return {
-        type: "Json",
-        id: `${user.connectionId}:${key}`,
-        key,
-        value: value ?? null,
-      } as DevTools.PrimitiveTreeNode<keyof User<JsonObject, BaseUserMeta>>;
-    }
-  });
-
   return {
     type: "User",
     id: `${user.connectionId}`,
     key,
-    isReadOnly: user.isReadOnly,
-    fields: fields.sort(({ type }) => (type === "Object" ? -1 : 0)),
+    payload: user,
   };
 }
 

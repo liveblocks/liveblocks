@@ -1,65 +1,49 @@
 import type { Json, JsonObject } from "../lib/Json";
-import type { BaseUserMeta } from "../protocol/BaseUserMeta";
-import type { User } from "./User";
 
-// XXX Get rid of type params here - this is all dynamic/runtime data, so they should not be needed?
-export type JsonTreeNode<TKey = string | number, TValue = Json> = {
-  type: "Json";
-  id: string;
-  key: TKey;
-  value: TValue;
+/**
+ * Envelope-like wrapper around data that will get visualized in the DevTools.
+ */
+// XXX I don't like the name Wrap and want to reserve the name TreeNode for the
+// XXX the union of all tree node types (see below).
+// XXX What to do?
+export type Wrap<TName extends string, TPayload extends Json> = {
+  /** Used by the DevTools UI to determine how to visualize the payload. */
+  readonly type: TName;
+
+  /** Used by DevTools panel to track nodes */
+  readonly id: string;
+
+  /** Label that will show up for each row in DevTools */
+  readonly key: string;
+
+  /** Payload that's relevant for this type */
+  readonly payload: TPayload;
 };
 
-// XXX Get rid of this type?
-export type ObjectTreeNode<K = string | number> = {
-  type: "Object";
-  id: string;
-  key: K;
-  fields: PrimitiveTreeNode[];
-};
+export type LsonTreeNode =
+  | Wrap<`Live${string}`, LsonTreeNode[]> // Allows for future-compatibility of Live types
+  | Wrap<"Json", Json>;
 
-export type UserTreeNode<
-  TUser extends User<JsonObject, BaseUserMeta> = User<JsonObject, BaseUserMeta>
-> = {
-  type: "User";
-  id: string;
-  key: number | string;
-  isReadOnly: boolean;
+export type UserTreeNode = Wrap<
+  "User",
+  {
+    //
+    // NOTE:
+    // It may be tempting to DRY this up with the User type. But here, this
+    // type is used for the DevTools messaging protocol, which should not
+    // automatically change unintentionally. Adding, changing, or removing
+    // fields from the User type should be done deliberately, and potentially
+    // versioned.
+    //
+    // In other words, this type should remain to be a union of all historic
+    // User types.
+    //
+    readonly connectionId: number;
+    readonly id?: string;
+    readonly info?: Json;
+    readonly presence: JsonObject;
+    readonly isReadOnly: boolean;
+  }
+>;
 
-  // XXX Restore info and presence fields?
-  fields: PrimitiveTreeNode<keyof TUser>[];
-};
-
-export type LiveMapTreeNode = {
-  type: "LiveMap";
-  id: string;
-  key: number | string;
-  entries: StorageTreeNode[];
-};
-
-export type LiveListTreeNode = {
-  type: "LiveList";
-  id: string;
-  key: number | string;
-  items: StorageTreeNode[];
-};
-
-export type LiveObjectTreeNode = {
-  type: "LiveObject";
-  id: string;
-  key: number | string;
-  fields: StorageTreeNode[];
-};
-
-// XXX Get rid of this type?
-export type PrimitiveTreeNode<TKey = string | number> =
-  | ObjectTreeNode<TKey>
-  | JsonTreeNode<TKey>;
-
-export type StorageTreeNode =
-  | LiveMapTreeNode
-  | LiveListTreeNode
-  | LiveObjectTreeNode
-  | PrimitiveTreeNode;
-
-export type TreeNode = StorageTreeNode | UserTreeNode;
+export type TreeNode = LsonTreeNode | UserTreeNode;

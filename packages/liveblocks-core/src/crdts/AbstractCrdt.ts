@@ -301,7 +301,7 @@ export abstract class AbstractCrdt {
    * @internal
    * This caches the result of the last .toTreeNode() call for this Live node.
    */
-  private _cachedTreeNode?: DevTools.StorageTreeNode;
+  private _cachedTreeNode?: DevTools.LsonTreeNode;
 
   /**
    * @internal
@@ -325,14 +325,14 @@ export abstract class AbstractCrdt {
   }
 
   /** @internal */
-  abstract _toTreeNode(key: string | number): DevTools.StorageTreeNode;
+  abstract _toTreeNode(key: string): DevTools.LsonTreeNode;
 
   /**
    * @internal
    *
    * Return an snapshot of this Live tree for use in DevTools.
    */
-  toTreeNode(key: string | number): DevTools.StorageTreeNode {
+  toTreeNode(key: string): DevTools.LsonTreeNode {
     if (this._cachedTreeNode === undefined || this._cachedTreeNodeKey !== key) {
       this._cachedTreeNodeKey = key;
       this._cachedTreeNode = this._toTreeNode(key);

@@ -451,12 +451,12 @@ export class LiveMap<
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): DevTools.LiveMapTreeNode {
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
     return {
       type: "LiveMap",
       id: this._id ?? nanoid(),
       key,
-      entries: Array.from(this._map.entries()).map(([key, val]) =>
+      payload: Array.from(this._map.entries()).map(([key, val]) =>
         val.toTreeNode(key)
       ),
     };

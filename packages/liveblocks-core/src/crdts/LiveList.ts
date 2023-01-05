@@ -1275,12 +1275,14 @@ export class LiveList<TItem extends Lson> extends AbstractCrdt {
   }
 
   /** @internal */
-  _toTreeNode(key: string | number): DevTools.LiveListTreeNode {
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
     return {
       type: "LiveList",
       id: this._id ?? nanoid(),
       key,
-      items: this._items.map((item, index) => item.toTreeNode(index)),
+      payload: this._items.map((item, index) =>
+        item.toTreeNode(index.toString())
+      ),
     };
   }
 

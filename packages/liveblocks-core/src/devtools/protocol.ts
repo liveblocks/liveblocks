@@ -75,7 +75,7 @@ export type ClientToPanelMessage =
       msg: "room::sync::full";
       roomId: string;
       status: ConnectionState;
-      storage: readonly DevTools.StorageTreeNode[] | null;
+      storage: readonly DevTools.LsonTreeNode[] | null;
       me: DevTools.UserTreeNode | null;
       others: readonly DevTools.UserTreeNode[];
     }
@@ -87,7 +87,7 @@ export type ClientToPanelMessage =
       msg: "room::sync::partial";
       roomId: string;
       status?: ConnectionState;
-      storage?: readonly DevTools.StorageTreeNode[];
+      storage?: readonly DevTools.LsonTreeNode[];
       me?: DevTools.UserTreeNode;
       others?: readonly DevTools.UserTreeNode[];
     };
