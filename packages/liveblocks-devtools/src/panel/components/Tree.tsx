@@ -29,6 +29,7 @@ import {
   QuestionIcon,
   UserIcon,
 } from "./Icons";
+import { assertNever } from "../../lib/assert";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -498,16 +499,10 @@ function PresenceNodeRenderer(props: NodeRendererProps<PresenceTreeNode>) {
   }
 }
 
-// XXX Split this up? This might further contain the hack!
-function childrenAccessor(node: PresenceTreeNode): PresenceTreeNode[] | null;
-function childrenAccessor(node: StorageTreeNode): StorageTreeNode[] | null;
-function childrenAccessor(node: DevTools.TreeNode): DevTools.TreeNode[] | null {
+function presenceChildAccessor(
+  node: PresenceTreeNode
+): PresenceTreeNode[] | null {
   switch (node.type) {
-    case "LiveList":
-    case "LiveMap":
-    case "LiveObject":
-      return node.payload;
-
     case "User": {
       //
       // This harcodes which keys are displayed as top-level properties of User
@@ -588,6 +583,21 @@ function childrenAccessor(node: DevTools.TreeNode): DevTools.TreeNode[] | null {
       return null;
 
     default:
+      return assertNever(node, "Unexpected node type");
+  }
+}
+
+function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
+  switch (node.type) {
+    case "LiveList":
+    case "LiveMap":
+    case "LiveObject":
+      return node.payload;
+
+    case "Json":
+      return null;
+
+    default:
       // e.g. future LiveXxx types
       return null;
   }
@@ -635,7 +645,7 @@ export const StorageTree = forwardRef<
           ref={ref}
           width={width}
           height={height}
-          childrenAccessor={childrenAccessor}
+          childrenAccessor={storageChildAccessor}
           disableDrag
           disableDrop
           disableMultiSelection
@@ -663,7 +673,7 @@ export const PresenceTree = forwardRef<
           ref={ref}
           width={width}
           height={height}
-          childrenAccessor={childrenAccessor}
+          childrenAccessor={presenceChildAccessor}
           disableDrag
           disableDrop
           disableMultiSelection
