@@ -18,7 +18,7 @@ import { onMessageFromClient, sendMessageToClient } from "../port";
 type Room = {
   readonly roomId: string;
   status: ConnectionState | null;
-  storage: readonly DevTools.StorageTreeNode[] | null;
+  storage: readonly DevTools.LsonTreeNode[] | null;
   me: DevTools.UserTreeNode | null;
   others: readonly DevTools.UserTreeNode[];
 };
@@ -337,9 +337,9 @@ export function useOthers(): readonly DevTools.UserTreeNode[] {
   );
 }
 
-const emptyStorage: readonly DevTools.StorageTreeNode[] = [];
+const emptyStorage: readonly DevTools.LsonTreeNode[] = [];
 
-export function useStorage(): readonly DevTools.StorageTreeNode[] {
+export function useStorage(): readonly DevTools.LsonTreeNode[] {
   const currentRoomId = useCurrentRoomId();
   return useSyncExternalStore(
     getSubscribe(currentRoomId, "onStorage") ?? nosub,

@@ -20,9 +20,11 @@ export type Wrap<TName extends string, TPayload extends Json> = {
   readonly payload: TPayload;
 };
 
+export type JsonTreeNode = Wrap<"Json", Json>;
+
 export type LsonTreeNode =
   | Wrap<`Live${string}`, LsonTreeNode[]> // Allows for future-compatibility of Live types
-  | Wrap<"Json", Json>;
+  | JsonTreeNode;
 
 export type UserTreeNode = Wrap<
   "User",

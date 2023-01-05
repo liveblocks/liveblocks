@@ -6,12 +6,8 @@ import type { NodeApi, TreeApi } from "react-arborist";
 
 import { truncate } from "../../lib/truncate";
 import { EmptyState } from "../components/EmptyState";
-import { Breadcrumbs, Tree } from "../components/Tree";
+import { Breadcrumbs, StorageTree } from "../components/Tree";
 import { useStorage } from "../contexts/CurrentRoom";
-
-type StorageTreeNode = DevTools.StorageTreeNode;
-type TreeNode = DevTools.TreeNode;
-type UserTreeNode = DevTools.UserTreeNode;
 
 interface Props extends ComponentProps<"div"> {
   search?: string;
@@ -20,32 +16,34 @@ interface Props extends ComponentProps<"div"> {
 
 export function Storage({ search, onSearchClear, className, ...props }: Props) {
   const storage = useStorage();
-  const tree = useRef<TreeApi<TreeNode>>(null);
-  const [selectedNode, setSelectedNode] = useState<NodeApi<TreeNode> | null>(
-    null
-  );
+  const tree = useRef<TreeApi<DevTools.LsonTreeNode>>(null);
+  const [selectedNode, setSelectedNode] =
+    useState<NodeApi<DevTools.LsonTreeNode> | null>(null);
   const [isEmptySearch, setEmptySearch] = useState(false);
 
-  const handleSelect = useCallback((nodes: NodeApi<TreeNode>[]) => {
-    const [node] = nodes;
+  const handleSelect = useCallback(
+    (nodes: NodeApi<DevTools.LsonTreeNode>[]) => {
+      const [node] = nodes;
 
-    if (node) {
-      setSelectedNode(node);
-    } else {
-      setSelectedNode(null);
-    }
-  }, []);
+      if (node) {
+        setSelectedNode(node);
+      } else {
+        setSelectedNode(null);
+      }
+    },
+    []
+  );
 
   const handleBreadcrumbClick = useCallback(
-    (node: NodeApi<TreeNode> | null) => {
+    (node: NodeApi<DevTools.LsonTreeNode> | null) => {
       tree.current?.focus(node, { scroll: true });
     },
     []
   );
 
   const searchMatch = useCallback(
-    (node: NodeApi<StorageTreeNode | UserTreeNode>, search: string) =>
-      String(node.data.key).toLowerCase().includes(search.toLowerCase()),
+    (node: NodeApi<DevTools.LsonTreeNode>, search: string) =>
+      node.data.key.toLowerCase().includes(search.toLowerCase()),
     []
   );
 
@@ -78,7 +76,7 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
           isEmptySearch && "hidden"
         )}
       >
-        <Tree
+        <StorageTree
           data={storage}
           ref={tree}
           onSelect={handleSelect}

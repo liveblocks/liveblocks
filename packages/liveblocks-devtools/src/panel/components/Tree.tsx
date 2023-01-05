@@ -1,4 +1,4 @@
-import type { DevTools } from "@liveblocks/core";
+import type { DevTools, Json } from "@liveblocks/core";
 import cx from "classnames";
 import type {
   ComponentProps,
@@ -8,13 +8,12 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, Fragment, useCallback, useMemo, useRef } from "react";
+import { forwardRef, Fragment, useCallback, useRef } from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 
 import { useDeepEffect } from "../../hooks/useDeepEffect";
-import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import {
   ELLIPSIS,
@@ -23,14 +22,6 @@ import {
   wrapProperty,
 } from "../../lib/stringify";
 
-type LiveListTreeNode = DevTools.LiveListTreeNode;
-type LiveMapTreeNode = DevTools.LiveMapTreeNode;
-type LiveObjectTreeNode = DevTools.LiveObjectTreeNode;
-type PrimitiveTreeNode = DevTools.PrimitiveTreeNode;
-type StorageTreeNode = DevTools.StorageTreeNode;
-type TreeNode = DevTools.TreeNode;
-type UserTreeNode = DevTools.UserTreeNode;
-
 const HIGHLIGHT_ANIMATION_DURATION = 600;
 const HIGHLIGHT_ANIMATION_DELAY = 100;
 const ROW_HEIGHT = 28;
@@ -38,11 +29,28 @@ const ROW_INDENT = 18;
 
 const USE_GRID_LAYOUT = false;
 
+const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
+
+function makeJsonNode(
+  parentId: string,
+  key: string,
+  payload: Json
+): DevTools.JsonTreeNode {
+  return {
+    type: "Json",
+    id: `${parentId}:${key}`,
+    key,
+    payload,
+  };
+}
+
 type ArboristTreeProps<T> = TreeApi<T>["props"];
 
-type TreeProps = Pick<ComponentProps<"div">, "className" | "style"> &
-  ArboristTreeProps<TreeNode> &
-  RefAttributes<TreeApi<TreeNode> | undefined>;
+type TreeProps<
+  TTreeNode extends DevTools.UserTreeNode | DevTools.LsonTreeNode
+> = Pick<ComponentProps<"div">, "className" | "style"> &
+  ArboristTreeProps<TTreeNode> &
+  RefAttributes<TreeApi<TTreeNode> | undefined>;
 
 interface RowProps extends ComponentProps<"div"> {
   node: NodeApi;
@@ -53,15 +61,15 @@ interface RowHighlightProps extends ComponentProps<"div"> {
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
-  node: NodeApi<TreeNode>;
-  onNodeClick: (node: NodeApi<TreeNode> | null) => void;
+  node: NodeApi<DevTools.LsonTreeNode>;
+  onNodeClick: (node: NodeApi<DevTools.LsonTreeNode> | null) => void;
 }
 
 interface AutoSizerProps extends Omit<ComponentProps<"div">, "children"> {
   children: (dimensions: { width: number; height: number }) => ReactElement;
 }
 
-function color(node: TreeNode): string {
+function color(node: DevTools.TreeNode): string {
   switch (node.type) {
     case "LiveObject":
       return "text-orange-500 dark:text-orange-400";
@@ -76,15 +84,15 @@ function color(node: TreeNode): string {
       return "text-teal-500 dark:text-teal-500";
 
     case "Json":
-    case "Object":
       return "text-light-500 dark:text-dark-500";
 
     default:
-      return assertNever(node, "Unhandled node type in color()");
+      // e.g. future LiveXxx types
+      return "text-light-500 dark:text-dark-500";
   }
 }
 
-function background(node: TreeNode): string {
+function background(node: DevTools.TreeNode): string {
   switch (node.type) {
     case "LiveObject":
       return "tree-focus:bg-orange-500 dark:tree-focus:bg-orange-400";
@@ -99,17 +107,16 @@ function background(node: TreeNode): string {
       return "tree-focus:bg-teal-500 dark:tree-focus:bg-teal-500";
 
     case "Json":
-    case "Object":
       return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
 
     default:
-      return assertNever(node, "Unhandled node type in background()");
+      // e.g. future LiveXxx types
+      return "tree-focus:bg-dark-800 dark:tree-focus:bg-dark-600";
   }
 }
 
-function icon(node: TreeNode): ReactNode {
+function icon(node: DevTools.TreeNode): ReactNode {
   switch (node.type) {
-    case "Object":
     case "LiveObject":
       return (
         <svg
@@ -196,24 +203,39 @@ function icon(node: TreeNode): ReactNode {
       );
 
     default:
-      return assertNever(node, "Unhandled node type in icon()");
+      // e.g. future LiveXxx types
+      // XXX Replace the SVG below with a "?" icon?
+      return (
+        <svg
+          width="16"
+          height="16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm1 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM9 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2.5 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+            fill="currentColor"
+          />
+        </svg>
+      );
   }
 }
 
 /**
  * Function that helps construct a "preview" string for a collapsed node.
  */
-function summarize(node: TreeNode): string {
+function summarize(node: DevTools.TreeNode): string {
   switch (node.type) {
-    case "Object":
     case "LiveObject":
       return wrapObject(
-        node.fields
-          .map((node: StorageTreeNode) =>
+        node.payload
+          .map((node) =>
             wrapProperty(
               node.key,
               node.type === "Json"
-                ? stringify(node.value)
+                ? stringify(node.payload)
                 : wrapObject(ELLIPSIS)
             )
           )
@@ -221,32 +243,28 @@ function summarize(node: TreeNode): string {
       );
 
     case "LiveList":
-      return `${node.items.length} item${node.items.length > 1 ? "s" : ""}`;
+      return `${node.payload.length} item${
+        node.payload.length !== 1 ? "s" : ""
+      }`;
 
     case "LiveMap":
-      return `${node.entries.length} ${
-        node.entries.length > 1 ? "entries" : "entry"
+      return `${node.payload.length} ${
+        node.payload.length !== 1 ? "entries" : "entry"
       }`;
 
     case "User":
       return wrapObject(
-        node.fields
-          .map((node) =>
-            wrapProperty(
-              node.key,
-              node.type === "Json"
-                ? stringify(node.value)
-                : wrapObject(ELLIPSIS)
-            )
-          )
+        Object.entries(node.payload)
+          .map(([key, value]) => wrapProperty(key, stringify(value)))
           .join(", ")
       );
 
     case "Json":
-      return stringify(node.value);
+      return stringify(node.payload);
 
     default:
-      return assertNever(node, "Unhandled node type in summarize()");
+      // e.g. future LiveXxx types
+      return "";
   }
 }
 
@@ -433,7 +451,10 @@ function Badge({ children, className, ...props }: ComponentProps<"span">) {
   );
 }
 
-function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
+function UserNodeRenderer({
+  node,
+  style,
+}: NodeRendererProps<DevTools.UserTreeNode>) {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
       toggleNode(node, { siblings: event.altKey }),
@@ -445,7 +466,7 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
       <RowInfo>
         <RowName>{node.data.key}</RowName>
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
-        {node.data.isReadOnly && (
+        {node.data.payload.isReadOnly && (
           <Badge className="flex-none opacity-60">Read-only</Badge>
         )}
       </RowInfo>
@@ -457,7 +478,7 @@ function UserNodeRenderer({ node, style }: NodeRendererProps<UserTreeNode>) {
 function LiveNodeRenderer({
   node,
   style,
-}: NodeRendererProps<LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode>) {
+}: NodeRendererProps<DevTools.LsonTreeNode>) {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
       toggleNode(node, { siblings: event.altKey }),
@@ -483,12 +504,10 @@ function LiveNodeRenderer({
   );
 }
 
-function PrimitiveNodeRenderer({
+function JsonNodeRenderer({
   node,
   style,
-}: NodeRendererProps<PrimitiveTreeNode>) {
-  const isParent = useMemo(() => node.isInternal, []);
-
+}: NodeRendererProps<DevTools.JsonTreeNode>) {
   const handleClick = useCallback(
     (event: MouseEvent<HTMLDivElement>) =>
       toggleNode(node, { siblings: event.altKey }),
@@ -496,7 +515,7 @@ function PrimitiveNodeRenderer({
   );
 
   return (
-    <Row node={node} style={style} onClick={isParent ? handleClick : undefined}>
+    <Row node={node} style={style} onClick={handleClick}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
       </RowInfo>
@@ -505,51 +524,152 @@ function PrimitiveNodeRenderer({
   );
 }
 
-function TreeNodeRenderer(props: NodeRendererProps<TreeNode>) {
+function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
   switch (props.node.data.type) {
     case "LiveMap":
     case "LiveList":
     case "LiveObject":
       return (
         <LiveNodeRenderer
-          {...(props as NodeRendererProps<
-            LiveListTreeNode | LiveMapTreeNode | LiveObjectTreeNode
-          >)}
+          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
         />
       );
 
-    case "User":
+    case "Json":
       return (
-        <UserNodeRenderer {...(props as NodeRendererProps<UserTreeNode>)} />
+        <JsonNodeRenderer
+          {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
+        />
       );
 
     default:
+      // e.g. future LiveXxx types
       return (
-        <PrimitiveNodeRenderer
-          {...(props as NodeRendererProps<PrimitiveTreeNode>)}
+        <LiveNodeRenderer
+          {...(props as NodeRendererProps<DevTools.LsonTreeNode>)}
         />
       );
   }
 }
 
-function childrenAccessor(node: TreeNode): TreeNode[] | null {
-  switch (node.type) {
-    case "LiveList":
-      return node.items;
-
-    case "LiveMap":
-      return node.entries;
-
+function PresenceNodeRenderer(
+  props: NodeRendererProps<DevTools.UserTreeNode | DevTools.JsonTreeNode>
+) {
+  switch (props.node.data.type) {
     case "User":
-    case "Object":
-    case "LiveObject":
-      return node.fields;
+      return (
+        <UserNodeRenderer
+          {...(props as NodeRendererProps<DevTools.UserTreeNode>)}
+        />
+      );
 
     case "Json":
+      return (
+        <JsonNodeRenderer
+          {...(props as NodeRendererProps<DevTools.JsonTreeNode>)}
+        />
+      );
+
+    default:
+      return null;
+  }
+}
+
+function childrenAccessor(
+  node: DevTools.UserTreeNode | DevTools.JsonTreeNode
+): (DevTools.UserTreeNode | DevTools.JsonTreeNode)[] | null;
+function childrenAccessor(
+  node: DevTools.LsonTreeNode
+): DevTools.LsonTreeNode[] | null;
+function childrenAccessor(node: DevTools.TreeNode): DevTools.TreeNode[] | null {
+  switch (node.type) {
+    case "LiveList":
+    case "LiveMap":
+    case "LiveObject":
+      return node.payload;
+
+    case "User": {
+      //
+      // This harcodes which keys are displayed as top-level properties of User
+      // nodes, most notably "presence" and "info". The special thing about
+      // these properties is that we'll want to expand these "one level deep",
+      // unlike other Json values we render elsewhere.
+      //
+      // This is currently implemented by pulling a hack, and we'll likely want
+      // to implement this more robustly in a later version.
+      //
+      // The hack consists of three parts:
+      // 1. When this accessor is called by Arborist to ask for the children of
+      //    this node, we create some Json nodes on the fly, derived from
+      //    actual User data.
+      // 2. We "tag" these nodes as special by adding a special prefix to their
+      //    internal node ID. (We cannot easily add a custom field, because the
+      //    types are "owned" by our client package, and that package should
+      //    not have any knowledge about UI details.)
+      // 3. In the "Json" case below, we'll do the same: we dynamically
+      //    generate child nodes for the subfields of "presence" and "info",
+      //    effectively making those Json nodes expandable, but we immediately
+      //    remove the special tag there, so that those subnodes themselves are
+      //    "normal" unexpandable Json nodes again.
+      //
+      // NOTE: While this is currently a hack, we may decide to make this the
+      // default behavior and always allow Json nodes to be expanded in the UI.
+      // This is more of a product decision, though. But removing this hack
+      // would make all Json nodes automatically expandable, which may be
+      // a nice feature.
+      //
+      const USER_FIELDS = ["id", "info", "presence"] as const;
+
+      return USER_FIELDS.flatMap((key) => {
+        const payload = node.payload[key];
+        return payload === undefined
+          ? []
+          : [makeJsonNode(`${SPECIAL_HACK_PREFIX}${node.id}`, key, payload)];
+        //                   ^^^^^^^^^^^^^^^^^^^
+        //                   Special tag that triggers special behavior (see
+        //                   below in the "Json" case)
+      });
+    }
+
+    case "Json":
+      if (node.id.startsWith(SPECIAL_HACK_PREFIX)) {
+        if (Array.isArray(node.payload)) {
+          return node.payload.map((item, index) =>
+            makeJsonNode(
+              `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+              //                   ^^^^^^^^^^^^^^^^^^^
+              //                   Undo the "special behavior" for the subnodes,
+              //                   making them "normal Json" nodes that aren't
+              //                   expandable
+              index.toString(),
+              item
+            )
+          );
+        } else if (node.payload !== null && typeof node.payload === "object") {
+          return Object.entries(node.payload).flatMap(([key, value]) =>
+            value === undefined
+              ? []
+              : [
+                  makeJsonNode(
+                    `${node.id.substring(SPECIAL_HACK_PREFIX.length)}`,
+                    //                   ^^^^^^^^^^^^^^^^^^^
+                    //                   Undo the "special behavior" for the
+                    //                   subnodes, making them "normal Json" nodes
+                    //                   that aren't expandable
+                    key,
+                    value
+                  ),
+                ]
+          );
+        }
+      }
+
+      // Common case: Json nodes don't have children and aren't expandable
       return null;
 
     default:
-      return assertNever(node, "Unhandled node type");
+      // e.g. future LiveXxx types
+      return null;
   }
 }
 
@@ -584,32 +704,61 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
   }
 );
 
-export const Tree = forwardRef<TreeApi<TreeNode>, TreeProps>(
-  ({ className, style, ...props }, ref) => {
-    return (
-      <AutoSizer className={cx(className, "tree")} style={style}>
-        {({ width, height }) => (
-          <ArboristTree
-            ref={ref}
-            width={width}
-            height={height}
-            childrenAccessor={childrenAccessor}
-            disableDrag
-            disableDrop
-            disableMultiSelection
-            className="!overflow-x-hidden"
-            selectionFollowsFocus
-            rowHeight={ROW_HEIGHT}
-            indent={ROW_INDENT}
-            {...props}
-          >
-            {TreeNodeRenderer}
-          </ArboristTree>
-        )}
-      </AutoSizer>
-    );
-  }
-);
+export const StorageTree = forwardRef<
+  TreeApi<DevTools.LsonTreeNode>,
+  TreeProps<DevTools.LsonTreeNode>
+>(({ className, style, ...props }, ref) => {
+  return (
+    <AutoSizer className={cx(className, "tree")} style={style}>
+      {({ width, height }) => (
+        <ArboristTree
+          ref={ref}
+          width={width}
+          height={height}
+          childrenAccessor={childrenAccessor}
+          disableDrag
+          disableDrop
+          disableMultiSelection
+          className="!overflow-x-hidden"
+          selectionFollowsFocus
+          rowHeight={ROW_HEIGHT}
+          indent={ROW_INDENT}
+          {...props}
+        >
+          {LsonNodeRenderer}
+        </ArboristTree>
+      )}
+    </AutoSizer>
+  );
+});
+
+export const PresenceTree = forwardRef<
+  TreeApi<DevTools.UserTreeNode | DevTools.JsonTreeNode>,
+  TreeProps<DevTools.UserTreeNode | DevTools.JsonTreeNode>
+>(({ className, style, ...props }, ref) => {
+  return (
+    <AutoSizer className={cx(className, "tree")} style={style}>
+      {({ width, height }) => (
+        <ArboristTree
+          ref={ref}
+          width={width}
+          height={height}
+          childrenAccessor={childrenAccessor}
+          disableDrag
+          disableDrop
+          disableMultiSelection
+          className="!overflow-x-hidden"
+          selectionFollowsFocus
+          rowHeight={ROW_HEIGHT}
+          indent={ROW_INDENT}
+          {...props}
+        >
+          {PresenceNodeRenderer}
+        </ArboristTree>
+      )}
+    </AutoSizer>
+  );
+});
 
 /**
  * Returns the list of nodes, from the root (excluded) all the way down to the

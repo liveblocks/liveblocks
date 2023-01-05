@@ -9,7 +9,7 @@ export function quoteAsNeeded(key: string | number) {
 }
 
 export function wrapProperty(key: string | number, value: string) {
-  return `${`${quoteAsNeeded(key)}: ${value}`}`;
+  return `${quoteAsNeeded(key)}: ${value}`;
 }
 
 export function wrapArray(values?: string) {
