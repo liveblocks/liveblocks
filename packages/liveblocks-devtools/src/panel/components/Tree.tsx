@@ -418,7 +418,6 @@ function RowPreview({ children, className, ...props }: ComponentProps<"div">) {
     </div>
   );
 }
-("tr");
 
 function Badge({ children, className, ...props }: ComponentProps<"span">) {
   return (
