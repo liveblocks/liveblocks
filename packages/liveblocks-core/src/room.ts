@@ -47,9 +47,11 @@ import type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 import { ServerMsgCode } from "./protocol/ServerMsg";
+import type { ImmutableRef } from "./refs/ImmutableRef";
 import { MeRef } from "./refs/MeRef";
 import { OthersRef } from "./refs/OthersRef";
 import { DerivedRef, ValueRef } from "./refs/ValueRef";
+import type * as DevTools from "./types/DevToolsTreeNode";
 import type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 import type { Others, OthersEvent } from "./types/Others";
 import type { User } from "./types/User";
@@ -531,7 +533,7 @@ export type Room<
   /**
    * @internal Utilities only used for unit testing.
    */
-  __INTERNAL_DO_NOT_USE: {
+  readonly __INTERNAL_DO_NOT_USE: {
     simulateCloseWebsocket(): void;
     simulateSendCloseEvent(event: {
       code: number;
@@ -539,6 +541,12 @@ export type Room<
       reason: string;
     }): void;
   };
+
+  /** @internal - For dev tools support */
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+
+  /** @internal - For dev tools support */
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 export function isRoomEventName(value: string): value is RoomEventName {
@@ -566,7 +574,7 @@ type Machine<
   heartbeat(): void;
   onNavigatorOnline(): void;
 
-  // Internal dev tools
+  // Internal unit testing tools
   simulateSocketClose(): void;
   simulateSendCloseEvent(event: {
     code: number;
@@ -638,6 +646,10 @@ type Machine<
   // Presence
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
+
+  // Dev tools support
+  getSelf_forDevTools(): DevTools.UserTreeNode | null;
+  getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
 const BACKOFF_RETRY_DELAYS = [250, 500, 1000, 2000, 4000, 8000, 10000];
@@ -704,6 +716,9 @@ type State<
   readonly me: MeRef<TPresence>;
   readonly others: OthersRef<TPresence, TUserMeta>;
 
+  /** @internal */
+  readonly others_forDevTools: ImmutableRef<DevTools.UserTreeNode[]>;
+
   idFactory: IdFactory | null;
   numberOfRetry: number;
   initialStorage?: TStorage;
@@ -736,7 +751,9 @@ type State<
     };
   };
 
-  offlineOperations: Map<string, Op>;
+  // A registry of yet-unacknowledged Ops. These Ops have already been
+  // submitted to the server, but have not yet been acknowledged.
+  unacknowledgedOps: Map<string, Op>;
 };
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
@@ -807,6 +824,18 @@ type Config = {
    */
   WebSocketPolyfill?: Polyfills["WebSocket"];
 };
+
+function userToTreeNode(
+  key: string,
+  user: User<JsonObject, BaseUserMeta>
+): DevTools.UserTreeNode {
+  return {
+    type: "User",
+    id: `${user.connectionId}`,
+    key,
+    payload: user,
+  };
+}
 
 function makeStateMachine<
   TPresence extends JsonObject,
@@ -953,6 +982,12 @@ function makeStateMachine<
             isReadOnly: conn.isReadOnly,
           }
         : null
+  );
+
+  // For use in dev tools
+  const selfAsTreeNode = new DerivedRef(
+    self as ImmutableRef<User<TPresence, TUserMeta> | null>,
+    (me) => (me !== null ? userToTreeNode("Me", me) : null)
   );
 
   function createOrUpdateRootFromMessage(
@@ -1162,7 +1197,7 @@ function makeStateMachine<
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.offlineOperations.delete(nn(op.opId));
+          const deleted = state.unacknowledgedOps.delete(nn(op.opId));
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1674,9 +1709,9 @@ function makeStateMachine<
           case ServerMsgCode.INITIAL_STORAGE_STATE: {
             // createOrUpdateRootFromMessage function could add ops to offlineOperations.
             // Client shouldn't resend these ops as part of the offline ops sending after reconnect.
-            const offlineOps = new Map(state.offlineOperations);
+            const unacknowledgedOps = new Map(state.unacknowledgedOps);
             createOrUpdateRootFromMessage(message, doNotBatchUpdates);
-            applyAndSendOfflineOps(offlineOps, doNotBatchUpdates);
+            applyAndSendOps(unacknowledgedOps, doNotBatchUpdates);
             if (_getInitialStateResolver !== null) {
               _getInitialStateResolver();
             }
@@ -1857,9 +1892,8 @@ function makeStateMachine<
     connect();
   }
 
-  function applyAndSendOfflineOps(
-    offlineOps: Map<string | undefined, Op>,
-    //                       ^^^^^^^^^ NOTE: Bug? Unintended?
+  function applyAndSendOps(
+    offlineOps: Map<string, Op>,
     batchedUpdatesWrapper: (cb: () => void) => void
   ) {
     if (offlineOps.size === 0) {
@@ -1887,7 +1921,7 @@ function makeStateMachine<
 
     if (storageOps.length > 0) {
       storageOps.forEach((op) => {
-        state.offlineOperations.set(nn(op.opId), op);
+        state.unacknowledgedOps.set(nn(op.opId), op);
       });
       notifyStorageStatus();
     }
@@ -2216,7 +2250,7 @@ function makeStateMachine<
       return "loading";
     }
 
-    return state.offlineOperations.size === 0
+    return state.unacknowledgedOps.size === 0
       ? "synchronized"
       : "synchronizing";
   }
@@ -2294,6 +2328,11 @@ function makeStateMachine<
     // Presence
     getPresence,
     getOthers,
+
+    // Support for the Liveblocks browser extension
+    getSelf_forDevTools: () => selfAsTreeNode.current,
+    getOthers_forDevTools: (): readonly DevTools.UserTreeNode[] =>
+      state.others_forDevTools.current,
   };
 }
 
@@ -2307,6 +2346,9 @@ function defaultState<
   initialStorage?: TStorage
 ): State<TPresence, TStorage, TUserMeta, TRoomEvent> {
   const others = new OthersRef<TPresence, TUserMeta>();
+  const others_forDevTools = new DerivedRef(others, (others) =>
+    others.map((other, index) => userToTreeNode(`Other ${index}`, other))
+  );
 
   const connection = new ValueRef<Connection>({ state: "closed" });
 
@@ -2338,6 +2380,7 @@ function defaultState<
     connection,
     me: new MeRef(initialPresence),
     others,
+    others_forDevTools,
 
     initialStorage,
     idFactory: null,
@@ -2353,7 +2396,7 @@ function defaultState<
     pausedHistory: null,
 
     activeBatch: null,
-    offlineOperations: new Map<string, Op>(),
+    unacknowledgedOps: new Map<string, Op>(),
   };
 }
 
@@ -2438,6 +2481,9 @@ export function createRoom<
       simulateCloseWebsocket: machine.simulateSocketClose,
       simulateSendCloseEvent: machine.simulateSendCloseEvent,
     },
+
+    getSelf_forDevTools: machine.getSelf_forDevTools,
+    getOthers_forDevTools: machine.getOthers_forDevTools,
   };
 
   return {

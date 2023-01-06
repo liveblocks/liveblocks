@@ -2,6 +2,7 @@ import { assertNever } from "../lib/assert";
 import type { CreateChildOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { SerializedCrdt } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { Immutable } from "../types/Immutable";
 import type { LiveNode } from "./Lson";
 import type { StorageUpdate } from "./StorageUpdates";
@@ -290,9 +291,17 @@ export abstract class AbstractCrdt {
   /**
    * @internal
    *
-   * This caches the result of the last .toImmutable() call for any Live node.
+   * This caches the result of the last .toImmutable() call for this Live node.
    */
   private _cachedImmutable?: Immutable;
+
+  /** @internal */
+  private _cachedTreeNodeKey?: string | number;
+  /**
+   * @internal
+   * This caches the result of the last .toTreeNode() call for this Live node.
+   */
+  private _cachedTreeNode?: DevTools.LsonTreeNode;
 
   /**
    * @internal
@@ -302,13 +311,35 @@ export abstract class AbstractCrdt {
    * mutation to the Live node.
    */
   invalidate(): void {
-    if (this._cachedImmutable !== undefined) {
+    if (
+      this._cachedImmutable !== undefined ||
+      this._cachedTreeNode !== undefined
+    ) {
       this._cachedImmutable = undefined;
+      this._cachedTreeNode = undefined;
 
       if (this.parent.type === "HasParent") {
         this.parent.node.invalidate();
       }
     }
+  }
+
+  /** @internal */
+  abstract _toTreeNode(key: string): DevTools.LsonTreeNode;
+
+  /**
+   * @internal
+   *
+   * Return an snapshot of this Live tree for use in DevTools.
+   */
+  toTreeNode(key: string): DevTools.LsonTreeNode {
+    if (this._cachedTreeNode === undefined || this._cachedTreeNodeKey !== key) {
+      this._cachedTreeNodeKey = key;
+      this._cachedTreeNode = this._toTreeNode(key);
+    }
+
+    // Return cached version
+    return this._cachedTreeNode;
   }
 
   /** @internal */

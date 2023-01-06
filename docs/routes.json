@@ -139,6 +139,11 @@
         "title": "Webhooks",
         "path": "/guides/webhooks",
         "hidden": true
+      },
+      {
+        "title": "Next.js Starter Kit guide",
+        "path": "/guides/nextjs-starter-kit",
+        "hidden": true
       }
     ]
   },

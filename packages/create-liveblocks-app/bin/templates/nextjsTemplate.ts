@@ -9,9 +9,8 @@ import { install as installApp } from "../utils/install";
 import { getPackageManager } from "../utils/getPackageManager";
 import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
 
-// TODO change for guide on liveblocks.io when complete
 const NEXTJS_STARTER_KIT_GUIDE_URL =
-  "https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/README.md";
+  "https://liveblocks.io/docs/guides/nextjs-starter-kit";
 const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
   "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
 
@@ -26,6 +25,8 @@ type Questions = {
 };
 
 export async function create(flags: Record<string, any>) {
+  const packageManager = flags.packageManager || getPackageManager();
+
   const questions: PromptObject<keyof Questions>[] = [
     {
       type: flags.name ? null : "text",
@@ -68,7 +69,7 @@ export async function create(flags: Record<string, any>) {
     {
       type: flags.install !== undefined ? null : "confirm",
       name: "install",
-      message: "Would you like to install?",
+      message: `Would you like to install with ${packageManager}?`,
       initial: true,
       active: "yes",
       inactive: "no",
@@ -101,7 +102,6 @@ export async function create(flags: Record<string, any>) {
     return;
   }
 
-  const packageManager = flags.packageManager || getPackageManager();
   const filesToWrite: { location: string; content: string }[] = [];
 
   // Set up authentication

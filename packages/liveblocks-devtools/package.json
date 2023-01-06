@@ -1,0 +1,56 @@
+{
+  "name": "@liveblocks/devtools",
+  "version": "0.0.2",
+  "private": true,
+  "displayName": "Liveblocks DevTools",
+  "description": "A browser extension that lets you inspect Liveblocks real-time collaborative experiences. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
+  "homepage": "https://liveblocks.io",
+  "scripts": {
+    "dev": "plasmo dev --build-path=dist",
+    "dev:firefox": "plasmo dev --build-path=dist --target=firefox-mv2",
+    "build": "tsc && plasmo build --build-path=dist",
+    "build:firefox": "tsc && plasmo build --build-path=dist --target=firefox-mv2",
+    "format": "eslint --fix src/; prettier --write src/"
+  },
+  "dependencies": {
+    "@liveblocks/core": "*",
+    "@plasmohq/storage": "^0.14.0",
+    "@radix-ui/react-popover": "^1.0.2",
+    "@radix-ui/react-select": "^1.1.2",
+    "@radix-ui/react-tabs": "^1.0.1",
+    "@radix-ui/react-tooltip": "^1.0.2",
+    "classnames": "^2.3.2",
+    "fast-equals": "^4.0.3",
+    "plasmo": "^0.61.2",
+    "react": "18.2.0",
+    "react-arborist": "^2.2.0",
+    "react-dom": "18.2.0",
+    "unquoted-property-validator": "^1.1.0",
+    "use-resize-observer": "^9.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.11.13",
+    "@types/react": "18.0.26",
+    "@types/react-dom": "18.0.9",
+    "@types/webextension-polyfill": "^0.9.2",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.20",
+    "prettier-plugin-tailwindcss": "^0.2.1",
+    "tailwindcss": "^3.2.4",
+    "webextension-polyfill": "^0.10.0"
+  },
+  "manifest": {
+    "description": "A browser extension that lets you inspect Liveblocks real-time collaborative experiences.",
+    "permissions": [
+      "storage"
+    ],
+    "host_permissions": [
+      "<all_urls>"
+    ],
+    "browser_specific_settings": {
+      "gecko": {
+        "id": "devtools@liveblocks.io"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 import type { LiveNode, Lson, LsonObject } from "../crdts/Lson";
 import { nn } from "../lib/assert";
 import type { JsonObject } from "../lib/Json";
+import { nanoid } from "../lib/nanoid";
 import { fromEntries } from "../lib/utils";
 import type {
   CreateChildOp,
@@ -18,6 +19,7 @@ import type {
   SerializedRootObject,
 } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
@@ -635,6 +637,29 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
     // ._toImmutable() instead. This helper merely exists to help TypeScript
     // infer better return types.
     return super.toImmutable() as ToImmutable<O>;
+  }
+
+  /** @internal */
+  toTreeNode(key: string): DevTools.LiveTreeNode<"LiveObject"> {
+    // Don't implement actual toTreeNode logic in here. Implement it in
+    // ._toTreeNode() instead. This helper merely exists to help TypeScript
+    // infer better return types.
+    return super.toTreeNode(key) as DevTools.LiveTreeNode<"LiveObject">;
+  }
+
+  /** @internal */
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
+    const nodeId = this._id ?? nanoid();
+    return {
+      type: "LiveObject",
+      id: nodeId,
+      key,
+      payload: Array.from(this._map.entries()).map(([key, value]) =>
+        isLiveNode(value)
+          ? value.toTreeNode(key)
+          : { type: "Json", id: `${nodeId}:${key}`, key, payload: value }
+      ),
+    };
   }
 
   /** @internal */

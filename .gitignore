@@ -1,6 +1,7 @@
 .idea/
 .next/
 .nuxt/
+.plasmo/
 .svelte-kit/
 .turbo/
 .vercel/
