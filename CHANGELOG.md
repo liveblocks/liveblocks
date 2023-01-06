@@ -1,3 +1,7 @@
+# v0.19.4
+
+Fix CORS issue.
+
 # v0.19.3
 
 In **@liveblocks/client**:
