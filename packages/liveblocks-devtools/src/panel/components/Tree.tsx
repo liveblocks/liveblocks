@@ -14,6 +14,7 @@ import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
 
 import { useDeepEffect } from "../../hooks/useDeepEffect";
+import { assertNever } from "../../lib/assert";
 import { mergeRefs } from "../../lib/mergeRefs";
 import {
   ELLIPSIS,
@@ -22,14 +23,16 @@ import {
   wrapProperty,
 } from "../../lib/stringify";
 import {
+  ArrayIcon,
+  BooleanIcon,
   EllipsisIcon,
-  ListIcon,
   MapIcon,
+  NumberIcon,
   ObjectIcon,
   QuestionIcon,
+  StringIcon,
   UserIcon,
 } from "./Icons";
-import { assertNever } from "../../lib/assert";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -139,16 +142,22 @@ function icon(node: DevTools.TreeNode): ReactNode {
       return <ObjectIcon />;
 
     case "LiveList":
-      return <ListIcon />;
+      return <ArrayIcon />;
 
     case "LiveMap":
       return <MapIcon />;
 
     case "Json":
       if (Array.isArray(node.payload)) {
-        return <ListIcon />;
+        return <ArrayIcon />;
       } else if (node.payload !== null && typeof node.payload === "object") {
         return <ObjectIcon />;
+      } else if (typeof node.payload === "number") {
+        return <NumberIcon />;
+      } else if (typeof node.payload === "string") {
+        return <StringIcon />;
+      } else if (typeof node.payload === "boolean") {
+        return <BooleanIcon />;
       } else {
         return <EllipsisIcon />;
       }

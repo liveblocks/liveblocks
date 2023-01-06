@@ -1,14 +1,3 @@
-export const EllipsisIcon = () => (
-  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm1 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM9 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2.5 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
-      fill="currentColor"
-    />
-  </svg>
-);
-
 export const ObjectIcon = () => (
   <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
@@ -20,7 +9,7 @@ export const ObjectIcon = () => (
   </svg>
 );
 
-export const ListIcon = () => (
+export const ArrayIcon = () => (
   <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fillRule="evenodd"
@@ -42,12 +31,55 @@ export const MapIcon = () => (
   </svg>
 );
 
+export const NumberIcon = () => (
+  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm4.17 4.127a.75.75 0 1 0-1.478-.254L5.912 5.5H4.335a.75.75 0 0 0 0 1.5h1.317l-.345 2H3.75a.75.75 0 0 0 0 1.5h1.3l-.237 1.373a.75.75 0 1 0 1.478.254l.28-1.627h1.996l-.237 1.373a.75.75 0 1 0 1.478.254l.28-1.627h1.576a.75.75 0 0 0 0-1.5h-1.317l.345-2h1.558a.75.75 0 0 0 0-1.5h-1.3l.237-1.373a.75.75 0 1 0-1.478-.254L9.43 5.5H7.434l.236-1.373ZM6.83 9l.345-2H9.17l-.345 2H6.83Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const StringIcon = () => (
+  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M0 3.5A3.5 3.5 0 0 1 3.5 0h9A3.5 3.5 0 0 1 16 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 0 12.5v-9Zm11.65 2.486a.75.75 0 0 0-.294-1.471c-.751.15-1.34.462-1.783.894a3.347 3.347 0 0 0-.85 1.433c-.215.798-.22 1.62-.223 2.124V9l.003.215v.035a2.25 2.25 0 1 0 1.735-2.19c.094-.223.218-.417.383-.578.213-.208.53-.397 1.03-.496ZM6.74 5.103a.75.75 0 0 1-.589.883c-.498.1-.816.288-1.03.496-.164.16-.288.355-.382.577a2.25 2.25 0 1 1-1.735 2.19v-.034L3 9v-.034c.003-.505.008-1.326.224-2.124.152-.495.41-1.005.849-1.433.443-.432 1.032-.744 1.783-.894a.75.75 0 0 1 .883.588Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+export const BooleanIcon = () => (
+  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9ZM3 8a3.5 3.5 0 0 1 3.5-3.5h3a3.5 3.5 0 1 1 0 7h-3A3.5 3.5 0 0 1 3 8Zm8.5 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
 export const UserIcon = () => (
   <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fillRule="evenodd"
       clipRule="evenodd"
       d="M0 3.5A3.5 3.5 0 0 1 3.5 0h9A3.5 3.5 0 0 1 16 3.5v9a3.5 3.5 0 0 1-3.5 3.5h-9A3.5 3.5 0 0 1 0 12.5v-9Zm8 1A1.25 1.25 0 1 0 8 7a1.25 1.25 0 0 0 0-2.5ZM5.25 5.75a2.75 2.75 0 1 1 5.5 0 2.75 2.75 0 0 1-5.5 0ZM8 9.25c-1.38 0-2.431.296-3.224.761a4.172 4.172 0 0 0-1.587 1.634.75.75 0 0 0 1.321.71c.19-.353.502-.743 1.025-1.05.524-.307 1.303-.555 2.465-.555s1.941.248 2.465.555c.523.307.835.697 1.025 1.05a.75.75 0 0 0 1.32-.71 4.173 4.173 0 0 0-1.586-1.634C10.431 9.546 9.38 9.25 8 9.25Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const EllipsisIcon = () => (
+  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9Zm1 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2ZM9 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm2.5 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
       fill="currentColor"
     />
   </svg>
