@@ -1287,7 +1287,11 @@ describe("room", () => {
 
       assert({ x: 0 });
 
-      expect(machine.hasPendingStorageModifications()).toBe(false);
+      expect(machine.getStorageStatus()).toBe("synchronized");
+
+      const storageStatusCallback = jest.fn();
+
+      machine.events.storageStatus.subscribe(storageStatusCallback);
 
       ws.closeFromBackend(
         new CloseEvent("close", {
@@ -1298,7 +1302,8 @@ describe("room", () => {
 
       storage.root.set("x", 1);
 
-      expect(machine.hasPendingStorageModifications()).toBe(true);
+      expect(storageStatusCallback).toBeCalledWith("synchronizing");
+      expect(machine.getStorageStatus()).toBe("synchronizing");
 
       const storageJson = lsonToJson(storage.root);
       expect(storageJson).toEqual({ x: 1 });
@@ -1314,7 +1319,10 @@ describe("room", () => {
       assert({
         x: 1,
       });
-      expect(machine.hasPendingStorageModifications()).toBe(false);
+      expect(machine.getStorageStatus()).toBe("synchronized");
+      expect(storageStatusCallback).toBeCalledWith("synchronized");
+
+      expect(storageStatusCallback).toHaveBeenCalledTimes(2);
     });
   });
 
