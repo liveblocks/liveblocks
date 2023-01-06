@@ -21,7 +21,7 @@
 A browser extension that lets you inspect [Liveblocks](https://liveblocks.io)
 real-time collaborative experiences.
 
-> Requires `@liveblocks/client` 0.19.4 or newer.
+<img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/devtools/devtools.png" width="640" alt="Liveblocks DevTools" />
 
 ## Installation
 
@@ -30,6 +30,8 @@ Download the extension for your browser:
 - [Chrome](https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk)
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
 - [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
+
+> Requires `@liveblocks/client` 0.19.4 or newer.
 
 ## Development
 
