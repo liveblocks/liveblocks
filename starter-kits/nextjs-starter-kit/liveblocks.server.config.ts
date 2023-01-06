@@ -11,7 +11,7 @@ if (!SECRET_API_KEY) {
 Example .env.local file:
 LIVEBLOCKS_SECRET_KEY=sk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
-You can find your secret keys on https://liveblocks.io/dashboard 
+You can find your secret keys on https://liveblocks.io/dashboard/apikeys 
 Follow the full starter kit guide on https://liveblocks.io/docs/guides/nextjs-starter-kit
  
 `);
