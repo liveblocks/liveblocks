@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-light-0 text-dark-0 dark:bg-dark-0 dark:text-light-0 overflow-hidden text-[75%];
+}
+
+body[data-resizing] * {
+  @apply pointer-events-none;
+}
+
+body[data-resizing="horizontal"] {
+  @apply cursor-col-resize;
+}
+
+body[data-resizing="vertical"] {
+  @apply cursor-row-resize;
+}
+
+#root {
+  @apply h-screen w-full;
+}
+
+* {
+  @apply select-none focus:outline-none;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  @apply hidden;
+}

@@ -102,7 +102,13 @@ export type {
   UserLeftServerMsg,
 } from "./protocol/ServerMsg";
 export { ServerMsgCode } from "./protocol/ServerMsg";
-export type { BroadcastOptions, History, Room, RoomInitializers } from "./room";
+export type {
+  BroadcastOptions,
+  ConnectionState,
+  History,
+  Room,
+  RoomInitializers,
+} from "./room";
 export type { Immutable } from "./types/Immutable";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
 export type { Others } from "./types/Others";
@@ -123,3 +129,9 @@ export type EnsureJson<T> =
   T extends (...args: unknown[]) => unknown ? T :
   // Resolve all other values explicitly
   { [K in keyof T]: EnsureJson<T[K]> };
+
+// Support for DevTools
+import type * as DevToolsMsg from "./devtools/protocol";
+export type { DevToolsMsg };
+import type * as DevTools from "./types/DevToolsTreeNode";
+export type { DevTools };

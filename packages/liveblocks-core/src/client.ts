@@ -1,4 +1,5 @@
 import type { LsonObject } from "./crdts/Lson";
+import { linkDevTools, setupDevTools, unlinkDevTools } from "./devtools";
 import { deprecateIf } from "./lib/deprecation";
 import type { Json, JsonObject } from "./lib/Json";
 import type { Resolve } from "./lib/Resolve";
@@ -165,6 +166,9 @@ export function createClient(options: ClientOptions): Client {
       >;
     }
 
+    // console.trace("enter");
+    // console.log("enter(", roomId, options, ") called");
+
     deprecateIf(
       options.initialPresence === null || options.initialPresence === undefined,
       "Please provide an initial presence value for the current user when entering the room."
@@ -193,6 +197,7 @@ export function createClient(options: ClientOptions): Client {
         authentication: prepareAuthentication(clientOptions, roomId),
       }
     );
+
     rooms.set(
       roomId,
       internalRoom as unknown as InternalRoom<
@@ -202,6 +207,10 @@ export function createClient(options: ClientOptions): Client {
         Json
       >
     );
+
+    setupDevTools(() => Array.from(rooms.keys()));
+    linkDevTools(roomId, internalRoom.room);
+
     if (shouldConnect) {
       // we need to check here because nextjs would fail earlier with Node < 16
       if (typeof atob === "undefined") {
@@ -216,10 +225,14 @@ export function createClient(options: ClientOptions): Client {
 
       internalRoom.connect();
     }
+
     return internalRoom.room;
   }
 
   function leave(roomId: string) {
+    // console.trace("leave");
+    unlinkDevTools(roomId);
+
     const room = rooms.get(roomId);
     if (room) {
       room.disconnect();

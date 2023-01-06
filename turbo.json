@@ -3,12 +3,19 @@
   "globalDependencies": [".envrc"],
   "pipeline": {
     "dev": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
+    },
+    "@liveblocks/devtools#dev:firefox": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
+    "@liveblocks/devtools#build:firefox": {
+      "dependsOn": ["^build"]
     },
     "test": {
       "dependsOn": ["^build"],

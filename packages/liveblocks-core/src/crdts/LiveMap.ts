@@ -1,9 +1,11 @@
 import { nn } from "../lib/assert";
 import { freeze } from "../lib/freeze";
+import { nanoid } from "../lib/nanoid";
 import type { CreateChildOp, CreateMapOp, Op } from "../protocol/Op";
 import { OpCode } from "../protocol/Op";
 import type { IdTuple, SerializedMap } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
+import type * as DevTools from "../types/DevToolsTreeNode";
 import type { ParentToChildNodeMap } from "../types/NodeMap";
 import type { ApplyResult, ManagedPool } from "./AbstractCrdt";
 import { AbstractCrdt, OpSource } from "./AbstractCrdt";
@@ -446,6 +448,18 @@ export class LiveMap<
     for (const entry of this) {
       callback(entry[1], entry[0], this);
     }
+  }
+
+  /** @internal */
+  _toTreeNode(key: string): DevTools.LsonTreeNode {
+    return {
+      type: "LiveMap",
+      id: this._id ?? nanoid(),
+      key,
+      payload: Array.from(this._map.entries()).map(([key, val]) =>
+        val.toTreeNode(key)
+      ),
+    };
   }
 
   toImmutable(): ReadonlyMap<TKey, ToImmutable<TValue>> {
