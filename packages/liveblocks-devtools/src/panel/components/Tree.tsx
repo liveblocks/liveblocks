@@ -145,8 +145,9 @@ function icon(node: DevTools.TreeNode): ReactNode {
       return <MapIcon />;
 
     case "Json":
-      // TODO Only temporarily needed, remove this hack later
-      if (node.id.startsWith(SPECIAL_HACK_PREFIX)) {
+      if (Array.isArray(node.payload)) {
+        return <ListIcon />;
+      } else if (node.payload !== null && typeof node.payload === "object") {
         return <ObjectIcon />;
       } else {
         return <EllipsisIcon />;
