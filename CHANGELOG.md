@@ -5,9 +5,11 @@ In **@liveblocks/client**:
 ## Room.getStorageStatus
 
 Get the storage status.
+
 - `not-loaded`: Initial state when entering the room.
 - `loading`: Once the storage has been requested via room.getStorage().
-- `synchronizing`: When some local updates have not been acknowledged by Liveblocks servers.
+- `synchronizing`: When some local updates have not been acknowledged by
+  Liveblocks servers.
 - `synchronized`: Storage is in sync with Liveblocks servers.
 
 ## Room.subscribe("storage-status", status => { })
@@ -18,17 +20,17 @@ Returns an unsubscribe function.
 
 ```typescript
 room.subscribe("storage-status", (status) => {
-  switch(status) {
-     case "not-loaded":
-       break;
-     case "loading":
-       break;
-     case "synchronizing":
-       break;
-     case "synchronized":
-       break;
-     default:
-       break;
+  switch (status) {
+    case "not-loaded":
+      break;
+    case "loading":
+      break;
+    case "synchronizing":
+      break;
+    case "synchronized":
+      break;
+    default:
+      break;
   }
 });
 ```
