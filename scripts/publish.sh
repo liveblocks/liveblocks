@@ -228,7 +228,7 @@ expand_workspace_globs () {
 all_workspaces () {
     for possible_workspace in $( expand_workspace_globs ); do
         if [ -f "$possible_workspace/package.json" ]; then
-            if [ "$(jq -r .private package.json)" != "true" ]; then
+            if [ "$(jq -r .private "$possible_workspace/package.json")" != "true" ]; then
                 echo "$possible_workspace"
             fi
         fi
