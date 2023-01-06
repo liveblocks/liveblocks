@@ -7,27 +7,27 @@
 # `@liveblocks/devtools`
 
 <p>
-  <a href="#">
+  <a href="https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk">
     <img src="https://img.shields.io/badge/chrome-message?style=flat&logo=google%20chrome&color=666&logoColor=fff" alt="Chrome" />
   </a>
-  <a href="#">
+  <a href="https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/">
     <img src="https://img.shields.io/badge/firefox-message?style=flat&logo=firefox&color=f63&logoColor=fff" alt="Firefox" />
   </a>
-  <a href="#">
+  <a href="https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg">
     <img src="https://img.shields.io/badge/edge-message?style=flat&logo=microsoft%20edge&color=18f&logoColor=fff" alt="Edge" />
   </a>
 </p>
 
 A browser extension that lets you inspect [Liveblocks](https://liveblocks.io)
-rooms.
+real-time collaborative experiences.
 
 ## Installation
 
 Download the extension for your browser:
 
-- [Chrome](#)
-- [Firefox](#)
-- [Edge](#)
+- [Chrome](https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk)
+- [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
+- [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
 ## Development
 
