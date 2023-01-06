@@ -252,6 +252,12 @@ Navigate there and add your details, for example, if you’re signing in with
 },
 ```
 
+You will also need to add a `NEXTAUTH_SECRET` to your `.env.local` file for demo authentication to work.  
+This value can be easily generated using the command line and running the following: 
+```
+openssl rand -base64 32
+```
+
 ### Ready to go
 
 The Next.js Starter Kit is now ready to use! After setting up authentication,

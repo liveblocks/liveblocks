@@ -5,7 +5,7 @@ export const API_BASE_URL = "https://api.liveblocks.io";
 export const SECRET_API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 // ============================================================================
-if (SECRET_API_KEY) {
+if (!SECRET_API_KEY) {
   throw new Error(`You must add your Liveblocks secret key to .env.local to use the starter kit 
 
 Example .env.local file:
