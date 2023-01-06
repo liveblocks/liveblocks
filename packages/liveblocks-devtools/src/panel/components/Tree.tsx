@@ -145,7 +145,12 @@ function icon(node: DevTools.TreeNode): ReactNode {
       return <MapIcon />;
 
     case "Json":
-      return <EllipsisIcon />;
+      // TODO Only temporarily needed, remove this hack later
+      if (node.id.startsWith(SPECIAL_HACK_PREFIX)) {
+        return <ObjectIcon />;
+      } else {
+        return <EllipsisIcon />;
+      }
 
     case "User":
       return <UserIcon />;
