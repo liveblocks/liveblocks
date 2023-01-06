@@ -21,6 +21,8 @@
 A browser extension that lets you inspect [Liveblocks](https://liveblocks.io)
 real-time collaborative experiences.
 
+> Requires `@liveblocks/client` 0.19.4 or newer.
+
 ## Installation
 
 Download the extension for your browser:
