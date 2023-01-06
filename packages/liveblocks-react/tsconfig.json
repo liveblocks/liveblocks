@@ -3,7 +3,7 @@
   "extends": "../../shared/tsconfig.common.json",
 
   "compilerOptions": {
-    "target": "es2015",
+    "target": "esnext",
     "module": "esnext",
     "lib": ["dom", "es2015"],
 
