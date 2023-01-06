@@ -52,12 +52,24 @@ export const StringIcon = () => (
     />
   </svg>
 );
-export const BooleanIcon = () => (
+
+export const BooleanOnIcon = () => (
   <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fillRule="evenodd"
       clipRule="evenodd"
       d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9ZM3 8a3.5 3.5 0 0 1 3.5-3.5h3a3.5 3.5 0 1 1 0 7h-3A3.5 3.5 0 0 1 3 8Zm8.5 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
+      fill="currentColor"
+    />
+  </svg>
+);
+
+export const BooleanOffIcon = () => (
+  <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path
+      fillRule="evenodd"
+      clipRule="evenodd"
+      d="M3.5 0A3.5 3.5 0 0 0 0 3.5v9A3.5 3.5 0 0 0 3.5 16h9a3.5 3.5 0 0 0 3.5-3.5v-9A3.5 3.5 0 0 0 12.5 0h-9ZM3 8a3.5 3.5 0 0 1 3.5-3.5h3a3.5 3.5 0 1 1 0 7h-3A3.5 3.5 0 0 1 3 8Zm5.5 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z"
       fill="currentColor"
     />
   </svg>

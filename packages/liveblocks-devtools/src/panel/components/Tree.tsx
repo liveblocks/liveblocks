@@ -24,7 +24,8 @@ import {
 } from "../../lib/stringify";
 import {
   ArrayIcon,
-  BooleanIcon,
+  BooleanOffIcon,
+  BooleanOnIcon,
   EllipsisIcon,
   MapIcon,
   NumberIcon,
@@ -157,7 +158,7 @@ function icon(node: DevTools.TreeNode): ReactNode {
       } else if (typeof node.payload === "string") {
         return <StringIcon />;
       } else if (typeof node.payload === "boolean") {
-        return <BooleanIcon />;
+        return node.payload ? <BooleanOnIcon /> : <BooleanOffIcon />;
       } else {
         return <EllipsisIcon />;
       }
