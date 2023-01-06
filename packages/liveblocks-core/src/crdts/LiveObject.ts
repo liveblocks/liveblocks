@@ -640,16 +640,11 @@ export class LiveObject<O extends LsonObject> extends AbstractCrdt {
   }
 
   /** @internal */
-  toTreeNode(
-    key: string
-  ): DevTools.Wrap<"LiveObject", DevTools.LsonTreeNode[]> {
+  toTreeNode(key: string): DevTools.LiveTreeNode<"LiveObject"> {
     // Don't implement actual toTreeNode logic in here. Implement it in
     // ._toTreeNode() instead. This helper merely exists to help TypeScript
     // infer better return types.
-    return super.toTreeNode(key) as DevTools.Wrap<
-      "LiveObject",
-      DevTools.LsonTreeNode[]
-    >;
+    return super.toTreeNode(key) as DevTools.LiveTreeNode<"LiveObject">;
   }
 
   /** @internal */
