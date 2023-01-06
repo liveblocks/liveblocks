@@ -58,6 +58,7 @@ export type ClientToPanelMessage =
   | {
       msg: "room::available";
       roomId: string;
+      clientVersion: string;
     }
 
   /**

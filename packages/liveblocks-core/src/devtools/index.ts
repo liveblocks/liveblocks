@@ -4,6 +4,11 @@ import type { BaseUserMeta } from "../protocol/BaseUserMeta";
 import type { Room } from "../room";
 import { activateBridge, onMessageFromPanel, sendToPanel } from "./bridge";
 
+// prettier-ignore
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore (__PACKAGE_VERSION__ will be injected by the build script)
+const VERSION = typeof __PACKAGE_VERSION__ === "string" ? /* istanbul ignore next */ __PACKAGE_VERSION__ : "dev";
+
 let _devtoolsSetupHasRun = false;
 
 /**
@@ -44,7 +49,11 @@ export function setupDevTools(getAllRooms: () => string[]): void {
         // this point. These can be used by the devpanel to subscribe to such
         // room's updates.
         for (const roomId of getAllRooms()) {
-          sendToPanel({ msg: "room::available", roomId });
+          sendToPanel({
+            msg: "room::available",
+            roomId,
+            clientVersion: VERSION,
+          });
         }
 
         break;
@@ -191,7 +200,7 @@ export function linkDevTools(
     return;
   }
 
-  sendToPanel({ msg: "room::available", roomId });
+  sendToPanel({ msg: "room::available", roomId, clientVersion: VERSION });
 
   // Before adding a new listener, stop all active listeners, so there is only
   // ever going to be one listener per room "channel"
