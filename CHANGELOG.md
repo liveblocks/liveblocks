@@ -39,6 +39,10 @@ room.subscribe("storage-status", (status) => {
 
 Close the room connection and try to reconnect.
 
+## Internal changes
+
+- Add support for the upcoming Liveblocks browser extension
+
 # v0.19.2
 
 Fixes some internal type definitions.
