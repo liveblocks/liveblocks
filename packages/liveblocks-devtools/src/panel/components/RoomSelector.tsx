@@ -32,12 +32,14 @@ export function RoomSelector({
         <RadixSelect.Trigger
           className={cx(
             className,
-            "text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 items-center pr-1.5 pl-1"
+            "text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 min-w-0 items-center pr-1.5 pl-1"
           )}
           aria-label="Choose a room"
           {...props}
         >
-          <RadixSelect.Value />
+          <span className="truncate">
+            <RadixSelect.Value>{currentRoomId}</RadixSelect.Value>
+          </span>
           <RadixSelect.Icon className="ml-1 block">
             <svg
               width="9"

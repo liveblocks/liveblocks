@@ -190,9 +190,9 @@ function Panel() {
           },
         ]}
         leading={
-          <div className="after:bg-light-300 after:dark:bg-dark-300 relative flex flex-none items-center pl-1.5 pr-1 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px">
-            <ReloadButton onClick={handleReload} />
-            <RoomStatus />
+          <div className="after:bg-light-300 after:dark:bg-dark-300 relative flex max-w-[40%] flex-none items-center pl-1.5 pr-1 after:absolute after:-right-px after:top-[20%] after:h-[60%] after:w-px">
+            <ReloadButton onClick={handleReload} className="flex-none" />
+            <RoomStatus className="flex-none" />
             <RoomSelector />
           </div>
         }

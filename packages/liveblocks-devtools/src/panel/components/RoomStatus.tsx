@@ -24,7 +24,7 @@ function Ping({ animate = true, className, ...props }: PingProps) {
   );
 }
 
-export function RoomStatus() {
+export function RoomStatus({ className, ...props }: ComponentProps<"div">) {
   const currentStatus = useStatus();
   const statusContent = useMemo(() => {
     switch (currentStatus) {
@@ -57,7 +57,10 @@ export function RoomStatus() {
   }, [currentStatus]);
 
   const content = (
-    <div className="flex h-5 w-5 items-center justify-center">
+    <div
+      className={cx(className, "flex h-5 w-5 items-center justify-center")}
+      {...props}
+    >
       {statusContent}
     </div>
   );
