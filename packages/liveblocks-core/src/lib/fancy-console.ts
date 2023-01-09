@@ -1,7 +1,7 @@
 /* eslint-disable rulesdir/console-must-be-fancy */
 
 const badge =
-  "background:radial-gradient(106.94% 108.33% at -10% -5%,#ff1aa3 0,#ff881a 100%);border-radius:3px;color:#fff;padding:2px 5px;font-family:sans-serif;font-weight:600";
+  "background:#0e0d12;border-radius:9999px;color:#fff;padding:3px 7px;font-family:sans-serif;font-weight:600;";
 const bold = "font-weight:600";
 
 function wrap(
