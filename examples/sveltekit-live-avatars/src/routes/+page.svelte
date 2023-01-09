@@ -42,10 +42,13 @@
     overrideRoomId();
 
     client = createClient({
-      authEndpoint: "/api/auth"
+      authEndpoint: "/api/auth",
     });
 
-    room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId);
+    room = client.enter<Presence, Storage /* UserMeta, RoomEvent */>(roomId, {
+      initialPresence: {},
+      initialStorage: {},
+    });
   });
 
   onDestroy(() => {
@@ -58,7 +61,7 @@
    * This function is used when deploying an example on liveblocks.io.
    * You can ignore it completely if you run the example locally.
    */
-  function overrideRoomId () {
+  function overrideRoomId() {
     const query = new URLSearchParams(window?.location?.search);
     const roomIdSuffix = query.get("roomId");
 
@@ -69,5 +72,5 @@
 </script>
 
 {#if room}
-  <App room={room} />
+  <App {room} />
 {/if}

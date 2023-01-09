@@ -11,7 +11,7 @@
     {
       stiffness: 0.07,
       damping: 0.35,
-    },
+    }
   );
 
   // Update spring when x and y change
