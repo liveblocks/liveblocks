@@ -45,17 +45,18 @@ export default async function auth(req, res) {
   const response = await authorize({
     room,
     secret,
-// Optional, corresponds to the UserMeta.id type defined in liveblocks.config.ts
+// Optional, corresponds to the UserMeta[id] type defined in liveblocks.config.ts
     userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
-      // Optional, corresponds to the UserMeta.info type defined in liveblocks.config.ts
+      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
       color: "red"
     },
   });
   return res.status(response.status).end(response.body);
 }
+```
 
 ### Example using Express.js [#express-example]
 

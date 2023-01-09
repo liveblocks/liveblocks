@@ -48,8 +48,6 @@ type UserMeta = {
 };
 ```
 
-
-
 ```js
 const express = require("express");
 const { authorize } = require("@liveblocks/node");
@@ -76,7 +74,7 @@ app.post("/api/auth", (req, res) => {
     userId: "123", // Optional
     groupIds: ["456"], // Optional
     userInfo: {
-      // Optional, corresponds to the UserMeta.info type defined in liveblocks.config.ts
+      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
       color: "red"
     },
@@ -91,9 +89,8 @@ app.post("/api/auth", (req, res) => {
 
 ```
 The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
-You can use the following example to use data from `userId` and `userInfo on the front end.
+You can use the following example to use data from `userId` and `userInfo`on the front end.
 ```ts
-function Component() {
   const self = useSelf();
 
   // "123"
