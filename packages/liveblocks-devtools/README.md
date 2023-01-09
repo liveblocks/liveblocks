@@ -31,7 +31,7 @@ Download the extension for your browser:
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
 - [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
-> Requires `@liveblocks/client` 0.19.3 or newer.
+> Requires `@liveblocks/client` 0.19.4 or newer.
 
 ## Development
 

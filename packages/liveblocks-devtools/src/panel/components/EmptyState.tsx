@@ -81,7 +81,7 @@ export function EmptyState({
           <span className="relative inline-block px-[0.35em] py-[0.1em] before:absolute before:inset-0 before:rounded-[0.4em] before:bg-current before:opacity-10">
             @liveblocks/client
           </span>{" "}
-          0.19.3 or newer.
+          0.19.4 or newer.
         </p>
       </div>
     </div>
