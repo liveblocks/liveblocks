@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/devtools",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "private": true,
   "displayName": "Liveblocks DevTools",
   "description": "A browser extension that lets you inspect Liveblocks real-time collaborative experiences. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
