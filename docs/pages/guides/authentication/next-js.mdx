@@ -55,11 +55,26 @@ export default async function auth(req, res) {
     userId: "123", // Optional
     groupIds: ["456"], // Optional
     userInfo: {
-      // Optional
+      // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
+      color: "red"
     },
   });
   return res.status(result.status).end(result.body);
+}
+```
+The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
+You can use the following example to use data from `userId` and `userInfo` on the front end.
+```ts
+  const self = useSelf();
+
+  // "123"
+  console.log(self.id);
+
+  // "red"
+  console.log(self.info.color);
+
+  // ...
 }
 ```
 
