@@ -64,9 +64,8 @@ export default async function auth(req, res) {
 }
 ```
 The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
-You can use the following example to use data from `userId` and `userInfo on the front end.
+You can use the following example to use data from `userId` and `userInfo` on the front end.
 ```ts
-function Component() {
   const self = useSelf();
 
   // "123"
