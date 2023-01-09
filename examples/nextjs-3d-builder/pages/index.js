@@ -28,7 +28,7 @@ export default function Example() {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>
-          <img src="https://liveblocks.io/loading.svg" alt="Loading" />
+          <img src="https://liveblocks.io/loading.svg" alt="Loading..." />
         </div>
       </div>
     );
