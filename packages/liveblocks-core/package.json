@@ -20,7 +20,7 @@
   "scripts": {
     "dev": "tsup --watch",
     "build": "tsup",
-    "format": "eslint --fix src/; prettier --write src/",
+    "format": "eslint --fix src/; prettier --write src/ docs/",
     "lint": "eslint src/",
     "test": "jest --silent --verbose --color=always",
     "test:watch": "jest --silent --verbose --color=always --watch",
