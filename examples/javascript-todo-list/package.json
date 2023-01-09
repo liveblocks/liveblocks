@@ -12,6 +12,6 @@
     "prettier": "^2.6.2"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.19.1"
+    "@liveblocks/client": "^0.19.4"
   }
 }

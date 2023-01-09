@@ -5,27 +5,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "svelte-kit dev",
-    "build": "svelte-kit build",
-    "package": "svelte-kit package",
-    "preview": "svelte-kit preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
-    "check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "next",
-    "@sveltejs/kit": "next",
+    "@sveltejs/adapter-auto": "^1.0.0",
+    "@sveltejs/kit": "^1.0.7",
     "autoprefixer": "^10.4.2",
     "prettier": "^2.6.2",
-    "prettier-plugin-svelte": "^2.7.0",
-    "svelte": "^3.46.0",
-    "svelte-check": "^2.2.6",
-    "svelte-preprocess": "^4.10.1",
-    "tslib": "^2.3.1",
-    "typescript": "~4.5.4"
+    "prettier-plugin-svelte": "^2.9.0",
+    "svelte": "^3.55.0",
+    "tslib": "^2.4.1",
+    "typescript": "^4.5.4",
+    "vite": "^4.0.4"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.19.1",
-    "@liveblocks/node": "^0.19.1"
+    "@liveblocks/client": "^0.19.4",
+    "@liveblocks/node": "^0.19.4"
   }
 }

@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.19.1",
-    "@liveblocks/node": "^0.19.1",
-    "@liveblocks/react": "^0.19.1",
+    "@liveblocks/client": "^0.19.4",
+    "@liveblocks/node": "^0.19.4",
+    "@liveblocks/react": "^0.19.4",
     "nanoid": "^3.1.25",
     "next": "^12.1.6",
     "perfect-freehand": "^0.5.3",
