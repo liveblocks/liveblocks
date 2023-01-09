@@ -69,7 +69,7 @@ public API key. Then add our
 [enhancer](/docs/api-reference/liveblocks-redux#enhancer) to your store
 configuration.
 
-```js file="src/store.js"
+```ts file="src/store.ts"
 import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -78,7 +78,11 @@ export const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const initialState = {
+export type State = {
+  /* Your state type will be defined here */
+};
+
+const initialState: State = {
   /* default state will go there */
 };
 
@@ -94,7 +98,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
       }),
     ],
@@ -108,7 +112,7 @@ export default store;
 
 And edit `src/index.js` to add the react-redux provider to your app:
 
-```js highlight="6,7,11,13" file="src/index.js"
+```ts highlight="6,7,11,13" file="src/index.tsx"
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -140,7 +144,7 @@ Our enhancer is responsible to enter or leave a room when you dispatch
 In our main component, we want to connect to the Liveblocks room when the
 component does mount, and leave the room when it unmounts.
 
-```js file="src/App.js"
+```tsx file="src/App.tsx"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch } from "react-redux";
@@ -176,7 +180,7 @@ To achieve that, we are going to use the enhancer option
 It means that the part of the state named `shapes` should be automatically
 synced with Liveblocks Storage.
 
-```js file="src/store.js" highlight="10,27"
+```ts file="src/store.ts" highlight="10,27"
 import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -185,8 +189,19 @@ export const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const initialState = {
-  shapes: {},
+export type Shape = {
+  x: number;
+  y: number;
+  fill: string;
+};
+
+export type State = {
+  shapes: Record<string, Shape>;
+};
+
+const initialState: State = {
+  /* default state will go there */
+  shapes:{}
 };
 
 const slice = createSlice({
@@ -201,9 +216,8 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
-        storageMapping: { shapes: true },
       }),
     ],
   });
@@ -214,10 +228,10 @@ const store = makeStore();
 export default store;
 ```
 
-Afterwards, we draw the shapes in our canvas. To keep it simple for the
-tutorial, we are going to only support rectangle.
+Afterward, we draw the shapes inside our canvas. To keep it simple for the
+tutorial, we are going to only support rectangles.
 
-```jsx file="src/App.js" highlight="3,9-10,25-35,38-48"
+```tsx file="src/App.tsx" highlight="3,9-10,25-35,38-48"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -255,7 +269,7 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape }) => {
+const Rectangle = ({ shape }: { shape: Shape }) => {
   return (
     <div
       className="rectangle"
@@ -341,7 +355,7 @@ body {
 
 ## Insert rectangles
 
-Currently our whiteboard is empty, and there’s no way to add rectangles. Let’s
+Currently, our whiteboard is empty, and there’s no way to add rectangles. Let’s
 create a button that adds a randomly placed rectangle to the board.
 
 <Figure>
@@ -355,7 +369,7 @@ create a button that adds a randomly placed rectangle to the board.
 
 Add a new action to your store that randomly insert a rectangle on the board.
 
-```js file="src/store.js" highlight="9-17,27-35,39"
+```ts file="src/store.ts" highlight="9-17,27-35,39"
 import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -364,9 +378,20 @@ export const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
+export type Shape = {
+  x: number;
+  y: number;
+  fill: string;
+};
+
+type State = {
+  shapes: Record<string, Shape>;
+  insertRectangle: () => void;
+};
+
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function getRandomInt(max) {
+function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
@@ -374,7 +399,7 @@ function getRandomColor() {
   return COLORS[getRandomInt(COLORS.length)];
 }
 
-const initialState = {
+const initialState: State = {
   shapes: {},
 };
 
@@ -415,7 +440,7 @@ export default store;
 
 Then add a button to dispatch this action from the board.
 
-```jsx file="src/App.js" highlight="6,18,24-27"
+```tsx file="src/App.tsx" highlight="6,18,24-27"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -480,10 +505,17 @@ The middleware option
 means that we want to automatically sync the part of the state named
 `selectedShape` to Liveblocks Presence.
 
-```js file="src/store.js" highlight="5,15-17,21,30"
+```ts file="src/store.ts" highlight="5,15-17,21,30"
 /* ... */
 
-const initialState = {
+type State = {
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string | null) => void;
+};
+
+const initialState: State = {
   shapes: {},
   selectedShape: null,
 };
@@ -507,7 +539,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { shapes: true },
         presenceMapping: { selectedShape: true },
@@ -524,7 +556,7 @@ export default store;
 Update your `App` and `Rectangle` components to show if a shape is selected by
 the current user or someone else in the room.
 
-```jsx file="src/App.js" highlight="6,13-14,23-31,36,38,50-51,59,61-64"
+```tsx file="src/App.tsx" highlight="6,13-14,23-31,36,38,50-51,59,61-64"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -574,7 +606,12 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id }) => {
+const Rectangle = (props: {
+  id: string;
+  shape: Shape;
+  selectionColor: string;
+}) => {
+  const { id, shape, selectionColor } = props;
   const dispatch = useDispatch();
 
   return (
@@ -611,10 +648,18 @@ rectangles too.
 Create a `deleteShape` action to remove the selected shape from `shapes`, and
 then reset the user’s selection:
 
-```js file="src/store.js" highlight="20,25-30,34"
+```ts file="src/store.ts" highlight="20,25-30,34"
 /* ... */
 
-const initialState = {
+type State = {
+  shapes: Record<string, Shape>;
+  selectedShape: string | null;
+  insertRectangle: () => void;
+  onShapePointerDown: (shapeId: string | null) => void;
+  deleteShape: () => void;
+};
+
+const initialState: State= {
   shapes: {},
   selectedShape: null,
 };
@@ -666,7 +711,7 @@ const store = makeStore();
 export default store;
 ```
 
-```jsx file="src/App.js" highlight="6,25-30"
+```tsx file="src/App.tsx" highlight="6,25-30"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -721,7 +766,7 @@ Let’s move some rectangles!
 To allow users to move rectangles, we’ll update the `x` and `y` properties of
 the selected shape when a user drags it:
 
-```js file="src/store.js" highlight="6,18,23-31,39-40"
+```ts file="src/store.ts" highlight="6,18,23-31,39-40"
 /* ... */
 
 const initialState = {
@@ -782,7 +827,7 @@ const store = makeStore();
 export default store;
 ```
 
-```jsx file="src/App.js" highlight="10-11,30-36"
+```tsx file="src/App.tsx" highlight="10-11,30-36"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -850,7 +895,7 @@ and
 [`room.history.redo`](/docs/api-reference/liveblocks-client#Room.history.redo).
 These functions only impact modifications made to the room’s storage.
 
-```jsx file="src/App.js" highlight="12,48-53"
+```tsx file="src/App.tsx" highlight="12,48-53"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -938,7 +983,7 @@ then call
 [`history.resume`](/docs/api-reference/liveblocks-client#Room.history.resume)
 afterwards.
 
-```js file="src/App.js" highlight="36,59"
+```ts file="src/App.ts" highlight="36,59"
 import { useEffect } from "react";
 import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -984,7 +1029,12 @@ export default function App() {
   );
 }
 
-const Rectangle = ({ shape, selectionColor, id }) => {
+const Rectangle = (props: {
+  id: string;
+  shape: Shape;
+  selectionColor: string;
+}) => {
+  const { id, shape, selectionColor } = props;
   const dispatch = useDispatch();
 
   return (
@@ -1010,8 +1060,8 @@ storage.
 
 ## Summary
 
-In this tutorial, we’ve learnt about the concept of rooms, presence, and others.
-We've also learnt how to put all these into practice, and how to persist state
+In this tutorial, we’ve learned about the concept of rooms, presence, and others.
+We've also leared how to put all these into practice, and how to persist state
 using storage too.
 
 You can see some stats about the room you created in your

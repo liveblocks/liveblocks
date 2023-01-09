@@ -29,11 +29,11 @@ endpoint.
 ## Setup authentication endpoint [#authentication]
 
 Users can only interact with rooms they have access to. You can configure
-permission access in an `api/auth` endpoint by creating the `pages/api/auth.js`
+permission access in an `api/auth` endpoint by creating the `pages/api/auth.ts`
 file with the following code. This is where you will implement your security and
 define if the current user has access to a specific room.
 
-```js
+```tsx
 import { authorize } from "@liveblocks/node";
 
 // Replace this key with your secret key provided at
@@ -82,7 +82,7 @@ To connect to Liveblocks, you need to create a Liveblocks client with
 [`createClient`](/docs/api-reference/liveblocks-client#createClient) from the front-end and set the `authEndpoint` option based on
 the path of the endpoint created earlier.
 
-```js
+```tsx
 import { createClient } from "@liveblocks/client";
 
 // Create a Liveblocks client

@@ -38,14 +38,14 @@ One way to create an API endpoint in your Nuxt app is to create a
 [server middleware to extend Express](https://nuxtjs.org/docs/2.x/configuration-glossary/configuration-servermiddleware#custom-api-endpoint).
 Modify your `nuxt.config.js` with the following config.
 
-```js file="nuxt.config.js"
+```ts file="nuxt.config.ts"
 serverMiddleware: [{ path: "/api", handler: "~/api" }];
 ```
 
 Then create a file called `api.js` at the root of your project and add an
 Express endpoint like below.
 
-```js file="api.js"
+```ts file="api.ts"
 import { authorize } from "@liveblocks/node";
 import express from "express";
 
@@ -102,7 +102,7 @@ To connect to Liveblocks, you need to create a Liveblocks client with
 [`createClient`][] from the front-end and set the `authEndpoint` option based on
 the path of the endpoint created earlier.
 
-```js
+```ts
 import { createClient } from "@liveblocks/client";
 
 // Create a Liveblocks client
