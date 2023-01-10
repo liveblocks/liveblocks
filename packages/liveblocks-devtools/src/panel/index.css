@@ -12,6 +12,8 @@
   --color-code-class: hsl(226, 59%, 51%);
   --color-code-constant: hsl(191, 91%, 37%);
   --color-code-string: hsl(151, 55%, 42%);
+
+  color-scheme: light;
 }
 
 :root.dark {
@@ -24,6 +26,8 @@
   --color-code-class: hsl(228, 100%, 75%);
   --color-code-constant: hsl(186, 100%, 42%);
   --color-code-string: hsl(167, 65%, 66%);
+
+  color-scheme: dark;
 }
 
 body {
