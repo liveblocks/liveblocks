@@ -99,10 +99,17 @@ export function Code({
           {...props}
         >
           {tokens.map((line, index) => (
-            <div {...getLineProps({ line, key: index })}>
-              {line.map((token, key) => (
-                <span {...getTokenProps({ token, key })} />
-              ))}
+            <div
+              {...getLineProps({ line, key: index, className: "table-row" })}
+            >
+              <span className="text-light-900 dark:text-dark-600 table-cell select-none pr-2.5 pl-0.5 text-right">
+                {index + 1}
+              </span>
+              <span className="table-cell">
+                {line.map((token, key) => (
+                  <span {...getTokenProps({ token, key })} />
+                ))}
+              </span>
             </div>
           ))}
         </pre>
