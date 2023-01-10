@@ -1,4 +1,6 @@
 import type { DevTools, Json } from "@liveblocks/core";
+import * as RadixDialog from "@radix-ui/react-dialog";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import cx from "classnames";
 import type {
   ComponentProps,
@@ -8,7 +10,14 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, Fragment, useCallback, useRef } from "react";
+import {
+  forwardRef,
+  Fragment,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
@@ -22,6 +31,7 @@ import {
   wrapObject,
   wrapProperty,
 } from "../../lib/stringify";
+import { EyeIcon } from "../icons/actions";
 import {
   ArrayIcon,
   BooleanOffIcon,
@@ -33,7 +43,10 @@ import {
   QuestionIcon,
   StringIcon,
   UserIcon,
-} from "./Icons";
+} from "../icons/types";
+import { Code } from "./Code";
+import { Dialog } from "./Dialog";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -298,7 +311,7 @@ function Row({ node, children, className, ...props }: RowProps) {
     <div
       className={cx(
         className,
-        "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
+        "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
         isSelected
           ? [
               background(node.data),
@@ -308,6 +321,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
+      data-selected={isSelected || undefined}
       {...props}
     >
       {shouldShowUpdates && (
@@ -483,13 +497,81 @@ function JsonNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.JsonTreeNode>) {
+  const [isValueDialogOpen, setValueDialogOpen] = useState(false);
   const toggle = useToggleNode(node);
+  const handleClick = useCallback((event: MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    setValueDialogOpen(true);
+  }, []);
+  const valueDialogContent = useMemo(() => {
+    return (
+      <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
+        <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
+          <div className="flex min-w-0 items-center">
+            <div className={cx(color(node.data), "mr-2 flex-none")}>
+              {icon(node.data)}
+            </div>
+            <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
+              {node.data.key}
+            </span>
+          </div>
+          <RadixDialog.Close
+            aria-label="Close"
+            className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
+          >
+            <svg
+              width="16"
+              height="16"
+              fill="none"
+              role="presentation"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fillRule="evenodd"
+                clipRule="evenodd"
+                d="M12.53 4.53a.75.75 0 0 0-1.06-1.06L8 6.94 4.53 3.47a.75.75 0 0 0-1.06 1.06L6.94 8l-3.47 3.47a.75.75 0 1 0 1.06 1.06L8 9.06l3.47 3.47a.75.75 0 1 0 1.06-1.06L9.06 8l3.47-3.47Z"
+                fill="currentColor"
+              />
+            </svg>
+          </RadixDialog.Close>
+        </div>
+        <Code
+          code={JSON.stringify(node.data.payload, null, 2)}
+          language="json"
+        />
+      </div>
+    );
+  }, [node.data.payload]);
+
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
         <RowName>{node.data.key}</RowName>
       </RowInfo>
-      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+      {!node.isOpen && (
+        <>
+          <RowPreview>{summarize(node.data)}</RowPreview>
+          <div className="ml-auto flex-none">
+            <Dialog
+              content={valueDialogContent}
+              open={isValueDialogOpen}
+              onOpenChange={setValueDialogOpen}
+            >
+              <Tooltip content="Show value" sideOffset={8}>
+                <button
+                  onClick={handleClick}
+                  aria-label="Show value"
+                  className="text-light-500 dark:text-dark-500 hover:text-light-700 dark:hover:text-dark-700 tree-focus:group-[[data-selected]]:text-light-0/60 tree-focus:group-[[data-selected]]:hover:text-light-0/80 hidden h-full items-center justify-center group-hover:flex group-focus:flex group-[[data-selected]]:flex"
+                >
+                  <EyeIcon />
+                </button>
+              </Tooltip>
+            </Dialog>
+          </div>
+        </>
+      )}
     </Row>
   );
 }
@@ -655,26 +737,28 @@ export const StorageTree = forwardRef<
   TreeProps<StorageTreeNode>
 >(({ className, style, ...props }, ref) => {
   return (
-    <AutoSizer className={cx(className, "tree")} style={style}>
-      {({ width, height }) => (
-        <ArboristTree
-          ref={ref}
-          width={width}
-          height={height}
-          childrenAccessor={storageChildAccessor}
-          disableDrag
-          disableDrop
-          disableMultiSelection
-          className="!overflow-x-hidden"
-          selectionFollowsFocus
-          rowHeight={ROW_HEIGHT}
-          indent={ROW_INDENT}
-          {...props}
-        >
-          {LsonNodeRenderer}
-        </ArboristTree>
-      )}
-    </AutoSizer>
+    <TooltipProvider skipDelayDuration={0}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={storageChildAccessor}
+            disableDrag
+            disableDrop
+            disableMultiSelection
+            className="!overflow-x-hidden"
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            {...props}
+          >
+            {LsonNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    </TooltipProvider>
   );
 });
 
@@ -683,26 +767,28 @@ export const PresenceTree = forwardRef<
   TreeProps<PresenceTreeNode>
 >(({ className, style, ...props }, ref) => {
   return (
-    <AutoSizer className={cx(className, "tree")} style={style}>
-      {({ width, height }) => (
-        <ArboristTree
-          ref={ref}
-          width={width}
-          height={height}
-          childrenAccessor={presenceChildAccessor}
-          disableDrag
-          disableDrop
-          disableMultiSelection
-          className="!overflow-x-hidden"
-          selectionFollowsFocus
-          rowHeight={ROW_HEIGHT}
-          indent={ROW_INDENT}
-          {...props}
-        >
-          {PresenceNodeRenderer}
-        </ArboristTree>
-      )}
-    </AutoSizer>
+    <TooltipProvider skipDelayDuration={0}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={presenceChildAccessor}
+            disableDrag
+            disableDrop
+            disableMultiSelection
+            className="!overflow-x-hidden"
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            {...props}
+          >
+            {PresenceNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    </TooltipProvider>
   );
 });
 

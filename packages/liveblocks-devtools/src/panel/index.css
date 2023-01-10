@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-code: hsl(252, 4%, 28%);
+  --color-code-comment: hsla(252, 4%, 28%, 0.5);
+  --color-code-variable: hsl(34, 100%, 41%);
+  --color-code-value: hsl(336, 74%, 54%);
+  --color-code-punctuation: hsl(292, 50%, 46%);
+  --color-code-tag: hsl(252, 56%, 58%);
+  --color-code-class: hsl(226, 59%, 51%);
+  --color-code-constant: hsl(191, 91%, 37%);
+  --color-code-string: hsl(151, 55%, 42%);
+}
+
+:root.dark {
+  --color-code: hsl(256, 6%, 93%);
+  --color-code-comment: hsla(256, 6%, 93%, 0.4);
+  --color-code-variable: hsl(36, 100%, 70%);
+  --color-code-value: hsl(341, 90%, 70%);
+  --color-code-punctuation: hsl(275, 80%, 71%);
+  --color-code-tag: hsl(250, 95%, 77%);
+  --color-code-class: hsl(228, 100%, 75%);
+  --color-code-constant: hsl(186, 100%, 42%);
+  --color-code-string: hsl(167, 65%, 66%);
+}
+
 body {
   @apply bg-light-0 text-dark-0 dark:bg-dark-0 dark:text-light-0 overflow-hidden text-[75%];
 }
