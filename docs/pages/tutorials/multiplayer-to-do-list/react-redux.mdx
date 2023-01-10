@@ -39,7 +39,7 @@ First, we need to create a new app with
 [`create-react-app`](https://create-react-app.dev/):
 
 ```bash
-npx create-react-app redux-todo-app
+npx create-react-app redux-todo-app --template typescript
 ```
 
 Then run the following command to install the Liveblocks packages and Redux:
@@ -75,7 +75,7 @@ configuration.
 
 ```js file="src/store.js"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
@@ -83,6 +83,7 @@ const client = createClient({
 });
 
 const initialState = {};
+
 
 const slice = createSlice({
   name: "state",
@@ -96,7 +97,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
       }),
     ],
@@ -110,7 +111,7 @@ export default store;
 
 We need to edit `src/index.js` to add the react-redux provider:
 
-```js highlight="6,7,11,13" file="src/index.js"
+```tsx highlight="6,7,11,13" file="src/index.tsx"
 import React from "react";
 import ReactDOM from "react-dom";
 import "./index.css";
@@ -142,7 +143,7 @@ We are going to dispatch the actions provided by `@liveblocks/redux` to
 In our main component, we want to connect to the Liveblocks room when the
 component does mount, and leave the room when it unmounts.
 
-```js file="src/App.js"
+```jsx file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { actions } from "@liveblocks/redux";
@@ -186,7 +187,7 @@ We’ll be doing this by using the injected object
 [`liveblocks.others`](/docs/api-reference/liveblocks-redux#liveblocks-state-others)
 to show who’s currently inside the room.
 
-```js highlight="2,7-17,35-37" file="src/App.js"
+```tsx highlight="2,7-17,35-37" file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
@@ -343,7 +344,12 @@ const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const initialState = {
+const State = {
+  draft: string,
+  isTyping: Boolean
+}
+
+const initialState: State = {
   draft: "",
   isTyping: false,
 };
@@ -365,7 +371,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { isTyping: true },
       }),
@@ -382,7 +388,7 @@ Now that we set the `isTyping` state when necessary, let's create a new
 component called `SomeoneIsTyping` to display a message when at least one other
 user has `isTyping` equals to `true`.
 
-```js highlight="5,11-19,22,40-47" file="src/App.js"
+```tsx highlight="5,11-19,22,40-47" file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
@@ -457,14 +463,20 @@ To achieve that, we are going to use the enhancer option
 It means that the part of the state named `todos` will be synced with Liveblocks
 Storage.
 
-```js highlight="10,23-30,34,42" file="src/store.js"
+```ts highlight="10,23-30,34,42" file="src/store.ts"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
+
+export type State = {
+  todos: string[],
+  draft: string,
+  isTyping: boolean
+}
 
 const initialState = {
   todos: [],
@@ -497,7 +509,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         storageMapping: { todos: true },
         presenceMapping: { isTyping: true },
@@ -514,7 +526,7 @@ export default store;
 We can display the list of todos and use the actions `addTodo` and `deleteTodo`
 to update our list:
 
-```js highlight="5,13,38-41,45-57" file="src/App.js"
+```tsx highlight="5,13,38-41,45-57" file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";

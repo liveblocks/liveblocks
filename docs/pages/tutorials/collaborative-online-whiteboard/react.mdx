@@ -195,6 +195,15 @@ export type Shape = {
   fill: string;
 };
 
+type State = {
+  shapes: Record<string, Shape>;
+  insertRectangle: () => void;
+};
+
+type CanvasProps = {
+  shapes: Record<string, Shape>
+}
+
 export default function App() {
   const shapes = useStorage((root)=> root.shapes)
   // const shapes = useMap("shapes");
@@ -206,7 +215,7 @@ export default function App() {
   return <Canvas shapes={shapes} />;
 }
 
-function Canvas({ shapes: new LiveMap <string, Object>() }) {
+function Canvas({ shapes }: CanvasProps) {
   return (
     <>
       <div className="canvas">
@@ -218,7 +227,9 @@ function Canvas({ shapes: new LiveMap <string, Object>() }) {
   );
 }
 
-const Rectangle = ({ shape }) => {
+const Rectangle =(props: {
+  shape: Shape;
+}) => {
   const { x, y, fill } = shape;
 
   return (
@@ -327,7 +338,7 @@ import "./App.css";
 
 const COLORS = ["#DC2626", "#D97706", "#059669", "#7C3AED", "#DB2777"];
 
-function getRandomInt(max) {
+function getRandomInt(max: number) {
   return Math.floor(Math.random() * max);
 }
 
@@ -337,7 +348,7 @@ function getRandomColor() {
 
 /* App */
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: CanvasProps) {
   const insertRectangle = () => {
     const shapeId = Date.now().toString();
     const rectangle = {

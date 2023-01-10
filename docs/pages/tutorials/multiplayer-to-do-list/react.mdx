@@ -37,7 +37,7 @@ The source code for this guide is
 Create a new app with [`create-react-app`](https://create-react-app.dev/):
 
 ```bash
-npx create-react-app react-todo-app
+npx create-react-app react-todo-app --template typescript
 ```
 
 Then run the following command to install the Liveblocks packages:
@@ -64,7 +64,7 @@ key. For more info, see the [authentication guide](/docs/guides/authentication).
 Let’s now add a new file `src/liveblocks.config.js` to our application to create
 a Liveblocks client, using the public key as shown below.
 
-```jsx file="src/liveblocks.config.js"
+```ts file="src/liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -82,7 +82,7 @@ Instead of using the client directly, we’re going to use [`createRoomContext`]
 from `@liveblocks/react` to create a [`RoomProvider`][] and hooks to make it
 easy to consume from our components.
 
-```jsx file="src/liveblocks.config.js" highlight="2,8-10"
+```ts file="src/liveblocks.config.js" highlight="2,8-10"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -98,14 +98,14 @@ export const {
 You might be wondering why we’re creating our Providers and Hooks with
 `createRoomContext` instead of importing them directly from
 `@liveblocks/client`. This allows TypeScript users to define their Liveblocks
-types once in one unique location—providing a helpful autocompletion experience
+types once in one unique location—providing a helpful auto-completion experience
 when using those hooks elsewhere.
 
 We can now import the `RoomProvider` directly from our `liveblocks.config.js`
 file. Every component wrapped inside `RoomProvider` will have access to the
 React hooks we’ll be using to interact with this room.
 
-```jsx file="src/App.js" highlight="2,6-10"
+```jsx file="src/App.jsx" highlight="2,6-10"
 import { Suspense } from "react";
 import { RoomProvider } from "./liveblocks.config";
 
@@ -170,7 +170,7 @@ containing information about each user. We can get the current user count from
 the length of that array. Add the following code to `src/App.js`, and open your
 app in multiple windows to see it in action.
 
-```jsx file="src/App.js" highlight="1,4,7"
+```tsx file="src/App.tsx" highlight="1,4,7"
 import { useOthers } from "./liveblocks.config";
 
 function WhoIsHere() {
