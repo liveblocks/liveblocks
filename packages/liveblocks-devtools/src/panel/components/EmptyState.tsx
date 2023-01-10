@@ -77,7 +77,8 @@ export function EmptyState({
       </div>
       <div className="bg-light-0 dark:bg-dark-0 border-light-300 dark:border-dark-300 flex h-12 w-full flex-none items-center justify-center border-t px-8">
         <p className="text-dark-900 dark:text-dark-800 text-2xs truncate leading-normal">
-          Requires{" "}
+          Requires a <strong className="font-medium">development</strong> build
+          of{" "}
           <span className="relative inline-block px-[0.35em] py-[0.1em] before:absolute before:inset-0 before:rounded-[0.4em] before:bg-current before:opacity-10">
             @liveblocks/client
           </span>{" "}
