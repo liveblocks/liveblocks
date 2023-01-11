@@ -2588,6 +2588,8 @@ async function fetchAuthEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
+    // Credentials are needed to support authentication with cookies
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {
