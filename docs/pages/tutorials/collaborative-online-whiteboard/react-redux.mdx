@@ -40,7 +40,7 @@ The source code for this guide is
 Create a new app with [`create-react-app`](https://create-react-app.dev/):
 
 ```bash
-npx create-react-app redux-whiteboard
+npx create-react-app redux-whiteboard --template typescript
 ```
 
 Then run the following command to install the Liveblocks packages and Redux:
@@ -71,7 +71,8 @@ configuration.
 
 ```ts file="src/store.ts"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer } from "@liveblocks/redux";
+import { WithLiveblocks } from '@liveblocks/redux';
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 export const client = createClient({
