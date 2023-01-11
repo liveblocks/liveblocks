@@ -11,8 +11,8 @@ export type {
   LsonObject,
   Others,
   Room,
-  StorageUpdate,
   StorageStatus,
+  StorageUpdate,
   User,
 } from "@liveblocks/core";
 export {
