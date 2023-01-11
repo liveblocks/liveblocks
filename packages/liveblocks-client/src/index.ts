@@ -12,6 +12,7 @@ export type {
   Others,
   Room,
   StorageUpdate,
+  StorageStatus,
   User,
 } from "@liveblocks/core";
 export {

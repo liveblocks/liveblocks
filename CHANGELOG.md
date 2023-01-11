@@ -1,3 +1,7 @@
+# v0.19.5
+
+Export the `StorageStatus` type (introduced in 0.19.3).
+
 # v0.19.4
 
 Fix CORS issue.
