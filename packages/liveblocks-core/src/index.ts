@@ -108,6 +108,7 @@ export type {
   History,
   Room,
   RoomInitializers,
+  StorageStatus,
 } from "./room";
 export type { Immutable } from "./types/Immutable";
 export type { NodeMap, ParentToChildNodeMap } from "./types/NodeMap";
