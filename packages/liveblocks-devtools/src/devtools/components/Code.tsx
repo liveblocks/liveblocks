@@ -93,7 +93,7 @@ export function Code({
           className={cx(
             className,
             prismClassName,
-            "child:select-auto select-auto overflow-y-auto px-2.5 py-2"
+            "child:select-auto cursor-text select-auto overflow-y-auto px-2.5 py-2"
           )}
           style={{ ...style, ...prismStyle }}
           {...props}
