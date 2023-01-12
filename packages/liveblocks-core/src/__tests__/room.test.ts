@@ -2,8 +2,10 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import { LiveList } from "../crdts/LiveList";
+import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import { lsonToJson } from "../immutable";
+import { nn } from "../lib/assert";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
@@ -15,9 +17,9 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
-  _private_defaultState as defaultState,
-  _private_makeStateMachine as makeStateMachine,
   createRoom,
+  _private_defaultState as defaultState,
+  _private_makeStateMachine as makeStateMachine
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
@@ -30,10 +32,11 @@ import {
   MockWebSocket,
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  prepareStorageUpdateTest,
   reconnect,
   serverMessage,
   waitFor,
-  withDateNow,
+  withDateNow
 } from "./_utils";
 
 const defaultContext = {
@@ -990,6 +993,34 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
     });
+
+    test(
+      "nested storage updates",
+      prepareStorageUpdateTest<{
+        items: LiveList<LiveObject<{ names: LiveList<string> }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+          createSerializedList("0:3", "0:2", "names"),
+        ],
+        async ({ root }) => {
+          // TOOD: Call this in batch
+          const items = root.get("items");
+          items.insert(
+            new LiveObject({ names: new LiveList(["John Doe"]) }),
+            0
+          );
+          const obj = items.get(1);
+          const names = nn(obj).get("names");
+          names.push("Jane Doe");
+          items.push(new LiveObject({ names: new LiveList(["James Doe"]) }));
+
+          // TODO: Actually assert updates
+        }
+      )
+    );
 
     test("batch history", () => {
       const { machine } = setupStateMachine({});
