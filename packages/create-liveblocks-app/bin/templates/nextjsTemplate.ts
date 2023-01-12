@@ -8,6 +8,12 @@ import { initializeGit } from "../utils/initializeGit";
 import { install as installApp } from "../utils/install";
 import { getPackageManager } from "../utils/getPackageManager";
 import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
+import open from "open";
+
+// TODO
+// Use external-id to pass info on as base64?
+// Example URL:
+// https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=EXTRADATAHERE
 
 const NEXTJS_STARTER_KIT_GUIDE_URL =
   "https://liveblocks.io/docs/guides/nextjs-starter-kit";
