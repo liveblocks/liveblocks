@@ -458,7 +458,7 @@ export function prepareStorageUpdateTest<
       TStorage,
       TUserMeta,
       TRoomEvent
-    >(items, 1, (messages) => {
+    >(items, -2, (messages) => {
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           refMachine.onMessage(
