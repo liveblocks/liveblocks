@@ -23,6 +23,7 @@ type Questions = {
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
 
+  // === Configure by asking prompts, questions skipped if flags exist ===
   const questions: PromptObject<keyof Questions>[] = [
     {
       type: flags.example ? null : "text",
@@ -53,6 +54,7 @@ export async function create(flags: Record<string, any>) {
     },
   ];
 
+  // === Prompt return values, using flags as defaults ===================
   const {
     example = flags.example,
     name = flags.name,
@@ -66,6 +68,7 @@ export async function create(flags: Record<string, any>) {
     },
   });
 
+  // === Clone example repo ==============================================
   const repoDir = EXAMPLES_REPO_LOCATION + example;
   const appDir = path.join(process.cwd(), "./" + name);
 
@@ -73,9 +76,13 @@ export async function create(flags: Record<string, any>) {
   const result = await cloneRepo({ repoDir, appDir });
 
   if (!result) {
+    console.log();
+    console.log(c.redBright.bold("Target repo is empty"));
+    console.log();
     return;
   }
 
+  // === Install and set up git ==========================================
   if (install) {
     await installApp({
       appDir: appDir,
@@ -87,12 +94,13 @@ export async function create(flags: Record<string, any>) {
     await initializeGit({ appDir });
   }
 
-  // Check which command to start developing
+  // === Check which command will start dev server from package.json =====
   const packageJsonLocation = path.join(appDir, "package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonLocation, "utf8"));
   const devCommand = getDevCommand(packageJson?.scripts || {});
   const buildCommand = getBuildCommand(packageJson?.scripts || {});
 
+  // === Final console messages ==========================================
   const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
   let instructionCount = 1;
 

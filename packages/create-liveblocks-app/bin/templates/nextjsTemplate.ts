@@ -25,7 +25,8 @@ const AUTH_PROVIDERS = ["demo", "github", "auth0"] as const;
 type Questions = {
   name: string;
   auth: typeof AUTH_PROVIDERS[number];
-  prettier: boolean;
+  vercel: boolean;
+  liveblocksSecret: boolean;
   git: boolean;
   install: boolean;
 };
@@ -33,6 +34,7 @@ type Questions = {
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
 
+  // === Configure by asking prompts, questions skipped if flags exist ===
   const questions: PromptObject<keyof Questions>[] = [
     {
       type: flags.name ? null : "text",
@@ -42,7 +44,8 @@ export async function create(flags: Record<string, any>) {
     {
       type: flags.auth && AUTH_PROVIDERS.includes(flags.auth) ? null : "select",
       name: "auth",
-      message: "Which authentication method would you like to use?",
+      message:
+        "Which authentication method would you like to use in your project?",
       choices: [
         {
           title: "Demo",
@@ -65,7 +68,40 @@ export async function create(flags: Record<string, any>) {
       inactive: "no",
     },
     {
-      type: flags.git !== undefined ? null : "confirm",
+      // TODO add Vercel flag
+      type: "confirm",
+      name: "vercel",
+      message: "Would you like to deploy on Vercel?",
+      initial: true,
+      active: "yes",
+      inactive: "no",
+    },
+    {
+      // TODO add liveblocksSecret flag
+      type: (_, values) => {
+        // Vercel integration always uses liveblocksSecret, so skip question
+        if (values.vercel) {
+          return null;
+        }
+        // TODO check for liveblocksSecret flag
+        return "confirm";
+      },
+      name: "liveblocksSecret",
+      message:
+        "Would you like to get your Liveblocks secret key automatically?",
+      initial: true,
+      active: "yes",
+      inactive: "no",
+    },
+    {
+      type: (_, values) => {
+        // Vercel needs git, so skip question if Vercel is true
+        // TODO check for Vercel flag too
+        if (values.vercel) {
+          return null;
+        }
+        return flags.git !== undefined ? null : "confirm";
+      },
       name: "git",
       message: "Would you like to initialize a new git repository?",
       initial: true,
@@ -82,9 +118,12 @@ export async function create(flags: Record<string, any>) {
     },
   ];
 
+  // === Prompt return values, using flags as defaults ===================
   const {
     name = flags.name,
     auth = flags.auth,
+    vercel = flags.vercel,
+    liveblocksSecret = flags.liveblocksSecret,
     git = flags.git,
     install = flags.install,
   }: Questions = await prompts(questions, {
@@ -95,6 +134,15 @@ export async function create(flags: Record<string, any>) {
     },
   });
 
+  if (vercel) {
+    // Use Vercel deploy button
+  }
+
+  if (liveblocksSecret) {
+    // Use `/integrations/general` on liveblocks.io
+  }
+
+  // === Clone starter kit repo ==========================================
   const repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
   const appDir = path.join(process.cwd(), "./" + name);
 
@@ -110,7 +158,7 @@ export async function create(flags: Record<string, any>) {
 
   const filesToWrite: { location: string; content: string }[] = [];
 
-  // Set up authentication
+  // === Set up starter kit authentication ===============================
   const nextauthTsLocation = path.join(
     appDir,
     "pages",
@@ -124,7 +172,7 @@ export async function create(flags: Record<string, any>) {
     content: addAuthproviderSetup(auth, nextauthTs),
   });
 
-  // Add .env.local
+  // === Add .env.local ==================================================
   const envVariables = [
     {
       key: "LIVEBLOCKS_SECRET_KEY",
@@ -142,7 +190,7 @@ export async function create(flags: Record<string, any>) {
     content: envVariables.map(({ key, value }) => `${key}=${value}`).join("\n"),
   });
 
-  // Add package.json
+  // === Add package.json ================================================
   const packageJsonLocation = path.join(appDir, "package.json");
   const packageJson = JSON.parse(fs.readFileSync(packageJsonLocation, "utf8"));
   filesToWrite.push({
@@ -150,7 +198,7 @@ export async function create(flags: Record<string, any>) {
     content: JSON.stringify(packageJson, null, 2),
   });
 
-  // Write files
+  // === Write files, install, set up git ================================
   filesToWrite.forEach(({ location, content }) => {
     fs.writeFileSync(location, content);
   });
@@ -166,6 +214,7 @@ export async function create(flags: Record<string, any>) {
     await initializeGit({ appDir });
   }
 
+  // === Final console messages ==========================================
   const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
   let instructionCount = 1;
 
