@@ -16,9 +16,9 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
-  createRoom,
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
+  createRoom,
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
