@@ -2,6 +2,7 @@ import { rest } from "msw";
 import { setupServer } from "msw/node";
 
 import { LiveList } from "../crdts/LiveList";
+import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
 import { lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
@@ -15,12 +16,13 @@ import type { IdTuple, SerializedCrdt } from "../protocol/SerializedCrdt";
 import { CrdtType } from "../protocol/SerializedCrdt";
 import { ServerMsgCode } from "../protocol/ServerMsg";
 import {
+  createRoom,
   _private_defaultState as defaultState,
   _private_makeStateMachine as makeStateMachine,
-  createRoom,
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
+import { listUpdate, listUpdateInsert } from "./_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -30,6 +32,7 @@ import {
   MockWebSocket,
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  prepareStorageUpdateTest,
   reconnect,
   serverMessage,
   waitFor,
@@ -990,6 +993,48 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
     });
+
+    test(
+      "nested storage updates",
+      prepareStorageUpdateTest<{
+        items: LiveList<LiveObject<{ names: LiveList<string> }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+          createSerializedList("0:3", "0:2", "names"),
+        ],
+        async ({ assert, root, batch }) => {
+          batch(() => {
+            const items = root.get("items");
+            items.insert(
+              new LiveObject({ names: new LiveList(["John Doe"]) }),
+              0
+            );
+            items.get(1)?.get("names").push("Jane Doe");
+            items.push(new LiveObject({ names: new LiveList(["James Doe"]) }));
+          });
+
+          assert([
+            [
+              listUpdate(
+                [
+                  { names: ["John Doe"] },
+                  { names: ["Jane Doe"] },
+                  { names: ["James Doe"] },
+                ],
+                [
+                  listUpdateInsert(0, { names: ["John Doe"] }),
+                  listUpdateInsert(2, { names: ["James Doe"] }),
+                ]
+              ),
+              listUpdate(["Jane Doe"], [listUpdateInsert(0, "Jane Doe")]),
+            ],
+          ]);
+        }
+      )
+    );
 
     test("batch history", () => {
       const { machine } = setupStateMachine({});
