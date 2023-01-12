@@ -451,14 +451,14 @@ export function prepareStorageUpdateTest<
 ): () => Promise<void> {
   return async () => {
     const { storage: refStorage, machine: refMachine } =
-      await prepareRoomWithStorage(items, 1);
+      await prepareRoomWithStorage(items, -1);
 
     const { storage, machine } = await prepareRoomWithStorage<
       TPresence,
       TStorage,
       TUserMeta,
       TRoomEvent
-    >(items, 0, (messages) => {
+    >(items, 1, (messages) => {
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           refMachine.onMessage(
@@ -496,7 +496,11 @@ export function prepareStorageUpdateTest<
       expect(refJsonUpdates).toEqual(updates);
     }
 
-    await callback({ root: storage.root, machine, assert });
+    await callback({
+      root: storage.root,
+      machine,
+      assert,
+    });
   };
 }
 
