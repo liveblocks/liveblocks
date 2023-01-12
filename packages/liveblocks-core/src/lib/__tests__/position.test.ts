@@ -180,12 +180,12 @@ describe("position datastructure", () => {
         genPos(),
 
         (pos1, pos2) => {
-          if (pos1 !== pos2) {
-            expect(comparePosition(pos1, pos2) < 0).toEqual(pos1 < pos2);
-            expect(comparePosition(pos1, pos2) > 0).toEqual(pos1 > pos2);
-          } else {
-            // Skip. Equal strings are not comparable.
-          }
+          expect(comparePosition(pos1, pos2) < 0).toEqual(pos1 < pos2);
+          expect(comparePosition(pos1, pos2) > 0).toEqual(pos1 > pos2);
+          expect(comparePosition(pos1, pos2) === 0).toEqual(pos1 === pos2);
+          expect(comparePosition(pos1, pos2) <= 0).toEqual(pos1 <= pos2);
+          expect(comparePosition(pos1, pos2) >= 0).toEqual(pos1 >= pos2);
+          expect(comparePosition(pos1, pos2) !== 0).toEqual(pos1 !== pos2);
         }
       )
     );
