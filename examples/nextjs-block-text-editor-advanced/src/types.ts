@@ -125,6 +125,14 @@ type LeafDecoration = {
   placeholder?: string;
 };
 
+export type User = {
+  id: string;
+  name: string;
+  avatar?: string;
+  color: string;
+  groupIds: string[];
+};
+
 export type Format = "bold" | "underline" | "strikeThrough" | "italic";
 
 export type Theme = "light" | "dark";

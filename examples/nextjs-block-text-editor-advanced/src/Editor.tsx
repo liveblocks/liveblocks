@@ -294,172 +294,172 @@ export default function App() {
   }
 
   return (
-    <div className={styles.editor}>
-      <Header />
+      <div className={styles.editor}>
+        <Header />
 
-      <div
-        className={classNames(styles.prose, "prose")}
-        id={PROSE_CONTAINER_ID}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className={styles.container}>
-          <Slate
-            editor={editor}
-            value={blocks?.toArray()}
-            onChange={() => {
-              if (blocks == null) {
-                return;
-              }
-
-              // Synchronizing Liveblocks storage and presence...
-
-              // Setting a flag to make sure that we don't create an infinite loop with Storage subscriptions
-              isEditingRef.current = true;
-
-              room.batch(() => {
-                // If the operation is a "move_node", we assume that it's coming from the drag operation and we simply call LiveList.move
-                if (
-                  editor.operations.length === 1 &&
-                  editor.operations[0].type === "move_node" &&
-                  editor.operations[0].isRemote === false
-                ) {
-                  const moveOperation = editor.operations[0];
-                  blocks.move(moveOperation.path[0], moveOperation.newPath[0]);
+        <div
+          className={classNames(styles.prose, "prose")}
+          id={PROSE_CONTAINER_ID}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className={styles.container}>
+            <Slate
+              editor={editor}
+              value={blocks?.toArray()}
+              onChange={() => {
+                if (blocks == null) {
                   return;
                 }
 
-                if (editor.selection) {
-                  updateMyPresence({
-                    selectedBlockId: (
-                      editor.children[
-                        editor.selection.anchor.path[0]
-                      ] as CustomElement
-                    ).id,
-                  });
-                } else {
-                  updateMyPresence({
-                    selectedBlockId: null,
-                  });
-                }
+                // Synchronizing Liveblocks storage and presence...
 
-                if (
-                  editor.operations.every(
-                    (op) => op.isRemote || op.type === "set_selection"
-                  )
-                ) {
-                  return;
-                }
+                // Setting a flag to make sure that we don't create an infinite loop with Storage subscriptions
+                isEditingRef.current = true;
 
-                // Naive algorithm to patch Liveblocks LiveList. Performance could be vastly improved
-                const children = editor.children as CustomElement[];
-
-                // Insert missing blocks
-                for (let i = 0; i < editor.children.length; i++) {
-                  const child = editor.children[i] as CustomElement;
-                  const liveblocksChildIndex = blocks.findIndex(
-                    (block) => block.id === child.id
-                  );
-
-                  if (liveblocksChildIndex === -1) {
-                    blocks.insert(child, i);
+                room.batch(() => {
+                  // If the operation is a "move_node", we assume that it's coming from the drag operation and we simply call LiveList.move
+                  if (
+                    editor.operations.length === 1 &&
+                    editor.operations[0].type === "move_node" &&
+                    editor.operations[0].isRemote === false
+                  ) {
+                    const moveOperation = editor.operations[0];
+                    blocks.move(moveOperation.path[0], moveOperation.newPath[0]);
+                    return;
                   }
-                }
 
-                // Delete blocks that are not in Slate children
-                for (let i = 0; i < blocks.length; i++) {
-                  const block = blocks.get(i)!;
+                  if (editor.selection) {
+                    updateMyPresence({
+                      selectedBlockId: (
+                        editor.children[
+                          editor.selection.anchor.path[0]
+                        ] as CustomElement
+                      ).id,
+                    });
+                  } else {
+                    updateMyPresence({
+                      selectedBlockId: null,
+                    });
+                  }
 
                   if (
-                    children.some((child) => child.id === block.id) === false
+                    editor.operations.every(
+                      (op) => op.isRemote || op.type === "set_selection"
+                    )
                   ) {
-                    blocks.delete(i);
-                    i--;
+                    return;
                   }
-                }
 
-                // At this point child that are not equals by reference needs to be replaced
-                for (let i = 0; i < children.length; i++) {
-                  const child = children[i];
-                  const block = blocks.get(i);
+                  // Naive algorithm to patch Liveblocks LiveList. Performance could be vastly improved
+                  const children = editor.children as CustomElement[];
 
-                  if (child !== block) {
-                    blocks.set(i, child);
+                  // Insert missing blocks
+                  for (let i = 0; i < editor.children.length; i++) {
+                    const child = editor.children[i] as CustomElement;
+                    const liveblocksChildIndex = blocks.findIndex(
+                      (block) => block.id === child.id
+                    );
+
+                    if (liveblocksChildIndex === -1) {
+                      blocks.insert(child, i);
+                    }
                   }
-                }
-              });
 
-              isEditingRef.current = false;
-            }}
-          >
-            <Toolbar />
-            <DndContext
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragCancel={handleDragCancel}
-              modifiers={[restrictToVerticalAxis]}
+                  // Delete blocks that are not in Slate children
+                  for (let i = 0; i < blocks.length; i++) {
+                    const block = blocks.get(i)!;
+
+                    if (
+                      children.some((child) => child.id === block.id) === false
+                    ) {
+                      blocks.delete(i);
+                      i--;
+                    }
+                  }
+
+                  // At this point child that are not equals by reference needs to be replaced
+                  for (let i = 0; i < children.length; i++) {
+                    const child = children[i];
+                    const block = blocks.get(i);
+
+                    if (child !== block) {
+                      blocks.set(i, child);
+                    }
+                  }
+                });
+
+                isEditingRef.current = false;
+              }}
             >
-              <SortableContext
-                items={items}
-                strategy={verticalListSortingStrategy}
+              <Toolbar />
+              <DndContext
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onDragCancel={handleDragCancel}
+                modifiers={[restrictToVerticalAxis]}
               >
-                <Editable
-                  renderElement={renderElement}
-                  renderLeaf={Leaf}
-                  /**
-                   * Inspired by this great article from https://twitter.com/_jkrsp
-                   * https://jkrsp.com/slate-js-placeholder-per-line/
-                   **/
-                  decorate={([node, path]) => {
-                    if (editor.selection != null) {
-                      if (
-                        !Editor.isEditor(node) &&
-                        Editor.string(editor, [path[0]]) === "" &&
-                        Range.includes(editor.selection, path) &&
-                        Range.isCollapsed(editor.selection)
-                      ) {
-                        return [
-                          {
-                            ...editor.selection,
-                            placeholder: "Type something here…",
-                          },
-                        ];
+                <SortableContext
+                  items={items}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <Editable
+                    renderElement={renderElement}
+                    renderLeaf={Leaf}
+                    /**
+                     * Inspired by this great article from https://twitter.com/_jkrsp
+                     * https://jkrsp.com/slate-js-placeholder-per-line/
+                     **/
+                    decorate={([node, path]) => {
+                      if (editor.selection != null) {
+                        if (
+                          !Editor.isEditor(node) &&
+                          Editor.string(editor, [path[0]]) === "" &&
+                          Range.includes(editor.selection, path) &&
+                          Range.isCollapsed(editor.selection)
+                        ) {
+                          return [
+                            {
+                              ...editor.selection,
+                              placeholder: "Type something here…",
+                            },
+                          ];
+                        }
                       }
-                    }
 
-                    return [];
-                  }}
-                  onKeyDown={(event) => {
-                    for (const hotkey in HOTKEYS) {
-                      if (
-                        isHotkey(hotkey, event as any) &&
-                        editor.selection &&
-                        !Range.includes(editor.selection, [0]) // Do not apply marks if selection include title
-                      ) {
-                        event.preventDefault();
-                        const mark = HOTKEYS[hotkey];
-                        toggleMark(editor, mark);
+                      return [];
+                    }}
+                    onKeyDown={(event) => {
+                      for (const hotkey in HOTKEYS) {
+                        if (
+                          isHotkey(hotkey, event as any) &&
+                          editor.selection &&
+                          !Range.includes(editor.selection, [0]) // Do not apply marks if selection include title
+                        ) {
+                          event.preventDefault();
+                          const mark = HOTKEYS[hotkey];
+                          toggleMark(editor, mark);
+                        }
                       }
-                    }
-                  }}
-                />
-              </SortableContext>
-              {createPortal(
-                <DragOverlay adjustScale={false}>
-                  {activeElement && (
-                    <DragOverlayContent
-                      element={activeElement}
-                      renderElement={renderElement}
-                    />
-                  )}
-                </DragOverlay>,
-                document.getElementById(PROSE_CONTAINER_ID) || document.body
-              )}
-            </DndContext>
-          </Slate>
+                    }}
+                  />
+                </SortableContext>
+                {createPortal(
+                  <DragOverlay adjustScale={false}>
+                    {activeElement && (
+                      <DragOverlayContent
+                        element={activeElement}
+                        renderElement={renderElement}
+                      />
+                    )}
+                  </DragOverlay>,
+                  document.getElementById(PROSE_CONTAINER_ID) || document.body
+                )}
+              </DndContext>
+            </Slate>
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
 }
 
 function SortableElement({
