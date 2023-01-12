@@ -1,19 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="600">
-  <path
-    fill-rule="evenodd"
-    clip-rule="evenodd"
-    d="M953.682 320H768l53.434 56v77.333L953.682 320ZM846.815 480H1032.5l-53.437-56v-77.333L846.815 480Z"
-    fill="url(#gradient-orange)"
-  />
-  <g filter="url(#cursor-shadow)">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M954 220H768l53 56v77l133-133ZM847 380h185l-53-56v-77L847 380Z" fill="black"/>
+  <g>
     <g transform="translate(-14,-18)" opacity="0">
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M9.774 6.262a3 3 0 0 1 3.225.5l22 19.656A3 3 0 0 1 33 31.655H20.811l-7.48 9.233A3 3 0 0 1 8 39V9a3 3 0 0 1 1.774-2.738Z"
-        fill="#fff"
-      />
-      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="#f81" />
+      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="hsla(256, 80%, 62%, 1)" />
       <animate
         id="cursor-animation-1"
         attributeName="opacity"
@@ -35,15 +24,9 @@
       keySplines="0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1"
     />
   </g>
-  <g filter="url(#cursor-shadow)">
+  <g>
     <g transform="translate(-14,-18)" opacity="0">
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M9.774 6.262a3 3 0 0 1 3.225.5l22 19.656A3 3 0 0 1 33 31.655H20.811l-7.48 9.233A3 3 0 0 1 8 39V9a3 3 0 0 1 1.774-2.738Z"
-        fill="#fff"
-      />
-      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="#8c1" />
+      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="hsla(165, 80%, 62%, 1)" />
       <animate
         id="cursor-animation-2"
         begin="3s;cursor-animation-2.end+7s"
@@ -65,15 +48,9 @@
       keySplines="0.6 0 0.4 1; 0.6 0 0.4 1"
     />
   </g>
-  <g filter="url(#cursor-shadow)">
+  <g>
     <g transform="translate(-14,-18)" opacity="0">
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M9.774 6.262a3 3 0 0 1 3.225.5l22 19.656A3 3 0 0 1 33 31.655H20.811l-7.48 9.233A3 3 0 0 1 8 39V9a3 3 0 0 1 1.774-2.738Z"
-        fill="#fff"
-      />
-      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="#0bf" />
+      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="hsla(209, 80%, 62%, 1)" />
       <animate
         id="cursor-animation-3"
         begin="5s;cursor-animation-3.end+6s"
@@ -95,15 +72,9 @@
       keySplines="0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1"
     />
   </g>
-  <g filter="url(#cursor-shadow)">
+  <g>
     <g transform="translate(-14,-18)" opacity="0">
-      <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
-        d="M9.774 6.262a3 3 0 0 1 3.225.5l22 19.656A3 3 0 0 1 33 31.655H20.811l-7.48 9.233A3 3 0 0 1 8 39V9a3 3 0 0 1 1.774-2.738Z"
-        fill="#fff"
-      />
-      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="#e4b" />
+      <path d="M11 39V9l22 19.655H19.381L11 39Z" fill="hsla(331, 100%, 67%, 1)" />
       <animate
         id="cursor-animation-4"
         begin="6s;cursor-animation-4.end+4s"
@@ -125,20 +96,4 @@
       keySplines="0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1; 0.6 0 0.4 1"
     />
   </g>
-  <defs>
-    <radialGradient
-      id="gradient-orange"
-      cx="0"
-      cy="0"
-      r="1"
-      gradientUnits="userSpaceOnUse"
-      gradientTransform="rotate(31.5 -131.761 1432.952) scale(331.742 257.349)"
-    >
-      <stop stop-color="#f09" />
-      <stop offset="1" stop-color="#f70" />
-    </radialGradient>
-    <filter id="cursor-shadow" x="-50%" y="-30%" width="200%" height="200%">
-      <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.2" />
-    </filter>
-  </defs>
 </svg>
