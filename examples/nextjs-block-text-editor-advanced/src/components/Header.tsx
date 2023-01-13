@@ -15,6 +15,7 @@ import {useSession, signIn, signOut} from "next-auth/react"
 export default function Header() {
   const others = useOthers();
   const { data: session} = useSession();
+  console.log(session)
 
   const [theme, setTheme] = useState<Theme | null>(
     localStorage.getItem(LOCAL_STORAGE_THEME) as Theme | null
@@ -28,37 +29,6 @@ export default function Header() {
     localStorage.setItem(LOCAL_STORAGE_THEME, theme);
     applyTheme(theme);
   }, [theme]);
-
-  function isUserLoggedIn(){
-    if(session){
-      return (          
-        <div className={styles.avatars}>
-          {others.map((user) => {
-            const {
-              info: { imageUrl, name },
-              connectionId,
-            } = user;
-            return (
-              <Avatar
-                key={connectionId}
-                imageUrl={imageUrl}
-                name={name}
-                color={USER_COLORS[connectionId % USER_COLORS.length]}
-              />
-            );
-          })}
-        </div>
-      )
-    } else {
-      return (
-        <div>
-          <p> Please sign in</p>
-          <button onClick={()=>signIn()}> Sign In</button>
-        </div>
-      )
-    }
-
-  }
 
   return (
     
@@ -77,7 +47,24 @@ export default function Header() {
           </Tooltip>
         </div>
         <div className={styles.right}>
-        {isUserLoggedIn()}
+        <div className={styles.avatars}>
+          {others.map((user) => {
+            console.log("the user", user)
+            const {
+              info: { imageUrl, name },
+              connectionId,
+            } = user;
+            return (
+              <Avatar
+                key={connectionId}
+                imageUrl={imageUrl}
+                name={name}
+                color={USER_COLORS[connectionId % USER_COLORS.length]}
+              />
+            );
+          })}
+        </div>
+        <button onClick={()=>signOut()}> Sign Out</button>
         </div>
       </div>
     </header>

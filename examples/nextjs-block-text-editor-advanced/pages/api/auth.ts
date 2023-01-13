@@ -13,17 +13,13 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 
   const session = await getServerSession(req, res);
     // Anonymous user info
-  const anonymousUser= {session: {
-    user:{
+  const anonymousUser: User ={
     name: "Anonymous",
     email: "none",
     image: "N/A"
       }
-    } 
-  }
 
     console.log(anonymousUser)
-
 
   const {
     name,
@@ -31,7 +27,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     image
     } = session?.user?? anonymousUser;
 
-  console.log("***The Session***",session)
+
 
   // We're generating random users and avatars here.
   // In a real-world scenario, this is where you'd assign the
@@ -41,20 +37,10 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     room: req.body.room,
     secret: API_KEY,
     userInfo: {
-      name: session.user.name,
-      imageUrl: `${session.user.image}.png`,
+      name: name,
+      imageUrl: image,
     },
   });
   return res.status(response.status).end(response.body);
 }
 
-const NAMES = [
-  "Charlie Layne",
-  "Mislav Abha",
-  "Tatum Paolo",
-  "Anjali Wanda",
-  "Jody Hekla",
-  "Emil Joyce",
-  "Jory Quispe",
-  "Quinn Elton",
-];

@@ -1,10 +1,13 @@
 import { LiveList } from "@liveblocks/client";
 import { nanoid } from "nanoid";
+import { GetServerSideProps } from "next";
+import { getSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useMemo } from "react";
 import Editor from "../src/Editor";
 import { RoomProvider } from "../src/liveblocks.config";
 import { BlockType, CustomElement } from "../src/types";
+import { getServerSession} from "../pages/api/auth/getServerSession";
 
 const initialValue: CustomElement[] = [
   {
@@ -162,20 +165,20 @@ export default function Page() {
   );
 }
 
-export async function getStaticProps() {
-  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
-  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
-    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#codesandbox.`
-    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#getting-started.`;
+// export async function getStaticProps() {
+//   const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+//   const API_KEY_WARNING = process.env.CODESANDBOX_SSE
+//     ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+//       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#codesandbox.`
+//     : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+//       `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#getting-started.`;
 
-  if (!API_KEY) {
-    console.warn(API_KEY_WARNING);
-  }
+//   if (!API_KEY) {
+//     console.warn(API_KEY_WARNING);
+//   }
 
-  return { props: {} };
-}
+//   return { props: {} };
+// }
 
 /**
  * This function is used when deploying an example on liveblocks.io.
@@ -189,3 +192,31 @@ function useOverrideRoomId(roomId: string) {
 
   return overrideRoomId;
 }
+
+// If not logged in redirect to signin
+export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+  const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+  const API_KEY_WARNING = process.env.CODESANDBOX_SSE
+    ? `Add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` secret in CodeSandbox.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#codesandbox.`
+    : `Create an \`.env.local\` file and add your secret key from https://liveblocks.io/dashboard/apikeys as the \`LIVEBLOCKS_SECRET_KEY\` environment variable.\n` +
+      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/nextjs-block-text-editor-advanced#getting-started.`;
+
+  if (!API_KEY) {
+    console.warn(API_KEY_WARNING);
+  }
+  const session = await getServerSession(req, res);
+
+  if (!session) {
+    return {
+      redirect: {
+        permanent: false,
+        destination: '/signin',
+      },
+    };
+  }
+
+  return {
+    props: {},
+  };
+};
