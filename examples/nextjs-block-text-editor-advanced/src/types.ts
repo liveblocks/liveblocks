@@ -126,11 +126,9 @@ type LeafDecoration = {
 };
 
 export type User = {
-  id: string;
   name: string;
-  avatar?: string;
-  color: string;
-  groupIds: string[];
+  email: string;
+  image: string
 };
 
 export type Format = "bold" | "underline" | "strikeThrough" | "italic";

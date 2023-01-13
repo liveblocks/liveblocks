@@ -5,7 +5,7 @@ import GoogleProvider from "next-auth/providers/google"
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
-export default NextAuth({
+export const authOptions = {
   callbacks: {
     session({ session, token, user }) {
       return session // The return type will match the one returned in `useSession()`
@@ -25,7 +25,9 @@ export default NextAuth({
     })
   ],
   secret: process.env.JWT_SECRET
-})
+}
+
+export default NextAuth(authOptions)
 
 // export default async function auth(req: NextApiRequest, res: NextApiResponse) {
 //   if (!API_KEY) {

@@ -10,8 +10,11 @@ import { useEffect, useState } from "react";
 import { applyTheme } from "../utils";
 import { LOCAL_STORAGE_THEME, USER_COLORS } from "../constants";
 
+import {useSession, signIn, signOut} from "next-auth/react"
+
 export default function Header() {
   const others = useOthers();
+  const { data: session} = useSession();
 
   const [theme, setTheme] = useState<Theme | null>(
     localStorage.getItem(LOCAL_STORAGE_THEME) as Theme | null
@@ -26,7 +29,39 @@ export default function Header() {
     applyTheme(theme);
   }, [theme]);
 
+  function isUserLoggedIn(){
+    if(session){
+      return (          
+        <div className={styles.avatars}>
+          {others.map((user) => {
+            const {
+              info: { imageUrl, name },
+              connectionId,
+            } = user;
+            return (
+              <Avatar
+                key={connectionId}
+                imageUrl={imageUrl}
+                name={name}
+                color={USER_COLORS[connectionId % USER_COLORS.length]}
+              />
+            );
+          })}
+        </div>
+      )
+    } else {
+      return (
+        <div>
+          <p> Please sign in</p>
+          <button onClick={()=>signIn()}> Sign In</button>
+        </div>
+      )
+    }
+
+  }
+
   return (
+    
     <header className={styles.header}>
       <div className={styles.container}>
         <div className={styles.left}>
@@ -42,22 +77,7 @@ export default function Header() {
           </Tooltip>
         </div>
         <div className={styles.right}>
-          <div className={styles.avatars}>
-            {others.map((user) => {
-              const {
-                info: { imageUrl, name },
-                connectionId,
-              } = user;
-              return (
-                <Avatar
-                  key={connectionId}
-                  imageUrl={imageUrl}
-                  name={name}
-                  color={USER_COLORS[connectionId % USER_COLORS.length]}
-                />
-              );
-            })}
-          </div>
+        {isUserLoggedIn()}
         </div>
       </div>
     </header>
