@@ -95,6 +95,10 @@ interface RowHighlightProps extends ComponentProps<"div"> {
   node: NodeApi;
 }
 
+interface JsonValueDialogProps extends ComponentProps<"div"> {
+  node: NodeApi<DevTools.JsonTreeNode>;
+}
+
 interface BreadcrumbsProps extends ComponentProps<"div"> {
   node: NodeApi<StorageTreeNode>;
   onNodeClick: (node: NodeApi<StorageTreeNode> | null) => void;
@@ -493,6 +497,43 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
   }
 }
 
+function JsonValueDialog({ node }: JsonValueDialogProps) {
+  return (
+    <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
+      <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
+        <div className="flex min-w-0 items-center">
+          <div className={cx(color(node.data), "mr-2 flex-none")}>
+            {icon(node.data)}
+          </div>
+          <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
+            {node.data.key}
+          </span>
+        </div>
+        <RadixDialog.Close
+          aria-label="Close"
+          className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
+        >
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            role="presentation"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12.03 5.03a.75.75 0 0 0-1.06-1.06L8 6.94 5.03 3.97a.75.75 0 0 0-1.06 1.06L6.94 8l-2.97 2.97a.75.75 0 1 0 1.06 1.06L8 9.06l2.97 2.97a.75.75 0 1 0 1.06-1.06L9.06 8l2.97-2.97Z"
+              fill="currentColor"
+            />
+          </svg>
+        </RadixDialog.Close>
+      </div>
+      <Code code={JSON.stringify(node.data.payload, null, 2)} language="json" />
+    </div>
+  );
+}
+
 function JsonNodeRenderer({
   node,
   style,
@@ -505,45 +546,6 @@ function JsonNodeRenderer({
 
     setValueDialogOpen(true);
   }, []);
-  const valueDialogContent = useMemo(() => {
-    return (
-      <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
-        <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
-          <div className="flex min-w-0 items-center">
-            <div className={cx(color(node.data), "mr-2 flex-none")}>
-              {icon(node.data)}
-            </div>
-            <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
-              {node.data.key}
-            </span>
-          </div>
-          <RadixDialog.Close
-            aria-label="Close"
-            className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
-          >
-            <svg
-              width="16"
-              height="16"
-              fill="none"
-              role="presentation"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M12.03 5.03a.75.75 0 0 0-1.06-1.06L8 6.94 5.03 3.97a.75.75 0 0 0-1.06 1.06L6.94 8l-2.97 2.97a.75.75 0 1 0 1.06 1.06L8 9.06l2.97 2.97a.75.75 0 1 0 1.06-1.06L9.06 8l2.97-2.97Z"
-                fill="currentColor"
-              />
-            </svg>
-          </RadixDialog.Close>
-        </div>
-        <Code
-          code={JSON.stringify(node.data.payload, null, 2)}
-          language="json"
-        />
-      </div>
-    );
-  }, [node.data.payload]);
 
   return (
     <Row node={node} style={style} onClick={toggle}>
@@ -555,7 +557,9 @@ function JsonNodeRenderer({
           <RowPreview>{summarize(node.data)}</RowPreview>
           <div className="ml-auto flex-none">
             <Dialog
-              content={valueDialogContent}
+              content={
+                isValueDialogOpen ? <JsonValueDialog node={node} /> : null
+              }
               open={isValueDialogOpen}
               onOpenChange={setValueDialogOpen}
             >
