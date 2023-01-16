@@ -501,7 +501,7 @@ function JsonValueDialog({ node }: JsonValueDialogProps) {
   return (
     <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
       <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
-        <div className="flex min-w-0 items-center">
+        <div className="child:select-none flex min-w-0 select-none items-center">
           <div className={cx(color(node.data), "mr-2 flex-none")}>
             {icon(node.data)}
           </div>

@@ -93,7 +93,7 @@ export function Code({
           className={cx(
             className,
             prismClassName,
-            "child:select-auto cursor-text select-auto overflow-y-auto px-2.5 py-2"
+            "cursor-text overflow-y-auto px-2.5 py-2"
           )}
           style={{ ...style, ...prismStyle }}
           {...props}
@@ -102,7 +102,7 @@ export function Code({
             <div
               {...getLineProps({ line, key: index, className: "table-row" })}
             >
-              <span className="text-light-900 dark:text-dark-600 table-cell select-none pr-2.5 pl-0.5 text-right">
+              <span className="text-light-900 dark:text-dark-600 pointer-events-none table-cell select-none pr-2.5 pl-0.5 text-right">
                 {index + 1}
               </span>
               <span className="table-cell">

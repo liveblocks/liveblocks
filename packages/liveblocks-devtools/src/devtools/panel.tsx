@@ -59,6 +59,7 @@ function Panel() {
 
   return (
     <ResizablePanel
+      className="child:select-none select-none"
       content={
         <Tabs
           className="h-full"

@@ -51,7 +51,7 @@ body[data-resizing="vertical"] {
 }
 
 * {
-  @apply select-none focus:outline-none;
+  @apply focus:outline-none;
 }
 
 input[type="search"]::-webkit-search-cancel-button {
