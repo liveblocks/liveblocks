@@ -536,6 +536,8 @@ export const authOptions = {
 It’s not only possible with GitHub and Auth0, any
 [NextAuth provider](https://next-auth.js.org/providers/) will work, such as Google, Twitter, Reddit, or more. You can find more information about getting the necessary secrets on the NextAuth documentation, or on the provider’s website.
 
+Note that if you’re using `CredentialsProvider` (for example, as used in the demo authentication), `CredentialsProvider` must be removed before any other authentication methods will appear.
+
 ### Switching themes
 
 The starter kit comes with both a dark mode and light mode. By default, the user sees the theme that corresponds to their system setting, but it’s easy to switch
