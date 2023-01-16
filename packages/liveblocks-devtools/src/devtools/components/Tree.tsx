@@ -14,7 +14,7 @@ import {
   forwardRef,
   Fragment,
   useCallback,
-  useMemo,
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -539,13 +539,35 @@ function JsonNodeRenderer({
   style,
 }: NodeRendererProps<DevTools.JsonTreeNode>) {
   const [isValueDialogOpen, setValueDialogOpen] = useState(false);
+  const isActionable = node.isSelected && !node.isOpen;
   const toggle = useToggleNode(node);
-  const handleClick = useCallback((event: MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
+  const handleValueDialogOpen = useCallback(
+    (event: MouseEvent | KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
 
-    setValueDialogOpen(true);
-  }, []);
+      setValueDialogOpen(true);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isActionable) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter") {
+        handleValueDialogOpen(event);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionable, handleValueDialogOpen]);
 
   return (
     <Row node={node} style={style} onClick={toggle}>
@@ -565,7 +587,7 @@ function JsonNodeRenderer({
             >
               <Tooltip content="Show value" sideOffset={8}>
                 <button
-                  onClick={handleClick}
+                  onClick={handleValueDialogOpen}
                   aria-label="Show value"
                   className="text-light-500 dark:text-dark-500 hover:text-light-700 dark:hover:text-dark-700 tree-focus:group-[[data-selected]]:text-light-0/60 tree-focus:group-[[data-selected]]:hover:text-light-0/80 hidden h-full items-center justify-center group-hover:flex group-focus:flex group-[[data-selected]]:flex"
                 >
