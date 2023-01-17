@@ -1,3 +1,7 @@
+# v0.19.6
+
+Support authentication with cookies.
+
 # v0.19.5
 
 Export the `StorageStatus` type (introduced with 0.19.3).
