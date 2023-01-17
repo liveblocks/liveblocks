@@ -1,18 +1,23 @@
+import styles from "../src/components/SignIn.module.css";
+
 import { GetServerSideProps } from "next";
 import { getProviders } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { getServerSession} from "../pages/api/auth/getServerSession";
+import MoonIcon from "../src/icons/moon.svg";
 
 const login = () => {
     const { data: session }= useSession()
     console.log(session)
     if (!session)
     return(
-        <div>
+        <div className={styles.signin}>
           <p> You are not signed in.</p>
-          <button onClick={() => signIn()}>Sign in</button>
+          <button className={styles.googlebutton} onClick={() => signIn()}>
+            <img src="/google-images/btn_google_signin_light_normal_web@2x.png"/>
+          </button>
         </div>
     )    
 }

@@ -1,0 +1,15 @@
+.signin {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    place-content: center;
+    place-items: center;
+    background-color: rgb(var(--color-surface));
+  }
+
+  .googlebutton{
+    background: url('/src/google-imagess/btn_google_signin_dark_focus_web@2x') no-repeat;
+  }
+

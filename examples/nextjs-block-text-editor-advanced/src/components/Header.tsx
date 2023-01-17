@@ -45,6 +45,7 @@ export default function Header() {
               {theme === "dark" ? <SunIcon /> : <MoonIcon />}
             </Button>
           </Tooltip>
+          <button onClick={()=>signOut()}> Sign Out</button>
         </div>
         <div className={styles.right}>
         <div className={styles.avatars}>
@@ -64,7 +65,6 @@ export default function Header() {
             );
           })}
         </div>
-        <button onClick={()=>signOut()}> Sign Out</button>
         </div>
       </div>
     </header>
