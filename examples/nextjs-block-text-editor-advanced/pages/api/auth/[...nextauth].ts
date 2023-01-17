@@ -1,20 +1,21 @@
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 import NextAuth from 'next-auth'
+import  {Session}  from "next-auth";
 import GoogleProvider from "next-auth/providers/google"
 
 const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 export const authOptions = {
-  callbacks: {
-    session({ session, token, user }) {
-      return session // The return type will match the one returned in `useSession()`
-    },
-  },
+  // callbacks: {
+  //   session({ session:, token, user }) {
+  //     return session // The return type will match the one returned in `useSession()`
+  //   },
+  // },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       authorization: {
         params: {
           prompt: "consent",
