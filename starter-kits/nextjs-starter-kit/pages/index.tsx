@@ -42,7 +42,7 @@ export default function Index() {
             Sign in
           </Button>
           <LinkButton
-            href="https://github.com/liveblocks/liveblocks/tree/main/starter-kit"
+            href="https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit"
             icon={<GitHubIcon />}
             target="_blank"
             variant="secondary"
