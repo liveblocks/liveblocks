@@ -23,11 +23,7 @@ import {
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
-import {
-  listUpdate,
-  listUpdateInsert,
-  serializeUpdateToJson,
-} from "./_updatesUtils";
+import { listUpdate, listUpdateInsert } from "./_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
