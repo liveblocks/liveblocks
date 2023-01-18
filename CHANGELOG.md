@@ -1,3 +1,8 @@
+
+# v0.19.7
+
+Fix nested storage event handling issue.
+
 # v0.19.6
 
 Support authentication with cookies.

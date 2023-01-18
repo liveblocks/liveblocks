@@ -444,6 +444,7 @@ export function prepareStorageUpdateTest<
 >(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
+    batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
     assert: (updates: JsonStorageUpdate[][]) => void;
@@ -497,6 +498,7 @@ export function prepareStorageUpdateTest<
     }
 
     await callback({
+      batch: machine.batch,
       root: storage.root,
       machine,
       assert,
