@@ -41,7 +41,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   const [columns, setColumns] = useState<Column[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
-  const [users, setUsers] = useState<User<Presence, UserMeta>[]>([]);
+  const [users, setUsers] = useState<readonly User<Presence, UserMeta>[]>([]);
   const [selection, setSelection] = useState<CellAddress | null>(null);
   const [others, setOthers] = useState<Record<string, UserInfo>>({});
 
