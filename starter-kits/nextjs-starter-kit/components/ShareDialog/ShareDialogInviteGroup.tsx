@@ -72,6 +72,7 @@ export function ShareDialogInviteGroup({
               }}
             >
               <Select
+                key={currentGroups[0]?.id || undefined}
                 aboveOverlay
                 name="groupId"
                 className={styles.inviteSelect}

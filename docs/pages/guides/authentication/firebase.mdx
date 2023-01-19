@@ -45,8 +45,9 @@ exports.auth = functions.https.onCall((data, context) => {
     userId: "123", // Optional
     groupIds: ["456"], // Optional
     userInfo: {
-      // Optional
+      // Optional, corresponds to the UserMeta[info] info defined in liveblocks.config.ts
       name: "Ada Lovelace",
+      color: "red"
     },
   }).then((authResult) => {
     if (authResult.status !== 200) {
@@ -55,6 +56,21 @@ exports.auth = functions.https.onCall((data, context) => {
     return JSON.parse(authResult.body);
   });
 });
+```
+
+The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
+You can use the following example to use data from `userId` and `userInfo`on the front end.
+```ts
+  const self = useSelf();
+
+  // "123"
+  console.log(self.id);
+
+  // "red"
+  console.log(self.info.color);
+
+  // ...
+}
 ```
 
 Then, deploy your function with `firebase deploy --only functions:auth`.

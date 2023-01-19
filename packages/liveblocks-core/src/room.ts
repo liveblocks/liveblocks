@@ -1203,17 +1203,11 @@ function makeStateMachine<
 
         const applyOpResult = applyOp(op, source);
         if (applyOpResult.modified) {
-          const parentId =
-            applyOpResult.modified.node.parent.type === "HasParent"
-              ? nn(
-                  applyOpResult.modified.node.parent.node._id,
-                  "Expected parent node to have an ID"
-                )
-              : undefined;
+          const nodeId = applyOpResult.modified.node._id;
 
-          // If the parent is the root (undefined) or was created in the same batch, we don't want to notify
+          // If the modified node is not the root (undefined) and was created in the same batch, we don't want to notify
           // storage updates for the children.
-          if (!parentId || !createdNodeIds.has(parentId)) {
+          if (!(nodeId && createdNodeIds.has(nodeId))) {
             output.storageUpdates.set(
               nn(applyOpResult.modified.node._id),
               mergeStorageUpdates(
@@ -1231,7 +1225,7 @@ function makeStateMachine<
             op.type === OpCode.CREATE_MAP ||
             op.type === OpCode.CREATE_OBJECT
           ) {
-            createdNodeIds.add(nn(applyOpResult.modified.node._id));
+            createdNodeIds.add(nn(op.id));
           }
         }
       }
@@ -2588,6 +2582,8 @@ async function fetchAuthEndpoint(
     headers: {
       "Content-Type": "application/json",
     },
+    // Credentials are needed to support authentication with cookies
+    credentials: "include",
     body: JSON.stringify(body),
   });
   if (!res.ok) {

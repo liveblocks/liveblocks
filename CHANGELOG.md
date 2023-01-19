@@ -1,3 +1,16 @@
+
+# v0.19.7
+
+Fix nested storage event handling issue.
+
+# v0.19.6
+
+Support authentication with cookies.
+
+# v0.19.5
+
+Export the `StorageStatus` type (introduced with 0.19.3).
+
 # v0.19.4
 
 Fix CORS issue.

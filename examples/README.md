@@ -23,13 +23,13 @@ your changes against any of the examples, take the following steps:
 
 1. Declare the example as an NPM workspace, in the `package.json` in the root of
    the monorepo:
-   ```json
+   ```js
    {
      "workspaces": [
        "shared/*",
        "packages/*",
        "e2e/next-sandbox",
-       "examples/whatever-example",  👈
+       "examples/whatever-example",  // 👈
      ]
    }
    ```
