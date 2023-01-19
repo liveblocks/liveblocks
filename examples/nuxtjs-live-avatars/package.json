@@ -9,6 +9,9 @@
     "start": "nuxt start",
     "generate": "nuxt generate"
   },
+  "engines": {
+    "node": ">=16.0.0 <17.0.0"
+  },
   "dependencies": {
     "@liveblocks/client": "^0.19.7",
     "@liveblocks/node": "^0.19.7",
