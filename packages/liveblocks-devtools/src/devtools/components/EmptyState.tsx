@@ -33,7 +33,7 @@ export function EmptyState({
     <div
       className={cx(
         className,
-        "absolute inset-0 flex h-full flex-col text-center"
+        "absolute inset-0 flex h-full select-none flex-col text-center"
       )}
       {...props}
     >
