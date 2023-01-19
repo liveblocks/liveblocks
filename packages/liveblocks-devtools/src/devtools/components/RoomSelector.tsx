@@ -58,7 +58,12 @@ export function RoomSelector({
         </RadixSelect.Trigger>
       </Tooltip>
       <RadixSelect.Portal>
-        <RadixSelect.Content className="bg-light-0 text-dark-400 dark:text-light-0 dark:bg-dark-100 dark:border-dark-300 border-light-300 rounded-lg border p-1">
+        <RadixSelect.Content
+          className="bg-light-0 text-dark-400 dark:text-light-0 dark:bg-dark-100 dark:border-dark-300 border-light-300 rounded-lg border p-1"
+          position="popper"
+          alignOffset={-24}
+          sideOffset={10}
+        >
           <RadixSelect.Viewport>
             {roomIds.map((roomId) => (
               <RadixSelect.Item
