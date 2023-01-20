@@ -32,6 +32,7 @@ function Panel() {
 
   const handleReload = useCallback(() => {
     browser.tabs.reload();
+    window.location.reload();
   }, []);
 
   useEffect(() => {
