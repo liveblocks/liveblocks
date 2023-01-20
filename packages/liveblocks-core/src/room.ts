@@ -878,7 +878,7 @@ function makeStateMachine<
             )
           );
         });
-        activeBatch.reverseOps.push(...reverse);
+        activeBatch.reverseOps.unshift(...reverse);
       } else {
         batchUpdates(() => {
           addToUndoStack(reverse, doNotBatchUpdates);
@@ -1453,7 +1453,7 @@ function makeStateMachine<
 
     if (state.activeBatch) {
       if (options?.addToHistory) {
-        state.activeBatch.reverseOps.push({
+        state.activeBatch.reverseOps.unshift({
           type: "presence",
           data: oldValues,
         });
