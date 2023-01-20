@@ -32,26 +32,7 @@ function Panel() {
 
   const handleReload = useCallback(() => {
     browser.tabs.reload();
-  }, []);
-
-  useEffect(() => {
-    function handleTabUpdate(
-      tabId: number,
-      { status }: browser.Tabs.OnUpdatedChangeInfoType
-    ) {
-      if (
-        tabId === browser.devtools.inspectedWindow.tabId &&
-        status === "complete"
-      ) {
-        window.location.reload();
-      }
-    }
-
-    browser.tabs.onUpdated.addListener(handleTabUpdate);
-
-    return () => {
-      browser.tabs.onUpdated.removeListener(handleTabUpdate);
-    };
+    window.location.reload();
   }, []);
 
   useEffect(() => {
