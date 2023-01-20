@@ -32,14 +32,18 @@ type Questions = {
   install: boolean;
 };
 
-type DecodedExternalId = {
-  env: { name: string; type: "public" | "private" }[];
+type DecodedEnvsAndCallbacks = {
+  env: { name: string; type: "public" | "secret" }[];
   callbackUrls?: string[];
 };
 
-type CallbackFormat = {
+type VercelCallbackFormat = {
   env: Record<string, string>;
   repo: string;
+};
+
+type GeneralCallbackFormat = {
+  env: Record<string, string>;
 };
 
 export async function create(flags: Record<string, any>) {
@@ -149,9 +153,9 @@ export async function create(flags: Record<string, any>) {
 
   if (vercel) {
     // Use Vercel deploy button
-    const vercelData: CallbackFormat = (await server((origin) => {
-      const data: DecodedExternalId = {
-        env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "private" }],
+    const vercelData: VercelCallbackFormat = (await server((origin) => {
+      const data: DecodedEnvsAndCallbacks = {
+        env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
         callbackUrls: [origin],
       };
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
@@ -159,16 +163,25 @@ export async function create(flags: Record<string, any>) {
       );
       const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=${encodedData}`;
       open(deployUrl);
-    })) as CallbackFormat;
+    })) as VercelCallbackFormat;
     console.log(vercelData);
     liveblocksSecretKeyValue = vercelData.env.LIVEBLOCKS_SECRET_KEY || "";
   }
 
   if (!vercel && liveblocksSecret) {
     // Use `/integrations/general` on liveblocks.io
-    await server((origin) => {
-      console.log("sending...", origin);
-    });
+    const liveblocksData = (await server((origin) => {
+      const data: DecodedEnvsAndCallbacks = {
+        env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
+        callbackUrls: [origin],
+      };
+      const encodedData = Buffer.from(JSON.stringify(data)).toString(
+        "base64url"
+      );
+      // TODO env var this
+      const liveblocksUrl = `http://localhost:3001/integrations/general?data=${encodedData}`;
+      open(liveblocksUrl);
+    })) as GeneralCallbackFormat;
   }
 
   const envVariables = [
