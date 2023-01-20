@@ -64,6 +64,7 @@ const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
 const USE_GRID_LAYOUT = false;
+const SHOW_INTERNAL_ID = false;
 
 const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
 
@@ -385,7 +386,7 @@ function Row({ node, children, className, ...props }: RowProps) {
   );
 }
 
-function RowName({ children, className, ...props }: ComponentProps<"span">) {
+function RowLabel({ children, className, ...props }: ComponentProps<"span">) {
   return (
     <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
       {children}
@@ -434,7 +435,8 @@ function UserNodeRenderer({
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
         {node.data.payload.isReadOnly && (
           <Badge className="flex-none opacity-60">Read-only</Badge>
@@ -453,7 +455,8 @@ function LiveNodeRenderer({
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
         <Badge
           className={cx(
             "flex-none",
@@ -572,7 +575,8 @@ function JsonNodeRenderer({
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
       </RowInfo>
       {!node.isOpen && (
         <>
