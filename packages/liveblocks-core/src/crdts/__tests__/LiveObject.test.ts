@@ -1,6 +1,8 @@
+import { objectUpdate } from "../../__tests__/_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
+  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   reconnect,
@@ -405,7 +407,56 @@ describe("LiveObject", () => {
   });
 
   describe("acknowledge mechanism", () => {
-    describe("should ignore incoming updates if current op has not been acknowledged", () => {
+    it(
+      "should not ignore history updates if the current op has not been acknowledged",
+      prepareDisconnectedStorageUpdateTest<{
+        items: LiveObject<{ b?: string; a?: string }>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedObject("0:1", { a: "B" }, "0:0", "items"),
+        ],
+        async ({ assert, batch, root, machine }) => {
+          const items = root.get("items");
+          machine.pauseHistory();
+          batch(() => {
+            items.set("a", "A");
+            items.set("b", "A");
+          });
+          machine.resumeHistory();
+
+          expect(items.toObject()).toEqual({ a: "A", b: "A" });
+          assert([
+            [
+              objectUpdate(
+                { a: "A", b: "A" },
+                { a: { type: "update" }, b: { type: "update" } }
+              ),
+            ],
+          ]);
+
+          machine.undo();
+
+          expect(items.toObject()).toEqual({ a: "B" });
+          assert([
+            [
+              objectUpdate(
+                { a: "A", b: "A" },
+                { a: { type: "update" }, b: { type: "update" } }
+              ),
+            ],
+            [
+              objectUpdate<{ a?: string; b?: string }>(
+                { a: "B" },
+                { a: { type: "update" }, b: { type: "delete" } }
+              ),
+            ],
+          ]);
+        }
+      )
+    );
+
+    describe("should ignore incoming updates if the current op has not been acknowledged", () => {
       test("when value is not a crdt", async () => {
         const { root, assert, applyRemoteOperations } =
           await prepareIsolatedStorageTest<{ a: number }>(
