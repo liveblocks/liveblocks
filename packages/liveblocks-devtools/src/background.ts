@@ -5,7 +5,7 @@ import browser from "webextension-polyfill";
 const portsByTabId: Map<number, Runtime.Port> = new Map();
 
 /**
- * Handles messages being sent from the dev tool, intended for the browser tab
+ * Handles messages being sent from the DevTools, intended for the browser tab
  * running the client.
  */
 browser.runtime.onConnect.addListener((port) => {

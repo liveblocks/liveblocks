@@ -542,10 +542,10 @@ export type Room<
     }): void;
   };
 
-  /** @internal - For dev tools support */
+  /** @internal - For DevTools support */
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
 
-  /** @internal - For dev tools support */
+  /** @internal - For DevTools support */
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
 
@@ -647,7 +647,7 @@ type Machine<
   getPresence(): Readonly<TPresence>;
   getOthers(): Others<TPresence, TUserMeta>;
 
-  // Dev tools support
+  // DevTools support
   getSelf_forDevTools(): DevTools.UserTreeNode | null;
   getOthers_forDevTools(): readonly DevTools.UserTreeNode[];
 };
@@ -984,7 +984,7 @@ function makeStateMachine<
         : null
   );
 
-  // For use in dev tools
+  // For use in DevTools
   const selfAsTreeNode = new DerivedRef(
     self as ImmutableRef<User<TPresence, TUserMeta> | null>,
     (me) => (me !== null ? userToTreeNode("Me", me) : null)
@@ -2272,7 +2272,7 @@ function makeStateMachine<
     authenticationSuccess,
     heartbeat,
     onNavigatorOnline,
-    // Internal dev tools
+    // Internal DevTools
     simulateSocketClose,
     simulateSendCloseEvent,
     onVisibilityChange,
