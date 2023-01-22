@@ -12,8 +12,15 @@ import styles from "./Avatar.module.css";
  */
 
 const IMAGE_SIZE = 48;
+//convert to typescript
+export interface AvatarProps {
+  picture: string;
+  name: string;
+}
 
-export function Avatar({ picture, name }) {
+//convert component to typescript
+            
+export function Avatar({ picture, name }: AvatarProps) {
   return (
     <div className={styles.avatar} data-tooltip={name}>
       <img
