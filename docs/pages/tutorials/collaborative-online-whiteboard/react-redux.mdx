@@ -109,6 +109,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocks<State>;
 ```
 
 And edit `src/index.js` to add the react-redux provider to your app:
@@ -200,6 +201,7 @@ export type State = {
   shapes: Record<string, Shape>;
 };
 
+
 const initialState: State = {
   /* default state will go there */
   shapes:{}
@@ -219,6 +221,9 @@ export function makeStore() {
     enhancers: [
       liveblocksEnhancer<State>({
         client,
+        storageMapping: {
+          shapes: true,
+        },
       }),
     ],
   });
@@ -227,6 +232,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocks<State>;
 ```
 
 Afterward, we draw the shapes inside our canvas. To keep it simple for the
@@ -238,7 +244,7 @@ import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 
-const roomId = "redux-whiteboard";
+const roomId: string = "redux-whiteboard";
 
 export default function App() {
   const shapes = useSelector((state) => state.shapes);
@@ -265,8 +271,9 @@ export default function App() {
     <div className="canvas">
       {Object.entries(shapes).map(([shapeId, shape]) => {
         return <Rectangle key={shapeId} shape={shape} />;
-      })}
+      })}}
     </div>
+    
   );
 }
 
@@ -372,7 +379,7 @@ Add a new action to your store that randomly insert a rectangle on the board.
 
 ```ts file="src/store.ts" highlight="9-17,27-35,39"
 import { createClient } from "@liveblocks/client";
-import { enhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer, withLiveBlocks } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 export const client = createClient({
@@ -397,7 +404,7 @@ function getRandomInt(max: number) {
 }
 
 function getRandomColor() {
-  return COLORS[getRandomInt(COLORS.length)];
+  return COLORS[getRandomInt(COLORS.length)] as string;
 }
 
 const initialState: State = {
@@ -426,7 +433,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { shapes: true },
       }),
@@ -437,6 +444,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocks<State, JsonObject, BaseUserMeta>;
 ```
 
 Then add a button to dispatch this action from the board.
@@ -447,13 +455,18 @@ import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 
-import { insertRectangle } from "./store";
+import { insertRectangle, LiveblocksState } from "./store";
 
-const roomId = "redux-whiteboard";
+const roomId: string = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
+//shapes using Liveblocks state
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>(
+    (state) => state.shapes );
+  // const shapes = useSelector((state) => state.shapes);
+  const isLoading = useSelector<LiveblocksState, boolean>(
+    (state) => state.liveblocks.isStorageLoading
+  );
   const dispatch = useDispatch();
 
   /* ... */
@@ -552,6 +565,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocks<State, JsonObject, BaseUserMeta>;
 ```
 
 Update your `App` and `Rectangle` components to show if a shape is selected by
@@ -563,15 +577,15 @@ import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 
-import { insertRectangle, onShapePointerDown } from "./store";
+import { insertRectangle, onShapePointerDown, LiveblocksState } from "./store";
 
 const roomId = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const others = useSelector((state) => state.liveblocks.others);
-  const selectedShape = useSelector((state) => state.selectedShape);
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>((state) => state.shapes);
+  const isLoading = useSelector<LiveblocksState, boolean>((state) => state.liveblocks.isStorageLoading);
+  const others = useSelector<LiveblocksState, LiveblocksState["liveblocks"]["others"]>((state) => state.liveblocks.others);
+  const selectedShape = useSelector<LiveblocksState, LiveblocksState["selectedShape"]>((state) => state.selectedShape);
   const dispatch = useDispatch();
 
   /* ... */
@@ -698,7 +712,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { selectedShape: true },
         storageMapping: { shapes: true },
@@ -710,6 +724,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocks<State, JsonObject, BaseUserMeta>;
 ```
 
 ```tsx file="src/App.tsx" highlight="6,25-30"
@@ -718,15 +733,15 @@ import "./App.css";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
 
-import { insertRectangle, onShapePointerDown, deleteShape } from "./store";
+import { insertRectangle, onShapePointerDown, deleteShape, LiveblocksState } from "./store";
 
 const roomId = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state) => state.selectedShape);
-  const others = useSelector((state) => state.liveblocks.others);
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>((state) => state.liveblocks.shapes);
+  const isLoading = useSelector<LiveblocksState,boolean>((state) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector<LiveblocksState, LiveblocksState["selectedShape"]>((state) => state.liveblocks.selectedShape);
+  const others = useSelector<LiveblocksState, LiveblocksState["others"]>((state) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
@@ -814,7 +829,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer({
         client,
         presenceMapping: { selectedShape: true },
         storageMapping: { shapes: true },
@@ -826,6 +841,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = withLiveblocksState<State>;
 ```
 
 ```tsx file="src/App.tsx" highlight="10-11,30-36"
@@ -840,15 +856,17 @@ import {
   deleteShape,
   onCanvasPointerUp,
   onCanvasPointerMove,
+  LiveblocksState,
 } from "./store";
 
 const roomId = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state) => state.selectedShape);
-  const others = useSelector((state) => state.liveblocks.others);
+
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>((state) => state.shapes);
+  const isLoading = useSelector<LiveblocksState, boolean>((state) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector<LiveblocksState, LiveblocksState["selectedShape"]>((state) => state.selectedShape);
+  const others = useSelector<LiveblocksState, LiveblocksState["liveblocks"]["others"]>((state) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
@@ -858,7 +876,7 @@ export default function App() {
     <>
       <div
         className="canvas"
-        onPointerMove={(e) => {
+        onPointerMove={(e: React.PointerEvent) => {
           e.preventDefault();
           dispatch(onCanvasPointerMove({ x: e.clientX, y: e.clientY }));
         }}
@@ -914,10 +932,10 @@ import {
 const roomId = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state) => state.selectedShape);
-  const others = useSelector((state) => state.liveblocks.others);
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>((state) => state.shapes);
+  const isLoading = useSelector<LiveblocksState, boolean>((state) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector<LiveblocksState, LiveblocksState["selectedShape"]>((state) => state.selectedShape);
+  const others = useSelector<LiveblocksState, LiveblocksState["liveblocks"]["others"]>((state) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
@@ -997,15 +1015,16 @@ import {
   onCanvasPointerUp,
   onCanvasPointerMove,
   client,
+  LiveblocsState,
 } from "./store";
 
 const roomId = "redux-whiteboard";
 
 export default function App() {
-  const shapes = useSelector((state) => state.shapes);
-  const isLoading = useSelector((state) => state.liveblocks.isStorageLoading);
-  const selectedShape = useSelector((state) => state.selectedShape);
-  const others = useSelector((state) => state.liveblocks.others);
+  const shapes = useSelector<LiveblocksState, LiveblocksState["shapes"]>((state) => state.shapes);
+  const isLoading = useSelector<LiveblocksState, boolean>((state) => state.liveblocks.isStorageLoading);
+  const selectedShape = useSelector<LiveblocksState, LiveblocksState["selectedShape"]>((state) => state.selectedShape);
+  const others = useSelector<LiveblocksState, LiveblocksState["liveblocks"]["others"]>((state) => state.liveblocks.others);
 
   const dispatch = useDispatch();
 
@@ -1015,7 +1034,7 @@ export default function App() {
     <>
       <div
         className="canvas"
-        onPointerMove={(e) => {
+        onPointerMove={(e:React.PointerEvent<HTMLDivElement>) => {
           /* ... */
         }}
         onPointerUp={() => {

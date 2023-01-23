@@ -15,7 +15,7 @@ you’re already familiar with [Express](https://expressjs.com/).
 Run the following command to install Liveblocks package:
 
 ```bash
-npm install @liveblocks/node
+npm install @liveblocks/node typescript --save-dev
 ```
 
 [`@liveblocks/node`][] is used from the backend to setup the authentication
@@ -33,7 +33,7 @@ the caller of this endpoint is a valid user by validating the cookies or
 authentication headers and that it has access to the requested room. Then use
 [`authorize`][] to generate a token and return the body as a response.
 
-```tsx
+```ts
 const express = require("express");
 const { authorize } = require("@liveblocks/node");
 
@@ -91,7 +91,7 @@ To connect to Liveblocks, you need to create a Liveblocks client with
 [`createClient`][] from the front-end and set the `authEndpoint` option based on
 the path of the endpoint created earlier.
 
-```tsx
+```ts
 import { createClient } from "@liveblocks/client";
 
 // Create a Liveblocks client

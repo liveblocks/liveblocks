@@ -39,10 +39,25 @@ The source code for this guide is
 Create an empty node project with `npm init` and run the following command to
 install Liveblocks package and `esbuild`:
 
-```bash
-npm install @liveblocks/client esbuild
-```
 
+```bash
+npm install @liveblocks/client esbuild typescript --save-dev
+```
+If you do not already have a typescript configuration file, you can create one with `npx tsc --init`.
+Or you can create the file with the following options:
+```ts file=tsconfig.json
+{
+  "compilerOptions": {
+    "target": "es2016", 
+    "module": "commonjs",  
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,                   
+    "skipLibCheck": true                  
+  },
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
+```
 [`@liveblocks/client`][] lets you interact with Liveblocks servers.  
 [`esbuild`](https://esbuild.github.io/) lets your bundle your app with
 `@liveblocks/client`.
@@ -50,9 +65,10 @@ npm install @liveblocks/client esbuild
 Then add a build script to your `package.json` that will be responsible to
 bundle our app.
 
+
 ```json
 "scripts": {
-  "build": "esbuild app.js --bundle --outfile=static/app.js"
+  "build": "esbuild app.ts --bundle --outfile=static/app.ts"
 },
 ```
 
@@ -73,7 +89,7 @@ key. For more info, see the [authentication guide](/docs/guides/authentication).
 To connect to Liveblocks servers, create a client with [`createClient`][] and
 set your public API key like below.
 
-```jsx file="app.js"
+```ts file="app.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -90,7 +106,7 @@ instructions below.
 You can easily connect to a room by using [`client.enter`][] by passing the room
 id as a parameter. For this tutorial we’ll use `javascript-todo-app`.
 
-```jsx highlight="7-13" file="app.js"
+```ts highlight="7-13" file="app.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -141,10 +157,10 @@ Create a file `static/index.html` with the following content:
 </html>
 ```
 
-And replace `app.js` content with the code below, build your app with
+And replace `app.ts` content with the code below, build your app with
 `npm run build` and open `static/index.html` in multiple browser windows.
 
-```jsx file="app.js" highlight="12-16"
+```ts file="app.ts" highlight="12-16"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -156,7 +172,7 @@ function run() {
     initialPresence: { isTyping: false },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
+  const whoIsHere: HTMLElement = document.getElementById("who_is_here");
 
   room.subscribe("others", (others) => {
     whoIsHere.innerHTML = `There are ${others.count} other users online`;
@@ -166,7 +182,7 @@ function run() {
 run();
 ```
 
-_If you want to make your app feel less "brutalist" while following along,
+_If you want to make your app look a bit more polished while following along,
 create a file `static/index.css` with the following CSS._
 
 ```css file="static/index.css" isCollapsed isCollapsable
@@ -283,7 +299,7 @@ First, add an input to `static/index.html`
       <div id="who_is_here" class="who_is_here"></div>
       <input id="todo_input" type="text" placeholder="What needs to be done?" />
     </div>
-    <script src="app.js"></script>
+    <script src="app.ts"></script>
   </body>
 </html>
 ```
@@ -302,8 +318,8 @@ function run() {
     initialPresence: { isTyping: false },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
-  const todoInput = document.getElementById("todo_input");
+  const whoIsHere: HTMLElement = document.getElementById("who_is_here");
+  const todoInput: HTMLElement = document.getElementById("todo_input");
 
   room.subscribe("others", (others) => {
     whoIsHere.innerHTML = `There are ${others.count} other users online`;
@@ -312,6 +328,7 @@ function run() {
   todoInput.addEventListener("keydown", (e) => {
     // Clear the input when the user presses "Enter".
     // We'll add todo later on
+
     if (e.key === "Enter") {
       room.updatePresence({ isTyping: false });
       todoInput.value = "";
@@ -345,12 +362,12 @@ a message when at least one other user has `isTyping` equals to `true`.
       <input id="todo_input" type="text" placeholder="What needs to be done?" />
       <div id="someone_is_typing" class="someone_is_typing"></div>
     </div>
-    <script src="app.js"></script>
+    <script src="app.ts"></script>
   </body>
 </html>
 ```
 
-```jsx highlight="14,19-23" file="app.js"
+```ts highlight="14,19-23" file="app.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -362,9 +379,9 @@ function run() {
     initialPresence: { isTyping: false },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
-  const todoInput = document.getElementById("todo_input");
-  const someoneIsTyping = document.getElementById("someone_is_typing");
+  const whoIsHere: HTMLElement = document.getElementById("who_is_here");
+  const todoInput: HTMLElement = document.getElementById("todo_input");
+  const someoneIsTyping: HTMLElement = document.getElementById("someone_is_typing");
 
   room.subscribe("others", (others) => {
     whoIsHere.innerHTML = `There are ${others.count} other users online`;
@@ -429,9 +446,9 @@ can be nested to create the state that you want.
 
 We’re going to store the list of todos in a `LiveList`. Initialize the storage
 with the `initialStorage` option when entering the room. Then we use
-[`LiveList.push`][] when the user press "Enter".
+[`LiveList.push`][] when the user presses "Enter".
 
-```jsx highlight="1,8-11,17-19,28" file="src/App.js"
+```ts highlight="1,8-11,17-19,28" file="src/app.ts"
 import { createClient, LiveList } from "@liveblocks/client";
 
 const client = createClient({
@@ -444,9 +461,9 @@ async function run() {
     initialStorage: { todos: new LiveList() },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
-  const todoInput = document.getElementById("todo_input");
-  const someoneIsTyping = document.getElementById("someone_is_typing");
+  const whoIsHere: HTMLElement = document.getElementById("who_is_here");
+  const todoInput: HTMLElement = document.getElementById("todo_input");
+  const someoneIsTyping: HTMLElement = document.getElementById("someone_is_typing");
 
   const { root } = await room.getStorage();
 
@@ -498,7 +515,7 @@ the app whenever the todos are updated.
 </html>
 ```
 
-```jsx highlight="16,34-56" file="src/App.js"
+```ts highlight="16,34-56" file="src/app.ts"
 import { createClient, LiveList } from "@liveblocks/client";
 
 const client = createClient({
@@ -511,10 +528,10 @@ async function run() {
     initialStorage: { todos: new LiveList() },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
-  const todoInput = document.getElementById("todo_input");
-  const someoneIsTyping = document.getElementById("someone_is_typing");
-  const todosContainer = document.getElementById("todos_container");
+  const whoIsHere:HTMLElement = document.getElementById("who_is_here");
+  const todoInput: HTMLElement = document.getElementById("todo_input");
+  const someoneIsTyping: HTMLElement = document.getElementById("someone_is_typing");
+  const todosContainer: HTMLElement = document.getElementById("todos_container");
 
   const { root } = await room.getStorage();
 
@@ -563,7 +580,7 @@ run();
 Finally, add a delete button for each todo and call [`LiveList.delete`][] to
 remove a todo from the list by index.
 
-```jsx highlight="48-54" file="src/App.js"
+```ts highlight="48-54" file="src/app.ts"
 import { createClient, LiveList } from "@liveblocks/client";
 
 const client = createClient({

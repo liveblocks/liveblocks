@@ -174,8 +174,14 @@ part of the state maps to the current user’s `presence`.
 
 ```ts file="src/store.ts"
 /* ... imports and client setup ... */
+type Cursor = { x: number; y: number };
 
-const initialState = {
+type State = {
+  cursor: Cursor;
+  setCursor: (cursor: Cursor) => void;
+};
+
+const initialState: State = {
   cursor: { x: 0, y: 0 },
 };
 
@@ -183,7 +189,7 @@ const slice = createSlice({
   name: "state",
   initialState,
   reducers: {
-    setCursor: (state, action) => {
+    setCursor: (state, action: PayloadAction<Cursor>) => {
       state.cursor = action.payload;
     },
   },
@@ -195,7 +201,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
         presenceMapping: { cursor: true },
       }),
@@ -204,6 +210,13 @@ function makeStore() {
 }
 
 const store = makeStore();
+
+export type LiveBlocksState = WithLiveblocks<
+  ReturnType<typeof store.getState>,
+  { cursor: Cursor },
+  never
+>;
+export type AppDispatch = typeof store.dispatch;
 
 export default store;
 ```
@@ -221,7 +234,7 @@ function YourComponent() {
   return (
     <div
       style={{ width: "100vw", height: "100vh" }}
-      onPointerMove={(e) => dispatch(setCursor({ x: e.clientX, y: e.clientY }))}
+      onPointerMove={(e:PointerEvent) => dispatch(setCursor({ x: e.clientX, y: e.clientY }))}
     />
   );
 }
@@ -235,10 +248,12 @@ user presence can be `undefined`.
 
 ```tsx
 import { useSelector } from "react-redux";
+import {LiveBlocksState} from "./store";
 
 function OthersCursors() {
-  const others = useSelector((state) => state.liveblocks.others);
-
+  const others = useSelector<LiveBlocksState, LiveBlocksState["others"]>(
+    (state) => state.liveblocks.others
+  );
   const othersCursors = others.map((user) => user.presence?.cursor);
 
   // Render cursors with custom SVGs based on x and y
@@ -277,8 +292,13 @@ following store:
 
 ```ts
 /* ...client setup... */
+type Person = {
+  firstName: string;
+  lastName: string;
+  discoveries: string[];
+};
 
-const initialState = {
+const initialState: Person = {
   firstName: "Marie",
   lastName: "Curie",
   discoveries: ["Polonium", "Radium"],
@@ -288,13 +308,13 @@ const slice = createSlice({
   name: "state",
   initialState,
   reducers: {
-    setFirstName: (state, action) => {
+    setFirstName: (state, action:PayloadAction<string>) => {
       state.firstName = action.payload;
     },
-    setLastName: (state, action) => {
+    setLastName: (state, action:PayloadAction<string>) => {
       state.lastName = action.payload;
     },
-    addDiscovery: (state, action) => {
+    addDiscovery: (state, action: PayloadAction<string>) => {
       state.discoveries.push(action.payload);
     },
   },
@@ -306,7 +326,7 @@ function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      enhancer({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { firstName: true, lastName: true, discoveries: true },
       }),
@@ -315,6 +335,14 @@ function makeStore() {
 }
 
 const store = makeStore();
+export type LiveBlocksState = WithLiveblocks<
+  ReturnType<typeof store.getState>,
+  { person:Person },
+  never
+>;
+export type AppDispatch = typeof store.dispatch;
+
+export default store;
 ```
 
 With this setup, the room's `storage` root is :

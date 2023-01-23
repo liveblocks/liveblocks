@@ -209,7 +209,7 @@ selection of users in your app. Groups can be attached to a user by passing an
 array of `groupId` values in `groupIds`, during
 [authentication](/docs/guides/authentication).
 
-```js highlight="3"
+```ts highlight="3"
 import { authorize } from "@liveblocks/node";
 const response = await authorize({
   groupIds: ["engineering"],
@@ -284,7 +284,7 @@ room.
 To use this, first, a user is given a `userId` during
 [authentication](/docs/guides/authentication).
 
-```js highlight="3"
+```ts highlight="3"
 import { authorize } from "@liveblocks/node";
 const response = await authorize({
   userId: "ellen@acme.inc",

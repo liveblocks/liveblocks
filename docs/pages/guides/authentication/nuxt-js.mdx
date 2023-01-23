@@ -21,7 +21,7 @@ README:
 Run the following command to install Liveblocks package:
 
 ```bash
-npm install @liveblocks/node
+npm install @liveblocks/node typescript --save-dev
 ```
 
 [`@liveblocks/node`][] is used from the backend to setup the authentication
@@ -42,7 +42,7 @@ Modify your `nuxt.config.js` with the following config.
 serverMiddleware: [{ path: "/api", handler: "~/api" }];
 ```
 
-Then create a file called `api.js` at the root of your project and add an
+Then create a file called `api.ts` at the root of your project and add an
 Express endpoint like below.
 
 ```ts file="api.ts"

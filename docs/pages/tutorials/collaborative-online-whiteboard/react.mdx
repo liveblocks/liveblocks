@@ -343,7 +343,7 @@ function getRandomInt(max: number) {
 }
 
 function getRandomColor() {
-  return COLORS[getRandomInt(COLORS.length)];
+  return COLORS[getRandomInt(COLORS.length)] as string;
 }
 
 /* App */
@@ -398,7 +398,7 @@ store a user’s selected shape, and then the
 users’ selected shapes. But first, let’s re-export those hooks from
 `src/liveblocks.config` like we did previously with `useMap`.
 
-```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+```ts file="src/liveblocks.config.ts" highlight="8-9,11"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -413,18 +413,22 @@ export const { RoomProvider, useOthers, useMyPresence, useMap } =
 We can now use those hooks directly in our application by importing them from
 `src/liveblocks.config.js`.
 
-```js file="src/App.js" highlight="1,6,7,11-13,19-26,31-33,45,50,55"
+```tsx file="src/App.tsx" highlight="1,6,7,11-13,19-26,31-33,45,50,55"
 import { useMap, useMyPresence, useOthers } from "./liveblocks.config";
 
 /* ... */
 
-function Canvas({ shapes }) {
+type CanvasProps = {
+  shapes: Record<string, Shape>
+}
+
+function Canvas({ shapes }: CanvasProps) {
   const [{ selectedShape }, setPresence] = useMyPresence();
   const others = useOthers();
 
   /* ... */
 
-  const onShapePointerDown = (e, shapeId) => {
+  const onShapePointerDown = (e: any, shapeId: string) => {
     setPresence({ selectedShape: shapeId });
   };
 
@@ -458,12 +462,19 @@ function Canvas({ shapes }) {
   );
 }
 
-const Rectangle = ({ shape, id, onShapePointerDown, selectionColor }) => {
+type RectangleProps = {
+  shape: any;
+  id: string;
+  onShapePointerDown: (e: any, id: string) => void;
+  selectionColor?: string;
+};
+
+const Rectangle = ({ shape, id, onShapePointerDown, selectionColor }: RectangleProps) => {
   const { x, y, fill } = shape;
 
   return (
     <div
-      onPointerDown={(e) => onShapePointerDown(e, id)}
+      onPointerDown={(e:any) => onShapePointerDown(e, id)}
       className="rectangle"
       style={{
         transform: `translate(${x}px, ${y}px)`,
@@ -492,7 +503,7 @@ rectangles too.
 We’ll use `shapes.delete` to remove the selected shape from the `LiveMap`, and
 then reset the user’s selection.
 
-```js file="src/App.js" highlight="3-6,12-14"
+```ts file="src/App.ts" highlight="3-6,12-14"
 /* ... */
 
 const deleteRectangle = () => {
@@ -528,19 +539,19 @@ Let’s move some rectangles!
 To allow users to move rectangles, we’ll update the `x` and `y` properties using
 `shapes.set` when a user drags a shape.
 
-```js file="src/App.js" highlight="7,13,17,20-26,28-41,46,47"
+```ts file="src/App.ts" highlight="7,13,17,20-26,28-41,46,47"
 import { useState } from "react";
 import { useMap, useMyPresence, useOthers } from "./liveblocks.config";
 
 /* ... */
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: CanvasProps) ) {
   const [isDragging, setIsDragging] = useState(false);
   const [{ selectedShape }, setPresence] = useMyPresence();
 
   /* ... */
 
-  const onShapePointerDown = (e, shapeId) => {
+  const onShapePointerDown = (e:any, shapeId:string) => {
     e.stopPropagation();
 
     setPresence({ selectedShape: shapeId });
@@ -610,7 +621,7 @@ undo/redo history. In this example, that means all changes made to `shapes`
 Like we did with the others hooks, re-export it from your
 `src/liveblocks.config`.
 
-```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+```ts file="src/liveblocks.config.ts" highlight="8-9,11"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -625,7 +636,7 @@ export const { RoomProvider, useOthers, useMyPresence, useMap, useHistory } =
 To undo a change to presence we need to add the `{ addToHistory: true }` option
 to `setPresence`.
 
-```js file="src/App.js" highlight="6,12,19,26,39,40"
+```ts file="src/App.ts" highlight="6,12,19,26,39,40"
 import { useEffect, useState } from "react";
 import {
   useMap,
@@ -636,12 +647,12 @@ import {
 
 /* ... */
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: CanvasProps)) {
   const history = useHistory();
 
   /* ... */
 
-  const onShapePointerDown = (e, shapeId) => {
+  const onShapePointerDown = (e: any, shapeId: string) => {
     e.stopPropagation();
 
     setPresence({ selectedShape: shapeId }, { addToHistory: true });
@@ -700,8 +711,8 @@ then call
 [`history.resume`](/docs/api-reference/liveblocks-client#Room.history.resume)
 afterwards.
 
-```js file="src/App.js" highlight="2,17"
-const onShapePointerDown = (e, shapeId) => {
+```ts file="src/App.tsx" highlight="2,17"
+const onShapePointerDown = (e: any, shapeId: string) => {
   history.pause();
   e.stopPropagation();
 
@@ -741,7 +752,7 @@ to do this, by calling all our changes within the `batch()` callback argument.
 Like we did with the others hooks, re-export it from your
 `src/liveblocks.config`.
 
-```jsx file="src/liveblocks.config.js" highlight="8-9,11"
+```ts file="src/liveblocks.config.ts" highlight="8-9,11"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -759,7 +770,7 @@ export const {
 } = createRoomContext(client);
 ```
 
-```js file="src/App.js" highlight="7,14,17,25,26"
+```tsx file="src/App.tsx" highlight="7,14,17,25,26"
 import { useEffect, useState } from "react";
 import {
   useMap,
@@ -771,7 +782,7 @@ import {
 
 /* ... */
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: CanvasProps) {
   /* ... */
   const batch = useBatch();
 
@@ -807,7 +818,7 @@ rectangles when the nested data structure updates:
 Re-export `useRoom` from `src/liveblocks.config` to get the current `Room` from
 your components.
 
-```jsx file="src/liveblocks.config.js" highlight="8-26"
+```ts file="src/liveblocks.config.ts" highlight="8-26"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -826,7 +837,7 @@ export const {
 } = createRoomContext(client);
 ```
 
-```js file="src/App.js" highlight="8,10,20-24,36-42,50,52-60"
+```ts file="src/App.tsx" highlight="8,10,20-24,36-42,50,52-60"
 import { useState, useEffect, memo } from "react";
 import {
   useMyPresence,
@@ -840,7 +851,7 @@ import { LiveObject } from "@liveblocks/client";
 
 /* ... */
 
-function Canvas({ shapes }) {
+function Canvas({ shapes }: CanvasProps) {
   /* ... */
 
   const insertRectangle = () => {
@@ -858,7 +869,7 @@ function Canvas({ shapes }) {
 
   /* ... */
 
-  const onCanvasPointerMove = (e) => {
+  const onCanvasPointerMove = (e: any) => {
     e.preventDefault();
 
     if (isDragging) {
@@ -875,7 +886,7 @@ function Canvas({ shapes }) {
   return (/* ... */);
 }
 
-const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
+const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }: RectangleProps) => {
   const [{ x, y, fill }, setShapeData] = useState(shape.toObject());
 
   const room = useRoom();
@@ -890,7 +901,10 @@ const Rectangle = memo(({ shape, id, onShapePointerDown, selectionColor }) => {
 
   return (
     <div
-      onPointerDown={(e) => onShapePointerDown(e, id)}
+      onPointerDown={(e: any) => {
+        e.preventDefault();
+        onShapePointerDown(e, id);
+      }
       className="rectangle"
       style={{
         transform: `translate(${x}px, ${y}px)`,

@@ -20,7 +20,7 @@ README:
 Run the following command to install Liveblocks package:
 
 ```bash
-npm install @liveblocks/node
+npm install @liveblocks/node typescript --save-dev
 ```
 
 [`@liveblocks/node`][] is used from the backend to setup the authentication
@@ -33,7 +33,7 @@ permission access in an `api/auth` endpoint by creating the `pages/api/auth.ts`
 file with the following code. This is where you will implement your security and
 define if the current user has access to a specific room.
 
-```tsx
+```ts
 import { authorize } from "@liveblocks/node";
 
 // Replace this key with your secret key provided at
@@ -82,7 +82,7 @@ To connect to Liveblocks, you need to create a Liveblocks client with
 [`createClient`](/docs/api-reference/liveblocks-client#createClient) from the front-end and set the `authEndpoint` option based on
 the path of the endpoint created earlier.
 
-```tsx
+```ts
 import { createClient } from "@liveblocks/client";
 
 // Create a Liveblocks client

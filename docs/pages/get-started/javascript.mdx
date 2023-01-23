@@ -56,7 +56,7 @@ instructions below.
 
 You can easily connect to a room by using [`client.enter`][] as shown below.
 
-```js
+```ts
 const room = client.enter("your-room-id", { initialPresence: {} });
 ```
 
@@ -66,7 +66,7 @@ Now that we have our room setup, we can start using Liveblocks Client methods to
 share any kind of data between users. For instance, [`Room.subscribe.others`][]
 allows us to subscribe to the other users updates.
 
-```js
+```ts
 const room = client.enter("your-room-id", { initialPresence: {} });
 
 const container = document.getElementById("root-container");

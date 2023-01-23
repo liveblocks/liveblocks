@@ -17,7 +17,7 @@ To do that, let’s first install [`@liveblocks/node`][] package in your Firebas
 functions project.
 
 ```bash
-npm install @liveblocks/node
+npm install @liveblocks/node typescript --save-dev
 ```
 
 ## Setup authentication endpoint [#authentication]
@@ -27,7 +27,7 @@ Next, create a new Firebase
 shown below. This is where you will implement your security and define if the
 current user has access to a specific room.
 
-```tsx
+```ts
 const functions = require("firebase-functions");
 const { authorize } = require("@liveblocks/node");
 
@@ -78,7 +78,7 @@ To connect to Liveblocks, you need to create a Liveblocks client with
 [`createClient`][] from the front-end and set the `authEndpoint` option based on
 the previously created “callable function”:
 
-```tsx
+```ts
 import { createClient } from "@liveblocks/client";
 import firebase from "firebase";
 import "firebase/functions";
