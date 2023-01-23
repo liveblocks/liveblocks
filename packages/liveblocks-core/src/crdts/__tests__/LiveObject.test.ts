@@ -418,12 +418,10 @@ describe("LiveObject", () => {
         ],
         async ({ assert, batch, root, machine }) => {
           const items = root.get("items");
-          machine.pauseHistory();
           batch(() => {
             items.set("a", "A");
             items.set("b", "A");
           });
-          machine.resumeHistory();
 
           expect(items.toObject()).toEqual({ a: "A", b: "A" });
           assert([
