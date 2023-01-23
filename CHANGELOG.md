@@ -1,6 +1,8 @@
 # v0.19.8
 
-Fix LiveObject key set undo if key has pending local changes.
+Fixes two history bugs:
+- The history didn't reliably undo LiveObject key set changes if any pending local changes existed on that key.
+- Changes performed inside `room.batch` were incorrectly ordered inside the history resulting in unexpected undo behavior in some cases.
 
 # v0.19.7
 
