@@ -1,3 +1,6 @@
+# v0.19.8
+
+Fix LiveObject key set undo if key has pending local changes.
 
 # v0.19.7
 
