@@ -2,7 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes loading-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes loading-offset-distance {
+  0% {
+    offset-distance: 0%;
+  }
+
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes loading-offset-rotate {
+  0% {
+    offset-rotate: 0deg;
+  }
+  100% {
+    offset-rotate: 180deg;
+  }
+}
+
 :root {
+  --ease-in-out-quart: cubic-bezier(0.6, 0, 0.4, 1);
+  --ease-in-out-expo: cubic-bezier(0.8, 0, 0.2, 1);
+
+  --loading-duration: 2s;
+
   --color-code: hsl(252, 4%, 28%);
   --color-code-comment: hsla(252, 4%, 28%, 0.5);
   --color-code-variable: hsl(34, 100%, 41%);
@@ -56,4 +90,29 @@ body[data-resizing="vertical"] {
 
 input[type="search"]::-webkit-search-cancel-button {
   @apply hidden;
+}
+
+#loading-group {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loading-rotate var(--loading-duration) infinite
+    var(--ease-in-out-expo);
+}
+
+#loading-top {
+  offset-path: path("M73.5 67C73.5 67 51 96 41 86C31 76 54.5 61 54.5 61");
+  transform-origin: 73.5px 67px;
+  animation: loading-offset-distance var(--loading-duration) infinite
+      var(--ease-in-out-quart),
+    loading-offset-rotate var(--loading-duration) infinite
+      var(--ease-in-out-expo);
+}
+
+#loading-bottom {
+  offset-path: path("M54.5 61C54.5 61 77 32 87 42C97 52 73.5 67 73.5 67");
+  transform-origin: 54.5px 61px;
+  animation: loading-offset-distance var(--loading-duration) infinite
+      var(--ease-in-out-quart),
+    loading-offset-rotate var(--loading-duration) infinite
+      var(--ease-in-out-expo);
 }
