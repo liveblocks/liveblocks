@@ -13,7 +13,8 @@ import {
 import { assertNever } from "../../lib/assert";
 import type { EventSource, Observable } from "../../lib/EventSource";
 import { makeEventSource } from "../../lib/EventSource";
-import { onMessageFromClient, sendMessageToClient } from "../port";
+import { onMessage, sendMessage } from "../port";
+import type { FullBackgroundToPanelMessage } from "../protocol";
 
 type Room = {
   readonly roomId: string;
@@ -171,16 +172,22 @@ export function CurrentRoomProvider(props: Props) {
     []
   );
 
-  useEffect(() => {
-    // Listen for new handshakes/connections!
-
-    function onClientMessage(msg: DevToolsMsg.FullClientToPanelMessage) {
+  const handleMessage = useCallback(
+    (
+      msg: DevToolsMsg.FullClientToPanelMessage | FullBackgroundToPanelMessage
+    ) => {
       switch (msg.msg) {
+        // The inspected window was reloaded, so we should reload the panel.
+        // Ideally, we should reconnect instead of performing a full reload.
+        case "reload":
+          window.location.reload();
+          break;
+
         // A new client just announced itself! Let's connect to it, by sending
         // it the connect message, so it knows it should start broadcasting
         // internal updates to the devtools.
         case "wake-up-devtools": {
-          sendMessageToClient({ msg: "connect" });
+          sendMessage({ msg: "connect" });
           break;
         }
 
@@ -241,20 +248,21 @@ export function CurrentRoomProvider(props: Props) {
           break;
         }
       }
-    }
+    },
+    []
+  );
 
-    onMessageFromClient.addListener(onClientMessage);
-    return () => {
-      onMessageFromClient.removeListener(onClientMessage);
-    };
-  }, []);
-
-  // When loading the app, try to connect. This can get acknowledged when an
-  // active Liveblocks app is already connected. Or it can not get
-  // acknowledged, in which case the dev panel will remain idle until we
-  // receive an "wake-up-devtools" message.
   useEffect(() => {
-    sendMessageToClient({ msg: "connect" });
+    // When loading the app, try to connect. This can get acknowledged when an
+    // active Liveblocks app is already connected. Or it can not get
+    // acknowledged, in which case the dev panel will remain idle until we
+    // receive an "wake-up-devtools" message.
+    sendMessage({ msg: "connect" });
+
+    onMessage.addListener(handleMessage);
+    return () => {
+      onMessage.removeListener(handleMessage);
+    };
   }, []);
 
   useEffect(() => {
@@ -262,9 +270,9 @@ export function CurrentRoomProvider(props: Props) {
     if (!roomId) {
       return;
     }
-    sendMessageToClient({ msg: "room::subscribe", roomId });
+    sendMessage({ msg: "room::subscribe", roomId });
     return () => {
-      sendMessageToClient({ msg: "room::unsubscribe", roomId });
+      sendMessage({ msg: "room::unsubscribe", roomId });
     };
   }, [currentRoomId]);
 

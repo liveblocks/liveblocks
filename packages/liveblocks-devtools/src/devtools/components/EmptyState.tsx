@@ -1,6 +1,7 @@
 import cx from "classnames";
 import type { ComponentProps, MouseEvent, ReactNode } from "react";
-import browser from "webextension-polyfill";
+
+import { sendMessage } from "../port";
 
 type Action =
   | {
@@ -54,9 +55,7 @@ export function EmptyState({
             {actions.map((action, index) => {
               const handleClick = (event: MouseEvent<HTMLButtonElement>) => {
                 if (action.href) {
-                  browser.tabs.create({
-                    url: action.href,
-                  });
+                  sendMessage({ msg: "open", url: action.href });
                 } else {
                   action.onClick?.(event);
                 }

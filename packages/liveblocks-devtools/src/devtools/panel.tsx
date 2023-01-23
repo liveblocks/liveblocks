@@ -2,7 +2,6 @@ import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
-import browser from "webextension-polyfill";
 
 import { Loading } from "../components/Loading";
 import { ThemeProvider } from "../contexts/Theme";
@@ -14,6 +13,7 @@ import { RoomStatus } from "./components/RoomStatus";
 import { StorageSearch } from "./components/StorageSearch";
 import { Tabs } from "./components/Tabs";
 import { CurrentRoomProvider, useCurrentRoomId } from "./contexts/CurrentRoom";
+import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 
@@ -31,8 +31,7 @@ function Panel() {
   }, []);
 
   const handleReload = useCallback(() => {
-    browser.tabs.reload();
-    window.location.reload();
+    sendMessage({ msg: "reload" });
   }, []);
 
   useEffect(() => {
