@@ -1,11 +1,15 @@
 import cx from "classnames";
 import type { ComponentProps } from "react";
 
-export function Loading({ className, ...props }: ComponentProps<"svg">) {
+interface Props extends ComponentProps<"svg"> {
+  animate?: boolean;
+}
+
+export function Loading({ className, animate = true, ...props }: Props) {
   return (
     <svg
-      width="128"
-      height="128"
+      width="96"
+      height="96"
       viewBox="0 0 128 128"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -13,13 +17,19 @@ export function Loading({ className, ...props }: ComponentProps<"svg">) {
       {...props}
     >
       <g
-        id="loading-group"
+        id={animate ? "loading-group" : undefined}
         fill="currentColor"
         fill-rule="evenodd"
         clip-rule="evenodd"
       >
-        <path id="loading-top" d="M96 83H51L83.0504 51V69.56L96 83Z" />
-        <path id="loading-bottom" d="M32 45H77L44.9496 77V58.44L32 45Z" />
+        <path
+          id={animate ? "loading-top" : undefined}
+          d="M96 83H51L83.0504 51V69.56L96 83Z"
+        />
+        <path
+          id={animate ? "loading-bottom" : undefined}
+          d="M32 45H77L44.9496 77V58.44L32 45Z"
+        />
       </g>
     </svg>
   );

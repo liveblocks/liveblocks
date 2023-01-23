@@ -40,20 +40,33 @@ function Panel() {
 
   if (currentRoomId === null) {
     return (
-      <EmptyState
-        visual={<Loading />}
-        title={<>No Liveblocks&nbsp;rooms found.</>}
-        description={
-          <>
-            Try reloading the page if something is wrong or go to the docs to
-            get started with&nbsp;Liveblocks.
-          </>
-        }
-        actions={[
-          { title: "Reload", onClick: handleReload },
-          { title: "Get started", href: "https://liveblocks.io/docs" },
-        ]}
-      />
+      <div className="absolute inset-0 flex h-full select-none flex-col text-center">
+        <EmptyState
+          className="relative flex-1"
+          visual={<Loading />}
+          title={<>No Liveblocks&nbsp;rooms found.</>}
+          description={
+            <>
+              Try reloading the page if something is wrong or go to the docs to
+              get started with&nbsp;Liveblocks.
+            </>
+          }
+          actions={[
+            { title: "Reload", onClick: handleReload },
+            { title: "Get started", href: "https://liveblocks.io/docs" },
+          ]}
+        />
+        <div className="bg-light-0 dark:bg-dark-0 border-light-300 dark:border-dark-300 flex h-12 w-full flex-none items-center justify-center border-t px-8">
+          <p className="text-dark-900 dark:text-dark-800 text-2xs truncate leading-normal">
+            Requires a <strong className="font-medium">development</strong>{" "}
+            build of{" "}
+            <span className="relative inline-block px-[0.35em] py-[0.1em] before:absolute before:inset-0 before:rounded-[0.4em] before:bg-current before:opacity-10">
+              @liveblocks/client
+            </span>{" "}
+            0.19.4 or newer.
+          </p>
+        </div>
+      </div>
     );
   }
 

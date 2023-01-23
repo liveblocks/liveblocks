@@ -53,7 +53,7 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
     }
   }, [search]);
 
-  return (
+  return storage.length > 0 ? (
     <div className={cx(className, "absolute inset-0")} {...props}>
       {isEmptySearch ? (
         <EmptyState
@@ -92,5 +92,9 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
         ) : null}
       </div>
     </div>
+  ) : (
+    <EmptyState
+      description={<>This room’s storage appears to be&nbsp;empty.</>}
+    />
   );
 }
