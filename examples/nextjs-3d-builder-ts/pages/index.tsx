@@ -4,6 +4,7 @@ import { useGLTF, OrbitControls, ContactShadows } from "@react-three/drei";
 import { HexColorPicker } from "react-colorful";
 import { useStorage, useMutation } from "../liveblocks.config";
 import styles from "./index.module.css";
+import Colors from "../../types.ts"
 
 /**
  * This file shows how to create a simple 3D builder using React Three Fiber and Liveblocks
@@ -12,13 +13,17 @@ import styles from "./index.module.css";
  */
 
 export default function Example() {
-  const [material, setMaterial] = useState(null);
+  // const [material, setMaterial] = useState(null);
+  const [material, setMaterial] = useState<{material: string | null}>({material:null});
   const colors = useStorage((root) => root.colors);
 
   const onChangeColor = useMutation(
     ({ storage }, color) => {
       if (material) {
-        storage.get("colors").set(material, color);
+        // storage.get("colors").set(material, color);
+        //set storage for material and color
+        // storage.get("colors").set(material, color)
+        storage.get("colors").set(material.material, color)
       }
     },
     [material]
@@ -37,7 +42,7 @@ export default function Example() {
   return (
     <div className={styles.container}>
       <div className={styles.canvas}>
-        <Canvas pixelRatio={[1, 1.5]} camera={{ position: [0, 0, 2.75] }}>
+        <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 2.75] }}>
           <ambientLight intensity={0.3} />
           <spotLight
             intensity={0.3}
@@ -49,7 +54,7 @@ export default function Example() {
             {colors && (
               <Shoe
                 snap={colors}
-                selectMaterial={(material) => setMaterial(material)}
+                selectMaterial={(material: string) => setMaterial({material})}
               />
             )}
             <ContactShadows
@@ -83,8 +88,16 @@ export default function Example() {
   );
 }
 
-function Shoe({ snap, selectMaterial }) {
-  const { nodes, materials } = useGLTF("/shoe.glb");
+type Props= {
+  snap: Colors;
+  selectMaterial: (material: string) => void;
+}
+
+function Shoe({ snap, selectMaterial }: Props) {
+
+  // make typescript happy
+  // const { nodes, materials } = useGLTF("/shoe.glb");
+  type GLTFResult = { nodes: any; materials: any };
 
   return (
     <group

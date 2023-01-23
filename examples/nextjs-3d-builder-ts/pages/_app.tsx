@@ -1,16 +1,19 @@
+import { AppProps } from "next/app";
 import Head from "next/head";
 import { useMemo } from "react";
 import { useRouter } from "next/router";
 import { LiveObject } from "@liveblocks/client";
 import { RoomProvider } from "../liveblocks.config";
+// import { createRoomContext } from "@liveblocks/react";
+// import { RoomProvider } from "../liveblocks.config";
 
-function App({ Component, pageProps }) {
+function App({ Component, pageProps }: AppProps) {
   const roomId = useOverrideRoomId("nextjs-3d-builder");
 
   return (
+    
     <RoomProvider
       id={roomId}
-      initialPresence={{}}
       initialStorage={{ colors: new LiveObject() }}
     >
       <Head>

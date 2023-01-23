@@ -5,7 +5,7 @@
   "private": true,
   "main": "app.js",
   "scripts": {
-    "build": "esbuild app.js --bundle --outfile=static/app.js"
+    "build": "esbuild app.ts --bundle --outfile=static/app.ts"
   },
   "devDependencies": {
     "esbuild": "^0.14.25",
