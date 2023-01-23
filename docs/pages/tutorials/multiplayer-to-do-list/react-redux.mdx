@@ -73,17 +73,22 @@ public API key. Then add our
 [enhancer](/docs/api-reference/liveblocks-redux#enhancer) to your store
 configuration.
 
-```js file="src/store.js"
+```ts file="src/store.ts"
 import { createClient } from "@liveblocks/client";
-import { liveblocksEnhancer } from "@liveblocks/redux";
+import { liveblocksEnhancer, WithLiveBlocks} from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const client = createClient({
   publicApiKey: "{{PUBLIC_KEY}}",
 });
 
-const initialState = {};
+type State = {
+  todos: string[];
+};
 
+const initialState: State = {
+  todos: [],
+};
 
 const slice = createSlice({
   name: "state",
@@ -98,7 +103,7 @@ export function makeStore() {
     reducer: slice.reducer,
     enhancers: [
       liveblocksEnhancer({
-        client,
+        client
       }),
     ],
   });
@@ -107,6 +112,7 @@ export function makeStore() {
 const store = makeStore();
 
 export default store;
+export type LiveblocksState = WithLiveblocsk<State>
 ```
 
 We need to edit `src/index.js` to add the react-redux provider:
@@ -143,7 +149,7 @@ We are going to dispatch the actions provided by `@liveblocks/redux` to
 In our main component, we want to connect to the Liveblocks room when the
 component does mount, and leave the room when it unmounts.
 
-```jsx file="src/App.tsx"
+```tsx file="src/App.tsx"
 import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { actions } from "@liveblocks/redux";
@@ -191,11 +197,11 @@ to show who’s currently inside the room.
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
+import { LiveblocksState } from "./store";
 
 import "./App.css";
-
 function WhoIsHere() {
-  const othersUsersCount = useSelector(
+  const othersUsersCount = useSelector<LiveblocksState, number]>(
     (state) => state.liveblocks.others.length
   );
 
@@ -335,7 +341,7 @@ The enhancer option
 means that we want to automatically sync the part of the state named `isTyping`
 to Liveblocks Presence.
 
-```js highlight="10-11,18-21,25,33" file="src/store.js"
+```ts highlight="10-11,18-21,25,33" file="src/store.ts"
 import { createClient } from "@liveblocks/client";
 import { enhancer } from "@liveblocks/redux";
 import { configureStore, createSlice } from "@reduxjs/toolkit";
@@ -371,7 +377,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      liveblocksEnhancer({
+      liveblocksEnhancer<State>({
         client,
         presenceMapping: { isTyping: true },
       }),
@@ -392,6 +398,7 @@ user has `isTyping` equals to `true`.
 import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions } from "@liveblocks/redux";
+import { LiveblocksState } from "./store";
 
 import { setDraft } from "./store";
 
@@ -400,7 +407,7 @@ import "./App.css";
 /* WhoIsHere */
 
 function SomeoneIsTyping() {
-  const someoneIsTyping = useSelector((state) =>
+  const someoneisTyping = useSelector<LiveblocksState, boolean >((state) =>
     state.liveblocks.others.some((user) => user.presence?.isTyping)
   );
 
@@ -410,7 +417,7 @@ function SomeoneIsTyping() {
 }
 
 export default function App() {
-  const draft = useSelector((state) => state.draft);
+  const draft = useSelector<LiveBlocksState,string>((state) => state.draft);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -509,7 +516,7 @@ export function makeStore() {
   return configureStore({
     reducer: slice.reducer,
     enhancers: [
-      liveblocksEnhancer({
+      liveblocksEnhancer<State>({
         client,
         storageMapping: { todos: true },
         presenceMapping: { isTyping: true },
@@ -539,8 +546,8 @@ import "./App.css";
 /* SomeoneIsTyping */
 
 export default function App() {
-  const todos = useSelector((state) => state.todos);
-  const draft = useSelector((state) => state.draft);
+  const todos = useSelector<LiveblocksState, string[]>(state => state.todos);
+  const draft = useSelector<LiveblocksState, string>((state) => state.draft);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -563,12 +570,14 @@ export default function App() {
         type="text"
         placeholder="What needs to be done?"
         value={draft}
-        onChange={(e) => dispatch(setDraft(e.target.value))}
-        onKeyDown={(e) => {
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+          dispatch(setDraft(e.target.value));
+        }
+        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
           if (e.key === "Enter") {
             dispatch(addTodo());
           }
-        }}
+        }
       ></input>
       <SomeoneIsTyping />
       {todos.map((todo, index) => {

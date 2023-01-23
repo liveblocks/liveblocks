@@ -1,0 +1,39 @@
+---
+meta:
+  title: "Liveblocks Devtool"
+  parentTitle: "Guides"
+  description:
+    "How to leverage Liveblocks new Devtool to fully understand and troubleshoot your Application."
+---
+
+## Why we Built a Devtool
+Our customers turn to us to expedite the creation of collaborative online experiences.  Leveraging Liveblocks API's are powerful, but because we handle the resolution and storage of data structures, understanding what is happening behind the scenes can be confusing for a new user.
+
+The hope in creating the Liveblocks devtool was to empower our community so that beginners can easily understand and learn Liveblocks, while power users can leverage the tool to troubleshoot, debug, and optimize their implementation.
+
+
+## How the Devtool Works
+Our devtools panel is a React + Tailwind app that we can run in the devtools extension tab.  We built a basic handshake and state synchronization protocol using browser extension message tunneling, and making the `@liveblocks/core` project aware of it in dev mode. 
+It supports one-way data syncs from the Liveblocks client.  Much like React and Redux Devtools, the code is compiled away in production. 
+
+(Could insert image here from notion doc)
+## Devtool Installation
+[Our devtool](https://chrome.google.com/webstore/detail/liveblocks-devtools/iiagocfmmhknpdalddkbiejnfmbmlffk?hl=en) is available from the chrome web store. You can download it from the store, or search for it on the main landing page.  It is compatible with chrome and firefox.
+
+## Testing the devtool with a Liveblocks Example
+All of our examples hosted on liveblocks.io are available for you to run locally from the [liveblocks repository](https://github.com/liveblocks/liveblocks) under the examples directory.
+
+For the purpose of testing and reviewing how to use the devtool we will use the [Advanced Collaborative Spreadsheet](https://liveblocks.io/examples/collaborative-spreadsheet-advanced/nextjs).
+
+After cloning the github and opening the example from liveblocks repository:
+```
+git clone https://github.com/liveblocks/liveblocks.git
+
+cd example/nextjs-nextjs-spreadsheet-advanced/
+``` 
+
+We will need to install packages and create an `.env.local` file just like we would do if we were working on the main repository.
+First run: `bash npm install` and then create the `.env.local` file with your `LIVEBLOCKS_SECRET_KEY`
+
+Now we can run our example by running `npm run dev` and navigating to `http://localhost:3000`
+
