@@ -11,10 +11,13 @@ import type {
   RefAttributes,
 } from "react";
 import {
+  createContext,
   forwardRef,
   Fragment,
   useCallback,
+  useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -94,6 +97,10 @@ interface RowProps extends ComponentProps<"div"> {
 
 interface RowHighlightProps extends ComponentProps<"div"> {
   node: NodeApi;
+}
+
+interface RowLabelProps extends Omit<ComponentProps<"span">, "children"> {
+  children: string;
 }
 
 interface JsonValueDialogProps extends ComponentProps<"div"> {
@@ -386,10 +393,35 @@ function Row({ node, children, className, ...props }: RowProps) {
   );
 }
 
-function RowLabel({ children, className, ...props }: ComponentProps<"span">) {
+function RowLabel({ children: label, className, ...props }: RowLabelProps) {
+  const search = useContext(TreeSearchContext);
+  const highlightedLabel = useMemo(() => {
+    if (!search) {
+      return label;
+    }
+
+    const index = label.toLowerCase().indexOf(search.toLowerCase());
+
+    if (index >= 0) {
+      const before = label.slice(0, index);
+      const match = label.slice(index, index + search.length);
+      const after = label.slice(index + search.length);
+
+      return (
+        <>
+          {before && <span className="opacity-50">{before}</span>}
+          <strong className="font-semibold">{match}</strong>
+          {after && <span className="opacity-50">{after}</span>}
+        </>
+      );
+    } else {
+      return label;
+    }
+  }, [label, search]);
+
   return (
     <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
-      {children}
+      {highlightedLabel}
     </span>
   );
 }
@@ -778,33 +810,39 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
   }
 );
 
+export const TreeSearchContext = createContext<string | undefined>(undefined);
+
 export const StorageTree = forwardRef<
   TreeApi<StorageTreeNode>,
-  TreeProps<StorageTreeNode>
->(({ className, style, ...props }, ref) => {
+  TreeProps<StorageTreeNode> & {
+    search?: string;
+  }
+>(({ search, className, style, ...props }, ref) => {
   return (
-    <TooltipProvider skipDelayDuration={0}>
-      <AutoSizer className={cx(className, "tree")} style={style}>
-        {({ width, height }) => (
-          <ArboristTree
-            ref={ref}
-            width={width}
-            height={height}
-            childrenAccessor={storageChildAccessor}
-            disableDrag
-            disableDrop
-            disableMultiSelection
-            className="!overflow-x-hidden"
-            selectionFollowsFocus
-            rowHeight={ROW_HEIGHT}
-            indent={ROW_INDENT}
-            {...props}
-          >
-            {LsonNodeRenderer}
-          </ArboristTree>
-        )}
-      </AutoSizer>
-    </TooltipProvider>
+    <TreeSearchContext.Provider value={search}>
+      <TooltipProvider skipDelayDuration={0}>
+        <AutoSizer className={cx(className, "tree")} style={style}>
+          {({ width, height }) => (
+            <ArboristTree
+              ref={ref}
+              width={width}
+              height={height}
+              childrenAccessor={storageChildAccessor}
+              disableDrag
+              disableDrop
+              disableMultiSelection
+              className="!overflow-x-hidden"
+              selectionFollowsFocus
+              rowHeight={ROW_HEIGHT}
+              indent={ROW_INDENT}
+              {...props}
+            >
+              {LsonNodeRenderer}
+            </ArboristTree>
+          )}
+        </AutoSizer>
+      </TooltipProvider>
+    </TreeSearchContext.Provider>
   );
 });
 

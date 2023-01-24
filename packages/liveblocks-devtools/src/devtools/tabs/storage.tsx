@@ -51,6 +51,7 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
           data={filteredStorage}
           ref={tree}
           onSelect={handleSelect}
+          search={search}
         />
         {selectedNode ? (
           <Breadcrumbs
