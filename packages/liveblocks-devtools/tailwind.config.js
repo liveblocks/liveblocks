@@ -99,6 +99,7 @@ module.exports = {
       );
     }),
     plugin(({ addVariant }) => {
+      addVariant("child", "& *");
       addVariant("tree-focus", ".tree:focus-within &");
     }),
   ],

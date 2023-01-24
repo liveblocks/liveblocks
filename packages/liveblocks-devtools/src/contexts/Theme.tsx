@@ -7,22 +7,26 @@ const THEMES: Theme[] = ["light", "dark"];
 
 export type Theme = "light" | "dark";
 
+interface Props extends PropsWithChildren {
+  devtools?: boolean;
+}
+
 const ThemeContext = createContext<Theme | undefined>(undefined);
 
-function getTheme(): Theme {
-  if (browser.devtools.panels.themeName === "dark") {
+function getTheme(devtools: boolean): Theme {
+  if (devtools && browser.devtools.panels.themeName === "dark") {
     return "dark";
   } else {
     return MEDIA_QUERY.matches ? "dark" : "light";
   }
 }
 
-export function ThemeProvider({ children }: PropsWithChildren) {
-  const [theme, setTheme] = useState<Theme>(getTheme);
+export function ThemeProvider({ devtools = false, children }: Props) {
+  const [theme, setTheme] = useState<Theme>(() => getTheme(devtools));
 
   useLayoutEffect(() => {
     function handleThemeChange() {
-      const theme = getTheme();
+      const theme = getTheme(devtools);
 
       document.documentElement.classList.remove(...THEMES);
       document.documentElement.classList.add(theme);
@@ -36,7 +40,7 @@ export function ThemeProvider({ children }: PropsWithChildren) {
     return () => {
       MEDIA_QUERY.removeEventListener("change", handleThemeChange);
     };
-  }, []);
+  }, [devtools]);
 
   return (
     <ThemeContext.Provider value={theme}>{children}</ThemeContext.Provider>
