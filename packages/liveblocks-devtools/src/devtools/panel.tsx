@@ -1,6 +1,6 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Loading } from "../components/Loading";
@@ -39,6 +39,7 @@ function buildRegex(searchText: string): RegExp {
 }
 
 function Panel() {
+  const searchRef = useRef<HTMLInputElement>(null);
   const [searchText, setSearchText] = useState("");
   const search = useMemo(() => {
     const trimmed = (searchText ?? "").trim();
@@ -63,6 +64,27 @@ function Panel() {
   useEffect(() => {
     handleSearchClear();
   }, [currentRoomId, handleSearchClear]);
+
+  useEffect(() => {
+    // Focus search on ⌘+F, ⌘+K, or /
+    function handleKeyDown(event: KeyboardEvent) {
+      if (
+        (event.metaKey && (event.key === "f" || event.key === "k")) ||
+        event.key === "/"
+      ) {
+        if (searchRef.current) {
+          searchRef.current.focus();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
 
   if (currentRoomId === null) {
     return (
@@ -157,7 +179,11 @@ function Panel() {
         }
         trailing={
           <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-            <StorageSearch value={searchText} onChange={handleSearchChange} />
+            <StorageSearch
+              value={searchText}
+              onChange={handleSearchChange}
+              ref={searchRef}
+            />
           </div>
         }
       />
