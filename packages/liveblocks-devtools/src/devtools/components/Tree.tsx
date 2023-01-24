@@ -731,6 +731,22 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
   }
 }
 
+function matchNode(node: DevTools.TreeNode, searchText: string) {
+  return node.key.toLowerCase().includes(searchText.toLowerCase());
+}
+
+export function filterNodes<TTreeNode extends DevTools.TreeNode>(
+  tree: readonly TTreeNode[],
+  searchText?: string
+): readonly TTreeNode[] {
+  if (!searchText) {
+    return tree;
+  }
+
+  // TODO: Implement actual tree filtering (this example just filters root nodes)
+  return tree.filter((node) => matchNode(node, searchText));
+}
+
 const autoSizerStyle = {
   flex: 1,
   width: "100%",
