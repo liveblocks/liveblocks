@@ -782,19 +782,14 @@ function mapfilter<T>(
   return Array.from(imapfilter(iterable, mapFn));
 }
 
-function matchValue(value: string, searchText: string): boolean {
-  // TODO: Make more efficient with precompiled RegExp
-  return value.toLowerCase().includes(searchText.toLowerCase());
-}
-
 /**
  * Determines whether the current node matches or not.
  */
-function matchNode(node: DevTools.TreeNode, searchText: string): boolean {
+function matchNode(node: DevTools.TreeNode, pattern: RegExp): boolean {
   if (node.type === "User") {
-    return Object.keys(node.payload).some((key) => matchValue(key, searchText));
+    return Object.keys(node.payload).some((key) => pattern.test(key));
   } else {
-    return matchValue(node.key, searchText);
+    return pattern.test(node.key);
   }
 }
 
@@ -804,11 +799,11 @@ function matchNode(node: DevTools.TreeNode, searchText: string): boolean {
  */
 function collect(
   node: DevTools.TreeNode,
-  searchText: string,
+  pattern: RegExp,
   directMatches: Set<string>,
   indirectMatches: Set<string>
 ): boolean {
-  if (matchNode(node, searchText)) {
+  if (matchNode(node, pattern)) {
     directMatches.add(node.id);
     return true;
   } else {
@@ -823,7 +818,7 @@ function collect(
       case "LiveMap":
         let isIndirectMatch = false;
         for (const childNode of node.payload) {
-          if (collect(childNode, searchText, directMatches, indirectMatches)) {
+          if (collect(childNode, pattern, directMatches, indirectMatches)) {
             isIndirectMatch = true;
           }
         }
@@ -841,7 +836,7 @@ function collect(
 
 function collectMatchingNodes(
   tree: readonly DevTools.TreeNode[],
-  searchText: string
+  pattern: RegExp
 ): {
   directMatches: Set<string>;
   indirectMatches: Set<string>;
@@ -849,7 +844,7 @@ function collectMatchingNodes(
   const directMatches = new Set<string>();
   const indirectMatches = new Set<string>();
   for (const node of tree) {
-    collect(node, searchText, directMatches, indirectMatches);
+    collect(node, pattern, directMatches, indirectMatches);
   }
   return {
     directMatches,
@@ -907,11 +902,11 @@ function pruneTree<TTreeNode extends DevTools.TreeNode>(
 
 export function filterNodes<TTreeNode extends DevTools.TreeNode>(
   tree: readonly TTreeNode[],
-  searchText: string
+  pattern: RegExp
 ): TTreeNode[] {
   const { directMatches, indirectMatches } = collectMatchingNodes(
     tree,
-    searchText
+    pattern
   );
   return pruneTree(tree, directMatches, indirectMatches);
 }
