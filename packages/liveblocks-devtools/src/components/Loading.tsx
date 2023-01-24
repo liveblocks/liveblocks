@@ -19,8 +19,8 @@ export function Loading({ className, animate = true, ...props }: Props) {
       <g
         id={animate ? "loading-group" : undefined}
         fill="currentColor"
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
       >
         <path
           id={animate ? "loading-top" : undefined}
