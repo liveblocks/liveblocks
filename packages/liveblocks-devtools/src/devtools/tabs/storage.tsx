@@ -47,7 +47,11 @@ export function Storage({ search, onSearchClear, className, ...props }: Props) {
   return filteredStorage.length > 0 ? (
     <div className={cx(className, "absolute inset-0")} {...props}>
       <div className="absolute inset-0 flex flex-col">
-        <StorageTree data={storage} ref={tree} onSelect={handleSelect} />
+        <StorageTree
+          data={filteredStorage}
+          ref={tree}
+          onSelect={handleSelect}
+        />
         {selectedNode ? (
           <Breadcrumbs
             className="flex-none"
