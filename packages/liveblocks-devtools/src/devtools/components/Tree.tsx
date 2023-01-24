@@ -400,23 +400,22 @@ function RowLabel({ children: label, className, ...props }: RowLabelProps) {
       return label;
     }
 
-    const index = label.toLowerCase().indexOf(search.toLowerCase());
-
-    if (index >= 0) {
-      const before = label.slice(0, index);
-      const match = label.slice(index, index + search.length);
-      const after = label.slice(index + search.length);
-
-      return (
-        <>
-          {before && <span className="opacity-50">{before}</span>}
-          <strong className="font-semibold">{match}</strong>
-          {after && <span className="opacity-50">{after}</span>}
-        </>
-      );
-    } else {
+    const match = search.exec(label);
+    if (!match) {
       return label;
     }
+
+    const beforeText = label.slice(0, match.index);
+    const matchText = label.slice(match.index, match.index + match[0].length);
+    const afterText = label.slice(match.index + match[0].length);
+
+    return (
+      <>
+        {beforeText && <span className="opacity-50">{beforeText}</span>}
+        <strong className="font-semibold">{matchText}</strong>
+        {afterText && <span className="opacity-50">{afterText}</span>}
+      </>
+    );
   }, [label, search]);
 
   return (
@@ -942,12 +941,12 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
   }
 );
 
-export const TreeSearchContext = createContext<string | undefined>(undefined);
+export const TreeSearchContext = createContext<RegExp | undefined>(undefined);
 
 export const StorageTree = forwardRef<
   TreeApi<StorageTreeNode>,
   TreeProps<StorageTreeNode> & {
-    search?: string;
+    search?: RegExp;
   }
 >(({ search, className, style, ...props }, ref) => {
   return (

@@ -1,6 +1,6 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import type { ChangeEvent } from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { createRoot } from "react-dom/client";
 
 import { Loading } from "../components/Loading";
@@ -17,17 +17,43 @@ import { sendMessage } from "./port";
 import { Presence } from "./tabs/presence";
 import { Storage } from "./tabs/storage";
 
+function buildRegex(searchText: string): RegExp {
+  // Interpret the search string as a regular expression if the search string
+  // starts and ends with "/".
+  if (
+    searchText.startsWith("/") &&
+    searchText.endsWith("/") &&
+    searchText.length >= 3
+  ) {
+    try {
+      return new RegExp(searchText.substring(1, searchText.length - 1), "i");
+    } catch {
+      // Fall through, interpret the invalid regex as a literal string match
+      // instead
+    }
+  }
+
+  // Still build a regex to use internally, but simply build one that will
+  // match the input literally
+  return new RegExp(searchText.replace(/[/\-\\^$*+?.()|[\]{}]/g, "\\$&"), "i");
+}
+
 function Panel() {
-  const [search, setSearch] = useState("");
+  const [searchText, setSearchText] = useState("");
+  const search = useMemo(() => {
+    const trimmed = (searchText ?? "").trim();
+    return trimmed ? buildRegex(trimmed) : undefined;
+  }, [searchText]);
+
   const currentRoomId = useCurrentRoomId();
 
   const handleSearchChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setSearch(event.target.value),
+    (event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value),
     []
   );
 
   const handleSearchClear = useCallback(() => {
-    setSearch("");
+    setSearchText("");
   }, []);
 
   const handleReload = useCallback(() => {
@@ -110,6 +136,7 @@ function Panel() {
               <Storage
                 key={currentRoomId}
                 search={search}
+                searchText={searchText}
                 onSearchClear={handleSearchClear}
               />
             ),
@@ -130,7 +157,7 @@ function Panel() {
         }
         trailing={
           <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
-            <StorageSearch value={search} onChange={handleSearchChange} />
+            <StorageSearch value={searchText} onChange={handleSearchChange} />
           </div>
         }
       />
