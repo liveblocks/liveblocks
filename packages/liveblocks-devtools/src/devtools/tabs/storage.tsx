@@ -16,10 +16,10 @@ interface Props extends ComponentProps<"div"> {
 
 export function Storage({ search, onSearchClear, className, ...props }: Props) {
   const storage = useStorage();
-  const filteredStorage = useMemo(
-    () => filterNodes(storage, search),
-    [storage, search]
-  );
+  const filteredStorage = useMemo(() => {
+    const searchText = (search ?? "").trim();
+    return searchText !== "" ? filterNodes(storage, searchText) : storage;
+  }, [storage, search]);
   const tree = useRef<TreeApi<DevTools.LsonTreeNode>>(null);
   const [selectedNode, setSelectedNode] =
     useState<NodeApi<DevTools.LsonTreeNode> | null>(null);

@@ -763,20 +763,157 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
   }
 }
 
-function matchNode(node: DevTools.TreeNode, searchText: string) {
-  return node.key.toLowerCase().includes(searchText.toLowerCase());
+function* imapfilter<T>(
+  iterable: readonly T[],
+  mapFn: (item: T) => T | null
+): Iterable<T> {
+  for (const item of iterable) {
+    const mappedItem = mapFn(item);
+    if (mappedItem !== null) {
+      yield mappedItem;
+    }
+  }
+}
+
+function mapfilter<T>(
+  iterable: readonly T[],
+  mapFn: (item: T) => T | null
+): T[] {
+  return Array.from(imapfilter(iterable, mapFn));
+}
+
+function matchValue(value: string, searchText: string): boolean {
+  // TODO: Make more efficient with precompiled RegExp
+  return value.toLowerCase().includes(searchText.toLowerCase());
+}
+
+/**
+ * Determines whether the current node matches or not.
+ */
+function matchNode(node: DevTools.TreeNode, searchText: string): boolean {
+  if (node.type === "User") {
+    return Object.keys(node.payload).some((key) => matchValue(key, searchText));
+  } else {
+    return matchValue(node.key, searchText);
+  }
+}
+
+/**
+ * Returns whether one of the collections was updated. This indicates to the
+ * parent call that it should be an indirect match.
+ */
+function collect(
+  node: DevTools.TreeNode,
+  searchText: string,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): boolean {
+  if (matchNode(node, searchText)) {
+    directMatches.add(node.id);
+    return true;
+  } else {
+    // Recursively scan child nodes
+    switch (node.type) {
+      case "Json":
+        // JSON nodes are leafs and have no children
+        return false;
+
+      case "LiveList":
+      case "LiveObject":
+      case "LiveMap":
+        let isIndirectMatch = false;
+        for (const childNode of node.payload) {
+          if (collect(childNode, searchText, directMatches, indirectMatches)) {
+            isIndirectMatch = true;
+          }
+        }
+        if (isIndirectMatch) {
+          indirectMatches.add(node.id);
+        }
+        return isIndirectMatch;
+
+      default:
+        // e.g. future LiveXxx types
+        return false;
+    }
+  }
+}
+
+function collectMatchingNodes(
+  tree: readonly DevTools.TreeNode[],
+  searchText: string
+): {
+  directMatches: Set<string>;
+  indirectMatches: Set<string>;
+} {
+  const directMatches = new Set<string>();
+  const indirectMatches = new Set<string>();
+  for (const node of tree) {
+    collect(node, searchText, directMatches, indirectMatches);
+  }
+  return {
+    directMatches,
+    indirectMatches,
+  };
+}
+
+function pruneNode<TTreeNode extends DevTools.TreeNode>(
+  node: TTreeNode,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): TTreeNode | null {
+  if (directMatches.has(node.id)) {
+    // No sub filtering, keep the entire subtree!
+    return node;
+  } else if (indirectMatches.has(node.id)) {
+    if (node.type === "Json") {
+      throw new Error("Json nodes will never be indirect matches");
+    }
+
+    if (node.type === "User") {
+      // NOTE:
+      // We don't narrow down User rows for now. We don't have full control
+      // over the User's child nodes on the rendered Tree, because we _derive_
+      // those Json node rows from the actual data inside the User instance.
+      // The only way to influence that process is to actually change the JSON
+      // data under the `info` and/or `presence` properties of the User. For
+      // now, we'll just display everything and hopefully highlighting will be
+      // enough.
+      return node;
+    }
+
+    // _Change_ the node, by pruning non-matching children from it
+    return {
+      ...node,
+      payload: mapfilter(node.payload, (child) =>
+        pruneNode(child, directMatches, indirectMatches)
+      ),
+    };
+  } else {
+    // No match in the entire subtree
+    return null;
+  }
+}
+
+function pruneTree<TTreeNode extends DevTools.TreeNode>(
+  tree: readonly TTreeNode[],
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): TTreeNode[] {
+  return mapfilter(tree, (node) =>
+    pruneNode(node, directMatches, indirectMatches)
+  );
 }
 
 export function filterNodes<TTreeNode extends DevTools.TreeNode>(
   tree: readonly TTreeNode[],
-  searchText?: string
-): readonly TTreeNode[] {
-  if (!searchText) {
-    return tree;
-  }
-
-  // TODO: Implement actual tree filtering (this example just filters root nodes)
-  return tree.filter((node) => matchNode(node, searchText));
+  searchText: string
+): TTreeNode[] {
+  const { directMatches, indirectMatches } = collectMatchingNodes(
+    tree,
+    searchText
+  );
+  return pruneTree(tree, directMatches, indirectMatches);
 }
 
 const autoSizerStyle = {
