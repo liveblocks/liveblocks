@@ -1,5 +1,4 @@
 import { TooltipProvider } from "@radix-ui/react-tooltip";
-import type { ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -48,11 +47,6 @@ function Panel() {
 
   const currentRoomId = useCurrentRoomId();
 
-  const handleSearchChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => setSearchText(event.target.value),
-    []
-  );
-
   const handleSearchClear = useCallback(() => {
     setSearchText("");
   }, []);
@@ -65,9 +59,14 @@ function Panel() {
     handleSearchClear();
   }, [currentRoomId, handleSearchClear]);
 
+  // Focus search on ⌘+F, ⌘+K, or /
   useEffect(() => {
-    // Focus search on ⌘+F, ⌘+K, or /
     function handleKeyDown(event: KeyboardEvent) {
+      // Except if an input is currently focused
+      if (document.activeElement?.tagName === "INPUT") {
+        return;
+      }
+
       if (
         (event.metaKey && (event.key === "f" || event.key === "k")) ||
         event.key === "/"
@@ -181,7 +180,7 @@ function Panel() {
           <div className="after:bg-light-300 after:dark:bg-dark-300 relative w-[30%] min-w-[140px] flex-none after:absolute after:-left-px after:top-[20%] after:h-[60%] after:w-px">
             <StorageSearch
               value={searchText}
-              onChange={handleSearchChange}
+              setValue={setSearchText}
               ref={searchRef}
             />
           </div>

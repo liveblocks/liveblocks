@@ -1,27 +1,59 @@
 import cx from "classnames";
-import type { ComponentProps } from "react";
-import { forwardRef } from "react";
+import type { ChangeEvent, ComponentProps, KeyboardEvent } from "react";
+import { forwardRef, useCallback, useRef } from "react";
 
-interface Props extends Omit<ComponentProps<"div">, "onChange"> {
+import { mergeRefs } from "../../lib/mergeRefs";
+import { Tooltip } from "./Tooltip";
+
+interface Props extends ComponentProps<"div"> {
   value: ComponentProps<"input">["value"];
-  onChange: ComponentProps<"input">["onChange"];
+  setValue: (search: string) => void;
 }
 
 export const StorageSearch = forwardRef<HTMLInputElement, Props>(
-  ({ value, onChange, className, ...props }, ref) => {
+  ({ value, setValue, className, ...props }, forwardRef) => {
+    const ref = useRef<HTMLInputElement>(null);
+    const handleKeyDown = useCallback(
+      (event: KeyboardEvent<HTMLInputElement>) => {
+        if (ref.current && event.key === "Escape") {
+          setValue("");
+          ref.current.blur();
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+      []
+    );
+
+    const handleSearchChange = useCallback(
+      (event: ChangeEvent<HTMLInputElement>) => setValue(event.target.value),
+      []
+    );
+
     return (
       <div
         className={cx(className, "relative flex h-full items-center")}
         {...props}
       >
-        <input
-          type="search"
-          ref={ref}
-          value={value}
-          onChange={onChange}
-          placeholder="Search storage…"
-          className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 h-full w-full bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
-        />
+        <Tooltip
+          content={
+            <span className="whitespace-nowrap">
+              Search with text or{" "}
+              <span className="inline-block font-mono text-[95%]">/regex/</span>
+            </span>
+          }
+          sideOffset={5}
+        >
+          <input
+            type="search"
+            ref={mergeRefs(ref, forwardRef)}
+            value={value}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Search storage…"
+            className="text-dark-0 dark:text-light-0 placeholder:text-dark-600 dark:placeholder:text-light-600 absolute inset-0 h-full w-full bg-transparent pl-7 pt-px pr-2.5 text-xs placeholder:opacity-50"
+          />
+        </Tooltip>
         <svg
           width="14"
           height="14"
