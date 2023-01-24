@@ -4,10 +4,11 @@ import type { ComponentProps, MouseEvent } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { NodeApi, TreeApi } from "react-arborist";
 
+import { Loading } from "../../components/Loading";
 import { truncate } from "../../lib/truncate";
 import { EmptyState } from "../components/EmptyState";
 import { Breadcrumbs, filterNodes, StorageTree } from "../components/Tree";
-import { useStorage } from "../contexts/CurrentRoom";
+import { useStatus, useStorage } from "../contexts/CurrentRoom";
 
 interface Props extends ComponentProps<"div"> {
   search?: RegExp;
@@ -23,6 +24,7 @@ export function Storage({
   ...props
 }: Props) {
   const storage = useStorage();
+  const currentStatus = useStatus();
   const filteredStorage = useMemo(() => {
     return search ? filterNodes(storage, search) : storage;
   }, [storage, search]);
@@ -50,41 +52,51 @@ export function Storage({
     []
   );
 
-  return filteredStorage.length > 0 ? (
-    <div className={cx(className, "absolute inset-0")} {...props}>
-      <div className="absolute inset-0 flex flex-col">
-        <StorageTree
-          data={filteredStorage}
-          ref={tree}
-          onSelect={handleSelect}
-          search={search}
+  if (currentStatus === "open") {
+    if (filteredStorage.length > 0) {
+      return (
+        <div className={cx(className, "absolute inset-0")} {...props}>
+          <div className="absolute inset-0 flex flex-col">
+            <StorageTree
+              data={filteredStorage}
+              ref={tree}
+              onSelect={handleSelect}
+              search={search}
+            />
+            {selectedNode ? (
+              <Breadcrumbs
+                className="flex-none"
+                node={selectedNode}
+                onNodeClick={handleBreadcrumbClick}
+              />
+            ) : null}
+          </div>
+        </div>
+      );
+    } else if (storage.length > 0 && filteredStorage.length === 0) {
+      return (
+        <EmptyState
+          title={
+            <>
+              Nothing found for “
+              <span className="text-dark-0 dark:text-light-0 font-semibold">
+                {truncate(searchText ?? "", 32)}
+              </span>
+              ”.
+            </>
+          }
+          description={<>Only properties are searchable, not values.</>}
+          actions={[{ title: "Clear search", onClick: onSearchClear }]}
         />
-        {selectedNode ? (
-          <Breadcrumbs
-            className="flex-none"
-            node={selectedNode}
-            onNodeClick={handleBreadcrumbClick}
-          />
-        ) : null}
-      </div>
-    </div>
-  ) : storage.length > 0 ? (
-    <EmptyState
-      title={
-        <>
-          Nothing found for “
-          <span className="text-dark-0 dark:text-light-0 font-semibold">
-            {truncate(searchText ?? "", 32)}
-          </span>
-          ”.
-        </>
-      }
-      description={<>Only properties are searchable, not values.</>}
-      actions={[{ title: "Clear search", onClick: onSearchClear }]}
-    />
-  ) : (
-    <EmptyState
-      description={<>This room’s storage appears to be&nbsp;empty.</>}
-    />
-  );
+      );
+    } else {
+      return (
+        <EmptyState
+          description={<>This room’s storage appears to be&nbsp;empty.</>}
+        />
+      );
+    }
+  } else {
+    return <EmptyState visual={<Loading />} />;
+  }
 }
