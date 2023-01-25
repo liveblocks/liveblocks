@@ -1,12 +1,15 @@
 import path from "path";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { cloneRepo } from "../utils/cloneRepo";
-import { initializeGit } from "../utils/initializeGit";
-import { install as installApp } from "../utils/install";
-import { getPackageManager } from "../utils/getPackageManager";
-import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
-import { getBuildCommand, getDevCommand } from "../utils/getCommand";
+import {
+  cloneRepo,
+  initializeGit,
+  install as installApp,
+  getPackageManager,
+  confirmDirectoryEmpty,
+  getBuildCommand,
+  getDevCommand,
+} from "../../utils";
 import fs from "fs";
 
 export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";

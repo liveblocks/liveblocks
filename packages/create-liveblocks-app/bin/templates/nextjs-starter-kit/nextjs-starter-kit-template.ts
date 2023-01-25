@@ -3,13 +3,25 @@ import path from "path";
 import crypto from "crypto";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { cloneRepo } from "../utils/cloneRepo";
-import { initializeGit } from "../utils/initializeGit";
-import { install as installApp } from "../utils/install";
-import { getPackageManager } from "../utils/getPackageManager";
-import { confirmDirectoryEmpty } from "../utils/confirmDirectoryEmpty";
+import {
+  cloneRepo,
+  initializeGit,
+  install as installApp,
+  getPackageManager,
+  confirmDirectoryEmpty,
+  server,
+} from "../../utils";
 import open from "open";
-import { server } from "../utils/server";
+import {
+  DecodedEnvsAndCallbacks,
+  GeneralCallbackFormat,
+  VercelCallbackFormat,
+} from "../types";
+import {
+  auth0AuthProvider,
+  demoAuthProvider,
+  githubAuthProvider,
+} from "./auth-provider-code";
 
 // TODO
 // Use external-id to pass info on as base64?
@@ -30,20 +42,6 @@ type Questions = {
   liveblocksSecret: boolean;
   git: boolean;
   install: boolean;
-};
-
-type DecodedEnvsAndCallbacks = {
-  env: { name: string; type: "public" | "secret" }[];
-  callbackUrls?: string[];
-};
-
-type VercelCallbackFormat = {
-  env: Record<string, string>;
-  repo: string;
-};
-
-type GeneralCallbackFormat = {
-  env: Record<string, string>;
 };
 
 export async function create(flags: Record<string, any>) {
@@ -150,6 +148,7 @@ export async function create(flags: Record<string, any>) {
   });
 
   let liveblocksSecretKeyValue = "";
+  let repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
 
   if (vercel) {
     // Use Vercel deploy button
@@ -161,11 +160,26 @@ export async function create(flags: Record<string, any>) {
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"
       );
-      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=${encodedData}`;
+
+      // dev url
+      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=${encodedData}`;
+
+      // prod url
+      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}`;
+
       open(deployUrl);
     })) as VercelCallbackFormat;
     console.log(vercelData);
-    liveblocksSecretKeyValue = vercelData.env.LIVEBLOCKS_SECRET_KEY || "";
+
+    if (vercelData.env.LIVEBLOCKS_SECRET_KEY) {
+      liveblocksSecretKeyValue = vercelData.env.LIVEBLOCKS_SECRET_KEY;
+    }
+
+    if (vercelData.repo) {
+      repoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
+    }
+
+    console.log(liveblocksSecretKeyValue, repoDir);
   }
 
   if (!vercel && liveblocksSecret) {
@@ -198,7 +212,6 @@ export async function create(flags: Record<string, any>) {
   ];
 
   // === Clone starter kit repo ==========================================
-  const repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
   const appDir = path.join(process.cwd(), "./" + name);
 
   await confirmDirectoryEmpty(appDir);
@@ -333,58 +346,6 @@ function addAuthproviderSetup(
 
   return newFileContent;
 }
-
-const demoAuthProvider = `
-    // CredentialsProvider is used for the demo auth system
-    // Replace this with a real provider, e.g. GitHub, Auth0
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: {
-          label: "email",
-          type: "text",
-        },
-      },
-      async authorize(credentials) {
-        if (!credentials) {
-          return null;
-        }
-
-        const a = [1, 2];
-
-        const user: User | null = await getUser(credentials.email);
-
-        if (!user) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.id,
-          image: user.avatar,
-        };
-      },
-    }),
-`;
-
-const githubAuthProvider = `
-    // Use GitHub authentication
-    GithubProvider({
-      clientId: process.env.GITHUB_CLIENT_ID as string,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET as string,
-    }),
-    
-`;
-
-const auth0AuthProvider = `
-    // Use Auth0 authentication
-    Auth0Provider({
-      clientId: process.env.AUTH0_CLIENT_ID as string,
-      clientSecret: process.env.AUTH0_CLIENT_SECRET as string,
-      issuer: process.env.AUTH0_ISSUER_BASE_URL,
-    }),
-`;
 
 // Get the selected auth provider initialization code
 function getAuthProvider(auth: Questions["auth"]): string {

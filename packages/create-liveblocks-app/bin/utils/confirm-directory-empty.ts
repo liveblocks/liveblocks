@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { loadingSpinner } from "./loadingSpinner";
+import { loadingSpinner } from "./loading-spinner";
 
 type Question = {
   confirmDelete: boolean;

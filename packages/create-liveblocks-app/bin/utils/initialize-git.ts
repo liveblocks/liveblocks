@@ -1,6 +1,6 @@
 import c from "ansi-colors";
-import { loadingSpinner } from "./loadingSpinner";
-import { execAsync } from "./execAsync";
+import { loadingSpinner } from "./loading-spinner";
+import { execAsync } from "./exec-async";
 import { execSync } from "child_process";
 import prompts, { PromptObject } from "prompts";
 

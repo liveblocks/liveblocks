@@ -1,8 +1,8 @@
 import commandLineArgs, { OptionDefinition } from "command-line-args";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import * as nextjsTemplate from "./templates/nextjsTemplate";
-import * as exampleTemplate from "./templates/exampleTemplate";
+import * as nextjsTemplate from "./templates/nextjs-starter-kit";
+import * as exampleTemplate from "./templates/example";
 import readline from "readline";
 
 type TemplateName = "next" | "example";
