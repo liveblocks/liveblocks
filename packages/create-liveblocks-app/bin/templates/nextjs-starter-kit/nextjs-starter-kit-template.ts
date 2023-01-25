@@ -4,12 +4,14 @@ import crypto from "crypto";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
 import {
+  clonePrivateRepo,
   cloneRepo,
   initializeGit,
   install as installApp,
   getPackageManager,
   confirmDirectoryEmpty,
   server,
+  stageAndCommit,
 } from "../../utils";
 import open from "open";
 import {
@@ -42,6 +44,7 @@ type Questions = {
   liveblocksSecret: boolean;
   git: boolean;
   install: boolean;
+  openBrowser: boolean;
 };
 
 export async function create(flags: Record<string, any>) {
@@ -129,6 +132,20 @@ export async function create(flags: Record<string, any>) {
       active: "yes",
       inactive: "no",
     },
+    {
+      type: (_, values) => {
+        if (values.vercel || values.liveblocksSecret) {
+          return "confirm";
+        }
+
+        return null;
+      },
+      name: "openBrowser",
+      message: "Open browser window to continue set up?",
+      initial: true,
+      active: "yes",
+      inactive: "no",
+    },
   ];
 
   // === Prompt return values, using flags as defaults ===================
@@ -139,16 +156,28 @@ export async function create(flags: Record<string, any>) {
     liveblocksSecret = flags.liveblocksSecret,
     git = flags.git,
     install = flags.install,
+    openBrowser = false,
   }: Questions = await prompts(questions, {
     onCancel: () => {
-      console.log(c.redBright.bold("  Cancelled"));
+      console.log(c.redBright.bold("Cancelled"));
       console.log();
       process.exit(0);
     },
   });
 
-  let liveblocksSecretKeyValue = "";
+  if (!openBrowser) {
+    console.log(c.redBright.bold("Cancelled"));
+    console.log();
+    return;
+  }
+
+  const appDir = path.join(process.cwd(), "./" + name);
   let repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
+  let liveblocksSecretKeyValue = "";
+  let clonedPrivateRepo = false;
+
+  // Empty/create appDir repo
+  await confirmDirectoryEmpty(appDir);
 
   if (vercel) {
     // Use Vercel deploy button
@@ -162,24 +191,22 @@ export async function create(flags: Record<string, any>) {
       );
 
       // dev url
-      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=${encodedData}`;
+      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}`;
 
       // prod url
-      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}`;
+      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=$name`;
 
       open(deployUrl);
     })) as VercelCallbackFormat;
-    console.log(vercelData);
 
     if (vercelData.env.LIVEBLOCKS_SECRET_KEY) {
       liveblocksSecretKeyValue = vercelData.env.LIVEBLOCKS_SECRET_KEY;
     }
 
     if (vercelData.repo) {
-      repoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
+      const privateRepoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
+      clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
     }
-
-    console.log(liveblocksSecretKeyValue, repoDir);
   }
 
   if (!vercel && liveblocksSecret) {
@@ -212,16 +239,15 @@ export async function create(flags: Record<string, any>) {
   ];
 
   // === Clone starter kit repo ==========================================
-  const appDir = path.join(process.cwd(), "./" + name);
+  if (!clonedPrivateRepo) {
+    const result = await cloneRepo({ repoDir, appDir });
 
-  await confirmDirectoryEmpty(appDir);
-  const result = await cloneRepo({ repoDir, appDir });
-
-  if (!result) {
-    console.log();
-    console.log(c.redBright.bold("Target repo is empty"));
-    console.log();
-    return;
+    if (!result) {
+      console.log();
+      console.log(c.redBright.bold("Target repo is empty"));
+      console.log();
+      return;
+    }
   }
 
   const filesToWrite: { location: string; content: string }[] = [];
@@ -261,13 +287,15 @@ export async function create(flags: Record<string, any>) {
 
   if (install) {
     await installApp({
-      appDir: appDir,
-      packageManager: packageManager,
+      appDir,
+      packageManager,
     });
   }
 
   if (git) {
     await initializeGit({ appDir });
+  } else if (vercel) {
+    await stageAndCommit({ appDir });
   }
 
   // === Final console messages ==========================================

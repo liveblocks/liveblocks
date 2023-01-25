@@ -1,3 +1,4 @@
+export * from "./clone-private-repo";
 export * from "./clone-repo";
 export * from "./confirm-directory-empty";
 export * from "./get-command";
@@ -6,3 +7,4 @@ export * from "./initialize-git";
 export * from "./install";
 export * from "./loading-spinner";
 export * from "./server";
+export * from "./stage-and-commit";

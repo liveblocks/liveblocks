@@ -3,7 +3,7 @@ import { loadingSpinner } from "./loading-spinner";
 import { execAsync } from "./exec-async";
 import { checkIfInsideRepo } from "./check-inside-repo";
 
-export async function initializeGit({ appDir }: { appDir: string }) {
+export async function stageAndCommit({ appDir }: { appDir: string }) {
   let spinner;
 
   try {
@@ -18,16 +18,12 @@ export async function initializeGit({ appDir }: { appDir: string }) {
       return;
     }
 
-    spinner = loadingSpinner().start("Initializing git...");
-
     const options = {
       cwd: appDir,
       stdio: "pipe",
     } as const;
 
-    await execAsync("git init", options);
-    await execAsync("git checkout -b main", options);
-    spinner.text = "Git: Adding files...";
+    spinner = loadingSpinner().start("Git: Adding files...");
     await execAsync("git add -A", options);
     spinner.text = "Git: Making first commit...";
     await execAsync(
@@ -42,5 +38,5 @@ export async function initializeGit({ appDir }: { appDir: string }) {
     process.exit(0);
   }
 
-  spinner?.succeed(c.green("Git initialized!"));
+  spinner?.succeed(c.green("Git ready!"));
 }
