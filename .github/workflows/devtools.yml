@@ -28,10 +28,10 @@ jobs:
           restore-keys: turbo-cache-@liveblocks/devtools-bust
 
       - name: Build for Chromium
-        run: turbo run build -- --filter devtools
+        run: npm run build -- --filter devtools
 
       - name: Build for Firefox
-        run: turbo run build:firefox -- --filter devtools
+        run: npm run build:firefox -- --filter devtools
 
       - name: Browser Platform Publish
         uses: PlasmoHQ/bpp@v3
