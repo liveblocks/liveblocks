@@ -65,6 +65,7 @@ export type {
 } from "./protocol/ClientMsg";
 export { ClientMsgCode } from "./protocol/ClientMsg";
 export type {
+  AckOp,
   CreateChildOp,
   CreateListOp,
   CreateMapOp,
