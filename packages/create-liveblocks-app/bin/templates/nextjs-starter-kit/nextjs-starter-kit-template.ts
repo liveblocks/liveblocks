@@ -12,6 +12,7 @@ import {
   confirmDirectoryEmpty,
   server,
   stageAndCommit,
+  loadingSpinner,
 } from "../../utils";
 import open from "open";
 import {
@@ -180,8 +181,13 @@ export async function create(flags: Record<string, any>) {
   await confirmDirectoryEmpty(appDir);
 
   if (vercel) {
+    const vercelSpinner = loadingSpinner("", "▲").start(
+      c.whiteBright.bold(
+        "Opening Vercel, continue deploying then check back..."
+      )
+    );
     // Use Vercel deploy button
-    const vercelData: VercelCallbackFormat = (await server((origin) => {
+    const vercelData: VercelCallbackFormat = (await server(async (origin) => {
       const data: DecodedEnvsAndCallbacks = {
         env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
         callbackUrls: [origin],
@@ -191,12 +197,12 @@ export async function create(flags: Record<string, any>) {
       );
 
       // dev url
-      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}`;
+      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
       // prod url
-      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=$name`;
+      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
-      open(deployUrl);
+      await open(deployUrl);
     })) as VercelCallbackFormat;
 
     if (vercelData.env.LIVEBLOCKS_SECRET_KEY) {
@@ -204,9 +210,11 @@ export async function create(flags: Record<string, any>) {
     }
 
     if (vercelData.repo) {
+      vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
       const privateRepoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
       clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
     }
+    vercelSpinner.succeed(c.green("Vercel deployment complete"));
   }
 
   if (!vercel && liveblocksSecret) {
