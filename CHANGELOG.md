@@ -7,6 +7,7 @@
   cases.
 - Fixes a bug where under some circumstances the Liveblocks client could get
   stuck in a "synchronizing" state indefinitely
+- Expose `JsonArray` and `JsonScalar` types publicly
 
 # v0.19.7
 

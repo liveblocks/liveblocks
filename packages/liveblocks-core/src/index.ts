@@ -38,7 +38,7 @@ export {
   throwUsageError,
 } from "./lib/deprecation";
 export { freeze } from "./lib/freeze";
-export type { Json, JsonObject } from "./lib/Json";
+export type { Json, JsonArray, JsonObject, JsonScalar } from "./lib/Json";
 export { isJsonArray, isJsonObject, isJsonScalar } from "./lib/Json";
 export { asArrayWithLegacyMethods } from "./lib/LegacyArray";
 export { comparePosition, makePosition } from "./lib/position";
