@@ -20,7 +20,7 @@ export interface GeneralIntegrationData {
 }
 
 export interface VercelIntegrationData extends GeneralIntegrationData {
-  envReady: { name: string; value: string }[];
+  envReady: { name: string; value: string | null }[];
 }
 
 export type IntegrationCallback = { url: string; data: any };
