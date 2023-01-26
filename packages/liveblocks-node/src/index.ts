@@ -1,4 +1,10 @@
 import fetch from "node-fetch";
+export type {
+  StorageUpdatedEvent,
+  UserEnteredEvent,
+  UserLeftEvent,
+  WebhookEvent,
+} from "./webhook";
 export { WebhookHandler } from "./webhook";
 
 type AuthorizeOptions = {
@@ -115,4 +121,3 @@ function buildLiveblocksAuthorizeEndpoint(
     roomId
   )}/authorize`;
 }
-

@@ -37,9 +37,9 @@ export class WebhookHandler {
   }
 }
 
-type WebhookEvent = StorageUpdatedEvent | UserEnteredEvent | UserLeftEvent;
+export type WebhookEvent = StorageUpdatedEvent | UserEnteredEvent | UserLeftEvent;
 
-type StorageUpdatedEvent = {
+export type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
@@ -52,7 +52,7 @@ type StorageUpdatedEvent = {
   };
 };
 
-type UserEnteredEvent = {
+export type UserEnteredEvent = {
   type: "userEntered";
   data: {
     appId: string;
@@ -69,7 +69,7 @@ type UserEnteredEvent = {
   };
 };
 
-type UserLeftEvent = {
+export type UserLeftEvent = {
   type: "userLeft";
   data: {
     appId: string;
