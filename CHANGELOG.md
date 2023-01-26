@@ -1,8 +1,13 @@
 # v0.19.8
 
-Fixes two history bugs:
-- The history didn't reliably undo LiveObject key set changes if any pending local changes existed on that key.
-- Changes performed inside `room.batch` were incorrectly ordered inside the history resulting in unexpected undo behavior in some cases.
+- Fixes a bug where history didn't reliably undo LiveObject key set changes if
+  any pending local changes existed on that key.
+- Fixes a bug where changes performed inside `room.batch` were incorrectly
+  ordered inside the history resulting in unexpected undo behavior in some
+  cases.
+- Fixes a bug where under some circumstances the Liveblocks client could get
+  stuck in a "synchronizing" state indefinitely
+- Expose `JsonArray` and `JsonScalar` types publicly
 
 # v0.19.7
 

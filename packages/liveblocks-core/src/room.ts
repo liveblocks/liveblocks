@@ -30,7 +30,7 @@ import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { ClientMsg } from "./protocol/ClientMsg";
 import { ClientMsgCode } from "./protocol/ClientMsg";
 import type { Op } from "./protocol/Op";
-import { OpCode } from "./protocol/Op";
+import { isAckOp, OpCode } from "./protocol/Op";
 import type {
   IdTuple,
   SerializedChild,
@@ -1244,6 +1244,12 @@ function makeStateMachine<
   }
 
   function applyOp(op: Op, source: OpSource): ApplyResult {
+    // Explicit case to handle incoming "AckOp"s, which are supposed to be
+    // no-ops.
+    if (isAckOp(op)) {
+      return { modified: false };
+    }
+
     switch (op.type) {
       case OpCode.DELETE_OBJECT_KEY:
       case OpCode.UPDATE_OBJECT:
@@ -1255,6 +1261,7 @@ function makeStateMachine<
 
         return node._apply(op, source === OpSource.UNDOREDO_RECONNECT);
       }
+
       case OpCode.SET_PARENT_KEY: {
         const node = state.nodes.get(op.id);
         if (node === undefined) {

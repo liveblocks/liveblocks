@@ -17,6 +17,7 @@ export enum OpCode {
  * only.
  */
 export type Op =
+  | AckOp
   | CreateOp
   | UpdateObjectOp
   | DeleteCrdtOp
@@ -94,6 +95,23 @@ export type DeleteCrdtOp = {
   readonly id: string;
   readonly type: OpCode.DELETE_CRDT;
 };
+
+//
+// HACK:
+// Disguised as a "DeleteCrdtOp" for a nonexisting node "ACK", this Op that the
+// server may return to senders is effectively sent as a backward-compatible
+// way to trigger an acknowledgement for Ops that were seen by the server, but
+// deliberately ignored.
+//
+export type AckOp = {
+  readonly type: OpCode.DELETE_CRDT; // Not a typo!
+  readonly id: "ACK";
+  readonly opId: string;
+};
+
+export function isAckOp(op: Op): op is AckOp {
+  return op.type === OpCode.DELETE_CRDT && op.id === "ACK";
+}
 
 export type SetParentKeyOp = {
   readonly opId?: string;
