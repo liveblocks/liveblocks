@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+export { WebhookHandler } from "./webhook";
 
 type AuthorizeOptions = {
   /**
@@ -114,3 +115,4 @@ function buildLiveblocksAuthorizeEndpoint(
     roomId
   )}/authorize`;
 }
+
