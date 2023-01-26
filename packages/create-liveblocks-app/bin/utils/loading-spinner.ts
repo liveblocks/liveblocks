@@ -2,21 +2,21 @@ import ora from "ora";
 import c from "ansi-colors";
 
 export function loadingSpinner(text?: string, customIcon?: string) {
-  const i = customIcon || "🖱";
+  const i = customIcon || c.magentaBright("🖱");
 
   return ora({
     spinner: {
       interval: 80,
       frames: [
-        c.magentaBright(`${i}    `),
-        c.magentaBright(` ${i}   `),
-        c.magentaBright(`  ${i}  `),
-        c.magentaBright(`   ${i} `),
-        c.magentaBright(`    ${i}`),
-        c.magentaBright(`   ${i} `),
-        c.magentaBright(`  ${i}  `),
-        c.magentaBright(` ${i}   `),
-        c.magentaBright(`${i}    `),
+        `${i}    `,
+        ` ${i}   `,
+        `  ${i}  `,
+        `   ${i} `,
+        `    ${i}`,
+        `   ${i} `,
+        `  ${i}  `,
+        ` ${i}   `,
+        `${i}    `,
       ],
     },
     text: text,

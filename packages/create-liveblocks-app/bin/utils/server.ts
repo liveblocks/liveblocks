@@ -4,7 +4,7 @@ import { AddressInfo } from "net";
 export async function server(callback: (origin: string) => void) {
   return new Promise((resolve) => {
     const server = http.createServer(async (req, res) => {
-      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Type", "text/plain");
 
       if (req.method !== "POST") {
         console.error("Response not using POST method");

@@ -1,20 +1,26 @@
+// This file should match liveblocks/liveblocks.io/src/app/pages/integrations/types.ts
+
 export type ExampleEnvironmentVariable = {
   name: string;
   type: "public" | "secret";
 };
 
-export interface DecodedEnvsAndCallbacks {
+export interface GeneralIntegrationCallback {
+  env: Record<string, string>;
+}
+
+export interface VercelIntegrationCallback extends GeneralIntegrationCallback {
+  env: Record<string, string>;
+  repo: { type: string; location: string };
+}
+
+export interface GeneralIntegrationData {
   env: ExampleEnvironmentVariable[];
   callbackUrls?: string[];
 }
 
-export interface GeneralCallbackFormat {
-  env: Record<string, string>;
+export interface VercelIntegrationData extends GeneralIntegrationData {
+  envReady: { name: string; value: string }[];
 }
 
-export type RepoLocation = { type: string; location: string };
-
-export interface VercelCallbackFormat extends GeneralCallbackFormat {
-  env: Record<string, string>;
-  repo: RepoLocation;
-}
+export type IntegrationCallback = { url: string; data: any };

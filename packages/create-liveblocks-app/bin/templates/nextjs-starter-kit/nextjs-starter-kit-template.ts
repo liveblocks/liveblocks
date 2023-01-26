@@ -16,9 +16,10 @@ import {
 } from "../../utils";
 import open from "open";
 import {
-  DecodedEnvsAndCallbacks,
-  GeneralCallbackFormat,
-  VercelCallbackFormat,
+  GeneralIntegrationCallback,
+  GeneralIntegrationData,
+  VercelIntegrationCallback,
+  VercelIntegrationData,
 } from "../types";
 import {
   auth0AuthProvider,
@@ -166,7 +167,7 @@ export async function create(flags: Record<string, any>) {
     },
   });
 
-  if (!openBrowser) {
+  if ((vercel || liveblocksSecret) && !openBrowser) {
     console.log(c.redBright.bold("Cancelled"));
     console.log();
     return;
@@ -174,36 +175,41 @@ export async function create(flags: Record<string, any>) {
 
   const appDir = path.join(process.cwd(), "./" + name);
   let repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
-  let liveblocksSecretKeyValue = "";
   let clonedPrivateRepo = false;
+  let liveblocksSecretKeyValue = "";
+  const nextAuthSecretValue = crypto.randomBytes(32).toString("base64");
 
   // Empty/create appDir repo
   await confirmDirectoryEmpty(appDir);
 
   if (vercel) {
-    const vercelSpinner = loadingSpinner("", "▲").start(
+    const vercelSpinner = loadingSpinner("", c.whiteBright("▲")).start(
       c.whiteBright.bold(
         "Opening Vercel, continue deploying then check back..."
       )
     );
     // Use Vercel deploy button
-    const vercelData: VercelCallbackFormat = (await server(async (origin) => {
-      const data: DecodedEnvsAndCallbacks = {
-        env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
-        callbackUrls: [origin],
-      };
-      const encodedData = Buffer.from(JSON.stringify(data)).toString(
-        "base64url"
-      );
+    const vercelData: VercelIntegrationCallback = (await server(
+      async (origin) => {
+        const data: VercelIntegrationData = {
+          env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
+          envReady: [{ name: "NEXTAUTH_SECRET", value: nextAuthSecretValue }],
+          callbackUrls: [origin],
+        };
+        const encodedData = Buffer.from(JSON.stringify(data)).toString(
+          "base64url"
+        );
 
-      // dev url
-      const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+        // TODO env vars
+        // dev url
+        const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
-      // prod url
-      // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+        // prod url
+        // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
-      await open(deployUrl);
-    })) as VercelCallbackFormat;
+        await open(deployUrl);
+      }
+    )) as VercelIntegrationCallback;
 
     if (vercelData.env.LIVEBLOCKS_SECRET_KEY) {
       liveblocksSecretKeyValue = vercelData.env.LIVEBLOCKS_SECRET_KEY;
@@ -220,7 +226,7 @@ export async function create(flags: Record<string, any>) {
   if (!vercel && liveblocksSecret) {
     // Use `/integrations/general` on liveblocks.io
     const liveblocksData = (await server((origin) => {
-      const data: DecodedEnvsAndCallbacks = {
+      const data: GeneralIntegrationData = {
         env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
         callbackUrls: [origin],
       };
@@ -230,7 +236,7 @@ export async function create(flags: Record<string, any>) {
       // TODO env var this
       const liveblocksUrl = `http://localhost:3001/integrations/general?data=${encodedData}`;
       open(liveblocksUrl);
-    })) as GeneralCallbackFormat;
+    })) as GeneralIntegrationCallback;
   }
 
   const envVariables = [
@@ -242,7 +248,7 @@ export async function create(flags: Record<string, any>) {
     {
       // https://next-auth.js.org/configuration/options#secret
       key: "NEXTAUTH_SECRET",
-      value: crypto.randomBytes(32).toString("base64"),
+      value: nextAuthSecretValue,
     },
   ];
 
