@@ -1,14 +1,14 @@
 import crypto from "crypto";
 
 export class WebhookHandler {
-  secretBytes: Buffer;
+  secretBuffer: Buffer;
   constructor(secret: string) {
     if (!secret) throw new Error("Secret is required");
     if (typeof secret !== "string") throw new Error("Secret must be a string");
 
     const secretKey = secret.split("_")[1];
     if (!secretKey) throw new Error("Secret is invalid");
-    this.secretBytes = Buffer.from(secretKey, "base64");
+    this.secretBuffer = Buffer.from(secretKey, "base64");
   }
 
   verifyRequest(request: {
@@ -21,7 +21,7 @@ export class WebhookHandler {
     const signedContent = `${webhookId}.${timestamp}.${request.rawBody}`;
 
     const signature = crypto
-      .createHmac("sha256", this.secretBytes)
+      .createHmac("sha256", this.secretBuffer)
       .update(signedContent)
       .digest("base64");
 
