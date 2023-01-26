@@ -1,3 +1,7 @@
+# v0.19.9
+
+- Allow `throttle` to go as low as 16ms
+
 # v0.19.8
 
 - Fixes a bug where history didn't reliably undo LiveObject key set changes if
