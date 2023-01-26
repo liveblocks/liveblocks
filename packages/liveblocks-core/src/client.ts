@@ -275,10 +275,10 @@ function getThrottleDelayFromOptions(options: ClientOptions): number {
 
   if (
     typeof options.throttle !== "number" ||
-    options.throttle < 80 ||
+    options.throttle < 16 ||
     options.throttle > 1000
   ) {
-    throw new Error("throttle should be a number between 80 and 1000.");
+    throw new Error("throttle should be a number between 16 and 1000.");
   }
 
   return options.throttle;
