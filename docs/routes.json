@@ -150,6 +150,11 @@
         "title": "Next.js starter kit",
         "path": "/guides/nextjs-starter-kit",
         "hidden": true
+      },
+      {
+        "title": "DevTools",
+        "path": "/guides/devtools",
+        "hidden": true
       }
     ]
   },
