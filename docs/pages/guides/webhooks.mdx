@@ -75,7 +75,7 @@ after the user has entered. This event is not throttled.
 
 ```ts
 // Schema
-type UserEntered = {
+type UserEnteredEvent = {
   type: "userEntered";
   data: {
     appId: string;
@@ -89,7 +89,7 @@ type UserEntered = {
 };
 
 // Example
-const userEnteredMessage = {
+const userEnteredEvent = {
   type: "userEntered",
   data: {
     appId: "my-app-id",
@@ -111,7 +111,7 @@ room after the user has left. This event, like `UserEntered`, is not throttled.
 
 ```ts
 // Schema
-type UserLeft = {
+type UserLeftEvent = {
   type: "userLeft";
   data: {
     appId: string;
@@ -125,7 +125,7 @@ type UserLeft = {
 };
 
 // Example
-const userLeftMessage = {
+const userLeftEvent = {
   type: "userLeft",
   data: {
     appId: "my-app-id",
@@ -143,12 +143,18 @@ const userLeftMessage = {
 
 #### StorageUpdated
 
-Storage is updated when a user writes to storage. This event is throttled at five minutes and, as such, may not be triggered for every write. The `updatedAt` field is the time
-of the last write.
+Storage is updated when a user writes to storage. This event is throttled at
+five minutes and, as such, may not be triggered for every write. The `updatedAt`
+field is the time of the last write.
+
+For example, if a user writes to storage at 1:00pm, the `storageUpdatedEvent`
+event will be triggered shortly after. If the user writes to storage again at
+1:01pm, the `storageUpdatedEvent` event will be triggered 5 minutes after the
+first event was sent, around 1:05pm.
 
 ```ts
 // Schema
-type StorageUpdated = {
+type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
@@ -158,7 +164,7 @@ type StorageUpdated = {
 };
 
 // Example
-const storageUpdatedMessage = {
+const storageUpdatedEvent = {
   type: "storageUpdated",
   data: {
     appId: "my-app-id",
@@ -298,7 +304,7 @@ const signature = crypto
   .digest("base64");
 ```
 
-#### 2. Validate the signature
+#### 3. Validate the signature
 
 This generated signature should match one of the ones sent in the
 `webhook-signature` header.
@@ -317,7 +323,7 @@ verifying the signature.
 Please note that to compare the signatures it's recommended to use a
 constant-time string comparison method in order to prevent timing attacks.
 
-#### 3. Verify the timestamp
+#### 4. Verify the timestamp
 
 As mentioned above, Liveblocks also sends the timestamp of the attempt in the
 `webhook-timestamp` header. You should compare this timestamp against your
