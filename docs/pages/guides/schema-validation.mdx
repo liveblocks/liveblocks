@@ -1,17 +1,26 @@
-## Why Schema Validation™?
-Schema validation is an important feature for future-proofing your application and ensuring that implementing new features or data structures into your app does not break the integration you have established with Liveblocks.  Our Storage block is flexible in the sense that you can use it to store different type structures dependent upon your unique needs.  What happens though, if you change  your application to use a different type structure and you have existing data in storage? A breaking change.   
+---
+meta:
+  title: "Schema Validation"
+  parentTitle: "Guides"
+  description: "Learn how to use Schema Validation to ensure data integrity in your application "
+---
 
-The issue would be that your Storage with Liveblocks contains a different type structure than your application (client)- which could break your application.   How do you handle this situation?  By enforcing Schema Validtion.  While optional, Schema Validation is an extremely important tool for productionalized applications- it ensures that errors like the one described above could be avoided and resolved in development mode.  We'll elaborate a bit more on the inner workings of schema validation below.
+## Why Schema Validation?
+Schema validation is an important feature for future-proofing your application and ensuring that implementing new features or data structures into your app does not break the integration you have established with Liveblocks.  Our Storage block is flexible in the sense that you can use it to store different Type structures dependent upon your unique needs.  What happens though, if you alter your application by updating some or all of the properties of an object in Storage and you have existing data?
+
+The issue is that Storage with Liveblocks contains a different type structure than your application (client)- which could break your application.   How do you avoid this situation?  By enforcing Schema Validation.  While optional, Schema Validation is an extremely important tool for productionalized applications- it ensures that errors like the one described above could be avoided and resolved while working in development mode.  We'll elaborate a bit more on the inner workings of schema validation below.
 
 ## How Schema Validation works
-As described above, the main purpose of Schema Validation is to prevent corrupted data from being loaded from the server. In order to accomplish this, two things need to happen. First, we need to ensure that data loaded into a Room is consistent with the persisted nodes representing a Storage tree that matches the schema. Second, we will introduce the rule that each operation or "Op" that occurs in the room which changes the Storage tree, will either be accpeted or rejected.  Without schema validation, all operations in the room are currently accepted. 
+As described above, the main purpose of Schema Validation is to prevent corrupted data from being loaded from the server. To accomplish this, two things need to happen. First, we need to ensure that data loaded into a Room matches the underlying Storage Tree and defined schema (if it exists). Second, we will introduce the rule that each operation or "Op" that occurs in the room which changes the Storage tree, will either be accepted or rejected.  
 
 When a Room is first loaded, the key `liveblocksSchema` from Storage is inspected: if no value is present, then schema validation is not enforced.  If there is a value, then that value of the schema is parsed and assigned to the Room where its values are distributed to the node tree.
 
-As described above, if schema validation is not enforced, all operations in the room are accepted. 
+<!-- Insert an animation here !-->
+
+If schema validation is not enforced, all operations in the room are accepted. 
 For example, imagine that a client performs an operation that updates the Storage Tree:  regardless of whether or not this could break the application, Liveblocks has no opinion on whether or not this operation should be completed and accepts the incoming operation.  After the operation is completed, the updated Storage Tree is forwarded to other users in the room. 
 
-In the case where schema validation is enforced, when the client performs an operation that updates the Storage Tree, it is sent to the Liveblocks server which verifies that the updated Storage Tree is consistent with the defined schema attached to the Room.  If the verification succeeds, the Op is acknowledged to the initial client, and the Storage Tree is updated and forwarded to other users (clients) in the room.  If the operation verification fails, a `RejectedOpsServerMsg` is sent to the client.  The Storage Tree is not updated. In this instance, it is the responsibility of the developer to resolve the error.
+In the case where schema validation is enforced, when the client performs an operation that updates the Storage Tree, it is sent to the Liveblocks server which verifies that the updated Storage Tree is consistent with the defined schema attached to the Room.  If the verification succeeds, the Op is acknowledged by the initial client, and the Storage Tree is updated and forwarded to other users (clients) in the room.  If the operation verification fails, a `RejectedOpsServerMsg` is sent to the client.  The Storage Tree is not updated. In this instance, it is the responsibility of the developer to resolve the error.
 
 ## Create a schema
 To create a schema, you will need to POST to the schemas endpoint:
@@ -39,7 +48,7 @@ POST https://api.liveblocks.io/v2/rooms/{id}/schema
   "schema": "some-id"
 }
 ```
-# The validation process in practice
+## The validation process in practice
 If you would like to work through an example, you can follow along by using the Multiplayer Form example.
 
 The schema we will define for the example is the following:
@@ -93,13 +102,12 @@ To simulate the importance of schema validation and also demonstrate how operati
       }}
     >
 ```
-In index.tsx, we will then update all references from `name` to `organization`.
-```tsx file="_index.tsx"
-  const updatOrg = useMutation(({ storage }, organization: string) => {
-    storage.get("logo").set("organization", organization);
-  }, []);
-```
+In index.tsx, we will then update all references from `name` to `organization`.  This is a simple but common instance of updating variable names which could easily break our integration. 
+After updating this and running locally, we should now see an error because our deployed schema and client code are out of sync.
 
+<!----Insert sample failure message here, once this is released.  You also mentioned demonstrating a refresh, but I have no way to record this currently !--->
+
+When an instance like this occurs, the hope is that these errors should only occur in development because your app will not function properly without resolving the errors. 
 
 
 
@@ -109,17 +117,8 @@ We’re opening up a private beta waitlist
 CTA to sign up for it, and to let us know their use case for it 
 <!--- -->
 
-This time, show how the server rejects the value
-Show how client A throws or logs an error about it
-Show that client B never receives the incorrect data from the server
-Explain that such errors are in the court of the app developer to address
-Show how to recover client A from being in out-of-sync state by refreshing the page
-Lift the tip of the veil a bit on our roadmap for schema validation. All of these feature will eventually come, before we leave private beta!
+## What's to Come
+The ability to add schema validation via API calls in and of itself is so powerful- but we're not stopping there.  In the future, we hope to greatly expound the ability to add schema validation with the touch of a button.  Our road map includes the ability to generate Typescript types from the schema.  In addition to this, we will include Online management and editing of your schemas from within the dashboard (and you can currently sign up for the waitlist here too!) 
+For those of you who have a large number of rooms, the ability to add schema validation en masse will also be available shortly. 
 
-Generating TypeScript types from the schema
-Online management/editing of your schemas on your Liveblocks dashboard
-Mass-assigning schemas to rooms
-Programmatically manage your schemas with more APIs
-Extending the schema language itself to be more rich (like union types, literals, etc)
-[later] Migration support, help to automatically change your data between app versions
-[later] Help with automatic reloading of in-the-wild client (think: allowing devs to automatically reload the page if a change in schema version is detected)
+How has Schema Validation helped you ensure the data integrity of your your application?  Is there a certain feature of schema validation you are most excited about? 

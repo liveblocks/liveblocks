@@ -150,6 +150,11 @@
         "title": "Next.js starter kit",
         "path": "/guides/nextjs-starter-kit",
         "hidden": true
+      },
+      {
+        "title": "Schema Validation",
+        "path": "/guides/schema-validation",
+        "hidden": true
       }
     ]
   },
