@@ -4,6 +4,7 @@ export type {
   UserEnteredEvent,
   UserLeftEvent,
   WebhookEvent,
+  WebhookRequest,
 } from "./webhook";
 export { WebhookHandler } from "./webhook";
 

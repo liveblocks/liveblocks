@@ -1,20 +1,29 @@
 import crypto from "crypto";
 
 export class WebhookHandler {
-  secretBuffer: Buffer;
-  constructor(secret: string) {
+  private secretBuffer: Buffer;
+  constructor(
+    /**
+     * The signing secret provided on the webhooks page of the dashboard
+     * @example "whsec_wPbvQ+u3VtN2e2tRPDKchQ1tBZ3svaHLm"
+     */
+    secret: string
+  ) {
     if (!secret) throw new Error("Secret is required");
     if (typeof secret !== "string") throw new Error("Secret must be a string");
 
     const secretKey = secret.split("_")[1];
     if (!secretKey) throw new Error("Secret is invalid");
+
     this.secretBuffer = Buffer.from(secretKey, "base64");
   }
 
-  verifyRequest(request: {
-    headers: { [key: string]: string };
-    rawBody: string;
-  }): WebhookEvent {
+  /**
+   * Verifies a webhook request and returns the event
+   * @param request
+   * @returns `WebhookEvent`
+   */
+  verifyRequest(request: WebhookRequest): WebhookEvent {
     const webhookId = request.headers["webhook-id"];
     const timestamp = request.headers["webhook-timestamp"];
 
@@ -25,21 +34,49 @@ export class WebhookHandler {
       .update(signedContent)
       .digest("base64");
 
-    /**
-     * @example "v1,g0hM9SsE+OTPJTGt/tmIKtSyZlE3uFJELVlNIOLJ1OE= v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
-     */
-    const expectedSignatures = request.headers["webhook-signature"];
+    const rawSignatures = request.headers["webhook-signature"];
 
-    if (expectedSignatures?.includes(signature) === false)
+    if (!rawSignatures) throw new Error("Missing webhook-signature header");
+
+    const expectedSignatures = rawSignatures
+      .split(" ")
+      .map((rawSignature) => {
+        const [, signature] = rawSignature.split(",");
+        return signature;
+      })
+      .filter(isNotUndefined);
+
+    if (expectedSignatures.includes(signature) === false)
       throw new Error("Invalid signature");
 
     return JSON.parse(request.rawBody);
   }
 }
 
-export type WebhookEvent = StorageUpdatedEvent | UserEnteredEvent | UserLeftEvent;
+const isNotUndefined = <T>(value: T | undefined): value is T =>
+  value !== undefined;
 
-export type StorageUpdatedEvent = {
+type WebhookRequest = {
+  /**
+   * Headers of the request
+   * @example
+   * {
+   *  "webhook-id": "123",
+   *  "webhook-timestamp": "1614588800000",
+   *  "webhook-signature": "v1,bm9ldHUjKzFob2VudXRob2VodWUzMjRvdWVvdW9ldQo= v2,MzJsNDk4MzI0K2VvdSMjMTEjQEBAQDEyMzMzMzEyMwo="
+   * }
+   */
+  headers: { [key: string]: string };
+  /**
+   * Raw body of the request, do not parse it
+   * @example '{"type":"storageUpdated","data":{"roomId":"my-room-id","appId":"my-app-id","updatedAt":"2021-03-01T12:00:00.000Z"}}'
+   */
+  rawBody: string;
+};
+
+type WebhookEvent = StorageUpdatedEvent | UserEnteredEvent | UserLeftEvent;
+
+type StorageUpdatedEvent = {
   type: "storageUpdated";
   data: {
     roomId: string;
@@ -52,7 +89,7 @@ export type StorageUpdatedEvent = {
   };
 };
 
-export type UserEnteredEvent = {
+type UserEnteredEvent = {
   type: "userEntered";
   data: {
     appId: string;
@@ -69,7 +106,7 @@ export type UserEnteredEvent = {
   };
 };
 
-export type UserLeftEvent = {
+type UserLeftEvent = {
   type: "userLeft";
   data: {
     appId: string;
@@ -85,4 +122,12 @@ export type UserLeftEvent = {
     leftAt: string;
     numActiveUsers: number;
   };
+};
+
+export type {
+  StorageUpdatedEvent,
+  UserEnteredEvent,
+  UserLeftEvent,
+  WebhookEvent,
+  WebhookRequest,
 };
