@@ -18,9 +18,11 @@ To create a schema, you will need to POST to the schemas endpoint:
 ```ts
 POST https://api.liveblocks.io/v2/schemas
 {
-  "id": "whiteboard",
-  "name": "Whiteboard",
-  "data": "schema",
+  "id": "some-id",
+  "name": "Your schema name",
+  "data": `{
+    // your data schema will go here
+  }`,
 }
 
 type Body = {
@@ -29,35 +31,83 @@ type Body = {
   data: string,
 }
 ```
-Not that this will create the schema, but it has not yet been assigned to a Room.  To attach this schema to a Room, you will POST to the rooms endpoint:
+Note that the data type will be of type string because the schema will be string interpolated. 
+The operation above creates the schema, but it has not yet been assigned to a Room.  To attach this schema to a Room, you will POST to the rooms endpoint:
 ```ts
 POST https://api.liveblocks.io/v2/rooms/{id}/schema
 {
-  "schema": "whiteboard@64"
+  "schema": "some-id"
 }
 ```
 # The validation process in practice
-If you would like to work through an example, you can follow along by using the base 
+If you would like to work through an example, you can follow along by using the Multiplayer Form example.
 
+The schema we will define for the example is the following:
+```ts
+POST https://api.liveblocks.io/v2/schemas
+
+{
+  "id": "collaborative-form",
+  "name": "Collaborative Form",
+  "data": `
+    type Logo {
+      name: String
+      theme: String
+    }
+    type Storage {
+      logo: LiveObject<Logo>
+    }
+  `
+}
+// 200 Response
+{
+   "id": "collaborative-form",
+   "name": "Collaborative Form",
+   "data": "schema",
+   "version": 1,
+   "createdAt": "2023-01-22T15:10:25.225Z",
+   "updatedAt": "2023-01-22T15:10:25.225Z"
+}
+```
+
+To attach this schema to a Room, you will POST to the rooms endpoint:
+
+```ts
+POST https://api.liveblocks.io/v2/rooms/{id}/schema
+{
+  "schema": "collaborative-form@1"
+}
+```
+
+To simulate the importance of schema validation and also demonstrate how operations can fail, we will change nested value of `name` to `organization`:
+
+```tsx file="_app.tsx"
+    <RoomProvider
+      id={roomId}
+      initialPresence={{ focusedId: null }}
+      initialStorage={{
+        logo: new LiveObject({
+          organization: "Acme Inc.",
+          theme: "light",
+        }),
+      }}
+    >
+```
+In index.tsx, we will then update all references from `name` to `organization`.
+```tsx file="_index.tsx"
+  const updatOrg = useMutation(({ storage }, organization: string) => {
+    storage.get("logo").set("organization", organization);
+  }, []);
+```
+
+
+
+
+<!----I believe the plan here was to insert some components that were used on the comments page --->
 We’re opening up a private beta waitlist
 
-CTA to sign up for it, and to let us know their use case for it
-We can cherry-pick customers based on their usage and enable it for the ones with the least complex use cases first
-Show an example of a schema you can use (support is pretty minimal)
-
-type Logo {
-  title: String
-  theme: String
-}
-
-type Storage {
-  logo: LiveObject<Logo>
-}
-Show how to assign it to a room using the API:
-
-First, call POST /v2/schemas to add a new schema
-Second, call POST /v2/rooms/{id}/schema to attach the schema to a room
-Now, tie it back to the example we started with
+CTA to sign up for it, and to let us know their use case for it 
+<!--- -->
 
 This time, show how the server rejects the value
 Show how client A throws or logs an error about it
