@@ -2,6 +2,8 @@ import crypto from "crypto";
 import type { IncomingHttpHeaders } from "http";
 
 export class WebhookHandler {
+  private secretBuffer: Buffer;
+  private static secretPrefix = "whsec_";
   constructor(
     /**
      * The signing secret provided on the dashboard's webhooks page
@@ -12,9 +14,10 @@ export class WebhookHandler {
     if (!secret) throw new Error("Secret is required");
     if (typeof secret !== "string") throw new Error("Secret must be a string");
 
-    const secretKey = secret.split("_")[1];
-    if (!secretKey) throw new Error("Secret is invalid");
+    if (secret.startsWith(WebhookHandler.secretPrefix) === false)
+      throw new Error("Invalid secret, must start with whsec_");
 
+    const secretKey = secret.slice(WebhookHandler.secretPrefix.length);
     this.secretBuffer = Buffer.from(secretKey, "base64");
   }
 
@@ -47,8 +50,6 @@ export class WebhookHandler {
 
     return event;
   }
-
-  private secretBuffer: Buffer;
 
   /**
    * Verifies the headers and returns the webhookId, timestamp and rawSignatures
