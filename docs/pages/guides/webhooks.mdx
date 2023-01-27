@@ -67,7 +67,7 @@ More events will come later such as:
 - RoomCreated/RoomDeleted
 - MaxConnectionsReached
 
-#### UserEntered
+#### UserEnteredEvent
 
 A user enters a room when they connect to a room, which is when this event is
 triggered. The `numActiveUsers` field represents the number of users in the room
@@ -103,7 +103,7 @@ const userEnteredEvent = {
 };
 ```
 
-#### UserLeft
+#### UserLeftEvent
 
 A user leaves a room when they disconnect from a room, which is when this event
 is triggered. The `numActiveUsers` field represents the number of users in the
@@ -141,7 +141,7 @@ const userLeftEvent = {
 };
 ```
 
-#### StorageUpdated
+#### StorageUpdatedEvent
 
 Storage is updated when a user writes to storage. This event is throttled at
 five minutes and, as such, may not be triggered for every write. The `updatedAt`
