@@ -5,8 +5,8 @@ export type {
   UserLeftEvent,
   WebhookEvent,
   WebhookRequest,
-} from "./webhook";
-export { WebhookHandler } from "./webhook";
+} from "./webhooks";
+export { WebhookHandler } from "./webhooks";
 
 type AuthorizeOptions = {
   /**
