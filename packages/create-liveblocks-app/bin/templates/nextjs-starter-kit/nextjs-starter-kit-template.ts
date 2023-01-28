@@ -26,34 +26,16 @@ import {
   demoAuthProvider,
   githubAuthProvider,
 } from "./auth-provider-code";
-
-// TODO
-// Use external-id to pass info on as base64?
-// Example URL:
-// https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&project-name=nextjs-starter-kit&repository-name=nextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_Lh2THxxVIJMeQYVQ2Zgrm1ov&external-id=EXTRADATAHERE
-
-const NEXTJS_STARTER_KIT_GUIDE_URL =
-  "https://liveblocks.io/docs/guides/nextjs-starter-kit";
-const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
-  "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
-
-// Dev url: `http://localhost:3001/integrations/general?data=${encodedData}`;
-const NEXTJS_STARTER_KIT_LIVEBLOCKS_GENERAL_INTEGRATION_URL = (
-  encodedData: string
-) => `https://liveblocks.io/integrations/general?data=${encodedData}`;
-
-// Dev url: `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
-const NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL = (
-  encodedData: string,
-  projectName: string
-) =>
-  `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${projectName}&repository-name=${projectName}`;
-
-const AUTH_PROVIDERS = ["demo", "github", "auth0"] as const;
+import {
+  NEXTJS_STARTER_KIT_AUTH_PROVIDERS,
+  NEXTJS_STARTER_KIT_GUIDE_URL,
+  NEXTJS_STARTER_KIT_REPO_DIRECTORY,
+  NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV,
+} from "../constants";
 
 type Questions = {
   name: string;
-  auth: typeof AUTH_PROVIDERS[number];
+  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number];
   vercel: boolean;
   liveblocksSecret: boolean;
   git: boolean;
@@ -72,7 +54,10 @@ export async function create(flags: Record<string, any>) {
       message: "What would you like to name your project directory?",
     },
     {
-      type: flags.auth && AUTH_PROVIDERS.includes(flags.auth) ? null : "select",
+      type:
+        flags.auth && NEXTJS_STARTER_KIT_AUTH_PROVIDERS.includes(flags.auth)
+          ? null
+          : "select",
       name: "auth",
       message:
         "Which authentication method would you like to use in your project?",
@@ -212,12 +197,11 @@ export async function create(flags: Record<string, any>) {
           "base64url"
         );
 
-        // TODO env vars
-        // dev url
-        const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
-
-        // prod url
-        // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(encodedData, name)
+        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+          encodedData,
+          name
+        );
 
         await open(deployUrl);
       }

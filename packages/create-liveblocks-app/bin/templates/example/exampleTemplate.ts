@@ -11,10 +11,7 @@ import {
   getDevCommand,
 } from "../../utils";
 import fs from "fs";
-
-export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
-export const EXAMPLES_URL =
-  "https://github.com/liveblocks/liveblocks/tree/main/examples";
+import { EXAMPLES_REPO_LOCATION, EXAMPLES_URL } from "../constants";
 
 type Questions = {
   example: string;
