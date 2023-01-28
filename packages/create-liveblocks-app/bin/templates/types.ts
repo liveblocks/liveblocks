@@ -17,6 +17,7 @@ export interface VercelIntegrationCallback extends GeneralIntegrationCallback {
 export interface GeneralIntegrationData {
   env: ExampleEnvironmentVariable[];
   callbackUrls?: string[];
+  exampleNames?: string[];
 }
 
 export interface VercelIntegrationData extends GeneralIntegrationData {

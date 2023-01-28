@@ -2,6 +2,22 @@ export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
 export const EXAMPLES_URL =
   "https://github.com/liveblocks/liveblocks/tree/main/examples";
 
+export const EXAMPLE_VERCEL_DEPLOYMENT_URL = (
+  encodedData: string,
+  projectName: string,
+  exampleName: string
+) =>
+  `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fexamples%2F${exampleName}&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${projectName}&repository-name=${projectName}`;
+
+export const EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV = (
+  encodedData: string,
+  projectName: string,
+  exampleName: string
+) => {
+  console.warn("Remove DEV URL");
+  return `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fexamples%2F${exampleName}&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${projectName}&repository-name=${projectName}`;
+};
+
 export const LIVEBLOCKS_GENERAL_INTEGRATION_URL = (encodedData: string) =>
   `https://liveblocks.io/integrations/general?data=${encodedData}`;
 

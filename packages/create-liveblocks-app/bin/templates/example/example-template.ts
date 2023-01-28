@@ -1,5 +1,5 @@
-import path from "path";
 import c from "ansi-colors";
+import path from "path";
 import {
   cloneRepo,
   initializeGit,
@@ -8,30 +8,99 @@ import {
   getBuildCommand,
   getDevCommand,
   getPackageManager,
+  loadingSpinner,
+  server,
+  clonePrivateRepo,
 } from "../../utils";
+import open from "open";
 import fs from "fs";
-import { EXAMPLES_REPO_LOCATION } from "../constants";
+import {
+  EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV,
+  EXAMPLES_REPO_LOCATION,
+} from "../constants";
 import { examplePrompts } from "./example-prompts";
+import { VercelIntegrationCallback, VercelIntegrationData } from "../types";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
-  const { example, name, git, install } = await examplePrompts(flags);
+  const { example, name, vercel, liveblocksSecret, git, install } =
+    await examplePrompts(flags);
 
-  // === Clone example repo ==============================================
-  const repoDir = EXAMPLES_REPO_LOCATION + example;
   const appDir = path.join(process.cwd(), "./" + name);
+  let repoDir = EXAMPLES_REPO_LOCATION + example;
+  let clonedPrivateRepo = false;
+  const envVariables: { key: string; value: string }[] = [];
 
+  // Empty/create appDir repo
   await confirmDirectoryEmpty(appDir);
-  const result = await cloneRepo({ repoDir, appDir });
 
-  if (!result) {
-    console.log();
-    console.log(c.redBright.bold("Target repo is empty"));
-    console.log();
-    return;
+  // === Deploy on Vercel and use Vercel integration to get secret key ===
+  if (vercel) {
+    const vercelSpinner = loadingSpinner("", c.whiteBright("▲")).start(
+      c.whiteBright.bold(
+        "Opening Vercel, continue deploying then check back..."
+      )
+    );
+    const vercelData: VercelIntegrationCallback = (await server(
+      async (origin) => {
+        const data: VercelIntegrationData = {
+          env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
+          envReady: [],
+          exampleNames: [example],
+          callbackUrls: [origin],
+        };
+        const encodedData = Buffer.from(JSON.stringify(data)).toString(
+          "base64url"
+        );
+
+        // const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT(encodedData, name)
+        const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV(
+          encodedData,
+          name,
+          example
+        );
+
+        await open(deployUrl);
+      }
+    )) as VercelIntegrationCallback;
+
+    Object.entries(vercelData.env).forEach(([key, value]) => {
+      envVariables.push({ key, value });
+    });
+
+    if (vercelData.repo) {
+      vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
+      const privateRepoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
+      clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
+    }
+    vercelSpinner.succeed(c.green("Vercel deployment complete"));
   }
 
-  // === Install and set up git ==========================================
+  // === Clone example repo ==============================================
+  if (!clonedPrivateRepo) {
+    const result = await cloneRepo({ repoDir, appDir });
+
+    if (!result) {
+      console.log();
+      console.log(c.redBright.bold("Target repo is empty"));
+      console.log();
+      return;
+    }
+  }
+
+  const filesToWrite: { location: string; content: string }[] = [];
+
+  // === Add .env.local ==================================================
+  filesToWrite.push({
+    location: path.join(appDir, ".env.local"),
+    content: envVariables.map(({ key, value }) => `${key}=${value}`).join("\n"),
+  });
+
+  // === Write files, install, set up git ================================
+  filesToWrite.forEach(({ location, content }) => {
+    fs.writeFileSync(location, content);
+  });
+
   if (install) {
     await installApp({
       appDir: appDir,
