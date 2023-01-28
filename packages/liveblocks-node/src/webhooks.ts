@@ -159,6 +159,7 @@ type UserEnteredEvent = {
     /**
      * ISO 8601 datestring
      * @example "2021-03-01T12:00:00.000Z"
+     * @description The time when the user entered the room.
      */
     enteredAt: string;
     numActiveUsers: number;
