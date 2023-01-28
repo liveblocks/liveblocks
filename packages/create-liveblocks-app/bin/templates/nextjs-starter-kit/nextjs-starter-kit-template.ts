@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import c from "ansi-colors";
-import prompts, { PromptObject } from "prompts";
 import {
   clonePrivateRepo,
   cloneRepo,
@@ -27,148 +26,18 @@ import {
   githubAuthProvider,
 } from "./auth-provider-code";
 import {
+  LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV,
   NEXTJS_STARTER_KIT_AUTH_PROVIDERS,
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
   NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV,
 } from "../constants";
-
-type Questions = {
-  name: string;
-  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number];
-  vercel: boolean;
-  liveblocksSecret: boolean;
-  git: boolean;
-  install: boolean;
-  openBrowser: boolean;
-};
+import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
-
-  // === Configure by asking prompts, questions skipped if flags exist ===
-  const questions: PromptObject<keyof Questions>[] = [
-    {
-      type: flags.name ? null : "text",
-      name: "name",
-      message: "What would you like to name your project directory?",
-    },
-    {
-      type:
-        flags.auth && NEXTJS_STARTER_KIT_AUTH_PROVIDERS.includes(flags.auth)
-          ? null
-          : "select",
-      name: "auth",
-      message:
-        "Which authentication method would you like to use in your project?",
-      choices: [
-        {
-          title: "Demo",
-          description: "Add your own authentication later",
-          value: "demo",
-        },
-        {
-          title: "GitHub",
-          description: "Sign in with GitHub (instructions in guide)",
-          value: "github",
-        },
-        {
-          title: "Auth0",
-          description: "Sign in with Auth0 (instructions in guide)",
-          value: "auth0",
-        },
-      ],
-      initial: false,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      // TODO add Vercel flag
-      type: "confirm",
-      name: "vercel",
-      message: "Would you like to deploy on Vercel?",
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      // TODO add liveblocksSecret flag
-      type: (_, values) => {
-        // Vercel integration always uses liveblocksSecret, so skip question
-        if (values.vercel) {
-          return null;
-        }
-        // TODO check for liveblocksSecret flag
-        return "confirm";
-      },
-      name: "liveblocksSecret",
-      message:
-        "Would you like to get your Liveblocks secret key automatically (recommended)?",
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      type: (_, values) => {
-        // Vercel needs git, so skip question if Vercel is true
-        // TODO check for Vercel flag too
-        if (values.vercel) {
-          return null;
-        }
-        return flags.git !== undefined ? null : "confirm";
-      },
-      name: "git",
-      message: "Would you like to initialize a new git repository?",
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      type: flags.install !== undefined ? null : "confirm",
-      name: "install",
-      message: `Would you like to install with ${packageManager}?`,
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      type: (_, values) => {
-        if (values.vercel || values.liveblocksSecret) {
-          return "confirm";
-        }
-
-        return null;
-      },
-      name: "openBrowser",
-      message: "Open browser window to continue set up?",
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-  ];
-
-  // === Prompt return values, using flags as defaults ===================
-  const {
-    name = flags.name,
-    auth = flags.auth,
-    vercel = flags.vercel,
-    liveblocksSecret = flags.liveblocksSecret,
-    git = flags.git,
-    install = flags.install,
-    openBrowser = false,
-  }: Questions = await prompts(questions, {
-    onCancel: () => {
-      console.log(c.redBright.bold("Cancelled"));
-      console.log();
-      process.exit(0);
-    },
-  });
-
-  if ((vercel || liveblocksSecret) && !openBrowser) {
-    console.log(c.redBright.bold("Cancelled"));
-    console.log();
-    return;
-  }
+  const { name, auth, vercel, liveblocksSecret, git, install } =
+    await nextjsStarterKitPrompts(flags);
 
   const appDir = path.join(process.cwd(), "./" + name);
   let repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
@@ -235,8 +104,8 @@ export async function create(flags: Record<string, any>) {
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"
       );
-      // TODO env var this
-      const liveblocksUrl = `http://localhost:3001/integrations/general?data=${encodedData}`;
+
+      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
       open(liveblocksUrl);
     })) as GeneralIntegrationCallback;
 
@@ -353,7 +222,9 @@ export async function create(flags: Record<string, any>) {
 }
 
 // Get environment variables required for your auth solution
-function getAuthEnvVariables(auth: Questions["auth"]) {
+function getAuthEnvVariables(
+  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+) {
   const envVariables = {
     demo: [],
     github: [
@@ -372,7 +243,7 @@ function getAuthEnvVariables(auth: Questions["auth"]) {
 
 // Add the selected auth provider code to a `[...nextauth].ts` file
 function addAuthproviderSetup(
-  auth: Questions["auth"],
+  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number],
   nextauthTs: string
 ): string {
   let newFileContent = nextauthTs;
@@ -398,7 +269,9 @@ function addAuthproviderSetup(
 }
 
 // Get the selected auth provider initialization code
-function getAuthProvider(auth: Questions["auth"]): string {
+function getAuthProvider(
+  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+): string {
   const providers = {
     demo: demoAuthProvider,
     github: githubAuthProvider,
@@ -409,7 +282,9 @@ function getAuthProvider(auth: Questions["auth"]): string {
 }
 
 // Get the select auth provider import code
-function getAuthProviderImport(auth: Questions["auth"]): string {
+function getAuthProviderImport(
+  auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number]
+): string {
   const imports = {
     demo: 'import CredentialsProvider from "next-auth/providers/credentials";',
     github: 'import GithubProvider from "next-auth/providers/github";',

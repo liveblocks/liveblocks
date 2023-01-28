@@ -50,6 +50,30 @@ export const commandLineFlags: OptionDefinition[] = [
     name: "no-git",
     type: Boolean,
   },
+  {
+    name: "vercel",
+    type: Boolean,
+  },
+  {
+    name: "no-vercel",
+    type: Boolean,
+  },
+  {
+    name: "get-key",
+    type: Boolean,
+  },
+  {
+    name: "no-get-key",
+    type: Boolean,
+  },
+  {
+    name: "open",
+    type: Boolean,
+  },
+  {
+    name: "no-open",
+    type: Boolean,
+  },
   // For Next.js starter kit
   {
     name: "auth",

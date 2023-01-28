@@ -1,72 +1,21 @@
 import path from "path";
 import c from "ansi-colors";
-import prompts, { PromptObject } from "prompts";
 import {
   cloneRepo,
   initializeGit,
   install as installApp,
-  getPackageManager,
   confirmDirectoryEmpty,
   getBuildCommand,
   getDevCommand,
+  getPackageManager,
 } from "../../utils";
 import fs from "fs";
-import { EXAMPLES_REPO_LOCATION, EXAMPLES_URL } from "../constants";
-
-type Questions = {
-  example: string;
-  name: string;
-  git: boolean;
-  install: boolean;
-};
+import { EXAMPLES_REPO_LOCATION } from "../constants";
+import { examplePrompts } from "./example-prompts";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
-
-  // === Configure by asking prompts, questions skipped if flags exist ===
-  const questions: PromptObject<keyof Questions>[] = [
-    {
-      type: flags.example ? null : "text",
-      name: "example",
-      message: `Name of the example you're cloning (e.g. nextjs-live-avatars)?
-  ${c.magentaBright(EXAMPLES_URL)}`,
-    },
-    {
-      type: flags.name ? null : "text",
-      name: "name",
-      message: "What would you like to name your project directory?",
-    },
-    {
-      type: flags.git !== undefined ? null : "confirm",
-      name: "git",
-      message: "Would you like to initialize a new git repository?",
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-    {
-      type: flags.install !== undefined ? null : "confirm",
-      name: "install",
-      message: `Would you like to install with ${packageManager}?`,
-      initial: true,
-      active: "yes",
-      inactive: "no",
-    },
-  ];
-
-  // === Prompt return values, using flags as defaults ===================
-  const {
-    example = flags.example,
-    name = flags.name,
-    git = flags.git,
-    install = flags.install,
-  }: Questions = await prompts(questions, {
-    onCancel: () => {
-      console.log(c.redBright.bold("  Cancelled"));
-      console.log();
-      process.exit(0);
-    },
-  });
+  const { example, name, git, install } = await examplePrompts(flags);
 
   // === Clone example repo ==============================================
   const repoDir = EXAMPLES_REPO_LOCATION + example;
