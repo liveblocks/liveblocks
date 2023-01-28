@@ -47,7 +47,7 @@ export async function examplePrompts(flags: Record<string, any>) {
       },
       name: "liveblocksSecret",
       message:
-        "Would you like to get your Liveblocks secret key automatically (recommended)?",
+        "Would you like to get your Liveblocks API key automatically (recommended)?",
       initial: true,
       active: "yes",
       inactive: "no",

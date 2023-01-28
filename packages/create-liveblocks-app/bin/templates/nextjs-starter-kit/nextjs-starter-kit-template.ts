@@ -26,11 +26,11 @@ import {
   githubAuthProvider,
 } from "./auth-provider-code";
 import {
-  LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV,
+  LIVEBLOCKS_GENERAL_INTEGRATION_URL,
   NEXTJS_STARTER_KIT_AUTH_PROVIDERS,
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
-  NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV,
+  NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL,
 } from "../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 
@@ -66,11 +66,14 @@ export async function create(flags: Record<string, any>) {
           "base64url"
         );
 
-        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(encodedData, name)
-        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+        const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL(
           encodedData,
           name
         );
+        // const deployUrl = NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL_DEV(
+        //   encodedData,
+        //   name
+        // );
 
         await open(deployUrl);
       }
@@ -105,7 +108,8 @@ export async function create(flags: Record<string, any>) {
         "base64url"
       );
 
-      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
+      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
+      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
       open(liveblocksUrl);
     })) as GeneralIntegrationCallback;
 

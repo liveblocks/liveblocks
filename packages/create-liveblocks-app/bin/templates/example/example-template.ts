@@ -15,11 +15,17 @@ import {
 import open from "open";
 import fs from "fs";
 import {
-  EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV,
+  EXAMPLE_VERCEL_DEPLOYMENT_URL,
   EXAMPLES_REPO_LOCATION,
+  LIVEBLOCKS_GENERAL_INTEGRATION_URL,
 } from "../constants";
 import { examplePrompts } from "./example-prompts";
-import { VercelIntegrationCallback, VercelIntegrationData } from "../types";
+import {
+  GeneralIntegrationCallback,
+  GeneralIntegrationData,
+  VercelIntegrationCallback,
+  VercelIntegrationData,
+} from "../types";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -44,7 +50,7 @@ export async function create(flags: Record<string, any>) {
     const vercelData: VercelIntegrationCallback = (await server(
       async (origin) => {
         const data: VercelIntegrationData = {
-          env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
+          env: [],
           envReady: [],
           exampleNames: [example],
           callbackUrls: [origin],
@@ -53,12 +59,16 @@ export async function create(flags: Record<string, any>) {
           "base64url"
         );
 
-        // const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT(encodedData, name)
-        const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV(
+        const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL(
           encodedData,
           name,
           example
         );
+        // const deployUrl = EXAMPLE_VERCEL_DEPLOYMENT_URL_DEV(
+        //   encodedData,
+        //   name,
+        //   example
+        // );
 
         await open(deployUrl);
       }
@@ -74,6 +84,36 @@ export async function create(flags: Record<string, any>) {
       clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
     }
     vercelSpinner.succeed(c.green("Vercel deployment complete"));
+  }
+
+  // === Get Liveblocks secret key from general integration ==============
+  if (liveblocksSecret) {
+    const liveblocksSpinner = loadingSpinner().start(
+      c.whiteBright.bold(
+        "Opening Liveblocks, import your API key then check back..."
+      )
+    );
+
+    const liveblocksData = (await server((origin) => {
+      const data: GeneralIntegrationData = {
+        env: [],
+        exampleNames: [example],
+        callbackUrls: [origin],
+      };
+      const encodedData = Buffer.from(JSON.stringify(data)).toString(
+        "base64url"
+      );
+
+      const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL(encodedData);
+      // const liveblocksUrl = LIVEBLOCKS_GENERAL_INTEGRATION_URL_DEV(encodedData);
+      open(liveblocksUrl);
+    })) as GeneralIntegrationCallback;
+
+    Object.entries(liveblocksData.env).forEach(([key, value]) => {
+      envVariables.push({ key, value });
+    });
+
+    liveblocksSpinner.succeed(c.green("Liveblocks API key added"));
   }
 
   // === Clone example repo ==============================================
