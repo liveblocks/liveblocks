@@ -38,12 +38,16 @@ const NEXTJS_STARTER_KIT_REPO_DIRECTORY =
   "liveblocks/liveblocks/starter-kits/nextjs-starter-kit";
 
 // Dev url: `http://localhost:3001/integrations/general?data=${encodedData}`;
-const LIVEBLOCKS_GENERAL_INTEGRATION_URL = (encodedData: string) =>
-  `https://liveblocks.io/integrations/general?data=${encodedData}`;
+const NEXTJS_STARTER_KIT_LIVEBLOCKS_GENERAL_INTEGRATION_URL = (
+  encodedData: string
+) => `https://liveblocks.io/integrations/general?data=${encodedData}`;
 
-// Dev url: `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
-const VERCEL_DEPLOYMENT_URL = (encodedData: string, projectName: string) =>
-  `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${projectName}&repository-name=${projectName}`;
+// Dev url: `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+const NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL = (
+  encodedData: string,
+  projectName: string
+) =>
+  `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${projectName}&repository-name=${projectName}`;
 
 const AUTH_PROVIDERS = ["demo", "github", "auth0"] as const;
 
@@ -210,10 +214,10 @@ export async function create(flags: Record<string, any>) {
 
         // TODO env vars
         // dev url
-        const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+        const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_cem0SgRkffaXn20Xd8wYxl8V&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_cem0SgRkffaXn20Xd8wYxl8V&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
         // prod url
-        // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Next.js%20Starter%20Kit&demo-description=Kickstart%20start%20your%20collaborative%20Next.js%20app%20with%20this%20starter%20kit&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fsocial-images%2Fexamples%2Flive-avatars-advanced.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
+        // const deployUrl = `https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fliveblocks%2Fliveblocks%2Fblob%2Fmain%2Fstarter-kits%2Fnextjs-starter-kit&redirect-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&developer-id=oac_vgAdc0379wKPfhSvnUIZ4Vc8&demo-title=Liveblocks%20Starter%20Kit&demo-description=Kickstart%20your%20collaborative%20app%20with%20Liveblocks%20and%20Next.js&demo-url=https%3A%2F%2Fliveblocks.io%2Fdocs%2Fguides%2Fnextjs-starter-kit&demo-image=https%3A%2F%2Fliveblocks.io%2Fimages%2Fintegrations%2Fnextjs-starter-kit-preview.png&integration-ids=oac_vgAdc0379wKPfhSvnUIZ4Vc8&external-id=${encodedData}&project-name=${name}&repository-name=${name}`;
 
         await open(deployUrl);
       }
@@ -232,7 +236,7 @@ export async function create(flags: Record<string, any>) {
   }
 
   // === Get Liveblocks secret key from general integration ==============
-  if (!vercel && liveblocksSecret) {
+  if (liveblocksSecret) {
     const liveblocksSpinner = loadingSpinner().start(
       c.whiteBright.bold(
         "Opening Liveblocks, import your API key then check back..."
