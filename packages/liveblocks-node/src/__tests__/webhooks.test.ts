@@ -66,7 +66,8 @@ describe("WebhookHandler", () => {
 
       const rawStorageUpdated = JSON.stringify(storageUpdated);
 
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674851522000);
+      const now = 1674851522000;
+      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(now);
 
       const webhookHandler = new WebhookHandler(secret);
 
