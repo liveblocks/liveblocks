@@ -1,4 +1,4 @@
-import { NEXTJS_STARTER_KIT_AUTH_PROVIDERS } from "../constants";
+import { NEXTJS_STARTER_KIT_AUTH_PROVIDERS } from "../../constants";
 import { getPackageManager } from "../../utils";
 import prompts, { PromptObject } from "prompts";
 import c from "ansi-colors";

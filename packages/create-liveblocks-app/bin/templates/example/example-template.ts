@@ -18,14 +18,14 @@ import {
   EXAMPLE_VERCEL_DEPLOYMENT_URL,
   EXAMPLES_REPO_LOCATION,
   LIVEBLOCKS_GENERAL_INTEGRATION_URL,
-} from "../constants";
+} from "../../constants";
 import { examplePrompts } from "./example-prompts";
 import {
   GeneralIntegrationCallback,
   GeneralIntegrationData,
   VercelIntegrationCallback,
   VercelIntegrationData,
-} from "../types";
+} from "../../types";
 
 export async function create(flags: Record<string, any>) {
   const packageManager = flags.packageManager || getPackageManager();
@@ -100,6 +100,7 @@ export async function create(flags: Record<string, any>) {
         exampleNames: [example],
         callbackUrls: [origin],
       };
+      console.log(data);
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"
       );

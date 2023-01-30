@@ -19,7 +19,7 @@ import {
   GeneralIntegrationData,
   VercelIntegrationCallback,
   VercelIntegrationData,
-} from "../types";
+} from "../../types";
 import {
   auth0AuthProvider,
   demoAuthProvider,
@@ -31,7 +31,7 @@ import {
   NEXTJS_STARTER_KIT_GUIDE_URL,
   NEXTJS_STARTER_KIT_REPO_DIRECTORY,
   NEXTJS_STARTER_KIT_VERCEL_DEPLOYMENT_URL,
-} from "../constants";
+} from "../../constants";
 import { nextjsStarterKitPrompts } from "./nextjs-starter-kit-prompts";
 
 export async function create(flags: Record<string, any>) {

@@ -1,3 +1,5 @@
+export const LIVEBLOCKS_URL = "https://liveblocks.io";
+
 export const EXAMPLES_REPO_LOCATION = "liveblocks/liveblocks/examples/";
 export const EXAMPLES_URL =
   "https://github.com/liveblocks/liveblocks/tree/main/examples";

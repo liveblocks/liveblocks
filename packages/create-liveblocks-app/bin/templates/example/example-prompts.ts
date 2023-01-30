@@ -1,6 +1,6 @@
 import prompts, { PromptObject } from "prompts";
 import { getPackageManager } from "../../utils";
-import { EXAMPLES_URL } from "../constants";
+import { EXAMPLES_URL } from "../../constants";
 import c from "ansi-colors";
 
 type Questions = {
