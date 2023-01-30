@@ -63,7 +63,7 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
     {
       type: (_, values) => {
         // Vercel integration always gets the API keys, so skip question
-        if (values.vercel) {
+        if (values.vercel || flags.vercel) {
           return null;
         }
         return flags["get-key"] ? null : "confirm";
@@ -99,7 +99,12 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
     },
     {
       type: (_, values) => {
-        if (values.vercel || values.liveblocksSecret) {
+        if (
+          values.vercel ||
+          values.liveblocksSecret ||
+          flags.vercel ||
+          flags["get-key"]
+        ) {
           return flags.open ? null : "confirm";
         }
 
