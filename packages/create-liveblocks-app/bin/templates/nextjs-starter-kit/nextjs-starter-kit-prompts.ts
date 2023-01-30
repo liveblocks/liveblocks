@@ -53,7 +53,7 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
       inactive: "no",
     },
     {
-      type: flags.vercel || flags["get-key"] ? null : "confirm",
+      type: flags.vercel !== undefined || flags["get-key"] ? null : "confirm",
       name: "vercel",
       message: "Would you like to deploy on Vercel?",
       initial: true,
@@ -63,10 +63,10 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
     {
       type: (_, values) => {
         // Vercel integration always gets the API keys, so skip question
-        if (values.vercel || flags.vercel) {
+        if (flags["get-key"] !== undefined || values.vercel || flags.vercel) {
           return null;
         }
-        return flags["get-key"] ? null : "confirm";
+        return "confirm";
       },
       name: "liveblocksSecret",
       message:
@@ -78,10 +78,10 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
     {
       type: (_, values) => {
         // Vercel needs git, so skip question if Vercel is true
-        if (values.vercel || flags.vercel) {
+        if (flags.git !== undefined || values.vercel || flags.vercel) {
           return null;
         }
-        return flags.git !== undefined ? null : "confirm";
+        return "confirm";
       },
       name: "git",
       message: "Would you like to initialize a new git repository?",

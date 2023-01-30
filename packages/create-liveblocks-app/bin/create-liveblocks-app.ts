@@ -1,9 +1,10 @@
-import commandLineArgs, { OptionDefinition } from "command-line-args";
 import c from "ansi-colors";
+import commandLineArgs from "command-line-args";
 import prompts, { PromptObject } from "prompts";
+import readline from "readline";
+import { commandLineFlags } from "./flags";
 import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
-import readline from "readline";
 
 type TemplateName = "next" | "example";
 
@@ -11,75 +12,6 @@ const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
 };
-
-export const commandLineFlags: OptionDefinition[] = [
-  {
-    name: "template",
-    type: String,
-    defaultOption: true,
-  },
-  {
-    name: "example",
-    type: String,
-  },
-  {
-    name: "next",
-    type: Boolean,
-  },
-  {
-    name: "name",
-    type: String,
-  },
-  {
-    name: "package-manager",
-    type: String,
-  },
-  {
-    name: "install",
-    type: Boolean,
-  },
-  {
-    name: "no-install",
-    type: Boolean,
-  },
-  {
-    name: "git",
-    type: Boolean,
-  },
-  {
-    name: "no-git",
-    type: Boolean,
-  },
-  {
-    name: "vercel",
-    type: Boolean,
-  },
-  {
-    name: "no-vercel",
-    type: Boolean,
-  },
-  {
-    name: "get-key",
-    type: Boolean,
-  },
-  {
-    name: "no-get-key",
-    type: Boolean,
-  },
-  {
-    name: "open",
-    type: Boolean,
-  },
-  {
-    name: "no-open",
-    type: Boolean,
-  },
-  // For Next.js starter kit
-  {
-    name: "auth",
-    type: String,
-  },
-];
 
 export async function createLiveblocksApp() {
   listenForQuit();
