@@ -53,7 +53,7 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
       inactive: "no",
     },
     {
-      type: flags.vercel ? null : "confirm",
+      type: flags.vercel || flags["get-key"] ? null : "confirm",
       name: "vercel",
       message: "Would you like to deploy on Vercel?",
       initial: true,

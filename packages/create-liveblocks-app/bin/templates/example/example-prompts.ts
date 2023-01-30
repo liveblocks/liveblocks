@@ -30,7 +30,7 @@ export async function examplePrompts(flags: Record<string, any>) {
       message: "What would you like to name your project directory?",
     },
     {
-      type: flags.vercel ? null : "confirm",
+      type: flags.vercel || flags["get-key"] ? null : "confirm",
       name: "vercel",
       message: "Would you like to deploy on Vercel?",
       initial: true,

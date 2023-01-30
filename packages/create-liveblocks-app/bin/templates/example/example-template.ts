@@ -100,7 +100,6 @@ export async function create(flags: Record<string, any>) {
         exampleNames: [example],
         callbackUrls: [origin],
       };
-      console.log(data);
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"
       );
