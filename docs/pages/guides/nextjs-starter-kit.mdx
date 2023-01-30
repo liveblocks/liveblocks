@@ -30,61 +30,6 @@ The Next.js Starter Kit includes the following
 
 ## Set up the Next.js Starter Kit
 
-The [starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit) has the following structure:
-
-```
-components
-data
-layouts
-lib
- └─ client
- └─ server
-pages
-primitives
-styles
-types
-liveblocks.config.ts
-liveblocks.server.config.ts
-package.json
-```
-
-The important thing to note is that there are primitives, which are base level
-components such as buttons (think of these as the small building blocks of a
-page), components, which you can think of as multiplayer implementations
-(cursors, badges, etc), pages, which render document level experiences and both
-server side and client side methods which contain the logic to create and modify
-documents.
-
-<br />
-<details>
-  <summary>More info about the structure</summary>
-  <br />
-  <dl>
-    <dt>`/components/`</dt>
-    <dd>Components used in the app.</dd>
-    <dt>`/data/`</dt>
-    <dd>A demo database.</dd>
-    <dt>`/layouts/`</dt>
-    <dd>Page layout components.</dd>
-    <dt>`/lib/client/`</dt>
-    <dd>Client functions used for accessing documents, database, SWR hooks.</dd>
-    <dt>`/lib/server/`</dt>
-    <dd>
-      Server functions used for accessing documents, database, liveblocks.
-    </dd>
-    <dt>`/pages/`</dt>
-    <dd>Next.js pages.</dd>
-    <dt>`/primitives/`</dt>
-    <dd>Generic reusable components.</dd>
-    <dt>`/types/`</dt>
-    <dd>All reusable TypeScript types.</dd>
-    <dt>`/liveblocks.config.ts`</dt>
-    <dd>Liveblocks config file.</dd>
-    <dt>`/liveblocks.server.config.ts`</dt>
-    <dd>Server-side Liveblocks config file.</dd>
-  </dl>
-</details>
-
 ### Liveblocks configuration
 
 If you already have a Liveblocks Development account, you may skip to step 4.
@@ -262,6 +207,64 @@ npm run dev
 ```
 
 ## Assorted info
+
+### Structure
+
+The [starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit) has the following structure:
+
+```
+components
+data
+layouts
+lib
+ └─ client
+ └─ server
+pages
+primitives
+styles
+types
+liveblocks.config.ts
+liveblocks.server.config.ts
+package.json
+```
+
+The important thing to note is that there are primitives, which are base level
+components such as buttons (think of these as the small building blocks of a
+page), components, which you can think of as multiplayer implementations
+(cursors, badges, etc), pages, which render document level experiences and both
+server side and client side methods which contain the logic to create and modify
+documents.
+
+<br />
+<details>
+  <summary>More info about the structure</summary>
+  <br />
+  <dl>
+    <dt>`/components/`</dt>
+    <dd>Components used in the app.</dd>
+    <dt>`/data/`</dt>
+    <dd>A demo database.</dd>
+    <dt>`/layouts/`</dt>
+    <dd>Page layout components.</dd>
+    <dt>`/lib/client/`</dt>
+    <dd>Client functions used for accessing documents, database, SWR hooks.</dd>
+    <dt>`/lib/server/`</dt>
+    <dd>
+      Server functions used for accessing documents, database, liveblocks.
+    </dd>
+    <dt>`/pages/`</dt>
+    <dd>Next.js pages.</dd>
+    <dt>`/primitives/`</dt>
+    <dd>Generic reusable components.</dd>
+    <dt>`/types/`</dt>
+    <dd>All reusable TypeScript types.</dd>
+    <dt>`/liveblocks.config.ts`</dt>
+    <dd>Liveblocks config file.</dd>
+    <dt>`/liveblocks.server.config.ts`</dt>
+    <dd>Server-side Liveblocks config file.</dd>
+  </dl>
+</details>
+
 
 ### Async fetching and error handling
 
