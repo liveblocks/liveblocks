@@ -10,6 +10,12 @@ export async function server(callback: (origin: string) => void) {
       res.setHeader("Access-Control-Allow-Headers", "Content-Type");
       res.setHeader("Content-Type", "text/plain");
 
+      if (req.method === "OPTIONS") {
+        res.statusCode = 200;
+        res.end();
+        return;
+      }
+
       if (req.method !== "POST") {
         res.statusCode = 405;
         res.end(
