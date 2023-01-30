@@ -59,7 +59,21 @@ Options:
   
   --no-git
   Don't initialize git
- 
+  
+  --vercel
+  Deploy on Vercel, and get Liveblocks API key
+  
+  --no-vercel
+  Don't deploy on Vercel
+  
+  --get-key
+  Get Liveblocks API key
+  
+  --no-get-key
+  Don't get Liveblocks API key
+  
+  --open
+  Open browser without asking permission, when deploying to Vercel or getting API key 
 ```
 
 #### Examples
