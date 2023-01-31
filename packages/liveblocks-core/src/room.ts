@@ -1735,6 +1735,24 @@ function makeStateMachine<
 
             break;
           }
+
+          // Receiving a RejectedOps message in the client means that the server is no
+          // longer in sync with the client. Trying to synchronize the client again by
+          // rolling back particular Ops may be hard/impossible. It's fine to not try and
+          // accept the out-of-sync reality and throw an error. We look at this kind of bug
+          // as a developer-owned bug. In production, these errors are not expected to happen.
+          case ServerMsgCode.REJECT_STORAGE_OP: {
+            console.errorWithTitle(
+              "Storage op rejection error",
+              message.reason
+            );
+
+            if (process.env.NODE_ENV !== "production") {
+              throw new Error(
+                `Storage ops rejected by server: ${message.reason}`
+              );
+            }
+          }
         }
       }
 
