@@ -2,8 +2,18 @@
   "$schema": "https://turborepo.org/schema.json",
   "globalDependencies": [".envrc"],
   "pipeline": {
-    "build": {
+    "build:ast": {
       "dependsOn": ["^build"],
+      "outputs": ["src/ast/index.ts"],
+      "inputs": ["src/ast/ast.grammar"]
+    },
+    "build:parser": {
+      "dependsOn": [],
+      "outputs": ["src/parser/generated-parser.ts"],
+      "inputs": ["src/parser/schema-lang.pegjs"]
+    },
+    "build": {
+      "dependsOn": ["build:ast", "build:parser"],
       "outputs": ["dist/**"]
     },
     "test": {
