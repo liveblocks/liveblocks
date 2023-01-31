@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build:ast && npm run build:parser && tsup",
-    "build:ast": "generate-ast && tsc --noEmit src/ast/index.ts",
+    "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts",
     "build:parser": "bin/build-parser",
     "test": "jest"
   },
