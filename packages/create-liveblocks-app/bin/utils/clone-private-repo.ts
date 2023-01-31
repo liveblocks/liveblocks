@@ -15,6 +15,8 @@ export async function clonePrivateRepo({
   const spinner = loadingSpinner().start("Cloning repo...");
 
   const { dir, name } = path.parse(appDir);
+
+  // Using simple-git for the timeout functionality
   const options: Partial<SimpleGitOptions> = {
     baseDir: dir,
     binary: "git",
