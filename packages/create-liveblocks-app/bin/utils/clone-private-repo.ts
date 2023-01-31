@@ -1,36 +1,46 @@
 import c from "ansi-colors";
 import { loadingSpinner } from "./loading-spinner";
-import { execAsync } from "./exec-async";
 import path from "path";
+import { simpleGit, SimpleGitOptions } from "simple-git";
 
 type ClonePrivateRepo = {
-  privateRepoDir: string;
   appDir: string;
+  repoUrls: { https: string; ssh: string };
 };
 
 export async function clonePrivateRepo({
-  privateRepoDir,
   appDir,
+  repoUrls,
 }: ClonePrivateRepo): Promise<boolean> {
   const spinner = loadingSpinner().start("Cloning repo...");
-  const { dir, name } = path.parse(appDir);
 
-  const options = {
-    cwd: dir,
-    stdio: "pipe",
-  } as const;
+  const { dir, name } = path.parse(appDir);
+  const options: Partial<SimpleGitOptions> = {
+    baseDir: dir,
+    binary: "git",
+    maxConcurrentProcesses: 6,
+    trimmed: false,
+    timeout: { block: 2000 },
+  };
+
+  const git = simpleGit(options);
 
   try {
-    await execAsync(`git clone ${privateRepoDir} ${name}`, options);
-  } catch (err) {
-    spinner.warn(
-      c.yellowBright.bold(
-        `Problem cloning "${privateRepoDir}", using public repo instead`
-      )
-    );
-    return false;
-  }
+    await git.clone(repoUrls.ssh, name);
+    spinner.succeed(c.green("Repo downloaded!"));
+    return true;
+  } catch (err) {}
 
-  spinner.succeed(c.green("Repo downloaded!"));
-  return true;
+  try {
+    await git.clone(repoUrls.https, name);
+    spinner.succeed(c.green("Repo downloaded!"));
+    return true;
+  } catch (err) {}
+
+  spinner.warn(
+    c.yellowBright.bold(
+      `Problem cloning private repo", using public repo instead`
+    )
+  );
+  return false;
 }

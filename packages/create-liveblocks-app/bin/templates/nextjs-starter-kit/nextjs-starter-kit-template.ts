@@ -3,15 +3,15 @@ import path from "path";
 import crypto from "crypto";
 import c from "ansi-colors";
 import {
-  clonePrivateRepo,
   cloneRepo,
   initializeGit,
   install as installApp,
   getPackageManager,
   confirmDirectoryEmpty,
   server,
-  stageAndCommit,
   loadingSpinner,
+  clonePrivateRepo,
+  stageAndCommit,
 } from "../../utils";
 import open from "open";
 import {
@@ -41,9 +41,10 @@ export async function create(flags: Record<string, any>) {
 
   const appDir = path.join(process.cwd(), "./" + name);
   let repoDir = NEXTJS_STARTER_KIT_REPO_DIRECTORY;
-  let clonedPrivateRepo = false;
   let liveblocksSecretKeyValue = "";
   const nextAuthSecretValue = crypto.randomBytes(32).toString("base64");
+  let repoUrls = null;
+  let clonedPrivateRepo = false;
 
   // Empty/create appDir repo
   await confirmDirectoryEmpty(appDir);
@@ -84,9 +85,15 @@ export async function create(flags: Record<string, any>) {
     }
 
     if (vercelData.repo) {
+      const host = `${vercelData.repo.type}.${
+        vercelData.repo.type === "bitbucket" ? "org" : "com"
+      }`;
       vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
-      const privateRepoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
-      clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
+      repoUrls = {
+        https: `https://${host}/${vercelData.repo.location}.git`,
+        ssh: `ssh://git@${host}/${vercelData.repo.location}.git`,
+      };
+      clonedPrivateRepo = await clonePrivateRepo({ appDir, repoUrls });
     }
     vercelSpinner.succeed(c.green("Vercel deployment complete"));
   }
@@ -188,8 +195,8 @@ export async function create(flags: Record<string, any>) {
   }
 
   if (git) {
-    await initializeGit({ appDir });
-  } else if (vercel) {
+    await initializeGit({ appDir, repoUrls });
+  } else if (vercel && clonedPrivateRepo) {
     await stageAndCommit({ appDir });
   }
 
@@ -223,6 +230,23 @@ export async function create(flags: Record<string, any>) {
   }
   console.log(NEXTJS_STARTER_KIT_GUIDE_URL);
   console.log();
+
+  if (vercel && !clonedPrivateRepo) {
+    console.log();
+    console.log(
+      c.bold.yellowBright(
+        "Warning: The private repo you created on Vercel couldn't be cloned"
+      )
+    );
+    console.log(
+      c.bold.yellowBright(
+        "Clone your project, then follow the instructions above:"
+      )
+    );
+    if (repoUrls) {
+      console.log(repoUrls.https);
+    }
+  }
 }
 
 // Get environment variables required for your auth solution
