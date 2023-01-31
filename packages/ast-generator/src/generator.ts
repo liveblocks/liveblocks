@@ -86,6 +86,10 @@ function partition<T>(items: T[], predicate: (item: T) => boolean): [T[], T[]] {
   return [gold, dirt];
 }
 
+function lowercaseFirst(text: string): string {
+  return text[0].toLowerCase() + text.slice(1);
+}
+
 function parseBaseNodeRef(spec: string): BaseNodeRef {
   const match = spec.match(/^(@?[a-z]+)$/i);
   invariant(match, `Invalid reference: "${spec}"`);
@@ -441,7 +445,7 @@ async function generateCode(grammar: Grammar): Promise<string> {
 
     output.push(
       `
-            export function ${node.name}(${[
+            export function ${lowercaseFirst(node.name)}(${[
         ...node.fields.map((field) => {
           let key = field.name;
           const type = getTypeScriptType(field.ref);

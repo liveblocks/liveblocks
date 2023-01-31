@@ -1,9 +1,9 @@
 import { prettify } from "../";
-import { parse } from "../../parser";
+import { parseDocument } from "../../parser";
 
 describe("prettify", () => {
   it("minimal schema", () => {
-    expect(prettify(parse("type Foo {x: Int,    }"))).toEqual(
+    expect(prettify(parseDocument("type Foo {x: Int,    }"))).toEqual(
       "type Foo {\n  x: Int\n}"
     );
   });

@@ -45,7 +45,7 @@
 Document
   = __ defs:DefinitionList __
     {
-      return ast.Document(
+      return ast.document(
         defs,
 
         // Comments have been consumed as a side-effect during parsing, and
@@ -84,7 +84,7 @@ Comment
 
 LineComment
   = $( '//' / '#' ) text:$( [^\n] )* &[\n]
-    { return ast.LineComment(text, rng()) }
+    { return ast.lineComment(text, rng()) }
 
 
 LOWER_CHAR = [a-z]
@@ -95,12 +95,12 @@ WORD_CHAR = [a-zA-Z0-9_]
 Identifier "identifier"
   // An identifier _must_ start with a lowercase char
   = name:$( WORD_CHAR+ ) !WORD_CHAR _
-    { return ast.Identifier(name, rng()) }
+    { return ast.identifier(name, rng()) }
 
 
 TypeName "type name"
   = name:$( UPPER_CHAR WORD_CHAR* ) !WORD_CHAR _
-    { return ast.TypeName(name, rng()) }
+    { return ast.typeName(name, rng()) }
 
 
 //////   //
@@ -115,12 +115,12 @@ DefinitionList
 
 Definition
   = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
-    { return ast.ObjectTypeDef(name, obj, rng()) }
+    { return ast.objectTypeDef(name, obj, rng()) }
 
 
 ObjectLiteralExpr
   = LCURLY fields:FieldDefList RCURLY
-    { return ast.ObjectLiteralExpr(fields, rng()) }
+    { return ast.objectLiteralExpr(fields, rng()) }
 
 
 FieldDefList
@@ -135,7 +135,7 @@ FieldDef
   = name:Identifier question:QUESTION? COLON type:TypeExpr
     {
       const optional = question !== null;
-      return ast.FieldDef(name, optional, type, rng())
+      return ast.fieldDef(name, optional, type, rng())
     }
 
 
@@ -157,7 +157,7 @@ TypeExprList
 TypeRef
   = name:TypeName args:( LT args:TypeExprList GT
                          { return args } )?
-    { return ast.TypeRef(name, args ?? [], rng()) }
+    { return ast.typeRef(name, args ?? [], rng()) }
 
 
 Literal
@@ -177,7 +177,7 @@ DoubleQuotedString
     {
       const value = unescape(rawValue
         .substring(1, rawValue.length - 1))  // strip off quotes
-      return ast.StringLiteral(value, rawValue, rng())
+      return ast.stringLiteral(value, rawValue, rng())
     }
 
 

@@ -131,7 +131,7 @@ export type TypeRef = {
   range: Range;
 };
 
-export function Document(
+export function document(
   definitions: Definition[],
   comments: Comment[] | null = null,
   range: Range = [0, 0]
@@ -167,7 +167,7 @@ export function Document(
   };
 }
 
-export function FieldDef(
+export function fieldDef(
   name: Identifier,
   optional: boolean,
   type: TypeExpr,
@@ -209,7 +209,7 @@ export function FieldDef(
   };
 }
 
-export function Identifier(name: string, range: Range = [0, 0]): Identifier {
+export function identifier(name: string, range: Range = [0, 0]): Identifier {
   invariant(
     typeof name === "string",
     `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
@@ -230,7 +230,7 @@ export function Identifier(name: string, range: Range = [0, 0]): Identifier {
   };
 }
 
-export function LineComment(text: string, range: Range = [0, 0]): LineComment {
+export function lineComment(text: string, range: Range = [0, 0]): LineComment {
   invariant(
     typeof text === "string",
     `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
@@ -251,7 +251,7 @@ export function LineComment(text: string, range: Range = [0, 0]): LineComment {
   };
 }
 
-export function ObjectLiteralExpr(
+export function objectLiteralExpr(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
 ): ObjectLiteralExpr {
@@ -275,7 +275,7 @@ export function ObjectLiteralExpr(
   };
 }
 
-export function ObjectTypeDef(
+export function objectTypeDef(
   name: TypeName,
   obj: ObjectLiteralExpr,
   range: Range = [0, 0]
@@ -308,7 +308,7 @@ export function ObjectTypeDef(
   };
 }
 
-export function StringLiteral(
+export function stringLiteral(
   value: string,
   rawValue: string,
   range: Range = [0, 0]
@@ -341,7 +341,7 @@ export function StringLiteral(
   };
 }
 
-export function TypeName(name: string, range: Range = [0, 0]): TypeName {
+export function typeName(name: string, range: Range = [0, 0]): TypeName {
   invariant(
     typeof name === "string",
     `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
@@ -362,7 +362,7 @@ export function TypeName(name: string, range: Range = [0, 0]): TypeName {
   };
 }
 
-export function TypeRef(
+export function typeRef(
   name: TypeName,
   args: TypeExpr[] = [],
   range: Range = [0, 0]

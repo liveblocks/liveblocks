@@ -5,14 +5,14 @@ describe("documents", () => {
   it("minimal document", () => {
     expectDocument(
       "type Foo { version: Int }",
-      ast.Document([
-        ast.ObjectTypeDef(
-          ast.TypeName("Foo"),
-          ast.ObjectLiteralExpr([
-            ast.FieldDef(
-              ast.Identifier("version"),
+      ast.document([
+        ast.objectTypeDef(
+          ast.typeName("Foo"),
+          ast.objectLiteralExpr([
+            ast.fieldDef(
+              ast.identifier("version"),
               false,
-              ast.TypeRef(ast.TypeName("Int"))
+              ast.typeRef(ast.typeName("Int"))
             ),
           ])
         ),

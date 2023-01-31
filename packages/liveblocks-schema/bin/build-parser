@@ -13,31 +13,27 @@ if [ $# -gt 0 ]; then
 fi
 
 main () {
-    if [ ! -f "$OUTPUT" -o "$INPUT" -nt "$OUTPUT" -o $FORCE -eq 1 ]; then
-        echo "Rebuilding parser..." >&2
+    echo "Rebuilding parser..." >&2
 
-        set +e
-        node_modules/.bin/peggy                             \
-            --plugin ./node_modules/ts-pegjs/src/tspegjs.js \
-            --extra-options-file pegconfig.json             \
-            --allowed-start-rules Document,TypeExpr         \
-            --cache                                         \
-            -o "$OUTPUT"                                    \
-            "$INPUT"                                        \
-            2>errors.log
-        exitcode="$?"
-        if [ "$exitcode" -gt 0 -o "$(cat errors.log | wc -l)" -gt 0 ]; then
-            cat errors.log >&2
-            rm -f "$OUTPUT" errors.log
-            exit "$exitcode"
-        fi
-        rm -f errors.log
-        set -e
-
-        echo "Done" >&2
-    else
-        echo "Parser up to date" >&2
+    set +e
+    ../../node_modules/.bin/peggy                           \
+        --plugin ../../node_modules/ts-pegjs/src/tspegjs.js \
+        --extra-options-file pegconfig.json                 \
+        --allowed-start-rules Document,TypeExpr             \
+        --cache                                             \
+        -o "$OUTPUT"                                        \
+        "$INPUT"                                            \
+        2>errors.log
+    exitcode="$?"
+    if [ "$exitcode" -gt 0 -o "$(cat errors.log | wc -l)" -gt 0 ]; then
+        cat errors.log >&2
+        rm -f "$OUTPUT" errors.log
+        exit "$exitcode"
     fi
+    rm -f errors.log
+    set -e
+
+    echo "Done" >&2
 }
 
 ( cd "$PKGROOT" && main )
