@@ -262,7 +262,67 @@ When you verify your webhooks, you protect against man-in-the-middle, CSRF, and
 replay attacks. Because of this, the importance of verification cannot be
 understated and should be considered paramount in your integration.
 
-Here's how to validate a webhook message:
+There are two ways to verify your webhooks, either manually or by using the
+`@liveblocks/node` package. We highly recommend using the `@liveblocks/node`
+package as it will verify the events for you and provide you with fully typed
+events.
+
+### Verify using `@liveblocks/node`
+
+#### 1. Install the package
+
+```bash
+npm install @liveblocks/node
+```
+
+#### 2. Setup the webhook handler
+
+```ts
+import { WebhookHandler } from "@liveblocks/node";
+
+const webhookHandler = new WebhookHandler(process.env.SECRET); // "whsec_..." obtained from the webhook dashboard
+```
+
+#### 3. Verify an event request
+
+```ts
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+```
+
+The method will return a `WebhookEvent` object that is fully typed. You can then
+use the event to perform actions based on the event type.
+
+If the request is not valid, an error will be thrown.
+
+#### Example
+
+```ts
+import { WebhookHandler } from "@liveblocks/node";
+
+// Will fail if not properly initialized with a secret
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
+
+export default function webhookRequestHandler(req, res) {
+  try {
+    const event = webhookHandler.verifyRequest({
+      headers: req.headers,
+      rawBody: req.body,
+    });
+
+    // do things with the event
+  } catch (error) {
+    console.error(error);
+    return res.status(400).end();
+  }
+
+  res.status(200).end();
+}
+```
+
+### Verify manually
 
 #### 1. Construct the signed content
 
