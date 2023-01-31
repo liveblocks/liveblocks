@@ -4,3 +4,5 @@ coverage/
 
 dist/
 *.tsbuildinfo
+
+.turbo/

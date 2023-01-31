@@ -1,0 +1,19 @@
+{
+  "name": "@liveblocks/schema-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "prettier": "^2.7.1",
+    "tsd": "^0.24.1",
+    "tsup": "^6.4.0",
+    "turbo": "^1.7.0",
+    "typescript": "^4.9.0"
+  }
+}

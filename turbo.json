@@ -1,0 +1,30 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "globalDependencies": [".envrc"],
+  "pipeline": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"],
+      "inputs": [
+        "jest.*",
+        "src/**/*.tsx",
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "test/**/*.tsx"
+      ]
+    },
+    "lint": {
+      // A package's `lint` script has no dependencies and can be run whenever.
+      // It also has no filesystem outputs.
+      "outputs": []
+    }
+    // "format": {
+    //   "cache": false,
+    //   "outputs": []
+    // }
+  }
+}
