@@ -46,7 +46,9 @@ export class WebhookHandler {
         `Invalid signature, expected one of ${expectedSignatures}, got ${signature}`
       );
 
-    const event = JSON.parse(request.rawBody);
+    const event: WebhookEvent = JSON.parse(request.rawBody);
+
+    this.verifyWebhookEventType(event);
 
     return event;
   }
@@ -107,6 +109,27 @@ export class WebhookHandler {
     if (timestamp > now + WEBHOOK_TOLERANCE_IN_SECONDS) {
       throw new Error("Timestamp in the future");
     }
+  }
+
+  /**
+   * Ensures that the event is a known event type
+   * or throws and prompts the user to upgrade to a higher version of @liveblocks/node
+   */
+  private verifyWebhookEventType(
+    event: WebhookEvent
+  ): asserts event is WebhookEvent {
+    if (
+      event &&
+      event.type &&
+      (event.type === "storageUpdated" ||
+        event.type === "userEntered" ||
+        event.type === "userLeft")
+    )
+      return;
+
+    throw new Error(
+      "Unknown event type, please upgrade to a higher version of @liveblocks/node"
+    );
   }
 }
 
