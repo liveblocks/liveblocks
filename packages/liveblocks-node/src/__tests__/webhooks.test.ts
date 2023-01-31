@@ -48,9 +48,13 @@ describe("WebhookHandler", () => {
   );
 
   describe("verifyRequest", () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
     it('should verify a "userEntered" event', () => {
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674850126000);
-
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
       const webhookHandler = new WebhookHandler(secret);
 
       const headers = {
@@ -69,8 +73,6 @@ describe("WebhookHandler", () => {
       });
 
       expect(event).toEqual(userEnteredBody);
-
-      dateNowSpy.mockRestore();
     });
 
     it('should verify a "storageUpdated" event', () => {
@@ -95,8 +97,9 @@ describe("WebhookHandler", () => {
         ),
       };
 
-      const now = 1674851522000;
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(now);
+      jest.useFakeTimers({
+        now: 1674851522000,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
 
@@ -106,8 +109,6 @@ describe("WebhookHandler", () => {
       });
 
       expect(event).toEqual(storageUpdated);
-
-      dateNowSpy.mockRestore();
     });
 
     it('should verify a "userLeft" event', () => {
@@ -152,11 +153,13 @@ describe("WebhookHandler", () => {
     });
 
     it("should verify an event with multiple signatures", () => {
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674850126000);
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
 
-      const anotherLegacySecret = "whsec_2KvOJ6yK9FO0hElL0JYkM3jPwBs"
+      const anotherLegacySecret = "whsec_2KvOJ6yK9FO0hElL0JYkM3jPwBs";
 
       const signature = [
         generateSignatureWithSvix(
@@ -184,12 +187,12 @@ describe("WebhookHandler", () => {
       });
 
       expect(event).toEqual(userEnteredBody);
-
-      dateNowSpy.mockRestore();
     });
 
     it("should throw if the signature is invalid", () => {
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674850126000);
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
       expect(() =>
@@ -201,12 +204,12 @@ describe("WebhookHandler", () => {
           rawBody: rawUserEnteredBody,
         })
       ).toThrowError("Invalid signature");
-
-      dateNowSpy.mockRestore();
     });
 
     it("should throw if the timestamp is invalid", () => {
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674850126000);
+      jest.useFakeTimers({
+        now: 1674850126000,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
       expect(() =>
@@ -224,13 +227,13 @@ describe("WebhookHandler", () => {
           rawBody: rawUserEnteredBody,
         })
       ).toThrowError("Invalid timestamp");
-
-      dateNowSpy.mockRestore();
     });
 
     it("should throw if timestamp is above future threshold", () => {
       const tenMinutesAgo = 1674850126000 - 10 * 60 * 1000;
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(tenMinutesAgo);
+      jest.useFakeTimers({
+        now: tenMinutesAgo,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
       expect(() =>
@@ -247,15 +250,13 @@ describe("WebhookHandler", () => {
           rawBody: rawUserEnteredBody,
         })
       ).toThrowError("Timestamp in the future");
-
-      dateNowSpy.mockRestore();
     });
 
     it("should throw if timestamp is below past threshold", () => {
       const tenMinutesFromNow = 1674850126000 + 10 * 60 * 1000;
-      const dateNowSpy = jest
-        .spyOn(Date, "now")
-        .mockReturnValue(tenMinutesFromNow);
+      jest.useFakeTimers({
+        now: tenMinutesFromNow,
+      });
 
       const webhookHandler = new WebhookHandler(secret);
       expect(() =>
@@ -272,12 +273,12 @@ describe("WebhookHandler", () => {
           rawBody: rawUserEnteredBody,
         })
       ).toThrowError("Timestamp too old");
-
-      dateNowSpy.mockRestore();
     });
 
     it("should throw if the event type is not supported", () => {
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674851522000);
+      jest.useFakeTimers({
+        now: 1674851522000,
+      });
 
       const body = {
         data: {
@@ -311,8 +312,6 @@ describe("WebhookHandler", () => {
       ).toThrowError(
         "Unknown event type, please upgrade to a higher version of @liveblocks/node"
       );
-
-      dateNowSpy.mockRestore();
     });
   });
 });
