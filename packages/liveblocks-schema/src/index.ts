@@ -1,38 +1,19 @@
-import { Command } from "commander";
 import { ErrorReporter } from "./lib/error-reporting";
-import { prettify } from "./prettify";
 import { check } from "./checker";
-import { parse } from "./parser";
+import { parseDocument } from "./parser";
 
-const version = "0.0.1";
+// Export all AST nodes and helpers
+export * as AST from "./ast";
 
-async function main() {
-  const cmd = new Command("parse-schema")
-    .version(version)
-    .description("Parse a Liveblocks schema and display the AST")
-    .argument("<file>", "File to parse")
-    .parse(process.argv);
-
-  const filename = cmd.args[0];
-  if (!filename) {
-    cmd.help();
-    process.exit(0);
-  }
-
-  // Run compiler
-  const reporter = ErrorReporter.fromPath(filename);
-  try {
-    const ast = check(parse(reporter), reporter);
-    console.log(prettify(ast));
-  } catch (err: unknown) {
-    console.log((err as Error).message);
-    process.exit(1);
-  }
+/**
+ * Parses and semantically checks the given schema text into an AST. If this
+ * returns an AST, then it will be a valid AST.
+ *
+ * @throws ParseError If the schema text is syntactically invalid.
+ * @throws SemanticError If the schema text is semantically invalid (for
+ * example, when referencing a type that does not exist).
+ */
+export async function parse(schemaText: string) {
+  const reporter = ErrorReporter.fromText(schemaText);
+  return check(parseDocument(reporter), reporter);
 }
-
-main()
-  .then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });

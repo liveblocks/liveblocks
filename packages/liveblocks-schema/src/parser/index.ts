@@ -55,9 +55,4 @@ function parseTypeExpr(src: string | Source | ErrorReporter): TypeExpr {
   return parseGrammarRule(src, "TypeExpr") as TypeExpr;
 }
 
-export {
-  parseDocument as parse,
-  parseDocument,
-  parseTypeExpr,
-  parseGrammarRule,
-};
+export { parseDocument, parseTypeExpr, parseGrammarRule };
