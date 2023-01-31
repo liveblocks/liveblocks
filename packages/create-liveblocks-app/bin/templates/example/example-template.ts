@@ -11,7 +11,6 @@ import {
   loadingSpinner,
   server,
   clonePrivateRepo,
-  stageAndCommit,
 } from "../../utils";
 import open from "open";
 import fs from "fs";
@@ -158,8 +157,6 @@ export async function create(flags: Record<string, any>) {
 
   if (git) {
     await initializeGit({ appDir, repoUrls });
-  } else if (vercel && clonedPrivateRepo) {
-    await stageAndCommit({ appDir });
   }
 
   // === Check which command will start dev server from package.json =====
