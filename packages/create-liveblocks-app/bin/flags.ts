@@ -7,6 +7,10 @@ export const commandLineFlags: OptionDefinition[] = [
     defaultOption: true,
   },
   {
+    name: "help",
+    type: Boolean,
+  },
+  {
     name: "example",
     type: String,
   },

@@ -5,12 +5,14 @@ import readline from "readline";
 import { commandLineFlags } from "./flags";
 import * as nextjsTemplate from "./templates/nextjs-starter-kit";
 import * as exampleTemplate from "./templates/example";
+import * as helpTemplate from "./templates/help";
 
-type TemplateName = "next" | "example";
+type TemplateName = "next" | "example" | "help";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
+  help: helpTemplate,
 };
 
 export async function createLiveblocksApp() {
@@ -36,6 +38,11 @@ export async function createLiveblocksApp() {
       flags[key.slice(3)] = false;
     }
   });
+
+  // If --help specified, show the help template
+  if (flags.help) {
+    flags.template = "help";
+  }
 
   // If --example specified, this is an example
   if (flags.example) {

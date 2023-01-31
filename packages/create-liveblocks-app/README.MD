@@ -74,6 +74,9 @@ Options:
   
   --open
   Open browser without asking permission, when deploying to Vercel or getting API key 
+  
+  --help
+  Find more info
 ```
 
 #### Examples
