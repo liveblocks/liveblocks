@@ -1,30 +1,35 @@
 {
-  "name": "@liveblocks/schema",
-  "version": "0.0.1",
-  "description": "The Liveblocks schema language",
+  "name": "ast-generator",
+  "version": "0.1.0",
+  "description": "Helper to generate a TypeScript or JavaScript module for an arbitrary AST definition from a specification.",
   "main": "./dist/index.js",
-  "type": "module",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "generate-ast": "./dist/index.js"
+  },
   "scripts": {
-    "build": "npm run build:ast && npm run build:parser && tsup",
-    "build:ast": "generate-ast && tsc --noEmit src/ast/index.ts",
-    "build:parser": "bin/build-parser",
+    "build": "tsup",
     "test": "jest"
   },
+  "author": "Vincent Driessen",
+  "homepage": "https://github.com/nvie/ast-generator#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/liveblocks/liveblocks-schema.git"
+    "url": "git+https://github.com/nvie/ast-generator.git"
   },
   "keywords": [
-    "liveblocks",
-    "schema",
-    "validation",
-    "language",
-    "parser"
+    "ast",
+    "abstract",
+    "syntax",
+    "tree",
+    "code",
+    "generator",
+    "grammar",
+    "typescript"
   ],
   "devDependencies": {
     "@types/didyoumean": "^1.2.0",
     "@types/jest": "^29.1.2",
-    "ast-generator": "*",
     "jest": "^29.1.2",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
@@ -42,5 +47,6 @@
     "didyoumean": "^1.2.2",
     "tiny-invariant": "^1.3.1",
     "typescript": "^4.9.4"
-  }
+  },
+  "sideEffects": false
 }

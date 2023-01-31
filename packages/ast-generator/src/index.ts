@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import chalk from "chalk";
 import fs from "fs";
 import invariant from "tiny-invariant";
