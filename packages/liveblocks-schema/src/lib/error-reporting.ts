@@ -1,33 +1,31 @@
-import colors from "colors";
-import fs from "fs";
 import { prettify } from "../prettify";
 import { indent } from "./indent";
 import type { Range } from "../ast";
 
 const WHITESPACE_ONLY_RE = /^\s*$/;
 
+// TODO: Use an ANSI color library when available
+// This is still useful to do when in node on an OS terminal, but not for error
+// messages sent over HTTP or within a browser env
+const nocolor = (value: string): string => value;
+const colors = {
+  cyan: nocolor,
+  gray: nocolor,
+  red: nocolor,
+  yellow: nocolor,
+};
+
 export class Source {
   path: string;
-  #contents: string | undefined;
-
-  static fromPath(path: string): Source {
-    return new Source(path);
-  }
+  contents: string;
 
   static fromText(text: string): Source {
     return new Source("<string>", text);
   }
 
-  private constructor(path: string, contents?: string) {
+  private constructor(path: string, contents: string) {
     this.path = path;
-    this.#contents = contents;
-  }
-
-  contents(): string {
-    if (this.#contents === undefined) {
-      this.#contents = fs.readFileSync(this.path, "utf-8");
-    }
-    return this.#contents;
+    this.contents = contents;
   }
 }
 
@@ -66,9 +64,9 @@ export class ErrorReporter {
   #offsets: Array<number> | undefined;
   #hasErrors: boolean = false;
 
-  static fromPath(path: string): ErrorReporter {
-    return new ErrorReporter(Source.fromPath(path));
-  }
+  // static fromPath(path: string): ErrorReporter {
+  //   return new ErrorReporter(Source.fromPath(path));
+  // }
 
   static fromText(programText: string): ErrorReporter {
     return new ErrorReporter(Source.fromText(programText));
@@ -87,7 +85,7 @@ export class ErrorReporter {
   }
 
   contents(): string {
-    return this.src.contents();
+    return this.src.contents;
   }
 
   lines() {
