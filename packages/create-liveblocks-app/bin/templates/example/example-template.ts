@@ -11,6 +11,7 @@ import {
   loadingSpinner,
   server,
   clonePrivateRepo,
+  stageAndCommit,
 } from "../../utils";
 import open from "open";
 import fs from "fs";
@@ -34,6 +35,7 @@ export async function create(flags: Record<string, any>) {
 
   const appDir = path.join(process.cwd(), "./" + name);
   let repoDir = EXAMPLES_REPO_LOCATION + example;
+  let repoUrls = null;
   let clonedPrivateRepo = false;
   const envVariables: { key: string; value: string }[] = [];
 
@@ -80,8 +82,14 @@ export async function create(flags: Record<string, any>) {
 
     if (vercelData.repo) {
       vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
-      const privateRepoDir = `https://${vercelData.repo.type}.com/${vercelData.repo.location}`;
-      clonedPrivateRepo = await clonePrivateRepo({ privateRepoDir, appDir });
+      const host = `${vercelData.repo.type}.${
+        vercelData.repo.type === "bitbucket" ? "org" : "com"
+      }`;
+      repoUrls = {
+        https: `https://${host}/${vercelData.repo.location}.git`,
+        ssh: `git@${host}/${vercelData.repo.location}.git`,
+      };
+      clonedPrivateRepo = await clonePrivateRepo({ repoUrls, appDir });
     }
     vercelSpinner.succeed(c.green("Vercel deployment complete"));
   }
@@ -149,7 +157,9 @@ export async function create(flags: Record<string, any>) {
   }
 
   if (git) {
-    await initializeGit({ appDir });
+    await initializeGit({ appDir, repoUrls });
+  } else if (vercel && clonedPrivateRepo) {
+    await stageAndCommit({ appDir });
   }
 
   // === Check which command will start dev server from package.json =====
@@ -182,4 +192,19 @@ ${c.bold(`Start ${devCommand ? "developing " : ""}by typing:`)}
   console.log();
   console.log(c.bold.magentaBright("✨ Ready to collaborate!"));
   console.log();
+
+  if (vercel && !clonedPrivateRepo) {
+    console.log();
+    console.log(
+      c.bold.yellowBright(
+        "Vercel project can't be cloned: Your git hasn't been set up to allow access to private repos"
+      )
+    );
+    console.log(
+      c.bold.yellowBright("Clone your project manually, before running it")
+    );
+    if (repoUrls) {
+      console.log(repoUrls.https);
+    }
+  }
 }

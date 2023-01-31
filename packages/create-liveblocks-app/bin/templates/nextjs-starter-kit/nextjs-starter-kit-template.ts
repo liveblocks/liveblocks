@@ -85,10 +85,10 @@ export async function create(flags: Record<string, any>) {
     }
 
     if (vercelData.repo) {
+      vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
       const host = `${vercelData.repo.type}.${
         vercelData.repo.type === "bitbucket" ? "org" : "com"
       }`;
-      vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
       repoUrls = {
         https: `https://${host}/${vercelData.repo.location}.git`,
         ssh: `git@${host}/${vercelData.repo.location}.git`,
@@ -235,12 +235,12 @@ export async function create(flags: Record<string, any>) {
     console.log();
     console.log(
       c.bold.yellowBright(
-        "Warning: The private repo you created on Vercel couldn't be cloned"
+        "Vercel project can't be cloned: Your git hasn't been set up to allow access to private repos"
       )
     );
     console.log(
       c.bold.yellowBright(
-        "Clone your project, then follow the instructions above:"
+        "Clone your project manually, then follow the instructions above"
       )
     );
     if (repoUrls) {
