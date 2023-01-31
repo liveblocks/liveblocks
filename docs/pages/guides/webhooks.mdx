@@ -11,8 +11,11 @@ observable, you can use webhooks to reduce development time and the need for
 polling.
 
 ## Why Webhooks
-Webhooks connect two applications and enable sending data asynchronously through event subscription and HTTP requests.  Using webhooks with Liveblocks decreases the complexity of managing and creating cron jobs which reach out to our API endpoints and poll. Using webhooks make a platform observable because updates between applications are immediately available.
+Webhooks connect two applications by letting one subscribe to events created by the other. The listening application (yours) subscribes to events, and the event emitting application (Liveblocks) submits events via HTTP requests to the listening application's URL. Thus, using webhooks with Liveblocks reduces the need to poll Liveblocks data as you are now alerted when the data changes. Leveraging webhooks makes Liveblocks observable and reduces the need for cron jobs to poll Liveblocks data. As a result, your application (the listening application) will have less complex logic related to consuming data.
 
+There are many scenarios where webhooks could benefit your application.  For example, you can use webhooks to monitor when users enter and leave a room. After some time has passed, you could create logic that syncs Liveblocks storage to your application database if no users are remaining.
+
+You could also use webhooks to display how many users are currently active in a room at any given time.  The possibilities are endless, and as time progresses, we will include more events for your application to subscribe to.
 ## What is a webhook?
 
 Webhooks pass information from one application to another instantaneously. A webhook is simply an HTTP callback triggered by an event. When an application subscribes to an event, and that event occurs, the webhook invokes the HTTP callback with a URL you specify (called the webhook endpoint). Webhooks streamline the collection
