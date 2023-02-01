@@ -4,6 +4,10 @@
   "description": "The Liveblocks schema language",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsup",
     "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts",
