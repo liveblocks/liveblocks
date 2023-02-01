@@ -10,6 +10,7 @@ import {
   initializeGit,
   install as installApp,
   loadingSpinner,
+  RemoteRepoType,
   server,
   stageAndCommit,
 } from "../../utils";
@@ -170,7 +171,7 @@ export async function create(flags: Record<string, any>) {
   const nextauthTs = fs.readFileSync(nextauthTsLocation, "utf-8");
   filesToWrite.push({
     location: nextauthTsLocation,
-    content: addAuthproviderSetup(auth, nextauthTs),
+    content: addAuthProviderSetup(auth, nextauthTs),
   });
 
   // === Add .env.local ==================================================
@@ -199,8 +200,10 @@ export async function create(flags: Record<string, any>) {
     });
   }
 
-  if (git) {
-    await initializeGit({ appDir, repoUrls });
+  let repoRemoteStatus: RemoteRepoType = "none";
+
+  if (git || !clonedPrivateRepo) {
+    repoRemoteStatus = await initializeGit({ appDir, repoUrls });
   } else if (vercel && clonedPrivateRepo) {
     await stageAndCommit({ appDir });
   }
@@ -209,16 +212,39 @@ export async function create(flags: Record<string, any>) {
   const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
   let instructionCount = 1;
 
+  function logInstruction(message: string) {
+    console.log(` ${instructionCount++}: ${message}`);
+  }
+
+  if (vercel && !clonedPrivateRepo) {
+    console.log();
+    console.log(
+      c.bold.yellowBright(
+        "Your private Vercel project couldn't be cloned, follow the instructions below to link it up"
+      )
+    );
+  }
+
   console.log();
   console.log(c.bold("Start using the Next.js Starter Kit by typing:"));
 
-  console.log(` ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${
-    !install
-      ? `
- ${instructionCount++}: ${c.cyanBright(`${packageManager} install`)}`
-      : ""
+  logInstruction(c.cyanBright(`cd ${name}`));
+
+  if (vercel && !clonedPrivateRepo && repoUrls) {
+    if (repoRemoteStatus === "none") {
+      console.log();
+      logInstruction(c.cyanBright(`git remote add origin ${repoUrls.https}`));
+      console.log("    (or)");
+      console.log(c.cyanBright(`    git remote add origin ${repoUrls.ssh}`));
+      console.log();
+    }
+    logInstruction(c.cyanBright("git push origin main --force"));
   }
- ${instructionCount++}: ${c.cyanBright(`${cmd} dev`)}`);
+
+  if (!install) {
+    logInstruction(c.cyanBright(`${packageManager} install`));
+  }
+  logInstruction(c.cyanBright(`${cmd} dev`));
 
   console.log();
   console.log(c.bold.magentaBright("✨ Ready to collaborate!"));
@@ -235,23 +261,6 @@ export async function create(flags: Record<string, any>) {
   }
   console.log(NEXTJS_STARTER_KIT_GUIDE_URL);
   console.log();
-
-  if (vercel && !clonedPrivateRepo) {
-    console.log();
-    console.log(
-      c.bold.yellowBright(
-        "Vercel project can't be cloned: Your git hasn't been set up to allow access to private repos"
-      )
-    );
-    console.log(
-      c.bold.yellowBright(
-        "Clone your project manually, then follow the instructions above"
-      )
-    );
-    if (repoUrls) {
-      console.log(repoUrls.https);
-    }
-  }
 }
 
 // Get environment variables required for your auth solution
@@ -275,7 +284,7 @@ function getAuthEnvVariables(
 }
 
 // Add the selected auth provider code to a `[...nextauth].ts` file
-function addAuthproviderSetup(
+function addAuthProviderSetup(
   auth: typeof NEXTJS_STARTER_KIT_AUTH_PROVIDERS[number],
   nextauthTs: string
 ): string {

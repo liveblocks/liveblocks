@@ -4,6 +4,7 @@ import { execAsync } from "./exec-async";
 import { checkIfInsideRepo } from "./check-inside-repo";
 
 export type RepoUrls = { https: string; ssh: string };
+export type RemoteRepoType = "none" | "https" | "ssh";
 
 export async function initializeGit({
   appDir,
@@ -11,8 +12,9 @@ export async function initializeGit({
 }: {
   appDir: string;
   repoUrls: null | RepoUrls;
-}) {
+}): Promise<RemoteRepoType> {
   let spinner;
+  let repoType: RemoteRepoType = "none";
 
   try {
     // Check git installed
@@ -23,7 +25,7 @@ export async function initializeGit({
 
     const continueInit = await checkIfInsideRepo(appDir);
     if (!continueInit) {
-      return;
+      return "none";
     }
 
     spinner = loadingSpinner().start("Initializing git...");
@@ -36,7 +38,8 @@ export async function initializeGit({
     await execAsync("git init", options);
 
     if (repoUrls) {
-      const repoType = await detectRemoteRepoLocation({ appDir, repoUrls });
+      spinner.text = "Git: Locating remote...";
+      repoType = await detectRemoteRepoLocation({ appDir, repoUrls });
       if (repoType !== "none") {
         await execAsync(`git remote add origin ${repoUrls[repoType]}`, options);
       }
@@ -59,6 +62,7 @@ export async function initializeGit({
   }
 
   spinner?.succeed(c.green("Git initialized!"));
+  return repoType;
 }
 
 async function detectRemoteRepoLocation({
@@ -67,7 +71,7 @@ async function detectRemoteRepoLocation({
 }: {
   appDir: string;
   repoUrls: RepoUrls;
-}): Promise<"none" | "https" | "ssh"> {
+}): Promise<RemoteRepoType> {
   return new Promise(async (res) => {
     const options = {
       cwd: appDir,
