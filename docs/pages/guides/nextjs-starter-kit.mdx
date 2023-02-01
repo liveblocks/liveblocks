@@ -32,7 +32,13 @@ The Next.js Starter Kit includes the following
 
 ### create-liveblocks-app
 
-[text]
+You can get started by running the following command:
+
+```shell
+npx create-liveblocks-app --next
+```
+
+This will run an installer that allows you to download, configure, and deploy, your project:
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -43,6 +49,10 @@ The Next.js Starter Kit includes the following
   </video>
 </Figure>
 
+Give your project a name, and select the [authentication](#authentication) method you’d like to use in your app.
+It’s recommended that you select "deploy to Vercel", or "get your Liveblocks secret key automatically" as they’ll get
+you started extra quickly. If you select one of these options, you’ll be presented with the Liveblocks integration page.
+From here you can sign up/in to Liveblocks, you can create a new project, and import your API key into the installer.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -53,49 +63,9 @@ The Next.js Starter Kit includes the following
   </video>
 </Figure>
 
-### Liveblocks configuration [change this]
+After finishing up, check the installer and follow the commands it recommends to get you started.
 
-If you already have a Liveblocks Development account, you may skip to step 4.
-
-1. Create an account at [liveblocks.io](https://liveblocks.io])
-2. Navigate to the [dashboard](https://liveblocks.io/dashboard) and click "Add
-   project..."
-3. Create a new project with "Development" as the environment.
-4. Go to "API keys" on the side menu, reveal your secret key, and copy it
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/next-js-starter-kit/create-api-key.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-5. Install the starter kit by running
-
-```shell
-npx create-liveblocks-app --next
-```
-
-6. Enter the `.env.local` file, which is located alongside `package.json` at the
-   root level in your project.
-7. Place your Liveblocks secret key into the file as `LIVEBLOCKS_SECRET_KEY`.
-
-Your `.env.local` file should contain a line similar to this:
-
-```dotenv file=".env.local"
-LIVEBLOCKS_SECRET_KEY =
-  sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;
-```
-
-After installing dependencies with `npm install`, the starter kit can be run with
-
-```shell
-npm run dev
-```
-
-### Authentication
+### Authentication [#authentication]
 
 The Liveblocks starter kit uses [NextAuth.js](https://next-auth.js.org/) for
 authentication, meaning many authentication providers can be configured with
