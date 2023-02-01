@@ -1752,6 +1752,8 @@ function makeStateMachine<
                 `Storage ops rejected by server: ${message.reason}`
               );
             }
+
+            break;
           }
         }
       }
