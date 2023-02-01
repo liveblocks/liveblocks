@@ -1,5 +1,6 @@
 {
   "name": "ast-generator",
+  "private": true,
   "version": "0.1.0",
   "description": "Helper to generate a TypeScript or JavaScript module for an arbitrary AST definition from a specification.",
   "main": "./dist/index.js",
