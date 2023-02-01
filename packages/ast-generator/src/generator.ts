@@ -5,6 +5,10 @@ import prettier from "prettier";
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
 const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
 
+type CodeGenerationOptions = {
+  emitRuntimeChecks: boolean;
+};
+
 // e.g. "SomeNode" or "@SomeGroup"
 type BaseNodeRef =
   | {
@@ -332,7 +336,12 @@ function parseGrammarDefinition(path: string): Grammar {
   };
 }
 
-async function generateCode(grammar: Grammar): Promise<string> {
+async function generateCode(
+  grammar: Grammar,
+  options?: CodeGenerationOptions
+): Promise<string> {
+  const emitRuntimeChecks = options?.emitRuntimeChecks ?? false;
+
   // Will throw in case of errors
   validate(grammar);
 
@@ -344,7 +353,14 @@ async function generateCode(grammar: Grammar): Promise<string> {
     " * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`",
     " */",
     "",
-    'import invariant from "tiny-invariant"',
+    emitRuntimeChecks
+      ? `
+        function invariant(condition: boolean, errmsg: string): void {
+          if (condition) return;
+          throw new Error(errmsg);
+        }
+        `
+      : "",
     "",
   ];
 
@@ -438,26 +454,23 @@ async function generateCode(grammar: Grammar): Promise<string> {
       .filter(Boolean);
     argChecks.push(
       `invariant(
-                isRange(range),
-                \`Invalid value for range in "${node.name}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
-             )`
+         isRange(range),
+         \`Invalid value for range in "${node.name}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
+       )`
     );
 
-    output.push(
-      `
-            export function ${lowercaseFirst(node.name)}(${[
-        ...node.fields.map((field) => {
-          let key = field.name;
-          const type = getTypeScriptType(field.ref);
-          return optionals.has(field.name)
-            ? `${key}: ${type} = ${
-                field.ref.ref === "Optional" ? "null" : "[]"
-              }`
-            : `${key}: ${type}`;
-        }),
-        "range: Range = [0, 0]",
-      ].join(", ")}): ${node.name} {
-                ${argChecks.join("\n")}
+    output.push(`
+      export function ${lowercaseFirst(node.name)}(${[
+      ...node.fields.map((field) => {
+        let key = field.name;
+        const type = getTypeScriptType(field.ref);
+        return optionals.has(field.name)
+          ? `${key}: ${type} = ${field.ref.ref === "Optional" ? "null" : "[]"}`
+          : `${key}: ${type}`;
+      }),
+      "range: Range = [0, 0]",
+    ].join(", ")}): ${node.name} {
+                ${emitRuntimeChecks ? argChecks.join("\n") : ""}
                 return {
                     _kind: ${JSON.stringify(node.name)},
                     ${[...node.fields.map((field) => field.name), "range"].join(
@@ -465,8 +478,7 @@ async function generateCode(grammar: Grammar): Promise<string> {
                     )}
                 }
             }
-            `
-    );
+            `);
   }
 
   // Generate a general purpose AST traversal/visit function
@@ -543,9 +555,13 @@ function writeFile(contents: string, path: string) {
   }
 }
 
-export async function generateAST(inpath: string, outpath: string) {
+export async function generateAST(
+  inpath: string,
+  outpath: string,
+  options?: CodeGenerationOptions
+) {
   const grammar = parseGrammarDefinition(inpath);
-  const uglyCode = await generateCode(grammar);
+  const uglyCode = await generateCode(grammar, options);
 
   // Beautify it with prettier
   const config = await prettier.resolveConfig(outpath);

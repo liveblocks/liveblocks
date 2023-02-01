@@ -5,8 +5,6 @@
  * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`
  */
 
-import invariant from "tiny-invariant";
-
 export function isComment(node: Node): node is Comment {
   return node._kind === "LineComment";
 }
@@ -136,29 +134,6 @@ export function document(
   comments: Comment[] | null = null,
   range: Range = [0, 0]
 ): Document {
-  invariant(
-    Array.isArray(definitions) &&
-      definitions.length > 0 &&
-      definitions.every((item) => isDefinition(item)),
-    `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition+\nGot:      ${JSON.stringify(
-      definitions
-    )}`
-  );
-
-  invariant(
-    comments === null ||
-      (Array.isArray(comments) && comments.every((item) => isComment(item))),
-    `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*?\nGot:      ${JSON.stringify(
-      comments
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "Document".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "Document",
     definitions,
@@ -173,33 +148,6 @@ export function fieldDef(
   type: TypeExpr,
   range: Range = [0, 0]
 ): FieldDef {
-  invariant(
-    name._kind === "Identifier",
-    `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
-      name
-    )}`
-  );
-
-  invariant(
-    typeof optional === "boolean",
-    `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
-      optional
-    )}`
-  );
-
-  invariant(
-    isTypeExpr(type),
-    `Invalid value for "type" arg in "FieldDef" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
-      type
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "FieldDef".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "FieldDef",
     name,
@@ -210,19 +158,6 @@ export function fieldDef(
 }
 
 export function identifier(name: string, range: Range = [0, 0]): Identifier {
-  invariant(
-    typeof name === "string",
-    `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
-      name
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "Identifier".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "Identifier",
     name,
@@ -231,19 +166,6 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
 }
 
 export function lineComment(text: string, range: Range = [0, 0]): LineComment {
-  invariant(
-    typeof text === "string",
-    `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
-      text
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "LineComment".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "LineComment",
     text,
@@ -255,19 +177,6 @@ export function objectLiteralExpr(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
 ): ObjectLiteralExpr {
-  invariant(
-    Array.isArray(fields) && fields.every((item) => item._kind === "FieldDef"),
-    `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
-      fields
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "ObjectLiteralExpr".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "ObjectLiteralExpr",
     fields,
@@ -280,26 +189,6 @@ export function objectTypeDef(
   obj: ObjectLiteralExpr,
   range: Range = [0, 0]
 ): ObjectTypeDef {
-  invariant(
-    name._kind === "TypeName",
-    `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-      name
-    )}`
-  );
-
-  invariant(
-    obj._kind === "ObjectLiteralExpr",
-    `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
-      obj
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "ObjectTypeDef".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "ObjectTypeDef",
     name,
@@ -313,26 +202,6 @@ export function stringLiteral(
   rawValue: string,
   range: Range = [0, 0]
 ): StringLiteral {
-  invariant(
-    typeof value === "string",
-    `Invalid value for "value" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
-      value
-    )}`
-  );
-
-  invariant(
-    typeof rawValue === "string",
-    `Invalid value for "rawValue" arg in "StringLiteral" call.\nExpected: string\nGot:      ${JSON.stringify(
-      rawValue
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "StringLiteral".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "StringLiteral",
     value,
@@ -342,19 +211,6 @@ export function stringLiteral(
 }
 
 export function typeName(name: string, range: Range = [0, 0]): TypeName {
-  invariant(
-    typeof name === "string",
-    `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
-      name
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "TypeName".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "TypeName",
     name,
@@ -367,26 +223,6 @@ export function typeRef(
   args: TypeExpr[] = [],
   range: Range = [0, 0]
 ): TypeRef {
-  invariant(
-    name._kind === "TypeName",
-    `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
-      name
-    )}`
-  );
-
-  invariant(
-    Array.isArray(args) && args.every((item) => isTypeExpr(item)),
-    `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
-      args
-    )}`
-  );
-
-  invariant(
-    isRange(range),
-    `Invalid value for range in "TypeRef".\nExpected: Range\nGot: ${JSON.stringify(
-      range
-    )}`
-  );
   return {
     _kind: "TypeRef",
     name,
