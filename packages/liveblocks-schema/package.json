@@ -41,7 +41,6 @@
     "watch": "^1.0.2"
   },
   "dependencies": {
-    "didyoumean": "^1.2.2",
-    "typescript": "^4.9.4"
+    "didyoumean": "^1.2.2"
   }
 }
