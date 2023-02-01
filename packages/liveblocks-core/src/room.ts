@@ -1774,10 +1774,12 @@ function makeStateMachine<
                 }
               }
 
-              console.warnWithTitle(
-                "The error above was caused by the following function call(-s):",
-                Array.from(traces).join("\n\n")
-              );
+              if (traces.size) {
+                console.warnWithTitle(
+                  "The rejected storage ops above where caused by the following function calls:",
+                  Array.from(traces).join("\n\n")
+                );
+              }
 
               throw new Error(
                 `Storage mutations rejected by server: ${message.reason}`

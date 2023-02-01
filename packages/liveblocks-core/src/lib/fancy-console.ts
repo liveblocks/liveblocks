@@ -14,7 +14,7 @@ function wrap(
         console[method]("%cLiveblocks", badge, message, ...args);
 }
 
-export const log = wrap("log");
+// export const log = wrap("log");
 export const warn = wrap("warn");
 export const error = wrap("error");
 

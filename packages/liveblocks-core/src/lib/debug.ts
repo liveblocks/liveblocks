@@ -1,6 +1,7 @@
 export function captureStackTrace(
   msg: string,
-  traceRoot?: () => unknown
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  traceRoot?: Function
 ): string | undefined {
   // Hack: Normally browsers will add the name of the error before the stack trace (default Error).
   // To customize this, we set the name of the error to the message we want to display.
