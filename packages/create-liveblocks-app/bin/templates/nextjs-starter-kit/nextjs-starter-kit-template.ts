@@ -202,7 +202,7 @@ export async function create(flags: Record<string, any>) {
 
   let repoRemoteStatus: RemoteRepoType = "none";
 
-  if (git || !clonedPrivateRepo) {
+  if (git || (vercel && !clonedPrivateRepo)) {
     repoRemoteStatus = await initializeGit({ appDir, repoUrls });
   } else if (vercel && clonedPrivateRepo) {
     await stageAndCommit({ appDir });
@@ -210,27 +210,24 @@ export async function create(flags: Record<string, any>) {
 
   // === Final console messages ==========================================
   const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
+  const mustLinkRepo = vercel && !clonedPrivateRepo;
   let instructionCount = 1;
 
   function logInstruction(message: string) {
     console.log(` ${instructionCount++}: ${message}`);
   }
 
-  if (vercel && !clonedPrivateRepo) {
-    console.log();
-    console.log(
-      c.bold.yellowBright(
-        "Your private Vercel project couldn't be cloned, follow the instructions below to link it up"
-      )
-    );
-  }
-
   console.log();
-  console.log(c.bold("Start using the Next.js Starter Kit by typing:"));
-
+  console.log(
+    c.bold(
+      mustLinkRepo
+        ? "Link your Vercel project and start developing by typing:"
+        : "Start using the Next.js Starter Kit by typing:"
+    )
+  );
   logInstruction(c.cyanBright(`cd ${name}`));
 
-  if (vercel && !clonedPrivateRepo && repoUrls) {
+  if (mustLinkRepo && repoUrls) {
     if (repoRemoteStatus === "none") {
       console.log();
       logInstruction(c.cyanBright(`git remote add origin ${repoUrls.https}`));

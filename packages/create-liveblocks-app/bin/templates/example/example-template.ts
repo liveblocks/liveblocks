@@ -10,6 +10,7 @@ import {
   initializeGit,
   install as installApp,
   loadingSpinner,
+  RemoteRepoType,
   server,
 } from "../../utils";
 import open from "open";
@@ -160,8 +161,10 @@ export async function create(flags: Record<string, any>) {
     });
   }
 
-  if (git) {
-    await initializeGit({ appDir, repoUrls });
+  let repoRemoteStatus: RemoteRepoType = "none";
+
+  if (git || (vercel && !clonedPrivateRepo)) {
+    repoRemoteStatus = await initializeGit({ appDir, repoUrls });
   }
 
   // === Check which command will start dev server from package.json =====
@@ -172,41 +175,45 @@ export async function create(flags: Record<string, any>) {
 
   // === Final console messages ==========================================
   const cmd = `${packageManager}${packageManager === "npm" ? " run" : ""}`;
+  const mustLinkRepo = vercel && !clonedPrivateRepo;
   let instructionCount = 1;
 
-  console.log(`
-${c.bold(`Start ${devCommand ? "developing " : ""}by typing:`)}
- ${instructionCount++}: ${c.cyanBright(`cd ${name}`)}${
-    !install
-      ? c.cyanBright(`
- ${instructionCount++}: ${packageManager} install`)
-      : ""
-  }`);
+  function logInstruction(message: string) {
+    console.log(` ${instructionCount++}: ${message}`);
+  }
+
+  console.log();
+  console.log(
+    c.bold(
+      mustLinkRepo
+        ? `Link your Vercel project and start ${
+            devCommand ? "developing " : ""
+          } by typing:`
+        : `Start ${devCommand ? "developing " : ""}by typing:`
+    )
+  );
+  logInstruction(c.cyanBright(`cd ${name}`));
+
+  if (mustLinkRepo && repoUrls) {
+    if (repoRemoteStatus === "none") {
+      console.log();
+      logInstruction(c.cyanBright(`git remote add origin ${repoUrls.https}`));
+      console.log("    (or)");
+      console.log(c.cyanBright(`    git remote add origin ${repoUrls.ssh}`));
+      console.log();
+    }
+    logInstruction(c.cyanBright("git push origin main --force"));
+  }
+
+  if (!install) {
+    logInstruction(c.cyanBright(`${packageManager} install`));
+  }
 
   if (devCommand || buildCommand) {
-    console.log(
-      ` ${instructionCount++}: ${c.cyanBright(
-        `${cmd} ${devCommand || buildCommand}`
-      )}`
-    );
+    logInstruction(c.cyanBright(`${cmd} ${devCommand || buildCommand}`));
   }
 
   console.log();
   console.log(c.bold.magentaBright("✨ Ready to collaborate!"));
   console.log();
-
-  if (vercel && !clonedPrivateRepo) {
-    console.log();
-    console.log(
-      c.bold.yellowBright(
-        "Vercel project can't be cloned: Your git hasn't been set up to allow access to private repos"
-      )
-    );
-    console.log(
-      c.bold.yellowBright("Clone your project manually, before running it")
-    );
-    if (repoUrls) {
-      console.log(repoUrls.https);
-    }
-  }
 }
