@@ -45,13 +45,13 @@ export default async function auth(req, res) {
   const response = await authorize({
     room,
     secret,
-// Optional, corresponds to the UserMeta[id] type defined in liveblocks.config.ts
+    // Optional, corresponds to the UserMeta[id] type defined in liveblocks.config.ts
     userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
       // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   });
   return res.status(response.status).end(response.body);
@@ -87,7 +87,7 @@ app.post("/api/auth", (req, res) => {
     userInfo: {
       // Optional
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   })
     .then((authResponse) => {
@@ -97,6 +97,62 @@ app.post("/api/auth", (req, res) => {
       res.status(403).end();
     });
 });
+```
+
+### WebhookHandler [#WebhookHandler]
+
+The `WebhookHandler` class is a helper to handle webhook requests from
+Liveblocks.
+
+It's initialized with a signing secret that you can find in your project's
+webhook page.
+
+```js
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
+```
+
+#### verifyRequest [#verifyRequest]
+
+Verifies the request and returns the event.
+
+```js
+const event = webhookHandler.verifyRequest({
+  headers: req.headers,
+  rawBody: req.body,
+});
+```
+
+#### Example using Next.js [#nextjs-webhook-example]
+
+```js
+import { WebhookHandler } from "@liveblocks/node";
+
+// Will fail if not properly initialized with a secret
+const webhookHandler = new WebhookHandler(process.env.WEBHOOK_SECRET);
+
+export default function webhookRequestHandler(req, res) {
+  try {
+    const event = webhookHandler.verifyRequest({
+      headers: req.headers,
+      rawBody: req.body,
+    });
+
+    // do things with the event of type `WebhookEvent`
+
+    if (event.type === "storageUpdated") {
+      // do things with the event of type `StorageUpdatedEvent`
+    } else if (event.type === "userEntered") {
+      // do things with the event of type `UserEnteredEvent`
+    } else if (event.type === "userLeft") {
+      // do things with the event of type `UserLeftEvent`
+    }
+  } catch (error) {
+    console.error(error);
+    return res.status(400).end();
+  }
+
+  res.status(200).end();
+}
 ```
 
 [`room.getothers`]: /docs/api-reference/liveblocks-client#Room.getOthers
