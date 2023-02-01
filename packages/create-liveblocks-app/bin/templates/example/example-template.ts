@@ -1,16 +1,16 @@
 import c from "ansi-colors";
 import path from "path";
 import {
+  clonePrivateRepo,
   cloneRepo,
-  initializeGit,
-  install as installApp,
   confirmDirectoryEmpty,
   getBuildCommand,
   getDevCommand,
   getPackageManager,
+  initializeGit,
+  install as installApp,
   loadingSpinner,
   server,
-  clonePrivateRepo,
 } from "../../utils";
 import open from "open";
 import fs from "fs";
@@ -23,6 +23,7 @@ import { examplePrompts } from "./example-prompts";
 import {
   GeneralIntegrationCallback,
   GeneralIntegrationData,
+  IntegrationOrigin,
   VercelIntegrationCallback,
   VercelIntegrationData,
 } from "../../types";
@@ -55,6 +56,8 @@ export async function create(flags: Record<string, any>) {
           envReady: [],
           exampleNames: [example],
           callbackUrls: [origin],
+          origin:
+            IntegrationOrigin.EXAMPLE_FROM_CREATE_LIVEBLOCKS_APP_VERCEL_INTEGRATION,
         };
         const encodedData = Buffer.from(JSON.stringify(data)).toString(
           "base64url"
@@ -106,6 +109,8 @@ export async function create(flags: Record<string, any>) {
         env: [],
         exampleNames: [example],
         callbackUrls: [origin],
+        origin:
+          IntegrationOrigin.EXAMPLE_FROM_CREATE_LIVEBLOCKS_APP_GENERAL_INTEGRATION,
       };
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"

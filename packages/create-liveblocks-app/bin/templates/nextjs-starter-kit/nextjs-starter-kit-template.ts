@@ -3,20 +3,21 @@ import path from "path";
 import crypto from "crypto";
 import c from "ansi-colors";
 import {
+  clonePrivateRepo,
   cloneRepo,
+  confirmDirectoryEmpty,
+  getPackageManager,
   initializeGit,
   install as installApp,
-  getPackageManager,
-  confirmDirectoryEmpty,
-  server,
   loadingSpinner,
-  clonePrivateRepo,
+  server,
   stageAndCommit,
 } from "../../utils";
 import open from "open";
 import {
   GeneralIntegrationCallback,
   GeneralIntegrationData,
+  IntegrationOrigin,
   VercelIntegrationCallback,
   VercelIntegrationData,
 } from "../../types";
@@ -62,6 +63,8 @@ export async function create(flags: Record<string, any>) {
           env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
           envReady: [{ name: "NEXTAUTH_SECRET", value: nextAuthSecretValue }],
           callbackUrls: [origin],
+          origin:
+            IntegrationOrigin.NEXTJS_STARTER_KIT_FROM_CREATE_LIVEBLOCKS_APP_VERCEL_INTEGRATION,
         };
         const encodedData = Buffer.from(JSON.stringify(data)).toString(
           "base64url"
@@ -110,6 +113,8 @@ export async function create(flags: Record<string, any>) {
       const data: GeneralIntegrationData = {
         env: [{ name: "LIVEBLOCKS_SECRET_KEY", type: "secret" }],
         callbackUrls: [origin],
+        origin:
+          IntegrationOrigin.NEXTJS_STARTER_KIT_FROM_CREATE_LIVEBLOCKS_APP_GENERAL_INTEGRATION,
       };
       const encodedData = Buffer.from(JSON.stringify(data)).toString(
         "base64url"
