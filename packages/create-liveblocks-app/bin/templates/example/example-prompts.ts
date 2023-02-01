@@ -21,13 +21,15 @@ export async function examplePrompts(flags: Record<string, any>) {
     {
       type: flags.example ? null : "text",
       name: "example",
-      message: `Name of the example you're cloning (e.g. nextjs-live-avatars)?
+      message: `Name of the example you're cloning?
   ${c.magentaBright(EXAMPLES_URL)}`,
+      initial: "nextjs-live-avatars",
     },
     {
       type: flags.name ? null : "text",
       name: "name",
       message: "What would you like to name your project directory?",
+      initial: (prev) => prev,
     },
     {
       type: flags.vercel !== undefined || flags["get-key"] ? null : "confirm",

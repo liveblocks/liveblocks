@@ -22,6 +22,7 @@ export async function nextjsStarterKitPrompts(flags: Record<string, any>) {
       type: flags.name ? null : "text",
       name: "name",
       message: "What would you like to name your project directory?",
+      initial: "liveblocks-starter-kit",
     },
     {
       type:
