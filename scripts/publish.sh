@@ -290,7 +290,7 @@ publish_to_npm () {
 
     echo "I'm ready to publish $PKGNAME to NPM, under $VERSION!"
     collect_otp_token
-    npm publish --tag private --otp "$OTP"
+    npm publish --access public --tag private --otp "$OTP"
 }
 
 commit_to_git () {
