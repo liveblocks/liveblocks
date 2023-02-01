@@ -72,7 +72,9 @@ class Context {
   }
 
   report(title: string, description: (string | null)[], range?: Range): void {
-    this.errorReporter.printSemanticError(title, description, range);
+    // FIXME(nvie) Don't throw on the first error! Collect a few (max 3?) and then throw as one error.
+    // this.errorReporter.printSemanticError(title, description, range);
+    this.errorReporter.throwSemanticError(title, description, range);
   }
 }
 
