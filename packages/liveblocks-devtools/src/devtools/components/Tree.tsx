@@ -1,4 +1,6 @@
 import type { DevTools, Json } from "@liveblocks/core";
+import * as RadixDialog from "@radix-ui/react-dialog";
+import { TooltipProvider } from "@radix-ui/react-tooltip";
 import cx from "classnames";
 import type {
   ComponentProps,
@@ -8,7 +10,17 @@ import type {
   ReactNode,
   RefAttributes,
 } from "react";
-import { forwardRef, Fragment, useCallback, useRef } from "react";
+import {
+  createContext,
+  forwardRef,
+  Fragment,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import type { NodeApi, NodeRendererProps, TreeApi } from "react-arborist";
 import { Tree as ArboristTree } from "react-arborist";
 import useResizeObserver from "use-resize-observer";
@@ -22,6 +34,7 @@ import {
   wrapObject,
   wrapProperty,
 } from "../../lib/stringify";
+import { EyeIcon } from "../icons/actions";
 import {
   ArrayIcon,
   BooleanOffIcon,
@@ -33,7 +46,10 @@ import {
   QuestionIcon,
   StringIcon,
   UserIcon,
-} from "./Icons";
+} from "../icons/types";
+import { Code } from "./Code";
+import { Dialog } from "./Dialog";
+import { Tooltip } from "./Tooltip";
 
 /**
  * Node types that can be used in the Storage tree view.
@@ -51,6 +67,7 @@ const ROW_HEIGHT = 28;
 const ROW_INDENT = 18;
 
 const USE_GRID_LAYOUT = false;
+const SHOW_INTERNAL_ID = false;
 
 const SPECIAL_HACK_PREFIX = "@@HACK@@ ^_^;";
 
@@ -80,6 +97,14 @@ interface RowProps extends ComponentProps<"div"> {
 
 interface RowHighlightProps extends ComponentProps<"div"> {
   node: NodeApi;
+}
+
+interface RowLabelProps extends Omit<ComponentProps<"span">, "children"> {
+  children: string;
+}
+
+interface JsonValueDialogProps extends ComponentProps<"div"> {
+  node: NodeApi<DevTools.JsonTreeNode>;
 }
 
 interface BreadcrumbsProps extends ComponentProps<"div"> {
@@ -298,7 +323,7 @@ function Row({ node, children, className, ...props }: RowProps) {
     <div
       className={cx(
         className,
-        "text-dark-400 dark:text-light-400 flex h-full items-center gap-2 pr-2",
+        "row text-dark-400 dark:text-light-400 group flex h-full items-center gap-2 pr-2",
         isSelected
           ? [
               background(node.data),
@@ -308,6 +333,7 @@ function Row({ node, children, className, ...props }: RowProps) {
           ? "hover:bg-light-100 dark:hover:bg-dark-100 tree-focus:bg-light-100 dark:tree-focus:bg-dark-100 hover:tree-focus:bg-light-200 dark:tree-focus:hover:bg-dark-200"
           : "hover:bg-light-100 dark:hover:bg-dark-100"
       )}
+      data-selected={isSelected || undefined}
       {...props}
     >
       {shouldShowUpdates && (
@@ -367,10 +393,34 @@ function Row({ node, children, className, ...props }: RowProps) {
   );
 }
 
-function RowName({ children, className, ...props }: ComponentProps<"span">) {
+function RowLabel({ children: label, className, ...props }: RowLabelProps) {
+  const search = useContext(TreeSearchContext);
+  const highlightedLabel = useMemo(() => {
+    if (!search) {
+      return label;
+    }
+
+    const match = search.exec(label);
+    if (!match) {
+      return label;
+    }
+
+    const beforeText = label.slice(0, match.index);
+    const matchText = label.slice(match.index, match.index + match[0].length);
+    const afterText = label.slice(match.index + match[0].length);
+
+    return (
+      <>
+        {beforeText && <span className="opacity-50">{beforeText}</span>}
+        <strong className="font-semibold">{matchText}</strong>
+        {afterText && <span className="opacity-50">{afterText}</span>}
+      </>
+    );
+  }, [label, search]);
+
   return (
     <span className={cx(className, "truncate font-mono text-[95%]")} {...props}>
-      {children}
+      {highlightedLabel}
     </span>
   );
 }
@@ -416,7 +466,8 @@ function UserNodeRenderer({
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
         <Badge className="flex-none opacity-60">#{node.data.id}</Badge>
         {node.data.payload.isReadOnly && (
           <Badge className="flex-none opacity-60">Read-only</Badge>
@@ -435,7 +486,8 @@ function LiveNodeRenderer({
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
         <Badge
           className={cx(
             "flex-none",
@@ -479,17 +531,108 @@ function LsonNodeRenderer(props: NodeRendererProps<DevTools.LsonTreeNode>) {
   }
 }
 
+function JsonValueDialog({ node }: JsonValueDialogProps) {
+  return (
+    <div className="grid h-[calc(100vh-2*theme(spacing.8))] max-h-[480px] grid-cols-[1fr] grid-rows-[auto_minmax(0,1fr)]">
+      <div className="border-light-300 dark:border-dark-300 flex h-9 items-center justify-between border-b px-2.5">
+        <div className="child:select-none flex min-w-0 select-none items-center">
+          <div className={cx(color(node.data), "mr-2 flex-none")}>
+            {icon(node.data)}
+          </div>
+          <span className="text-dark-600 dark:text-light-600 truncate font-mono text-[95%]">
+            {node.data.key}
+          </span>
+        </div>
+        <RadixDialog.Close
+          aria-label="Close"
+          className="text-dark-600 hover:text-dark-0 focus-visible:text-dark-0 dark:text-light-600 dark:hover:text-light-0 dark:focus-visible:text-light-0 flex h-5 w-5 items-center justify-center"
+        >
+          <svg
+            width="16"
+            height="16"
+            fill="none"
+            role="presentation"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fillRule="evenodd"
+              clipRule="evenodd"
+              d="M12.03 5.03a.75.75 0 0 0-1.06-1.06L8 6.94 5.03 3.97a.75.75 0 0 0-1.06 1.06L6.94 8l-2.97 2.97a.75.75 0 1 0 1.06 1.06L8 9.06l2.97 2.97a.75.75 0 1 0 1.06-1.06L9.06 8l2.97-2.97Z"
+              fill="currentColor"
+            />
+          </svg>
+        </RadixDialog.Close>
+      </div>
+      <Code code={JSON.stringify(node.data.payload, null, 2)} language="json" />
+    </div>
+  );
+}
+
 function JsonNodeRenderer({
   node,
   style,
 }: NodeRendererProps<DevTools.JsonTreeNode>) {
+  const [isValueDialogOpen, setValueDialogOpen] = useState(false);
+  const isActionable = node.isSelected && !node.isOpen;
   const toggle = useToggleNode(node);
+  const handleValueDialogOpen = useCallback(
+    (event: MouseEvent | KeyboardEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      setValueDialogOpen(true);
+    },
+    []
+  );
+
+  useEffect(() => {
+    if (!isActionable) {
+      return;
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Enter") {
+        handleValueDialogOpen(event);
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isActionable, handleValueDialogOpen]);
+
   return (
     <Row node={node} style={style} onClick={toggle}>
       <RowInfo>
-        <RowName>{node.data.key}</RowName>
+        <RowLabel>{node.data.key}</RowLabel>
+        {SHOW_INTERNAL_ID && <RowLabel>{node.id}</RowLabel>}
       </RowInfo>
-      {!node.isOpen && <RowPreview>{summarize(node.data)}</RowPreview>}
+      {!node.isOpen && (
+        <>
+          <RowPreview>{summarize(node.data)}</RowPreview>
+          <div className="ml-auto flex-none">
+            <Dialog
+              content={
+                isValueDialogOpen ? <JsonValueDialog node={node} /> : null
+              }
+              open={isValueDialogOpen}
+              onOpenChange={setValueDialogOpen}
+            >
+              <Tooltip content="Show value" sideOffset={8}>
+                <button
+                  onClick={handleValueDialogOpen}
+                  aria-label="Show value"
+                  className="text-light-500 dark:text-dark-500 hover:text-light-700 dark:hover:text-dark-700 tree-focus:group-[[data-selected]]:text-light-0/60 tree-focus:group-[[data-selected]]:hover:text-light-0/80 hidden h-full items-center justify-center group-hover:flex group-focus:flex group-[[data-selected]]:flex"
+                >
+                  <EyeIcon />
+                </button>
+              </Tooltip>
+            </Dialog>
+          </div>
+        </>
+      )}
     </Row>
   );
 }
@@ -619,6 +762,154 @@ function storageChildAccessor(node: StorageTreeNode): StorageTreeNode[] | null {
   }
 }
 
+function* imapfilter<T>(
+  iterable: readonly T[],
+  mapFn: (item: T) => T | null
+): Iterable<T> {
+  for (const item of iterable) {
+    const mappedItem = mapFn(item);
+    if (mappedItem !== null) {
+      yield mappedItem;
+    }
+  }
+}
+
+function mapfilter<T>(
+  iterable: readonly T[],
+  mapFn: (item: T) => T | null
+): T[] {
+  return Array.from(imapfilter(iterable, mapFn));
+}
+
+/**
+ * Determines whether the current node matches or not.
+ */
+function matchNode(node: DevTools.TreeNode, pattern: RegExp): boolean {
+  if (node.type === "User") {
+    return Object.keys(node.payload).some((key) => pattern.test(key));
+  } else {
+    return pattern.test(node.key);
+  }
+}
+
+/**
+ * Returns whether one of the collections was updated. This indicates to the
+ * parent call that it should be an indirect match.
+ */
+function collect(
+  node: DevTools.TreeNode,
+  pattern: RegExp,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): boolean {
+  if (matchNode(node, pattern)) {
+    directMatches.add(node.id);
+    return true;
+  } else {
+    // Recursively scan child nodes
+    switch (node.type) {
+      case "Json":
+        // JSON nodes are leafs and have no children
+        return false;
+
+      case "LiveList":
+      case "LiveObject":
+      case "LiveMap":
+        let isIndirectMatch = false;
+        for (const childNode of node.payload) {
+          if (collect(childNode, pattern, directMatches, indirectMatches)) {
+            isIndirectMatch = true;
+          }
+        }
+        if (isIndirectMatch) {
+          indirectMatches.add(node.id);
+        }
+        return isIndirectMatch;
+
+      default:
+        // e.g. future LiveXxx types
+        return false;
+    }
+  }
+}
+
+function collectMatchingNodes(
+  tree: readonly DevTools.TreeNode[],
+  pattern: RegExp
+): {
+  directMatches: Set<string>;
+  indirectMatches: Set<string>;
+} {
+  const directMatches = new Set<string>();
+  const indirectMatches = new Set<string>();
+  for (const node of tree) {
+    collect(node, pattern, directMatches, indirectMatches);
+  }
+  return {
+    directMatches,
+    indirectMatches,
+  };
+}
+
+function pruneNode<TTreeNode extends DevTools.TreeNode>(
+  node: TTreeNode,
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): TTreeNode | null {
+  if (directMatches.has(node.id)) {
+    // No sub filtering, keep the entire subtree!
+    return node;
+  } else if (indirectMatches.has(node.id)) {
+    if (node.type === "Json") {
+      throw new Error("Json nodes will never be indirect matches");
+    }
+
+    if (node.type === "User") {
+      // NOTE:
+      // We don't narrow down User rows for now. We don't have full control
+      // over the User's child nodes on the rendered Tree, because we _derive_
+      // those Json node rows from the actual data inside the User instance.
+      // The only way to influence that process is to actually change the JSON
+      // data under the `info` and/or `presence` properties of the User. For
+      // now, we'll just display everything and hopefully highlighting will be
+      // enough.
+      return node;
+    }
+
+    // _Change_ the node, by pruning non-matching children from it
+    return {
+      ...node,
+      payload: mapfilter(node.payload, (child) =>
+        pruneNode(child, directMatches, indirectMatches)
+      ),
+    };
+  } else {
+    // No match in the entire subtree
+    return null;
+  }
+}
+
+function pruneTree<TTreeNode extends DevTools.TreeNode>(
+  tree: readonly TTreeNode[],
+  directMatches: Set<string>,
+  indirectMatches: Set<string>
+): TTreeNode[] {
+  return mapfilter(tree, (node) =>
+    pruneNode(node, directMatches, indirectMatches)
+  );
+}
+
+export function filterNodes<TTreeNode extends DevTools.TreeNode>(
+  tree: readonly TTreeNode[],
+  pattern: RegExp
+): TTreeNode[] {
+  const { directMatches, indirectMatches } = collectMatchingNodes(
+    tree,
+    pattern
+  );
+  return pruneTree(tree, directMatches, indirectMatches);
+}
+
 const autoSizerStyle = {
   flex: 1,
   width: "100%",
@@ -650,31 +941,39 @@ const AutoSizer = forwardRef<HTMLDivElement, AutoSizerProps>(
   }
 );
 
+export const TreeSearchContext = createContext<RegExp | undefined>(undefined);
+
 export const StorageTree = forwardRef<
   TreeApi<StorageTreeNode>,
-  TreeProps<StorageTreeNode>
->(({ className, style, ...props }, ref) => {
+  TreeProps<StorageTreeNode> & {
+    search?: RegExp;
+  }
+>(({ search, className, style, ...props }, ref) => {
   return (
-    <AutoSizer className={cx(className, "tree")} style={style}>
-      {({ width, height }) => (
-        <ArboristTree
-          ref={ref}
-          width={width}
-          height={height}
-          childrenAccessor={storageChildAccessor}
-          disableDrag
-          disableDrop
-          disableMultiSelection
-          className="!overflow-x-hidden"
-          selectionFollowsFocus
-          rowHeight={ROW_HEIGHT}
-          indent={ROW_INDENT}
-          {...props}
-        >
-          {LsonNodeRenderer}
-        </ArboristTree>
-      )}
-    </AutoSizer>
+    <TreeSearchContext.Provider value={search}>
+      <TooltipProvider skipDelayDuration={0}>
+        <AutoSizer className={cx(className, "tree")} style={style}>
+          {({ width, height }) => (
+            <ArboristTree
+              ref={ref}
+              width={width}
+              height={height}
+              childrenAccessor={storageChildAccessor}
+              disableDrag
+              disableDrop
+              disableMultiSelection
+              className="!overflow-x-hidden"
+              selectionFollowsFocus
+              rowHeight={ROW_HEIGHT}
+              indent={ROW_INDENT}
+              {...props}
+            >
+              {LsonNodeRenderer}
+            </ArboristTree>
+          )}
+        </AutoSizer>
+      </TooltipProvider>
+    </TreeSearchContext.Provider>
   );
 });
 
@@ -683,26 +982,28 @@ export const PresenceTree = forwardRef<
   TreeProps<PresenceTreeNode>
 >(({ className, style, ...props }, ref) => {
   return (
-    <AutoSizer className={cx(className, "tree")} style={style}>
-      {({ width, height }) => (
-        <ArboristTree
-          ref={ref}
-          width={width}
-          height={height}
-          childrenAccessor={presenceChildAccessor}
-          disableDrag
-          disableDrop
-          disableMultiSelection
-          className="!overflow-x-hidden"
-          selectionFollowsFocus
-          rowHeight={ROW_HEIGHT}
-          indent={ROW_INDENT}
-          {...props}
-        >
-          {PresenceNodeRenderer}
-        </ArboristTree>
-      )}
-    </AutoSizer>
+    <TooltipProvider skipDelayDuration={0}>
+      <AutoSizer className={cx(className, "tree")} style={style}>
+        {({ width, height }) => (
+          <ArboristTree
+            ref={ref}
+            width={width}
+            height={height}
+            childrenAccessor={presenceChildAccessor}
+            disableDrag
+            disableDrop
+            disableMultiSelection
+            className="!overflow-x-hidden"
+            selectionFollowsFocus
+            rowHeight={ROW_HEIGHT}
+            indent={ROW_INDENT}
+            {...props}
+          >
+            {PresenceNodeRenderer}
+          </ArboristTree>
+        )}
+      </AutoSizer>
+    </TooltipProvider>
   );
 });
 

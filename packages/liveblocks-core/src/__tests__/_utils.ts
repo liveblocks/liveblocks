@@ -444,6 +444,7 @@ export function prepareStorageUpdateTest<
 >(
   items: IdTuple<SerializedCrdt>[],
   callback: (args: {
+    batch: (fn: () => void) => void;
     root: LiveObject<TStorage>;
     machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
     assert: (updates: JsonStorageUpdate[][]) => void;
@@ -451,14 +452,14 @@ export function prepareStorageUpdateTest<
 ): () => Promise<void> {
   return async () => {
     const { storage: refStorage, machine: refMachine } =
-      await prepareRoomWithStorage(items, 1);
+      await prepareRoomWithStorage(items, -1);
 
     const { storage, machine } = await prepareRoomWithStorage<
       TPresence,
       TStorage,
       TUserMeta,
       TRoomEvent
-    >(items, 0, (messages) => {
+    >(items, -2, (messages) => {
       for (const message of messages) {
         if (message.type === ClientMsgCode.UPDATE_STORAGE) {
           refMachine.onMessage(
@@ -496,7 +497,58 @@ export function prepareStorageUpdateTest<
       expect(refJsonUpdates).toEqual(updates);
     }
 
-    await callback({ root: storage.root, machine, assert });
+    await callback({
+      batch: machine.batch,
+      root: storage.root,
+      machine,
+      assert,
+    });
+  };
+}
+
+/**
+ * Create a room, join with the client but sync local storage changes with the server
+ */
+export function prepareDisconnectedStorageUpdateTest<
+  TStorage extends LsonObject,
+  TPresence extends JsonObject = never,
+  TUserMeta extends BaseUserMeta = never,
+  TRoomEvent extends Json = never
+>(
+  items: IdTuple<SerializedCrdt>[],
+  callback: (args: {
+    batch: (fn: () => void) => void;
+    root: LiveObject<TStorage>;
+    machine: Machine<TPresence, TStorage, TUserMeta, TRoomEvent>;
+    assert: (updates: JsonStorageUpdate[][]) => void;
+  }) => Promise<void>
+): () => Promise<void> {
+  return async () => {
+    const { storage, machine } = await prepareRoomWithStorage<
+      TPresence,
+      TStorage,
+      TUserMeta,
+      TRoomEvent
+    >(items, -1);
+
+    const jsonUpdates: JsonStorageUpdate[][] = [];
+
+    machine.subscribe(
+      storage.root,
+      (updates) => jsonUpdates.push(updates.map(serializeUpdateToJson)),
+      { isDeep: true }
+    );
+
+    function assert(updates: JsonStorageUpdate[][]) {
+      expect(jsonUpdates).toEqual(updates);
+    }
+
+    await callback({
+      batch: machine.batch,
+      root: storage.root,
+      machine,
+      assert,
+    });
   };
 }
 

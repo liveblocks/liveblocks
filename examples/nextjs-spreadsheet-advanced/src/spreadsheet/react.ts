@@ -32,7 +32,7 @@ export interface ReactSpreadsheet {
   selectCell: Spreadsheet["selectCell"];
   selection: CellAddress | null;
   setCellValue: Spreadsheet["setCellValue"];
-  users: User<Presence, UserMeta>[];
+  users: readonly User<Presence, UserMeta>[];
 }
 
 export function useSpreadsheet(): ReactSpreadsheet | null {
@@ -41,7 +41,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
   const [columns, setColumns] = useState<Column[]>([]);
   const [rows, setRows] = useState<Row[]>([]);
   const [cells, setCells] = useState<Record<string, string>>({});
-  const [users, setUsers] = useState<User<Presence, UserMeta>[]>([]);
+  const [users, setUsers] = useState<readonly User<Presence, UserMeta>[]>([]);
   const [selection, setSelection] = useState<CellAddress | null>(null);
   const [others, setOthers] = useState<Record<string, UserInfo>>({});
 
@@ -81,7 +81,7 @@ export function useSpreadsheet(): ReactSpreadsheet | null {
     }
   }, [columns, rows, selection, selectCell]);
 
-  return spreadsheet != null
+  return spreadsheet !== null
     ? {
         insertRow: spreadsheet.insertRow,
         resizeRow: spreadsheet.resizeRow,

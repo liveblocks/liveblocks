@@ -1,6 +1,6 @@
 ---
 meta:
-  title: "Next.js Starter Guide"
+  title: "Next.js starter kit"
   parentTitle: "Guides"
   description: "Create Multiplayer Documents with Authentication in Minutes"
 ---
@@ -104,8 +104,8 @@ up your GitHub secret key and client id.
   </video>
 </Figure>
 
-7. On the next page under "Client secrets", press "Generate a new client
-   secret".
+7. On the next page under "Client secrets", press the "Generate a new client
+   secret" button (note that this is different to generating a private key!).
 8. Copy this secret into the `/.env.local` file as `GITHUB_SECRET`
 9. Go back to the previous page and find the "Client ID" near the top. Copy this into your `.env.local` file as `GITHUB_ID`
 
@@ -130,7 +130,7 @@ up your Auth0 secret key and client information.
    "Create Application".
 2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
    app for each environment, so it’s helpful to place "dev" in the name.
-3. Next, select "Single Page Web Applications", and press "Create".
+3. Select "Single Page Web Applications", and press "Create".
 4. Copy your "Client ID" from the top of the page, and place it within
    `.env.local` as `AUTH0_CLIENT_ID`.
 5. Click the "Settings" tab— we’ll be making a number of changes here.
@@ -189,6 +189,8 @@ Navigate there and add your details, for example, if you’re signing in with
   groupIds: ["product", "engineering", "design"],
 },
 ```
+
+Note that this is replacing the sign-up process, so you must enter the email of any new user. If, for example, you’re using GitHub authentication, you can enter the email address of any valid GitHub account.
 
 ### Ready to go
 
@@ -528,7 +530,9 @@ export const authOptions = {
 ```
 
 It’s not only possible with GitHub and Auth0, any
-[NextAuth provider](https://next-auth.js.org/providers/) will work.
+[NextAuth provider](https://next-auth.js.org/providers/) will work, such as Google, Twitter, Reddit, or more. You can find more information about getting the necessary secrets on the NextAuth documentation, or on the provider’s website.
+
+Note that if you’re using `CredentialsProvider` (for example, as used in the demo authentication), `CredentialsProvider` must be removed before any other authentication methods will appear.
 
 ### Switching themes
 

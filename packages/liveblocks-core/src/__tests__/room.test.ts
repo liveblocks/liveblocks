@@ -1,9 +1,12 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
+import { nn } from "..";
 import { LiveList } from "../crdts/LiveList";
+import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
-import { lsonToJson } from "../immutable";
+import type { StorageUpdate } from "../crdts/StorageUpdates";
+import { legacy_patchImmutableObject, lsonToJson } from "../immutable";
 import * as console from "../lib/fancy-console";
 import type { Json, JsonObject } from "../lib/Json";
 import type { Authentication } from "../protocol/Authentication";
@@ -21,6 +24,7 @@ import {
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
+import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -28,8 +32,10 @@ import {
   FIRST_POSITION,
   mockEffects,
   MockWebSocket,
+  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
+  prepareStorageUpdateTest,
   reconnect,
   serverMessage,
   waitFor,
@@ -586,6 +592,39 @@ describe("room", () => {
     expect(room.getPresence()).toEqual({ x: 1 });
   });
 
+  it(
+    "undo redo batch",
+    prepareDisconnectedStorageUpdateTest<{
+      items: LiveList<LiveObject<Record<string, number>>>;
+    }>(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+      ],
+      async ({ assert, batch, root, machine }) => {
+        const items = root.get("items");
+        batch(() => {
+          nn(items.get(0)).set("a", 1);
+          items.set(0, new LiveObject({ a: 2 }));
+        });
+
+        expect(items.toImmutable()).toEqual([{ a: 2 }]);
+        machine.undo();
+
+        expect(items.toImmutable()).toEqual([{}]);
+        machine.redo();
+
+        expect(items.toImmutable()).toEqual([{ a: 2 }]);
+        assert([
+          [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
+          [listUpdate([{}], [listUpdateSet(0, {})])],
+          [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
+        ]);
+      }
+    )
+  );
+
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
     const { machine: room } = setupStateMachine({});
 
@@ -990,6 +1029,65 @@ describe("room", () => {
         items: ["A", "B", "C"],
       });
     });
+
+    test(
+      "nested storage updates",
+      prepareStorageUpdateTest<{
+        items: LiveList<LiveObject<{ names: LiveList<string> }>>;
+      }>(
+        [
+          createSerializedObject("0:0", {}),
+          createSerializedList("0:1", "0:0", "items"),
+          createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+          createSerializedList("0:3", "0:2", "names"),
+        ],
+        async ({ assert, root, batch, machine }) => {
+          let receivedUpdates: StorageUpdate[] = [];
+
+          machine.subscribe(root, (updates) => (receivedUpdates = updates), {
+            isDeep: true,
+          });
+
+          const immutableState = root.toImmutable() as {
+            items: Array<{ names: Array<string> }>;
+          };
+
+          batch(() => {
+            const items = root.get("items");
+            items.insert(
+              new LiveObject({ names: new LiveList(["John Doe"]) }),
+              0
+            );
+            items.get(1)?.get("names").push("Jane Doe");
+            items.push(new LiveObject({ names: new LiveList(["James Doe"]) }));
+          });
+
+          assert([
+            [
+              listUpdate(
+                [
+                  { names: ["John Doe"] },
+                  { names: ["Jane Doe"] },
+                  { names: ["James Doe"] },
+                ],
+                [
+                  listUpdateInsert(0, { names: ["John Doe"] }),
+                  listUpdateInsert(2, { names: ["James Doe"] }),
+                ]
+              ),
+              listUpdate(["Jane Doe"], [listUpdateInsert(0, "Jane Doe")]),
+            ],
+          ]);
+
+          // Additional check to prove that generated updates could patch an immutable state
+          const newImmutableState = legacy_patchImmutableObject(
+            immutableState,
+            receivedUpdates
+          );
+          expect(newImmutableState).toEqual(root.toImmutable());
+        }
+      )
+    );
 
     test("batch history", () => {
       const { machine } = setupStateMachine({});

@@ -1,3 +1,26 @@
+# v0.19.8
+
+- Fixes a bug where history didn't reliably undo LiveObject key set changes if
+  any pending local changes existed on that key.
+- Fixes a bug where changes performed inside `room.batch` were incorrectly
+  ordered inside the history resulting in unexpected undo behavior in some
+  cases.
+- Fixes a bug where under some circumstances the Liveblocks client could get
+  stuck in a "synchronizing" state indefinitely
+- Expose `JsonArray` and `JsonScalar` types publicly
+
+# v0.19.7
+
+Fix nested storage event handling issue.
+
+# v0.19.6
+
+Support authentication with cookies.
+
+# v0.19.5
+
+Export the `StorageStatus` type (introduced with 0.19.3).
+
 # v0.19.4
 
 Fix CORS issue.
