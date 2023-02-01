@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { GetServerSideProps } from "next";
 import { ComponentProps, ReactNode } from "react";
 import { DASHBOARD_URL } from "../constants";
-import { GitHubIcon, SignInIcon } from "../icons";
+import { SignInIcon } from "../icons";
 import { MarketingLayout } from "../layouts/Marketing";
 import { signIn } from "next-auth/react";
 import * as Server from "../lib/server";
@@ -42,8 +42,7 @@ export default function Index() {
             Sign in
           </Button>
           <LinkButton
-            href="https://github.com/liveblocks/liveblocks/tree/main/starter-kit"
-            icon={<GitHubIcon />}
+            href="https://liveblocks.io/docs/guides/nextjs-starter-kit"
             target="_blank"
             variant="secondary"
           >
