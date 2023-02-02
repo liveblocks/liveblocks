@@ -1,10 +1,15 @@
+# v0.19.10
+
+- Allow [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle) `throttle` option to go as low as 16ms.
+
 # v0.19.9
 
-- Allow `throttle` to go as low as 16ms
+- [`WebhookHandler`](https://liveblocks.io/docs/api-reference/liveblocks-node#WebhookHandler) utility to verify incoming webhook requests.
+
 
 # v0.19.8
 
-- Fixes a bug where history didn't reliably undo LiveObject key set changes if
+- Fixes a bug where history didn't reliably undo `LiveObject` key set changes if
   any pending local changes existed on that key.
 - Fixes a bug where changes performed inside `room.batch` were incorrectly
   ordered inside the history resulting in unexpected undo behavior in some
