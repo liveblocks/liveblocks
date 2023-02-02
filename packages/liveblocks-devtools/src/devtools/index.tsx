@@ -1,4 +1,4 @@
-import liveblocksPanelHTML from "url:./panel/index.html";
+import liveblocksPanelHTML from "url:./panel.html";
 import browser from "webextension-polyfill";
 
 browser.devtools.panels.create(

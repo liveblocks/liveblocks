@@ -34,7 +34,7 @@ Download the extension for your browser:
 - [Firefox](https://addons.mozilla.org/en-US/firefox/addon/liveblocks-devtools/)
 - [Edge](https://microsoftedge.microsoft.com/addons/detail/liveblocks-devtools/hfecmmnilleegmjaegkjjklnjbgadikg)
 
-> Requires `@liveblocks/client` 0.19.3 or newer.
+> Requires a **development** build of `@liveblocks/client` 0.19.4 or newer.
 
 ## Development
 
@@ -43,6 +43,7 @@ Download the extension for your browser:
 1. Run `turbo build --filter @liveblocks/devtools` from the project root to
    build the browser extension
 1. Navigate to [chrome://extensions](chrome://extensions)
+1. Disable the production Liveblocks extension, if you already have it installed (it will conflict with the development version)
 1. Enable "Developer mode"
 1. Click "Load unpacked" and select the outputted `dist/chrome-mv3-prod`
    directory (which contains the `manifest.json` file)
@@ -53,6 +54,7 @@ Download the extension for your browser:
    to build the browser extension
 1. Navigate to
    [about:debugging#/runtime/this-firefox](about:debugging#/runtime/this-firefox)
+1. Disable the production Liveblocks extension, if you already have it installed (it will conflict with the development version)
 1. Click "Load temporary add-on..." and select the `manifest.json` file within
    the outputted `dist/firefox-mv2-prod` directory
 

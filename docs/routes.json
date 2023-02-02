@@ -115,7 +115,13 @@
       },
       {
         "title": "Limits",
-        "path": "/guides/limits"
+        "path": "/guides/limits",
+        "routes": [
+          {
+            "title": "Fair Use Policy",
+            "path": "/guides/limits/fair-use-policy"
+          }
+        ]
       },
       {
         "title": "Troubleshooting",
@@ -137,11 +143,10 @@
       },
       {
         "title": "Webhooks",
-        "path": "/guides/webhooks",
-        "hidden": true
+        "path": "/guides/webhooks"
       },
       {
-        "title": "Next.js Starter Kit guide",
+        "title": "Next.js starter kit",
         "path": "/guides/nextjs-starter-kit",
         "hidden": true
       }

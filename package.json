@@ -8,6 +8,7 @@
   ],
   "scripts": {
     "build": "turbo run build",
+    "build:firefox": "turbo run build:firefox",
     "test": "turbo run test",
     "test:types": "turbo run test:types",
     "test:deps": "turbo run test:deps",
