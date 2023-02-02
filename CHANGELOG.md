@@ -4,8 +4,12 @@
 
 # v0.19.9
 
-- [`WebhookHandler`](https://liveblocks.io/docs/api-reference/liveblocks-node#WebhookHandler) utility to verify incoming webhook requests.
-
+- Adds a `WebhookHandler` class in `@liveblocks/node`
+  - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
+    to verify event requests from Liveblock's Webhook functionality. It also
+    provides fully typed `WebhookEvents`.
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+    for more details!
 
 # v0.19.8
 
