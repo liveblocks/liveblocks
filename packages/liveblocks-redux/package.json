@@ -1,6 +1,6 @@
 {
   "name": "@liveblocks/redux",
-  "version": "0.19.9",
+  "version": "0.19.10-beta0",
   "description": "A store enhancer to integrate Liveblocks into Redux stores. Liveblocks is the all-in-one toolkit to build collaborative products like Figma, Notion, and more.",
   "license": "Apache-2.0",
   "main": "./dist/index.js",
@@ -18,8 +18,8 @@
     "test:watch": "jest --silent --verbose --color=always --watch"
   },
   "dependencies": {
-    "@liveblocks/client": "0.19.9",
-    "@liveblocks/core": "0.19.9"
+    "@liveblocks/client": "0.19.10-beta0",
+    "@liveblocks/core": "0.19.10-beta0"
   },
   "peerDependencies": {
     "redux": "^4"
