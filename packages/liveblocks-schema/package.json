@@ -10,8 +10,9 @@
   ],
   "scripts": {
     "build": "tsup",
+    "build:dev": "tsup",
     "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts",
-    "build:ast:debug": "generate-ast --runtime-checks src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts",
+    "build:ast:dev": "generate-ast --runtime-checks src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts",
     "build:parser": "bin/build-parser",
     "test": "jest"
   },
