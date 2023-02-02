@@ -140,8 +140,8 @@ FieldDef
 
 
 TypeExpr
-  = Literal
-  / ObjectLiteralExpr
+  // = Literal
+  = ObjectLiteralExpr
   / TypeRef
 
 
@@ -160,25 +160,25 @@ TypeRef
     { return ast.typeRef(name, args ?? [], rng()) }
 
 
-Literal
-  = StringLiteral
-
-
-StringLiteral "string literal"
-  = DoubleQuotedString
-
-
-DoubleQuotedString
-  = rawValue:$( ["] ( ([\\].) / [^"\n{] )* ["] )
-    //                 ^^^^^    ^^^^^^^
-    //   A backslash escapes    Any character but the end of
-    //     any (.) character    string, or a newline, or the start of
-    //                          a template literal
-    {
-      const value = unescape(rawValue
-        .substring(1, rawValue.length - 1))  // strip off quotes
-      return ast.stringLiteral(value, rawValue, rng())
-    }
+// Literal
+//   = StringLiteral
+// 
+// 
+// StringLiteral "string literal"
+//   = DoubleQuotedString
+// 
+// 
+// DoubleQuotedString
+//   = rawValue:$( ["] ( ([\\].) / [^"\n{] )* ["] )
+//     //                 ^^^^^    ^^^^^^^
+//     //   A backslash escapes    Any character but the end of
+//     //     any (.) character    string, or a newline, or the start of
+//     //                          a template literal
+//     {
+//       const value = unescape(rawValue
+//         .substring(1, rawValue.length - 1))  // strip off quotes
+//       return ast.stringLiteral(value, rawValue, rng())
+//     }
 
 
 EOK "end of keyword"

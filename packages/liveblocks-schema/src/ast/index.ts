@@ -13,25 +13,15 @@ export function isDefinition(node: Node): node is Definition {
   return node._kind === "ObjectTypeDef";
 }
 
-export function isLiteral(node: Node): node is Literal {
-  return node._kind === "StringLiteral";
-}
-
 export function isTypeExpr(node: Node): node is TypeExpr {
-  return (
-    node._kind === "ObjectLiteralExpr" ||
-    node._kind === "TypeRef" ||
-    isLiteral(node)
-  );
+  return node._kind === "ObjectLiteralExpr" || node._kind === "TypeRef";
 }
 
 export type Comment = LineComment;
 
 export type Definition = ObjectTypeDef;
 
-export type Literal = StringLiteral;
-
-export type TypeExpr = Literal | ObjectLiteralExpr | TypeRef;
+export type TypeExpr = ObjectLiteralExpr | TypeRef;
 
 export type Range = [number, number];
 
@@ -42,7 +32,6 @@ export type Node =
   | LineComment
   | ObjectLiteralExpr
   | ObjectTypeDef
-  | StringLiteral
   | TypeName
   | TypeRef;
 
@@ -63,7 +52,6 @@ export function isNode(node: Node): node is Node {
     node._kind === "LineComment" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDef" ||
-    node._kind === "StringLiteral" ||
     node._kind === "TypeName" ||
     node._kind === "TypeRef"
   );
@@ -106,13 +94,6 @@ export type ObjectTypeDef = {
   _kind: "ObjectTypeDef";
   name: TypeName;
   obj: ObjectLiteralExpr;
-  range: Range;
-};
-
-export type StringLiteral = {
-  _kind: "StringLiteral";
-  value: string;
-  rawValue: string;
   range: Range;
 };
 
@@ -197,19 +178,6 @@ export function objectTypeDef(
   };
 }
 
-export function stringLiteral(
-  value: string,
-  rawValue: string,
-  range: Range = [0, 0]
-): StringLiteral {
-  return {
-    _kind: "StringLiteral",
-    value,
-    rawValue,
-    range,
-  };
-}
-
 export function typeName(name: string, range: Range = [0, 0]): TypeName {
   return {
     _kind: "TypeName",
@@ -238,7 +206,6 @@ interface Visitor<TContext> {
   LineComment?(node: LineComment, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDef?(node: ObjectTypeDef, context: TContext): void;
-  StringLiteral?(node: StringLiteral, context: TContext): void;
   TypeName?(node: TypeName, context: TContext): void;
   TypeRef?(node: TypeRef, context: TContext): void;
 }
@@ -287,10 +254,6 @@ export function visit<TNode extends Node, TContext>(
       visitor.ObjectTypeDef?.(node, context);
       visit(node.name, visitor, context);
       visit(node.obj, visitor, context);
-      break;
-
-    case "StringLiteral":
-      visitor.StringLiteral?.(node, context);
       break;
 
     case "TypeName":

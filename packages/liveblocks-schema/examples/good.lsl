@@ -3,7 +3,7 @@
 type RGB { r: Int, g: Int, b: Int }
 
 type Rect {
-  type: "rect"
+  type: String // TODO: Use "rect" here
   x: Int
   y: Int
   width: Int
@@ -13,7 +13,7 @@ type Rect {
 }
 
 type Circle {
-  type: "circle"
+  type: String // TODO: Use "circle" here
   cx: Int
   cy: Int
   radius: Int
@@ -23,6 +23,6 @@ type Circle {
 
 type Storage {
   // shapes: LiveList<Shape>
-  circles: LiveList<Circle>
-  rects: LiveList<Rect>
+  mycircle: LiveObject<Circle>
+  myrect: LiveObject<Rect>
 }

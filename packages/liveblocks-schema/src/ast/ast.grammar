@@ -15,14 +15,14 @@
     | ObjectTypeDef
 
 
-@Literal:
-    # | FloatLiteral
-    # | IntLiteral
-    | StringLiteral
+# @Literal:
+#     | FloatLiteral
+#     | IntLiteral
+#     | StringLiteral
 
 
 @TypeExpr:
-    | @Literal
+    # | @Literal
     | ObjectLiteralExpr
     | TypeRef
 
@@ -57,9 +57,9 @@ ObjectTypeDef:
     obj   ObjectLiteralExpr
 
 
-StringLiteral:
-    value     string
-    rawValue  string
+# StringLiteral:
+#     value     string
+#     rawValue  string
 
 
 TypeName:

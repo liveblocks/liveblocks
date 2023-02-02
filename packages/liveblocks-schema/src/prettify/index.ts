@@ -50,8 +50,8 @@ export function prettify(node: Node): string {
         ? [`${prettify(node.name)}<`, ...node.args.map(prettify), ">"].join("")
         : prettify(node.name);
 
-    case "StringLiteral":
-      return quoteDouble(node.value);
+    // case "StringLiteral":
+    //   return quoteDouble(node.value);
 
     case "LineComment":
       return `# ${node.text}`;
