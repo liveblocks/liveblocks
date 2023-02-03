@@ -41,6 +41,7 @@ export async function create(flags: Record<string, any>) {
   const envVariables: { key: string; value: string }[] = [];
 
   // Empty/create appDir repo
+  console.log();
   await confirmDirectoryEmpty(appDir);
 
   // === Deploy on Vercel and use Vercel integration to get secret key ===

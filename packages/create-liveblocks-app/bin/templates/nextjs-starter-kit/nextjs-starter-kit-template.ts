@@ -49,6 +49,7 @@ export async function create(flags: Record<string, any>) {
   let clonedPrivateRepo = false;
 
   // Empty/create appDir repo
+  console.log();
   await confirmDirectoryEmpty(appDir);
 
   // === Deploy on Vercel and use Vercel integration to get secret key ===
@@ -99,7 +100,7 @@ export async function create(flags: Record<string, any>) {
       };
       clonedPrivateRepo = await clonePrivateRepo({ appDir, repoUrls });
     }
-    vercelSpinner.succeed(c.green("Vercel deployment complete"));
+    vercelSpinner.succeed(c.green("Vercel deployment complete!"));
   }
 
   // === Get Liveblocks secret key from general integration ==============
@@ -130,7 +131,7 @@ export async function create(flags: Record<string, any>) {
       liveblocksSecretKeyValue = liveblocksData.env.LIVEBLOCKS_SECRET_KEY;
     }
 
-    liveblocksSpinner.succeed(c.green("Liveblocks secret key added"));
+    liveblocksSpinner.succeed(c.green("Liveblocks secret key added!"));
   }
 
   const envVariables = [
