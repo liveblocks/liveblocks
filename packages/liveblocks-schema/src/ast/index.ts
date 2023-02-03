@@ -5,6 +5,25 @@
  * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`
  */
 
+const DEBUG = process.env.NODE_ENV !== "production";
+
+function assert(condition: boolean, errmsg: string): asserts condition {
+  if (condition) return;
+  throw new Error(errmsg);
+}
+
+function assertRange(
+  range: unknown,
+  currentContext: string
+): asserts range is Range {
+  assert(
+    isRange(range),
+    `Invalid value for range in "${JSON.stringify(
+      currentContext
+    )}".\nExpected: Range\nGot: ${JSON.stringify(range)}`
+  );
+}
+
 export function isComment(node: Node): node is Comment {
   return node._kind === "LineComment";
 }
@@ -35,7 +54,7 @@ export type Node =
   | TypeName
   | TypeRef;
 
-export function isRange(thing: Range): thing is Range {
+export function isRange(thing: unknown): thing is Range {
   return (
     Array.isArray(thing) &&
     thing.length === 2 &&
@@ -115,6 +134,26 @@ export function document(
   comments: Comment[] | null = null,
   range: Range = [0, 0]
 ): Document {
+  DEBUG &&
+    (() => {
+      assert(
+        Array.isArray(definitions) &&
+          definitions.length > 0 &&
+          definitions.every((item) => isDefinition(item)),
+        `Invalid value for "definitions" arg in "Document" call.\nExpected: @Definition+\nGot:      ${JSON.stringify(
+          definitions
+        )}`
+      );
+      assert(
+        comments === null ||
+          (Array.isArray(comments) &&
+            comments.every((item) => isComment(item))),
+        `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*?\nGot:      ${JSON.stringify(
+          comments
+        )}`
+      );
+      assertRange(range, "Document");
+    })();
   return {
     _kind: "Document",
     definitions,
@@ -129,6 +168,28 @@ export function fieldDef(
   type: TypeExpr,
   range: Range = [0, 0]
 ): FieldDef {
+  DEBUG &&
+    (() => {
+      assert(
+        name._kind === "Identifier",
+        `Invalid value for "name" arg in "FieldDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
+          name
+        )}`
+      );
+      assert(
+        typeof optional === "boolean",
+        `Invalid value for "optional" arg in "FieldDef" call.\nExpected: boolean\nGot:      ${JSON.stringify(
+          optional
+        )}`
+      );
+      assert(
+        isTypeExpr(type),
+        `Invalid value for "type" arg in "FieldDef" call.\nExpected: @TypeExpr\nGot:      ${JSON.stringify(
+          type
+        )}`
+      );
+      assertRange(range, "FieldDef");
+    })();
   return {
     _kind: "FieldDef",
     name,
@@ -139,6 +200,16 @@ export function fieldDef(
 }
 
 export function identifier(name: string, range: Range = [0, 0]): Identifier {
+  DEBUG &&
+    (() => {
+      assert(
+        typeof name === "string",
+        `Invalid value for "name" arg in "Identifier" call.\nExpected: string\nGot:      ${JSON.stringify(
+          name
+        )}`
+      );
+      assertRange(range, "Identifier");
+    })();
   return {
     _kind: "Identifier",
     name,
@@ -147,6 +218,16 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
 }
 
 export function lineComment(text: string, range: Range = [0, 0]): LineComment {
+  DEBUG &&
+    (() => {
+      assert(
+        typeof text === "string",
+        `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
+          text
+        )}`
+      );
+      assertRange(range, "LineComment");
+    })();
   return {
     _kind: "LineComment",
     text,
@@ -158,6 +239,17 @@ export function objectLiteralExpr(
   fields: FieldDef[] = [],
   range: Range = [0, 0]
 ): ObjectLiteralExpr {
+  DEBUG &&
+    (() => {
+      assert(
+        Array.isArray(fields) &&
+          fields.every((item) => item._kind === "FieldDef"),
+        `Invalid value for "fields" arg in "ObjectLiteralExpr" call.\nExpected: FieldDef*\nGot:      ${JSON.stringify(
+          fields
+        )}`
+      );
+      assertRange(range, "ObjectLiteralExpr");
+    })();
   return {
     _kind: "ObjectLiteralExpr",
     fields,
@@ -170,6 +262,22 @@ export function objectTypeDef(
   obj: ObjectLiteralExpr,
   range: Range = [0, 0]
 ): ObjectTypeDef {
+  DEBUG &&
+    (() => {
+      assert(
+        name._kind === "TypeName",
+        `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+          name
+        )}`
+      );
+      assert(
+        obj._kind === "ObjectLiteralExpr",
+        `Invalid value for "obj" arg in "ObjectTypeDef" call.\nExpected: ObjectLiteralExpr\nGot:      ${JSON.stringify(
+          obj
+        )}`
+      );
+      assertRange(range, "ObjectTypeDef");
+    })();
   return {
     _kind: "ObjectTypeDef",
     name,
@@ -179,6 +287,16 @@ export function objectTypeDef(
 }
 
 export function typeName(name: string, range: Range = [0, 0]): TypeName {
+  DEBUG &&
+    (() => {
+      assert(
+        typeof name === "string",
+        `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
+          name
+        )}`
+      );
+      assertRange(range, "TypeName");
+    })();
   return {
     _kind: "TypeName",
     name,
@@ -191,6 +309,22 @@ export function typeRef(
   args: TypeExpr[] = [],
   range: Range = [0, 0]
 ): TypeRef {
+  DEBUG &&
+    (() => {
+      assert(
+        name._kind === "TypeName",
+        `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+          name
+        )}`
+      );
+      assert(
+        Array.isArray(args) && args.every((item) => isTypeExpr(item)),
+        `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
+          args
+        )}`
+      );
+      assertRange(range, "TypeRef");
+    })();
   return {
     _kind: "TypeRef",
     name,

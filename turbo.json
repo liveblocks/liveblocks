@@ -7,26 +7,17 @@
       "outputs": ["src/ast/index.ts"],
       "inputs": ["src/ast/ast.grammar"]
     },
-    "build:ast:dev": {
-      "dependsOn": ["^build"],
-      "outputs": ["src/ast/index.ts"],
-      "inputs": ["src/ast/ast.grammar"]
-    },
     "build:parser": {
       "dependsOn": [],
       "outputs": ["src/parser/generated-parser.ts"],
       "inputs": ["src/parser/schema-lang.pegjs"]
-    },
-    "build:dev": {
-      "dependsOn": ["build:ast:dev", "build:parser"],
-      "outputs": ["dist/**"]
     },
     "build": {
       "dependsOn": ["build:ast", "build:parser"],
       "outputs": ["dist/**"]
     },
     "test": {
-      "dependsOn": ["build:dev"],
+      "dependsOn": ["build:ast", "build:parser"],
       "outputs": ["coverage/**"],
       "inputs": [
         "jest.*",

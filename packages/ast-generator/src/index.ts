@@ -8,7 +8,6 @@ async function main() {
     .description(
       "Generate a TypeScript module for the AST defined in the grammar"
     )
-    .option("--runtime-checks", "Emit runtime invariant checks")
     .argument("<infile>", "Source grammar (*.grammar)")
     .argument("<outfile>", "Output file (*.ts)")
     .parse(process.argv);
@@ -21,9 +20,7 @@ async function main() {
   }
 
   // Run compiler
-  await generateAST(infile, outfile, {
-    emitRuntimeChecks: !!cmd.opts().runtimeChecks,
-  });
+  await generateAST(infile, outfile);
 }
 
 main()

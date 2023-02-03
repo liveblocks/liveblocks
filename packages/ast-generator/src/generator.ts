@@ -5,22 +5,18 @@ import prettier from "prettier";
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
 const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
 
-type CodeGenerationOptions = {
-  emitRuntimeChecks: boolean;
-};
-
-// e.g. "SomeNode" or "@SomeGroup"
+// e.g. "SomeNode" or "@SomeUnion"
 type BaseNodeRef =
   | {
       ref: "Node";
       name: string;
     }
   | {
-      ref: "NodeGroup";
+      ref: "NodeUnion";
       name: string;
     };
 
-// e.g. "SomeNode+" or "@SomeGroup*"
+// e.g. "SomeNode+" or "@SomeUnion*"
 type MultiNodeRef =
   | BaseNodeRef
   | {
@@ -29,7 +25,7 @@ type MultiNodeRef =
       min: 0 | 1;
     };
 
-// e.g. "SomeNode?" or "@SomeGroup*?"
+// e.g. "SomeNode?" or "@SomeUnion*?"
 type NodeRef =
   | MultiNodeRef
   | {
@@ -38,7 +34,7 @@ type NodeRef =
     };
 
 // e.g. ['FloatLiteral', 'IntLiteral', '@StringExpr']
-type NodeGroup = {
+type NodeUnion = {
   name: string;
   members: NodeRef[];
 };
@@ -61,8 +57,8 @@ type Grammar = {
   nodesByName: LUT<Node>;
   nodes: Node[]; // Sorted list of nodes
 
-  nodeGroupsByName: LUT<NodeGroup>;
-  nodeGroups: NodeGroup[]; // Sorted list of node groups
+  unionsByName: LUT<NodeUnion>;
+  unions: NodeUnion[]; // Sorted list of node unions
 };
 
 function takeWhile<T>(items: T[], predicate: (item: T) => boolean): T[] {
@@ -99,7 +95,7 @@ function parseBaseNodeRef(spec: string): BaseNodeRef {
   invariant(match, `Invalid reference: "${spec}"`);
   if (spec.startsWith("@")) {
     return {
-      ref: "NodeGroup",
+      ref: "NodeUnion",
       name: spec.substring(1),
     };
   } else {
@@ -152,7 +148,7 @@ function serializeRef(ref: NodeRef): string {
     } else {
       return base + "*";
     }
-  } else if (ref.ref === "NodeGroup") {
+  } else if (ref.ref === "NodeUnion") {
     return "@" + ref.name;
   } else {
     return ref.name;
@@ -167,7 +163,7 @@ function getBareRef(ref: NodeRef): string {
     : ref.name;
 }
 
-function getBareRefTarget(ref: NodeRef): "Node" | "NodeGroup" {
+function getBareRefTarget(ref: NodeRef): "Node" | "NodeUnion" {
   return ref.ref === "Optional" || ref.ref === "List"
     ? getBareRefTarget(ref.of)
     : ref.ref;
@@ -185,15 +181,14 @@ function validate(grammar: Grammar) {
   // Keep track of which node names are referenced/used
   const referenced: Set<string> = new Set();
 
-  for (const nodeGroup of grammar.nodeGroups) {
-    for (const ref of nodeGroup.members) {
+  for (const nodeUnion of grammar.unions) {
+    for (const ref of nodeUnion.members) {
       const memberName = getBareRef(ref);
       referenced.add(memberName);
       invariant(
         grammar.nodesByName[memberName] ||
-          (nodeGroup.name !== memberName &&
-            !!grammar.nodeGroupsByName[memberName]),
-        `Member "${memberName}" of group "${nodeGroup.name}" is not defined in the grammar`
+          (nodeUnion.name !== memberName && !!grammar.unionsByName[memberName]),
+        `Member "${memberName}" of union "${nodeUnion.name}" is not defined in the grammar`
       );
     }
   }
@@ -208,7 +203,7 @@ function validate(grammar: Grammar) {
       referenced.add(bare);
       invariant(
         BUILTIN_TYPES.has(bare) ||
-          !!grammar.nodeGroupsByName[bare] ||
+          !!grammar.unionsByName[bare] ||
           !!grammar.nodesByName[bare],
         `Unknown node kind "${bare}" (in "${node.name}.${field.name}")`
       );
@@ -229,6 +224,21 @@ function validate(grammar: Grammar) {
       ", "
     )}`
   );
+}
+
+function generateAssertParam(
+  fieldName: string, // actualKindValue
+  fieldRef: NodeRef, // expectedNode
+  currentContext: string
+): string {
+  return `assert(${generateTypeCheckCondition(
+    fieldRef,
+    fieldName
+  )}, \`Invalid value for "${fieldName}" arg in ${JSON.stringify(
+    currentContext
+  )} call.\\nExpected: ${serializeRef(
+    fieldRef
+  )}\\nGot:      \${JSON.stringify(${fieldName})}\`)`;
 }
 
 function generateTypeCheckCondition(
@@ -255,7 +265,7 @@ function generateTypeCheckCondition(
         "item"
       )})`
     );
-  } else if (expected.ref === "NodeGroup") {
+  } else if (expected.ref === "NodeUnion") {
     conditions.push(`is${expected.name}(${actualValue})`);
   } else if (TYPEOF_CHECKS.has(expected.name)) {
     conditions.push(
@@ -277,27 +287,27 @@ function parseGrammarDefinition(path: string): Grammar {
     .map((line) => line.trim())
     .filter((line) => line && !line.startsWith("#"));
 
-  const nodeGroupsByName: LUT<NodeGroup> = {};
+  const unionsByName: LUT<NodeUnion> = {};
   const nodesByName: LUT<Node> = {};
 
-  let currGroup: NodeRef[] | void;
+  let currUnion: NodeRef[] | void;
   let currNode: LUT<Field> | void;
 
   for (let line of lines) {
     if (line.endsWith(":")) {
       line = line.substring(0, line.length - 1).trim();
 
-      // NodeGroup or Node?
+      // NodeUnion or Node?
       if (line.startsWith("@")) {
-        currGroup = [];
+        currUnion = [];
         currNode = undefined;
-        nodeGroupsByName[line.substring(1)] = {
+        unionsByName[line.substring(1)] = {
           name: line.substring(1),
-          members: currGroup,
+          members: currUnion,
         };
       } else {
         currNode = {};
-        currGroup = undefined;
+        currUnion = undefined;
         nodesByName[line] = {
           name: line,
           fieldsByName: currNode,
@@ -308,12 +318,12 @@ function parseGrammarDefinition(path: string): Grammar {
     }
 
     if (line.startsWith("|")) {
-      const group = line.substring(1).trim();
-      invariant(currGroup, "Expect a curr node group");
-      currGroup.push(parseBaseNodeRef(group));
+      const union = line.substring(1).trim();
+      invariant(currUnion, "Expect a current union");
+      currUnion.push(parseBaseNodeRef(union));
     } else {
       const [name, spec] = line.split(/\s+/);
-      invariant(currNode, "Expect a curr node");
+      invariant(currNode, "Expect a current node");
       currNode[name] = { name, ref: parseSpec(spec) };
     }
   }
@@ -329,19 +339,14 @@ function parseGrammarDefinition(path: string): Grammar {
       .sort()
       .map((name) => nodesByName[name]),
 
-    nodeGroupsByName,
-    nodeGroups: Object.keys(nodeGroupsByName)
+    unionsByName: unionsByName,
+    unions: Object.keys(unionsByName)
       .sort()
-      .map((name) => nodeGroupsByName[name]),
+      .map((name) => unionsByName[name]),
   };
 }
 
-async function generateCode(
-  grammar: Grammar,
-  options?: CodeGenerationOptions
-): Promise<string> {
-  const emitRuntimeChecks = options?.emitRuntimeChecks ?? false;
-
+async function generateCode(grammar: Grammar): Promise<string> {
   // Will throw in case of errors
   validate(grammar);
 
@@ -353,29 +358,33 @@ async function generateCode(
     " * Instead, update the `ast.grammar` file, and re-run `npm run build-ast`",
     " */",
     "",
-    emitRuntimeChecks
-      ? `
-        function invariant(condition: boolean, errmsg: string): void {
-          if (condition) return;
-          throw new Error(errmsg);
-        }
-        `
-      : "",
-    "",
+    `
+    const DEBUG = process.env.NODE_ENV !== 'production';
+
+    function assert(condition: boolean, errmsg: string): asserts condition {
+      if (condition) return;
+      throw new Error(errmsg);
+    }
+
+    function assertRange(range: unknown, currentContext: string): asserts range is Range {
+      assert(
+        isRange(range),
+        \`Invalid value for range in "\${JSON.stringify(currentContext)}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
+      );
+    }
+    `,
   ];
 
-  for (const nodeGroup of grammar.nodeGroups) {
-    const [subNodes, subGroups] = partition(
-      nodeGroup.members,
+  for (const union of grammar.unions) {
+    const [subNodes, subUnions] = partition(
+      union.members,
       (ref) => getBareRefTarget(ref) === "Node"
     );
     const conditions = subNodes
       .map((ref) => `node._kind === ${JSON.stringify(getBareRef(ref))}`)
-      .concat(subGroups.map((ref) => `is${getBareRef(ref)}(node)`));
+      .concat(subUnions.map((ref) => `is${getBareRef(ref)}(node)`));
     output.push(`
-          export function is${nodeGroup.name}(node: Node): node is ${
-      nodeGroup.name
-    } {
+          export function is${union.name}(node: Node): node is ${union.name} {
             return (
               ${conditions.join(" || ")}
             )
@@ -383,10 +392,10 @@ async function generateCode(
         `);
   }
 
-  for (const nodeGroup of grammar.nodeGroups) {
+  for (const union of grammar.unions) {
     output.push(`
-            export type ${nodeGroup.name} =
-                ${nodeGroup.members
+            export type ${union.name} =
+                ${union.members
                   .map((member) => `${getBareRef(member)}`)
                   .join(" | ")};
             `);
@@ -397,7 +406,7 @@ async function generateCode(
 
         export type Node = ${grammar.nodes.map((node) => node.name).join(" | ")}
 
-        export function isRange(thing: Range): thing is Range {
+        export function isRange(thing: unknown): thing is Range {
             return (
                 Array.isArray(thing)
                 && thing.length === 2
@@ -440,24 +449,10 @@ async function generateCode(
       ).map((field) => field.name)
     );
 
-    const argChecks = node.fields
-      .map((field) => {
-        return `invariant(${generateTypeCheckCondition(
-          field.ref,
-          field.name
-        )}, \`Invalid value for "${field.name}" arg in "${
-          node.name
-        }" call.\\nExpected: ${serializeRef(
-          field.ref
-        )}\\nGot:      \${JSON.stringify(${field.name})}\`)\n`;
-      })
-      .filter(Boolean);
-    argChecks.push(
-      `invariant(
-         isRange(range),
-         \`Invalid value for range in "${node.name}".\\nExpected: Range\\nGot: \${JSON.stringify(range)}\`
-       )`
+    const runtimeTypeChecks = node.fields.map((field) =>
+      generateAssertParam(field.name, field.ref, node.name)
     );
+    runtimeTypeChecks.push(`assertRange(range, ${JSON.stringify(node.name)})`);
 
     output.push(`
       export function ${lowercaseFirst(node.name)}(${[
@@ -470,7 +465,11 @@ async function generateCode(
       }),
       "range: Range = [0, 0]",
     ].join(", ")}): ${node.name} {
-                ${emitRuntimeChecks ? argChecks.join("\n") : ""}
+                ${
+                  runtimeTypeChecks.length > 0
+                    ? `DEBUG && (() => { ${runtimeTypeChecks.join("\n")} })()`
+                    : ""
+                }
                 return {
                     _kind: ${JSON.stringify(node.name)},
                     ${[...node.fields.map((field) => field.name), "range"].join(
@@ -509,7 +508,7 @@ async function generateCode(
     for (const field of fields) {
       switch (field.ref.ref) {
         case "Node":
-        case "NodeGroup":
+        case "NodeUnion":
           output.push(`  visit(node.${field.name}, visitor, context);`);
           break;
 
@@ -555,13 +554,9 @@ function writeFile(contents: string, path: string) {
   }
 }
 
-export async function generateAST(
-  inpath: string,
-  outpath: string,
-  options?: CodeGenerationOptions
-) {
+export async function generateAST(inpath: string, outpath: string) {
   const grammar = parseGrammarDefinition(inpath);
-  const uglyCode = await generateCode(grammar, options);
+  const uglyCode = await generateCode(grammar);
 
   // Beautify it with prettier
   const config = await prettier.resolveConfig(outpath);
