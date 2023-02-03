@@ -1,8 +1,7 @@
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const API_KEY =
-  "sk_dev_RqpANTCULVYnXiBErjcng8Q2UnemhqiUvYAfD8lqZ1N1oREmH5emW2WFum5cWc_C";
+const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
