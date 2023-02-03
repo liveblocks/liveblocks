@@ -72,7 +72,7 @@
           }
         },
         "operationId": "get-rooms",
-        "description": "Note: if you need real-time visibility on your room activities, you can use our Liveblocks DevTools extension.\n\nReturns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
+        "description": "Returns a list of your rooms. The rooms are returned sorted by creation date, from newest to oldest. You can filter rooms by metadata, users accesses and groups accesses.\n\nThere is a pagination system where the next page URL is returned in the response as `nextPage`.\nYou can also limit the number of rooms by query.\n\nFiltering by metadata works by giving key values like `metadata.color=red`. Of course you can combine multiple metadata clauses to refine the response like `metadata.color=red&metadata.type=text`. Notice here the operator AND is applied between each clauses.\n\nFiltering by groups or userId works by giving a list of groups like `groupIds=marketing,GZo7tQ,product` or/and a userId like `userId=user1`.\nNotice here the operator OR is applied between each `groupIds` and the `userId`.\n",
         "parameters": [
           {
             "schema": {
@@ -557,7 +557,7 @@
           }
         },
         "operationId": "get-rooms-roomId-storage",
-        "description": "_Note: if you need real-time visibility_ on your storage activities, you can use our Liveblocks DevTools extension.\n\nReturns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
+        "description": "Returns a room storage as JSON.\n\nSome implementation details:\nEach Liveblocks data structure is represented by a JSON element having two properties:\n`\"liveblocksType\": \"LiveObject\" | \"LiveList\" | \"LiveMap\"`\n`\"data\"` => contains the nested data structures (children) and data.\nThe root is always a `LiveObject`."
       },
       "post": {
         "summary": "Initialize storage",
