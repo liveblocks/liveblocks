@@ -1,7 +1,6 @@
 import { createClient } from "@liveblocks/client";
 
-let PUBLIC_KEY =
-  "pk_dev_94sjZ6Tho2cCgs4Ej9erNJjs95XLroOArvvheXC9Zi8waQzUy2BMNb7Ix1aX6cCe";
+let PUBLIC_KEY = "pk_YOUR_PUBLIC_KEY";
 let roomId = "javascript-live-cursors";
 
 overrideApiKeyAndRoomId();
