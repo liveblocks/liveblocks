@@ -875,7 +875,9 @@ function makeStateMachine<
         const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
         if (stackTrace) {
           ops.forEach((op) => {
-            nn(state.opStackTraces).set(op.id, stackTrace);
+            if (op.opId) {
+              nn(state.opStackTraces).set(op.opId, stackTrace);
+            }
           });
         }
       }
@@ -1776,7 +1778,7 @@ function makeStateMachine<
 
               if (traces.size) {
                 console.warnWithTitle(
-                  "The rejected storage ops above where caused by the following function calls:",
+                  "The rejected storage mutations where caused by the following function calls:\n\n",
                   Array.from(traces).join("\n\n")
                 );
               }
