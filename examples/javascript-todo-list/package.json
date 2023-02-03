@@ -5,11 +5,11 @@
   "private": true,
   "main": "app.js",
   "scripts": {
-    "build": "esbuild app.js --bundle --outfile=static/app.js"
+    "build": "esbuild app.ts --bundle --outfile=static/app.js"
   },
   "devDependencies": {
-    "esbuild": "^0.14.25",
-    "prettier": "^2.6.2"
+    "esbuild": "^0.17.5",
+    "prettier": "^2.8.3"
   },
   "dependencies": {
     "@liveblocks/client": "^1.0.0-beta0"
