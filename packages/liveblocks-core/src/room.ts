@@ -1743,13 +1743,13 @@ function makeStateMachine<
           // as a developer-owned bug. In production, these errors are not expected to happen.
           case ServerMsgCode.REJECT_STORAGE_OP: {
             console.errorWithTitle(
-              "Storage op rejection error",
+              "Storage mutation rejection error",
               message.reason
             );
 
             if (process.env.NODE_ENV !== "production") {
               throw new Error(
-                `Storage ops rejected by server: ${message.reason}`
+                `Storage mutations rejected by server: ${message.reason}`
               );
             }
 
