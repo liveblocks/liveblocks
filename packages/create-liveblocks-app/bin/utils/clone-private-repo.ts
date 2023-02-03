@@ -22,7 +22,7 @@ export async function clonePrivateRepo({
     binary: "git",
     maxConcurrentProcesses: 6,
     trimmed: false,
-    timeout: { block: 2000 },
+    timeout: { block: 8000 },
   };
 
   const git = simpleGit(options);
@@ -41,7 +41,7 @@ export async function clonePrivateRepo({
 
   spinner.warn(
     c.yellowBright.bold(
-      `Problem cloning private repo", using public repo instead`
+      `Problem cloning private repo, using public repo instead`
     )
   );
   return false;

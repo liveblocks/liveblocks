@@ -148,6 +148,7 @@ export async function create(flags: Record<string, any>) {
 
   // === Clone starter kit repo ==========================================
   if (!clonedPrivateRepo) {
+    await confirmDirectoryEmpty(appDir);
     const result = await cloneRepo({ repoDir, appDir });
 
     if (!result) {
