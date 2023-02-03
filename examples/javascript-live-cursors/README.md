@@ -25,5 +25,5 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) by your **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in [`app.ts`](./app.ts) by your **public** key
 - Run `npm run build` and open `static/index.html` in your browser

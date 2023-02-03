@@ -19,7 +19,6 @@ body {
   position: absolute;
   top: 0;
   left: 0;
-  transition: transform 120ms linear;
 }
 
 #text {
