@@ -24,6 +24,14 @@ function assertRange(
   );
 }
 
+export function isBuiltInScalarType(node: Node): node is BuiltInScalarType {
+  return (
+    node._kind === "StringKeyword" ||
+    node._kind === "IntKeyword" ||
+    node._kind === "FloatKeyword"
+  );
+}
+
 export function isComment(node: Node): node is Comment {
   return node._kind === "LineComment";
 }
@@ -32,26 +40,46 @@ export function isDefinition(node: Node): node is Definition {
   return node._kind === "ObjectTypeDef";
 }
 
-export function isTypeExpr(node: Node): node is TypeExpr {
-  return node._kind === "ObjectLiteralExpr" || node._kind === "TypeRef";
+export function isLiveTypeExpr(node: Node): node is LiveTypeExpr {
+  return node._kind === "LiveObjectTypeExpr";
 }
+
+export function isTypeExpr(node: Node): node is TypeExpr {
+  return (
+    node._kind === "ObjectLiteralExpr" ||
+    node._kind === "TypeRef" ||
+    isBuiltInScalarType(node) ||
+    isLiveTypeExpr(node)
+  );
+}
+
+export type BuiltInScalarType = StringKeyword | IntKeyword | FloatKeyword;
 
 export type Comment = LineComment;
 
 export type Definition = ObjectTypeDef;
 
-export type TypeExpr = ObjectLiteralExpr | TypeRef;
+export type LiveTypeExpr = LiveObjectTypeExpr;
+
+export type TypeExpr =
+  | BuiltInScalarType
+  | LiveTypeExpr
+  | ObjectLiteralExpr
+  | TypeRef;
 
 export type Range = [number, number];
 
 export type Node =
   | Document
   | FieldDef
+  | FloatKeyword
   | Identifier
+  | IntKeyword
   | LineComment
+  | LiveObjectTypeExpr
   | ObjectLiteralExpr
   | ObjectTypeDef
-  | TypeName
+  | StringKeyword
   | TypeRef;
 
 export function isRange(thing: unknown): thing is Range {
@@ -67,11 +95,14 @@ export function isNode(node: Node): node is Node {
   return (
     node._kind === "Document" ||
     node._kind === "FieldDef" ||
+    node._kind === "FloatKeyword" ||
     node._kind === "Identifier" ||
+    node._kind === "IntKeyword" ||
     node._kind === "LineComment" ||
+    node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDef" ||
-    node._kind === "TypeName" ||
+    node._kind === "StringKeyword" ||
     node._kind === "TypeRef"
   );
 }
@@ -91,15 +122,33 @@ export type FieldDef = {
   range: Range;
 };
 
+export type FloatKeyword = {
+  _kind: "FloatKeyword";
+  dummy_: string | null;
+  range: Range;
+};
+
 export type Identifier = {
   _kind: "Identifier";
   name: string;
   range: Range;
 };
 
+export type IntKeyword = {
+  _kind: "IntKeyword";
+  dummy_: string | null;
+  range: Range;
+};
+
 export type LineComment = {
   _kind: "LineComment";
   text: string;
+  range: Range;
+};
+
+export type LiveObjectTypeExpr = {
+  _kind: "LiveObjectTypeExpr";
+  of: TypeRef;
   range: Range;
 };
 
@@ -111,21 +160,20 @@ export type ObjectLiteralExpr = {
 
 export type ObjectTypeDef = {
   _kind: "ObjectTypeDef";
-  name: TypeName;
+  name: Identifier;
   obj: ObjectLiteralExpr;
   range: Range;
 };
 
-export type TypeName = {
-  _kind: "TypeName";
-  name: string;
+export type StringKeyword = {
+  _kind: "StringKeyword";
+  dummy_: string | null;
   range: Range;
 };
 
 export type TypeRef = {
   _kind: "TypeRef";
-  name: TypeName;
-  args: TypeExpr[];
+  name: Identifier;
   range: Range;
 };
 
@@ -199,6 +247,27 @@ export function fieldDef(
   };
 }
 
+export function floatKeyword(
+  dummy_: string | null = null,
+  range: Range = [0, 0]
+): FloatKeyword {
+  DEBUG &&
+    (() => {
+      assert(
+        dummy_ === null || typeof dummy_ === "string",
+        `Invalid value for "dummy_" arg in "FloatKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          dummy_
+        )}`
+      );
+      assertRange(range, "FloatKeyword");
+    })();
+  return {
+    _kind: "FloatKeyword",
+    dummy_,
+    range,
+  };
+}
+
 export function identifier(name: string, range: Range = [0, 0]): Identifier {
   DEBUG &&
     (() => {
@@ -217,6 +286,27 @@ export function identifier(name: string, range: Range = [0, 0]): Identifier {
   };
 }
 
+export function intKeyword(
+  dummy_: string | null = null,
+  range: Range = [0, 0]
+): IntKeyword {
+  DEBUG &&
+    (() => {
+      assert(
+        dummy_ === null || typeof dummy_ === "string",
+        `Invalid value for "dummy_" arg in "IntKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          dummy_
+        )}`
+      );
+      assertRange(range, "IntKeyword");
+    })();
+  return {
+    _kind: "IntKeyword",
+    dummy_,
+    range,
+  };
+}
+
 export function lineComment(text: string, range: Range = [0, 0]): LineComment {
   DEBUG &&
     (() => {
@@ -231,6 +321,27 @@ export function lineComment(text: string, range: Range = [0, 0]): LineComment {
   return {
     _kind: "LineComment",
     text,
+    range,
+  };
+}
+
+export function liveObjectTypeExpr(
+  of: TypeRef,
+  range: Range = [0, 0]
+): LiveObjectTypeExpr {
+  DEBUG &&
+    (() => {
+      assert(
+        of._kind === "TypeRef",
+        `Invalid value for "of" arg in "LiveObjectTypeExpr" call.\nExpected: TypeRef\nGot:      ${JSON.stringify(
+          of
+        )}`
+      );
+      assertRange(range, "LiveObjectTypeExpr");
+    })();
+  return {
+    _kind: "LiveObjectTypeExpr",
+    of,
     range,
   };
 }
@@ -258,15 +369,15 @@ export function objectLiteralExpr(
 }
 
 export function objectTypeDef(
-  name: TypeName,
+  name: Identifier,
   obj: ObjectLiteralExpr,
   range: Range = [0, 0]
 ): ObjectTypeDef {
   DEBUG &&
     (() => {
       assert(
-        name._kind === "TypeName",
-        `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+        name._kind === "Identifier",
+        `Invalid value for "name" arg in "ObjectTypeDef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
           name
         )}`
       );
@@ -286,41 +397,34 @@ export function objectTypeDef(
   };
 }
 
-export function typeName(name: string, range: Range = [0, 0]): TypeName {
+export function stringKeyword(
+  dummy_: string | null = null,
+  range: Range = [0, 0]
+): StringKeyword {
   DEBUG &&
     (() => {
       assert(
-        typeof name === "string",
-        `Invalid value for "name" arg in "TypeName" call.\nExpected: string\nGot:      ${JSON.stringify(
-          name
+        dummy_ === null || typeof dummy_ === "string",
+        `Invalid value for "dummy_" arg in "StringKeyword" call.\nExpected: string?\nGot:      ${JSON.stringify(
+          dummy_
         )}`
       );
-      assertRange(range, "TypeName");
+      assertRange(range, "StringKeyword");
     })();
   return {
-    _kind: "TypeName",
-    name,
+    _kind: "StringKeyword",
+    dummy_,
     range,
   };
 }
 
-export function typeRef(
-  name: TypeName,
-  args: TypeExpr[] = [],
-  range: Range = [0, 0]
-): TypeRef {
+export function typeRef(name: Identifier, range: Range = [0, 0]): TypeRef {
   DEBUG &&
     (() => {
       assert(
-        name._kind === "TypeName",
-        `Invalid value for "name" arg in "TypeRef" call.\nExpected: TypeName\nGot:      ${JSON.stringify(
+        name._kind === "Identifier",
+        `Invalid value for "name" arg in "TypeRef" call.\nExpected: Identifier\nGot:      ${JSON.stringify(
           name
-        )}`
-      );
-      assert(
-        Array.isArray(args) && args.every((item) => isTypeExpr(item)),
-        `Invalid value for "args" arg in "TypeRef" call.\nExpected: @TypeExpr*\nGot:      ${JSON.stringify(
-          args
         )}`
       );
       assertRange(range, "TypeRef");
@@ -328,7 +432,6 @@ export function typeRef(
   return {
     _kind: "TypeRef",
     name,
-    args,
     range,
   };
 }
@@ -336,11 +439,14 @@ export function typeRef(
 interface Visitor<TContext> {
   Document?(node: Document, context: TContext): void;
   FieldDef?(node: FieldDef, context: TContext): void;
+  FloatKeyword?(node: FloatKeyword, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
+  IntKeyword?(node: IntKeyword, context: TContext): void;
   LineComment?(node: LineComment, context: TContext): void;
+  LiveObjectTypeExpr?(node: LiveObjectTypeExpr, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDef?(node: ObjectTypeDef, context: TContext): void;
-  TypeName?(node: TypeName, context: TContext): void;
+  StringKeyword?(node: StringKeyword, context: TContext): void;
   TypeRef?(node: TypeRef, context: TContext): void;
 }
 
@@ -371,12 +477,25 @@ export function visit<TNode extends Node, TContext>(
       visit(node.type, visitor, context);
       break;
 
+    case "FloatKeyword":
+      visitor.FloatKeyword?.(node, context);
+      break;
+
     case "Identifier":
       visitor.Identifier?.(node, context);
       break;
 
+    case "IntKeyword":
+      visitor.IntKeyword?.(node, context);
+      break;
+
     case "LineComment":
       visitor.LineComment?.(node, context);
+      break;
+
+    case "LiveObjectTypeExpr":
+      visitor.LiveObjectTypeExpr?.(node, context);
+      visit(node.of, visitor, context);
       break;
 
     case "ObjectLiteralExpr":
@@ -390,14 +509,13 @@ export function visit<TNode extends Node, TContext>(
       visit(node.obj, visitor, context);
       break;
 
-    case "TypeName":
-      visitor.TypeName?.(node, context);
+    case "StringKeyword":
+      visitor.StringKeyword?.(node, context);
       break;
 
     case "TypeRef":
       visitor.TypeRef?.(node, context);
       visit(node.name, visitor, context);
-      node.args.forEach((a) => visit(a, visitor, context));
       break;
   }
 

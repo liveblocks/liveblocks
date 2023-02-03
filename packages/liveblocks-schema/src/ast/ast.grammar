@@ -6,25 +6,46 @@
 # This is used to generate the AST TypeScript module.
 #
 
+@BuiltInScalarType:
+    | StringKeyword
+    | IntKeyword
+    | FloatKeyword
+
+
 @Comment:
     # | BlockComment
     | LineComment
 
 
+# A custom user-defined type definition
 @Definition:
     | ObjectTypeDef
 
 
 # @Literal:
-#     | FloatLiteral
-#     | IntLiteral
+#     # | FloatLiteral
+#     # | IntLiteral
 #     | StringLiteral
+
+
+@LiveTypeExpr:
+    # | LiveListTypeExpr
+    # | LiveMapTypeExpr
+    | LiveObjectTypeExpr
 
 
 @TypeExpr:
     # | @Literal
+    | @BuiltInScalarType
+    | @LiveTypeExpr
     | ObjectLiteralExpr
     | TypeRef
+
+
+# Reference to a custom, user-defined, type. Not a built-in, not
+# a "LiveObject". Things like "Circle", "BlogPost", etc.
+TypeRef:
+    name  Identifier
 
 
 Document:
@@ -46,6 +67,11 @@ LineComment:
     text  string
 
 
+# e.g. "LiveObject<Shape>"
+LiveObjectTypeExpr:
+    of  TypeRef
+
+
 # e.g. { cx: Number; cy: Number; r: Float }
 ObjectLiteralExpr:
     fields  FieldDef*
@@ -53,7 +79,7 @@ ObjectLiteralExpr:
 
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
 ObjectTypeDef:
-    name  TypeName
+    name  Identifier
     obj   ObjectLiteralExpr
 
 
@@ -62,10 +88,13 @@ ObjectTypeDef:
 #     rawValue  string
 
 
-TypeName:
-    name  string
+StringKeyword:
+    dummy_  string?
 
 
-TypeRef:
-    name  TypeName
-    args  @TypeExpr*
+IntKeyword:
+    dummy_  string?
+
+
+FloatKeyword:
+    dummy_  string?

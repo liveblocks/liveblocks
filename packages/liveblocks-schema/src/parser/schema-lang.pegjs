@@ -93,14 +93,8 @@ WORD_CHAR = [a-zA-Z0-9_]
 
 
 Identifier "identifier"
-  // An identifier _must_ start with a lowercase char
   = name:$( WORD_CHAR+ ) !WORD_CHAR _
     { return ast.identifier(name, rng()) }
-
-
-TypeName "type name"
-  = name:$( UPPER_CHAR WORD_CHAR* ) !WORD_CHAR _
-    { return ast.typeName(name, rng()) }
 
 
 //////   //
@@ -114,7 +108,11 @@ DefinitionList
 
 
 Definition
-  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
+  = ObjectTypeDef
+
+
+ObjectTypeDef
+  = TYPE name:Identifier EQ? obj:ObjectLiteralExpr
     { return ast.objectTypeDef(name, obj, rng()) }
 
 
@@ -139,10 +137,32 @@ FieldDef
     }
 
 
+StringKeyword
+  = _ 'String' EOK
+    { return ast.stringKeyword() }
+
+
+IntKeyword
+  = _ 'Int' EOK
+    { return ast.intKeyword() }
+
+
+FloatKeyword
+  = _ 'Float' EOK
+    { return ast.floatKeyword() }
+
+
+LiveObjectKeyword
+  = _ 'LiveObject' EOK
+    { return null }
+
+
 TypeExpr
-  // = Literal
   = ObjectLiteralExpr
+  / BuiltInScalarType
+  / LiveTypeExpr
   / TypeRef
+  // / Literal
 
 
 TypeExprList
@@ -153,11 +173,24 @@ TypeExprList
     { return [first, ...rest] }
 
 
+BuiltInScalarType
+  = StringKeyword
+  / IntKeyword
+  / FloatKeyword
+
+
+LiveTypeExpr
+  = LiveObjectTypeExpr
+
+
+LiveObjectTypeExpr
+  = LiveObjectKeyword LT of:TypeRef GT
+    { return ast.liveObjectTypeExpr(of, rng()) }
+
 
 TypeRef
-  = name:TypeName args:( LT args:TypeExprList GT
-                         { return args } )?
-    { return ast.typeRef(name, args ?? [], rng()) }
+  = name:Identifier
+    { return ast.typeRef(name, rng()) }
 
 
 // Literal
@@ -182,7 +215,7 @@ TypeRef
 
 
 EOK "end of keyword"
-  = ![a-zA-Z0-9_] __
+  = ![a-zA-Z0-9_] _
 
 
 TYPE "keyword \"type\""

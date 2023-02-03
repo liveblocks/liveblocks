@@ -1,56 +1,25 @@
 import didyoumean from "didyoumean";
 import type {
+  TypeRef,
   Definition,
   Document,
+  LiveObjectTypeExpr,
   ObjectLiteralExpr,
+  ObjectTypeDef,
   Range,
-  TypeName,
-  TypeRef,
 } from "../ast";
 import { visit } from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
 
-const BUILT_IN = Symbol("BUILT_IN");
-
-const BUILT_IN_NAMES = [
-  "Int",
-  "String",
-  "LiveList",
-  "LiveMap",
-  "LiveObject",
-] as const;
-
-const CARDINALITIES: Record<string, number> = {
-  LiveList: 1,
-  LiveMap: 2,
-  LiveObject: 1,
-};
-
-type RegisteredTypeInfo = {
-  definition: typeof BUILT_IN | Definition;
-  cardinality: number;
-};
-
 class Context {
   errorReporter: ErrorReporter;
 
-  // A registry of types by their identifier names
-  registeredTypes: Map<string, RegisteredTypeInfo>;
+  // A registry of user-defined types by their identifier names
+  registeredTypes: Map<string, Definition>;
 
   constructor(errorReporter: ErrorReporter) {
     this.errorReporter = errorReporter;
-    this.registeredTypes = new Map(
-      BUILT_IN_NAMES.map((name) => [
-        name,
-        {
-          definition: BUILT_IN,
-
-          // Only our hardcoded "Live" objects take params for now, you cannot
-          // define your own custom parameterized types
-          cardinality: CARDINALITIES[name] ?? 0,
-        } as const,
-      ])
-    );
+    this.registeredTypes = new Map();
   }
 
   //
@@ -112,14 +81,28 @@ function checkObjectLiteralExpr(
   }
 }
 
-function checkTypeName(
-  node: TypeName,
+function checkLiveObjectTypeExpr(
+  node: LiveObjectTypeExpr,
   context: Context
-): RegisteredTypeInfo | undefined {
-  const typeDef = context.registeredTypes.get(node.name);
+): void {
+  // Check that the payload of a LiveObject type is an object type
+  if (
+    context.registeredTypes.get(node.of.name.name)?._kind !== "ObjectTypeDef"
+  ) {
+    context.report(
+      "Not an object type",
+      ["LiveObject expressions can only wrap object types"],
+      node.of.range
+    );
+    return undefined;
+  }
+}
+
+function checkTypeRef(node: TypeRef, context: Context): void {
+  const typeDef = context.registeredTypes.get(node.name.name);
   if (typeDef === undefined) {
     const suggestion = didyoumean(
-      node.name,
+      node.name.name,
       Array.from(context.registeredTypes.keys())
     );
 
@@ -131,131 +114,37 @@ function checkTypeName(
       ],
       node.range
     );
-
-    return undefined;
-  } else {
-    return typeDef;
   }
 }
 
-function checkTypeRef(node: TypeRef, context: Context): void {
-  const typeDef = checkTypeName(node.name, context);
-  if (typeDef === undefined) {
-    return undefined;
-  }
+// XXX Check that type definitions don't use reserved types names e.g. `type String { ... }`)
+// XXX Other examples: Boolean, LiveXxx, Regex, List, Email
 
-  // Check for cardinality mismatch
-  if (typeDef.cardinality !== node.args.length) {
-    // Too many arguments
-    if (typeDef.cardinality < node.args.length) {
-      const what =
-        typeDef.cardinality === 0
-          ? `needs no arguments`
-          : `needs only ${typeDef.cardinality} arguments, but ${node.args.length} were found`;
-      context.report(
-        `Too many arguments: type ${JSON.stringify(node.name.name)} ${what}`,
-        [`Please remove the excessive arguments`],
-        node.args[typeDef.cardinality].range
-      );
-    }
-
-    // Too few arguments
-    else {
-      context.report(
-        `Too few arguments: type ${JSON.stringify(node.name.name)} needs ${
-          typeDef.cardinality
-        } type arguments`,
-        [`Did you mean to write ${JSON.stringify(node.name.name + "<...>")}?`],
-        node.range
-      );
-    }
-  }
-  // Special check for the LiveMap type
-  else if (node.name.name === "LiveMap") {
-    if (
-      // Pretty ugly hardcoded limit. Yuck, I know, but we'll generalize this later :(
-      node.args.length < 1 ||
-      node.args[0]?._kind !== "TypeRef" ||
-      node.args[0]?.name._kind !== "TypeName" ||
-      node.args[0]?.name.name !== "String"
-    ) {
-      context.report(
-        `First argument to type "LiveMap" must be of type "String"`,
-        [
-          `In the future, we may loosen this constraint, but it's not supported right now.`,
-        ],
-        node.args[0]?.range ?? node.range
-      );
-    }
-  } else if (node.name.name === "LiveObject") {
-    if (
-      node.args.length !== 1 ||
-      node.args[0]?._kind !== "TypeRef" ||
-      node.args[0]?.name._kind !== "TypeName" ||
-      context.registeredTypes.get(node.args[0]?.name.name)?.definition ===
-        BUILT_IN
-    ) {
-      context.report(
-        `The argument to a "LiveObject" type must be a (named) object type`,
-        node.args[0]?._kind === "ObjectLiteralExpr"
-          ? [
-              "You cannot use object literal types for now. We may loosen this constraint in the future.",
-              "",
-              "To fix this, declare the object literal as a named type, and refer to it here.",
-            ]
-          : [],
-        node.args[0]?.range ?? node.range
-      );
-    }
-  }
-}
+// XXX Check that lowercased type names are disallowed (e.g. `type henk { ... }`)
+//                                                                 ^ Must start with uppercase
 
 function checkDocument(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
   for (const def of doc.definitions) {
+    // XXX Factor out into checkDefinition?
     const name = def.name.name;
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
-      if (existing.definition === BUILT_IN) {
-        context.report(
-          `Type ${JSON.stringify(name)} is a built-in type`,
-          [
-            'You cannot redefine built-in types like "Int", "String", or "LiveList".',
-            "Please use a different name.",
-          ],
-          def.name.range
-        );
-      } else {
-        context.report(
-          `A type named ${JSON.stringify(
-            name
-          )} is defined multiple times (on line ${context.lineno(
-            existing.definition.name.range
-          )} and ${context.lineno(def.name.range)})`,
-          [
-            "You cannot declare types multiple times.",
-            "Please remove the duplicate definition, or use a different name.",
-          ],
-          def.name.range
-        );
-      }
+      context.report(
+        `A type named ${JSON.stringify(
+          name
+        )} is defined multiple times (on line ${context.lineno(
+          existing.name.range
+        )} and ${context.lineno(def.name.range)})`,
+        [
+          "You cannot declare types multiple times.",
+          "Please remove the duplicate definition, or use a different name.",
+        ],
+        def.name.range
+      );
     } else {
-      if (/^live/i.test(name)) {
-        context.report(
-          `The name ${JSON.stringify(name)} is not allowed`,
-          [
-            'Type names starting with "Live" are reserved for future use.',
-            "Please use a different name for your custom type.",
-          ],
-          def.name.range
-        );
-      }
-
       // All good, let's register it!
-      context.registeredTypes.set(name, {
-        definition: def,
-        cardinality: 0, // You cannot define custom types with params in the schema yourself
-      });
+      context.registeredTypes.set(name, def);
     }
   }
 
@@ -274,7 +163,36 @@ function checkDocument(doc: Document, context: Context): void {
   }
 }
 
-export function check(doc: Document, errorReporter: ErrorReporter): Document {
+export type CheckedDocument = {
+  /**
+   * The raw AST node.
+   */
+  // XXX Keep or remove?
+  // ast: Document;
+
+  /**
+   * A map of bindings from user-defined type names to their respective
+   * definitions.
+   */
+  // XXX Keep or remove?
+  // types: Map<string, Definition>;
+
+  /**
+   * Direct access to the root "Storage" definition.
+   */
+  root: ObjectTypeDef;
+
+  /**
+   * Look up the Definition of a user-defined type by a Reference to it. This
+   * lookup is guaranteed to exist in the semantic check phase.
+   */
+  getDefinition(ref: TypeRef): Definition;
+};
+
+export function check(
+  doc: Document,
+  errorReporter: ErrorReporter
+): CheckedDocument {
   const context = new Context(errorReporter);
 
   // Check the entire tree
@@ -283,6 +201,7 @@ export function check(doc: Document, errorReporter: ErrorReporter): Document {
     {
       Document: checkDocument,
       ObjectLiteralExpr: checkObjectLiteralExpr,
+      LiveObjectTypeExpr: checkLiveObjectTypeExpr,
       TypeRef: checkTypeRef,
     },
     context
@@ -292,5 +211,18 @@ export function check(doc: Document, errorReporter: ErrorReporter): Document {
     throw new Error("There were errors");
   }
 
-  return doc;
+  return {
+    // XXX Keep or remove?
+    // ast: doc,
+    // types: context.registeredTypes,
+
+    root: context.registeredTypes.get("Storage") as ObjectTypeDef,
+    getDefinition(ref: TypeRef): Definition {
+      const def = context.registeredTypes.get(ref.name.name);
+      if (def === undefined) {
+        throw new Error(`Unknown type name "${ref.name.name}"`);
+      }
+      return def;
+    },
+  };
 }
