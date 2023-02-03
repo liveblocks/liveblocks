@@ -50,9 +50,25 @@ This will run an installer that allows you to download, configure, and deploy, y
 </Figure>
 
 Give your project a name, and select the [authentication](#authentication) method you’d like to use in your app.
-It’s recommended that you select "deploy to Vercel", or "get your Liveblocks secret key automatically" as they’ll get
-you started extra quickly. If you select one of these options, you’ll be presented with the Liveblocks integration page.
-From here you can sign up/in to Liveblocks, you can create a new project, and import your API key into the installer.
+If you are trying to generate a proof of concept quickly, opting to use demo authentication may be a great option—you can still add other authentication providers later on.
+
+#### Deploy with Vercel Integration
+If you would like to set up CI/CD with your application, we've made that process straightforward for you as well.  When prompted, you can select "deploy to Vercel" to enable building and deploying the starter kit. The Vercel Integration will open in a new browser window for you to complete the process of adding your repository.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/deploy-on-vercel.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+If by clicking "Create" you receive "An unexpected internal error occurred" you should validate within your code hosting platform of choice (GitHub, GitLab, Bitbucket) that the Vercel integration has permission to access your repository.  In GitHub, permissions can be found can be found under Settings > Integrations > Vercel.
+
+#### Connect to Liveblocks and retrieve your secret key
+ If you prefer to work locally, you can tell the installer you would not like to "deploy to Vercel."  After declining the deployment option, the installer will prompt adding your Liveblocks Key to the application automatically.  If you forwent deployment or indicated that you would like to get your Liveblocks secret key automatically, the Liveblocks integration page will open in a new browser tab.
+Once the integration page appears, you can sign up/sign in to Liveblocks, create a new project, and import your API key into the installer.
 
 <Figure>
   <video autoPlay loop muted playsInline>
@@ -63,7 +79,7 @@ From here you can sign up/in to Liveblocks, you can create a new project, and im
   </video>
 </Figure>
 
-After finishing up, check the installer and follow the commands it recommends to get you started.
+After finishing up, check the installer and follow the commands recommended to get you started.
 
 ### Authentication [#authentication]
 
