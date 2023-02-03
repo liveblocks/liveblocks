@@ -1,7 +1,8 @@
 import { authorize } from "@liveblocks/node";
 import { NextApiRequest, NextApiResponse } from "next";
 
-const API_KEY = process.env.LIVEBLOCKS_SECRET_KEY;
+const API_KEY =
+  "sk_dev_RqpANTCULVYnXiBErjcng8Q2UnemhqiUvYAfD8lqZ1N1oREmH5emW2WFum5cWc_C";
 
 export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
@@ -14,6 +15,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       imageUrl: `https://liveblocks.io/avatars/avatar-${Math.floor(

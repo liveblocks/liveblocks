@@ -14,9 +14,12 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
-      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(Math.random() * 30)}.png`,
+      picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
+        Math.random() * 30
+      )}.png`,
     },
   });
   return res.status(response.status).end(response.body);
