@@ -1,6 +1,14 @@
+# v0.19.11
+
+`@liveblocks/node`
+
+- `WebhookHandler` now handles `RoomCreatedEvent` and `RoomDeletedEvent`
+
 # v0.19.10
 
-- Allow [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle) `throttle` option to go as low as 16ms.
+- Allow
+  [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
+  `throttle` option to go as low as 16ms.
 
 # v0.19.9
 
