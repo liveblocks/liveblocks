@@ -7,10 +7,10 @@
     "build": "esbuild app.ts --bundle --outfile=static/app.js"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.0-beta0"
+    "@liveblocks/client": "1.0.0-beta0"
   },
   "devDependencies": {
-    "esbuild": "^0.17.5",
-    "prettier": "^2.8.3"
+    "esbuild": "0.17.5",
+    "prettier": "2.8.3"
   }
 }
