@@ -49,7 +49,7 @@ room.subscribe("others", (others, event) => {
     case "reset": {
       // Clear all cursors
       cursorsContainer.innerHTML = "";
-      for (const user of others.toArray()) {
+      for (const user of others) {
         updateCursor(user);
       }
       break;
