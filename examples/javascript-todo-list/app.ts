@@ -30,7 +30,7 @@ async function run() {
   };
 
   const room = client.enter<Presence, Storage>(roomId, {
-    initialPresence: { isTyping: true },
+    initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });
 
