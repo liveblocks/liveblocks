@@ -10,8 +10,8 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.0-beta0",
-    "@liveblocks/react": "^1.0.0-beta0",
+    "@liveblocks/client": "^1.0.0-beta2",
+    "@liveblocks/react": "^1.0.0-beta2",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-scripts": "^5.0.1"
