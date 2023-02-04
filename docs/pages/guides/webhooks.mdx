@@ -11,25 +11,45 @@ observable, you can use webhooks to reduce development time and the need for
 polling.
 
 ## Why Webhooks
-Webhooks connect two applications by letting one subscribe to events created by the other. The listening application (yours) subscribes to events, and the event emitting application (Liveblocks) submits events via HTTP requests to the listening application's URL. Thus, using webhooks with Liveblocks reduces the need to poll Liveblocks data as you are now alerted when the data changes. Leveraging webhooks makes Liveblocks observable and reduces the need for cron jobs to poll Liveblocks data. As a result, your application (the listening application) will have less complex logic related to consuming data.
 
-There are many scenarios where webhooks could benefit your application.  For example, you can use webhooks to monitor when users enter and leave a room. After some time has passed, you could create logic that syncs Liveblocks storage to your application database if no users are remaining.
+Webhooks connect two applications by letting one subscribe to events created by
+the other. The listening application (yours) subscribes to events, and the event
+emitting application (Liveblocks) submits events via HTTP requests to the
+listening application's URL. Thus, using webhooks with Liveblocks reduces the
+need to poll Liveblocks data as you are now alerted when the data changes.
+Leveraging webhooks makes Liveblocks observable and reduces the need for cron
+jobs to poll Liveblocks data. As a result, your application (the listening
+application) will have less complex logic related to consuming data.
 
-You could also use webhooks to display how many users are currently active in a room at any given time.  The possibilities are endless, and as time progresses, we will include more events for your application to subscribe to.
+There are many scenarios where webhooks could benefit your application. For
+example, you can use webhooks to monitor when users enter and leave a room.
+After some time has passed, you could create logic that syncs Liveblocks storage
+to your application database if no users are remaining.
+
+You could also use webhooks to display how many users are currently active in a
+room at any given time. The possibilities are endless, and as time progresses,
+we will include more events for your application to subscribe to.
+
 ## What is a webhook?
 
-Webhooks pass information from one application to another instantaneously. A webhook is simply an HTTP callback triggered by an event. When an application subscribes to an event, and that event occurs, the webhook invokes the HTTP callback with a URL you specify (called the webhook endpoint). Webhooks streamline the collection
-of data between two connected services in real-time.
+Webhooks pass information from one application to another instantaneously. A
+webhook is simply an HTTP callback triggered by an event. When an application
+subscribes to an event, and that event occurs, the webhook invokes the HTTP
+callback with a URL you specify (called the webhook endpoint). Webhooks
+streamline the collection of data between two connected services in real-time.
 
 Like an API, webhooks are a mechanism for a client to receive data. The main
-difference between webhooks and APIs is webhooks function as an inverted
-API. A traditional API receives requests and sends responses, whereas a webhook calls an endpoint that you provide where we send events.
+difference between webhooks and APIs is webhooks function as an inverted API. A
+traditional API receives requests and sends responses, whereas a webhook calls
+an endpoint that you provide where we send events.
 
 The lifecycle of a webhook:
 
 1. You create and provide a client endpoint, which listens to event messages
-2. The Liveblocks server broadcasts a message (event) to the client endpoint when an event occurs
-3. You verify the message request sent to the endpoint and send a 200 response once the request has been verified
+2. The Liveblocks server broadcasts a message (event) to the client endpoint
+   when an event occurs
+3. You verify the message request sent to the endpoint and send a 200 response
+   once the request has been verified
 4. You use the message payload to trigger a task
 
 Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.
@@ -61,13 +81,13 @@ available for subscription, along with their schema.
 
 Events available for use include:
 
-- UserEntered/UserLeft
-- StorageUpdated
+- `StorageUpdated`
+- `UserEntered/UserLeft`
+- `RoomCreated/RoomDeleted`
 
 More events will come later such as:
 
-- RoomCreated/RoomDeleted
-- MaxConnectionsReached
+- `MaxConnectionsReached`
 
 #### UserEnteredEvent
 
@@ -176,6 +196,63 @@ const storageUpdatedEvent = {
 };
 ```
 
+#### RoomCreatedEvent
+
+An event is triggered when a room is created. This event is not throttled. There
+are two ways for rooms to be created:
+
+- By calling the
+  [create room API](/docs/api-reference/rest-api-endpoints#post-rooms)
+- When a user connects to a room that does not exist
+
+```ts
+// Schema
+type RoomCreatedEvent = {
+  type: "roomCreated";
+  data: {
+    appId: string;
+    roomId: string;
+    createdAt: string;
+  };
+};
+
+// Example
+const roomCreatedEvent = {
+  type: "roomCreated",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    createdAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
+#### RoomDeletedEvent
+
+An event is triggered when a room is deleted. This event is not throttled.
+
+```ts
+// Schema
+type RoomDeletedEvent = {
+  type: "roomDeleted";
+  data: {
+    appId: string;
+    roomId: string;
+    deletedAt: string;
+  };
+};
+
+// Example
+const roomDeletedEvent = {
+  type: "roomDeleted",
+  data: {
+    appId: "my-app-id",
+    roomId: "my-room-id",
+    deletedAt: "2021-10-06T01:45:56.558Z",
+  },
+};
+```
+
 ### Endpoints
 
 An endpoint is a URL whose purpose is to receive event messages and trigger a
@@ -266,8 +343,7 @@ understated and should be considered paramount in your integration.
 
 There are two ways to verify your webhooks, either manually or by using the
 `@liveblocks/node` package. We highly recommend using the `@liveblocks/node`
-package as it will verify the events and provide you with fully typed
-events.
+package to verify and return fully typed events.
 
 ### Verify using `@liveblocks/node`
 
