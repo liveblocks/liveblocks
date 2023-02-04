@@ -16,6 +16,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
