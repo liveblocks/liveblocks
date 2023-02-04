@@ -10,24 +10,26 @@ you can react to Liveblocks events as they happen. Now that our platform is
 observable, you can use webhooks to reduce development time and the need for
 polling.
 
+## Why Webhooks
+Webhooks connect two applications by letting one subscribe to events created by the other. The listening application (yours) subscribes to events, and the event emitting application (Liveblocks) submits events via HTTP requests to the listening application's URL. Thus, using webhooks with Liveblocks reduces the need to poll Liveblocks data as you are now alerted when the data changes. Leveraging webhooks makes Liveblocks observable and reduces the need for cron jobs to poll Liveblocks data. As a result, your application (the listening application) will have less complex logic related to consuming data.
+
+There are many scenarios where webhooks could benefit your application.  For example, you can use webhooks to monitor when users enter and leave a room. After some time has passed, you could create logic that syncs Liveblocks storage to your application database if no users are remaining.
+
+You could also use webhooks to display how many users are currently active in a room at any given time.  The possibilities are endless, and as time progresses, we will include more events for your application to subscribe to.
 ## What is a webhook?
 
-Webhooks make a platform observable. They let users subscribe to events on the
-platform for them to react to. In this sense, webhooks streamline the collection
-of data between two connected services.
+Webhooks pass information from one application to another instantaneously. A webhook is simply an HTTP callback triggered by an event. When an application subscribes to an event, and that event occurs, the webhook invokes the HTTP callback with a URL you specify (called the webhook endpoint). Webhooks streamline the collection
+of data between two connected services in real-time.
 
 Like an API, webhooks are a mechanism for a client to receive data. The main
-difference between webhooks and APIs is that a webhook functions as an inverted
-API. A traditional API receives requests and sends responses, whereas a webhook
-is an endpoint that you provide where we send events.
+difference between webhooks and APIs is webhooks function as an inverted
+API. A traditional API receives requests and sends responses, whereas a webhook calls an endpoint that you provide where we send events.
 
 The lifecycle of a webhook:
 
 1. You create and provide a client endpoint, which listens to event messages
-2. The Liveblocks server broadcasts a message (event) to the client endpoint
-   when an event occurs
-3. You verify the message request sent to the endpoint and send a 200 response
-   once the request has been verified
+2. The Liveblocks server broadcasts a message (event) to the client endpoint when an event occurs
+3. You verify the message request sent to the endpoint and send a 200 response once the request has been verified
 4. You use the message payload to trigger a task
 
 Steps 2-4 will be repeated as long as you are subscribed to Liveblocks events.

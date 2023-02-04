@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import c from "ansi-colors";
 import prompts, { PromptObject } from "prompts";
-import { loadingSpinner } from "./loadingSpinner";
+import { loadingSpinner } from "./loading-spinner";
 
 type Question = {
   confirmDelete: boolean;
@@ -11,7 +11,6 @@ type Question = {
 export async function confirmDirectoryEmpty(dir: string) {
   // Directory does not exist or already empty, skip function
   if (!fs.existsSync(dir) || fs.readdirSync(dir).length === 0) {
-    console.log();
     return false;
   }
 
@@ -35,7 +34,6 @@ export async function confirmDirectoryEmpty(dir: string) {
     process.exit(0);
   }
 
-  console.log();
   const spinner = loadingSpinner().start("Clearing directory...");
   fs.rmSync(dir, { recursive: true, force: true });
   spinner.succeed(c.green("Directory cleared!"));
