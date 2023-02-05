@@ -1,9 +1,10 @@
 ---
 meta:
-  title: "Creating a multiplayer to-do list with React, Zustand, and Liveblocks"
+  title:
+    "Creating a collaborative to-do list with React, Zustand, and Liveblocks"
   parentTitle: "Tutorials"
   description:
-    "Build a multiplayer to-do list with React, Zustand, and Liveblocks"
+    "Build a collaborative to-do list with React, Zustand, and Liveblocks"
 ---
 
 In this 15-minute guide, we’ll be building a collaborative to-do list using
@@ -26,8 +27,8 @@ This guide assumes that you’re already familiar with
 If you’re not using Zustand, we recommend reading one of our dedicated to-do
 list tutorials:
 
-- [React tutorial](/docs/tutorials/multiplayer-to-do-list/react)
-- [React + Redux tutorial](/docs/tutorials/multiplayer-to-do-list/react-redux)
+- [React tutorial](/docs/tutorials/collaborative-to-do-list/react)
+- [React + Redux tutorial](/docs/tutorials/collaborative-to-do-list/react-redux)
 
 The source code for this guide is
 [available on github](https://github.com/liveblocks/liveblocks/tree/main/examples/zustand-todo-list).
@@ -106,7 +107,7 @@ export default useStore;
 ### Connect to a Liveblocks room [#connect-liveblocks-room]
 
 Liveblocks uses the concept of _rooms_, separate virtual spaces where people can
-collaborate. To create a multiplayer experience, multiple users must be
+collaborate. To create a collaborative experience, multiple users must be
 connected to the same room.
 
 Our middleware injected the object `liveblocks` to the store. Inside that

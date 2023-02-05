@@ -6,7 +6,6 @@ type Props = {
   y: number;
   points: number[][];
   fill: string;
-  isAnimated?: boolean;
   onPointerDown?: (e: React.PointerEvent) => void;
   stroke?: string;
 };
@@ -14,7 +13,6 @@ type Props = {
 export default function Path({
   x,
   y,
-  isAnimated,
   onPointerDown,
   stroke,
   fill,
@@ -32,7 +30,6 @@ export default function Path({
         })
       )}
       style={{
-        transition: isAnimated ? "transform 120ms linear" : "",
         transform: `translate(${x}px, ${y}px)`,
       }}
       x={0}

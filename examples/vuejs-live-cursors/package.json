@@ -8,7 +8,7 @@
     "build": "vue-cli-service build"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.19.7",
+    "@liveblocks/client": "^1.0.0-beta2",
     "core-js": "^3.6.5",
     "vue": "^2.6.11"
   },

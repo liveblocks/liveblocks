@@ -516,10 +516,6 @@ function Canvas() {
             {/* Blue square that show the selection of the current users. Also contains the resize handles. */}
             <SelectionBox
               onResizeHandlePointerDown={onResizeHandlePointerDown}
-              isAnimated={
-                canvasState.mode !== CanvasMode.Translating &&
-                canvasState.mode !== CanvasMode.Resizing
-              }
             />
             {/* Selection net that appears when the user is selecting multiple layers at once */}
             {canvasState.mode === CanvasMode.SelectionNet &&

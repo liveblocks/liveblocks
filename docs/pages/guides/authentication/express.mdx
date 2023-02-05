@@ -33,9 +33,10 @@ the caller of this endpoint is a valid user by validating the cookies or
 authentication headers and that it has access to the requested room. Then use
 [`authorize`][] to generate a token and return the body as a response.
 
-Note that UserMeta represents static/readonly metadata on each User, as provided by
-your own custom auth backend (if used). Useful for data that will not change
-during a session, like a User's name or avatar, eg: 
+Note that UserMeta represents static/readonly metadata on each User, as provided
+by your own custom auth backend (if used). Useful for data that will not change
+during a session, like a User's name or avatar, eg:
+
 ```ts
 type UserMeta = {
   id: string; // Accessible through `user.id`
@@ -71,12 +72,12 @@ app.post("/api/auth", (req, res) => {
   authorize({
     room: req.body.room,
     secret,
-    userId: "123", // Optional
+    userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
       // Optional, corresponds to the UserMeta[info] type defined in liveblocks.config.ts
       name: "Ada Lovelace",
-      color: "red"
+      color: "red",
     },
   })
     .then((authResponse) => {
@@ -86,10 +87,12 @@ app.post("/api/auth", (req, res) => {
       res.status(403).end();
     });
 });
-
 ```
-The `userId` used in the `authorize` function corresponds to userId used in our APIs when setting permissions (e.g. in create room).
-You can use the following example to use data from `userId` and `userInfo`on the front end.
+
+The `userId` used in the `authorize` function corresponds to userId used in our
+APIs when setting permissions (e.g. in create room). You can use the following
+example to use data from `userId` and `userInfo`on the front end.
+
 ```ts
   const self = useSelf();
 

@@ -1,10 +1,21 @@
+# v1.0.0
+
+## `@liveblocks/node`
+
+`authorize` option `userId` is now mandatory.
+
+Our new [pricing](https://liveblocks.io/pricing) is based on Monthly Active Users instead of connections. 
+We're using `userId` to track MAU associated to a Liveblocks account.
+
 # v0.19.11
 
-`@liveblocks/node`
+## `@liveblocks/node`
 
 - `WebhookHandler` now handles `RoomCreatedEvent` and `RoomDeletedEvent`
 
 # v0.19.10
+
+## `@liveblocks/client`
 
 - Allow
   [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
@@ -12,12 +23,14 @@
 
 # v0.19.9
 
-- Adds a `WebhookHandler` class in `@liveblocks/node`
+## `@liveblocks/client`
+
+- Adds a `WebhookHandler` class
   - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
     to verify event requests from Liveblock's Webhook functionality. It also
     provides fully typed `WebhookEvents`.
   - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
-    for more details!
+    for more details
 
 # v0.19.8
 

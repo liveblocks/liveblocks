@@ -13,7 +13,7 @@
     "vite-plugin-solid": "^2.2.6"
   },
   "dependencies": {
-    "@liveblocks/client": "^0.19.7",
+    "@liveblocks/client": "^1.0.0-beta2",
     "solid-js": "^1.3.13"
   }
 }
