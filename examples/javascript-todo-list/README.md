@@ -37,5 +37,5 @@ also be able to see who else is currently online and when a user is typing.
 ### Tutorial
 
 Follow our
-[step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/javascript)
+[step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/javascript)
 to build it from scratch.
