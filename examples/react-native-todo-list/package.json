@@ -10,8 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.0-beta2",
-    "@liveblocks/react": "^1.0.0-beta2",
+    "@liveblocks/client": "^1.0.0",
+    "@liveblocks/react": "^1.0.0",
     "base-64": "^1.0.0",
     "react": "^17.0.2",
     "react-native": "^0.68.2",
