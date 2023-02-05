@@ -10,6 +10,32 @@
       {
         "title": "Concepts",
         "path": "/concepts"
+      },
+      {
+        "title": "Get started",
+        "path": "/get-started",
+        "routes": [
+          {
+            "title": "React",
+            "path": "/get-started/react"
+          },
+          {
+            "title": "React + Redux",
+            "path": "/get-started/react-redux"
+          },
+          {
+            "title": "React + Zustand",
+            "path": "/get-started/react-zustand"
+          },
+          {
+            "title": "JavaScript",
+            "path": "/get-started/javascript"
+          },
+          {
+            "title": "Vue",
+            "path": "/get-started/vue"
+          }
+        ]
       }
     ]
   },
