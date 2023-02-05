@@ -18,7 +18,7 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
     secret: API_KEY,
     userId: `user-${userIndex}`,
     userInfo: {
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
+      name: NAMES[userIndex],
       picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30
       )}.png`,
