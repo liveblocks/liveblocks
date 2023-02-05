@@ -9,9 +9,9 @@
     "start": "next start"
   },
   "dependencies": {
-    "@liveblocks/client": "^1.0.0-beta2",
-    "@liveblocks/node": "^1.0.0-beta2",
-    "@liveblocks/react": "^1.0.0-beta2",
+    "@liveblocks/client": "^1.0.0",
+    "@liveblocks/node": "^1.0.0",
+    "@liveblocks/react": "^1.0.0",
     "classnames": "^2.3.1",
     "framer-motion": "^6.3.6",
     "next": "^12.2.5",
