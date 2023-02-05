@@ -10,32 +10,6 @@
       {
         "title": "Concepts",
         "path": "/concepts"
-      },
-      {
-        "title": "Get started",
-        "path": "/get-started",
-        "routes": [
-          {
-            "title": "React",
-            "path": "/get-started/react"
-          },
-          {
-            "title": "React + Redux",
-            "path": "/get-started/react-redux"
-          },
-          {
-            "title": "React + Zustand",
-            "path": "/get-started/react-zustand"
-          },
-          {
-            "title": "JavaScript",
-            "path": "/get-started/javascript"
-          },
-          {
-            "title": "Vue",
-            "path": "/get-started/vue"
-          }
-        ]
       }
     ]
   },
@@ -44,23 +18,23 @@
     "routes": [
       {
         "title": "To-do list",
-        "path": "/tutorials/multiplayer-to-do-list",
+        "path": "/tutorials/collaborative-to-do-list",
         "routes": [
           {
             "title": "React",
-            "path": "/tutorials/multiplayer-to-do-list/react"
+            "path": "/tutorials/collaborative-to-do-list/react"
           },
           {
             "title": "React + Redux",
-            "path": "/tutorials/multiplayer-to-do-list/react-redux"
+            "path": "/tutorials/collaborative-to-do-list/react-redux"
           },
           {
             "title": "React + Zustand",
-            "path": "/tutorials/multiplayer-to-do-list/react-zustand"
+            "path": "/tutorials/collaborative-to-do-list/react-zustand"
           },
           {
             "title": "JavaScript",
-            "path": "/tutorials/multiplayer-to-do-list/javascript"
+            "path": "/tutorials/collaborative-to-do-list/javascript"
           }
         ]
       },
