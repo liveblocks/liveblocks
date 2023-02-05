@@ -13,12 +13,13 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // For the cursor example, we're generating random users
   // and set their info from the authentication endpoint
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+  const userIndex = Math.floor(Math.random() * NAMES.length);
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
-    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
+    userId: `user-${userIndex}`,
     userInfo: {
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
+      name: NAMES[userIndex],
       color: COLORS[Math.floor(Math.random() * COLORS.length)],
       picture: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30
