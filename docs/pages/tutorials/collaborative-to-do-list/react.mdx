@@ -131,11 +131,11 @@ You may also notice that we’re exporting the suspense version of our hooks in
 we must wrap `RoomProvider` children in our
 [`ClientSideSuspense`](/docs/api-reference/liveblocks-react#suspense-avoid-ssr)
 component. Liveblocks does not connect through WebSocket when running on server,
-so `ClientSideSuspense` ensure nothing its children are not rendered on the
-server. More information can be found
+so `ClientSideSuspense` ensure its children are not rendered on the server. More
+information can be found
 [here](/docs/api-reference/liveblocks-react#suspense-avoid-ssr).
 
-```tsx file="pages/index.tsx" highlight="1,7-9,14-16"
+```tsx file="pages/index.tsx" highlight="1,7-9,14-20"
 import { ClientSideSuspense } from "@liveblocks/react";
 import { RoomProvider } from "@/liveblocks.config";
 
@@ -150,7 +150,11 @@ export default function Page() {
 }
 
 function TodoList() {
-  return <div></div>;
+  return (
+    <div>
+      {/* We’re starting to implement the to-do list in the next section */}
+    </div>
+  );
 }
 ```
 
