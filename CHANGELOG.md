@@ -1,3 +1,7 @@
+# v1.0.1
+
+Log stack traces of function calls that resulted in rejected storage mutations to the console in non-production builds to ease debugging.
+
 # v1.0.0
 
 This major release marks the maturity of Liveblocks. There are no upgrade instructions for 1.0.0.

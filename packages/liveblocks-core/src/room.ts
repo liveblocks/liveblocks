@@ -12,6 +12,7 @@ import { LiveObject } from "./crdts/LiveObject";
 import type { LiveNode, LiveStructure, LsonObject } from "./crdts/Lson";
 import type { StorageCallback, StorageUpdate } from "./crdts/StorageUpdates";
 import { assertNever, nn } from "./lib/assert";
+import { captureStackTrace } from "./lib/debug";
 import type { Callback, Observable } from "./lib/EventSource";
 import { makeEventSource } from "./lib/EventSource";
 import * as console from "./lib/fancy-console";
@@ -754,6 +755,9 @@ type State<
   // A registry of yet-unacknowledged Ops. These Ops have already been
   // submitted to the server, but have not yet been acknowledged.
   unacknowledgedOps: Map<string, Op>;
+
+  // Stack traces of all pending Ops. Used for debugging in non-production builds
+  opStackTraces?: Map<string, string>;
 };
 
 type Effects<TPresence extends JsonObject, TRoomEvent extends Json> = {
@@ -866,6 +870,17 @@ function makeStateMachine<
       storageUpdates: Map<string, StorageUpdate>
     ) {
       const activeBatch = state.activeBatch;
+
+      if (process.env.NODE_ENV !== "production") {
+        const stackTrace = captureStackTrace("Storage mutation", this.dispatch);
+        if (stackTrace) {
+          ops.forEach((op) => {
+            if (op.opId) {
+              nn(state.opStackTraces).set(op.opId, stackTrace);
+            }
+          });
+        }
+      }
 
       if (activeBatch) {
         activeBatch.ops.push(...ops);
@@ -1197,7 +1212,12 @@ function makeStateMachine<
         if (isLocal) {
           source = OpSource.UNDOREDO_RECONNECT;
         } else {
-          const deleted = state.unacknowledgedOps.delete(nn(op.opId));
+          const opId = nn(op.opId);
+          if (process.env.NODE_ENV !== "production") {
+            nn(state.opStackTraces).delete(opId);
+          }
+
+          const deleted = state.unacknowledgedOps.delete(opId);
           source = deleted ? OpSource.ACK : OpSource.REMOTE;
         }
 
@@ -1748,6 +1768,21 @@ function makeStateMachine<
             );
 
             if (process.env.NODE_ENV !== "production") {
+              const traces: Set<string> = new Set();
+              for (const opId of message.opIds) {
+                const trace = state.opStackTraces?.get(opId);
+                if (trace) {
+                  traces.add(trace);
+                }
+              }
+
+              if (traces.size > 0) {
+                console.warnWithTitle(
+                  "The following function calls caused the rejected storage mutations:",
+                  `\n\n${Array.from(traces).join("\n\n")}`
+                );
+              }
+
               throw new Error(
                 `Storage mutations rejected by server: ${message.reason}`
               );
@@ -2418,6 +2453,12 @@ function defaultState<
 
     activeBatch: null,
     unacknowledgedOps: new Map<string, Op>(),
+
+    // Debug
+    opStackTraces:
+      process.env.NODE_ENV !== "production"
+        ? new Map<string, string>()
+        : undefined,
   };
 }
 
