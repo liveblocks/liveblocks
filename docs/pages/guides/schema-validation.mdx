@@ -1,11 +1,18 @@
 ---
 meta:
-  title: "Schema Validation"
+  title: "Schema validation"
   parentTitle: "Guides"
   description:
-    "Learn how to use Schema Validation to ensure data integrity in your
-    application"
+    "Learn how to use schemas to ensure data integrity in your application"
 ---
+
+<Banner title="Private beta">
+
+Schema validation is currently in private beta. If you would like to try it,
+please fill out the following survey to join our
+[waiting list](https://docs.google.com/forms/d/197IrpiyeqlJo9xOCOfzwdcwBIk6nisk9pToJe3st3Ng/viewform).
+
+</Banner>
 
 ## Why schema validation?
 
@@ -18,12 +25,11 @@ to type your storage in `liveblocks.config.ts`. Still, we want to go one step
 further to help you protect your application by attaching a schema to a room
 that rejects invalid modifications.
 
-By including a schema, you will be able to:
+By using schema validation, you will be able to:
 
 - Trust any incoming storage modifications
 - Synchronize our storage with your database safely
-- Paring schema validation with webhooks makes your application robust and
-  allows you to synchronize your storage in real-time.
+- Write migration scripts for your room storage more easily
 
 ## How schema validation works
 
@@ -31,104 +37,64 @@ The primary purpose of schema validation is to prevent corrupted data from being
 loaded from the server. To add schema validation to your application, take the
 following steps:
 
-1. Define the shape of your storage with a schema (similar to how you would
-   describe the storage type in typescript)
+1. Define the shape of your storage with a schema definition (similar to how you
+   would describe the storage type in TypeScript)
 2. Attach your schema to a room
 
 By default, a room storage accepts any modifications coming from the client. But
 once you attach a schema to a room, Liveblocks will reject any modifications to
 the storage that do not match the schema you provided. Situations like this
-should only happen in development mode, and the developer is responsible to fix
-it.
+should only happen in development mode, and the developer is responsible for
+fixing them.
 
-## Create a schema via schema modification APIs
+## Create a schema
 
-<Banner title="Public vs secret key">
-
-When creating and attaching rooms via our APIs, you will need to provide your
-secret key to the Authorization header. For more info, see the
-[authentication guide](/docs/guides/authentication).
-
-</Banner>
-
-To create a schema, you will need to POST to the schemas endpoint:
-
-```ts
-POST https://api.liveblocks.io/v2/schemas
-{
-  "name": "Your schema name",
-  "schemaText": `{
-    type Storage {
-      // your schema will go here
-    }
-  }`,
-}
-```
-
-Note that the `schemaText` is enclosed in backticks because the value of your
-schema will be parsed. For more information, see our
-[Schema Language documentation](xxx). The operation above creates the schema,
-but no schema is attached to a room. To attach this schema to a room, you will
-POST to the rooms endpoint:
-
-```ts
-POST https://api.liveblocks.io/v2/rooms/{id}/schema
-{
-  // example "schema": "collaborative-form@1"
-  "schema": "<your-schema>@<version>"
-}
-```
-
-## Create a schema via the dashboard
-
-Creating a schema via the dashboard is straight forward. Simply navigate to the
-project you want to add the schema to, and click on the "Create schema" button.
-You can use the example defined to help you formulate your own schema. In a
-later state, our dashboard will support the ability to attach the schema to a
-room.
+Creating a schema via the dashboard is straightforward. Simply navigate to the
+“Schemas” page in the project you want to add the schema to, and click on the
+“Create schema” button. Provide a name and a definition that describes the shape
+of the data you want to store in your rooms.
 
 <Figure>
   <video autoPlay loop muted playsInline>
     <source
-      src="/images/docs/schhema-validation/create-schema-dashboard.mp4"
+      src="/images/docs/schema-validation/create-schema-dashboard.mp4"
       type="video/mp4"
     />
   </video>
 </Figure>
+
+<Banner title="Schema language specification">
+
+Take a look at our
+[language specification](/docs/pages/guides/schema-validation/language) to learn
+more about what kind of validations are currently supported.
+
+</Banner>
 
 ## The validation process in practice
 
 If you would like to work through an example, you can follow along by using the
 [Multiplayer Form example](/examples/multiplayer-form/nextjs).
 
-The schema we will define for the example is the following:
+Let’s create a schema called `collaborative-form`, with the following
+definition:
 
-```ts
-POST https://api.liveblocks.io/v2/schemas
-
-{
-  "name": "collaborative-form",
-  "schemaText": `
-    type Logo {
-      name: String
-      theme: String
-    }
-    type storage {
-      logo: LiveObject<Logo>
-    }
-  `
+```
+type Logo {
+  name: String
+  theme: String
 }
-// 200 Response
-{
-   "id": "collaborative-form@1",
-   "name": "Collaborative Form",
-   "version":"1",
-   "createdAt": "2023-01-22T15:10:25.225Z",
-   "updatedAt": "2023-01-22T15:10:25.225Z"
+
+type Storage {
+  logo: LiveObject<Logo>
 }
 ```
 
-To attach this schema to a room, you will POST to the rooms endpoint:
+Schemas are versionned to facilitate migrations. To attach a schema to a room,
+you need to specify a version. A version id take the form
+`{schema-name}@{schema-version}`.
+
+To attach the schema we just created to a room, call the following endpoint:
 
 ```ts
 POST https://api.liveblocks.io/v2/rooms/{id}/schema
@@ -139,8 +105,8 @@ POST https://api.liveblocks.io/v2/rooms/{id}/schema
 
 To simulate the importance of schema validation and also demonstrate how
 operations can fail, we will change the nested value of `name` in Storage to
-`organization` by renaming the `updateName` function and updating its parmaters.
-First, we will relace:
+`organization` by renaming the `updateName` function and updating its
+parameters. First, we will relace:
 
 ```tsx file="index.tsx"
 const updateName = useMutation(({ storage }, name: string) => {
@@ -151,68 +117,44 @@ const updateName = useMutation(({ storage }, name: string) => {
 with
 
 ```tsx file="index.tsx"
-const updateOrganization = useMutation(({ storage }, organization: string) => {
-  storage.get("logo").set("organization", organization);
+const updateName = useMutation(({ storage }, name: string) => {
+  storage.get("logo").set("organization", name);
 }, []);
-```
-
-After updating all references from `name` to `organization`, we will replace the
-`onChange` event with our renamed function:
-
-```tsx file="index.tsx" highlight="9"
-<div className={styles.selection_container}>
-  <input
-    id="input-name"
-    type="text"
-    className={styles.input}
-    value={name}
-    onFocus={(e) => updateMyPresence({ focusedId: e.target.id })}
-    onBlur={() => updateMyPresence({ focusedId: null })}
-    onChange={(e) => updateOrganization(e.target.value)}
-    maxLength={20}
-  />
-  <Selections id="input-name" />
-</div>
 ```
 
 This is a simple but common instance of updating variable names, which could
 easily break our integration.
 
-After updating and running locally, we should now see an error because our
-deployed schema and client code are out of sync.
+After updating and running locally, we should now see the following error
+because our deployed schema and client code are out of sync.
+
+```
+Error: Storage mutation rejected by the server.
+Field "organization" does not exist on type "Logo".
+```
 
 Other examples where schema validation would catch the error include:
 
-- Attempting to update the value of the 'name' variable to a number, as it is
+- Attempting to update the value of the `name` variable to a number, as it is
   defined as a string
 - Attempting to delete the `name` variable: it was not defined as optional in
   the schema
 
-### TODO: Placeholder!! we need an updated error example here. need MVP to be merged or for local development steps to test this
-
-When an instance like this occurs, it's indicative of a bug in your app, which
+When an instance like this occurs, it’s indicative of a bug in your app, which
 you should fix in development, just like how you have to fix a TypeScript bug in
 your application before shipping it.
 
-### TODO: I believe the plan here was to insert some components that were used on the comments page
+<Banner title="Private beta">
 
-We’re opening up a private beta waitlist
+Schema validation is currently in private beta. If you would like to try it,
+please fill out the following survey to join our
+[waiting list](https://docs.google.com/forms/d/197IrpiyeqlJo9xOCOfzwdcwBIk6nisk9pToJe3st3Ng/viewform).
 
-TODO: CTA to sign up for it, and to let us know their use case for it
+</Banner>
 
 ## What’s to come
 
-The ability to add schema validation via API calls is powerful- but we’re not
-stopping there. In the future, we will expand the ability to add schema
-validation with the touch of a button. Our road map includes the ability to
-generate Typescript types from the schema. In addition, schema validation with
-Liveblocks will consist of online management and editing of your schemas from
-within the dashboard (and you can currently sign up for the waitlist here!).
-When you create a new schema, you may have noticed that it is versioned: our
-long-term goal is to run migrations with minimal effort by using schema versions
-coupled with webhooks. For those with many rooms, the ability to add schema
-validation en masse will also be available shortly.
-
-How has schema validation helped you ensure the data integrity of your
-application? Is there a specific feature of schema validation you are most
-excited to use?
+Our roadmap includes the ability to generate TypeScript types from the schema
+and tools to help you migrate your data from one schema version to the next. If
+you have any feedback or questions regarding schema validation, come talk to us
+on this Github [discussion](TODO).
