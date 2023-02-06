@@ -35,4 +35,4 @@ As users edit the list, changes will be automatically persisted and synced—all
 
 ### Tutorial
 
-Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/multiplayer-to-do-list/react) to build it from scratch.
+Follow our [step by step tutorial](https://liveblocks.io/docs/tutorials/collaborative-to-do-list/react) to build it from scratch.

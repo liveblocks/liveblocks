@@ -45,7 +45,7 @@ export default async function auth(req, res) {
   const response = await authorize({
     room,
     secret,
-    // Optional, corresponds to the UserMeta[id] type defined in liveblocks.config.ts
+    // Corresponds to the UserMeta[id] type defined in liveblocks.config.ts
     userId: "123",
     groupIds: ["456"], // Optional
     userInfo: {
@@ -83,7 +83,7 @@ app.post("/api/auth", (req, res) => {
   authorize({
     room: req.body.room,
     secret,
-    userId: "123", // Optional
+    userId: "123",
     userInfo: {
       // Optional
       name: "Ada Lovelace",

@@ -121,9 +121,13 @@ export class WebhookHandler {
     if (
       event &&
       event.type &&
-      (event.type === "storageUpdated" ||
-        event.type === "userEntered" ||
-        event.type === "userLeft")
+      [
+        "storageUpdated",
+        "userEntered",
+        "userLeft",
+        "roomCreated",
+        "roomDeleted",
+      ].includes(event.type)
     )
       return;
 
@@ -156,7 +160,12 @@ type WebhookRequest = {
   rawBody: string;
 };
 
-type WebhookEvent = StorageUpdatedEvent | UserEnteredEvent | UserLeftEvent;
+type WebhookEvent =
+  | StorageUpdatedEvent
+  | UserEnteredEvent
+  | UserLeftEvent
+  | RoomCreatedEvent
+  | RoomDeletedEvent;
 
 type StorageUpdatedEvent = {
   type: "storageUpdated";
@@ -207,7 +216,35 @@ type UserLeftEvent = {
   };
 };
 
+type RoomCreatedEvent = {
+  type: "roomCreated";
+  data: {
+    appId: string;
+    roomId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    createdAt: string;
+  };
+};
+
+type RoomDeletedEvent = {
+  type: "roomDeleted";
+  data: {
+    appId: string;
+    roomId: string;
+    /**
+     * ISO 8601 datestring
+     * @example "2021-03-01T12:00:00.000Z"
+     */
+    deletedAt: string;
+  };
+};
+
 export type {
+  RoomCreatedEvent,
+  RoomDeletedEvent,
   StorageUpdatedEvent,
   UserEnteredEvent,
   UserLeftEvent,
