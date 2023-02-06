@@ -10,7 +10,7 @@
   ],
   "scripts": {
     "build": "tsup",
-    "build:ast": "generate-ast src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && jq 'del(.returnTypes)' pegconfig.json | sponge pegconfig.json && grep -Ee 'type ' src/ast/index.ts | cut -d' ' -f3 | sort | while read n; do jq \".returnTypes.$n = \\\"ast.$n\\\"\" pegconfig.json | sponge pegconfig.json; done",
+    "build:ast": "../../node_modules/ast-generator/dist/index.js src/ast/ast.grammar src/ast/index.ts && tsc --noEmit src/ast/index.ts && node bin/update-returntypes.js",
     "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
     "test": "jest"
   },

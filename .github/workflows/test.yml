@@ -1,0 +1,53 @@
+name: Tests
+
+on: [pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x]
+        pkg: ["ast-generator", "@liveblocks/schema"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Turbo Cache
+        id: turbo-cache
+        uses: actions/cache@v3
+        with:
+          key: turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+          path: node_modules/.cache/turbo
+          restore-keys:
+            turbo-cache-${{ matrix.node-version }}-${{ matrix.pkg }}-bust1
+
+      - name: Build
+        run: npm run build -- --filter ${{ matrix.pkg }}
+
+      - name: Ensure no files are changed
+        run: |
+          CHANGED=$(git status --porcelain)
+          if [ -n "$CHANGED" ]; then
+            echo "Local, uncommitted changes found:"
+            echo "$CHANGED"
+            exit 1
+          fi
+
+      - name: Run unit tests
+        run: npm run test -- --filter ${{ matrix.pkg }}
+
+      - name: Run lint checks
+        run: npm run lint -- --filter ${{ matrix.pkg }}
