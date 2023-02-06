@@ -130,6 +130,7 @@
       {
         "title": "Upgrading",
         "path": "/guides/upgrading",
+        "sort": "descending",
         "routes": [
           {
             "title": "Upgrading to 0.17",

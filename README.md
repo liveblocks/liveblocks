@@ -21,7 +21,10 @@
   </a>
 </p>
 
-**At [Liveblocks](https://liveblocks.io), we’re building tools to help companies create world-class collaborative products that attract, engage and retain users.** This repository is a set of open-source packages for building performant and reliable multiplayer experiences.
+**[Liveblocks](https://liveblocks.io) is a real-time collaboration
+infrastructure for developers.** A fully hosted solution and complete toolkit to
+modularly embed collaborative experiences into your product in just days, not
+months.
 
 ## Packages
 
@@ -33,25 +36,36 @@
 
 ## Documentation
 
-Read the [documentation](https://liveblocks.io/docs) for guides and API references.
+Read the [documentation](https://liveblocks.io/docs) to learn how to use
+Liveblocks with our tutorials, guides, and API reference.
+
+> The documentation is open-source and live in this repository, within
+> [`/docs`](./docs).
 
 ## Examples
 
-Explore our [collaborative examples](https://liveblocks.io/examples) to help you get started.
+Explore our gallery of [collaborative examples](https://liveblocks.io/examples)
+to help you get started.
 
-> All examples are open-source and live in this repository, within [`/examples`](./examples).
+> All examples are open-source and live in this repository, within
+> [`/examples`](./examples).
 
 ## Releases
 
-See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or learn more about [upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
+See the [latest changes](https://github.com/liveblocks/liveblocks/releases) or
+learn more about
+[upcoming releases](https://github.com/liveblocks/liveblocks/milestones).
 
 ## Community
 
-- [Discord](https://discord.gg/X4YWJuH9VY) - To get involved with the Liveblocks community, ask questions and share tips.
-- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements, blog posts, and general Liveblocks tips.
+- [Discord](https://liveblocks.io/discord) - To get involved with the Liveblocks
+  community, ask questions and share tips.
+- [Twitter](https://twitter.com/liveblocks) - To receive updates, announcements,
+  blog posts, and general Liveblocks tips.
 
 ## License
 
-Licensed under the Apache License 2.0, Copyright © 2021-present [Liveblocks](https://liveblocks.io).
+Licensed under the Apache License 2.0, Copyright © 2021-present
+[Liveblocks](https://liveblocks.io).
 
 See [LICENSE](./LICENSE) for more information.
