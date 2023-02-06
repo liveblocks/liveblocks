@@ -26,7 +26,7 @@ export function* enumerate<T>(
   start: number = 0
 ): Iterable<[number, T]> {
   let index: number = start;
-  for (let value of iterable) {
+  for (const value of iterable) {
     yield [index++, value];
   }
 }

@@ -5,7 +5,6 @@ import { parseDocument } from "./parser";
 
 // Export all AST nodes and helpers
 export * as AST from "./ast";
-
 export type { CheckedDocument } from "./checker";
 
 /**

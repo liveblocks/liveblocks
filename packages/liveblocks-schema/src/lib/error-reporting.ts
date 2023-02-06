@@ -1,6 +1,6 @@
+import type { Range } from "../ast";
 import { prettify } from "../prettify";
 import { indent } from "./indent";
-import type { Range } from "../ast";
 
 const WHITESPACE_ONLY_RE = /^\s*$/;
 
@@ -38,7 +38,7 @@ export type LineInfo = {
 /**
  * For a string like "foo\nbarbaz\nquxxx\n", builds: [4, 11, 17]
  */
-function buildOffsetLUT(lines: Array<string>): Array<number> {
+function buildOffsetLUT(lines: string[]): number[] {
   const offsets = [];
   let total = 0;
   for (const line of lines) {
@@ -60,8 +60,8 @@ function buildOffsetLUT(lines: Array<string>): Array<number> {
  */
 export class ErrorReporter {
   src: Source;
-  #lines: Array<string> | undefined;
-  #offsets: Array<number> | undefined;
+  #lines: string[] | undefined;
+  #offsets: number[] | undefined;
   #hasErrors: boolean = false;
 
   // static fromPath(path: string): ErrorReporter {
@@ -80,7 +80,7 @@ export class ErrorReporter {
     this.src = typeof src === "string" ? Source.fromText(src) : src;
   }
 
-  get hasErrors() {
+  get hasErrors(): boolean {
     return this.#hasErrors;
   }
 
@@ -88,14 +88,14 @@ export class ErrorReporter {
     return this.src.contents;
   }
 
-  lines() {
+  lines(): string[] {
     if (!this.#lines) {
       this.#lines = this.contents().split("\n");
     }
     return this.#lines;
   }
 
-  offsets() {
+  offsets(): number[] {
     if (!this.#offsets) {
       this.#offsets = buildOffsetLUT(this.lines());
     }
@@ -230,7 +230,7 @@ export class ErrorReporter {
 
     yield "";
     yield colors.cyan(
-      this.formatHeading(`Schema error`, ` in ${this.src.path}`)
+      this.formatHeading("Schema error", ` in ${this.src.path}`)
     );
     if (title) {
       yield "";

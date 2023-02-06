@@ -1,12 +1,13 @@
 import didyoumean from "didyoumean";
+
 import type {
-  TypeRef,
   Definition,
   Document,
   LiveObjectTypeExpr,
   ObjectLiteralExpr,
   ObjectTypeDef,
   Range,
+  TypeRef,
 } from "../ast";
 import { visit } from "../ast";
 import type { ErrorReporter } from "../lib/error-reporting";
@@ -117,16 +118,16 @@ function checkTypeRef(node: TypeRef, context: Context): void {
   }
 }
 
-// XXX Check that type definitions don't use reserved types names e.g. `type String { ... }`)
-// XXX Other examples: Boolean, LiveXxx, Regex, List, Email
+// FIXME(nvie) Check that type definitions don't use reserved types names e.g. `type String { ... }`)
+// FIXME(nvie) Other examples: Boolean, LiveXxx, Regex, List, Email
 
-// XXX Check that lowercased type names are disallowed (e.g. `type henk { ... }`)
-//                                                                 ^ Must start with uppercase
+// FIXME(nvie) Check that lowercased type names are disallowed (e.g. `type henk { ... }`)
+//                                                                         ^ Must start with uppercase
 
 function checkDocument(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
   for (const def of doc.definitions) {
-    // XXX Factor out into checkDefinition?
+    // FIXME(nvie) Factor out into checkDefinition?
     const name = def.name.name;
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
@@ -167,14 +168,14 @@ export type CheckedDocument = {
   /**
    * The raw AST node.
    */
-  // XXX Keep or remove?
+  // FIXME(nvie) Keep or remove?
   // ast: Document;
 
   /**
    * A map of bindings from user-defined type names to their respective
    * definitions.
    */
-  // XXX Keep or remove?
+  // FIXME(nvie) Keep or remove?
   // types: Map<string, Definition>;
 
   /**
@@ -212,7 +213,7 @@ export function check(
   }
 
   return {
-    // XXX Keep or remove?
+    // FIXME(nvie) Keep or remove?
     // ast: doc,
     // types: context.registeredTypes,
 

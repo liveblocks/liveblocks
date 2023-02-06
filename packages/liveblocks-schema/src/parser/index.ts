@@ -1,6 +1,7 @@
-import * as generatedParser from "./generated-parser";
-import { Source, ErrorReporter } from "../lib/error-reporting";
 import type { Document, Node, TypeExpr } from "../ast";
+import type { Source } from "../lib/error-reporting";
+import { ErrorReporter } from "../lib/error-reporting";
+import * as generatedParser from "./generated-parser";
 
 export type StartRule =
   // See the PEG grammar. These are the valid start rule to kick off the
@@ -55,4 +56,4 @@ function parseTypeExpr(src: string | Source | ErrorReporter): TypeExpr {
   return parseGrammarRule(src, "TypeExpr") as TypeExpr;
 }
 
-export { parseDocument, parseTypeExpr, parseGrammarRule };
+export { parseDocument, parseGrammarRule, parseTypeExpr };

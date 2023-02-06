@@ -29,13 +29,16 @@ function stripRanges_(value: Value): Value {
     const rv = {};
     for (const key of Object.keys(value)) {
       if (key === "range") {
-        // @ts-expect-error
+        // @ts-expect-error: Property `range` does not exist on `rv`
         rv.range = undefined;
         continue;
       }
 
-      // @ts-expect-error
-      rv[key] = stripRanges_(value[key]);
+      // @ts-expect-error: rv[key] is too dynamic
+      rv[key] = stripRanges_(
+        // @ts-expect-error value[key] is implicitly any
+        value[key]
+      );
     }
 
     return rv as Node;
@@ -63,7 +66,7 @@ export function parseDocument(src: string): Document {
 /// Custom expecters
 ///
 
-export function expectDocument(src: string, expected: Node) {
+export function expectDocument(src: string, expected: Node): void {
   try {
     return expect(parseDocument(src)).toEqual(stripRanges(expected));
   } catch (error: unknown) {

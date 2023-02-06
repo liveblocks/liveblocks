@@ -9,7 +9,9 @@
     "generate-ast": "./dist/index.js"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "lint": "eslint src/",
+    "format": "eslint --fix src/ ; prettier --write src/"
   },
   "author": "Vincent Driessen",
   "homepage": "https://github.com/nvie/ast-generator#readme",

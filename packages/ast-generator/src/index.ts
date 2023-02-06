@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import chalk from "chalk";
 import { Command } from "commander";
+
 import { generateAST } from "./generator";
 
 async function main() {

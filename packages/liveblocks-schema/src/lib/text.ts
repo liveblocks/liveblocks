@@ -12,11 +12,11 @@ function plural(noun: string): string {
 
 export function formatCount(count: number): string {
   if (count === 0) {
-    return `no`;
+    return "no";
   } else if (count === 1) {
-    return `one`;
+    return "one";
   } else if (count === 2) {
-    return `two`;
+    return "two";
   } else {
     return `${count}`;
   }
@@ -32,11 +32,11 @@ export function pluralize(count: number, noun: string): string {
 
 export function ordinal(count: number): string {
   if (count === 1) {
-    return `1st`;
+    return "1st";
   } else if (count === 2) {
-    return `2nd`;
+    return "2nd";
   } else if (count === 3) {
-    return `3rd`;
+    return "3rd";
   } else {
     return `${count}th`;
   }

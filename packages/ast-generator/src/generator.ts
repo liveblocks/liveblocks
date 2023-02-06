@@ -1,6 +1,6 @@
 import fs from "fs";
-import invariant from "tiny-invariant";
 import prettier from "prettier";
+import invariant from "tiny-invariant";
 
 const TYPEOF_CHECKS = new Set(["number", "string", "boolean"]);
 const BUILTIN_TYPES = new Set(["number", "string", "boolean"]);
@@ -245,7 +245,7 @@ function generateTypeCheckCondition(
   expected: NodeRef,
   actualValue: string
 ): string {
-  let conditions = [];
+  const conditions = [];
 
   if (expected.ref === "Optional") {
     conditions.push(
@@ -339,7 +339,7 @@ function parseGrammarDefinition(path: string): Grammar {
       .sort()
       .map((name) => nodesByName[name]),
 
-    unionsByName: unionsByName,
+    unionsByName,
     unions: Object.keys(unionsByName)
       .sort()
       .map((name) => unionsByName[name]),
@@ -457,7 +457,7 @@ async function generateCode(grammar: Grammar): Promise<string> {
     output.push(`
       export function ${lowercaseFirst(node.name)}(${[
       ...node.fields.map((field) => {
-        let key = field.name;
+        const key = field.name;
         const type = getTypeScriptType(field.ref);
         return optionals.has(field.name)
           ? `${key}: ${type} = ${field.ref.ref === "Optional" ? "null" : "[]"}`
@@ -554,7 +554,10 @@ function writeFile(contents: string, path: string) {
   }
 }
 
-export async function generateAST(inpath: string, outpath: string) {
+export async function generateAST(
+  inpath: string,
+  outpath: string
+): Promise<void> {
   const grammar = parseGrammarDefinition(inpath);
   const uglyCode = await generateCode(grammar);
 
