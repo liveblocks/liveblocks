@@ -12,11 +12,6 @@
     | FloatKeyword
 
 
-@Comment:
-    # | BlockComment
-    | LineComment
-
-
 # A custom user-defined type definition
 @Definition:
     | ObjectTypeDef
@@ -50,7 +45,6 @@ TypeRef:
 
 Document:
     definitions  @Definition+
-    comments     @Comment*?
 
 
 FieldDef:
@@ -61,10 +55,6 @@ FieldDef:
 
 Identifier:
     name  string
-
-
-LineComment:
-    text  string
 
 
 # e.g. "LiveObject<Shape>"

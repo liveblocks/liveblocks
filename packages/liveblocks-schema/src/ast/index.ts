@@ -32,10 +32,6 @@ export function isBuiltInScalarType(node: Node): node is BuiltInScalarType {
   );
 }
 
-export function isComment(node: Node): node is Comment {
-  return node._kind === "LineComment";
-}
-
 export function isDefinition(node: Node): node is Definition {
   return node._kind === "ObjectTypeDef";
 }
@@ -55,8 +51,6 @@ export function isTypeExpr(node: Node): node is TypeExpr {
 
 export type BuiltInScalarType = StringKeyword | IntKeyword | FloatKeyword;
 
-export type Comment = LineComment;
-
 export type Definition = ObjectTypeDef;
 
 export type LiveTypeExpr = LiveObjectTypeExpr;
@@ -75,7 +69,6 @@ export type Node =
   | FloatKeyword
   | Identifier
   | IntKeyword
-  | LineComment
   | LiveObjectTypeExpr
   | ObjectLiteralExpr
   | ObjectTypeDef
@@ -98,7 +91,6 @@ export function isNode(node: Node): node is Node {
     node._kind === "FloatKeyword" ||
     node._kind === "Identifier" ||
     node._kind === "IntKeyword" ||
-    node._kind === "LineComment" ||
     node._kind === "LiveObjectTypeExpr" ||
     node._kind === "ObjectLiteralExpr" ||
     node._kind === "ObjectTypeDef" ||
@@ -110,7 +102,6 @@ export function isNode(node: Node): node is Node {
 export type Document = {
   _kind: "Document";
   definitions: Definition[];
-  comments: Comment[] | null;
   range: Range;
 };
 
@@ -137,12 +128,6 @@ export type Identifier = {
 export type IntKeyword = {
   _kind: "IntKeyword";
   dummy_: string | null;
-  range: Range;
-};
-
-export type LineComment = {
-  _kind: "LineComment";
-  text: string;
   range: Range;
 };
 
@@ -179,7 +164,6 @@ export type TypeRef = {
 
 export function document(
   definitions: Definition[],
-  comments: Comment[] | null = null,
   range: Range = [0, 0]
 ): Document {
   DEBUG &&
@@ -192,20 +176,11 @@ export function document(
           definitions
         )}`
       );
-      assert(
-        comments === null ||
-          (Array.isArray(comments) &&
-            comments.every((item) => isComment(item))),
-        `Invalid value for "comments" arg in "Document" call.\nExpected: @Comment*?\nGot:      ${JSON.stringify(
-          comments
-        )}`
-      );
       assertRange(range, "Document");
     })();
   return {
     _kind: "Document",
     definitions,
-    comments,
     range,
   };
 }
@@ -303,24 +278,6 @@ export function intKeyword(
   return {
     _kind: "IntKeyword",
     dummy_,
-    range,
-  };
-}
-
-export function lineComment(text: string, range: Range = [0, 0]): LineComment {
-  DEBUG &&
-    (() => {
-      assert(
-        typeof text === "string",
-        `Invalid value for "text" arg in "LineComment" call.\nExpected: string\nGot:      ${JSON.stringify(
-          text
-        )}`
-      );
-      assertRange(range, "LineComment");
-    })();
-  return {
-    _kind: "LineComment",
-    text,
     range,
   };
 }
@@ -442,7 +399,6 @@ interface Visitor<TContext> {
   FloatKeyword?(node: FloatKeyword, context: TContext): void;
   Identifier?(node: Identifier, context: TContext): void;
   IntKeyword?(node: IntKeyword, context: TContext): void;
-  LineComment?(node: LineComment, context: TContext): void;
   LiveObjectTypeExpr?(node: LiveObjectTypeExpr, context: TContext): void;
   ObjectLiteralExpr?(node: ObjectLiteralExpr, context: TContext): void;
   ObjectTypeDef?(node: ObjectTypeDef, context: TContext): void;
@@ -468,7 +424,6 @@ export function visit<TNode extends Node, TContext>(
     case "Document":
       visitor.Document?.(node, context);
       node.definitions.forEach((d) => visit(d, visitor, context));
-      // TODO: Implement visiting for _optional_ field node.comments
       break;
 
     case "FieldDef":
@@ -487,10 +442,6 @@ export function visit<TNode extends Node, TContext>(
 
     case "IntKeyword":
       visitor.IntKeyword?.(node, context);
-      break;
-
-    case "LineComment":
-      visitor.LineComment?.(node, context);
       break;
 
     case "LiveObjectTypeExpr":

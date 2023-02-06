@@ -54,12 +54,6 @@ export function prettify(node: Node): string {
         node.type
       )}`;
 
-    // case "StringLiteral":
-    //   return quoteDouble(node.value);
-
-    case "LineComment":
-      return `# ${node.text}`;
-
     default:
       return assertNever(node, `Please define prettify for «${node}» nodes`);
   }

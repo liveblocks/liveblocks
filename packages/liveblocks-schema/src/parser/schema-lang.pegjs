@@ -44,18 +44,7 @@
 
 Document
   = __ defs:DefinitionList __
-    {
-      return ast.document(
-        defs,
-
-        // Comments have been consumed as a side-effect during parsing, and
-        // have been stored on the `options` global.  This way, they stay out
-        // of the way in the resulting parse tree, but still get consumed and
-        // recorded, so tools like formatters can access them.
-        options?.comments,
-        rng(),
-      )
-    }
+    { return ast.document(defs, rng()) }
 
 
 // Single-underscore means "whitespace but no newlines"
@@ -73,18 +62,11 @@ WhitespaceWithNewlines = $( [ \t\r\n]+ )
 
 
 Comment
-  = comment:LineComment
-    {
-      /* if (!options) { return null; } */
-      /* options.comments = options.comments ?? []; */
-      /* options.comments.push(comment); */
-      return null;
-    }
+  = LineComment
 
 
 LineComment
   = $( '//' / '#' ) text:$( [^\n] )* &[\n]
-    { return ast.lineComment(text, rng()) }
 
 
 LOWER_CHAR = [a-z]
