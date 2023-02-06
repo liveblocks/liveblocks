@@ -1,6 +1,9 @@
 <p align="center">
-  <a href="https://liveblocks.io">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
+  <a href="https://liveblocks.io#gh-light-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
+  </a>
+  <a href="https://liveblocks.io#gh-dark-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
   </a>
 </p>
 
@@ -59,7 +62,24 @@ Options:
   
   --no-git
   Don't initialize git
- 
+  
+  --vercel
+  Deploy on Vercel, and get Liveblocks API key
+  
+  --no-vercel
+  Don't deploy on Vercel
+  
+  --get-key
+  Get Liveblocks API key
+  
+  --no-get-key
+  Don't get Liveblocks API key
+  
+  --open
+  Open browser without asking permission, when deploying to Vercel or getting API key 
+  
+  --help
+  Find more info
 ```
 
 #### Examples

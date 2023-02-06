@@ -112,6 +112,10 @@ describe("WebhookHandler", () => {
     });
 
     it('should verify a "userLeft" event', () => {
+      jest.useFakeTimers({
+        now: 1674851609000,
+      });
+
       const userLeft = {
         data: {
           appId: "605a50b01a36d5ea7a2e9104",
@@ -138,8 +142,6 @@ describe("WebhookHandler", () => {
         ),
       };
 
-      const dateNowSpy = jest.spyOn(Date, "now").mockReturnValue(1674851609000);
-
       const webhookHandler = new WebhookHandler(secret);
 
       const event = webhookHandler.verifyRequest({
@@ -148,8 +150,78 @@ describe("WebhookHandler", () => {
       });
 
       expect(event).toEqual(userLeft);
+    });
 
-      dateNowSpy.mockRestore();
+    it('should verify a "roomCreated" event', () => {
+      jest.useFakeTimers({
+        now: 1674851609000,
+      });
+      const roomCreated = {
+        data: {
+          appId: "605a50b01a36d5ea7a2e9104",
+          createdAt: "2023-01-27T20:33:23.737Z",
+          roomId: "examples-hero-21-07-2022",
+        },
+        type: "roomCreated",
+      };
+
+      const rawRoomCreated = JSON.stringify(roomCreated);
+
+      const headersRoomCreated = {
+        "webhook-id": "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
+        "webhook-timestamp": "1674851609",
+        "webhook-signature": generateSignatureWithSvix(
+          secret,
+          "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
+          "1674851609",
+          rawRoomCreated
+        ),
+      };
+
+      const webhookHandler = new WebhookHandler(secret);
+
+      const event = webhookHandler.verifyRequest({
+        headers: headersRoomCreated,
+        rawBody: rawRoomCreated,
+      });
+
+      expect(event).toEqual(roomCreated);
+    });
+
+    it('should verify a "roomDeleted" event', () => {
+      jest.useFakeTimers({
+        now: 1674851609000,
+      });
+      const roomDeleted = {
+        data: {
+          appId: "605a50b01a36d5ea7a2e9104",
+          deletedAt: "2023-01-27T20:33:23.737Z",
+          roomId: "examples-hero-21-07-2022",
+        },
+        type: "roomDeleted",
+      };
+
+      const rawRoomDeleted = JSON.stringify(roomDeleted);
+
+      const headersRoomDeleted = {
+        "webhook-id": "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
+        "webhook-timestamp": "1674851609",
+        "webhook-signature": generateSignatureWithSvix(
+          secret,
+          "msg_2KvOUwNvJ8oYoL0SJRPdqJwSuiu",
+          "1674851609",
+          rawRoomDeleted
+        ),
+      };
+
+      const webhookHandler = new WebhookHandler(secret);
+
+      const event = webhookHandler.verifyRequest({
+        headers: headersRoomDeleted,
+        rawBody: rawRoomDeleted,
+      });
+
+      expect(event).toEqual(roomDeleted);
     });
 
     it("should verify an event with multiple signatures", () => {

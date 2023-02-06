@@ -44,23 +44,23 @@
     "routes": [
       {
         "title": "To-do list",
-        "path": "/tutorials/multiplayer-to-do-list",
+        "path": "/tutorials/collaborative-to-do-list",
         "routes": [
           {
             "title": "React",
-            "path": "/tutorials/multiplayer-to-do-list/react"
+            "path": "/tutorials/collaborative-to-do-list/react"
           },
           {
             "title": "React + Redux",
-            "path": "/tutorials/multiplayer-to-do-list/react-redux"
+            "path": "/tutorials/collaborative-to-do-list/react-redux"
           },
           {
             "title": "React + Zustand",
-            "path": "/tutorials/multiplayer-to-do-list/react-zustand"
+            "path": "/tutorials/collaborative-to-do-list/react-zustand"
           },
           {
             "title": "JavaScript",
-            "path": "/tutorials/multiplayer-to-do-list/javascript"
+            "path": "/tutorials/collaborative-to-do-list/javascript"
           }
         ]
       },
@@ -130,6 +130,7 @@
       {
         "title": "Upgrading",
         "path": "/guides/upgrading",
+        "sort": "descending",
         "routes": [
           {
             "title": "Upgrading to 0.17",

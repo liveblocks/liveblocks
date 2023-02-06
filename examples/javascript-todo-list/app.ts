@@ -9,7 +9,7 @@ async function run() {
   if (!/^pk_(live|test)/.test(PUBLIC_KEY)) {
     console.warn(
       `Replace "${PUBLIC_KEY}" by your public key from https://liveblocks.io/dashboard/apikeys.\n` +
-      `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/javascript-todo-list#getting-started.`
+        `Learn more: https://github.com/liveblocks/liveblocks/tree/main/examples/javascript-todo-list#getting-started.`
     );
   }
 
@@ -17,22 +17,36 @@ async function run() {
     publicApiKey: PUBLIC_KEY,
   });
 
-  const room = client.enter(roomId, {
-    initialPresence: { isTyping: true },
+  type Presence = {
+    isTyping: boolean;
+  };
+
+  type Todo = {
+    text: string;
+  };
+
+  type Storage = {
+    todos: LiveList<Todo>;
+  };
+
+  const room = client.enter<Presence, Storage>(roomId, {
+    initialPresence: { isTyping: false },
     initialStorage: { todos: new LiveList() },
   });
 
-  const whoIsHere = document.getElementById("who_is_here");
-  const todoInput = document.getElementById("todo_input");
-  const someoneIsTyping = document.getElementById("someone_is_typing");
-  const todosContainer = document.getElementById("todos_container");
+  const whoIsHere = document.getElementById("who_is_here") as HTMLDivElement;
+  const todoInput = document.getElementById("todo_input") as HTMLInputElement;
+  const someoneIsTyping = document.getElementById(
+    "someone_is_typing"
+  ) as HTMLDivElement;
+  const todosContainer = document.getElementById(
+    "todos_container"
+  ) as HTMLDivElement;
 
   room.subscribe("others", (others) => {
-    whoIsHere.innerHTML = `There are ${others.count} other users online`;
+    whoIsHere.innerHTML = `There are ${others.length} other users online`;
 
-    someoneIsTyping.innerHTML = others
-      .toArray()
-      .some((user) => user.presence?.isTyping)
+    someoneIsTyping.innerHTML = others.some((user) => user.presence.isTyping)
       ? "Someone is typing..."
       : "";
   });
@@ -58,9 +72,7 @@ async function run() {
   function render() {
     todosContainer.innerHTML = "";
 
-    for (let i = 0; i < todos.length; i++) {
-      const todo = todos.get(i);
-
+    todos.forEach((todo, index) => {
       const todoContainer = document.createElement("div");
       todoContainer.classList.add("todo_container");
 
@@ -73,12 +85,12 @@ async function run() {
       deleteButton.classList.add("delete_button");
       deleteButton.innerHTML = "✕";
       deleteButton.addEventListener("click", () => {
-        todos.delete(i);
+        todos.delete(index);
       });
       todoContainer.appendChild(deleteButton);
 
       todosContainer.appendChild(todoContainer);
-    }
+    });
   }
 
   room.subscribe(todos, () => {

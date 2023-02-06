@@ -1,61 +1,19 @@
-import commandLineArgs, { OptionDefinition } from "command-line-args";
 import c from "ansi-colors";
+import commandLineArgs from "command-line-args";
 import prompts, { PromptObject } from "prompts";
-import * as nextjsTemplate from "./templates/nextjsTemplate";
-import * as exampleTemplate from "./templates/exampleTemplate";
 import readline from "readline";
+import { commandLineFlags } from "./flags";
+import * as nextjsTemplate from "./templates/nextjs-starter-kit";
+import * as exampleTemplate from "./templates/example";
+import * as helpTemplate from "./templates/help";
 
-type TemplateName = "next" | "example";
+type TemplateName = "next" | "example" | "help";
 
 const templates: { [K in TemplateName]: any } = {
   next: nextjsTemplate,
   example: exampleTemplate,
+  help: helpTemplate,
 };
-
-export const commandLineFlags: OptionDefinition[] = [
-  {
-    name: "template",
-    type: String,
-    defaultOption: true,
-  },
-  {
-    name: "example",
-    type: String,
-  },
-  {
-    name: "next",
-    type: Boolean,
-  },
-  {
-    name: "name",
-    type: String,
-  },
-  {
-    name: "package-manager",
-    type: String,
-  },
-  {
-    name: "install",
-    type: Boolean,
-  },
-  {
-    name: "no-install",
-    type: Boolean,
-  },
-  {
-    name: "git",
-    type: Boolean,
-  },
-  {
-    name: "no-git",
-    type: Boolean,
-  },
-  // For Next.js starter kit
-  {
-    name: "auth",
-    type: String,
-  },
-];
 
 export async function createLiveblocksApp() {
   listenForQuit();
@@ -80,6 +38,11 @@ export async function createLiveblocksApp() {
       flags[key.slice(3)] = false;
     }
   });
+
+  // If --help specified, show the help template
+  if (flags.help) {
+    flags.template = "help";
+  }
 
   // If --example specified, this is an example
   if (flags.example) {

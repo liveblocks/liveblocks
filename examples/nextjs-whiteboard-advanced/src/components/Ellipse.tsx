@@ -4,14 +4,12 @@ import { colorToCss } from "../utils";
 type Props = {
   id: string;
   layer: EllipseLayer;
-  isAnimated: boolean;
   onPointerDown: (e: React.PointerEvent, id: string) => void;
   selectionColor?: string;
 };
 
 export default function Ellipse({
   layer,
-  isAnimated,
   onPointerDown,
   id,
   selectionColor,
@@ -20,7 +18,6 @@ export default function Ellipse({
     <ellipse
       onPointerDown={(e) => onPointerDown(e, id)}
       style={{
-        transition: isAnimated ? "all 120ms linear" : "",
         transform: `translate(${layer.x}px, ${layer.y}px)`,
       }}
       cx={layer.width / 2}
