@@ -4,13 +4,17 @@
   "pipeline": {
     "build:ast": {
       "dependsOn": ["^build"],
-      "outputs": ["src/ast/index.ts"],
+      "outputs": ["src/ast/index.ts", "pegconfig.json"],
       "inputs": ["src/ast/ast.grammar"]
     },
     "build:parser": {
-      "dependsOn": [],
+      "dependsOn": ["build:ast"],
       "outputs": ["src/parser/generated-parser.ts"],
-      "inputs": ["src/parser/schema-lang.pegjs", "src/pegconfig.json"]
+      "inputs": [
+        "bin/build-parser",
+        "pegconfig.json",
+        "src/parser/schema-lang.pegjs"
+      ]
     },
     "build": {
       "dependsOn": ["build:ast", "build:parser"],

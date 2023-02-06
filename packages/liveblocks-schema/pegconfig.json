@@ -2,5 +2,24 @@
   "tspegjs": {
     "customHeader": "import * as ast from \"../ast\";\n"
   },
-  "returnTypes": {}
+  "returnTypes": {
+    "BuiltInScalarType": "ast.BuiltInScalarType",
+    "Comment": "ast.Comment",
+    "Definition": "ast.Definition",
+    "Document": "ast.Document",
+    "FieldDef": "ast.FieldDef",
+    "FloatKeyword": "ast.FloatKeyword",
+    "Identifier": "ast.Identifier",
+    "IntKeyword": "ast.IntKeyword",
+    "LineComment": "ast.LineComment",
+    "LiveObjectTypeExpr": "ast.LiveObjectTypeExpr",
+    "LiveTypeExpr": "ast.LiveTypeExpr",
+    "Node": "ast.Node",
+    "ObjectLiteralExpr": "ast.ObjectLiteralExpr",
+    "ObjectTypeDef": "ast.ObjectTypeDef",
+    "Range": "ast.Range",
+    "StringKeyword": "ast.StringKeyword",
+    "TypeExpr": "ast.TypeExpr",
+    "TypeRef": "ast.TypeRef"
+  }
 }

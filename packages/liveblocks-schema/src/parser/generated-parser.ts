@@ -462,7 +462,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     );
   }
 
-  function peg$parseDocument(): any {
+  function peg$parseDocument(): ast.Document {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 0;
@@ -678,7 +678,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseComment(): any {
+  function peg$parseComment(): ast.Comment {
     let s0, s1;
 
     const key = peg$currPos * 38 + 5;
@@ -703,7 +703,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseLineComment(): any {
+  function peg$parseLineComment(): ast.LineComment {
     let s0, s1, s2, s3, s4;
 
     const key = peg$currPos * 38 + 6;
@@ -877,7 +877,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseIdentifier(): any {
+  function peg$parseIdentifier(): ast.Identifier {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 10;
@@ -1022,7 +1022,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseObjectTypeDef(): any {
+  function peg$parseObjectTypeDef(): ast.ObjectTypeDef {
     let s0, s1, s2, s3, s4;
 
     const key = peg$currPos * 38 + 12;
@@ -1071,7 +1071,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseObjectLiteralExpr(): any {
+  function peg$parseObjectLiteralExpr(): ast.ObjectLiteralExpr {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 13;
@@ -1213,7 +1213,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseFieldDef(): any {
+  function peg$parseFieldDef(): ast.FieldDef {
     let s0, s1, s2, s3, s4;
 
     const key = peg$currPos * 38 + 15;
@@ -1262,7 +1262,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseStringKeyword(): any {
+  function peg$parseStringKeyword(): ast.StringKeyword {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 16;
@@ -1308,7 +1308,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseIntKeyword(): any {
+  function peg$parseIntKeyword(): ast.IntKeyword {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 17;
@@ -1354,7 +1354,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseFloatKeyword(): any {
+  function peg$parseFloatKeyword(): ast.FloatKeyword {
     let s0, s1, s2, s3;
 
     const key = peg$currPos * 38 + 18;
@@ -1446,7 +1446,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseTypeExpr(): any {
+  function peg$parseTypeExpr(): ast.TypeExpr {
     let s0;
 
     const key = peg$currPos * 38 + 20;
@@ -1552,7 +1552,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseBuiltInScalarType(): any {
+  function peg$parseBuiltInScalarType(): ast.BuiltInScalarType {
     let s0;
 
     const key = peg$currPos * 38 + 22;
@@ -1577,7 +1577,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseLiveObjectTypeExpr(): any {
+  function peg$parseLiveObjectTypeExpr(): ast.LiveObjectTypeExpr {
     let s0, s1, s2, s3, s4;
 
     const key = peg$currPos * 38 + 23;
@@ -1623,7 +1623,7 @@ function peg$parse(input: string, options?: IParseOptions) {
     return s0;
   }
 
-  function peg$parseTypeRef(): any {
+  function peg$parseTypeRef(): ast.TypeRef {
     let s0, s1;
 
     const key = peg$currPos * 38 + 24;
