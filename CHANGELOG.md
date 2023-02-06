@@ -1,5 +1,7 @@
 # v1.0.0
 
+This major release marks the maturity of Liveblocks. There are no upgrade instructions for 1.0.0.
+
 ## `@liveblocks/node`
 
 `authorize` option `userId` is now mandatory.
