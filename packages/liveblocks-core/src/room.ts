@@ -1776,10 +1776,10 @@ function makeStateMachine<
                 }
               }
 
-              if (traces.size) {
+              if (traces.size > 0) {
                 console.warnWithTitle(
-                  "The rejected storage mutations where caused by the following function calls:\n\n",
-                  Array.from(traces).join("\n\n")
+                  "The following function calls caused the rejected storage mutations:",
+                  `\n\n${Array.from(traces).join("\n\n")}`
                 );
               }
 
