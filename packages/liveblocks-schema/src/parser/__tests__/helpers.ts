@@ -1,7 +1,7 @@
-import type { Document, Node, TypeExpr } from "../../ast";
+import type { Document, Node } from "../../ast";
 import { parseGrammarRule } from "..";
 
-type Value = string | number | boolean | null | void | Node | Value[];
+type Value = string | number | boolean | null | undefined | Node | Value[];
 
 describe("helpers", () => {
   it("ignores me", () => {
