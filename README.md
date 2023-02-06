@@ -1,11 +1,13 @@
-# Tools for schema validation
+# Liveblocks schema language
 
 This repo is currently private while we're still setting up the foundational
 work, but this may eventually become open source.
 
-This repo offers:
+This monorepo consists of two subprojects:
 
-- A private NPM package, installable via `@liveblocks/schema`
+- [`liveblocks-schema`](./packages/liveblocks-schema) - the source of the main
+  `@liveblocks/schema` package
+- [`ast-generator`](./packages/ast-generator) - an internal build tool
 
 # Architecture
 
