@@ -1,0 +1,49 @@
+meta:
+  title: "Schema validation"
+  parentTitle: "Guides"
+  description:
+    "Learn how to use schemas to ensure data integrity in your application"
+---
+
+## Why use schema language
+Enginneers need to have a way to specify the schema they would like to apply to a room. 
+* Existing languages like GraphQL, Prisma, and JSON schema do not support Live Structures, or have more features than are necessary.
+* Using DSL would be completely customized and would require learning a new language
+* When a complex application needs to apply a schema migration, we had to create a server side solution that could assign schemas to rooms based on developer configuration
+
+## Syntax 
+Each schema must include the `Storage` type, which is a special type of "root" object.
+```ts
+// the Storage type is a mandatory specification in the schema
+type Storage {
+  // Your stroage definition here
+}
+```
+
+## Built in types
+Familiar scalar types are globally available when you creat a schema. 
+We support:
+* `String`
+* `Int` (only whole numbers)
+* `Number` (floats and whole numbers)
+* `Boolean` 
+In addition, we support the JSON type which represents any legal JSON value (this type is the same type as defined in @liveblocks/client):
+* `Json`
+
+## Built-In complex types
+We offer 2 globally complex types with more coming to come as we complete the Beta versoin of schema validation.  these  types take expressions as arguments.
+* `Array<typeExpr>
+* `LiveObject<typeExpr>` (where typeExpr must be an object type)
+
+## Ojbect Types
+Object types can exist in two capacities: 
+* Registered as a global type name as a defnition 
+```ts
+type myObject {
+  title: String
+  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema 
+  age?: Int //Optional
+}
+```
+
+## Examples
