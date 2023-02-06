@@ -106,7 +106,7 @@ POST https://api.liveblocks.io/v2/rooms/{id}/schema
 To simulate the importance of schema validation and also demonstrate how
 operations can fail, we will change the nested value of `name` in Storage to
 `organization` by renaming the `updateName` function and updating its
-parameters. First, we will relace:
+parameters. First, we will replace:
 
 ```tsx file="index.tsx"
 const updateName = useMutation(({ storage }, name: string) => {
