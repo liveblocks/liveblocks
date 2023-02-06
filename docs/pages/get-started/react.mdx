@@ -132,13 +132,13 @@ export const {
 To show how many other users are in the room, import `useOthers` into a
 component and use it as below.
 
-```tsx highlight="4"
+```tsx highlight="1,4"
 import { RoomProvider, useOthers } from "./liveblocks.config";
 
 function App() {
   const others = useOthers();
 
-  return <div>There are {others.count} other users with you in the room.</div>;
+  return <div>There are {others.length} other users with you in the room.</div>;
 }
 
 function Index() {
@@ -169,8 +169,8 @@ cursor: { x: 256, y: 367 }
 
 To start using presence, let’s define a type named `Presence` in
 `liveblocks.config.ts` and use it as a generic argument of `createRoomContext`.
-All of our _presence_ hooks returned by `createRoomContext` will be typed correspondingly to
-the newly defined `Presence` type.
+All of our _presence_ hooks returned by `createRoomContext` will be typed
+correspondingly to the newly defined `Presence` type.
 
 ```tsx file="liveblocks.config.ts" highlight="8-10,12"
 import { createClient } from "@liveblocks/client";
@@ -192,9 +192,9 @@ initial cursor to `null` to represent a user whose cursor is currently
 off-screen.
 
 ```tsx file="index.ts" highlight="7"
-import App from "./App";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider } from "./liveblocks.config";
+import { RoomProvider, useOthers } from "./liveblocks.config";
+
+// App
 
 function Index() {
   return (
@@ -256,16 +256,25 @@ To retrieve each user’s presence, and cursor locations, we can once again add
 user’s presence, and grab their cursor property. If a cursor is set to `null`, a
 user is off-screen, so we’ll skip rendering it.
 
-```tsx
-import { useOthers } from "./liveblocks.config";
+```tsx highlight="20-26"
+import {
+  useOthers,
+  useUpdateMyPresence,
+  RoomProvider,
+} from "./liveblocks.config";
 
 function App() {
-  // List of other users
   const others = useOthers();
+  const updateMyPresence = useUpdateMyPresence();
 
-  // If a cursor is on screen (not null), render
   return (
-    <>
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={(e) =>
+        updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } })
+      }
+      onPointerLeave={() => updateMyPresence({ cursor: null })}
+    >
       {others.map(({ connectionId, presence }) =>
         presence.cursor ? (
           <Cursor
@@ -275,7 +284,7 @@ function App() {
           />
         ) : null
       )}
-    </>
+    </div>
   );
 }
 
@@ -287,7 +296,7 @@ function Cursor({ x, y }) {
         position: "absolute",
         transform: `translate(${x}px, ${y}px)`,
       }}
-      src="cursor-image.svg"
+      src="https://liveblocks.io/images/cursor.svg"
     />
   );
 }
@@ -321,11 +330,11 @@ available:
 
 ### Defining initial storage [#initial-storage]
 
-To use storage, first define a type named `Storage` in `liveblocks.config.ts`, like we
-did for `Presence`. In this example we’ll define a [`LiveObject`][] called
-`scientist`, containing first and last name properties.
+To use storage, first define a type named `Storage` in `liveblocks.config.ts`,
+like we did for `Presence`. In this example we’ll define a [`LiveObject`][]
+called `scientist`, containing first and last name properties.
 
-```tsx file="liveblocks.config.ts" highlight="4-6,11"
+```tsx file="liveblocks.config.ts" highlight="1,4-6,11"
 import { createClient, LiveObject } from "@liveblocks/client";
 // ...
 
@@ -371,7 +380,7 @@ Once the default structure is defined, we can then make use of our storage. The
 [`useStorage`][] hook allows us to access an immutable version of our storage
 using a selector function.
 
-```tsx highlight="4,8,9"
+```tsx highlight="4,12,13"
 import { useStorage } from "./liveblocks.config";
 
 function App() {
@@ -394,15 +403,16 @@ The two input values will now automatically update in a real-time as `firstName`
 and `lastName` are modified by other users.
 
 `useStorage` returns `null` during the initial loading because the storage is
-loaded from the server. It can quickly become cumbersome to handle `null` whenever
-we use `useStorage`, but we have some good new for you; `@liveblocks/react` contains
-a [`Suspense`](https://beta.reactjs.org/reference/react/Suspense) version of all
+loaded from the server. It can quickly become cumbersome to handle `null`
+whenever we use `useStorage`, but we have some good new for you;
+`@liveblocks/react` contains a
+[`Suspense`](https://beta.reactjs.org/reference/react/Suspense) version of all
 of our hooks.
 
 ### Using Suspense
 
-If you’d like to use `Suspense` in your application, make sure to re-export our hooks from
-`liveblocks.config.ts` like so.
+If you’d like to use `Suspense` in your application, make sure to re-export our
+hooks from `liveblocks.config.ts` like so.
 
 ```tsx file="liveblocks.config.ts" highlight="4-8"
 // ...
