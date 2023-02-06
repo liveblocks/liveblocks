@@ -10,7 +10,7 @@ Liveblocks custom hooks. The hooks are part of [`@liveblocks/react`][], a
 package enabling multiplayer experiences in a matter of minutes.
 
 This guide uses [TypeScript](https://www.typescriptlang.org/). Liveblocks can
-definitely be used without TypeScript. We believe typings is helpful to make
+definitely be used without TypeScript. We believe typings are helpful to make
 collaborative apps more robust, but if you’d prefer to skip the TypeScript
 syntax, feel free to write your code in JavaScript.
 
@@ -67,7 +67,7 @@ Instead of using the client directly, we’re going to use [`createRoomContext`]
 from `@liveblocks/react` to create a [`RoomProvider`][] and hooks to make it
 easy to consume from our components.
 
-```tsx file="src/liveblocks.config.ts" highlight="2,8"
+```tsx file="liveblocks.config.ts" highlight="2,8"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -167,9 +167,9 @@ example would be the pixel coordinates of a user’s cursor:
 cursor: { x: 256, y: 367 }
 ```
 
-To start using presence, let’s define a type `Presence` in
+To start using presence, let’s define a type named `Presence` in
 `liveblocks.config.ts` and use it as a generic argument of `createRoomContext`.
-All of our _presence_ hooks returned `createRoomContext` will be according to
+All of our _presence_ hooks returned by `createRoomContext` will be typed correspondingly to
 the newly defined `Presence` type.
 
 ```tsx file="liveblocks.config.ts" highlight="8-10,12"
@@ -321,7 +321,7 @@ available:
 
 ### Defining initial storage [#initial-storage]
 
-To use storage, first define a type `Storage` in `liveblocks.config.ts`, like we
+To use storage, first define a type named `Storage` in `liveblocks.config.ts`, like we
 did for `Presence`. In this example we’ll define a [`LiveObject`][] called
 `scientist`, containing first and last name properties.
 
@@ -393,16 +393,16 @@ function App() {
 The two input values will now automatically update in a real-time as `firstName`
 and `lastName` are modified by other users.
 
-`useStorage` returns null during the initial loading because the storage is
-loaded from the server. This quickly become cumbersome to handle `null` whenever
-we use `useStorage`, we have some good new for you; `@liveblocks/react` contains
+`useStorage` returns `null` during the initial loading because the storage is
+loaded from the server. It can quickly become cumbersome to handle `null` whenever
+we use `useStorage`, but we have some good new for you; `@liveblocks/react` contains
 a [`Suspense`](https://beta.reactjs.org/reference/react/Suspense) version of all
 of our hooks.
 
 ### Using Suspense
 
-If you can use `Suspense` in your application, re-export our hooks from
-`liveblocks.config.ts` like this.
+If you’d like to use `Suspense` in your application, make sure to re-export our hooks from
+`liveblocks.config.ts` like so.
 
 ```tsx file="liveblocks.config.ts" highlight="4-8"
 // ...
@@ -456,10 +456,10 @@ function Index() {
 }
 ```
 
-If you’re using a framework that support Server Side Rendering like
+If you’re using a framework that supports Server Side Rendering like
 [Next.js](https://nextjs.org/), you cannot use `Suspense` directly like this.
 Liveblocks does not load the storage on the server by default, so the components
-using `useStorage` will never be able to render. To still benefit from
+using `useStorage` will never be able to render. To keep the benefits from
 `Suspense`, you should use `ClientSideSuspense` from ` @liveblocks/react`
 instead of the normal `Suspense` from React like this:
 
