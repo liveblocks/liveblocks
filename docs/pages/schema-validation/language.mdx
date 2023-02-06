@@ -47,3 +47,20 @@ type myObject {
 ```
 
 ## Examples
+This is an example schema that you could create to include a `Rect` type 
+
+```type RGB { r: Int, g: Int, b: Int }
+
+type Rect {
+  type: "rect"
+  x: Int
+  y: Int
+  width: Int
+  height: Int
+  fill: RGB
+  stroke: RGB
+}
+
+type Storage {
+  circle: LiveOjbect<Rect>
+}
