@@ -1,5 +1,5 @@
 import type { Document, Node } from "../../ast";
-import { parseGrammarRule } from "..";
+import { parseDocument as originalParseDocument } from "..";
 
 type Value = string | number | boolean | null | undefined | Node | Value[];
 
@@ -59,7 +59,7 @@ function stripRanges<T extends Node | Node[]>(node: T): T {
 //
 
 export function parseDocument(src: string): Document {
-  return stripRanges(parseGrammarRule(src, "Document") as Document);
+  return stripRanges(originalParseDocument(src));
 }
 
 ///

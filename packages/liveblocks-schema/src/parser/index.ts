@@ -48,12 +48,10 @@ function parseGrammarRule(
   throw new Error("Should never get here");
 }
 
-function parseDocument(src: string | Source | ErrorReporter): Document {
+export function parseDocument(src: string | Source | ErrorReporter): Document {
   return parseGrammarRule(src, "Document") as Document;
 }
 
-function parseTypeExpr(src: string | Source | ErrorReporter): TypeExpr {
+export function parseTypeExpr(src: string | Source | ErrorReporter): TypeExpr {
   return parseGrammarRule(src, "TypeExpr") as TypeExpr;
 }
-
-export { parseDocument, parseGrammarRule, parseTypeExpr };

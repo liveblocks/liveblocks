@@ -23,6 +23,7 @@ const types = fs
 const returnTypes = {};
 for (const type of types) {
   returnTypes[type] = `ast.${type}`;
+  returnTypes[type + "List"] = `ast.${type}[]`;
 }
 
 const config = {

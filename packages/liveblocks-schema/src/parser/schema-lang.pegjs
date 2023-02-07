@@ -66,7 +66,7 @@ Comment
 
 
 LineComment
-  = $( '//' / '#' ) text:$( [^\n] )* &[\n]
+  = $( ( '//' / '#' ) [^\n]* )
 
 
 LOWER_CHAR = [a-z]
@@ -84,8 +84,7 @@ Identifier "identifier"
 //////   //
 //////   
 DefinitionList
-  = first:Definition __ rest:( x:Definition __
-                               { return x } )*
+  = first:Definition __ rest:( @Definition __ )*
     { return [first, ...rest] }
 
 
@@ -99,15 +98,14 @@ ObjectTypeDef
 
 
 ObjectLiteralExpr
-  = LCURLY fields:FieldDefList RCURLY
-    { return ast.objectLiteralExpr(fields, rng()) }
+  = LCURLY fields:FieldDefList? RCURLY
+    { return ast.objectLiteralExpr(fields ?? [], rng()) }
 
 
 FieldDefList
   = first:FieldDef
-    rest:( ( COMMA / SEMICOLON / NEWLINE ) def:FieldDef
-           { return def } )*
-    $( COMMA / SEMICOLON / NEWLINE )?
+    rest:( ( COMMA / SEMICOLON / NEWLINE ) @FieldDef )*
+    ( COMMA / SEMICOLON / NEWLINE )?
     { return [first, ...rest] }
 
 
@@ -145,14 +143,6 @@ TypeExpr
   / LiveTypeExpr
   / TypeRef
   // / Literal
-
-
-TypeExprList
-  = first:TypeExpr
-    rest:( COMMA type:TypeExpr
-           { return type } )*
-    COMMA?
-    { return [first, ...rest] }
 
 
 BuiltInScalarType
@@ -201,19 +191,19 @@ EOK "end of keyword"
 
 
 TYPE "keyword \"type\""
-  = _ 'type'   EOK
+  = _ @$'type' EOK
 
 
-LCURLY     = __ '{' __ { return null }
-RCURLY     = __ '}' _  { return null }
+LCURLY     = __ @$'{' __
+RCURLY     = __ @$'}' _
 //                  ^ NOTE: We cannot generically eat newlines after RCURLY, because they're significant
-GT         = __ '>' _  { return '>' }
+GT         = __ @$'>' _
 //                  ^ NOTE: We cannot generically eat newlines after GT, because they're significant
-LT         = __ '<' __ { return '<' }
-COLON      = __ ':' __ { return ':' }
-COMMA      = __ ',' __ { return ',' }
-EQ         = __ '=' __ { return '=' }
-QUESTION   = __ '?' __ { return '?' }
-PIPE       = __ '|' __ { return '|' }
-SEMICOLON  = __ ';' __ { return ';' }
-NEWLINE    = _ '\n' __ { return '\n' }
+LT         = __ @$'<' __
+COLON      = __ @$':' __
+COMMA      = __ @$',' __
+EQ         = __ @$'=' __
+QUESTION   = __ @$'?' __
+PIPE       = __ @$'|' __
+SEMICOLON  = __ @$';' __
+NEWLINE    = _  @$'\n' __
