@@ -21,6 +21,13 @@ room.
 
 ## Syntax
 
+<Banner title="Supported Schema Types">
+The list below is exhaustive of the supported schema types which will be implemented before the final release of schema validation.  We currently support the following schema types: `LiveOjbect`, `Object`, and `Scalars`.
+
+</Banner>
+
+### Scalar types
+
 Each schema must include the `Storage` type, a special type of "root" object.
 
 Familiar scalar types are globally available when you create a schema. We
@@ -28,58 +35,108 @@ support:
 
 - `String`
 - `Int` (only whole numbers)
-- `Number` (floats and whole numbers)
+- `Float` (floats and whole numbers)
 - `Boolean`
 
-In addition to scalar types, we support the JSON type, which represents any
-legal JSON value (this type is the same type as defined in @liveblocks/client):
+A sample schema using scalar types could look like this:
 
-- `Json`
+```ts
+type Rect {
+  color: String
+}
+
+type Storage {
+  rectangle: Rect
+}
+```
+
+```ts
+root.set("rectangle", { color: "red" }); //✅
+root.set("rectangle", { color: 123 }); //❌
+root.set("rectangle", { color: undefined }); //❌
+```
+
+### Array Type
+
+You can use arrays in your schema in one of two ways:
+
+- `typeExpr[]` as syntactic sugar
+
+```ts highlight="3"
+type MyObject {
+  title: String
+  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
+  age: Int
+}
+
+type Storage {
+  item: MyObject
+}
+```
+
+- `Array<typeExpr>`
+
+```ts highlight="3"
+type MyObject {
+  title: String
+  shapes: Array<Shape>
+  age: Int
+}
+
+type Storage {
+  item: MyObject
+}
+```
+
+```ts
+root.set("item", {
+  title: "whiteboard",
+  shapes: ["rectangle", "circle"],
+  age: 4,
+}); //✅
+root.set("item", { title: "whiteboard", shapes: "none", age: 4 }); //❌
+```
+
+### Object types
+
+Object types can exist in two capacities:
+
+- Registered as a global type name as a definition:
+
+```ts
+type MyObject {
+  title: String
+  age: Int
+}
+
+type Storage {
+  item: MyObject
+}
+```
+
+- Anonymous, inline, object literal expressions:
+
+```ts
+type Storage{
+  item: {title: String, age: Int}
+}
+```
+
+```ts
+root.set("item", { title: "whiteboard", age: 2 }); //✅
+root.set("item", { title: "whiteboard", age: "three" }); //❌
+```
+
+#### Optional types
 
 Each field inside an object type can be marked optional using the `?` operator.
 If an optional field becomes undefined, the field will be deleted from the
 object.
 
-For example, if your schema looked like this:
+For example, if your schema looked exactly like the example provided above,
+except we changed the `age` field to optional:
 
-```ts
-type Rect{
-  color?: String
-  x: Integer
-  y: Integer
-}
-
-Storage {
-  rectangle: Rect
-}
-```
-
-If you send an operation with a payload `{"x":10, "y":20, "color": undefined}`
-to the server, the value of the object after reading it back would be
-`{"x":10, "y":20}`. In this case, the field `color` has been deleted. You cannot
-explicitly set fields to undefined or null.
-
-## Built-In complex types
-
-We currently offer one globally complex type, with more coming as we complete
-the Beta version of schema validation. These types take expressions as
-arguments.
-
-- `LiveObject<typeExpr>` (where typeExpr must be an object type) Object Types
-
-Later on, we will support the following:
-
-- `Array<typeExpr>`
-- `LiveList<typeExpr>`
-- `LiveMap<String, typeExpr> `
-
-## Object types
-
-Object types can exist in two capacities:
-
-- Registered as a global type name as a definition
-
-```ts
+```ts highlight="4"
 type MyObject {
   title: String
   shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
@@ -91,48 +148,126 @@ type Storage {
 }
 ```
 
-- Anonymous, inline, object literal expressions
+After making this change, suppose you send an operation to the server with the
+payload below:
 
 ```ts
-type Storage{
-  item: {title: String, shapes:Shape[], age?: Int}
+root.set("rectangle", { x: 10, y: 20, color: undefined }); //✅
+```
+
+The value of the `rectangle` object in storage after reading it back would be
+`{"x":10, "y":20}`- the field `color` has been deleted. You cannot explicitly
+set fields to undefined or null.
+
+```ts
+root.set("rectangle", { x: 10, y: undefined, color: "red" }); //❌
+```
+
+### Built-In live types
+
+#### LiveObject type
+
+To turn an object type into a "live" object type, wrap it in the built-in
+`LiveObject` type when you reference it like so:
+
+```ts
+`LiveObject<typeExpr>` (where typeExpr must be an object type)
+```
+
+We can convert an object type from the example above to a live object type by
+creating the following schema:
+
+```ts highlight="8"
+type MyObject {
+  title: String
+  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
+  age?: Int //Optional
 }
-```
 
-## Examples
-
-Consider the following schema examples to understand how to create a valid
-schema and what type of operations the server will reject once your schema is in
-place.
-
-```
 type Storage {
-  name: String
+  item: LiveObject<MyObject>
 }
 ```
 
 ```ts
-root.set("name", "liveblocks"); // ✅
-root.set("name", 123); // ❌
-root.set("name", true); // ❌
+root.set(
+  "item",
+  new LiveObject({
+    title: "whiteboard",
+    age: 20,
+    shapes: ["circle", "rectangle"],
+  })
+); // ✅
+root.set("item", {
+  title: "whiteboard",
+  age: 20,
+  shapes: ["circle", "rectangle"],
+}); // ❌
+root.set(
+  "item",
+  new LiveObject({
+    title: "whiteboard",
+    age: 20,
+    shapes: { circle: "circle" },
+  })
+); // ❌
 ```
 
-The schema below represents the use of the built-in complex type `LiveObject`:
+Using a `LiveObject` is beneficial because you can mutate the individual
+`title`, `shapes`, and `age` values.
+
+#### LiveList type
+
+To use a `LiveList` in your schema, wrap it in the built-in `LiveList` type when
+you reference it.
 
 ```ts
-type Shape {
-  x: Int
-  y: Int
-  fill: String
+LiveList<typeExpr>; //(where typeExpr must be an object type)
+```
+
+For example:
+
+```ts highlight="8"
+type MyObject {
+  title: String
 }
 
 type Storage {
-  shape: LiveObject<Shape>
+  item: LiveList<MyObject>
 }
 ```
 
 ```ts
-root.set("shape", new LiveObject({ x: 100, y: 100, fill: "purple" })); // ✅
-root.set("shape", { x: 100, y: 100, fill: "purple" }); //❌
-root.set("shape", new LiveObject({ x: 100, y: 100, fill: 123 })); ///❌
+root.set("item",new LiveList(["whiteboard","collaborative-form"]))// ✅
+root.set("item", ["whiteboard","collaborative-form"])// ❌
+root.set("item",new LiveList([123,456])//❌
+```
+
+#### LiveMap type
+
+To use a `LiveMap` within your schema, wrap it in the built-in `LiveMap` type
+when you reference it like so:
+
+```ts
+LiveMap<String, typeExpr>; // where the first argument must be a string
+```
+
+For example:
+
+```ts highlight="8"
+type Todos {
+  item: String
+}
+
+type Storage {
+  todos: LiveMap<String,Todos>
+}
+```
+
+```ts
+root.set(
+  "item",
+  new LiveMap(["title", "whiteboard"], ["title", "collaborative-form"])
+); // ✅
+root.set("item", new LiveMap(["whiteboard"])); //❌
 ```
