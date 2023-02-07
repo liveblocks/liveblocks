@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsup",
     "lint": "eslint src/",
-    "format": "eslint --fix src/ ; prettier --write src/"
+    "format": "eslint --fix src/ ; prettier --write src/",
+    "test": "jest"
   },
   "author": "Vincent Driessen",
   "homepage": "https://github.com/nvie/ast-generator#readme",
@@ -30,7 +31,8 @@
     "typescript"
   ],
   "devDependencies": {
-    "tsup": "^6.4.0"
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*"
   },
   "dependencies": {
     "chalk": "^4.1.0",

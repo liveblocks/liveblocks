@@ -28,17 +28,15 @@
     "parser"
   ],
   "devDependencies": {
+    "@liveblocks/eslint-config": "*",
+    "@liveblocks/jest-config": "*",
     "@types/didyoumean": "^1.2.0",
-    "@types/jest": "^29.1.2",
     "ast-generator": "*",
-    "jest": "^29.1.2",
     "peggy": "^2.0.1",
     "pkg": "^4.4.9",
     "prettier": "^2.7.1",
-    "ts-jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "ts-pegjs": "^2.1.0",
-    "tsup": "^6.4.0",
     "watch": "^1.0.2"
   },
   "dependencies": {

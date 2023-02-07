@@ -280,8 +280,12 @@ function generateTypeCheckCondition(
   return conditions.map((c) => `(${c})`).join(" && ");
 }
 
-function parseGrammarDefinition(path: string): Grammar {
+function parseGrammarFromPath(path: string): Grammar {
   const src = fs.readFileSync(path, "utf-8");
+  return parseGrammarFromString(src);
+}
+
+export function parseGrammarFromString(src: string): Grammar {
   const lines = src
     .split("\n")
     .map((line) => line.trim())
@@ -346,7 +350,7 @@ function parseGrammarDefinition(path: string): Grammar {
   };
 }
 
-async function generateCode(grammar: Grammar): Promise<string> {
+function generateCode(grammar: Grammar): string {
   // Will throw in case of errors
   validate(grammar);
 
@@ -558,8 +562,8 @@ export async function generateAST(
   inpath: string,
   outpath: string
 ): Promise<void> {
-  const grammar = parseGrammarDefinition(inpath);
-  const uglyCode = await generateCode(grammar);
+  const grammar = parseGrammarFromPath(inpath);
+  const uglyCode = generateCode(grammar);
 
   // Beautify it with prettier
   const config = await prettier.resolveConfig(outpath);
