@@ -147,9 +147,8 @@
         "path": "/guides/webhooks"
       },
       {
-        "title": "Next.js starter kit",
-        "path": "/guides/nextjs-starter-kit",
-        "hidden": true
+        "title": "Next.js Starter Kit",
+        "path": "/guides/nextjs-starter-kit"
       }
     ]
   },

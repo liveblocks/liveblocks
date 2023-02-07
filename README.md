@@ -42,6 +42,15 @@ Liveblocks with our tutorials, guides, and API reference.
 > The documentation is open-source and live in this repository, within
 > [`/docs`](./docs).
 
+## Starter Kit
+
+Get started with Liveblocks using `npx create-liveblocks-app@latest --next`, to
+get the [Next.js Starter Kit](https://liveblocks.io/starter-kit) and kickstart
+your collaborative app.
+
+> The Next.js Starter Kit is open-source and lives
+> [in this repository](./starter-kits/nextjs-starter-kit).
+
 ## Examples
 
 Explore our gallery of [collaborative examples](https://liveblocks.io/examples)
