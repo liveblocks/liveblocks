@@ -16,13 +16,12 @@ room.
 - Using DSL would be completely customized and would require learning a new
   language
 - When a complex application needs to apply a schema migration, we had to create
-  a server-side solution that could assign schemas to rooms based on developer
-  configuration
+  a server-side solution that could assign schemas to rooms based on the
+  developer's desired configuration
 
 ## Syntax
 
-Each schema must include the `Storage` type, which is a special type of "root"
-object.
+Each schema must include the `Storage` type, a special type of "root" object.
 
 Familiar scalar types are globally available when you create a schema. We
 support:
@@ -57,15 +56,24 @@ Storage {
 
 If you send an operation with a payload `{"x":10, "y":20, "color": undefined}`
 to the server, the value of the object after reading it back would be
-`{"x":10, "y":20}`. You cannot explicitly set fields to undefined or null.
+`{"x":10, "y":20}`. In this case, the field `color` has been deleted. You cannot
+explicitly set fields to undefined or null.
 
 ## Built-In complex types
 
-We offer two globally complex types, with more coming as we complete the Beta
-version of schema validation. These types take expressions as arguments.
+We currently offer one globally complex type, with more coming as we complete
+the Beta version of schema validation. These types take expressions as
+arguments.
+
+- `LiveObject<typeExpr>` (where typeExpr must be an object type) Object Types
+
+Later on, we will support the following:
 
 - `Array<typeExpr>`
-- `LiveObject<typeExpr>` (where typeExpr must be an object type) Object Types
+- `LiveList<typeExpr>`
+- `LiveMap<String, typeExpr> `
+
+## Object types
 
 Object types can exist in two capacities:
 
@@ -109,23 +117,7 @@ root.set("name", 123); // ❌
 root.set("name", true); // ❌
 ```
 
-```ts
-type Shape {
-  x: Int
-  y: Int
-  fill: String
-}
-
-type Storage {
-  shapes: Shape[] // short for List<Shape>
-  }
-```
-
-```ts
-root.set("shapes", [{ x: 100, y: 100, fill: "purple" }]); // ✅
-root.set("shapes", [{ x: 100, y: 100, fill: undefined }]); //❌
-root.set("shapes", [{ x: "123", y: 100, fill: undefined }]); //❌
-```
+The schema below represents the use of the built-in complex type `LiveObject`:
 
 ```ts
 type Shape {
