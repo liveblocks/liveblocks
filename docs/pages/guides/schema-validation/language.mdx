@@ -8,15 +8,15 @@ meta:
 
 ## Why use schema language
 
-Enginneers need to have a way to specify the schema they would like to apply to
-a room.
+Engineers need to have a way to specify the schema they would like to apply to a
+room.
 
 - Existing languages like GraphQL, Prisma, and JSON schema do not support Live
-  Structures, or have more features than are necessary.
+  Structures or have more features than are necessary.
 - Using DSL would be completely customized and would require learning a new
   language
 - When a complex application needs to apply a schema migration, we had to create
-  a server side solution that could assign schemas to rooms based on developer
+  a server-side solution that could assign schemas to rooms based on developer
   configuration
 
 ## Syntax
@@ -24,16 +24,7 @@ a room.
 Each schema must include the `Storage` type, which is a special type of "root"
 object.
 
-```ts
-// the Storage type is a mandatory specification in the schema
-type Storage {
-  // Your stroage definition here
-}
-```
-
-## Built in types
-
-Familiar scalar types are globally available when you creat a schema. We
+Familiar scalar types are globally available when you create a schema. We
 support:
 
 - `String`
@@ -41,36 +32,70 @@ support:
 - `Number` (floats and whole numbers)
 - `Boolean`
 
-In addition, we support the JSON type which represents any legal JSON value
-(this type is the same type as defined in @liveblocks/client):
+In addition to scalar types, we support the JSON type, which represents any
+legal JSON value (this type is the same type as defined in @liveblocks/client):
 
 - `Json`
 
+Each field inside an object type can be marked optional using the `?` operator.
+If an optional field becomes undefined, the field will be deleted from the
+object.
+
+For example, if your schema looked like this:
+
+```ts
+type Rect{
+  color?: String
+  x: Integer
+  y: Integer
+}
+
+Storage {
+  rectangle: Rect
+}
+```
+
+If you send an operation with a payload `{"x":10, "y":20, "color": undefined}`
+to the server, the value of the object after reading it back would be
+`{"x":10, "y":20}`. You cannot explicitly set fields to undefined or null.
+
 ## Built-In complex types
 
-We offer 2 globally complex types with more coming to come as we complete the
-Beta versoin of schema validation. these types take expressions as arguments.
+We offer two globally complex types, with more coming as we complete the Beta
+version of schema validation. These types take expressions as arguments.
 
 - `Array<typeExpr>`
-- `LiveObject<typeExpr>` (where typeExpr must be an object type)
-
-## Ojbect Types
+- `LiveObject<typeExpr>` (where typeExpr must be an object type) Object Types
 
 Object types can exist in two capacities:
 
-- Registered as a global type name as a defnition
+- Registered as a global type name as a definition
 
 ```ts
-type myObject {
+type MyObject {
   title: String
   shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
   age?: Int //Optional
+}
+
+type Storage {
+  item: MyObject
+}
+```
+
+- Anonymous, inline, object literal expressions
+
+```ts
+type Storage{
+  item: {title: String, shapes:Shape[], age?: Int}
 }
 ```
 
 ## Examples
 
-Considering the following schema
+Consider the following schema examples to understand how to create a valid
+schema and what type of operations the server will reject once your schema is in
+place.
 
 ```
 type Storage {
@@ -82,4 +107,40 @@ type Storage {
 root.set("name", "liveblocks"); // ✅
 root.set("name", 123); // ❌
 root.set("name", true); // ❌
+```
+
+```ts
+type Shape {
+  x: Int
+  y: Int
+  fill: String
+}
+
+type Storage {
+  shapes: Shape[] // short for List<Shape>
+  }
+```
+
+```ts
+root.set("shapes", [{ x: 100, y: 100, fill: "purple" }]); // ✅
+root.set("shapes", [{ x: 100, y: 100, fill: undefined }]); //❌
+root.set("shapes", [{ x: "123", y: 100, fill: undefined }]); //❌
+```
+
+```ts
+type Shape {
+  x: Int
+  y: Int
+  fill: String
+}
+
+type Storage {
+  shape: LiveObject<Shape>
+}
+```
+
+```ts
+root.set("shape", new LiveObject({ x: 100, y: 100, fill: "purple" })); // ✅
+root.set("shape", { x: 100, y: 100, fill: "purple" }); //❌
+root.set("shape", new LiveObject({ x: 100, y: 100, fill: 123 })); ///❌
 ```

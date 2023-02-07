@@ -153,12 +153,17 @@
       },
       {
         "title": "Schema Validation",
-        "path": "/guides/schema-validation",
-        "hidden": true
-      },
-      {
-        "title": "Schema Language",
-        "path": "/guides/schema-validation/language",
+        "path": "/guides/schema-validation/schema-validation",
+        "routes": [
+          {
+            "title": "Schema Validation",
+            "path": "/guides/schema-validation/schema-validation"
+          },
+          {
+            "title": "Schema Language",
+            "path": "/guides/schema-validation/language"
+          }
+        ],
         "hidden": true
       }
     ]
