@@ -91,7 +91,7 @@ export async function create(flags: Record<string, any>) {
       }`;
       repoUrls = {
         https: `https://${host}/${vercelData.repo.location}.git`,
-        ssh: `git@${host}/${vercelData.repo.location}.git`,
+        ssh: `git@${host}:${vercelData.repo.location}.git`,
       };
       clonedPrivateRepo = await clonePrivateRepo({ repoUrls, appDir });
     }
