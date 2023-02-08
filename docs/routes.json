@@ -88,8 +88,8 @@
     "title": "Guides",
     "routes": [
       {
-        "title": "Managing rooms, users, and permissions",
-        "path": "/guides/managing-rooms-users-permissions"
+        "title": "Next.js Starter Kit",
+        "path": "/guides/nextjs-starter-kit"
       },
       {
         "title": "Authentication",
@@ -114,41 +114,22 @@
         ]
       },
       {
-        "title": "Limits",
-        "path": "/guides/limits",
-        "routes": [
-          {
-            "title": "Fair Use Policy",
-            "path": "/guides/limits/fair-use-policy"
-          }
-        ]
-      },
-      {
-        "title": "Troubleshooting",
-        "path": "/guides/troubleshooting"
-      },
-      {
-        "title": "Upgrading",
-        "path": "/guides/upgrading",
-        "sort": "descending",
-        "routes": [
-          {
-            "title": "Upgrading to 0.17",
-            "path": "/guides/upgrading/0.17"
-          },
-          {
-            "title": "Upgrading to 0.18",
-            "path": "/guides/upgrading/0.18"
-          }
-        ]
+        "title": "Managing rooms and users",
+        "path": "/guides/managing-rooms-users-permissions"
       },
       {
         "title": "Webhooks",
         "path": "/guides/webhooks"
       },
       {
-        "title": "Next.js Starter Kit",
-        "path": "/guides/nextjs-starter-kit"
+        "title": "Schema validation",
+        "path": "/guides/schema-validation",
+        "routes": [
+          {
+            "title": "Schema language",
+            "path": "/guides/schema-validation/language"
+          }
+        ]
       }
     ]
   },
@@ -183,6 +164,40 @@
         "title": "API v1 Endpoints",
         "hidden": true,
         "path": "/api-reference/rest-api-endpoints-v1"
+      }
+    ]
+  },
+  {
+    "title": "Miscellaneous",
+    "routes": [
+      {
+        "title": "Limits",
+        "path": "/guides/limits",
+        "routes": [
+          {
+            "title": "Fair Use Policy",
+            "path": "/guides/limits/fair-use-policy"
+          }
+        ]
+      },
+      {
+        "title": "Upgrading",
+        "path": "/guides/upgrading",
+        "sort": "descending",
+        "routes": [
+          {
+            "title": "Upgrading to 0.17",
+            "path": "/guides/upgrading/0.17"
+          },
+          {
+            "title": "Upgrading to 0.18",
+            "path": "/guides/upgrading/0.18"
+          }
+        ]
+      },
+      {
+        "title": "Troubleshooting",
+        "path": "/guides/troubleshooting"
       }
     ]
   },

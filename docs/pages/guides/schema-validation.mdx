@@ -1,0 +1,148 @@
+---
+meta:
+  title: "Schema validation"
+  parentTitle: "Guides"
+  description:
+    "Learn how to use schemas to ensure data integrity in your application"
+---
+
+<Banner title="Private beta">
+
+Schema validation is currently in private beta. Browse the guide below to
+understand how schema validation works, and
+[sign up for the waitlist](https://docs.google.com/forms/d/197IrpiyeqlJo9xOCOfzwdcwBIk6nisk9pToJe3st3Ng/viewform)
+to get access in the near future.
+
+</Banner>
+
+## Why schema validation?
+
+Schema validation is essential for future-proofing your application and ensuring
+that implementing new features or data structures into your app will keep the
+integration you have established with Liveblocks.
+
+We currently mitigate the risk of introducing client-side errors by allowing you
+to type your storage in `liveblocks.config.ts`. Still, we want to go one step
+further to help you protect your application by attaching a schema to a room
+that rejects invalid modifications.
+
+By using schema validation, you will be able to:
+
+- Trust any incoming storage modifications
+- Paired with webhooks, strengthen your database synchronization
+- Write migration scripts for your room storage more easily
+
+## How schema validation works
+
+The primary purpose of schema validation is to prevent corrupted data from being
+loaded from the server. To add schema validation to your application, take the
+following steps:
+
+1. Define the shape of your storage with a schema definition (similar to how you
+   would describe the storage type in TypeScript)
+2. Attach your schema to a room
+
+By default, a room storage accepts any modifications coming from the client. But
+once you attach a schema to a room, Liveblocks will reject any modifications to
+the storage that do not match the schema you provided. Situations like this
+should only happen in development mode, and the developer is responsible for
+fixing them.
+
+## Create a schema
+
+Creating a schema via the dashboard is straightforward. Simply navigate to the
+“Schemas” page in the project you want to add the schema to, and click on the
+“Create schema” button. Provide a name and a definition that describes the shape
+of the data you want to store in your rooms.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/schema-validation/create-schema-dashboard.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+<Banner title="Schema language specification">
+
+Take a look at our
+[language specification](/docs/guides/schema-validation/language) to learn more
+about what kind of validations are currently supported.
+
+</Banner>
+
+## The validation process in practice
+
+If you would like to work through an example, you can follow along by using the
+[Multiplayer Form example](/examples/multiplayer-form/nextjs).
+
+Let’s create a new schema called `collaborative-form` in your dashboard, with
+the following definition:
+
+```ts
+type Logo {
+  name: String
+  theme: String
+}
+
+type Storage {
+  logo: LiveObject<Logo>
+}
+```
+
+Schemas are automatically versioned to facilitate migrations. By saving the new
+schema, we have created the first version, named `collaborative-form@1`.
+
+To attach the schema we just created to a room, call the following endpoint:
+
+```ts
+POST https://api.liveblocks.io/v2/rooms/{id}/schema
+{
+  "schema": "collaborative-form@1"
+}
+```
+
+To demonstrate the importance of schema validation and how unsafe operations
+will now fail, we will change the `name` field in our storage mutation to
+`organization` to simulate a bug:
+
+```tsx file="index.tsx"
+const updateName = useMutation(({ storage }, name: string) => {
+  storage.get("logo").set("name", name);
+}, []);
+```
+
+with
+
+```tsx file="index.tsx"
+const updateName = useMutation(({ storage }, name: string) => {
+  storage.get("logo").set("organization", name);
+}, []);
+```
+
+After updating and running locally, we should now see the following error
+because our deployed schema will reject the mutation:
+
+```
+Error: Storage mutation rejected by the server.
+Field "organization" does not exist on type "Logo".
+```
+
+Other examples where schema validation would catch the error include:
+
+- Attempting to update the value of the `name` variable to a number, as it is
+  defined as a string
+- Attempting to delete the `name` variable: it was not defined as optional in
+  the schema
+
+When an instance like this occurs, it’s indicative of a bug in your app. You
+should fix it, just like you would, for a TypeScript bug.
+
+## What’s to come
+
+Our roadmap includes the ability to generate TypeScript types from the schema
+and tools to help you migrate your data from one schema version to the next. If
+you have any feedback or questions regarding schema validation, come talk to us
+on this GitHub
+[discussion](https://github.com/liveblocks/liveblocks/discussions/674).
