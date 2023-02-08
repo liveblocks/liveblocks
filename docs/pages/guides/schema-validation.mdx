@@ -76,8 +76,8 @@ about what kind of validations are currently supported.
 If you would like to work through an example, you can follow along by using the
 [Multiplayer Form example](/examples/multiplayer-form/nextjs).
 
-Let’s create a schema called `collaborative-form`, with the following
-definition:
+Let’s create a new schema called `collaborative-form` in your dashboard, with
+the following definition:
 
 ```ts
 type Logo {
@@ -90,9 +90,8 @@ type Storage {
 }
 ```
 
-Schemas are versioned to facilitate migrations. To attach a schema to a room,
-you need to specify a version. A version id takes the form
-`{schema-name}@{schema-version}`.
+Schemas are automatically versioned to facilitate migrations. By saving the new
+schema, we have created the first version, named `collaborative-form@1`.
 
 To attach the schema we just created to a room, call the following endpoint:
 
@@ -103,10 +102,9 @@ POST https://api.liveblocks.io/v2/rooms/{id}/schema
 }
 ```
 
-To simulate the importance of schema validation and also demonstrate how
-operations can fail, we will change the nested value of `name` in storage to
-`organization` by renaming the `updateName` function and updating its
-parameters. First, we will replace:
+To demonstrate the importance of schema validation and how unsafe operations
+will now fail, we will change the `name` field in our storage mutation to
+`organization` to simulate a bug:
 
 ```tsx file="index.tsx"
 const updateName = useMutation(({ storage }, name: string) => {
@@ -122,11 +120,8 @@ const updateName = useMutation(({ storage }, name: string) => {
 }, []);
 ```
 
-This is a simple but common instance of updating variable names, which could
-easily break our integration.
-
 After updating and running locally, we should now see the following error
-because our deployed schema and client code are out of sync:
+because our deployed schema will reject the mutation:
 
 ```
 Error: Storage mutation rejected by the server.
