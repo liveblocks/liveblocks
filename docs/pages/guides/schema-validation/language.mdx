@@ -137,9 +137,9 @@ root.set("scientist", { name: "Marie Curie" }); // `age` is missing
 
 ### LiveObject
 
-To use an object type definition as a “live” object type, wrap it in the
-built-in [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject)
-construct, like so:
+To use an object type definition as a “live” object, wrap it in the built-in
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) construct, like
+so:
 
 ```ts
 type Scientist {
@@ -185,9 +185,11 @@ root.set("animals", [1, 2, 2]);
 
 ### LiveList
 
-To turn an array into a “live” array, replace it in the built-in
-[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) construct when you
-reference it like so:
+To use a “live” array instead of a normal array, wrap your item type in a
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) when you reference
+it.
+
+For example:
 
 ```ts
 type Storage {
@@ -226,8 +228,7 @@ type Storage {
 }
 ```
 
-The first argument to a `LiveMap` construct must always be `String`. Other types
-are not supported to use as keys.
+The first argument to a `LiveMap` construct must always be `String`.
 
 Accepted and rejected updates:
 
