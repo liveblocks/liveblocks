@@ -55,9 +55,7 @@ export async function create(flags: Record<string, any>) {
   // === Deploy on Vercel and use Vercel integration to get secret key ===
   if (vercel) {
     const vercelSpinner = loadingSpinner("", c.whiteBright("▲")).start(
-      c.whiteBright.bold(
-        "Opening Vercel, continue deploying then check back..."
-      )
+      c.whiteBright.bold("Opening Vercel, continue deploying then check back…")
     );
     const vercelData: VercelIntegrationCallback = (await server(
       async (origin) => {
@@ -90,7 +88,7 @@ export async function create(flags: Record<string, any>) {
     }
 
     if (vercelData.repo) {
-      vercelSpinner.text = "Cloning new repo...";
+      vercelSpinner.text = "Cloning new repo…";
       const host = `${vercelData.repo.type}.${
         vercelData.repo.type === "bitbucket" ? "org" : "com"
       }`;
@@ -117,7 +115,7 @@ export async function create(flags: Record<string, any>) {
   if (liveblocksSecret) {
     const liveblocksSpinner = loadingSpinner().start(
       c.whiteBright.bold(
-        "Opening Liveblocks, import your API key then check back..."
+        "Opening Liveblocks, import your API key then check back…"
       )
     );
 
