@@ -18,9 +18,9 @@ please fill out the following survey to join our
 The list below is exhaustive of the supported feature that will be implemented
 before the public beta.
 
-We currently support the following schema types: `Scalars`, `Object` and
-`LiveObject` during the private beta. We’re sharing our plans for other syntaxes
-so you can give us early feedback [here](TODO).
+Currently in the private beta phase we support: scalars, optionals, objects, and
+`LiveObject`. We’re sharing our plans for other syntaxes so you can give us
+early feedback [here](TODO).
 
 ### Storage root
 
@@ -42,7 +42,7 @@ support:
 - `Float` (floats and whole numbers)
 - `Boolean`
 
-A sample schema using scalar types could look like this:
+A sample schema using only scalar types could look like this:
 
 ```ts
 type Storage {
@@ -74,8 +74,7 @@ root.set("hasSiblings", "???");
 Each field inside an object type can be marked optional using the `?` operator.
 An optional field means that it can be deleted.
 
-For example, if your schema looked exactly like the example provided above,
-except we changed the `age` field to optional:
+For example, to make the `age` field optional:
 
 ```ts highlight="3"
 type Storage {
@@ -103,9 +102,9 @@ root.delete("name"); // `name` is not optional
 
 ### Objects
 
-Our language supports two different ways to declare types:
+Our language supports two different ways to declare object types:
 
-- Named type definition
+- Named object types
 
 ```ts
 type Scientist {
@@ -118,7 +117,7 @@ type Storage {
 }
 ```
 
-- Anonymous type definition
+- Anonymous/inlined object types
 
 ```ts
 type Storage  {
@@ -138,15 +137,9 @@ root.set("scientist", { name: "Marie Curie" }); // `age` is missing
 
 ### LiveObject
 
-To turn an object type into a “live” object type, wrap it in the built-in
-[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) type like so:
-
-```ts
-`LiveObject<typeExpr>`; // where `typeExpr` must be an object type
-```
-
-We can convert an object type from the example above to a `LiveObject` type by
-creating the following schema:
+To use an object type definition as a “live” object type, wrap it in the
+built-in [`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject)
+construct, like so:
 
 ```ts
 type Scientist {
@@ -156,6 +149,7 @@ type Scientist {
 
 type Storage {
   scientist: LiveObject<Scientist>
+  //         ^^^^^^^^^^
 }
 ```
 
@@ -169,9 +163,9 @@ root.set("scientist", new LiveObject({ name: "Marie Curie"; age: 66 }));
 root.set("scientist", { name: "Marie Curie"; age: 66 });
 ```
 
-### Array
+### Arrays
 
-`Array` can be defined like this:
+Arrays can be defined like this:
 
 ```ts
 type Storage {
@@ -191,20 +185,14 @@ root.set("animals", [1, 2, 2]);
 
 ### LiveList
 
-To turn an `Array` into a “live” array, wrap it in the built-in
-[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) type when you
+To turn an array into a “live” array, replace it in the built-in
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) construct when you
 reference it like so:
 
 ```ts
-`LiveObject<typeExpr>`; // where `typeExpr` must be an object type
-```
-
-We can convert an `Array` from the example above to a `LiveList` by creating the
-following schema:
-
-```ts
 type Storage {
-  animals: LiveList<string>
+  animals: LiveList<String>
+  //       ^^^^^^^^
 }
 ```
 
@@ -223,10 +211,6 @@ root.set("animals", ["🦁", "🦊", "🐵"]); // `animals` should be a `LiveLis
 It’s also possible to define a
 [`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) in your schema.
 
-```ts
-`LiveMap<String, typeExpr>`; // where the first argument must be a `String`
-```
-
 For example:
 
 ```ts
@@ -237,9 +221,13 @@ type Shape {
 }
 
 type Storage {
-  shapes: LiveMap<string, Shape>
+  shapes: LiveMap<String, Shape>
+  //      ^^^^^^^
 }
 ```
+
+The first argument to a `LiveMap` construct must always be `String`. Other types
+are not supported to use as keys.
 
 Accepted and rejected updates:
 
