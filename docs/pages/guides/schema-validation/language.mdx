@@ -1,34 +1,33 @@
 ---
 meta:
-  title: "Schema validation"
+  title: "Schema language"
   parentTitle: "Guides"
   description:
     "Learn how to use schemas to ensure data integrity in your application"
 ---
 
-## Why use schema language
-
-Engineers need to have a way to specify the schema they would like to apply to a
-room.
-
-- Existing languages like GraphQL, Prisma, and JSON schema do not support Live
-  Structures or have more features than are necessary.
-- Using DSL would be completely customized and would require learning a new
-  language
-- When a complex application needs to apply a schema migration, we had to create
-  a server-side solution that could assign schemas to rooms based on the
-  developer's desired configuration
-
 ## Syntax
 
-<Banner title="Supported Schema Types">
-The list below is exhaustive of the supported schema types which will be implemented before the final release of schema validation.  We currently support the following schema types: `LiveOjbect`, `Object`, and `Scalars`.  Long term we are evaluating the use of union types and would value feedback on which types are important to your use case.
+The list below is exhaustive of the supported feature that will be implemented
+before the public beta.
 
-</Banner>
+We currently support the following schema types: `LiveObject`, `Object`, and
+`Scalars` during the private beta.
 
-### Scalar types
+We’re sharing our plans for other syntaxes so you can give us early feedback
+[here](TODO).
 
-Each schema must include the `Storage` type, a special type of "root" object.
+### Storage root
+
+Each schema must include the `Storage` type, a special type of “root” object.
+
+```ts
+type Storage {
+
+}
+```
+
+### Scalars
 
 Familiar scalar types are globally available when you create a schema. We
 support:
@@ -41,233 +40,219 @@ support:
 A sample schema using scalar types could look like this:
 
 ```ts
-type Rect {
-  color: String
-}
-
 type Storage {
-  rectangle: Rect
-}
-```
-
-```ts
-root.set("rectangle", { color: "red" }); //✅
-root.set("rectangle", { color: 123 }); //❌
-root.set("rectangle", { color: undefined }); //❌
-```
-
-### Array Type
-
-You can use arrays in your schema in one of two ways:
-
-- `typeExpr[]` as syntactic sugar
-
-```ts highlight="3"
-type MyObject {
-  title: String
-  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
+  name: String
   age: Int
-}
-
-type Storage {
-  item: MyObject
+  height: Float
+  hasSiblings: Boolean
 }
 ```
 
-- `Array<typeExpr>`
-
-```ts highlight="3"
-type MyObject {
-  title: String
-  shapes: Array<Shape>
-  age: Int
-}
-
-type Storage {
-  item: MyObject
-}
-```
+And here are some updates that would accepted and rejected by the schema:
 
 ```ts
-root.set("item", {
-  title: "whiteboard",
-  shapes: ["rectangle", "circle"],
-  age: 4,
-}); //✅
-root.set("item", { title: "whiteboard", shapes: "none", age: 4 }); //❌
+// ✅ Valid storage updates
+root.set("name", "Marie Curie");
+root.set("age", 66);
+root.set("height", 1.52);
+root.set("hasSiblings", true);
+
+// ❌ Invalid storage updates
+root.set("name", true);
+root.set("age", 66.5); // Invalid because `age` should be a whole number
+root.set("height", "1.52");
+root.set("hasSiblings", "???");
 ```
 
-### Object types
-
-Object types can exist in two capacities:
-
-- Registered as a global type name as a definition:
-
-```ts
-type MyObject {
-  title: String
-  age: Int
-}
-
-type Storage {
-  item: MyObject
-}
-```
-
-- Anonymous, inline, object literal expressions:
-
-```ts
-type Storage{
-  item: {title: String, age: Int}
-}
-```
-
-```ts
-root.set("item", { title: "whiteboard", age: 2 }); //✅
-root.set("item", { title: "whiteboard", age: "three" }); //❌
-```
-
-#### Optional types
+### Optionals
 
 Each field inside an object type can be marked optional using the `?` operator.
-If an optional field becomes undefined, the field will be deleted from the
-object.
+An optional field means that it can be deleted.
 
 For example, if your schema looked exactly like the example provided above,
 except we changed the `age` field to optional:
 
-```ts highlight="4"
-type MyObject {
-  title: String
-  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
-  age?: Int //Optional
+```ts highlight="3"
+type Storage {
+  name: String
+  age?: Int
+  height: Float
+  hasSiblings: Boolean
+}
+```
+
+Accepted and rejected updates:
+
+```ts
+// ✅
+root.delete("age");
+
+// ❌
+root.delete("name"); // `name` is not optional
+```
+
+<Banner title="Comparison with GraphQL">
+  Notice that we made the decision to make every field mandatory by default, as
+  opposed to GraphQL.
+</Banner>
+
+### Object types
+
+Our language supports two different ways to declare types:
+
+- Named type definition
+
+```ts
+type Scientist {
+  name: String
+  age: Int
 }
 
 type Storage {
-  item: MyObject
+  scientist: Scientist
 }
 ```
 
-After making this change, suppose you send an operation to the server with the
-payload below:
+- Anonymous type definition
 
 ```ts
-root.set("rectangle", { x: 10, y: 20, color: undefined }); //✅
+type Storage  {
+  scientist: { name: String, age: Int }
+}
 ```
 
-The value of the `rectangle` object in storage after reading it back would be
-`{"x":10, "y":20}`- the field `color` has been deleted. You cannot explicitly
-set fields to undefined or null.
+These definitions are equivalent. Accepted and rejected updates:
 
 ```ts
-root.set("rectangle", { x: 10, y: undefined, color: "red" }); //❌
+// ✅
+root.set("scientist", { name: "Marie Curie", age: 66 });
+
+// ❌
+root.set("scientist", { name: "Marie Curie" }); // `age` is missing
 ```
 
-### Built-In live types
+### LiveObject
 
-#### LiveObject type
-
-To turn an object type into a "live" object type, wrap it in the built-in
-`LiveObject` type when you reference it like so:
+To turn an object type into a “live” object type, wrap it in the built-in
+[`LiveObject`](/docs/api-reference/liveblocks-client#LiveObject) type like so:
 
 ```ts
-`LiveObject<typeExpr>` (where typeExpr must be an object type)
+`LiveObject<typeExpr>`; // where `typeExpr` must be an object type
 ```
 
-We can convert an object type from the example above to a live object type by
+We can convert an object type from the example above to a `LiveObject` type by
 creating the following schema:
 
-```ts highlight="8"
-type MyObject {
-  title: String
-  shapes: Shape[] //Short for List<Shape>, defined elsewhere in schema
-  age?: Int //Optional
+```ts
+type Scientist {
+  name: String
+  age: Int
 }
 
 type Storage {
-  item: LiveObject<MyObject>
+  scientist: LiveObject<Scientist>
 }
 ```
 
+Accepted and rejected updates:
+
 ```ts
-root.set(
-  "item",
-  new LiveObject({
-    title: "whiteboard",
-    age: 20,
-    shapes: ["circle", "rectangle"],
-  })
-); // ✅
-root.set("item", {
-  title: "whiteboard",
-  age: 20,
-  shapes: ["circle", "rectangle"],
-}); // ❌
-root.set(
-  "item",
-  new LiveObject({
-    title: "whiteboard",
-    age: 20,
-    shapes: { circle: "circle" },
-  })
-); // ❌
+// ✅
+root.set("scientist", new LiveObject({ name: "Marie Curie"; age: 66 }));
+
+// ❌ `scientist` should be a LiveObject
+root.set("scientist", { name: "Marie Curie"; age: 66 });
 ```
 
-Using a `LiveObject` is beneficial because you can mutate the individual
-`title`, `shapes`, and `age` values.
+### Array
 
-#### LiveList type
-
-To use a `LiveList` in your schema, wrap it in the built-in `LiveList` type when
-you reference it.
+`Array` can be defined like this:
 
 ```ts
-LiveList<typeExpr>; //(where typeExpr must be an object type)
+type Storage {
+  animals: String[]
+}
+```
+
+Accepted and rejected updates:
+
+```ts
+// ✅
+root.set("animals", ["🦁", "🦊", "🐵"]));
+
+// ❌
+root.set("animals", [1, 2, 2]);
+```
+
+### LiveList
+
+To turn an `Array` into a “live” array, wrap it in the built-in
+[`LiveList`](/docs/api-reference/liveblocks-client#LiveList) type when you
+reference it like so:
+
+```ts
+`LiveObject<typeExpr>`; // where `typeExpr` must be an object type
+```
+
+We can convert an `Array` from the example above to a `LiveList` by creating the
+following schema:
+
+```ts
+type Storage {
+  animals: LiveList<string>
+}
+```
+
+Accepted and rejected updates:
+
+```ts
+// ✅
+root.set("animals", new LiveList(["🦁", "🦊", "🐵"]));
+
+// ❌
+root.set("animals", ["🦁", "🦊", "🐵"]); // `animals` should be a `LiveList`
+```
+
+### LiveMap
+
+It’s also possible to define a
+[`LiveMap`](/docs/api-reference/liveblocks-client#LiveMap) in your schema.
+
+```ts
+`LiveMap<String, typeExpr>`; // where the first argument must be a `String`
 ```
 
 For example:
 
-```ts highlight="8"
-type MyObject {
-  title: String
+```ts
+type Shape {
+  x: Float
+  y: Float
+  fill: String
 }
 
 type Storage {
-  item: LiveList<MyObject>
+  shapes: LiveMap<string, Shape>
 }
 ```
 
-```ts
-root.set("item",new LiveList(["whiteboard","collaborative-form"]))// ✅
-root.set("item", ["whiteboard","collaborative-form"])// ❌
-root.set("item",new LiveList([123,456])//❌
-```
-
-#### LiveMap type
-
-To use a `LiveMap` within your schema, wrap it in the built-in `LiveMap` type
-when you reference it like so:
+Accepted and rejected updates:
 
 ```ts
-LiveMap<String, typeExpr>; // where the first argument must be a string
-```
-
-For example:
-
-```ts highlight="8"
-type Todos {
-  item: String
-}
-
-type Storage {
-  todos: LiveMap<String,Todos>
-}
-```
-
-```ts
+// ✅
 root.set(
-  "item",
-  new LiveMap(["title", "whiteboard"], ["title", "collaborative-form"])
-); // ✅
-root.set("item", new LiveMap(["whiteboard"])); //❌
+  "shapes",
+  new LiveMap([["shapeId", { x: 100, y: 100, fill: "blue" }]])
+);
+
+// ❌
+root.set("shapes", new LiveMap([["shapeId", { x: 100, y: 100 }]]));
 ```
+
+## What’s to come
+
+We’re also planning to support more language features. Discriminated unions,
+regex, ranges, etc...
+
+If you’re interested in a specific feature, please send your feedback on this
+GitHub [discussion](TODO) so we can prioritize it appropriately!

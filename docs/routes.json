@@ -128,6 +128,16 @@
         "path": "/guides/troubleshooting"
       },
       {
+        "title": "Schema validation",
+        "path": "/guides/schema-validation",
+        "routes": [
+          {
+            "title": "Schema language",
+            "path": "/guides/schema-validation/language"
+          }
+        ]
+      },
+      {
         "title": "Upgrading",
         "path": "/guides/upgrading",
         "routes": [
@@ -150,17 +160,6 @@
         "title": "Next.js starter kit",
         "path": "/guides/nextjs-starter-kit",
         "hidden": true
-      },
-      {
-        "title": "Schema validation",
-        "path": "/guides/schema-validation",
-        "routes": [
-          {
-            "title": "Schema language",
-            "path": "/guides/schema-validation/language"
-          }
-        ],
-        "hidden": false
       }
     ]
   },
