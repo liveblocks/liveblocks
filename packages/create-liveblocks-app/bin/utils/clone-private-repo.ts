@@ -1,5 +1,3 @@
-import c from "ansi-colors";
-import { loadingSpinner } from "./loading-spinner";
 import path from "path";
 import { simpleGit, SimpleGitOptions } from "simple-git";
 
@@ -12,8 +10,6 @@ export async function clonePrivateRepo({
   appDir,
   repoUrls,
 }: ClonePrivateRepo): Promise<boolean> {
-  const spinner = loadingSpinner().start("Cloning repo...");
-
   const { dir, name } = path.parse(appDir);
 
   // Using simple-git for the timeout functionality
@@ -29,20 +25,13 @@ export async function clonePrivateRepo({
 
   try {
     await git.clone(repoUrls.ssh, name);
-    spinner.succeed(c.green("Repo downloaded!"));
     return true;
   } catch (err) {}
 
   try {
     await git.clone(repoUrls.https, name);
-    spinner.succeed(c.green("Repo downloaded!"));
     return true;
   } catch (err) {}
 
-  spinner.warn(
-    c.yellowBright.bold(
-      `Problem cloning private repo, using public repo instead`
-    )
-  );
   return false;
 }

@@ -85,7 +85,7 @@ export async function create(flags: Record<string, any>) {
     });
 
     if (vercelData.repo) {
-      vercelSpinner.text = c.whiteBright.bold("Cloning new repo...");
+      vercelSpinner.text = "Cloning new repo...";
       const host = `${vercelData.repo.type}.${
         vercelData.repo.type === "bitbucket" ? "org" : "com"
       }`;
@@ -93,9 +93,19 @@ export async function create(flags: Record<string, any>) {
         https: `https://${host}/${vercelData.repo.location}.git`,
         ssh: `git@${host}:${vercelData.repo.location}.git`,
       };
-      clonedPrivateRepo = await clonePrivateRepo({ repoUrls, appDir });
+
+      clonedPrivateRepo = await clonePrivateRepo({ appDir, repoUrls });
+
+      if (clonedPrivateRepo) {
+        vercelSpinner.succeed(c.green("Vercel deployment complete!"));
+      } else {
+        vercelSpinner.warn(
+          c.yellowBright.bold(
+            `Problem cloning private repo, using public repo instead`
+          )
+        );
+      }
     }
-    vercelSpinner.succeed(c.green("Vercel deployment complete"));
   }
 
   // === Get Liveblocks secret key from general integration ==============
