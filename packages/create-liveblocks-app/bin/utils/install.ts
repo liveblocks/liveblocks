@@ -9,9 +9,7 @@ type Props = {
 };
 
 export async function install({ packageManager, appDir }: Props) {
-  const spinner = loadingSpinner().start(
-    `Installing with ${packageManager}...`
-  );
+  const spinner = loadingSpinner().start(`Installing with ${packageManager}…`);
 
   try {
     await execAsync(`${packageManager} install`, {

@@ -28,7 +28,7 @@ export async function initializeGit({
       return "none";
     }
 
-    spinner = loadingSpinner().start("Initializing git...");
+    spinner = loadingSpinner().start("Initializing git…");
 
     const options = {
       cwd: appDir,
@@ -38,7 +38,7 @@ export async function initializeGit({
     await execAsync("git init", options);
 
     if (repoUrls) {
-      spinner.text = "Git: Locating remote...";
+      spinner.text = "Git: Locating remote…";
       repoType = await detectRemoteRepoLocation({ appDir, repoUrls });
       if (repoType !== "none") {
         await execAsync(`git remote add origin ${repoUrls[repoType]}`, options);
@@ -46,9 +46,9 @@ export async function initializeGit({
     }
 
     await execAsync("git checkout -b main", options);
-    spinner.text = "Git: Adding files...";
+    spinner.text = "Git: Adding files…";
     await execAsync("git add -A", options);
-    spinner.text = "Git: Making first commit...";
+    spinner.text = "Git: Making first commit…";
     await execAsync(
       'git commit -m "Initial commit from create-liveblocks-app"',
       options

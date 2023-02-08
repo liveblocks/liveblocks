@@ -10,7 +10,7 @@ type CloneRepo = {
 };
 
 export async function cloneRepo({ repoDir, appDir }: CloneRepo) {
-  const spinner = loadingSpinner().start("Downloading repo...");
+  const spinner = loadingSpinner().start("Downloading repo…");
 
   let finalResult = null;
   const emitter = degit(repoDir);

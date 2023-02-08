@@ -23,9 +23,9 @@ export async function stageAndCommit({ appDir }: { appDir: string }) {
       stdio: "pipe",
     } as const;
 
-    spinner = loadingSpinner().start("Git: Adding files...");
+    spinner = loadingSpinner().start("Git: Adding files…");
     await execAsync("git add -A", options);
-    spinner.text = "Git: Making first commit...";
+    spinner.text = "Git: Making first commit…";
     await execAsync(
       'git commit -m "Initial commit from create-liveblocks-app"',
       options

@@ -34,7 +34,7 @@ export async function confirmDirectoryEmpty(dir: string) {
     process.exit(0);
   }
 
-  const spinner = loadingSpinner().start("Clearing directory...");
+  const spinner = loadingSpinner().start("Clearing directory…");
   fs.rmSync(dir, { recursive: true, force: true });
   spinner.succeed(c.green("Directory cleared!"));
   return true;
