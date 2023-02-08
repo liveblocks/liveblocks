@@ -81,16 +81,16 @@
             "path": "/tutorials/collaborative-online-whiteboard/react-zustand"
           }
         ]
-      },
-      {
-        "title": "Next.js Starter Kit",
-        "path": "/guides/nextjs-starter-kit"
       }
     ]
   },
   {
     "title": "Guides",
     "routes": [
+      {
+        "title": "Next.js Starter Kit",
+        "path": "/guides/nextjs-starter-kit"
+      },
       {
         "title": "Authentication",
         "path": "/guides/authentication",
