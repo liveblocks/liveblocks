@@ -2,6 +2,7 @@ import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
 const client = createClient({
+  throttle: 16,
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
 });
 
@@ -36,7 +37,5 @@ type Storage = {
 // room. Must be JSON-serializable.
 // type RoomEvent = {};
 
-export const { RoomProvider, useOthers, useUpdateMyPresence } = createRoomContext<
-  Presence,
-  Storage /* UserMeta, RoomEvent */
->(client);
+export const { RoomProvider, useOthers, useUpdateMyPresence } =
+  createRoomContext<Presence, Storage /* UserMeta, RoomEvent */>(client);

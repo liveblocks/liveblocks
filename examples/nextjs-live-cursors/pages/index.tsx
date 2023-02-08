@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useRouter } from "next/router";
 import { RoomProvider, useOthers, useMyPresence } from "../liveblocks.config";
 import Cursor from "../components/Cursor";
+import styles from "./index.module.css";
 
 /**
  * This file shows how to add basic live cursors on your product.
@@ -34,7 +35,7 @@ function Example() {
 
   return (
     <main
-      className="relative w-full h-screen flex place-content-center place-items-center touch-none"
+      className={styles.container}
       onPointerMove={(event) => {
         event.preventDefault();
         // Update the user cursor position on every pointer move
@@ -52,7 +53,7 @@ function Example() {
         })
       }
     >
-      <div className="max-w-sm mx-4 text-center">
+      <div className={styles.text}>
         {cursor
           ? `${cursor.x} × ${cursor.y}`
           : "Move your cursor to broadcast its position to other people in the room."}

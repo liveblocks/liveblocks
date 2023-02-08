@@ -425,12 +425,6 @@ useErrorListener((error) => {
 
 ## Storage
 
-<Banner title="The storage block is in beta">
-
-The following APIs are subject to change during the beta.
-
-</Banner>
-
 The room’s storage is a conflicts-free state that multiple users can edit at the
 same time. It persists even after everyone leaves the room. Liveblocks provides
 3 data structures that can be nested to create the state that you want.
@@ -495,11 +489,14 @@ This hook returns `null` while storage is still loading. To avoid that, use the
 It’s recommended to select only the subset of Storage data that your component
 needs. This will avoid unnecessary rerenders that happen with overselection.
 
-In order to select one item from a LiveMap within the storage tree with the `useStorage` method, you can use the example below: 
+In order to select one item from a LiveMap within the storage tree with the
+`useStorage` method, you can use the example below:
+
 ```ts
-const key = 'errands'
-const myTodos = useStorage(root => root.todoMap.get(key))
+const key = "errands";
+const myTodos = useStorage((root) => root.todoMap.get(key));
 ```
+
 In order to query a LiveMap, and filter for specific values:
 
 ```ts

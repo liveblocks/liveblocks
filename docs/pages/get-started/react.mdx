@@ -9,6 +9,11 @@ In this guide, we’ll be learning how to add collaboration to React using the
 Liveblocks custom hooks. The hooks are part of [`@liveblocks/react`][], a
 package enabling multiplayer experiences in a matter of minutes.
 
+This guide uses [TypeScript](https://www.typescriptlang.org/). Liveblocks can
+definitely be used without TypeScript. We believe typings are helpful to make
+collaborative apps more robust, but if you’d prefer to skip the TypeScript
+syntax, feel free to write your code in JavaScript.
+
 If you’re using a state-management library such as
 [Redux](https://redux.js.org/) or [Zustand](https://github.com/pmndrs/zustand),
 we recommend reading one of our dedicated guides:
@@ -17,7 +22,7 @@ we recommend reading one of our dedicated guides:
 - [React + Zustand guide](/docs/get-started/react-zustand)
 
 You can also
-[follow our step-by-step tutorial](/docs/tutorials/multiplayer-to-do-list/react)
+[follow our step-by-step tutorial](/docs/tutorials/collaborative-to-do-list/react)
 to learn how to use Liveblocks.
 
 ## Install Liveblocks into your project [#install-liveblocks]
@@ -41,10 +46,10 @@ In order to use Liveblocks, we’ll need to sign up and get an API key.
 [the dashboard](/dashboard/apikeys) to find your public key (it starts with
 `pk_`).
 
-Let’s now add a new file `src/liveblocks.config.js` in our application to create
-a Liveblocks client using the public key as shown below.
+Let’s now add a new file `liveblocks.config.ts` in our application to create a
+Liveblocks client using the public key as shown below.
 
-```jsx file="liveblocks.config.js"
+```tsx file="liveblocks.config.ts"
 import { createClient } from "@liveblocks/client";
 
 const client = createClient({
@@ -62,7 +67,7 @@ Instead of using the client directly, we’re going to use [`createRoomContext`]
 from `@liveblocks/react` to create a [`RoomProvider`][] and hooks to make it
 easy to consume from our components.
 
-```jsx file="src/liveblocks.config.js" highlight="2,8-10"
+```tsx file="liveblocks.config.ts" highlight="2,8"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -79,50 +84,27 @@ You might be wondering why we’re creating our Providers and Hooks with
 types once in one unique location—allowing them to get a great autocompletion
 experience when using those hooks elsewhere.
 
-We can now import the `RoomProvider` directly from our
-`src/liveblocks.config.js` file. The `RoomProvider` takes a room `id` as a
-property, this being the unique reference for the room. For this tutorial we’ll
-use `"my-room-id"` as our `id`. When the `RoomProvider` renders, the current
-user enters the room `"my-room-id"` and leaves it when it unmounts.
+We can now import the `RoomProvider` directly from our `liveblocks.config.ts`
+file. The `RoomProvider` takes a room `id` as a property, this being the unique
+reference for the room. For this tutorial we’ll use `"my-room-id"` as our `id`.
+When the `RoomProvider` renders, the current user enters the room `"my-room-id"`
+and leaves it when it unmounts.
 
-```jsx file="src/index.js" highlight="7,11"
-import App from "./App";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider } from "./liveblocks.config.js";
+```tsx file="index.ts" highlight="1,5-7"
+import { RoomProvider } from "./liveblocks.config";
 
 function Index() {
   return (
     <RoomProvider id="my-room-id" initialPresence={{}}>
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <App />}
-      </ClientSideSuspense>
+      {/* Components that are inside RoomProvider can use our hooks */}
     </RoomProvider>
   );
 }
 ```
 
-You may also notice that we’re using `ClientSideSuspense` from
-`@liveblocks/react` in this example. This is a component that adds React’s
-[Suspense](https://reactjs.org/docs/react-api.html#suspense) feature by wrapping
-our app in a Suspense boundary. Doing so enables the suspense version of our
-hooks—an option we recommend using for simpler component code.
-
-The component passed to the `fallback` property will be displayed until
-Liveblocks is connected and ready to go. `ClientSideSuspense` can also be moved
-further down the tree, so that specific parts of your app load exactly when
-ready.
-
-<Banner title="ClientSideSuspense">
-
-If you’re familiar with Suspense, you may be wondering why we’re using
-`ClientSideSuspense` from @liveblocks/react instead of the normal `Suspense`
-component from React itself. This is only done so this tutorial will also work
-in projects that use server-side rendering (e.g. in a Next.js project). You may
-not strictly need it. Details can be found
-[here](/docs/api-reference/liveblocks-react#suspense-boundary-setup) if you’re
-interested.
-
-</Banner>
+You might have noticed that we’re setting `initialPresence` property with an
+empty object. Let’s ignore it for now, we’ll explain the concept _presence_ a
+bit later.
 
 ## Get other users in the room [#get-others]
 
@@ -130,11 +112,10 @@ Now that the provider is set up, we can start using the Liveblocks hooks. The
 first we’ll add is [`useOthers`][], a hook that provides us information about
 which _other_ users are connected to the room.
 
-We can re-export this from `liveblocks.config.js`, and because we’re using
-suspense in this example, we’ll export all our hooks from the `suspense`
-property.
+We can re-export this from `liveblocks.config.ts`, exactly like we did for
+`RoomProvider`.
 
-```jsx file="liveblocks.config.js" highlight="11"
+```tsx file="liveblocks.config.ts" highlight="10"
 import { createClient } from "@liveblocks/client";
 import { createRoomContext } from "@liveblocks/react";
 
@@ -143,23 +124,29 @@ const client = createClient({
 });
 
 export const {
-  suspense: {
-    RoomProvider,
-    useOthers, // 👈
-  },
+  RoomProvider,
+  useOthers, // 👈
 } = createRoomContext(client);
 ```
 
 To show how many other users are in the room, import `useOthers` into a
 component and use it as below.
 
-```jsx highlight="4"
-import { useOthers } from "./liveblocks.config";
+```tsx highlight="1,4"
+import { RoomProvider, useOthers } from "./liveblocks.config";
 
 function App() {
   const others = useOthers();
 
-  return <div>There are {others.count} other users with you in the room.</div>;
+  return <div>There are {others.length} other users with you in the room.</div>;
+}
+
+function Index() {
+  return (
+    <RoomProvider id="my-room-id" initialPresence={{}}>
+      <App />
+    </RoomProvider>
+  );
 }
 ```
 
@@ -180,21 +167,39 @@ example would be the pixel coordinates of a user’s cursor:
 cursor: { x: 256, y: 367 }
 ```
 
-To start using presence, first we must define an `initialPresence` value on our
-`RoomProvider`. We’ll set the initial cursor to `null` to represent a user whose
-cursor is currently off-screen.
+To start using presence, let’s define a type named `Presence` in
+`liveblocks.config.ts` and use it as a generic argument of `createRoomContext`.
+All of our _presence_ hooks returned by `createRoomContext` will be typed
+correspondingly to the newly defined `Presence` type.
 
-```jsx file="src/index.js" highlight="7"
-import App from "./App";
-import { ClientSideSuspense } from "@liveblocks/react";
-import { RoomProvider } from "./liveblocks.config.js";
+```tsx file="liveblocks.config.ts" highlight="8-10,12"
+import { createClient } from "@liveblocks/client";
+import { createRoomContext } from "@liveblocks/react";
+
+const client = createClient({
+  publicApiKey: "{{PUBLIC_KEY}}",
+});
+
+type Presence = {
+  cursor: { x: number; y: number } | null;
+};
+
+export const { RoomProvider, useOthers } = createRoomContext<Presence>(client);
+```
+
+Then, define an `initialPresence` value on our `RoomProvider`. We’ll set the
+initial cursor to `null` to represent a user whose cursor is currently
+off-screen.
+
+```tsx file="index.ts" highlight="7"
+import { RoomProvider, useOthers } from "./liveblocks.config";
+
+// App
 
 function Index() {
   return (
     <RoomProvider id="my-room-id" initialPresence={{ cursor: null }}>
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <App />}
-      </ClientSideSuspense>
+      <App />
     </RoomProvider>
   );
 }
@@ -208,16 +213,14 @@ real-time, and in this case, update the current user cursor position when
 
 First, re-export `useUpdateMyPresence` like we did with `useOthers`.
 
-```jsx file="liveblocks.config.js" highlight="7"
+```tsx file="liveblocks.config.ts" highlight="6"
 // ...
 
 export const {
-  suspense: {
-    RoomProvider,
-    useOthers,
-    useUpdateMyPresence, // 👈
-  },
-} = createRoomContext(client);
+  RoomProvider,
+  useOthers,
+  useUpdateMyPresence, // 👈
+} = createRoomContext<Presence>(client);
 ```
 
 To keep this guide concise, we’ll assume that you now understand how to
@@ -226,7 +229,7 @@ re-export your hooks for every new hook.
 Next, import `updateMyPresence` and call it with the updated cursor coordinates
 whenever a pointer move event is detected.
 
-```jsx
+```tsx
 import { useUpdateMyPresence } from "./liveblocks.config";
 
 function App() {
@@ -253,16 +256,25 @@ To retrieve each user’s presence, and cursor locations, we can once again add
 user’s presence, and grab their cursor property. If a cursor is set to `null`, a
 user is off-screen, so we’ll skip rendering it.
 
-```jsx
-import { useOthers } from "./liveblocks.config";
+```tsx highlight="20-26"
+import {
+  useOthers,
+  useUpdateMyPresence,
+  RoomProvider,
+} from "./liveblocks.config";
 
 function App() {
-  // List of other users
   const others = useOthers();
+  const updateMyPresence = useUpdateMyPresence();
 
-  // If a cursor is on screen (not null), render
   return (
-    <>
+    <div
+      style={{ width: "100vw", height: "100vh" }}
+      onPointerMove={(e) =>
+        updateMyPresence({ cursor: { x: e.clientX, y: e.clientY } })
+      }
+      onPointerLeave={() => updateMyPresence({ cursor: null })}
+    >
       {others.map(({ connectionId, presence }) =>
         presence.cursor ? (
           <Cursor
@@ -272,7 +284,7 @@ function App() {
           />
         ) : null
       )}
-    </>
+    </div>
   );
 }
 
@@ -284,7 +296,7 @@ function Cursor({ x, y }) {
         position: "absolute",
         transform: `translate(${x}px, ${y}px)`,
       }}
-      src="cursor-image.svg"
+      src="https://liveblocks.io/images/cursor.svg"
     />
   );
 }
@@ -318,15 +330,31 @@ available:
 
 ### Defining initial storage [#initial-storage]
 
-To use storage, first we need to define the initial structure within
-[`RoomProvider`][]. In this example we’ll define a [`LiveObject`][] called
-`scientist`, containing first and last name properties.
+To use storage, first define a type named `Storage` in `liveblocks.config.ts`,
+like we did for `Presence`. In this example we’ll define a [`LiveObject`][]
+called `scientist`, containing first and last name properties.
 
-```jsx file="src/index.js" highlight="11-16"
-import App from "./App";
-import { ClientSideSuspense } from "@liveblocks/react";
+```tsx file="liveblocks.config.ts" highlight="1,4-6,11"
+import { createClient, LiveObject } from "@liveblocks/client";
+// ...
+
+type Storage = {
+  scientist: LiveObject<{ firstName: string; lastName: string }>;
+};
+
+export const {
+  RoomProvider,
+  /* exported hooks */
+} = createRoomContext<Presence, Storage>(client);
+```
+
+Then, define the initial structure within [`RoomProvider`][].
+
+```tsx file="index.ts" highlight="1,11-16"
 import { LiveObject } from "@liveblocks/client";
-import { RoomProvider } from "./liveblocks.config.js";
+import { RoomProvider } from "./liveblocks.config";
+
+/* App */
 
 function Index() {
   return (
@@ -340,9 +368,7 @@ function Index() {
         }),
       }}
     >
-      <ClientSideSuspense fallback={<div>Loading...</div>}>
-        {() => <App />}
-      </ClientSideSuspense>
+      <App />
     </RoomProvider>
   );
 }
@@ -354,11 +380,15 @@ Once the default structure is defined, we can then make use of our storage. The
 [`useStorage`][] hook allows us to access an immutable version of our storage
 using a selector function.
 
-```jsx highlight="4,8,9"
+```tsx highlight="4,12,13"
 import { useStorage } from "./liveblocks.config";
 
-function YourComponent() {
+function App() {
   const scientist = useStorage((root) => root.scientist);
+
+  if (scientist == null) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <>
@@ -372,6 +402,97 @@ function YourComponent() {
 The two input values will now automatically update in a real-time as `firstName`
 and `lastName` are modified by other users.
 
+`useStorage` returns `null` during the initial loading because the storage is
+loaded from the server. It can quickly become cumbersome to handle `null`
+whenever we use `useStorage`, but we have some good new for you;
+`@liveblocks/react` contains a
+[`Suspense`](https://beta.reactjs.org/reference/react/Suspense) version of all
+of our hooks.
+
+### Using Suspense
+
+If you’d like to use `Suspense` in your application, make sure to re-export our
+hooks from `liveblocks.config.ts` like so.
+
+```tsx file="liveblocks.config.ts" highlight="4-8"
+// ...
+
+export const {
+  suspense: {
+    RoomProvider,
+    useStorage,
+    /* exported hooks */
+  },
+} = createRoomContext<Presence, Storage>(client);
+```
+
+And then put a `Suspense` component right below the `RoomProvider`. This version
+of `useStorage` never returns `null`, the loading fallback will be handled by
+`Suspense` `fallback`.
+
+```tsx file="index.ts" highlight="2,28-30"
+import { LiveObject } from "@liveblocks/client";
+import { Suspense } from "react";
+import { RoomProvider, useSelector } from "./liveblocks.config";
+
+function App() {
+  const scientist = useStorage((root) => root.scientist);
+
+  return (
+    <>
+      <input value={scientist.firstName} />
+      <input value={scientist.lastName} />
+    </>
+  );
+}
+
+function Index() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialPresence={/* ... */}
+      initialStorage={{
+        scientist: new LiveObject({
+          firstName: "Marie",
+          lastName: "Curie",
+        }),
+      }}
+    >
+      <Suspense fallback={<div>Loading</div>}>
+        <App />
+      </Suspense>
+    </RoomProvider>
+  );
+}
+```
+
+If you’re using a framework that supports Server Side Rendering like
+[Next.js](https://nextjs.org/), you cannot use `Suspense` directly like this.
+Liveblocks does not load the storage on the server by default, so the components
+using `useStorage` will never be able to render. To keep the benefits from
+`Suspense`, you should use `ClientSideSuspense` from ` @liveblocks/react`
+instead of the normal `Suspense` from React like this:
+
+```tsx file="index.ts" highlight="1,12-14"
+import { ClientSideSuspense } from "@liveblocks/react";
+
+// ...
+
+function Index() {
+  return (
+    <RoomProvider
+      id="my-room-id"
+      initialPresence={/* ... */}
+      initialStorage={/* ... */}
+    >
+      <ClientSideSuspense fallback={<div>Loading...</div>}>
+        {() => <App />}
+      </Suspense>
+    </RoomProvider>
+  );
+}
+```
+
 ### Updating storage
 
 The best way to update storage is through mutations. The [`useMutation`][] hook
@@ -383,7 +504,7 @@ Inside this mutation we’re accessing the storage root, a [`LiveObject`][] like
 [`LiveObject.get`]. From there, we can set the updated name using
 [`LiveObject.set`].
 
-```jsx
+```tsx
 // Define mutation
 const updateName = useMutation(({ storage }, nameType, newName) => {
   const mutableScientist = storage.get("scientist");
@@ -393,7 +514,7 @@ const updateName = useMutation(({ storage }, nameType, newName) => {
 
 We can then call this mutation, and pass `nameType` and `newName` arguments.
 
-```jsx
+```tsx
 updateName("firstName", "Albert");
 ```
 
@@ -402,8 +523,8 @@ combine [`useStorage`][] to display the names, and [`useMutation`][] to modify
 them. Note that `useMutation` takes a dependency array, and works similarly to
 `useCallback`.
 
-```jsx highlight="6-9,15,19"
-import { useStorage } from "./liveblocks.config";
+```tsx file="index.ts" highlight="1,6-9,15,19"
+import { useStorage, useMutation } from "./liveblocks.config";
 
 function YourComponent() {
   const scientist = useStorage((root) => root.scientist);
@@ -432,7 +553,7 @@ All changes made within `useMutation` are automatically batched and sent to the
 Liveblocks together. `useMutation` can also be used to retrieve and modify
 presence too, giving you access to multiple parameters, not just `storage`.
 
-```jsx
+```tsx
 useMutation({ storage, self, others, setMyPresence });
 ```
 
@@ -446,7 +567,7 @@ With Liveblocks storage, it’s possible to nest data structures inside each
 other, for example `scientist` could hold a [`LiveList`][] containing a list of
 pets.
 
-```jsx highlight="3"
+```tsx highlight="3"
 initialStorage={{
   scientist: new LiveObject({
     pets: new LiveList(["🐶", "🐱", "🐷"]),
@@ -460,14 +581,14 @@ Because the `useStorage` selector converts your data structure into a normal
 immutable JavaScript structure (made from objects, arrays, maps), `pets` can be
 accessed directly with `useStorage`.
 
-```jsx
+```tsx
 // ["🐶", "🐱", "🐷"]
 const pets = useStorage((root) => root.scientist.pets);
 ```
 
 You can even reach into a `LiveObject` or `LiveList` and extract a property.
 
-```jsx
+```tsx
 // "Marie"
 const firstName = useStorage((root) => root.scientist.firstName);
 
@@ -482,7 +603,7 @@ returned from the selector changes. For example, the following selectors will
 only trigger rerenders when their respective values change, and are unaffected
 by any other storage updates.
 
-```jsx
+```tsx
 // ✅ Rerenders only when root.scientist.firstName changes
 const firstName = useStorage((root) => root.scientist.firstName);
 
@@ -494,7 +615,7 @@ However, selector functions must return a stable result to be efficient—if a n
 object is created within the selector function, it will rerender on every
 storage change.
 
-```jsx
+```tsx
 // ❌ Rerenders on every change because `map` returns a new array every time
 const pets = useStorage((root) => root.scientist.pets.map((pet) => pet + pet));
 ```
@@ -502,7 +623,7 @@ const pets = useStorage((root) => root.scientist.pets.map((pet) => pet + pet));
 To account for this, we can pass a `shallow` equality check function, provided
 by `@liveblocks/react`:
 
-```jsx highlight="1,6"
+```tsx highlight="1,6"
 import { shallow } from "@liveblocks/react";
 
 // ✅ Rerenders only when root.scientist.pets shallowly changes
@@ -524,7 +645,7 @@ but Liveblocks provides functions to handle it for you. `useUndo` and `useRedo`
 return functions that allow you to undo and redo the last changes made to your
 app.
 
-```jsx highlight="4,5,9,10"
+```tsx highlight="4,5,9,10"
 import { useUndo, useRedo } from "./liveblocks.config";
 
 function App() {
@@ -545,7 +666,7 @@ of a scientist. Every time a Liveblocks storage change is detected, in this case
 `.set` being called, it’s stored. Pressing the undo button will change the name
 back to its previous value.
 
-```jsx highlight="6,9,15,16"
+```tsx highlight="6,9,15,16"
 import { useState } from "react";
 import { useMutation, useUndo } from "./liveblocks.config";
 
@@ -590,7 +711,7 @@ that the transition is smooth.
 `useHistory` is a hook that allows us to pause and resume history states as we
 please.
 
-```jsx highlight="4,8,9"
+```tsx highlight="4,8,9"
 import { useHistory } from "./liveblocks.config";
 
 function App() {
@@ -613,7 +734,7 @@ back, it would make sense to remove the user’s selection on that rectangle.
 To enable this, we can use the `addToHistory` option when updating the user’s
 presence.
 
-```jsx highlight="4,9"
+```tsx highlight="4,9"
 import { useUpdateMyPresence } from "./liveblocks.config";
 
 function App() {
@@ -631,7 +752,7 @@ function App() {
 
 This also works in mutations with `setMyPresence`.
 
-```jsx highlight="4"
+```tsx highlight="4"
 import { useMutation } from "./liveblocks.config";
 
 const updateSelected = useMutation(({ setMyPresence }, rectangleId) => {
@@ -648,9 +769,9 @@ Liveblocks applications. What’s next?
   `@liveblocks/react` documentation
 - [Authentication](/docs/guides/authentication) - Learn how to authenticate your
   real-time application
-- [Managing Rooms](/docs/guides/managing-rooms-users-permissions) - Learn how to manage room
-  metadata and permissions
-- [Multiplayer To-do List](/docs/tutorials/multiplayer-to-do-list) - Build a
+- [Managing Rooms](/docs/guides/managing-rooms-users-permissions) - Learn how to
+  manage room metadata and permissions
+- [Multiplayer To-do List](/docs/tutorials/collaborative-to-do-list) - Build a
   real-time to-do list in another tutorial
 - [Examples](/examples) - Get started with some live examples
 

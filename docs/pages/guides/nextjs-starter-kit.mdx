@@ -1,8 +1,8 @@
 ---
 meta:
-  title: "Next.js starter kit"
+  title: "Next.js Starter Kit"
   parentTitle: "Guides"
-  description: "Create Multiplayer Documents with Authentication in Minutes"
+  description: "Create collaborative documents with authentication in minutes"
 ---
 
 In this guide, you’ll learn how to build a document-based product using standard
@@ -30,7 +30,228 @@ The Next.js Starter Kit includes the following
 
 ## Set up the Next.js Starter Kit
 
-The [starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit) has the following structure:
+### create-liveblocks-app
+
+You can get started by running the following command:
+
+```shell
+npx create-liveblocks-app@latest --next
+```
+
+This will run an installer that allows you to download, configure, and deploy,
+your project:
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/create-liveblocks-app.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+Give your project a name, and select the [authentication](#authentication)
+method you’d like to use in your app. If you are trying to generate a proof of
+concept quickly, opting to use demo authentication may be a great option—you can
+still add other authentication providers later on.
+
+#### Deploy with Vercel Integration
+
+If you would like to set up CI/CD with your application, we’ve made that process
+straightforward for you as well. When prompted, you can select "deploy to
+Vercel" to enable building and deploying the starter kit. The Vercel Integration
+will open in a new browser window for you to complete the process of adding your
+repository.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/deploy-on-vercel.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+If by clicking "Create" you receive "An unexpected internal error occurred" you
+should validate within your code hosting platform of choice (GitHub, GitLab,
+Bitbucket) that the Vercel integration has permission to access your repository.
+In GitHub, permissions can be found can be found under Settings > Integrations >
+Vercel.
+
+#### Connect to Liveblocks and retrieve your secret key
+
+If you prefer to work locally, you can tell the installer you would not like to
+"deploy to Vercel." After declining the deployment option, the installer will
+prompt adding your Liveblocks Key to the application automatically. If you
+forwent deployment or indicated that you would like to get your Liveblocks
+secret key automatically, the Liveblocks integration page will open in a new
+browser tab. Once the integration page appears, you can sign up/sign in to
+Liveblocks, create a new project, and import your API key into the installer.
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/create-liveblocks-project.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+After finishing up, check the installer and follow the commands recommended to
+get you started.
+
+### Authentication [#authentication]
+
+The Liveblocks starter kit uses [NextAuth.js](https://next-auth.js.org/) for
+authentication, meaning many authentication providers can be configured with
+minimal code changes. A demo authentication system is used by default, but it’s
+easy to add real providers, such as GitHub, Auth0, and more.
+
+Take a look at the guide for your chosen authentication method:
+
+- [GitHub authentication](#github-authentication)
+- [Auth0 authentication](#auth0-authentication)
+- [Demo authentication](#demo-authentication)
+
+### GitHub authentication [#github-authentication]
+
+To use GitHub auth, make sure you selected "GitHub authentication" when running
+the installer (or you’ve set up the
+[provider manually](#add-multiple-authentication-providers)). This is how to set
+up your GitHub secret key and client id.
+
+1. Go to [Developer Settings](https://github.com/settings/apps) on GitHub and
+   click "New GitHub App".
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
+   app for each environment, so it’s helpful to place "dev" in the name.
+3. Add a homepage URL—this isn’t important now, so a placeholder will do.
+4. Find the "Callback URL" input just below, and add your local development URL
+   (e.g. `http://localhost:3000`).
+5. Look for the "Webhook" section and make sure to uncheck "Active".
+6. Use the remaining default settings and press "Create GitHub App".
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/github-auth.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+7. On the next page under "Client secrets", press the "Generate a new client
+   secret" button (note that this is different to generating a private key!).
+8. Copy this secret into the `/.env.local` file as `GITHUB_CLIENT_SECRET`
+9. Go back to the previous page and find the "Client ID" near the top. Copy this
+   into your `.env.local` file as `GITHUB_CLIENT_ID`
+
+Almost there! `.env.local` should now contain lines similar to this:
+
+```dotenv file=".env.local"
+GITHUB_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+GITHUB_CLIENT_ID=XXXXXXXXXXXXXXXXXXXX
+```
+
+GitHub authentication is now complete! Next,
+[add yourself as a user](#how-to-sign-up) to test out your authentication.
+
+### Auth0 authentication [#auth0-authentication]
+
+To use Auth0 auth, make sure you selected "Auth0 authentication" when running
+the installer (or you’ve set up the
+[provider manually](#add-multiple-authentication-providers)). This is how to set
+up your Auth0 secret key and client information.
+
+1. Go to your [Auth0 Dashboard](https://manage.auth0.com/dashboard) and click
+   "Create Application".
+2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
+   app for each environment, so it’s helpful to place "dev" in the name.
+3. Select "Single Page Web Applications", and press "Create".
+4. Copy your "Client ID" from the top of the page, and place it within
+   `.env.local` as `AUTH0_CLIENT_ID`.
+5. Click the "Settings" tab— we’ll be making a number of changes here.
+6. Find the "Client Secret" input field, and copy the value into `.env.local` as
+   `AUTH0_CLIENT_SECRET`.
+7. Copy your "Domain" from the input field, add "https://" to the start, and
+   place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`.
+8. Add the following to the "Allowed Callback URLs" textarea:
+   `http://localhost:3000/api/auth/callback/auth0`.
+9. Add the following to the "Allowed Logout URLs" textarea:
+   `http://localhost:3000`.
+10. Scroll to the bottom and press "Save changes".
+
+<Figure>
+  <video autoPlay loop muted playsInline>
+    <source
+      src="/images/docs/next-js-starter-kit/auth0-auth.mp4"
+      type="video/mp4"
+    />
+  </video>
+</Figure>
+
+`.env.local` should now contain these three lines, along with anything
+previously there:
+
+```dotenv file=".env.local"
+AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
+```
+
+Auth0 authentication is now set up! Next, [add yourself a user](#how-to-sign-up)
+to test out your authentication.
+
+### Demo authentication [#demo-authentication]
+
+For quickly testing out your app, the demo authentication method can be used.
+This method uses a NextAuth
+[`CredentialsProvider`](https://next-auth.js.org/providers/credentials) to
+simulate a real sign in system. To replace it with your own authentication
+method, you can add any other NextAuth
+[`Provider`](https://next-auth.js.org/providers/) to
+[`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts).
+
+Read the [next section](#how-to-sign-up) to learn how to add a new user to your
+demo application.
+
+### How to sign up - add yourself as a user [#how-to-sign-up]
+
+We haven’t set up a database, so we’re temporarily using the
+[`/data`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data)
+folder instead. Before any user can sign in, they need to be added to
+[`/data/users.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data/users.ts).
+Navigate there and add your details, for example, if you’re signing in with
+`yourname@example.com`:
+
+```ts file="data/users.ts"
+{
+  id: "yourname@example.com",
+  name: "Your Name",
+  avatar: "https://liveblocks.io/avatars/avatar-0.png",
+  groupIds: ["product", "engineering", "design"],
+},
+```
+
+Note that this is replacing the sign-up process, so you must enter the email of
+any new user. If, for example, you’re using GitHub authentication, you can enter
+the email address of any valid GitHub account.
+
+### Ready to go
+
+The Next.js Starter Kit is now ready to use! After setting up authentication,
+make sure to restart the dev server to see your authentication in action.
+
+```bash
+npm run dev
+```
+
+## Assorted info
+
+### Structure
+
+The
+[starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit)
+has the following structure:
 
 ```
 components
@@ -85,186 +306,6 @@ documents.
   </dl>
 </details>
 
-### Liveblocks configuration
-
-If you already have a Liveblocks Development account, you may skip to step 4.
-
-1. Create an account at [liveblocks.io](https://liveblocks.io])
-2. Navigate to the [dashboard](https://liveblocks.io/dashboard) and click "Add
-   project..."
-3. Create a new project with "Development" as the environment.
-4. Go to "API keys" on the side menu, reveal your secret key, and copy it
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/next-js-starter-kit/create-api-key.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-5. From the command line, get the starter kit by running Create Liveblocks App. Follow through the instructions, selecting your project name, chosen authentication method, and install the app:
-
-```shell
-npx create-liveblocks-app --next
-```
-
-6. Enter the `.env.local` file, which is located alongside `package.json` at the
-   root level in your project. This file will contain a randomly generated `NEXTAUTH_SECRET` that will be used for authentication, along with a number of empty variables for you to fill in.
-7. Place your Liveblocks secret key into the file as `LIVEBLOCKS_SECRET_KEY`.
-
-Your `.env.local` file should contain a line similar to this:
-
-```dotenv file=".env.local"
-LIVEBLOCKS_SECRET_KEY =
-  sk_dev_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX;
-```
-
-After installing dependencies with `npm install`, the starter kit can be run with
-
-```shell
-npm run dev
-```
-
-### Authentication
-
-The Liveblocks starter kit uses [NextAuth.js](https://next-auth.js.org/) for
-authentication, meaning many authentication providers can be configured with
-minimal code changes. A demo authentication system is used by default, but it’s
-easy to add real providers, such as GitHub, Auth0, and more.
-
-Take a look at the guide for your chosen authentication method:
-
-- [GitHub authentication](#github-authentication)
-- [Auth0 authentication](#auth0-authentication)
-- [Demo authentication](#demo-authentication)
-
-### GitHub authentication [#github-authentication]
-
-To use GitHub auth, make sure you selected "GitHub authentication" when running
-the installer (or you’ve set up the
-[provider manually](#add-multiple-authentication-providers)). This is how to set
-up your GitHub secret key and client id.
-
-1. Go to [Developer Settings](https://github.com/settings/apps) on GitHub and
-   click "New GitHub App".
-2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
-   app for each environment, so it’s helpful to place "dev" in the name.
-3. Add a homepage URL—this isn’t important now, so a placeholder will do.
-4. Find the "Callback URL" input just below, and add your local development URL
-   (e.g. `http://localhost:3000`).
-5. Look for the "Webhook" section and make sure to uncheck "Active".
-6. Use the remaining default settings and press "Create GitHub App".
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/next-js-starter-kit/github-auth.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-7. On the next page under "Client secrets", press the "Generate a new client
-   secret" button (note that this is different to generating a private key!).
-8. Copy this secret into the `/.env.local` file as `GITHUB_SECRET`
-9. Go back to the previous page and find the "Client ID" near the top. Copy this into your `.env.local` file as `GITHUB_ID`
-
-Almost there! `.env.local` should now contain lines similar to this:
-
-```dotenv file=".env.local"
-GITHUB_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-GITHUB_ID=XXXXXXXXXXXXXXXXXXXX
-```
-
-GitHub authentication is now complete! Next,
-[add yourself as a user](#how-to-sign-up) to test out your authentication.
-
-### Auth0 authentication [#auth0-authentication]
-
-To use Auth0 auth, make sure you selected "Auth0 authentication" when running
-the installer (or you’ve set up the
-[provider manually](#add-multiple-authentication-providers)). This is how to set
-up your Auth0 secret key and client information.
-
-1. Go to your [Auth0 Dashboard](https://manage.auth0.com/dashboard) and click
-   "Create Application".
-2. Enter an app name (e.g. `Liveblocks Starter Kit (dev)`). You’ll need a new
-   app for each environment, so it’s helpful to place "dev" in the name.
-3. Select "Single Page Web Applications", and press "Create".
-4. Copy your "Client ID" from the top of the page, and place it within
-   `.env.local` as `AUTH0_CLIENT_ID`.
-5. Click the "Settings" tab— we’ll be making a number of changes here.
-6. Find the "Client Secret" input field, and copy the value into `.env.local` as
-   `AUTH0_CLIENT_SECRET`.
-7. Copy your "Domain" from the input field, add "https://" to the start, and
-   place it within `.env.local` as `AUTH0_ISSUER_BASE_URL`.
-8. Add the following to the "Allowed Callback URLs" textarea:
-   `http://localhost:3000/api/auth/callback/auth0`.
-9. Add the following to the "Allowed Logout URLs" textarea:
-   `http://localhost:3000`.
-10. Scroll to the bottom and press "Save changes".
-
-<Figure>
-  <video autoPlay loop muted playsInline>
-    <source
-      src="/images/docs/next-js-starter-kit/auth0-auth.mp4"
-      type="video/mp4"
-    />
-  </video>
-</Figure>
-
-`.env.local` should now contain these three lines, along with anything
-previously there:
-
-```dotenv file=".env.local"
-AUTH0_CLIENT_ID=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-AUTH0_CLIENT_SECRET=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-AUTH0_ISSUER_BASE_URL=https://XXXXXXXXXXXXXXXXXX.com
-```
-
-Auth0 authentication is now set up! Next, [add yourself a user](#how-to-sign-up)
-to test out your authentication.
-
-### Demo authentication [#demo-authentication]
-
-For quickly testing out your app, the demo authentication method can be used. This method
-uses a NextAuth [`CredentialsProvider`](https://next-auth.js.org/providers/credentials) to
-simulate a real sign in system. To replace it with your own authentication method, you can add any other
-NextAuth [`Provider`](https://next-auth.js.org/providers/) to [`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts).
-
-Read the [next section](#how-to-sign-up) to learn how to add a new user to your demo application.
-
-### How to sign up - add yourself as a user [#how-to-sign-up]
-
-We haven’t set up a database, so we’re temporarily using the [`/data`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data) folder
-instead. Before any user can sign in, they need to be added to [`/data/users.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/data/users.ts).
-Navigate there and add your details, for example, if you’re signing in with
-`yourname@example.com`:
-
-```ts file="data/users.ts"
-{
-  id: "yourname@example.com",
-  name: "Your Name",
-  avatar: "https://liveblocks.io/avatars/avatar-0.png",
-  groupIds: ["product", "engineering", "design"],
-},
-```
-
-Note that this is replacing the sign-up process, so you must enter the email of any new user. If, for example, you’re using GitHub authentication, you can enter the email address of any valid GitHub account.
-
-### Ready to go
-
-The Next.js Starter Kit is now ready to use! After setting up authentication,
-make sure to restart the dev server to see your authentication in action.
-
-```
-npm run dev
-```
-
-## Assorted info
-
 ### Async fetching and error handling
 
 This starter kit makes extensive use of the following programming pattern for
@@ -294,9 +335,10 @@ console.log(data);
 
 ### Document functions
 
-Much of the starter kit’s power is in the [`/lib/server/documents`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server/documents) directory. The
-functions in these files allow you to edit your documents easily and return
-type-safe objects. For example in an API endpoint:
+Much of the starter kit’s power is in the
+[`/lib/server/documents`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server/documents)
+directory. The functions in these files allow you to edit your documents easily
+and return type-safe objects. For example in an API endpoint:
 
 ```ts
 import { createDocument } from "../../lib/server";
@@ -312,9 +354,12 @@ export default async function (req, res) {
 }
 ```
 
-These functions can also be leveraged on the client side. To do so, instead simply
-import from the [`/lib/client`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/client) folder, and omit `req` and `res`. This client function
-works by calling an API endpoint for you and then calling the [`/lib/server`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server)
+These functions can also be leveraged on the client side. To do so, instead
+simply import from the
+[`/lib/client`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/client)
+folder, and omit `req` and `res`. This client function works by calling an API
+endpoint for you and then calling the
+[`/lib/server`](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit/lib/server)
 function.
 
 ```tsx
@@ -388,10 +433,11 @@ export function ListUsers() {
 }
 ```
 
-### How to extend the `Document` type
+### How to extend the Document type
 
 If you’d like to add a new property to `Document`, it’s simple. First, edit the
-`Document` type in [`/types/documents.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/types/document.ts):
+`Document` type in
+[`/types/documents.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/types/document.ts):
 
 ```ts file="types/documents.ts"
 export type Document = {
@@ -401,8 +447,10 @@ export type Document = {
 };
 ```
 
-Then modify the return value in [`/lib/server/utils/buildDocuments.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/utils/buildDocuments.ts). This is a
-function that converts a Liveblocks room into your custom document format:
+Then modify the return value in
+[`/lib/server/utils/buildDocuments.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/utils/buildDocuments.ts).
+This is a function that converts a Liveblocks room into your custom document
+format:
 
 ```ts file="lib/server/utils/buildDocuments.ts"
 // Return our custom Document format
@@ -414,19 +462,20 @@ const document: Document = {
 
 Next, run the following command to check for problems:
 
-```
+```bash
 npm run typecheck
 ```
 
 If no errors are returned, the document properties were successfully extended.
 
-### How to extend the `User` & `Session` type
+### How to extend the User & Session type
 
 Similar to the way we extend the `Document` type, we can also extend the `User`
 and `Session` type.
 
 Adding a new property to `User`/`Session` is simple. First, edit the `User` type
-in [`/types/data.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/types/data.ts).
+in
+[`/types/data.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/types/data.ts).
 
 ```ts file="types/data.ts"
 export type User = {
@@ -436,7 +485,8 @@ export type User = {
 };
 ```
 
-Then make sure to return this new property in [`/lib/server/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getUser.ts).
+Then make sure to return this new property in
+[`/lib/server/database/getUser.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/lib/server/database/getUser.ts).
 
 ```ts file="lib/server/database/getUser.ts"
 return { randomNumber: Math.random() /* ... */ };
@@ -451,14 +501,22 @@ console.log(session.user.info.randomNumber);
 
 #### Adding this to your Liveblocks app (optional)
 
-Liveblocks presence is a way of displaying online presence between users, helpful for live avatars, real-time cursors, etc., and it’s possible to attach a properties to it for each user. To make a property accessible in presence (and within the React hooks used in whiteboard), you must modify `UserInfo` in [`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
+Liveblocks presence is a way of displaying online presence between users,
+helpful for live avatars, real-time cursors, etc., and it’s possible to attach a
+properties to it for each user. To make a property accessible in presence (and
+within the React hooks used in whiteboard), you must modify `UserInfo` in
+[`/liveblocks.config.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/liveblocks.config.ts).
 
 ```ts file="liveblocks.config.ts"
 export type UserInfo = Pick<User, "randomNumber" /* ... */>;
 ```
 
-In this example [Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates the UserInfo type based off of the User type and adds additional keys based on the properties you provide. After this, modify [`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts). First, we’ll give an anonymous user
-a property:
+In this example
+[Pick](https://www.typescriptlang.org/docs/handbook/utility-types.html) creates
+the UserInfo type based off of the User type and adds additional keys based on
+the properties you provide. After this, modify
+[`/pages/api/liveblocks/auth.ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/liveblocks/auth.ts).
+First, we’ll give an anonymous user a property:
 
 ```ts file="pages/api/liveblocks/auth.ts"
 // Anonymous user info
@@ -491,7 +549,7 @@ const { data, error } = await authorize({
 
 To make sure to check everything’s hooked up correctly:
 
-```
+```bash
 npm run typecheck
 ```
 
@@ -511,7 +569,8 @@ const everyonesRandomNumbers = useOthersMapped(
 
 It’s possible to add multiple authentication providers to the starter kit using
 [NextAuth Providers](https://next-auth.js.org/providers/). Open
-[`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts) and place your providers in the object:
+[`/pages/api/auth/[...nextauth].ts`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/pages/api/auth/%5B...nextauth%5D.ts)
+and place your providers in the object:
 
 ```ts
 import GithubProvider from "next-auth/providers/github";
@@ -534,17 +593,27 @@ export const authOptions = {
 ```
 
 It’s not only possible with GitHub and Auth0, any
-[NextAuth provider](https://next-auth.js.org/providers/) will work, such as Google, Twitter, Reddit, or more. You can find more information about getting the necessary secrets on the NextAuth documentation, or on the provider’s website.
+[NextAuth provider](https://next-auth.js.org/providers/) will work, such as
+Google, Twitter, Reddit, or more. You can find more information about getting
+the necessary secrets on the NextAuth documentation, or on the provider’s
+website.
 
-Note that if you’re using `CredentialsProvider` (for example, as used in the demo authentication), `CredentialsProvider` must be removed before any other authentication methods will appear.
+Note that if you’re using `CredentialsProvider` (for example, as used in the
+demo authentication), `CredentialsProvider` must be removed before any other
+authentication methods will appear.
 
 ### Switching themes
 
-The starter kit comes with both a dark mode and light mode. By default, the user sees the theme that corresponds to their system setting, but it’s easy to switch
-your whole app to just dark or light mode by modifying [`styles/globals.css`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/styles/globals.css).
+The starter kit comes with both a dark mode and light mode. By default, the user
+sees the theme that corresponds to their system setting, but it’s easy to switch
+your whole app to just dark or light mode by modifying
+[`styles/globals.css`](https://github.com/liveblocks/liveblocks/blob/main/starter-kits/nextjs-starter-kit/styles/globals.css).
 
-- To use only light mode, remove the entire `@media (prefers-color-scheme: dark)` media query.
-- To use only dark mode, copy the "Dark mode" CSS variables into the "Light mode" section, then remove the entire `@media (prefers-color-scheme: dark)` media query.
+- To use only light mode, remove the entire
+  `@media (prefers-color-scheme: dark)` media query.
+- To use only dark mode, copy the "Dark mode" CSS variables into the "Light
+  mode" section, then remove the entire `@media (prefers-color-scheme: dark)`
+  media query.
 
 ### Adding a database
 

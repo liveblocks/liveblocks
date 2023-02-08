@@ -1,6 +1,9 @@
 <p align="center">
-  <a href="https://liveblocks.io">
-    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header.svg" alt="Liveblocks" />
+  <a href="https://liveblocks.io#gh-light-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-light.svg" alt="Liveblocks" />
+  </a>
+  <a href="https://liveblocks.io#gh-dark-mode-only">
+    <img src="https://raw.githubusercontent.com/liveblocks/liveblocks/main/.github/assets/header-dark.svg" alt="Liveblocks" />
   </a>
 </p>
 
@@ -25,5 +28,5 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`app.js`](./app.js) by your **public** key
+- Replace `pk_YOUR_PUBLIC_KEY` in [`app.ts`](./app.ts) by your **public** key
 - Run `npm run build` and open `static/index.html` in your browser
