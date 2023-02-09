@@ -1,0 +1,118 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes loading-rotate {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(180deg);
+  }
+}
+
+@keyframes loading-offset-distance {
+  0% {
+    offset-distance: 0%;
+  }
+
+  100% {
+    offset-distance: 100%;
+  }
+}
+
+@keyframes loading-offset-rotate {
+  0% {
+    offset-rotate: 0deg;
+  }
+  100% {
+    offset-rotate: 180deg;
+  }
+}
+
+:root {
+  --ease-in-out-quart: cubic-bezier(0.6, 0, 0.4, 1);
+  --ease-in-out-expo: cubic-bezier(0.8, 0, 0.2, 1);
+
+  --loading-duration: 2s;
+
+  --color-code: hsl(252, 4%, 28%);
+  --color-code-comment: hsla(252, 4%, 28%, 0.5);
+  --color-code-variable: hsl(34, 100%, 41%);
+  --color-code-value: hsl(336, 74%, 54%);
+  --color-code-punctuation: hsl(292, 50%, 46%);
+  --color-code-tag: hsl(252, 56%, 58%);
+  --color-code-class: hsl(226, 59%, 51%);
+  --color-code-constant: hsl(191, 91%, 37%);
+  --color-code-string: hsl(151, 55%, 42%);
+
+  color-scheme: light;
+}
+
+:root.dark {
+  --color-code: hsl(256, 6%, 93%);
+  --color-code-comment: hsla(256, 6%, 93%, 0.4);
+  --color-code-variable: hsl(36, 100%, 70%);
+  --color-code-value: hsl(341, 90%, 70%);
+  --color-code-punctuation: hsl(275, 80%, 71%);
+  --color-code-tag: hsl(250, 95%, 77%);
+  --color-code-class: hsl(228, 100%, 75%);
+  --color-code-constant: hsl(186, 100%, 42%);
+  --color-code-string: hsl(167, 65%, 66%);
+
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-light-0 text-dark-0 dark:bg-dark-0 dark:text-light-0 overflow-hidden text-[75%];
+}
+
+body[data-resizing] * {
+  @apply pointer-events-none;
+}
+
+body[data-resizing="horizontal"] {
+  @apply cursor-col-resize;
+}
+
+body[data-resizing="vertical"] {
+  @apply cursor-row-resize;
+}
+
+#root {
+  @apply h-screen w-full;
+}
+
+* {
+  @apply focus:outline-none;
+}
+
+input[type="search"]::-webkit-search-cancel-button {
+  @apply hidden;
+}
+
+#loading-group {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: loading-rotate var(--loading-duration) infinite
+    var(--ease-in-out-expo);
+}
+
+#loading-top {
+  offset-path: path("M73.5 67C73.5 67 51 96 41 86C31 76 54.5 61 54.5 61");
+  transform-origin: 73.5px 67px;
+}
+
+#loading-bottom {
+  offset-path: path("M54.5 61C54.5 61 77 32 87 42C97 52 73.5 67 73.5 67");
+  transform-origin: 54.5px 61px;
+}
+
+#loading-top,
+#loading-bottom {
+  animation: loading-offset-distance var(--loading-duration) infinite
+      var(--ease-in-out-quart),
+    loading-offset-rotate var(--loading-duration) infinite
+      var(--ease-in-out-expo);
+}

@@ -1,3 +1,53 @@
+# v1.0.1
+
+Log stack traces of function calls that resulted in rejected storage mutations to the console in non-production builds to ease debugging.
+
+# v1.0.0
+
+This major release marks the maturity of Liveblocks. There are no upgrade instructions for 1.0.0.
+
+## `@liveblocks/node`
+
+`authorize` option `userId` is now mandatory.
+
+Our new [pricing](https://liveblocks.io/pricing) is based on Monthly Active Users instead of connections. 
+We're using `userId` to track MAU associated to a Liveblocks account.
+
+# v0.19.11
+
+## `@liveblocks/node`
+
+- `WebhookHandler` now handles `RoomCreatedEvent` and `RoomDeletedEvent`
+
+# v0.19.10
+
+## `@liveblocks/client`
+
+- Allow
+  [`createClient`](https://liveblocks.io/docs/api-reference/liveblocks-client#createClientThrottle)
+  `throttle` option to go as low as 16ms.
+
+# v0.19.9
+
+## `@liveblocks/client`
+
+- Adds a `WebhookHandler` class
+  - `new WebhookHandler(secret).verifyRequest({ rawBody, headers })` can be used
+    to verify event requests from Liveblock's Webhook functionality. It also
+    provides fully typed `WebhookEvents`.
+  - Check out our [Webhooks guide](https://liveblocks.io/docs/guides/webhooks)
+    for more details
+
+# v0.19.8
+
+- Fixes a bug where history didn't reliably undo `LiveObject` key set changes if
+  any pending local changes existed on that key.
+- Fixes a bug where changes performed inside `room.batch` were incorrectly
+  ordered inside the history resulting in unexpected undo behavior in some
+  cases.
+- Fixes a bug where under some circumstances the Liveblocks client could get
+  stuck in a "synchronizing" state indefinitely
+- Expose `JsonArray` and `JsonScalar` types publicly
 
 # v0.19.7
 

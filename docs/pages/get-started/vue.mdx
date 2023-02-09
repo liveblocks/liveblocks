@@ -87,7 +87,7 @@ allows us to subscribe to the other users updates.
   const client = createClient({
     publicApiKey: "{{PUBLIC_KEY}}",
   });
-  
+
   const roomId = "my-room";
 
   export default {
@@ -135,9 +135,9 @@ allows us to subscribe to the other users updates.
 
   const roomId = "my-room";
   const room = client.enter(roomId, { initialPresence: {} });
-  
+
   const message = ref("You’re the only one here.");
-  
+
   function onOthersChange(others) {
     if (others.count === 0) {
       message.value = "You’re the only one here.";

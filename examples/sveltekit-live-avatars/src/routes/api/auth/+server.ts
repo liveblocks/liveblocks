@@ -33,6 +33,7 @@ export async function POST({ request }) {
   const response = await authorize({
     room: room,
     secret: API_KEY,
+    userId: `user-${Math.floor(Math.random() * NAMES.length)}`,
     userInfo: {
       name: NAMES[Math.floor(Math.random() * NAMES.length)],
       picture: `https://liveblocks.io/avatars/avatar-${Math.floor(

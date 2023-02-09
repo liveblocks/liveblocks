@@ -35,5 +35,5 @@ function wrapWithTitle(
 }
 
 // export const logWithTitle = wrapWithTitle("log");
-// export const warnWithTitle = wrapWithTitle("warn");
+export const warnWithTitle = wrapWithTitle("warn");
 export const errorWithTitle = wrapWithTitle("error");

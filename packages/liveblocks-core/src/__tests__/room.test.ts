@@ -1,6 +1,7 @@
 import { rest } from "msw";
 import { setupServer } from "msw/node";
 
+import { nn } from "..";
 import { LiveList } from "../crdts/LiveList";
 import { LiveObject } from "../crdts/LiveObject";
 import type { LsonObject } from "../crdts/Lson";
@@ -23,7 +24,7 @@ import {
 } from "../room";
 import type { Others } from "../types/Others";
 import { WebsocketCloseCodes } from "../types/WebsocketCloseCodes";
-import { listUpdate, listUpdateInsert } from "./_updatesUtils";
+import { listUpdate, listUpdateInsert, listUpdateSet } from "./_updatesUtils";
 import {
   createSerializedList,
   createSerializedObject,
@@ -31,6 +32,7 @@ import {
   FIRST_POSITION,
   mockEffects,
   MockWebSocket,
+  prepareDisconnectedStorageUpdateTest,
   prepareIsolatedStorageTest,
   prepareStorageTest,
   prepareStorageUpdateTest,
@@ -589,6 +591,39 @@ describe("room", () => {
     expect(state.buffer.me?.data).toEqual({ x: 1 });
     expect(room.getPresence()).toEqual({ x: 1 });
   });
+
+  it(
+    "undo redo batch",
+    prepareDisconnectedStorageUpdateTest<{
+      items: LiveList<LiveObject<Record<string, number>>>;
+    }>(
+      [
+        createSerializedObject("0:0", {}),
+        createSerializedList("0:1", "0:0", "items"),
+        createSerializedObject("0:2", {}, "0:1", FIRST_POSITION),
+      ],
+      async ({ assert, batch, root, machine }) => {
+        const items = root.get("items");
+        batch(() => {
+          nn(items.get(0)).set("a", 1);
+          items.set(0, new LiveObject({ a: 2 }));
+        });
+
+        expect(items.toImmutable()).toEqual([{ a: 2 }]);
+        machine.undo();
+
+        expect(items.toImmutable()).toEqual([{}]);
+        machine.redo();
+
+        expect(items.toImmutable()).toEqual([{ a: 2 }]);
+        assert([
+          [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
+          [listUpdate([{}], [listUpdateSet(0, {})])],
+          [listUpdate([{ a: 2 }], [listUpdateSet(0, { a: 2 })])],
+        ]);
+      }
+    )
+  );
 
   test("if presence is not added to history during a batch, it should not impact the undo/stack", async () => {
     const { machine: room } = setupStateMachine({});

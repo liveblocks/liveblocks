@@ -1,7 +1,7 @@
 import c from "ansi-colors";
-import { PackageManager } from "./getPackageManager";
-import { loadingSpinner } from "./loadingSpinner";
-import { execAsync } from "./execAsync";
+import { PackageManager } from "./get-package-manager";
+import { loadingSpinner } from "./loading-spinner";
+import { execAsync } from "./exec-async";
 
 type Props = {
   packageManager: PackageManager;
@@ -9,9 +9,7 @@ type Props = {
 };
 
 export async function install({ packageManager, appDir }: Props) {
-  const spinner = loadingSpinner().start(
-    `Installing with ${packageManager}...`
-  );
+  const spinner = loadingSpinner().start(`Installing with ${packageManager}…`);
 
   try {
     await execAsync(`${packageManager} install`, {

@@ -1,4 +1,12 @@
 import fetch from "node-fetch";
+export type {
+  StorageUpdatedEvent,
+  UserEnteredEvent,
+  UserLeftEvent,
+  WebhookEvent,
+  WebhookRequest,
+} from "./webhooks";
+export { WebhookHandler } from "./webhooks";
 
 type AuthorizeOptions = {
   /**
@@ -10,10 +18,11 @@ type AuthorizeOptions = {
    */
   room: string;
   /**
-   * The id of the user that try to connect. It should be used to get information about the connected users in the room (name, avatar, etc).
-   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accesses
+   * The id of the user that try to connect. It can be used to get information about the connected users in the room (name, avatar, etc).
+   * It can also be used to generate a token that gives access to a private room where the userId is configured in the room accesses.
+   * Liveblocks uses the userId to calculate your account's Monthly Active Users.
    */
-  userId?: string;
+  userId: string;
   /**
    * The info associated to the user. Can be used to store the name or the profile picture to implement avatar for example. Can't exceed 1KB when serialized as JSON
    */
@@ -44,7 +53,7 @@ type AuthorizeResponse = {
  * const response = await authorize({
  *   room,
  *   secret,
- *   userId: "123", // Optional
+ *   userId: "123",
  *   userInfo: {    // Optional
  *     name: "Ada Lovelace"
  *   },
@@ -62,6 +71,12 @@ export async function authorize(
     if (!(typeof room === "string" && room.length > 0)) {
       throw new Error(
         "Invalid room. Please provide a non-empty string as the room. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
+      );
+    }
+
+    if (!(typeof userId === "string" && userId.length > 0)) {
+      throw new Error(
+        "Invalid userId. Please provide a non-empty string as the userId. For more information: https://liveblocks.io/docs/api-reference/liveblocks-node#authorize"
       );
     }
 

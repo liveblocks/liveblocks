@@ -183,20 +183,20 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 80 and 1000.");
+    ).toThrowError("throttle should be a number between 16 and 1000.");
   });
 
-  test("should throw if throttle is less than 80", () => {
+  test("should throw if throttle is less than 16", () => {
     expect(() =>
       createClientAndEnter({
-        throttle: 79,
+        throttle: 15,
         authEndpoint: "api/auth",
         polyfills: {
           WebSocket: MockWebSocket,
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 80 and 1000.");
+    ).toThrowError("throttle should be a number between 16 and 1000.");
   });
 
   test("should throw if throttle is more than 1000", () => {
@@ -209,7 +209,7 @@ describe("createClient", () => {
           fetch: fetchMock,
         },
       })
-    ).toThrowError("throttle should be a number between 80 and 1000.");
+    ).toThrowError("throttle should be a number between 16 and 1000.");
   });
 });
 
