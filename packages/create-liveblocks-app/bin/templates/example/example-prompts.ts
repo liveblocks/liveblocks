@@ -29,7 +29,7 @@ export async function examplePrompts(flags: Record<string, any>) {
       type: flags.name ? null : "text",
       name: "name",
       message: "What would you like to name your project directory?",
-      initial: (prev) => prev,
+      initial: (prev) => flags.example || prev,
     },
     {
       type: flags.vercel !== undefined || flags["get-key"] ? null : "confirm",
