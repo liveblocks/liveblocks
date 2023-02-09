@@ -124,7 +124,7 @@ const initialValue: CustomElement[] = [
   {
     id: nanoid(),
     type: BlockType.Video,
-    url: "https://youtube.com/embed/ejJT4XhmFPU",
+    url: "https://youtube.com/embed/T5eoM9d2WU8",
     children: [
       {
         text: "",

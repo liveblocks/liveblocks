@@ -13,7 +13,6 @@ export default function Cursor({ color, x, y }: Props) {
         position: "absolute",
         left: 0,
         top: 0,
-        transition: "transform 120ms linear",
         transform: `translateX(${x}px) translateY(${y}px)`,
       }}
       width="24"

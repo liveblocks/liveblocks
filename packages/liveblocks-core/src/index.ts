@@ -95,6 +95,7 @@ export { isChildCrdt, isRootCrdt } from "./protocol/SerializedCrdt";
 export type {
   BroadcastedEventServerMsg,
   InitialDocumentStateServerMsg,
+  RejectedStorageOpServerMsg,
   RoomStateServerMsg,
   ServerMsg,
   UpdatePresenceServerMsg,

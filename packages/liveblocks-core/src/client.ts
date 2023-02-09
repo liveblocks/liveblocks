@@ -8,6 +8,10 @@ import type { BaseUserMeta } from "./protocol/BaseUserMeta";
 import type { InternalRoom, Polyfills, Room, RoomInitializers } from "./room";
 import { createRoom } from "./room";
 
+const MIN_THROTTLE = 16;
+const MAX_THROTTLE = 1000;
+const DEFAULT_THROTTLE = 100;
+
 type EnterOptions<
   TPresence extends JsonObject,
   TStorage extends LsonObject
@@ -270,15 +274,17 @@ export function createClient(options: ClientOptions): Client {
 
 function getThrottleDelayFromOptions(options: ClientOptions): number {
   if (options.throttle === undefined) {
-    return 100;
+    return DEFAULT_THROTTLE;
   }
 
   if (
     typeof options.throttle !== "number" ||
-    options.throttle < 80 ||
-    options.throttle > 1000
+    options.throttle < MIN_THROTTLE ||
+    options.throttle > MAX_THROTTLE
   ) {
-    throw new Error("throttle should be a number between 80 and 1000.");
+    throw new Error(
+      `throttle should be a number between ${MIN_THROTTLE} and ${MAX_THROTTLE}.`
+    );
   }
 
   return options.throttle;

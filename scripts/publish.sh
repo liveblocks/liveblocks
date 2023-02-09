@@ -319,7 +319,7 @@ npm install
 commit_to_git "Bump to $VERSION" "package-lock.json" "packages/"
 
 echo "==> Rebuilding packages"
-turbo run build --force
+node_modules/.bin/turbo run build --force
 
 # Publish to NPM
 for pkgdir in ${PACKAGE_DIRS[@]}; do

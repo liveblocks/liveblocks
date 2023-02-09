@@ -7,15 +7,18 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   if (!API_KEY) {
     return res.status(403).end();
   }
+
   // We're generating random users and avatars here.
   // In a real-world scenario, this is where you'd assign the
   // user based on their real identity from your auth provider.
   // See https://liveblocks.io/docs/api-reference/liveblocks-node#authorize for more information
+  const userIndex = Math.floor(Math.random() * NAMES.length);
   const response = await authorize({
     room: req.body.room,
     secret: API_KEY,
+    userId: `user-${userIndex}`,
     userInfo: {
-      name: NAMES[Math.floor(Math.random() * NAMES.length)],
+      name: NAMES[userIndex],
       imageUrl: `https://liveblocks.io/avatars/avatar-${Math.floor(
         Math.random() * 30
       )}.png`,
