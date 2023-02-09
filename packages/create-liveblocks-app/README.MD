@@ -7,7 +7,7 @@
   </a>
 </p>
 
-# `create-liveblocks-app` (beta)
+# `create-liveblocks-app`
 
 The easiest way to get started with a Liveblocks starter kit or example. 
 
@@ -19,7 +19,7 @@ npx create-liveblocks-app
 ```
 
 The initial prompt allows you to set up one of the following:
-1. [Next.js Starter kit](https://github.com/liveblocks/liveblocks/tree/main/starter-kits/nextjs-starter-kit)—Our official starter kit for Next.js
+1. [Next.js Starter kit](https://liveblocks.io/starter-kit)—Our official starter kit for Next.js
 2. [An example from the Liveblocks repo](https://github.com/liveblocks/liveblocks/tree/main/examples)—Any example from `liveblocks/liveblocks`
 
 From there, follow the instructions to set up your app!
@@ -70,10 +70,10 @@ Options:
   Don't deploy on Vercel
   
   --get-key
-  Get Liveblocks API key
+  Get Liveblocks API key. Ignored if `--vercel` is used.
   
   --no-get-key
-  Don't get Liveblocks API key
+  Don't get Liveblocks API key. Ignored if `--vercel` is used.
   
   --open
   Open browser without asking permission, when deploying to Vercel or getting API key 
@@ -95,5 +95,5 @@ npx create-liveblocks-app --example nextjs-live-avatars --name my-liveblocks-app
 
 Next.js Starter Kit with every option:
 ```
-npx create-liveblocks-app --next --name my-project --auth github --package-manager npm --install --git 
+npx create-liveblocks-app --next --name my-project --auth github --package-manager npm --install --git  --vercel --open
 ```
