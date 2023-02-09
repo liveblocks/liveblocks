@@ -1,0 +1,2 @@
+type Foo { foo?: Foo }
+type Storage { foo: Foo }

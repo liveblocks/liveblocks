@@ -1,0 +1,6 @@
+type Thing { x: Int }
+
+type Storage {
+  a: LiveObject<Int>
+  b: LiveObject<Thing>
+}

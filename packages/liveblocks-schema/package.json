@@ -14,7 +14,7 @@
     "build:parser": "bin/build-parser && tsc --noEmit src/parser/generated-parser.ts",
     "lint": "eslint src/",
     "format": "eslint --fix src/; prettier --write src/",
-    "test": "jest --no-coverage"
+    "test": "jest --verbose --no-coverage"
   },
   "repository": {
     "type": "git",

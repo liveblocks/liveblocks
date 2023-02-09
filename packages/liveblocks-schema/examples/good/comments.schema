@@ -1,0 +1,4 @@
+type Storage { 
+  # This is a comment, starting with an "#". GraphQL like.
+  // This is a comment, starting with an "//". TypeScript like.
+}

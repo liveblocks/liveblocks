@@ -58,7 +58,7 @@ describe("syntactic parser", () => {
 
       ast.document([
         ast.objectTypeDef(
-          ast.identifier("Foo"),
+          ast.typeName("Foo"),
           ast.objectLiteralExpr([
             ast.fieldDef(ast.identifier("cx"), false, ast.floatKeyword()),
             ast.fieldDef(ast.identifier("cy"), false, ast.floatKeyword()),
@@ -67,24 +67,24 @@ describe("syntactic parser", () => {
         ),
 
         ast.objectTypeDef(
-          ast.identifier("Foo"),
+          ast.typeName("Foo"),
           ast.objectLiteralExpr([
             ast.fieldDef(ast.identifier("version"), false, ast.intKeyword()),
             ast.fieldDef(ast.identifier("version"), false, ast.intKeyword()),
             ast.fieldDef(
               ast.identifier("mycircle"),
               true,
-              ast.liveObjectTypeExpr(ast.typeRef(ast.identifier("Bar")))
+              ast.liveObjectTypeExpr(ast.typeRef(ast.typeName("Bar")))
             ),
             ast.fieldDef(
               ast.identifier("someField"),
               false,
-              ast.typeRef(ast.identifier("_undefinedThing_"))
+              ast.typeRef(ast.typeName("_undefinedThing_"))
             ),
           ])
         ),
 
-        ast.objectTypeDef(ast.identifier("abc"), ast.objectLiteralExpr([])),
+        ast.objectTypeDef(ast.typeName("abc"), ast.objectLiteralExpr([])),
       ])
     );
   });

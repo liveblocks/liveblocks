@@ -71,12 +71,22 @@ LineComment
 
 LOWER_CHAR = [a-z]
 UPPER_CHAR = [A-Z]
+IDENTIFIER_PREFIX = [a-zA-Z_]
 WORD_CHAR = [a-zA-Z0-9_]
 
 
-Identifier "identifier"
-  = name:$( WORD_CHAR+ ) !WORD_CHAR _
+// e.g. "x" or "y" -- used in field positions
+// Similar to TypeName, but there are different semantic validation rules that apply
+Identifier "<identifier>"
+  = name:$( IDENTIFIER_PREFIX WORD_CHAR* ) !WORD_CHAR _
     { return ast.identifier(name, rng()) }
+
+
+// e.g. "Circle" or "Person" -- used in type positions
+// Similar to Identifier, but there are different semantic validation rules that apply
+TypeName "<type name>"
+  = name:$( WORD_CHAR+ ) !WORD_CHAR _
+    { return ast.typeName(name, rng()) }
 
 
 //////   //
@@ -93,7 +103,7 @@ Definition
 
 
 ObjectTypeDef
-  = TYPE name:Identifier EQ? obj:ObjectLiteralExpr
+  = TYPE name:TypeName EQ? obj:ObjectLiteralExpr
     { return ast.objectTypeDef(name, obj, rng()) }
 
 
@@ -132,9 +142,13 @@ FloatKeyword
     { return ast.floatKeyword() }
 
 
+BooleanKeyword
+  = _ 'Boolean' EOK
+    { return ast.booleanKeyword() }
+
+
 LiveObjectKeyword
-  = _ 'LiveObject' EOK
-    { return null }
+  = _ @$'LiveObject' EOK
 
 
 TypeExpr
@@ -149,6 +163,7 @@ BuiltInScalarType
   = StringKeyword
   / IntKeyword
   / FloatKeyword
+  / BooleanKeyword
 
 
 LiveTypeExpr
@@ -161,7 +176,7 @@ LiveObjectTypeExpr
 
 
 TypeRef
-  = name:Identifier
+  = !LiveObjectKeyword name:TypeName
     { return ast.typeRef(name, rng()) }
 
 
@@ -191,7 +206,7 @@ EOK "end of keyword"
 
 
 TYPE "keyword \"type\""
-  = _ @$'type' EOK
+  = _ @$'type' EOK __
 
 
 LCURLY     = __ @$'{' __

@@ -1,0 +1,4 @@
+type Storage {
+  a: Int
+  b: Int
+}

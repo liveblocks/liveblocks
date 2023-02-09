@@ -1,0 +1,6 @@
+type Storage {
+  x: 42ndStreet
+}
+
+type 42ndStreet {}
+#    ^ Type must start with an uppercase char

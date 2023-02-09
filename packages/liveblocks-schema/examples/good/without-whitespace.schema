@@ -1,0 +1,1 @@
+type Storage{foo?:Foo,bar:Bar}type Bar{}type Foo{}#comment

@@ -1,0 +1,4 @@
+type Storage { 
+  /* We support no such
+     multi-line comments */
+}

@@ -10,6 +10,7 @@
     | StringKeyword
     | IntKeyword
     | FloatKeyword
+    | BooleanKeyword
 
 
 # A custom user-defined type definition
@@ -40,7 +41,7 @@
 # Reference to a custom, user-defined, type. Not a built-in, not
 # a "LiveObject". Things like "Circle", "BlogPost", etc.
 TypeRef:
-    name  Identifier
+    name  TypeName
 
 
 Document:
@@ -53,6 +54,12 @@ FieldDef:
     type      @TypeExpr
 
 
+# e.g. "Circle" or "Person" -- used in type positions
+TypeName:
+    name  string
+
+
+# e.g. "x" or "y" -- used in field positions
 Identifier:
     name  string
 
@@ -69,7 +76,7 @@ ObjectLiteralExpr:
 
 # e.g. type Circle { cx: Number; cy: Number; r: Float }
 ObjectTypeDef:
-    name  Identifier
+    name  TypeName
     obj   ObjectLiteralExpr
 
 
@@ -87,4 +94,8 @@ IntKeyword:
 
 
 FloatKeyword:
+    dummy_  string?
+
+
+BooleanKeyword:
     dummy_  string?

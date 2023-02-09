@@ -1,0 +1,4 @@
+type Storage { moo: Moo }
+type Moo { boo: Boo }
+type Boo { zoo: Zoo }
+type Zoo { moo: Moo }  # Cycle closed here

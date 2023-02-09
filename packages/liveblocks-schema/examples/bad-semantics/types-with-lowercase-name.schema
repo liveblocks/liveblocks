@@ -1,0 +1,6 @@
+type Storage {
+  x: illegal
+}
+
+type illegal {}
+#    ^ Type must start with an uppercase char

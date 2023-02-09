@@ -1,4 +1,4 @@
-import didyoumean from "didyoumean";
+import original_didyoumean from "didyoumean";
 
 import type {
   Definition,
@@ -7,10 +7,28 @@ import type {
   ObjectLiteralExpr,
   ObjectTypeDef,
   Range,
+  TypeExpr,
+  TypeName,
   TypeRef,
 } from "../ast";
-import { visit } from "../ast";
+import { isBuiltInScalarType, visit } from "../ast";
+import { assertNever } from "../lib/assert";
 import type { ErrorReporter } from "../lib/error-reporting";
+
+function quote(value: string): string {
+  return JSON.stringify(value);
+}
+
+const TYPENAME_REGEX = /^[A-Z_]/;
+
+// TODO Ideally _derive_ this list of builtins directly from the grammar
+// instead somehow?
+const BUILTINS = ["String", "Int", "Float", "Boolean"];
+
+/**
+ * Reserve these names for future use.
+ */
+const RESERVED_TYPENAMES_REGEX = /^Live|^(Presence|Array)$/i;
 
 class Context {
   errorReporter: ErrorReporter;
@@ -71,7 +89,7 @@ function checkObjectLiteralExpr(
 ): void {
   for (const [first, second] of dupes(obj.fields, (f) => f.name.name)) {
     context.report(
-      `A field named ${JSON.stringify(
+      `A field named ${quote(
         first.name.name
       )} is defined multiple times (on line ${context.lineno(
         first.name.range
@@ -99,30 +117,134 @@ function checkLiveObjectTypeExpr(
   }
 }
 
-function checkTypeRef(node: TypeRef, context: Context): void {
-  const typeDef = context.registeredTypes.get(node.name.name);
-  if (typeDef === undefined) {
-    const suggestion = didyoumean(
-      node.name.name,
-      Array.from(context.registeredTypes.keys())
-    );
-
+function checkTypeName(node: TypeName, context: Context): void {
+  if (!TYPENAME_REGEX.test(node.name)) {
     context.report(
-      `Unknown type ${JSON.stringify(node.name)}`,
-      [
-        `I didn't understand what ${JSON.stringify(node.name)} refers to.`,
-        suggestion ? `Did you mean ${JSON.stringify(suggestion)}?` : null,
-      ],
+      "Type names should start with an uppercase character",
+      [],
+      node.range
+    );
+  }
+
+  // Continue collecting more errors
+
+  if (BUILTINS.some((bname) => bname === node.name)) {
+    context.report(
+      `Type name ${quote(node.name)} is a built-in type`,
+      [],
+      node.range
+    );
+  } else if (RESERVED_TYPENAMES_REGEX.test(node.name)) {
+    context.report(
+      `Type name ${quote(node.name)} is reserved for future use`,
+      [],
       node.range
     );
   }
 }
 
-// FIXME(nvie) Check that type definitions don't use reserved types names e.g. `type String { ... }`)
+/**
+ * Wrap didyoumean to avoid dealing with a million different possible output
+ * values.
+ */
+function didyoumean(value: string, alternatives: string[]): string[] {
+  const output = original_didyoumean(value, alternatives);
+  if (!output) {
+    return [];
+  } else if (Array.isArray(output)) {
+    return output;
+  } else {
+    return [output];
+  }
+}
+
+function checkTypeRef(node: TypeRef, context: Context): void {
+  const name = node.name.name;
+  const typeDef = context.registeredTypes.get(name);
+  if (typeDef === undefined) {
+    // If we land here, it means there's an unknown type reference. Possibly
+    // caused by misspellings or people trying to learn/play with the language.
+    // Let's be friendly to them and assist them with fixing the problem,
+    // especially around common mistakes.
+    let alternatives: string[] = didyoumean(
+      node.name.name,
+      BUILTINS.concat(Array.from(context.registeredTypes.keys()))
+    );
+
+    if (alternatives.length === 0) {
+      // It can be expected that people will try to put "number" in as a type,
+      // because that's TypeScript's syntax. If there is no custom type name
+      // found that closely matches this typo, then try to suggest one more thing
+      // to nudge them.
+      alternatives = /^num(ber)?$/i.test(name)
+        ? ["Float", "Int"]
+        : [
+            /* no alternatives */
+          ];
+    }
+
+    const suggestion =
+      alternatives.length > 0
+        ? `. Did you mean ${alternatives
+            .map((alt) => quote(alt))
+            .join(" or ")}?`
+        : "";
+
+    context.report(`Unknown type ${quote(name)}` + suggestion, [], node.range);
+  }
+}
+
 // FIXME(nvie) Other examples: Boolean, LiveXxx, Regex, List, Email
 
-// FIXME(nvie) Check that lowercased type names are disallowed (e.g. `type henk { ... }`)
-//                                                                         ^ Must start with uppercase
+function checkNoForbiddenRefs(
+  typeExpr: TypeExpr,
+  context: Context,
+  forbidden: Set<string>
+): void {
+  if (isBuiltInScalarType(typeExpr)) {
+    return;
+  }
+
+  switch (typeExpr._kind) {
+    case "LiveObjectTypeExpr":
+      checkNoForbiddenRefs(typeExpr.of, context, forbidden);
+      break;
+
+    case "ObjectLiteralExpr":
+      for (const field of typeExpr.fields) {
+        if (!field.optional) {
+          checkNoForbiddenRefs(field.type, context, forbidden);
+        }
+      }
+      break;
+
+    case "TypeRef": {
+      if (forbidden.has(typeExpr.name.name)) {
+        context.report(
+          `Cyclical reference detected: ${quote(typeExpr.name.name)}`,
+          [],
+          typeExpr.range
+        );
+      }
+
+      const def = context.registeredTypes.get(typeExpr.name.name);
+      if (def !== undefined) {
+        const s = new Set(forbidden);
+        s.add(typeExpr.name.name);
+        checkNoForbiddenRefs(def.obj, context, s);
+      }
+      break;
+    }
+
+    default:
+      return assertNever(typeExpr, "Unhandled case");
+  }
+}
+
+function checkObjectTypeDef(def: ObjectTypeDef, context: Context): void {
+  // Checks to make sure there are no self-references in object definitions
+  checkNoForbiddenRefs(def.obj, context, new Set([def.name.name]));
+}
 
 function checkDocument(doc: Document, context: Context): void {
   // Now, first add all definitions to the global registry
@@ -132,7 +254,7 @@ function checkDocument(doc: Document, context: Context): void {
     const existing = context.registeredTypes.get(name);
     if (existing !== undefined) {
       context.report(
-        `A type named ${JSON.stringify(
+        `A type named ${quote(
           name
         )} is defined multiple times (on line ${context.lineno(
           existing.name.range
@@ -201,8 +323,10 @@ export function check(
     doc,
     {
       Document: checkDocument,
-      ObjectLiteralExpr: checkObjectLiteralExpr,
       LiveObjectTypeExpr: checkLiveObjectTypeExpr,
+      ObjectLiteralExpr: checkObjectLiteralExpr,
+      ObjectTypeDef: checkObjectTypeDef,
+      TypeName: checkTypeName,
       TypeRef: checkTypeRef,
     },
     context

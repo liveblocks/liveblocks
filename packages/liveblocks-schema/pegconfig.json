@@ -3,6 +3,8 @@
     "customHeader": "import * as ast from \"../ast\";\n"
   },
   "returnTypes": {
+    "BooleanKeyword": "ast.BooleanKeyword",
+    "BooleanKeywordList": "ast.BooleanKeyword[]",
     "BuiltInScalarType": "ast.BuiltInScalarType",
     "BuiltInScalarTypeList": "ast.BuiltInScalarType[]",
     "Definition": "ast.Definition",
@@ -33,6 +35,8 @@
     "StringKeywordList": "ast.StringKeyword[]",
     "TypeExpr": "ast.TypeExpr",
     "TypeExprList": "ast.TypeExpr[]",
+    "TypeName": "ast.TypeName",
+    "TypeNameList": "ast.TypeName[]",
     "TypeRef": "ast.TypeRef",
     "TypeRefList": "ast.TypeRef[]"
   }

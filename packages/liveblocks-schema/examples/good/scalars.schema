@@ -1,0 +1,6 @@
+type Storage {
+  name: String
+  age: Int
+  height: Float
+  hasSiblings: Boolean
+}

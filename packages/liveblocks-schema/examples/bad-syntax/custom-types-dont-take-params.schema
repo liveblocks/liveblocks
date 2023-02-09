@@ -1,0 +1,5 @@
+type Custom {}
+
+type X {
+  bad: Custom<Int>
+}

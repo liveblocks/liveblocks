@@ -21,6 +21,9 @@ export function prettify(node: Node): string {
     case "Document":
       return node.definitions.map(prettify).join("\n\n");
 
+    case "BooleanKeyword":
+      return "Boolean";
+
     case "StringKeyword":
       return "String";
 
@@ -44,6 +47,9 @@ export function prettify(node: Node): string {
       return `LiveObject<${prettify(node.of)}>`;
 
     case "Identifier":
+      return node.name;
+
+    case "TypeName":
       return node.name;
 
     case "TypeRef":

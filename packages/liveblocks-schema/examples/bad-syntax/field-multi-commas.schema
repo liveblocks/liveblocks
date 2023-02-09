@@ -1,0 +1,7 @@
+type X {
+  x: Int,
+  #     ^ One comma is fine
+  y: Int,,,,,
+  #     ^^^^^ But multiple ones are not
+  z: Int
+}

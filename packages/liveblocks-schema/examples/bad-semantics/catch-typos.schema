@@ -1,0 +1,7 @@
+type Storage {
+  a: string
+  b: boolean
+  x: int
+  y: float
+  z: number
+}

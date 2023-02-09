@@ -1,0 +1,17 @@
+# These should all work as field identifiers
+type Storage {
+  String: String
+  string: String
+  Int: Int
+  int: Int
+  Float: Float
+  float: Float
+  Boolean: Boolean
+  boolean: Boolean
+  LiveObject: LiveObject<Obj>
+  liveObject: LiveObject<Obj>
+  Obj: Obj
+  obj: Obj
+}
+
+type Obj { }

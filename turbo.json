@@ -23,13 +23,7 @@
     "test": {
       "dependsOn": ["build:ast", "build:parser"],
       "outputs": ["coverage/**"],
-      "inputs": [
-        "jest.*",
-        "src/**/*.tsx",
-        "src/**/*.ts",
-        "test/**/*.ts",
-        "test/**/*.tsx"
-      ]
+      "inputs": ["jest.config.*", "src/**/*.ts", "examples/**/*.schema"]
     },
     "lint": {
       "outputs": []
