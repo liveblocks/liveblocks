@@ -1,6 +1,10 @@
 name: Tests
 
-on: [pull_request]
+# Run on every pull request, and on every push to the main branch
+on:
+  pull_request:
+  push:
+    branches: main
 
 jobs:
   test:

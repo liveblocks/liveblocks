@@ -1,3 +1,5 @@
+[![Tests](https://github.com/liveblocks/liveblocks-schema/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/liveblocks/liveblocks-schema/actions/workflows/test.yml)
+
 # Liveblocks schema language
 
 This repo is currently private while we're still setting up the foundational
