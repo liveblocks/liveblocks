@@ -8,6 +8,10 @@
 - Fix: improved error suggestions when misspelling built-ins
 - Fix various other small bugs in the parser/checker
 - Massively improved unit test foundation
+- AST grammar cleanups
+  - `{String,Int,Float,Boolean}Keyword` → `{String,Int,Float,Boolean}StringType`
+  - `ObjectTypeDef` → `ObjectTypeDefinition`
+  - Remove `LiveTypeExpr` grouping level
 - Don't retain comments as part of the AST (might be added back in later)
 - Fix for non-node envs (missing `process` global)
 
