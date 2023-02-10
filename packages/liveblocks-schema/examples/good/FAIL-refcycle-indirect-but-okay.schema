@@ -1,0 +1,12 @@
+#
+# This indirect self-referential type should be perfectly fine. It's easy to
+# support this at the parser level, but not so much for the runtime
+# implementation, see https://github.com/liveblocks/liveblocks.io/issues/910
+#
+# We should ideally support this again later.
+#
+
+type Storage { moo: Moo }
+type Moo { boo?: Boo }
+type Boo { zoo: Zoo }
+type Zoo { moo: Moo }  # Cycle here, but the optionality breaks the ref cycle, so it's fine

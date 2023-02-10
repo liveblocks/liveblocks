@@ -2,7 +2,9 @@
 
 - Add `Boolean` built-in scalar type
 - Fix: differentiate between Identifier and TypeName nodes
-- Fix: don't allow illegal ref cycles
+- Fix: don't allow illegal ref cycles (forever) + also don't allow legal ref
+  cycles (for now, see
+  [rationale](https://github.com/liveblocks/liveblocks.io/issues/910))
 - Fix: identifiers must start with letter or `_`
 - Fix: type names must start with uppercase letter or `_`
 - Fix: improved error suggestions when misspelling built-ins

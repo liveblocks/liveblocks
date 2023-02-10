@@ -213,9 +213,12 @@ function checkNoForbiddenRefs(
 
     case "ObjectLiteralExpr":
       for (const field of typeExpr.fields) {
-        if (!field.optional) {
-          checkNoForbiddenRefs(field.type, context, forbidden);
-        }
+        // TODO for later. Allow _some_ self-references. For example, if
+        // `field.optional`, then it'd be perfectly fine to use
+        // self-references. But for reasons unrelated to the technical parsing,
+        // we're currently not allowing them. See
+        // https://github.com/liveblocks/liveblocks.io/issues/910 for context.
+        checkNoForbiddenRefs(field.type, context, forbidden);
       }
       break;
 
