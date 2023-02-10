@@ -27,12 +27,51 @@ This example shows how to build a collaborative 3D builder with [Liveblocks](htt
 
 ## Getting started
 
+Run the following command to try this example locally:
+
+```shell
+npx create-liveblocks-app@latest --example nextjs-3d-builder --api-key
+```
+
+This will download the example and ask permission to open your browser, enabling you to automatically get your API key from your [liveblocks.io](https://liveblocks.io) account.
+
+### Manual setup
+<details><summary>Read more</summary>
+
+<p></p>
+
+Alternatively, you can set up your project manually:
+
 - Install all dependencies with `npm install`
 - Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
 - Copy your **public** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
 - Create an `.env.local` file and add your **public** key as the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable
 - Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
 
-### CodeSandbox
+</details>
+
+### Deploy on Vercel
+
+<details><summary>Read more</summary>
+
+<p></p>
+
+To both deploy on [Vercel](https://vercel.com), and run the example locally, use the following command:
+
+```shell
+npx create-liveblocks-app@latest --example nextjs-3d-builder --vercel
+```
+
+This will download the example and ask permission to open your browser, enabling you to deploy to Vercel.
+
+</details>
+
+### Develop on CodeSandbox
+
+<details><summary>Read more</summary>
+
+<p></p>
 
 After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-3d-builder) on CodeSandbox, create the `NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
+
+</details>
