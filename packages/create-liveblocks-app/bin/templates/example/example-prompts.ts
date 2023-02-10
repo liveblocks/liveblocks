@@ -90,7 +90,7 @@ export async function examplePrompts(flags: Record<string, any>) {
         return null;
       },
       name: "openBrowser",
-      message: "Open browser window to continue set up?",
+      message: "Open browser window to continue set up? (required)",
       initial: true,
       active: "yes",
       inactive: "no",
