@@ -27,19 +27,6 @@ This example shows how to build an advanced live avatar stack with [Liveblocks](
 
 ## Getting started
 
-- Install all dependencies with `npm install`
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Create an `.env.local` file and add your **secret** key as the `LIVEBLOCKS_SECRET_KEY` environment variable
-- Run `npm run dev` and go to [http://localhost:3000](http://localhost:3000)
-
-### CodeSandbox
-
-After forking [this example](https://codesandbox.io/s/github/liveblocks/liveblocks/tree/main/examples/nextjs-live-avatars-advanced) on CodeSandbox, create the `LIVEBLOCKS_SECRET_KEY` environment variable as a [secret](https://codesandbox.io/docs/secrets).
-
-
-## Getting started
-
 Run the following command to try this example locally:
 
 ```shell
