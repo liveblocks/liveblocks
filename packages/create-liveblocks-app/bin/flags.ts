@@ -51,11 +51,11 @@ export const commandLineFlags: OptionDefinition[] = [
     type: Boolean,
   },
   {
-    name: "get-key",
+    name: "api-key",
     type: Boolean,
   },
   {
-    name: "no-get-key",
+    name: "no-api-key",
     type: Boolean,
   },
   {
