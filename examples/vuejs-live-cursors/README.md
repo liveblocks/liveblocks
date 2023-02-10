@@ -25,15 +25,6 @@ This example shows how to build live cursors with [Liveblocks](https://liveblock
 
 ## Getting started
 
-- Install all dependencies with `npm install`
-- Create an account on [liveblocks.io](https://liveblocks.io/dashboard)
-- Copy your **secret** key from the [dashboard](https://liveblocks.io/dashboard/apikeys)
-- Replace `pk_YOUR_PUBLIC_KEY` in [`App.vue`](./src/App.vue) by your **public** key
-- Run `npm run serve` and go to [http://localhost:8000](http://localhost:8000)
-
-
-## Getting started
-
 Run the following command to try this example locally:
 
 ```shell
