@@ -42,6 +42,7 @@ This will download the example and install the example. Next, you must:
 - Run `npm run build` and open `http://localhost:3000` in your browser
 
 ### Manual setup
+
 <details><summary>Read more</summary>
 
 <p></p>

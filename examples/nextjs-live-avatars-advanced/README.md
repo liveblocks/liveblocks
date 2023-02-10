@@ -36,6 +36,7 @@ npx create-liveblocks-app@latest --example nextjs-live-avatars-advanced --api-ke
 This will download the example and ask permission to open your browser, enabling you to automatically get your API key from your [liveblocks.io](https://liveblocks.io) account.
 
 ### Manual setup
+
 <details><summary>Read more</summary>
 
 <p></p>

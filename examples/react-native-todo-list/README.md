@@ -36,6 +36,7 @@ This will download the example and install the example. Next, you must:
 - For Android, run `npm run android`
 
 ### Manual setup
+
 <details><summary>Read more</summary>
 
 <p></p>
